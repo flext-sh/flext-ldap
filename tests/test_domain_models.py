@@ -1,3 +1,5 @@
+"""Module test_domain_models."""
+
 from typing import Any
 
 """
@@ -11,7 +13,6 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
-
 from ldap_core_shared.domain.models import (
     EntryProcessingResult,
     LDAPConnectionConfig,

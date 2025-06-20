@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="3" failures="0" skipped="0" tests="3" time="0.346" timestamp="2025-06-20T02:54:49.839526-03:00" hostname="tungs"><testcase classname="" name="tests.test_dn_utils" time="0.000"><error message="collection failure">ImportError while importing test module '/home/marlonsc/pyauto/ldap-core-shared/tests/test_dn_utils.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_dn_utils.py:13: in &lt;module&gt;
+    from ldap_core_shared.utils.dn_utils import (
+E   ModuleNotFoundError: No module named 'ldap_core_shared'</error></testcase><testcase classname="" name="tests.test_domain_models" time="0.000"><error message="collection failure">ImportError while importing test module '/home/marlonsc/pyauto/ldap-core-shared/tests/test_domain_models.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_domain_models.py:16: in &lt;module&gt;
+    from ldap_core_shared.domain.models import (
+E   ModuleNotFoundError: No module named 'ldap_core_shared'</error></testcase><testcase classname="" name="tests.test_value_objects" time="0.000"><error message="collection failure">ImportError while importing test module '/home/marlonsc/pyauto/ldap-core-shared/tests/test_value_objects.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_value_objects.py:13: in &lt;module&gt;
+    from ldap_core_shared.domain.value_objects import (
+E   ModuleNotFoundError: No module named 'ldap_core_shared'</error></testcase></testsuite></testsuites>

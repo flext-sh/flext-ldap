@@ -11,7 +11,9 @@ import sys
 from datetime import datetime
 from typing import Any
 
-from ..config.base_config import LoggingConfig
+from ldap_core_shared.config.base_config import LoggingConfig
+
+logger = logging.getLogger(__name__)
 
 
 class StructuredFormatter(logging.Formatter):
@@ -33,12 +35,11 @@ class StructuredFormatter(logging.Formatter):
         if self.include_timestamp:
             timestamp = datetime.fromtimestamp(record.created).isoformat()
             base = f"{timestamp} - {record.name} - {record.levelname} - {record.getMessage()}"
-        else:
             base = f"{record.name} - {record.levelname} - {record.getMessage()}"
 
         # Add structured data if available
         if hasattr(record, "extra_data") and record.extra_data:
-            extra_parts = []
+            extra_parts: list = []
             for key, value in record.extra_data.items():
                 extra_parts.append(f"{key}={value}")
 
@@ -108,7 +109,7 @@ class LDAPLogger:
 
         except Exception as e:
             # Fallback to console logging
-            self.logger.error("Failed to setup file logging: %s", e")
+            self.logger.exception("Failed to setup file logging: %s", e)
 
     def debug(self, message: str, **kwargs) -> Any:
         """Log debug message with extra data."""
@@ -130,7 +131,9 @@ class LDAPLogger:
         """Log critical message with extra data."""
         self._log_with_extra(logging.CRITICAL, message, kwargs)
 
-    def _log_with_extra(self, level: int, message: str, extra_data: dict[str, Any]) -> Any:
+    def _log_with_extra(
+        self, level: int, message: str, extra_data: dict[str, Any]
+    ) -> Any:
         """Log message with extra structured data."""
         # Filter sensitive data if configured
         if self.config.mask_sensitive_data:
@@ -158,11 +161,10 @@ class LDAPLogger:
             "bind_password",
         }
 
-        masked_data = {}
+        masked_data: dict = {}
         for key, value in data.items():
             if any(sensitive_key in key.lower() for sensitive_key in sensitive_keys):
                 masked_data[key] = "***MASKED***"
-            else:
                 masked_data[key] = value
 
         return masked_data
@@ -183,10 +185,11 @@ class LDAPLogger:
 
         if success:
             self.info(f"LDAP {operation} successful", **extra_data)
-        else:
             self.error(f"LDAP {operation} failed", **extra_data)
 
-    def log_performance(self, operation: str, count: int, duration: float, **kwargs) -> Any:
+    def log_performance(
+        self, operation: str, count: int, duration: float, **kwargs
+    ) -> Any:
         """Log performance metrics."""
         rate = count / duration if duration > 0 else 0
 
@@ -254,9 +257,7 @@ def setup_logging(config: LoggingConfig, root_logger_name: str = "ldap") -> LDAP
     _loggers.clear()
 
     # Create root logger
-    root_logger = get_logger(root_logger_name, config)
-
-    return root_logger
+    return get_logger(root_logger_name, config)
 
 
 class PerformanceTimer:

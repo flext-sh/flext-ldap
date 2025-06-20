@@ -8,7 +8,7 @@ core domain concepts like DNs, object classes, and configuration profiles.
 import re
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -55,7 +55,8 @@ class DNComponent(BaseModel):
     def validate_attribute(cls, v: str) -> str:
         """Validate attribute name format."""
         if not re.match(r"^[a-zA-Z][a-zA-Z0-9-]*$", v):
-            raise ValueError(f"Invalid attribute name: {v}")
+            msg = f"Invalid attribute name: {v}"
+            raise ValueError(msg)
         return v.lower()
 
     @field_validator("value")
@@ -63,7 +64,8 @@ class DNComponent(BaseModel):
     def validate_value(cls, v: str) -> str:
         """Validate value is not empty."""
         if not v.strip():
-            raise ValueError("DN component value cannot be empty")
+            msg = "DN component value cannot be empty"
+            raise ValueError(msg)
         return v.strip()
 
     def __str__(self) -> str:
@@ -86,15 +88,17 @@ class LdapDn(BaseModel):
     def from_string(cls, dn_string: str) -> "LdapDn":
         """Create LdapDn from string representation."""
         if not dn_string.strip():
-            raise ValueError("DN cannot be empty")
+            msg = "DN cannot be empty"
+            raise ValueError(msg)
 
-        components = []
+        components: list = []
         # Simple DN parsing (would need more sophisticated parsing for complex cases)
         parts = [part.strip() for part in dn_string.split(",")]
 
         for part in parts:
             if "=" not in part:
-                raise ValueError(f"Invalid DN component: {part}")
+                msg = f"Invalid DN component: {part}"
+                raise ValueError(msg)
 
             attr, value = part.split("=", 1)
             components.append(DNComponent(attribute=attr.strip(), value=value.strip()))
@@ -106,7 +110,8 @@ class LdapDn(BaseModel):
     def validate_components(cls, v: list[DNComponent]) -> list[DNComponent]:
         """Validate DN has at least one component."""
         if not v:
-            raise ValueError("DN must have at least one component")
+            msg = "DN must have at least one component"
+            raise ValueError(msg)
         return v
 
     def __str__(self) -> str:
@@ -116,13 +121,12 @@ class LdapDn(BaseModel):
     def normalize(self) -> "LdapDn":
         """Return normalized version of DN."""
         # Normalize each component
-        normalized_components = []
-        for component in self.components:
-            normalized_components.append(
-                DNComponent(
-                    attribute=component.attribute.lower(), value=component.value.strip()
-                )
+        normalized_components = [
+            DNComponent(
+                attribute=component.attribute.lower(), value=component.value.strip()
             )
+            for component in self.components
+        ]
 
         return LdapDn(components=normalized_components)
 
@@ -158,12 +162,13 @@ class LdapDn(BaseModel):
     def append_component(self, attribute: str, value: str) -> "LdapDn":
         """Append a component to the beginning of the DN."""
         new_component = DNComponent(attribute=attribute, value=value)
-        return LdapDn(components=[new_component] + self.components)
+        return LdapDn(components=[new_component, *self.components])
 
     def replace_base_dn(self, old_base: "LdapDn", new_base: "LdapDn") -> "LdapDn":
         """Replace base DN portion with new base DN."""
         if not self.is_child_of(old_base):
-            raise ValueError("DN is not a child of the specified base DN")
+            msg = "DN is not a child of the specified base DN"
+            raise ValueError(msg)
 
         # Keep the relative components and add new base
         relative_components = self.components[
@@ -188,19 +193,24 @@ class ConnectionProfile:
     def __post_init__(self) -> Any:
         """Validate profile after initialization."""
         if not self.name.strip():
-            raise ValueError("Profile name cannot be empty")
+            msg = "Profile name cannot be empty"
+            raise ValueError(msg)
 
         if not self.host.strip():
-            raise ValueError("Host cannot be empty")
+            msg = "Host cannot be empty"
+            raise ValueError(msg)
 
         if not 1 <= self.port <= 65535:
-            raise ValueError("Port must be between 1 and 65535")
+            msg = "Port must be between 1 and 65535"
+            raise ValueError(msg)
 
         if not self.bind_dn.strip():
-            raise ValueError("Bind DN cannot be empty")
+            msg = "Bind DN cannot be empty"
+            raise ValueError(msg)
 
         if self.timeout <= 0:
-            raise ValueError("Timeout must be positive")
+            msg = "Timeout must be positive"
+            raise ValueError(msg)
 
     def to_ldap_url(self) -> str:
         """Generate LDAP URL from profile."""
@@ -223,13 +233,16 @@ class TransformationRule:
     def __post_init__(self) -> Any:
         """Validate rule after initialization."""
         if not self.name.strip():
-            raise ValueError("Rule name cannot be empty")
+            msg = "Rule name cannot be empty"
+            raise ValueError(msg)
 
         if not self.source_pattern.strip():
-            raise ValueError("Source pattern cannot be empty")
+            msg = "Source pattern cannot be empty"
+            raise ValueError(msg)
 
         if not self.target_pattern.strip():
-            raise ValueError("Target pattern cannot be empty")
+            msg = "Target pattern cannot be empty"
+            raise ValueError(msg)
 
 
 class SchemaCompatibility(StrEnum):
@@ -274,15 +287,16 @@ class MigrationPlan:
     def __post_init__(self) -> Any:
         """Validate plan after initialization."""
         if not self.name.strip():
-            raise ValueError("Plan name cannot be empty")
+            msg = "Plan name cannot be empty"
+            raise ValueError(msg)
 
         if not self.phases:
-            raise ValueError("Plan must have at least one phase")
+            msg = "Plan must have at least one phase"
+            raise ValueError(msg)
 
         if not self.schema_analysis.is_migration_possible:
-            raise ValueError(
-                "Migration plan cannot be created with incompatible schema"
-            )
+            msg = "Migration plan cannot be created with incompatible schema"
+            raise ValueError(msg)
 
     @property
     def is_ready_for_execution(self) -> bool:

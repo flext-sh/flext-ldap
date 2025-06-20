@@ -16,11 +16,12 @@ from typing import Any
 import ldap3
 from ldap3 import BASE, LEVEL, SUBTREE, Connection, Server
 from ldap3.core.exceptions import LDAPException
-
-from ..config.base_config import LDAPServerConfig
-from ..domain.models import LDAPEntry
-from ..events.domain_events import LDAPConnectionEvent, LDAPOperationEvent
-from ..events.event_handler import dispatch_event
+from ldap_core_shared.config.base_config import LDAPServerConfig
+from ldap_core_shared.domain.models import LDAPEntry
+from ldap_core_shared.events.domain_events import (
+    LDAPConnectionEvent, LDAPOperationEvent,
+)
+from ldap_core_shared.events.event_handler import dispatch_event
 
 
 class SearchScope(Enum):
@@ -75,9 +76,11 @@ class LDAPConnectionPool:
                     connection = await self._create_connection()
                     self._pool.append(connection)
                     self._stats.active_connections += 1
-                    self.logger.debug(f"Created connection {i + 1}/{self.pool_size}")
+                    self.logger.debug("Created connection %s/%s", i + 1, self.pool_size)
                 except Exception as e:
-                    self.logger.error("Failed to create connection %s", i + 1: %s", e")
+                    self.logger.exception(
+                        "Failed to create connection %s: %s", i + 1, e
+                    )
                     self._stats.failed_connections += 1
 
             self._stats.total_connections = len(self._pool)
@@ -118,7 +121,7 @@ class LDAPConnectionPool:
         return connection
 
     @asynccontextmanager
-    async def get_connection(self) -> AsyncGenerator[Connection, None]:
+    async def get_connection(self) -> AsyncGenerator[Connection]:
         """Get a connection from the pool."""
         if not self._initialized:
             await self.initialize()
@@ -135,7 +138,7 @@ class LDAPConnectionPool:
             yield connection
 
         except Exception as e:
-            self.logger.error("Connection error: %s", e")
+            self.logger.exception("Connection error: %s", e)
             self._stats.failed_operations += 1
             raise
         finally:
@@ -143,7 +146,6 @@ class LDAPConnectionPool:
                 async with self._pool_lock:
                     if len(self._pool) < self.pool_size:
                         self._pool.append(connection)
-                    else:
                         connection.unbind()
 
     async def close_all(self) -> None:
@@ -153,7 +155,7 @@ class LDAPConnectionPool:
                 try:
                     connection.unbind()
                 except Exception as e:
-                    self.logger.error("Error closing connection: %s", e")
+                    self.logger.exception("Error closing connection: %s", e)
 
             self._pool.clear()
             self._stats.active_connections = 0
@@ -201,12 +203,13 @@ class LDAPOperationHelper:
                 )
 
                 if not success:
-                    raise LDAPException(f"Search failed: {conn.result}")
+                    msg = f"Search failed: {conn.result}"
+                    raise LDAPException(msg)
 
-                entries = []
+                entries: list = []
                 for entry in conn.entries:
                     # Convert ldap3 entry to our LDAPEntry model
-                    attributes_dict = {}
+                    attributes_dict: dict = {}
                     for attr_name in entry.entry_attributes:
                         attr_values = getattr(entry, attr_name)
                         if hasattr(attr_values, "values"):
@@ -248,7 +251,7 @@ class LDAPOperationHelper:
                 )
             )
 
-            self.logger.error("Search operation failed: %s", e")
+            self.logger.exception("Search operation failed: %s", e)
             raise
 
     async def add_entry(self, entry: LDAPEntry) -> bool:
@@ -272,7 +275,7 @@ class LDAPOperationHelper:
                 )
 
                 if not success:
-                    self.logger.error("Add operation failed: %s", conn.result")
+                    self.logger.error("Add operation failed: %s", conn.result)
 
                 return success
 
@@ -289,7 +292,7 @@ class LDAPOperationHelper:
                 )
             )
 
-            self.logger.error("Add operation failed: %s", e")
+            self.logger.exception("Add operation failed: %s", e)
             return False
 
     async def modify_entry(self, dn: str, changes: dict[str, Any]) -> bool:
@@ -314,7 +317,7 @@ class LDAPOperationHelper:
                 )
 
                 if not success:
-                    self.logger.error("Modify operation failed: %s", conn.result")
+                    self.logger.error("Modify operation failed: %s", conn.result)
 
                 return success
 
@@ -331,7 +334,7 @@ class LDAPOperationHelper:
                 )
             )
 
-            self.logger.error("Modify operation failed: %s", e")
+            self.logger.exception("Modify operation failed: %s", e)
             return False
 
     async def delete_entry(self, dn: str) -> bool:
@@ -355,7 +358,7 @@ class LDAPOperationHelper:
                 )
 
                 if not success:
-                    self.logger.error("Delete operation failed: %s", conn.result")
+                    self.logger.error("Delete operation failed: %s", conn.result)
 
                 return success
 
@@ -372,7 +375,7 @@ class LDAPOperationHelper:
                 )
             )
 
-            self.logger.error("Delete operation failed: %s", e")
+            self.logger.exception("Delete operation failed: %s", e)
             return False
 
     async def test_connection(self) -> bool:
@@ -381,7 +384,7 @@ class LDAPOperationHelper:
             async with self.pool.get_connection() as conn:
                 return conn.bound
         except Exception as e:
-            self.logger.error("Connection test failed: %s", e")
+            self.logger.exception("Connection test failed: %s", e)
             return False
 
 
@@ -391,11 +394,9 @@ async def connect_ldap(config: LDAPServerConfig) -> Connection:
         host=config.host, port=config.port, use_ssl=config.use_ssl, get_info=ldap3.ALL
     )
 
-    connection = Connection(
+    return Connection(
         server, user=config.bind_dn, password=config.password, auto_bind=True
     )
-
-    return connection
 
 
 async def validate_connection(config: LDAPServerConfig) -> dict[str, Any]:

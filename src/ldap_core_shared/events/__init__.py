@@ -5,6 +5,7 @@ Provides domain events and event handling for consistent
 event-driven architecture across LDAP projects.
 """
 
+
 from .domain_events import (
     DomainEvent,
     ErrorEvent,
@@ -18,12 +19,12 @@ from .event_handler import EventDispatcher, EventHandler
 
 __all__ = [
     "DomainEvent",
+    "ErrorEvent",
+    "EventDispatcher",
+    "EventHandler",
     "LDAPConnectionEvent",
     "LDAPOperationEvent",
-    "MigrationStageEvent",
     "MigrationCompletedEvent",
+    "MigrationStageEvent",
     "ValidationEvent",
-    "ErrorEvent",
-    "EventHandler",
-    "EventDispatcher",
 ]
