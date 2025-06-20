@@ -24,7 +24,6 @@ class DomainEvent(ABC):
     @abstractmethod
     def event_type(self) -> str:
         """Get the event type identifier."""
-        pass
 
 
 @dataclass

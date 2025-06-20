@@ -14,6 +14,8 @@ from typing import Any
 
 from .domain_events import DomainEvent
 
+logger = logging.getLogger(__name__)
+
 
 class EventHandler(ABC):
     """Base class for event handlers."""
@@ -21,13 +23,11 @@ class EventHandler(ABC):
     @abstractmethod
     async def handle(self, event: DomainEvent) -> None:
         """Handle a domain event."""
-        pass
 
     @property
     @abstractmethod
     def handled_events(self) -> list[type[DomainEvent]]:
         """Return list of event types this handler can process."""
-        pass
 
 
 class EventDispatcher:
@@ -94,7 +94,7 @@ class EventDispatcher:
             try:
                 await asyncio.gather(*tasks, return_exceptions=True)
             except Exception as e:
-                self._logger.error("Error in async event handlers: %s", e")
+                self._logger.exception("Error in async event handlers: %s", e)
 
         # Process sync handlers in thread pool
         sync_handlers = self._handlers.get(event_type, [])
@@ -107,7 +107,7 @@ class EventDispatcher:
             try:
                 await asyncio.gather(*tasks, return_exceptions=True)
             except Exception as e:
-                self._logger.error("Error in sync event handlers: %s", e")
+                self._logger.exception("Error in sync event handlers: %s", e)
 
         self._logger.debug(
             f"Processed event {event.event_type} with "
@@ -156,7 +156,7 @@ class EventDispatcher:
                 self._event_queue.task_done()
 
             except Exception as e:
-                self._logger.error("Error in event loop: %s", e")
+                self._logger.exception("Error in event loop: %s", e)
 
     def get_handler_count(self, event_type: type[DomainEvent]) -> int:
         """Get number of handlers for a specific event type."""
@@ -166,7 +166,7 @@ class EventDispatcher:
 
     def get_all_handlers(self) -> dict[str, int]:
         """Get summary of all registered handlers."""
-        summary = {}
+        summary: dict = {}
 
         all_event_types = set(self._async_handlers.keys()) | set(self._handlers.keys())
 
@@ -185,7 +185,7 @@ class EventDispatcher:
 class LoggingEventHandler(EventHandler):
     """Event handler that logs all events."""
 
-    def __init__(self, logger: logging.Logger = None) -> None:
+    def __init__(self, logger: logging.Logger | None = None) -> None:
         """Initialize logging handler."""
         self.logger = logger or logging.getLogger(__name__)
 

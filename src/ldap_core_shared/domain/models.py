@@ -31,7 +31,8 @@ class LDAPConnectionConfig(BaseModel):
     def validate_port(cls, v: int) -> int:
         """Validate port number is in valid range."""
         if not 1 <= v <= 65535:
-            raise ValueError("Port must be between 1 and 65535")
+            msg = "Port must be between 1 and 65535"
+            raise ValueError(msg)
         return v
 
 
@@ -52,12 +53,13 @@ class LDAPEntry(BaseModel):
     def validate_dn(cls, v: str) -> str:
         """Validate DN is not empty."""
         if not v.strip():
-            raise ValueError("DN cannot be empty")
+            msg = "DN cannot be empty"
+            raise ValueError(msg)
         return v.strip()
 
     def get_attribute(self, name: str) -> list[str] | None:
         """Get attribute values by name (case-insensitive)."""
-        for _attr_name, values in self.attributes.items():
+        for attr_name, values in self.attributes.items():
             if attr_name.lower() == name.lower():
                 return values
         return None
@@ -102,7 +104,8 @@ class MigrationConfig(BaseModel):
     def validate_source_path(cls, v: Path) -> Path:
         """Validate source path exists."""
         if not v.exists():
-            raise ValueError(f"Source LDIF path does not exist: {v}")
+            msg = f"Source LDIF path does not exist: {v}"
+            raise ValueError(msg)
         return v
 
 
@@ -147,7 +150,8 @@ class MigrationStage(BaseModel):
     def validate_order(cls, v: int) -> int:
         """Validate order is non-negative."""
         if v < 0:
-            raise ValueError("Order must be non-negative")
+            msg = "Order must be non-negative"
+            raise ValueError(msg)
         return v
 
 

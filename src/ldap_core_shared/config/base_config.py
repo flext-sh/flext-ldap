@@ -46,7 +46,8 @@ class LDAPServerConfig(BaseConfig):
     def validate_port(cls, v: int) -> int:
         """Validate port is in valid range."""
         if not 1 <= v <= 65535:
-            raise ValueError("Port must be between 1 and 65535")
+            msg = "Port must be between 1 and 65535"
+            raise ValueError(msg)
         return v
 
     @field_validator("timeout")
@@ -54,7 +55,8 @@ class LDAPServerConfig(BaseConfig):
     def validate_timeout(cls, v: int) -> int:
         """Validate timeout is positive."""
         if v <= 0:
-            raise ValueError("Timeout must be positive")
+            msg = "Timeout must be positive"
+            raise ValueError(msg)
         return v
 
     @field_validator("pool_size")
@@ -62,7 +64,8 @@ class LDAPServerConfig(BaseConfig):
     def validate_pool_size(cls, v: int) -> int:
         """Validate pool size is reasonable."""
         if not 1 <= v <= 100:
-            raise ValueError("Pool size must be between 1 and 100")
+            msg = "Pool size must be between 1 and 100"
+            raise ValueError(msg)
         return v
 
     def to_connection_string(self) -> str:
@@ -86,7 +89,8 @@ class ProcessingConfig(BaseConfig):
     def validate_batch_size(cls, v: int) -> int:
         """Validate batch size is reasonable."""
         if not 1 <= v <= 10000:
-            raise ValueError("Batch size must be between 1 and 10000")
+            msg = "Batch size must be between 1 and 10000"
+            raise ValueError(msg)
         return v
 
     @field_validator("max_workers")
@@ -94,7 +98,8 @@ class ProcessingConfig(BaseConfig):
     def validate_max_workers(cls, v: int) -> int:
         """Validate worker count is reasonable."""
         if not 1 <= v <= 32:
-            raise ValueError("Max workers must be between 1 and 32")
+            msg = "Max workers must be between 1 and 32"
+            raise ValueError(msg)
         return v
 
     @field_validator("retry_attempts")
@@ -102,7 +107,8 @@ class ProcessingConfig(BaseConfig):
     def validate_retry_attempts(cls, v: int) -> int:
         """Validate retry attempts is reasonable."""
         if not 0 <= v <= 10:
-            raise ValueError("Retry attempts must be between 0 and 10")
+            msg = "Retry attempts must be between 0 and 10"
+            raise ValueError(msg)
         return v
 
 
@@ -126,7 +132,8 @@ class LoggingConfig(BaseConfig):
         valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
         v_upper = v.upper()
         if v_upper not in valid_levels:
-            raise ValueError(f"Log level must be one of: {valid_levels}")
+            msg = f"Log level must be one of: {valid_levels}"
+            raise ValueError(msg)
         return v_upper
 
 
@@ -147,7 +154,8 @@ class SecurityConfig(BaseConfig):
     def validate_cert_files(cls, v: Path | None) -> Path | None:
         """Validate certificate files exist if specified."""
         if v is not None and not v.exists():
-            raise ValueError(f"Certificate file does not exist: {v}")
+            msg = f"Certificate file does not exist: {v}"
+            raise ValueError(msg)
         return v
 
 
@@ -184,7 +192,7 @@ class ConfigurationManager:
             Configured instance of config_class
         """
         # Load from file if specified
-        file_data = {}
+        file_data: dict = {}
         if config_file and config_file.exists():
             with open(config_file, encoding="utf-8") as f:
                 file_data = json.load(f)
@@ -209,7 +217,6 @@ class ConfigurationManager:
             if env_prefix:
                 if original_prefix:
                     config_class.model_config.env_prefix = original_prefix
-                else:
                     delattr(config_class.model_config, "env_prefix")
 
     def get_config(self, config_name: str) -> BaseConfig | None:
@@ -224,8 +231,8 @@ class ConfigurationManager:
 
     def validate_all_configs(self) -> list[str]:
         """Validate all loaded configurations."""
-        errors = []
-        for _name, config in self._configs.items():
+        errors: list = []
+        for config in self._configs.values():
             try:
                 # Re-validate the configuration
                 config.model_validate(config.model_dump())

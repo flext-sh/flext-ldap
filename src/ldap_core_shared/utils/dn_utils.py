@@ -5,7 +5,7 @@ Provides utilities for parsing, validating, and manipulating
 LDAP Distinguished Names.
 """
 
-from ..domain.value_objects import LdapDn
+from ldap_core_shared.domain.value_objects import LdapDn
 
 
 def parse_dn(dn_string: str) -> LdapDn:
@@ -132,7 +132,7 @@ def escape_dn_value(value: str) -> str:
     }
 
     escaped = value
-    for _char, escaped_char in escape_chars.items():
+    for escaped_char in escape_chars.values():
         escaped = escaped.replace(char, escaped_char)
 
     # Leading and trailing spaces also need escaping
@@ -167,9 +167,7 @@ def unescape_dn_value(value: str) -> str:
     unescaped = unescaped.replace("\\;", ";")
     unescaped = unescaped.replace("\\=", "=")
     unescaped = unescaped.replace("\\#", "#")
-    unescaped = unescaped.replace("\\ ", " ")
-
-    return unescaped
+    return unescaped.replace("\\ ", " ")
 
 
 def extract_attribute_value(dn_string: str, attribute: str) -> str | None:
@@ -203,7 +201,7 @@ def build_dn(components: list[tuple[str, str]]) -> str:
     Returns:
         DN string
     """
-    dn_components = []
+    dn_components: list = []
     for attr, value in components:
         escaped_value = escape_dn_value(value)
         dn_components.append(f"{attr}={escaped_value}")
@@ -293,7 +291,7 @@ def find_common_base_dn(dn_list: list[str]) -> str | None:
             return None
 
         # Check components from the end (base) backwards
-        common_components = []
+        common_components: list = []
         for i in range(min_depth):
             # Get component at position from end
             pos = -(i + 1)
@@ -307,7 +305,6 @@ def find_common_base_dn(dn_list: list[str]) -> str | None:
                 for comp in components
             ):
                 common_components.insert(0, first_comp)
-            else:
                 break
 
         if common_components:
@@ -331,7 +328,7 @@ def rewrite_dn_base(dn_string: str, base_mappings: dict[str, str]) -> str:
     Returns:
         DN with rewritten base or original DN if no mapping found
     """
-    for _old_base, new_base in base_mappings.items():
+    for new_base in base_mappings.values():
         try:
             if is_child_dn(dn_string, old_base):
                 return replace_base_dn(dn_string, old_base, new_base)

@@ -20,15 +20,17 @@ def simple_parse_dn(dn_string: str) -> list[tuple[str, str]]:
         ValueError: If DN format is invalid
     """
     if not dn_string or not dn_string.strip():
-        raise ValueError("DN cannot be empty")
+        msg = "DN cannot be empty"
+        raise ValueError(msg)
 
-    components = []
+    components: list = []
     # Simple DN parsing (would need more sophisticated parsing for complex cases)
     parts = [part.strip() for part in dn_string.split(",")]
 
     for part in parts:
         if "=" not in part:
-            raise ValueError(f"Invalid DN component: {part}")
+            msg = f"Invalid DN component: {part}"
+            raise ValueError(msg)
 
         attr, value = part.split("=", 1)
         components.append((attr.strip().lower(), value.strip()))

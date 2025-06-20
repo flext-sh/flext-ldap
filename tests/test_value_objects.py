@@ -1,3 +1,5 @@
+"""Module test_value_objects."""
+
 from typing import Any
 
 """
@@ -8,7 +10,6 @@ migration plans, and schema analysis results.
 """
 
 import pytest
-
 from ldap_core_shared.domain.value_objects import (
     ConnectionProfile,
     DNComponent,
@@ -438,7 +439,9 @@ class TestMigrationPlan:
 
         return source, target
 
-    def create_test_schema_analysis(self, compatibility=SchemaCompatibility.FULL) -> Any:
+    def create_test_schema_analysis(
+        self, compatibility=SchemaCompatibility.FULL
+    ) -> Any:
         """Create test schema analysis result."""
         return SchemaAnalysisResult(
             compatibility=compatibility,
