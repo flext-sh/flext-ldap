@@ -4,8 +4,10 @@ Domain events for LDAP operations.
 Events that capture significant domain occurrences during LDAP
 operations, migrations, and validations.
 """
+from __future__ import annotations
 
 import uuid
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime

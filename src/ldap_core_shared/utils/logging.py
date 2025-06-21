@@ -4,14 +4,17 @@ Standardized logging utilities for LDAP projects.
 Provides consistent logging setup and utilities across
 tap-ldap, target-ldap, and flx-ldap projects.
 """
+from __future__ import annotations
 
 import logging
 import logging.handlers
 import sys
+
 from datetime import datetime
 from typing import Any
 
 from ldap_core_shared.config.base_config import LoggingConfig
+
 
 logger = logging.getLogger(__name__)
 

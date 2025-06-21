@@ -17,6 +17,7 @@ from .domain_events import (
 )
 from .event_handler import EventDispatcher, EventHandler
 
+
 __all__ = [
     "DomainEvent",
     "ErrorEvent",

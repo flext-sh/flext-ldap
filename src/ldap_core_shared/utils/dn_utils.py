@@ -4,6 +4,7 @@ DN (Distinguished Name) manipulation utilities.
 Provides utilities for parsing, validating, and manipulating
 LDAP Distinguished Names.
 """
+from __future__ import annotations
 
 from ldap_core_shared.domain.value_objects import LdapDn
 

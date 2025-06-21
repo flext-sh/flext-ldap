@@ -2,6 +2,7 @@
 
 from typing import Any
 
+
 """
 Tests for value objects.
 
@@ -10,6 +11,7 @@ migration plans, and schema analysis results.
 """
 
 import pytest
+
 from ldap_core_shared.domain.value_objects import (
     ConnectionProfile,
     DNComponent,

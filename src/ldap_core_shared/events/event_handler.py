@@ -4,15 +4,18 @@ Event handling infrastructure for LDAP operations.
 Provides event dispatching and handling capabilities for
 domain events across LDAP projects.
 """
+from __future__ import annotations
 
 import asyncio
 import logging
+
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from .domain_events import DomainEvent
+
 
 logger = logging.getLogger(__name__)
 

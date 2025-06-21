@@ -4,11 +4,13 @@ Core LDAP value objects for shared use across projects.
 Value objects encapsulate business rules and provide validation for
 core domain concepts like DNs, object classes, and configuration profiles.
 """
+from __future__ import annotations
 
 import re
+
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -85,7 +87,7 @@ class LdapDn(BaseModel):
     components: list[DNComponent] = Field(..., description="DN components")
 
     @classmethod
-    def from_string(cls, dn_string: str) -> "LdapDn":
+    def from_string(cls, dn_string: str) -> LdapDn:
         """Create LdapDn from string representation."""
         if not dn_string.strip():
             msg = "DN cannot be empty"
@@ -118,7 +120,7 @@ class LdapDn(BaseModel):
         """Return string representation of DN."""
         return ",".join(str(component) for component in self.components)
 
-    def normalize(self) -> "LdapDn":
+    def normalize(self) -> LdapDn:
         """Return normalized version of DN."""
         # Normalize each component
         normalized_components = [
@@ -134,14 +136,14 @@ class LdapDn(BaseModel):
         """Get the Relative DN (first component)."""
         return self.components[0]
 
-    def get_parent_dn(self) -> Optional["LdapDn"]:
+    def get_parent_dn(self) -> LdapDn | None:
         """Get parent DN (all components except first)."""
         if len(self.components) <= 1:
             return None
 
         return LdapDn(components=self.components[1:])
 
-    def is_child_of(self, potential_parent: "LdapDn") -> bool:
+    def is_child_of(self, potential_parent: LdapDn) -> bool:
         """Check if this DN is a child of the potential parent."""
         if len(self.components) <= len(potential_parent.components):
             return False
@@ -159,12 +161,12 @@ class LdapDn(BaseModel):
 
         return True
 
-    def append_component(self, attribute: str, value: str) -> "LdapDn":
+    def append_component(self, attribute: str, value: str) -> LdapDn:
         """Append a component to the beginning of the DN."""
         new_component = DNComponent(attribute=attribute, value=value)
         return LdapDn(components=[new_component, *self.components])
 
-    def replace_base_dn(self, old_base: "LdapDn", new_base: "LdapDn") -> "LdapDn":
+    def replace_base_dn(self, old_base: LdapDn, new_base: LdapDn) -> LdapDn:
         """Replace base DN portion with new base DN."""
         if not self.is_child_of(old_base):
             msg = "DN is not a child of the specified base DN"

@@ -4,12 +4,16 @@ Core LDAP domain models for shared use across tap-ldap, target-ldap, and flx-lda
 This module contains the fundamental domain models extracted from client-a-oud-mig
 for use across all LDAP-related projects to ensure consistency and reusability.
 """
+from __future__ import annotations
 
-from datetime import datetime
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field, field_validator
+
+
+if TYPE_CHECKING:
+    from datetime import datetime
+    from pathlib import Path
 
 
 class LDAPConnectionConfig(BaseModel):
