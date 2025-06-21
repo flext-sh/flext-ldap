@@ -4,24 +4,33 @@ LDAP operation utilities for common operations across projects.
 Provides connection management, operation helpers, and utilities
 for consistent LDAP operations.
 """
+from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import AsyncGenerator
+
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import ldap3
+
 from ldap3 import BASE, LEVEL, SUBTREE, Connection, Server
 from ldap3.core.exceptions import LDAPException
-from ldap_core_shared.config.base_config import LDAPServerConfig
+
 from ldap_core_shared.domain.models import LDAPEntry
 from ldap_core_shared.events.domain_events import (
-    LDAPConnectionEvent, LDAPOperationEvent,
+    LDAPConnectionEvent,
+    LDAPOperationEvent,
 )
 from ldap_core_shared.events.event_handler import dispatch_event
+
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
+    from ldap_core_shared.config.base_config import LDAPServerConfig
 
 
 class SearchScope(Enum):

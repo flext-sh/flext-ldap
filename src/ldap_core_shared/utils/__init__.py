@@ -14,6 +14,7 @@ from .logging import (
 )
 from .simple_dn_utils import simple_is_child_dn, simple_normalize_dn, simple_parse_dn
 
+
 __all__ = [
     # Logging
     "LDAPLogger",

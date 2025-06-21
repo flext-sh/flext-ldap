@@ -4,15 +4,21 @@ Base configuration management for LDAP projects.
 Provides standardized configuration loading, validation, and management
 across tap-ldap, target-ldap, and flx-ldap projects.
 """
+from __future__ import annotations
 
 import json
-from pathlib import Path
-from typing import TypeVar
 
-from pydantic import BaseModel, Field, field_validator
+from typing import TYPE_CHECKING, TypeVar
+
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-T = TypeVar("T", bound=BaseModel)
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
+T = TypeVar("T", bound="BaseConfig")
 
 
 class BaseConfig(BaseSettings):
@@ -200,7 +206,8 @@ class ConfigurationManager:
         # Set environment prefix if specified
         if env_prefix:
             original_prefix = getattr(config_class.model_config, "env_prefix", None)
-            config_class.model_config.env_prefix = env_prefix
+            if hasattr(config_class.model_config, "env_prefix"):
+                config_class.model_config["env_prefix"] = env_prefix
 
         try:
             # Create configuration instance
@@ -214,10 +221,10 @@ class ConfigurationManager:
 
         finally:
             # Restore original prefix
-            if env_prefix:
-                if original_prefix:
-                    config_class.model_config.env_prefix = original_prefix
-                    delattr(config_class.model_config, "env_prefix")
+            if env_prefix and original_prefix and hasattr(config_class.model_config, "env_prefix"):
+                config_class.model_config["env_prefix"] = original_prefix
+            elif env_prefix and hasattr(config_class.model_config, "env_prefix"):
+                config_class.model_config.pop("env_prefix", None)
 
     def get_config(self, config_name: str) -> BaseConfig | None:
         """Get configuration by name."""
@@ -232,12 +239,12 @@ class ConfigurationManager:
     def validate_all_configs(self) -> list[str]:
         """Validate all loaded configurations."""
         errors: list = []
-        for config in self._configs.values():
+        for config_name, config in self._configs.items():
             try:
                 # Re-validate the configuration
                 config.model_validate(config.model_dump())
             except Exception as e:
-                errors.append(f"Configuration '{name}' validation failed: {e}")
+                errors.append(f"Configuration '{config_name}' validation failed: {e}")
 
         return errors
 
