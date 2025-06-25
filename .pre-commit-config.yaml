@@ -12,7 +12,7 @@ repos:
         name: "Ruff Linter (ZERO TOLERANCE)"
         args: [--fix, --exit-non-zero-on-fix]
         types_or: [python, pyi]
-        
+
       # Formatter for consistent code style
       - id: ruff-format
         name: "Ruff Formatter"
@@ -24,11 +24,8 @@ repos:
     hooks:
       - id: mypy
         name: "MyPy Type Checking (STRICT)"
-        additional_dependencies: [
-          pydantic>=2.8.0,
-          types-python-dateutil,
-          types-orjson,
-        ]
+        additional_dependencies:
+          [pydantic>=2.8.0, types-python-dateutil, types-orjson]
         args: [--strict, --show-error-codes, --pretty]
         exclude: ^(tests/|examples/)
 
@@ -57,7 +54,7 @@ repos:
         name: "Check TOML Syntax"
       - id: check-json
         name: "Check JSON Syntax"
-      
+
       # Python-specific checks
       - id: check-ast
         name: "Check Python AST"
@@ -70,7 +67,7 @@ repos:
       - id: name-tests-test
         name: "Check Test Naming"
         args: [--pytest-test-first]
-      
+
       # Security and best practices
       - id: check-added-large-files
         name: "Check Large Files"

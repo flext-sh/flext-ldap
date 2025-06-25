@@ -1,12 +1,10 @@
-"""
-Event system for LDAP operations.
+"""Event system for LDAP operations.
 
 Provides domain events and event handling for consistent
 event-driven architecture across LDAP projects.
 """
 
-
-from .domain_events import (
+from ldap_core_shared.events.domain_events import (
     DomainEvent,
     ErrorEvent,
     LDAPConnectionEvent,
@@ -15,8 +13,7 @@ from .domain_events import (
     MigrationStageEvent,
     ValidationEvent,
 )
-from .event_handler import EventDispatcher, EventHandler
-
+from ldap_core_shared.events.event_handler import EventDispatcher, EventHandler
 
 __all__ = [
     "DomainEvent",

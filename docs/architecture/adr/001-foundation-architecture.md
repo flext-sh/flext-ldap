@@ -3,6 +3,7 @@
 **The architectural foundation that will make this the ultimate Python LDAP library**
 
 ## 📋 Status
+
 **APPROVED** - Critical infrastructure decision
 
 ## 🎯 Context
@@ -10,14 +11,18 @@
 Based on extensive analysis of our current `src/ldap_core_shared/` implementation and study of 57+ existing LDAP implementations, we need to establish the fundamental architectural patterns that will support enterprise-grade performance, maintainability, and extensibility.
 
 ### 🔍 **Current State Analysis**
+
 Our existing architecture in `src/ldap_core_shared/` shows:
+
 - ✅ **Good modular separation**: `core/`, `ldif/`, `schema/`, `utils/`
 - ✅ **Enterprise patterns**: Connection pooling, performance monitoring
 - ✅ **Modern Python**: Type hints, Pydantic models, async support
 - ❌ **Needs enhancement**: Cleaner abstractions, plugin architecture, better error handling
 
 ### 🏆 **Best Practices from Analysis**
+
 From studying 57+ implementations, the winning patterns are:
+
 - **Layered Architecture**: Clean separation of concerns
 - **Repository Pattern**: Abstract data access
 - **Factory Pattern**: Object creation and configuration
@@ -74,55 +79,56 @@ Interface_Layer = {
 ### 🎨 **Design Patterns Implementation**
 
 #### 1. **Repository Pattern** - Data Access Abstraction
+
 ```python
 from abc import ABC, abstractmethod
 from typing import List, Optional, AsyncIterator
 
 class LDAPRepository(ABC):
     """Abstract repository for LDAP operations."""
-    
+
     @abstractmethod
     async def find_by_dn(self, dn: str) -> Optional[LDAPEntry]:
         """Find entry by Distinguished Name."""
-        
+
     @abstractmethod
-    async def find_by_filter(self, 
-                           base_dn: str, 
+    async def find_by_filter(self,
+                           base_dn: str,
                            filter_query: Filter,
                            scope: SearchScope = SearchScope.SUBTREE) -> List[LDAPEntry]:
         """Find entries matching filter."""
-        
+
     @abstractmethod
     async def save(self, entry: LDAPEntry) -> OperationResult:
         """Save entry (add or modify)."""
-        
+
     @abstractmethod
     async def delete(self, dn: str) -> OperationResult:
         """Delete entry by DN."""
-        
+
     @abstractmethod
-    async def stream_search(self, 
-                          base_dn: str, 
+    async def stream_search(self,
+                          base_dn: str,
                           filter_query: Filter) -> AsyncIterator[LDAPEntry]:
         """Stream search results for memory efficiency."""
 
 class CachedLDAPRepository(LDAPRepository):
     """Repository with intelligent caching."""
-    
-    def __init__(self, 
+
+    def __init__(self,
                  base_repository: LDAPRepository,
                  cache: CacheInterface,
                  ttl: int = 300):
         self._base = base_repository
         self._cache = cache
         self._ttl = ttl
-    
+
     async def find_by_dn(self, dn: str) -> Optional[LDAPEntry]:
         # Try cache first
         cached = await self._cache.get(f"dn:{dn}")
         if cached:
             return LDAPEntry.model_validate(cached)
-            
+
         # Fallback to base repository
         entry = await self._base.find_by_dn(dn)
         if entry:
@@ -131,12 +137,13 @@ class CachedLDAPRepository(LDAPRepository):
 ```
 
 #### 2. **Factory Pattern** - Object Creation
+
 ```python
 class ConnectionFactory:
     """Factory for creating optimized LDAP connections."""
-    
+
     @classmethod
-    async def create_pooled_connection(cls, 
+    async def create_pooled_connection(cls,
                                      config: ConnectionConfig) -> PooledConnection:
         """Create connection with enterprise pooling."""
         pool = await ConnectionPool.create(
@@ -146,14 +153,14 @@ class ConnectionFactory:
             health_check_interval=config.health_check_interval
         )
         return PooledConnection(pool)
-    
+
     @classmethod
-    async def create_simple_connection(cls, 
-                                     url: str, 
+    async def create_simple_connection(cls,
+                                     url: str,
                                      credentials: Credentials) -> SimpleConnection:
         """Create simple connection for basic use cases."""
         return SimpleConnection(url, credentials)
-    
+
     @classmethod
     async def create_load_balanced_connection(cls,
                                             servers: List[str],
@@ -163,24 +170,25 @@ class ConnectionFactory:
 
 class RepositoryFactory:
     """Factory for creating specialized repositories."""
-    
+
     @classmethod
-    def create_cached_repository(cls, 
+    def create_cached_repository(cls,
                                connection: Connection,
                                cache_config: CacheConfig) -> CachedLDAPRepository:
         """Create repository with caching."""
         base_repo = StandardLDAPRepository(connection)
         cache = CacheFactory.create_cache(cache_config)
         return CachedLDAPRepository(base_repo, cache)
-    
+
     @classmethod
-    def create_read_only_repository(cls, 
+    def create_read_only_repository(cls,
                                   connection: Connection) -> ReadOnlyLDAPRepository:
         """Create read-only repository for safety."""
         return ReadOnlyLDAPRepository(connection)
 ```
 
 #### 3. **Observer Pattern** - Event-Driven Monitoring
+
 ```python
 from typing import List, Callable
 from enum import Enum
@@ -196,14 +204,14 @@ class LDAPEvent(Enum):
 
 class EventObserver(ABC):
     """Abstract observer for LDAP events."""
-    
+
     @abstractmethod
     async def handle_event(self, event: LDAPEvent, data: dict) -> None:
         """Handle LDAP event."""
 
 class PerformanceMonitorObserver(EventObserver):
     """Observer that tracks performance metrics."""
-    
+
     async def handle_event(self, event: LDAPEvent, data: dict) -> None:
         if event == LDAPEvent.OPERATION_COMPLETED:
             await self._record_operation_metrics(data)
@@ -212,21 +220,21 @@ class PerformanceMonitorObserver(EventObserver):
 
 class AlertingObserver(EventObserver):
     """Observer that sends alerts for critical events."""
-    
+
     async def handle_event(self, event: LDAPEvent, data: dict) -> None:
         if event in [LDAPEvent.POOL_EXHAUSTED, LDAPEvent.HEALTH_CHECK_FAILED]:
             await self._send_alert(event, data)
 
 class EventBus:
     """Central event bus for LDAP events."""
-    
+
     def __init__(self):
         self._observers: List[EventObserver] = []
-    
+
     def subscribe(self, observer: EventObserver) -> None:
         """Subscribe observer to events."""
         self._observers.append(observer)
-    
+
     async def publish(self, event: LDAPEvent, data: dict) -> None:
         """Publish event to all observers."""
         for observer in self._observers:
@@ -237,49 +245,50 @@ class EventBus:
 ```
 
 #### 4. **Strategy Pattern** - Pluggable Algorithms
+
 ```python
 class SearchStrategy(ABC):
     """Abstract strategy for search optimization."""
-    
+
     @abstractmethod
-    async def execute_search(self, 
+    async def execute_search(self,
                            repository: LDAPRepository,
                            query: SearchQuery) -> SearchResult:
         """Execute search with specific strategy."""
 
 class CachedSearchStrategy(SearchStrategy):
     """Search strategy with intelligent caching."""
-    
+
     async def execute_search(self, repository: LDAPRepository, query: SearchQuery) -> SearchResult:
         cache_key = self._generate_cache_key(query)
-        
+
         # Try cache first
         cached_result = await self._cache.get(cache_key)
         if cached_result and not self._is_stale(cached_result):
             return SearchResult.from_cache(cached_result)
-        
+
         # Execute fresh search
         result = await repository.find_by_filter(query.base_dn, query.filter, query.scope)
-        
+
         # Cache result
         await self._cache.set(cache_key, result, ttl=query.cache_ttl)
-        
+
         return SearchResult(entries=result, from_cache=False)
 
 class StreamingSearchStrategy(SearchStrategy):
     """Search strategy optimized for large result sets."""
-    
+
     async def execute_search(self, repository: LDAPRepository, query: SearchQuery) -> SearchResult:
         # Use streaming for memory efficiency
         entries = []
         async for entry in repository.stream_search(query.base_dn, query.filter):
             entries.append(entry)
-            
+
             # Yield partial results for immediate processing
             if len(entries) >= query.batch_size:
                 yield SearchResult(entries=entries, partial=True)
                 entries = []
-        
+
         # Yield final batch
         if entries:
             yield SearchResult(entries=entries, partial=False)
@@ -290,32 +299,32 @@ class StreamingSearchStrategy(SearchStrategy):
 ```python
 class DIContainer:
     """Dependency injection container for clean architecture."""
-    
+
     def __init__(self):
         self._services: Dict[str, Any] = {}
         self._factories: Dict[str, Callable] = {}
-    
+
     def register_singleton(self, interface: type, implementation: Any) -> None:
         """Register singleton service."""
         self._services[interface.__name__] = implementation
-    
+
     def register_factory(self, interface: type, factory: Callable) -> None:
         """Register factory for service creation."""
         self._factories[interface.__name__] = factory
-    
+
     def get(self, interface: type) -> Any:
         """Get service instance."""
         service_name = interface.__name__
-        
+
         # Return singleton if available
         if service_name in self._services:
             return self._services[service_name]
-        
+
         # Create using factory
         if service_name in self._factories:
             service = self._factories[service_name]()
             return service
-        
+
         raise ValueError(f"Service {service_name} not registered")
 
 # Example usage
@@ -409,11 +418,12 @@ ldap_enterprise_ultra/
 ## 🚀 Implementation Plan
 
 ### 📅 **Phase 1: Core Foundation (Week 1-2)**
+
 ```python
 # Implementation priorities
 Foundation_Tasks = [
     "✅ Create base architecture patterns",
-    "✅ Implement dependency injection container", 
+    "✅ Implement dependency injection container",
     "✅ Set up event system and observers",
     "✅ Define core interfaces",
     "✅ Create domain model foundation"
@@ -421,6 +431,7 @@ Foundation_Tasks = [
 ```
 
 ### 📅 **Phase 2: Infrastructure (Week 3-4)**
+
 ```python
 Infrastructure_Tasks = [
     "✅ Implement repository pattern",
@@ -432,6 +443,7 @@ Infrastructure_Tasks = [
 ```
 
 ### 📅 **Phase 3: Validation (Week 5-6)**
+
 ```python
 Validation_Tasks = [
     "✅ Performance benchmarking",
@@ -480,7 +492,7 @@ async def search_handler(
     publish,  # Lato event publishing
 ) -> SearchResult:
     """Handle search command across all protocols."""
-    
+
     async with monitor.track_operation("ldap_search"):
         result = await repository.search(
             command.base_dn,
@@ -488,23 +500,23 @@ async def search_handler(
             command.attributes,
             command.scope
         )
-        
+
         # Publish domain event
         await publish(SearchCompletedEvent(
             base_dn=command.base_dn,
             entry_count=len(result.entries),
             duration=monitor.last_operation_duration
         ))
-        
+
         return result
 
 # Container Configuration
 class LDAPContainer(containers.DeclarativeContainer):
     """Enterprise DI container for LDAP operations."""
-    
+
     # Configuration providers
     config = providers.Configuration()
-    
+
     # Infrastructure providers
     connection_pool = providers.Singleton(
         AsyncConnectionPool,
@@ -512,12 +524,12 @@ class LDAPContainer(containers.DeclarativeContainer):
         min_size=config.connection.pool_min_size,
         max_size=config.connection.pool_max_size
     )
-    
+
     performance_monitor = providers.Singleton(
         PerformanceMonitor,
         enable_metrics=config.monitoring.enable_metrics
     )
-    
+
     # Repository providers
     repositories = providers.DependenciesContainer()
     repositories.ldap = providers.Factory(
@@ -525,7 +537,7 @@ class LDAPContainer(containers.DeclarativeContainer):
         connection_pool=connection_pool,
         cache_config=config.cache
     )
-    
+
     # Infrastructure container
     infrastructure = providers.DependenciesContainer()
     infrastructure.monitoring = performance_monitor
@@ -546,14 +558,14 @@ Foundation_Implementation_Status = {
             "next_milestone": "Complete cache invalidation strategy"
         },
         "dependency_injection": {
-            "design_quality": "✅ Excellent", 
+            "design_quality": "✅ Excellent",
             "implementation_status": "🟡 60% Complete",
             "production_ready": "❌ Container not wired",
             "next_milestone": "Wire all infrastructure components"
         },
         "event_system": {
             "design_quality": "✅ Excellent",
-            "implementation_status": "🔴 30% Complete", 
+            "implementation_status": "🔴 30% Complete",
             "production_ready": "❌ Core observer missing",
             "next_milestone": "Implement EventBus and base observers"
         },
@@ -617,7 +629,7 @@ Quality_Gates = {
 Architecture_Success_Metrics = {
     "maintainability": {
         "cyclomatic_complexity": "< 10 per function",
-        "coupling": "< 5 dependencies per module", 
+        "coupling": "< 5 dependencies per module",
         "cohesion": "> 80% related functionality per module",
         "technical_debt_ratio": "< 5%",
         "documentation_coverage": "100%"
@@ -649,7 +661,7 @@ Architecture_Success_Metrics = {
 
 **🎯 This foundation architecture decision establishes the bedrock for the ultimate Python LDAP library.** Every subsequent ADR builds upon these patterns to create an enterprise-grade, maintainable, and high-performance solution.
 
-**Decision Maker**: Architecture Team  
-**Date**: 2025-06-24  
-**Status**: ✅ APPROVED  
+**Decision Maker**: Architecture Team
+**Date**: 2025-06-24
+**Status**: ✅ APPROVED
 **Next Review**: Post Phase 1 implementation (Q1 2025)

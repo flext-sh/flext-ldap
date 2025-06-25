@@ -22,6 +22,7 @@ The domain results module provides comprehensive typed result objects for all LD
 The results module follows enterprise design principles for maximum type safety and developer experience:
 
 ### 🎯 **Key Design Principles**
+
 - **Zero Tolerance**: No untyped dict returns where structure is known
 - **Type Safety**: Full typing with mypy compliance
 - **Enterprise Validation**: Comprehensive validation using Pydantic
@@ -39,13 +40,13 @@ classDiagram
     BaseResult <|-- LDAPBulkResult
     BaseResult <|-- LDAPPerformanceResult
     BaseResult <|-- LDAPValidationResult
-    
+
     class BaseResult {
         +timestamp: datetime
         +has_errors: bool
         +to_dict()
     }
-    
+
     class LDAPConnectionResult {
         +connected: bool
         +host: str
@@ -54,7 +55,7 @@ classDiagram
         +encryption: str
         +is_secure: bool
     }
-    
+
     class LDAPSearchResult {
         +success: bool
         +entries_found: int
@@ -62,7 +63,7 @@ classDiagram
         +search_duration: float
         +has_more_pages: bool
     }
-    
+
     class LDAPOperationResult {
         +success: bool
         +operation_type: str
@@ -73,6 +74,7 @@ classDiagram
 ```
 
 All result classes inherit from Pydantic's `BaseModel` and provide:
+
 - **Immutable data structures** (frozen=True)
 - **Strict validation** (strict=True, extra="forbid")
 - **Computed properties** for derived values
@@ -92,49 +94,50 @@ class LDAPConnectionResult(BaseModel):
     port: int
     auth_method: str = "simple"
     encryption: str = "none"
-    
+
     # Connection metrics
     connection_time: float = Field(ge=0.0)
     response_time: float = Field(ge=0.0)
     last_activity: datetime | None = None
-    
+
     # Tunnel information
     tunnel_active: bool = False
     tunnel_local_port: int | None = Field(default=None, gt=0, lt=65536)
-    
+
     # Error tracking
     connection_error: str | None = None
     auth_error: str | None = None
-    
+
     # Protocol-specific info
     ldap_info: dict[str, Any] = Field(default_factory=dict)
     ssh_info: dict[str, Any] = Field(default_factory=dict)
-    
+
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 ```
 
 ### Properties
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `connected` | `bool` | Whether connection is established |
-| `host` | `str` | LDAP server hostname |
-| `port` | `int` | LDAP server port |
-| `auth_method` | `str` | Authentication method used |
-| `encryption` | `str` | Encryption protocol in use |
-| `connection_time` | `float` | Time to establish connection (ms) |
-| `response_time` | `float` | Last response time (ms) |
-| `last_activity` | `datetime \| None` | Timestamp of last activity |
-| `tunnel_active` | `bool` | Whether SSH tunnel is active |
-| `tunnel_local_port` | `int \| None` | Local SSH tunnel port |
-| `connection_error` | `str \| None` | Connection error message |
-| `auth_error` | `str \| None` | Authentication error message |
-| `ldap_info` | `dict[str, Any]` | LDAP-specific information |
-| `ssh_info` | `dict[str, Any]` | SSH tunnel information |
+| Field               | Type               | Description                       |
+| ------------------- | ------------------ | --------------------------------- |
+| `connected`         | `bool`             | Whether connection is established |
+| `host`              | `str`              | LDAP server hostname              |
+| `port`              | `int`              | LDAP server port                  |
+| `auth_method`       | `str`              | Authentication method used        |
+| `encryption`        | `str`              | Encryption protocol in use        |
+| `connection_time`   | `float`            | Time to establish connection (ms) |
+| `response_time`     | `float`            | Last response time (ms)           |
+| `last_activity`     | `datetime \| None` | Timestamp of last activity        |
+| `tunnel_active`     | `bool`             | Whether SSH tunnel is active      |
+| `tunnel_local_port` | `int \| None`      | Local SSH tunnel port             |
+| `connection_error`  | `str \| None`      | Connection error message          |
+| `auth_error`        | `str \| None`      | Authentication error message      |
+| `ldap_info`         | `dict[str, Any]`   | LDAP-specific information         |
+| `ssh_info`          | `dict[str, Any]`   | SSH tunnel information            |
 
 ### Computed Properties
 
 #### `has_errors -> bool`
+
 Check if any connection errors occurred.
 
 ```python
@@ -145,6 +148,7 @@ if result.has_errors:
 ```
 
 #### `is_secure -> bool`
+
 Check if connection uses secure protocols.
 
 ```python
@@ -192,59 +196,61 @@ class LDAPSearchResult(BaseModel):
     entries_found: int = Field(ge=0)
     search_base: str
     search_filter: str
-    
+
     # Search results
     entries: list[dict[str, Any]] = Field(default_factory=list)
     attributes_returned: list[str] = Field(default_factory=list)
-    
+
     # Search configuration
     scope: str = "subtree"
     size_limit: int = Field(default=1000, ge=0)
     time_limit: int = Field(default=30, ge=0)
-    
+
     # Performance metrics
     search_duration: float = Field(ge=0.0)
     entries_per_second: float = Field(ge=0.0)
-    
+
     # Pagination support
     page_size: int | None = Field(default=None, gt=0)
     has_more_pages: bool = False
     page_cookie: str | None = None
-    
+
     # Error tracking
     errors: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
-    
+
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 ```
 
 ### Properties
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `success` | `bool` | Whether search succeeded |
-| `entries_found` | `int` | Number of entries found |
-| `search_base` | `str` | Search base DN |
-| `search_filter` | `str` | LDAP search filter used |
-| `entries` | `list[dict[str, Any]]` | Search result entries |
-| `attributes_returned` | `list[str]` | Attributes included in results |
-| `scope` | `str` | Search scope (base, level, subtree) |
-| `size_limit` | `int` | Maximum entries limit |
-| `time_limit` | `int` | Search time limit (seconds) |
-| `search_duration` | `float` | Search execution time (ms) |
-| `entries_per_second` | `float` | Search performance metric |
-| `page_size` | `int \| None` | Pagination page size |
-| `has_more_pages` | `bool` | Whether more results available |
-| `page_cookie` | `str \| None` | Pagination cookie |
-| `errors` | `list[str]` | Search error messages |
-| `warnings` | `list[str]` | Search warning messages |
+| Field                 | Type                   | Description                         |
+| --------------------- | ---------------------- | ----------------------------------- |
+| `success`             | `bool`                 | Whether search succeeded            |
+| `entries_found`       | `int`                  | Number of entries found             |
+| `search_base`         | `str`                  | Search base DN                      |
+| `search_filter`       | `str`                  | LDAP search filter used             |
+| `entries`             | `list[dict[str, Any]]` | Search result entries               |
+| `attributes_returned` | `list[str]`            | Attributes included in results      |
+| `scope`               | `str`                  | Search scope (base, level, subtree) |
+| `size_limit`          | `int`                  | Maximum entries limit               |
+| `time_limit`          | `int`                  | Search time limit (seconds)         |
+| `search_duration`     | `float`                | Search execution time (ms)          |
+| `entries_per_second`  | `float`                | Search performance metric           |
+| `page_size`           | `int \| None`          | Pagination page size                |
+| `has_more_pages`      | `bool`                 | Whether more results available      |
+| `page_cookie`         | `str \| None`          | Pagination cookie                   |
+| `errors`              | `list[str]`            | Search error messages               |
+| `warnings`            | `list[str]`            | Search warning messages             |
 
 ### Computed Properties
 
 #### `has_errors -> bool`
+
 Check if any search errors occurred.
 
 #### `has_warnings -> bool`
+
 Check if any search warnings occurred.
 
 ### Usage Examples
@@ -299,43 +305,44 @@ class LDAPOperationResult(BaseModel):
     success: bool
     operation_type: str  # add, modify, delete
     dn: str
-    
+
     # Operation details
     attributes_modified: dict[str, Any] = Field(default_factory=dict)
     backup_created: bool = False
     transaction_id: str | None = None
-    
+
     # Performance metrics
     operation_duration: float = Field(ge=0.0)
-    
+
     # Error tracking
     error_message: str | None = None
     ldap_error_code: int | None = None
-    
+
     # Rollback information
     rollback_data: dict[str, Any] = Field(default_factory=dict)
-    
+
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 ```
 
 ### Properties
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `success` | `bool` | Whether operation succeeded |
-| `operation_type` | `str` | Type of operation (add/modify/delete) |
-| `dn` | `str` | Distinguished name of entry |
-| `attributes_modified` | `dict[str, Any]` | Attributes that were modified |
-| `backup_created` | `bool` | Whether backup was created |
-| `transaction_id` | `str \| None` | Transaction identifier |
-| `operation_duration` | `float` | Operation execution time (ms) |
-| `error_message` | `str \| None` | Error message if failed |
-| `ldap_error_code` | `int \| None` | LDAP error code |
-| `rollback_data` | `dict[str, Any]` | Data for rollback operations |
+| Field                 | Type             | Description                           |
+| --------------------- | ---------------- | ------------------------------------- |
+| `success`             | `bool`           | Whether operation succeeded           |
+| `operation_type`      | `str`            | Type of operation (add/modify/delete) |
+| `dn`                  | `str`            | Distinguished name of entry           |
+| `attributes_modified` | `dict[str, Any]` | Attributes that were modified         |
+| `backup_created`      | `bool`           | Whether backup was created            |
+| `transaction_id`      | `str \| None`    | Transaction identifier                |
+| `operation_duration`  | `float`          | Operation execution time (ms)         |
+| `error_message`       | `str \| None`    | Error message if failed               |
+| `ldap_error_code`     | `int \| None`    | LDAP error code                       |
+| `rollback_data`       | `dict[str, Any]` | Data for rollback operations          |
 
 ### Computed Properties
 
 #### `has_error -> bool`
+
 Check if operation failed.
 
 ### Usage Examples
@@ -389,54 +396,57 @@ class LDAPBulkResult(BaseModel):
     successful_entries: int = Field(ge=0)
     failed_entries: int = Field(ge=0)
     operation_type: str
-    
+
     # Operation details
     operations_log: list[LDAPOperationResult] = Field(default_factory=list)
     checkpoints: list[dict[str, Any]] = Field(default_factory=list)
-    
+
     # Performance metrics
     operation_duration: float = Field(ge=0.0)
     operations_per_second: float = Field(ge=0.0)
-    
+
     # Transaction info
     transaction_id: str | None = None
     transaction_committed: bool = False
     backup_created: bool = False
-    
+
     # Error tracking
     errors: list[str] = Field(default_factory=list)
     critical_errors: list[str] = Field(default_factory=list)
-    
+
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 ```
 
 ### Properties
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `total_entries` | `int` | Total number of entries processed |
-| `successful_entries` | `int` | Number of successful operations |
-| `failed_entries` | `int` | Number of failed operations |
-| `operation_type` | `str` | Type of bulk operation |
-| `operations_log` | `list[LDAPOperationResult]` | Individual operation results |
-| `checkpoints` | `list[dict[str, Any]]` | Progress checkpoints |
-| `operation_duration` | `float` | Total operation time (ms) |
-| `operations_per_second` | `float` | Performance metric |
-| `transaction_id` | `str \| None` | Transaction identifier |
-| `transaction_committed` | `bool` | Whether transaction was committed |
-| `backup_created` | `bool` | Whether backup was created |
-| `errors` | `list[str]` | Non-critical error messages |
-| `critical_errors` | `list[str]` | Critical error messages |
+| Field                   | Type                        | Description                       |
+| ----------------------- | --------------------------- | --------------------------------- |
+| `total_entries`         | `int`                       | Total number of entries processed |
+| `successful_entries`    | `int`                       | Number of successful operations   |
+| `failed_entries`        | `int`                       | Number of failed operations       |
+| `operation_type`        | `str`                       | Type of bulk operation            |
+| `operations_log`        | `list[LDAPOperationResult]` | Individual operation results      |
+| `checkpoints`           | `list[dict[str, Any]]`      | Progress checkpoints              |
+| `operation_duration`    | `float`                     | Total operation time (ms)         |
+| `operations_per_second` | `float`                     | Performance metric                |
+| `transaction_id`        | `str \| None`               | Transaction identifier            |
+| `transaction_committed` | `bool`                      | Whether transaction was committed |
+| `backup_created`        | `bool`                      | Whether backup was created        |
+| `errors`                | `list[str]`                 | Non-critical error messages       |
+| `critical_errors`       | `list[str]`                 | Critical error messages           |
 
 ### Computed Properties
 
 #### `success_rate -> float`
+
 Calculate success rate as percentage.
 
 #### `has_critical_errors -> bool`
+
 Check if any critical errors occurred.
 
 #### `is_complete_success -> bool`
+
 Check if all operations succeeded.
 
 ### Usage Examples
@@ -500,47 +510,49 @@ class LDAPPerformanceResult(BaseModel):
     total_operations: int = Field(ge=0)
     successful_operations: int = Field(ge=0)
     failed_operations: int = Field(ge=0)
-    
+
     # Performance metrics
     total_duration: float = Field(ge=0.0)
     average_duration: float = Field(ge=0.0)
     operations_per_second: float = Field(ge=0.0)
-    
+
     # Resource usage
     memory_peak_mb: float = Field(ge=0.0)
     cpu_usage_percent: float = Field(ge=0.0, le=100.0)
-    
+
     # Connection pool metrics
     pool_size: int = Field(ge=0)
     pool_utilization: float = Field(ge=0.0, le=100.0)
     connection_reuse_rate: float = Field(ge=0.0, le=100.0)
-    
+
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 ```
 
 ### Properties
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `operation_name` | `str` | Name of monitored operation |
-| `total_operations` | `int` | Total number of operations |
-| `successful_operations` | `int` | Number of successful operations |
-| `failed_operations` | `int` | Number of failed operations |
-| `total_duration` | `float` | Total execution time (ms) |
-| `average_duration` | `float` | Average operation time (ms) |
-| `operations_per_second` | `float` | Throughput metric |
-| `memory_peak_mb` | `float` | Peak memory usage (MB) |
-| `cpu_usage_percent` | `float` | CPU usage percentage |
-| `pool_size` | `int` | Connection pool size |
-| `pool_utilization` | `float` | Pool utilization percentage |
+| Field                   | Type    | Description                      |
+| ----------------------- | ------- | -------------------------------- |
+| `operation_name`        | `str`   | Name of monitored operation      |
+| `total_operations`      | `int`   | Total number of operations       |
+| `successful_operations` | `int`   | Number of successful operations  |
+| `failed_operations`     | `int`   | Number of failed operations      |
+| `total_duration`        | `float` | Total execution time (ms)        |
+| `average_duration`      | `float` | Average operation time (ms)      |
+| `operations_per_second` | `float` | Throughput metric                |
+| `memory_peak_mb`        | `float` | Peak memory usage (MB)           |
+| `cpu_usage_percent`     | `float` | CPU usage percentage             |
+| `pool_size`             | `int`   | Connection pool size             |
+| `pool_utilization`      | `float` | Pool utilization percentage      |
 | `connection_reuse_rate` | `float` | Connection reuse rate percentage |
 
 ### Computed Properties
 
 #### `success_rate -> float`
+
 Calculate success rate as percentage.
 
 #### `failure_rate -> float`
+
 Calculate failure rate as percentage.
 
 ### Usage Examples
@@ -593,36 +605,38 @@ class LDAPValidationResult(BaseModel):
     valid: bool
     validation_type: str
     entries_validated: int = Field(ge=0)
-    
+
     # Validation details
     schema_errors: list[str] = Field(default_factory=list)
     syntax_errors: list[str] = Field(default_factory=list)
     reference_errors: list[str] = Field(default_factory=list)
-    
+
     # Performance metrics
     validation_duration: float = Field(ge=0.0)
-    
+
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 ```
 
 ### Properties
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `valid` | `bool` | Whether validation passed |
-| `validation_type` | `str` | Type of validation performed |
-| `entries_validated` | `int` | Number of entries validated |
-| `schema_errors` | `list[str]` | Schema validation errors |
-| `syntax_errors` | `list[str]` | Syntax validation errors |
-| `reference_errors` | `list[str]` | Reference validation errors |
-| `validation_duration` | `float` | Validation time (ms) |
+| Field                 | Type        | Description                  |
+| --------------------- | ----------- | ---------------------------- |
+| `valid`               | `bool`      | Whether validation passed    |
+| `validation_type`     | `str`       | Type of validation performed |
+| `entries_validated`   | `int`       | Number of entries validated  |
+| `schema_errors`       | `list[str]` | Schema validation errors     |
+| `syntax_errors`       | `list[str]` | Syntax validation errors     |
+| `reference_errors`    | `list[str]` | Reference validation errors  |
+| `validation_duration` | `float`     | Validation time (ms)         |
 
 ### Computed Properties
 
 #### `has_errors -> bool`
+
 Check if any validation errors occurred.
 
 #### `total_errors -> int`
+
 Get total count of all validation errors.
 
 ### Usage Examples
@@ -639,17 +653,17 @@ if result.valid:
     print("✅ Validation passed - LDIF is valid")
 else:
     print(f"❌ Validation failed - {result.total_errors} errors found")
-    
+
     if result.schema_errors:
         print("Schema Errors:")
         for error in result.schema_errors:
             print(f"  - {error}")
-    
+
     if result.syntax_errors:
         print("Syntax Errors:")
         for error in result.syntax_errors:
             print(f"  - {error}")
-    
+
     if result.reference_errors:
         print("Reference Errors:")
         for error in result.reference_errors:
@@ -717,7 +731,7 @@ from ldap_core_shared.domain.results import LDAPSearchResult
 
 def search_users_with_monitoring(operations: LDAPOperations) -> LDAPSearchResult:
     """Search for users with comprehensive result handling."""
-    
+
     # Perform search
     result = operations.search_entries(
         base_dn="ou=people,dc=example,dc=com",
@@ -725,14 +739,14 @@ def search_users_with_monitoring(operations: LDAPOperations) -> LDAPSearchResult
         attributes=["cn", "mail", "departmentNumber", "title"],
         page_size=100
     )
-    
+
     # Log performance metrics
     logger.info(
         f"Search completed: {result.entries_found} entries in "
         f"{result.search_duration:.2f}ms "
         f"({result.entries_per_second:.0f} entries/sec)"
     )
-    
+
     # Handle pagination
     all_entries = result.entries.copy()
     while result.has_more_pages:
@@ -743,7 +757,7 @@ def search_users_with_monitoring(operations: LDAPOperations) -> LDAPSearchResult
         )
         all_entries.extend(next_result.entries)
         result = next_result
-    
+
     # Create final merged result
     final_result = LDAPSearchResult(
         success=True,
@@ -754,7 +768,7 @@ def search_users_with_monitoring(operations: LDAPOperations) -> LDAPSearchResult
         search_duration=result.search_duration,
         entries_per_second=len(all_entries) / (result.search_duration / 1000)
     )
-    
+
     return final_result
 ```
 
@@ -765,39 +779,39 @@ from ldap_core_shared.domain.results import LDAPBulkResult
 
 def bulk_import_with_progress(operations: LDAPOperations, entries: list) -> LDAPBulkResult:
     """Bulk import with detailed progress tracking."""
-    
+
     batch_size = 100
     all_results = []
-    
+
     for i in range(0, len(entries), batch_size):
         batch = entries[i:i + batch_size]
-        
+
         # Process batch
         batch_result = operations.bulk_add(batch)
         all_results.append(batch_result)
-        
+
         # Log progress
         progress = ((i + len(batch)) / len(entries)) * 100
         logger.info(
             f"Progress: {progress:.1f}% "
             f"({batch_result.successful_entries}/{len(batch)} successful)"
         )
-        
+
         # Check for critical errors
         if batch_result.has_critical_errors:
             logger.error("Critical errors detected - stopping import")
             break
-    
+
     # Merge all results
     final_result = merge_bulk_results(all_results)
-    
+
     # Final summary
     logger.info(
         f"Bulk import completed: {final_result.successful_entries}/"
         f"{final_result.total_entries} successful "
         f"({final_result.success_rate:.1f}% success rate)"
     )
-    
+
     return final_result
 ```
 
@@ -869,17 +883,17 @@ for r in search_results:
 # ✅ Good - Comprehensive error handling
 try:
     result = operations.search_entries(base_dn, filter)
-    
+
     if result.success:
         process_entries(result.entries)
     else:
         # Handle search failures
         for error in result.errors:
             logger.error(f"Search error: {error}")
-        
+
         # Implement fallback logic
         fallback_search()
-        
+
 except Exception as e:
     logger.exception("Unexpected error during search")
     # Implement error recovery
@@ -888,6 +902,7 @@ except Exception as e:
 ---
 
 **📋 Related Documentation**
+
 - [🔗 Connection Management](../core/connection-management.md)
 - [⚙️ LDAP Operations](../core/operations.md)
 - [🔍 Search Engine](../core/search-engine.md)

@@ -2,7 +2,6 @@
 
 from typing import Any
 
-
 """
 Tests for value objects.
 
@@ -212,7 +211,8 @@ class TestLdapDn:
         new_base = LdapDn.from_string("dc=newdomain,dc=org")
 
         with pytest.raises(
-            ValueError, match="DN is not a child of the specified base DN"
+            ValueError,
+            match="DN is not a child of the specified base DN",
         ):
             dn.replace_base_dn(invalid_base, new_base)
 
@@ -442,7 +442,8 @@ class TestMigrationPlan:
         return source, target
 
     def create_test_schema_analysis(
-        self, compatibility=SchemaCompatibility.FULL
+        self,
+        compatibility=SchemaCompatibility.FULL,
     ) -> Any:
         """Create test schema analysis result."""
         return SchemaAnalysisResult(
@@ -508,7 +509,7 @@ class TestMigrationPlan:
         """Test validation with incompatible schema."""
         source, target = self.create_test_profiles()
         incompatible_schema = self.create_test_schema_analysis(
-            SchemaCompatibility.INCOMPATIBLE
+            SchemaCompatibility.INCOMPATIBLE,
         )
 
         with pytest.raises(

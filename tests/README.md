@@ -120,7 +120,7 @@ class TestLDAPEntry:
         """Test successful LDAP entry creation."""
         # Act
         entry = LDAPEntry(dn=sample_dn, attributes=sample_attributes)
-        
+
         # Assert
         assert entry.dn == sample_dn
         assert entry.attributes == sample_attributes
@@ -131,7 +131,7 @@ class TestLDAPEntry:
         """Test LDAP entry creation with invalid DN."""
         # Arrange
         invalid_dn = "invalid_dn_format"
-        
+
         # Act & Assert
         with pytest.raises(DomainModelError):
             LDAPEntry(dn=invalid_dn, attributes=sample_attributes)
@@ -140,10 +140,10 @@ class TestLDAPEntry:
         """Test getting single-value attribute."""
         # Arrange
         entry = LDAPEntry(dn=sample_dn, attributes=sample_attributes)
-        
+
         # Act
         uid = entry.get_attribute("uid")
-        
+
         # Assert
         assert uid is not None
         assert uid.value == "john.doe"
@@ -152,10 +152,10 @@ class TestLDAPEntry:
         """Test getting multi-value attribute."""
         # Arrange
         entry = LDAPEntry(dn=sample_dn, attributes=sample_attributes)
-        
+
         # Act
         object_classes = entry.get_attributes("objectClass")
-        
+
         # Assert
         assert len(object_classes) == 3
         values = [attr.value for attr in object_classes]
@@ -166,10 +166,10 @@ class TestLDAPEntry:
         """Test adding attribute to LDAP entry."""
         # Arrange
         entry = LDAPEntry(dn=sample_dn, attributes=sample_attributes)
-        
+
         # Act
         entry.add_attribute("telephoneNumber", AttributeValue("+1-555-1234"))
-        
+
         # Assert
         phone = entry.get_attribute("telephoneNumber")
         assert phone is not None
@@ -179,10 +179,10 @@ class TestLDAPEntry:
         """Test removing attribute from LDAP entry."""
         # Arrange
         entry = LDAPEntry(dn=sample_dn, attributes=sample_attributes)
-        
+
         # Act
         entry.remove_attribute("mail")
-        
+
         # Assert
         mail = entry.get_attribute("mail")
         assert mail is None
@@ -191,10 +191,10 @@ class TestLDAPEntry:
         """Test updating attribute in LDAP entry."""
         # Arrange
         entry = LDAPEntry(dn=sample_dn, attributes=sample_attributes)
-        
+
         # Act
         entry.update_attribute("mail", AttributeValue("john.new@example.com"))
-        
+
         # Assert
         mail = entry.get_attribute("mail")
         assert mail is not None
@@ -207,7 +207,7 @@ class TestLDAPEntry:
             "uid": [AttributeValue("john.doe")],
             # Missing required objectClass attribute
         }
-        
+
         # Act & Assert
         with pytest.raises(DomainModelError):
             entry = LDAPEntry(dn=sample_dn, attributes=invalid_attributes)
@@ -223,7 +223,7 @@ class TestLDAPAttribute:
             name="cn",
             values=[AttributeValue("John Doe"), AttributeValue("J. Doe")]
         )
-        
+
         # Assert
         assert attribute.name == "cn"
         assert len(attribute.values) == 2
@@ -236,7 +236,7 @@ class TestLDAPAttribute:
             name="uid",
             values=[AttributeValue("john.doe")]
         )
-        
+
         # Assert
         assert attribute.name == "uid"
         assert len(attribute.values) == 1
@@ -247,11 +247,11 @@ class TestLDAPAttribute:
         """Test adding value to LDAP attribute."""
         # Arrange
         attribute = LDAPAttribute(name="mail", values=[])
-        
+
         # Act
         attribute.add_value(AttributeValue("john@example.com"))
         attribute.add_value(AttributeValue("john.doe@example.com"))
-        
+
         # Assert
         assert len(attribute.values) == 2
         assert attribute.is_multi_valued()
@@ -266,10 +266,10 @@ class TestLDAPAttribute:
                 AttributeValue("john.doe@example.com")
             ]
         )
-        
+
         # Act
         attribute.remove_value(AttributeValue("john@example.com"))
-        
+
         # Assert
         assert len(attribute.values) == 1
         assert attribute.get_single_value().value == "john.doe@example.com"
@@ -288,7 +288,7 @@ class TestLDAPObjectClass:
             required_attributes=["cn"],
             optional_attributes=["audio", "businessCategory", "carLicense"]
         )
-        
+
         # Assert
         assert oc.name == "inetOrgPerson"
         assert oc.oid == "2.16.840.1.113730.3.2.2"
@@ -304,7 +304,7 @@ class TestLDAPObjectClass:
             required_attributes=["cn", "sn"],
             optional_attributes=["description", "seeAlso", "telephoneNumber"]
         )
-        
+
         # Act & Assert
         assert oc.is_attribute_required("cn")
         assert oc.is_attribute_required("sn")
@@ -319,17 +319,17 @@ class TestLDAPObjectClass:
             name="person",
             required_attributes=["cn", "sn"]
         )
-        
+
         org_person_oc = LDAPObjectClass(
             name="organizationalPerson",
             superior_classes=["person"],
             optional_attributes=["title", "ou"]
         )
-        
+
         # Act
         all_required = org_person_oc.get_all_required_attributes([person_oc])
         all_optional = org_person_oc.get_all_optional_attributes([person_oc])
-        
+
         # Assert
         assert "cn" in all_required
         assert "sn" in all_required
@@ -361,7 +361,7 @@ class TestDN:
         """Test DN creation with valid format."""
         # Act
         dn = DN("uid=john.doe,ou=users,dc=example,dc=com")
-        
+
         # Assert
         assert str(dn) == "uid=john.doe,ou=users,dc=example,dc=com"
         assert dn.value == "uid=john.doe,ou=users,dc=example,dc=com"
@@ -376,10 +376,10 @@ class TestDN:
         """Test DN parsing into components."""
         # Arrange
         dn = DN("uid=john.doe,ou=users,dc=example,dc=com")
-        
+
         # Act
         components = dn.get_components()
-        
+
         # Assert
         assert len(components) == 3
         assert components[0] == ("uid", "john.doe")
@@ -390,10 +390,10 @@ class TestDN:
         """Test getting parent DN."""
         # Arrange
         dn = DN("uid=john.doe,ou=users,dc=example,dc=com")
-        
+
         # Act
         parent = dn.get_parent()
-        
+
         # Assert
         assert str(parent) == "ou=users,dc=example,dc=com"
 
@@ -401,10 +401,10 @@ class TestDN:
         """Test getting relative DN."""
         # Arrange
         dn = DN("uid=john.doe,ou=users,dc=example,dc=com")
-        
+
         # Act
         rdn = dn.get_rdn()
-        
+
         # Assert
         assert rdn == "uid=john.doe"
 
@@ -412,10 +412,10 @@ class TestDN:
         """Test getting base DN."""
         # Arrange
         dn = DN("uid=john.doe,ou=users,dc=example,dc=com")
-        
+
         # Act
         base_dn = dn.get_base_dn()
-        
+
         # Assert
         assert str(base_dn) == "dc=example,dc=com"
 
@@ -425,7 +425,7 @@ class TestDN:
         child_dn = DN("uid=john.doe,ou=users,dc=example,dc=com")
         parent_dn = DN("ou=users,dc=example,dc=com")
         unrelated_dn = DN("ou=groups,dc=example,dc=com")
-        
+
         # Act & Assert
         assert child_dn.is_child_of(parent_dn)
         assert not child_dn.is_child_of(unrelated_dn)
@@ -434,7 +434,7 @@ class TestDN:
         """Test DN with special characters."""
         # Act
         dn = DN("cn=John, Doe+title=Manager,ou=users,dc=example,dc=com")
-        
+
         # Assert
         components = dn.get_components()
         assert components[0][1] == "John, Doe"  # Comma should be preserved
@@ -445,7 +445,7 @@ class TestDN:
         dn1 = DN("uid=john.doe,ou=users,dc=example,dc=com")
         dn2 = DN("uid=john.doe,ou=users,dc=example,dc=com")
         dn3 = DN("uid=jane.smith,ou=users,dc=example,dc=com")
-        
+
         # Act & Assert
         assert dn1 == dn2
         assert dn1 != dn3
@@ -458,7 +458,7 @@ class TestAttributeValue:
         """Test string attribute value."""
         # Act
         attr_val = AttributeValue("john.doe")
-        
+
         # Assert
         assert attr_val.value == "john.doe"
         assert attr_val.is_string()
@@ -468,10 +468,10 @@ class TestAttributeValue:
         """Test binary attribute value."""
         # Arrange
         binary_data = b"\\x89PNG\\r\\n\\x1a\\n"
-        
+
         # Act
         attr_val = AttributeValue(binary_data, is_binary=True)
-        
+
         # Assert
         assert attr_val.value == binary_data
         assert attr_val.is_binary()
@@ -482,10 +482,10 @@ class TestAttributeValue:
         # Arrange
         binary_data = b"binary_content"
         attr_val = AttributeValue(binary_data, is_binary=True)
-        
+
         # Act
         base64_encoded = attr_val.to_base64()
-        
+
         # Assert
         assert base64_encoded == "YmluYXJ5X2NvbnRlbnQ="
 
@@ -493,10 +493,10 @@ class TestAttributeValue:
         """Test creating attribute value from base64."""
         # Arrange
         base64_string = "YmluYXJ5X2NvbnRlbnQ="
-        
+
         # Act
         attr_val = AttributeValue.from_base64(base64_string)
-        
+
         # Assert
         assert attr_val.value == b"binary_content"
         assert attr_val.is_binary()
@@ -513,7 +513,7 @@ class TestAttributeValue:
         val1 = AttributeValue("test")
         val2 = AttributeValue("test")
         val3 = AttributeValue("different")
-        
+
         # Act & Assert
         assert val1 == val2
         assert val1 != val3
@@ -526,7 +526,7 @@ class TestLDAPFilter:
         """Test simple LDAP filter."""
         # Act
         filter_obj = LDAPFilter("(uid=john.doe)")
-        
+
         # Assert
         assert str(filter_obj) == "(uid=john.doe)"
         assert filter_obj.is_valid()
@@ -535,7 +535,7 @@ class TestLDAPFilter:
         """Test complex LDAP filter."""
         # Act
         filter_obj = LDAPFilter("(&(objectClass=person)(|(uid=john*)(cn=John*)))")
-        
+
         # Assert
         assert filter_obj.is_valid()
         assert "objectClass=person" in str(filter_obj)
@@ -550,10 +550,10 @@ class TestLDAPFilter:
         """Test LDAP filter parsing."""
         # Arrange
         filter_obj = LDAPFilter("(&(objectClass=person)(uid=john.doe))")
-        
+
         # Act
         components = filter_obj.get_components()
-        
+
         # Assert
         assert len(components) >= 2
         assert any("objectClass=person" in comp for comp in components)
@@ -563,7 +563,7 @@ class TestLDAPFilter:
         """Test LDAP filter with special characters."""
         # Act
         filter_obj = LDAPFilter("(cn=John\\2C Doe)")  # Escaped comma
-        
+
         # Assert
         assert filter_obj.is_valid()
         assert "John\\2C Doe" in str(filter_obj)
@@ -575,7 +575,7 @@ class TestObjectIdentifier:
         """Test OID creation with valid format."""
         # Act
         oid = ObjectIdentifier("2.16.840.1.113730.3.2.2")
-        
+
         # Assert
         assert str(oid) == "2.16.840.1.113730.3.2.2"
         assert oid.is_valid()
@@ -590,10 +590,10 @@ class TestObjectIdentifier:
         """Test OID component extraction."""
         # Arrange
         oid = ObjectIdentifier("2.16.840.1.113730.3.2.2")
-        
+
         # Act
         components = oid.get_components()
-        
+
         # Assert
         assert components == [2, 16, 840, 1, 113730, 3, 2, 2]
 
@@ -603,7 +603,7 @@ class TestObjectIdentifier:
         oid1 = ObjectIdentifier("2.16.840.1.113730.3.2.2")
         oid2 = ObjectIdentifier("2.16.840.1.113730.3.2.2")
         oid3 = ObjectIdentifier("2.16.840.1.113730.3.2.3")
-        
+
         # Act & Assert
         assert oid1 == oid2
         assert oid1 != oid3
@@ -615,7 +615,7 @@ class TestTimestampValue:
         """Test timestamp creation from string."""
         # Act
         timestamp = TimestampValue("20250619120000Z")
-        
+
         # Assert
         assert timestamp.value == "20250619120000Z"
         assert timestamp.is_valid()
@@ -625,10 +625,10 @@ class TestTimestampValue:
         # Arrange
         from datetime import datetime, timezone
         dt = datetime(2025, 6, 19, 12, 0, 0, tzinfo=timezone.utc)
-        
+
         # Act
         timestamp = TimestampValue.from_datetime(dt)
-        
+
         # Assert
         assert timestamp.value == "20250619120000Z"
 
@@ -636,10 +636,10 @@ class TestTimestampValue:
         """Test timestamp conversion to datetime."""
         # Arrange
         timestamp = TimestampValue("20250619120000Z")
-        
+
         # Act
         dt = timestamp.to_datetime()
-        
+
         # Assert
         assert dt.year == 2025
         assert dt.month == 6
@@ -658,7 +658,7 @@ class TestTimestampValue:
         ts1 = TimestampValue("20250619120000Z")
         ts2 = TimestampValue("20250619130000Z")
         ts3 = TimestampValue("20250619120000Z")
-        
+
         # Act & Assert
         assert ts1 < ts2
         assert ts1 == ts3
@@ -693,7 +693,7 @@ class TestDNParsing:
         """Test parsing simple DN."""
         # Act
         components = parse_dn("uid=john.doe,ou=users,dc=example,dc=com")
-        
+
         # Assert
         assert len(components) == 3
         assert components[0] == ("uid", "john.doe")
@@ -704,7 +704,7 @@ class TestDNParsing:
         """Test parsing DN with spaces."""
         # Act
         components = parse_dn("cn=John Doe, ou=users, dc=example, dc=com")
-        
+
         # Assert
         assert len(components) == 3
         assert components[0] == ("cn", "John Doe")
@@ -715,7 +715,7 @@ class TestDNParsing:
         """Test parsing DN with escaped characters."""
         # Act
         components = parse_dn("cn=John\\, Doe+title=Manager,ou=users,dc=example,dc=com")
-        
+
         # Assert
         assert len(components) == 3
         assert components[0] == ("cn", "John, Doe+title=Manager")
@@ -726,7 +726,7 @@ class TestDNParsing:
         """Test parsing DN with multi-valued RDN."""
         # Act
         components = parse_dn("cn=John Doe+uid=john.doe,ou=users,dc=example,dc=com")
-        
+
         # Assert
         assert len(components) == 3
         # First component should contain both cn and uid
@@ -746,10 +746,10 @@ class TestDNFormatting:
         """Test formatting DN from components."""
         # Arrange
         components = [("uid", "john.doe"), ("ou", "users"), ("dc", "example"), ("dc", "com")]
-        
+
         # Act
         dn = format_dn(components)
-        
+
         # Assert
         assert dn == "uid=john.doe,ou=users,dc=example,dc=com"
 
@@ -757,10 +757,10 @@ class TestDNFormatting:
         """Test formatting DN with special characters."""
         # Arrange
         components = [("cn", "John, Doe"), ("ou", "users"), ("dc", "example"), ("dc", "com")]
-        
+
         # Act
         dn = format_dn(components)
-        
+
         # Assert
         assert "John\\, Doe" in dn or "John, Doe" in dn  # Should handle escaping
 
@@ -768,7 +768,7 @@ class TestDNFormatting:
         """Test DN normalization."""
         # Act
         normalized = normalize_dn("  CN=John Doe , OU=Users , DC=Example , DC=Com  ")
-        
+
         # Assert
         assert normalized == "cn=john doe,ou=users,dc=example,dc=com"
 
@@ -777,11 +777,11 @@ class TestDNFormatting:
         # Arrange
         dn1 = "uid=JOHN.DOE,ou=USERS,dc=EXAMPLE,dc=COM"
         dn2 = "uid=john.doe,ou=users,dc=example,dc=com"
-        
+
         # Act
         norm1 = normalize_dn(dn1)
         norm2 = normalize_dn(dn2)
-        
+
         # Assert
         assert norm1 == norm2
 
@@ -792,7 +792,7 @@ class TestDNEscaping:
         """Test escaping comma in DN value."""
         # Act
         escaped = escape_dn_value("John, Doe")
-        
+
         # Assert
         assert escaped == "John\\, Doe"
 
@@ -800,7 +800,7 @@ class TestDNEscaping:
         """Test escaping plus sign in DN value."""
         # Act
         escaped = escape_dn_value("John+Manager")
-        
+
         # Assert
         assert escaped == "John\\+Manager"
 
@@ -808,7 +808,7 @@ class TestDNEscaping:
         """Test escaping multiple special characters."""
         # Act
         escaped = escape_dn_value("John, Doe+Manager<Admin>")
-        
+
         # Assert
         assert "\\," in escaped
         assert "\\+" in escaped
@@ -819,7 +819,7 @@ class TestDNEscaping:
         """Test unescaping DN value."""
         # Act
         unescaped = unescape_dn_value("John\\, Doe\\+Manager")
-        
+
         # Assert
         assert unescaped == "John, Doe+Manager"
 
@@ -827,11 +827,11 @@ class TestDNEscaping:
         """Test escape/unescape roundtrip."""
         # Arrange
         original = "John, Doe+Manager<Admin>#Hash"
-        
+
         # Act
         escaped = escape_dn_value(original)
         unescaped = unescape_dn_value(escaped)
-        
+
         # Assert
         assert unescaped == original
 
@@ -859,7 +859,7 @@ class TestDNUtilities:
         """Test getting parent DN."""
         # Act
         parent = get_dn_parent("uid=john.doe,ou=users,dc=example,dc=com")
-        
+
         # Assert
         assert parent == "ou=users,dc=example,dc=com"
 
@@ -867,7 +867,7 @@ class TestDNUtilities:
         """Test getting relative DN."""
         # Act
         rdn = get_dn_rdn("uid=john.doe,ou=users,dc=example,dc=com")
-        
+
         # Assert
         assert rdn == "uid=john.doe"
 
@@ -875,7 +875,7 @@ class TestDNUtilities:
         """Test getting parent of root DN."""
         # Act
         parent = get_dn_parent("dc=com")
-        
+
         # Assert
         assert parent == "" or parent is None
 
@@ -883,10 +883,10 @@ class TestDNUtilities:
         """Test converting DN components to dictionary."""
         # Arrange
         components = [("uid", "john.doe"), ("ou", "users"), ("dc", "example"), ("dc", "com")]
-        
+
         # Act
         dn_dict = dn_components_to_dict(components)
-        
+
         # Assert
         assert dn_dict["uid"] == "john.doe"
         assert dn_dict["ou"] == "users"
@@ -896,10 +896,10 @@ class TestDNUtilities:
         """Test converting DN components with single values."""
         # Arrange
         components = [("uid", "john.doe"), ("ou", "users")]
-        
+
         # Act
         dn_dict = dn_components_to_dict(components)
-        
+
         # Assert
         assert dn_dict["uid"] == "john.doe"
         assert dn_dict["ou"] == "users"
@@ -964,7 +964,7 @@ def sample_ldap_entry(sample_dn, sample_attributes):
 def sample_domain_events():
     """Sample domain events for testing."""
     dn = DN("uid=john.doe,ou=users,dc=example,dc=com")
-    
+
     return [
         LDAPEntryCreated(
             entry_dn=dn,

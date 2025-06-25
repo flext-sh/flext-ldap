@@ -3,6 +3,7 @@
 **Robust, informative, and actionable error handling for enterprise reliability**
 
 ## 📋 Status
+
 **APPROVED** - High priority infrastructure decision
 
 ## 🎯 Context
@@ -12,6 +13,7 @@ Building on our foundation architecture ([ADR-001](001-foundation-architecture.m
 ### 🔍 **Current Implementation Analysis**
 
 Our existing codebase in `src/ldap_core_shared/` shows:
+
 - ✅ **Good foundation**: `LDAPOperationResult` pattern for structured results
 - ✅ **Domain exceptions**: Basic exception handling in domain layer
 - ✅ **Performance tracking**: Error tracking in performance monitoring
@@ -20,6 +22,7 @@ Our existing codebase in `src/ldap_core_shared/` shows:
 ### 🏆 **Error Handling Requirements from Research**
 
 From analyzing enterprise systems and 57+ implementations:
+
 - **Clear Error Taxonomy**: Structured, categorized exception hierarchy
 - **Recovery Strategies**: Automatic retry, fallback, and graceful degradation
 - **Observability**: Detailed error context and tracing
@@ -67,7 +70,7 @@ class ErrorCategory(Enum):
 
 class LDAPError(Exception, ABC):
     """Base exception for all LDAP library errors."""
-    
+
     def __init__(self,
                  message: str,
                  error_code: str = None,
@@ -77,7 +80,7 @@ class LDAPError(Exception, ABC):
                  suggestions: List[str] = None,
                  recoverable: bool = True,
                  retry_after: Optional[float] = None):
-        
+
         super().__init__(message)
         self.message = message
         self.error_code = error_code or self._generate_error_code()
@@ -89,7 +92,7 @@ class LDAPError(Exception, ABC):
         self.retry_after = retry_after
         self.timestamp = datetime.now()
         self.stack_trace = traceback.format_exc()
-        
+
         # Add contextual information
         self.details.update({
             "error_class": self.__class__.__name__,
@@ -98,11 +101,11 @@ class LDAPError(Exception, ABC):
             "category": self.category.value,
             "recoverable": self.recoverable
         })
-    
+
     def _generate_error_code(self) -> str:
         """Generate unique error code."""
         return f"LDAP_{self.category.value.upper()}_{self.__class__.__name__.upper()}"
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert error to dictionary for serialization."""
         return {
@@ -117,22 +120,22 @@ class LDAPError(Exception, ABC):
             "timestamp": self.timestamp.isoformat(),
             "stack_trace": self.stack_trace
         }
-    
+
     def get_user_friendly_message(self) -> str:
         """Get user-friendly error message with suggestions."""
         message = f"{self.message}"
-        
+
         if self.suggestions:
             message += f"\n\nSuggestions:\n"
             for i, suggestion in enumerate(self.suggestions, 1):
                 message += f"{i}. {suggestion}\n"
-        
+
         return message
 
 # Connection-related errors
 class ConnectionError(LDAPError):
     """Base class for connection-related errors."""
-    
+
     def __init__(self, message: str, server_url: str = None, **kwargs):
         super().__init__(
             message,
@@ -144,7 +147,7 @@ class ConnectionError(LDAPError):
 
 class ConnectionTimeoutError(ConnectionError):
     """Connection timeout error."""
-    
+
     def __init__(self, timeout_duration: float, server_url: str = None):
         super().__init__(
             f"Connection timed out after {timeout_duration:.2f} seconds",
@@ -162,7 +165,7 @@ class ConnectionTimeoutError(ConnectionError):
 
 class ConnectionPoolExhaustedError(ConnectionError):
     """Connection pool exhausted error."""
-    
+
     def __init__(self, max_pool_size: int, active_connections: int):
         super().__init__(
             f"Connection pool exhausted (max: {max_pool_size}, active: {active_connections})",
@@ -182,7 +185,7 @@ class ConnectionPoolExhaustedError(ConnectionError):
 
 class ServerUnavailableError(ConnectionError):
     """Server unavailable error."""
-    
+
     def __init__(self, server_url: str, last_error: str = None):
         super().__init__(
             f"LDAP server {server_url} is unavailable",
@@ -202,7 +205,7 @@ class ServerUnavailableError(ConnectionError):
 # Authentication and Authorization errors
 class AuthenticationError(LDAPError):
     """Base class for authentication errors."""
-    
+
     def __init__(self, message: str, username: str = None, **kwargs):
         super().__init__(
             message,
@@ -216,7 +219,7 @@ class AuthenticationError(LDAPError):
 
 class InvalidCredentialsError(AuthenticationError):
     """Invalid credentials error."""
-    
+
     def __init__(self, username: str = None):
         super().__init__(
             "Invalid username or password",
@@ -231,7 +234,7 @@ class InvalidCredentialsError(AuthenticationError):
 
 class InsufficientPermissionsError(LDAPError):
     """Insufficient permissions error."""
-    
+
     def __init__(self, operation: str, dn: str = None, required_permission: str = None):
         super().__init__(
             f"Insufficient permissions to perform {operation}",
@@ -254,7 +257,7 @@ class InsufficientPermissionsError(LDAPError):
 # Validation and data errors
 class ValidationError(LDAPError):
     """Base class for validation errors."""
-    
+
     def __init__(self, message: str, field_name: str = None, **kwargs):
         super().__init__(
             message,
@@ -268,7 +271,7 @@ class ValidationError(LDAPError):
 
 class InvalidDNError(ValidationError):
     """Invalid Distinguished Name error."""
-    
+
     def __init__(self, dn: str, reason: str = None):
         super().__init__(
             f"Invalid Distinguished Name: {dn}",
@@ -286,7 +289,7 @@ class InvalidDNError(ValidationError):
 
 class SchemaViolationError(ValidationError):
     """Schema violation error."""
-    
+
     def __init__(self, attribute: str, object_class: str, violation_type: str):
         super().__init__(
             f"Schema violation: {violation_type} for attribute '{attribute}' in object class '{object_class}'",
@@ -307,7 +310,7 @@ class SchemaViolationError(ValidationError):
 # Protocol and server errors
 class ProtocolError(LDAPError):
     """Base class for LDAP protocol errors."""
-    
+
     def __init__(self, message: str, ldap_result_code: int = None, **kwargs):
         super().__init__(
             message,
@@ -319,7 +322,7 @@ class ProtocolError(LDAPError):
 
 class SearchError(ProtocolError):
     """Search operation error."""
-    
+
     def __init__(self, base_dn: str, filter_query: str, error_message: str):
         super().__init__(
             f"Search failed: {error_message}",
@@ -338,7 +341,7 @@ class SearchError(ProtocolError):
 # LDIF processing errors
 class LDIFError(LDAPError):
     """Base class for LDIF processing errors."""
-    
+
     def __init__(self, message: str, line_number: int = None, **kwargs):
         super().__init__(
             message,
@@ -350,7 +353,7 @@ class LDIFError(LDAPError):
 
 class LDIFParseError(LDIFError):
     """LDIF parsing error."""
-    
+
     def __init__(self, line_number: int, line_content: str, parse_error: str):
         super().__init__(
             f"LDIF parse error at line {line_number}: {parse_error}",
@@ -378,7 +381,7 @@ from functools import wraps
 
 class RetryPolicy:
     """Configurable retry policy for operations."""
-    
+
     def __init__(self,
                  max_attempts: int = 3,
                  base_delay: float = 1.0,
@@ -386,7 +389,7 @@ class RetryPolicy:
                  exponential_backoff: bool = True,
                  jitter: bool = True,
                  retryable_exceptions: List[Type[Exception]] = None):
-        
+
         self.max_attempts = max_attempts
         self.base_delay = base_delay
         self.max_delay = max_delay
@@ -397,28 +400,28 @@ class RetryPolicy:
             ConnectionPoolExhaustedError,
             ServerUnavailableError
         ]
-    
+
     def calculate_delay(self, attempt: int) -> float:
         """Calculate delay for retry attempt."""
         if self.exponential_backoff:
             delay = self.base_delay * (2 ** (attempt - 1))
         else:
             delay = self.base_delay
-        
+
         # Apply maximum delay limit
         delay = min(delay, self.max_delay)
-        
+
         # Add jitter to prevent thundering herd
         if self.jitter:
             delay = delay * (0.5 + random.random() * 0.5)
-        
+
         return delay
-    
+
     def should_retry(self, exception: Exception, attempt: int) -> bool:
         """Determine if operation should be retried."""
         if attempt >= self.max_attempts:
             return False
-        
+
         # Check if exception is retryable
         for retryable_type in self.retryable_exceptions:
             if isinstance(exception, retryable_type):
@@ -426,54 +429,54 @@ class RetryPolicy:
                 if hasattr(exception, 'recoverable') and not exception.recoverable:
                     return False
                 return True
-        
+
         return False
 
 class RetryableOperation:
     """Wrapper for retryable operations with comprehensive error handling."""
-    
+
     def __init__(self, retry_policy: RetryPolicy = None):
         self.retry_policy = retry_policy or RetryPolicy()
         self.error_history: List[Exception] = []
-    
+
     async def execute(self, operation: Callable, *args, **kwargs) -> Any:
         """Execute operation with retry logic."""
         last_exception = None
-        
+
         for attempt in range(1, self.retry_policy.max_attempts + 1):
             try:
                 # Clear error history on successful retry
                 if attempt > 1:
                     self.error_history.clear()
-                
+
                 result = await operation(*args, **kwargs)
-                
+
                 # Log successful retry if previous attempts failed
                 if attempt > 1:
                     logger.info(f"Operation succeeded on attempt {attempt} after {len(self.error_history)} failures")
-                
+
                 return result
-                
+
             except Exception as e:
                 last_exception = e
                 self.error_history.append(e)
-                
+
                 # Log the error
                 logger.warning(f"Operation failed on attempt {attempt}/{self.retry_policy.max_attempts}: {e}")
-                
+
                 # Check if we should retry
                 if not self.retry_policy.should_retry(e, attempt):
                     break
-                
+
                 # Calculate and apply delay
                 if attempt < self.retry_policy.max_attempts:
                     delay = self.retry_policy.calculate_delay(attempt)
                     logger.debug(f"Retrying in {delay:.2f} seconds...")
                     await asyncio.sleep(delay)
-        
+
         # All retries exhausted, raise aggregated error
         raise self._create_aggregated_error(last_exception)
-    
+
     def _create_aggregated_error(self, last_exception: Exception) -> Exception:
         """Create aggregated error with retry history."""
         if isinstance(last_exception, LDAPError):
@@ -519,32 +522,32 @@ operation_stack_var: contextvars.ContextVar[List[str]] = contextvars.ContextVar(
 
 class ErrorContext:
     """Context manager for tracking error context."""
-    
+
     def __init__(self, operation_name: str, **context_data):
         self.operation_name = operation_name
         self.context_data = context_data
         self.request_id = request_id_var.get(str(uuid.uuid4()))
         self.start_time = datetime.now()
-    
+
     def __enter__(self):
         # Set request ID if not already set
         if not request_id_var.get(None):
             request_id_var.set(self.request_id)
-        
+
         # Add operation to stack
         stack = operation_stack_var.get([])
         stack.append(self.operation_name)
         operation_stack_var.set(stack)
-        
+
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         # Remove operation from stack
         stack = operation_stack_var.get([])
         if stack and stack[-1] == self.operation_name:
             stack.pop()
             operation_stack_var.set(stack)
-        
+
         # Enhance exception with context if one occurred
         if exc_val and isinstance(exc_val, LDAPError):
             exc_val.details.update({
@@ -553,38 +556,38 @@ class ErrorContext:
                 "operation_duration": (datetime.now() - self.start_time).total_seconds(),
                 **self.context_data
             })
-        
+
         return False  # Don't suppress exceptions
 
 class ErrorReporter:
     """Centralized error reporting and monitoring."""
-    
+
     def __init__(self):
         self.error_handlers: List[Callable[[Exception], None]] = []
         self.error_stats = ErrorStatistics()
-    
+
     def add_error_handler(self, handler: Callable[[Exception], None]) -> None:
         """Add custom error handler."""
         self.error_handlers.append(handler)
-    
+
     def report_error(self, error: Exception, context: Dict[str, Any] = None) -> None:
         """Report error to all registered handlers."""
         # Update statistics
         self.error_stats.record_error(error)
-        
+
         # Call all error handlers
         for handler in self.error_handlers:
             try:
                 handler(error)
             except Exception as e:
                 logger.error(f"Error handler failed: {e}")
-        
+
         # Log the error
         if isinstance(error, LDAPError):
             self._log_ldap_error(error, context)
         else:
             self._log_generic_error(error, context)
-    
+
     def _log_ldap_error(self, error: LDAPError, context: Dict[str, Any] = None) -> None:
         """Log LDAP-specific error with structured data."""
         log_data = {
@@ -596,15 +599,15 @@ class ErrorReporter:
             "operation_stack": operation_stack_var.get([]),
             **error.details
         }
-        
+
         if context:
             log_data.update(context)
-        
+
         if error.severity in [ErrorSeverity.HIGH, ErrorSeverity.CRITICAL]:
             logger.error(error.message, extra=log_data)
         else:
             logger.warning(error.message, extra=log_data)
-    
+
     def _log_generic_error(self, error: Exception, context: Dict[str, Any] = None) -> None:
         """Log generic error with context."""
         log_data = {
@@ -612,58 +615,58 @@ class ErrorReporter:
             "request_id": request_id_var.get(None),
             "operation_stack": operation_stack_var.get([])
         }
-        
+
         if context:
             log_data.update(context)
-        
+
         logger.error(f"Unexpected error: {str(error)}", extra=log_data)
 
 class ErrorStatistics:
     """Track error statistics for monitoring."""
-    
+
     def __init__(self):
         self.error_counts: Dict[str, int] = {}
         self.error_rates: Dict[str, List[datetime]] = {}
         self.severity_counts: Dict[ErrorSeverity, int] = {
             severity: 0 for severity in ErrorSeverity
         }
-    
+
     def record_error(self, error: Exception) -> None:
         """Record error occurrence for statistics."""
         error_type = type(error).__name__
         now = datetime.now()
-        
+
         # Update counts
         self.error_counts[error_type] = self.error_counts.get(error_type, 0) + 1
-        
+
         # Update rates (last hour)
         if error_type not in self.error_rates:
             self.error_rates[error_type] = []
-        
+
         self.error_rates[error_type].append(now)
-        
+
         # Clean old entries (older than 1 hour)
         cutoff = now - timedelta(hours=1)
         self.error_rates[error_type] = [
             ts for ts in self.error_rates[error_type] if ts > cutoff
         ]
-        
+
         # Update severity counts
         if isinstance(error, LDAPError):
             self.severity_counts[error.severity] += 1
-    
+
     def get_error_rate(self, error_type: str, window_minutes: int = 60) -> float:
         """Get error rate for specific error type."""
         if error_type not in self.error_rates:
             return 0.0
-        
+
         cutoff = datetime.now() - timedelta(minutes=window_minutes)
         recent_errors = [
             ts for ts in self.error_rates[error_type] if ts > cutoff
         ]
-        
+
         return len(recent_errors) / window_minutes  # Errors per minute
-    
+
     def get_summary(self) -> Dict[str, Any]:
         """Get error statistics summary."""
         return {
@@ -691,7 +694,7 @@ T = TypeVar('T')
 
 class EnhancedLDAPOperationResult(Generic[T]):
     """Enhanced operation result with comprehensive error handling."""
-    
+
     def __init__(self,
                  success: bool,
                  data: Optional[T] = None,
@@ -699,7 +702,7 @@ class EnhancedLDAPOperationResult(Generic[T]):
                  operation: str = "",
                  metadata: Dict[str, Any] = None,
                  warnings: List[str] = None):
-        
+
         self.success = success
         self.data = data
         self.error = error
@@ -708,7 +711,7 @@ class EnhancedLDAPOperationResult(Generic[T]):
         self.warnings = warnings or []
         self.request_id = request_id_var.get(None)
         self.operation_stack = operation_stack_var.get([])
-    
+
     @classmethod
     def success_result(cls, data: T, operation: str = "", **metadata) -> 'EnhancedLDAPOperationResult[T]':
         """Create successful result."""
@@ -718,19 +721,19 @@ class EnhancedLDAPOperationResult(Generic[T]):
             operation=operation,
             metadata=metadata
         )
-    
+
     @classmethod
     def error_result(cls, error: LDAPError, operation: str = "") -> 'EnhancedLDAPOperationResult[T]':
         """Create error result."""
         # Report error for monitoring
         error_reporter.report_error(error)
-        
+
         return cls(
             success=False,
             error=error,
             operation=operation
         )
-    
+
     @classmethod
     def from_exception(cls, exception: Exception, operation: str = "") -> 'EnhancedLDAPOperationResult[T]':
         """Create error result from any exception."""
@@ -745,14 +748,14 @@ class EnhancedLDAPOperationResult(Generic[T]):
                     "original_error_type": type(exception).__name__
                 }
             )
-        
+
         return cls.error_result(error, operation)
-    
+
     def get_error_summary(self) -> Optional[Dict[str, Any]]:
         """Get comprehensive error summary."""
         if not self.error:
             return None
-        
+
         return {
             "error_code": self.error.error_code,
             "message": self.error.message,
@@ -794,6 +797,7 @@ class EnhancedLDAPOperationResult(Generic[T]):
 ## 🚀 Implementation Plan
 
 ### 📅 **Phase 1: Core Error Infrastructure (Week 1)**
+
 ```python
 Core_Tasks = [
     "✅ Implement structured exception hierarchy",
@@ -805,6 +809,7 @@ Core_Tasks = [
 ```
 
 ### 📅 **Phase 2: Advanced Error Handling (Week 2)**
+
 ```python
 Advanced_Tasks = [
     "✅ Implement intelligent retry policies",
@@ -816,6 +821,7 @@ Advanced_Tasks = [
 ```
 
 ### 📅 **Phase 3: Integration and Monitoring (Week 3)**
+
 ```python
 Integration_Tasks = [
     "✅ Integrate with monitoring systems",
@@ -859,7 +865,7 @@ Error_Handling_Targets = {
 
 **🛡️ This comprehensive error handling strategy establishes the reliability and maintainability foundation for enterprise LDAP operations.** Every error provides actionable information while maintaining system stability and enabling intelligent recovery.
 
-**Decision Maker**: Architecture Team  
-**Date**: 2025-06-24  
-**Status**: ✅ APPROVED  
+**Decision Maker**: Architecture Team
+**Date**: 2025-06-24
+**Status**: ✅ APPROVED
 **Next Review**: Post Phase 1 implementation and error pattern analysis

@@ -7,17 +7,20 @@ This documentation provides comprehensive coverage of all modules, classes, and 
 ## 📋 Table of Contents
 
 ### 🏗️ Core Modules
+
 - [🔗 Connection Management](core/connection-management.md) - Enterprise connection pooling and management
 - [⚙️ LDAP Operations](core/operations.md) - CRUD operations with transaction support
 - [🔍 Search Engine](core/search-engine.md) - Advanced search with caching and pagination
 - [🔒 Security](core/security.md) - SSH tunnels and authentication management
 
 ### 📊 Domain Models
+
 - [📋 Result Types](domain/results.md) - Comprehensive typed result classes
 - [🏗️ Domain Models](domain/models.md) - Core domain entities and value objects
 - [🎯 Value Objects](domain/value-objects.md) - Immutable value objects for LDAP data
 
 ### 📄 LDIF Processing
+
 - [📝 LDIF Processor](ldif/processor.md) - Standards-compliant LDIF parsing
 - [✍️ LDIF Writer](ldif/writer.md) - Advanced LDIF generation and formatting
 - [✅ LDIF Validator](ldif/validator.md) - Comprehensive validation and error checking
@@ -26,6 +29,7 @@ This documentation provides comprehensive coverage of all modules, classes, and 
 - [🔗 LDIF Merger](ldif/merger.md) - Multiple file merging with conflict resolution
 
 ### 🗂️ Schema Management
+
 - [🔍 Schema Discovery](schema/discovery.md) - Auto-discover schemas from LDAP servers
 - [📋 Schema Parser](schema/parser.md) - RFC 2252 compliant schema parsing
 - [✅ Schema Validator](schema/validator.md) - Enterprise-grade schema validation
@@ -34,12 +38,14 @@ This documentation provides comprehensive coverage of all modules, classes, and 
 - [📈 Schema Analyzer](schema/analyzer.md) - Advanced schema analysis and optimization
 
 ### 🛠️ Utilities
+
 - [📋 Constants](utils/constants.md) - Comprehensive LDAP constants and configurations
 - [📈 Performance Monitoring](utils/performance.md) - Real-time metrics and analysis
 - [🔧 LDAP Helpers](utils/helpers.md) - DN manipulation, filter building, data conversion
 - [📝 Logging](utils/logging.md) - Enterprise logging and audit trails
 
 ### 🎯 Events
+
 - [📡 Domain Events](events/domain-events.md) - Event-driven architecture support
 - [🎯 Event Handlers](events/handlers.md) - Event processing and routing
 
@@ -88,7 +94,7 @@ analyzer = LDIFAnalyzer()
 ldif_result = processor.parse_file("data.ldif")
 analysis = analyzer.analyze_entries(ldif_result.entries)
 
-# Schema Management  
+# Schema Management
 discovery = SchemaDiscovery()
 comparator = SchemaComparator()
 
@@ -107,6 +113,7 @@ with monitor.track_operation("bulk_import"):
 The ldap-core-shared library follows enterprise architecture principles:
 
 ### 🎯 **Core Design Principles**
+
 - **Zero Tolerance**: Comprehensive typing and validation
 - **Enterprise Grade**: Production-ready with monitoring and metrics
 - **Domain-Driven Design**: Clear separation of concerns
@@ -119,27 +126,27 @@ The ldap-core-shared library follows enterprise architecture principles:
 graph TD
     A[Core Modules] --> B[Connection Management]
     A --> C[LDAP Operations]
-    A --> D[Search Engine] 
+    A --> D[Search Engine]
     A --> E[Security]
-    
+
     F[Domain Layer] --> G[Result Types]
     F --> H[Domain Models]
     F --> I[Value Objects]
-    
+
     J[LDIF Processing] --> K[Processor]
     J --> L[Writer]
     J --> M[Validator]
     J --> N[Analyzer]
     J --> O[Transformer]
     J --> P[Merger]
-    
+
     Q[Schema Management] --> R[Discovery]
     Q --> S[Parser]
     Q --> T[Validator]
     Q --> U[Comparator]
     Q --> V[Migrator]
     Q --> W[Analyzer]
-    
+
     X[Utilities] --> Y[Constants]
     X --> Z[Performance]
     X --> AA[Helpers]
@@ -157,13 +164,15 @@ graph TD
 ## 📊 Performance Characteristics
 
 ### 🎯 **A+ Grade Targets**
+
 - **Search Operations**: 12,000+ entries/second
-- **Bulk Operations**: 8,000+ operations/second  
+- **Bulk Operations**: 8,000+ operations/second
 - **Connection Pooling**: 95%+ reuse rate
 - **Memory Efficiency**: <100MB for 10,000 entries
 - **Response Time**: <50ms for typical operations
 
 ### 📈 **Scalability Features**
+
 - Connection pooling with health monitoring
 - Streaming LDIF processing for large files
 - Pagination support for large result sets
@@ -180,7 +189,7 @@ from ldap_core_shared.utils.constants import DEFAULT_PROFILES
 # Development environment
 dev_config = DEFAULT_PROFILES["DEVELOPMENT"]
 
-# Production environment  
+# Production environment
 prod_config = DEFAULT_PROFILES["PRODUCTION"]
 
 # High-performance environment

@@ -11,7 +11,7 @@ Architecture:
 
 Key Design Principles:
     - Zero Tolerance: No untyped dict returns where structure is known
-    - Type Safety: Full typing with mypy compliance  
+    - Type Safety: Full typing with mypy compliance
     - Enterprise Validation: Comprehensive validation using Pydantic
     - Performance: Optimized for high-throughput LDAP operations
     - Composability: Results can be merged and aggregated
@@ -30,9 +30,11 @@ Version: 1.0.0-enterprise
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
+
+T = TypeVar("T")
 
 
 class LDAPConnectionResult(BaseModel):
@@ -135,7 +137,7 @@ class LDAPSearchResult(BaseModel):
         return len(self.warnings) > 0
 
 
-class LDAPOperationResult(BaseModel):
+class LDAPOperationResult(BaseModel, Generic[T]):
     """Typed result for individual LDAP operations (add, modify, delete)."""
 
     model_config = ConfigDict(
@@ -146,8 +148,8 @@ class LDAPOperationResult(BaseModel):
     )
 
     success: bool
-    operation_type: str  # add, modify, delete
-    dn: str
+    operation: str = ""  # operation name
+    data: T | None = None
 
     # Operation details
     attributes_modified: dict[str, Any] = Field(default_factory=dict)
@@ -155,11 +157,16 @@ class LDAPOperationResult(BaseModel):
     transaction_id: str | None = None
 
     # Performance metrics
-    operation_duration: float = Field(ge=0.0)
+    operation_duration: float = Field(default=0.0, ge=0.0)
 
     # Error tracking
     error_message: str | None = None
     ldap_error_code: int | None = None
+
+    # Additional details and message support
+    message: str | None = None
+    details: dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     # Rollback information
     rollback_data: dict[str, Any] = Field(default_factory=dict)
@@ -171,6 +178,22 @@ class LDAPOperationResult(BaseModel):
     def has_error(self) -> bool:
         """Check if operation failed."""
         return not self.success or bool(self.error_message)
+
+    @computed_field
+    @property
+    def duration(self) -> float:
+        """Alias for operation_duration for compatibility."""
+        return self.operation_duration
+
+    @computed_field
+    @property
+    def computed_message(self) -> str:
+        """Get appropriate message based on operation status."""
+        if self.message:
+            return self.message
+        if self.error_message:
+            return self.error_message
+        return f"Successfully {self.operation_type}d entry: {self.dn}"
 
 
 class LDAPBulkResult(BaseModel):
@@ -311,6 +334,11 @@ class LDAPValidationResult(BaseModel):
     def total_errors(self) -> int:
         """Get total count of all validation errors."""
         return len(self.schema_errors + self.syntax_errors + self.reference_errors)
+
+
+# Aliases for backward compatibility and enterprise integration
+BulkOperationResult = LDAPBulkResult
+OperationSummary = LDAPOperationResult
 
 
 # Utility functions for result aggregation

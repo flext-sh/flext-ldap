@@ -22,6 +22,7 @@ The constants module provides centralized LDAP constants used across the entire 
 The constants module follows enterprise architecture principles for configuration management:
 
 ### 🎯 **Design Principles**
+
 - **Centralized Configuration**: Single source of truth for all constants
 - **Environment Awareness**: Different profiles for dev/test/prod
 - **Type Safety**: Properly typed constants with validation
@@ -95,7 +96,7 @@ CONNECTION_MAX_IDLE = 300      # Connection max idle time (5 minutes)
 
 ```python
 from ldap_core_shared.utils.constants import (
-    DEFAULT_LDAP_PORT, DEFAULT_LDAPS_PORT, 
+    DEFAULT_LDAP_PORT, DEFAULT_LDAPS_PORT,
     DEFAULT_POOL_SIZE, CONNECTION_MAX_AGE
 )
 
@@ -108,7 +109,7 @@ conn_info = ConnectionInfo(
 
 # Secure LDAP connection
 secure_conn_info = ConnectionInfo(
-    host="ldaps.example.com", 
+    host="ldaps.example.com",
     port=DEFAULT_LDAPS_PORT,  # 636
     use_ssl=True
 )
@@ -173,10 +174,10 @@ from ldap_core_shared.utils.constants import (
 # Bulk operation with performance targets
 def bulk_import_optimized(entries):
     batch_size = DEFAULT_BATCH_SIZE  # 100
-    
+
     for i in range(0, len(entries), batch_size):
         batch = entries[i:i + batch_size]
-        
+
         # Process with retry logic
         for attempt in range(MAX_RETRY_ATTEMPTS):  # 3 attempts
             try:
@@ -195,7 +196,7 @@ def check_performance_targets(metrics):
             f"Performance below target: {metrics.operations_per_second} < "
             f"{TARGET_OPERATIONS_PER_SECOND} ops/sec"
         )
-    
+
     if metrics.connection_reuse_rate < TARGET_CONNECTION_REUSE_RATE:
         logger.warning(
             f"Low connection reuse: {metrics.connection_reuse_rate:.1%} < "
@@ -263,7 +264,7 @@ class LDAPCircuitBreaker:
     def __init__(self):
         self.failure_count = 0
         self.threshold = CIRCUIT_BREAKER_THRESHOLD  # 5 failures
-    
+
     def record_failure(self):
         self.failure_count += 1
         if self.failure_count >= self.threshold:
@@ -359,7 +360,7 @@ SEARCH_FILTERS = {
 
 ```python
 from ldap_core_shared.utils.constants import (
-    LDAP_SCOPES, COMMON_OBJECT_CLASSES, 
+    LDAP_SCOPES, COMMON_OBJECT_CLASSES,
     STANDARD_ATTRIBUTES, SEARCH_FILTERS
 )
 
@@ -436,7 +437,7 @@ MAX_PAGE_SIZE = 1000                       # Maximum pagination size
 # Connection and operation states
 CONNECTION_STATES = {
     "DISCONNECTED": "disconnected",
-    "CONNECTING": "connecting", 
+    "CONNECTING": "connecting",
     "CONNECTED": "connected",
     "AUTHENTICATING": "authenticating",
     "AUTHENTICATED": "authenticated",
@@ -446,7 +447,7 @@ CONNECTION_STATES = {
 OPERATION_STATES = {
     "PENDING": "pending",
     "RUNNING": "running",
-    "SUCCESS": "success", 
+    "SUCCESS": "success",
     "FAILED": "failed",
     "CANCELLED": "cancelled",
 }
@@ -465,7 +466,7 @@ def execute_with_transaction(operations_list):
     transaction = TransactionManager(
         timeout=TRANSACTION_TIMEOUT_SECONDS  # 300 seconds
     )
-    
+
     try:
         with transaction:
             for op in operations_list:
@@ -480,15 +481,15 @@ def execute_with_transaction(operations_list):
 def paginated_search(base_dn, filter_str):
     page_size = DEFAULT_PAGE_SIZE  # 100
     all_entries = []
-    
+
     result = operations.search_entries(
         base_dn=base_dn,
         search_filter=filter_str,
         page_size=page_size
     )
-    
+
     all_entries.extend(result.entries)
-    
+
     while result.has_more_pages:
         result = operations.search_entries(
             base_dn=base_dn,
@@ -497,7 +498,7 @@ def paginated_search(base_dn, filter_str):
             page_cookie=result.page_cookie
         )
         all_entries.extend(result.entries)
-    
+
     return all_entries
 ```
 
@@ -536,12 +537,12 @@ class PerformanceMonitor:
     def __init__(self):
         self.collection_interval = METRICS_COLLECTION_INTERVAL  # 30 seconds
         self.health_check_interval = HEALTH_CHECK_INTERVAL      # 60 seconds
-    
+
     def calculate_success_rate(self, successful, total):
         if total == 0:
             return PERCENTAGE_CALCULATION_BASE  # 100.0%
         return (successful / total) * PERCENTAGE_CALCULATION_BASE
-    
+
     def convert_to_ms(self, seconds):
         return seconds * MILLISECONDS_PER_SECOND
 
@@ -550,7 +551,7 @@ def start_monitoring():
     while True:
         collect_metrics()
         time.sleep(METRICS_COLLECTION_INTERVAL)  # 30 seconds
-        
+
         if time.time() % HEALTH_CHECK_INTERVAL == 0:  # Every 60 seconds
             perform_health_check()
 ```
@@ -643,7 +644,7 @@ CUSTOM_PROFILE = {
 def create_microservices_connection(host):
     return ConnectionInfo(
         host=host,
-        **{k: v for k, v in CUSTOM_PROFILE.items() 
+        **{k: v for k, v in CUSTOM_PROFILE.items()
            if k not in ["name", "description"]}
     )
 ```
@@ -660,7 +661,7 @@ from ldap_core_shared.core import LDAPConnectionManager, ConnectionInfo
 def create_production_ldap_manager():
     # Use production profile
     prod_config = DEFAULT_PROFILES["PRODUCTION"]
-    
+
     # Connection configuration
     conn_info = ConnectionInfo(
         host="ldaps.example.com",
@@ -674,7 +675,7 @@ def create_production_ldap_manager():
         max_pool_size=prod_config["max_pool_size"], # 100
         validate_cert=True,
     )
-    
+
     # Create manager with production settings
     manager = LDAPConnectionManager(
         connection_info=conn_info,
@@ -682,14 +683,14 @@ def create_production_ldap_manager():
         health_check_interval=HEALTH_CHECK_INTERVAL,  # 60 seconds
         enable_monitoring=True,
     )
-    
+
     # Set performance thresholds
     manager.set_performance_thresholds(
         target_ops_per_second=TARGET_OPERATIONS_PER_SECOND,      # 12000
         target_success_rate=TARGET_SUCCESS_RATE,                # 0.99
         target_connection_reuse=TARGET_CONNECTION_REUSE_RATE     # 0.95
     )
-    
+
     return manager
 
 # Search with standard filters and attributes
@@ -710,20 +711,20 @@ def search_all_users():
 # Bulk operation with retry logic
 def bulk_import_with_retries(entries):
     batch_size = DEFAULT_BATCH_SIZE  # 100
-    
+
     for i in range(0, len(entries), batch_size):
         batch = entries[i:i + batch_size]
-        
+
         for attempt in range(MAX_RETRY_ATTEMPTS):  # 3 attempts
             try:
                 result = operations.bulk_add(batch)
-                
+
                 # Check performance targets
                 if result.operations_per_second < TARGET_OPERATIONS_PER_SECOND:
                     logger.warning("Performance below target")
-                
+
                 break
-                
+
             except Exception as e:
                 if attempt < MAX_RETRY_ATTEMPTS - 1:
                     delay = RETRY_DELAY_BASE * (2 ** attempt)  # Exponential backoff
@@ -738,35 +739,35 @@ def bulk_import_with_retries(entries):
 # Performance monitoring with thresholds
 def monitor_ldap_performance(manager):
     metrics = manager.get_metrics()
-    
+
     # Check against targets
     alerts = []
-    
+
     if metrics.operations_per_second < TARGET_OPERATIONS_PER_SECOND:
         alerts.append({
             "type": "performance",
             "message": f"Low throughput: {metrics.operations_per_second} ops/sec",
             "threshold": TARGET_OPERATIONS_PER_SECOND
         })
-    
+
     if metrics.success_rate < TARGET_SUCCESS_RATE:
         alerts.append({
             "type": "reliability",
             "message": f"Low success rate: {metrics.success_rate:.1%}",
             "threshold": TARGET_SUCCESS_RATE
         })
-    
+
     if metrics.connection_reuse_rate < TARGET_CONNECTION_REUSE_RATE:
         alerts.append({
             "type": "efficiency",
             "message": f"Low connection reuse: {metrics.connection_reuse_rate:.1%}",
             "threshold": TARGET_CONNECTION_REUSE_RATE
         })
-    
+
     # Handle alerts
     for alert in alerts:
         logger.warning(f"Performance Alert: {alert['message']}")
-        
+
         # Trigger automated responses
         if alert["type"] == "performance":
             scale_up_resources()
@@ -780,17 +781,17 @@ def continuous_health_monitoring():
     while True:
         try:
             health_result = manager.health_check()
-            
+
             if not health_result.connected:
                 logger.error("LDAP connection lost - attempting reconnection")
                 manager.reconnect()
-            
+
             if health_result.response_time > 100:  # 100ms threshold
                 logger.warning(f"High latency: {health_result.response_time:.2f}ms")
-            
+
         except Exception as e:
             logger.exception("Health check failed")
-        
+
         time.sleep(HEALTH_CHECK_INTERVAL)  # 60 seconds
 ```
 
@@ -881,6 +882,7 @@ for attempt in range(3):  # Hardcoded
 ---
 
 **📋 Related Documentation**
+
 - [🔗 Connection Management](../core/connection-management.md)
 - [📈 Performance Monitoring](performance.md)
 - [🔧 LDAP Helpers](helpers.md)

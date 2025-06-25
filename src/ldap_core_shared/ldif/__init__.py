@@ -22,11 +22,11 @@ Components:
 Example:
     ```python
     from ldap_core_shared.ldif import LDIFProcessor, LDIFWriter
-    
+
     # Parse LDIF file
     processor = LDIFProcessor()
     entries = processor.parse_file("input.ldif")
-    
+
     # Write processed entries
     writer = LDIFWriter()
     writer.write_entries(entries, "output.ldif", title="Processed Entries")
@@ -35,21 +35,21 @@ Example:
 
 # Import classes that are actually implemented
 try:
-    from .processor import LDIFProcessor
-    from .writer import LDIFWriter
-    from .validator import LDIFValidator
-    from .analyzer import LDIFAnalyzer
-    from .transformer import LDIFTransformer
-    from .merger import LDIFMerger
-    
+    from ldap_core_shared.ldif.analyzer import LDIFAnalyzer
+    from ldap_core_shared.ldif.merger import LDIFMerger
+    from ldap_core_shared.ldif.processor import LDIFProcessor
+    from ldap_core_shared.ldif.transformer import LDIFTransformer
+    from ldap_core_shared.ldif.validator import LDIFValidator
+    from ldap_core_shared.ldif.writer import LDIFWriter
+
     __all__ = [
-        "LDIFProcessor",
-        "LDIFWriter", 
-        "LDIFValidator",
         "LDIFAnalyzer",
-        "LDIFTransformer",
         "LDIFMerger",
+        "LDIFProcessor",
+        "LDIFTransformer",
+        "LDIFValidator",
+        "LDIFWriter",
     ]
 except ImportError:
     # If modules are not yet implemented, provide empty list
-    __all__ = [] 
+    __all__ = []

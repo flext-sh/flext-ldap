@@ -1,17 +1,16 @@
-"""
-DN (Distinguished Name) manipulation utilities.
+"""DN (Distinguished Name) manipulation utilities.
 
 Provides utilities for parsing, validating, and manipulating
 LDAP Distinguished Names.
 """
+
 from __future__ import annotations
 
 from ldap_core_shared.domain.value_objects import LdapDn
 
 
 def parse_dn(dn_string: str) -> LdapDn:
-    """
-    Parse DN string into LdapDn object.
+    """Parse DN string into LdapDn object.
 
     Args:
         dn_string: DN string to parse
@@ -26,8 +25,7 @@ def parse_dn(dn_string: str) -> LdapDn:
 
 
 def normalize_dn(dn_string: str) -> str:
-    """
-    Normalize DN string to standard format.
+    """Normalize DN string to standard format.
 
     Args:
         dn_string: DN string to normalize
@@ -41,8 +39,7 @@ def normalize_dn(dn_string: str) -> str:
 
 
 def is_child_dn(child_dn: str, parent_dn: str) -> bool:
-    """
-    Check if one DN is a child of another.
+    """Check if one DN is a child of another.
 
     Args:
         child_dn: Potential child DN
@@ -57,8 +54,7 @@ def is_child_dn(child_dn: str, parent_dn: str) -> bool:
 
 
 def get_parent_dn(dn_string: str) -> str | None:
-    """
-    Get parent DN of the given DN.
+    """Get parent DN of the given DN.
 
     Args:
         dn_string: DN string
@@ -72,8 +68,7 @@ def get_parent_dn(dn_string: str) -> str | None:
 
 
 def get_rdn(dn_string: str) -> str:
-    """
-    Get the Relative DN (first component) of a DN.
+    """Get the Relative DN (first component) of a DN.
 
     Args:
         dn_string: DN string
@@ -87,8 +82,7 @@ def get_rdn(dn_string: str) -> str:
 
 
 def replace_base_dn(dn_string: str, old_base: str, new_base: str) -> str:
-    """
-    Replace the base DN portion of a DN.
+    """Replace the base DN portion of a DN.
 
     Args:
         dn_string: Original DN
@@ -110,8 +104,7 @@ def replace_base_dn(dn_string: str, old_base: str, new_base: str) -> str:
 
 
 def escape_dn_value(value: str) -> str:
-    """
-    Escape special characters in DN value.
+    """Escape special characters in DN value.
 
     Args:
         value: Value to escape
@@ -133,7 +126,7 @@ def escape_dn_value(value: str) -> str:
     }
 
     escaped = value
-    for escaped_char in escape_chars.values():
+    for char, escaped_char in escape_chars.items():
         escaped = escaped.replace(char, escaped_char)
 
     # Leading and trailing spaces also need escaping
@@ -146,8 +139,7 @@ def escape_dn_value(value: str) -> str:
 
 
 def unescape_dn_value(value: str) -> str:
-    """
-    Unescape DN value.
+    """Unescape DN value.
 
     Args:
         value: Escaped value
@@ -172,8 +164,7 @@ def unescape_dn_value(value: str) -> str:
 
 
 def extract_attribute_value(dn_string: str, attribute: str) -> str | None:
-    """
-    Extract value of specific attribute from DN.
+    """Extract value of specific attribute from DN.
 
     Args:
         dn_string: DN string
@@ -193,8 +184,7 @@ def extract_attribute_value(dn_string: str, attribute: str) -> str | None:
 
 
 def build_dn(components: list[tuple[str, str]]) -> str:
-    """
-    Build DN string from list of (attribute, value) tuples.
+    """Build DN string from list of (attribute, value) tuples.
 
     Args:
         components: List of (attribute, value) tuples
@@ -211,8 +201,7 @@ def build_dn(components: list[tuple[str, str]]) -> str:
 
 
 def split_dn_components(dn_string: str) -> list[tuple[str, str]]:
-    """
-    Split DN into list of (attribute, value) tuples.
+    """Split DN into list of (attribute, value) tuples.
 
     Args:
         dn_string: DN string
@@ -228,8 +217,7 @@ def split_dn_components(dn_string: str) -> list[tuple[str, str]]:
 
 
 def validate_dn_format(dn_string: str) -> tuple[bool, str | None]:
-    """
-    Validate DN format.
+    """Validate DN format.
 
     Args:
         dn_string: DN string to validate
@@ -248,8 +236,7 @@ def validate_dn_format(dn_string: str) -> tuple[bool, str | None]:
 
 
 def get_dn_depth(dn_string: str) -> int:
-    """
-    Get the depth (number of components) of a DN.
+    """Get the depth (number of components) of a DN.
 
     Args:
         dn_string: DN string
@@ -265,8 +252,7 @@ def get_dn_depth(dn_string: str) -> int:
 
 
 def find_common_base_dn(dn_list: list[str]) -> str | None:
-    """
-    Find common base DN among a list of DNs.
+    """Find common base DN among a list of DNs.
 
     Args:
         dn_list: List of DN strings
@@ -319,8 +305,7 @@ def find_common_base_dn(dn_list: list[str]) -> str | None:
 
 
 def rewrite_dn_base(dn_string: str, base_mappings: dict[str, str]) -> str:
-    """
-    Rewrite DN base using mapping rules.
+    """Rewrite DN base using mapping rules.
 
     Args:
         dn_string: Original DN
@@ -329,7 +314,7 @@ def rewrite_dn_base(dn_string: str, base_mappings: dict[str, str]) -> str:
     Returns:
         DN with rewritten base or original DN if no mapping found
     """
-    for new_base in base_mappings.values():
+    for old_base, new_base in base_mappings.items():
         try:
             if is_child_dn(dn_string, old_base):
                 return replace_base_dn(dn_string, old_base, new_base)

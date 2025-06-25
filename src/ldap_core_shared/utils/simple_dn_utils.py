@@ -1,5 +1,4 @@
-"""
-Simple DN utilities without complex dependencies.
+"""Simple DN utilities without complex dependencies.
 
 Provides basic DN manipulation utilities that can be used
 without importing the complex event system.
@@ -7,8 +6,7 @@ without importing the complex event system.
 
 
 def simple_parse_dn(dn_string: str) -> list[tuple[str, str]]:
-    """
-    Simple DN parser that returns list of (attribute, value) tuples.
+    """Simple DN parser that returns list of (attribute, value) tuples.
 
     Args:
         dn_string: DN string to parse
@@ -23,7 +21,7 @@ def simple_parse_dn(dn_string: str) -> list[tuple[str, str]]:
         msg = "DN cannot be empty"
         raise ValueError(msg)
 
-    components: list = []
+    components: list[tuple[str, str]] = []
     # Simple DN parsing (would need more sophisticated parsing for complex cases)
     parts = [part.strip() for part in dn_string.split(",")]
 
@@ -39,8 +37,7 @@ def simple_parse_dn(dn_string: str) -> list[tuple[str, str]]:
 
 
 def simple_normalize_dn(dn_string: str) -> str:
-    """
-    Simple DN normalization.
+    """Simple DN normalization.
 
     Args:
         dn_string: DN string to normalize
@@ -53,8 +50,7 @@ def simple_normalize_dn(dn_string: str) -> str:
 
 
 def simple_is_child_dn(child_dn: str, parent_dn: str) -> bool:
-    """
-    Check if one DN is a child of another (simple version).
+    """Check if one DN is a child of another (simple version).
 
     Args:
         child_dn: Potential child DN

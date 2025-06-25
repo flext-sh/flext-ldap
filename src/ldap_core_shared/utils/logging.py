@@ -1,27 +1,24 @@
-"""
-Standardized logging utilities for LDAP projects.
+"""Standardized logging utilities for LDAP projects.
 
 Provides consistent logging setup and utilities across
 tap-ldap, target-ldap, and flx-ldap projects.
 """
+
 from __future__ import annotations
 
 import logging
 import logging.handlers
 import sys
-
 from datetime import datetime
 from typing import Any
 
 from ldap_core_shared.config.base_config import LoggingConfig
 
-
 logger = logging.getLogger(__name__)
 
 
 class StructuredFormatter(logging.Formatter):
-    """
-    Structured logging formatter with consistent output.
+    """Structured logging formatter with consistent output.
 
     Formats log messages with structured data for better analysis
     and monitoring.
@@ -57,8 +54,7 @@ class StructuredFormatter(logging.Formatter):
 
 
 class LDAPLogger:
-    """
-    LDAP-specific logger with standard configuration and utilities.
+    """LDAP-specific logger with standard configuration and utilities.
 
     Provides consistent logging setup for LDAP operations with
     performance tracking and structured output.
@@ -67,7 +63,22 @@ class LDAPLogger:
     def __init__(self, name: str, config: LoggingConfig | None = None) -> None:
         """Initialize LDAP logger."""
         self.name = name
-        self.config = config or LoggingConfig()
+        try:
+            self.config = config or LoggingConfig()
+        except Exception:
+            # Fallback to basic config if Pydantic config fails
+            from dataclasses import dataclass
+
+            @dataclass
+            class BasicLoggingConfig:
+                level: str = "INFO"
+                format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                file_path: str = ""
+                max_file_size_mb: int = 100
+                backup_count: int = 5
+                enable_console: bool = True
+
+            self.config = BasicLoggingConfig()
         self.logger = logging.getLogger(name)
         self._setup_logger()
 
@@ -135,7 +146,10 @@ class LDAPLogger:
         self._log_with_extra(logging.CRITICAL, message, kwargs)
 
     def _log_with_extra(
-        self, level: int, message: str, extra_data: dict[str, Any]
+        self,
+        level: int,
+        message: str,
+        extra_data: dict[str, Any],
     ) -> Any:
         """Log message with extra structured data."""
         # Filter sensitive data if configured
@@ -144,7 +158,13 @@ class LDAPLogger:
 
         # Create log record with extra data
         record = self.logger.makeRecord(
-            self.name, level, __file__, 0, message, (), None
+            self.name,
+            level,
+            __file__,
+            0,
+            message,
+            (),
+            None,
         )
         record.extra_data = extra_data
 
@@ -179,7 +199,7 @@ class LDAPLogger:
         success: bool,
         duration: float | None = None,
         **kwargs,
-    ):
+    ) -> None:
         """Log LDAP operation with standard format."""
         extra_data = {"operation": operation, "dn": dn, "success": success, **kwargs}
 
@@ -191,7 +211,11 @@ class LDAPLogger:
             self.error(f"LDAP {operation} failed", **extra_data)
 
     def log_performance(
-        self, operation: str, count: int, duration: float, **kwargs
+        self,
+        operation: str,
+        count: int,
+        duration: float,
+        **kwargs,
     ) -> Any:
         """Log performance metrics."""
         rate = count / duration if duration > 0 else 0
@@ -207,8 +231,13 @@ class LDAPLogger:
         self.info(f"Performance: {operation}", **extra_data)
 
     def log_migration_progress(
-        self, stage: str, processed: int, total: int, errors: int = 0, **kwargs
-    ):
+        self,
+        stage: str,
+        processed: int,
+        total: int,
+        errors: int = 0,
+        **kwargs,
+    ) -> None:
         """Log migration progress."""
         percentage = (processed / total * 100) if total > 0 else 0
 
@@ -229,8 +258,7 @@ _loggers: dict[str, LDAPLogger] = {}
 
 
 def get_logger(name: str, config: LoggingConfig | None = None) -> LDAPLogger:
-    """
-    Get or create LDAP logger instance.
+    """Get or create LDAP logger instance.
 
     Args:
         name: Logger name
@@ -246,8 +274,7 @@ def get_logger(name: str, config: LoggingConfig | None = None) -> LDAPLogger:
 
 
 def setup_logging(config: LoggingConfig, root_logger_name: str = "ldap") -> LDAPLogger:
-    """
-    Setup logging with specified configuration.
+    """Setup logging with specified configuration.
 
     Args:
         config: Logging configuration
@@ -264,15 +291,18 @@ def setup_logging(config: LoggingConfig, root_logger_name: str = "ldap") -> LDAP
 
 
 class PerformanceTimer:
-    """
-    Context manager for timing operations.
+    """Context manager for timing operations.
 
     Provides convenient timing of operations with automatic logging.
     """
 
     def __init__(
-        self, logger: LDAPLogger, operation: str, auto_log: bool = True, **extra_data
-    ):
+        self,
+        logger: LDAPLogger,
+        operation: str,
+        auto_log: bool = True,
+        **extra_data,
+    ) -> None:
         """Initialize performance timer."""
         self.logger = logger
         self.operation = operation
@@ -286,7 +316,12 @@ class PerformanceTimer:
         self.start_time = datetime.now()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> Any:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: Any,
+    ) -> Any:
         """Stop timing and optionally log."""
         if self.start_time:
             end_time = datetime.now()

@@ -1,21 +1,19 @@
-"""
-Event handling infrastructure for LDAP operations.
+"""Event handling infrastructure for LDAP operations.
 
 Provides event dispatching and handling capabilities for
 domain events across LDAP projects.
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
-
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
-from .domain_events import DomainEvent
-
+from ldap_core_shared.events.domain_events import DomainEvent
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +32,7 @@ class EventHandler(ABC):
 
 
 class EventDispatcher:
-    """
-    Event dispatcher for domain events.
+    """Event dispatcher for domain events.
 
     Manages event handlers and dispatches events to appropriate handlers.
     """
@@ -44,7 +41,7 @@ class EventDispatcher:
         """Initialize event dispatcher."""
         self._handlers: dict[type[DomainEvent], list[EventHandler]] = defaultdict(list)
         self._async_handlers: dict[type[DomainEvent], list[EventHandler]] = defaultdict(
-            list
+            list,
         )
         self._event_queue: asyncio.Queue = asyncio.Queue()
         self._logger = logging.getLogger(__name__)
@@ -53,7 +50,9 @@ class EventDispatcher:
         self._task: asyncio.Task = None
 
     def register_handler(
-        self, handler: EventHandler, async_handler: bool = True
+        self,
+        handler: EventHandler,
+        async_handler: bool = True,
     ) -> None:
         """Register an event handler."""
         for event_type in handler.handled_events:
@@ -64,7 +63,7 @@ class EventDispatcher:
 
             self._logger.debug(
                 f"Registered {'async' if async_handler else 'sync'} handler "
-                f"{handler.__class__.__name__} for event {event_type.__name__}"
+                f"{handler.__class__.__name__} for event {event_type.__name__}",
             )
 
     def unregister_handler(self, handler: EventHandler) -> None:
@@ -114,7 +113,7 @@ class EventDispatcher:
 
         self._logger.debug(
             f"Processed event {event.event_type} with "
-            f"{len(async_handlers)} async and {len(sync_handlers)} sync handlers"
+            f"{len(async_handlers)} async and {len(sync_handlers)} sync handlers",
         )
 
     async def start(self) -> None:
@@ -164,7 +163,7 @@ class EventDispatcher:
     def get_handler_count(self, event_type: type[DomainEvent]) -> int:
         """Get number of handlers for a specific event type."""
         return len(self._async_handlers.get(event_type, [])) + len(
-            self._handlers.get(event_type, [])
+            self._handlers.get(event_type, []),
         )
 
     def get_all_handlers(self) -> dict[str, int]:
@@ -197,7 +196,7 @@ class LoggingEventHandler(EventHandler):
         self.logger.info(
             f"Event: {event.event_type} | "
             f"Source: {event.source} | "
-            f"Time: {event.timestamp.isoformat()}"
+            f"Time: {event.timestamp.isoformat()}",
         )
 
     @property
