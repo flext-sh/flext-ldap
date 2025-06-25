@@ -91,7 +91,8 @@ class FilterExpression(BaseModel):
     def validate_filter_string(cls, v: str) -> str:
         """Validate filter string format."""
         if not v or not v.strip():
-            raise ValueError("Filter string cannot be empty")
+            msg = "Filter string cannot be empty"
+            raise ValueError(msg)
 
         # Basic syntax check - should start and end with parentheses for compound filters
         v = v.strip()
@@ -188,7 +189,8 @@ class FilterEscaping:
 
         # Attribute names should only contain valid LDAP attribute characters
         if not re.match(r"^[a-zA-Z][a-zA-Z0-9\-]*$", attribute):
-            raise ValueError(f"Invalid attribute name: {attribute}")
+            msg = f"Invalid attribute name: {attribute}"
+            raise ValueError(msg)
 
         return attribute
 
@@ -462,7 +464,8 @@ class FilterBuilder:
             ValueError: If no compound filter to close
         """
         if not self._operator_stack:
-            raise ValueError("No compound filter to close")
+            msg = "No compound filter to close"
+            raise ValueError(msg)
 
         operator = self._operator_stack.pop()
 
@@ -482,18 +485,22 @@ class FilterBuilder:
         # Build the compound filter
         if operator == FilterOperator.AND:
             if len(compound_filters) < 2:
-                raise ValueError("AND filter requires at least 2 conditions")
+                msg = "AND filter requires at least 2 conditions"
+                raise ValueError(msg)
             compound_filter = f"(&{''.join(compound_filters)})"
         elif operator == FilterOperator.OR:
             if len(compound_filters) < 2:
-                raise ValueError("OR filter requires at least 2 conditions")
+                msg = "OR filter requires at least 2 conditions"
+                raise ValueError(msg)
             compound_filter = f"(|{''.join(compound_filters)})"
         elif operator == FilterOperator.NOT:
             if len(compound_filters) != 1:
-                raise ValueError("NOT filter requires exactly 1 condition")
+                msg = "NOT filter requires exactly 1 condition"
+                raise ValueError(msg)
             compound_filter = f"(!{compound_filters[0]})"
         else:
-            raise ValueError(f"Unknown compound operator: {operator}")
+            msg = f"Unknown compound operator: {operator}"
+            raise ValueError(msg)
 
         self._add_filter_part(compound_filter)
         return self
@@ -508,10 +515,12 @@ class FilterBuilder:
             ValueError: If builder state is invalid
         """
         if self._operator_stack:
-            raise ValueError("Unclosed compound filters. Call end() to close them.")
+            msg = "Unclosed compound filters. Call end() to close them."
+            raise ValueError(msg)
 
         if not self._filter_stack:
-            raise ValueError("No filter conditions added")
+            msg = "No filter conditions added"
+            raise ValueError(msg)
 
         if len(self._filter_stack) == 1:
             filter_string = self._filter_stack[0]
@@ -595,7 +604,8 @@ def and_filters(*filters: Union[FilterExpression, str]) -> FilterExpression:
         FilterExpression combining all filters with AND
     """
     if len(filters) < 2:
-        raise ValueError("AND requires at least 2 filters")
+        msg = "AND requires at least 2 filters"
+        raise ValueError(msg)
 
     builder = FilterBuilder().and_()
     for filter_expr in filters:
@@ -621,7 +631,8 @@ def or_filters(*filters: Union[FilterExpression, str]) -> FilterExpression:
         FilterExpression combining all filters with OR
     """
     if len(filters) < 2:
-        raise ValueError("OR requires at least 2 filters")
+        msg = "OR requires at least 2 filters"
+        raise ValueError(msg)
 
     builder = FilterBuilder().or_()
     for filter_expr in filters:

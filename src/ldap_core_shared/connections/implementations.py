@@ -351,7 +351,10 @@ class PerformanceTracker(BaseConnectionComponent):
             self._recent_operations = self._recent_operations[-MAX_RECENT_OPERATIONS:]
 
         logger.debug(
-            f"Recorded {operation_type} operation: {duration:.3f}s ({'success' if success else 'error'})",
+            "Recorded %s operation: %.3fs (%s)",
+            operation_type,
+            duration,
+            "success" if success else "error",
         )
 
     def get_metrics(self) -> dict[str, Any]:
@@ -406,7 +409,8 @@ class StandardHealthMonitor(BaseConnectionComponent):
         self._shutdown_event = asyncio.Event()
 
         logger.info(
-            f"🔥 SOLID StandardHealthMonitor initialized (interval: {check_interval}s)",
+            "🔥 SOLID StandardHealthMonitor initialized (interval: %ss)",
+            check_interval,
         )
 
     async def initialize(self) -> None:
@@ -442,7 +446,7 @@ class StandardHealthMonitor(BaseConnectionComponent):
             return True
 
         except Exception as e:
-            logger.warning(f"Health check failed: {e}")
+            logger.warning("Health check failed: %s", e)
             return False
 
     async def start_monitoring(self) -> None:
@@ -480,7 +484,7 @@ class StandardHealthMonitor(BaseConnectionComponent):
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.exception(f"Health monitoring error: {e}")
+                logger.exception("Health monitoring error: %s", e)
 
 
 class StandardSecurityManager(BaseConnectionComponent):

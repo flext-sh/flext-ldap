@@ -38,9 +38,9 @@ References:
 from typing import TYPE_CHECKING
 
 # Import core filter components
-from .builder import FilterBuilder, FilterExpression
-from .parser import FilterParser, ParsedFilter
-from .validator import FilterValidationResult, FilterValidator
+from ldap_core_shared.filters.builder import FilterBuilder, FilterExpression
+from ldap_core_shared.filters.parser import FilterParser, ParsedFilter
+from ldap_core_shared.filters.validator import FilterValidationResult, FilterValidator
 
 __all__ = [
     # Core filter building
@@ -48,8 +48,8 @@ __all__ = [
     "FilterExpression",
     # Filter parsing
     "FilterParser",
-    "ParsedFilter",
+    "FilterValidationResult",
     # Filter validation
     "FilterValidator",
-    "FilterValidationResult",
+    "ParsedFilter",
 ]

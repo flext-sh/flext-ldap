@@ -28,6 +28,9 @@ from typing import TYPE_CHECKING
 from ldap_core_shared.controls.base import LDAPControl
 from ldap_core_shared.controls.paged import PagedResultsControl
 from ldap_core_shared.controls.password_policy import PasswordPolicyControl
+from ldap_core_shared.controls.persistent_search import PersistentSearchControl
+from ldap_core_shared.controls.postread import PostReadControl
+from ldap_core_shared.controls.preread import PreReadControl
 from ldap_core_shared.controls.proxy_auth import ProxyAuthorizationControl
 from ldap_core_shared.controls.sort import ServerSideSortControl
 
@@ -35,6 +38,9 @@ __all__ = [
     "LDAPControl",
     "PagedResultsControl",
     "PasswordPolicyControl",
+    "PersistentSearchControl",
+    "PostReadControl",
+    "PreReadControl",
     "ProxyAuthorizationControl",
     "ServerSideSortControl",
 ]

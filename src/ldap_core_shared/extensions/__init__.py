@@ -31,9 +31,9 @@ from ldap_core_shared.extensions.start_tls import StartTLSExtension
 from ldap_core_shared.extensions.who_am_i import WhoAmIExtension
 
 __all__ = [
+    "CancelExtension",
     "LDAPExtension",
-    "WhoAmIExtension",
     "ModifyPasswordExtension",
     "StartTLSExtension",
-    "CancelExtension",
+    "WhoAmIExtension",
 ]

@@ -178,14 +178,14 @@ class TestLDAPSearchEngine:
         """Create mock connection manager."""
         return MagicMock()
 
-    def test_search_engine_initialization(self, mock_connection: Any_manager) -> None:
+    def test_search_engine_initialization(self, mock_connection_manager) -> None:
         """Test search engine initialization."""
         engine = LDAPSearchEngine(connection_manager=mock_connection_manager)
 
         assert engine.connection_manager == mock_connection_manager
         assert hasattr(engine, "performance_monitor")
 
-    def test_search_engine_basic_search(self, mock_connection: Any_manager) -> None:
+    def test_basic_search_operation(self, mock_connection_manager) -> None:
         """Test basic search operation."""
         engine = LDAPSearchEngine(connection_manager=mock_connection_manager)
 
@@ -211,7 +211,7 @@ class TestLDAPSearchEngine:
             result = engine.search(config)
             assert isinstance(result, (LDAPSearchResult, list))
 
-    def test_search_engine_with_pagination(self, mock_connection: Any_manager) -> None:
+    def test_search_with_pagination(self, mock_connection_manager) -> None:
         """Test search with pagination."""
         engine = LDAPSearchEngine(connection_manager=mock_connection_manager)
 
@@ -235,7 +235,7 @@ class TestLDAPSearchEngine:
             assert result is not None
 
     def test_search_engine_performance_monitoring(
-        self, mock_connection: Any_manager
+        self, mock_connection_manager
     ) -> None:
         """Test search engine performance monitoring."""
         engine = LDAPSearchEngine(connection_manager=mock_connection_manager)
@@ -248,7 +248,7 @@ class TestLDAPSearchEngine:
             stats = engine.get_performance_stats()
             assert isinstance(stats, dict)
 
-    def test_search_engine_filter_building(self, mock_connection: Any_manager) -> None:
+    def test_filter_building(self, mock_connection_manager) -> None:
         """Test search engine filter building capabilities."""
         engine = LDAPSearchEngine(connection_manager=mock_connection_manager)
 
@@ -263,7 +263,7 @@ class TestLDAPSearchEngine:
             assert isinstance(combined_filter, str)
             assert "cn=test*" in combined_filter or "test" in combined_filter
 
-    def test_search_engine_result_caching(self, mock_connection: Any_manager) -> None:
+    def test_search_caching(self, mock_connection_manager) -> None:
         """Test search result caching."""
         engine = LDAPSearchEngine(connection_manager=mock_connection_manager)
 
@@ -283,7 +283,7 @@ class TestLDAPSearchEngine:
                 # Both results should be equivalent
                 assert type(result1) == type(result2)
 
-    def test_search_engine_error_handling(self, mock_connection: Any_manager) -> None:
+    def test_error_handling(self, mock_connection_manager) -> None:
         """Test search engine error handling."""
         engine = LDAPSearchEngine(connection_manager=mock_connection_manager)
 
@@ -308,7 +308,7 @@ class TestLDAPSearchEngine:
                 # Exception handling is acceptable
                 assert "Connection failed" in str(e)
 
-    def test_search_engine_complex_filters(self, mock_connection: Any_manager) -> None:
+    def test_complex_filters(self, mock_connection_manager) -> None:
         """Test search engine with complex LDAP filters."""
         LDAPSearchEngine(connection_manager=mock_connection_manager)
 
@@ -328,9 +328,7 @@ class TestLDAPSearchEngine:
             # Test that complex filters are accepted
             assert config.search_filter == filter_str
 
-    def test_search_engine_attribute_selection(
-        self, mock_connection: Any_manager
-    ) -> None:
+    def test_search_engine_attribute_selection(self, mock_connection_manager) -> None:
         """Test search engine attribute selection."""
         LDAPSearchEngine(connection_manager=mock_connection_manager)
 
@@ -346,6 +344,21 @@ class TestLDAPSearchEngine:
 
 
 # Mock implementations for classes that might not exist yet
+# Mock class for SearchFilter
+class SearchFilter:
+    def __init__(
+        self,
+        attribute: str,
+        operator: str,
+        value: str,
+        logical_operator: str | None = None,
+    ):
+        self.attribute = attribute
+        self.operator = operator
+        self.value = value
+        self.logical_operator = logical_operator
+
+
 try:
     from ldap_core_shared.core.search_engine import SearchConfiguration
 except ImportError:

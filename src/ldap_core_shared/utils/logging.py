@@ -35,6 +35,7 @@ class StructuredFormatter(logging.Formatter):
         if self.include_timestamp:
             timestamp = datetime.fromtimestamp(record.created).isoformat()
             base = f"{timestamp} - {record.name} - {record.levelname} - {record.getMessage()}"
+        else:
             base = f"{record.name} - {record.levelname} - {record.getMessage()}"
 
         # Add structured data if available
@@ -77,6 +78,7 @@ class LDAPLogger:
                 max_file_size_mb: int = 100
                 backup_count: int = 5
                 enable_console: bool = True
+                mask_sensitive_data: bool = True
 
             self.config = BasicLoggingConfig()
         self.logger = logging.getLogger(name)
@@ -188,6 +190,7 @@ class LDAPLogger:
         for key, value in data.items():
             if any(sensitive_key in key.lower() for sensitive_key in sensitive_keys):
                 masked_data[key] = "***MASKED***"
+            else:
                 masked_data[key] = value
 
         return masked_data
@@ -208,6 +211,7 @@ class LDAPLogger:
 
         if success:
             self.info(f"LDAP {operation} successful", **extra_data)
+        else:
             self.error(f"LDAP {operation} failed", **extra_data)
 
     def log_performance(

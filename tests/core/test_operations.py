@@ -24,6 +24,7 @@ Version: 1.0.0-enterprise
 from __future__ import annotations
 
 import time
+from typing import Any
 from unittest.mock import Mock
 from uuid import uuid4
 
@@ -170,7 +171,7 @@ class TestTransactionContext:
 class TestLDAPOperationRequest:
     """Test LDAP operation request validation."""
 
-    def test_valid_add_request(self, data_generator) -> None:
+    def test_valid_add_request(self, data_generator: Any) -> None:
         """Test valid add operation request."""
         request = LDAPOperationRequest(
             operation_type="add",
@@ -183,7 +184,7 @@ class TestLDAPOperationRequest:
         assert request.attributes is not None
         assert "objectClass" in request.attributes
 
-    def test_valid_modify_request(self, data_generator) -> None:
+    def test_valid_modify_request(self, data_generator: Any) -> None:
         """Test valid modify operation request."""
         request = LDAPOperationRequest(
             operation_type="modify",
@@ -195,7 +196,7 @@ class TestLDAPOperationRequest:
         assert request.dn is not None
         assert request.changes is not None
 
-    def test_valid_delete_request(self, data_generator) -> None:
+    def test_valid_delete_request(self, data_generator: Any) -> None:
         """Test valid delete operation request."""
         request = LDAPOperationRequest(
             operation_type="delete",
@@ -207,7 +208,7 @@ class TestLDAPOperationRequest:
         assert request.attributes is None
         assert request.changes is None
 
-    def test_invalid_operation_type(self, data_generator) -> None:
+    def test_invalid_operation_type(self, data_generator: Any) -> None:
         """Test invalid operation type validation."""
         with pytest.raises(ValidationError) as exc_info:
             LDAPOperationRequest(
@@ -226,7 +227,7 @@ class TestLDAPOperationRequest:
             "=test",  # Empty attribute
         ],
     )
-    def test_invalid_dn_validation(self, invalid_dn) -> None:
+    def test_invalid_dn_validation(self, invalid_dn: Any) -> None:
         """Test DN validation with various invalid formats."""
         with pytest.raises(ValidationError) as exc_info:
             LDAPOperationRequest(
@@ -237,7 +238,7 @@ class TestLDAPOperationRequest:
 
         assert "dn" in str(exc_info.value).lower()
 
-    def test_timeout_validation(self, data_generator) -> None:
+    def test_timeout_validation(self, data_generator: Any) -> None:
         """Test timeout parameter validation."""
         # Valid timeout
         request = LDAPOperationRequest(
@@ -266,7 +267,7 @@ class TestLDAPOperationRequest:
                 timeout=500,
             )
 
-    def test_retry_count_validation(self, data_generator) -> None:
+    def test_retry_count_validation(self, data_generator: Any) -> None:
         """Test retry count validation."""
         # Valid retry count
         request = LDAPOperationRequest(
@@ -304,8 +305,8 @@ class TestEnterpriseTransaction:
 
     def test_transaction_initialization(
         self,
-        mock_connection,
-        transaction_context,
+        mock_connection: Any,
+        transaction_context: Any,
     ) -> None:
         """Test transaction initialization."""
         transaction = EnterpriseTransaction(mock_connection, transaction_context)
@@ -318,9 +319,9 @@ class TestEnterpriseTransaction:
 
     def test_add_entry_success(
         self,
-        enterprise_transaction,
-        data_generator,
-        test_assertions,
+        enterprise_transaction: Any,
+        data_generator: Any,
+        test_assertions: Any,
     ) -> None:
         """Test successful entry addition."""
         dn = data_generator.valid_dn()
@@ -344,9 +345,9 @@ class TestEnterpriseTransaction:
 
     def test_add_entry_idempotent(
         self,
-        enterprise_transaction,
-        data_generator,
-        test_assertions,
+        enterprise_transaction: Any,
+        data_generator: Any,
+        test_assertions: Any,
     ) -> None:
         """Test idempotent add operation (entry already exists)."""
         dn = data_generator.valid_dn()
@@ -364,9 +365,9 @@ class TestEnterpriseTransaction:
 
     def test_modify_entry_success(
         self,
-        enterprise_transaction,
-        data_generator,
-        test_assertions,
+        enterprise_transaction: Any,
+        data_generator: Any,
+        test_assertions: Any,
     ) -> None:
         """Test successful entry modification."""
         dn = data_generator.valid_dn()
@@ -393,8 +394,8 @@ class TestEnterpriseTransaction:
 
     def test_modify_nonexistent_entry(
         self,
-        enterprise_transaction,
-        data_generator,
+        enterprise_transaction: Any,
+        data_generator: Any,
     ) -> None:
         """Test modifying non-existent entry."""
         dn = data_generator.valid_dn()
@@ -408,9 +409,9 @@ class TestEnterpriseTransaction:
 
     def test_delete_entry_success(
         self,
-        enterprise_transaction,
-        data_generator,
-        test_assertions,
+        enterprise_transaction: Any,
+        data_generator: Any,
+        test_assertions: Any,
     ) -> None:
         """Test successful entry deletion."""
         dn = data_generator.valid_dn()
@@ -443,9 +444,9 @@ class TestEnterpriseTransaction:
 
     def test_delete_nonexistent_entry(
         self,
-        enterprise_transaction,
-        data_generator,
-        test_assertions,
+        enterprise_transaction: Any,
+        data_generator: Any,
+        test_assertions: Any,
     ) -> None:
         """Test deleting non-existent entry (idempotent)."""
         dn = data_generator.valid_dn()
@@ -456,7 +457,7 @@ class TestEnterpriseTransaction:
         assert "does not exist" in result.message.lower()
         assert result.details["skipped"] is True
 
-    def test_transaction_state_validation(self, enterprise_transaction) -> None:
+    def test_transaction_state_validation(self, enterprise_transaction: Any) -> None:
         """Test transaction state validation."""
         # Test operations on committed transaction
         enterprise_transaction.commit()
@@ -488,7 +489,7 @@ class TestEnterpriseTransaction:
         with pytest.raises(LDAPTransactionError, match="Transaction has expired"):
             transaction.add_entry("cn=test", {"objectClass": ["person"]})
 
-    def test_commit_rollback_behavior(self, enterprise_transaction) -> None:
+    def test_commit_rollback_behavior(self, enterprise_transaction: Any) -> None:
         """Test commit and rollback behavior."""
         # Test normal commit
         assert not enterprise_transaction.is_committed
@@ -537,7 +538,7 @@ class TestEnterpriseTransaction:
         ):
             transaction.commit()
 
-    def test_operations_summary(self, enterprise_transaction, data_generator) -> None:
+    def test_operations_summary(self, enterprise_transaction: Any, data_generator: Any) -> None:
         """Test operations summary generation."""
         # Perform multiple operations
         dn1 = data_generator.valid_dn("cn=user1")
@@ -585,7 +586,7 @@ class TestLDAPOperations:
         with pytest.raises(ValueError, match="Connection is required"):
             LDAPOperations(None)
 
-    def test_transaction_context_manager(self, ldap_operations, data_generator) -> None:
+    def test_transaction_context_manager(self, ldap_operations: Any, data_generator: Any) -> None:
         """Test transaction context manager functionality."""
         dn = data_generator.valid_dn()
         attributes = data_generator.ldap_attributes()
@@ -607,8 +608,8 @@ class TestLDAPOperations:
 
     def test_transaction_rollback_on_error(
         self,
-        ldap_operations,
-        data_generator,
+        ldap_operations: Any,
+        data_generator: Any,
     ) -> None:
         """Test transaction rollback when error occurs."""
         dn = data_generator.valid_dn()
@@ -624,7 +625,7 @@ class TestLDAPOperations:
         assert not tx.is_committed
         assert ldap_operations.current_transaction is None
 
-    def test_nested_transactions_not_supported(self, ldap_operations) -> None:
+    def test_nested_transactions_not_supported(self, ldap_operations: Any) -> None:
         """Test that nested transactions are not supported."""
         with (
             ldap_operations.transaction(),
@@ -638,9 +639,9 @@ class TestLDAPOperations:
 
     def test_execute_request_add(
         self,
-        ldap_operations,
-        valid_operation_request,
-        test_assertions,
+        ldap_operations: Any,
+        valid_operation_request: Any,
+        test_assertions: Any,
     ) -> None:
         """Test executing add operation request."""
         result = ldap_operations.execute_request(valid_operation_request)
@@ -651,9 +652,9 @@ class TestLDAPOperations:
 
     def test_execute_request_modify(
         self,
-        ldap_operations,
-        data_generator,
-        test_assertions,
+        ldap_operations: Any,
+        data_generator: Any,
+        test_assertions: Any,
     ) -> None:
         """Test executing modify operation request."""
         dn = data_generator.valid_dn()
@@ -681,9 +682,9 @@ class TestLDAPOperations:
 
     def test_execute_request_delete(
         self,
-        ldap_operations,
-        data_generator,
-        test_assertions,
+        ldap_operations: Any,
+        data_generator: Any,
+        test_assertions: Any,
     ) -> None:
         """Test executing delete operation request."""
         dn = data_generator.valid_dn()
@@ -709,8 +710,8 @@ class TestLDAPOperations:
 
     def test_execute_request_validation_errors(
         self,
-        ldap_operations,
-        data_generator,
+        ldap_operations: Any,
+        data_generator: Any,
     ) -> None:
         """Test request validation errors."""
         # Test add without attributes

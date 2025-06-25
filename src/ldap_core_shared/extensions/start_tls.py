@@ -48,7 +48,7 @@ References:
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import BaseModel, Field, validator
 
@@ -520,7 +520,7 @@ class TLSUpgradeManager:
 
     def upgrade_connection(
         self,
-        connection,  # Type hint omitted - requires connection manager integration
+        connection: Any,  # Connection type to be defined when integrating with connection manager
         config: Optional[TLSConfiguration] = None,
         retry_on_failure: bool = False,
         fallback_to_insecure: bool = False,

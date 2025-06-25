@@ -326,7 +326,7 @@ class TestLoggingUtils:
             pytest.fail(f"Logging with extra should not raise exceptions: {e}")
 
     @patch("ldap_core_shared.utils.logging.logging")
-    def test_logger_configuration(self, mock_logging) -> None:
+    def test_logger_configuration(self, mock_logging: Any) -> None:
         """Test logger configuration."""
         from ldap_core_shared.utils.logging import get_logger
 

@@ -49,16 +49,16 @@ from ldap_core_shared.vectorized.search_engine import (
 )
 
 __all__ = [
+    "PerformanceBenchmarker",
+    "PredictiveConnectionPool",
     # Core vectorized classes (integrated into main API)
     "VectorizedBulkProcessor",
     "VectorizedLDIFProcessor",
     "VectorizedSearchEngine",
-    "PredictiveConnectionPool",
-    "PerformanceBenchmarker",
+    "create_performance_benchmarker",
+    "create_predictive_pool",
+    "create_vectorized_ldif_processor",
     # Factory functions (for direct instantiation if needed)
     "create_vectorized_processor",
-    "create_vectorized_ldif_processor",
     "create_vectorized_search_engine",
-    "create_predictive_pool",
-    "create_performance_benchmarker",
 ]

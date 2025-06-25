@@ -379,19 +379,19 @@ def transaction_context():
 
 
 @pytest.fixture
-def enterprise_transaction(mock_connection, transaction_context):
+def enterprise_transaction(mock_connection: Any, transaction_context: Any):
     """Provide enterprise transaction for testing."""
     return EnterpriseTransaction(mock_connection, transaction_context)
 
 
 @pytest.fixture
-def ldap_operations(mock_connection):
+def ldap_operations(mock_connection: Any):
     """Provide LDAP operations manager for testing."""
     return LDAPOperations(mock_connection)
 
 
 @pytest.fixture
-def valid_operation_request(data_generator):
+def valid_operation_request(data_generator: Any):
     """Provide valid LDAP operation request for testing."""
     return LDAPOperationRequest(
         operation_type="add",
@@ -401,7 +401,7 @@ def valid_operation_request(data_generator):
 
 
 @pytest.fixture
-def bulk_test_entries(data_generator):
+def bulk_test_entries(data_generator: Any):
     """Provide bulk entries for performance testing."""
     return data_generator.bulk_entries(100)  # 100 entries for tests
 
@@ -440,7 +440,7 @@ def performance_validator():
             return memory_mb <= max_memory_mb
 
         @staticmethod
-        def time_operation(func, *args, **kwargs) -> tuple[Any, float]:
+        def time_operation(func: Any, *args: Any, **kwargs: Any) -> tuple[Any, float]:
             """Time an operation and return result and duration."""
             start_time = time.time()
             result = func(*args, **kwargs)
@@ -522,7 +522,7 @@ def test_assertions():
         "delete",
     ],
 )
-def operation_type(request):
+def operation_type(request: Any):
     """Parametrized fixture for testing different operation types."""
     return request.param
 
@@ -535,7 +535,7 @@ def operation_type(request):
         1000,
     ],
 )
-def bulk_sizes(request):
+def bulk_sizes(request: Any):
     """Parametrized fixture for testing different bulk operation sizes."""
     return request.param
 
@@ -547,7 +547,7 @@ def bulk_sizes(request):
         {"simulate_failures": True, "failure_rate": 0.1},
     ],
 )
-def connection_scenarios(request):
+def connection_scenarios(request: Any):
     """Parametrized fixture for testing different connection scenarios."""
     return MockLDAPConnection(**request.param)
 
@@ -556,7 +556,7 @@ def connection_scenarios(request):
 
 
 @pytest.fixture
-def integration_test_setup(mock_connection, data_generator):
+def integration_test_setup(mock_connection: Any, data_generator: Any):
     """Provide comprehensive setup for integration testing."""
 
     class IntegrationTestSetup:
