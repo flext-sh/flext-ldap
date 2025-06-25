@@ -8,45 +8,45 @@ Este documento é um **DE-PARA** rápido dos RFCs disponíveis em `docs/` para i
 
 ## 🎯 RFCs CRÍTICOS (Implementar PRIMEIRO)
 
-| RFC | Localização | Módulo de Implementação | Descrição |
-|-----|-------------|------------------------|-----------|
-| **4510** | `core-specs/rfc4510.txt` | `core/__init__.py` | **Roadmap** - Visão geral LDAP v3 |
+| RFC      | Localização              | Módulo de Implementação                              | Descrição                              |
+| -------- | ------------------------ | ---------------------------------------------------- | -------------------------------------- |
+| **4510** | `core-specs/rfc4510.txt` | `core/__init__.py`                                   | **Roadmap** - Visão geral LDAP v3      |
 | **4511** | `core-specs/rfc4511.txt` | `core/operations.py`<br>`core/connection_manager.py` | **Protocolo** - Operações LDAP básicas |
-| **4512** | `core-specs/rfc4512.txt` | `domain/models.py`<br>`schema/parser.py` | **Modelos** - Estrutura de dados |
-| **4513** | `core-specs/rfc4513.txt` | `core/security.py` | **Autenticação** - Segurança |
-| **4514** | `core-specs/rfc4514.txt` | `utils/dn_utils.py` | **DN String** - Nomes únicos |
-| **4515** | `core-specs/rfc4515.txt` | `core/search_engine.py`<br>`utils/ldap_helpers.py` | **Filtros** - Busca LDAP |
-| **4517** | `core-specs/rfc4517.txt` | `schema/validator.py` | **Sintaxes** - Validação |
-| **4519** | `core-specs/rfc4519.txt` | `schema/parser.py` | **Schema** - Definições padrão |
-| **2849** | `rfc2849-ldif.txt` | `ldif/*` (todos) | **LDIF** - Formato de dados |
+| **4512** | `core-specs/rfc4512.txt` | `domain/models.py`<br>`schema/parser.py`             | **Modelos** - Estrutura de dados       |
+| **4513** | `core-specs/rfc4513.txt` | `core/security.py`                                   | **Autenticação** - Segurança           |
+| **4514** | `core-specs/rfc4514.txt` | `utils/dn_utils.py`                                  | **DN String** - Nomes únicos           |
+| **4515** | `core-specs/rfc4515.txt` | `core/search_engine.py`<br>`utils/ldap_helpers.py`   | **Filtros** - Busca LDAP               |
+| **4517** | `core-specs/rfc4517.txt` | `schema/validator.py`                                | **Sintaxes** - Validação               |
+| **4519** | `core-specs/rfc4519.txt` | `schema/parser.py`                                   | **Schema** - Definições padrão         |
+| **2849** | `rfc2849-ldif.txt`       | `ldif/*` (todos)                                     | **LDIF** - Formato de dados            |
 
 ---
 
 ## 🔧 RFCs DE CONTROLES E EXTENSÕES
 
-| RFC | Localização | Módulo | Funcionalidade |
-|-----|-------------|--------|----------------|
-| **2696** | `controls-extensions/rfc2696.txt` | `core/search_engine.py` | **Paginação** - Resultados paginados |
-| **2891** | `controls-extensions/rfc2891.txt` | `core/search_engine.py` | **Ordenação** - Sort no servidor |
-| **3062** | `controls-extensions/rfc3062.txt` | `core/security.py` | **Senha** - Modificação de senha |
-| **4533** | `controls-extensions/rfc4533.txt` | `core/operations.py` | **Sincronização** - Replicação |
-| **5805** | `controls-extensions/rfc5805.txt` | `core/operations.py` | **Transações** - Operações atômicas |
-| **4532** | `controls-extensions/rfc4532.txt` | `core/security.py` | **"Who am I?"** - Identificação |
+| RFC      | Localização                       | Módulo                  | Funcionalidade                         |
+| -------- | --------------------------------- | ----------------------- | -------------------------------------- |
+| **2696** | `controls-extensions/rfc2696.txt` | `core/search_engine.py` | **Paginação** - Resultados paginados   |
+| **2891** | `controls-extensions/rfc2891.txt` | `core/search_engine.py` | **Ordenação** - Sort no servidor       |
+| **3062** | `controls-extensions/rfc3062.txt` | `core/security.py`      | **Senha** - Modificação de senha       |
+| **4533** | `controls-extensions/rfc4533.txt` | `core/operations.py`    | **Sincronização** - Replicação         |
+| **5805** | `controls-extensions/rfc5805.txt` | `core/operations.py`    | **Transações** - Operações atômicas    |
+| **4532** | `controls-extensions/rfc4532.txt` | `core/security.py`      | **"Who am I?"** - Identificação        |
 | **3876** | `controls-extensions/rfc3876.txt` | `core/search_engine.py` | **Matched Values** - Filtros avançados |
 
 ---
 
 ## 📋 RFCs DE SCHEMA
 
-| RFC | Localização | Módulo | Schema/Objeto |
-|-----|-------------|--------|---------------|
-| **2247** | `schema/rfc2247.txt` | `utils/dn_utils.py` | **Domínios** - DN baseado em domínio |
-| **2798** | `schema/rfc2798.txt` | `schema/parser.py` | **inetOrgPerson** - Pessoas |
-| **3112** | `schema/rfc3112.txt` | `core/security.py` | **Senhas** - Autenticação |
-| **4523** | `schema/rfc4523.txt` | `schema/parser.py` | **X.509** - Certificados |
-| **4524** | `schema/rfc4524.txt` | `schema/parser.py` | **COSINE** - Esquemas organizacionais |
-| **4530** | `schema/rfc4530.txt` | `domain/models.py` | **entryUUID** - IDs únicos |
-| **5020** | `schema/rfc5020.txt` | `domain/models.py` | **entryDN** - DNs operacionais |
+| RFC      | Localização          | Módulo              | Schema/Objeto                         |
+| -------- | -------------------- | ------------------- | ------------------------------------- |
+| **2247** | `schema/rfc2247.txt` | `utils/dn_utils.py` | **Domínios** - DN baseado em domínio  |
+| **2798** | `schema/rfc2798.txt` | `schema/parser.py`  | **inetOrgPerson** - Pessoas           |
+| **3112** | `schema/rfc3112.txt` | `core/security.py`  | **Senhas** - Autenticação             |
+| **4523** | `schema/rfc4523.txt` | `schema/parser.py`  | **X.509** - Certificados              |
+| **4524** | `schema/rfc4524.txt` | `schema/parser.py`  | **COSINE** - Esquemas organizacionais |
+| **4530** | `schema/rfc4530.txt` | `domain/models.py`  | **entryUUID** - IDs únicos            |
+| **5020** | `schema/rfc5020.txt` | `domain/models.py`  | **entryDN** - DNs operacionais        |
 
 ---
 
@@ -101,7 +101,7 @@ Implementa: Manipulação completa de Distinguished Names
 ### Fase 1 - Base (RFC 4510-4519 + 2849)
 
 1. **RFC 4511** → `core/operations.py` - Operações básicas
-2. **RFC 4512** → `domain/models.py` - Modelos de dados  
+2. **RFC 4512** → `domain/models.py` - Modelos de dados
 3. **RFC 4514** → `utils/dn_utils.py` - Manipulação DN
 4. **RFC 4515** → `core/search_engine.py` - Filtros de busca
 5. **RFC 2849** → `ldif/*` - Processamento LDIF
@@ -132,7 +132,7 @@ Implementa: Manipulação completa de Distinguished Names
 - Validação de filtros de busca
 - Modelos de dados do diretório
 
-### 🟠 ALTA  
+### 🟠 ALTA
 
 - Paginação e ordenação de resultados
 - Transações e operações atômicas
@@ -153,7 +153,7 @@ Implementa: Manipulação completa de Distinguished Names
 ### Compliance
 
 - ✅ 100% RFC 4511 (Protocolo)
-- ✅ 100% RFC 2849 (LDIF)  
+- ✅ 100% RFC 2849 (LDIF)
 - ✅ 95% RFCs de Schema
 - ✅ 80% RFCs de Controles
 
@@ -187,9 +187,9 @@ monitor.generate_compliance_report()
 
 ---
 
-**📁 Total de RFCs Catalogados**: 65+  
-**📍 RFCs Críticos**: 9  
-**🔧 Módulos de Implementação**: 15+  
+**📁 Total de RFCs Catalogados**: 65+
+**📍 RFCs Críticos**: 9
+**🔧 Módulos de Implementação**: 15+
 **🎯 Taxa de Compliance Alvo**: 95%+
 
 ---
@@ -202,4 +202,4 @@ monitor.generate_compliance_report()
 - **Schemas**: `docs/schema/` - Definições de objetos
 - **Informativo**: `docs/informational/` - Guias e boas práticas
 
-**💡 Dica**: Use o arquivo `docs/README.md` para descrições detalhadas de cada RFC e o `docs/RFC_IMPLEMENTATION_MAPPING.md` para mapeamento completo. 
+**💡 Dica**: Use o arquivo `docs/README.md` para descrições detalhadas de cada RFC e o `docs/RFC_IMPLEMENTATION_MAPPING.md` para mapeamento completo.

@@ -3,6 +3,7 @@
 **The async/await foundation that ensures maximum performance and scalability**
 
 ## 📋 Status
+
 **APPROVED** - Critical infrastructure decision
 
 ## 🎯 Context
@@ -12,6 +13,7 @@ Building on [ADR-001: Core Foundation Architecture](001-foundation-architecture.
 ### 🔍 **Current Implementation Analysis**
 
 Our existing codebase shows:
+
 - ✅ **Good async foundation**: Basic async patterns in place
 - ✅ **Performance monitoring**: `PerformanceMonitor` with async tracking
 - ✅ **Result pattern**: `LDAPOperationResult` for consistent error handling
@@ -20,6 +22,7 @@ Our existing codebase shows:
 ### 🏆 **Best Practices from Research**
 
 From analyzing 57+ implementations, the winning async patterns are:
+
 - **Async-First**: All operations async by default, sync wrappers available
 - **Connection Pooling**: Async connection pool management
 - **Streaming Operations**: Memory-efficient async iteration
@@ -70,30 +73,30 @@ from contextlib import asynccontextmanager
 
 class AsyncConnection(ABC):
     """Base async connection interface."""
-    
+
     @abstractmethod
     async def connect(self) -> None:
         """Establish connection asynchronously."""
-    
+
     @abstractmethod
     async def disconnect(self) -> None:
         """Close connection gracefully."""
-    
+
     @abstractmethod
     async def is_connected(self) -> bool:
         """Check connection status."""
-    
+
     @abstractmethod
-    async def search(self, 
-                    base_dn: str, 
+    async def search(self,
+                    base_dn: str,
                     filter_query: str,
                     attributes: List[str] = None) -> AsyncIterator[LDAPEntry]:
         """Perform async search with streaming results."""
 
 class AsyncConnectionPool:
     """High-performance async connection pool."""
-    
-    def __init__(self, 
+
+    def __init__(self,
                  server_urls: List[str],
                  min_size: int = 5,
                  max_size: int = 50,
@@ -107,7 +110,7 @@ class AsyncConnectionPool:
         self._created_connections = 0
         self._health_check_task: asyncio.Task = None
         self._lock = asyncio.Lock()
-    
+
     async def start(self) -> None:
         """Initialize pool with minimum connections."""
         async with self._lock:
@@ -116,10 +119,10 @@ class AsyncConnectionPool:
                 conn = await self._create_connection()
                 await self._pool.put(conn)
                 self._created_connections += 1
-            
+
             # Start health check task
             self._health_check_task = asyncio.create_task(self._health_check_loop())
-    
+
     async def stop(self) -> None:
         """Shutdown pool gracefully."""
         if self._health_check_task:
@@ -128,7 +131,7 @@ class AsyncConnectionPool:
                 await self._health_check_task
             except asyncio.CancelledError:
                 pass
-        
+
         # Close all connections
         while not self._pool.empty():
             try:
@@ -136,7 +139,7 @@ class AsyncConnectionPool:
                 await conn.disconnect()
             except asyncio.QueueEmpty:
                 break
-    
+
     @asynccontextmanager
     async def acquire(self) -> AsyncContextManager[AsyncConnection]:
         """Acquire connection from pool with timeout."""
@@ -145,7 +148,7 @@ class AsyncConnectionPool:
             # Try to get existing connection
             try:
                 conn = await asyncio.wait_for(
-                    self._pool.get(), 
+                    self._pool.get(),
                     timeout=self._acquire_timeout
                 )
             except asyncio.TimeoutError:
@@ -156,13 +159,13 @@ class AsyncConnectionPool:
                         self._created_connections += 1
                     else:
                         raise ConnectionPoolExhausted("Pool at maximum capacity")
-            
+
             # Verify connection health
             if not await conn.is_connected():
                 await conn.connect()
-            
+
             yield conn
-            
+
         finally:
             if conn:
                 # Return connection to pool
@@ -173,7 +176,7 @@ class AsyncConnectionPool:
                     await conn.disconnect()
                     async with self._lock:
                         self._created_connections -= 1
-    
+
     async def _create_connection(self) -> AsyncConnection:
         """Create new connection with load balancing."""
         # Round-robin server selection
@@ -181,7 +184,7 @@ class AsyncConnectionPool:
         conn = AsyncLDAPConnection(server_url)
         await conn.connect()
         return conn
-    
+
     async def _health_check_loop(self) -> None:
         """Periodic health check for pooled connections."""
         while True:
@@ -192,11 +195,11 @@ class AsyncConnectionPool:
                 break
             except Exception as e:
                 logger.warning(f"Health check failed: {e}")
-    
+
     async def _perform_health_checks(self) -> None:
         """Check health of all pooled connections."""
         unhealthy_connections = []
-        
+
         # Extract all connections for health check
         connections_to_check = []
         while not self._pool.empty():
@@ -205,7 +208,7 @@ class AsyncConnectionPool:
                 connections_to_check.append(conn)
             except asyncio.QueueEmpty:
                 break
-        
+
         # Check each connection
         for conn in connections_to_check:
             try:
@@ -216,14 +219,14 @@ class AsyncConnectionPool:
                     unhealthy_connections.append(conn)
             except Exception:
                 unhealthy_connections.append(conn)
-        
+
         # Replace unhealthy connections
         for conn in unhealthy_connections:
             try:
                 await conn.disconnect()
             except Exception:
                 pass
-            
+
             # Create replacement
             try:
                 new_conn = await self._create_connection()
@@ -239,12 +242,12 @@ class AsyncConnectionPool:
 ```python
 class AsyncLDAPOperations:
     """Async LDAP operations with streaming and batching."""
-    
+
     def __init__(self, connection_pool: AsyncConnectionPool):
         self._pool = connection_pool
         self._semaphore = asyncio.Semaphore(10)  # Control concurrency
-    
-    async def search(self, 
+
+    async def search(self,
                     base_dn: str,
                     filter_query: str,
                     attributes: List[str] = None,
@@ -254,74 +257,74 @@ class AsyncLDAPOperations:
         async with self._pool.acquire() as conn:
             async for entry in conn.search(base_dn, filter_query, attributes, scope):
                 yield entry
-                
+
                 if size_limit > 0 and entry.sequence_number >= size_limit:
                     break
-    
-    async def bulk_add(self, 
+
+    async def bulk_add(self,
                       entries: List[LDAPEntry],
                       batch_size: int = 100,
                       max_concurrent: int = 5) -> BulkOperationResult:
         """Async bulk add with controlled concurrency."""
         semaphore = asyncio.Semaphore(max_concurrent)
         results = []
-        
+
         # Process in batches
         for i in range(0, len(entries), batch_size):
             batch = entries[i:i + batch_size]
             batch_tasks = [
-                self._add_with_semaphore(entry, semaphore) 
+                self._add_with_semaphore(entry, semaphore)
                 for entry in batch
             ]
-            
+
             batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
             results.extend(batch_results)
-        
+
         return BulkOperationResult(
             total_operations=len(entries),
             successful_operations=sum(1 for r in results if not isinstance(r, Exception)),
             failed_operations=sum(1 for r in results if isinstance(r, Exception)),
             results=results
         )
-    
-    async def _add_with_semaphore(self, 
-                                 entry: LDAPEntry, 
+
+    async def _add_with_semaphore(self,
+                                 entry: LDAPEntry,
                                  semaphore: asyncio.Semaphore) -> OperationResult:
         """Add entry with semaphore for concurrency control."""
         async with semaphore:
             async with self._pool.acquire() as conn:
                 return await conn.add(entry.dn, entry.attributes)
-    
+
     async def stream_search_results(self,
                                    base_dn: str,
                                    filter_query: str,
                                    chunk_size: int = 1000) -> AsyncIterator[List[LDAPEntry]]:
         """Stream search results in chunks for memory efficiency."""
         chunk = []
-        
+
         async for entry in self.search(base_dn, filter_query):
             chunk.append(entry)
-            
+
             if len(chunk) >= chunk_size:
                 yield chunk
                 chunk = []
-        
+
         # Yield remaining entries
         if chunk:
             yield chunk
-    
+
     async def parallel_search(self,
                             search_requests: List[SearchRequest]) -> List[SearchResult]:
         """Execute multiple searches in parallel."""
         semaphore = asyncio.Semaphore(5)  # Limit concurrent searches
-        
+
         tasks = [
             self._search_with_semaphore(request, semaphore)
             for request in search_requests
         ]
-        
+
         return await asyncio.gather(*tasks, return_exceptions=True)
-    
+
     async def _search_with_semaphore(self,
                                    request: SearchRequest,
                                    semaphore: asyncio.Semaphore) -> SearchResult:
@@ -334,7 +337,7 @@ class AsyncLDAPOperations:
                 request.attributes
             ):
                 entries.append(entry)
-            
+
             return SearchResult(
                 base_dn=request.base_dn,
                 filter_query=request.filter_query,
@@ -348,26 +351,26 @@ class AsyncLDAPOperations:
 ```python
 class AsyncLDIFProcessor:
     """Async LDIF processing for large files."""
-    
-    async def stream_parse_file(self, 
+
+    async def stream_parse_file(self,
                                file_path: Path,
                                chunk_size: int = 1000) -> AsyncIterator[List[LDIFEntry]]:
         """Stream parse LDIF file asynchronously."""
         chunk = []
-        
+
         async with aiofiles.open(file_path, 'r', encoding='utf-8') as f:
             async for line in f:
                 # Parse line and accumulate entries
                 if entry := await self._parse_line_async(line):
                     chunk.append(entry)
-                    
+
                     if len(chunk) >= chunk_size:
                         yield chunk
                         chunk = []
-        
+
         if chunk:
             yield chunk
-    
+
     async def bulk_import(self,
                          file_path: Path,
                          connection_pool: AsyncConnectionPool,
@@ -376,26 +379,26 @@ class AsyncLDIFProcessor:
         total_entries = 0
         successful_imports = 0
         failed_imports = 0
-        
+
         async for chunk in self.stream_parse_file(file_path, batch_size):
             # Process chunk in parallel
             tasks = []
             for entry in chunk:
                 task = self._import_entry_async(entry, connection_pool)
                 tasks.append(task)
-            
+
             results = await asyncio.gather(*tasks, return_exceptions=True)
-            
+
             total_entries += len(chunk)
             successful_imports += sum(1 for r in results if not isinstance(r, Exception))
             failed_imports += sum(1 for r in results if isinstance(r, Exception))
-        
+
         return ImportResult(
             total_entries=total_entries,
             successful_imports=successful_imports,
             failed_imports=failed_imports
         )
-    
+
     async def _import_entry_async(self,
                                  entry: LDIFEntry,
                                  pool: AsyncConnectionPool) -> OperationResult:
@@ -409,31 +412,31 @@ class AsyncLDIFProcessor:
 ```python
 class AsyncPerformanceMonitor:
     """Async performance monitoring with real-time metrics."""
-    
+
     def __init__(self):
         self._metrics: Dict[str, List[float]] = defaultdict(list)
         self._active_operations: Dict[str, datetime] = {}
         self._lock = asyncio.Lock()
-    
+
     @asynccontextmanager
     async def track_operation(self, operation_name: str):
         """Track async operation performance."""
         start_time = time.time()
         operation_id = f"{operation_name}_{asyncio.current_task().get_name()}"
-        
+
         async with self._lock:
             self._active_operations[operation_id] = datetime.now()
-        
+
         try:
             yield
         finally:
             end_time = time.time()
             duration = end_time - start_time
-            
+
             async with self._lock:
                 self._metrics[operation_name].append(duration)
                 self._active_operations.pop(operation_id, None)
-    
+
     async def get_realtime_stats(self) -> PerformanceStats:
         """Get real-time performance statistics."""
         async with self._lock:
@@ -443,7 +446,7 @@ class AsyncPerformanceMonitor:
                 operations_per_second=self._calculate_ops_per_second(),
                 current_load=len(self._active_operations)
             )
-    
+
     async def export_metrics_async(self) -> Dict[str, Any]:
         """Export metrics asynchronously."""
         async with self._lock:
@@ -459,32 +462,32 @@ class AsyncPerformanceMonitor:
 ```python
 class SyncWrapper:
     """Sync wrapper for async operations."""
-    
+
     def __init__(self, async_operations: AsyncLDAPOperations):
         self._async_ops = async_operations
         self._loop = None
-    
+
     def search(self, base_dn: str, filter_query: str, **kwargs) -> List[LDAPEntry]:
         """Sync wrapper for async search."""
         return self._run_async(self._collect_search_results(base_dn, filter_query, **kwargs))
-    
+
     def bulk_add(self, entries: List[LDAPEntry], **kwargs) -> BulkOperationResult:
         """Sync wrapper for async bulk add."""
         return self._run_async(self._async_ops.bulk_add(entries, **kwargs))
-    
+
     async def _collect_search_results(self, base_dn: str, filter_query: str, **kwargs) -> List[LDAPEntry]:
         """Collect all async search results."""
         results = []
         async for entry in self._async_ops.search(base_dn, filter_query, **kwargs):
             results.append(entry)
         return results
-    
+
     def _run_async(self, coro):
         """Run async coroutine in sync context."""
         if self._loop is None or self._loop.is_closed():
             self._loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self._loop)
-        
+
         return self._loop.run_until_complete(coro)
 ```
 
@@ -516,6 +519,7 @@ class SyncWrapper:
 ## 🚀 Implementation Plan
 
 ### 📅 **Phase 1: Core Async Infrastructure (Week 1)**
+
 ```python
 Foundation_Tasks = [
     "✅ Implement AsyncConnection base class",
@@ -527,6 +531,7 @@ Foundation_Tasks = [
 ```
 
 ### 📅 **Phase 2: Advanced Async Features (Week 2)**
+
 ```python
 Advanced_Tasks = [
     "✅ Implement async streaming operations",
@@ -538,6 +543,7 @@ Advanced_Tasks = [
 ```
 
 ### 📅 **Phase 3: Integration and Optimization (Week 3)**
+
 ```python
 Integration_Tasks = [
     "✅ Integrate with foundation architecture from ADR-001",
@@ -580,7 +586,7 @@ Async_Performance_Targets = {
 
 **🚀 This async-first design decision establishes the performance foundation for the ultimate Python LDAP library.** Every operation benefits from async patterns while maintaining compatibility for existing sync code.
 
-**Decision Maker**: Architecture Team  
-**Date**: 2025-06-24  
-**Status**: ✅ APPROVED  
+**Decision Maker**: Architecture Team
+**Date**: 2025-06-24
+**Status**: ✅ APPROVED
 **Next Review**: Post Phase 1 implementation validation

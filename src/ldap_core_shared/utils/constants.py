@@ -10,7 +10,7 @@ Architecture:
 
 Constants Categories:
     - Connection: LDAP connection defaults and limits
-    - Performance: Pool sizes, timeouts, and thresholds  
+    - Performance: Pool sizes, timeouts, and thresholds
     - Protocol: LDAP protocol constants and supported values
     - Security: Encryption and authentication defaults
     - Operations: Search limits, batch sizes, and intervals
@@ -48,6 +48,11 @@ LDAP_SCOPES = {
     "SUBTREE": "subtree",
 }
 
+# LDAP Search Scope Constants (for import compatibility)
+BASE = "base"
+ONELEVEL = "onelevel"
+SUBTREE = "subtree"
+
 # LDAP Authentication Methods
 LDAP_AUTH_METHODS = {
     "ANONYMOUS": "anonymous",
@@ -67,6 +72,7 @@ SUPPORTED_PROTOCOLS = {
 MAX_ERROR_RETRIES = 3
 ERROR_COOLDOWN_SECONDS = 5
 FAILURE_RATE_THRESHOLD = 0.1  # 10%
+LDAP_FAILURE_RATE_THRESHOLD = 0.1  # 10% (alias for compatibility)
 CIRCUIT_BREAKER_THRESHOLD = 5
 
 # Memory and Resource Limits
@@ -81,6 +87,8 @@ SSH_LOCAL_PORT_RANGE = (20000, 30000)
 
 # Performance Thresholds (A+ Grade Targets)
 TARGET_OPERATIONS_PER_SECOND = 12000
+TARGET_OPERATIONS_PER_SECOND_A_GRADE = 8000
+TARGET_OPERATIONS_PER_SECOND_B_GRADE = 4000
 TARGET_CONNECTION_REUSE_RATE = 0.95  # 95%
 TARGET_POOL_EFFICIENCY_MS = 10  # <10ms connection acquisition
 TARGET_SUCCESS_RATE = 0.99  # 99%

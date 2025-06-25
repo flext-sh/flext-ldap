@@ -12,16 +12,16 @@
 
 **Pick your language and start coding immediately:**
 
-| Language | ⏱️ **Setup Time** | 🛠️ **Library** | 📋 **Quick Example** |
-|----------|:----------------|:---------------|:---------------------|
-| 🐍 **Python** | 2 minutes | ldap3 | [Jump to Python](#-python-fastest-start) |
-| ☕ **Java** | 5 minutes | Apache LDAP API | [Jump to Java](#-java-enterprise-ready) |
-| 🦀 **Rust** | 3 minutes | ldap3 | [Jump to Rust](#-rust-safe--fast) |
-| 🌐 **Node.js** | 2 minutes | ldapjs | [Jump to Node.js](#-nodejs-web-ready) |
-| 💎 **Ruby** | 3 minutes | net-ldap | [Jump to Ruby](#-ruby-elegant--simple) |
-| 🐹 **Go** | 3 minutes | go-ldap | [Jump to Go](#-go-concurrent--efficient) |
-| 🔷 **C#** | 4 minutes | DirectoryServices | [Jump to C#](#-c-net-integration) |
-| 🐘 **PHP** | 2 minutes | ldap extension | [Jump to PHP](#-php-web-development) |
+| Language       | ⏱️ **Setup Time** | 🛠️ **Library**    | 📋 **Quick Example**                     |
+| -------------- | :---------------- | :---------------- | :--------------------------------------- |
+| 🐍 **Python**  | 2 minutes         | ldap3             | [Jump to Python](#-python-fastest-start) |
+| ☕ **Java**    | 5 minutes         | Apache LDAP API   | [Jump to Java](#-java-enterprise-ready)  |
+| 🦀 **Rust**    | 3 minutes         | ldap3             | [Jump to Rust](#-rust-safe--fast)        |
+| 🌐 **Node.js** | 2 minutes         | ldapjs            | [Jump to Node.js](#-nodejs-web-ready)    |
+| 💎 **Ruby**    | 3 minutes         | net-ldap          | [Jump to Ruby](#-ruby-elegant--simple)   |
+| 🐹 **Go**      | 3 minutes         | go-ldap           | [Jump to Go](#-go-concurrent--efficient) |
+| 🔷 **C#**      | 4 minutes         | DirectoryServices | [Jump to C#](#-c-net-integration)        |
+| 🐘 **PHP**     | 2 minutes         | ldap extension    | [Jump to PHP](#-php-web-development)     |
 
 **🚀 Just want to test LDAP?** → [Test Server Setup](#-instant-test-server)
 
@@ -30,6 +30,7 @@
 **Need a test LDAP server? Get one running in 30 seconds:**
 
 ### 🐳 **Docker Approach (Recommended)**
+
 ```bash
 # Quick OpenLDAP server
 docker run -p 389:389 -p 636:636 \
@@ -43,6 +44,7 @@ ldapsearch -x -H ldap://localhost -b dc=test,dc=com -D cn=admin,dc=test,dc=com -
 ```
 
 ### 🦀 **Modern Rust Server (LLDAP)**
+
 ```bash
 # Lightweight, modern server with web UI
 docker run -p 3890:3890 -p 17170:17170 \
@@ -56,6 +58,7 @@ docker run -p 3890:3890 -p 17170:17170 \
 ```
 
 ### 🌐 **Online Test Server**
+
 ```
 Host: ldap.forumsys.com
 Port: 389
@@ -69,11 +72,13 @@ Base DN: dc=example,dc=com
 **The most popular LDAP library - production ready in 2 minutes:**
 
 ### 📦 **Installation**
+
 ```bash
 pip install ldap3
 ```
 
 ### 🚀 **Basic Connection & Search**
+
 ```python
 from ldap3 import Server, Connection, ALL
 
@@ -84,16 +89,17 @@ conn = Connection(server, 'cn=read-only-admin,dc=example,dc=com', 'password')
 if conn.bind():
     # Search for all people
     conn.search('dc=example,dc=com', '(objectclass=person)', attributes=['cn', 'mail'])
-    
+
     for entry in conn.entries:
         print(f"Name: {entry.cn}, Email: {entry.mail}")
-    
+
     conn.unbind()
 else:
     print("Connection failed")
 ```
 
 ### 🔧 **Advanced Operations**
+
 ```python
 from ldap3 import Server, Connection, MODIFY_REPLACE
 
@@ -102,21 +108,22 @@ conn = Connection(server, 'cn=admin,dc=test,dc=com', 'admin123')
 
 if conn.bind():
     # Add new user
-    conn.add('cn=john,ou=people,dc=test,dc=com', 
-             ['inetOrgPerson'], 
+    conn.add('cn=john,ou=people,dc=test,dc=com',
+             ['inetOrgPerson'],
              {'cn': 'John Doe', 'sn': 'Doe', 'mail': 'john@test.com'})
-    
+
     # Modify user
-    conn.modify('cn=john,ou=people,dc=test,dc=com', 
+    conn.modify('cn=john,ou=people,dc=test,dc=com',
                 {'mail': [(MODIFY_REPLACE, ['john.doe@test.com'])]})
-    
+
     # Delete user
     conn.delete('cn=john,ou=people,dc=test,dc=com')
-    
+
     conn.unbind()
 ```
 
 ### 📚 **Python Resources**
+
 - **📖 [Official Docs](reference/ldap3-python-client/README.rst)** - Complete documentation
 - **🧪 [Tutorial Examples](reference/ldap3-python-client/)** - Step-by-step examples
 - **🔧 [Production Config](reference/ldap3-python-client/)** - Enterprise setup
@@ -126,6 +133,7 @@ if conn.bind():
 **Professional Java LDAP development with Apache LDAP API:**
 
 ### 📦 **Maven Setup**
+
 ```xml
 <dependency>
     <groupId>org.apache.directory.api</groupId>
@@ -135,6 +143,7 @@ if conn.bind():
 ```
 
 ### 🚀 **Basic Connection & Search**
+
 ```java
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.ldap.client.api.*;
@@ -144,28 +153,29 @@ public class LdapQuickStart {
         // Connect to server
         LdapConnection connection = new LdapNetworkConnection("ldap.forumsys.com", 389);
         connection.bind("cn=read-only-admin,dc=example,dc=com", "password");
-        
+
         // Search for people
         SearchRequest searchRequest = new SearchRequestImpl();
         searchRequest.setBase("dc=example,dc=com");
         searchRequest.setFilter("(objectclass=person)");
         searchRequest.addAttributes("cn", "mail");
         searchRequest.setScope(SearchScope.SUBTREE);
-        
+
         SearchCursor searchCursor = connection.search(searchRequest);
-        
+
         while (searchCursor.next()) {
             SearchResultEntry entry = searchCursor.getEntry();
-            System.out.println("Name: " + entry.get("cn").getString() + 
+            System.out.println("Name: " + entry.get("cn").getString() +
                              ", Email: " + entry.get("mail").getString());
         }
-        
+
         connection.close();
     }
 }
 ```
 
 ### 🔧 **Advanced Operations**
+
 ```java
 import org.apache.directory.api.ldap.model.entry.*;
 
@@ -188,6 +198,7 @@ connection.delete("cn=john,ou=people,dc=test,dc=com");
 ```
 
 ### 📚 **Java Resources**
+
 - **📖 [Apache LDAP API Docs](reference/apache-ldap-api/)** - Complete API reference
 - **🏢 [Enterprise Examples](reference/apache-ldap-api/)** - Production patterns
 - **🛠️ [Development Setup](reference/apache-directory-studio-source/)** - IDE integration
@@ -197,6 +208,7 @@ connection.delete("cn=john,ou=people,dc=test,dc=com");
 **Modern, memory-safe LDAP development:**
 
 ### 📦 **Cargo Setup**
+
 ```toml
 [dependencies]
 ldap3 = "0.11"
@@ -204,6 +216,7 @@ tokio = { version = "1.0", features = ["full"] }
 ```
 
 ### 🚀 **Basic Connection & Search**
+
 ```rust
 use ldap3::{LdapConn, Scope, SearchEntry};
 
@@ -212,7 +225,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Connect to server
     let mut ldap = LdapConn::new("ldap://ldap.forumsys.com:389")?;
     ldap.simple_bind("cn=read-only-admin,dc=example,dc=com", "password")?;
-    
+
     // Search for people
     let (rs, _res) = ldap.search(
         "dc=example,dc=com",
@@ -220,20 +233,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "(objectclass=person)",
         vec!["cn", "mail"]
     )?.success()?;
-    
+
     for entry in rs {
         let entry = SearchEntry::construct(entry);
-        println!("Name: {:?}, Email: {:?}", 
-                entry.attrs.get("cn"), 
+        println!("Name: {:?}, Email: {:?}",
+                entry.attrs.get("cn"),
                 entry.attrs.get("mail"));
     }
-    
+
     ldap.unbind()?;
     Ok(())
 }
 ```
 
 ### 📚 **Rust Resources**
+
 - **📖 [LLDAP Server](reference/lldap-light-implementation/)** - Modern Rust server
 - **🦀 [Rust LDAP Crate](https://crates.io/crates/ldap3)** - Library documentation
 
@@ -242,43 +256,45 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 **JavaScript/TypeScript LDAP for web applications:**
 
 ### 📦 **Installation**
+
 ```bash
 npm install ldapjs
 ```
 
 ### 🚀 **Basic Connection & Search**
+
 ```javascript
-const ldap = require('ldapjs');
+const ldap = require("ldapjs");
 
 // Connect to server
 const client = ldap.createClient({
-  url: 'ldap://ldap.forumsys.com:389'
+  url: "ldap://ldap.forumsys.com:389",
 });
 
-client.bind('cn=read-only-admin,dc=example,dc=com', 'password', (err) => {
+client.bind("cn=read-only-admin,dc=example,dc=com", "password", (err) => {
   if (err) {
-    console.error('Bind failed:', err);
+    console.error("Bind failed:", err);
     return;
   }
-  
+
   // Search for people
   const opts = {
-    filter: '(objectclass=person)',
-    scope: 'sub',
-    attributes: ['cn', 'mail']
+    filter: "(objectclass=person)",
+    scope: "sub",
+    attributes: ["cn", "mail"],
   };
-  
-  client.search('dc=example,dc=com', opts, (err, res) => {
+
+  client.search("dc=example,dc=com", opts, (err, res) => {
     if (err) {
-      console.error('Search failed:', err);
+      console.error("Search failed:", err);
       return;
     }
-    
-    res.on('searchEntry', (entry) => {
-      console.log('Name:', entry.object.cn, 'Email:', entry.object.mail);
+
+    res.on("searchEntry", (entry) => {
+      console.log("Name:", entry.object.cn, "Email:", entry.object.mail);
     });
-    
-    res.on('end', () => {
+
+    res.on("end", () => {
       client.unbind();
     });
   });
@@ -286,27 +302,28 @@ client.bind('cn=read-only-admin,dc=example,dc=com', 'password', (err) => {
 ```
 
 ### 🔧 **Modern Async/Await Version**
+
 ```javascript
-const ldap = require('ldapjs');
-const { promisify } = require('util');
+const ldap = require("ldapjs");
+const { promisify } = require("util");
 
 class LdapClient {
   constructor(url) {
     this.client = ldap.createClient({ url });
     this.bind = promisify(this.client.bind.bind(this.client));
   }
-  
+
   async search(base, filter, attributes = []) {
     return new Promise((resolve, reject) => {
-      const opts = { filter, scope: 'sub', attributes };
+      const opts = { filter, scope: "sub", attributes };
       const results = [];
-      
+
       this.client.search(base, opts, (err, res) => {
         if (err) return reject(err);
-        
-        res.on('searchEntry', (entry) => results.push(entry.object));
-        res.on('end', () => resolve(results));
-        res.on('error', reject);
+
+        res.on("searchEntry", (entry) => results.push(entry.object));
+        res.on("end", () => resolve(results));
+        res.on("error", reject);
       });
     });
   }
@@ -314,15 +331,22 @@ class LdapClient {
 
 // Usage
 async function example() {
-  const client = new LdapClient('ldap://ldap.forumsys.com:389');
-  await client.bind('cn=read-only-admin,dc=example,dc=com', 'password');
-  
-  const people = await client.search('dc=example,dc=com', '(objectclass=person)', ['cn', 'mail']);
-  people.forEach(person => console.log(`Name: ${person.cn}, Email: ${person.mail}`));
+  const client = new LdapClient("ldap://ldap.forumsys.com:389");
+  await client.bind("cn=read-only-admin,dc=example,dc=com", "password");
+
+  const people = await client.search(
+    "dc=example,dc=com",
+    "(objectclass=person)",
+    ["cn", "mail"],
+  );
+  people.forEach((person) =>
+    console.log(`Name: ${person.cn}, Email: ${person.mail}`),
+  );
 }
 ```
 
 ### 📚 **Node.js Resources**
+
 - **📖 [ldapjs Documentation](reference/nodejs-ldapjs/)** - Complete API reference
 - **🌐 [Modern Web UI](reference/ldap-ui-minimalist-web/)** - Vue.js LDAP interface
 
@@ -331,11 +355,13 @@ async function example() {
 **Beautiful Ruby LDAP code with net-ldap:**
 
 ### 📦 **Installation**
+
 ```bash
 gem install net-ldap
 ```
 
 ### 🚀 **Basic Connection & Search**
+
 ```ruby
 require 'net/ldap'
 
@@ -363,6 +389,7 @@ end
 ```
 
 ### 🔧 **Advanced Operations**
+
 ```ruby
 # Add new user
 attributes = {
@@ -384,6 +411,7 @@ ldap.delete(dn: 'cn=john,ou=people,dc=test,dc=com')
 ```
 
 ### 📚 **Ruby Resources**
+
 - **📖 [net-ldap Documentation](reference/ruby-ldap-source/)** - Complete gem documentation
 
 ## 🐹 Go - Concurrent & Efficient
@@ -391,12 +419,14 @@ ldap.delete(dn: 'cn=john,ou=people,dc=test,dc=com')
 **High-performance Go LDAP applications:**
 
 ### 📦 **Installation**
+
 ```bash
 go mod init ldap-example
 go get github.com/go-ldap/ldap/v3
 ```
 
 ### 🚀 **Basic Connection & Search**
+
 ```go
 package main
 
@@ -423,7 +453,7 @@ func main() {
     // Search for people
     searchRequest := ldap.NewSearchRequest(
         "dc=example,dc=com",
-        ldap.ScopeWholeSubtree, 
+        ldap.ScopeWholeSubtree,
         ldap.NeverDerefAliases,
         0, 0, false,
         "(objectclass=person)",
@@ -437,14 +467,15 @@ func main() {
     }
 
     for _, entry := range sr.Entries {
-        fmt.Printf("Name: %s, Email: %s\n", 
-                  entry.GetAttributeValue("cn"), 
+        fmt.Printf("Name: %s, Email: %s\n",
+                  entry.GetAttributeValue("cn"),
                   entry.GetAttributeValue("mail"))
     }
 }
 ```
 
 ### 📚 **Go Resources**
+
 - **📖 [go-ldap Documentation](reference/go-ldap-source/)** - Complete package docs
 
 ## 🔷 C# - .NET Integration
@@ -452,6 +483,7 @@ func main() {
 **Native .NET LDAP development:**
 
 ### 🚀 **Basic Connection & Search**
+
 ```csharp
 using System;
 using System.DirectoryServices;
@@ -461,15 +493,15 @@ class Program
     static void Main()
     {
         // Connect to server
-        using (var entry = new DirectoryEntry("LDAP://ldap.forumsys.com/dc=example,dc=com", 
-                                              "cn=read-only-admin,dc=example,dc=com", 
+        using (var entry = new DirectoryEntry("LDAP://ldap.forumsys.com/dc=example,dc=com",
+                                              "cn=read-only-admin,dc=example,dc=com",
                                               "password"))
         {
             using (var searcher = new DirectorySearcher(entry))
             {
                 searcher.Filter = "(objectclass=person)";
                 searcher.PropertiesToLoad.AddRange(new[] { "cn", "mail" });
-                
+
                 foreach (SearchResult result in searcher.FindAll())
                 {
                     var name = result.Properties["cn"][0]?.ToString();
@@ -483,6 +515,7 @@ class Program
 ```
 
 ### 📚 **C# Resources**
+
 - **📖 [.NET Directory Services](reference/dotnet-directory-services/)** - Microsoft documentation
 
 ## 🐘 PHP - Web Development
@@ -490,6 +523,7 @@ class Program
 **PHP LDAP for web applications:**
 
 ### 🚀 **Basic Connection & Search**
+
 ```php
 <?php
 // Connect to server
@@ -503,7 +537,7 @@ if ($bind) {
     // Search for people
     $search = ldap_search($ldap, "dc=example,dc=com", "(objectclass=person)", ["cn", "mail"]);
     $entries = ldap_get_entries($ldap, $search);
-    
+
     for ($i = 0; $i < $entries["count"]; $i++) {
         echo "Name: " . $entries[$i]["cn"][0] . ", Email: " . $entries[$i]["mail"][0] . "\n";
     }
@@ -514,6 +548,7 @@ ldap_close($ldap);
 ```
 
 ### 📚 **PHP Resources**
+
 - **📖 [phpLDAPadmin](reference/phpldapadmin-web-interface/)** - Complete web admin
 - **🔑 [Self Service Password](reference/ldap-self-service-password/)** - Password management
 
@@ -522,6 +557,7 @@ ldap_close($ldap);
 **Copy-paste examples for common LDAP operations:**
 
 ### 🔍 **Search Filters**
+
 ```python
 # Basic filters
 "(objectclass=person)"                    # All people
@@ -529,17 +565,18 @@ ldap_close($ldap);
 "(&(objectclass=person)(mail=*@test.com))" # People with test.com emails
 "(|(cn=john)(cn=jane))"                   # John OR Jane
 
-# Advanced filters  
+# Advanced filters
 "(&(objectclass=person)(!(mail=*)))"      # People without email
 "(createTimestamp>=20231201000000Z)"       # Created after Dec 1, 2023
 ```
 
 ### 📝 **Common Attributes**
+
 ```python
 # Person attributes
 ['cn', 'sn', 'givenName', 'mail', 'telephoneNumber']
 
-# Group attributes  
+# Group attributes
 ['cn', 'description', 'member', 'memberUid']
 
 # Organizational attributes
@@ -550,6 +587,7 @@ ldap_close($ldap);
 ```
 
 ### 🏗️ **DN Construction**
+
 ```python
 # User DNs
 "cn=john.doe,ou=people,dc=company,dc=com"
@@ -567,6 +605,7 @@ ldap_close($ldap);
 **Quick fixes for common LDAP issues:**
 
 ### 🔌 **Connection Issues**
+
 ```python
 # Test basic connectivity
 import socket
@@ -576,6 +615,7 @@ print("Port 389 open" if result == 0 else "Port 389 closed")
 ```
 
 ### 🔐 **Authentication Issues**
+
 ```python
 # Debug bind issues
 try:
@@ -587,6 +627,7 @@ except Exception as e:
 ```
 
 ### 🔍 **Search Issues**
+
 ```python
 # Debug empty search results
 conn.search('dc=example,dc=com', '(objectclass=*)', attributes=['*'])
@@ -595,6 +636,7 @@ if not conn.entries:
 ```
 
 ### 🌐 **SSL/TLS Issues**
+
 ```python
 # Test SSL connection
 from ldap3 import Server, Connection, Tls
@@ -610,16 +652,19 @@ conn = Connection(server)
 **Now that you're up and running:**
 
 ### 🎓 **Learn More**
+
 - **[📖 Complete Documentation](README.md)** - Full learning center
 - **[⚡ RFC Quick Reference](RFC_QUICK_REFERENCE.md)** - Fast RFC lookup
 - **[✅ Compliance Checklist](IMPLEMENTATION_CHECKLIST.md)** - Production readiness
 
 ### 🛠️ **Build Something**
+
 - **[🏗️ Deploy a Server](reference/README.md#complete-ldap-servers)** - Production LDAP servers
 - **[🖥️ Try GUI Tools](reference/README.md#gui--administration-tools)** - Visual administration
 - **[🌐 Web Interfaces](reference/README.md#web-interfaces--tools)** - Browser-based tools
 
 ### 🤝 **Get Help**
+
 - **[🧭 Navigation Guide](NAVIGATION_INDEX.md)** - Find anything quickly
 - **[🔗 External Resources](README.md#external-references)** - Community resources
 
@@ -631,7 +676,7 @@ conn = Connection(server)
 
 ---
 
-**Last Updated**: 2025-06-24  
-**Languages Covered**: 8+ with production examples  
-**Setup Time**: 2-15 minutes depending on language  
+**Last Updated**: 2025-06-24
+**Languages Covered**: 8+ with production examples
+**Setup Time**: 2-15 minutes depending on language
 **Status**: ✅ Production tested and ready to use

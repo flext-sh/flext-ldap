@@ -1,15 +1,14 @@
-"""
-Core LDAP domain models for shared use across tap-ldap, target-ldap, and flx-ldap.
+"""Core LDAP domain models for shared use across tap-ldap, target-ldap, and flx-ldap.
 
 This module contains the fundamental domain models extracted from algar-oud-mig
 for use across all LDAP-related projects to ensure consistency and reusability.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field, field_validator
-
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -17,8 +16,7 @@ if TYPE_CHECKING:
 
 
 class LDAPConnectionConfig(BaseModel):
-    """
-    LDAP connection configuration.
+    """LDAP connection configuration.
 
     Standardized configuration for LDAP connections across all projects.
     """
@@ -41,15 +39,15 @@ class LDAPConnectionConfig(BaseModel):
 
 
 class LDAPEntry(BaseModel):
-    """
-    LDAP entry representation.
+    """LDAP entry representation.
 
     Standard representation of an LDAP entry with DN and attributes.
     """
 
     dn: str = Field(..., description="Distinguished Name")
     attributes: dict[str, list[str]] = Field(
-        default_factory=dict, description="Entry attributes"
+        default_factory=dict,
+        description="Entry attributes",
     )
 
     @field_validator("dn")
@@ -75,18 +73,19 @@ class LDAPEntry(BaseModel):
 
 
 class MigrationConfig(BaseModel):
-    """
-    Migration configuration.
+    """Migration configuration.
 
     Standard configuration for LDAP migration operations.
     """
 
     source_ldif_path: Path = Field(..., description="Source LDIF directory path")
     target_ldap_config: LDAPConnectionConfig = Field(
-        ..., description="Target LDAP configuration"
+        ...,
+        description="Target LDAP configuration",
     )
     output_directory: Path = Field(
-        ..., description="Output directory for generated files"
+        ...,
+        description="Output directory for generated files",
     )
     migration_stages: list[str] = Field(
         default_factory=lambda: [
@@ -100,7 +99,8 @@ class MigrationConfig(BaseModel):
     )
     skip_existing: bool = Field(default=True, description="Skip existing entries")
     dry_run: bool = Field(
-        default=False, description="Perform dry run without actual changes"
+        default=False,
+        description="Perform dry run without actual changes",
     )
 
     @field_validator("source_ldif_path")
@@ -114,8 +114,7 @@ class MigrationConfig(BaseModel):
 
 
 class MigrationStats(BaseModel):
-    """
-    Migration statistics.
+    """Migration statistics.
 
     Tracks statistics for migration operations.
     """
@@ -135,8 +134,7 @@ class MigrationStats(BaseModel):
 
 
 class MigrationStage(BaseModel):
-    """
-    Migration stage information.
+    """Migration stage information.
 
     Represents a single stage in a multi-stage migration.
     """
@@ -145,7 +143,8 @@ class MigrationStage(BaseModel):
     filename: str = Field(..., description="LDIF filename")
     description: str = Field(..., description="Stage description")
     critical: bool = Field(
-        default=True, description="Whether stage is critical for migration"
+        default=True,
+        description="Whether stage is critical for migration",
     )
     order: int = Field(..., description="Execution order")
 
@@ -160,8 +159,7 @@ class MigrationStage(BaseModel):
 
 
 class MigrationReport(BaseModel):
-    """
-    Complete migration report.
+    """Complete migration report.
 
     Comprehensive report of migration execution.
     """
@@ -169,16 +167,20 @@ class MigrationReport(BaseModel):
     start_time: datetime = Field(..., description="Migration start time")
     end_time: datetime | None = Field(None, description="Migration end time")
     config: Any = Field(
-        ..., description="Migration configuration"
+        ...,
+        description="Migration configuration",
     )  # Using Any to avoid circular import
     stats: MigrationStats = Field(
-        default_factory=MigrationStats, description="Migration statistics"
+        default_factory=MigrationStats,
+        description="Migration statistics",
     )
     stage_results: dict[str, bool] = Field(
-        default_factory=dict, description="Stage results"
+        default_factory=dict,
+        description="Stage results",
     )
     validation_results: dict[str, Any] = Field(
-        default_factory=dict, description="Validation results"
+        default_factory=dict,
+        description="Validation results",
     )
     success: bool = Field(default=False, description="Overall migration success")
 
@@ -191,8 +193,7 @@ class MigrationReport(BaseModel):
 
 
 class LDIFGenerationResult(BaseModel):
-    """
-    LDIF generation result.
+    """LDIF generation result.
 
     Result of generating LDIF files during migration.
     """
@@ -206,8 +207,7 @@ class LDIFGenerationResult(BaseModel):
 
 
 class ValidationResult(BaseModel):
-    """
-    Validation result for migration.
+    """Validation result for migration.
 
     Result of validation checks during migration.
     """
@@ -217,13 +217,13 @@ class ValidationResult(BaseModel):
     message: str = Field(..., description="Validation message")
     count: int | None = Field(None, description="Count value if applicable")
     details: dict[str, Any] = Field(
-        default_factory=dict, description="Additional details"
+        default_factory=dict,
+        description="Additional details",
     )
 
 
 class EntryProcessingResult(BaseModel):
-    """
-    Result of processing a single LDAP entry.
+    """Result of processing a single LDAP entry.
 
     Detailed result of processing an individual LDAP entry.
     """
@@ -233,8 +233,10 @@ class EntryProcessingResult(BaseModel):
     action: str = Field(..., description="Action taken (add, skip, error)")
     message: str = Field(..., description="Result message")
     original_attributes: dict[str, list[str]] = Field(
-        default_factory=dict, description="Original attributes"
+        default_factory=dict,
+        description="Original attributes",
     )
     processed_attributes: dict[str, list[str]] = Field(
-        default_factory=dict, description="Processed attributes"
+        default_factory=dict,
+        description="Processed attributes",
     )

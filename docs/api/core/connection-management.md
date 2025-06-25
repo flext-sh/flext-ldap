@@ -34,7 +34,7 @@ classDiagram
     LDAPConnectionManager --> ConnectionPool
     ConnectionPool --> HealthMonitor
     ConnectionPool --> SecurityManager
-    
+
     class ConnectionInfo {
         +host: str
         +port: int
@@ -44,7 +44,7 @@ classDiagram
         +timeout: int
         +validate()
     }
-    
+
     class LDAPConnectionManager {
         +connect()
         +disconnect()
@@ -52,7 +52,7 @@ classDiagram
         +get_connection()
         +health_check()
     }
-    
+
     class ConnectionPool {
         +get_connection()
         +return_connection()
@@ -93,24 +93,24 @@ class ConnectionInfo:
 
 ### Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `host` | `str` | **Required** | LDAP server hostname or IP address |
-| `port` | `int` | `389` | LDAP server port (389 for LDAP, 636 for LDAPS) |
-| `bind_dn` | `str \| None` | `None` | Distinguished name for authentication |
-| `password` | `str \| None` | `None` | Password for authentication |
-| `use_ssl` | `bool` | `False` | Use SSL/TLS encryption (LDAPS) |
-| `use_tls` | `bool` | `False` | Use StartTLS encryption |
-| `timeout` | `int` | `30` | Connection timeout in seconds |
-| `max_retries` | `int` | `3` | Maximum retry attempts for failed connections |
-| `retry_delay` | `float` | `1.0` | Delay between retry attempts |
-| `pool_size` | `int` | `10` | Initial connection pool size |
-| `max_pool_size` | `int` | `50` | Maximum connection pool size |
-| `pool_timeout` | `int` | `60` | Pool connection timeout in seconds |
-| `validate_cert` | `bool` | `True` | Validate SSL certificates |
-| `ca_cert_path` | `str \| None` | `None` | Path to CA certificate file |
-| `client_cert_path` | `str \| None` | `None` | Path to client certificate file |
-| `client_key_path` | `str \| None` | `None` | Path to client private key file |
+| Parameter          | Type          | Default      | Description                                    |
+| ------------------ | ------------- | ------------ | ---------------------------------------------- |
+| `host`             | `str`         | **Required** | LDAP server hostname or IP address             |
+| `port`             | `int`         | `389`        | LDAP server port (389 for LDAP, 636 for LDAPS) |
+| `bind_dn`          | `str \| None` | `None`       | Distinguished name for authentication          |
+| `password`         | `str \| None` | `None`       | Password for authentication                    |
+| `use_ssl`          | `bool`        | `False`      | Use SSL/TLS encryption (LDAPS)                 |
+| `use_tls`          | `bool`        | `False`      | Use StartTLS encryption                        |
+| `timeout`          | `int`         | `30`         | Connection timeout in seconds                  |
+| `max_retries`      | `int`         | `3`          | Maximum retry attempts for failed connections  |
+| `retry_delay`      | `float`       | `1.0`        | Delay between retry attempts                   |
+| `pool_size`        | `int`         | `10`         | Initial connection pool size                   |
+| `max_pool_size`    | `int`         | `50`         | Maximum connection pool size                   |
+| `pool_timeout`     | `int`         | `60`         | Pool connection timeout in seconds             |
+| `validate_cert`    | `bool`        | `True`       | Validate SSL certificates                      |
+| `ca_cert_path`     | `str \| None` | `None`       | Path to CA certificate file                    |
+| `client_cert_path` | `str \| None` | `None`       | Path to client certificate file                |
+| `client_key_path`  | `str \| None` | `None`       | Path to client private key file                |
 
 ### Methods
 
@@ -204,12 +204,12 @@ class LDAPConnectionManager:
 
 ### Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `connection_info` | `ConnectionInfo` | **Required** | Connection configuration |
-| `use_pool` | `bool` | `True` | Enable connection pooling |
-| `health_check_interval` | `int` | `60` | Health check interval in seconds |
-| `enable_monitoring` | `bool` | `True` | Enable performance monitoring |
+| Parameter               | Type             | Default      | Description                      |
+| ----------------------- | ---------------- | ------------ | -------------------------------- |
+| `connection_info`       | `ConnectionInfo` | **Required** | Connection configuration         |
+| `use_pool`              | `bool`           | `True`       | Enable connection pooling        |
+| `health_check_interval` | `int`            | `60`         | Health check interval in seconds |
+| `enable_monitoring`     | `bool`           | `True`       | Enable performance monitoring    |
 
 ### Methods
 
@@ -569,12 +569,12 @@ manager = LDAPConnectionManager(conn_info)
 result = manager.connect()
 if result.connected:
     print("Connected successfully!")
-    
+
     # Use the connection
     with manager.get_connection() as conn:
         # Perform LDAP operations
         pass
-        
+
     # Disconnect when done
     manager.disconnect()
 ```
@@ -611,9 +611,9 @@ manager.start_monitoring()
 try:
     # Application operations
     result = manager.connect()
-    
+
     # Your application code here
-    
+
 finally:
     # Clean shutdown
     manager.stop_monitoring()
@@ -816,6 +816,7 @@ except Exception as e:
 ---
 
 **🔗 Related Documentation**
+
 - [⚙️ LDAP Operations](operations.md)
 - [🔍 Search Engine](search-engine.md)
 - [🔒 Security](security.md)

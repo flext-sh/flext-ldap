@@ -21,9 +21,10 @@ Version: 1.0.0-enterprise
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import time
 from contextlib import asynccontextmanager, contextmanager
-from typing import Any
+from typing import TYPE_CHECKING
 
 import ldap3
 from ldap3 import ALL, Connection, Server, Tls
@@ -37,9 +38,17 @@ from ldap_core_shared.utils.constants import (
     DEFAULT_LDAP_TIMEOUT,
     DEFAULT_MAX_POOL_SIZE,
     DEFAULT_POOL_SIZE,
-    SUPPORTED_PROTOCOLS,
 )
-from ldap_core_shared.utils.performance import ConnectionPoolMetrics, PerformanceMonitor
+from ldap_core_shared.utils.performance import (
+    ConnectionPoolMetrics,
+    LDAPMetrics,
+    PerformanceMonitor,
+)
+
+# Vectorized connection pool import (lazy import to avoid circular dependency)
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Iterator
 
 
 class ConnectionInfo(BaseModel):
@@ -115,13 +124,66 @@ class PooledConnection:
                 search_scope=ldap3.BASE,
                 size_limit=1,
             )
-            return True
         except Exception:
             return False
+        else:
+            return True
+
+
+class PerformanceHelper:
+    """🔥 ZERO DUPLICATION - Centralized performance monitoring utilities."""
+
+    @staticmethod
+    def record_connection_operation(
+        monitor: PerformanceMonitor,
+        start_time: float,
+        success: bool,
+    ) -> None:
+        """Record connection operation performance - NO DUPLICATION."""
+        duration = time.time() - start_time
+        monitor.record_operation(duration, success=success)
+
+
+class ConnectionFactory:
+    """🔥 ZERO DUPLICATION - Centralized connection creation factory."""
+
+    @staticmethod
+    def create_tls_config(connection_info: ConnectionInfo) -> Tls | None:
+        """Create TLS configuration - NO DUPLICATION."""
+        if connection_info.use_ssl or connection_info.use_tls:
+            return Tls(validate=connection_info.verify_cert)
+        return None
+
+    @staticmethod
+    def create_server(connection_info: ConnectionInfo) -> Server:
+        """Create LDAP server configuration - NO DUPLICATION."""
+        tls_config = ConnectionFactory.create_tls_config(connection_info)
+
+        return Server(
+            host=connection_info.host,
+            port=connection_info.port,
+            use_ssl=connection_info.use_ssl,
+            tls=tls_config,
+            get_info=ALL,
+        )
+
+    @staticmethod
+    def create_connection(connection_info: ConnectionInfo) -> Connection:
+        """Create LDAP connection - NO DUPLICATION."""
+        server = ConnectionFactory.create_server(connection_info)
+
+        return Connection(
+            server=server,
+            user=connection_info.bind_dn,
+            password=connection_info.bind_password,
+            auto_bind=connection_info.auto_bind,
+            authentication=ldap3.SIMPLE,
+            receive_timeout=connection_info.timeout,
+        )
 
 
 class ConnectionPool:
-    """Enterprise LDAP connection pool with advanced management."""
+    """🔥🔥 Enterprise LDAP connection pool with ZERO DUPLICATION."""
 
     def __init__(
         self,
@@ -156,29 +218,8 @@ class ConnectionPool:
         }
 
     async def _create_connection(self) -> PooledConnection:
-        """Create new LDAP connection."""
-        # Create server configuration
-        tls_config = None
-        if self.connection_info.use_ssl or self.connection_info.use_tls:
-            tls_config = Tls(validate=self.connection_info.verify_cert)
-
-        server = Server(
-            host=self.connection_info.host,
-            port=self.connection_info.port,
-            use_ssl=self.connection_info.use_ssl,
-            tls=tls_config,
-            get_info=ALL,
-        )
-
-        # Create connection
-        connection = Connection(
-            server=server,
-            user=self.connection_info.bind_dn,
-            password=self.connection_info.bind_password,
-            auto_bind=self.connection_info.auto_bind,
-            authentication=ldap3.SIMPLE,
-            receive_timeout=self.connection_info.timeout,
-        )
+        """🔥 Create new LDAP connection using centralized factory - NO DUPLICATION."""
+        connection = ConnectionFactory.create_connection(self.connection_info)
 
         pooled_conn = PooledConnection(connection, self.connection_info)
         self._total_connections_created += 1
@@ -201,11 +242,9 @@ class ConnectionPool:
                     or not pooled_conn.validate_health()
                 ):
                     # Close stale/unhealthy connections
-                    try:
+                    with contextlib.suppress(Exception):
                         pooled_conn.connection.unbind()
                         self._metrics["connections_closed"] += 1
-                    except Exception:
-                        pass  # Connection already closed
                 else:
                     # Keep healthy connections
                     active_connections.append(pooled_conn)
@@ -213,7 +252,7 @@ class ConnectionPool:
             self._pool = active_connections
 
     @asynccontextmanager
-    async def get_connection(self):
+    async def get_connection(self) -> AsyncIterator[PooledConnection]:
         """Get connection from pool.
 
         Yields:
@@ -240,18 +279,18 @@ class ConnectionPool:
                     available_connection.mark_used()
                     self._metrics["pool_hits"] += 1
                     self._metrics["connections_reused"] += 1
+                # Create new connection if pool not at max capacity
+                elif len(self._pool) < self.max_pool_size:
+                    available_connection = await self._create_connection()
+                    available_connection.is_in_use = True
+                    self._pool.append(available_connection)
+                    self._metrics["pool_misses"] += 1
                 else:
-                    # Create new connection if pool not at max capacity
-                    if len(self._pool) < self.max_pool_size:
-                        available_connection = await self._create_connection()
-                        available_connection.is_in_use = True
-                        self._pool.append(available_connection)
-                        self._metrics["pool_misses"] += 1
-                    else:
-                        raise RuntimeError("Connection pool exhausted")
+                    connection_pool_exhausted_msg = "Connection pool exhausted"
+                    raise RuntimeError(connection_pool_exhausted_msg)
 
             acquisition_time = time.time() - start_time
-            self._performance_monitor.record_operation(acquisition_time, True)
+            self._performance_monitor.record_operation(acquisition_time, success=True)
 
             yield available_connection
 
@@ -264,10 +303,8 @@ class ConnectionPool:
         """Close all connections in pool."""
         async with self._pool_lock:
             for pooled_conn in self._pool:
-                try:
+                with contextlib.suppress(Exception):
                     pooled_conn.connection.unbind()
-                except Exception:
-                    pass
 
             self._pool.clear()
 
@@ -331,8 +368,8 @@ class LDAPConnectionManager:
         )
 
     @contextmanager
-    def get_connection(self):
-        """Get LDAP connection (sync version).
+    def get_connection(self) -> Iterator[ldap3.Connection]:
+        """🔥🔥 Get LDAP connection using centralized factory - NO DUPLICATION.
 
         Yields:
             Connection: LDAP connection
@@ -341,49 +378,26 @@ class LDAPConnectionManager:
         connection = None
 
         try:
-            # Create server configuration
-            tls_config = None
-            if self.connection_info.use_ssl or self.connection_info.use_tls:
-                tls_config = Tls(validate=self.connection_info.verify_cert)
-
-            server = Server(
-                host=self.connection_info.host,
-                port=self.connection_info.port,
-                use_ssl=self.connection_info.use_ssl,
-                tls=tls_config,
-                get_info=ALL,
-            )
-
-            # Create connection
-            connection = Connection(
-                server=server,
-                user=self.connection_info.bind_dn,
-                password=self.connection_info.bind_password,
-                auto_bind=self.connection_info.auto_bind,
-                authentication=ldap3.SIMPLE,
-                receive_timeout=self.connection_info.timeout,
-            )
-
+            connection = ConnectionFactory.create_connection(self.connection_info)
             yield connection
 
             # Record successful connection
             duration = time.time() - start_time
-            self._performance_monitor.record_operation(duration, True)
+            self._performance_monitor.record_operation(duration, success=True)
 
-        except Exception as e:
+        except Exception:
             # Record failed connection
             duration = time.time() - start_time
-            self._performance_monitor.record_operation(duration, False)
+            self._performance_monitor.record_operation(duration, success=False)
             raise
 
         finally:
             if connection:
-                try:
+                with contextlib.suppress(Exception):
                     connection.unbind()
-                except Exception:
-                    pass
 
-    async def get_pooled_connection(self):
+    @asynccontextmanager
+    async def get_pooled_connection(self) -> AsyncIterator[PooledConnection]:
         """Get connection from pool (async version).
 
         Yields:
@@ -439,7 +453,7 @@ class LDAPConnectionManager:
                     },
                 )
 
-        except Exception as e:
+        except Exception as connection_error:
             connection_time = time.time() - start_time
 
             return LDAPConnectionResult(
@@ -448,10 +462,10 @@ class LDAPConnectionManager:
                 port=self.connection_info.port,
                 connection_time=connection_time,
                 response_time=0.0,
-                connection_error=str(e),
+                connection_error=str(connection_error),
             )
 
-    def get_performance_metrics(self):
+    def get_performance_metrics(self) -> LDAPMetrics:
         """Get performance metrics."""
         return self._performance_monitor.get_metrics()
 

@@ -1,13 +1,12 @@
-"""
-Core LDAP value objects for shared use across projects.
+"""Core LDAP value objects for shared use across projects.
 
 Value objects encapsulate business rules and provide validation for
 core domain concepts like DNs, object classes, and configuration profiles.
 """
+
 from __future__ import annotations
 
 import re
-
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
@@ -78,8 +77,7 @@ class DNComponent(BaseModel):
 
 
 class LdapDn(BaseModel):
-    """
-    LDAP Distinguished Name value object.
+    """LDAP Distinguished Name value object.
 
     Provides validation, normalization, and manipulation of LDAP DNs.
     """
@@ -125,7 +123,8 @@ class LdapDn(BaseModel):
         # Normalize each component
         normalized_components = [
             DNComponent(
-                attribute=component.attribute.lower(), value=component.value.strip()
+                attribute=component.attribute.lower(),
+                value=component.value.strip(),
             )
             for component in self.components
         ]

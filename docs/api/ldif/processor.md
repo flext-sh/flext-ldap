@@ -21,6 +21,7 @@ The LDIF (LDAP Data Interchange Format) processing module provides comprehensive
 The LDIF processing suite follows enterprise design principles for maximum flexibility and performance:
 
 ### 🎯 **Key Features**
+
 - **RFC 2849 Compliant**: Standards-compliant LDIF parsing and generation
 - **Enterprise Scale**: Streaming support for large LDIF files
 - **Schema Aware**: Schema-aware LDIF processing and validation
@@ -38,7 +39,7 @@ classDiagram
     LDIFAnalyzer --> LDIFProcessor
     LDIFTransformer --> LDIFProcessor
     LDIFMerger --> LDIFProcessor
-    
+
     class LDIFProcessor {
         +parse_file(filename)
         +parse_string(content)
@@ -46,21 +47,21 @@ classDiagram
         +get_entries()
         +get_statistics()
     }
-    
+
     class LDIFWriter {
         +write_entries(entries, filename)
         +write_string(entries)
         +write_stream(entries, stream)
         +set_formatting(options)
     }
-    
+
     class LDIFValidator {
         +validate_file(filename)
         +validate_entries(entries)
         +validate_syntax()
         +validate_schema()
     }
-    
+
     class LDIFAnalyzer {
         +analyze_file(filename)
         +analyze_entries(entries)
@@ -106,14 +107,14 @@ class LDIFProcessor:
 
 ### Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `schema` | `SchemaDefinition \| None` | `None` | Schema for validation (optional) |
-| `encoding` | `str` | `"utf-8"` | File encoding |
-| `strict_mode` | `bool` | `True` | Enable strict RFC compliance |
-| `max_entries` | `int \| None` | `None` | Maximum entries to process |
-| `progress_callback` | `Callable` | `None` | Progress notification callback |
-| `error_handler` | `Callable` | `None` | Custom error handler |
+| Parameter           | Type                       | Default   | Description                      |
+| ------------------- | -------------------------- | --------- | -------------------------------- |
+| `schema`            | `SchemaDefinition \| None` | `None`    | Schema for validation (optional) |
+| `encoding`          | `str`                      | `"utf-8"` | File encoding                    |
+| `strict_mode`       | `bool`                     | `True`    | Enable strict RFC compliance     |
+| `max_entries`       | `int \| None`              | `None`    | Maximum entries to process       |
+| `progress_callback` | `Callable`                 | `None`    | Progress notification callback   |
+| `error_handler`     | `Callable`                 | `None`    | Custom error handler             |
 
 ### Methods
 
@@ -128,7 +129,7 @@ result = processor.parse_file("users.ldif")
 if result.success:
     print(f"Parsed {result.entries_found} entries")
     print(f"Parse time: {result.search_duration:.2f}ms")
-    
+
     for entry in result.entries:
         print(f"DN: {entry['dn']}")
         print(f"Attributes: {list(entry.keys())}")
@@ -166,7 +167,7 @@ with open("large_file.ldif", "r") as f:
     for entry in processor.parse_stream(f):
         # Process entry immediately
         process_entry(entry)
-        
+
         # Memory usage stays constant
 ```
 
@@ -232,7 +233,7 @@ result = processor.parse_file("large_file.ldif")
 ```python
 def error_handler(context: str, error: Exception) -> bool:
     logger.error(f"Parse error in {context}: {error}")
-    
+
     # Return True to continue parsing, False to stop
     if isinstance(error, CriticalParseError):
         return False  # Stop on critical errors
@@ -263,14 +264,14 @@ class LDIFWriter:
 
 ### Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `encoding` | `str` | `"utf-8"` | Output file encoding |
-| `line_length` | `int` | `76` | Maximum line length (RFC 2849) |
-| `sort_attributes` | `bool` | `True` | Sort attributes alphabetically |
-| `include_comments` | `bool` | `True` | Include informational comments |
-| `format_style` | `str` | `"standard"` | Formatting style (standard/compact/pretty) |
-| `compression` | `bool` | `False` | Enable gzip compression |
+| Parameter          | Type   | Default      | Description                                |
+| ------------------ | ------ | ------------ | ------------------------------------------ |
+| `encoding`         | `str`  | `"utf-8"`    | Output file encoding                       |
+| `line_length`      | `int`  | `76`         | Maximum line length (RFC 2849)             |
+| `sort_attributes`  | `bool` | `True`       | Sort attributes alphabetically             |
+| `include_comments` | `bool` | `True`       | Include informational comments             |
+| `format_style`     | `str`  | `"standard"` | Formatting style (standard/compact/pretty) |
+| `compression`      | `bool` | `False`      | Enable gzip compression                    |
 
 ### Methods
 
@@ -409,17 +410,17 @@ print(f"  Duration: {result.validation_duration:.2f}ms")
 
 if not result.valid:
     print(f"Total errors: {result.total_errors}")
-    
+
     if result.syntax_errors:
         print("Syntax Errors:")
         for error in result.syntax_errors:
             print(f"  - {error}")
-    
+
     if result.schema_errors:
         print("Schema Errors:")
         for error in result.schema_errors:
             print(f"  - {error}")
-    
+
     if result.reference_errors:
         print("Reference Errors:")
         for error in result.reference_errors:
@@ -449,6 +450,7 @@ if syntax_errors:
 ### Validation Categories
 
 #### Syntax Validation
+
 - RFC 2849 compliance
 - Line length limits
 - Character encoding
@@ -456,12 +458,14 @@ if syntax_errors:
 - Attribute value formats
 
 #### Schema Validation
+
 - Object class requirements
 - Attribute presence rules
 - Value syntax validation
 - Structural validation
 
 #### Reference Validation
+
 - DN references
 - Group memberships
 - Organizational hierarchy
@@ -564,18 +568,21 @@ with open("analysis_report.json", "w") as f:
 ### Analysis Features
 
 #### Statistical Analysis
+
 - Entry count and distribution
 - Attribute frequency analysis
 - Value length statistics
 - Encoding analysis
 
 #### Quality Assessment
+
 - Data completeness
 - Consistency checks
 - Duplicate detection
 - Orphaned references
 
 #### Performance Analysis
+
 - File size optimization
 - Index recommendations
 - Query performance hints
@@ -620,19 +627,19 @@ rules = [
         to_attribute="mail",
         merge_values=True
     ),
-    
+
     # Transform DN structure
     DNTransformRule(
         from_base="ou=users,dc=old,dc=com",
         to_base="ou=people,dc=new,dc=com"
     ),
-    
+
     # Filter entries
     FilterRule(
         include_filter="(objectClass=person)",
         exclude_filter="(accountStatus=disabled)"
     ),
-    
+
     # Transform values
     ValueTransformRule(
         attribute="telephoneNumber",
@@ -671,7 +678,7 @@ normalized_entries = transformer.normalize_entries(
     entries,
     normalization_rules=[
         "lowercase_dns",
-        "standardize_phone_numbers", 
+        "standardize_phone_numbers",
         "normalize_email_addresses",
         "remove_empty_attributes"
     ]
@@ -753,7 +760,7 @@ merger = LDIFMerger(
 result = merger.merge_files(
     filenames=[
         "users_dept1.ldif",
-        "users_dept2.ldif", 
+        "users_dept2.ldif",
         "users_dept3.ldif"
     ],
     output_filename="all_users.ldif"
@@ -826,11 +833,11 @@ from ldap_core_shared.ldif import (
 
 def process_ldif_migration(source_files: list[str], output_file: str):
     """Complete LDIF processing pipeline for migration."""
-    
+
     # Step 1: Parse and validate source files
     processor = LDIFProcessor(strict_mode=True)
     validator = LDIFValidator(validate_schema=True)
-    
+
     all_entries = []
     for source_file in source_files:
         # Parse file
@@ -838,74 +845,74 @@ def process_ldif_migration(source_files: list[str], output_file: str):
         if not parse_result.success:
             logger.error(f"Failed to parse {source_file}: {parse_result.errors}")
             continue
-        
+
         # Validate entries
         validation_result = validator.validate_entries(parse_result.entries)
         if not validation_result.valid:
             logger.warning(f"Validation issues in {source_file}: {validation_result.total_errors} errors")
-        
+
         all_entries.extend(parse_result.entries)
-    
+
     # Step 2: Analyze data quality
     analyzer = LDIFAnalyzer(enable_quality_checks=True)
     analysis = analyzer.analyze_entries(all_entries)
-    
+
     print(f"Analysis Results:")
     print(f"  Total entries: {analysis.total_entries}")
     print(f"  Quality score: {analysis.quality_score:.1f}/100")
-    
+
     # Step 3: Apply transformations
     transformer = LDIFTransformer()
-    
+
     transformation_rules = [
         # Migrate DN structure
         DNTransformRule(
             from_base="ou=users,dc=old,dc=com",
             to_base="ou=people,dc=new,dc=com"
         ),
-        
+
         # Standardize attributes
         AttributeRenameRule(
             from_attribute="mailAlternateAddress",
             to_attribute="mail",
             merge_values=True
         ),
-        
+
         # Filter active accounts only
         FilterRule(
             include_filter="(!(accountStatus=disabled))"
         )
     ]
-    
+
     transformed_entries = transformer.transform_entries(all_entries, transformation_rules)
-    
+
     # Step 4: Merge and deduplicate
     merger = LDIFMerger(
         conflict_resolution="newest",
         enable_deduplication=True
     )
-    
+
     merged_entries = merger.merge_entries([transformed_entries])
-    
+
     # Step 5: Final validation
     final_validation = validator.validate_entries(merged_entries)
     if not final_validation.valid:
         logger.error(f"Final validation failed: {final_validation.total_errors} errors")
         return False
-    
+
     # Step 6: Write output
     writer = LDIFWriter(
         format_style="pretty",
         include_comments=True
     )
-    
+
     write_result = writer.write_entries(
         merged_entries,
         output_file,
         title="LDAP Migration Export",
         description=f"Migrated from {len(source_files)} source files"
     )
-    
+
     if write_result.success:
         print(f"Migration completed: {len(merged_entries)} entries written to {output_file}")
         return True
@@ -925,13 +932,13 @@ success = process_ldif_migration(
 ```python
 def bulk_ldif_processing(large_file: str, batch_size: int = 1000):
     """Memory-efficient processing of large LDIF files."""
-    
+
     processor = LDIFProcessor(max_entries=batch_size)
     writer = LDIFWriter(format_style="compact")
-    
+
     total_processed = 0
     batch_number = 1
-    
+
     # Process in batches to manage memory
     with open(large_file, 'r') as input_file:
         while True:
@@ -943,29 +950,29 @@ def bulk_ldif_processing(large_file: str, batch_size: int = 1000):
                     batch_entries.append(entry)
                 except StopIteration:
                     break
-            
+
             if not batch_entries:
                 break
-            
+
             # Process batch
             processed_entries = transformer.transform_entries(
                 batch_entries,
                 transformation_rules
             )
-            
+
             # Write batch
             batch_filename = f"output_batch_{batch_number:04d}.ldif"
             writer.write_entries(processed_entries, batch_filename)
-            
+
             total_processed += len(processed_entries)
             batch_number += 1
-            
+
             print(f"Processed batch {batch_number-1}: {len(processed_entries)} entries")
-            
+
             # Memory cleanup
             del batch_entries, processed_entries
             gc.collect()
-    
+
     print(f"Total processed: {total_processed} entries in {batch_number-1} batches")
 ```
 
@@ -1041,6 +1048,7 @@ processor = LDIFProcessor()  # Crashes on errors
 ---
 
 **📄 Related Documentation**
+
 - [✅ LDIF Validator](validator.md)
 - [📊 LDIF Analyzer](analyzer.md)
 - [🔄 LDIF Transformer](transformer.md)

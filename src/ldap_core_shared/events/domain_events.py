@@ -1,13 +1,12 @@
-"""
-Domain events for LDAP operations.
+"""Domain events for LDAP operations.
 
 Events that capture significant domain occurrences during LDAP
 operations, migrations, and validations.
 """
+
 from __future__ import annotations
 
 import uuid
-
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -32,12 +31,12 @@ class DomainEvent(ABC):
 class LDAPConnectionEvent(DomainEvent):
     """Event for LDAP connection status changes."""
 
-    host: str
-    port: int
-    bind_dn: str
-    connected: bool
     connection_id: str | None = field(default=None)
     error_message: str | None = field(default=None)
+    host: str = ""
+    port: int = 389
+    bind_dn: str = ""
+    connected: bool = False
 
     @property
     def event_type(self) -> str:
@@ -48,13 +47,13 @@ class LDAPConnectionEvent(DomainEvent):
 class LDAPOperationEvent(DomainEvent):
     """Event for LDAP operations (search, add, modify, delete)."""
 
-    operation: str  # search, add, modify, delete
-    dn: str
-    success: bool
     duration_ms: float | None = field(default=None)
     entry_count: int | None = field(default=None)
     error_message: str | None = field(default=None)
     attributes_modified: list[str] | None = field(default=None)
+    operation: str = ""  # search, add, modify, delete
+    dn: str = ""
+    success: bool = False
 
     @property
     def event_type(self) -> str:
@@ -65,15 +64,15 @@ class LDAPOperationEvent(DomainEvent):
 class MigrationStageEvent(DomainEvent):
     """Event for migration stage completion."""
 
-    migration_id: str
-    stage_name: str
-    stage_order: int
-    success: bool
     entries_processed: int = 0
     entries_successful: int = 0
     entries_failed: int = 0
     duration_s: float | None = None
     error_details: list[str] | None = None
+    migration_id: str = ""
+    stage_name: str = ""
+    stage_order: int = 0
+    success: bool = False
 
     @property
     def event_type(self) -> str:
@@ -84,15 +83,15 @@ class MigrationStageEvent(DomainEvent):
 class MigrationCompletedEvent(DomainEvent):
     """Event for complete migration finish."""
 
-    migration_id: str
-    success: bool
-    total_stages: int
-    successful_stages: int
-    total_entries: int
-    successful_entries: int
-    total_duration_s: float
-    final_validation_passed: bool
-    summary_report: dict[str, Any]
+    migration_id: str = ""
+    success: bool = False
+    total_stages: int = 0
+    successful_stages: int = 0
+    total_entries: int = 0
+    successful_entries: int = 0
+    total_duration_s: float = 0.0
+    final_validation_passed: bool = False
+    summary_report: dict[str, Any] = field(default_factory=dict)
 
     @property
     def event_type(self) -> str:
@@ -103,13 +102,13 @@ class MigrationCompletedEvent(DomainEvent):
 class ValidationEvent(DomainEvent):
     """Event for validation operations."""
 
-    validation_type: str  # schema, data, connectivity
-    target: str  # what was validated
-    success: bool
     details: dict[str, Any] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     recommendations: list[str] = field(default_factory=list)
+    validation_type: str = ""  # schema, data, connectivity
+    target: str = ""  # what was validated
+    success: bool = False
 
     @property
     def event_type(self) -> str:
@@ -120,13 +119,13 @@ class ValidationEvent(DomainEvent):
 class ErrorEvent(DomainEvent):
     """Event for error conditions."""
 
-    error_type: str
-    error_message: str
-    component: str
-    severity: str  # critical, error, warning
     context: dict[str, Any] = field(default_factory=dict)
     stack_trace: str | None = None
     recovery_suggestions: list[str] = field(default_factory=list)
+    error_type: str = ""
+    error_message: str = ""
+    component: str = ""
+    severity: str = ""  # critical, error, warning
 
     @property
     def event_type(self) -> str:
@@ -137,12 +136,12 @@ class ErrorEvent(DomainEvent):
 class SchemaDiscoveryEvent(DomainEvent):
     """Event for schema discovery operations."""
 
-    server_host: str
-    object_classes_found: int
-    attributes_found: int
     custom_schemas_detected: list[str] = field(default_factory=list)
     compatibility_issues: list[str] = field(default_factory=list)
     discovery_duration_s: float | None = None
+    server_host: str = ""
+    object_classes_found: int = 0
+    attributes_found: int = 0
 
     @property
     def event_type(self) -> str:
@@ -153,12 +152,12 @@ class SchemaDiscoveryEvent(DomainEvent):
 class PerformanceEvent(DomainEvent):
     """Event for performance metrics."""
 
-    operation_type: str
-    measurement_type: str  # throughput, latency, memory
-    value: float
-    unit: str  # ops/sec, ms, MB
-    component: str
     additional_metrics: dict[str, float] = field(default_factory=dict)
+    operation_type: str = ""
+    measurement_type: str = ""  # throughput, latency, memory
+    value: float = 0.0
+    unit: str = ""  # ops/sec, ms, MB
+    component: str = ""
 
     @property
     def event_type(self) -> str:

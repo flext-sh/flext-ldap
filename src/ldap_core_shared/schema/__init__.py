@@ -22,11 +22,11 @@ Components:
 Example:
     ```python
     from ldap_core_shared.schema import SchemaDiscovery, SchemaComparator
-    
+
     # Discover schema from server
     discovery = SchemaDiscovery()
     schema = discovery.discover_from_server("ldap://server:389")
-    
+
     # Compare with target schema
     comparator = SchemaComparator()
     differences = comparator.compare_schemas(source_schema, target_schema)
@@ -35,21 +35,21 @@ Example:
 
 # Import classes that are actually implemented
 try:
-    from .discovery import SchemaDiscovery
-    from .parser import SchemaParser
-    from .validator import SchemaValidator
-    from .comparator import SchemaComparator
-    from .migrator import SchemaMigrator
-    from .analyzer import SchemaAnalyzer
-    
+    from ldap_core_shared.schema.analyzer import SchemaAnalyzer
+    from ldap_core_shared.schema.comparator import SchemaComparator
+    from ldap_core_shared.schema.discovery import SchemaDiscovery
+    from ldap_core_shared.schema.migrator import SchemaMigrator
+    from ldap_core_shared.schema.parser import SchemaParser
+    from ldap_core_shared.schema.validator import SchemaValidator
+
     __all__ = [
-        "SchemaDiscovery",
-        "SchemaParser",
-        "SchemaValidator", 
-        "SchemaComparator",
-        "SchemaMigrator",
         "SchemaAnalyzer",
+        "SchemaComparator",
+        "SchemaDiscovery",
+        "SchemaMigrator",
+        "SchemaParser",
+        "SchemaValidator",
     ]
 except ImportError:
     # If modules are not yet implemented, provide empty list
-    __all__ = [] 
+    __all__ = []

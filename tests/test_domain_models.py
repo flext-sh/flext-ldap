@@ -2,7 +2,6 @@
 
 from typing import Any
 
-
 """
 Tests for domain models.
 
@@ -131,7 +130,7 @@ class TestLDAPEntry:
         entry = LDAPEntry(
             dn="cn=john,ou=users,dc=example,dc=com",
             attributes={
-                "objectClass": ["person", "inetOrgPerson", "organizationalPerson"]
+                "objectClass": ["person", "inetOrgPerson", "organizationalPerson"],
             },
         )
 
@@ -142,7 +141,8 @@ class TestLDAPEntry:
 
         # Test entry without objectClass
         entry_no_oc = LDAPEntry(
-            dn="cn=test,dc=example,dc=com", attributes={"cn": ["test"]}
+            dn="cn=test,dc=example,dc=com",
+            attributes={"cn": ["test"]},
         )
         assert entry_no_oc.has_object_class("person") is False
 
@@ -170,7 +170,10 @@ class TestMigrationStats:
     def test_success_rate_with_failures(self) -> Any:
         """Test success rate with failures."""
         stats = MigrationStats(
-            total_processed=100, successful=70, skipped=10, failed=20
+            total_processed=100,
+            successful=70,
+            skipped=10,
+            failed=20,
         )
 
         assert stats.success_rate == 80.0  # (70 + 10) / 100 * 100
@@ -199,7 +202,10 @@ class TestMigrationStage:
         """Test order validation."""
         with pytest.raises(ValueError, match="Order must be non-negative"):
             MigrationStage(
-                name="Test", filename="test.ldif", description="Test stage", order=-1
+                name="Test",
+                filename="test.ldif",
+                description="Test stage",
+                order=-1,
             )
 
 
@@ -212,7 +218,9 @@ class TestMigrationReport:
         end_time = datetime(2024, 1, 1, 10, 5, 30)
 
         report = MigrationReport(
-            start_time=start_time, end_time=end_time, config={"test": "config"}
+            start_time=start_time,
+            end_time=end_time,
+            config={"test": "config"},
         )
 
         assert report.duration == 330.0  # 5 minutes 30 seconds

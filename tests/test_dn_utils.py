@@ -2,7 +2,6 @@
 
 from typing import Any
 
-
 """
 Tests for DN utilities.
 
@@ -192,7 +191,8 @@ class TestReplaceBaseDn:
         new_base = "dc=newdomain,dc=org"
 
         with pytest.raises(
-            ValueError, match="DN is not a child of the specified base DN"
+            ValueError,
+            match="DN is not a child of the specified base DN",
         ):
             replace_base_dn(dn, invalid_base, new_base)
 

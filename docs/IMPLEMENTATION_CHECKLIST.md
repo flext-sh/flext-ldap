@@ -11,6 +11,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 ### RFC 4511 - The Protocol (`core/operations.py` + `core/connection_manager.py`)
 
 #### Operações Básicas
+
 - [ ] **BindRequest/BindResponse** - Autenticação de conexão
   - [ ] Simple bind (nome/senha)
   - [ ] Anonymous bind
@@ -32,10 +33,12 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 - [ ] **UnbindRequest** - Finalizar sessão
 
 #### Controles Básicos
+
 - [ ] **Controls Framework** - Infraestrutura de controles
 - [ ] **ManageDsaIT Control** - Gestão de referrals
 
 #### Códigos de Resultado (Appendix A)
+
 - [ ] **Success (0)**
 - [ ] **Operations Error (1)**
 - [ ] **Protocol Error (2)**
@@ -79,6 +82,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 ### RFC 4512 - Directory Information Models (`domain/models.py` + `schema/parser.py`)
 
 #### Directory Information Tree
+
 - [ ] **Entry Structure** - Estrutura básica de entradas
 - [ ] **Attribute Types** - Tipos de atributos
 - [ ] **Attribute Values** - Valores de atributos
@@ -86,6 +90,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 - [ ] **Distinguished Names** - Nomes únicos
 
 #### Schema Framework
+
 - [ ] **Attribute Type Definitions**
   - [ ] NAME
   - [ ] SUP (superior)
@@ -107,6 +112,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 - [ ] **LDAP Syntax Definitions**
 
 #### Operational Attributes
+
 - [ ] **createTimestamp**
 - [ ] **modifyTimestamp**
 - [ ] **creatorsName**
@@ -118,6 +124,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 ### RFC 4514 - DN String Representation (`utils/dn_utils.py`)
 
 #### Distinguished Name Processing
+
 - [ ] **DN Parsing** - Análise sintática de DNs
   - [ ] Multi-valued RDNs
   - [ ] Escaped characters
@@ -131,11 +138,12 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 ### RFC 4515 - Search Filters (`core/search_engine.py` + `utils/ldap_helpers.py`)
 
 #### Filter Types
+
 - [ ] **Present Filter** - `(attribute=*)`
 - [ ] **Equality Filter** - `(attribute=value)`
 - [ ] **Substring Filter** - `(attribute=initial*any*final)`
   - [ ] Initial substring
-  - [ ] Any substring  
+  - [ ] Any substring
   - [ ] Final substring
 - [ ] **Greater-or-Equal Filter** - `(attribute>=value)`
 - [ ] **Less-or-Equal Filter** - `(attribute<=value)`
@@ -143,11 +151,13 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 - [ ] **Extensible Match Filter** - `(attribute:dn:matchingRule:=value)`
 
 #### Filter Composition
+
 - [ ] **AND Filter** - `(&(filter1)(filter2)...)`
 - [ ] **OR Filter** - `(|(filter1)(filter2)...)`
 - [ ] **NOT Filter** - `(!(filter))`
 
 #### Filter Processing
+
 - [ ] **Filter Validation** - Validação sintática
 - [ ] **Filter Optimization** - Otimização de performance
 - [ ] **Filter String Generation** - Geração de strings de filtro
@@ -155,6 +165,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 ### RFC 4517 - Syntaxes and Matching Rules (`schema/validator.py`)
 
 #### Standard Syntaxes
+
 - [ ] **Binary** - Dados binários
 - [ ] **Boolean** - Valores booleanos
 - [ ] **Country String** - Códigos de país
@@ -170,6 +181,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 - [ ] **Telephone Number** - Números de telefone
 
 #### Standard Matching Rules
+
 - [ ] **caseIgnoreMatch** - Comparação ignorando case
 - [ ] **caseExactMatch** - Comparação exata
 - [ ] **numericStringMatch** - Comparação numérica
@@ -187,6 +199,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 ### RFC 2849 - LDIF Format (`ldif/` - Todos os módulos)
 
 #### LDIF Parsing (`ldif/processor.py`)
+
 - [ ] **Version Line** - `version: 1`
 - [ ] **DN Line** - `dn: distinguished_name`
 - [ ] **Attribute Lines** - `attribute: value`
@@ -197,6 +210,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 - [ ] **Folding** - Long line continuation
 
 #### Change Records (`ldif/processor.py`)
+
 - [ ] **Add Change** - `changetype: add`
 - [ ] **Delete Change** - `changetype: delete`
 - [ ] **Modify Change** - `changetype: modify`
@@ -209,6 +223,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
   - [ ] New superior DN
 
 #### LDIF Writing (`ldif/writer.py`)
+
 - [ ] **Entry Writing** - Escrita de entradas
 - [ ] **Change Writing** - Escrita de mudanças
 - [ ] **Base64 Detection** - Detecção automática de necessidade de Base64
@@ -216,6 +231,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 - [ ] **Safe Character Detection** - Detecção de caracteres seguros
 
 #### LDIF Validation (`ldif/validator.py`)
+
 - [ ] **Syntax Validation** - Validação sintática
 - [ ] **DN Validation** - Validação de Distinguished Names
 - [ ] **Attribute Validation** - Validação de atributos
@@ -223,18 +239,21 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 - [ ] **Change Validation** - Validação de mudanças
 
 #### LDIF Analysis (`ldif/analyzer.py`)
+
 - [ ] **Entry Statistics** - Estatísticas de entradas
 - [ ] **Attribute Usage** - Uso de atributos
 - [ ] **Object Class Analysis** - Análise de classes de objetos
 - [ ] **Data Quality Assessment** - Avaliação de qualidade
 
 #### LDIF Transformation (`ldif/transformer.py`)
+
 - [ ] **Entry Filtering** - Filtragem de entradas
 - [ ] **Attribute Transformation** - Transformação de atributos
 - [ ] **Value Modification** - Modificação de valores
 - [ ] **Schema Application** - Aplicação de schema
 
 #### LDIF Merging (`ldif/merger.py`)
+
 - [ ] **Multi-file Merging** - Fusão de arquivos
 - [ ] **Conflict Resolution** - Resolução de conflitos
 - [ ] **Duplicate Handling** - Tratamento de duplicatas
@@ -245,24 +264,28 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 ## 🟠 PRIORIDADE ALTA - SEGUNDA FASE
 
 ### RFC 2696 - Simple Paged Results Control (`core/search_engine.py`)
+
 - [ ] **Paged Results Control** - OID 1.2.840.113556.1.4.319
 - [ ] **Page Size Configuration**
 - [ ] **Cookie Management**
 - [ ] **Result Set Pagination**
 
 ### RFC 2891 - Server Side Sorting Control (`core/search_engine.py`)
+
 - [ ] **Sort Request Control** - OID 1.2.840.113556.1.4.473
 - [ ] **Sort Response Control** - OID 1.2.840.113556.1.4.474
 - [ ] **Sort Key Specification**
 - [ ] **Ordering Rule Application**
 
 ### RFC 5805 - Transactions (`core/operations.py`)
+
 - [ ] **Start Transaction Extended Operation**
 - [ ] **End Transaction Extended Operation**
 - [ ] **Transaction Specification Control**
 - [ ] **Rollback Support**
 
 ### RFC 4533 - Content Synchronization (`core/operations.py`)
+
 - [ ] **Sync Request Control**
 - [ ] **Sync State Control**
 - [ ] **Sync Done Control**
@@ -270,12 +293,14 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 - [ ] **Entry Change Notification**
 
 ### RFC 3062 - Password Modify Extended Operation (`core/security.py`)
+
 - [ ] **Password Modify Extended Operation** - OID 1.3.6.1.4.1.4203.1.11.1
 - [ ] **Current Password Handling**
 - [ ] **New Password Generation**
 - [ ] **Password Policy Integration**
 
 ### Schema Extensions
+
 - [ ] **RFC 2798 - inetOrgPerson** (`schema/parser.py`)
 - [ ] **RFC 4530 - entryUUID** (`schema/parser.py`)
 - [ ] **RFC 5020 - entryDN** (`schema/parser.py`)
@@ -285,11 +310,13 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 ## 🟡 PRIORIDADE MÉDIA - TERCEIRA FASE
 
 ### Extended Operations
+
 - [ ] **RFC 4532 - "Who am I?" Operation** (`core/security.py`)
 - [ ] **RFC 3909 - Cancel Operation** (`core/operations.py`)
 - [ ] **RFC 4531 - Turn Operation** (`core/operations.py`)
 
 ### Advanced Controls
+
 - [ ] **RFC 3829 - Authorization Identity Controls** (`core/security.py`)
 - [ ] **RFC 4370 - Proxied Authorization Control** (`core/security.py`)
 - [ ] **RFC 3876 - Returning Matched Values** (`core/search_engine.py`)
@@ -297,6 +324,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 - [ ] **RFC 4528 - Assertion Control** (`core/operations.py`)
 
 ### Schema Features
+
 - [ ] **RFC 3671 - Collective Attributes** (`schema/parser.py`)
 - [ ] **RFC 3672 - Subentries** (`schema/discovery.py`)
 - [ ] **RFC 4525 - Modify-Increment Extension** (`core/operations.py`)
@@ -306,11 +334,13 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 ## 🔵 PRIORIDADE BAIXA - FUTURAS RELEASES
 
 ### Experimental Features
+
 - [ ] **RFC 4373 - Bulk Update/Replication Protocol**
 - [ ] **RFC 3088 - OpenLDAP Root Service**
 - [ ] **RFC 3663 - Domain Administrative Data**
 
 ### Specialized Schemas
+
 - [ ] **RFC 2713 - Java Objects Schema**
 - [ ] **RFC 2714 - CORBA Objects Schema**
 - [ ] **RFC 4403 - UDDI Schema**
@@ -320,6 +350,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 ## 📊 Métricas de Qualidade
 
 ### Compliance Targets
+
 - [ ] **100% RFC 4511 Compliance** (Core Protocol)
 - [ ] **100% RFC 2849 Compliance** (LDIF)
 - [ ] **100% RFC 4512 Compliance** (Information Models)
@@ -328,6 +359,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 - [ ] **100% RFC 4517 Compliance** (Syntaxes and Matching Rules)
 
 ### Performance Targets
+
 - [ ] **Search Operations**: > 12,000 entries/second
 - [ ] **Bulk Operations**: > 8,000 operations/second
 - [ ] **Connection Pool Reuse**: > 95%
@@ -335,6 +367,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 - [ ] **Average Response Time**: < 50ms
 
 ### Test Coverage
+
 - [ ] **Unit Tests**: > 95% coverage
 - [ ] **Integration Tests**: All critical paths
 - [ ] **RFC Compliance Tests**: All implemented RFCs
@@ -345,6 +378,7 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 ## 🛠️ Ferramentas de Desenvolvimento
 
 ### Validação e Testes
+
 ```python
 # RFC Compliance Validator
 class RFCValidator:
@@ -357,6 +391,7 @@ class RFCValidator:
 ```
 
 ### Performance Monitoring
+
 ```python
 # Performance Metrics
 class PerformanceMonitor:
@@ -368,8 +403,8 @@ class PerformanceMonitor:
 
 ---
 
-**Status**: 🚧 Em Desenvolvimento  
-**Última Atualização**: $(date)  
+**Status**: 🚧 Em Desenvolvimento
+**Última Atualização**: $(date)
 **Versão do Checklist**: 1.0
 
-Este checklist deve ser usado como referência durante o desenvolvimento para garantir conformidade completa com os RFCs disponíveis. 
+Este checklist deve ser usado como referência durante o desenvolvimento para garantir conformidade completa com os RFCs disponíveis.

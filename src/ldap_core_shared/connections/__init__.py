@@ -10,7 +10,7 @@ Architecture:
 
 Extracted Components:
     - LDAPConnectionInfo: From algar-oud-mig.ldap_operations
-    - RealLDAPConnection: Enhanced from algar-oud-mig.ldap_operations  
+    - RealLDAPConnection: Enhanced from algar-oud-mig.ldap_operations
     - LDAPConnectionPool: From algar-oud-mig.connection_pool
     - SSH Tunnel Support: From algar-oud-mig.ssh
 
@@ -22,16 +22,17 @@ Integration Points:
 Version: 1.0.0-extracted
 """
 
-from .base import LDAPConnectionInfo, LDAPSearchConfig, LDAPConnectionOptions
-from .manager import EnhancedLDAPConnection, LDAPConnectionManager
-from .pool import LDAPConnectionPool, PoolConfig
+from ldap_core_shared.connections.base import (
+    LDAPConnectionInfo,
+    LDAPConnectionOptions,
+    LDAPSearchConfig,
+)
+from ldap_core_shared.connections.manager import ConnectionStats, LDAPConnectionManager
 
 __all__ = [
+    "ConnectionStats",
     "LDAPConnectionInfo",
-    "LDAPSearchConfig", 
-    "LDAPConnectionOptions",
-    "EnhancedLDAPConnection",
     "LDAPConnectionManager",
-    "LDAPConnectionPool",
-    "PoolConfig",
+    "LDAPConnectionOptions",
+    "LDAPSearchConfig",
 ]
