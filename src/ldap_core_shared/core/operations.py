@@ -1187,6 +1187,7 @@ class LDAPOperations:
         progress_callback: callable | None = None,
     ) -> BulkOperationResult:
         """Traditional bulk add processing (fallback for small batches)."""
+        start_time = time.time()
         processor = BulkOperationProcessor(tx, batch_size)
         total_entries = len(entries)
 

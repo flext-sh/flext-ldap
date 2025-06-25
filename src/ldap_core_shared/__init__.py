@@ -106,55 +106,55 @@ if not is_compatible_python_version((sys.version_info.major, sys.version_info.mi
 
 # 🚀 Public API - Simplified and consistent exports
 __all__ = [
-    # 📊 Metadata
-    "__version__",
+    "AsyncLDAPConnection",  # Explicit async connection
+    "AuthenticationError",  # Authentication failures
+    "ConnectionError",  # Connection-related errors
+    "ConnectionPool",  # Connection pooling
+    # 🔌 Core Connection API
+    "LDAPConnection",  # Main connection class (async + sync)
+    # 📄 Data Models
+    "LDAPEntry",  # LDAP entry representation
+    # ⚠️ Exception Classes
+    "LDAPError",  # Base LDAP exception
+    "LDAPResult",  # Operation result wrapper
+    "LDIFEntry",  # LDIF entry representation
+    # 🔄 LDIF Processing (Ultra-High Performance)
+    "LDIFProcessor",  # Main LDIF processor (40,000+ entries/sec)
+    "LDIFValidator",  # LDIF validation
+    # 🏢 Migration Tools
+    "MigrationEngine",  # Main migration engine
+    "MigrationError",  # Migration operation errors
+    "MigrationResult",  # Migration operation result
+    "PerformanceBenchmarker",  # Comprehensive performance analysis
+    "PredictiveConnectionPool",  # <5ms connection acquisition
+    "SchemaComparator",  # Schema comparison tools
+    # 🔍 Schema Management
+    "SchemaDiscovery",  # Schema discovery and analysis
+    "SchemaError",  # Schema-related errors
+    "SchemaMapper",  # Schema mapping tools
+    "SchemaValidator",  # Schema validation
+    "SearchResult",  # Search operation result
+    "SimpleLDAPClient",  # High-level client API
+    "SyncLDAPConnection",  # Explicit sync connection
+    "ValidationError",  # Data validation errors
+    # 🚀 Vectorized Operations (Core Performance)
+    "VectorizedBulkProcessor",  # 300-500% faster bulk operations
+    "VectorizedLDIFProcessor",  # 200-400% faster LDIF processing
+    "VectorizedSearchEngine",  # 400-600% faster search operations
     "__author__",
     "__copyright__",
     "__email__",
     "__license__",
-    "get_package_info",
-    "get_version_tuple",
-    "is_stable_release",
-    # 🔌 Core Connection API
-    "LDAPConnection",  # Main connection class (async + sync)
-    "AsyncLDAPConnection",  # Explicit async connection
-    "SyncLDAPConnection",  # Explicit sync connection
-    "ConnectionPool",  # Connection pooling
-    "SimpleLDAPClient",  # High-level client API
-    # 📄 Data Models
-    "LDAPEntry",  # LDAP entry representation
-    "LDAPResult",  # Operation result wrapper
-    "SearchResult",  # Search operation result
-    # 🔄 LDIF Processing (Ultra-High Performance)
-    "LDIFProcessor",  # Main LDIF processor (40,000+ entries/sec)
-    "LDIFEntry",  # LDIF entry representation
-    "LDIFValidator",  # LDIF validation
-    # 🚀 Vectorized Operations (Core Performance)
-    "VectorizedBulkProcessor",  # 300-500% faster bulk operations
-    "VectorizedSearchEngine",  # 400-600% faster search operations
-    "VectorizedLDIFProcessor",  # 200-400% faster LDIF processing
-    "PredictiveConnectionPool",  # <5ms connection acquisition
-    "PerformanceBenchmarker",  # Comprehensive performance analysis
-    # 🏢 Migration Tools
-    "MigrationEngine",  # Main migration engine
-    "SchemaMapper",  # Schema mapping tools
-    "MigrationResult",  # Migration operation result
-    # 🔍 Schema Management
-    "SchemaDiscovery",  # Schema discovery and analysis
-    "SchemaComparator",  # Schema comparison tools
-    "SchemaValidator",  # Schema validation
-    # ⚠️ Exception Classes
-    "LDAPError",  # Base LDAP exception
-    "ConnectionError",  # Connection-related errors
-    "AuthenticationError",  # Authentication failures
-    "ValidationError",  # Data validation errors
-    "SchemaError",  # Schema-related errors
-    "MigrationError",  # Migration operation errors
+    # 📊 Metadata
+    "__version__",
     # 🛠️ Utilities
     "configure_logging",  # Logging configuration
     "get_logger",  # Logger factory
-    "quick_search",  # Convenience search function
+    "get_package_info",
+    "get_version_tuple",
+    "is_stable_release",
     "process_ldif_file",  # Convenience LDIF processing
+    "quick_search",  # Convenience search function
 ]
 
 # 🚀 Lazy import mappings for optimal performance and Python 3.9+ compatibility

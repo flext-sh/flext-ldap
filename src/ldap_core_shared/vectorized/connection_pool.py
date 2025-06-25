@@ -17,7 +17,7 @@ import asyncio
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Any, AsyncContextManager, Dict, List
+from typing import Any, AsyncContextManager
 
 from ldap_core_shared.utils.logging import get_logger
 
@@ -71,10 +71,10 @@ class PredictiveConnectionPool:
         self.enable_ml_prediction = enable_ml_prediction
 
         # Pool state
-        self._pool: List[Any] = []
-        self._active_connections: Dict[str, Any] = {}
+        self._pool: list[Any] = []
+        self._active_connections: dict[str, Any] = {}
         self._stats = ConnectionPoolStats()
-        self._demand_history: List[tuple[float, int]] = []
+        self._demand_history: list[tuple[float, int]] = []
 
         logger.info(
             "Predictive connection pool initialized",
@@ -136,7 +136,7 @@ class PredictiveConnectionPool:
             return connection
         except Exception as e:
             self._stats.failed_connections += 1
-            logger.error(f"Failed to create connection: {e}")
+            logger.exception(f"Failed to create connection: {e}")
             raise
 
     async def _return_connection(self, connection: Any) -> None:

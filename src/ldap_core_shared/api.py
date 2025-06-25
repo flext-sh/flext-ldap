@@ -9,6 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Optional, Union
 
+from typing_extensions import Self
+
 # Import the core components
 from ldap_core_shared.core.connection_manager import (
     ConnectionInfo,
@@ -392,7 +394,7 @@ class SimpleLDAPClient:
             msg = f"Delete operation failed: {e}"
             raise LDAPError(msg, original_error=e) from e
 
-    async def __aenter__(self) -> SimpleLDAPClient:
+    async def __aenter__(self) -> Self:
         """Async context manager entry."""
         return self
 

@@ -157,7 +157,7 @@ class TestLDAPConnectionManager:
     @patch("ldap3.Connection")
     @patch("ldap3.Server")
     def test_create_connection(
-        self, mock_server, mock_connection: Any, manager
+        self, mock_server: Any, mock_connection: Any, manager: Any
     ) -> None:
         """Test connection creation."""
         # Mock server and connection
@@ -188,9 +188,9 @@ class TestLDAPConnectionManager:
     @pytest.mark.asyncio
     async def test_initialize_connections(
         self,
-        mock_server,
-        mock_connection,
-        manager,
+        mock_server: Any,
+        mock_connection: Any,
+        manager: Any,
     ) -> None:
         """Test connection pool initialization."""
         # Mock successful connections
@@ -209,9 +209,9 @@ class TestLDAPConnectionManager:
     @pytest.mark.asyncio
     async def test_cleanup_connections(
         self,
-        mock_server,
-        mock_connection,
-        manager,
+        mock_server: Any,
+        mock_connection: Any,
+        manager: Any,
     ) -> None:
         """Test connection cleanup."""
         # Add some mock connections
@@ -235,9 +235,9 @@ class TestLDAPConnectionManager:
     @pytest.mark.asyncio
     async def test_get_connection_from_pool(
         self,
-        mock_server,
-        mock_connection,
-        manager,
+        mock_server: Any,
+        mock_connection: Any,
+        manager: Any,
     ) -> None:
         """Test getting connection from pool."""
         # Setup mock connection
@@ -262,9 +262,9 @@ class TestLDAPConnectionManager:
     @pytest.mark.asyncio
     async def test_get_connection_create_new(
         self,
-        mock_server,
-        mock_connection,
-        manager,
+        mock_server: Any,
+        mock_connection: Any,
+        manager: Any,
     ) -> None:
         """Test creating new connection when pool is empty."""
         # Setup mock connection
@@ -283,9 +283,9 @@ class TestLDAPConnectionManager:
     @pytest.mark.asyncio
     async def test_search_operation(
         self,
-        mock_server,
-        mock_connection,
-        manager,
+        mock_server: Any,
+        mock_connection: Any,
+        manager: Any,
     ) -> None:
         """Test LDAP search operation."""
         # Setup mock connection and entries
@@ -325,9 +325,9 @@ class TestLDAPConnectionManager:
     @pytest.mark.asyncio
     async def test_add_entry_operation(
         self,
-        mock_server,
-        mock_connection,
-        manager,
+        mock_server: Any,
+        mock_connection: Any,
+        manager: Any,
     ) -> None:
         """Test LDAP add operation."""
         # Setup mock connection
@@ -355,9 +355,9 @@ class TestLDAPConnectionManager:
     @pytest.mark.asyncio
     async def test_modify_entry_operation(
         self,
-        mock_server,
-        mock_connection,
-        manager,
+        mock_server: Any,
+        mock_connection: Any,
+        manager: Any,
     ) -> None:
         """Test LDAP modify operation."""
         # Setup mock connection
@@ -382,9 +382,9 @@ class TestLDAPConnectionManager:
     @pytest.mark.asyncio
     async def test_delete_entry_operation(
         self,
-        mock_server,
-        mock_connection,
-        manager,
+        mock_server: Any,
+        mock_connection: Any,
+        manager: Any,
     ) -> None:
         """Test LDAP delete operation."""
         # Setup mock connection
@@ -408,9 +408,9 @@ class TestLDAPConnectionManager:
     @pytest.mark.asyncio
     async def test_get_entry_operation(
         self,
-        mock_server,
-        mock_connection,
-        manager,
+        mock_server: Any,
+        mock_connection: Any,
+        manager: Any,
     ) -> None:
         """Test LDAP get entry operation."""
         # Setup mock connection and entry
@@ -441,7 +441,7 @@ class TestLDAPConnectionManager:
     @patch("ldap3.Server")
     @pytest.mark.asyncio
     async def test_health_check(
-        self, mock_server, mock_connection: Any, manager
+        self, mock_server: Any, mock_connection: Any, manager: Any
     ) -> None:
         """Test health check operation."""
         # Setup mock connection
@@ -459,7 +459,7 @@ class TestLDAPConnectionManager:
         mock_connection_instance.search.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_bulk_search_operations(self, manager) -> None:
+    async def test_bulk_search_operations(self, manager: Any) -> None:
         """Test bulk search operations for high performance."""
         # Create multiple search configs
         search_configs = [
@@ -474,7 +474,7 @@ class TestLDAPConnectionManager:
         ]
 
         # Mock the search_with_config method to return predictable results
-        async def mock_search(config):
+        async def mock_search(config: Any):
             if "users" in config.search_base:
                 yield {
                     "dn": "cn=user1,ou=users,dc=test,dc=com",
@@ -500,7 +500,7 @@ class TestLDAPConnectionManager:
         assert len(results[0]) == 2  # 2 users
         assert len(results[1]) == 1  # 1 group
 
-    def test_get_stats(self, manager) -> None:
+    def test_get_connection_stats(self, manager: Any) -> None:
         """Test getting connection statistics."""
         # Test initial stats
         stats = manager.get_stats()
@@ -509,7 +509,7 @@ class TestLDAPConnectionManager:
         assert stats.active_connections == 0
 
     @pytest.mark.asyncio
-    async def test_refresh_pool(self, manager) -> None:
+    async def test_connection_pool_refresh(self, manager: Any) -> None:
         """Test connection pool refresh."""
         # Mock some connections in pool
         mock_conn = MagicMock()
@@ -526,7 +526,7 @@ class TestLDAPConnectionManager:
         manager._initialize_connections.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_concurrent_operations(self, manager) -> None:
+    async def test_concurrent_operations(self, manager: Any) -> None:
         """Test concurrent operations for performance."""
         # Mock the get_connection method to return a mock connection
         mock_connection = MagicMock()
@@ -539,7 +539,7 @@ class TestLDAPConnectionManager:
         manager.get_connection = mock_get_connection
 
         # Create multiple concurrent search tasks
-        async def search_task(base):
+        async def search_task(base: str):
             results = []
             async for result in manager.search(base, "(objectClass=*)"):
                 results.append(result)
@@ -557,7 +557,7 @@ class TestLDAPConnectionManager:
     @patch("ldap3.Server")
     @pytest.mark.asyncio
     async def test_error_handling(
-        self, mock_server, mock_connection: Any, manager
+        self, mock_server: Any, mock_connection: Any, manager: Any
     ) -> None:
         """Test error handling in operations."""
         # Setup mock connection that raises exception
@@ -571,7 +571,7 @@ class TestLDAPConnectionManager:
                 pass
 
     @pytest.mark.asyncio
-    async def test_context_manager_usage(self, manager) -> None:
+    async def test_async_context_manager(self, manager: Any) -> None:
         """Test using manager as async context manager."""
         # Mock initialization and cleanup
         manager._initialize_connections = AsyncMock()
@@ -585,7 +585,7 @@ class TestLDAPConnectionManager:
         # Cleanup should be called on exit
         manager._cleanup_connections.assert_called_once()
 
-    def test_ssh_tunnel_configuration(self, connection_info) -> None:
+    def test_ssh_tunnel_configuration(self, connection_info: Any) -> None:
         """Test SSH tunnel configuration."""
         options = LDAPConnectionOptions(
             connection_info=connection_info,
@@ -608,7 +608,7 @@ class TestPerformanceBenchmarks:
 
     @pytest.mark.benchmark
     @pytest.mark.asyncio
-    async def test_connection_acquisition_performance(self, manager) -> None:
+    async def test_benchmark_connection_acquisition(self, manager: Any) -> None:
         """Benchmark connection acquisition time."""
         # Mock fast connection
         mock_connection = MagicMock()
@@ -632,7 +632,7 @@ class TestPerformanceBenchmarks:
 
     @pytest.mark.benchmark
     @pytest.mark.asyncio
-    async def test_search_throughput(self, manager) -> None:
+    async def test_benchmark_search_throughput(self, manager: Any) -> None:
         """Benchmark search operation throughput."""
         # Mock high-performance search
         mock_connection = MagicMock()
@@ -673,7 +673,7 @@ class TestIntegrationScenarios:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_migration_workflow_simulation(self, manager) -> None:
+    async def test_migration_workflow(self, manager: Any) -> None:
         """Simulate a typical migration workflow."""
         # Mock successful operations
         manager.search = AsyncMock()
@@ -705,7 +705,7 @@ class TestIntegrationScenarios:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_high_volume_operations(self, manager) -> None:
+    async def test_high_volume_operations(self, manager: Any) -> None:
         """Test high-volume operations for enterprise usage."""
         # Mock bulk operations
         manager.bulk_search = AsyncMock()
