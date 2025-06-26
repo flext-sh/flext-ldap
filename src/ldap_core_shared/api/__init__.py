@@ -40,6 +40,7 @@ from ldap_core_shared.api.results import Result
 # Import migration-related API components for client-a-oud-mig compatibility
 from ldap_core_shared.ldif.processor import LDIFProcessor, LDIFProcessingConfig
 from ldap_core_shared.ldif.writer import LDIFWriter, LDIFWriterConfig, LDIFHeaderConfig
+from ldap_core_shared.ldif.transformer import TransformationRule, AttributeTransformRule
 from ldap_core_shared.schema.migrator import SchemaMigrator, MigrationPlan
 from ldap_core_shared.exceptions.migration import (
     MigrationError,
@@ -77,6 +78,8 @@ __all__ = [
     "LDIFWriter",           # LDIF writing functionality
     "LDIFWriterConfig",     # LDIF writer configuration
     "LDIFHeaderConfig",     # LDIF header configuration
+    "TransformationRule",   # LDIF transformation rules
+    "AttributeTransformRule", # LDIF attribute transformation rules
     "SchemaMigrator",       # Schema migration functionality
     "MigrationPlan",        # Migration planning
     "MigrationError",       # Migration exceptions
