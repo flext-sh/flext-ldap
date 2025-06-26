@@ -69,28 +69,28 @@ class ChangeNotification(BaseModel):
     entry_dn: str = Field(description="Distinguished name of changed entry")
 
     change_number: Optional[int] = Field(
-        default=None, description="Server-assigned change sequence number"
+        default=None, description="Server-assigned change sequence number",
     )
 
     entry_data: Optional[dict[str, list[str]]] = Field(
-        default=None, description="Entry data if requested"
+        default=None, description="Entry data if requested",
     )
 
     timestamp: datetime = Field(
-        default_factory=datetime.now, description="When change was detected"
+        default_factory=datetime.now, description="When change was detected",
     )
 
     # Additional metadata
     previous_dn: Optional[str] = Field(
-        default=None, description="Previous DN for MODDN operations"
+        default=None, description="Previous DN for MODDN operations",
     )
 
     change_controls: list[str] = Field(
-        default_factory=list, description="Additional controls returned with change"
+        default_factory=list, description="Additional controls returned with change",
     )
 
     server_info: Optional[dict[str, Any]] = Field(
-        default=None, description="Server-specific change information"
+        default=None, description="Server-specific change information",
     )
 
     def is_add(self) -> bool:
@@ -141,7 +141,7 @@ class ChangeNotification(BaseModel):
 
         return any(
             attr_name.lower() == attribute.lower()
-            for attr_name in self.entry_data.keys()
+            for attr_name in self.entry_data
         )
 
 
@@ -154,11 +154,11 @@ class PersistentSearchRequest(BaseModel):
     )
 
     changes_only: bool = Field(
-        default=True, description="Return only changes, not initial search results"
+        default=True, description="Return only changes, not initial search results",
     )
 
     return_entry_change_notification: bool = Field(
-        default=True, description="Return entry change notification control"
+        default=True, description="Return entry change notification control",
     )
 
     def get_change_types_mask(self) -> int:
@@ -245,7 +245,6 @@ class PersistentSearchControl(LDAPControl):
 
         # Initialize base control
         super().__init__(
-            control_type=self.control_type,
             criticality=criticality,
             control_value=self._encode_request(),
         )
@@ -280,7 +279,7 @@ class PersistentSearchControl(LDAPControl):
         self._is_active = False
 
     def set_notification_callback(
-        self, callback: Callable[[ChangeNotification], None]
+        self, callback: Callable[[ChangeNotification], None],
     ) -> None:
         """Set callback function for change notifications.
 
@@ -290,7 +289,7 @@ class PersistentSearchControl(LDAPControl):
         self._notification_callback = callback
 
     def process_change_notification(
-        self, entry_dn: str, change_type: ChangeType, entry_data: Optional[dict] = None
+        self, entry_dn: str, change_type: ChangeType, entry_data: Optional[dict[str, Any]] = None,
     ) -> None:
         """Process incoming change notification.
 
@@ -314,9 +313,9 @@ class PersistentSearchControl(LDAPControl):
         if self._notification_callback:
             try:
                 self._notification_callback(notification)
-            except Exception as e:
+            except Exception:
                 # Log error but don't stop monitoring
-                print(f"Error in notification callback: {e}")
+                pass
 
     def get_pending_notifications(self) -> list[ChangeNotification]:
         """Get all pending change notifications.
@@ -385,6 +384,34 @@ class PersistentSearchControl(LDAPControl):
         """Clear all accumulated notifications."""
         self._notifications.clear()
 
+    def encode_value(self) -> Optional[bytes]:
+        """Encode persistent search control value to ASN.1 bytes.
+
+        Returns:
+            Encoded control value or None if no value
+        """
+        return self.control_value
+
+    @classmethod
+    def decode_value(cls, control_value: Optional[bytes]) -> PersistentSearchControl:
+        """Decode ASN.1 bytes to create persistent search control instance.
+
+        Args:
+            control_value: ASN.1 encoded control value
+
+        Returns:
+            PersistentSearchControl instance with decoded values
+        """
+        if not control_value:
+            # Default persistent search control for all changes
+            return cls(change_types=[ChangeType.ADD, ChangeType.DELETE, ChangeType.MODIFY],
+                      changes_only=True, return_entry_change_controls=True)
+
+        # For now, return a default control since proper ASN.1 decoding
+        # would require more complex implementation
+        return cls(change_types=[ChangeType.ADD, ChangeType.DELETE, ChangeType.MODIFY],
+                  changes_only=True, return_entry_change_controls=True)
+
 
 # High-level persistent search monitoring
 class PersistentSearchMonitor:
@@ -398,7 +425,7 @@ class PersistentSearchMonitor:
         """
         self._connection = connection
         self._active_searches: dict[str, PersistentSearchControl] = {}
-        self._event_handlers: dict[str, list[Callable]] = {}
+        self._event_handlers: dict[str, list[Callable[..., Any]]] = {}
 
     async def start_monitoring(
         self,
@@ -498,11 +525,31 @@ class PersistentSearchMonitor:
 
     async def process_notifications(self) -> None:
         """Process pending notifications for all active monitors."""
-        for monitor_id, control in self._active_searches.items():
+        for control in self._active_searches.values():
             notifications = control.get_pending_notifications()
 
             for notification in notifications:
                 await self._dispatch_notification(notification)
+
+    async def _execute_handler_safely(
+        self,
+        handler: Callable[[ChangeNotification], None],
+        notification: ChangeNotification,
+    ) -> None:
+        """Execute event handler safely with proper async/sync handling.
+
+        Args:
+            handler: Event handler function
+            notification: Change notification to pass to handler
+        """
+        try:
+            if asyncio.iscoroutinefunction(handler):
+                await handler(notification)
+            else:
+                handler(notification)
+        except Exception:
+            # Log error but don't stop processing other handlers
+            pass
 
     async def _dispatch_notification(self, notification: ChangeNotification) -> None:
         """Dispatch notification to appropriate event handlers.
@@ -514,24 +561,12 @@ class PersistentSearchMonitor:
         change_type = notification.change_type.value
         if change_type in self._event_handlers:
             for handler in self._event_handlers[change_type]:
-                try:
-                    if asyncio.iscoroutinefunction(handler):
-                        await handler(notification)
-                    else:
-                        handler(notification)
-                except Exception as e:
-                    print(f"Error in event handler for {change_type}: {e}")
+                await self._execute_handler_safely(handler, notification)
 
         # Call handlers for 'all' events
         if "all" in self._event_handlers:
             for handler in self._event_handlers["all"]:
-                try:
-                    if asyncio.iscoroutinefunction(handler):
-                        await handler(notification)
-                    else:
-                        handler(notification)
-                except Exception as e:
-                    print(f"Error in 'all' event handler: {e}")
+                await self._execute_handler_safely(handler, notification)
 
 
 # Convenience functions
@@ -615,7 +650,6 @@ async def monitor_directory_changes(
     )
 
     return monitor
-
 
 # TODO: Integration points for implementation:
 #

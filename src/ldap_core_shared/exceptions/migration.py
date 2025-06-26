@@ -5,7 +5,10 @@ Exception classes for LDAP migration and data transfer errors.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Optional, Union, cast
+
+# Type for error context data passed to exception constructors
+ErrorContext = Union[str, int, float, bool, list[str], dict[str, Any], None]
 
 from ldap_core_shared.exceptions.base import LDAPError
 
@@ -23,7 +26,9 @@ class MigrationError(LDAPError):
         migration_phase: Optional[str] = None,
         source_dn: Optional[str] = None,
         target_dn: Optional[str] = None,
-        **kwargs: Any,
+        error_code: Optional[str] = None,
+        context: Optional[dict[str, Any]] = None,
+        original_error: Optional[Exception] = None,
     ) -> None:
         """Initialize migration error.
 
@@ -32,18 +37,131 @@ class MigrationError(LDAPError):
             migration_phase: Phase of migration where error occurred
             source_dn: Source DN being migrated
             target_dn: Target DN in destination
-            **kwargs: Additional arguments for LDAPError
+            error_code: Optional LDAP error code
+            context: Additional context information
+            original_error: Original exception that caused this error
         """
-        context = kwargs.get("context", {})
+        final_context = context or {}
         if migration_phase:
-            context["migration_phase"] = migration_phase
+            final_context["migration_phase"] = migration_phase
         if source_dn:
-            context["source_dn"] = source_dn
+            final_context["source_dn"] = source_dn
         if target_dn:
-            context["target_dn"] = target_dn
+            final_context["target_dn"] = target_dn
 
-        kwargs["context"] = context
-        super().__init__(message, **kwargs)
+        super().__init__(
+            message,
+            error_code=error_code,
+            context=final_context,
+            original_error=original_error,
+        )
+
+
+class SchemaValidationError(MigrationError):
+    """🔍 Exception for schema validation failures during migration."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        schema_element: Optional[str] = None,
+        validation_type: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize schema validation error.
+
+        Args:
+            message: Error description
+            schema_element: Schema element that failed validation
+            validation_type: Type of validation that failed
+            **kwargs: Additional arguments for MigrationError
+        """
+        context: dict[str, Any] = cast("dict[str, Any]", kwargs.get("context", {}))
+        if schema_element:
+            context["schema_element"] = schema_element
+        if validation_type:
+            context["validation_type"] = validation_type
+
+        super().__init__(
+            message,
+            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            context=context,
+            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+        )
+
+
+class DataIntegrityError(MigrationError):
+    """💾 Exception for data integrity issues during migration."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        integrity_check: Optional[str] = None,
+        expected_value: Optional[str | int | float | bool] = None,
+        actual_value: Optional[str | int | float | bool] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize data integrity error.
+
+        Args:
+            message: Error description
+            integrity_check: Type of integrity check that failed
+            expected_value: Expected value
+            actual_value: Actual value found
+            **kwargs: Additional arguments for MigrationError
+        """
+        context: dict[str, Any] = cast("dict[str, Any]", kwargs.get("context", {}))
+        if integrity_check:
+            context["integrity_check"] = integrity_check
+        if expected_value is not None:
+            context["expected_value"] = str(expected_value)
+        if actual_value is not None:
+            context["actual_value"] = str(actual_value)
+
+        super().__init__(
+            message,
+            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            context=context,
+            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+        )
+
+
+class PerformanceThresholdError(MigrationError):
+    """⚡ Exception for performance threshold violations during migration."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        metric_name: Optional[str] = None,
+        threshold_value: Optional[float] = None,
+        actual_value: Optional[float] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize performance threshold error.
+
+        Args:
+            message: Error description
+            metric_name: Name of the performance metric
+            threshold_value: Performance threshold that was exceeded
+            actual_value: Actual performance value
+            **kwargs: Additional arguments for MigrationError
+        """
+        context: dict[str, Any] = cast("dict[str, Any]", kwargs.get("context", {}))
+        if metric_name:
+            context["metric_name"] = metric_name
+        if threshold_value is not None:
+            context["threshold_value"] = threshold_value
+        if actual_value is not None:
+            context["actual_value"] = actual_value
+
+        super().__init__(
+            message,
+            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            context=context,
+            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+        )
 
 
 class MigrationValidationError(MigrationError):
@@ -65,14 +183,18 @@ class MigrationValidationError(MigrationError):
             entry_count: Number of entries processed when error occurred
             **kwargs: Additional arguments for MigrationError
         """
-        context = kwargs.get("context", {})
+        context: dict[str, Any] = cast("dict[str, Any]", kwargs.get("context", {}))
         if validation_rule:
             context["validation_rule"] = validation_rule
         if entry_count is not None:
             context["entry_count"] = entry_count
 
-        kwargs["context"] = context
-        super().__init__(message, **kwargs)
+        super().__init__(
+            message,
+            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            context=context,
+            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+        )
 
 
 class MigrationPerformanceError(MigrationError):
@@ -96,7 +218,7 @@ class MigrationPerformanceError(MigrationError):
             actual_value: Actual performance value
             **kwargs: Additional arguments for MigrationError
         """
-        context = kwargs.get("context", {})
+        context: dict[str, Any] = cast("dict[str, Any]", kwargs.get("context", {}))
         if performance_metric:
             context["performance_metric"] = performance_metric
         if expected_value is not None:
@@ -104,8 +226,12 @@ class MigrationPerformanceError(MigrationError):
         if actual_value is not None:
             context["actual_value"] = actual_value
 
-        kwargs["context"] = context
-        super().__init__(message, **kwargs)
+        super().__init__(
+            message,
+            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            context=context,
+            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+        )
 
 
 class MigrationDataError(MigrationError):
@@ -127,14 +253,18 @@ class MigrationDataError(MigrationError):
             affected_attributes: Attributes affected by the data issue
             **kwargs: Additional arguments for MigrationError
         """
-        context = kwargs.get("context", {})
+        context: dict[str, Any] = cast("dict[str, Any]", kwargs.get("context", {}))
         if data_issue:
             context["data_issue"] = data_issue
         if affected_attributes:
             context["affected_attributes"] = affected_attributes
 
-        kwargs["context"] = context
-        super().__init__(message, **kwargs)
+        super().__init__(
+            message,
+            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            context=context,
+            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+        )
 
 
 class MigrationConfigurationError(MigrationError):
@@ -145,7 +275,7 @@ class MigrationConfigurationError(MigrationError):
         message: str,
         *,
         config_parameter: Optional[str] = None,
-        config_value: Optional[Any] = None,
+        config_value: Optional[str | int | float | bool] = None,
         **kwargs: Any,
     ) -> None:
         """Initialize migration configuration error.
@@ -156,11 +286,15 @@ class MigrationConfigurationError(MigrationError):
             config_value: Invalid configuration value
             **kwargs: Additional arguments for MigrationError
         """
-        context = kwargs.get("context", {})
+        context: dict[str, Any] = cast("dict[str, Any]", kwargs.get("context", {}))
         if config_parameter:
             context["config_parameter"] = config_parameter
         if config_value is not None:
             context["config_value"] = str(config_value)  # Convert to string for safety
 
-        kwargs["context"] = context
-        super().__init__(message, **kwargs)
+        super().__init__(
+            message,
+            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            context=context,
+            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+        )

@@ -39,7 +39,7 @@ References:
 
 from __future__ import annotations
 
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from pydantic import Field, validator
 
@@ -171,14 +171,14 @@ class ProxyAuthorizationControl(LDAPControl):
     control_type = ControlOIDs.PROXY_AUTHORIZATION
 
     authorization_identity: AuthorizationIdentity = Field(
-        description="Authorization identity to proxy as"
+        description="Authorization identity to proxy as",
     )
 
     def __init__(
         self,
         authorization_identity: Union[str, AuthorizationIdentity],
         criticality: bool = True,  # Typically critical
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """Initialize proxy authorization control.
 
@@ -191,14 +191,13 @@ class ProxyAuthorizationControl(LDAPControl):
             authorization_identity = AuthorizationIdentity(authorization_identity)
 
         super().__init__(
-            authorization_identity=authorization_identity,
             criticality=criticality,
             **kwargs,
         )
 
     @validator("authorization_identity", pre=True)
     def validate_authorization_identity(
-        cls, v: Union[str, AuthorizationIdentity]
+        cls, v: Union[str, AuthorizationIdentity],
     ) -> AuthorizationIdentity:
         """Validate and convert authorization identity."""
         if isinstance(v, str):
@@ -265,7 +264,7 @@ class ProxyAuthorizationControl(LDAPControl):
 
     @classmethod
     def for_user_id(
-        cls, user_id: str, criticality: bool = True
+        cls, user_id: str, criticality: bool = True,
     ) -> ProxyAuthorizationControl:
         """Create proxy control for a user ID.
 
@@ -280,7 +279,7 @@ class ProxyAuthorizationControl(LDAPControl):
 
     @classmethod
     def for_auth_id(
-        cls, auth_id: str, criticality: bool = True
+        cls, auth_id: str, criticality: bool = True,
     ) -> ProxyAuthorizationControl:
         """Create proxy control for an authorization ID.
 
@@ -453,8 +452,7 @@ def proxy_as_REDACTED_LDAP_BIND_PASSWORD() -> ProxyAuthorizationControl:
     Note:
         This assumes an "REDACTED_LDAP_BIND_PASSWORD" user ID. Adjust based on your directory schema.
     """
-    return ProxyAuthorizationControl.for_user_id("REDACTED_LDAP_BIND_PASSWORD", critical=True)
-
+    return ProxyAuthorizationControl.for_user_id("REDACTED_LDAP_BIND_PASSWORD", criticality=True)
 
 # TODO: Integration points for implementation:
 #

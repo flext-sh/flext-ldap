@@ -183,7 +183,7 @@ class TestLDAPSearchEngine:
         engine = LDAPSearchEngine(connection_manager=mock_connection_manager)
 
         assert engine.connection_manager == mock_connection_manager
-        assert hasattr(engine, "performance_monitor")
+        assert hasattr(engine, "_performance_monitor")
 
     def test_basic_search_operation(self, mock_connection_manager) -> None:
         """Test basic search operation."""
@@ -201,8 +201,10 @@ class TestLDAPSearchEngine:
             mock_connection
         )
 
-        config = SearchConfiguration(
-            base_dn="dc=example,dc=com",
+        from ldap_core_shared.core.search_engine import SearchConfig
+
+        config = SearchConfig(
+            search_base="dc=example,dc=com",
             search_filter="(objectClass=person)",
         )
 
@@ -235,7 +237,7 @@ class TestLDAPSearchEngine:
             assert result is not None
 
     def test_search_engine_performance_monitoring(
-        self, mock_connection_manager
+        self, mock_connection_manager,
     ) -> None:
         """Test search engine performance monitoring."""
         engine = LDAPSearchEngine(connection_manager=mock_connection_manager)
@@ -289,7 +291,7 @@ class TestLDAPSearchEngine:
 
         # Mock connection failure
         mock_connection_manager.get_connection.side_effect = Exception(
-            "Connection failed"
+            "Connection failed",
         )
 
         config = SearchConfiguration(
@@ -314,9 +316,9 @@ class TestLDAPSearchEngine:
 
         # Test complex filter scenarios
         complex_filters = [
-            "(&(objectClass=person)(cn=test*))",
-            "(|(mail=*@example.com)(mail=*@test.com))",
-            "(&(objectClass=inetOrgPerson)(!(cn=disabled*)))",
+            "(&(objectClass=person)(cn=test*)",
+            "(|(mail=*@example.com)(mail=*@test.com)",
+            "(&(objectClass=inetOrgPerson)(!(cn=disabled*))",
         ]
 
         for filter_str in complex_filters:
@@ -352,7 +354,7 @@ class SearchFilter:
         operator: str,
         value: str,
         logical_operator: str | None = None,
-    ):
+    ) -> None:
         self.attribute = attribute
         self.operator = operator
         self.value = value

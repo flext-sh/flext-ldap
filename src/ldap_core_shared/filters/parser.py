@@ -24,10 +24,10 @@ Usage Example:
     >>> print(parsed.value)  # 'John Doe'
     >>>
     >>> # Parse complex nested filter
-    >>> complex_filter = "(&(objectClass=person)(|(cn=*REDACTED_LDAP_BIND_PASSWORD*)(mail=*@example.com)))"
+    >>> complex_filter = "(&(objectClass=person)(|(cn=*REDACTED_LDAP_BIND_PASSWORD*)(mail=*@example.com))"
     >>> parsed = parser.parse(complex_filter)
     >>> print(parsed.filter_type)  # 'and'
-    >>> print(len(parsed.children))  # 2
+    >>> print(len(parsed.children)  # 2
 
 References:
     - perl-ldap: lib/Net/LDAP/Filter.pm
@@ -42,6 +42,11 @@ from enum import Enum
 from typing import Any, Optional
 
 from pydantic import BaseModel, Field, validator
+
+# Constants for filter validation
+MIN_COMPOUND_FILTER_CHILDREN = 2  # Minimum children for AND/OR filters
+EXACT_NOT_FILTER_CHILDREN = 1     # Exact children for NOT filters
+COMPLEXITY_PERFORMANCE_THRESHOLD = 10  # Complexity score threshold for performance warnings
 
 
 class FilterType(Enum):
@@ -122,19 +127,19 @@ class ParsedFilter(BaseModel):
     filter_type: FilterType = Field(description="Type of LDAP filter")
 
     attribute: Optional[str] = Field(
-        default=None, description="Attribute name for simple filters"
+        default=None, description="Attribute name for simple filters",
     )
 
     value: Optional[str] = Field(
-        default=None, description="Filter value for simple filters"
+        default=None, description="Filter value for simple filters",
     )
 
     operator: Optional[str] = Field(
-        default=None, description="Comparison operator (=, >=, <=, ~=)"
+        default=None, description="Comparison operator (=, >=, <=, ~=)",
     )
 
     children: list[ParsedFilter] = Field(
-        default_factory=list, description="Child filters for compound filters"
+        default_factory=list, description="Child filters for compound filters",
     )
 
     is_negated: bool = Field(default=False, description="Whether filter is negated")
@@ -143,27 +148,27 @@ class ParsedFilter(BaseModel):
 
     # Extensible match components
     matching_rule: Optional[str] = Field(
-        default=None, description="Matching rule OID for extensible matches"
+        default=None, description="Matching rule OID for extensible matches",
     )
 
     dn_attributes: bool = Field(
-        default=False, description="Whether extensible match includes DN attributes"
+        default=False, description="Whether extensible match includes DN attributes",
     )
 
     @validator("children")
-    def validate_children(cls, v: list, values: dict) -> list:
+    def validate_children(cls, v: list[Any], values: dict[str, Any]) -> list[Any]:
         """Validate children based on filter type."""
         filter_type = values.get("filter_type")
 
-        if filter_type == FilterType.AND and len(v) < 2:
+        if filter_type == FilterType.AND and len(v) < MIN_COMPOUND_FILTER_CHILDREN:
             msg = "AND filter must have at least 2 children"
             raise ValueError(msg)
 
-        if filter_type == FilterType.OR and len(v) < 2:
+        if filter_type == FilterType.OR and len(v) < MIN_COMPOUND_FILTER_CHILDREN:
             msg = "OR filter must have at least 2 children"
             raise ValueError(msg)
 
-        if filter_type == FilterType.NOT and len(v) != 1:
+        if filter_type == FilterType.NOT and len(v) != EXACT_NOT_FILTER_CHILDREN:
             msg = "NOT filter must have exactly 1 child"
             raise ValueError(msg)
 
@@ -258,9 +263,9 @@ class FilterParser:
 
     Example:
         >>> parser = FilterParser()
-        >>> parsed = parser.parse("(&(cn=john)(mail=*@example.com))")
+        >>> parsed = parser.parse("(&(cn=john)(mail=*@example.com)")
         >>> print(parsed.filter_type)  # FilterType.AND
-        >>> print(len(parsed.children))  # 2
+        >>> print(len(parsed.children)  # 2
     """
 
     # Regular expressions for filter components
@@ -354,7 +359,7 @@ class FilterParser:
 
         self._advance()  # Skip closing parenthesis
 
-        if len(children) < 2:
+        if len(children) < MIN_COMPOUND_FILTER_CHILDREN:
             msg = "AND filter requires at least 2 child filters"
             raise FilterSyntaxError(msg, self._position, self._filter_string)
 
@@ -381,12 +386,12 @@ class FilterParser:
 
         self._advance()  # Skip closing parenthesis
 
-        if len(children) < 2:
+        if len(children) < MIN_COMPOUND_FILTER_CHILDREN:
             msg = "OR filter requires at least 2 child filters"
             raise FilterSyntaxError(msg, self._position, self._filter_string)
 
         return ParsedFilter(
-            filter_type=FilterType.OR, children=children, raw_filter=self._filter_string
+            filter_type=FilterType.OR, children=children, raw_filter=self._filter_string,
         )
 
     def _parse_not_filter(self) -> ParsedFilter:
@@ -655,7 +660,7 @@ class FilterAnalyzer:
 
     Example:
         >>> analyzer = FilterAnalyzer()
-        >>> analysis = analyzer.analyze("(&(objectClass=person)(cn=*REDACTED_LDAP_BIND_PASSWORD*))")
+        >>> analysis = analyzer.analyze("(&(objectClass=person)(cn=*REDACTED_LDAP_BIND_PASSWORD*)")
         >>> print(analysis.performance_hints)
         >>> print(analysis.security_warnings)
     """
@@ -701,13 +706,13 @@ class FilterAnalyzer:
         # Check for substring filters
         if self._has_substring_filters(parsed):
             hints.append(
-                "Substring filters may impact performance - consider using indexed attributes"
+                "Substring filters may impact performance - consider using indexed attributes",
             )
 
         # Check for complex nested filters
-        if parsed.get_complexity_score() > 10:
+        if parsed.get_complexity_score() > COMPLEXITY_PERFORMANCE_THRESHOLD:
             hints.append(
-                "Complex nested filter - consider simplification for better performance"
+                "Complex nested filter - consider simplification for better performance",
             )
 
         # Check for presence filters on non-indexed attributes
@@ -723,13 +728,13 @@ class FilterAnalyzer:
         # Check for overly broad filters
         if self._is_overly_broad(parsed):
             warnings.append(
-                "Filter may return excessive results - consider adding more constraints"
+                "Filter may return excessive results - consider adding more constraints",
             )
 
         # Check for potential injection patterns
         if self._has_injection_patterns(parsed):
             warnings.append(
-                "Filter contains patterns that may indicate injection attempts"
+                "Filter contains patterns that may indicate injection attempts",
             )
 
         return warnings
@@ -741,13 +746,13 @@ class FilterAnalyzer:
         # Suggest moving equality filters first in AND clauses
         if parsed.filter_type == FilterType.AND:
             suggestions.append(
-                "Consider placing equality filters before substring filters"
+                "Consider placing equality filters before substring filters",
             )
 
         # Suggest using presence filters for existence checks
         if self._can_use_presence_filter(parsed):
             suggestions.append(
-                "Consider using presence filter (*) for attribute existence checks"
+                "Consider using presence filter (*) for attribute existence checks",
             )
 
         return suggestions
@@ -792,7 +797,6 @@ class FilterAnalyzer:
         """Check if presence filter can be used instead."""
         # Simple heuristic for demonstration
         return parsed.filter_type == FilterType.EQUALITY and parsed.value == ""
-
 
 # TODO: Integration points for implementation:
 #

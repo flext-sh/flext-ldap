@@ -14,7 +14,7 @@ Test categories:
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import pytest
@@ -280,7 +280,7 @@ class TestBaseEntity:
 
     def test_mark_updated(self) -> None:
         """Test entity update marking functionality."""
-        original_time = datetime.now(UTC)
+        original_time = datetime.now(timezone.utc)
         entity = TestEntity(
             name="Test",
             created_at=original_time,

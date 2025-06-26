@@ -1,18 +1,22 @@
-"""LDIF Analyzer - Advanced LDIF content analysis and statistics.
-
-This module provides comprehensive LDIF analysis capabilities including
-content statistics, entry classification, and data quality assessment.
-"""
+"""LDIF Analyzer - Advanced LDIF content analysis and statistics."""
 
 from __future__ import annotations
 
 import logging
+import operator
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from ldap_core_shared.domain.results import LDAPOperationResult
+from ldap_core_shared.utils.constants import DEFAULT_MAX_ITEMS, DEFAULT_TIMEOUT_SECONDS
+
+# Constants for magic values
+HTTP_OK = 200
+MIN_GOOD_DN_LENGTH = 20        # Minimum DN length for good structure
+GOOD_ATTRIBUTE_DIVERSITY = 5   # Threshold for good attribute diversity
+MIN_ATTRIBUTE_DIVERSITY = 2    # Minimum attribute diversity threshold
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -63,7 +67,7 @@ class LDIFAnalysisResult(BaseModel):
     data_quality_score: float = Field(
         default=0.0,
         ge=0.0,
-        le=100.0,
+        le=DEFAULT_MAX_ITEMS,
         description="Overall data quality score",
     )
 
@@ -109,7 +113,7 @@ class LDIFAnalyzer:
             )
 
         except Exception as e:
-            logger.exception(f"Failed to analyze LDIF file: {file_path}")
+            logger.exception("Failed to analyze LDIF file: {file_path}")
             return LDAPOperationResult[LDIFAnalysisResult](
                 success=False,
                 error_message=f"Analysis failed: {e!s}",
@@ -130,9 +134,9 @@ class LDIFAnalyzer:
             return LDIFAnalysisResult()
 
         # Initialize counters
-        object_class_counts = defaultdict(int)
-        attribute_counts = defaultdict(int)
-        dn_depth_counts = defaultdict(int)
+        object_class_counts: defaultdict[str, int] = defaultdict(int)
+        attribute_counts: defaultdict[str, int] = defaultdict(int)
+        dn_depth_counts: defaultdict[int, int] = defaultdict(int)
         unique_attributes = set()
         binary_attributes = set()
 
@@ -215,7 +219,7 @@ class LDIFAnalyzer:
         report.append(
             f"Average Attributes per Entry: {analysis.average_attributes_per_entry:.2f}",
         )
-        report.append(f"Data Quality Score: {analysis.data_quality_score:.1f}/100")
+        report.append(f"Data Quality Score: {analysis.data_quality_score:.1f}/DEFAULT_MAX_ITEMS")
         report.append("")
 
         # Object class distribution
@@ -223,11 +227,11 @@ class LDIFAnalyzer:
             report.append("Top Object Classes:")
             sorted_ocs = sorted(
                 analysis.object_class_distribution.items(),
-                key=lambda x: x[1],
+                key=operator.itemgetter(1),
                 reverse=True,
             )
             for oc, count in sorted_ocs[:10]:
-                percentage = (count / analysis.total_entries) * 100
+                percentage = (count / analysis.total_entries) * DEFAULT_MAX_ITEMS
                 report.append(f"  {oc}: {count:,} entries ({percentage:.1f}%)")
             report.append("")
 
@@ -236,7 +240,7 @@ class LDIFAnalyzer:
             report.append("Top Attributes:")
             sorted_attrs = sorted(
                 analysis.attribute_distribution.items(),
-                key=lambda x: x[1],
+                key=operator.itemgetter(1),
                 reverse=True,
             )
             for attr, count in sorted_attrs[:10]:
@@ -248,15 +252,14 @@ class LDIFAnalyzer:
             report.append("DN Depth Distribution:")
             sorted_depths = sorted(analysis.dn_depth_distribution.items())
             for depth, count in sorted_depths:
-                percentage = (count / analysis.total_entries) * 100
+                percentage = (count / analysis.total_entries) * DEFAULT_MAX_ITEMS
                 report.append(f"  Depth {depth}: {count:,} entries ({percentage:.1f}%)")
             report.append("")
 
         # Binary attributes
         if analysis.binary_attributes:
             report.append("Binary Attributes:")
-            for attr in sorted(analysis.binary_attributes):
-                report.append(f"  {attr}")
+            report.extend(f"  {attr}" for attr in sorted(analysis.binary_attributes))
             report.append("")
 
         # Extremes
@@ -294,33 +297,33 @@ class LDIFAnalyzer:
             unique_attrs: Set of unique attribute names
 
         Returns:
-            Quality score from 0.0 to 100.0
+            Quality score from 0.0 to DEFAULT_MAX_ITEMS
         """
         if not entries:
             return 0.0
 
-        score = 100.0
+        score = DEFAULT_MAX_ITEMS
 
         # Penalize for missing object classes
         entries_without_oc = sum(
             1 for entry in entries if not entry.get_object_classes()
         )
         if entries_without_oc > 0:
-            score -= (entries_without_oc / len(entries)) * 30
+            score -= (entries_without_oc / len(entries) * DEFAULT_TIMEOUT_SECONDS)
 
         # Penalize for very short or very long DNs
         dn_lengths = [len(entry.dn) for entry in entries]
         avg_dn_length = sum(dn_lengths) / len(dn_lengths)
         if (
-            avg_dn_length < 20 or avg_dn_length > 200
+            avg_dn_length < MIN_GOOD_DN_LENGTH or avg_dn_length > HTTP_OK
         ):  # Very short DNs might indicate poor structure
             score -= 10
 
         # Reward attribute diversity
         attr_diversity = len(unique_attrs) / len(entries) if entries else 0
-        if attr_diversity > 5:  # Good attribute diversity
-            score += min(5, attr_diversity - 5)
-        elif attr_diversity < 2:  # Poor attribute diversity
+        if attr_diversity > GOOD_ATTRIBUTE_DIVERSITY:  # Good attribute diversity
+            score += min(GOOD_ATTRIBUTE_DIVERSITY, attr_diversity - GOOD_ATTRIBUTE_DIVERSITY)
+        elif attr_diversity < MIN_ATTRIBUTE_DIVERSITY:  # Poor attribute diversity
             score -= 10
 
-        return max(0.0, min(100.0, score))
+        return max(0.0, min(DEFAULT_MAX_ITEMS, score))

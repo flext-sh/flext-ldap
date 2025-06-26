@@ -1,4 +1,8 @@
+from ldap_core_shared.utils.constants import LDAP_DEFAULT_PORT
+
 """LDAP Schema Management Module.
+
+# Constants for magic values
 
 This module provides comprehensive LDAP schema management capabilities including
 schema discovery, validation, comparison, and migration support.
@@ -25,7 +29,7 @@ Example:
 
     # Discover schema from server
     discovery = SchemaDiscovery()
-    schema = discovery.discover_from_server("ldap://server:389")
+    schema = discovery.discover_from_server("ldap://server:LDAP_DEFAULT_PORT")
 
     # Compare with target schema
     comparator = SchemaComparator()

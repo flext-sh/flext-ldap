@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """LDAP Filter Builder Implementation.
 
 This module provides a fluent API for building complex LDAP filters programmatically.
@@ -40,13 +42,14 @@ References:
     - RFC 4515: LDAP String Representation of Search Filters
 """
 
-from __future__ import annotations
 
 import re
 from enum import Enum
 from typing import Any, Optional, Union
 
 from pydantic import BaseModel, Field, validator
+
+from ldap_core_shared.utils.constants import MIN_LOGICAL_OPERATORS
 
 
 class FilterOperator(Enum):
@@ -84,7 +87,7 @@ class FilterExpression(BaseModel):
     is_valid: bool = Field(default=True, description="Whether filter syntax is valid")
 
     complexity_score: int = Field(
-        default=1, description="Estimated filter complexity (1-100)"
+        default=1, description="Estimated filter complexity (1-DEFAULT_MAX_ITEMS)",
     )
 
     @validator("filter_string")
@@ -139,7 +142,7 @@ class FilterEscaping:
     }
 
     @classmethod
-    def escape_value(cls, value: str) -> str:
+    def escape_value(cls, value: Any) -> str:
         """Escape special characters in filter value.
 
         Args:
@@ -151,10 +154,11 @@ class FilterEscaping:
         if not isinstance(value, str):
             value = str(value)
 
+        str_value: str = value
         for char, escaped in cls.ESCAPE_CHARS.items():
-            value = value.replace(char, escaped)
+            str_value = str_value.replace(char, escaped)
 
-        return value
+        return str_value
 
     @classmethod
     def unescape_value(cls, value: str) -> str:
@@ -172,7 +176,7 @@ class FilterEscaping:
         return value
 
     @classmethod
-    def escape_attribute(cls, attribute: str) -> str:
+    def escape_attribute(cls, attribute: Any) -> str:
         """Escape LDAP attribute name.
 
         Args:
@@ -187,12 +191,13 @@ class FilterEscaping:
         if not isinstance(attribute, str):
             attribute = str(attribute)
 
+        str_attribute: str = attribute
         # Attribute names should only contain valid LDAP attribute characters
-        if not re.match(r"^[a-zA-Z][a-zA-Z0-9\-]*$", attribute):
-            msg = f"Invalid attribute name: {attribute}"
+        if not re.match(r"^[a-zA-Z][a-zA-Z0-9\-]*$", str_attribute):
+            msg = f"Invalid attribute name: {str_attribute}"
             raise ValueError(msg)
 
-        return attribute
+        return str_attribute
 
 
 class FilterBuilder:
@@ -470,27 +475,27 @@ class FilterBuilder:
         operator = self._operator_stack.pop()
 
         # Collect filters for this compound level
-        compound_filters = []
+        compound_filters: list[str] = []
         while self._filter_stack and not self._filter_stack[-1].startswith(
-            "__COMPOUND_START__"
+            "__COMPOUND_START__",
         ):
             compound_filters.insert(0, self._filter_stack.pop())
 
         # Remove the compound start marker
         if self._filter_stack and self._filter_stack[-1].startswith(
-            "__COMPOUND_START__"
+            "__COMPOUND_START__",
         ):
             self._filter_stack.pop()
 
         # Build the compound filter
         if operator == FilterOperator.AND:
-            if len(compound_filters) < 2:
-                msg = "AND filter requires at least 2 conditions"
+            if len(compound_filters) < MIN_LOGICAL_OPERATORS:
+                msg = f"AND filter requires at least {MIN_LOGICAL_OPERATORS} conditions"
                 raise ValueError(msg)
             compound_filter = f"(&{''.join(compound_filters)})"
         elif operator == FilterOperator.OR:
-            if len(compound_filters) < 2:
-                msg = "OR filter requires at least 2 conditions"
+            if len(compound_filters) < MIN_LOGICAL_OPERATORS:
+                msg = f"OR filter requires at least {MIN_LOGICAL_OPERATORS} conditions"
                 raise ValueError(msg)
             compound_filter = f"(|{''.join(compound_filters)})"
         elif operator == FilterOperator.NOT:
@@ -529,7 +534,7 @@ class FilterBuilder:
             filter_string = f"(&{''.join(self._filter_stack)})"
 
         return FilterExpression(
-            filter_string=filter_string, complexity_score=max(1, self._complexity)
+            filter_string=filter_string, complexity_score=max(1, self._complexity),
         )
 
     def reset(self) -> FilterBuilder:
@@ -603,8 +608,8 @@ def and_filters(*filters: Union[FilterExpression, str]) -> FilterExpression:
     Returns:
         FilterExpression combining all filters with AND
     """
-    if len(filters) < 2:
-        msg = "AND requires at least 2 filters"
+    if len(filters) < MIN_LOGICAL_OPERATORS:
+        msg = f"AND requires at least {MIN_LOGICAL_OPERATORS} filters"
         raise ValueError(msg)
 
     builder = FilterBuilder().and_()
@@ -630,8 +635,8 @@ def or_filters(*filters: Union[FilterExpression, str]) -> FilterExpression:
     Returns:
         FilterExpression combining all filters with OR
     """
-    if len(filters) < 2:
-        msg = "OR requires at least 2 filters"
+    if len(filters) < MIN_LOGICAL_OPERATORS:
+        msg = f"OR requires at least {MIN_LOGICAL_OPERATORS} filters"
         raise ValueError(msg)
 
     builder = FilterBuilder().or_()
@@ -668,7 +673,6 @@ def not_filter(filter_expr: Union[FilterExpression, str]) -> FilterExpression:
         builder._add_filter_part(f"({filter_expr})")
 
     return builder.end().build()
-
 
 # TODO: Integration points for implementation:
 #

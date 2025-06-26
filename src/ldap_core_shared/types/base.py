@@ -13,17 +13,17 @@ from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any, ClassVar, Generic, TypeVar, final
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import ConfigDict, Field, model_validator
+from typing_extensions import Self
 
 # Generic type variables for reusable patterns
-T = TypeVar("T")
 TEntity = TypeVar("TEntity", bound="BaseEntity")
 TValueObject = TypeVar("TValueObject", bound="BaseValueObject")
-TRepository = TypeVar("TRepository", bound="BaseRepository")
+TRepository = TypeVar("TRepository", bound="BaseRepository[Any]")
 
 
 class BaseModel(PydanticBaseModel):
@@ -65,7 +65,7 @@ class BaseModel(PydanticBaseModel):
         # JSON handling
         json_encoders={
             datetime: lambda v: v.isoformat(),
-            uuid.UUID: lambda v: str(v),
+            uuid.UUID: str,
         },
         # Extra field handling
         extra="forbid",
@@ -159,13 +159,13 @@ class BaseEntity(BaseModel, ABC):
 
     # Audit trail fields
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
+        default_factory=lambda: datetime.now(timezone.utc),
         description="Timestamp when entity was created",
         json_schema_extra={"example": "2025-01-01T00:00:00Z"},
     )
 
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
+        default_factory=lambda: datetime.now(timezone.utc),
         description="Timestamp when entity was last updated",
         json_schema_extra={"example": "2025-01-01T12:00:00Z"},
     )
@@ -207,7 +207,7 @@ class BaseEntity(BaseModel, ABC):
         """
 
     @final
-    def mark_updated(self) -> BaseEntity:
+    def mark_updated(self) -> Self:
         """Create a new instance with updated timestamp and version.
 
         Since entities are immutable, this returns a new instance
@@ -218,7 +218,7 @@ class BaseEntity(BaseModel, ABC):
         """
         return self.model_copy(
             update={
-                "updated_at": datetime.now(UTC),
+                "updated_at": datetime.now(timezone.utc),
                 "version": self.version + 1,
             },
         )
@@ -297,7 +297,7 @@ class BaseRepository(ABC, Generic[TEntity]):
     """
 
     # Type information for runtime introspection
-    entity_type: ClassVar[type[TEntity]]
+    entity_type: ClassVar[type[Any]]
 
     @abstractmethod
     async def find_by_id(self, entity_id: uuid.UUID) -> TEntity | None:

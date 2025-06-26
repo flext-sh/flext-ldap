@@ -14,7 +14,7 @@ Test categories:
 from __future__ import annotations
 
 import uuid
-from datetime import UTC
+from datetime import timezone
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -94,7 +94,7 @@ class TestBindable:
 
     async def bind_sasl(self, mechanism: str, **kwargs: Any) -> bool:
         """Test SASL bind implementation."""
-        if self._should_succeed and mechanism in ["GSSAPI", "DIGEST-MD5"]:
+        if self._should_succeed and mechanism in {"GSSAPI", "DIGEST-MD5"}:
             self._bound = True
             return True
         return False
@@ -321,7 +321,7 @@ class TestTrackable:
         """Initialize with timestamps."""
         from datetime import datetime
 
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         self._created_at = now.isoformat()
         self._updated_at = now.isoformat()
         self._version = 1
@@ -474,13 +474,11 @@ class TestSearchableProtocol:
 
     async def test_search_all_attributes(self, searchable: TestSearchable) -> None:
         """Test search returning all attributes."""
-        results = []
-        async for result in searchable.search(
+        results = [result async for result in searchable.search(
             "dc=example,dc=com",
             "(objectClass=*)",
             "subtree",
-        ):
-            results.append(result)
+        )]
 
         assert len(results) == 2
         assert "dn" in results[0]
@@ -489,14 +487,12 @@ class TestSearchableProtocol:
 
     async def test_search_specific_attributes(self, searchable: TestSearchable) -> None:
         """Test search with attribute filtering."""
-        results = []
-        async for result in searchable.search(
+        results = [result async for result in searchable.search(
             "dc=example,dc=com",
             "(objectClass=*)",
             "subtree",
             ["cn"],
-        ):
-            results.append(result)
+        )]
 
         assert len(results) == 2
         assert "dn" in results[0]

@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import ldap3
@@ -35,17 +36,17 @@ from ldap_core_shared.connections.base import (
     LDAPSearchConfig,
 )
 from ldap_core_shared.connections.manager import (
-    ConnectionStats,
-    LDAPConnectionManager,
+    ConnectionManager,
+    ConnectionMetrics,
 )
 
 
-class TestConnectionStats:
-    """Test suite for ConnectionStats model."""
+class TestConnectionMetrics:
+    """Test suite for ConnectionMetrics model."""
 
     def test_connection_stats_creation(self) -> None:
-        """Test ConnectionStats model creation with default values."""
-        stats = ConnectionStats()
+        """Test ConnectionMetrics model creation with default values."""
+        stats = ConnectionMetrics()
 
         assert stats.total_connections == 0
         assert stats.active_connections == 0
@@ -55,8 +56,8 @@ class TestConnectionStats:
         assert stats.last_connection_time == 0.0
 
     def test_connection_stats_with_values(self) -> None:
-        """Test ConnectionStats model with specific values."""
-        stats = ConnectionStats(
+        """Test ConnectionMetrics model with specific values."""
+        stats = ConnectionMetrics(
             total_connections=10,
             active_connections=5,
             failed_connections=2,
@@ -73,26 +74,26 @@ class TestConnectionStats:
         assert stats.last_connection_time > 0
 
     def test_connection_stats_validation(self) -> None:
-        """Test ConnectionStats validation for negative values."""
+        """Test ConnectionMetrics validation for negative values."""
         with pytest.raises(ValueError):
-            ConnectionStats(total_connections=-1)
+            ConnectionMetrics(total_connections=-1)
 
         with pytest.raises(ValueError):
-            ConnectionStats(active_connections=-1)
+            ConnectionMetrics(active_connections=-1)
 
         with pytest.raises(ValueError):
-            ConnectionStats(average_response_time=-1.0)
+            ConnectionMetrics(average_response_time=-1.0)
 
     def test_connection_stats_immutability(self) -> None:
-        """Test that ConnectionStats is immutable (frozen)."""
-        stats = ConnectionStats(total_connections=5)
+        """Test that ConnectionMetrics is immutable (frozen)."""
+        stats = ConnectionMetrics(total_connections=5)
 
         with pytest.raises(ValueError):
             stats.total_connections = 10
 
 
-class TestLDAPConnectionManager:
-    """Test suite for LDAPConnectionManager."""
+class TestConnectionManager:
+    """Test suite for ConnectionManager."""
 
     @pytest.fixture
     def connection_info(self) -> LDAPConnectionInfo:
@@ -108,7 +109,7 @@ class TestLDAPConnectionManager:
 
     @pytest.fixture
     def connection_options(
-        self, connection_info: LDAPConnectionInfo
+        self, connection_info: LDAPConnectionInfo,
     ) -> LDAPConnectionOptions:
         """Create test connection options."""
         return LDAPConnectionOptions(
@@ -119,9 +120,9 @@ class TestLDAPConnectionManager:
         )
 
     @pytest.fixture
-    def manager(self, connection_info: LDAPConnectionInfo) -> LDAPConnectionManager:
+    def manager(self, connection_info: LDAPConnectionInfo) -> ConnectionManager:
         """Create test connection manager."""
-        return LDAPConnectionManager(
+        return ConnectionManager(
             connection_info=connection_info,
             enable_pooling=True,
             pool_size=3,
@@ -130,7 +131,7 @@ class TestLDAPConnectionManager:
 
     def test_manager_initialization(self, connection_info: LDAPConnectionInfo) -> None:
         """Test connection manager initialization."""
-        manager = LDAPConnectionManager(
+        manager = ConnectionManager(
             connection_info=connection_info,
             enable_pooling=True,
             pool_size=5,
@@ -145,10 +146,10 @@ class TestLDAPConnectionManager:
         assert len(manager._active_connections) == 0
 
     def test_from_options_creation(
-        self, connection_options: LDAPConnectionOptions
+        self, connection_options: LDAPConnectionOptions,
     ) -> None:
         """Test creating manager from options."""
-        manager = LDAPConnectionManager.from_options(connection_options)
+        manager = ConnectionManager.from_options(connection_options)
 
         assert manager.connection_info == connection_options.connection_info
         assert manager.enable_pooling == connection_options.connection_pool_enabled
@@ -157,7 +158,7 @@ class TestLDAPConnectionManager:
     @patch("ldap3.Connection")
     @patch("ldap3.Server")
     def test_create_connection(
-        self, mock_server: Any, mock_connection: Any, manager: Any
+        self, mock_server: Any, mock_connection: Any, manager: Any,
     ) -> None:
         """Test connection creation."""
         # Mock server and connection
@@ -305,12 +306,10 @@ class TestLDAPConnectionManager:
         mock_connection.return_value = mock_connection_instance
 
         # Test search
-        results = []
-        async for result in manager.search(
+        results = [result async for result in manager.search(
             search_base="dc=test,dc=com",
             search_filter="(objectClass=person)",
-        ):
-            results.append(result)
+        )]
 
         # Verify results
         assert len(results) == 1
@@ -441,7 +440,7 @@ class TestLDAPConnectionManager:
     @patch("ldap3.Server")
     @pytest.mark.asyncio
     async def test_health_check(
-        self, mock_server: Any, mock_connection: Any, manager: Any
+        self, mock_server: Any, mock_connection: Any, manager: Any,
     ) -> None:
         """Test health check operation."""
         # Setup mock connection
@@ -504,7 +503,7 @@ class TestLDAPConnectionManager:
         """Test getting connection statistics."""
         # Test initial stats
         stats = manager.get_stats()
-        assert isinstance(stats, ConnectionStats)
+        assert isinstance(stats, ConnectionMetrics)
         assert stats.total_connections == 0
         assert stats.active_connections == 0
 
@@ -540,10 +539,7 @@ class TestLDAPConnectionManager:
 
         # Create multiple concurrent search tasks
         async def search_task(base: str):
-            results = []
-            async for result in manager.search(base, "(objectClass=*)"):
-                results.append(result)
-            return results
+            return [result async for result in manager.search(base, "(objectClass=*)")]
 
         # Run concurrent searches
         tasks = [search_task(f"ou=test{i},dc=test,dc=com") for i in range(10)]
@@ -557,7 +553,7 @@ class TestLDAPConnectionManager:
     @patch("ldap3.Server")
     @pytest.mark.asyncio
     async def test_error_handling(
-        self, mock_server: Any, mock_connection: Any, manager: Any
+        self, mock_server: Any, mock_connection: Any, manager: Any,
     ) -> None:
         """Test error handling in operations."""
         # Setup mock connection that raises exception
@@ -596,7 +592,7 @@ class TestLDAPConnectionManager:
         )
 
         # Test manager creation with SSH tunnel
-        manager = LDAPConnectionManager.from_options(options)
+        manager = ConnectionManager.from_options(options)
 
         # Verify SSH configuration was attempted
         # (In real implementation, this would configure actual SSH tunnel)

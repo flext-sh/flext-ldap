@@ -1,0 +1,328 @@
+{
+  "timestamp": "2025-06-26T10:25:44.766331",
+  "project_name": "ldap-core-shared",
+  "overall_health": "EXCELLENT",
+  "system_results": {
+    "integrity": {
+      "scripts_available": {
+        "documentation": {
+          "available": true,
+          "path": "/home/marlonsc/pyauto/ldap-core-shared/scripts/claude_documentation_validator.py"
+        },
+        "self_validation": {
+          "available": true,
+          "path": "/home/marlonsc/pyauto/ldap-core-shared/scripts/claude_self_validation.py"
+        },
+        "freshness": {
+          "available": true,
+          "path": "/home/marlonsc/pyauto/ldap-core-shared/scripts/claude_freshness_monitor.py"
+        }
+      },
+      "memory_files": {
+        ".context_memory": {
+          "exists": true,
+          "path": "/home/marlonsc/pyauto/ldap-core-shared/.context_memory"
+        },
+        ".pattern_memory": {
+          "exists": true,
+          "path": "/home/marlonsc/pyauto/ldap-core-shared/.pattern_memory"
+        },
+        ".failure_memory": {
+          "exists": true,
+          "path": "/home/marlonsc/pyauto/ldap-core-shared/.failure_memory"
+        },
+        ".resolution_memory": {
+          "exists": true,
+          "path": "/home/marlonsc/pyauto/ldap-core-shared/.resolution_memory"
+        }
+      },
+      "coordination_files": {
+        ".token": {
+          "exists": true,
+          "path": "/home/marlonsc/pyauto/ldap-core-shared/.token"
+        }
+      },
+      "overall_integrity": true
+    },
+    "documentation": {
+      "success": true,
+      "output": "\ud83d\udd0d STARTING CLAUDE.md DOCUMENTATION VALIDATION\n============================================================\n\n\ud83d\udccb Validating Hierarchy Structure...\n\u2705 Hierarchy Structure: PASSED\n\n\ud83d\udccb Validating Cross-References...\n\u2705 Cross-References: PASSED\n\n\ud83d\udccb Validating Freshness Monitoring...\n\u2705 Freshness Monitoring: PASSED\n\n\ud83d\udccb Validating Pattern Compliance...\n\u2705 Pattern Compliance: PASSED\n\n\ud83d\udccb Validating Memory Optimization...\n\u2705 Memory Optimization: PASSED\n\n============================================================\n\u2705 CLAUDE.md VALIDATION: ALL CHECKS PASSED\n\ud83d\udcca Total validations: 5\n\ud83d\udcca Successful: 5\n\ud83d\udcca Failed: 0\n\n\ud83d\udcc1 Results saved to: /home/marlonsc/pyauto/ldap-core-shared/validation_results.json\n",
+      "error": null,
+      "results": {
+        "overall_success": true,
+        "validation_results": {
+          "Hierarchy Structure": {
+            "success": true,
+            "message": "Hierarchy validation passed",
+            "details": {
+              "issues": [],
+              "files_checked": 3
+            },
+            "timestamp": "2025-06-26T10:25:44.634036",
+            "execution_time_ms": 0.2
+          },
+          "Cross-References": {
+            "success": true,
+            "message": "Cross-reference validation passed",
+            "details": {
+              "broken_references": [],
+              "total_checked": 0
+            },
+            "timestamp": "2025-06-26T10:25:44.635181",
+            "execution_time_ms": 1.1039999999999999
+          },
+          "Freshness Monitoring": {
+            "success": true,
+            "message": "Freshness validation passed",
+            "details": {
+              "stale_files": [],
+              "cutoff_days": 7
+            },
+            "timestamp": "2025-06-26T10:25:44.635256",
+            "execution_time_ms": 0.044
+          },
+          "Pattern Compliance": {
+            "success": true,
+            "message": "Pattern compliance passed",
+            "details": {
+              "violations": [],
+              "patterns_checked": 5
+            },
+            "timestamp": "2025-06-26T10:25:44.635886",
+            "execution_time_ms": 0.607
+          },
+          "Memory Optimization": {
+            "success": true,
+            "message": "Memory optimization passed",
+            "details": {
+              "memory_issues": [],
+              "token_files_found": 2
+            },
+            "timestamp": "2025-06-26T10:25:44.636318",
+            "execution_time_ms": 0.40499999999999997
+          }
+        },
+        "summary": {
+          "total_validations": 5,
+          "successful": 5,
+          "failed": 0,
+          "timestamp": "2025-06-26T10:25:44.636356"
+        }
+      }
+    },
+    "self_validation": {
+      "success": true,
+      "output": "\ud83d\udd0d STARTING CLAUDE.md COMPREHENSIVE SELF-VALIDATION\n======================================================================\n\ud83d\udcda RUNNING DOCUMENTATION VALIDATION\n\ud83d\udd0d STARTING CLAUDE.md DOCUMENTATION VALIDATION\n============================================================\n\n\ud83d\udccb Validating Hierarchy Structure...\n\u2705 Hierarchy Structure: PASSED\n\n\ud83d\udccb Validating Cross-References...\n\u2705 Cross-References: PASSED\n\n\ud83d\udccb Validating Freshness Monitoring...\n\u2705 Freshness Monitoring: PASSED\n\n\ud83d\udccb Validating Pattern Compliance...\n\u2705 Pattern Compliance: PASSED\n\n\ud83d\udccb Validating Memory Optimization...\n\u2705 Memory Optimization: PASSED\n\n============================================================\n\u2705 CLAUDE.md VALIDATION: ALL CHECKS PASSED\n\ud83d\udcca Total validations: 5\n\ud83d\udcca Successful: 5\n\ud83d\udcca Failed: 0\n\ud83c\udf0d VALIDATING GLOBAL METHODOLOGY COMPLIANCE\n--------------------------------------------------\n\u2705 Global Methodology: COMPLIANT\n\n\ud83e\udde0 ANALYZING MEMORY OPTIMIZATION\n--------------------------------------------------\n\u2705 .context_memory: 15 entries\n\u2705 .pattern_memory: 16 entries\n\u2705 .failure_memory: 12 entries\n\u2705 .resolution_memory: 9 entries\n\n\ud83e\udd1d VALIDATING AGENT COORDINATION\n--------------------------------------------------\n\u2705 .token: 12 entries, 4 agent actions\n\u2705 Workspace .token: FOUND\n\n\ud83d\udd0d ANALYZING PATTERN RECOGNITION\n--------------------------------------------------\n\u2705 Pattern Recognition: 5 patterns documented\n   \ud83d\udccb true: frequency 1, 1 solutions\n   \ud83d\udccb comprehensive: frequency 1, 1 solutions\n   \ud83d\udccb enterprise: frequency 1, 1 solutions\n\n\ud83d\udee1\ufe0f VALIDATING FAILURE PREVENTION\n--------------------------------------------------\n\u2705 Failure Prevention: 4 failure types documented\n   \ud83d\udee1\ufe0f false_facade: \u2705 prevention documented\n   \ud83d\udee1\ufe0f reimplementation: \u2705 prevention documented\n   \ud83d\udee1\ufe0f limited_coverage: \u2705 prevention documented\n\n======================================================================\n\ud83c\udfc6 OVERALL HEALTH: EXCELLENT\n\ud83d\udcca Documentation: \u2705 PASSED\n\ud83d\udcca Methodology: \u2705 COMPLIANT\n\ud83d\udcca Memory Systems: 4 active\n\ud83d\udcca Pattern Recognition: MEDIUM\n\ud83d\udcca Failure Prevention: HIGH\n\ud83d\udcca Agent Coordination: GOOD\n\n\ud83d\udcc1 Comprehensive report saved to: /home/marlonsc/pyauto/ldap-core-shared/self_validation_report.json\n",
+      "error": null,
+      "results": {
+        "timestamp": "2025-06-26T10:25:44.701254",
+        "project_name": "ldap-core-shared",
+        "workspace": "pyauto",
+        "validation_categories": {
+          "documentation": {
+            "overall_success": true,
+            "validation_results": {
+              "Hierarchy Structure": {
+                "success": true,
+                "message": "Hierarchy validation passed",
+                "details": {
+                  "issues": [],
+                  "files_checked": 3
+                },
+                "timestamp": "2025-06-26T10:25:44.698020",
+                "execution_time_ms": 0.153
+              },
+              "Cross-References": {
+                "success": true,
+                "message": "Cross-reference validation passed",
+                "details": {
+                  "broken_references": [],
+                  "total_checked": 0
+                },
+                "timestamp": "2025-06-26T10:25:44.699122",
+                "execution_time_ms": 1.065
+              },
+              "Freshness Monitoring": {
+                "success": true,
+                "message": "Freshness validation passed",
+                "details": {
+                  "stale_files": [],
+                  "cutoff_days": 7
+                },
+                "timestamp": "2025-06-26T10:25:44.699193",
+                "execution_time_ms": 0.041999999999999996
+              },
+              "Pattern Compliance": {
+                "success": true,
+                "message": "Pattern compliance passed",
+                "details": {
+                  "violations": [],
+                  "patterns_checked": 5
+                },
+                "timestamp": "2025-06-26T10:25:44.699786",
+                "execution_time_ms": 0.57
+              },
+              "Memory Optimization": {
+                "success": true,
+                "message": "Memory optimization passed",
+                "details": {
+                  "memory_issues": [],
+                  "token_files_found": 2
+                },
+                "timestamp": "2025-06-26T10:25:44.700156",
+                "execution_time_ms": 0.345
+              }
+            },
+            "summary": {
+              "total_validations": 5,
+              "successful": 5,
+              "failed": 0,
+              "timestamp": "2025-06-26T10:25:44.700186"
+            }
+          },
+          "methodology": {
+            "success": true,
+            "issues": [],
+            "files_checked": 2
+          }
+        },
+        "memory_analysis": {
+          ".context_memory": {
+            "exists": true,
+            "lines_count": 15,
+            "last_modified": "2025-06-26T10:24:23.970171",
+            "description": "Context retention across sessions",
+            "status": "ACTIVE"
+          },
+          ".pattern_memory": {
+            "exists": true,
+            "lines_count": 16,
+            "last_modified": "2025-06-26T10:24:23.970171",
+            "description": "Pattern recognition and frequency tracking",
+            "status": "ACTIVE"
+          },
+          ".failure_memory": {
+            "exists": true,
+            "lines_count": 12,
+            "last_modified": "2025-06-26T10:15:58.313926",
+            "description": "Failure prevention documentation",
+            "status": "ACTIVE"
+          },
+          ".resolution_memory": {
+            "exists": true,
+            "lines_count": 9,
+            "last_modified": "2025-06-26T10:16:49.059715",
+            "description": "Conflict resolution tracking",
+            "status": "ACTIVE"
+          },
+          "pattern_analysis": {
+            "total_patterns": 15,
+            "unique_patterns": 5,
+            "effectiveness": "MEDIUM"
+          }
+        },
+        "pattern_recognition": {
+          "total_patterns": 5,
+          "patterns": {
+            "true": {
+              "frequency": 1,
+              "solutions": [
+                "complete_delegation_to_existing_modules"
+              ]
+            },
+            "comprehensive": {
+              "frequency": 1,
+              "solutions": [
+                "85_plus_modules_across_20_categories"
+              ]
+            },
+            "enterprise": {
+              "frequency": 1,
+              "solutions": [
+                "async_transaction_vectorized_operations"
+              ]
+            },
+            "zero": {
+              "frequency": 1,
+              "solutions": [
+                "pure_delegation_pattern"
+              ]
+            },
+            "backward": {
+              "frequency": 1,
+              "solutions": [
+                "100_percent_api_preservation"
+              ]
+            }
+          },
+          "high_frequency_patterns": [],
+          "effectiveness": "MEDIUM"
+        },
+        "failure_prevention": {
+          "total_failures_documented": 4,
+          "failures": {
+            "false_facade": {
+              "context": "api_not_using_rest_of_api",
+              "prevention": "comprehensive_delegation_to_all_modules",
+              "last_seen": null
+            },
+            "reimplementation": {
+              "context": "duplicating_existing_functionality",
+              "prevention": "pure_delegation_pattern",
+              "last_seen": null
+            },
+            "limited_coverage": {
+              "context": "only_40_percent_infrastructure_used",
+              "prevention": "100_percent_module_integration",
+              "last_seen": null
+            },
+            "missing_enterprise_features": {
+              "context": "basic_functionality_only",
+              "prevention": "comprehensive_enterprise_integration",
+              "last_seen": null
+            }
+          },
+          "prevention_coverage": 1.0,
+          "effectiveness": "HIGH"
+        },
+        "coordination_status": {
+          ".token": {
+            "exists": true,
+            "total_entries": 12,
+            "agent_entries": 4,
+            "objective_entries": 1,
+            "completion_entries": 1,
+            "coordination_health": "GOOD"
+          },
+          "workspace_coordination": {
+            "exists": true
+          }
+        },
+        "overall_health": "EXCELLENT",
+        "recommendations": []
+      }
+    },
+    "freshness": {
+      "success": true,
+      "output": "\u23f0 STARTING CLAUDE.md FRESHNESS MONITORING\n============================================================\n\ud83d\udccb Checking file freshness...\n\u2705 CLAUDE.md: FRESH (1 days)\n\u2705 internal.invalid.md: FRESH (1 days)\n\u2705 CLAUDE.md: FRESH (1 days)\n\u2705 internal.invalid.md: FRESH (0 days)\n\u2705 internal.invalid.md: FRESH (0 days)\n\n\ud83d\udccb Checking cross-reference freshness...\n\u2705 All cross-references point to fresh documents\n\n\ud83d\udccb Generating update recommendations...\n\n============================================================\n\u2705 OVERALL FRESHNESS STATUS: FRESH\n\ud83d\udcca Files checked: 5\n\ud83d\udcca Fresh files: 5\n\ud83d\udcca Stale files: 0\n\ud83d\udcca Cross-ref issues: 0\n\n\ud83d\udcc1 Freshness report saved to: /home/marlonsc/pyauto/ldap-core-shared/freshness_report.json\n",
+      "error": null,
+      "results": {
+        "timestamp": "2025-06-26T10:25:44.759877",
+        "project_name": "ldap-core-shared",
+        "files_checked": 5,
+        "stale_files": [],
+        "freshness_violations": [],
+        "update_recommendations": [],
+        "overall_status": "FRESH"
+      }
+    }
+  },
+  "critical_issues": [],
+  "recommendations": [],
+  "summary": {
+    "systems_run": 4,
+    "successful_systems": 3,
+    "critical_issues_count": 0,
+    "recommendations_count": 0
+  }
+}

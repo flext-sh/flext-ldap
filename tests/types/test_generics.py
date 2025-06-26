@@ -16,6 +16,7 @@ Test categories:
 from __future__ import annotations
 
 import uuid
+from typing import TYPE_CHECKING
 
 import pytest
 from hypothesis import given
@@ -30,6 +31,9 @@ from ldap_core_shared.types.generics import (
     Service,
     Specification,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 # ===== TEST FIXTURES AND IMPLEMENTATIONS =====
 
@@ -877,9 +881,7 @@ class TestAsyncIteratorWrapper:
         """Test filtering async iterator."""
         wrapper = AsyncIteratorWrapper(self.async_range(10))
 
-        filtered_items = []
-        async for item in wrapper.filter(lambda x: x % 2 == 0):
-            filtered_items.append(item)
+        filtered_items = [item async for item in wrapper.filter(lambda x: x % 2 == 0)]
 
         assert filtered_items == [0, 2, 4, 6, 8]
 
@@ -887,9 +889,7 @@ class TestAsyncIteratorWrapper:
         """Test mapping async iterator."""
         wrapper = AsyncIteratorWrapper(self.async_range(5))
 
-        mapped_items = []
-        async for item in wrapper.map(lambda x: x * 2):
-            mapped_items.append(item)
+        mapped_items = [item async for item in wrapper.map(lambda x: x * 2)]
 
         assert mapped_items == [0, 2, 4, 6, 8]
 
@@ -897,9 +897,7 @@ class TestAsyncIteratorWrapper:
         """Test taking limited items from async iterator."""
         wrapper = AsyncIteratorWrapper(self.async_range(10))
 
-        taken_items = []
-        async for item in wrapper.take(3):
-            taken_items.append(item)
+        taken_items = [item async for item in wrapper.take(3)]
 
         assert taken_items == [0, 1, 2]
 
@@ -907,9 +905,7 @@ class TestAsyncIteratorWrapper:
         """Test taking more items than available."""
         wrapper = AsyncIteratorWrapper(self.async_range(3))
 
-        taken_items = []
-        async for item in wrapper.take(10):
-            taken_items.append(item)
+        taken_items = [item async for item in wrapper.take(10)]
 
         assert taken_items == [0, 1, 2]
 
@@ -924,9 +920,7 @@ class TestAsyncIteratorWrapper:
         """Test batching async iterator."""
         wrapper = AsyncIteratorWrapper(self.async_range(7))
 
-        batches = []
-        async for batch in wrapper.batch(3):
-            batches.append(batch)
+        batches = [batch async for batch in wrapper.batch(3)]
 
         assert batches == [[0, 1, 2], [3, 4, 5], [6]]
 
@@ -934,9 +928,7 @@ class TestAsyncIteratorWrapper:
         """Test batching with exact size matches."""
         wrapper = AsyncIteratorWrapper(self.async_range(6))
 
-        batches = []
-        async for batch in wrapper.batch(2):
-            batches.append(batch)
+        batches = [batch async for batch in wrapper.batch(2)]
 
         assert batches == [[0, 1], [2, 3], [4, 5]]
 
@@ -1062,9 +1054,7 @@ class TestGenericPatternIntegration:
         wrapper = AsyncIteratorWrapper(entity_iterator())
 
         # Filter and map entities
-        high_value_names = []
-        async for name in wrapper.filter(lambda e: e.value >= 5).map(lambda e: e.name):
-            high_value_names.append(name)
+        high_value_names = [name async for name in wrapper.filter(lambda e: e.value >= 5).map(lambda e: e.name)]
 
         # Should get entities with value >= 5
         expected_names = [f"Entity{i}" for i in range(5, 10)]

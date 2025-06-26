@@ -1,97 +1,92 @@
-"""🚨 Base LDAP Exception Classes.
+"""🚨 DEPRECATED - Use core.exceptions instead.
 
-Foundation exception classes for the LDAP Core Shared library.
-Provides structured error handling with context and Python 3.9+ compatibility.
+This module is deprecated. All exceptions have been consolidated
+into the comprehensive system in core.exceptions.
+
+Use imports like:
+    from ldap_core_shared.core.exceptions import LDAPCoreError, ValidationError
 """
 
 from __future__ import annotations
 
+import warnings
 from typing import Any, Optional
 
+from ldap_core_shared.core.exceptions import (
+    AuthenticationError as CoreAuthenticationError,
+)
+from ldap_core_shared.core.exceptions import (
+    ConnectionError as CoreConnectionError,
+)
 
-class LDAPError(Exception):
-    """🚨 Base exception for all LDAP-related errors.
+# Import from the unified exception system
+from ldap_core_shared.core.exceptions import (
+    LDAPCoreError,
+)
+from ldap_core_shared.core.exceptions import (
+    ValidationError as CoreValidationError,
+)
 
-    Provides structured error information with context for enterprise debugging.
-    All LDAP exceptions inherit from this base class.
 
-    Attributes:
-        message: Human-readable error message
-        error_code: Optional LDAP error code
-        context: Additional error context information
-        original_error: Original exception that caused this error (if any)
-    """
+# Backward compatibility aliases with deprecation warnings
+class LDAPError(LDAPCoreError):
+    """DEPRECATED: Use LDAPCoreError from core.exceptions instead."""
 
-    def __init__(
-        self,
-        message: str,
-        *,
-        error_code: Optional[str] = None,
-        context: Optional[dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
-    ) -> None:
-        """Initialize LDAP error with structured information.
-
-        Args:
-            message: Human-readable error description
-            error_code: Optional LDAP protocol error code
-            context: Additional context information
-            original_error: Original exception that caused this error
-        """
-        super().__init__(message)
-        self.message = message
-        self.error_code = error_code
-        self.context = context or {}
-        self.original_error = original_error
-
-    def __str__(self) -> str:
-        """Return string representation of the error."""
-        parts = [self.message]
-
-        if self.error_code:
-            parts.append(f"[Code: {self.error_code}]")
-
-        if self.context:
-            context_str = ", ".join(f"{k}={v}" for k, v in self.context.items())
-            parts.append(f"[Context: {context_str}]")
-
-        return " ".join(parts)
-
-    def __repr__(self) -> str:
-        """Return detailed representation of the error."""
-        return (
-            f"{self.__class__.__name__}("
-            f"message={self.message!r}, "
-            f"error_code={self.error_code!r}, "
-            f"context={self.context!r}, "
-            f"original_error={self.original_error!r})"
+    def __init__(self, message: str, *, error_code: Optional[str] = None,
+                 context: Optional[dict[str, Any]] = None,
+                 original_error: Optional[Exception] = None) -> None:
+        warnings.warn(
+            "LDAPError is deprecated. Use LDAPCoreError from core.exceptions instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        # Convert to new format
+        context_obj = context or {}
+        super().__init__(
+            message=message,
+            error_code=error_code,
+            context=context_obj,
+            cause=original_error,
         )
 
-    def add_context(self, **kwargs: Any) -> LDAPError:
-        """Add additional context to the error.
 
-        Args:
-            **kwargs: Context key-value pairs to add
+class ConnectionError(CoreConnectionError):
+    """DEPRECATED: Use ConnectionError from core.exceptions instead."""
 
-        Returns:
-            Self for method chaining
-        """
-        self.context.update(kwargs)
-        return self
-
-    def with_context(self, **kwargs: Any) -> LDAPError:
-        """Create a new error instance with additional context.
-
-        Args:
-            **kwargs: Context key-value pairs to add
-
-        Returns:
-            New error instance with merged context
-        """
-        new_context = {**self.context, **kwargs}
-        return self.__class__(
-            message=self.message,
-            error_code=self.error_code,
-            context=new_context,
-            original_error=self.original_error,
+    def __init__(self, message: str, *, error_code: Optional[str] = None,
+                 context: Optional[dict[str, Any]] = None,
+                 original_error: Optional[Exception] = None) -> None:
+        warnings.warn(
+            "ConnectionError is deprecated. Use ConnectionError from core.exceptions instead.",
+            DeprecationWarning,
+            stacklevel=2,
         )
+        super().__init__(message=message, error_code=error_code, context=context or {})
+
+
+class AuthenticationError(CoreAuthenticationError):
+    """DEPRECATED: Use AuthenticationError from core.exceptions instead."""
+
+    def __init__(self, message: str, *, error_code: Optional[str] = None,
+                 context: Optional[dict[str, Any]] = None,
+                 original_error: Optional[Exception] = None) -> None:
+        warnings.warn(
+            "AuthenticationError is deprecated. Use AuthenticationError from core.exceptions instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(message=message, error_code=error_code, context=context or {})
+
+
+class ValidationError(CoreValidationError):
+    """DEPRECATED: Use ValidationError from core.exceptions instead."""
+
+    def __init__(self, message: str, *, error_code: Optional[str] = None,
+                 context: Optional[dict[str, Any]] = None,
+                 original_error: Optional[Exception] = None) -> None:
+        warnings.warn(
+            "ValidationError is deprecated. Use ValidationError from core.exceptions instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(message=message, error_code=error_code, context=context or {})

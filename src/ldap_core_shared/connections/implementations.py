@@ -1,560 +1,61 @@
-"""🔥 SOLID Principle Implementations for LDAP Connection Management.
-
-This module provides concrete implementations following SOLID principles:
-- Single Responsibility: Each class has one clear purpose
-- Open/Closed: Open for extension, closed for modification
-- Liskov Substitution: All implementations are interchangeable
-- Interface Segregation: Small, focused implementations
-- Dependency Inversion: Depend on abstractions, not concretions
-
-ZERO TOLERANCE SOLID implementation following enterprise patterns.
-"""
+"""🔥 SOLID Principle Implementations for LDAP Connection Management."""
 
 from __future__ import annotations
 
-import asyncio
 import contextlib
 import logging
-import ssl
 import time
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any
 
-# Constants for magic values
-MAX_RECENT_OPERATIONS = 100
-
-import ldap3
-
-from ldap_core_shared.connections.interfaces import (
-    BaseConnectionComponent,
-    IConnectionFactory,
-    IConnectionPool,
-    IHealthMonitor,
-    IPerformanceTracker,
-    ISecurityManager,
-)
+from typing_extensions import Self
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, AsyncIterator
+    from types import TracebackType
 
+import ldap3
+
+from ldap_core_shared.connections.factories import StandardConnectionFactory
+from ldap_core_shared.connections.monitoring import (
+    PerformanceTracker,
+    StandardHealthMonitor,
+)
+from ldap_core_shared.connections.pools import AsyncConnectionPool
+from ldap_core_shared.connections.security import StandardSecurityManager
+
+if TYPE_CHECKING:
     from ldap_core_shared.connections.base import LDAPConnectionInfo
+    from ldap_core_shared.connections.interfaces import (
+        IConnectionFactory,
+        IConnectionPool,
+        IHealthMonitor,
+        IPerformanceTracker,
+        ISecurityManager,
+    )
 
 logger = logging.getLogger(__name__)
-
-
-# ============================================================================
-# 🔥 SINGLE RESPONSIBILITY IMPLEMENTATIONS
-# ============================================================================
-
-
-class StandardConnectionFactory(BaseConnectionComponent):
-    """🎯 Single Responsibility: Create LDAP connections only.
-
-    SOLID Compliance:
-    - S: Only creates connections, nothing else
-    - O: Extensible through inheritance
-    - L: Interchangeable with other factories
-    - I: Implements focused IConnectionFactory
-    - D: Depends on LDAPConnectionInfo abstraction
-    """
-
-    def __init__(
-        self,
-        connection_info: LDAPConnectionInfo,
-        security_manager: ISecurityManager | None = None,
-    ) -> None:
-        """Initialize factory with dependencies.
-
-        Args:
-            connection_info: Connection configuration
-            security_manager: Optional security manager for TLS
-        """
-        super().__init__(connection_info)
-        self._security_manager = security_manager or StandardSecurityManager(
-            connection_info,
-        )
-
-    async def initialize(self) -> None:
-        """Initialize factory component."""
-        await self._security_manager.validate_credentials(self.connection_info)
-        logger.info("🔥 SOLID StandardConnectionFactory initialized")
-
-    async def cleanup(self) -> None:
-        """Cleanup factory resources."""
-        logger.debug("StandardConnectionFactory cleaned up")
-
-    def create_connection(
-        self,
-        connection_info: LDAPConnectionInfo,
-    ) -> ldap3.Connection:
-        """🔥 ZERO DUPLICATION: Create LDAP connection using factory pattern.
-
-        Args:
-            connection_info: Connection configuration
-
-        Returns:
-            Configured LDAP connection
-        """
-        # Create TLS configuration
-        tls_config = None
-        if connection_info.use_ssl:
-            tls_config = ldap3.Tls(validate=ssl.CERT_REQUIRED)
-
-        # Create server
-        server = ldap3.Server(
-            host=connection_info.host,
-            port=connection_info.port,
-            use_ssl=connection_info.use_ssl,
-            tls=tls_config,
-            get_info=ldap3.ALL,
-        )
-
-        # Create connection
-        return ldap3.Connection(
-            server=server,
-            user=connection_info.bind_dn,
-            password=connection_info.bind_password.get_secret_value(),
-            authentication=connection_info.get_ldap3_authentication(),
-            auto_bind=connection_info.auto_bind,
-            lazy=False,
-        )
-
-
-class AsyncConnectionPool(BaseConnectionComponent):
-    """🎯 Single Responsibility: Manage connection pooling only.
-
-    SOLID Compliance:
-    - S: Only manages connection pools
-    - O: Extensible pool strategies
-    - L: Interchangeable with other pools
-    - I: Implements focused IConnectionPool
-    - D: Depends on IConnectionFactory abstraction
-    """
-
-    def __init__(
-        self,
-        connection_info: LDAPConnectionInfo,
-        factory: IConnectionFactory,
-        pool_size: int = 10,
-        max_pool_size: int = 20,
-    ) -> None:
-        """Initialize connection pool.
-
-        Args:
-            connection_info: Connection configuration
-            factory: Connection factory for creating connections
-            pool_size: Initial pool size
-            max_pool_size: Maximum pool size
-        """
-        super().__init__(connection_info)
-        self._factory = factory
-        self._pool_size = pool_size
-        self._max_pool_size = max_pool_size
-
-        # Pool state
-        self._pool: list[ldap3.Connection] = []
-        self._active_connections: set[ldap3.Connection] = set()
-        self._lock = asyncio.Lock()
-
-        logger.info(
-            "🔥 SOLID AsyncConnectionPool initialized (size: %s, max: %s)",
-            pool_size,
-            max_pool_size,
-        )
-
-    async def initialize(self) -> None:
-        """Initialize connection pool."""
-        await self.initialize_pool(self._pool_size)
-
-    async def cleanup(self) -> None:
-        """Cleanup all pool connections."""
-        await self.cleanup_pool()
-
-    async def initialize_pool(self, size: int) -> None:
-        """🔥 Initialize connection pool with specified size.
-
-        Args:
-            size: Number of connections to create
-        """
-        async with self._lock:
-            logger.info("Initializing connection pool with %s connections", size)
-
-            for i in range(size):
-                try:
-                    connection = self._factory.create_connection(self.connection_info)
-                    if connection.bind():
-                        self._pool.append(connection)
-                        logger.debug("Created pooled connection %s/%s", i + 1, size)
-                    else:
-                        logger.warning("Failed to bind pooled connection %s", i + 1)
-                except Exception as e:
-                    logger.exception(
-                        "Failed to create pooled connection %s: %s", i + 1, e
-                    )
-
-    async def cleanup_pool(self) -> None:
-        """🔥 Cleanup all pooled connections."""
-        async with self._lock:
-            logger.info("Cleaning up connection pool")
-
-            # Close active connections
-            for connection in self._active_connections.copy():
-                with contextlib.suppress(Exception):
-                    connection.unbind()
-
-            # Close pooled connections
-            for connection in self._pool:
-                with contextlib.suppress(Exception):
-                    connection.unbind()
-
-            self._active_connections.clear()
-            self._pool.clear()
-
-    @contextlib.asynccontextmanager
-    async def acquire_connection(self) -> AsyncGenerator[ldap3.Connection, None]:
-        """🔥 Acquire connection from pool.
-
-        Yields:
-            LDAP connection from pool
-        """
-        connection = None
-
-        try:
-            async with self._lock:
-                # Try to get connection from pool
-                if self._pool:
-                    connection = self._pool.pop()
-                    logger.debug("Retrieved connection from pool")
-                elif len(self._active_connections) < self._max_pool_size:
-                    # Create new connection if under limit
-                    connection = self._factory.create_connection(self.connection_info)
-                    if not connection.bind():
-                        msg = "Failed to bind new connection"
-                        raise ldap3.LDAPBindError(msg)
-                    logger.debug("Created new connection")
-                else:
-                    msg = "Connection pool exhausted"
-                    raise RuntimeError(msg)
-
-                self._active_connections.add(connection)
-
-            yield connection
-
-        finally:
-            await self.return_connection(connection)
-
-    async def return_connection(self, connection: ldap3.Connection | None) -> None:
-        """🔥 Return connection to pool.
-
-        Args:
-            connection: Connection to return
-        """
-        if not connection:
-            return
-
-        async with self._lock:
-            self._active_connections.discard(connection)
-
-            if len(self._pool) < self._pool_size and connection.bound:
-                self._pool.append(connection)
-                logger.debug("Returned connection to pool")
-            else:
-                with contextlib.suppress(Exception):
-                    connection.unbind()
-                    logger.debug("Closed excess connection")
-
-
-class PerformanceTracker(BaseConnectionComponent):
-    """🎯 Single Responsibility: Track performance metrics only.
-
-    SOLID Compliance:
-    - S: Only tracks performance metrics
-    - O: Extensible metric types
-    - L: Interchangeable with other trackers
-    - I: Implements focused IPerformanceTracker
-    - D: No dependencies on concretions
-    """
-
-    def __init__(self, connection_info: LDAPConnectionInfo) -> None:
-        """Initialize performance tracker.
-
-        Args:
-            connection_info: Connection configuration
-        """
-        super().__init__(connection_info)
-        self._metrics: dict[str, Any] = {
-            "operations_count": 0,
-            "total_duration": 0.0,
-            "success_count": 0,
-            "error_count": 0,
-            "operations_by_type": {},
-        }
-        self._recent_operations: list[dict[str, Any]] = []
-
-        logger.info("🔥 SOLID PerformanceTracker initialized")
-
-    async def initialize(self) -> None:
-        """Initialize performance tracker."""
-        logger.debug("PerformanceTracker initialized")
-
-    async def cleanup(self) -> None:
-        """Cleanup performance tracker."""
-        logger.debug("PerformanceTracker cleaned up")
-
-    def record_operation(
-        self,
-        operation_type: str,
-        duration: float,
-        success: bool,
-    ) -> None:
-        """🔥 Record operation performance metrics.
-
-        Args:
-            operation_type: Type of operation (search, add, modify, delete)
-            duration: Operation duration in seconds
-            success: Whether operation succeeded
-        """
-        # Update general metrics
-        self._metrics["operations_count"] += 1
-        self._metrics["total_duration"] += duration
-
-        if success:
-            self._metrics["success_count"] += 1
-        else:
-            self._metrics["error_count"] += 1
-
-        # Update operation type metrics
-        if operation_type not in self._metrics["operations_by_type"]:
-            self._metrics["operations_by_type"][operation_type] = {
-                "count": 0,
-                "total_duration": 0.0,
-                "avg_duration": 0.0,
-            }
-
-        type_metrics = self._metrics["operations_by_type"][operation_type]
-        type_metrics["count"] += 1
-        type_metrics["total_duration"] += duration
-        type_metrics["avg_duration"] = (
-            type_metrics["total_duration"] / type_metrics["count"]
-        )
-
-        # Keep recent operations (last 100)
-        self._recent_operations.append(
-            {
-                "type": operation_type,
-                "duration": duration,
-                "success": success,
-                "timestamp": time.time(),
-            },
-        )
-
-        if len(self._recent_operations) > MAX_RECENT_OPERATIONS:
-            self._recent_operations = self._recent_operations[-MAX_RECENT_OPERATIONS:]
-
-        logger.debug(
-            "Recorded %s operation: %.3fs (%s)",
-            operation_type,
-            duration,
-            "success" if success else "error",
-        )
-
-    def get_metrics(self) -> dict[str, Any]:
-        """🔥 Get comprehensive performance metrics.
-
-        Returns:
-            Performance metrics dictionary
-        """
-        # Calculate derived metrics
-        total_ops = self._metrics["operations_count"]
-        avg_duration = (
-            self._metrics["total_duration"] / total_ops if total_ops > 0 else 0.0
-        )
-        success_rate = (
-            self._metrics["success_count"] / total_ops if total_ops > 0 else 0.0
-        )
-
-        return {
-            **self._metrics,
-            "average_duration": avg_duration,
-            "success_rate": success_rate,
-            "error_rate": 1.0 - success_rate,
-            "recent_operations": self._recent_operations[-10:],  # Last 10
-        }
-
-
-class StandardHealthMonitor(BaseConnectionComponent):
-    """🎯 Single Responsibility: Monitor connection health only.
-
-    SOLID Compliance:
-    - S: Only monitors health
-    - O: Extensible health checks
-    - L: Interchangeable with other monitors
-    - I: Implements focused IHealthMonitor
-    - D: No dependencies on concretions
-    """
-
-    def __init__(
-        self,
-        connection_info: LDAPConnectionInfo,
-        check_interval: float = 30.0,
-    ) -> None:
-        """Initialize health monitor.
-
-        Args:
-            connection_info: Connection configuration
-            check_interval: Health check interval in seconds
-        """
-        super().__init__(connection_info)
-        self._check_interval = check_interval
-        self._monitoring_task: asyncio.Task[None] | None = None
-        self._shutdown_event = asyncio.Event()
-
-        logger.info(
-            "🔥 SOLID StandardHealthMonitor initialized (interval: %ss)",
-            check_interval,
-        )
-
-    async def initialize(self) -> None:
-        """Initialize health monitor."""
-        await self.start_monitoring()
-
-    async def cleanup(self) -> None:
-        """Cleanup health monitor."""
-        await self.stop_monitoring()
-
-    async def check_health(self, connection: ldap3.Connection) -> bool:
-        """🔥 Check if connection is healthy.
-
-        Args:
-            connection: Connection to check
-
-        Returns:
-            True if healthy
-        """
-        try:
-            if not connection.bound:
-                return False
-
-            # Perform lightweight search
-            connection.search(
-                search_base="",
-                search_filter="(objectClass=*)",
-                search_scope=ldap3.BASE,
-                size_limit=1,
-            )
-
-            logger.debug("Health check passed")
-            return True
-
-        except Exception as e:
-            logger.warning("Health check failed: %s", e)
-            return False
-
-    async def start_monitoring(self) -> None:
-        """🔥 Start health monitoring background task."""
-        if self._monitoring_task:
-            return
-
-        self._monitoring_task = asyncio.create_task(self._monitoring_loop())
-        logger.info("Health monitoring started")
-
-    async def stop_monitoring(self) -> None:
-        """🔥 Stop health monitoring."""
-        if not self._monitoring_task:
-            return
-
-        self._shutdown_event.set()
-
-        try:
-            await asyncio.wait_for(self._monitoring_task, timeout=5.0)
-        except TimeoutError:
-            self._monitoring_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._monitoring_task
-
-        self._monitoring_task = None
-        logger.info("Health monitoring stopped")
-
-    async def _monitoring_loop(self) -> None:
-        """Background monitoring loop."""
-        while not self._shutdown_event.is_set():
-            try:
-                await asyncio.sleep(self._check_interval)
-                # In real implementation, would check pool connections
-                logger.debug("Health monitoring cycle completed")
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                logger.exception("Health monitoring error: %s", e)
-
-
-class StandardSecurityManager(BaseConnectionComponent):
-    """🎯 Single Responsibility: Handle security concerns only.
-
-    SOLID Compliance:
-    - S: Only handles security
-    - O: Extensible security policies
-    - L: Interchangeable with other security managers
-    - I: Implements focused ISecurityManager
-    - D: No dependencies on concretions
-    """
-
-    def __init__(self, connection_info: LDAPConnectionInfo) -> None:
-        """Initialize security manager.
-
-        Args:
-            connection_info: Connection configuration
-        """
-        super().__init__(connection_info)
-        logger.info("🔥 SOLID StandardSecurityManager initialized")
-
-    async def initialize(self) -> None:
-        """Initialize security manager."""
-        logger.debug("SecurityManager initialized")
-
-    async def cleanup(self) -> None:
-        """Cleanup security manager."""
-        logger.debug("SecurityManager cleaned up")
-
-    async def setup_tls(self, connection_info: LDAPConnectionInfo) -> ldap3.Tls | None:
-        """🔥 Setup TLS configuration.
-
-        Args:
-            connection_info: Connection configuration
-
-        Returns:
-            TLS configuration object or None
-        """
-        if not connection_info.use_ssl:
-            return None
-
-        logger.info("Setting up TLS configuration")
-        return ldap3.Tls(validate=ssl.CERT_REQUIRED)
-
-    async def validate_credentials(self, connection_info: LDAPConnectionInfo) -> bool:
-        """🔥 Validate connection credentials.
-
-        Args:
-            connection_info: Connection configuration
-
-        Returns:
-            True if credentials are valid
-        """
-        # Basic validation
-        if not connection_info.bind_dn:
-            logger.warning("Missing bind DN")
-            return False
-
-        if not connection_info.bind_password.get_secret_value():
-            logger.warning("Missing bind password")
-            return False
-
-        logger.debug("Credentials validation passed")
-        return True
-
 
 # ============================================================================
 # 🔥 SOLID COMPLIANT CONNECTION MANAGER IMPLEMENTATION
 # ============================================================================
+
+
+class ConnectionComponents:
+    """Configuration container for SOLID connection components."""
+
+    def __init__(
+        self,
+        factory: IConnectionFactory | None = None,
+        pool: IConnectionPool | None = None,
+        health_monitor: IHealthMonitor | None = None,
+        performance_tracker: IPerformanceTracker | None = None,
+        security_manager: ISecurityManager | None = None,
+    ) -> None:
+        self.factory = factory
+        self.pool = pool
+        self.health_monitor = health_monitor
+        self.performance_tracker = performance_tracker
+        self.security_manager = security_manager
 
 
 class SOLIDConnectionManager:
@@ -573,34 +74,28 @@ class SOLIDConnectionManager:
     def __init__(
         self,
         connection_info: LDAPConnectionInfo,
-        factory: IConnectionFactory | None = None,
-        pool: IConnectionPool | None = None,
-        health_monitor: IHealthMonitor | None = None,
-        performance_tracker: IPerformanceTracker | None = None,
-        security_manager: ISecurityManager | None = None,
+        components: ConnectionComponents | None = None,
     ) -> None:
         """Initialize SOLID connection manager with dependency injection.
 
         Args:
             connection_info: Connection configuration
-            factory: Connection factory (injected dependency)
-            pool: Connection pool (injected dependency)
-            health_monitor: Health monitor (injected dependency)
-            performance_tracker: Performance tracker (injected dependency)
-            security_manager: Security manager (injected dependency)
+            components: Optional container for SOLID components
         """
+        if components is None:
+            components = ConnectionComponents()
         self.connection_info = connection_info
 
         # 🔥 DEPENDENCY INVERSION: Inject dependencies
-        self._factory = factory or StandardConnectionFactory(connection_info)
-        self._security_manager = security_manager or StandardSecurityManager(
+        self._factory = components.factory or StandardConnectionFactory(connection_info)
+        self._security_manager = components.security_manager or StandardSecurityManager(
             connection_info,
         )
-        self._performance_tracker = performance_tracker or PerformanceTracker(
+        self._performance_tracker = components.performance_tracker or PerformanceTracker(
             connection_info,
         )
-        self._health_monitor = health_monitor or StandardHealthMonitor(connection_info)
-        self._pool = pool or AsyncConnectionPool(
+        self._health_monitor = components.health_monitor or StandardHealthMonitor(connection_info)
+        self._pool = components.pool or AsyncConnectionPool(
             connection_info,
             self._factory,
             pool_size=10,
@@ -668,14 +163,14 @@ class SOLIDConnectionManager:
                 duration,
                 False,
             )
-            logger.exception(f"Connection acquisition failed: {e}")
+            logger.exception("Connection acquisition failed: %s", e)
             raise
 
     async def search(
         self,
         search_base: str,
         search_filter: str = "(objectClass=*)",
-        **kwargs: Any,
+        **kwargs: str | list[str] | int | None,  # LDAP search parameters: attributes, scope, size_limit, time_limit
     ) -> AsyncIterator[dict[str, Any]]:
         """🔥 Perform search using SOLID composition.
 
@@ -711,7 +206,7 @@ class SOLIDConnectionManager:
             # Record failed search
             duration = time.time() - start_time
             self._performance_tracker.record_operation("search", duration, False)
-            logger.exception(f"Search operation failed: {e}")
+            logger.exception("Search operation failed: %s", e)
             raise
 
     async def add_entry(self, dn: str, attributes: dict[str, Any]) -> bool:
@@ -735,9 +230,9 @@ class SOLIDConnectionManager:
                 self._performance_tracker.record_operation("add", duration, result)
 
                 if result:
-                    logger.info(f"Successfully added entry: {dn}")
+                    logger.info("Successfully added entry: %s", dn)
                 else:
-                    logger.error(f"Failed to add entry {dn}: {connection.result}")
+                    logger.error("Failed to add entry %s: %s", dn, connection.result)
 
                 return result
 
@@ -745,7 +240,7 @@ class SOLIDConnectionManager:
             # Record failed add
             duration = time.time() - start_time
             self._performance_tracker.record_operation("add", duration, False)
-            logger.exception(f"Add operation failed for {dn}: {e}")
+            logger.exception("Add operation failed for %s: %s", dn, e)
             raise
 
     async def modify_entry(self, dn: str, changes: dict[str, Any]) -> bool:
@@ -777,9 +272,9 @@ class SOLIDConnectionManager:
                 self._performance_tracker.record_operation("modify", duration, result)
 
                 if result:
-                    logger.info(f"Successfully modified entry: {dn}")
+                    logger.info("Successfully modified entry: %s", dn)
                 else:
-                    logger.error(f"Failed to modify entry {dn}: {connection.result}")
+                    logger.error("Failed to modify entry %s: %s", dn, connection.result)
 
                 return result
 
@@ -787,7 +282,7 @@ class SOLIDConnectionManager:
             # Record failed modify
             duration = time.time() - start_time
             self._performance_tracker.record_operation("modify", duration, False)
-            logger.exception(f"Modify operation failed for {dn}: {e}")
+            logger.exception("Modify operation failed for %s: %s", dn, e)
             raise
 
     async def delete_entry(self, dn: str) -> bool:
@@ -810,9 +305,9 @@ class SOLIDConnectionManager:
                 self._performance_tracker.record_operation("delete", duration, result)
 
                 if result:
-                    logger.info(f"Successfully deleted entry: {dn}")
+                    logger.info("Successfully deleted entry: %s", dn)
                 else:
-                    logger.error(f"Failed to delete entry {dn}: {connection.result}")
+                    logger.error("Failed to delete entry %s: %s", dn, connection.result)
 
                 return result
 
@@ -820,7 +315,7 @@ class SOLIDConnectionManager:
             # Record failed delete
             duration = time.time() - start_time
             self._performance_tracker.record_operation("delete", duration, False)
-            logger.exception(f"Delete operation failed for {dn}: {e}")
+            logger.exception("Delete operation failed for %s: %s", dn, e)
             raise
 
     def get_performance_metrics(self) -> dict[str, Any]:
@@ -841,7 +336,7 @@ class SOLIDConnectionManager:
             async with self.get_connection() as connection:
                 return await self._health_monitor.check_health(connection)
         except Exception as e:
-            logger.exception(f"Health check failed: {e}")
+            logger.exception("Health check failed: %s", e)
             return False
 
     # Context manager support
@@ -854,11 +349,10 @@ class SOLIDConnectionManager:
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        exc_tb: Any,
+        exc_tb: TracebackType | None,
     ) -> None:
         """Async context manager exit."""
         await self.cleanup()
-
 
 # ============================================================================
 # 🔥 DEPENDENCY INJECTION FACTORY

@@ -108,6 +108,76 @@ class DNValidationError(ValidationError):
         super().__init__(message, **kwargs)
 
 
+class FilterValidationError(ValidationError):
+    """🔍 Exception for LDAP filter validation failures."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        filter_string: Optional[str] = None,
+        filter_component: Optional[str] = None,
+        syntax_error: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize filter validation error.
+
+        Args:
+            message: Error description
+            filter_string: LDAP filter that failed validation
+            filter_component: Specific filter component that failed
+            syntax_error: Syntax error details
+            **kwargs: Additional arguments for ValidationError
+        """
+        context = kwargs.get("context", {})
+        if filter_string:
+            context["filter_string"] = filter_string
+        if filter_component:
+            context["filter_component"] = filter_component
+        if syntax_error:
+            context["syntax_error"] = syntax_error
+
+        kwargs["context"] = context
+        super().__init__(message, **kwargs)
+
+
+class AttributeValidationError(ValidationError):
+    """🏷️ Exception for LDAP attribute validation failures."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        attribute_name: Optional[str] = None,
+        attribute_value: Optional[Any] = None,
+        attribute_syntax: Optional[str] = None,
+        validation_type: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize attribute validation error.
+
+        Args:
+            message: Error description
+            attribute_name: Name of attribute that failed validation
+            attribute_value: Value that failed validation
+            attribute_syntax: Expected attribute syntax
+            validation_type: Type of validation that failed
+            **kwargs: Additional arguments for ValidationError
+        """
+        context = kwargs.get("context", {})
+        if attribute_name:
+            context["attribute_name"] = attribute_name
+        if attribute_value is not None:
+            context["attribute_value"] = str(attribute_value)
+        if attribute_syntax:
+            context["attribute_syntax"] = attribute_syntax
+        if validation_type:
+            context["validation_type"] = validation_type
+
+        kwargs["context"] = context
+        super().__init__(message, **kwargs)
+
+
 class LDIFValidationError(ValidationError):
     """📄 Exception for LDIF format validation failures."""
 

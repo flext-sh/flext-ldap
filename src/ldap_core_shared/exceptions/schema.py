@@ -137,6 +137,43 @@ class SchemaMappingError(SchemaError):
         super().__init__(message, **kwargs)
 
 
+class SchemaCompatibilityError(SchemaError):
+    """🔄 Exception for schema compatibility failures during migration."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        source_schema: Optional[str] = None,
+        target_schema: Optional[str] = None,
+        compatibility_issue: Optional[str] = None,
+        resolution_suggestion: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize schema compatibility error.
+
+        Args:
+            message: Error description
+            source_schema: Source schema identifier
+            target_schema: Target schema identifier
+            compatibility_issue: Specific compatibility issue
+            resolution_suggestion: Suggested resolution
+            **kwargs: Additional arguments for SchemaError
+        """
+        context = kwargs.get("context", {})
+        if source_schema:
+            context["source_schema"] = source_schema
+        if target_schema:
+            context["target_schema"] = target_schema
+        if compatibility_issue:
+            context["compatibility_issue"] = compatibility_issue
+        if resolution_suggestion:
+            context["resolution_suggestion"] = resolution_suggestion
+
+        kwargs["context"] = context
+        super().__init__(message, **kwargs)
+
+
 class SchemaConflictError(SchemaError):
     """⚠️ Exception for schema conflicts during migration."""
 

@@ -6,7 +6,7 @@ LDAP Distinguished Names.
 
 from __future__ import annotations
 
-from ldap_core_shared.domain.value_objects import LdapDn
+from ldap_core_shared.domain.value_objects import DNComponent, LdapDn
 
 
 def parse_dn(dn_string: str) -> LdapDn:
@@ -192,7 +192,7 @@ def build_dn(components: list[tuple[str, str]]) -> str:
     Returns:
         DN string
     """
-    dn_components: list = []
+    dn_components: list[str] = []
     for attr, value in components:
         escaped_value = escape_dn_value(value)
         dn_components.append(f"{attr}={escaped_value}")
@@ -265,7 +265,7 @@ def find_common_base_dn(dn_list: list[str]) -> str | None:
 
     if len(dn_list) == 1:
         parent = get_parent_dn(dn_list[0])
-        return parent if parent else dn_list[0]
+        return parent or dn_list[0]
 
     try:
         # Parse all DNs
@@ -278,7 +278,7 @@ def find_common_base_dn(dn_list: list[str]) -> str | None:
             return None
 
         # Check components from the end (base) backwards
-        common_components: list = []
+        common_components: list[DNComponent] = []
         for i in range(min_depth):
             # Get component at position from end
             pos = -(i + 1)

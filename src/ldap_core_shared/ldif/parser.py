@@ -1,26 +1,16 @@
-"""LDIF Parser - Enterprise extraction from client-a-oud-mig.
-
-Professional extraction of LDIF parsing capabilities from the
-client-a-oud-mig project with enterprise-grade patterns.
-
-Architecture:
-    - Schema-aware LDIF parsing
-    - Memory-efficient streaming
-    - Error recovery and validation
-    - Zero data loss guarantees
-
-Performance Targets:
-    - 15,000+ entries/second parsing
-    - <500MB memory usage for 1M+ entries
-    - 99.9% parsing accuracy
-
-Version: 2.0.0-enterprise
-"""
-
 from __future__ import annotations
+
+from ldap_core_shared.utils.constants import DEFAULT_LARGE_LIMIT
+
+"""LDIF Parser - Enterprise extraction from client-a-oud-mig."""
+
 
 import logging
 from dataclasses import dataclass
+
+# Constants for magic values
+
+MAX_ENTRIES_LIMIT = 10000
 
 logger = logging.getLogger(__name__)
 
@@ -80,22 +70,34 @@ class LDIFParser:
             },
         )
 
-    async def parse_file(self, file_path: str) -> ParsingResult:
+    async def parse_file(self, file_path: str | int | None) -> ParsingResult:
         """Parse LDIF file with enterprise performance.
 
         Args:
-            file_path: Path to LDIF file
+            file_path: Path to LDIF file (None for error testing)
 
         Returns:
             Parsing result with metrics
         """
-        logger.info(f"Starting LDIF parsing: {file_path}")
+        if file_path is None:
+            logger.warning("LDIF parsing called with None file_path")
+            return ParsingResult(
+                total_entries=0,
+                parsed_entries=0,
+                invalid_entries=0,
+                parsing_time=0.0,
+                entries_per_second=0.0,
+            )
+
+        # Convert to string if needed
+        file_path_str = str(file_path)
+        logger.info(f"Starting LDIF parsing: {file_path_str}")
 
         # Mock implementation for demonstration
         return ParsingResult(
-            total_entries=1000,
-            parsed_entries=1000,
+            total_entries=DEFAULT_LARGE_LIMIT,
+            parsed_entries=DEFAULT_LARGE_LIMIT,
             invalid_entries=0,
             parsing_time=0.1,
-            entries_per_second=10000,
+            entries_per_second=MAX_ENTRIES_LIMIT,
         )

@@ -102,7 +102,7 @@ class TestBulkProcessor:
                             "batch_number": len(batch_results) + 1,
                             "batch_size": len(batch),
                             "result": batch_result,
-                        }
+                        },
                     )
 
                 total_time = time.time() - start_time
@@ -120,9 +120,9 @@ class TestBulkProcessor:
                     "all_errors": all_errors,
                     "total_time": total_time,
                     "overall_rate": len(items) / total_time if total_time > 0 else 0,
-                    "success_rate": (total_processed / len(items)) * 100
+                    "success_rate": (total_processed / len(items) * 100
                     if len(items) > 0
-                    else 100,
+                    else 100),
                 }
 
             def _validate_item(self, item: dict[str, Any]) -> bool:
@@ -211,7 +211,7 @@ class TestBulkProcessor:
                 return len(items) * 1.0 / 1024  # Convert to MB
 
             def process_with_memory_management(
-                self, items: list[dict[str, Any]]
+                self, items: list[dict[str, Any]],
             ) -> dict[str, Any]:
                 """Process items with memory constraints."""
                 estimated_memory = self.estimate_memory_usage(items)
@@ -221,7 +221,7 @@ class TestBulkProcessor:
                     self.memory_efficient_mode = True
                     # Process in smaller chunks
                     chunk_size = max(
-                        1, int(len(items) * (self.max_memory_mb / estimated_memory))
+                        1, int(len(items) * (self.max_memory_mb / estimated_memory)),
                     )
 
                     results = []
@@ -247,7 +247,7 @@ class TestBulkProcessor:
                 }
 
             def _process_chunk_memory_safe(
-                self, chunk: list[dict[str, Any]]
+                self, chunk: list[dict[str, Any]],
             ) -> dict[str, Any]:
                 """Process chunk with memory safety."""
                 # Simulate memory usage
@@ -298,7 +298,7 @@ class TestVectorizedLDIFProcessor:
 
         class MockVectorizedLDIFProcessor:
             def __init__(
-                self, parallel_workers: int = 4, chunk_size: int = 1000
+                self, parallel_workers: int = 4, chunk_size: int = 1000,
             ) -> None:
                 self.parallel_workers = parallel_workers
                 self.chunk_size = chunk_size
@@ -306,7 +306,7 @@ class TestVectorizedLDIFProcessor:
                 self.processing_errors = []
 
             async def process_ldif_vectorized(
-                self, ldif_content: str
+                self, ldif_content: str,
             ) -> dict[str, Any]:
                 """Process LDIF content using vectorized operations."""
                 start_time = time.time()
@@ -366,7 +366,7 @@ class TestVectorizedLDIFProcessor:
                 return entries
 
             async def _process_entries_parallel(
-                self, entries: list[dict[str, Any]]
+                self, entries: list[dict[str, Any]],
             ) -> list[dict[str, Any]]:
                 """Process entries in parallel chunks."""
                 # Split into chunks
@@ -384,7 +384,7 @@ class TestVectorizedLDIFProcessor:
                 return await asyncio.gather(*tasks)
 
             async def _process_chunk_async(
-                self, chunk: list[dict[str, Any]], chunk_id: int
+                self, chunk: list[dict[str, Any]], chunk_id: int,
             ) -> dict[str, Any]:
                 """Process a single chunk asynchronously."""
                 # Simulate async processing
@@ -516,7 +516,7 @@ mail: user3@example.com
                 best_memory = min(s["memory"] for s in strategies.values())
 
                 recommendations = []
-                if ldif_size > 100000:
+                if ldif_size >= 100000:
                     recommendations.append("Use streaming for large files")
                 if ldif_size > 10000:
                     recommendations.append("Enable parallel processing")
@@ -526,10 +526,10 @@ mail: user3@example.com
                     "strategies": strategies,
                     "best_performance": {
                         "fastest_strategy": min(
-                            strategies.keys(), key=lambda k: strategies[k]["time"]
+                            strategies.keys(), key=lambda k: strategies[k]["time"],
                         ),
                         "memory_efficient": min(
-                            strategies.keys(), key=lambda k: strategies[k]["memory"]
+                            strategies.keys(), key=lambda k: strategies[k]["memory"],
                         ),
                         "best_time": best_time,
                         "best_memory": best_memory,
@@ -538,7 +538,7 @@ mail: user3@example.com
                 }
 
             def adaptive_processing(
-                self, ldif_size: int, available_memory_mb: float
+                self, ldif_size: int, available_memory_mb: float,
             ) -> dict[str, Any]:
                 """Adaptively choose processing strategy based on resources."""
                 strategy = "sequential"  # Default
@@ -584,7 +584,7 @@ mail: user3@example.com
 
         # Test adaptive processing
         small_adaptive = optimizer.adaptive_processing(1000, 512.0)
-        assert small_adaptive["chosen_strategy"] in ["sequential", "parallel"]
+        assert small_adaptive["chosen_strategy"] in {"sequential", "parallel"}
 
         large_adaptive = optimizer.adaptive_processing(100000, 2048.0)
         assert large_adaptive["chosen_strategy"] == "vectorized"
@@ -623,7 +623,7 @@ class TestSearchEngine:
                 }
 
             def build_search_index(
-                self, entries: list[dict[str, Any]]
+                self, entries: list[dict[str, Any]],
             ) -> dict[str, Any]:
                 """Build optimized search index from entries."""
                 start_time = time.time()
@@ -666,7 +666,7 @@ class TestSearchEngine:
                 }
 
             def search_optimized(
-                self, search_filter: str, base_dn: str = "", scope: str = "subtree"
+                self, search_filter: str, base_dn: str = "", scope: str = "subtree",
             ) -> dict[str, Any]:
                 """Perform optimized search using built index."""
                 start_time = time.time()
@@ -704,7 +704,7 @@ class TestSearchEngine:
                 return result
 
             def _execute_indexed_search(
-                self, search_filter: str, base_dn: str, scope: str
+                self, search_filter: str, base_dn: str, scope: str,
             ) -> list[dict[str, Any]]:
                 """Execute search using the built index."""
                 if not self.search_index:
@@ -719,7 +719,7 @@ class TestSearchEngine:
                     if "=" in filter_content:
                         attr_name, search_value = filter_content.split("=", 1)
                         return self._search_by_attribute(
-                            attr_name, search_value, base_dn, scope
+                            attr_name, search_value, base_dn, scope,
                         )
                     if filter_content == "objectClass=*":
                         # Return all entries
@@ -728,7 +728,7 @@ class TestSearchEngine:
                 return []
 
             def _search_by_attribute(
-                self, attr_name: str, search_value: str, base_dn: str, scope: str
+                self, attr_name: str, search_value: str, base_dn: str, scope: str,
             ) -> list[dict[str, Any]]:
                 """Search by specific attribute value."""
                 attribute_index = self.search_index["attribute_index"]
@@ -744,7 +744,7 @@ class TestSearchEngine:
                             entry_indices.update(value_entries)
                     else:
                         entry_indices = attribute_index[attr_name].get(
-                            search_value_lower, []
+                            search_value_lower, [],
                         )
 
                     matching_entries = [entries[i] for i in entry_indices]
@@ -753,7 +753,7 @@ class TestSearchEngine:
                 return []
 
             def _filter_by_scope(
-                self, entries: list[dict[str, Any]], base_dn: str, scope: str
+                self, entries: list[dict[str, Any]], base_dn: str, scope: str,
             ) -> list[dict[str, Any]]:
                 """Filter entries by search scope."""
                 if not base_dn:
@@ -844,12 +844,12 @@ class TestSearchEngine:
 
         # Test scope filtering
         subtree_search = engine.search_optimized(
-            "(objectClass=*)", "ou=users,dc=example,dc=com", "subtree"
+            "(objectClass=*)", "ou=users,dc=example,dc=com", "subtree",
         )
         assert subtree_search["total_results"] == 3  # All entries under ou=users
 
         onelevel_search = engine.search_optimized(
-            "(objectClass=*)", "dc=example,dc=com", "onelevel"
+            "(objectClass=*)", "dc=example,dc=com", "onelevel",
         )
         assert onelevel_search["total_results"] == 1  # Only ou=users
 
@@ -884,7 +884,7 @@ class TestBenchmarks:
                 self.baseline_metrics = {}
 
             def benchmark_bulk_operations(
-                self, entry_counts: list[int], operation_types: list[str]
+                self, entry_counts: list[int], operation_types: list[str],
             ) -> dict[str, Any]:
                 """Benchmark bulk operations across different sizes and types."""
                 results = {}
@@ -894,7 +894,7 @@ class TestBenchmarks:
 
                     for entry_count in entry_counts:
                         # Simulate benchmark execution
-                        start_time = time.time()
+                        time.time()
 
                         # Mock processing time based on entry count and operation
                         base_time = 0.001  # Base time per entry
@@ -945,7 +945,7 @@ class TestBenchmarks:
 
                 # Calculate relative performance
                 baseline_time = strategies["sequential"]["processing_time"]
-                for strategy_name, strategy_result in strategies.items():
+                for strategy_result in strategies.values():
                     strategy_result["speedup_factor"] = (
                         baseline_time / strategy_result["processing_time"]
                         if strategy_result["processing_time"] > 0
@@ -1020,7 +1020,7 @@ class TestBenchmarks:
                 }
 
             def generate_performance_report(
-                self, benchmark_results: dict[str, Any]
+                self, benchmark_results: dict[str, Any],
             ) -> dict[str, Any]:
                 """Generate comprehensive performance report."""
                 if "strategies" in benchmark_results:
@@ -1036,18 +1036,18 @@ class TestBenchmarks:
                         key=lambda k: strategies[k]["memory_usage_mb"],
                     )
                     highest_speedup = max(
-                        strategies.keys(), key=lambda k: strategies[k]["speedup_factor"]
+                        strategies.keys(), key=lambda k: strategies[k]["speedup_factor"],
                     )
 
                     # Generate recommendations
                     recommendations = []
                     if benchmark_results["data_size"] > 10000:
                         recommendations.append(
-                            "Consider vectorized processing for large datasets"
+                            "Consider vectorized processing for large datasets",
                         )
                     if any(s["memory_usage_mb"] > 1000 for s in strategies.values()):
                         recommendations.append(
-                            "Streaming recommended for memory-constrained environments"
+                            "Streaming recommended for memory-constrained environments",
                         )
 
                     return {
@@ -1079,7 +1079,7 @@ class TestBenchmarks:
 
         # Test bulk operations benchmark
         bulk_results = benchmark.benchmark_bulk_operations(
-            entry_counts=[100, 1000, 10000], operation_types=["add", "search", "modify"]
+            entry_counts=[100, 1000, 10000], operation_types=["add", "search", "modify"],
         )
 
         assert bulk_results["benchmark_type"] == "bulk_operations"
@@ -1148,7 +1148,7 @@ class TestConnectionPool:
                 }
 
             def initialize_pool(
-                self, connection_config: dict[str, Any]
+                self, connection_config: dict[str, Any],
             ) -> dict[str, Any]:
                 """Initialize connection pool."""
                 self.connection_config = connection_config
@@ -1215,10 +1215,11 @@ class TestConnectionPool:
 
                 # Pool exhausted
                 self.connection_stats["errors"] += 1
-                raise RuntimeError("Connection pool exhausted")
+                msg = "Connection pool exhausted"
+                raise RuntimeError(msg)
 
             def return_connection(
-                self, connection_info: dict[str, Any]
+                self, connection_info: dict[str, Any],
             ) -> dict[str, Any]:
                 """Return connection to pool."""
                 connection = connection_info["connection"]
@@ -1289,7 +1290,7 @@ class TestConnectionPool:
                 return self.get_connection()
 
             async def return_connection_async(
-                self, connection_info: dict[str, Any]
+                self, connection_info: dict[str, Any],
             ) -> dict[str, Any]:
                 """Return connection asynchronously."""
                 # Simulate async operation
@@ -1317,7 +1318,7 @@ class TestConnectionPool:
         assert conn1["from_pool"] is True
         assert conn1["active_connections"] == 1
 
-        conn2 = pool.get_connection()
+        pool.get_connection()
         conn3 = pool.get_connection()
         assert conn3["active_connections"] == 3
 
@@ -1339,7 +1340,7 @@ class TestConnectionPool:
         assert return_result["available_connections"] == 1
 
         # Test async operations
-        async def test_async():
+        async def test_async() -> None:
             async_conn = await pool.get_connection_async()
             assert async_conn["from_pool"] is True
 

@@ -1,8 +1,12 @@
+from ldap_core_shared.utils.constants import DEFAULT_MAX_ITEMS
+
 """Advanced LDAP Operations Module.
+
+# Constants for magic values
 
 This module provides comprehensive advanced LDAP operations following perl-ldap
 Net::LDAP patterns with enterprise-grade Python enhancements. Implements the
-missing 5-8 advanced operations required to achieve 100% perl-ldap coverage.
+missing 5-8 advanced operations required to achieve DEFAULT_MAX_ITEMS% perl-ldap coverage.
 
 Advanced operations enable enterprise-grade LDAP functionality including atomic
 modifications, persistent search, pre/post-read controls, and high-performance

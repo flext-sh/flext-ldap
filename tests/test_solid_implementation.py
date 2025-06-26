@@ -85,7 +85,7 @@ class TestSingleResponsibilityPrinciple:
 
         for method in factory_methods:
             assert method in connection_methods or hasattr(
-                object, method
+                object, method,
             ), f"Factory has non-connection method: {method}"
 
     def test_performance_tracker_single_responsibility(
@@ -109,7 +109,7 @@ class TestSingleResponsibilityPrinciple:
 
         for method in tracker_methods:
             assert method in performance_methods or hasattr(
-                object, method
+                object, method,
             ), f"Tracker has non-performance method: {method}"
 
     def test_health_monitor_single_responsibility(
@@ -134,7 +134,7 @@ class TestSingleResponsibilityPrinciple:
 
         for method in monitor_methods:
             assert method in health_methods or hasattr(
-                object, method
+                object, method,
             ), f"Monitor has non-health method: {method}"
 
 
@@ -456,9 +456,7 @@ class TestSOLIDIntegration:
                 )
 
                 # Test search
-                results = []
-                async for result in manager.search("dc=test,dc=com", "(objectClass=*)"):
-                    results.append(result)
+                [result async for result in manager.search("dc=test,dc=com", "(objectClass=*)")]
 
                 await manager.delete_entry("cn=test,dc=test,dc=com")
 

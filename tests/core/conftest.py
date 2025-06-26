@@ -23,7 +23,7 @@ Version: 1.0.0-enterprise
 from __future__ import annotations
 
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 from uuid import uuid4
@@ -101,7 +101,7 @@ class TestDataGenerator:
         return {
             "description": {
                 "action": "MODIFY_REPLACE",
-                "values": [f"Updated description {datetime.now(UTC).isoformat()}"],
+                "values": [f"Updated description {datetime.now(timezone.utc).isoformat()}"],
             },
             "telephoneNumber": ["+1-555-0123"],
             "title": "Senior Developer",
@@ -182,7 +182,7 @@ class MockLDAPConnection:
                 "operation": "search",
                 "search_base": search_base,
                 "search_filter": search_filter,
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         )
 
@@ -223,7 +223,7 @@ class MockLDAPConnection:
                 "operation": "add",
                 "dn": dn,
                 "attributes_count": len(attributes),
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         )
 
@@ -252,7 +252,7 @@ class MockLDAPConnection:
                 "operation": "modify",
                 "dn": dn,
                 "changes_count": len(changes),
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         )
 
@@ -292,7 +292,7 @@ class MockLDAPConnection:
             {
                 "operation": "delete",
                 "dn": dn,
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         )
 

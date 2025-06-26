@@ -131,7 +131,7 @@ class TestSchemaDiscovery:
                 return schema
 
             def discover_attribute_usage(
-                self, connection: Any, base_dn: str
+                self, connection: Any, base_dn: str,
             ) -> dict[str, Any]:
                 """Discover how attributes are used in the directory."""
                 return {
@@ -163,7 +163,7 @@ class TestSchemaDiscovery:
                     "total_object_classes": len(schema.get("object_classes", [])),
                     "total_attribute_types": len(schema.get("attribute_types", [])),
                     "total_syntax_definitions": len(
-                        schema.get("syntax_definitions", {})
+                        schema.get("syntax_definitions", {}),
                     ),
                     "total_matching_rules": len(schema.get("matching_rules", [])),
                     "structural_classes": len(
@@ -171,14 +171,14 @@ class TestSchemaDiscovery:
                             oc
                             for oc in schema.get("object_classes", [])
                             if "structural" in oc.get("type", "structural")
-                        ]
+                        ],
                     ),
                     "auxiliary_classes": len(
                         [
                             oc
                             for oc in schema.get("object_classes", [])
                             if "auxiliary" in oc.get("type", "")
-                        ]
+                        ],
                     ),
                 }
 
@@ -225,10 +225,12 @@ class TestSchemaDiscovery:
                     not hasattr(connection, "is_connected")
                     or not connection.is_connected
                 ):
-                    raise ConnectionError("Not connected to LDAP server")
+                    msg = "Not connected to LDAP server"
+                    raise ConnectionError(msg)
 
                 if hasattr(connection, "simulate_error") and connection.simulate_error:
-                    raise RuntimeError("Schema discovery failed")
+                    msg = "Schema discovery failed"
+                    raise RuntimeError(msg)
 
                 # Return minimal schema for successful case
                 return {
@@ -326,16 +328,16 @@ class TestSchemaAnalyzer:
                         * 100,
                         "has_missing_attributes": len(missing_attrs) > 0,
                         "inheritance_depth": self._calculate_max_inheritance_depth(
-                            inheritance_map
+                            inheritance_map,
                         ),
                     },
                     "recommendations": self._generate_recommendations(
-                        missing_attrs, inheritance_map
+                        missing_attrs, inheritance_map,
                     ),
                 }
 
             def _calculate_max_inheritance_depth(
-                self, inheritance_map: dict[str, list[str]]
+                self, inheritance_map: dict[str, list[str]],
             ) -> int:
                 """Calculate maximum inheritance depth."""
 
@@ -356,21 +358,21 @@ class TestSchemaAnalyzer:
                 )
 
             def _generate_recommendations(
-                self, missing_attrs: set, inheritance_map: dict
+                self, missing_attrs: set, inheritance_map: dict,
             ) -> list[str]:
                 """Generate schema improvement recommendations."""
                 recommendations = []
 
                 if missing_attrs:
                     recommendations.append(
-                        f"Define missing attribute types: {', '.join(missing_attrs)}"
+                        f"Define missing attribute types: {', '.join(missing_attrs)}",
                     )
 
                 # Check for deep inheritance
                 max_depth = self._calculate_max_inheritance_depth(inheritance_map)
                 if max_depth > 5:
                     recommendations.append(
-                        f"Consider flattening inheritance hierarchy (current max depth: {max_depth})"
+                        f"Consider flattening inheritance hierarchy (current max depth: {max_depth})",
                     )
 
                 # Check for orphaned classes
@@ -379,17 +381,17 @@ class TestSchemaAnalyzer:
                     classes_with_superiors.update(superiors)
 
                 orphaned = (
-                    set(inheritance_map.keys()) - classes_with_superiors - {"top"}
+                    set(inheritance_map.keys() - classes_with_superiors - {"top"})
                 )
                 if orphaned:
                     recommendations.append(
-                        f"Review orphaned object classes: {', '.join(orphaned)}"
+                        f"Review orphaned object classes: {', '.join(orphaned)}",
                     )
 
                 return recommendations
 
             def analyze_schema_evolution(
-                self, old_schema: dict[str, Any], new_schema: dict[str, Any]
+                self, old_schema: dict[str, Any], new_schema: dict[str, Any],
             ) -> dict[str, Any]:
                 """Analyze changes between schema versions."""
                 old_classes = {
@@ -412,15 +414,9 @@ class TestSchemaAnalyzer:
                 removed_attrs = set(old_attrs.keys()) - set(new_attrs.keys())
 
                 # Detect modifications
-                modified_classes = []
-                for name in set(old_classes.keys()) & set(new_classes.keys()):
-                    if old_classes[name] != new_classes[name]:
-                        modified_classes.append(name)
+                modified_classes = [name for name in set(old_classes.keys()) & set(new_classes.keys()) if old_classes[name] != new_classes[name]]
 
-                modified_attrs = []
-                for name in set(old_attrs.keys()) & set(new_attrs.keys()):
-                    if old_attrs[name] != new_attrs[name]:
-                        modified_attrs.append(name)
+                modified_attrs = [name for name in set(old_attrs.keys()) & set(new_attrs.keys()) if old_attrs[name] != new_attrs[name]]
 
                 return {
                     "changes": {
@@ -441,12 +437,12 @@ class TestSchemaAnalyzer:
                         + len(modified_classes),
                     },
                     "migration_complexity": self._assess_migration_complexity(
-                        len(removed_classes), len(removed_attrs), len(modified_classes)
+                        len(removed_classes), len(removed_attrs), len(modified_classes),
                     ),
                 }
 
             def _assess_migration_complexity(
-                self, removed_classes: int, removed_attrs: int, modified_classes: int
+                self, removed_classes: int, removed_attrs: int, modified_classes: int,
             ) -> str:
                 """Assess migration complexity based on changes."""
                 if removed_classes > 0 or removed_attrs > 5:
@@ -567,7 +563,7 @@ class TestSchemaComparator:
                 self.comparison_cache = {}
 
             def compare_schemas(
-                self, source_schema: dict[str, Any], target_schema: dict[str, Any]
+                self, source_schema: dict[str, Any], target_schema: dict[str, Any],
             ) -> dict[str, Any]:
                 """Compare two schemas and identify differences."""
                 source_classes = {
@@ -587,7 +583,7 @@ class TestSchemaComparator:
 
                 # Find differences
                 class_differences = self._compare_object_classes(
-                    source_classes, target_classes
+                    source_classes, target_classes,
                 )
                 attr_differences = self._compare_attributes(source_attrs, target_attrs)
 
@@ -603,7 +599,7 @@ class TestSchemaComparator:
                 )
 
                 compatibility_score = max(
-                    0, (total_items - differences_count) / max(total_items, 1) * 100
+                    0, (total_items - differences_count) / max(total_items, 1) * 100,
                 )
 
                 return {
@@ -622,7 +618,7 @@ class TestSchemaComparator:
                 }
 
             def _compare_object_classes(
-                self, source_classes: dict, target_classes: dict
+                self, source_classes: dict, target_classes: dict,
             ) -> dict[str, Any]:
                 """Compare object classes between schemas."""
                 source_names = set(source_classes.keys())
@@ -632,19 +628,14 @@ class TestSchemaComparator:
                 only_in_target = target_names - source_names
                 common = source_names & target_names
 
-                different = []
-                for name in common:
-                    if source_classes[name] != target_classes[name]:
-                        different.append(
-                            {
+                different = [{
                                 "name": name,
                                 "source": source_classes[name],
                                 "target": target_classes[name],
                                 "differences": self._find_class_differences(
-                                    source_classes[name], target_classes[name]
+                                    source_classes[name], target_classes[name],
                                 ),
-                            }
-                        )
+                            } for name in common if source_classes[name] != target_classes[name]]
 
                 return {
                     "only_in_source": list(only_in_source),
@@ -658,7 +649,7 @@ class TestSchemaComparator:
                 }
 
             def _compare_attributes(
-                self, source_attrs: dict, target_attrs: dict
+                self, source_attrs: dict, target_attrs: dict,
             ) -> dict[str, Any]:
                 """Compare attributes between schemas."""
                 source_names = set(source_attrs.keys())
@@ -668,19 +659,14 @@ class TestSchemaComparator:
                 only_in_target = target_names - source_names
                 common = source_names & target_names
 
-                different = []
-                for name in common:
-                    if source_attrs[name] != target_attrs[name]:
-                        different.append(
-                            {
+                different = [{
                                 "name": name,
                                 "source": source_attrs[name],
                                 "target": target_attrs[name],
                                 "differences": self._find_attr_differences(
-                                    source_attrs[name], target_attrs[name]
+                                    source_attrs[name], target_attrs[name],
                                 ),
-                            }
-                        )
+                            } for name in common if source_attrs[name] != target_attrs[name]]
 
                 return {
                     "only_in_source": list(only_in_source),
@@ -694,7 +680,7 @@ class TestSchemaComparator:
                 }
 
             def _find_class_differences(
-                self, source_class: dict, target_class: dict
+                self, source_class: dict, target_class: dict,
             ) -> list[str]:
                 """Find specific differences between object classes."""
                 differences = []
@@ -709,13 +695,13 @@ class TestSchemaComparator:
 
                     if source_values != target_values:
                         differences.append(
-                            f"{field}: source={source_values}, target={target_values}"
+                            f"{field}: source={source_values}, target={target_values}",
                         )
 
                 return differences
 
             def _find_attr_differences(
-                self, source_attr: dict, target_attr: dict
+                self, source_attr: dict, target_attr: dict,
             ) -> list[str]:
                 """Find specific differences between attributes."""
                 differences = []
@@ -726,13 +712,13 @@ class TestSchemaComparator:
 
                     if source_value != target_value:
                         differences.append(
-                            f"{field}: source={source_value}, target={target_value}"
+                            f"{field}: source={source_value}, target={target_value}",
                         )
 
                 return differences
 
             def generate_migration_plan(
-                self, comparison_result: dict[str, Any]
+                self, comparison_result: dict[str, Any],
             ) -> dict[str, Any]:
                 """Generate migration plan based on schema comparison."""
                 steps = []
@@ -749,7 +735,7 @@ class TestSchemaComparator:
                             "description": f"Add missing object classes: {', '.join(missing_classes)}",
                             "items": missing_classes,
                             "priority": "HIGH",
-                        }
+                        },
                     )
 
                 # Handle missing attributes
@@ -763,7 +749,7 @@ class TestSchemaComparator:
                             "description": f"Add missing attributes: {', '.join(missing_attrs)}",
                             "items": missing_attrs,
                             "priority": "HIGH",
-                        }
+                        },
                     )
 
                 # Handle different classes
@@ -777,7 +763,7 @@ class TestSchemaComparator:
                             "description": f"Modify {len(different_classes)} object classes",
                             "items": [dc["name"] for dc in different_classes],
                             "priority": "MEDIUM",
-                        }
+                        },
                     )
 
                 # Handle different attributes
@@ -791,7 +777,7 @@ class TestSchemaComparator:
                             "description": f"Modify {len(different_attrs)} attributes",
                             "items": [da["name"] for da in different_attrs],
                             "priority": "MEDIUM",
-                        }
+                        },
                     )
 
                 # Generate warnings
@@ -800,7 +786,7 @@ class TestSchemaComparator:
                 ]
                 if extra_classes:
                     warnings.append(
-                        f"Source has extra object classes that will be ignored: {', '.join(extra_classes)}"
+                        f"Source has extra object classes that will be ignored: {', '.join(extra_classes)}",
                     )
 
                 extra_attrs = comparison_result["attribute_differences"][
@@ -808,7 +794,7 @@ class TestSchemaComparator:
                 ]
                 if extra_attrs:
                     warnings.append(
-                        f"Source has extra attributes that will be ignored: {', '.join(extra_attrs)}"
+                        f"Source has extra attributes that will be ignored: {', '.join(extra_attrs)}",
                     )
 
                 return {
@@ -948,7 +934,7 @@ class TestSchemaParser:
                         # Process completed entry
                         if current_entry:
                             self._process_schema_entry(
-                                current_entry, object_classes, attribute_types
+                                current_entry, object_classes, attribute_types,
                             )
                             current_entry = {}
                         continue
@@ -967,7 +953,7 @@ class TestSchemaParser:
                 # Process final entry
                 if current_entry:
                     self._process_schema_entry(
-                        current_entry, object_classes, attribute_types
+                        current_entry, object_classes, attribute_types,
                     )
 
                 return {
@@ -978,7 +964,7 @@ class TestSchemaParser:
                 }
 
             def _process_schema_entry(
-                self, entry: dict, object_classes: list, attribute_types: list
+                self, entry: dict, object_classes: list, attribute_types: list,
             ) -> None:
                 """Process a single schema entry."""
                 try:
@@ -998,7 +984,7 @@ class TestSchemaParser:
                         # Parse attribute types
                         for attr_def in attribute_type_defs:
                             parsed_attr = self._parse_attribute_type_definition(
-                                attr_def
+                                attr_def,
                             )
                             if parsed_attr:
                                 attribute_types.append(parsed_attr)
@@ -1079,7 +1065,7 @@ class TestSchemaParser:
                     return None
 
             def _parse_attribute_type_definition(
-                self, definition: str
+                self, definition: str,
             ) -> Optional[dict]:
                 """Parse attribute type definition string."""
                 try:
@@ -1139,14 +1125,14 @@ class TestSchemaParser:
                 missing_attrs = referenced_attrs - defined_attrs
                 if missing_attrs:
                     errors.append(
-                        f"Missing attribute type definitions: {', '.join(missing_attrs)}"
+                        f"Missing attribute type definitions: {', '.join(missing_attrs)}",
                     )
 
                 # Check for unused attribute definitions
                 unused_attrs = defined_attrs - referenced_attrs
                 if unused_attrs:
                     warnings.append(
-                        f"Unused attribute type definitions: {', '.join(unused_attrs)}"
+                        f"Unused attribute type definitions: {', '.join(unused_attrs)}",
                     )
 
                 # Check for duplicate names
@@ -1199,7 +1185,7 @@ class TestSchemaParser:
 
                         if current in path:
                             cycle_start = path.index(current)
-                            cycle = " -> ".join(path[cycle_start:] + [current])
+                            cycle = " -> ".join([*path[cycle_start:], current])
                             errors.append(f"Circular inheritance detected: {cycle}")
                             break
 
@@ -1226,7 +1212,7 @@ attributeTypes: ( 0.9.2342.19200300.100.1.3 NAME 'mail' SYNTAX 1.3.6.1.4.1.1466.
         object_classes = parsed_schema["object_classes"]
         assert len(object_classes) >= 1
         person_class = next(
-            (oc for oc in object_classes if oc["name"] == "person"), None
+            (oc for oc in object_classes if oc["name"] == "person"), None,
         )
         assert person_class is not None
         assert "cn" in person_class["required_attributes"]
@@ -1298,14 +1284,14 @@ class TestSchemaValidator:
 
                 # Validate attribute types
                 attr_errors, attr_warnings = self._validate_attribute_types(
-                    attribute_types
+                    attribute_types,
                 )
                 errors.extend(attr_errors)
                 warnings.extend(attr_warnings)
 
                 # Cross-validate between object classes and attributes
                 cross_errors, cross_warnings = self._cross_validate(
-                    object_classes, attribute_types
+                    object_classes, attribute_types,
                 )
                 errors.extend(cross_errors)
                 warnings.extend(cross_warnings)
@@ -1324,7 +1310,7 @@ class TestSchemaValidator:
                 }
 
             def _validate_object_classes(
-                self, object_classes: list
+                self, object_classes: list,
             ) -> tuple[list[str], list[str]]:
                 """Validate object class definitions."""
                 errors = []
@@ -1352,7 +1338,7 @@ class TestSchemaValidator:
 
                     if oid and oid in oids:
                         errors.append(
-                            f"Duplicate object class OID: {oid} (class: {name})"
+                            f"Duplicate object class OID: {oid} (class: {name})",
                         )
                     oids.add(oid)
 
@@ -1360,7 +1346,7 @@ class TestSchemaValidator:
                     required_attrs = oc.get("required_attributes", [])
                     if not required_attrs and name != "top":
                         warnings.append(
-                            f"Object class '{name}' has no required attributes"
+                            f"Object class '{name}' has no required attributes",
                         )
 
                     # Check for 'top' class requirement
@@ -1370,13 +1356,13 @@ class TestSchemaValidator:
                             # Check if any superior eventually inherits from 'top'
                             if not self._inherits_from_top(name, object_classes):
                                 warnings.append(
-                                    f"Object class '{name}' does not inherit from 'top'"
+                                    f"Object class '{name}' does not inherit from 'top'",
                                 )
 
                 return errors, warnings
 
             def _validate_attribute_types(
-                self, attribute_types: list
+                self, attribute_types: list,
             ) -> tuple[list[str], list[str]]:
                 """Validate attribute type definitions."""
                 errors = []
@@ -1415,7 +1401,7 @@ class TestSchemaValidator:
 
                     if oid and oid in oids:
                         errors.append(
-                            f"Duplicate attribute type OID: {oid} (attribute: {name})"
+                            f"Duplicate attribute type OID: {oid} (attribute: {name})",
                         )
                     oids.add(oid)
 
@@ -1423,13 +1409,13 @@ class TestSchemaValidator:
                     if self.validation_rules["validate_syntax_references"] and syntax:
                         if syntax not in valid_syntaxes:
                             warnings.append(
-                                f"Attribute '{name}' uses unknown syntax: {syntax}"
+                                f"Attribute '{name}' uses unknown syntax: {syntax}",
                             )
 
                 return errors, warnings
 
             def _cross_validate(
-                self, object_classes: list, attribute_types: list
+                self, object_classes: list, attribute_types: list,
             ) -> tuple[list[str], list[str]]:
                 """Cross-validate object classes and attribute types."""
                 errors = []
@@ -1447,11 +1433,7 @@ class TestSchemaValidator:
                         "optional_attributes",
                     ]:
                         attrs = oc.get(attr_list_name, [])
-                        for attr_name in attrs:
-                            if attr_name not in defined_attrs:
-                                errors.append(
-                                    f"Object class '{oc_name}' references undefined attribute: {attr_name}"
-                                )
+                        errors.extend(f"Object class '{oc_name}' references undefined attribute: {attr_name}" for attr_name in attrs if attr_name not in defined_attrs)
 
                 # Check for unused attribute types
                 referenced_attrs = set()
@@ -1462,7 +1444,7 @@ class TestSchemaValidator:
                 unused_attrs = defined_attrs - referenced_attrs
                 if unused_attrs:
                     warnings.append(
-                        f"Unused attribute types: {', '.join(sorted(unused_attrs))}"
+                        f"Unused attribute types: {', '.join(sorted(unused_attrs))}",
                     )
 
                 return errors, warnings
@@ -1487,7 +1469,7 @@ class TestSchemaValidator:
                 return False
 
             def validate_entry_against_schema(
-                self, entry: dict[str, Any], schema: dict[str, Any]
+                self, entry: dict[str, Any], schema: dict[str, Any],
             ) -> dict[str, Any]:
                 """Validate a directory entry against the schema."""
                 errors = []
@@ -1525,22 +1507,14 @@ class TestSchemaValidator:
                         all_allowed.update(oc_def.get("optional_attributes", []))
                     else:
                         errors.append(
-                            f"Entry '{entry_dn}' uses undefined objectClass: {oc_name}"
+                            f"Entry '{entry_dn}' uses undefined objectClass: {oc_name}",
                         )
 
                 # Check required attributes are present
-                for required_attr in all_required:
-                    if required_attr not in entry_attrs:
-                        errors.append(
-                            f"Entry '{entry_dn}' missing required attribute: {required_attr}"
-                        )
+                errors.extend(f"Entry '{entry_dn}' missing required attribute: {required_attr}" for required_attr in all_required if required_attr not in entry_attrs)
 
                 # Check no forbidden attributes are present
-                for attr_name in entry_attrs:
-                    if attr_name != "objectClass" and attr_name not in all_allowed:
-                        warnings.append(
-                            f"Entry '{entry_dn}' has non-schema attribute: {attr_name}"
-                        )
+                warnings.extend(f"Entry '{entry_dn}' has non-schema attribute: {attr_name}" for attr_name in entry_attrs if attr_name != "objectClass" and attr_name not in all_allowed)
 
                 # Validate attribute syntax (basic check)
                 for attr_name, values in entry_attrs.items():
@@ -1550,7 +1524,7 @@ class TestSchemaValidator:
 
                         if single_value and len(values) > 1:
                             errors.append(
-                                f"Entry '{entry_dn}' has multiple values for single-valued attribute: {attr_name}"
+                                f"Entry '{entry_dn}' has multiple values for single-valued attribute: {attr_name}",
                             )
 
                 return {
@@ -1660,7 +1634,7 @@ class TestSchemaValidator:
         }
 
         entry_validation = validator.validate_entry_against_schema(
-            test_entry, valid_schema
+            test_entry, valid_schema,
         )
         assert entry_validation["valid"] is True
         assert entry_validation["entry_dn"] == test_entry["dn"]
@@ -1676,7 +1650,7 @@ class TestSchemaValidator:
         }
 
         invalid_entry_result = validator.validate_entry_against_schema(
-            invalid_entry, valid_schema
+            invalid_entry, valid_schema,
         )
         assert invalid_entry_result["valid"] is False
         assert any(
@@ -1709,7 +1683,7 @@ class TestSchemaMigrator:
                 self.dry_run_mode = False
 
             def create_migration_plan(
-                self, source_schema: dict[str, Any], target_schema: dict[str, Any]
+                self, source_schema: dict[str, Any], target_schema: dict[str, Any],
             ) -> dict[str, Any]:
                 """Create migration plan from source to target schema."""
                 plan_id = f"migration_{int(time.time())}"
@@ -1743,7 +1717,7 @@ class TestSchemaMigrator:
                             "items": list(new_attrs),
                             "risk_level": "LOW",
                             "estimated_time_minutes": len(new_attrs) * 2,
-                        }
+                        },
                     )
 
                 # Step 2: Add new object classes
@@ -1757,16 +1731,13 @@ class TestSchemaMigrator:
                             "items": list(new_classes),
                             "risk_level": "MEDIUM",
                             "estimated_time_minutes": len(new_classes) * 5,
-                        }
+                        },
                     )
 
                 # Step 3: Modify existing object classes
-                modified_classes = []
-                for class_name in set(source_classes.keys()) & set(
-                    target_classes.keys()
-                ):
-                    if source_classes[class_name] != target_classes[class_name]:
-                        modified_classes.append(class_name)
+                modified_classes = [class_name for class_name in set(source_classes.keys()) & set(
+                    target_classes.keys(),
+                ) if source_classes[class_name] != target_classes[class_name]]
 
                 if modified_classes:
                     migration_steps.append(
@@ -1777,13 +1748,13 @@ class TestSchemaMigrator:
                             "items": modified_classes,
                             "risk_level": "HIGH",
                             "estimated_time_minutes": len(modified_classes) * 10,
-                        }
+                        },
                     )
 
                 # Step 4: Remove obsolete items (optional)
                 removed_attrs = set(source_attrs.keys()) - set(target_attrs.keys())
                 removed_classes = set(source_classes.keys()) - set(
-                    target_classes.keys()
+                    target_classes.keys(),
                 )
 
                 if removed_attrs or removed_classes:
@@ -1799,7 +1770,7 @@ class TestSchemaMigrator:
                             )
                             * 3,
                             "warning": "This step may break existing entries",
-                        }
+                        },
                     )
 
                 total_time = sum(
@@ -1833,7 +1804,7 @@ class TestSchemaMigrator:
                 }
 
             def execute_migration(
-                self, migration_plan: dict[str, Any], connection: Any = None
+                self, migration_plan: dict[str, Any], connection: Any = None,
             ) -> dict[str, Any]:
                 """Execute migration plan."""
                 plan_id = migration_plan["plan_id"]
@@ -1862,7 +1833,7 @@ class TestSchemaMigrator:
                                 "duration_seconds": round(step_duration, 2),
                                 "items_processed": len(step["items"]),
                                 "details": step_result,
-                            }
+                            },
                         )
 
                     except Exception as e:
@@ -1875,7 +1846,7 @@ class TestSchemaMigrator:
                                 "status": "FAILED",
                                 "duration_seconds": round(step_duration, 2),
                                 "error": str(e),
-                            }
+                            },
                         )
 
                         failed_steps.append(step["step_id"])
@@ -1905,7 +1876,7 @@ class TestSchemaMigrator:
                 return migration_record
 
             def _execute_migration_step(
-                self, step: dict[str, Any], connection: Any
+                self, step: dict[str, Any], connection: Any,
             ) -> dict[str, Any]:
                 """Execute a single migration step."""
                 step_type = step["type"]
@@ -1938,7 +1909,8 @@ class TestSchemaMigrator:
                 if step_type == "cleanup_obsolete":
                     # Mock cleanup - this would be dangerous in real implementation
                     if connection and hasattr(connection, "simulate_error"):
-                        raise RuntimeError("Simulated cleanup failure")
+                        msg = "Simulated cleanup failure"
+                        raise RuntimeError(msg)
 
                     return {
                         "items_removed": items,
@@ -1946,20 +1918,17 @@ class TestSchemaMigrator:
                         "message": f"Successfully removed {len(items)} obsolete items",
                     }
 
-                raise ValueError(f"Unknown migration step type: {step_type}")
+                msg = f"Unknown migration step type: {step_type}"
+                raise ValueError(msg)
 
             def _simulate_migration(
-                self, migration_plan: dict[str, Any]
+                self, migration_plan: dict[str, Any],
             ) -> dict[str, Any]:
                 """Simulate migration execution without making changes."""
                 plan_id = migration_plan["plan_id"]
                 steps = migration_plan["migration_steps"]
 
-                simulation_log = []
-
-                for step in steps:
-                    simulation_log.append(
-                        {
+                simulation_log = [{
                             "step_id": step["step_id"],
                             "type": step["type"],
                             "status": "SIMULATED",
@@ -1968,8 +1937,7 @@ class TestSchemaMigrator:
                                 "estimated_time_minutes"
                             ],
                             "risk_level": step["risk_level"],
-                        }
-                    )
+                        } for step in steps]
 
                 return {
                     "plan_id": plan_id,
@@ -1985,7 +1953,7 @@ class TestSchemaMigrator:
                 }
 
             def rollback_migration(
-                self, migration_record: dict[str, Any]
+                self, migration_record: dict[str, Any],
             ) -> dict[str, Any]:
                 """Rollback a previously executed migration."""
                 plan_id = migration_record["plan_id"]
@@ -2000,11 +1968,11 @@ class TestSchemaMigrator:
                                 {
                                     "step_id": len(rollback_steps) + 1,
                                     "type": self._get_rollback_operation(
-                                        log_entry["type"]
+                                        log_entry["type"],
                                     ),
                                     "original_step": log_entry["step_id"],
                                     "items_to_rollback": log_entry["items_processed"],
-                                }
+                                },
                             )
 
                     return {
@@ -2134,12 +2102,12 @@ class TestSchemaMigrator:
                     "items": ["test"],
                     "risk_level": "HIGH",
                     "estimated_time_minutes": 5,
-                }
+                },
             ],
         }
 
         error_result = migrator.execute_migration(error_plan, error_connection)
-        assert error_result["status"] in ["FAILED", "PARTIAL"]
+        assert error_result["status"] in {"FAILED", "PARTIAL"}
         assert error_result["steps_failed"] > 0
 
 

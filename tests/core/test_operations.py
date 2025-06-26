@@ -511,7 +511,7 @@ class TestEnterpriseTransaction:
             enterprise_transaction.rollback()
 
     def test_rollback_behavior(
-        self, mock_connection: Any, transaction_context: Any
+        self, mock_connection: Any, transaction_context: Any,
     ) -> None:
         """Test rollback behavior."""
         transaction = EnterpriseTransaction(mock_connection, transaction_context)
@@ -538,7 +538,9 @@ class TestEnterpriseTransaction:
         ):
             transaction.commit()
 
-    def test_operations_summary(self, enterprise_transaction: Any, data_generator: Any) -> None:
+    def test_operations_summary(
+        self, enterprise_transaction: Any, data_generator: Any,
+    ) -> None:
         """Test operations summary generation."""
         # Perform multiple operations
         dn1 = data_generator.valid_dn("cn=user1")
@@ -586,7 +588,9 @@ class TestLDAPOperations:
         with pytest.raises(ValueError, match="Connection is required"):
             LDAPOperations(None)
 
-    def test_transaction_context_manager(self, ldap_operations: Any, data_generator: Any) -> None:
+    def test_transaction_context_manager(
+        self, ldap_operations: Any, data_generator: Any,
+    ) -> None:
         """Test transaction context manager functionality."""
         dn = data_generator.valid_dn()
         attributes = data_generator.ldap_attributes()
@@ -747,9 +751,9 @@ class TestBulkOperations:
 
     def test_bulk_add_entries_success(
         self,
-        ldap_operations,
-        bulk_test_entries,
-        test_assertions,
+        ldap_operations: Any,
+        bulk_test_entries: Any,
+        test_assertions: Any,
     ) -> None:
         """Test successful bulk add operations."""
         result = ldap_operations.bulk_add_entries(bulk_test_entries)
@@ -762,12 +766,12 @@ class TestBulkOperations:
         assert result.transaction_committed is True
         assert result.backup_created is True
 
-    def test_bulk_add_empty_list(self, ldap_operations) -> None:
+    def test_bulk_add_empty_list(self, ldap_operations: Any) -> None:
         """Test bulk add with empty entries list."""
         with pytest.raises(ValueError, match="Entries list cannot be empty"):
             ldap_operations.bulk_add_entries([])
 
-    def test_bulk_add_invalid_entry_format(self, ldap_operations) -> None:
+    def test_bulk_add_invalid_entry_format(self, ldap_operations: Any) -> None:
         """Test bulk add with invalid entry format."""
         invalid_entries = [
             {"dn": "cn=test1,ou=people,dc=test,dc=com"},  # Missing attributes
@@ -783,14 +787,14 @@ class TestBulkOperations:
 
     def test_bulk_add_with_progress_callback(
         self,
-        ldap_operations,
-        data_generator,
+        ldap_operations: Any,
+        data_generator: Any,
     ) -> None:
         """Test bulk add with progress callback."""
         entries = data_generator.bulk_entries(10)
         progress_calls = []
 
-        def progress_callback(current, total, dn) -> None:
+        def progress_callback(current: Any, total: Any, dn: Any) -> None:
             progress_calls.append((current, total, dn))
 
         ldap_operations.bulk_add_entries(entries, progress_callback=progress_callback)
@@ -802,8 +806,8 @@ class TestBulkOperations:
 
     def test_bulk_add_with_custom_batch_size(
         self,
-        ldap_operations,
-        data_generator,
+        ldap_operations: Any,
+        data_generator: Any,
     ) -> None:
         """Test bulk add with custom batch size."""
         entries = data_generator.bulk_entries(25)
@@ -822,9 +826,9 @@ class TestBulkOperations:
 
     def test_bulk_add_performance_validation(
         self,
-        ldap_operations,
-        data_generator,
-        performance_validator,
+        ldap_operations: Any,
+        data_generator: Any,
+        performance_validator: Any,
     ) -> None:
         """Test bulk add performance meets requirements."""
         # Test with larger dataset for performance validation
@@ -853,10 +857,10 @@ class TestBulkOperations:
     @pytest.mark.parametrize("bulk_size", [1, 10, 100, 500])
     def test_bulk_add_various_sizes(
         self,
-        ldap_operations,
-        data_generator,
-        bulk_size,
-        test_assertions,
+        ldap_operations: Any,
+        data_generator: Any,
+        bulk_size: Any,
+        test_assertions: Any,
     ) -> None:
         """Test bulk add with various entry counts."""
         entries = data_generator.bulk_entries(bulk_size)
@@ -875,8 +879,8 @@ class TestErrorHandling:
 
     def test_connection_failure_handling(
         self,
-        mock_connection_with_failures,
-        data_generator,
+        mock_connection_with_failures: Any,
+        data_generator: Any,
     ) -> None:
         """Test handling of connection failures."""
         operations = LDAPOperations(mock_connection_with_failures)
@@ -898,7 +902,7 @@ class TestErrorHandling:
         assert success_rate < 1.0  # Not 100% success due to simulated failures
         assert success_rate > 0.8  # But most should succeed (10% failure rate)
 
-    def test_high_failure_rate_protection(self, data_generator) -> None:
+    def test_high_failure_rate_protection(self, data_generator: Any) -> None:
         """Test protection against high failure rates in bulk operations."""
         # Create mock connection with high failure rate
         from tests.core.conftest import MockLDAPConnection
@@ -914,8 +918,8 @@ class TestErrorHandling:
 
     def test_transaction_timeout_handling(
         self,
-        mock_connection,
-        data_generator,
+        mock_connection: Any,
+        data_generator: Any,
     ) -> None:
         """Test transaction timeout handling."""
         # Create short-timeout transaction
@@ -934,8 +938,8 @@ class TestErrorHandling:
 
     def test_operation_error_details(
         self,
-        enterprise_transaction,
-        data_generator,
+        enterprise_transaction: Any,
+        data_generator: Any,
     ) -> None:
         """Test that operation errors include proper details."""
         dn = data_generator.valid_dn()
@@ -972,9 +976,9 @@ class TestIntegration:
 
     def test_complete_crud_workflow(
         self,
-        ldap_operations,
-        data_generator,
-        test_assertions,
+        ldap_operations: Any,
+        data_generator: Any,
+        test_assertions: Any,
     ) -> None:
         """Test complete CRUD workflow with audit trail."""
         dn = data_generator.valid_dn()
@@ -1014,9 +1018,9 @@ class TestIntegration:
 
     def test_mixed_bulk_operations(
         self,
-        ldap_operations,
-        data_generator,
-        test_assertions,
+        ldap_operations: Any,
+        data_generator: Any,
+        test_assertions: Any,
     ) -> None:
         """Test mixed bulk operations with different entry types."""
         # Create different types of entries
@@ -1067,8 +1071,8 @@ class TestIntegration:
 
     def test_concurrent_operations_simulation(
         self,
-        ldap_operations,
-        data_generator,
+        ldap_operations: Any,
+        data_generator: Any,
     ) -> None:
         """Test simulation of concurrent operations."""
         # Simulate concurrent operations by rapid succession
@@ -1145,9 +1149,9 @@ class TestPerformanceBenchmarks:
     @pytest.mark.performance
     def test_single_operation_performance(
         self,
-        ldap_operations,
-        data_generator,
-        performance_validator,
+        ldap_operations: Any,
+        data_generator: Any,
+        performance_validator: Any,
     ) -> None:
         """Test single operation performance."""
         dn = data_generator.valid_dn()
@@ -1171,9 +1175,9 @@ class TestPerformanceBenchmarks:
     @pytest.mark.performance
     def test_bulk_performance_scaling(
         self,
-        ldap_operations,
-        data_generator,
-        performance_config,
+        ldap_operations: Any,
+        data_generator: Any,
+        performance_config: Any,
     ) -> None:
         """Test bulk operation performance scaling."""
         performance_results = []
@@ -1214,9 +1218,9 @@ class TestPerformanceBenchmarks:
     @pytest.mark.performance
     def test_memory_usage_stability(
         self,
-        ldap_operations,
-        data_generator,
-        performance_validator,
+        ldap_operations: Any,
+        data_generator: Any,
+        performance_validator: Any,
     ) -> None:
         """Test memory usage remains stable during bulk operations."""
         import os
@@ -1244,7 +1248,7 @@ class TestPerformanceBenchmarks:
 # TEST CONFIGURATION AND MARKERS
 
 
-def pytest_configure(config) -> None:
+def pytest_configure(config: Any) -> None:
     """Configure pytest with custom markers."""
     config.addinivalue_line(
         "markers",

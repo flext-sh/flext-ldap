@@ -1,10 +1,9 @@
-"""Schema Discovery - Discover LDAP schemas from servers.
-
-This module provides capabilities to discover and retrieve LDAP schemas
-from various LDAP servers with support for different schema formats.
-"""
-
 from __future__ import annotations
+
+from ldap_core_shared.utils.constants import DEFAULT_TIMEOUT_SECONDS
+
+"""Schema Discovery - Discover LDAP schemas from servers."""
+
 
 import logging
 from typing import TYPE_CHECKING
@@ -14,6 +13,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ldap_core_shared.domain.results import LDAPOperationResult
 from ldap_core_shared.utils.performance import PerformanceMonitor
+
+# Constants for magic values
 
 if TYPE_CHECKING:
     from ldap_core_shared.core.connection_manager import ConnectionInfo
@@ -42,7 +43,7 @@ class SchemaDiscoveryConfig(BaseModel):
         default=True,
         description="Include matching rules",
     )
-    timeout_seconds: int = Field(default=30, ge=1, description="Discovery timeout")
+    timeout_seconds: int = Field(default=DEFAULT_TIMEOUT_SECONDS, ge=1, description="Discovery timeout")
 
 
 class SchemaInfo(BaseModel):
@@ -125,7 +126,7 @@ class SchemaDiscovery:
                 )
 
             except Exception as e:
-                logger.exception(f"Schema discovery failed for {connection_info.host}")
+                logger.exception("Schema discovery failed for {connection_info.host}")
                 return LDAPOperationResult[SchemaInfo](
                     success=False,
                     error_message=f"Discovery failed: {e!s}",
@@ -198,8 +199,8 @@ class SchemaDiscovery:
 
             if conn.entries and hasattr(conn.entries[0], "subschemaSubentry"):
                 return str(conn.entries[0].subschemaSubentry.value)
-        except Exception as e:
-            logger.debug(f"Failed to get schema DN from RootDSE: {e}")
+        except Exception:
+            logger.debug("Failed to get schema DN from RootDSE: {e}")
 
         # Fallback to standard schema DN
         return "cn=schema"

@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from ldap_core_shared.utils.constants import DEFAULT_MAX_ITEMS
+
 """LDAP Capability Detection Service Implementation.
 
 This module provides comprehensive LDAP server capability detection functionality
@@ -32,13 +36,20 @@ References:
     - RFC 4511: LDAP Protocol Operations
 """
 
-from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
 from pydantic import BaseModel, Field
+
+# Constants for security assessment scoring
+HIGH_SECURITY_THRESHOLD = 7  # Score for high security assessment
+MEDIUM_SECURITY_THRESHOLD = 4  # Score for medium security assessment
+LOW_SECURITY_THRESHOLD = 2  # Score for low security assessment
+
+# Constants for capability confidence assessment
+MINIMUM_FEATURES_FOR_CONFIDENCE = 5  # Minimum features required for good confidence
 
 
 class FeatureCategory(Enum):
@@ -49,7 +60,7 @@ class FeatureCategory(Enum):
     CONTROLS = "controls"
     EXTENSIONS = "extensions"
     PAGING = "paging"
-    PASSWORD_POLICY = "password_policy"  # noqa: S105
+    PASSWORD_POLICY = "password_policy"
     SCHEMA = "schema"
     SECURITY = "security"
     SORTING = "sorting"
@@ -90,25 +101,25 @@ class FeatureInfo(BaseModel):
     support_level: FeatureSupport = Field(description="Level of support")
 
     version_required: Optional[str] = Field(
-        default=None, description="Minimum server version required"
+        default=None, description="Minimum server version required",
     )
 
     dependencies: list[str] = Field(
-        default_factory=list, description="Required dependencies"
+        default_factory=list, description="Required dependencies",
     )
 
     limitations: list[str] = Field(
-        default_factory=list, description="Known limitations"
+        default_factory=list, description="Known limitations",
     )
 
     configuration_required: bool = Field(
-        default=False, description="Whether feature requires configuration"
+        default=False, description="Whether feature requires configuration",
     )
 
     description: Optional[str] = Field(default=None, description="Feature description")
 
     is_experimental: bool = Field(
-        default=False, description="Whether feature is experimental"
+        default=False, description="Whether feature is experimental",
     )
 
     def is_supported(self) -> bool:
@@ -127,101 +138,101 @@ class ServerCapabilities(BaseModel):
     server_type: ServerType = Field(description="Detected server type")
 
     server_version: Optional[str] = Field(
-        default=None, description="Server version string"
+        default=None, description="Server version string",
     )
 
     vendor_name: Optional[str] = Field(default=None, description="Vendor name")
 
     # Core protocol capabilities
     supported_ldap_versions: list[str] = Field(
-        default_factory=list, description="Supported LDAP protocol versions"
+        default_factory=list, description="Supported LDAP protocol versions",
     )
 
     max_connections: Optional[int] = Field(
-        default=None, description="Maximum concurrent connections"
+        default=None, description="Maximum concurrent connections",
     )
 
     max_search_results: Optional[int] = Field(
-        default=None, description="Maximum search results"
+        default=None, description="Maximum search results",
     )
 
     max_page_size: Optional[int] = Field(
-        default=None, description="Maximum page size for paged results"
+        default=None, description="Maximum page size for paged results",
     )
 
     # Feature support matrix
     features: dict[str, FeatureInfo] = Field(
-        default_factory=dict, description="Detected features by name"
+        default_factory=dict, description="Detected features by name",
     )
 
     # Authentication capabilities
     supported_sasl_mechanisms: list[str] = Field(
-        default_factory=list, description="Supported SASL mechanisms"
+        default_factory=list, description="Supported SASL mechanisms",
     )
 
     supports_simple_auth: bool = Field(
-        default=True, description="Supports simple bind authentication"
+        default=True, description="Supports simple bind authentication",
     )
 
     supports_anonymous_auth: bool = Field(
-        default=False, description="Supports anonymous authentication"
+        default=False, description="Supports anonymous authentication",
     )
 
     requires_ssl_for_auth: bool = Field(
-        default=False, description="Requires SSL/TLS for authentication"
+        default=False, description="Requires SSL/TLS for authentication",
     )
 
     # Security capabilities
     supports_ssl: bool = Field(default=False, description="Supports SSL/TLS")
 
     supports_start_tls: bool = Field(
-        default=False, description="Supports StartTLS extension"
+        default=False, description="Supports StartTLS extension",
     )
 
     supports_password_policy: bool = Field(
-        default=False, description="Supports password policy"
+        default=False, description="Supports password policy",
     )
 
     # Search and paging capabilities
     supports_paging: bool = Field(
-        default=False, description="Supports paged results control"
+        default=False, description="Supports paged results control",
     )
 
     supports_sorting: bool = Field(
-        default=False, description="Supports server-side sorting"
+        default=False, description="Supports server-side sorting",
     )
 
     supports_vlv: bool = Field(default=False, description="Supports Virtual List View")
 
     # Schema and metadata capabilities
     supports_schema_discovery: bool = Field(
-        default=False, description="Supports schema discovery"
+        default=False, description="Supports schema discovery",
     )
 
     supports_root_dse: bool = Field(
-        default=True, description="Supports Root DSE queries"
+        default=True, description="Supports Root DSE queries",
     )
 
     # Operational capabilities
     supports_persistent_search: bool = Field(
-        default=False, description="Supports persistent search"
+        default=False, description="Supports persistent search",
     )
 
     supports_sync_repl: bool = Field(
-        default=False, description="Supports sync replication"
+        default=False, description="Supports sync replication",
     )
 
     supports_transactions: bool = Field(
-        default=False, description="Supports transaction controls"
+        default=False, description="Supports transaction controls",
     )
 
     # Detection metadata
     detected_at: datetime = Field(
-        default_factory=datetime.now, description="When capabilities were detected"
+        default_factory=datetime.now, description="When capabilities were detected",
     )
 
     detection_confidence: float = Field(
-        default=1.0, description="Confidence level of detection (0.0-1.0)"
+        default=1.0, description="Confidence level of detection (0.0-1.0)",
     )
 
     def get_feature(self, name: str) -> Optional[FeatureInfo]:
@@ -261,7 +272,7 @@ class ServerCapabilities(BaseModel):
             "ldap_versions": self.supported_ldap_versions,
             "features_supported": supported_count,
             "features_total": total_count,
-            "support_percentage": (supported_count / total_count * 100)
+            "support_percentage": (supported_count / total_count * DEFAULT_MAX_ITEMS)
             if total_count > 0
             else 0,
             "authentication_methods": len(self.supported_sasl_mechanisms)
@@ -284,11 +295,11 @@ class ServerCapabilities(BaseModel):
         if len(self.supported_sasl_mechanisms) > 0:
             score += 1
 
-        if score >= 7:
+        if score >= HIGH_SECURITY_THRESHOLD:
             return "high"
-        if score >= 4:
+        if score >= MEDIUM_SECURITY_THRESHOLD:
             return "medium"
-        if score >= 2:
+        if score >= LOW_SECURITY_THRESHOLD:
             return "low"
         return "minimal"
 
@@ -299,19 +310,19 @@ class CompatibilityResult(BaseModel):
     is_compatible: bool = Field(description="Whether operation is compatible")
 
     required_features: list[str] = Field(
-        default_factory=list, description="Features required for operation"
+        default_factory=list, description="Features required for operation",
     )
 
     missing_features: list[str] = Field(
-        default_factory=list, description="Missing required features"
+        default_factory=list, description="Missing required features",
     )
 
     warnings: list[str] = Field(
-        default_factory=list, description="Compatibility warnings"
+        default_factory=list, description="Compatibility warnings",
     )
 
     recommendations: list[str] = Field(
-        default_factory=list, description="Compatibility recommendations"
+        default_factory=list, description="Compatibility recommendations",
     )
 
     def add_warning(self, message: str) -> None:
@@ -378,7 +389,7 @@ class FeatureMatrix:
 
     @classmethod
     def get_feature_support(
-        cls, server_type: ServerType, feature: str
+        cls, server_type: ServerType, feature: str,
     ) -> FeatureSupport:
         """Get feature support level for server type."""
         server_features = cls.FEATURE_MATRIX.get(server_type, {})
@@ -427,7 +438,7 @@ class CapabilityDetection:
         self._cached_capabilities: Optional[ServerCapabilities] = None
 
     async def detect_capabilities(
-        self, force_refresh: bool = False
+        self, force_refresh: bool = False,
     ) -> ServerCapabilities:
         """Detect comprehensive server capabilities.
 
@@ -474,7 +485,7 @@ class CapabilityDetection:
         Returns:
             Compatibility check result
         """
-        result = CompatibilityResult(required_features=required_features)
+        result = CompatibilityResult(is_compatible=True, required_features=required_features)
 
         if not self._cached_capabilities:
             result.is_compatible = False
@@ -493,7 +504,7 @@ class CapabilityDetection:
         # Add recommendations based on missing features
         if result.missing_features:
             result.add_recommendation(
-                f"Consider alternative approaches for: {', '.join(result.missing_features)}"
+                f"Consider alternative approaches for: {', '.join(result.missing_features)}",
             )
 
         return result
@@ -570,7 +581,7 @@ class CapabilityDetection:
         return ServerType.UNKNOWN
 
     def _detect_authentication_capabilities(
-        self, root_dse_info: dict[str, Any]
+        self, root_dse_info: dict[str, Any],
     ) -> dict[str, Any]:
         """Detect authentication capabilities."""
         sasl_mechanisms = root_dse_info.get("supportedSASLMechanisms", [])
@@ -584,7 +595,7 @@ class CapabilityDetection:
         }
 
     def _detect_search_capabilities(
-        self, root_dse_info: dict[str, Any]
+        self, root_dse_info: dict[str, Any],
     ) -> dict[str, Any]:
         """Detect search and paging capabilities."""
         controls = root_dse_info.get("supportedControl", [])
@@ -603,7 +614,7 @@ class CapabilityDetection:
         return "1.3.6.1.4.1.4203.1.5.1" in features  # All Op Attrs feature
 
     def _calculate_detection_confidence(
-        self, capabilities: ServerCapabilities
+        self, capabilities: ServerCapabilities,
     ) -> float:
         """Calculate confidence level of detection."""
         confidence = 1.0
@@ -617,7 +628,7 @@ class CapabilityDetection:
             confidence -= 0.1
 
         # Reduce confidence if limited feature detection
-        if len(capabilities.features) < 5:
+        if len(capabilities.features) < MINIMUM_FEATURES_FOR_CONFIDENCE:
             confidence -= 0.2
 
         return max(0.0, confidence)
@@ -638,7 +649,7 @@ async def detect_server_capabilities(connection: Any) -> ServerCapabilities:
 
 
 def check_feature_compatibility(
-    capabilities: ServerCapabilities, required_features: list[str]
+    capabilities: ServerCapabilities, required_features: list[str],
 ) -> CompatibilityResult:
     """Check feature compatibility.
 
@@ -666,7 +677,6 @@ def get_feature_matrix_info(server_type: ServerType) -> dict[str, str]:
     """
     features = FeatureMatrix.FEATURE_MATRIX.get(server_type, {})
     return {feature: support.value for feature, support in features.items()}
-
 
 # TODO: Integration points for implementation:
 #

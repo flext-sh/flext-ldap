@@ -1,10 +1,9 @@
-"""LDAP operation utilities for common operations across projects.
-
-Provides connection management, operation helpers, and utilities
-for consistent LDAP operations.
-"""
-
 from __future__ import annotations
+
+from ldap_core_shared.utils.constants import DEFAULT_LARGE_LIMIT
+
+"""LDAP operation utilities for common operations across projects."""
+
 
 import asyncio
 import logging
@@ -15,10 +14,18 @@ from typing import TYPE_CHECKING, Any
 
 import ldap3
 from ldap3 import BASE, LEVEL, SUBTREE, Connection, Server
-from ldap3.core.exceptions import LDAPException
 
+from ldap_core_shared.core.exceptions import OperationError
 from ldap_core_shared.domain.models import LDAPEntry
+
+# Import unified Result for consistent return values
+try:
+    from ldap_core_shared.api import Result
+except ImportError:
+    # Fallback for import order issues
+    Result = None
 from ldap_core_shared.events.domain_events import (
+    # Constants for magic values
     LDAPConnectionEvent,
     LDAPOperationEvent,
 )
@@ -96,8 +103,7 @@ class LDAPConnectionPool:
             self._stats.total_connections = len(self._pool)
             self._initialized = True
 
-            self.logger.info(
-                f"Connection pool initialized: {len(self._pool)}/{self.pool_size} connections",
+            self.logger.info("Connection pool initialized: %s/%s connections", len(self._pool, self.pool_size),
             )
 
     async def _create_connection(self) -> Connection:
@@ -197,7 +203,7 @@ class LDAPOperationHelper:
         scope: SearchScope = SearchScope.SUBTREE,
         attributes: list[str] | None = None,
         size_limit: int = 0,
-    ) -> list[LDAPEntry]:
+    ) -> Result[list[LDAPEntry]] | list[LDAPEntry]:
         """Perform LDAP search operation."""
         start_time = asyncio.get_event_loop().time()
 
@@ -213,7 +219,7 @@ class LDAPOperationHelper:
 
                 if not success:
                     msg = f"Search failed: {conn.result}"
-                    raise LDAPException(msg)
+                    raise OperationError(msg, operation_type="search")
 
                 entries: list = []
                 for entry in conn.entries:
@@ -233,6 +239,7 @@ class LDAPOperationHelper:
                     )
 
                 duration = asyncio.get_event_loop().time() - start_time
+                execution_time_ms = duration * 1000
 
                 # Dispatch operation event
                 await dispatch_event(
@@ -240,27 +247,44 @@ class LDAPOperationHelper:
                         operation="search",
                         dn=base_dn,
                         success=True,
-                        duration_ms=duration * 1000,
+                        duration_ms=duration * DEFAULT_LARGE_LIMIT,
                         entry_count=len(entries),
                     ),
                 )
 
+                # Return unified Result if available, otherwise legacy list
+                if Result is not None:
+                    return Result.ok(
+                        entries,
+                        execution_time_ms=execution_time_ms,
+                        context={
+                            "base_dn": base_dn,
+                            "filter": search_filter,
+                            "scope": scope.name,
+                            "count": len(entries),
+                        },
+                    )
                 return entries
 
         except Exception as e:
             duration = asyncio.get_event_loop().time() - start_time
+            execution_time_ms = duration * 1000
 
             await dispatch_event(
                 LDAPOperationEvent(
                     operation="search",
                     dn=base_dn,
                     success=False,
-                    duration_ms=duration * 1000,
+                    duration_ms=duration * DEFAULT_LARGE_LIMIT,
                     error_message=str(e),
                 ),
             )
 
             self.logger.exception("Search operation failed: %s", e)
+
+            # Return unified Result error if available, otherwise raise
+            if Result is not None:
+                return Result.from_exception(e, default_data=[], execution_time_ms=execution_time_ms)
             raise
 
     async def add_entry(self, entry: LDAPEntry) -> bool:
@@ -278,7 +302,7 @@ class LDAPOperationHelper:
                         operation="add",
                         dn=entry.dn,
                         success=success,
-                        duration_ms=duration * 1000,
+                        duration_ms=duration * DEFAULT_LARGE_LIMIT,
                         error_message=None if success else str(conn.result),
                     ),
                 )
@@ -296,7 +320,7 @@ class LDAPOperationHelper:
                     operation="add",
                     dn=entry.dn,
                     success=False,
-                    duration_ms=duration * 1000,
+                    duration_ms=duration * DEFAULT_LARGE_LIMIT,
                     error_message=str(e),
                 ),
             )
@@ -319,7 +343,7 @@ class LDAPOperationHelper:
                         operation="modify",
                         dn=dn,
                         success=success,
-                        duration_ms=duration * 1000,
+                        duration_ms=duration * DEFAULT_LARGE_LIMIT,
                         attributes_modified=list(changes.keys()),
                         error_message=None if success else str(conn.result),
                     ),
@@ -338,7 +362,7 @@ class LDAPOperationHelper:
                     operation="modify",
                     dn=dn,
                     success=False,
-                    duration_ms=duration * 1000,
+                    duration_ms=duration * DEFAULT_LARGE_LIMIT,
                     error_message=str(e),
                 ),
             )
@@ -361,7 +385,7 @@ class LDAPOperationHelper:
                         operation="delete",
                         dn=dn,
                         success=success,
-                        duration_ms=duration * 1000,
+                        duration_ms=duration * DEFAULT_LARGE_LIMIT,
                         error_message=None if success else str(conn.result),
                     ),
                 )
@@ -379,7 +403,7 @@ class LDAPOperationHelper:
                     operation="delete",
                     dn=dn,
                     success=False,
-                    duration_ms=duration * 1000,
+                    duration_ms=duration * DEFAULT_LARGE_LIMIT,
                     error_message=str(e),
                 ),
             )

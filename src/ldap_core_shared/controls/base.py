@@ -25,13 +25,14 @@ from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from pydantic import BaseModel, Field
 
-from ldap_core_shared.exceptions.base import LDAPCoreError
+from ldap_core_shared.exceptions.base import LDAPError
+from ldap_core_shared.utils.constants import PLACEHOLDER_OID
 
 if TYPE_CHECKING:
     from ldap_core_shared.types.aliases import OID
 
 
-class ControlError(LDAPCoreError):
+class ControlError(LDAPError):
     """Base exception for LDAP control related errors."""
 
 
@@ -68,10 +69,10 @@ class LDAPControl(BaseModel, ABC):
 
     # Control properties
     criticality: bool = Field(
-        default=False, description="Whether this control is critical to the operation"
+        default=False, description="Whether this control is critical to the operation",
     )
     control_value: Optional[bytes] = Field(
-        default=None, description="Control-specific value (ASN.1 encoded)"
+        default=None, description="Control-specific value (ASN.1 encoded)",
     )
 
     class Config:
@@ -247,8 +248,7 @@ class GenericControl(LDAPControl):
     specific implementations. It preserves the control value as raw bytes.
     """
 
-    # Override in instances
-    control_type: OID = "0.0.0.0"  # Will be set dynamically
+    # Dynamic control type handled in __init__
 
     def __init__(
         self,
@@ -270,7 +270,7 @@ class GenericControl(LDAPControl):
     def decode_value(cls, control_value: Optional[bytes]) -> LDAPControl:
         """Create generic control with raw value."""
         return cls(
-            control_type="0.0.0.0",  # Will be overridden
+            control_type=PLACEHOLDER_OID,  # Will be overridden
             control_value=control_value,
         )
 
@@ -319,7 +319,6 @@ class ControlOIDs:
 
     # Matched Values Control (RFC 3876)
     MATCHED_VALUES = "1.2.826.0.1.3344810.2.3"
-
 
 # TODO: Implement the following critical controls:
 # 1. PagedResultsControl (CRITICAL - RFC 2696)

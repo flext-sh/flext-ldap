@@ -115,7 +115,7 @@ class SchemaParser:
         # Compiled regex patterns for parsing
         self._oid_pattern = re.compile(r"^\s*\(\s*([0-9.]+)\s*")
         self._name_pattern = re.compile(
-            r"NAME\s+(?:'([^']+)'|\(([^)]+)\))",
+            r"NAME\s+(?:'([^']+)'|\(([^)]+)\)",
             re.IGNORECASE,
         )
         self._desc_pattern = re.compile(r"DESC\s+'([^']*)'", re.IGNORECASE)
@@ -263,7 +263,7 @@ class SchemaParser:
             )
 
         except Exception as e:
-            logger.exception(f"Failed to parse attribute type: {definition}")
+            logger.exception("Failed to parse attribute type: {definition}")
             return LDAPOperationResult[AttributeType](
                 success=False,
                 error_message=f"Parse failed: {e!s}",
@@ -322,7 +322,7 @@ class SchemaParser:
             )
 
         except Exception as e:
-            logger.exception(f"Failed to parse object class: {definition}")
+            logger.exception("Failed to parse object class: {definition}")
             return LDAPOperationResult[ObjectClass](
                 success=False,
                 error_message=f"Parse failed: {e!s}",
@@ -453,7 +453,7 @@ class SchemaParser:
     def _extract_superior_classes(self, definition: str) -> list[str]:
         """Extract superior object classes."""
         match = re.search(
-            r"SUP\s+(?:([a-zA-Z0-9-]+)|\(([^)]+)\))",
+            r"SUP\s+(?:([a-zA-Z0-9-]+)|\(([^)]+)\)",
             definition,
             re.IGNORECASE,
         )
@@ -485,7 +485,7 @@ class SchemaParser:
 
     def _extract_attribute_list(self, definition: str, keyword: str) -> list[str]:
         """Extract attribute list for MUST or MAY."""
-        pattern = rf"{keyword}\s+(?:([a-zA-Z0-9-]+)|\(([^)]+)\))"
+        pattern = rf"{keyword}\s+(?:([a-zA-Z0-9-]+)|\(([^)]+)\)"
         match = re.search(pattern, definition, re.IGNORECASE)
         if not match:
             return []

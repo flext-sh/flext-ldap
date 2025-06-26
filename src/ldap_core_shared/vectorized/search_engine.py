@@ -1,30 +1,35 @@
-"""🚀 Vectorized Search Engine - Ultra High Performance.
-
-Provides 400-600% performance improvement for LDAP search operations using:
-- Numpy arrays for filter processing and result aggregation
-- Pandas DataFrames for complex attribute filtering
-- Vectorized DN matching and validation
-- Parallel search execution across multiple connections
-- Intelligent query optimization and caching
-
-Performance Features:
-    - Target: 50,000+ searches/second
-    - Parallel query execution with connection pooling
-    - Vectorized result processing and filtering
-    - Smart query optimization and result caching
-    - Memory-efficient result streaming for large datasets
-"""
-
 from __future__ import annotations
+
+from ldap_core_shared.utils.constants import DEFAULT_LARGE_LIMIT
+
+"""🚀 Vectorized Search Engine - Ultra High Performance."""
+
 
 import asyncio
 import time
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
-import numpy as np
-import pandas as pd
-from numba import jit
+# Constants for magic values
+
+try:
+    import numpy as np
+    import pandas as pd
+    from numba import jit  # type: ignore[import-not-found]
+    VECTORIZED_AVAILABLE = True
+except ImportError:
+    # Mock implementations for when vectorized dependencies are not available
+    np = None
+    pd = None
+    VECTORIZED_AVAILABLE = False
+
+    def jit(*args, **kwargs) -> Callable[[Any], Any]:
+        """Mock jit decorator when numba is not available."""
+        def decorator(func: Any) -> Any:
+            return func
+        return decorator
+
+from itertools import starmap
 
 from ldap_core_shared.domain.models import LDAPEntry
 from ldap_core_shared.utils.logging import get_logger
@@ -215,20 +220,20 @@ class VectorizedSearchEngine:
             # Phase 1: Execute search with optimization
             search_start = time.time()
             raw_entries = await self._execute_optimized_search(
-                search_base, search_filter, attributes, size_limit
+                search_base, search_filter, attributes, size_limit,
             )
             self.stats.search_time = time.time() - search_start
 
             # Phase 2: Vectorized filtering and processing
             filter_start = time.time()
             processed_entries = await self._process_results_vectorized(
-                raw_entries, search_filter, enable_scoring, progress_callback
+                raw_entries, search_filter, enable_scoring, progress_callback,
             )
             self.stats.filter_time = time.time() - filter_start
 
             # Phase 3: Create result
             result = self._create_search_result(
-                processed_entries, search_base, search_filter
+                processed_entries, search_base, search_filter,
             )
 
             # Cache result if enabled
@@ -269,11 +274,11 @@ class VectorizedSearchEngine:
         semaphore = asyncio.Semaphore(max_concurrent)
 
         async def search_with_semaphore(
-            search_base: str, search_filter: str, attributes: Optional[list[str]]
+            search_base: str, search_filter: str, attributes: Optional[list[str]],
         ) -> SearchResult:
             async with semaphore:
                 return await self.search_vectorized(
-                    search_base, search_filter, attributes
+                    search_base, search_filter, attributes,
                 )
 
         logger.info(
@@ -283,10 +288,7 @@ class VectorizedSearchEngine:
         )
 
         # Execute searches in parallel
-        tasks = [
-            search_with_semaphore(base, filter_str, attrs)
-            for base, filter_str, attrs in search_requests
-        ]
+        tasks = list(starmap(search_with_semaphore, search_requests))
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -309,7 +311,7 @@ class VectorizedSearchEngine:
                         search_filter=filter_str,
                         search_time=0.0,
                         metadata={"error": str(result)},
-                    )
+                    ),
                 )
             else:
                 processed_results.append(result)
@@ -338,16 +340,10 @@ class VectorizedSearchEngine:
             )
 
             # Convert to list of dictionaries
-            entries = []
-            for entry in connection.entries:
-                entries.append(
-                    {
+            return [{
                         "dn": entry.entry_dn,
                         "attributes": dict(entry.entry_attributes_as_dict),
-                    }
-                )
-
-            return entries
+                    } for entry in connection.entries]
 
     async def _process_results_vectorized(
         self,
@@ -440,7 +436,7 @@ class VectorizedSearchEngine:
         attributes: Optional[list[str]],
     ) -> str:
         """Generate cache key for search parameters."""
-        attrs_str = ",".join(sorted(attributes)) if attributes else "ALL"
+        attrs_str = ",".join(sorted(attributes) if attributes else ["ALL"])
         return f"{search_base}|{search_filter}|{attrs_str}"
 
     def _get_cached_result(self, cache_key: str) -> Optional[SearchResult]:
@@ -463,10 +459,10 @@ class VectorizedSearchEngine:
         """Cache search result."""
         self._result_cache[cache_key] = (result, time.time())
 
-        # Simple cache cleanup (keep last 1000 entries)
-        if len(self._result_cache) > 1000:
+        # Simple cache cleanup (keep last DEFAULT_LARGE_LIMIT entries)
+        if len(self._result_cache) > DEFAULT_LARGE_LIMIT:
             oldest_key = min(
-                self._result_cache.keys(), key=lambda k: self._result_cache[k][1]
+                self._result_cache.keys(), key=lambda k: self._result_cache[k][1],
             )
             del self._result_cache[oldest_key]
 
@@ -515,7 +511,7 @@ class VectorizedSearchEngine:
 
 # Factory function for easy integration
 async def create_vectorized_search_engine(
-    connection_pool: Any, **kwargs: Any
+    connection_pool: Any, **kwargs: Any,
 ) -> VectorizedSearchEngine:
     """Factory function to create vectorized search engine.
 

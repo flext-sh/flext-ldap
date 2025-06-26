@@ -1,18 +1,4 @@
-"""🚀 Vectorized Bulk Operations Processor - Ultra High Performance.
-
-Provides 300-500% performance improvement over sequential processing using:
-- Numpy arrays for batch validation and processing
-- Pandas DataFrames for attribute manipulation
-- Parallel processing with asyncio for independent operations
-- Vectorized DN validation and normalization
-- Memory-efficient batch operations
-
-Performance Features:
-    - Target: 25,000-40,000 entries/second
-    - Batch processing with optimal memory usage
-    - Parallel validation and transformation
-    - Adaptive batch sizing based on memory and CPU
-"""
+"""🚀 Vectorized Bulk Operations Processor - Ultra High Performance."""
 
 from __future__ import annotations
 
@@ -21,9 +7,27 @@ import time
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
-import numpy as np
-import pandas as pd
-from numba import jit
+# Constants for magic values
+BYTES_PER_KB = 1024
+
+HTTP_INTERNAL_ERROR = 500
+
+try:
+    import numpy as np
+    import pandas as pd
+    from numba import jit  # type: ignore[import-not-found]
+    VECTORIZED_AVAILABLE = True
+except ImportError:
+    # Mock implementations for when vectorized dependencies are not available
+    np = None
+    pd = None
+    VECTORIZED_AVAILABLE = False
+
+    def jit(*args, **kwargs) -> Callable[[Any], Any]:
+        """Mock jit decorator when numba is not available."""
+        def decorator(func: Any) -> Any:
+            return func
+        return decorator
 
 from ldap_core_shared.core.operations import (
     BulkOperationResult,
@@ -104,7 +108,7 @@ def _calculate_batch_sizes(total_entries: int, max_memory_mb: float) -> np.ndarr
     """
     # Estimate 1KB per entry average
     entry_size_kb = 1.0
-    max_entries_per_batch = int((max_memory_mb * 1024) / entry_size_kb)
+    max_entries_per_batch = int((max_memory_mb * BYTES_PER_KB) / entry_size_kb)
 
     if total_entries <= max_entries_per_batch:
         return np.array([total_entries])
@@ -219,7 +223,7 @@ class VectorizedBulkProcessor:
             raise LDAPBulkOperationError(msg) from e
 
     async def _create_dataframe_async(
-        self, entries: list[dict[str, Any]]
+        self, entries: list[dict[str, Any]],
     ) -> pd.DataFrame:
         """Create pandas DataFrame from entries asynchronously.
 
@@ -332,11 +336,11 @@ class VectorizedBulkProcessor:
         semaphore = asyncio.Semaphore(self.max_parallel_tasks)
 
         async def process_batch_with_semaphore(
-            batch_df: pd.DataFrame, batch_idx: int
+            batch_df: pd.DataFrame, batch_idx: int,
         ) -> pd.DataFrame:
             async with semaphore:
                 return await self._process_single_batch(
-                    batch_df, batch_idx, progress_callback
+                    batch_df, batch_idx, progress_callback,
                 )
 
         # Execute batches in parallel
@@ -345,7 +349,7 @@ class VectorizedBulkProcessor:
             *[
                 process_batch_with_semaphore(batch_df, i)
                 for i, batch_df in enumerate(batches)
-            ]
+            ],
         )
         self.stats.batch_processing_time = time.time() - batch_start
 
@@ -430,7 +434,7 @@ class VectorizedBulkProcessor:
         return batch_df
 
     async def _check_failure_rate_adaptive(
-        self, batch_df: pd.DataFrame, current_idx: int
+        self, batch_df: pd.DataFrame, current_idx: int,
     ) -> None:
         """Check failure rate and adapt processing if needed.
 
@@ -480,7 +484,7 @@ class VectorizedBulkProcessor:
         }
 
         self.transaction.context.add_checkpoint(
-            "vectorized_bulk_complete", **final_checkpoint
+            "vectorized_bulk_complete", **final_checkpoint,
         )
 
         logger.info(
@@ -508,13 +512,26 @@ async def create_vectorized_processor(
     transaction: EnterpriseTransaction,
     **kwargs: Any,
 ) -> VectorizedBulkProcessor:
-    """Factory function to create vectorized bulk processor.
+    """Create vectorized bulk processor instance.
 
     Args:
-        transaction: Enterprise transaction for operations
-        **kwargs: Additional configuration options
+        transaction: Enterprise transaction for LDAP operations
+        **kwargs: Additional processor configuration
 
     Returns:
         Configured vectorized bulk processor
+
+    Example:
+        ```python
+        processor = await create_vectorized_processor(
+            transaction=transaction,
+            max_memory_mb=256.0,
+            max_parallel_tasks=4
+        )
+        ```
     """
     return VectorizedBulkProcessor(transaction, **kwargs)
+
+
+# Alias for backward compatibility
+BulkOperationProcessor = VectorizedBulkProcessor

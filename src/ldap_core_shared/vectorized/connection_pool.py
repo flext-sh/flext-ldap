@@ -1,17 +1,9 @@
-"""🚀 Predictive Connection Pool - Ultra High Performance.
-
-Provides intelligent predictive connection pooling with ML-based demand prediction
-for <5ms connection acquisition and optimal resource utilization.
-
-Performance Features:
-    - Target: <5ms connection acquisition
-    - Predictive scaling based on usage patterns
-    - Adaptive pool sizing and health monitoring
-    - Connection pre-warming and intelligent recycling
-    - Advanced load balancing and failover
-"""
-
 from __future__ import annotations
+
+from ldap_core_shared.utils.constants import DEFAULT_LARGE_LIMIT
+
+"""🚀 Predictive Connection Pool - Ultra High Performance."""
+
 
 import asyncio
 import time
@@ -20,6 +12,8 @@ from dataclasses import dataclass
 from typing import Any, AsyncContextManager
 
 from ldap_core_shared.utils.logging import get_logger
+
+# Constants for magic values
 
 logger = get_logger(__name__)
 
@@ -97,7 +91,7 @@ class PredictiveConnectionPool:
             # Get connection from pool or create new one
             connection = await self._get_connection()
 
-            acquisition_time = (time.perf_counter() - start_time) * 1000
+            acquisition_time = (time.perf_counter() - start_time) * DEFAULT_LARGE_LIMIT
             self._update_acquisition_stats(acquisition_time)
 
             logger.debug(
@@ -136,7 +130,7 @@ class PredictiveConnectionPool:
             return connection
         except Exception as e:
             self._stats.failed_connections += 1
-            logger.exception(f"Failed to create connection: {e}")
+            logger.exception("Failed to create connection: %s", e)
             raise
 
     async def _return_connection(self, connection: Any) -> None:
@@ -169,14 +163,14 @@ class PredictiveConnectionPool:
 
     async def warmup_pool(self) -> None:
         """Pre-warm pool with minimum connections."""
-        logger.info(f"Warming up connection pool with {self.min_pool_size} connections")
+        logger.info("Warming up connection pool with %s connections", self.min_pool_size)
 
         for _ in range(self.min_pool_size):
             try:
                 connection = await self._create_connection()
                 self._pool.append(connection)
-            except Exception as e:
-                logger.warning(f"Failed to create warmup connection: {e}")
+            except Exception:
+                logger.warning("Failed to create warmup connection: {e}")
 
     async def close_pool(self) -> None:
         """Close all connections in pool."""
@@ -187,16 +181,16 @@ class PredictiveConnectionPool:
             try:
                 if hasattr(connection, "close"):
                     await connection.close()
-            except Exception as e:
-                logger.warning(f"Error closing pooled connection: {e}")
+            except Exception:
+                logger.warning("Error closing pooled connection: {e}")
 
         # Close all active connections
         for connection in self._active_connections.values():
             try:
                 if hasattr(connection, "close"):
                     await connection.close()
-            except Exception as e:
-                logger.warning(f"Error closing active connection: {e}")
+            except Exception:
+                logger.warning("Error closing active connection: {e}")
 
         self._pool.clear()
         self._active_connections.clear()

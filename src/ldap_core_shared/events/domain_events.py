@@ -1,16 +1,17 @@
-"""Domain events for LDAP operations.
-
-Events that capture significant domain occurrences during LDAP
-operations, migrations, and validations.
-"""
-
 from __future__ import annotations
+
+from ldap_core_shared.utils.constants import LDAP_DEFAULT_PORT
+
+"""Domain events for LDAP operations."""
+
 
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
+
+# Constants for magic values
 
 
 @dataclass
@@ -34,7 +35,7 @@ class LDAPConnectionEvent(DomainEvent):
     connection_id: str | None = field(default=None)
     error_message: str | None = field(default=None)
     host: str = ""
-    port: int = 389
+    port: int = LDAP_DEFAULT_PORT
     bind_dn: str = ""
     connected: bool = False
 

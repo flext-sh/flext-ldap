@@ -18,6 +18,14 @@ from __future__ import annotations
 
 import asyncio
 import statistics
+import time
+from collections import defaultdict
+from typing import Any
+
+from ldap_core_shared.connections import (
+    LDAPConnectionInfo,
+    LDAPConnectionManager,
+)
 
 # Performance benchmark constants
 TARGET_CONNECTION_TIME_MS = 10.0
@@ -27,16 +35,8 @@ TARGET_SUCCESS_RATE = 0.999
 
 # Test credentials constants
 TEST_BIND_DN = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com"
-TEST_BIND_PASSWORD = "test123"
+TEST_BIND_PASSWORD = "test123"  # nosec S105 - test credential for benchmarking
 TEST_BASE_DN = "dc=test,dc=com"
-import time
-from collections import defaultdict
-from typing import Any
-
-from ldap_core_shared.connections import (
-    LDAPConnectionInfo,
-    LDAPConnectionManager,
-)
 
 
 class PerformanceBenchmark:
@@ -85,11 +85,11 @@ class PerformanceBenchmark:
         )
 
         # Mock connection for testing
-        manager._create_connection = lambda: type(
+        manager._create_connection = type(
             "MockConn",
             (),
             {"bind": lambda: True, "bound": True, "unbind": lambda: None},
-        )()
+        )
 
         times = []
         for _i in range(100):
@@ -238,9 +238,7 @@ class PerformanceBenchmark:
         manager.get_connection = mock_get_connection
 
         async def search_task():
-            results = []
-            async for result in manager.search("dc=test,dc=com", "(objectClass=*)"):
-                results.append(result)
+            results = [result async for result in manager.search("dc=test,dc=com", "(objectClass=*)")]
             return len(results)
 
         # Run 50 concurrent operations
@@ -314,8 +312,6 @@ class PerformanceBenchmark:
             self.results["concurrent_operations"]
 
         if all_passed:
-            pass
-        else:
             pass
 
 

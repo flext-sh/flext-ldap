@@ -1,38 +1,38 @@
-"""Enterprise-grade typed result classes for LDAP operations.
+"""DEPRECATED: Use api.Result[T] instead of these specialized result classes.
 
-This module provides comprehensive typed result objects for LDAP operations,
-ensuring type safety, IDE support, runtime validation, and consistent result
-structures across all LDAP operations.
+This module contains legacy result classes. For new code, use the unified api.Result[T] pattern.
+Migration utilities are provided for backward compatibility.
 
-Architecture:
-    The results module serves as the data layer foundation, providing strongly-typed
-    result objects that eliminate the need for untyped dictionaries while maintaining
-    backward compatibility through conversion methods.
+PREFERRED PATTERN:
+    from ldap_core_shared.api import Result
 
-Key Design Principles:
-    - Zero Tolerance: No untyped dict returns where structure is known
-    - Type Safety: Full typing with mypy compliance
-    - Enterprise Validation: Comprehensive validation using Pydantic
-    - Performance: Optimized for high-throughput LDAP operations
-    - Composability: Results can be merged and aggregated
-    - Backward Compatibility: to_dict() methods for legacy consumers
+    # Instead of LDAPSearchResult:
+    result: Result[list[LDAPEntry]] = await ldap.search(...)
 
-Result Categories:
-    - LDAPConnectionResult: Connection operations, tunnels, authentication
-    - LDAPSearchResult: Search operations with pagination and filtering
-    - LDAPOperationResult: CRUD operations with transaction support
-    - LDAPBulkResult: Bulk operations with progress tracking
-    - LDAPPerformanceResult: Performance metrics and monitoring
+    # Instead of LDAPConnectionResult:
+    result: Result[bool] = await ldap.test_connection()
 
-Version: 1.0.0-enterprise
+    # Instead of LDAPOperationResult:
+    result: Result[LDAPEntry] = await ldap.add_entry(...)
 """
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-from typing import Any, Generic, TypeVar
+import warnings
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
+
+from ldap_core_shared.utils.constants import (
+    DEFAULT_LARGE_LIMIT,
+    DEFAULT_MAX_ITEMS,
+    DEFAULT_TIMEOUT_SECONDS,
+)
+
+# Import unified Result for migration utilities
+if TYPE_CHECKING:
+    from ldap_core_shared.api import Result
 
 T = TypeVar("T")
 
@@ -54,8 +54,8 @@ class LDAPConnectionResult(BaseModel):
     encryption: str = "none"
 
     # Connection metrics
-    connection_time: float = Field(ge=0.0)
-    response_time: float = Field(ge=0.0)
+    connection_time: float = Field(default=0.0, ge=0.0)
+    response_time: float = Field(default=0.0, ge=0.0)
     last_activity: datetime | None = None
 
     # Tunnel information
@@ -70,16 +70,14 @@ class LDAPConnectionResult(BaseModel):
     ldap_info: dict[str, Any] = Field(default_factory=dict)
     ssh_info: dict[str, Any] = Field(default_factory=dict)
 
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     @computed_field
-    @property
     def has_errors(self) -> bool:
         """Check if any connection errors occurred."""
         return bool(self.connection_error or self.auth_error)
 
     @computed_field
-    @property
     def is_secure(self) -> bool:
         """Check if connection uses secure protocols."""
         return self.encryption in {"ssl", "tls", "starttls"} or self.tunnel_active
@@ -96,7 +94,7 @@ class LDAPSearchResult(BaseModel):
     )
 
     success: bool
-    entries_found: int = Field(ge=0)
+    entries_found: int = Field(default=0, ge=0)
     search_base: str
     search_filter: str
 
@@ -106,12 +104,12 @@ class LDAPSearchResult(BaseModel):
 
     # Search configuration
     scope: str = "subtree"
-    size_limit: int = Field(default=1000, ge=0)
-    time_limit: int = Field(default=30, ge=0)
+    size_limit: int = Field(default=DEFAULT_LARGE_LIMIT, ge=0)
+    time_limit: int = Field(default=DEFAULT_TIMEOUT_SECONDS, ge=0)
 
     # Performance metrics
-    search_duration: float = Field(ge=0.0)
-    entries_per_second: float = Field(ge=0.0)
+    search_duration: float = Field(default=0.0, ge=0.0)
+    entries_per_second: float = Field(default=0.0, ge=0.0)
 
     # Pagination support
     page_size: int | None = Field(default=None, gt=0)
@@ -122,16 +120,14 @@ class LDAPSearchResult(BaseModel):
     errors: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
 
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     @computed_field
-    @property
     def has_errors(self) -> bool:
         """Check if any search errors occurred."""
         return len(self.errors) > 0
 
     @computed_field
-    @property
     def has_warnings(self) -> bool:
         """Check if any search warnings occurred."""
         return len(self.warnings) > 0
@@ -171,29 +167,26 @@ class LDAPOperationResult(BaseModel, Generic[T]):
     # Rollback information
     rollback_data: dict[str, Any] = Field(default_factory=dict)
 
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     @computed_field
-    @property
     def has_error(self) -> bool:
         """Check if operation failed."""
         return not self.success or bool(self.error_message)
 
     @computed_field
-    @property
     def duration(self) -> float:
         """Alias for operation_duration for compatibility."""
         return self.operation_duration
 
     @computed_field
-    @property
     def computed_message(self) -> str:
         """Get appropriate message based on operation status."""
         if self.message:
             return self.message
         if self.error_message:
             return self.error_message
-        return f"Successfully {self.operation_type}d entry: {self.dn}"
+        return f"Successfully completed {self.operation} operation"
 
 
 class LDAPBulkResult(BaseModel):
@@ -206,18 +199,18 @@ class LDAPBulkResult(BaseModel):
         validate_assignment=True,
     )
 
-    total_entries: int = Field(ge=0)
-    successful_entries: int = Field(ge=0)
-    failed_entries: int = Field(ge=0)
+    total_entries: int = Field(default=0, ge=0)
+    successful_entries: int = Field(default=0, ge=0)
+    failed_entries: int = Field(default=0, ge=0)
     operation_type: str
 
     # Operation details
-    operations_log: list[LDAPOperationResult] = Field(default_factory=list)
+    operations_log: list[LDAPOperationResult[Any]] = Field(default_factory=list)
     checkpoints: list[dict[str, Any]] = Field(default_factory=list)
 
     # Performance metrics
-    operation_duration: float = Field(ge=0.0)
-    operations_per_second: float = Field(ge=0.0)
+    operation_duration: float = Field(default=0.0, ge=0.0)
+    operations_per_second: float = Field(default=0.0, ge=0.0)
 
     # Transaction info
     transaction_id: str | None = None
@@ -228,27 +221,24 @@ class LDAPBulkResult(BaseModel):
     errors: list[str] = Field(default_factory=list)
     critical_errors: list[str] = Field(default_factory=list)
 
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     @computed_field
-    @property
     def success_rate(self) -> float:
         """Calculate success rate as percentage."""
         if self.total_entries == 0:
-            return 100.0
-        return (self.successful_entries / self.total_entries) * 100.0
+            return DEFAULT_MAX_ITEMS
+        return (self.successful_entries / self.total_entries) * DEFAULT_MAX_ITEMS
 
     @computed_field
-    @property
     def has_critical_errors(self) -> bool:
         """Check if any critical errors occurred."""
         return len(self.critical_errors) > 0
 
     @computed_field
-    @property
     def is_complete_success(self) -> bool:
         """Check if all operations succeeded."""
-        return self.failed_entries == 0 and not self.has_critical_errors
+        return self.failed_entries == 0 and not self.has_critical_errors  # type: ignore[truthy-function]
 
 
 class LDAPPerformanceResult(BaseModel):
@@ -262,41 +252,39 @@ class LDAPPerformanceResult(BaseModel):
     )
 
     operation_name: str
-    total_operations: int = Field(ge=0)
-    successful_operations: int = Field(ge=0)
-    failed_operations: int = Field(ge=0)
+    total_operations: int = Field(default=0, ge=0)
+    successful_operations: int = Field(default=0, ge=0)
+    failed_operations: int = Field(default=0, ge=0)
 
     # Performance metrics
-    total_duration: float = Field(ge=0.0)
-    average_duration: float = Field(ge=0.0)
-    operations_per_second: float = Field(ge=0.0)
+    total_duration: float = Field(default=0.0, ge=0.0)
+    average_duration: float = Field(default=0.0, ge=0.0)
+    operations_per_second: float = Field(default=0.0, ge=0.0)
 
     # Resource usage
-    memory_peak_mb: float = Field(ge=0.0)
-    cpu_usage_percent: float = Field(ge=0.0, le=100.0)
+    memory_peak_mb: float = Field(default=0.0, ge=0.0)
+    cpu_usage_percent: float = Field(default=0.0, ge=0.0, le=DEFAULT_MAX_ITEMS)
 
     # Connection pool metrics
-    pool_size: int = Field(ge=0)
-    pool_utilization: float = Field(ge=0.0, le=100.0)
-    connection_reuse_rate: float = Field(ge=0.0, le=100.0)
+    pool_size: int = Field(default=0, ge=0)
+    pool_utilization: float = Field(default=0.0, ge=0.0, le=DEFAULT_MAX_ITEMS)
+    connection_reuse_rate: float = Field(default=0.0, ge=0.0, le=DEFAULT_MAX_ITEMS)
 
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     @computed_field
-    @property
     def success_rate(self) -> float:
         """Calculate success rate as percentage."""
         if self.total_operations == 0:
-            return 100.0
-        return (self.successful_operations / self.total_operations) * 100.0
+            return DEFAULT_MAX_ITEMS
+        return (self.successful_operations / self.total_operations) * DEFAULT_MAX_ITEMS
 
     @computed_field
-    @property
     def failure_rate(self) -> float:
         """Calculate failure rate as percentage."""
         if self.total_operations == 0:
             return 0.0
-        return (self.failed_operations / self.total_operations) * 100.0
+        return (self.failed_operations / self.total_operations) * DEFAULT_MAX_ITEMS
 
 
 class LDAPValidationResult(BaseModel):
@@ -311,7 +299,7 @@ class LDAPValidationResult(BaseModel):
 
     valid: bool
     validation_type: str
-    entries_validated: int = Field(ge=0)
+    entries_validated: int = Field(default=0, ge=0)
 
     # Validation details
     schema_errors: list[str] = Field(default_factory=list)
@@ -319,18 +307,16 @@ class LDAPValidationResult(BaseModel):
     reference_errors: list[str] = Field(default_factory=list)
 
     # Performance metrics
-    validation_duration: float = Field(ge=0.0)
+    validation_duration: float = Field(default=0.0, ge=0.0)
 
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     @computed_field
-    @property
     def has_errors(self) -> bool:
         """Check if any validation errors occurred."""
         return len(self.schema_errors + self.syntax_errors + self.reference_errors) > 0
 
     @computed_field
-    @property
     def total_errors(self) -> int:
         """Get total count of all validation errors."""
         return len(self.schema_errors + self.syntax_errors + self.reference_errors)
@@ -350,6 +336,8 @@ def merge_search_results(results: list[LDAPSearchResult]) -> LDAPSearchResult:
             entries_found=0,
             search_base="",
             search_filter="",
+            search_duration=0.0,
+            entries_per_second=0.0,
         )
 
     first_result = results[0]
@@ -387,6 +375,8 @@ def merge_bulk_results(results: list[LDAPBulkResult]) -> LDAPBulkResult:
             successful_entries=0,
             failed_entries=0,
             operation_type="unknown",
+            operation_duration=0.0,
+            operations_per_second=0.0,
         )
 
     first_result = results[0]
@@ -417,3 +407,204 @@ def merge_bulk_results(results: list[LDAPBulkResult]) -> LDAPBulkResult:
         errors=all_errors,
         critical_errors=all_critical_errors,
     )
+
+
+# ============================================================================
+# 🔄 MIGRATION UTILITIES - Convert legacy results to unified api.Result[T]
+# ============================================================================
+
+def migrate_connection_result_to_unified(legacy_result: LDAPConnectionResult) -> Result[bool]:
+    """Convert LDAPConnectionResult to unified Result[bool].
+
+    DEPRECATED: Use api.Result[bool] directly for new connection testing.
+
+    Args:
+        legacy_result: Legacy connection result
+
+    Returns:
+        Unified Result[bool] with connection status
+    """
+    warnings.warn(
+        "LDAPConnectionResult is deprecated. Use api.Result[bool] with LDAP.test_connection() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+    # Dynamic import to avoid circular dependency
+    from ldap_core_shared.api import Result
+
+    if legacy_result.has_errors:
+        error_msg = legacy_result.connection_error or legacy_result.auth_error or "Connection failed"
+        return Result.fail(error_msg, default_data=False)
+
+    return Result.ok(
+        legacy_result.connected,
+        context={
+            "host": legacy_result.host,
+            "port": legacy_result.port,
+            "secure": legacy_result.is_secure,
+            "connection_time": legacy_result.connection_time,
+        },
+    )
+
+
+def migrate_search_result_to_unified(legacy_result: LDAPSearchResult) -> Result[list[dict[str, Any]]]:
+    """Convert LDAPSearchResult to unified Result[list[LDAPEntry]].
+
+    DEPRECATED: Use api.Result[list[LDAPEntry]] with LDAP.search() instead.
+
+    Args:
+        legacy_result: Legacy search result
+
+    Returns:
+        Unified Result with search entries
+    """
+    warnings.warn(
+        "LDAPSearchResult is deprecated. Use api.Result[list[LDAPEntry]] with LDAP.query().execute() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+    # Dynamic import to avoid circular dependency
+    from ldap_core_shared.api import Result
+
+    if not legacy_result.success or legacy_result.has_errors:
+        error_msg = "; ".join(legacy_result.errors) if legacy_result.errors else "Search failed"
+        return Result.fail(error_msg, default_data=[])
+
+    return Result.ok(
+        legacy_result.entries,
+        execution_time_ms=legacy_result.search_duration * 1000,
+        context={
+            "base_dn": legacy_result.search_base,
+            "filter": legacy_result.search_filter,
+            "count": legacy_result.entries_found,
+            "scope": legacy_result.scope,
+        },
+    )
+
+
+def migrate_operation_result_to_unified(legacy_result: LDAPOperationResult[T]) -> Result[T]:
+    """Convert LDAPOperationResult to unified Result[T].
+
+    DEPRECATED: Use api.Result[T] directly for LDAP operations.
+
+    Args:
+        legacy_result: Legacy operation result
+
+    Returns:
+        Unified Result with operation data
+    """
+    warnings.warn(
+        "LDAPOperationResult is deprecated. Use api.Result[T] with unified LDAP operations instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+    # Dynamic import to avoid circular dependency
+    from ldap_core_shared.api import Result
+
+    if legacy_result.has_error:
+        return Result.fail(
+            legacy_result.error_message or "Operation failed",
+            code=str(legacy_result.ldap_error_code) if legacy_result.ldap_error_code else None,
+            execution_time_ms=legacy_result.operation_duration * 1000,
+            default_data=legacy_result.data,
+        )
+
+    return Result.ok(
+        legacy_result.data,
+        execution_time_ms=legacy_result.operation_duration * 1000,
+        context={
+            "operation": legacy_result.operation,
+            "transaction_id": legacy_result.transaction_id,
+            "backup_created": legacy_result.backup_created,
+        },
+    )
+
+
+def migrate_bulk_result_to_unified(legacy_result: LDAPBulkResult) -> Result[dict[str, Any]]:
+    """Convert LDAPBulkResult to unified Result[dict].
+
+    DEPRECATED: Use api.Result[dict] for bulk operation summaries.
+
+    Args:
+        legacy_result: Legacy bulk result
+
+    Returns:
+        Unified Result with bulk operation summary
+    """
+    warnings.warn(
+        "LDAPBulkResult is deprecated. Use api.Result[dict] for bulk operation reporting instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+    # Dynamic import to avoid circular dependency
+    from ldap_core_shared.api import Result
+
+    summary_data = {
+        "total_entries": legacy_result.total_entries,
+        "successful_entries": legacy_result.successful_entries,
+        "failed_entries": legacy_result.failed_entries,
+        "success_rate": legacy_result.success_rate,
+        "operation_type": legacy_result.operation_type,
+        "operations_per_second": legacy_result.operations_per_second,
+    }
+
+    if legacy_result.has_critical_errors:
+        error_msg = "; ".join(legacy_result.critical_errors)
+        return Result.fail(
+            f"Bulk operation had critical errors: {error_msg}",
+            execution_time_ms=legacy_result.operation_duration * 1000,
+            default_data=summary_data,
+        )
+
+    return Result.ok(
+        summary_data,
+        execution_time_ms=legacy_result.operation_duration * 1000,
+        context={
+            "transaction_committed": legacy_result.transaction_committed,
+            "backup_created": legacy_result.backup_created,
+            "warnings": len(legacy_result.errors),
+        },
+    )
+
+
+# Utility function to auto-migrate any legacy result to unified format
+def auto_migrate_to_unified(legacy_result: Any) -> Result[Any]:
+    """Automatically migrate any legacy result to unified format.
+
+    Args:
+        legacy_result: Any legacy result object
+
+    Returns:
+        Unified Result object
+
+    Raises:
+        ValueError: If result type is not recognized
+    """
+    if isinstance(legacy_result, LDAPConnectionResult):
+        return migrate_connection_result_to_unified(legacy_result)
+    if isinstance(legacy_result, LDAPSearchResult):
+        return migrate_search_result_to_unified(legacy_result)
+    if isinstance(legacy_result, LDAPOperationResult):
+        return migrate_operation_result_to_unified(legacy_result)
+    if isinstance(legacy_result, LDAPBulkResult):
+        return migrate_bulk_result_to_unified(legacy_result)
+    msg = f"Unknown legacy result type: {type(legacy_result)}"
+    raise ValueError(msg)
+
+
+# Export migration utilities
+__all__ = [
+    "LDAPBulkResult",
+    "LDAPConnectionResult",
+    "LDAPOperationResult",
+    "LDAPSearchResult",
+    "auto_migrate_to_unified",
+    "migrate_bulk_result_to_unified",
+    "migrate_connection_result_to_unified",
+    "migrate_operation_result_to_unified",
+    "migrate_search_result_to_unified",
+]

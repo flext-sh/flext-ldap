@@ -1,10 +1,9 @@
-"""LDAP Helpers - Useful utilities and helper functions for LDAP projects.
-
-This module provides commonly needed utilities for LDAP development including
-DN manipulation, attribute value processing, filter building, and data conversion.
-"""
-
 from __future__ import annotations
+
+from ldap_core_shared.utils.constants import LDAP_DEFAULT_PORT, LDAPS_DEFAULT_PORT
+
+"""LDAP Helpers - Useful utilities and helper functions for LDAP projects."""
+
 
 import base64
 import logging
@@ -12,6 +11,8 @@ import re
 from datetime import datetime
 from typing import Any
 from urllib.parse import quote
+
+# Constants for magic values
 
 logger = logging.getLogger(__name__)
 
@@ -56,10 +57,7 @@ class DNHelper:
         Returns:
             Formatted Distinguished Name
         """
-        dn_parts = []
-        for rdn in rdns:
-            if "attribute" in rdn and "value" in rdn:
-                dn_parts.append(f"{rdn['attribute']}={rdn['value']}")
+        dn_parts = [f"{rdn['attribute']}={rdn['value']}" for rdn in rdns if "attribute" in rdn and "value" in rdn]
 
         return ",".join(dn_parts)
 
@@ -234,8 +232,7 @@ class FilterHelper:
         if initial:
             parts.append(FilterHelper.escape_filter_value(initial))
 
-        for part in any_parts:
-            parts.append(f"*{FilterHelper.escape_filter_value(part)}")
+        parts.extend(f"*{FilterHelper.escape_filter_value(part)}" for part in any_parts)
 
         if final:
             if parts:
@@ -416,7 +413,7 @@ class LDAPUrlHelper:
     @staticmethod
     def build_ldap_url(
         host: str,
-        port: int = 389,
+        port: int = LDAP_DEFAULT_PORT,
         base_dn: str = "",
         scope: str = "sub",
         filter_expr: str = "",
@@ -484,9 +481,9 @@ class LDAPUrlHelper:
 
         result: dict[str, str | int | bool | list[str]] = {
             "scheme": parsed.scheme,
-            "host": parsed.hostname,
-            "port": parsed.port or (636 if parsed.scheme == "ldaps" else 389),
-            "base_dn": unquote(parsed.path.lstrip("/")) if parsed.path else "",
+            "host": parsed.hostname or "",
+            "port": parsed.port or (LDAPS_DEFAULT_PORT if parsed.scheme == "ldaps" else LDAP_DEFAULT_PORT),
+            "base_dn": unquote(parsed.path.lstrip("/") if parsed.path else ""),
             "attributes": [],
             "scope": "sub",
             "filter": "",

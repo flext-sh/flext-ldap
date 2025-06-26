@@ -57,6 +57,7 @@ from ldap_core_shared.extensions.base import (
     ExtensionResult,
     LDAPExtension,
 )
+from ldap_core_shared.utils.constants import BER_CONTEXT_TAG_0, BER_SEQUENCE_TAG
 
 if TYPE_CHECKING:
     from ldap_core_shared.types.aliases import OID
@@ -84,19 +85,19 @@ class ModifyPasswordResult(ExtensionResult):
     """
 
     generated_password: Optional[str] = Field(
-        default=None, description="Server-generated password (if applicable)"
+        default=None, description="Server-generated password (if applicable)",
     )
 
     password_changed: bool = Field(
-        default=False, description="Whether password was successfully changed"
+        default=False, description="Whether password was successfully changed",
     )
 
     old_password_required: bool = Field(
-        default=False, description="Whether old password was required but missing"
+        default=False, description="Whether old password was required but missing",
     )
 
     policy_violations: list[str] = Field(
-        default_factory=list, description="List of password policy violations"
+        default_factory=list, description="List of password policy violations",
     )
 
     def has_generated_password(self) -> bool:
@@ -155,11 +156,11 @@ class ModifyPasswordExtension(LDAPExtension):
     )
 
     old_password: Optional[str] = Field(
-        default=None, description="Current password (required for self-service)"
+        default=None, description="Current password (required for self-service)",
     )
 
     new_password: Optional[str] = Field(
-        default=None, description="New password (None = server generates)"
+        default=None, description="New password (None = server generates)",
     )
 
     @validator("user_identity")
@@ -214,7 +215,7 @@ class ModifyPasswordExtension(LDAPExtension):
             # Encode user identity if provided
             if self.user_identity:
                 identity_encoded = self._encode_octet_string(
-                    self.user_identity.encode("utf-8")
+                    self.user_identity.encode("utf-8"),
                 )
                 identity_tagged = self._encode_context_tag(0, identity_encoded)
                 content += identity_tagged
@@ -222,7 +223,7 @@ class ModifyPasswordExtension(LDAPExtension):
             # Encode old password if provided
             if self.old_password:
                 old_pwd_encoded = self._encode_octet_string(
-                    self.old_password.encode("utf-8")
+                    self.old_password.encode("utf-8"),
                 )
                 old_pwd_tagged = self._encode_context_tag(1, old_pwd_encoded)
                 content += old_pwd_tagged
@@ -230,7 +231,7 @@ class ModifyPasswordExtension(LDAPExtension):
             # Encode new password if provided
             if self.new_password:
                 new_pwd_encoded = self._encode_octet_string(
-                    self.new_password.encode("utf-8")
+                    self.new_password.encode("utf-8"),
                 )
                 new_pwd_tagged = self._encode_context_tag(2, new_pwd_encoded)
                 content += new_pwd_tagged
@@ -244,7 +245,7 @@ class ModifyPasswordExtension(LDAPExtension):
 
     @classmethod
     def decode_response_value(
-        cls, response_name: Optional[OID], response_value: Optional[bytes]
+        cls, response_name: Optional[OID], response_value: Optional[bytes],
     ) -> ModifyPasswordResult:
         """Decode password modify response value.
 
@@ -266,7 +267,7 @@ class ModifyPasswordExtension(LDAPExtension):
                 # Response is SEQUENCE { genPasswd [0] OCTET STRING OPTIONAL }
                 content = cls._decode_sequence(response_value)
 
-                if content and content[0] == 0x80:  # Context tag [0]
+                if content and content[0] == BER_CONTEXT_TAG_0:  # Context tag [0]
                     _, pos = cls._decode_context_tag(content, 0)
                     password_bytes = content[2:pos]
                     generated_password = password_bytes.decode("utf-8")
@@ -283,7 +284,7 @@ class ModifyPasswordExtension(LDAPExtension):
 
     @classmethod
     def self_service_change(
-        cls, old_password: str, new_password: str
+        cls, old_password: str, new_password: str,
     ) -> ModifyPasswordExtension:
         """Create extension for self-service password change.
 
@@ -302,7 +303,7 @@ class ModifyPasswordExtension(LDAPExtension):
 
     @classmethod
     def REDACTED_LDAP_BIND_PASSWORD_reset(
-        cls, user_identity: str, new_password: str
+        cls, user_identity: str, new_password: str,
     ) -> ModifyPasswordExtension:
         """Create extension for REDACTED_LDAP_BIND_PASSWORDistrative password reset.
 
@@ -401,7 +402,7 @@ class ModifyPasswordExtension(LDAPExtension):
     @classmethod
     def _decode_sequence(cls, data: bytes) -> bytes:
         """Decode BER SEQUENCE and return content."""
-        if not data or data[0] != 0x30:
+        if not data or data[0] != BER_SEQUENCE_TAG:
             msg = "Not a SEQUENCE"
             raise ValueError(msg)
         length = data[1]
@@ -545,7 +546,6 @@ class PasswordChangeBuilder:
             old_password=self._old_password,
             new_password=self._new_password,
         )
-
 
 # TODO: Integration points for implementation:
 #

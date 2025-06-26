@@ -24,11 +24,12 @@ ZERO TOLERANCE PERFORMANCE PRINCIPLES:
 import asyncio
 import tempfile
 import time
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ldap_core_shared.connections.manager import LDAPConnectionManager
+from ldap_core_shared.connections.manager import ConnectionManager
 from ldap_core_shared.ldif.parser import LDIFParser
 from ldap_core_shared.ldif.processor import LDIFProcessor
 from ldap_core_shared.utils.performance import PerformanceMonitor
@@ -81,8 +82,8 @@ member: uid=user{i:03d},ou=users,dc=performance,dc=com
     @pytest.mark.asyncio
     async def test_connection_performance_integration(
         self,
-        sample_connection_info,
-        performance_ldif_content,
+        sample_connection_info: dict[str, Any],
+        performance_ldif_content: str,
     ) -> None:
         """🔥 Test performance monitoring integration with connection management."""
         monitor = PerformanceMonitor()
@@ -99,7 +100,7 @@ member: uid=user{i:03d},ou=users,dc=performance,dc=com
             # Start overall performance measurement
             monitor.start_measurement("connection_integration")
 
-            async with LDAPConnectionManager(
+            async with ConnectionManager(
                 sample_connection_info,
                 enable_pooling=True,
                 pool_size=10,
@@ -170,12 +171,12 @@ member: uid=user{i:03d},ou=users,dc=performance,dc=com
     @pytest.mark.asyncio
     async def test_ldif_processing_performance_integration(
         self,
-        performance_ldif_content,
+        performance_ldif_content: str,
     ) -> None:
         """🔥 Test performance monitoring integration with LDIF processing."""
         monitor = PerformanceMonitor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(performance_ldif_content)
             ldif_path = f.name
 
@@ -220,14 +221,11 @@ member: uid=user{i:03d},ou=users,dc=performance,dc=com
             async def concurrent_processor():
                 entries = []
                 async with processor.process_file(ldif_path) as results:
-                    async for entry in results:
-                        entries.append(entry)
+                    entries.extend([entry async for entry in results])
                 return len(entries)
 
             async def concurrent_parser():
-                entries = []
-                async for entry in parser.parse_file(ldif_path):
-                    entries.append(entry)
+                entries = [entry async for entry in parser.parse_file(ldif_path)]
                 return len(entries)
 
             # Run both concurrently
@@ -272,14 +270,14 @@ member: uid=user{i:03d},ou=users,dc=performance,dc=com
     @pytest.mark.asyncio
     async def test_resource_monitoring_integration(
         self,
-        sample_connection_info,
-        performance_ldif_content,
+        sample_connection_info: dict[str, Any],
+        performance_ldif_content: str,
     ) -> None:
         """🔥 Test resource monitoring integration across components."""
         monitor = PerformanceMonitor()
 
         # Create temporary LDIF file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(performance_ldif_content)
             ldif_path = f.name
 
@@ -299,7 +297,7 @@ member: uid=user{i:03d},ou=users,dc=performance,dc=com
                     """Simulate memory-intensive LDAP operations."""
                     processor = LDIFProcessor()
 
-                    async with LDAPConnectionManager(
+                    async with ConnectionManager(
                         sample_connection_info,
                         enable_pooling=True,
                         pool_size=5,
@@ -348,7 +346,7 @@ member: uid=user{i:03d},ou=users,dc=performance,dc=com
     @pytest.mark.asyncio
     async def test_performance_threshold_integration(
         self,
-        sample_connection_info,
+        sample_connection_info: dict[str, Any],
     ) -> None:
         """🔥 Test performance threshold monitoring integration."""
         monitor = PerformanceMonitor()
@@ -368,7 +366,7 @@ member: uid=user{i:03d},ou=users,dc=performance,dc=com
 
             monitor.start_measurement("threshold_test")
 
-            async with LDAPConnectionManager(
+            async with ConnectionManager(
                 sample_connection_info,
                 enable_pooling=True,
             ) as manager:
@@ -495,7 +493,7 @@ class TestPerformanceRegressionIntegration:
     @pytest.mark.asyncio
     async def test_baseline_performance_establishment(
         self,
-        sample_connection_info,
+        sample_connection_info: dict[str, Any],
     ) -> None:
         """🔥 Test establishing baseline performance metrics."""
         monitor = PerformanceMonitor()
@@ -512,7 +510,7 @@ class TestPerformanceRegressionIntegration:
             # Connection establishment baseline
             monitor.start_measurement("baseline_connection")
 
-            async with LDAPConnectionManager(sample_connection_info) as manager:
+            async with ConnectionManager(sample_connection_info) as manager:
                 for _ in range(20):
                     async with manager.get_connection():
                         pass
@@ -522,7 +520,7 @@ class TestPerformanceRegressionIntegration:
             # Search operation baseline
             monitor.start_measurement("baseline_search")
 
-            async with LDAPConnectionManager(sample_connection_info) as manager:
+            async with ConnectionManager(sample_connection_info) as manager:
                 for i in range(10):
                     async for _ in manager.search(f"uid=user{i}", "(objectClass=*)"):
                         pass
@@ -532,7 +530,7 @@ class TestPerformanceRegressionIntegration:
             # Pool refresh baseline
             monitor.start_measurement("baseline_pool_refresh")
 
-            async with LDAPConnectionManager(
+            async with ConnectionManager(
                 sample_connection_info,
                 enable_pooling=True,
                 pool_size=10,
@@ -577,7 +575,7 @@ class TestPerformanceRegressionIntegration:
             # Simulate normal performance
             monitor.start_measurement("normal_performance")
 
-            async with LDAPConnectionManager(sample_connection_info) as manager:
+            async with ConnectionManager(sample_connection_info) as manager:
                 for _ in range(10):
                     async with manager.get_connection():
                         await asyncio.sleep(0.001)  # Normal delay
@@ -588,7 +586,7 @@ class TestPerformanceRegressionIntegration:
             # Simulate degraded performance
             monitor.start_measurement("degraded_performance")
 
-            async with LDAPConnectionManager(sample_connection_info) as manager:
+            async with ConnectionManager(sample_connection_info) as manager:
                 for _ in range(10):
                     async with manager.get_connection():
                         await asyncio.sleep(0.01)  # 10x slower

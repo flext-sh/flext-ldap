@@ -1,16 +1,41 @@
-"""Base configuration management for LDAP projects.
+"""DEPRECATED: Base configuration management for LDAP projects.
 
-Provides standardized configuration loading, validation, and management
-across tap-ldap, target-ldap, and flx-ldap projects.
+This module contains legacy configuration classes. For new code, use the unified
+api.LDAPConfig pattern which provides a simpler, more focused configuration interface.
+
+PREFERRED PATTERN:
+    from ldap_core_shared.api import LDAPConfig
+
+    # Instead of LDAPServerConfig:
+    config = LDAPConfig(
+        server="ldaps://ldap.company.com:636",
+        auth_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=company,dc=com",
+        auth_password="secret",
+        base_dn="dc=company,dc=com"
+    )
+
+Migration utilities are provided for backward compatibility.
 """
 
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, TypeVar, Union
+import warnings
+from typing import TYPE_CHECKING, Any, TypeVar, Union
 
 from pydantic import Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from ldap_core_shared.utils.constants import (
+    DEFAULT_LARGE_LIMIT,
+    DEFAULT_MAX_ITEMS,
+    DEFAULT_TIMEOUT_SECONDS,
+    LDAP_DEFAULT_PORT,
+)
+
+# Constants for magic values
+
+MAX_ENTRIES_LIMIT = 10000
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -18,9 +43,9 @@ if TYPE_CHECKING:
 # Configuration constants
 MAX_PORT_NUMBER = 65535
 MIN_PORT_NUMBER = 1
-MAX_POOL_SIZE = 100
+MAX_POOL_SIZE = DEFAULT_MAX_ITEMS
 MIN_POOL_SIZE = 1
-MAX_BATCH_SIZE = 10000
+MAX_BATCH_SIZE = MAX_ENTRIES_LIMIT
 MIN_BATCH_SIZE = 1
 MAX_WORKERS = 32
 MIN_WORKERS = 1
@@ -49,13 +74,13 @@ class LDAPServerConfig(BaseConfig):
     """LDAP server connection configuration."""
 
     host: str = Field(..., description="LDAP server hostname")
-    port: int = Field(default=389, description="LDAP server port")
+    port: int = Field(default=LDAP_DEFAULT_PORT, description="LDAP server port")
     bind_dn: str = Field(..., description="Bind DN for authentication")
     password: str = Field(..., description="Password for authentication", repr=False)
     base_dn: str = Field(..., description="Base DN for operations")
     use_ssl: bool = Field(default=False, description="Use SSL/TLS connection")
     use_tls: bool = Field(default=False, description="Use StartTLS")
-    timeout: int = Field(default=30, description="Connection timeout in seconds")
+    timeout: int = Field(default=DEFAULT_TIMEOUT_SECONDS, description="Connection timeout in seconds")
     pool_size: int = Field(default=10, description="Connection pool size")
 
     @field_validator("port")
@@ -81,7 +106,7 @@ class LDAPServerConfig(BaseConfig):
     def validate_pool_size(cls, v: int) -> int:
         """Validate pool size is reasonable."""
         if not MIN_POOL_SIZE <= v <= MAX_POOL_SIZE:
-            msg = "Pool size must be between 1 and 100"
+            msg = "Pool size must be between 1 and DEFAULT_MAX_ITEMS"
             raise ValueError(msg)
         return v
 
@@ -94,9 +119,9 @@ class LDAPServerConfig(BaseConfig):
 class ProcessingConfig(BaseConfig):
     """Processing and performance configuration."""
 
-    batch_size: int = Field(default=1000, description="Batch processing size")
+    batch_size: int = Field(default=DEFAULT_LARGE_LIMIT, description="Batch processing size")
     max_workers: int = Field(default=4, description="Maximum worker threads")
-    chunk_size: int = Field(default=100, description="Chunk size for processing")
+    chunk_size: int = Field(default=DEFAULT_MAX_ITEMS, description="Chunk size for processing")
     memory_limit_mb: int = Field(default=512, description="Memory limit in MB")
     retry_attempts: int = Field(default=3, description="Number of retry attempts")
     retry_delay: float = Field(default=1.0, description="Retry delay in seconds")
@@ -106,7 +131,7 @@ class ProcessingConfig(BaseConfig):
     def validate_batch_size(cls, v: int) -> int:
         """Validate batch size is reasonable."""
         if not MIN_BATCH_SIZE <= v <= MAX_BATCH_SIZE:
-            msg = "Batch size must be between 1 and 10000"
+            msg = "Batch size must be between 1 and MAX_ENTRIES_LIMIT"
             raise ValueError(msg)
         return v
 
@@ -138,9 +163,10 @@ class LoggingConfig(BaseConfig):
         description="Log format",
     )
     file_path: Union[Path, None] = Field(None, description="Log file path")
-    max_file_size_mb: int = Field(default=100, description="Max log file size in MB")
+    max_file_size_mb: int = Field(default=DEFAULT_MAX_ITEMS, description="Max log file size in MB")
     backup_count: int = Field(default=5, description="Number of backup log files")
     enable_console: bool = Field(default=True, description="Enable console logging")
+    mask_sensitive_data: bool = Field(default=True, description="Mask sensitive data in logs")
 
     @field_validator("level")
     @classmethod
@@ -160,11 +186,11 @@ class SecurityConfig(BaseConfig):
     verify_ssl: bool = Field(default=True, description="Verify SSL certificates")
     ca_cert_file: Union[Path, None] = Field(None, description="CA certificate file")
     client_cert_file: Union[Path, None] = Field(
-        None, description="Client certificate file"
+        None, description="Client certificate file",
     )
     client_key_file: Union[Path, None] = Field(None, description="Client key file")
     encryption_key: Union[str, None] = Field(
-        None, description="Encryption key", repr=False
+        None, description="Encryption key", repr=False,
     )
     mask_sensitive_data: bool = Field(
         default=True,
@@ -212,7 +238,7 @@ class ConfigurationManager:
             Configured instance of config_class
         """
         # Load from file if specified
-        file_data: dict = {}
+        file_data: dict[str, Any] = {}
         if config_file and config_file.exists():
             with config_file.open(encoding="utf-8") as f:
                 file_data = json.load(f)
@@ -256,7 +282,7 @@ class ConfigurationManager:
 
     def validate_all_configs(self) -> list[str]:
         """Validate all loaded configurations."""
-        errors: list = []
+        errors: list[str] = []
         for config_name, config in self._configs.items():
             try:
                 # Re-validate the configuration
@@ -334,3 +360,119 @@ def load_security_config(
         config_file,
         env_prefix,
     )
+
+
+# ============================================================================
+# 🔄 MIGRATION UTILITIES - Convert legacy configs to unified api.LDAPConfig
+# ============================================================================
+
+def migrate_ldap_server_config_to_unified(legacy_config: LDAPServerConfig):
+    """Convert LDAPServerConfig to unified api.LDAPConfig.
+
+    DEPRECATED: Use api.LDAPConfig directly for new LDAP connections.
+
+    Args:
+        legacy_config: Legacy LDAP server configuration
+
+    Returns:
+        Unified LDAPConfig instance
+    """
+    warnings.warn(
+        "LDAPServerConfig is deprecated. Use api.LDAPConfig directly instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+    # Dynamic import to avoid circular dependency
+    from ldap_core_shared.api import LDAPConfig
+
+    # Map legacy fields to unified config
+    server_url = legacy_config.to_connection_string()
+
+    return LDAPConfig(
+        server=server_url,
+        auth_dn=legacy_config.bind_dn,
+        auth_password=legacy_config.password,
+        base_dn=legacy_config.base_dn,
+        port=legacy_config.port,
+        use_tls=legacy_config.use_ssl or legacy_config.use_tls,
+        timeout=legacy_config.timeout,
+        pool_size=legacy_config.pool_size,
+    )
+
+
+def create_unified_config_from_legacy_manager(
+    config_name: str = "ldap_server",
+):
+    """Create unified config from legacy configuration manager.
+
+    DEPRECATED: Use api.LDAPConfig constructor directly.
+
+    Args:
+        config_name: Name of config in legacy manager
+
+    Returns:
+        Unified LDAPConfig instance or None if not found
+    """
+    warnings.warn(
+        "Legacy configuration manager is deprecated. Use api.LDAPConfig directly instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+    legacy_config = config_manager.get_config(config_name)
+    if legacy_config and isinstance(legacy_config, LDAPServerConfig):
+        return migrate_ldap_server_config_to_unified(legacy_config)
+
+    return None
+
+
+def auto_detect_and_migrate_config() -> Any:
+    """Auto-detect legacy config and migrate to unified format.
+
+    DEPRECATED: Use api.LDAPConfig constructor with explicit parameters.
+
+    Returns:
+        Unified LDAPConfig if legacy config found, None otherwise
+    """
+    warnings.warn(
+        "Auto-detection of legacy config is deprecated. Use explicit api.LDAPConfig construction instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+    # Try to find any LDAP config in the legacy manager
+    for config in config_manager._configs.values():
+        if isinstance(config, LDAPServerConfig):
+            return migrate_ldap_server_config_to_unified(config)
+
+    return None
+
+
+# Updated load function with migration warning
+def load_ldap_config_unified(
+    config_file: Path | None = None,
+    env_prefix: str = "LDAP_",
+):
+    """Load LDAP config and return unified format.
+
+    DEPRECATED: Use api.LDAPConfig constructor directly.
+
+    Args:
+        config_file: Optional config file
+        env_prefix: Environment variable prefix
+
+    Returns:
+        Unified LDAPConfig instance
+    """
+    warnings.warn(
+        "load_ldap_config_unified is deprecated. Use api.LDAPConfig constructor directly instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+    # Load legacy config first
+    legacy_config = load_ldap_config(config_file, env_prefix)
+
+    # Migrate to unified format
+    return migrate_ldap_server_config_to_unified(legacy_config)
