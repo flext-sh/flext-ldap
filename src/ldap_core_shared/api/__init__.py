@@ -37,14 +37,66 @@ from ldap_core_shared.api.facade import (
 from ldap_core_shared.api.query import Query
 from ldap_core_shared.api.results import Result
 
+# Import migration-related API components for client-a-oud-mig compatibility
+from ldap_core_shared.ldif.processor import LDIFProcessor, LDIFProcessingConfig
+from ldap_core_shared.ldif.writer import LDIFWriter, LDIFWriterConfig, LDIFHeaderConfig
+from ldap_core_shared.schema.migrator import SchemaMigrator, MigrationPlan
+from ldap_core_shared.exceptions.migration import (
+    MigrationError,
+    SchemaValidationError,
+    DataIntegrityError,
+)
+# Import connection and utility modules for compatibility
+from ldap_core_shared.connections.manager import ConnectionManager
+from ldap_core_shared.utils.dn_utils import normalize_dn, parse_dn, is_child_dn, get_parent_dn, validate_dn_format
+from ldap_core_shared.utils.performance import PerformanceMonitor
+from ldap_core_shared.utils.ldap_validation import (
+    validate_and_normalize_ldap_entry,
+    validate_and_normalize_attribute_name,
+    validate_and_normalize_attribute_value,
+    validate_dn,
+    validate_and_normalize_file_path,
+    validate_configuration_value,
+    PathValidationError,
+    ConfigValidationError,
+)
+
 __all__ = [
     # Main facade and convenience functions
     "LDAP",                 # True Facade (pure delegation)
     # Core components
-    "LDAPConfig",   # Value Object for configuration
-    "Query",        # Builder Pattern for queries
-    "Result",       # Value Object for results
+    "LDAPConfig",           # Value Object for configuration
+    "Query",                # Builder Pattern for queries
+    "Result",               # Value Object for results
     "connect",              # Factory method for quick connections
     "ldap_session",         # Context manager factory
-    "validate_ldap_config",  # Configuration validation
+    "validate_ldap_config", # Configuration validation
+    # Migration API for client-a-oud-mig compatibility
+    "LDIFProcessor",        # LDIF processing functionality
+    "LDIFProcessingConfig", # LDIF processor configuration
+    "LDIFWriter",           # LDIF writing functionality
+    "LDIFWriterConfig",     # LDIF writer configuration
+    "LDIFHeaderConfig",     # LDIF header configuration
+    "SchemaMigrator",       # Schema migration functionality
+    "MigrationPlan",        # Migration planning
+    "MigrationError",       # Migration exceptions
+    "SchemaValidationError", # Schema validation exceptions
+    "DataIntegrityError",   # Data integrity exceptions
+    # Connection and utility API
+    "ConnectionManager",     # Connection management
+    "normalize_dn",         # DN normalization
+    "parse_dn",             # DN parsing
+    "is_child_dn",          # DN hierarchy checking
+    "get_parent_dn",        # DN parent extraction
+    "validate_dn_format",   # DN validation
+    "PerformanceMonitor",   # Performance monitoring
+    # LDAP validation utilities
+    "validate_and_normalize_ldap_entry",     # Complete entry validation
+    "validate_and_normalize_attribute_name", # Attribute name validation
+    "validate_and_normalize_attribute_value", # Attribute value validation
+    "validate_dn",          # DN validation with normalization
+    "validate_and_normalize_file_path",      # File path validation
+    "validate_configuration_value",          # Configuration validation
+    "PathValidationError",  # Path validation exception
+    "ConfigValidationError", # Config validation exception
 ]
