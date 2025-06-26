@@ -1,18 +1,4 @@
-"""Enterprise LDIF Processor with Production-Validated Patterns.
-
-This module provides enterprise-grade LDIF processing extracted from
-algar-oud-mig production system (16,062 entries migrated successfully).
-Implements ZERO TOLERANCE methodology with streaming, validation, and
-comprehensive error recovery.
-
-Architecture:
-    - Memory-efficient streaming for 100MB+ files
-    - Rules-based validation with schema integration
-    - Production-grade error recovery and checkpointing
-    - Performance monitoring with 12K+ entries/second target
-
-Version: 1.0.0-enterprise
-"""
+"""Enterprise LDIF Processor with Production-Validated Patterns."""
 
 from __future__ import annotations
 
@@ -24,11 +10,14 @@ from typing import TYPE_CHECKING
 import ldif
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+# Constants for magic values
 from ldap_core_shared.domain.results import (
     LDAPOperationResult,
     LDAPPerformanceResult,
 )
 from ldap_core_shared.utils.constants import (
+    DEFAULT_LARGE_LIMIT,
+    DEFAULT_MAX_ITEMS,
     TARGET_OPERATIONS_PER_SECOND,
     TARGET_OPERATIONS_PER_SECOND_A_GRADE,
     TARGET_OPERATIONS_PER_SECOND_B_GRADE,
@@ -53,7 +42,7 @@ class LDIFProcessingConfig(BaseModel):
 
     encoding: str = Field(default="utf-8", description="File encoding")
     chunk_size: int = Field(
-        default=1000,
+        default=DEFAULT_LARGE_LIMIT,
         ge=1,
         description="Entries per chunk for streaming",
     )
@@ -85,7 +74,7 @@ class LDIFProcessingConfig(BaseModel):
     )
     memory_limit_mb: int = Field(
         default=375,
-        ge=100,
+        ge=DEFAULT_MAX_ITEMS,
         description="Memory usage limit in MB",
     )
 
@@ -298,22 +287,22 @@ class LDIFProcessor:
         metrics = self.performance_monitor.get_metrics()
 
         return LDAPPerformanceResult(
-            entries_processed=self._stats["entries_processed"],
-            processing_time_ms=metrics.total_duration * 1000,
-            entries_per_second=(
+            operation_name="ldif_processing",
+            total_operations=int(self._stats["entries_processed"]),
+            successful_operations=int(self._stats.get("successful_entries", 0)),
+            failed_operations=int(self._stats.get("failed_entries", 0)),
+            total_duration=metrics.total_duration,
+            average_duration=metrics.total_duration / max(self._stats["entries_processed"], 1),
+            operations_per_second=(
                 self._stats["entries_processed"] / metrics.total_duration
                 if metrics.total_duration > 0
                 else 0
             ),
-            memory_usage_mb=self._stats["memory_usage_mb"],
-            performance_grade=self._calculate_performance_grade(
-                self._stats["entries_processed"] / max(metrics.total_duration, 0.001),
-            ),
-            metadata={
-                "operation_counts": metrics.operation_counts,
-                "stats": self._stats.copy(),
-                "config": self.config.model_dump(),
-            },
+            memory_peak_mb=self._stats["memory_usage_mb"],
+            cpu_usage_percent=0.0,
+            pool_size=1,
+            pool_utilization=0.0,
+            connection_reuse_rate=0.0,
         )
 
     def _parse_file_internal(self, file_path: Path) -> list[LDIFEntry]:
@@ -412,7 +401,7 @@ class LDIFProcessor:
                 for value in attr_values:
                     if isinstance(value, bytes):
                         if self.config.preserve_binary:
-                            # For binary data, convert to base64 or keep as bytes representation  # noqa: E501
+                            # For binary data, convert to base64 or keep as bytes representation
                             str_values.append(value.decode("utf-8", errors="replace"))
                         else:
                             str_values.append(value.decode("utf-8"))
@@ -571,7 +560,7 @@ class LDIFProcessor:
             Error operation result
         """
         file_not_found_msg = f"File not found: {file_path}"
-        logger.exception("LDIF file not found", extra={"file_path": str(file_path)})
+        logger.error("LDIF file not found", extra={"file_path": str(file_path)})
         ctx["success"] = False
         ctx["error"] = file_not_found_msg
 
@@ -597,7 +586,7 @@ class LDIFProcessor:
             Error operation result
         """
         permission_error_msg = f"Permission denied: {file_path}"
-        logger.exception(
+        logger.error(
             "LDIF file permission denied",
             extra={"file_path": str(file_path)},
         )
@@ -628,7 +617,7 @@ class LDIFProcessor:
             Error operation result
         """
         validation_error_msg = f"Validation failed: {validation_error!s}"
-        logger.exception(
+        logger.error(
             "LDIF validation error",
             extra={"error": str(validation_error)},
         )
@@ -659,7 +648,7 @@ class LDIFProcessor:
             Error operation result
         """
         parse_error_msg = f"Parse failed: {parse_error!s}"
-        logger.exception("LDIF parse error", extra={"file_path": str(file_path)})
+        logger.error("LDIF parse error", extra={"file_path": str(file_path)})
         ctx["success"] = False
         ctx["error"] = parse_error_msg
 
@@ -715,7 +704,7 @@ class LDIFProcessor:
             Error operation result
         """
         validation_error_msg = f"Validation failed: {validation_error!s}"
-        logger.exception(
+        logger.error(
             "LDIF string validation error",
             extra={"error": str(validation_error)},
         )
@@ -749,7 +738,7 @@ class LDIFProcessor:
             Error operation result
         """
         parse_error_msg = f"Parse failed: {parse_error!s}"
-        logger.exception("LDIF string parse error")
+        logger.error("LDIF string parse error")
         ctx["success"] = False
         ctx["error"] = parse_error_msg
 
@@ -837,3 +826,7 @@ class LDIFProcessor:
             "parse_file",
             {"file_path": str(file_path), "entries_count": len(entries)},
         )
+
+
+# Backward compatibility alias - maintain existing API for enterprise integration
+RFC2849LDIFProcessor = LDIFProcessor

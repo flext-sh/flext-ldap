@@ -1,3 +1,16 @@
+from __future__ import annotations
+
+# Constants for magic values
+SECONDS_PER_DAY = 86400
+
+# BER/ASN.1 encoding constants
+BER_SEQUENCE_TAG = 0x30
+BER_INTEGER_TAG = 0x02
+BER_ENUMERATED_TAG = 0x0A
+BER_CONTEXT_TAG_0 = 0xA0
+BER_CONTEXT_TAG_1 = 0x81
+BER_CONTEXT_TAG_0_SIMPLE = 0x80
+
 """LDAP Password Policy Control Implementation.
 
 This module implements the Password Policy control as defined in the IETF draft
@@ -19,13 +32,19 @@ Usage Example:
     >>> # Request password policy information during bind
     >>> control = PasswordPolicyControl()
     >>> result = connection.bind(
-    ...     dn="uid=user,ou=people,dc=example,dc=com", password="secret", controls=[control]
+    ...     dn="uid=user,ou=people,dc=example,dc=com",
+    ...     password="secret",
+    ...     controls=[control]
     ... )
     >>>
     >>> # Check for password policy response
-    >>> policy_response = result.get_response_control(PasswordPolicyControl.control_type)
+    >>> policy_response = result.get_response_control(
+    ...     PasswordPolicyControl.control_type
+    ... )
     >>> if policy_response and policy_response.warning:
-    ...     print(f"Password expires in {policy_response.time_before_expiration} seconds")
+    ...     print(
+    ...         f"Password expires in {policy_response.time_before_expiration} seconds"
+    ...     )
 
 References:
     - perl-ldap: lib/Net/LDAP/Control/PasswordPolicy.pm
@@ -33,10 +52,8 @@ References:
     - OID: 1.3.6.1.4.1.42.2.27.8.5.1 (Sun/Oracle)
 """
 
-from __future__ import annotations
-
 from enum import IntEnum
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import Field, validator
 
@@ -104,7 +121,7 @@ class PasswordPolicyControl(LDAPControl):
 
     # Response fields (populated by server)
     warning_type: Optional[PasswordPolicyWarning] = Field(
-        default=None, description="Type of password policy warning"
+        default=None, description="Type of password policy warning",
     )
 
     warning_value: Optional[int] = Field(
@@ -114,7 +131,7 @@ class PasswordPolicyControl(LDAPControl):
     )
 
     error: Optional[PasswordPolicyError] = Field(
-        default=None, description="Password policy error code"
+        default=None, description="Password policy error code",
     )
 
     # Convenience properties for common warning types
@@ -139,7 +156,7 @@ class PasswordPolicyControl(LDAPControl):
         return None
 
     @validator("warning_value")
-    def validate_warning_value(cls, v: Optional[int], values: dict) -> Optional[int]:
+    def validate_warning_value(cls, v: Optional[int], values: dict[str, Any]) -> Optional[int]:
         """Validate warning value is consistent with warning type."""
         if v is not None and v < 0:
             msg = "Warning value must be non-negative"
@@ -237,19 +254,19 @@ class PasswordPolicyControl(LDAPControl):
             while pos < len(content):
                 tag = content[pos]
 
-                if tag == 0xA0:  # Context tag [0] - warning
+                if tag == BER_CONTEXT_TAG_0:  # Context tag [0] - warning
                     warning_content, pos = cls._decode_context_tag(content, pos)
 
                     # Decode warning choice
                     warning_tag = warning_content[0]
-                    if warning_tag == 0x80:  # Context tag [0] - timeBeforeExpiration
+                    if warning_tag == BER_CONTEXT_TAG_0_SIMPLE:  # Context tag [0] - timeBeforeExpiration
                         warning_type = PasswordPolicyWarning.TIME_BEFORE_EXPIRATION
                         warning_value = cls._decode_integer(warning_content[2:])[0]
-                    elif warning_tag == 0x81:  # Context tag [1] - graceLoginsRemaining
+                    elif warning_tag == BER_CONTEXT_TAG_1:  # Context tag [1] - graceLoginsRemaining
                         warning_type = PasswordPolicyWarning.GRACE_LOGINS_REMAINING
                         warning_value = cls._decode_integer(warning_content[2:])[0]
 
-                elif tag == 0x81:  # Context tag [1] - error
+                elif tag == BER_CONTEXT_TAG_1:  # Context tag [1] - error
                     error_content, pos = cls._decode_context_tag(content, pos)
                     error_value = cls._decode_enumerated(error_content)
                     error = PasswordPolicyError(error_value)
@@ -258,7 +275,7 @@ class PasswordPolicyControl(LDAPControl):
                     pos += 1  # Skip unknown tags
 
             return cls(
-                warning_type=warning_type, warning_value=warning_value, error=error
+                warning_type=warning_type, warning_value=warning_value, error=error,
             )
 
         except Exception as e:
@@ -293,7 +310,7 @@ class PasswordPolicyControl(LDAPControl):
         """Check if account is locked."""
         return self.error == PasswordPolicyError.ACCOUNT_LOCKED
 
-    def is_password_expiring_soon(self, threshold_seconds: int = 86400) -> bool:
+    def is_password_expiring_soon(self, threshold_seconds: int = 86400) -> bool:  # 24 hours
         """Check if password is expiring soon.
 
         Args:
@@ -318,8 +335,12 @@ class PasswordPolicyControl(LDAPControl):
         error_messages = {
             PasswordPolicyError.PASSWORD_EXPIRED: "Password has expired",
             PasswordPolicyError.ACCOUNT_LOCKED: "Account is locked",
-            PasswordPolicyError.CHANGE_AFTER_RESET: "Must change password after reset",
-            PasswordPolicyError.PASSWORD_MOD_NOT_ALLOWED: "Password modification not allowed",
+            PasswordPolicyError.CHANGE_AFTER_RESET: (
+                "Must change password after reset"
+            ),
+            PasswordPolicyError.PASSWORD_MOD_NOT_ALLOWED: (
+                "Password modification not allowed"
+            ),
             PasswordPolicyError.MUST_SUPPLY_OLD_PASSWORD: "Must supply old password",
             PasswordPolicyError.INSUFFICIENT_PASSWORD_QUALITY: "Password quality insufficient",
             PasswordPolicyError.PASSWORD_TOO_SHORT: "Password is too short",
@@ -339,7 +360,7 @@ class PasswordPolicyControl(LDAPControl):
             return None
 
         if self.warning_type == PasswordPolicyWarning.TIME_BEFORE_EXPIRATION:
-            days = (self.warning_value or 0) // 86400
+            days = (self.warning_value or 0) // SECONDS_PER_DAY
             if days > 0:
                 return f"Password expires in {days} day(s)"
             return f"Password expires in {self.warning_value} second(s)"
@@ -392,7 +413,7 @@ class PasswordPolicyControl(LDAPControl):
     @classmethod
     def _decode_sequence(cls, data: bytes) -> bytes:
         """Decode BER SEQUENCE and return content."""
-        if not data or data[0] != 0x30:
+        if not data or data[0] != BER_SEQUENCE_TAG:
             msg = "Not a SEQUENCE"
             raise ValueError(msg)
         length = data[1]
@@ -401,7 +422,7 @@ class PasswordPolicyControl(LDAPControl):
     @classmethod
     def _decode_integer(cls, data: bytes) -> tuple[int, bytes]:
         """Decode BER INTEGER and return value and remaining data."""
-        if not data or data[0] != 0x02:
+        if not data or data[0] != BER_INTEGER_TAG:
             msg = "Not an INTEGER"
             raise ValueError(msg)
         length = data[1]
@@ -412,7 +433,7 @@ class PasswordPolicyControl(LDAPControl):
     @classmethod
     def _decode_enumerated(cls, data: bytes) -> int:
         """Decode BER ENUMERATED and return value."""
-        if not data or data[0] != 0x0A:
+        if not data or data[0] != BER_ENUMERATED_TAG:
             msg = "Not an ENUMERATED"
             raise ValueError(msg)
         length = data[1]
@@ -426,7 +447,6 @@ class PasswordPolicyControl(LDAPControl):
         length = data[pos + 1]
         content = data[pos + 2 : pos + 2 + length]
         return content, pos + 2 + length
-
 
 # TODO: Integration points for implementation:
 #

@@ -72,7 +72,7 @@ ResultMessage: TypeAlias = str
 #: Complete operation result
 OperationResult: TypeAlias = dict[
     Literal["result_code", "message", "dn"],
-    Union[ResultCode, ResultMessage] | Union[DN, None],
+    Union[ResultCode, ResultMessage, DN, None],
 ]
 
 #: Entry result from search operation
@@ -115,7 +115,7 @@ LDIFRecordType: TypeAlias = Literal["entry", "modification", "delete", "moddn"]
 #: LDIF record
 LDIFRecord: TypeAlias = dict[
     Literal["type", "dn", "attributes", "changes"],
-    Union[LDIFRecordType, DN, Attributes, list[dict[str, Any]]] | None,
+    Union[LDIFRecordType, DN, Attributes, list[dict[str, Any]], None],
 ]
 
 #: Collection of LDIF records
@@ -123,7 +123,7 @@ LDIFRecords: TypeAlias = list[LDIFRecord]
 
 #: Migration status
 MigrationStatus: TypeAlias = Literal[
-    "pending", "running", "completed", "failed", "cancelled"
+    "pending", "running", "completed", "failed", "cancelled",
 ]
 
 #: Migration result statistics
@@ -135,9 +135,7 @@ MigrationStats: TypeAlias = dict[
 # ===== CONFIGURATION TYPES =====
 
 #: Configuration value (can be various types)
-ConfigValue: TypeAlias = (
-    Union[str, int] | Union[float, bool] | list[Any] | dict[str, Any] | None
-)
+ConfigValue: TypeAlias = Union[str, int, float, bool, list[Any], dict[str, Any], None]
 
 #: Configuration dictionary
 Config: TypeAlias = dict[str, ConfigValue]
@@ -162,7 +160,7 @@ MetricLabels: TypeAlias = dict[str, str]
 #: Metric data point
 Metric: TypeAlias = dict[
     Literal["name", "value", "labels", "timestamp"],
-    Union[MetricName, MetricValue] | Union[MetricLabels, float],
+    Union[MetricName, MetricValue, MetricLabels, float],
 ]
 
 #: Collection of metrics
@@ -217,7 +215,7 @@ ErrorContext: TypeAlias = dict[str, Any]
 #: Exception details
 ExceptionDetails: TypeAlias = dict[
     Literal["type", "message", "traceback", "context"],
-    Union[str, ErrorContext] | None,
+    Union[str, ErrorContext, None],
 ]
 
 # ===== VALIDATION TYPES =====
@@ -254,7 +252,7 @@ PaginationToken: TypeAlias = str
 #: Pagination metadata
 PaginationMeta: TypeAlias = dict[
     Literal["page", "size", "total", "token"],
-    Union[PageNumber, PageSize] | Union[TotalCount, PaginationToken] | None,
+    Union[PageNumber, PageSize, TotalCount, PaginationToken, None],
 ]
 
 #: Sort field name
@@ -265,7 +263,7 @@ SortDirection: TypeAlias = Literal["asc", "desc"]
 
 #: Sort specification
 SortSpec: TypeAlias = dict[
-    Literal["field", "direction"], Union[SortField, SortDirection]
+    Literal["field", "direction"], Union[SortField, SortDirection],
 ]
 
 #: Collection of sort specifications

@@ -73,17 +73,17 @@ class ExtensionInfo(BaseModel):
     oid: str = Field(description="Extension OID")
 
     name: Optional[str] = Field(
-        default=None, description="Human-readable extension name"
+        default=None, description="Human-readable extension name",
     )
 
     description: Optional[str] = Field(
-        default=None, description="Extension description"
+        default=None, description="Extension description",
     )
 
     rfc: Optional[str] = Field(default=None, description="RFC specification reference")
 
     is_critical: bool = Field(
-        default=False, description="Whether extension is critical for operation"
+        default=False, description="Whether extension is critical for operation",
     )
 
 
@@ -104,60 +104,60 @@ class ServerInfo(BaseModel):
 
     # Basic server identification
     vendor: ServerVendor = Field(
-        default=ServerVendor.UNKNOWN, description="Server vendor/implementation"
+        default=ServerVendor.UNKNOWN, description="Server vendor/implementation",
     )
 
     version: Optional[str] = Field(default=None, description="Server version string")
 
     ldap_version: list[LDAPVersion] = Field(
-        default_factory=list, description="Supported LDAP protocol versions"
+        default_factory=list, description="Supported LDAP protocol versions",
     )
 
     # Directory structure
     naming_contexts: list[str] = Field(
-        default_factory=list, description="Available naming contexts (base DNs)"
+        default_factory=list, description="Available naming contexts (base DNs)",
     )
 
     default_naming_context: Optional[str] = Field(
-        default=None, description="Default naming context"
+        default=None, description="Default naming context",
     )
 
     schema_naming_context: Optional[str] = Field(
-        default=None, description="Schema naming context"
+        default=None, description="Schema naming context",
     )
 
     config_naming_context: Optional[str] = Field(
-        default=None, description="Configuration naming context"
+        default=None, description="Configuration naming context",
     )
 
     # Capabilities
     supported_extensions: list[ExtensionInfo] = Field(
-        default_factory=list, description="Supported LDAP extensions"
+        default_factory=list, description="Supported LDAP extensions",
     )
 
     supported_controls: list[ControlInfo] = Field(
-        default_factory=list, description="Supported LDAP controls"
+        default_factory=list, description="Supported LDAP controls",
     )
 
     supported_sasl_mechanisms: list[str] = Field(
-        default_factory=list, description="Supported SASL authentication mechanisms"
+        default_factory=list, description="Supported SASL authentication mechanisms",
     )
 
     supported_features: list[str] = Field(
-        default_factory=list, description="Additional supported features"
+        default_factory=list, description="Additional supported features",
     )
 
     # Security and policies
     supports_tls: bool = Field(
-        default=False, description="Whether server supports TLS/SSL"
+        default=False, description="Whether server supports TLS/SSL",
     )
 
     requires_authentication: bool = Field(
-        default=True, description="Whether server requires authentication"
+        default=True, description="Whether server requires authentication",
     )
 
     password_policy_enabled: bool = Field(
-        default=False, description="Whether password policy is enabled"
+        default=False, description="Whether password policy is enabled",
     )
 
     # Server-specific attributes
@@ -166,16 +166,16 @@ class ServerInfo(BaseModel):
     domain_name: Optional[str] = Field(default=None, description="Domain name")
 
     forest_name: Optional[str] = Field(
-        default=None, description="Forest name (Active Directory)"
+        default=None, description="Forest name (Active Directory)",
     )
 
     # Timestamps and metadata
     discovered_at: datetime = Field(
-        default_factory=datetime.now, description="When server info was discovered"
+        default_factory=datetime.now, description="When server info was discovered",
     )
 
     raw_attributes: dict[str, Any] = Field(
-        default_factory=dict, description="Raw Root DSE attributes from server"
+        default_factory=dict, description="Raw Root DSE attributes from server",
     )
 
     def get_extension_by_oid(self, oid: str) -> Optional[ExtensionInfo]:
@@ -394,16 +394,16 @@ class RootDSEService:
         # Extract basic information
         naming_contexts = self._extract_list_attribute(attributes, "namingContexts")
         supported_extensions_oids = self._extract_list_attribute(
-            attributes, "supportedExtension"
+            attributes, "supportedExtension",
         )
         supported_controls_oids = self._extract_list_attribute(
-            attributes, "supportedControl"
+            attributes, "supportedControl",
         )
         supported_sasl = self._extract_list_attribute(
-            attributes, "supportedSASLMechanisms"
+            attributes, "supportedSASLMechanisms",
         )
         supported_ldap_versions = self._extract_list_attribute(
-            attributes, "supportedLDAPVersion"
+            attributes, "supportedLDAPVersion",
         )
 
         # Parse extensions
@@ -416,7 +416,7 @@ class RootDSEService:
                     name=ext_info.get("name"),
                     description=ext_info.get("description"),
                     rfc=ext_info.get("rfc"),
-                )
+                ),
             )
 
         # Parse controls
@@ -428,7 +428,7 @@ class RootDSEService:
                     oid=oid,
                     name=ctrl_info.get("name"),
                     description=ctrl_info.get("description"),
-                )
+                ),
             )
 
         # Detect server vendor and version
@@ -449,13 +449,13 @@ class RootDSEService:
             ldap_version=ldap_versions,
             naming_contexts=naming_contexts,
             default_naming_context=self._extract_single_attribute(
-                attributes, "defaultNamingContext"
+                attributes, "defaultNamingContext",
             ),
             schema_naming_context=self._extract_single_attribute(
-                attributes, "schemaNamingContext"
+                attributes, "schemaNamingContext",
             ),
             config_naming_context=self._extract_single_attribute(
-                attributes, "configurationNamingContext"
+                attributes, "configurationNamingContext",
             ),
             supported_extensions=extensions,
             supported_controls=controls,
@@ -463,13 +463,13 @@ class RootDSEService:
             supports_tls=self._detect_tls_support(attributes),
             server_name=self._extract_single_attribute(attributes, "serverName"),
             domain_name=self._extract_single_attribute(
-                attributes, "defaultNamingContext"
+                attributes, "defaultNamingContext",
             ),
             raw_attributes=attributes,
         )
 
     def _extract_single_attribute(
-        self, attributes: dict[str, Any], attr_name: str
+        self, attributes: dict[str, Any], attr_name: str,
     ) -> Optional[str]:
         """Extract single-valued attribute."""
         value = attributes.get(attr_name)
@@ -480,7 +480,7 @@ class RootDSEService:
         return None
 
     def _extract_list_attribute(
-        self, attributes: dict[str, Any], attr_name: str
+        self, attributes: dict[str, Any], attr_name: str,
     ) -> list[str]:
         """Extract multi-valued attribute as list."""
         value = attributes.get(attr_name, [])
@@ -491,7 +491,7 @@ class RootDSEService:
         return []
 
     def _detect_server_vendor(
-        self, attributes: dict[str, Any]
+        self, attributes: dict[str, Any],
     ) -> tuple[ServerVendor, Optional[str]]:
         """Detect server vendor and version from attributes."""
         vendor_string = self._extract_single_attribute(attributes, "vendorName") or ""
@@ -547,7 +547,7 @@ async def discover_server_info(connection: Any) -> ServerInfo:
 
 
 def create_extension_info(
-    oid: str, name: Optional[str] = None, description: Optional[str] = None
+    oid: str, name: Optional[str] = None, description: Optional[str] = None,
 ) -> ExtensionInfo:
     """Create extension information object.
 
@@ -563,7 +563,7 @@ def create_extension_info(
 
 
 def create_control_info(
-    oid: str, name: Optional[str] = None, description: Optional[str] = None
+    oid: str, name: Optional[str] = None, description: Optional[str] = None,
 ) -> ControlInfo:
     """Create control information object.
 
@@ -576,7 +576,6 @@ def create_control_info(
         ControlInfo object
     """
     return ControlInfo(oid=oid, name=name, description=description)
-
 
 # TODO: Integration points for implementation:
 #

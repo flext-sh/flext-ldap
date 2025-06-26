@@ -1,10 +1,9 @@
-"""LDIF Transformer - Advanced entry transformation and filtering.
-
-This module provides sophisticated LDIF transformation capabilities including
-entry filtering, attribute transformation, and data migration support.
-"""
-
 from __future__ import annotations
+
+from ldap_core_shared.utils.constants import DEFAULT_MAX_ITEMS
+
+"""LDIF Transformer - Advanced entry transformation and filtering."""
+
 
 import logging
 import re
@@ -14,6 +13,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ldap_core_shared.domain.results import LDAPOperationResult
 from ldap_core_shared.ldif.processor import LDIFEntry
+
+# Constants for magic values
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -30,7 +31,7 @@ class TransformationRule(BaseModel):
     description: str = Field(default="", description="Rule description")
     enabled: bool = Field(default=True, description="Whether rule is enabled")
     priority: int = Field(
-        default=100,
+        default=DEFAULT_MAX_ITEMS,
         description="Rule priority (lower = higher priority)",
     )
 
@@ -150,8 +151,8 @@ class LDIFTransformer:
 
             return filtered
 
-        except re.error as e:
-            logger.exception(f"Invalid regex pattern '{pattern}': {e}")
+        except re.error:
+            logger.exception("Invalid regex pattern '{pattern}': {e}")
             return entries
 
     def filter_entries_by_object_class(
@@ -212,9 +213,7 @@ class LDIFTransformer:
                         ]
                         new_attributes[attr_key] = new_values
                     except Exception as e:
-                        logger.warning(
-                            f"Failed to transform attribute {attr_key} in {entry.dn}: {e}",
-                        )
+                        logger.warning("Failed to transform attribute %s in %s: %s", attr_key, entry.dn, e)
 
             transformed.append(
                 LDIFEntry(
@@ -376,8 +375,8 @@ class LDIFTransformer:
                 values = entry.get_attribute_values(attr_name)
                 return any(re.search(pattern, value, re.IGNORECASE) for value in values)
 
-        except Exception as e:
-            logger.warning(f"Failed to apply filter rule {rule.name}: {e}")
+        except Exception:
+            logger.warning("Failed to apply filter rule {rule.name}: {e}")
 
         return None
 
@@ -392,9 +391,7 @@ class LDIFTransformer:
             try:
                 new_attributes = self._apply_attribute_rule(new_attributes, rule)
             except Exception as e:
-                logger.warning(
-                    f"Failed to apply attribute rule {rule.name} to {entry.dn}: {e}",
-                )
+                logger.warning("Failed to apply attribute rule %s to %s: %s", rule.name, entry.dn, e)
 
         return LDIFEntry(
             dn=entry.dn,

@@ -1,14 +1,20 @@
-"""Core LDAP domain models for shared use across tap-ldap, target-ldap, and flx-ldap.
-
-This module contains the fundamental domain models extracted from algar-oud-mig
-for use across all LDAP-related projects to ensure consistency and reusability.
-"""
-
 from __future__ import annotations
+
+from ldap_core_shared.utils.constants import (
+    DEFAULT_MAX_ITEMS,
+    LDAP_DEFAULT_PORT,
+    TCP_PORT_MAX,
+    TCP_PORT_MIN,
+)
+
+"""Core LDAP domain models for shared use across tap-ldap, target-ldap, and flx-ldap."""
+
 
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field, field_validator
+
+# Constants for magic values
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -22,7 +28,7 @@ class LDAPConnectionConfig(BaseModel):
     """
 
     host: str = Field(..., description="LDAP server hostname")
-    port: int = Field(default=389, description="LDAP server port")
+    port: int = Field(default=LDAP_DEFAULT_PORT, description="LDAP server port")
     bind_dn: str = Field(..., description="Bind DN for authentication")
     password: str = Field(..., description="Password for authentication")
     base_dn: str = Field(..., description="Base DN for operations")
@@ -32,8 +38,8 @@ class LDAPConnectionConfig(BaseModel):
     @classmethod
     def validate_port(cls, v: int) -> int:
         """Validate port number is in valid range."""
-        if not 1 <= v <= 65535:
-            msg = "Port must be between 1 and 65535"
+        if not TCP_PORT_MIN <= v <= TCP_PORT_MAX:
+            msg = f"Port must be between {TCP_PORT_MIN} and {TCP_PORT_MAX}"
             raise ValueError(msg)
         return v
 
@@ -49,6 +55,10 @@ class LDAPEntry(BaseModel):
         default_factory=dict,
         description="Entry attributes",
     )
+    raw_attributes: dict[str, list[bytes]] = Field(
+        default_factory=dict,
+        description="Raw binary attributes",
+    )
 
     @field_validator("dn")
     @classmethod
@@ -59,17 +69,43 @@ class LDAPEntry(BaseModel):
             raise ValueError(msg)
         return v.strip()
 
-    def get_attribute(self, name: str) -> list[str] | None:
-        """Get attribute values by name (case-insensitive)."""
+    def get_attribute(self, name: str) -> str | None:
+        """Get single attribute value by name (case-insensitive).
+
+        Returns first value for multi-valued attributes for compatibility
+        with the unified API. Use get_attribute_values() for all values.
+        """
+        values = self.get_attribute_values(name)
+        return values[0] if values else None
+
+    def get_attribute_values(self, name: str) -> list[str]:
+        """Get all attribute values by name (case-insensitive)."""
         for attr_name, values in self.attributes.items():
             if attr_name.lower() == name.lower():
                 return values
-        return None
+        return []
 
     def has_object_class(self, object_class: str) -> bool:
         """Check if entry has specific object class."""
-        object_classes = self.get_attribute("objectClass") or []
+        object_classes = self.get_attribute_values("objectClass")
         return any(oc.lower() == object_class.lower() for oc in object_classes)
+
+    def is_user(self) -> bool:
+        """Check if entry is a user (person/user object class)."""
+        return self.has_object_class("person") or self.has_object_class("user")
+
+    def is_group(self) -> bool:
+        """Check if entry is a group."""
+        return self.has_object_class("group") or self.has_object_class("groupOfNames")
+
+    def get_display_name(self) -> str:
+        """Get display name (cn, displayName, or name attribute)."""
+        return (
+            self.get_attribute("displayName") or
+            self.get_attribute("cn") or
+            self.get_attribute("name") or
+            self.dn.split(",")[0].split("=")[1] if "=" in self.dn else self.dn
+        )
 
 
 class MigrationConfig(BaseModel):
@@ -130,7 +166,7 @@ class MigrationStats(BaseModel):
         """Calculate success rate percentage."""
         if self.total_processed == 0:
             return 0.0
-        return ((self.successful + self.skipped) / self.total_processed) * 100
+        return ((self.successful + self.skipped) / self.total_processed) * DEFAULT_MAX_ITEMS
 
 
 class MigrationStage(BaseModel):

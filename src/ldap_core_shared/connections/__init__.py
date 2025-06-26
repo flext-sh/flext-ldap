@@ -1,38 +1,64 @@
-"""LDAP Core Shared - Connections Module.
+"""LDAP Connection Management.
 
-This module provides enterprise-grade LDAP connection management extracted and
-enhanced from the algar-oud-mig project. It implements connection pooling,
-automatic reconnection, health monitoring, and SSH tunnel support.
+This package provides enterprise-grade LDAP connection management with
+advanced features including connection pooling, failover, and monitoring.
 
-Architecture:
-    Connection management using Repository pattern with connection pooling
-    for optimal resource utilization and enterprise-grade reliability.
+UNIFIED INTEGRATION: Use create_unified_connection_manager() for easy setup
+with api.LDAPConfig instead of the legacy ConnectionConfig approach.
 
-Extracted Components:
-    - LDAPConnectionInfo: From algar-oud-mig.ldap_operations
-    - RealLDAPConnection: Enhanced from algar-oud-mig.ldap_operations
-    - LDAPConnectionPool: From algar-oud-mig.connection_pool
-    - SSH Tunnel Support: From algar-oud-mig.ssh
+PREFERRED PATTERN:
+    from ldap_core_shared.api import LDAPConfig
+    from ldap_core_shared.connections import create_unified_connection_manager
 
-Integration Points:
-    - Used by algar-oud-mig for migration operations
-    - Provides shared connection management for all LDAP tools
-    - Implements enterprise patterns for production use
+    config = LDAPConfig(
+        server="ldaps://ldap.company.com:636",
+        auth_dn="cn=admin,dc=company,dc=com",
+        auth_password="secret",
+        base_dn="dc=company,dc=com"
+    )
 
-Version: 1.0.0-extracted
+    manager = create_unified_connection_manager(config, pool_size=20)
+
+    with manager.get_connection() as conn:
+        result = conn.search("dc=company,dc=com", "(objectClass=*)")
+
+LEGACY PATTERN (deprecated):
+    from ldap_core_shared.connections import ConnectionManager, ConnectionConfig
+
+    config = ConnectionConfig(
+        servers=["ldaps://ldap.company.com:636"],
+        bind_dn="cn=admin,dc=company,dc=com",
+        bind_password="secret"
+    )
+
+    manager = ConnectionManager(config)
 """
 
-from ldap_core_shared.connections.base import (
-    LDAPConnectionInfo,
-    LDAPConnectionOptions,
-    LDAPSearchConfig,
+from ldap_core_shared.connections.manager import (
+    ConnectionConfig,
+    ConnectionManager,
+    ConnectionMetrics,
+    ConnectionState,
+    ConnectionStrategy,
+    ServerHealth,
+    ServerInfo,
+    create_connection_config_from_unified,
+    create_unified_connection_manager,
+    migrate_legacy_connection_setup,
 )
-from ldap_core_shared.connections.manager import ConnectionStats, LDAPConnectionManager
 
 __all__ = [
-    "ConnectionStats",
-    "LDAPConnectionInfo",
-    "LDAPConnectionManager",
-    "LDAPConnectionOptions",
-    "LDAPSearchConfig",
+    "ConnectionConfig",       # Legacy configuration class
+    # LEGACY: Core connection management (still valid but less preferred)
+    "ConnectionManager",      # Legacy connection manager
+    "ConnectionMetrics",     # Performance metrics
+    # Connection state and monitoring
+    "ConnectionState",        # Connection state tracking
+    "ConnectionStrategy",     # Connection strategies enum
+    "ServerHealth",          # Server health status
+    "ServerInfo",            # Server information
+    "create_connection_config_from_unified",  # Config conversion helper
+    # PREFERRED: Unified integration
+    "create_unified_connection_manager",     # Main function for unified config
+    "migrate_legacy_connection_setup",       # Migration helper
 ]

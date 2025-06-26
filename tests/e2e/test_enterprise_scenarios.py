@@ -25,12 +25,13 @@ ZERO TOLERANCE ENTERPRISE PRINCIPLES:
 import asyncio
 import tempfile
 import time
+from itertools import starmap
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ldap_core_shared.connections.manager import LDAPConnectionManager
+from ldap_core_shared.connections.manager import ConnectionManager
 from ldap_core_shared.ldif.processor import LDIFProcessor
 from ldap_core_shared.utils.performance import PerformanceMonitor
 
@@ -322,13 +323,13 @@ userPassword: {SSHA}monitoring_hash
     @pytest.mark.asyncio
     async def test_multi_tenant_isolation(
         self,
-        multi_tenant_ldif_data,
-        sample_connection_info,
+        multi_tenant_ldif_data: str,
+        sample_connection_info: dict[str, Any],
     ) -> None:
         """🔥🔥🔥🔥 Test multi-tenant data isolation in enterprise environment."""
         monitor = PerformanceMonitor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(multi_tenant_ldif_data)
             ldif_path = f.name
 
@@ -359,7 +360,7 @@ userPassword: {SSHA}monitoring_hash
                 mock_conn.result = {"result": 0, "description": "success"}
                 mock_conn_class.return_value = mock_conn
 
-                async with LDAPConnectionManager(
+                async with ConnectionManager(
                     sample_connection_info,
                     enable_pooling=True,
                     pool_size=15,  # Higher pool for multi-tenant load
@@ -421,13 +422,11 @@ userPassword: {SSHA}monitoring_hash
                     )  # eve.brown, frank.miller, grace.lee
 
                     # Test department-based sub-isolation within tenant C
-                    engineering_users = []
-                    async for user in manager.search(
+                    engineering_users = [user async for user in manager.search(
                         search_base="ou=people,ou=tenantC,dc=enterprise,dc=global",
                         search_filter="(departmentNumber=engineering)",
                         attributes=["uid", "title"],
-                    ):
-                        engineering_users.append(user)
+                    )]
 
                     assert len(engineering_users) == 2  # eve.brown, frank.miller
 
@@ -437,15 +436,13 @@ userPassword: {SSHA}monitoring_hash
                     monitor.start_measurement("cross_tenant_isolation")
 
                     # Verify no tenant can access another tenant's data
-                    cross_tenant_search_results = []
 
                     # Search from tenant A scope trying to find tenant B users
-                    async for result in manager.search(
+                    cross_tenant_search_results = [result async for result in manager.search(
                         search_base="ou=tenantA,dc=enterprise,dc=global",
                         search_filter="(mail=*@companyB.com)",  # Should find nothing
                         attributes=["uid", "mail"],
-                    ):
-                        cross_tenant_search_results.append(result)
+                    )]
 
                     # Should find no cross-tenant data
                     assert len(cross_tenant_search_results) == 0
@@ -456,13 +453,11 @@ userPassword: {SSHA}monitoring_hash
                     monitor.start_measurement("global_service_access")
 
                     # Global service accounts should be accessible
-                    service_accounts = []
-                    async for account in manager.search(
+                    service_accounts = [account async for account in manager.search(
                         search_base="ou=services,dc=enterprise,dc=global",
                         search_filter="(objectClass=account)",
                         attributes=["uid", "description"],
-                    ):
-                        service_accounts.append(account)
+                    )]
 
                     assert len(service_accounts) == 2  # ldap-admin, monitoring
 
@@ -501,7 +496,7 @@ userPassword: {SSHA}monitoring_hash
     @pytest.mark.asyncio
     async def test_enterprise_scale_concurrent_operations(
         self,
-        sample_connection_info,
+        sample_connection_info: dict[str, Any],
     ) -> None:
         """🔥🔥🔥 Test enterprise-scale concurrent operations across tenants."""
         monitor = PerformanceMonitor()
@@ -528,7 +523,7 @@ userPassword: {SSHA}monitoring_hash
                 mock_conn.result = {"result": 0, "description": "success"}
                 mock_conn_class.return_value = mock_conn
 
-                async with LDAPConnectionManager(
+                async with ConnectionManager(
                     sample_connection_info,
                     enable_pooling=True,
                     pool_size=10,
@@ -538,13 +533,11 @@ userPassword: {SSHA}monitoring_hash
                             operation_type = i % 3  # Cycle through operation types
 
                             if operation_type == 0:  # Search operation
-                                search_results = []
-                                async for result in manager.search(
+                                [result async for result in manager.search(
                                     search_base=f"ou={tenant_id},dc=enterprise,dc=global",
                                     search_filter="(objectClass=*)",
                                     attributes=["cn", "uid"],
-                                ):
-                                    search_results.append(result)
+                                )]
 
                                 workload_results["search_operations"] += 1
                                 monitor.record_event(f"tenant_{tenant_id}_search")
@@ -601,7 +594,7 @@ userPassword: {SSHA}monitoring_hash
         ]
 
         # Launch all tenant workloads concurrently
-        tasks = [tenant_workload(tenant, ops) for tenant, ops in tenant_workloads]
+        tasks = list(starmap(tenant_workload, tenant_workloads))
 
         results = await asyncio.gather(*tasks)
 
@@ -636,13 +629,13 @@ userPassword: {SSHA}monitoring_hash
     @pytest.mark.asyncio
     async def test_enterprise_compliance_auditing(
         self,
-        multi_tenant_ldif_data,
-        sample_connection_info,
+        multi_tenant_ldif_data: str,
+        sample_connection_info: dict[str, Any],
     ) -> None:
         """🔥🔥 Test enterprise compliance and auditing workflows."""
         monitor = PerformanceMonitor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(multi_tenant_ldif_data)
             ldif_path = f.name
 
@@ -697,7 +690,7 @@ userPassword: {SSHA}monitoring_hash
                 mock_conn.result = {"result": 0, "description": "success"}
                 mock_conn_class.return_value = mock_conn
 
-                async with LDAPConnectionManager(sample_connection_info):
+                async with ConnectionManager(sample_connection_info):
                     # Audit 1: User Account Compliance
                     monitor.start_measurement("user_account_audit")
 
@@ -908,7 +901,7 @@ class TestHighAvailabilityScenarios:
     """🔥🔥🔥 High availability and disaster recovery scenario testing."""
 
     @pytest.mark.asyncio
-    async def test_connection_failover_scenario(self, sample_connection_info) -> None:
+    async def test_connection_failover_scenario(self, sample_connection_info: dict[str, Any]) -> None:
         """🔥🔥 Test connection failover in high availability setup."""
         monitor = PerformanceMonitor()
 
@@ -953,7 +946,7 @@ class TestHighAvailabilityScenarios:
 
                 # Primary manager (will fail)
                 try:
-                    async with LDAPConnectionManager(primary_config) as primary_manager:
+                    async with ConnectionManager(primary_config) as primary_manager:
                         # Attempt operations on primary
                         for _i in range(5):
                             try:
@@ -968,7 +961,7 @@ class TestHighAvailabilityScenarios:
 
                 # Failover to secondary
                 if failover_detected:
-                    async with LDAPConnectionManager(
+                    async with ConnectionManager(
                         secondary_config,
                     ) as secondary_manager:
                         # Complete remaining operations on secondary
@@ -997,7 +990,7 @@ class TestHighAvailabilityScenarios:
         monitor.stop_measurement("ha_failover_scenario")
 
     @pytest.mark.asyncio
-    async def test_load_balancing_scenario(self, sample_connection_info) -> None:
+    async def test_load_balancing_scenario(self, sample_connection_info: dict[str, Any]) -> None:
         """🔥🔥 Test load balancing across multiple LDAP servers."""
         monitor = PerformanceMonitor()
 
@@ -1027,10 +1020,10 @@ class TestHighAvailabilityScenarios:
             mock_conn_class.side_effect = track_server_usage
 
             # Simulate load-balanced operations
-            async def load_balanced_operations(server_config, operations_count):
+            async def load_balanced_operations(server_config: dict[str, Any], operations_count: int):
                 """Perform operations on a specific server."""
                 completed = 0
-                async with LDAPConnectionManager(
+                async with ConnectionManager(
                     server_config,
                     enable_pooling=True,
                     pool_size=5,

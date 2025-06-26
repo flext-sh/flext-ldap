@@ -93,9 +93,7 @@ class LDIFMerger:
                     all_entries.extend(result.data)
                     stats.total_input_entries += len(result.data)
                 else:
-                    logger.warning(
-                        f"Failed to parse {file_path}: {result.error_message}",
-                    )
+                    logger.warning("Failed to parse %s: %s", file_path, result.error_message)
 
             # Merge and deduplicate
             merged_entries = self._merge_entries(all_entries, stats)

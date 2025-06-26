@@ -23,11 +23,12 @@ ZERO TOLERANCE E2E PRINCIPLES:
 """
 
 import tempfile
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ldap_core_shared.connections.manager import LDAPConnectionManager
+from ldap_core_shared.connections.manager import ConnectionManager
 
 # LDIFParser class does not exist - using processor instead
 from ldap_core_shared.ldif.processor import LDIFProcessor
@@ -268,13 +269,13 @@ userPassword: {SSHA}monitoring_password_hash
     @pytest.mark.asyncio
     async def test_complete_ldif_import_workflow(
         self,
-        enterprise_ldif_data,
-        sample_connection_info,
+        enterprise_ldif_data: Any,
+        sample_connection_info: Any,
     ) -> None:
         """🔥🔥🔥🔥 Test complete LDIF import and validation workflow."""
         monitor = PerformanceMonitor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(enterprise_ldif_data)
             ldif_path = f.name
 
@@ -334,7 +335,7 @@ userPassword: {SSHA}monitoring_password_hash
 
                 monitor.start_measurement("ldap_operations")
 
-                async with LDAPConnectionManager(
+                async with ConnectionManager(
                     sample_connection_info,
                     enable_pooling=True,
                     pool_size=10,
@@ -383,7 +384,7 @@ userPassword: {SSHA}monitoring_password_hash
     @pytest.mark.asyncio
     async def test_user_lifecycle_management_workflow(
         self,
-        sample_connection_info,
+        sample_connection_info: Any,
     ) -> None:
         """🔥🔥🔥 Test complete user lifecycle management workflow."""
         monitor = PerformanceMonitor()
@@ -398,7 +399,7 @@ userPassword: {SSHA}monitoring_password_hash
 
             monitor.start_measurement("user_lifecycle_workflow")
 
-            async with LDAPConnectionManager(
+            async with ConnectionManager(
                 sample_connection_info,
                 enable_pooling=True,
             ) as manager:
@@ -483,13 +484,11 @@ userPassword: {SSHA}monitoring_password_hash
                 monitor.start_measurement("access_verification")
 
                 # Verify user can be found in searches
-                search_results = []
-                async for result in manager.search(
+                search_results = [result async for result in manager.search(
                     search_base="ou=people,dc=enterprise,dc=com",
                     search_filter="(uid=new.employee)",
                     attributes=["cn", "title", "departmentNumber"],
-                ):
-                    search_results.append(result)
+                )]
 
                 assert len(search_results) == 1
                 user_data = search_results[0]
@@ -498,13 +497,11 @@ userPassword: {SSHA}monitoring_password_hash
                 )
 
                 # Verify group memberships
-                group_search_results = []
-                async for result in manager.search(
+                group_search_results = [result async for result in manager.search(
                     search_base="ou=groups,dc=enterprise,dc=com",
                     search_filter=f"(member={new_user_dn})",
                     attributes=["cn", "description"],
-                ):
-                    group_search_results.append(result)
+                )]
 
                 assert (
                     len(group_search_results) >= 2
@@ -567,13 +564,13 @@ userPassword: {SSHA}monitoring_password_hash
     @pytest.mark.asyncio
     async def test_organizational_restructuring_workflow(
         self,
-        enterprise_ldif_data,
-        sample_connection_info,
+        enterprise_ldif_data: Any,
+        sample_connection_info: Any,
     ) -> None:
         """🔥🔥 Test organizational restructuring workflow."""
         monitor = PerformanceMonitor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(enterprise_ldif_data)
             ldif_path = f.name
 
@@ -607,7 +604,7 @@ userPassword: {SSHA}monitoring_password_hash
                 mock_conn.result = {"result": 0, "description": "success"}
                 mock_conn_class.return_value = mock_conn
 
-                async with LDAPConnectionManager(sample_connection_info) as manager:
+                async with ConnectionManager(sample_connection_info) as manager:
                     # Step 2: Create new department structure
                     monitor.start_measurement("department_creation")
 
@@ -738,13 +735,11 @@ userPassword: {SSHA}monitoring_password_hash
                         # In real implementation, would verify department and title changes
 
                     # Verify new group structure
-                    group_search_results = []
-                    async for result in manager.search(
+                    group_search_results = [result async for result in manager.search(
                         search_base="ou=groups,dc=enterprise,dc=com",
                         search_filter="(objectClass=groupOfNames)",
                         attributes=["cn", "description", "member"],
-                    ):
-                        group_search_results.append(result)
+                    )]
 
                     # Should have original groups plus new ones
                     assert len(group_search_results) >= 8  # Original 6 + 2 new groups
@@ -780,13 +775,13 @@ userPassword: {SSHA}monitoring_password_hash
     @pytest.mark.asyncio
     async def test_backup_and_recovery_workflow(
         self,
-        enterprise_ldif_data,
-        sample_connection_info,
+        enterprise_ldif_data: Any,
+        sample_connection_info: Any,
     ) -> None:
         """🔥🔥 Test backup and recovery workflow."""
         monitor = PerformanceMonitor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(enterprise_ldif_data)
             original_ldif_path = f.name
 
@@ -801,7 +796,7 @@ userPassword: {SSHA}monitoring_password_hash
                 mock_conn.result = {"result": 0, "description": "success"}
                 mock_conn_class.return_value = mock_conn
 
-                async with LDAPConnectionManager(
+                async with ConnectionManager(
                     sample_connection_info,
                     enable_pooling=True,
                 ) as manager:
@@ -809,46 +804,36 @@ userPassword: {SSHA}monitoring_password_hash
                     monitor.start_measurement("backup_creation")
 
                     # Simulate backup by searching all entries
-                    backup_entries = []
 
                     # Backup all organizational units
-                    async for entry in manager.search(
+                    backup_entries = [{
+                                "type": "ou",
+                                "entry": entry,
+                            } async for entry in manager.search(
                         search_base="dc=enterprise,dc=com",
                         search_filter="(objectClass=organizationalUnit)",
                         attributes=["*"],
-                    ):
-                        backup_entries.append(
-                            {
-                                "type": "ou",
-                                "entry": entry,
-                            },
-                        )
+                    )]
 
                     # Backup all people
-                    async for entry in manager.search(
+                    backup_entries.extend([{
+                                "type": "person",
+                                "entry": entry,
+                            } async for entry in manager.search(
                         search_base="ou=people,dc=enterprise,dc=com",
                         search_filter="(objectClass=inetOrgPerson)",
                         attributes=["*"],
-                    ):
-                        backup_entries.append(
-                            {
-                                "type": "person",
-                                "entry": entry,
-                            },
-                        )
+                    )])
 
                     # Backup all groups
-                    async for entry in manager.search(
+                    backup_entries.extend([{
+                                "type": "group",
+                                "entry": entry,
+                            } async for entry in manager.search(
                         search_base="ou=groups,dc=enterprise,dc=com",
                         search_filter="(objectClass=groupOfNames)",
                         attributes=["*"],
-                    ):
-                        backup_entries.append(
-                            {
-                                "type": "group",
-                                "entry": entry,
-                            },
-                        )
+                    )])
 
                     monitor.stop_measurement("backup_creation")
 

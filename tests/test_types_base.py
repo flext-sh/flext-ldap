@@ -18,22 +18,24 @@ ZERO DUPLICATION ACHIEVED:
 ✅ No duplicate performance testing (uses utilities)
 """
 
+from typing import Any
+
 import pytest
 from pydantic import ValidationError
 
-from tests.conftest import TestUser  # Import from shared conftest
+# TestUser is defined within test files that need it
 
 
 class TestBaseModel:
     """🔥 Test BaseModel enterprise features using DRY patterns."""
 
-    def test_basic_model_creation(self, sample_user) -> None:
+    def test_basic_model_creation(self, sample_user: Any) -> None:
         """🔥 Test basic model creation using shared fixtures."""
         # Using TestUser from conftest.py (extends BaseModel)
         assert sample_user.username == "john_doe"
         assert sample_user.age == 30
 
-    def test_model_immutability(self, sample_user) -> None:
+    def test_model_immutability(self, sample_user: Any) -> None:
         """🔥 Test model immutability using shared fixtures."""
         with pytest.raises(ValidationError):
             sample_user.username = "changed"  # Should fail - model is frozen
@@ -54,7 +56,7 @@ class TestBaseModel:
                 extra_field="not allowed",
             )
 
-    def test_model_dump_json_safe(self, sample_user) -> None:
+    def test_model_dump_json_safe(self, sample_user: Any) -> None:
         """🔥 Test JSON-safe serialization using shared fixtures."""
         json_data = sample_user.model_dump_json_safe()
         assert isinstance(json_data, dict)
@@ -62,7 +64,7 @@ class TestBaseModel:
         assert "created_at" in json_data
         assert isinstance(json_data["created_at"], str)  # ISO format
 
-    def test_field_info_introspection(self, sample_user) -> None:
+    def test_field_info_introspection(self, sample_user: Any) -> None:
         """🔥 Test field information using shared fixtures."""
         field_info = sample_user.get_field_info("username")
         assert field_info is not None
@@ -74,21 +76,21 @@ class TestBaseModel:
 class TestBaseEntity:
     """🔥🔥 Test BaseEntity using DRY patterns and shared fixtures."""
 
-    def test_entity_creation_with_id(self, sample_user, assert_helper) -> None:
+    def test_entity_creation_with_id(self, sample_user: Any, assert_helper: Any) -> None:
         """🔥 Test entity creation using DRY validation."""
         assert_helper.assert_valid_entity(sample_user)
         assert sample_user.username == "john_doe"
         assert sample_user.email == "john_doe@example.com"
         assert sample_user.is_new()
 
-    def test_entity_audit_fields(self, sample_user) -> None:
+    def test_entity_audit_fields(self, sample_user: Any) -> None:
         """🔥 Test audit trail using shared fixtures."""
         # All validation consolidated in assert_helper
         assert sample_user.created_at.tzinfo is not None
         assert sample_user.updated_at.tzinfo is not None
         assert sample_user.created_at <= sample_user.updated_at
 
-    def test_entity_equality_by_id(self, user_factory) -> None:
+    def test_entity_equality_by_id(self, user_factory: Any) -> None:
         """🔥 Test entity equality using factory."""
         user1 = user_factory(username="user1")
         user2 = user_factory(username="user2")
@@ -100,7 +102,7 @@ class TestBaseEntity:
         user1_copy = user1.model_copy(update={"id": user1.id})
         assert user1 == user1_copy
 
-    def test_entity_hashing(self, sample_user) -> None:
+    def test_entity_hashing(self, sample_user: Any) -> None:
         """🔥 Test entity hashing using shared fixtures."""
         # Should be hashable
         user_set = {sample_user}
@@ -111,7 +113,7 @@ class TestBaseEntity:
         hash2 = hash(sample_user)
         assert hash1 == hash2
 
-    def test_entity_mark_updated(self, sample_user) -> None:
+    def test_entity_mark_updated(self, sample_user: Any) -> None:
         """🔥 Test mark_updated using shared fixtures."""
         original_version = sample_user.version
         original_updated = sample_user.updated_at
@@ -146,14 +148,14 @@ class TestBaseEntity:
 class TestBaseValueObject:
     """🔥🔥 Test BaseValueObject using DRY patterns and shared fixtures."""
 
-    def test_value_object_creation(self, sample_email, assert_helper) -> None:
+    def test_value_object_creation(self, sample_email: Any, assert_helper: Any) -> None:
         """🔥 Test value object creation using shared fixtures."""
         assert_helper.assert_valid_value_object(sample_email)
         assert sample_email.address == "user@company.com"
         assert sample_email.verified is True
         assert sample_email.domain == "company.com"
 
-    def test_value_object_equality_by_value(self, email_factory) -> None:
+    def test_value_object_equality_by_value(self, email_factory: Any) -> None:
         """🔥 Test value objects equality using factory."""
         email1 = email_factory(address="same@domain.com", verified=True)
         email2 = email_factory(address="same@domain.com", verified=True)
@@ -162,7 +164,7 @@ class TestBaseValueObject:
         assert email1 == email2  # Same values
         assert email1 != email3  # Different values
 
-    def test_value_object_hashing(self, sample_email) -> None:
+    def test_value_object_hashing(self, sample_email: Any) -> None:
         """🔥 Test value object hashing using shared fixtures."""
         # Create identical email
         email_copy = sample_email.__class__(
@@ -177,7 +179,7 @@ class TestBaseValueObject:
         email_set = {sample_email, email_copy}
         assert len(email_set) == 1  # Deduplicated
 
-    def test_value_object_validation(self, sample_email, invalid_email) -> None:
+    def test_value_object_validation(self, sample_email: Any, invalid_email: Any) -> None:
         """🔥 Test value object validation using shared fixtures."""
         assert sample_email.is_valid() is True
         assert invalid_email.is_valid() is False

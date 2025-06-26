@@ -382,7 +382,7 @@ class TestUtilityIntegration:
                 self.logger = logger
 
             def execute(self) -> dict[str, Any]:
-                self.logger.info(f"Executing {self.operation_type} operation")
+                self.logger.info("Executing %s operation", self.operation_type)
 
                 # Mock operation execution
                 result = {

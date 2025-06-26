@@ -1,31 +1,4 @@
-"""LDAP Connection Base Components - Professional extraction from algar-oud-mig.
-
-This module contains the core connection components extracted and enhanced from
-the algar-oud-mig project, implementing enterprise-grade LDAP connection management
-following SOLID, DRY, and KISS principles.
-
-Architecture:
-    - Single Responsibility: Each class has one clear purpose
-    - Open/Closed: Extensible through inheritance and composition
-    - Liskov Substitution: All interfaces are substitutable
-    - Interface Segregation: Minimal focused interfaces
-    - Dependency Inversion: Depends on abstractions, not concretions
-
-Extracted from:
-    - ../algar-oud-mig/src/algar_oud_mig/ldap_operations.py
-    - LDAPConnectionInfo dataclass
-    - LDAPSearchConfig dataclass
-    - LDAPConnectionOptions dataclass
-
-Enhanced with:
-    - Pydantic v2 validation for type safety
-    - Comprehensive documentation
-    - Performance optimizations
-    - Professional error handling
-
-Version: 1.0.0-extracted
-Author: LDAP Core Team (extracted from algar-oud-mig)
-"""
+"""LDAP Connection Base Components - Professional extraction from algar-oud-mig."""
 
 from __future__ import annotations
 
@@ -42,12 +15,25 @@ from pydantic import (
     field_validator,
 )
 
+# Constants for magic values
+BYTES_PER_KB = 1024
+DEFAULT_BUFFER_SIZE = 4096
+
+LDAPS_GC_PORT = 3269
+
+LDAP_GC_PORT = 3268
+SECONDS_PER_HOUR = 3600
+SECONDS_PER_MINUTE = 60
+
 from ldap_core_shared.utils.constants import (
     DEFAULT_LDAP_PORT,
     DEFAULT_LDAP_SIZE_LIMIT,
     DEFAULT_LDAP_TIME_LIMIT,
     DEFAULT_LDAP_TIMEOUT,
-    SUBTREE,
+    DEFAULT_MAX_ITEMS,
+    LDAP_DEFAULT_PORT,
+    LDAPS_DEFAULT_PORT,
+    SENSITIVE_DATA_MASK,
 )
 
 
@@ -90,7 +76,7 @@ class LDAPConnectionInfo(BaseModel):
         Basic connection:
         >>> conn_info = LDAPConnectionInfo(
         ...     host="ldap.example.com",
-        ...     port=389,
+        ...     port=LDAP_DEFAULT_PORT,
         ...     use_ssl=False,
         ...     bind_dn="cn=admin,dc=example,dc=com",
         ...     bind_password="secret",
@@ -100,12 +86,12 @@ class LDAPConnectionInfo(BaseModel):
         Secure connection with SSL:
         >>> secure_conn = LDAPConnectionInfo(
         ...     host="ldaps.example.com",
-        ...     port=636,
+        ...     port=LDAPS_DEFAULT_PORT,
         ...     use_ssl=True,
         ...     bind_dn="cn=admin,dc=example,dc=com",
         ...     bind_password="secret",
         ...     base_dn="dc=example,dc=com",
-        ...     timeout=60,
+        ...     timeout=SECONDS_PER_MINUTE,
         ... )
     """
 
@@ -121,49 +107,39 @@ class LDAPConnectionInfo(BaseModel):
 
     # Core connection parameters
     host: str = Field(
-        ...,
         description="LDAP server hostname or IP address",
         min_length=1,
         max_length=255,
-        example="ldap.example.com",
     )
 
     port: int = Field(
         default=DEFAULT_LDAP_PORT,
-        description="LDAP server port (389 for plain, 636 for SSL)",
+        description="LDAP server port (LDAP_DEFAULT_PORT for plain, LDAPS_DEFAULT_PORT for SSL)",
         ge=1,
         le=65535,
-        example=389,
     )
 
     use_ssl: bool = Field(
         default=False,
         description="Enable SSL/TLS encryption for secure connections",
-        example=True,
     )
 
     # Authentication parameters
     bind_dn: str = Field(
-        ...,
         description="Distinguished Name for binding to LDAP server",
         min_length=3,
-        max_length=1024,
-        example="cn=admin,dc=example,dc=com",
+        max_length=BYTES_PER_KB,
     )
 
     bind_password: SecretStr = Field(
-        ...,
         description="Password for LDAP authentication (encrypted storage)",
         min_length=1,
-        example="secret",
     )
 
     base_dn: str = Field(
-        ...,
         description="Base Distinguished Name for LDAP operations",
         min_length=3,
-        max_length=1024,
-        example="dc=example,dc=com",
+        max_length=BYTES_PER_KB,
     )
 
     # Connection options with enterprise defaults
@@ -171,25 +147,22 @@ class LDAPConnectionInfo(BaseModel):
         default=DEFAULT_LDAP_TIMEOUT,
         description="Connection timeout in seconds",
         ge=1,
-        le=3600,
-        example=30,
+        le=SECONDS_PER_HOUR,
     )
 
     auto_bind: bool = Field(
         default=True,
         description="Automatically bind after connection establishment",
-        example=True,
     )
 
     authentication: LDAPAuthenticationMethod = Field(
         default=LDAPAuthenticationMethod.SIMPLE,
         description="LDAP authentication method",
-        example="SIMPLE",
     )
 
     # Class constants for validation
-    _VALID_LDAP_PORTS: ClassVar[set[int]] = {389, 636, 3268, 3269}
-    _SECURE_PORTS: ClassVar[set[int]] = {636, 3269}
+    _VALID_LDAP_PORTS: ClassVar[set[int]] = {LDAP_DEFAULT_PORT, LDAPS_DEFAULT_PORT, LDAP_GC_PORT, LDAPS_GC_PORT}
+    _SECURE_PORTS: ClassVar[set[int]] = {LDAPS_DEFAULT_PORT, LDAPS_GC_PORT}
 
     @field_validator("host")
     @classmethod
@@ -301,7 +274,10 @@ class LDAPConnectionInfo(BaseModel):
         )
 
         if not has_valid_component:
-            msg = f"DN should contain recognized components like: {', '.join(valid_prefixes)}"
+            msg = (
+                f"DN should contain recognized components like: "
+                f"{', '.join(valid_prefixes)}"
+            )
             raise ValueError(
                 msg,
             )
@@ -353,7 +329,7 @@ class LDAPConnectionInfo(BaseModel):
             Configuration dictionary with password masked
         """
         data = self.model_dump()
-        data["bind_password"] = "***MASKED***"
+        data["bind_password"] = SENSITIVE_DATA_MASK
         return data
 
 
@@ -373,10 +349,10 @@ class LDAPSearchConfig(BaseModel):
         Advanced search with limits:
         >>> advanced_search = LDAPSearchConfig(
         ...     search_base="dc=example,dc=com",
-        ...     search_filter="(&(objectClass=user)(department=IT))",
+        ...     search_filter="(&(objectClass=user)(department=IT)",
         ...     attributes=["cn", "mail", "department"],
-        ...     size_limit=100,
-        ...     time_limit=30,
+        ...     size_limit=DEFAULT_MAX_ITEMS,
+        ...     time_limit=DEFAULT_TIMEOUT_SECONDS,
         ... )
     """
 
@@ -389,31 +365,26 @@ class LDAPSearchConfig(BaseModel):
     )
 
     search_base: str = Field(
-        ...,
         description="Base DN for search operations",
         min_length=3,
-        max_length=1024,
-        example="ou=people,dc=example,dc=com",
+        max_length=BYTES_PER_KB,
     )
 
     search_filter: str = Field(
         default="(objectClass=*)",
         description="LDAP search filter following RFC 4515",
         min_length=3,
-        max_length=4096,
-        example="(objectClass=person)",
+        max_length=DEFAULT_BUFFER_SIZE,
     )
 
     attributes: list[str] | None = Field(
         default=None,
         description="List of attributes to retrieve (None for all)",
-        example=["cn", "mail", "department"],
     )
 
     search_scope: Literal["BASE", "ONELEVEL", "SUBTREE"] = Field(
-        default=SUBTREE,
+        default="SUBTREE",
         description="LDAP search scope",
-        example="SUBTREE",
     )
 
     size_limit: int = Field(
@@ -421,15 +392,13 @@ class LDAPSearchConfig(BaseModel):
         description="Maximum number of entries to return",
         ge=0,
         le=100000,
-        example=1000,
     )
 
     time_limit: int = Field(
         default=DEFAULT_LDAP_TIME_LIMIT,
         description="Search timeout in seconds",
         ge=0,
-        le=3600,
-        example=30,
+        le=SECONDS_PER_HOUR,
     )
 
     @field_validator("search_filter")
@@ -484,6 +453,9 @@ class LDAPSearchConfig(BaseModel):
             "BASE": ldap3.BASE,
             "ONELEVEL": ldap3.LEVEL,
             "SUBTREE": ldap3.SUBTREE,
+            "base": ldap3.BASE,
+            "onelevel": ldap3.LEVEL,
+            "subtree": ldap3.SUBTREE,
         }
         return mapping[self.search_scope]
 
@@ -505,7 +477,6 @@ class LDAPConnectionOptions(BaseModel):
     )
 
     connection_info: LDAPConnectionInfo = Field(
-        ...,
         description="Core LDAP connection configuration",
     )
 
@@ -540,7 +511,7 @@ class LDAPConnectionOptions(BaseModel):
         default=10,
         description="Maximum connections in pool",
         ge=1,
-        le=100,
+        le=DEFAULT_MAX_ITEMS,
     )
 
     @field_validator("ssh_host")

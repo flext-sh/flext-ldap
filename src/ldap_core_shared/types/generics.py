@@ -67,9 +67,6 @@ TRepository = TypeVar("TRepository", bound=BaseRepository[Any])
 #: Generic service type variable
 TService = TypeVar("TService", bound=BaseService)
 
-#: Generic error type variable
-TError = TypeVar("TError", bound=Exception)
-
 # ===== RESULT PATTERN GENERICS =====
 
 
@@ -196,7 +193,7 @@ class Result(Generic[T, TError]):
         """
         return self._value if self._value is not None else default
 
-    def map(self, func: callable[[T], TOutput]) -> Result[TOutput, TError]:
+    def map(self, func: Callable[[T], TOutput]) -> Result[TOutput, TError]:
         """Transform the success value if present.
 
         Args:
@@ -214,7 +211,7 @@ class Result(Generic[T, TError]):
 
     def flat_map(
         self,
-        func: callable[[T], Result[TOutput, TError]],
+        func: Callable[[T], Result[TOutput, TError]],
     ) -> Result[TOutput, TError]:
         """Transform the success value with a function that returns a Result.
 
@@ -227,7 +224,6 @@ class Result(Generic[T, TError]):
         if self.is_success():
             return func(self.unwrap())
         return Result.error(self.unwrap_error())
-
 
 # ===== OPTION PATTERN GENERICS =====
 
@@ -328,7 +324,7 @@ class Option(Generic[T]):
         """
         return self._value if self._value is not None else default
 
-    def map(self, func: callable[[T], TOutput]) -> Option[TOutput]:
+    def map(self, func: Callable[[T], TOutput]) -> Option[TOutput]:
         """Transform the contained value if present.
 
         Args:
@@ -341,7 +337,7 @@ class Option(Generic[T]):
             return Option.some(func(self.unwrap()))
         return Option.none()
 
-    def flat_map(self, func: callable[[T], Option[TOutput]]) -> Option[TOutput]:
+    def flat_map(self, func: Callable[[T], Option[TOutput]]) -> Option[TOutput]:
         """Transform the value with a function that returns an Option.
 
         Args:
@@ -354,11 +350,10 @@ class Option(Generic[T]):
             return func(self.unwrap())
         return Option.none()
 
-
 # ===== REPOSITORY PATTERN GENERICS =====
 
 
-class Repository(Generic[TEntity], BaseRepository[TEntity]):
+class Repository(BaseRepository[TEntity], Generic[TEntity]):
     """Generic repository implementation with common functionality.
 
     This class provides a base implementation of the repository pattern
@@ -428,11 +423,10 @@ class Repository(Generic[TEntity], BaseRepository[TEntity]):
         """
         return len(self._entities)
 
-
 # ===== SERVICE PATTERN GENERICS =====
 
 
-class Service(Generic[TEntity], BaseService):
+class Service(BaseService, Generic[TEntity]):
     """Generic service implementation with common business logic.
 
     This class provides a base implementation for domain services
@@ -471,7 +465,7 @@ class Service(Generic[TEntity], BaseService):
         entity = await self._repository.find_by_id(entity_id)
         return Option.some(entity) if entity else Option.none()
 
-    async def create(self, entity: TEntity) -> Result[TEntity, str]:
+    async def create(self, entity: TEntity) -> Result[TEntity, Exception]:
         """Create new entity using Result pattern.
 
         Args:
@@ -482,14 +476,14 @@ class Service(Generic[TEntity], BaseService):
         """
         try:
             if not entity.can_be_deleted():  # Basic validation
-                return Result.error("Entity validation failed")
+                return Result.error(ValueError("Entity validation failed"))
 
             saved_entity = await self._repository.save(entity)
             return Result.success(saved_entity)
         except Exception as e:
-            return Result.error(str(e))
+            return Result.error(e)
 
-    async def update(self, entity: TEntity) -> Result[TEntity, str]:
+    async def update(self, entity: TEntity) -> Result[TEntity, Exception]:
         """Update existing entity.
 
         Args:
@@ -501,15 +495,15 @@ class Service(Generic[TEntity], BaseService):
         try:
             existing = await self._repository.find_by_id(entity.id)
             if not existing:
-                return Result.error("Entity not found")
+                return Result.error(ValueError("Entity not found"))
 
             updated_entity = entity.mark_updated()
-            saved_entity = await self._repository.save(updated_entity)
+            saved_entity = await self._repository.save(updated_entity)  # type: ignore[arg-type]
             return Result.success(saved_entity)
         except Exception as e:
-            return Result.error(str(e))
+            return Result.error(e)
 
-    async def delete(self, entity_id: uuid.UUID) -> Result[bool, str]:
+    async def delete(self, entity_id: uuid.UUID) -> Result[bool, Exception]:
         """Delete entity by ID.
 
         Args:
@@ -521,16 +515,15 @@ class Service(Generic[TEntity], BaseService):
         try:
             entity = await self._repository.find_by_id(entity_id)
             if not entity:
-                return Result.error("Entity not found")
+                return Result.error(ValueError("Entity not found"))
 
             if not entity.can_be_deleted():
-                return Result.error("Entity cannot be deleted")
+                return Result.error(ValueError("Entity cannot be deleted"))
 
             success = await self._repository.delete(entity)
             return Result.success(success)
         except Exception as e:
-            return Result.error(str(e))
-
+            return Result.error(e)
 
 # ===== SPECIFICATION PATTERN GENERICS =====
 
@@ -580,7 +573,6 @@ class Specification(Protocol[T]):
             Negated specification
         """
 
-
 # ===== ITERATOR PATTERN GENERICS =====
 
 
@@ -600,7 +592,7 @@ class AsyncIteratorWrapper(Generic[T]):
         """
         self._iterator = iterator
 
-    async def filter(self, predicate: callable[[T], bool]) -> AsyncIterator[T]:
+    async def filter(self, predicate: Callable[[T], bool]) -> AsyncIterator[T]:
         """Filter items based on predicate.
 
         Args:
@@ -613,7 +605,7 @@ class AsyncIteratorWrapper(Generic[T]):
             if predicate(item):
                 yield item
 
-    async def map(self, func: callable[[T], TOutput]) -> AsyncIterator[TOutput]:
+    async def map(self, func: Callable[[T], TOutput]) -> AsyncIterator[TOutput]:
         """Transform items using function.
 
         Args:
@@ -669,25 +661,16 @@ class AsyncIteratorWrapper(Generic[T]):
         if batch:
             yield batch
 
-
 # ===== TYPE ALIASES FOR COMMON GENERIC PATTERNS =====
 
-#: Generic entity type alias
-Entity = TEntity
+# Type aliases cannot use TypeVars directly - remove these problematic aliases
 
-#: Generic value object type alias
-ValueObject = TValueObject
+# Type aliases with TypeVars cannot be used at module level
 
-#: Generic async iterator type alias
-AsyncIter = AsyncIterator[T]
+# Predicate type alias also cannot use TypeVar at module level
 
-#: Generic predicate function type alias
-Predicate = Callable[[T], bool]
+# Mapper type alias also cannot use TypeVar at module level
 
-#: Generic mapper function type alias
-Mapper = Callable[[T], TOutput]
-
-from collections.abc import Callable
 
 #: Generic async function type alias
 AsyncFunc = Callable[..., Any]  # Should be Awaitable but keeping simple

@@ -1,20 +1,25 @@
-"""Core LDAP value objects for shared use across projects.
-
-Value objects encapsulate business rules and provide validation for
-core domain concepts like DNs, object classes, and configuration profiles.
-"""
-
 from __future__ import annotations
+
+from ldap_core_shared.utils.constants import (
+    DEFAULT_TIMEOUT_SECONDS,
+    TCP_PORT_MAX,
+    TCP_PORT_MIN,
+)
+
+"""Core LDAP value objects for shared use across projects."""
+
 
 import re
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
+# Constants for magic values
 
-class MigrationStatus(StrEnum):
+
+class MigrationStatus(str, Enum):
     """Migration status enumeration."""
 
     PENDING = "pending"
@@ -25,7 +30,7 @@ class MigrationStatus(StrEnum):
     ROLLBACK = "rollback"
 
 
-class LDAPObjectClass(StrEnum):
+class LDAPObjectClass(str, Enum):
     """Standard LDAP object classes."""
 
     TOP = "top"
@@ -91,7 +96,7 @@ class LdapDn(BaseModel):
             msg = "DN cannot be empty"
             raise ValueError(msg)
 
-        components: list = []
+        components: list[DNComponent] = []
         # Simple DN parsing (would need more sophisticated parsing for complex cases)
         parts = [part.strip() for part in dn_string.split(",")]
 
@@ -189,7 +194,7 @@ class ConnectionProfile:
     password: str
     base_dn: str
     use_ssl: bool = False
-    timeout: int = 30
+    timeout: int = DEFAULT_TIMEOUT_SECONDS
 
     def __post_init__(self) -> Any:
         """Validate profile after initialization."""
@@ -201,8 +206,8 @@ class ConnectionProfile:
             msg = "Host cannot be empty"
             raise ValueError(msg)
 
-        if not 1 <= self.port <= 65535:
-            msg = "Port must be between 1 and 65535"
+        if not TCP_PORT_MIN <= self.port <= TCP_PORT_MAX:
+            msg = f"Port must be between {TCP_PORT_MIN} and {TCP_PORT_MAX}"
             raise ValueError(msg)
 
         if not self.bind_dn.strip():
@@ -246,7 +251,7 @@ class TransformationRule:
             raise ValueError(msg)
 
 
-class SchemaCompatibility(StrEnum):
+class SchemaCompatibility(str, Enum):
     """Schema compatibility levels."""
 
     FULL = "full"  # Fully compatible

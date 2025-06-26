@@ -1,8 +1,4 @@
-"""Standardized logging utilities for LDAP projects.
-
-Provides consistent logging setup and utilities across
-tap-ldap, target-ldap, and flx-ldap projects.
-"""
+"""Standardized logging utilities for LDAP projects."""
 
 from __future__ import annotations
 
@@ -10,9 +6,18 @@ import logging
 import logging.handlers
 import sys
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+from typing_extensions import Self
 
 from ldap_core_shared.config.base_config import LoggingConfig
+from ldap_core_shared.utils.constants import DEFAULT_LARGE_LIMIT, DEFAULT_MAX_ITEMS
+
+if TYPE_CHECKING:
+    from types import TracebackType
+
+# Constants for magic values
+BYTES_PER_KB = 1024
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +45,7 @@ class StructuredFormatter(logging.Formatter):
 
         # Add structured data if available
         if hasattr(record, "extra_data") and record.extra_data:
-            extra_parts: list = []
+            extra_parts: list[str] = []
             for key, value in record.extra_data.items():
                 extra_parts.append(f"{key}={value}")
 
@@ -65,7 +70,7 @@ class LDAPLogger:
         """Initialize LDAP logger."""
         self.name = name
         try:
-            self.config = config or LoggingConfig()
+            self.config: LoggingConfig | Any = config or LoggingConfig()
         except Exception:
             # Fallback to basic config if Pydantic config fails
             from dataclasses import dataclass
@@ -74,8 +79,8 @@ class LDAPLogger:
             class BasicLoggingConfig:
                 level: str = "INFO"
                 format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-                file_path: str = ""
-                max_file_size_mb: int = 100
+                file_path: str | None = None
+                max_file_size_mb: int = DEFAULT_MAX_ITEMS
                 backup_count: int = 5
                 enable_console: bool = True
                 mask_sensitive_data: bool = True
@@ -84,7 +89,7 @@ class LDAPLogger:
         self.logger = logging.getLogger(name)
         self._setup_logger()
 
-    def _setup_logger(self) -> Any:
+    def _setup_logger(self) -> None:
         """Setup logger with configuration."""
         # Clear existing handlers
         self.logger.handlers.clear()
@@ -108,16 +113,27 @@ class LDAPLogger:
         # Prevent propagation to avoid duplicate messages
         self.logger.propagate = False
 
-    def _setup_file_handler(self, formatter: logging.Formatter) -> Any:
+    def _setup_file_handler(self, formatter: logging.Formatter) -> None:
         """Setup rotating file handler."""
         try:
+            # Handle file path
+            if self.config.file_path is None:
+                return
+
+            # Convert to Path if it's a string
+            from pathlib import Path
+            if isinstance(self.config.file_path, str):
+                file_path = Path(self.config.file_path)
+            else:
+                file_path = self.config.file_path
+
             # Ensure directory exists
-            self.config.file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Create rotating file handler
             file_handler = logging.handlers.RotatingFileHandler(
-                self.config.file_path,
-                maxBytes=self.config.max_file_size_mb * 1024 * 1024,
+                str(file_path),
+                maxBytes=self.config.max_file_size_mb * BYTES_PER_KB * BYTES_PER_KB,
                 backupCount=self.config.backup_count,
             )
             file_handler.setFormatter(formatter)
@@ -127,32 +143,43 @@ class LDAPLogger:
             # Fallback to console logging
             self.logger.exception("Failed to setup file logging: %s", e)
 
-    def debug(self, message: str, **kwargs) -> Any:
+    def debug(self, message: str, *args: Any, **kwargs: Any) -> None:
         """Log debug message with extra data."""
-        self._log_with_extra(logging.DEBUG, message, kwargs)
+        formatted_message = message % args if args else message
+        self._log_with_extra(logging.DEBUG, formatted_message, kwargs)
 
-    def info(self, message: str, **kwargs) -> Any:
+    def info(self, message: str, *args: Any, **kwargs: Any) -> None:
         """Log info message with extra data."""
-        self._log_with_extra(logging.INFO, message, kwargs)
+        formatted_message = message % args if args else message
+        self._log_with_extra(logging.INFO, formatted_message, kwargs)
 
-    def warning(self, message: str, **kwargs) -> Any:
+    def warning(self, message: str, *args: Any, **kwargs: Any) -> None:
         """Log warning message with extra data."""
-        self._log_with_extra(logging.WARNING, message, kwargs)
+        formatted_message = message % args if args else message
+        self._log_with_extra(logging.WARNING, formatted_message, kwargs)
 
-    def error(self, message: str, **kwargs) -> Any:
+    def error(self, message: str, *args: Any, **kwargs: Any) -> None:
         """Log error message with extra data."""
-        self._log_with_extra(logging.ERROR, message, kwargs)
+        formatted_message = message % args if args else message
+        self._log_with_extra(logging.ERROR, formatted_message, kwargs)
 
-    def critical(self, message: str, **kwargs) -> Any:
+    def critical(self, message: str, *args: Any, **kwargs: Any) -> None:
         """Log critical message with extra data."""
-        self._log_with_extra(logging.CRITICAL, message, kwargs)
+        formatted_message = message % args if args else message
+        self._log_with_extra(logging.CRITICAL, formatted_message, kwargs)
+
+    def exception(self, message: str, *args: Any, **kwargs: Any) -> None:
+        """Log exception message with stack trace."""
+        formatted_message = message % args if args else message
+        kwargs["exc_info"] = True
+        self._log_with_extra(logging.ERROR, formatted_message, kwargs)
 
     def _log_with_extra(
         self,
         level: int,
         message: str,
         extra_data: dict[str, Any],
-    ) -> Any:
+    ) -> None:
         """Log message with extra structured data."""
         # Filter sensitive data if configured
         if self.config.mask_sensitive_data:
@@ -186,7 +213,7 @@ class LDAPLogger:
             "bind_password",
         }
 
-        masked_data: dict = {}
+        masked_data: dict[str, Any] = {}
         for key, value in data.items():
             if any(sensitive_key in key.lower() for sensitive_key in sensitive_keys):
                 masked_data[key] = "***MASKED***"
@@ -201,13 +228,13 @@ class LDAPLogger:
         dn: str,
         success: bool,
         duration: float | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """Log LDAP operation with standard format."""
         extra_data = {"operation": operation, "dn": dn, "success": success, **kwargs}
 
         if duration is not None:
-            extra_data["duration_ms"] = round(duration * 1000, 2)
+            extra_data["duration_ms"] = round(duration * DEFAULT_LARGE_LIMIT, 2)
 
         if success:
             self.info(f"LDAP {operation} successful", **extra_data)
@@ -219,8 +246,8 @@ class LDAPLogger:
         operation: str,
         count: int,
         duration: float,
-        **kwargs,
-    ) -> Any:
+        **kwargs: str | float | bool,
+    ) -> None:
         """Log performance metrics."""
         rate = count / duration if duration > 0 else 0
 
@@ -232,7 +259,15 @@ class LDAPLogger:
             **kwargs,
         }
 
-        self.info(f"Performance: {operation}", **extra_data)
+        # Convert extra_data values to compatible types
+        converted_extra = {}
+        for key, value in extra_data.items():
+            if isinstance(value, (str, int, float, bool)):
+                converted_extra[key] = value
+            else:
+                converted_extra[key] = str(value)
+
+        self.info(f"Performance: {operation}", **converted_extra)
 
     def log_migration_progress(
         self,
@@ -240,10 +275,10 @@ class LDAPLogger:
         processed: int,
         total: int,
         errors: int = 0,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """Log migration progress."""
-        percentage = (processed / total * 100) if total > 0 else 0
+        percentage = (processed / total * DEFAULT_MAX_ITEMS) if total > 0 else 0
 
         extra_data = {
             "stage": stage,
@@ -305,17 +340,17 @@ class PerformanceTimer:
         logger: LDAPLogger,
         operation: str,
         auto_log: bool = True,
-        **extra_data,
+        **extra_data: Any,
     ) -> None:
         """Initialize performance timer."""
         self.logger = logger
         self.operation = operation
         self.auto_log = auto_log
         self.extra_data = extra_data
-        self.start_time = None
-        self.duration = None
+        self.start_time: datetime | None = None
+        self.duration: float | None = None
 
-    def __enter__(self) -> Any:
+    def __enter__(self) -> Self:
         """Start timing."""
         self.start_time = datetime.now()
         return self
@@ -324,8 +359,8 @@ class PerformanceTimer:
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        exc_tb: Any,
-    ) -> Any:
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Stop timing and optionally log."""
         if self.start_time:
             end_time = datetime.now()
@@ -335,7 +370,7 @@ class PerformanceTimer:
                 self.logger.info(
                     f"Operation completed: {self.operation}",
                     duration_s=round(self.duration, 3),
-                    **self.extra_data,
+                    **{k: v for k, v in self.extra_data.items() if isinstance(v, (str, int, float, bool))},
                 )
 
     def get_duration(self) -> float | None:

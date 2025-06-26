@@ -1,24 +1,4 @@
-"""Base LDAP Extension Implementation.
-
-This module provides the foundation for all LDAP extension implementations,
-following the perl-ldap Net::LDAP::Extension architecture with enterprise-grade
-Python enhancements.
-
-Extensions are special LDAP operations that extend the protocol beyond basic
-CRUD operations. They use the Extended Operation mechanism defined in RFC 4511
-to provide additional functionality like password changes, identity queries,
-and connection management.
-
-Architecture:
-    - LDAPExtension: Abstract base class for all extensions
-    - ExtensionRegistry: Manages extension type registration
-    - ExtensionResult: Base class for extension results
-    - ExtensionError: Exception hierarchy for extension failures
-
-References:
-    - perl-ldap: lib/Net/LDAP/Extension.pm
-    - RFC 4511: Section 4.12 - Extended Operation
-"""
+"""Base LDAP Extension Implementation."""
 
 from __future__ import annotations
 
@@ -27,13 +7,16 @@ from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from pydantic import BaseModel, Field
 
-from ldap_core_shared.exceptions.base import LDAPCoreError
+from ldap_core_shared.exceptions.base import LDAPError
+from ldap_core_shared.utils.constants import PLACEHOLDER_OID
+
+# Constants for magic values
 
 if TYPE_CHECKING:
     from ldap_core_shared.types.aliases import OID
 
 
-class ExtensionError(LDAPCoreError):
+class ExtensionError(LDAPError):
     """Base exception for LDAP extension related errors."""
 
 
@@ -71,23 +54,23 @@ class ExtensionResult(BaseModel):
     result_code: int = Field(description="LDAP result code (0 = success)")
 
     matched_dn: Optional[str] = Field(
-        default=None, description="Matched DN from server response"
+        default=None, description="Matched DN from server response",
     )
 
     error_message: Optional[str] = Field(
-        default=None, description="Error message if operation failed"
+        default=None, description="Error message if operation failed",
     )
 
     referrals: Optional[list[str]] = Field(
-        default=None, description="List of referral URLs"
+        default=None, description="List of referral URLs",
     )
 
     response_name: Optional[OID] = Field(
-        default=None, description="OID of the extension response"
+        default=None, description="OID of the extension response",
     )
 
     response_value: Optional[bytes] = Field(
-        default=None, description="Raw response value from server"
+        default=None, description="Raw response value from server",
     )
 
     class Config:
@@ -143,7 +126,7 @@ class ExtensionResult(BaseModel):
         }
 
         return error_codes.get(
-            self.result_code, f"Unknown error (code {self.result_code})"
+            self.result_code, f"Unknown error (code {self.result_code})",
         )
 
 
@@ -167,7 +150,7 @@ class LDAPExtension(BaseModel, ABC):
 
     # Extension properties
     request_value: Optional[bytes] = Field(
-        default=None, description="Extension-specific request value (ASN.1 encoded)"
+        default=None, description="Extension-specific request value (ASN.1 encoded)",
     )
 
     class Config:
@@ -202,7 +185,7 @@ class LDAPExtension(BaseModel, ABC):
     @classmethod
     @abstractmethod
     def decode_response_value(
-        cls, response_name: Optional[OID], response_value: Optional[bytes]
+        cls, response_name: Optional[OID], response_value: Optional[bytes],
     ) -> ExtensionResult:
         """Decode extension response value to create a result instance.
 
@@ -222,7 +205,7 @@ class LDAPExtension(BaseModel, ABC):
         """
         raise NotImplementedError
 
-    def to_ldap_extended_request(self) -> dict[str, Any]:
+    def to_ldap_extended_request(self) -> dict[str, str | bytes]:
         """Convert to LDAP extended request dictionary format.
 
         Returns:
@@ -231,7 +214,7 @@ class LDAPExtension(BaseModel, ABC):
         Note:
             This format is used by underlying LDAP libraries for transmission.
         """
-        result = {
+        result: dict[str, str | bytes] = {
             "requestName": self.request_name,
         }
 
@@ -243,7 +226,7 @@ class LDAPExtension(BaseModel, ABC):
 
     @classmethod
     def from_ldap_extended_response(
-        cls, response_dict: dict[str, Any]
+        cls, response_dict: dict[str, Any],
     ) -> ExtensionResult:
         """Create extension result from LDAP extended response dictionary.
 
@@ -271,7 +254,7 @@ class LDAPExtension(BaseModel, ABC):
 
         try:
             result = extension_class.decode_response_value(
-                response_name, response_value
+                response_name, response_value,
             )
 
             # Set additional response metadata
@@ -362,10 +345,10 @@ class GenericExtension(LDAPExtension):
     """
 
     # Override in instances
-    request_name: OID = "0.0.0.0"  # Will be set dynamically
+    request_name: ClassVar[OID] = PLACEHOLDER_OID  # Will be set dynamically
 
     def __init__(
-        self, request_name: OID, request_value: Optional[bytes] = None, **kwargs: Any
+        self, request_name: OID, request_value: Optional[bytes] = None, **kwargs: Any,
     ) -> None:
         """Initialize generic extension with dynamic type."""
         super().__init__(request_value=request_value, **kwargs)
@@ -378,7 +361,7 @@ class GenericExtension(LDAPExtension):
 
     @classmethod
     def decode_response_value(
-        cls, response_name: Optional[OID], response_value: Optional[bytes]
+        cls, response_name: Optional[OID], response_value: Optional[bytes],
     ) -> ExtensionResult:
         """Create generic result with raw values."""
         return ExtensionResult(
@@ -411,11 +394,10 @@ class ExtensionOIDs:
     FAST_BIND = "1.2.840.113556.1.4.1781"
 
     # Novell eDirectory extensions
-    GET_EFFECTIVE_PRIVILEGES = "2.16.840.1.113719.1.27.100.33"
+    GET_EFFECTIVE_PRIVILEGES = "2.16.840.1.113719.1.27.DEFAULT_MAX_ITEMS.33"
 
     # OpenLDAP specific extensions
     MODIFY_PASSWD = "1.3.6.1.4.1.4203.1.11.1"
-
 
 # TODO: Implement the following critical extensions:
 # 1. WhoAmIExtension (CRITICAL - RFC 4532)

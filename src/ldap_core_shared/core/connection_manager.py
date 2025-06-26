@@ -1,41 +1,27 @@
-"""Enterprise LDAP Connection Manager with Advanced Pool Management.
-
-This module provides enterprise-grade LDAP connection management with
-high-performance connection pooling, automatic reconnection, and
-comprehensive monitoring capabilities.
-
-Architecture:
-    Connection manager implementing the Repository pattern with connection
-    pooling for optimal resource utilization and performance.
-
-Key Features:
-    - Enterprise Connection Pooling: Automatic pool sizing and cleanup
-    - Health Monitoring: Active connection health checks and metrics
-    - Automatic Reconnection: Circuit breaker pattern for resilience
-    - SSH Tunnel Support: Secure connections through SSH tunnels
-    - Performance Optimization: Connection reuse and load balancing
-
-Version: 1.0.0-enterprise
-"""
+"""Enterprise LDAP Connection Manager with Advanced Pool Management."""
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
 import time
+from collections.abc import Iterator
 from contextlib import asynccontextmanager, contextmanager
 from typing import TYPE_CHECKING
 
 import ldap3
-from ldap3 import ALL, Connection, Server, Tls
+from ldap3 import ALL, Connection, LDAPException, Server, Tls
 from pydantic import BaseModel, ConfigDict, Field
 
 from ldap_core_shared.domain.results import LDAPConnectionResult
 from ldap_core_shared.utils.constants import (
+    # Constants for magic values
     CONNECTION_MAX_AGE,
     CONNECTION_MAX_IDLE,
+    DEFAULT_LARGE_LIMIT,
     DEFAULT_LDAP_PORT,
     DEFAULT_LDAP_TIMEOUT,
+    DEFAULT_MAX_ITEMS,
     DEFAULT_MAX_POOL_SIZE,
     DEFAULT_POOL_SIZE,
 )
@@ -315,7 +301,7 @@ class ConnectionPool:
 
         # Calculate utilization
         utilization = (
-            (active_count / self.max_pool_size) * 100.0
+            (active_count / self.max_pool_size) * DEFAULT_MAX_ITEMS
             if self.max_pool_size > 0
             else 0.0
         )
@@ -331,8 +317,8 @@ class ConnectionPool:
             connections_reused=self._metrics["connections_reused"],
             connections_closed=self._metrics["connections_closed"],
             average_acquisition_time=perf_metrics.average_duration
-            * 1000,  # Convert to ms
-            max_acquisition_time=perf_metrics.max_duration * 1000,  # Convert to ms
+            * DEFAULT_LARGE_LIMIT,  # Convert to ms
+            max_acquisition_time=perf_metrics.max_duration * DEFAULT_LARGE_LIMIT,  # Convert to ms
             pool_utilization=utilization,
         )
 
@@ -393,8 +379,14 @@ class LDAPConnectionManager:
 
         finally:
             if connection:
-                with contextlib.suppress(Exception):
+                try:
                     connection.unbind()
+                except (LDAPException, OSError, AttributeError) as e:
+                    # Log specific unbind errors but don't raise
+                    self._logger.warning(f"Error during connection unbind: {e}")
+                except Exception as e:
+                    # Unexpected unbind error - log with more detail
+                    self._logger.error(f"Unexpected error during connection unbind: {e}", exc_info=True)
 
     @asynccontextmanager
     async def get_pooled_connection(self) -> AsyncIterator[PooledConnection]:
@@ -405,6 +397,10 @@ class LDAPConnectionManager:
         """
         if not self._pool:
             await self.initialize_pool()
+
+        if self._pool is None:
+            msg = "Connection pool not initialized"
+            raise RuntimeError(msg)
 
         async with self._pool.get_connection() as pooled_conn:
             yield pooled_conn

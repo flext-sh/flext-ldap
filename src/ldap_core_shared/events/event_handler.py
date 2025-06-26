@@ -11,9 +11,10 @@ import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ldap_core_shared.events.domain_events import DomainEvent
+if TYPE_CHECKING:
+    from ldap_core_shared.events.domain_events import DomainEvent
 
 logger = logging.getLogger(__name__)
 
@@ -43,11 +44,11 @@ class EventDispatcher:
         self._async_handlers: dict[type[DomainEvent], list[EventHandler]] = defaultdict(
             list,
         )
-        self._event_queue: asyncio.Queue = asyncio.Queue()
+        self._event_queue: asyncio.Queue[DomainEvent | None] = asyncio.Queue()
         self._logger = logging.getLogger(__name__)
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
         self._running = False
-        self._task: asyncio.Task = None
+        self._task: asyncio.Task[None] | None = None
 
     def register_handler(
         self,
@@ -62,8 +63,10 @@ class EventDispatcher:
                 self._handlers[event_type].append(handler)
 
             self._logger.debug(
-                f"Registered {'async' if async_handler else 'sync'} handler "
-                f"{handler.__class__.__name__} for event {event_type.__name__}",
+                "Registered %s handler %s for event %s",
+                "async" if async_handler else "sync",
+                handler.__class__.__name__,
+                event_type.__name__,
             )
 
     def unregister_handler(self, handler: EventHandler) -> None:
@@ -98,22 +101,20 @@ class EventDispatcher:
             except Exception as e:
                 self._logger.exception("Error in async event handlers: %s", e)
 
-        # Process sync handlers in thread pool
+        # Process sync handlers (still async but treated as sync priority)
         sync_handlers = self._handlers.get(event_type, [])
         if sync_handlers:
-            loop = asyncio.get_event_loop()
-            tasks = [
-                loop.run_in_executor(self._executor, handler.handle, event)
-                for handler in sync_handlers
-            ]
-            try:
-                await asyncio.gather(*tasks, return_exceptions=True)
-            except Exception as e:
-                self._logger.exception("Error in sync event handlers: %s", e)
+            for handler in sync_handlers:
+                try:
+                    await handler.handle(event)
+                except Exception as e:
+                    self._logger.exception("Error in sync event handler %s: %s", handler.__class__.__name__, e)
 
         self._logger.debug(
-            f"Processed event {event.event_type} with "
-            f"{len(async_handlers)} async and {len(sync_handlers)} sync handlers",
+            "Processed event %s with %d async and %d sync handlers",
+            event.event_type,
+            len(async_handlers),
+            len(sync_handlers),
         )
 
     async def start(self) -> None:
@@ -152,6 +153,7 @@ class EventDispatcher:
 
                 # Shutdown signal
                 if event is None:
+                    self._running = False
                     break
 
                 await self._process_event(event)
@@ -166,11 +168,11 @@ class EventDispatcher:
             self._handlers.get(event_type, []),
         )
 
-    def get_all_handlers(self) -> dict[str, int]:
+    def get_all_handlers(self) -> dict[str, dict[str, int]]:
         """Get summary of all registered handlers."""
-        summary: dict = {}
+        summary: dict[str, dict[str, int]] = {}
 
-        all_event_types = set(self._async_handlers.keys()) | set(self._handlers.keys())
+        all_event_types = set(self._async_handlers.keys() | set(self._handlers.keys()))
 
         for event_type in all_event_types:
             async_count = len(self._async_handlers.get(event_type, []))
@@ -202,7 +204,7 @@ class LoggingEventHandler(EventHandler):
     @property
     def handled_events(self) -> list[type[DomainEvent]]:
         """Handle all event types."""
-        return [DomainEvent]
+        return []  # This handler handles events dynamically
 
 
 class MetricsEventHandler(EventHandler):
@@ -224,7 +226,7 @@ class MetricsEventHandler(EventHandler):
     @property
     def handled_events(self) -> list[type[DomainEvent]]:
         """Handle all event types."""
-        return [DomainEvent]
+        return []  # This handler handles events dynamically
 
     def get_metrics(self) -> dict[str, Any]:
         """Get collected metrics."""
@@ -242,7 +244,7 @@ class MetricsEventHandler(EventHandler):
 
 
 # Global event dispatcher instance
-_dispatcher: EventDispatcher = None
+_dispatcher: EventDispatcher | None = None
 
 
 def get_event_dispatcher() -> EventDispatcher:

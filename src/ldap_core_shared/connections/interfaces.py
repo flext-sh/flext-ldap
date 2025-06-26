@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
     from ldap_core_shared.connections.base import LDAPConnectionInfo, LDAPSearchConfig
     from ldap_core_shared.domain.results import LDAPConnectionResult
-
+    from ldap_core_shared.types.aliases import DN, Attributes
 
 # ============================================================================
 # 🔥 SINGLE RESPONSIBILITY PRINCIPLE - ONE PURPOSE PER INTERFACE
@@ -138,7 +138,7 @@ class ISecurityManager(Protocol):
     """🎯 Single Responsibility: Handle security concerns only."""
 
     @abstractmethod
-    async def setup_tls(self, connection_info: LDAPConnectionInfo) -> Any:
+    async def setup_tls(self, connection_info: LDAPConnectionInfo) -> ldap3.Tls | None:
         """Setup TLS configuration.
 
         Args:
@@ -159,7 +159,6 @@ class ISecurityManager(Protocol):
             True if credentials are valid
         """
 
-
 # ============================================================================
 # 🔥 INTERFACE SEGREGATION PRINCIPLE - SMALL, FOCUSED INTERFACES
 # ============================================================================
@@ -174,15 +173,15 @@ class ISearchOperations(Protocol):
         self,
         search_base: str,
         search_filter: str,
-        **kwargs: Any,
-    ) -> AsyncIterator[dict[str, Any]]:
+        **kwargs: str | int | bool | list[str] | None,
+    ) -> AsyncIterator[Attributes]:
         """Perform LDAP search."""
 
     @abstractmethod
     async def search_with_config(
         self,
         config: LDAPSearchConfig,
-    ) -> AsyncIterator[dict[str, Any]]:
+    ) -> AsyncIterator[Attributes]:
         """Search with configuration object."""
 
 
@@ -191,15 +190,15 @@ class IModificationOperations(Protocol):
     """🎯 Interface Segregation: Modification operations only."""
 
     @abstractmethod
-    async def add_entry(self, dn: str, attributes: dict[str, Any]) -> bool:
+    async def add_entry(self, dn: DN, attributes: Attributes) -> bool:
         """Add new LDAP entry."""
 
     @abstractmethod
-    async def modify_entry(self, dn: str, changes: dict[str, Any]) -> bool:
+    async def modify_entry(self, dn: DN, changes: Attributes) -> bool:
         """Modify existing LDAP entry."""
 
     @abstractmethod
-    async def delete_entry(self, dn: str) -> bool:
+    async def delete_entry(self, dn: DN) -> bool:
         """Delete LDAP entry."""
 
 
@@ -210,13 +209,13 @@ class IRetrievalOperations(Protocol):
     @abstractmethod
     async def get_entry(
         self,
-        dn: str,
+        dn: DN,
         attributes: list[str] | None = None,
-    ) -> dict[str, Any] | None:
+    ) -> Attributes | None:
         """Get single LDAP entry."""
 
     @abstractmethod
-    async def compare_attribute(self, dn: str, attribute: str, value: str) -> bool:
+    async def compare_attribute(self, dn: DN, attribute: str, value: str) -> bool:
         """Compare attribute value."""
 
 
@@ -270,7 +269,6 @@ class IConnectionLifecycle(Protocol):
     async def refresh(self) -> None:
         """Refresh connections."""
 
-
 # ============================================================================
 # 🔥 OPEN/CLOSED PRINCIPLE - EXTENSIBLE ABSTRACTIONS
 # ============================================================================
@@ -307,13 +305,12 @@ class BaseOperationHandler(ABC):
     """
 
     @abstractmethod
-    async def execute(self, *args: Any, **kwargs: Any) -> Any:
+    async def execute(self, *args: str | int | bool, **kwargs: str | int | bool | list[str] | None) -> bool | list[Attributes] | None:
         """Execute operation."""
 
     @abstractmethod
-    def validate_parameters(self, *args: Any, **kwargs: Any) -> bool:
+    def validate_parameters(self, *args: str | int | bool, **kwargs: str | int | bool | list[str] | None) -> bool:
         """Validate operation parameters."""
-
 
 # ============================================================================
 # 🔥 DEPENDENCY INVERSION PRINCIPLE - DEPEND ON ABSTRACTIONS
@@ -337,18 +334,18 @@ class ILDAPConnectionManager(Protocol):
         self,
         search_base: str,
         search_filter: str,
-        **kwargs: Any,
-    ) -> AsyncIterator[dict[str, Any]]:
+        **kwargs: str | int | bool | list[str] | None,
+    ) -> AsyncIterator[Attributes]:
         """Perform search operation."""
 
     # Modification operations
-    async def add_entry(self, dn: str, attributes: dict[str, Any]) -> bool:
+    async def add_entry(self, dn: DN, attributes: Attributes) -> bool:
         """Add new entry."""
 
-    async def modify_entry(self, dn: str, changes: dict[str, Any]) -> bool:
+    async def modify_entry(self, dn: DN, changes: Attributes) -> bool:
         """Modify existing entry."""
 
-    async def delete_entry(self, dn: str) -> bool:
+    async def delete_entry(self, dn: DN) -> bool:
         """Delete entry."""
 
     # Lifecycle management
@@ -370,7 +367,7 @@ class IConnectionManagerFactory(Protocol):
     def create_manager(
         self,
         connection_info: LDAPConnectionInfo,
-        **kwargs: Any,
+        **kwargs: str | int | bool | list[str] | None,
     ) -> ILDAPConnectionManager:
         """Create connection manager instance.
 
@@ -381,7 +378,6 @@ class IConnectionManagerFactory(Protocol):
         Returns:
             Connection manager instance
         """
-
 
 # ============================================================================
 # 🔥 LISKOV SUBSTITUTION PRINCIPLE - INTERCHANGEABLE IMPLEMENTATIONS
@@ -398,9 +394,9 @@ class ConnectionManagerContract(ABC):
     async def perform_operation(
         self,
         operation_type: str,
-        *args: Any,
-        **kwargs: Any,
-    ) -> Any:
+        *args: str | int | bool,
+        **kwargs: str | int | bool | list[str] | None,
+    ) -> bool | list[Attributes] | None:
         """Generic operation interface.
 
         All implementations must handle operations consistently.
@@ -421,7 +417,6 @@ class ConnectionManagerContract(ABC):
 
         All implementations must handle errors the same way.
         """
-
 
 # ============================================================================
 # 🔥 COMPOSITION INTERFACES - ENABLE DEPENDENCY INJECTION
@@ -467,7 +462,7 @@ class ILogger(Protocol):
     """🎯 Dependency Injection: Logger interface."""
 
     @abstractmethod
-    def log_info(self, message: str, **kwargs: Any) -> None:
+    def log_info(self, message: str, **kwargs) -> None:
         """Log info message."""
 
     @abstractmethod
@@ -480,9 +475,8 @@ class ILogger(Protocol):
         """Log error message."""
 
     @abstractmethod
-    def log_debug(self, message: str, **kwargs: Any) -> None:
+    def log_debug(self, message: str, **kwargs) -> None:
         """Log debug message."""
-
 
 # ============================================================================
 # 🔥 SOLID PRINCIPLE VALIDATION

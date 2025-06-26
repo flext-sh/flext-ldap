@@ -26,7 +26,7 @@ Quality standards:
 from __future__ import annotations
 
 import uuid
-from datetime import UTC
+from datetime import timezone
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -265,7 +265,7 @@ class MockTrackable:
     def __init__(self) -> None:
         from datetime import datetime
 
-        self._created_at = datetime.now(UTC)
+        self._created_at = datetime.now(timezone.utc)
         self._updated_at = self._created_at
         self._version = 1
 
@@ -375,9 +375,7 @@ class TestSearchable:
         )
 
         # Search all
-        results = []
-        async for entry in mock.search("dc=test,dc=com", "(objectClass=person)"):
-            results.append(entry)
+        results = [entry async for entry in mock.search("dc=test,dc=com", "(objectClass=person)")]
 
         assert len(results) == 2
 

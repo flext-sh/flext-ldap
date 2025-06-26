@@ -4,7 +4,7 @@ Integration tests for LDAP Core Shared library focusing on component interaction
 connection management, and real LDAP operations using mocked servers.
 
 Architecture tested:
-- LDAPConnectionManager + Base components integration
+- ConnectionManager + Base components integration
 - Connection pooling + LDIF processing interaction
 - SSH tunnel + connection management integration
 - Performance monitoring + connection statistics
@@ -32,18 +32,18 @@ from ldap_core_shared.connections.base import (
     LDAPConnectionOptions,
     LDAPSearchConfig,
 )
-from ldap_core_shared.connections.manager import LDAPConnectionManager
+from ldap_core_shared.connections.manager import ConnectionManager
 from ldap_core_shared.ldif.processor import LDIFProcessor
 from ldap_core_shared.utils.performance import PerformanceMonitor
 
 
 class TestConnectionManagerIntegration:
-    """🔥 Integration tests for LDAPConnectionManager with various components."""
+    """🔥 Integration tests for ConnectionManager with various components."""
 
     @pytest.fixture
-    async def mock_connection_manager(self, sample_connection_info):
+    async def mock_connection_manager(self, sample_connection_info: Any):
         """Create mocked connection manager for integration testing."""
-        manager = LDAPConnectionManager(
+        manager = ConnectionManager(
             connection_info=sample_connection_info,
             enable_pooling=True,
             pool_size=5,
@@ -89,7 +89,7 @@ class TestConnectionManagerIntegration:
     @pytest.mark.asyncio
     async def test_connection_manager_initialization_integration(
         self,
-        sample_connection_info,
+        sample_connection_info: Any,
     ) -> None:
         """🔥 Test connection manager initialization with all components."""
         options = LDAPConnectionOptions(
@@ -105,7 +105,7 @@ class TestConnectionManagerIntegration:
             mock_conn.bound = True
             mock_conn_class.return_value = mock_conn
 
-            manager = LDAPConnectionManager.from_options(options)
+            manager = ConnectionManager.from_options(options)
 
             assert manager.connection_info == sample_connection_info
             assert manager.enable_pooling is True
@@ -115,7 +115,7 @@ class TestConnectionManagerIntegration:
     @pytest.mark.asyncio
     async def test_connection_pool_health_integration(
         self,
-        mock_connection_manager,
+        mock_connection_manager: Any,
     ) -> None:
         """🔥 Test connection pool health checks integration."""
         # Perform health check
@@ -131,8 +131,8 @@ class TestConnectionManagerIntegration:
     @pytest.mark.asyncio
     async def test_concurrent_search_operations_integration(
         self,
-        mock_connection_manager,
-        integration_search_configs,
+        mock_connection_manager: Any,
+        integration_search_configs: Any,
     ) -> None:
         """🔥 Test concurrent search operations with connection pooling."""
         # Mock search results
@@ -164,7 +164,7 @@ class TestConnectionManagerIntegration:
     @pytest.mark.asyncio
     async def test_connection_error_recovery_integration(
         self,
-        mock_connection_manager,
+        mock_connection_manager: Any,
     ) -> None:
         """🔥 Test connection error recovery across components."""
         # Simulate connection failure and recovery
@@ -172,7 +172,7 @@ class TestConnectionManagerIntegration:
             # First call fails
             mock_get_conn.side_effect = [
                 Exception("Connection failed"),
-                contextlib.asynccontextmanager(lambda: AsyncMock())(),
+                contextlib.asynccontextmanager(AsyncMock)(),
             ]
 
             # First operation should fail
@@ -187,7 +187,7 @@ class TestConnectionManagerIntegration:
     @pytest.mark.asyncio
     async def test_performance_monitoring_integration(
         self,
-        mock_connection_manager,
+        mock_connection_manager: Any,
     ) -> None:
         """🔥 Test performance monitoring integration across operations."""
         initial_stats = mock_connection_manager.get_stats()
@@ -205,7 +205,7 @@ class TestConnectionManagerIntegration:
         assert final_stats.total_operations >= initial_stats.total_operations
 
     @pytest.mark.asyncio
-    async def test_ssh_tunnel_integration(self, sample_connection_info) -> None:
+    async def test_ssh_tunnel_integration(self, sample_connection_info: Any) -> None:
         """🔥 Test SSH tunnel integration with connection manager."""
         options = LDAPConnectionOptions(
             connection_info=sample_connection_info,
@@ -216,7 +216,7 @@ class TestConnectionManagerIntegration:
             ssh_password="tunnelpass",
         )
 
-        manager = LDAPConnectionManager.from_options(options)
+        manager = ConnectionManager.from_options(options)
 
         # Verify SSH tunnel configuration was applied
         # Note: In real implementation, this would establish SSH tunnel
@@ -261,11 +261,11 @@ member: uid=user2,ou=users,dc=example,dc=com
     @pytest.mark.asyncio
     async def test_ldif_processor_with_connection_manager(
         self,
-        sample_ldif_content,
-        sample_connection_info,
+        sample_ldif_content: Any,
+        sample_connection_info: Any,
     ) -> None:
         """🔥 Test LDIF processor integration with connection manager."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(sample_ldif_content)
             ldif_path = f.name
 
@@ -279,12 +279,10 @@ member: uid=user2,ou=users,dc=example,dc=com
                 mock_conn.bound = True
                 mock_conn_class.return_value = mock_conn
 
-                async with LDAPConnectionManager(sample_connection_info) as manager:
+                async with ConnectionManager(sample_connection_info) as manager:
                     # Process LDIF file
                     async with processor.process_file(ldif_path) as results:
-                        entries = []
-                        async for entry in results:
-                            entries.append(entry)
+                        entries = [entry async for entry in results]
 
                     # Verify integration results
                     assert len(entries) > 0
@@ -301,13 +299,13 @@ member: uid=user2,ou=users,dc=example,dc=com
     @pytest.mark.asyncio
     async def test_ldif_processing_with_performance_monitoring(
         self,
-        sample_ldif_content,
+        sample_ldif_content: Any,
     ) -> None:
         """🔥 Test LDIF processing with performance monitoring integration."""
         monitor = PerformanceMonitor()
         processor = LDIFProcessor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(sample_ldif_content)
             ldif_path = f.name
 
@@ -343,8 +341,8 @@ class TestEndToEndIntegration:
     @pytest.mark.asyncio
     async def test_full_ldap_workflow_integration(
         self,
-        sample_connection_info,
-        integration_search_configs,
+        sample_connection_info: Any,
+        integration_search_configs: Any,
     ) -> None:
         """🔥🔥🔥 Test complete LDAP workflow integration."""
         # Initialize performance monitoring
@@ -376,7 +374,7 @@ class TestEndToEndIntegration:
                 enable_ssh_tunnel=False,
             )
 
-            async with LDAPConnectionManager.from_options(options) as manager:
+            async with ConnectionManager.from_options(options) as manager:
                 # Perform health check
                 health_ok = await manager.health_check()
                 assert health_ok is True
@@ -435,13 +433,13 @@ class TestEndToEndIntegration:
     @pytest.mark.asyncio
     async def test_concurrent_operations_integration(
         self,
-        sample_connection_info,
+        sample_connection_info: Any,
     ) -> None:
         """🔥🔥 Test concurrent operations across all components."""
 
         async def worker_task(
             worker_id: int,
-            manager: LDAPConnectionManager,
+            manager: ConnectionManager,
         ) -> dict[str, Any]:
             """Worker task for concurrent testing."""
             results = {"worker_id": worker_id, "operations": 0, "errors": 0}
@@ -470,7 +468,7 @@ class TestEndToEndIntegration:
             mock_conn.bound = True
             mock_conn_class.return_value = mock_conn
 
-            async with LDAPConnectionManager(
+            async with ConnectionManager(
                 sample_connection_info,
                 pool_size=20,
             ) as manager:
@@ -493,7 +491,7 @@ class TestEndToEndIntegration:
     @pytest.mark.asyncio
     async def test_error_handling_integration(
         self,
-        sample_connection_info,
+        sample_connection_info: Any,
     ) -> None:
         """🔥🔥 Test error handling integration across components."""
         with patch("ldap3.Connection") as mock_conn_class:
@@ -506,7 +504,7 @@ class TestEndToEndIntegration:
             mock_conn.search.side_effect = Exception("Search failed")
             mock_conn_class.return_value = mock_conn
 
-            async with LDAPConnectionManager(sample_connection_info) as manager:
+            async with ConnectionManager(sample_connection_info) as manager:
                 # Test error handling in search
                 with pytest.raises(Exception, match="Search failed"):
                     async for _ in manager.search("dc=example,dc=com"):
@@ -519,7 +517,7 @@ class TestEndToEndIntegration:
     @pytest.mark.asyncio
     async def test_resource_cleanup_integration(
         self,
-        sample_connection_info,
+        sample_connection_info: Any,
     ) -> None:
         """🔥🔥 Test resource cleanup integration."""
         manager = None
@@ -531,7 +529,7 @@ class TestEndToEndIntegration:
             mock_conn_class.return_value = mock_conn
 
             # Create and use manager
-            manager = LDAPConnectionManager(
+            manager = ConnectionManager(
                 sample_connection_info,
                 enable_pooling=True,
                 pool_size=5,

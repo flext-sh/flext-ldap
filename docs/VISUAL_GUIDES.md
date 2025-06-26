@@ -1,6 +1,6 @@
 # 📊 LDAP Visual Guides & Diagrams
 
-**Understand LDAP concepts through visual diagrams and flowcharts**
+> **Understand LDAP concepts through visual diagrams and flowcharts**
 
 [![Visual Learning](https://img.shields.io/badge/Visual-Learning-purple.svg)](https://visual-ldap.com)
 [![Diagrams](https://img.shields.io/badge/Diagrams-Complete-blue.svg)](https://ldap-diagrams.com)

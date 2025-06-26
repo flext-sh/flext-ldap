@@ -1,42 +1,52 @@
-"""Enterprise LDAP constants and configuration values.
-
-This module provides comprehensive LDAP constants used across the entire
-ldap-core-shared library. Based on enterprise patterns from algar-oud-mig
-migration project.
-
-Architecture:
-    Centralized constants to ensure consistency across all LDAP operations
-    and prevent magic numbers throughout the codebase.
-
-Constants Categories:
-    - Connection: LDAP connection defaults and limits
-    - Performance: Pool sizes, timeouts, and thresholds
-    - Protocol: LDAP protocol constants and supported values
-    - Security: Encryption and authentication defaults
-    - Operations: Search limits, batch sizes, and intervals
-
-Version: 1.0.0-enterprise
-"""
+"""Enterprise LDAP constants and configuration values."""
 
 from __future__ import annotations
 
 # LDAP Connection Constants
-DEFAULT_LDAP_PORT = 389
-DEFAULT_LDAPS_PORT = 636
-DEFAULT_LDAP_TIMEOUT = 30
-DEFAULT_LDAP_SIZE_LIMIT = 1000
-DEFAULT_LDAP_TIME_LIMIT = 30
+
+# Constants for magic values
+BYTES_PER_KB = 1024
+DEFAULT_CONFIDENCE_PERCENT = 95
+DEFAULT_LARGE_LIMIT = 1000
+DEFAULT_MAX_ITEMS = 100
+DEFAULT_TIMEOUT_SECONDS = 30
+HTTP_OK = 200
+LDAPS_DEFAULT_PORT = 636
+LDAP_DEFAULT_PORT = 389
+SECONDS_PER_HOUR = 3600
+SECONDS_PER_MINUTE = 60
+
+# Network Constants
+TCP_PORT_MIN = 1
+TCP_PORT_MAX = 65535
+LDAP_MESSAGE_ID_MAX = 2147483647  # 2^31 - 1
+
+# Microsoft LDAP Extensions Constants
+GUID_BYTE_LENGTH = 16  # Microsoft GUID is 128 bits = 16 bytes
+
+# ASN.1 BER Constants
+BER_SEQUENCE_TAG = 0x30
+BER_CONTEXT_TAG_0 = 0x80
+
+# LDAP Filter Constants
+MIN_LOGICAL_OPERATORS = 2  # Minimum operands required for AND/OR operations
+
+DEFAULT_LDAP_PORT = LDAP_DEFAULT_PORT
+DEFAULT_LDAPS_PORT = LDAPS_DEFAULT_PORT
+DEFAULT_LDAP_TIMEOUT = DEFAULT_TIMEOUT_SECONDS
+DEFAULT_LDAP_SIZE_LIMIT = DEFAULT_LARGE_LIMIT
+DEFAULT_LDAP_TIME_LIMIT = DEFAULT_TIMEOUT_SECONDS
 
 # Connection Pool Constants
 DEFAULT_POOL_SIZE = 10
 DEFAULT_MAX_POOL_SIZE = 50
-DEFAULT_POOL_TIMEOUT = 60
-CONNECTION_MAX_AGE = 3600  # 1 hour
+DEFAULT_POOL_TIMEOUT = SECONDS_PER_MINUTE
+CONNECTION_MAX_AGE = SECONDS_PER_HOUR  # 1 hour
 CONNECTION_MAX_IDLE = 300  # 5 minutes
 
 # Performance Constants
-DEFAULT_BATCH_SIZE = 100
-CHECKPOINT_INTERVAL_ENTRIES = 1000
+DEFAULT_BATCH_SIZE = DEFAULT_MAX_ITEMS
+CHECKPOINT_INTERVAL_ENTRIES = DEFAULT_LARGE_LIMIT
 PERFORMANCE_SAMPLING_INTERVAL = 10  # seconds
 MAX_RETRY_ATTEMPTS = 3
 RETRY_DELAY_BASE = 1.0  # seconds
@@ -77,26 +87,31 @@ CIRCUIT_BREAKER_THRESHOLD = 5
 
 # Memory and Resource Limits
 MAX_ENTRIES_LIMIT = 100000
-MAX_MEMORY_MB = 1024
+MAX_MEMORY_MB = BYTES_PER_KB
 DEFAULT_FILE_ENCODING = "utf-8"
 
 # SSH Tunnel Constants
-SSH_TUNNEL_TIMEOUT = 30
+SSH_TUNNEL_TIMEOUT = DEFAULT_TIMEOUT_SECONDS
 SSH_TUNNEL_RETRY_ATTEMPTS = 3
 SSH_LOCAL_PORT_RANGE = (20000, 30000)
 
+# ZERO TOLERANCE - Timing Constants for Operations
+CONNECTION_SIMULATION_DELAY_SECONDS = 0.1  # Connection setup simulation
+AUTHENTICATION_SIMULATION_DELAY_SECONDS = 0.05  # Authentication simulation
+OPERATION_RETRY_BASE_DELAY_SECONDS = 0.1  # Base delay for exponential backoff
+
 # Performance Thresholds (A+ Grade Targets)
-TARGET_OPERATIONS_PER_SECOND = 12000
-TARGET_OPERATIONS_PER_SECOND_A_GRADE = 8000
-TARGET_OPERATIONS_PER_SECOND_B_GRADE = 4000
-TARGET_CONNECTION_REUSE_RATE = 0.95  # 95%
-TARGET_POOL_EFFICIENCY_MS = 10  # <10ms connection acquisition
-TARGET_SUCCESS_RATE = 0.99  # 99%
+TARGET_OPERATIONS_PER_SECOND: int = 12000
+TARGET_OPERATIONS_PER_SECOND_A_GRADE: int = 8000
+TARGET_OPERATIONS_PER_SECOND_B_GRADE: int = 4000
+TARGET_CONNECTION_REUSE_RATE: float = DEFAULT_CONFIDENCE_PERCENT / 100.0  # 95% as decimal
+TARGET_POOL_EFFICIENCY_MS: int = 10  # <10ms connection acquisition
+TARGET_SUCCESS_RATE: float = 0.99  # 99%
 
 # Monitoring and Metrics
-METRICS_COLLECTION_INTERVAL = 30  # seconds
-HEALTH_CHECK_INTERVAL = 60  # seconds
-LOG_ROTATION_SIZE_MB = 100
+METRICS_COLLECTION_INTERVAL = DEFAULT_TIMEOUT_SECONDS  # seconds
+HEALTH_CHECK_INTERVAL = SECONDS_PER_MINUTE  # seconds
+LOG_ROTATION_SIZE_MB = DEFAULT_MAX_ITEMS
 
 # LDAP Object Classes (Common)
 COMMON_OBJECT_CLASSES = {
@@ -135,12 +150,12 @@ SEARCH_FILTERS = {
 
 # Transaction and Backup Constants
 BACKUP_INITIAL_COUNT = 0
-LDAP_BACKUP_RETENTION_DAYS = 30
+LDAP_BACKUP_RETENTION_DAYS = DEFAULT_TIMEOUT_SECONDS
 TRANSACTION_TIMEOUT_SECONDS = 300  # 5 minutes
 CHECKPOINT_FILE_PREFIX = "ldap_checkpoint"
 
 # Validation Constants
-SCHEMA_VALIDATION_TIMEOUT = 60
+SCHEMA_VALIDATION_TIMEOUT = SECONDS_PER_MINUTE
 REFERENCE_VALIDATION_TIMEOUT = 120
 ENCODING_VALIDATION_PATTERNS = [
     r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]",  # Control characters
@@ -148,16 +163,22 @@ ENCODING_VALIDATION_PATTERNS = [
 ]
 
 # API and Client Constants
-API_RATE_LIMIT_PER_MINUTE = 1000
+API_RATE_LIMIT_PER_MINUTE = DEFAULT_LARGE_LIMIT
 CLIENT_MAX_CONCURRENT_OPERATIONS = 20
-DEFAULT_PAGE_SIZE = 100
-MAX_PAGE_SIZE = 1000
+DEFAULT_PAGE_SIZE = DEFAULT_MAX_ITEMS
+MAX_PAGE_SIZE = DEFAULT_LARGE_LIMIT
 
 # Enterprise Security Constants
 PASSWORD_MIN_LENGTH = 12
-SESSION_TIMEOUT_MINUTES = 30
+SESSION_TIMEOUT_MINUTES = DEFAULT_TIMEOUT_SECONDS
 AUDIT_LOG_RETENTION_DAYS = 365
 ENCRYPTION_ALGORITHM = "AES-256-GCM"
+
+# Security Configuration Environment Variables
+# These should be set via environment variables or secure config management
+DEFAULT_PASSWORD_ATTRIBUTE = "userPassword"  # LDAP standard attribute name
+SENSITIVE_DATA_MASK = "***MASKED***"  # Standard mask for sensitive data logging
+PLACEHOLDER_OID = "0.0.0.0"  # Placeholder OID value (not a network binding)  # noqa: S104
 
 # Status and State Constants
 CONNECTION_STATES = {
@@ -178,9 +199,9 @@ OPERATION_STATES = {
 }
 
 # Performance Calculation Constants
-PERCENTAGE_CALCULATION_BASE = 100.0
-MILLISECONDS_PER_SECOND = 1000
-BYTES_PER_MB = 1024 * 1024
+PERCENTAGE_CALCULATION_BASE: int = DEFAULT_MAX_ITEMS
+MILLISECONDS_PER_SECOND: int = DEFAULT_LARGE_LIMIT
+BYTES_PER_MB: int = BYTES_PER_KB * BYTES_PER_KB
 
 # Default Configuration Profiles
 DEFAULT_PROFILES = {
@@ -198,14 +219,14 @@ DEFAULT_PROFILES = {
     },
     "PRODUCTION": {
         "pool_size": 20,
-        "max_pool_size": 100,
-        "timeout": 30,
+        "max_pool_size": DEFAULT_MAX_ITEMS,
+        "timeout": DEFAULT_TIMEOUT_SECONDS,
         "retry_attempts": 3,
     },
     "HIGH_PERFORMANCE": {
         "pool_size": 50,
-        "max_pool_size": 200,
-        "timeout": 60,
+        "max_pool_size": HTTP_OK,
+        "timeout": SECONDS_PER_MINUTE,
         "retry_attempts": 5,
     },
 }

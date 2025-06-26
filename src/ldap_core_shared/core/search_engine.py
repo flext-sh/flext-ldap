@@ -34,7 +34,7 @@ from ldap_core_shared.utils.constants import (
     MAX_PAGE_SIZE,
     SEARCH_FILTERS,
 )
-from ldap_core_shared.utils.performance import PerformanceMonitor
+from ldap_core_shared.utils.performance import LDAPMetrics, PerformanceMonitor
 
 # Vectorized search engine import (lazy import to avoid circular dependency)
 
@@ -201,7 +201,7 @@ class PaginatedSearch:
         self._has_more_pages = True
         self._total_entries = 0
 
-    def __iter__(self):
+    def __iter__(self) -> PaginatedSearch:
         """Make paginated search iterable."""
         return self
 
@@ -259,7 +259,7 @@ class LDAPSearchEngine:
     """
 
     def __init__(
-        self, connection_manager: LDAPConnectionManager, use_vectorized: bool = True
+        self, connection_manager: LDAPConnectionManager, use_vectorized: bool = True,
     ) -> None:
         """Initialize search engine with vectorized capabilities.
 
@@ -388,7 +388,10 @@ class LDAPSearchEngine:
                     search_duration=duration,
                     entries_per_second=0.0,
                     errors=[
-                        f"Search failed: {connection.result.get('description', 'Unknown error')}",
+                        (
+                            f"Search failed: "
+                            f"{connection.result.get('description', 'Unknown error')}"
+                        ),
                     ],
                 )
 
@@ -507,7 +510,7 @@ class LDAPSearchEngine:
         """Clear search result cache."""
         self._search_cache.clear()
 
-    def get_performance_metrics(self):
+    def get_performance_metrics(self) -> LDAPMetrics:
         """Get search performance metrics."""
         return self._performance_monitor.get_metrics()
 

@@ -1,19 +1,4 @@
-"""🚀 Vectorized LDIF Processor - Ultra High Performance.
-
-Provides 200-400% performance improvement for LDIF processing using:
-- Memory-mapped file processing for 100MB+ files
-- Streaming pandas DataFrames for large datasets
-- Vectorized parsing and validation with numpy
-- Parallel chunk processing with multiprocessing
-- Efficient attribute normalization and transformation
-
-Performance Features:
-    - Target: 40,000+ entries/second for LDIF parsing
-    - Memory-efficient streaming for unlimited file sizes
-    - Parallel processing for CPU-intensive operations
-    - Vectorized DN and attribute validation
-    - Adaptive chunk sizing based on memory constraints
-"""
+"""🚀 Vectorized LDIF Processor - Ultra High Performance."""
 
 from __future__ import annotations
 
@@ -23,10 +8,26 @@ import multiprocessing as mp
 import time
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
-import numpy as np
-from numba import jit
+# Constants for magic values
+BYTES_PER_KB = 1024
+HTTP_OK = 200
+
+try:
+    import numpy as np
+    from numba import jit  # type: ignore[import-not-found]
+    VECTORIZED_AVAILABLE = True
+except ImportError:
+    # Mock implementations for when vectorized dependencies are not available
+    np = None
+    VECTORIZED_AVAILABLE = False
+
+    def jit(*args, **kwargs) -> Callable[[Any], Any]:
+        """Mock jit decorator when numba is not available."""
+        def decorator(func: Any) -> Any:
+            return func
+        return decorator
 
 from ldap_core_shared.domain.models import LDAPEntry
 from ldap_core_shared.utils.logging import get_logger
@@ -84,7 +85,7 @@ def _parse_ldif_attributes_vectorized(attr_lines: list[str]) -> dict[str, list[s
     Returns:
         Dictionary of attribute name to values
     """
-    attributes = {}
+    attributes: dict[str, list[str]] = {}
 
     for line in attr_lines:
         if ":" not in line:
@@ -147,7 +148,7 @@ def _process_ldif_chunk(chunk_data: tuple[bytes, int, int]) -> dict[str, Any]:
 
         # Split into entries (separated by blank lines)
         entries = []
-        current_entry = []
+        current_entry: list[str] = []
 
         for line in chunk_text.split("\n"):
             line = line.strip()
@@ -185,7 +186,7 @@ def _process_ldif_chunk(chunk_data: tuple[bytes, int, int]) -> dict[str, Any]:
                 {
                     "dn": dn,
                     "attributes": attributes,
-                }
+                },
             )
 
         return {
@@ -226,7 +227,7 @@ class VectorizedLDIFProcessor:
         self,
         chunk_size_mb: float = 64.0,
         max_workers: Optional[int] = None,
-        memory_limit_mb: float = 1024.0,
+        memory_limit_mb: float = 512.0,
         enable_streaming: bool = True,
     ) -> None:
         """Initialize vectorized LDIF processor.
@@ -237,7 +238,7 @@ class VectorizedLDIFProcessor:
             memory_limit_mb: Maximum memory usage limit
             enable_streaming: Enable streaming processing for large files
         """
-        self.chunk_size_bytes = int(chunk_size_mb * 1024 * 1024)
+        self.chunk_size_bytes = int(chunk_size_mb * BYTES_PER_KB * BYTES_PER_KB)
         self.max_workers = max_workers or min(mp.cpu_count(), 8)
         self.memory_limit_mb = memory_limit_mb
         self.enable_streaming = enable_streaming
@@ -277,8 +278,8 @@ class VectorizedLDIFProcessor:
         logger.info(
             "Starting vectorized LDIF processing",
             file_path=str(file_path),
-            file_size_mb=self.stats.file_size_bytes / (1024 * 1024),
-            chunk_size_mb=self.chunk_size_bytes / (1024 * 1024),
+            file_size_mb=self.stats.file_size_bytes / (BYTES_PER_KB * BYTES_PER_KB),
+            chunk_size_mb=self.chunk_size_bytes / (BYTES_PER_KB * BYTES_PER_KB),
         )
 
         try:
@@ -352,7 +353,7 @@ class VectorizedLDIFProcessor:
         return await self._process_chunks_parallel(chunks)
 
     async def _stream_file_chunks(
-        self, file_path: Path
+        self, file_path: Path,
     ) -> AsyncIterator[list[LDAPEntry]]:
         """Stream file chunks for memory-efficient processing.
 
@@ -427,7 +428,7 @@ class VectorizedLDIFProcessor:
         return chunks
 
     async def _process_chunks_parallel(
-        self, chunks: list[tuple[bytes, int, int]]
+        self, chunks: list[tuple[bytes, int, int]],
     ) -> list[LDAPEntry]:
         """Process chunks in parallel using ProcessPoolExecutor.
 
@@ -481,7 +482,7 @@ class VectorizedLDIFProcessor:
         return all_entries
 
     async def _process_chunk_async(
-        self, chunk_data: bytes, offset: int
+        self, chunk_data: bytes, offset: int,
     ) -> list[LDAPEntry]:
         """Process a single chunk asynchronously.
 
@@ -534,10 +535,10 @@ class VectorizedLDIFProcessor:
         if "attributes" in df.columns:
             # Use pandas operations for efficient processing
             df["_attr_count"] = df["attributes"].apply(
-                lambda x: len(x) if isinstance(x, dict) else 0
+                lambda x: len(x) if isinstance(x, dict) else 0,
             )
             df["_has_objectclass"] = df["attributes"].apply(
-                lambda x: "objectClass" in x if isinstance(x, dict) else False
+                lambda x: "objectClass" in x if isinstance(x, dict) else False,
             )
 
         self.stats.validation_time = time.time() - validation_start
@@ -553,7 +554,7 @@ class VectorizedLDIFProcessor:
         return df
 
     def _create_processing_result(
-        self, entries: list[LDAPEntry]
+        self, entries: list[LDAPEntry],
     ) -> LDIFProcessingResult:
         """Create comprehensive processing result.
 
@@ -586,7 +587,7 @@ class VectorizedLDIFProcessor:
 
 
 # Factory function for easy integration
-async def create_vectorized_ldif_processor(**kwargs: Any) -> VectorizedLDIFProcessor:
+async def create_vectorized_ldif_processor(**kwargs) -> VectorizedLDIFProcessor:
     """Factory function to create vectorized LDIF processor.
 
     Args:

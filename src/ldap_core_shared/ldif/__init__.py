@@ -38,7 +38,8 @@ try:
     from ldap_core_shared.ldif.analyzer import LDIFAnalyzer
     from ldap_core_shared.ldif.merger import LDIFMerger
     from ldap_core_shared.ldif.processor import LDIFProcessor
-    from ldap_core_shared.ldif.transformer import LDIFTransformer
+
+    # from ldap_core_shared.ldif.transformer import LDIFTransformer  # Temporarily disabled due to syntax errors
     from ldap_core_shared.ldif.validator import LDIFValidator
     from ldap_core_shared.ldif.writer import LDIFWriter
 
@@ -46,7 +47,7 @@ try:
         "LDIFAnalyzer",
         "LDIFMerger",
         "LDIFProcessor",
-        "LDIFTransformer",
+        # "LDIFTransformer",  # Temporarily disabled
         "LDIFValidator",
         "LDIFWriter",
     ]

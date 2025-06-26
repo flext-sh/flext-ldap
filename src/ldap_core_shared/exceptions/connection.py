@@ -50,6 +50,105 @@ class ConnectionError(LDAPError):
         )
 
 
+class ConnectionPoolError(ConnectionError):
+    """🏊 Exception for connection pool management failures."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        pool_size: Optional[int] = None,
+        active_connections: Optional[int] = None,
+        pool_status: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize connection pool error.
+
+        Args:
+            message: Error description
+            pool_size: Maximum pool size
+            active_connections: Number of active connections
+            pool_status: Current pool status
+            **kwargs: Additional arguments for ConnectionError
+        """
+        context = kwargs.get("context", {})
+        if pool_size is not None:
+            context["pool_size"] = pool_size
+        if active_connections is not None:
+            context["active_connections"] = active_connections
+        if pool_status:
+            context["pool_status"] = pool_status
+
+        kwargs["context"] = context
+        super().__init__(message, **kwargs)
+
+
+class ConnectionTimeoutError(ConnectionError):
+    """⏱️ Exception for connection timeout failures."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        timeout_seconds: Optional[float] = None,
+        operation: Optional[str] = None,
+        connection_attempts: Optional[int] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize connection timeout error.
+
+        Args:
+            message: Error description
+            timeout_seconds: Timeout value that was exceeded
+            operation: Operation that timed out
+            connection_attempts: Number of connection attempts made
+            **kwargs: Additional arguments for ConnectionError
+        """
+        context = kwargs.get("context", {})
+        if timeout_seconds is not None:
+            context["timeout_seconds"] = timeout_seconds
+        if operation:
+            context["operation"] = operation
+        if connection_attempts is not None:
+            context["connection_attempts"] = connection_attempts
+
+        kwargs["context"] = context
+        super().__init__(message, **kwargs)
+
+
+class AuthenticationError(ConnectionError):
+    """🔐 Exception for LDAP authentication failures."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        bind_dn: Optional[str] = None,
+        auth_method: Optional[str] = None,
+        failure_reason: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize authentication error.
+
+        Args:
+            message: Error description
+            bind_dn: DN used for binding
+            auth_method: Authentication method used
+            failure_reason: Specific reason for authentication failure
+            **kwargs: Additional arguments for ConnectionError
+        """
+        context = kwargs.get("context", {})
+        if bind_dn:
+            context["bind_dn"] = bind_dn
+        if auth_method:
+            context["auth_method"] = auth_method
+        if failure_reason:
+            context["failure_reason"] = failure_reason
+
+        kwargs["context"] = context
+        super().__init__(message, **kwargs)
+
+
 class TimeoutError(ConnectionError):
     """⏱️ Exception for LDAP operation timeouts."""
 

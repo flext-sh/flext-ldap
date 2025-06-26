@@ -1,8 +1,4 @@
-"""Schema Analyzer - Advanced schema analysis and optimization.
-
-This module provides sophisticated schema analysis capabilities including
-complexity analysis, optimization recommendations, and schema health metrics.
-"""
+"""Schema Analyzer - Advanced schema analysis and optimization."""
 
 from __future__ import annotations
 
@@ -12,6 +8,10 @@ from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from ldap_core_shared.domain.results import LDAPOperationResult
+from ldap_core_shared.utils.constants import DEFAULT_MAX_ITEMS, DEFAULT_TIMEOUT_SECONDS
+
+# Constants for magic values
+MIN_NAME_LENGTH = 3  # Minimum length for well-named identifiers
 
 if TYPE_CHECKING:
     from ldap_core_shared.schema.parser import ParsedSchema
@@ -86,7 +86,7 @@ class SchemaAnalyzer:
             )
 
     def _calculate_complexity_score(self, schema: ParsedSchema) -> float:
-        """Calculate schema complexity score (0-100)."""
+        """Calculate schema complexity score (0-DEFAULT_MAX_ITEMS)."""
         score = 0.0
 
         # Base complexity from element count
@@ -113,11 +113,11 @@ class SchemaAnalyzer:
         )
         score += min(15, unique_syntaxes * 0.5)
 
-        return min(100.0, score)
+        return min(DEFAULT_MAX_ITEMS, score)
 
     def _calculate_health_score(self, schema: ParsedSchema) -> float:
-        """Calculate schema health score (0-100)."""
-        score = 100.0
+        """Calculate schema health score (0-DEFAULT_MAX_ITEMS)."""
+        score = DEFAULT_MAX_ITEMS
 
         # Penalize obsolete elements
         obsolete_attrs = sum(
@@ -129,7 +129,7 @@ class SchemaAnalyzer:
 
         if total_elements > 0:
             obsolete_ratio = total_obsolete / total_elements
-            score -= obsolete_ratio * 30
+            score -= obsolete_ratio * DEFAULT_TIMEOUT_SECONDS
 
         # Penalize missing descriptions
         attrs_without_desc = sum(
@@ -170,7 +170,7 @@ class SchemaAnalyzer:
             naming_score = (proper_names / total_names) * 10
             score += naming_score
 
-        return max(0.0, min(100.0, score))
+        return max(0.0, min(DEFAULT_MAX_ITEMS, score))
 
     def _generate_recommendations(self, schema: ParsedSchema) -> list[str]:
         """Generate optimization recommendations."""
@@ -335,7 +335,7 @@ class SchemaAnalyzer:
         # Check for proper camelCase or kebab-case
         import re
 
-        return bool(re.match(r"^[a-z][a-zA-Z0-9-]*$", name)) and len(name) >= 3
+        return bool(re.match(r"^[a-z][a-zA-Z0-9-]*$", name) and len(name) >= MIN_NAME_LENGTH)
 
     def _check_naming_consistency(self, schema: ParsedSchema) -> list[str]:
         """Check for naming consistency issues."""

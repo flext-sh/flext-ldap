@@ -166,9 +166,9 @@ sn: Three
 """
 
     @pytest.mark.asyncio
-    async def test_processor_parser_coordination(self, complex_ldif_content) -> None:
+    async def test_processor_parser_coordination(self, complex_ldif_content: str) -> None:
         """🔥 Test coordination between processor and parser."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(complex_ldif_content)
             ldif_path = f.name
 
@@ -178,14 +178,10 @@ sn: Three
 
             # Process file with processor
             async with processor.process_file(ldif_path) as processor_results:
-                processor_entries = []
-                async for entry in processor_results:
-                    processor_entries.append(entry)
+                processor_entries = [entry async for entry in processor_results]
 
             # Parse same file with parser
-            parser_entries = []
-            async for entry in parser.parse_file(ldif_path):
-                parser_entries.append(entry)
+            parser_entries = [entry async for entry in parser.parse_file(ldif_path)]
 
             # Verify both components produced consistent results
             assert len(processor_entries) == len(parser_entries)
@@ -207,9 +203,9 @@ sn: Three
             os.unlink(ldif_path)
 
     @pytest.mark.asyncio
-    async def test_categorization_integration(self, complex_ldif_content) -> None:
+    async def test_categorization_integration(self, complex_ldif_content: str) -> None:
         """🔥 Test entry categorization integration across components."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(complex_ldif_content)
             ldif_path = f.name
 
@@ -251,9 +247,9 @@ sn: Three
             os.unlink(ldif_path)
 
     @pytest.mark.asyncio
-    async def test_error_handling_integration(self, ldif_with_errors) -> None:
+    async def test_error_handling_integration(self, ldif_with_errors: Any) -> None:
         """🔥 Test error handling integration across LDIF components."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(ldif_with_errors)
             ldif_path = f.name
 
@@ -304,12 +300,12 @@ sn: Three
     @pytest.mark.asyncio
     async def test_performance_monitoring_integration(
         self,
-        complex_ldif_content,
+        complex_ldif_content: Any,
     ) -> None:
         """🔥 Test performance monitoring integration with LDIF processing."""
         monitor = PerformanceMonitor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(complex_ldif_content)
             ldif_path = f.name
 
@@ -395,7 +391,7 @@ mail: user{i}_2@domain{i}.com
             with tempfile.NamedTemporaryFile(
                 mode="w",
                 suffix=f"_domain{i}.ldif",
-                delete=False,
+                delete=False, encoding="utf-8",
             ) as f:
                 f.write(content)
                 files.append(f.name)
@@ -403,7 +399,7 @@ mail: user{i}_2@domain{i}.com
         return files
 
     @pytest.mark.asyncio
-    async def test_concurrent_file_processing(self, multiple_ldif_files) -> None:
+    async def test_concurrent_file_processing(self, multiple_ldif_files: Any) -> None:
         """🔥 Test concurrent processing of multiple LDIF files."""
 
         async def process_file(file_path: str) -> dict[str, Any]:
@@ -460,7 +456,7 @@ mail: user{i}_2@domain{i}.com
                 os.unlink(file_path)
 
     @pytest.mark.asyncio
-    async def test_concurrent_stream_processing(self, multiple_ldif_files) -> None:
+    async def test_concurrent_stream_processing(self, multiple_ldif_files: Any) -> None:
         """🔥 Test concurrent stream processing with shared resources."""
         monitor = PerformanceMonitor()
 
@@ -527,7 +523,7 @@ mail: user{i:04d}@large.com
 
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(large_ldif_content)
             large_ldif_path = f.name
 
@@ -613,7 +609,7 @@ cn: Second Duplicate
 sn: Duplicate
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(validation_ldif)
             ldif_path = f.name
 
@@ -661,9 +657,9 @@ sn: Duplicate
             os.unlink(ldif_path)
 
     @pytest.mark.asyncio
-    async def test_schema_validation_integration(self, complex_ldif_content) -> None:
+    async def test_schema_validation_integration(self, complex_ldif_content: str) -> None:
         """🔥 Test schema validation integration across components."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
             f.write(complex_ldif_content)
             ldif_path = f.name
 

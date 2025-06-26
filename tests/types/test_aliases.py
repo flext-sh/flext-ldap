@@ -13,6 +13,7 @@ Test categories:
 
 from __future__ import annotations
 
+import math
 import uuid
 from typing import TYPE_CHECKING
 
@@ -163,7 +164,7 @@ class TestBasicLDAPTypes:
     def test_filter_expression(self) -> None:
         """Test FilterExpression type alias."""
         simple_filter: FilterExpression = "(cn=user)"
-        complex_filter: FilterExpression = "(&(objectClass=person)(mail=*@example.com))"
+        complex_filter: FilterExpression = "(&(objectClass=person)(mail=*@example.com)"
 
         assert isinstance(simple_filter, str)
         assert isinstance(complex_filter, str)
@@ -466,7 +467,7 @@ class TestConfigurationTypes:
         """Test ConfigValue can handle various types."""
         str_config: ConfigValue = "test_value"
         int_config: ConfigValue = 42
-        float_config: ConfigValue = 3.14
+        float_config: ConfigValue = math.pi
         bool_config: ConfigValue = True
         list_config: ConfigValue = ["item1", "item2"]
         dict_config: ConfigValue = {"key": "value"}
@@ -639,7 +640,7 @@ class TestErrorTypes:
         error_context: ErrorContext = {"operation": "search", "dn": "dc=example,dc=com"}
 
         assert isinstance(error_code, str)
-        assert error_severity in ["low", "medium", "high", "critical"]
+        assert error_severity in {"low", "medium", "high", "critical"}
         assert isinstance(error_context, dict)
 
     def test_exception_details_structure(self) -> None:
@@ -739,7 +740,7 @@ class TestPaginationTypes:
         direction: SortDirection = "desc"
 
         assert isinstance(field, str)
-        assert direction in ["asc", "desc"]
+        assert direction in {"asc", "desc"}
 
     def test_sort_spec_structure(self) -> None:
         """Test SortSpec type alias structure."""

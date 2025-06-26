@@ -27,7 +27,7 @@ Usage Example:
     ...     .end()
     ...     .build()
     ... )
-    >>> print(filter_expr)  # (&(objectClass=person)(|(cn=*john*)(mail=j*)))
+    >>> print(filter_expr)  # (&(objectClass=person)(|(cn=*john*)(mail=j*))
 
 References:
     - perl-ldap: lib/Net/LDAP/Filter.pm

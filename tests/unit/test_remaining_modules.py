@@ -55,7 +55,7 @@ class TestCoreOperations:
                 self.operation_count = 0
 
             def search(
-                self, base_dn: str, search_filter: str, **kwargs
+                self, base_dn: str, search_filter: str, **kwargs,
             ) -> dict[str, Any]:
                 """Mock search operation."""
                 self.operation_count += 1
@@ -136,7 +136,7 @@ class TestCoreOperations:
 
         # Test search operation
         search_result = operations.search(
-            "dc=example,dc=com", "(objectClass=person)", attributes=["cn", "mail"]
+            "dc=example,dc=com", "(objectClass=person)", attributes=["cn", "mail"],
         )
         assert search_result["success"] is True
         assert len(search_result["entries"]) == 3
@@ -221,7 +221,7 @@ class TestCoreOperations:
         builder = MockSearchOperationBuilder()
         operation = (
             builder.base_dn("ou=users,dc=example,dc=com")
-            .filter("(&(objectClass=person)(cn=j*))")
+            .filter("(&(objectClass=person)(cn=j*)")
             .attributes(["cn", "mail", "telephoneNumber"])
             .scope("onelevel")
             .size_limit(100)
@@ -230,7 +230,7 @@ class TestCoreOperations:
         )
 
         assert operation["base_dn"] == "ou=users,dc=example,dc=com"
-        assert operation["filter"] == "(&(objectClass=person)(cn=j*))"
+        assert operation["filter"] == "(&(objectClass=person)(cn=j*)"
         assert "mail" in operation["attributes"]
         assert operation["scope"] == "onelevel"
         assert operation["size_limit"] == 100
@@ -274,7 +274,7 @@ class TestEventSystem:
 
             @classmethod
             def create(
-                cls, event_type: str, source: str, data: dict[str, Any]
+                cls, event_type: str, source: str, data: dict[str, Any],
             ) -> MockDomainEvent:
                 return cls(
                     event_id=f"event_{int(time.time() * 1000)}",
@@ -293,7 +293,7 @@ class TestEventSystem:
 
             @classmethod
             def connection_established(
-                cls, connection_id: str, host: str, port: int
+                cls, connection_id: str, host: str, port: int,
             ) -> MockLDAPConnectionEvent:
                 return cls(
                     event_id=f"conn_{int(time.time() * 1000)}",
@@ -309,7 +309,7 @@ class TestEventSystem:
 
             @classmethod
             def connection_failed(
-                cls, host: str, port: int, error: str
+                cls, host: str, port: int, error: str,
             ) -> MockLDAPConnectionEvent:
                 return cls(
                     event_id=f"conn_fail_{int(time.time() * 1000)}",
@@ -331,7 +331,7 @@ class TestEventSystem:
 
             @classmethod
             def operation_completed(
-                cls, operation_type: str, dn: str, duration: float
+                cls, operation_type: str, dn: str, duration: float,
             ) -> MockLDAPOperationEvent:
                 return cls(
                     event_id=f"op_{int(time.time() * 1000)}",
@@ -352,7 +352,7 @@ class TestEventSystem:
         # Test mock events
         # Test basic domain event
         basic_event = MockDomainEvent.create(
-            "test_event", "test_source", {"message": "Test event created"}
+            "test_event", "test_source", {"message": "Test event created"},
         )
         assert basic_event.event_type == "test_event"
         assert basic_event.source == "test_source"
@@ -360,14 +360,14 @@ class TestEventSystem:
 
         # Test connection events
         conn_event = MockLDAPConnectionEvent.connection_established(
-            "conn_123", "ldap.example.com", 389
+            "conn_123", "ldap.example.com", 389,
         )
         assert conn_event.event_type == "connection_established"
         assert conn_event.connection_id == "conn_123"
         assert conn_event.success is True
 
         fail_event = MockLDAPConnectionEvent.connection_failed(
-            "invalid.host.com", 389, "Host unreachable"
+            "invalid.host.com", 389, "Host unreachable",
         )
         assert fail_event.event_type == "connection_failed"
         assert fail_event.success is False
@@ -375,7 +375,7 @@ class TestEventSystem:
 
         # Test operation events
         op_event = MockLDAPOperationEvent.operation_completed(
-            "search", "dc=example,dc=com", 1.5
+            "search", "dc=example,dc=com", 1.5,
         )
         assert op_event.event_type == "operation_completed"
         assert op_event.operation_type == "search"
@@ -500,7 +500,7 @@ class TestVectorizedProcessing:
                 self.failed_items = 0
 
             def process_entries(
-                self, entries: list[dict[str, Any]], operation: str
+                self, entries: list[dict[str, Any]], operation: str,
             ) -> dict[str, Any]:
                 """Process entries in batches."""
                 results = {
@@ -522,7 +522,7 @@ class TestVectorizedProcessing:
                             "size": len(batch),
                             "processed": batch_result["processed"],
                             "failed": batch_result["failed"],
-                        }
+                        },
                     )
 
                     results["processed"] += batch_result["processed"]
@@ -532,7 +532,7 @@ class TestVectorizedProcessing:
                 return results
 
             def _process_batch(
-                self, batch: list[dict[str, Any]], operation: str
+                self, batch: list[dict[str, Any]], operation: str,
             ) -> dict[str, Any]:
                 """Process a single batch."""
                 processed = 0
@@ -640,7 +640,7 @@ class TestVectorizedProcessing:
 
         class MockVectorizedLDIFProcessor:
             def __init__(
-                self, chunk_size: int = 1000, parallel_workers: int = 4
+                self, chunk_size: int = 1000, parallel_workers: int = 4,
             ) -> None:
                 self.chunk_size = chunk_size
                 self.parallel_workers = parallel_workers
@@ -824,12 +824,12 @@ class TestConfigurationManagement:
                 errors = []
                 warnings = []
 
-                if self.log_level not in ["DEBUG", "INFO", "WARNING", "ERROR"]:
+                if self.log_level not in {"DEBUG", "INFO", "WARNING", "ERROR"}:
                     errors.append(f"Invalid log level: {self.log_level}")
 
                 if self.log_file and not Path(self.log_file).parent.exists():
                     warnings.append(
-                        f"Log file directory does not exist: {Path(self.log_file).parent}"
+                        f"Log file directory does not exist: {Path(self.log_file).parent}",
                     )
 
                 return {
@@ -873,14 +873,14 @@ class TestConfigurationManagement:
 
         # Test logging config
         logging_config = MockLoggingConfig(
-            level="WARNING", file_path="/var/log/ldap-core.log"
+            level="WARNING", file_path="/var/log/ldap-core.log",
         )
         assert logging_config.level == "WARNING"
         assert logging_config.max_bytes == 10 * 1024 * 1024
 
         # Test connection config
         conn_config = MockConnectionConfig(
-            host="ldap.example.com", port=636, use_ssl=True
+            host="ldap.example.com", port=636, use_ssl=True,
         )
         assert conn_config.get_connection_url() == "ldaps://ldap.example.com:636/"
 
@@ -929,11 +929,11 @@ class TestVersionAndMetadata:
     def test_init_module(self) -> None:
         """Test package __init__ module."""
         try:
-            from ldap_core_shared import LDAPConnectionManager, LDAPEntry, LDIFProcessor
+            from ldap_core_shared import ConnectionManager, LDAPEntry, LDIFProcessor
 
             # Test that main classes are available at package level
             assert LDAPEntry is not None
-            assert LDAPConnectionManager is not None
+            assert ConnectionManager is not None
             assert LDIFProcessor is not None
 
         except ImportError:
@@ -954,7 +954,7 @@ class TestModuleIntegration:
                 self.operations_count = 0
 
             def execute_operation_with_events(
-                self, operation_type: str, **kwargs
+                self, operation_type: str, **kwargs,
             ) -> dict[str, Any]:
                 """Execute operation and publish events."""
                 start_time = time.time()
@@ -1013,7 +1013,7 @@ class TestModuleIntegration:
 
         # Test successful operation
         result = operations.execute_operation_with_events(
-            "search", base_dn="dc=example,dc=com"
+            "search", base_dn="dc=example,dc=com",
         )
         assert result["success"] is True
         assert result["duration"] > 0
@@ -1033,7 +1033,7 @@ class TestModuleIntegration:
                 self.timeout = config.get("timeout", 300)
 
             def process_with_config(
-                self, entries: list[dict[str, Any]]
+                self, entries: list[dict[str, Any]],
             ) -> dict[str, Any]:
                 """Process entries using configuration parameters."""
                 start_time = time.time()
@@ -1068,7 +1068,7 @@ class TestModuleIntegration:
                             "entries_per_second": len(batch) / batch_duration
                             if batch_duration > 0
                             else 0,
-                        }
+                        },
                     )
 
                 total_duration = time.time() - start_time

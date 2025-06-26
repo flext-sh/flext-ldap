@@ -1,36 +1,27 @@
-"""Enterprise LDAP Security Module with SSH Tunnels and Authentication.
-
-This module provides comprehensive security features for LDAP operations,
-including SSH tunnel management, advanced authentication, and security monitoring.
-
-Architecture:
-    Security module implementing security patterns for LDAP operations with
-    SSH tunnel support and authentication management.
-
-Key Features:
-    - SSH Tunnel Management: Secure connections through SSH tunnels
-    - Advanced Authentication: Multiple authentication methods
-    - Security Monitoring: Authentication attempts and security events
-    - Certificate Management: SSL/TLS certificate validation
-    - Security Hardening: Security best practices implementation
-
-Version: 1.0.0-enterprise
-"""
+"""Enterprise LDAP Security Module with SSH Tunnels and Authentication."""
 
 from __future__ import annotations
 
+import logging
 import socket
 import time
 from contextlib import contextmanager
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
+from typing_extensions import Self
 
+# Constants for magic values
 from ldap_core_shared.utils.constants import (
+    DEFAULT_LARGE_LIMIT,
+    DEFAULT_MAX_ITEMS,
     SSH_LOCAL_PORT_RANGE,
     SSH_TUNNEL_TIMEOUT,
 )
 from ldap_core_shared.utils.performance import PerformanceMonitor
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 class SSHTunnelConfig(BaseModel):
@@ -53,7 +44,7 @@ class SSHTunnelConfig(BaseModel):
     # Tunnel settings
     local_bind_port: int | None = Field(default=None, gt=0, lt=65536)
     remote_host: str = "localhost"
-    remote_port: int = Field(gt=0, lt=65536)
+    remote_port: int = Field(default=22, gt=0, lt=65536)
 
     # Security settings
     compression: bool = False
@@ -84,9 +75,15 @@ class SSHTunnel:
         try:
             # Import here to avoid dependency issues if paramiko not installed
             from sshtunnel import SSHTunnelForwarder
-        except ImportError as e:
-            msg = "sshtunnel package required for SSH tunnel support"
-            raise ImportError(msg) from e
+        except ImportError:
+            # ZERO TOLERANCE - SSH tunnel dependency is required for security
+            msg = (
+                "SSH tunnel functionality requires 'sshtunnel' package. "
+                "Install with: pip install sshtunnel. "
+                "SECURITY WARNING: Cannot create secure tunnel without this dependency."
+            )
+            logging.getLogger(__name__).exception(msg)
+            raise ImportError(msg) from None
 
         start_time = time.time()
 
@@ -102,7 +99,7 @@ class SSHTunnel:
                     self.config.remote_host,
                     self.config.remote_port,
                 ),
-                "local_bind_address": ("127.0.0.1", local_port),
+                "local_bind_address": (self.config.local_bind_host or "127.0.0.1", local_port),
                 "compression": self.config.compression,
             }
 
@@ -119,8 +116,9 @@ class SSHTunnel:
             self._tunnel = SSHTunnelForwarder(**tunnel_kwargs)
 
             # Start tunnel
-            self._tunnel.start()
-            self._local_port = self._tunnel.local_bind_port
+            if self._tunnel is not None:
+                self._tunnel.start()
+                self._local_port = self._tunnel.local_bind_port
             self._is_active = True
 
             # Record successful start
@@ -170,7 +168,7 @@ class SSHTunnel:
         msg = "No free ports available in range"
         raise RuntimeError(msg)
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         """Context manager entry."""
         self.start()
         return self
@@ -293,7 +291,7 @@ class SecurityManager:
         self._security_events: list[dict[str, Any]] = []
 
     @contextmanager
-    def secure_tunnel(self, config: SSHTunnelConfig, tunnel_id: str | None = None):
+    def secure_tunnel(self, config: SSHTunnelConfig, tunnel_id: str | None = None) -> Generator[SSHTunnel, None, None]:
         """Create secure SSH tunnel context.
 
         Args:
@@ -304,7 +302,7 @@ class SecurityManager:
             SSHTunnel: Active SSH tunnel
         """
         if tunnel_id is None:
-            tunnel_id = f"tunnel_{int(time.time() * 1000)}"
+            tunnel_id = f"tunnel_{int(time.time() * DEFAULT_LARGE_LIMIT)}"
 
         tunnel = SSHTunnel(config)
 
@@ -447,7 +445,7 @@ class SecurityManager:
                 "error": str(e),
             }
 
-    def get_security_events(self, limit: int = 100) -> list[dict[str, Any]]:
+    def get_security_events(self, limit: int = DEFAULT_MAX_ITEMS) -> list[dict[str, Any]]:
         """Get recent security events.
 
         Args:
@@ -488,9 +486,9 @@ class SecurityManager:
 
         self._security_events.append(event)
 
-        # Keep only recent events (last 1000)
-        if len(self._security_events) > 1000:
-            self._security_events = self._security_events[-1000:]
+        # Keep only recent events (last DEFAULT_LARGE_LIMIT)
+        if len(self._security_events) > DEFAULT_LARGE_LIMIT:
+            self._security_events = self._security_events[-DEFAULT_LARGE_LIMIT:]
 
 
 # Global security manager instance

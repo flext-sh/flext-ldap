@@ -1,20 +1,19 @@
-"""LDIF Writer - Advanced LDIF writing with enterprise formatting.
-
-This module provides sophisticated LDIF writing capabilities including
-custom formatting, line wrapping, header generation, and output validation.
-"""
+"""LDIF Writer - Advanced LDIF writing with enterprise formatting."""
 
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, TextIO
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from ldap_core_shared.domain.results import LDAPOperationResult
+from ldap_core_shared.utils.constants import DEFAULT_LARGE_LIMIT
 from ldap_core_shared.utils.performance import PerformanceMonitor
+
+# Constants for magic values
 
 if TYPE_CHECKING:
     from ldap_core_shared.ldif.processor import LDIFEntry
@@ -122,7 +121,7 @@ class LDIFWriter:
                         f"{output_path.suffix}.backup",
                     )
                     output_path.rename(backup_path)
-                    logger.info(f"Created backup: {backup_path}")
+                    logger.info("Created backup: {backup_path}")
 
                 # Reset statistics
                 self._reset_stats()
@@ -154,7 +153,7 @@ class LDIFWriter:
                 )
 
             except Exception as e:
-                logger.exception(f"Failed to write LDIF to {output_path}")
+                logger.exception("Failed to write LDIF to {output_path}")
                 return LDAPOperationResult[LDIFStatistics](
                     success=False,
                     error_message=f"Write failed: {e!s}",
@@ -249,7 +248,7 @@ class LDIFWriter:
             )
 
         except Exception as e:
-            logger.exception(f"Failed to write entry to {output_path}")
+            logger.exception("Failed to write entry to {output_path}")
             return LDAPOperationResult[None](
                 success=False,
                 error_message=f"Write failed: {e!s}",
@@ -281,7 +280,7 @@ class LDIFWriter:
 
         # Update timing
         end_time = self.performance_monitor._get_current_time()
-        self._stats.writing_time_ms = (end_time - start_time) * 1000
+        self._stats.writing_time_ms = (end_time - start_time) * DEFAULT_LARGE_LIMIT
 
     def _write_header(
         self,
@@ -302,15 +301,13 @@ class LDIFWriter:
         f.write(f"# Version: {config.version}\n")
 
         if self.config.include_timestamp:
-            timestamp = datetime.now(UTC).isoformat()
+            timestamp = datetime.now(timezone.utc).isoformat()
             f.write(f"# Generated: {timestamp}\n")
 
         f.write(f"# Entries: {entry_count}\n")
 
         # Add custom headers
-        f.writelines(
-            f"# {key}: {value}\n" for key, value in config.custom_headers.items()
-        )
+        f.writelines(f"# {key}: {value}\n" for key, value in config.custom_headers.items())
 
         f.write("#\n")
         f.write(f"version: {config.version}\n\n")
@@ -379,9 +376,7 @@ class LDIFWriter:
             f.write(f"{indent}{chunk}\n")
             remaining = remaining[continuation_length:]
             self._stats.lines_written += 1
-            self._stats.bytes_written += (
-                len(f"{indent}{chunk}".encode(self.config.encoding)) + 1
-            )
+            self._stats.bytes_written += len(f"{indent}{chunk}".encode(self.config.encoding)) + 1
 
     def _sort_entries(self, entries: list[LDIFEntry]) -> list[LDIFEntry]:
         """Sort entries by DN hierarchy (parents before children)."""
@@ -412,11 +407,12 @@ class LDIFWriter:
                 raise ValueError(msg)
 
             logger.debug(
-                f"LDIF file validation successful: {len(result.data or [])} entries",
+                "LDIF file validation successful: %s entries",
+                len(result.data or []),
             )
 
-        except Exception as e:
-            logger.warning(f"LDIF file validation failed: {e}")
+        except Exception:
+            logger.warning("LDIF file validation failed: {e}")
             # Don't raise exception - validation is optional
 
     def _finalize_stats(self, output_path: Path) -> None:

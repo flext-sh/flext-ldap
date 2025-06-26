@@ -52,6 +52,7 @@ from ldap_core_shared.extensions.base import (
     ExtensionResult,
     LDAPExtension,
 )
+from ldap_core_shared.utils.constants import LDAP_MESSAGE_ID_MAX
 
 if TYPE_CHECKING:
     from ldap_core_shared.types.aliases import OID
@@ -79,19 +80,19 @@ class CancelResult(ExtensionResult):
     """
 
     operation_cancelled: bool = Field(
-        default=False, description="Whether the target operation was cancelled"
+        default=False, description="Whether the target operation was cancelled",
     )
 
     operation_completed: bool = Field(
-        default=False, description="Whether operation completed before cancellation"
+        default=False, description="Whether operation completed before cancellation",
     )
 
     target_message_id: Optional[int] = Field(
-        default=None, description="Message ID of the operation that was targeted"
+        default=None, description="Message ID of the operation that was targeted",
     )
 
     cancellation_reason: Optional[str] = Field(
-        default=None, description="Reason for cancellation result"
+        default=None, description="Reason for cancellation result",
     )
 
     def was_effective(self) -> bool:
@@ -155,7 +156,7 @@ class CancelExtension(LDAPExtension):
     message_id: int = Field(description="Message ID of the operation to cancel")
 
     timeout_seconds: Optional[int] = Field(
-        default=None, description="Timeout for the cancel operation itself"
+        default=None, description="Timeout for the cancel operation itself",
     )
 
     @validator("message_id")
@@ -165,7 +166,7 @@ class CancelExtension(LDAPExtension):
             msg = "Message ID must be positive"
             raise CancelError(msg)
 
-        if v > 2147483647:  # 2^31 - 1
+        if v > LDAP_MESSAGE_ID_MAX:  # 2^31 - 1
             msg = "Message ID too large"
             raise CancelError(msg)
 
@@ -202,7 +203,7 @@ class CancelExtension(LDAPExtension):
 
     @classmethod
     def decode_response_value(
-        cls, response_name: Optional[OID], response_value: Optional[bytes]
+        cls, response_name: Optional[OID], response_value: Optional[bytes],
     ) -> CancelResult:
         """Decode cancel response value.
 
@@ -230,7 +231,7 @@ class CancelExtension(LDAPExtension):
 
     @classmethod
     def for_operation(
-        cls, message_id: int, timeout_seconds: Optional[int] = None
+        cls, message_id: int, timeout_seconds: Optional[int] = None,
     ) -> CancelExtension:
         """Create cancel extension for specific operation.
 
@@ -467,7 +468,6 @@ class OperationTracker:
             Operation information dictionary or None
         """
         return self._operations.get(message_id)
-
 
 # TODO: Integration points for implementation:
 #

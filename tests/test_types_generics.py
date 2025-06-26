@@ -687,7 +687,7 @@ class TestService:
         result = await user_service.update(sample_user)
 
         assert result.is_error()
-        assert "not found" in result.unwrap_error().lower()
+        assert "not found" in str(result.unwrap_error()).lower()
 
     @pytest.mark.asyncio
     async def test_service_delete_success(
@@ -715,7 +715,7 @@ class TestService:
         result = await user_service.delete(random_id)
 
         assert result.is_error()
-        assert "not found" in result.unwrap_error().lower()
+        assert "not found" in str(result.unwrap_error()).lower()
 
     @pytest.mark.asyncio
     async def test_service_delete_business_rule_violation(
@@ -738,7 +738,7 @@ class TestService:
         result = await user_service.delete(admin_user.id)
 
         assert result.is_error()
-        assert "cannot be deleted" in result.unwrap_error().lower()
+        assert "cannot be deleted" in str(result.unwrap_error()).lower()
 
     @pytest.mark.asyncio
     async def test_service_exception_handling(
@@ -773,7 +773,7 @@ class TestService:
         user = TestUser(username="test", email="test@example.com", age=25)
         result = await service.create(user)
         assert result.is_error()
-        assert "disk full" in result.unwrap_error().lower()
+        assert "disk full" in str(result.unwrap_error()).lower()
 
         # Get should handle exceptions
         result = await service.get_by_id(uuid.uuid4())
@@ -798,9 +798,7 @@ class TestAsyncIteratorWrapper:
         # Filter even numbers
         filtered = wrapper.filter(lambda x: x % 2 == 0)
 
-        results = []
-        async for item in filtered:
-            results.append(item)
+        results = [item async for item in filtered]
 
         assert results == [2, 4, 6, 8, 10]
 
@@ -813,9 +811,7 @@ class TestAsyncIteratorWrapper:
         # Square each number
         mapped = wrapper.map(lambda x: x**2)
 
-        results = []
-        async for item in mapped:
-            results.append(item)
+        results = [item async for item in mapped]
 
         assert results == [1, 4, 9, 16, 25]
 
@@ -828,9 +824,7 @@ class TestAsyncIteratorWrapper:
         # Take first 5
         taken = wrapper.take(5)
 
-        results = []
-        async for item in taken:
-            results.append(item)
+        results = [item async for item in taken]
 
         assert results == [0, 1, 2, 3, 4]
 
@@ -853,9 +847,7 @@ class TestAsyncIteratorWrapper:
         # Batch in groups of 3
         batched = wrapper.batch(3)
 
-        batches = []
-        async for batch in batched:
-            batches.append(batch)
+        batches = [batch async for batch in batched]
 
         expected_batches = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
         assert batches == expected_batches
@@ -899,9 +891,7 @@ class TestAsyncIteratorWrapper:
         assert taken == []
 
         wrapper = AsyncIteratorWrapper(empty_iterator())
-        batches = []
-        async for batch in wrapper.batch(5):
-            batches.append(batch)
+        batches = [batch async for batch in wrapper.batch(5)]
         assert batches == []
 
     @pytest.mark.asyncio
@@ -1071,7 +1061,7 @@ class TestSpecification:
         active_spec = MockSpecification(lambda user: user.is_active)
         admin_spec = MockSpecification(lambda user: user.username == "admin")
 
-        complex_spec = (adult_spec.and_(active_spec)).or_(admin_spec)
+        complex_spec = (adult_spec.and_(active_spec).or_(admin_spec))
 
         # Test cases
         test_cases = [
