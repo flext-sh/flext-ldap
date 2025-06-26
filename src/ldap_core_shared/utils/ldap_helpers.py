@@ -18,11 +18,21 @@ logger = logging.getLogger(__name__)
 
 
 class DNHelper:
-    """Helper functions for Distinguished Name (DN) manipulation."""
+    """Helper functions for Distinguished Name (DN) manipulation - Enterprise Delegation Facade.
+    
+    TRUE FACADE PATTERN: 100% DELEGATION TO ENTERPRISE DN INFRASTRUCTURE
+    ====================================================================
+    
+    This class delegates entirely to the enterprise-grade DN utilities in
+    utilities.dn without any reimplementation.
+    
+    DELEGATION TARGET: utilities.dn.DistinguishedName - Enterprise DN processing
+    with RFC 4514 compliance, comprehensive validation, advanced manipulation.
+    """
 
     @staticmethod
     def parse_dn(dn: str) -> list[dict[str, str]]:
-        """Parse DN into list of RDN components.
+        """Parse DN into list of RDN components - delegates to enterprise DN system.
 
         Args:
             dn: Distinguished Name to parse
@@ -33,19 +43,20 @@ class DNHelper:
         if not dn:
             return []
 
-        rdns = []
-        for rdn in dn.split(","):
-            rdn = rdn.strip()
-            if "=" in rdn:
-                attr, value = rdn.split("=", 1)
-                rdns.append(
-                    {
-                        "attribute": attr.strip(),
-                        "value": value.strip(),
-                    },
-                )
-
-        return rdns
+        # Delegate to enterprise DN parsing
+        from ldap_core_shared.utilities.dn import DistinguishedName
+        
+        try:
+            enterprise_dn = DistinguishedName(dn)
+            rdns = []
+            for comp in enterprise_dn.components:
+                rdns.append({
+                    "attribute": comp.attribute_type,
+                    "value": comp.attribute_value,
+                })
+            return rdns
+        except Exception:
+            return []
 
     @staticmethod
     def build_dn(rdns: list[dict[str, str]]) -> str:
@@ -63,7 +74,7 @@ class DNHelper:
 
     @staticmethod
     def get_parent_dn(dn: str) -> str:
-        """Get parent DN by removing the first RDN component.
+        """Get parent DN by removing the first RDN component - delegates to enterprise DN system.
 
         Args:
             dn: Child DN
@@ -71,14 +82,18 @@ class DNHelper:
         Returns:
             Parent DN or empty string if no parent
         """
-        if not dn or "," not in dn:
+        if not dn:
             return ""
 
-        return dn.split(",", 1)[1].strip()
+        # Delegate to enterprise DN system
+        from ldap_core_shared.utilities.dn import get_dn_parent
+        
+        parent = get_dn_parent(dn)
+        return parent or ""
 
     @staticmethod
     def get_rdn(dn: str) -> str:
-        """Get the RDN (leftmost component) from DN.
+        """Get the RDN (leftmost component) from DN - delegates to enterprise DN system.
 
         Args:
             dn: Distinguished Name
@@ -89,11 +104,15 @@ class DNHelper:
         if not dn:
             return ""
 
-        return dn.split(",")[0].strip()
+        # Delegate to enterprise DN system
+        from ldap_core_shared.utilities.dn import get_dn_rdn
+        
+        rdn = get_dn_rdn(dn)
+        return rdn or ""
 
     @staticmethod
     def escape_dn_value(value: str) -> str:
-        """Escape special characters in DN value according to RFC 2253.
+        """Escape special characters in DN value - delegates to enterprise DN system.
 
         Args:
             value: Value to escape
@@ -101,23 +120,14 @@ class DNHelper:
         Returns:
             Escaped value
         """
-        # Characters that need escaping: , + " \ < > ; = and leading/trailing spaces
-        special_chars = [",", "+", '"', "\\", "<", ">", ";", "="]
-
-        for char in special_chars:
-            value = value.replace(char, f"\\{char}")
-
-        # Escape leading and trailing spaces
-        if value.startswith(" "):
-            value = f"\\ {value[1:]}"
-        if value.endswith(" "):
-            value = f"{value[:-1]}\\ "
-
-        return value
+        # Delegate to enterprise DN escaping
+        from ldap_core_shared.utilities.dn import escape_dn_value
+        
+        return escape_dn_value(value)
 
     @staticmethod
     def normalize_dn(dn: str) -> str:
-        """Normalize DN format for comparison.
+        """Normalize DN format for comparison - delegates to enterprise DN system.
 
         Args:
             dn: DN to normalize
@@ -128,9 +138,10 @@ class DNHelper:
         if not dn:
             return ""
 
-        # Parse and rebuild to normalize spacing
-        rdns = DNHelper.parse_dn(dn)
-        return DNHelper.build_dn(rdns).lower()
+        # Delegate to enterprise DN normalization
+        from ldap_core_shared.utilities.dn import normalize_dn
+        
+        return normalize_dn(dn)
 
 
 class FilterHelper:

@@ -1008,6 +1008,50 @@ class LDAP:
     # ========================================================================
     # PAGED OPERATIONS - Delegates to existing control modules
     # ========================================================================
+    # BASIC SEARCH OPERATIONS - FUNDAMENTAL LDAP OPERATIONS
+    # ========================================================================
+
+    async def search(self, base_dn: str, filter_expr: str = "(objectClass=*)", *,
+                    attributes: list[str] | None = None, 
+                    scope: str = "SUBTREE",
+                    size_limit: int = 0,
+                    time_limit: int = 0) -> Result[list[LDAPEntry]]:
+        """Basic LDAP search operation - delegates to existing search infrastructure.
+        
+        This is the FUNDAMENTAL LDAP operation that was missing from the facade.
+        Pure delegation to existing core/search_engine.py infrastructure.
+        
+        Args:
+            base_dn: Base DN for search scope
+            filter_expr: LDAP filter expression (defaults to all objects)
+            attributes: List of attributes to retrieve (None = all attributes)
+            scope: Search scope (SUBTREE, ONELEVEL, BASE)
+            size_limit: Maximum number of entries to return (0 = no limit)
+            time_limit: Maximum time in seconds (0 = no limit)
+            
+        Returns:
+            Result containing list of LDAPEntry objects
+            
+        Example:
+            >>> async with LDAP(config) as ldap:
+            ...     result = await ldap.search("dc=example,dc=com", "(cn=user*)")
+            ...     if result.success:
+            ...         for entry in result.data:
+            ...             print(f"Found: {entry.dn}")
+        """
+        search_engine = self._get_search_engine()
+        if search_engine is None:
+            return Result.fail("Search engine not available")
+
+        # Pure delegation to existing search infrastructure
+        return await search_engine.search(
+            base_dn=base_dn,
+            filter_expr=filter_expr,
+            attributes=attributes,
+            scope=scope,
+            size_limit=size_limit,
+            time_limit=time_limit
+        )
 
     async def search_paged(self, base_dn: str, filter_expr: str, *, page_size: int = 1000,
                           attributes: list[str] | None = None) -> Result[list[LDAPEntry]]:
