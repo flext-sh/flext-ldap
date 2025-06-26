@@ -26,7 +26,7 @@ from pydantic import ValidationError
 
 from ldap_core_shared.core.connection_manager import (
     ConnectionInfo,
-    ConnectionManager,
+    LDAPConnectionManager,
     ConnectionPool,
     PooledConnection,
 )
@@ -438,8 +438,8 @@ class TestConnectionPool:
         assert metrics.connections_closed == 1
 
 
-class TestConnectionManager:
-    """Test ConnectionManager functionality."""
+class TestLDAPConnectionManager:
+    """Test LDAPConnectionManager functionality."""
 
     @pytest.fixture
     def connection_info(self) -> ConnectionInfo:
@@ -453,16 +453,16 @@ class TestConnectionManager:
         )
 
     @pytest.fixture
-    def connection_manager(self, connection_info: ConnectionInfo) -> ConnectionManager:
+    def connection_manager(self, connection_info: ConnectionInfo) -> LDAPConnectionManager:
         """Create test connection manager."""
-        return ConnectionManager(connection_info)
+        return LDAPConnectionManager(connection_info)
 
-    def test_initialization(self, connection_manager: ConnectionManager, connection_info: ConnectionInfo) -> None:
-        """Test ConnectionManager initialization."""
+    def test_initialization(self, connection_manager: LDAPConnectionManager, connection_info: ConnectionInfo) -> None:
+        """Test LDAPConnectionManager initialization."""
         assert connection_manager.connection_info == connection_info
         assert connection_manager._pool is None
 
-    async def test_initialize_pool(self, connection_manager: ConnectionManager) -> None:
+    async def test_initialize_pool(self, connection_manager: LDAPConnectionManager) -> None:
         """Test pool initialization."""
         await connection_manager.initialize_pool(pool_size=3, max_pool_size=10)
 
@@ -471,7 +471,7 @@ class TestConnectionManager:
         assert connection_manager._pool.max_pool_size == 10
 
     @patch("ldap_core_shared.core.connection_manager.ConnectionFactory.create_connection")
-    def test_get_connection_success(self, mock_create_connection: MagicMock, connection_manager: ConnectionManager) -> None:
+    def test_get_connection_success(self, mock_create_connection: MagicMock, connection_manager: LDAPConnectionManager) -> None:
         """Test successful connection creation with context manager."""
         mock_conn = MagicMock()
         mock_conn.bound = True
@@ -484,7 +484,7 @@ class TestConnectionManager:
         mock_conn.unbind.assert_called_once()
 
     @patch("ldap_core_shared.core.connection_manager.ConnectionFactory.create_connection")
-    def test_get_connection_failure(self, mock_create_connection: MagicMock, connection_manager: ConnectionManager) -> None:
+    def test_get_connection_failure(self, mock_create_connection: MagicMock, connection_manager: LDAPConnectionManager) -> None:
         """Test connection creation failure handling."""
         mock_create_connection.side_effect = Exception("Connection failed")
 
@@ -493,7 +493,7 @@ class TestConnectionManager:
                 pass
 
     @patch("ldap_core_shared.core.connection_manager.ConnectionFactory.create_connection")
-    async def test_get_pooled_connection_initializes_pool(self, mock_create_connection: MagicMock, connection_manager: ConnectionManager) -> None:
+    async def test_get_pooled_connection_initializes_pool(self, mock_create_connection: MagicMock, connection_manager: LDAPConnectionManager) -> None:
         """Test pooled connection automatically initializes pool."""
         mock_conn = MagicMock()
         mock_conn.bound = True
@@ -506,7 +506,7 @@ class TestConnectionManager:
         assert connection_manager._pool is not None
 
     @patch("ldap_core_shared.core.connection_manager.ConnectionFactory.create_connection")
-    def test_test_connection_success(self, mock_create_connection: MagicMock, connection_manager: ConnectionManager) -> None:
+    def test_test_connection_success(self, mock_create_connection: MagicMock, connection_manager: LDAPConnectionManager) -> None:
         """Test successful connection test."""
         mock_conn = MagicMock()
         mock_conn.bound = True
@@ -526,7 +526,7 @@ class TestConnectionManager:
         assert "Mock LDAP Server" in result.ldap_info["server_info"]
 
     @patch("ldap_core_shared.core.connection_manager.ConnectionFactory.create_connection")
-    def test_test_connection_failure(self, mock_create_connection: MagicMock, connection_manager: ConnectionManager) -> None:
+    def test_test_connection_failure(self, mock_create_connection: MagicMock, connection_manager: LDAPConnectionManager) -> None:
         """Test connection test failure handling."""
         mock_create_connection.side_effect = Exception("Authentication failed")
 
@@ -536,7 +536,7 @@ class TestConnectionManager:
         assert result.connection_error == "Authentication failed"
         assert result.response_time == 0.0
 
-    def test_get_performance_metrics(self, connection_manager: ConnectionManager) -> None:
+    def test_get_performance_metrics(self, connection_manager: LDAPConnectionManager) -> None:
         """Test getting performance metrics."""
         metrics = connection_manager.get_performance_metrics()
 
@@ -544,7 +544,7 @@ class TestConnectionManager:
         assert metrics.operation_count == 0
         assert metrics.total_duration == 0.0
 
-    async def test_close(self, connection_manager: ConnectionManager) -> None:
+    async def test_close(self, connection_manager: LDAPConnectionManager) -> None:
         """Test closing connection manager."""
         # Initialize pool first
         await connection_manager.initialize_pool()
@@ -904,7 +904,7 @@ class TestConnectionManager:
 
     def test_connection_manager_creation(
         self,
-        connection_manager: ConnectionManager,
+        connection_manager: LDAPConnectionManager,
         connection_info: ConnectionInfo,
     ) -> None:
         """Test ConnectionManager creation."""
@@ -913,7 +913,7 @@ class TestConnectionManager:
 
     async def test_connection_manager_initialize_pool(
         self,
-        connection_manager: ConnectionManager,
+        connection_manager: LDAPConnectionManager,
     ) -> None:
         """Test connection pool initialization."""
         await connection_manager.initialize_pool(pool_size=3, max_pool_size=10)
@@ -928,7 +928,7 @@ class TestConnectionManager:
         self,
         mock_server: MagicMock,
         mock_connection_class: MagicMock,
-        connection_manager: ConnectionManager,
+        connection_manager: LDAPConnectionManager,
     ) -> None:
         """Test synchronous connection retrieval."""
         mock_connection = MagicMock(spec=ldap3.Connection)
@@ -946,7 +946,7 @@ class TestConnectionManager:
         self,
         mock_server: MagicMock,
         mock_connection_class: MagicMock,
-        connection_manager: ConnectionManager,
+        connection_manager: LDAPConnectionManager,
     ) -> None:
         """Test asynchronous pooled connection retrieval."""
         mock_connection = MagicMock(spec=ldap3.Connection)
@@ -962,7 +962,7 @@ class TestConnectionManager:
         self,
         mock_server: MagicMock,
         mock_connection_class: MagicMock,
-        connection_manager: ConnectionManager,
+        connection_manager: LDAPConnectionManager,
     ) -> None:
         """Test successful connection testing."""
         mock_connection = MagicMock(spec=ldap3.Connection)
@@ -989,7 +989,7 @@ class TestConnectionManager:
         self,
         mock_server: MagicMock,
         mock_connection_class: MagicMock,
-        connection_manager: ConnectionManager,
+        connection_manager: LDAPConnectionManager,
     ) -> None:
         """Test failed connection testing."""
         mock_connection_class.side_effect = Exception("Connection failed")
@@ -1003,7 +1003,7 @@ class TestConnectionManager:
 
     def test_connection_manager_get_performance_metrics(
         self,
-        connection_manager: ConnectionManager,
+        connection_manager: LDAPConnectionManager,
     ) -> None:
         """Test performance metrics retrieval."""
         metrics = connection_manager.get_performance_metrics()
@@ -1016,7 +1016,7 @@ class TestConnectionManager:
 
     async def test_connection_manager_close(
         self,
-        connection_manager: ConnectionManager,
+        connection_manager: LDAPConnectionManager,
     ) -> None:
         """Test connection manager cleanup."""
         # Initialize pool first

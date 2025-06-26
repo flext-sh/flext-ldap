@@ -10,7 +10,8 @@ from contextlib import asynccontextmanager, contextmanager
 from typing import TYPE_CHECKING
 
 import ldap3
-from ldap3 import ALL, Connection, LDAPException, Server, Tls
+from ldap3 import ALL, Connection, Server, Tls
+from ldap3.core.exceptions import LDAPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from ldap_core_shared.domain.results import LDAPConnectionResult

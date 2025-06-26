@@ -21,8 +21,9 @@ import pytest
 
 from ldap_core_shared.core.connection_manager import (
     ConnectionInfo,
-    ConnectionManager,
+    LDAPConnectionManager,
 )
+from ldap_core_shared.connections.manager import ConnectionManager
 
 
 class TestConnectionInfo:

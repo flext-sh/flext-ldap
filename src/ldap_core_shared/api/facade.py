@@ -78,16 +78,13 @@ except ImportError:
     CoreLDIFProcessor = None
     SecurityManager = None
 
-# CRITICAL MISSING: Async operations modules (high-performance non-blocking)
+# Async operations modules (high-performance non-blocking)
 try:
     from ldap_core_shared.async_ops.callbacks import CallbackManager
-    from ldap_core_shared.async_ops.futures import OperationFuture
-    from ldap_core_shared.async_ops.operations import AsyncLDAPOperations
-    from ldap_core_shared.async_ops.results import AsyncResult
+    from ldap_core_shared.async_ops.manager import AsyncLDAPOperations, AsyncResult
 except ImportError:
     AsyncLDAPOperations = None
     AsyncResult = None
-    OperationFuture = None
     CallbackManager = None
 
 # CRITICAL MISSING: Transaction support modules (atomic multi-operations)
@@ -110,9 +107,9 @@ except ImportError:
     CompareOperations = None
     CompareResult = None
 
-# CRITICAL MISSING: Vectorized high-performance operations
+# Vectorized high-performance operations
 try:
-    from ldap_core_shared.vectorized.benchmarker import PerformanceBenchmarker
+    from ldap_core_shared.vectorized.benchmarks import PerformanceBenchmarker
     from ldap_core_shared.vectorized.bulk_processor import VectorizedBulkProcessor
     from ldap_core_shared.vectorized.connection_pool import PredictiveConnectionPool
     from ldap_core_shared.vectorized.ldif_processor import VectorizedLDIFProcessor
@@ -124,15 +121,15 @@ except ImportError:
     PredictiveConnectionPool = None
     PerformanceBenchmarker = None
 
-# MISSING: Referral handling modules (distributed directory support)
+# Referral handling modules (distributed directory support)
 try:
-    from ldap_core_shared.referrals.chaser import ReferralChaser
-    from ldap_core_shared.referrals.credentials import ReferralCredentials
-    from ldap_core_shared.referrals.handler import ReferralHandler
+    from ldap_core_shared.referrals.chaser import ReferralChaser, ReferralCredentials
+    from ldap_core_shared.referrals.handler import ReferralHandler, ReferralResult
 except ImportError:
     ReferralHandler = None
     ReferralChaser = None
     ReferralCredentials = None
+    ReferralResult = None
 
 # MISSING: Advanced protocol implementations (LDAPI, LDAPS, DSML)
 try:
