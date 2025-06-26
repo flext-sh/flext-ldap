@@ -1,12 +1,31 @@
-"""Simple DN utilities without complex dependencies.
+"""Simple DN utilities - Enterprise Delegation Facade.
 
-Provides basic DN manipulation utilities that can be used
-without importing the complex event system.
+TRUE FACADE PATTERN: 100% DELEGATION TO ENTERPRISE DN INFRASTRUCTURE
+====================================================================
+
+This module provides simple DN utilities by delegating entirely to the
+enterprise-grade DN utilities in utilities.dn.
+
+DELEGATION TARGET: utilities.dn.DistinguishedName - Enterprise DN processing
+with RFC 4514 compliance, comprehensive validation, advanced manipulation.
+
+MIGRATION BENEFITS:
+- Eliminated simple DN implementation duplication
+- Leverages enterprise validation and RFC compliance  
+- Automatic improvements from enterprise DN system
+- Consistent behavior with simplified interface
 """
 
 
+# Delegate to enterprise DN infrastructure
+from ldap_core_shared.utilities.dn import (
+    DistinguishedName as EnterpriseDistinguishedName,
+    normalize_dn as enterprise_normalize_dn,
+)
+
+
 def simple_parse_dn(dn_string: str) -> list[tuple[str, str]]:
-    """Simple DN parser that returns list of (attribute, value) tuples.
+    """Simple DN parser that returns list of (attribute, value) tuples - delegates to enterprise DN.
 
     Args:
         dn_string: DN string to parse
@@ -21,23 +40,19 @@ def simple_parse_dn(dn_string: str) -> list[tuple[str, str]]:
         msg = "DN cannot be empty"
         raise ValueError(msg)
 
-    components: list[tuple[str, str]] = []
-    # Simple DN parsing (would need more sophisticated parsing for complex cases)
-    parts = [part.strip() for part in dn_string.split(",")]
-
-    for part in parts:
-        if "=" not in part:
-            msg = f"Invalid DN component: {part}"
-            raise ValueError(msg)
-
-        attr, value = part.split("=", 1)
-        components.append((attr.strip().lower(), value.strip()))
-
+    # Delegate to enterprise DN parsing
+    enterprise_dn = EnterpriseDistinguishedName(dn_string)
+    
+    # Convert to simple tuple format with lowercase attributes for backward compatibility
+    components = []
+    for comp in enterprise_dn.components:
+        components.append((comp.attribute_type.lower(), comp.attribute_value))
+    
     return components
 
 
 def simple_normalize_dn(dn_string: str) -> str:
-    """Simple DN normalization.
+    """Simple DN normalization - delegates to enterprise DN system.
 
     Args:
         dn_string: DN string to normalize
@@ -45,12 +60,12 @@ def simple_normalize_dn(dn_string: str) -> str:
     Returns:
         Normalized DN string
     """
-    components = simple_parse_dn(dn_string)
-    return ",".join(f"{attr}={value}" for attr, value in components)
+    # Delegate directly to enterprise normalization
+    return enterprise_normalize_dn(dn_string)
 
 
 def simple_is_child_dn(child_dn: str, parent_dn: str) -> bool:
-    """Check if one DN is a child of another (simple version).
+    """Check if one DN is a child of another (simple version) - delegates to enterprise DN.
 
     Args:
         child_dn: Potential child DN
@@ -60,21 +75,8 @@ def simple_is_child_dn(child_dn: str, parent_dn: str) -> bool:
         True if child_dn is a child of parent_dn
     """
     try:
-        child_components = simple_parse_dn(child_dn)
-        parent_components = simple_parse_dn(parent_dn)
-
-        if len(child_components) <= len(parent_components):
-            return False
-
-        # Check if parent components match the end of child components
-        parent_start = len(child_components) - len(parent_components)
-        child_suffix = child_components[parent_start:]
-
-        for i, (p_attr, p_val) in enumerate(parent_components):
-            c_attr, c_val = child_suffix[i]
-            if p_attr.lower() != c_attr.lower() or p_val.lower() != c_val.lower():
-                return False
-
-        return True
-    except ValueError:
+        # Delegate to enterprise DN system
+        enterprise_child = EnterpriseDistinguishedName(child_dn)
+        return enterprise_child.is_child_of(parent_dn)
+    except Exception:
         return False

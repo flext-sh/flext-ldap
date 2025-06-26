@@ -1,31 +1,69 @@
-"""DN (Distinguished Name) manipulation utilities.
+"""DN (Distinguished Name) manipulation utilities - Enterprise Delegation Facade.
 
-Provides utilities for parsing, validating, and manipulating
-LDAP Distinguished Names.
+TRUE FACADE PATTERN: 100% DELEGATION TO ENTERPRISE DN INFRASTRUCTURE
+====================================================================
+
+This module delegates entirely to the enterprise-grade DN utilities in
+utilities.dn without any reimplementation.
+
+DELEGATION TARGET: utilities.dn.DistinguishedName - Enterprise DN processing with
+RFC 4514 compliance, comprehensive validation, advanced manipulation.
+
+MIGRATION BENEFITS:
+- Eliminated DN implementation duplication
+- Leverages enterprise validation and RFC compliance
+- Automatic improvements from enterprise DN system
+- Consistent behavior across all DN usage
 """
 
 from __future__ import annotations
 
+# Delegate to enterprise DN infrastructure  
+from ldap_core_shared.utilities.dn import (
+    DistinguishedName as EnterpriseDistinguishedName,
+    DNComponent as EnterpriseDNComponent,
+    DNParser,
+    escape_dn_value,
+    unescape_dn_value,
+    normalize_dn as enterprise_normalize_dn,
+    is_valid_dn,
+    get_dn_parent,
+    get_dn_rdn,
+)
+
+# Keep domain imports for compatibility but use enterprise implementations
 from ldap_core_shared.domain.value_objects import DNComponent, LdapDn
 
 
 def parse_dn(dn_string: str) -> LdapDn:
-    """Parse DN string into LdapDn object.
+    """Parse DN string into LdapDn object - delegates to enterprise DN system.
 
     Args:
         dn_string: DN string to parse
 
     Returns:
-        LdapDn object
+        LdapDn object (converted from enterprise DistinguishedName)
 
     Raises:
         ValueError: If DN format is invalid
     """
-    return LdapDn.from_string(dn_string)
+    # Delegate to enterprise DN parser and convert to domain object
+    enterprise_dn = EnterpriseDistinguishedName(dn_string)
+    
+    # Convert enterprise DN to domain LdapDn
+    components = []
+    for comp in enterprise_dn.components:
+        domain_component = DNComponent(
+            attribute=comp.attribute_type,
+            value=comp.attribute_value
+        )
+        components.append(domain_component)
+    
+    return LdapDn(components=components)
 
 
 def normalize_dn(dn_string: str) -> str:
-    """Normalize DN string to standard format.
+    """Normalize DN string to standard format - delegates to enterprise DN system.
 
     Args:
         dn_string: DN string to normalize
@@ -33,13 +71,12 @@ def normalize_dn(dn_string: str) -> str:
     Returns:
         Normalized DN string
     """
-    dn = parse_dn(dn_string)
-    normalized = dn.normalize()
-    return str(normalized)
+    # Delegate directly to enterprise normalization
+    return enterprise_normalize_dn(dn_string)
 
 
 def is_child_dn(child_dn: str, parent_dn: str) -> bool:
-    """Check if one DN is a child of another.
+    """Check if one DN is a child of another - delegates to enterprise DN system.
 
     Args:
         child_dn: Potential child DN
@@ -48,13 +85,13 @@ def is_child_dn(child_dn: str, parent_dn: str) -> bool:
     Returns:
         True if child_dn is a child of parent_dn
     """
-    child = parse_dn(child_dn)
-    parent = parse_dn(parent_dn)
-    return child.is_child_of(parent)
+    # Delegate directly to enterprise DN system
+    enterprise_child = EnterpriseDistinguishedName(child_dn)
+    return enterprise_child.is_child_of(parent_dn)
 
 
 def get_parent_dn(dn_string: str) -> str | None:
-    """Get parent DN of the given DN.
+    """Get parent DN of the given DN - delegates to enterprise DN system.
 
     Args:
         dn_string: DN string
@@ -62,13 +99,12 @@ def get_parent_dn(dn_string: str) -> str | None:
     Returns:
         Parent DN string or None if no parent
     """
-    dn = parse_dn(dn_string)
-    parent = dn.get_parent_dn()
-    return str(parent) if parent else None
+    # Delegate directly to enterprise DN system
+    return get_dn_parent(dn_string)
 
 
 def get_rdn(dn_string: str) -> str:
-    """Get the Relative DN (first component) of a DN.
+    """Get the Relative DN (first component) of a DN - delegates to enterprise DN system.
 
     Args:
         dn_string: DN string
@@ -76,9 +112,9 @@ def get_rdn(dn_string: str) -> str:
     Returns:
         RDN string
     """
-    dn = parse_dn(dn_string)
-    rdn = dn.get_rdn()
-    return str(rdn)
+    # Delegate directly to enterprise DN system
+    rdn = get_dn_rdn(dn_string)
+    return rdn or ""
 
 
 def replace_base_dn(dn_string: str, old_base: str, new_base: str) -> str:
@@ -103,64 +139,9 @@ def replace_base_dn(dn_string: str, old_base: str, new_base: str) -> str:
     return str(result)
 
 
-def escape_dn_value(value: str) -> str:
-    """Escape special characters in DN value.
-
-    Args:
-        value: Value to escape
-
-    Returns:
-        Escaped value
-    """
-    # Characters that need escaping in DN values
-    escape_chars = {
-        "\\": "\\\\",
-        ",": "\\,",
-        "+": "\\+",
-        '"': '\\"',
-        "<": "\\<",
-        ">": "\\>",
-        ";": "\\;",
-        "=": "\\=",
-        "#": "\\#",
-    }
-
-    escaped = value
-    for char, escaped_char in escape_chars.items():
-        escaped = escaped.replace(char, escaped_char)
-
-    # Leading and trailing spaces also need escaping
-    if escaped.startswith(" "):
-        escaped = "\\ " + escaped[1:]
-    if escaped.endswith(" "):
-        escaped = escaped[:-1] + "\\ "
-
-    return escaped
-
-
-def unescape_dn_value(value: str) -> str:
-    """Unescape DN value.
-
-    Args:
-        value: Escaped value
-
-    Returns:
-        Unescaped value
-    """
-    # Simple unescaping - reverse of escape_dn_value
-    unescaped = value
-
-    # Handle escaped characters
-    unescaped = unescaped.replace("\\\\", "\\")
-    unescaped = unescaped.replace("\\,", ",")
-    unescaped = unescaped.replace("\\+", "+")
-    unescaped = unescaped.replace('\\"', '"')
-    unescaped = unescaped.replace("\\<", "<")
-    unescaped = unescaped.replace("\\>", ">")
-    unescaped = unescaped.replace("\\;", ";")
-    unescaped = unescaped.replace("\\=", "=")
-    unescaped = unescaped.replace("\\#", "#")
-    return unescaped.replace("\\ ", " ")
+# Re-export enterprise escape/unescape functions directly
+# These are already imported at the top as escape_dn_value and unescape_dn_value
+# No need to reimplement - the imports provide the delegation
 
 
 def extract_attribute_value(dn_string: str, attribute: str) -> str | None:
@@ -217,7 +198,7 @@ def split_dn_components(dn_string: str) -> list[tuple[str, str]]:
 
 
 def validate_dn_format(dn_string: str) -> tuple[bool, str | None]:
-    """Validate DN format.
+    """Validate DN format - delegates to enterprise DN system.
 
     Args:
         dn_string: DN string to validate
@@ -228,11 +209,14 @@ def validate_dn_format(dn_string: str) -> tuple[bool, str | None]:
     if not dn_string or not dn_string.strip():
         return False, "DN cannot be empty"
 
-    try:
-        parse_dn(dn_string)
+    # Delegate to enterprise validation
+    if is_valid_dn(dn_string):
         return True, None
-    except ValueError as e:
-        return False, str(e)
+    else:
+        # Get detailed validation errors from enterprise system
+        errors = DNParser.validate_dn_syntax(dn_string)
+        error_message = "; ".join(errors) if errors else "Invalid DN format"
+        return False, error_message
 
 
 def get_dn_depth(dn_string: str) -> int:
