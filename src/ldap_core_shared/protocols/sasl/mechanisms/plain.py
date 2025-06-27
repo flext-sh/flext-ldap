@@ -33,7 +33,7 @@ References:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar
 
 from ldap_core_shared.protocols.sasl.callback import (
     AuthorizeCallback,
@@ -79,23 +79,25 @@ class PlainMechanism(SASLMechanism):
     """
 
     MECHANISM_NAME: ClassVar[str] = "PLAIN"
-    MECHANISM_CAPABILITIES: ClassVar[SASLMechanismCapabilities] = SASLMechanismCapabilities(
-        mechanism_type=SASLMechanismType.SIMPLE,
-        supports_initial_response=True,
-        supports_server_challenges=False,  # PLAIN is single-message
-        requires_server_name=False,
-        requires_realm=False,
-        security_flags=[],  # No security flags - plaintext mechanism
-        qop_supported=["auth"],  # Only authentication, no integrity/confidentiality
-        max_security_strength=0,  # No encryption
-        computational_cost=1,  # Very low computational cost
-        network_round_trips=0,  # Initial response only, no round trips
+    MECHANISM_CAPABILITIES: ClassVar[SASLMechanismCapabilities] = (
+        SASLMechanismCapabilities(
+            mechanism_type=SASLMechanismType.SIMPLE,
+            supports_initial_response=True,
+            supports_server_challenges=False,  # PLAIN is single-message
+            requires_server_name=False,
+            requires_realm=False,
+            security_flags=[],  # No security flags - plaintext mechanism
+            qop_supported=["auth"],  # Only authentication, no integrity/confidentiality
+            max_security_strength=0,  # No encryption
+            computational_cost=1,  # Very low computational cost
+            network_round_trips=0,  # Initial response only, no round trips
+        )
     )
 
     def __init__(
         self,
         callback_handler: SASLCallbackHandler,
-        context: Optional[SASLContext] = None,
+        context: SASLContext | None = None,
     ) -> None:
         """Initialize PLAIN mechanism.
 
@@ -106,12 +108,12 @@ class PlainMechanism(SASLMechanism):
         super().__init__(callback_handler, context)
 
         # PLAIN mechanism state
-        self._username: Optional[str] = None
-        self._password: Optional[str] = None
-        self._authorization_id: Optional[str] = None
+        self._username: str | None = None
+        self._password: str | None = None
+        self._authorization_id: str | None = None
         self._response_sent = False
 
-    def evaluate_challenge(self, challenge: bytes) -> Optional[bytes]:
+    def evaluate_challenge(self, challenge: bytes) -> bytes | None:
         """Evaluate challenge and generate PLAIN response.
 
         For PLAIN mechanism:
@@ -276,7 +278,9 @@ class PlainMechanism(SASLMechanism):
 
     def __str__(self) -> str:
         """String representation (security-aware)."""
-        return f"PlainMechanism(username={self._username}, complete={self.is_complete()})"
+        return (
+            f"PlainMechanism(username={self._username}, complete={self.is_complete()})"
+        )
 
     def __repr__(self) -> str:
         """Detailed representation (security-aware)."""

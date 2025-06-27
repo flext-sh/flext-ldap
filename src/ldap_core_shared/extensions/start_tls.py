@@ -49,7 +49,7 @@ References:
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field, validator
 
@@ -103,40 +103,48 @@ class TLSConfiguration(BaseModel):
         The key file should not be password-protected for automatic use.
     """
 
-    ca_cert_file: Optional[str] = Field(
-        default=None, description="Path to CA certificate file (PEM format)",
+    ca_cert_file: str | None = Field(
+        default=None,
+        description="Path to CA certificate file (PEM format)",
     )
 
-    ca_cert_dir: Optional[str] = Field(
-        default=None, description="Directory containing CA certificates",
+    ca_cert_dir: str | None = Field(
+        default=None,
+        description="Directory containing CA certificates",
     )
 
-    cert_file: Optional[str] = Field(
-        default=None, description="Path to client certificate file (PEM format)",
+    cert_file: str | None = Field(
+        default=None,
+        description="Path to client certificate file (PEM format)",
     )
 
-    key_file: Optional[str] = Field(
-        default=None, description="Path to client private key file (PEM format)",
+    key_file: str | None = Field(
+        default=None,
+        description="Path to client private key file (PEM format)",
     )
 
     verify_mode: TLSVerifyMode = Field(
-        default=TLSVerifyMode.REQUIRED, description="Certificate verification mode",
+        default=TLSVerifyMode.REQUIRED,
+        description="Certificate verification mode",
     )
 
     check_hostname: bool = Field(
-        default=True, description="Whether to verify hostname in certificate",
+        default=True,
+        description="Whether to verify hostname in certificate",
     )
 
     tls_version: TLSVersion = Field(
-        default=TLSVersion.TLS_V1_2, description="Minimum TLS version to use",
+        default=TLSVersion.TLS_V1_2,
+        description="Minimum TLS version to use",
     )
 
-    cipher_suites: Optional[str] = Field(
-        default=None, description="Allowed cipher suites (OpenSSL format)",
+    cipher_suites: str | None = Field(
+        default=None,
+        description="Allowed cipher suites (OpenSSL format)",
     )
 
     @validator("cert_file")
-    def validate_cert_file(cls, v: Optional[str], values: dict) -> Optional[str]:
+    def validate_cert_file(self, v: str | None, values: dict) -> str | None:
         """Validate client certificate configuration."""
         key_file = values.get("key_file")
 
@@ -148,7 +156,7 @@ class TLSConfiguration(BaseModel):
         return v
 
     @validator("key_file")
-    def validate_key_file(cls, v: Optional[str], values: dict) -> Optional[str]:
+    def validate_key_file(self, v: str | None, values: dict) -> str | None:
         """Validate private key configuration."""
         cert_file = values.get("cert_file")
 
@@ -218,23 +226,28 @@ class StartTLSResult(ExtensionResult):
     """
 
     tls_established: bool = Field(
-        default=False, description="Whether TLS connection was established",
+        default=False,
+        description="Whether TLS connection was established",
     )
 
-    tls_version: Optional[str] = Field(
-        default=None, description="Version of TLS protocol negotiated",
+    tls_version: str | None = Field(
+        default=None,
+        description="Version of TLS protocol negotiated",
     )
 
-    cipher_suite: Optional[str] = Field(
-        default=None, description="Cipher suite used for encryption",
+    cipher_suite: str | None = Field(
+        default=None,
+        description="Cipher suite used for encryption",
     )
 
-    peer_certificate: Optional[dict] = Field(
-        default=None, description="Server certificate information",
+    peer_certificate: dict | None = Field(
+        default=None,
+        description="Server certificate information",
     )
 
     connection_encrypted: bool = Field(
-        default=False, description="Whether connection is now encrypted",
+        default=False,
+        description="Whether connection is now encrypted",
     )
 
     def is_tls_active(self) -> bool:
@@ -286,11 +299,12 @@ class StartTLSExtension(LDAPExtension):
 
     request_name = ExtensionOIDs.START_TLS
 
-    tls_config: Optional[TLSConfiguration] = Field(
-        default=None, description="TLS configuration parameters",
+    tls_config: TLSConfiguration | None = Field(
+        default=None,
+        description="TLS configuration parameters",
     )
 
-    def __init__(self, tls_config: Optional[TLSConfiguration] = None, **kwargs) -> None:
+    def __init__(self, tls_config: TLSConfiguration | None = None, **kwargs) -> None:
         """Initialize Start TLS extension.
 
         Args:
@@ -304,7 +318,7 @@ class StartTLSExtension(LDAPExtension):
         super().__init__(request_value=None, **kwargs)
         self.tls_config = tls_config or TLSConfiguration()
 
-    def encode_request_value(self) -> Optional[bytes]:
+    def encode_request_value(self) -> bytes | None:
         """Encode Start TLS request value.
 
         Returns:
@@ -314,7 +328,9 @@ class StartTLSExtension(LDAPExtension):
 
     @classmethod
     def decode_response_value(
-        cls, response_name: Optional[OID], response_value: Optional[bytes],
+        cls,
+        response_name: OID | None,
+        response_value: bytes | None,
     ) -> StartTLSResult:
         """Decode Start TLS response value.
 
@@ -341,7 +357,7 @@ class StartTLSExtension(LDAPExtension):
             raise ExtensionDecodingError(msg) from e
 
     @classmethod
-    def create(cls, tls_config: Optional[TLSConfiguration] = None) -> StartTLSExtension:
+    def create(cls, tls_config: TLSConfiguration | None = None) -> StartTLSExtension:
         """Create a Start TLS extension instance.
 
         Args:
@@ -363,7 +379,10 @@ class StartTLSExtension(LDAPExtension):
 
     @classmethod
     def with_client_cert(
-        cls, cert_file: str, key_file: str, ca_cert_file: Optional[str] = None,
+        cls,
+        cert_file: str,
+        key_file: str,
+        ca_cert_file: str | None = None,
     ) -> StartTLSExtension:
         """Create Start TLS extension with client certificate authentication.
 
@@ -385,7 +404,9 @@ class StartTLSExtension(LDAPExtension):
 
     @classmethod
     def with_ca_verification(
-        cls, ca_cert_file: str, verify_hostname: bool = True,
+        cls,
+        ca_cert_file: str,
+        verify_hostname: bool = True,
     ) -> StartTLSExtension:
         """Create Start TLS extension with CA certificate verification.
 
@@ -471,7 +492,9 @@ def start_tls_with_ca(ca_cert_file: str) -> StartTLSExtension:
 
 
 def start_tls_with_client_cert(
-    cert_file: str, key_file: str, ca_cert_file: Optional[str] = None,
+    cert_file: str,
+    key_file: str,
+    ca_cert_file: str | None = None,
 ) -> StartTLSExtension:
     """Create Start TLS extension with client certificate authentication.
 
@@ -525,7 +548,7 @@ class TLSUpgradeManager:
         self,
         connection: Any,  # Connection type to be defined when integrating
         # with connection manager
-        config: Optional[TLSConfiguration] = None,
+        config: TLSConfiguration | None = None,
         retry_on_failure: bool = False,
         fallback_to_insecure: bool = False,
     ) -> StartTLSResult:
@@ -572,8 +595,11 @@ class TLSUpgradeManager:
                 return result
             # Mock implementation for testing/development
             from ldap_core_shared.utils.logging import get_logger
+
             logger = get_logger(__name__)
-            logger.warning("Connection does not support extended operations. Using mock TLS upgrade.")
+            logger.warning(
+                "Connection does not support extended operations. Using mock TLS upgrade.",
+            )
 
             return StartTLSResult(
                 result_code=0,
@@ -591,15 +617,19 @@ class TLSUpgradeManager:
         except Exception as e:
             if retry_on_failure:
                 from ldap_core_shared.utils.logging import get_logger
+
                 logger = get_logger(__name__)
-                logger.warning(f"TLS upgrade failed, retrying: {e}")
+                logger.warning("TLS upgrade failed, retrying: %s", e)
                 # Simple retry logic (in production, use exponential backoff)
-                return self.upgrade_connection(connection, config, False, fallback_to_insecure)
+                return self.upgrade_connection(
+                    connection, config, False, fallback_to_insecure,
+                )
 
             if fallback_to_insecure:
                 from ldap_core_shared.utils.logging import get_logger
+
                 logger = get_logger(__name__)
-                logger.warning(f"TLS upgrade failed, falling back to insecure: {e}")
+                logger.warning("TLS upgrade failed, falling back to insecure: %s", e)
                 return StartTLSResult(
                     result_code=1,  # Indicate failure but operation continued
                     is_secure=False,
@@ -614,6 +644,6 @@ class TLSUpgradeManager:
                 )
 
             from ldap_core_shared.extensions.base import ExtensionError
+
             msg = f"StartTLS operation failed: {e}"
             raise ExtensionError(msg) from e
-

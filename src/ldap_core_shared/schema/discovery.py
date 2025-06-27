@@ -43,7 +43,9 @@ class SchemaDiscoveryConfig(BaseModel):
         default=True,
         description="Include matching rules",
     )
-    timeout_seconds: int = Field(default=DEFAULT_TIMEOUT_SECONDS, ge=1, description="Discovery timeout")
+    timeout_seconds: int = Field(
+        default=DEFAULT_TIMEOUT_SECONDS, ge=1, description="Discovery timeout",
+    )
 
 
 class SchemaInfo(BaseModel):

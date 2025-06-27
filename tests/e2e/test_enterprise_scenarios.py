@@ -329,7 +329,9 @@ userPassword: {SSHA}monitoring_hash
         """🔥🔥🔥🔥 Test multi-tenant data isolation in enterprise environment."""
         monitor = PerformanceMonitor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(multi_tenant_ldif_data)
             ldif_path = f.name
 
@@ -422,11 +424,14 @@ userPassword: {SSHA}monitoring_hash
                     )  # eve.brown, frank.miller, grace.lee
 
                     # Test department-based sub-isolation within tenant C
-                    engineering_users = [user async for user in manager.search(
-                        search_base="ou=people,ou=tenantC,dc=enterprise,dc=global",
-                        search_filter="(departmentNumber=engineering)",
-                        attributes=["uid", "title"],
-                    )]
+                    engineering_users = [
+                        user
+                        async for user in manager.search(
+                            search_base="ou=people,ou=tenantC,dc=enterprise,dc=global",
+                            search_filter="(departmentNumber=engineering)",
+                            attributes=["uid", "title"],
+                        )
+                    ]
 
                     assert len(engineering_users) == 2  # eve.brown, frank.miller
 
@@ -438,11 +443,14 @@ userPassword: {SSHA}monitoring_hash
                     # Verify no tenant can access another tenant's data
 
                     # Search from tenant A scope trying to find tenant B users
-                    cross_tenant_search_results = [result async for result in manager.search(
-                        search_base="ou=tenantA,dc=enterprise,dc=global",
-                        search_filter="(mail=*@companyB.com)",  # Should find nothing
-                        attributes=["uid", "mail"],
-                    )]
+                    cross_tenant_search_results = [
+                        result
+                        async for result in manager.search(
+                            search_base="ou=tenantA,dc=enterprise,dc=global",
+                            search_filter="(mail=*@companyB.com)",  # Should find nothing
+                            attributes=["uid", "mail"],
+                        )
+                    ]
 
                     # Should find no cross-tenant data
                     assert len(cross_tenant_search_results) == 0
@@ -453,11 +461,14 @@ userPassword: {SSHA}monitoring_hash
                     monitor.start_measurement("global_service_access")
 
                     # Global service accounts should be accessible
-                    service_accounts = [account async for account in manager.search(
-                        search_base="ou=services,dc=enterprise,dc=global",
-                        search_filter="(objectClass=account)",
-                        attributes=["uid", "description"],
-                    )]
+                    service_accounts = [
+                        account
+                        async for account in manager.search(
+                            search_base="ou=services,dc=enterprise,dc=global",
+                            search_filter="(objectClass=account)",
+                            attributes=["uid", "description"],
+                        )
+                    ]
 
                     assert len(service_accounts) == 2  # ldap-REDACTED_LDAP_BIND_PASSWORD, monitoring
 
@@ -533,11 +544,14 @@ userPassword: {SSHA}monitoring_hash
                             operation_type = i % 3  # Cycle through operation types
 
                             if operation_type == 0:  # Search operation
-                                [result async for result in manager.search(
-                                    search_base=f"ou={tenant_id},dc=enterprise,dc=global",
-                                    search_filter="(objectClass=*)",
-                                    attributes=["cn", "uid"],
-                                )]
+                                [
+                                    result
+                                    async for result in manager.search(
+                                        search_base=f"ou={tenant_id},dc=enterprise,dc=global",
+                                        search_filter="(objectClass=*)",
+                                        attributes=["cn", "uid"],
+                                    )
+                                ]
 
                                 workload_results["search_operations"] += 1
                                 monitor.record_event(f"tenant_{tenant_id}_search")
@@ -635,7 +649,9 @@ userPassword: {SSHA}monitoring_hash
         """🔥🔥 Test enterprise compliance and auditing workflows."""
         monitor = PerformanceMonitor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(multi_tenant_ldif_data)
             ldif_path = f.name
 
@@ -901,7 +917,9 @@ class TestHighAvailabilityScenarios:
     """🔥🔥🔥 High availability and disaster recovery scenario testing."""
 
     @pytest.mark.asyncio
-    async def test_connection_failover_scenario(self, sample_connection_info: dict[str, Any]) -> None:
+    async def test_connection_failover_scenario(
+        self, sample_connection_info: dict[str, Any]
+    ) -> None:
         """🔥🔥 Test connection failover in high availability setup."""
         monitor = PerformanceMonitor()
 
@@ -990,7 +1008,9 @@ class TestHighAvailabilityScenarios:
         monitor.stop_measurement("ha_failover_scenario")
 
     @pytest.mark.asyncio
-    async def test_load_balancing_scenario(self, sample_connection_info: dict[str, Any]) -> None:
+    async def test_load_balancing_scenario(
+        self, sample_connection_info: dict[str, Any]
+    ) -> None:
         """🔥🔥 Test load balancing across multiple LDAP servers."""
         monitor = PerformanceMonitor()
 
@@ -1020,7 +1040,9 @@ class TestHighAvailabilityScenarios:
             mock_conn_class.side_effect = track_server_usage
 
             # Simulate load-balanced operations
-            async def load_balanced_operations(server_config: dict[str, Any], operations_count: int):
+            async def load_balanced_operations(
+                server_config: dict[str, Any], operations_count: int
+            ):
                 """Perform operations on a specific server."""
                 completed = 0
                 async with ConnectionManager(

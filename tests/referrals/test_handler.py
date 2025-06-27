@@ -38,7 +38,7 @@ Performance Testing:
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -171,8 +171,8 @@ class TestReferralOperation:
         """Test get_duration method."""
         with patch("ldap_core_shared.referrals.handler.datetime") as mock_datetime:
             # Mock current time to be 5 seconds after start
-            start_time = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-            current_time = datetime(2024, 1, 1, 12, 0, 5, tzinfo=timezone.utc)
+            start_time = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
+            current_time = datetime(2024, 1, 1, 12, 0, 5, tzinfo=UTC)
 
             mock_datetime.now.side_effect = [start_time, current_time]
 
@@ -336,7 +336,9 @@ class TestReferralPolicy:
         """Test should_follow_referral with disabled mode."""
         policy = ReferralPolicy(handling_mode=ReferralHandlingMode.DISABLED)
 
-        should_follow, reason = policy.should_follow_referral("ldap://server.example.com")
+        should_follow, reason = policy.should_follow_referral(
+            "ldap://server.example.com"
+        )
         assert should_follow is False
         assert reason == "Referral handling is disabled"
 
@@ -344,7 +346,9 @@ class TestReferralPolicy:
         """Test should_follow_referral with manual mode."""
         policy = ReferralPolicy(handling_mode=ReferralHandlingMode.MANUAL)
 
-        should_follow, reason = policy.should_follow_referral("ldap://server.example.com")
+        should_follow, reason = policy.should_follow_referral(
+            "ldap://server.example.com"
+        )
         assert should_follow is False
         assert reason == "Manual referral handling mode"
 
@@ -361,12 +365,16 @@ class TestReferralPolicy:
         policy = ReferralPolicy(security_mode=ReferralSecurityMode.STRICT)
 
         # Insecure URL should be rejected
-        should_follow, reason = policy.should_follow_referral("ldap://server.example.com")
+        should_follow, reason = policy.should_follow_referral(
+            "ldap://server.example.com"
+        )
         assert should_follow is False
         assert "Strict security mode requires secure connections" in reason
 
         # Secure URL should be allowed
-        should_follow, reason = policy.should_follow_referral("ldaps://server.example.com")
+        should_follow, reason = policy.should_follow_referral(
+            "ldaps://server.example.com"
+        )
         assert should_follow is True
         assert reason == "Referral allowed by policy"
 
@@ -376,12 +384,16 @@ class TestReferralPolicy:
         policy = ReferralPolicy(allowed_servers=allowed_servers)
 
         # Allowed server should be accepted
-        should_follow, reason = policy.should_follow_referral("ldap://trusted1.example.com")
+        should_follow, reason = policy.should_follow_referral(
+            "ldap://trusted1.example.com"
+        )
         assert should_follow is True
         assert reason == "Referral allowed by policy"
 
         # Non-allowed server should be rejected
-        should_follow, reason = policy.should_follow_referral("ldap://untrusted.example.com")
+        should_follow, reason = policy.should_follow_referral(
+            "ldap://untrusted.example.com"
+        )
         assert should_follow is False
         assert "not in allowed list" in reason
 
@@ -406,7 +418,9 @@ class TestReferralPolicy:
         policy = ReferralPolicy(allowed_domains=allowed_domains)
 
         # Allowed domain should be accepted
-        should_follow, reason = policy.should_follow_referral("ldap://server.example.com")
+        should_follow, reason = policy.should_follow_referral(
+            "ldap://server.example.com"
+        )
         assert should_follow is True
         assert reason == "Referral allowed by policy"
 
@@ -416,7 +430,9 @@ class TestReferralPolicy:
         assert reason == "Referral allowed by policy"
 
         # Non-allowed domain should be rejected
-        should_follow, reason = policy.should_follow_referral("ldap://server.untrusted.com")
+        should_follow, reason = policy.should_follow_referral(
+            "ldap://server.untrusted.com"
+        )
         assert should_follow is False
         assert "not in allowed list" in reason
 
@@ -429,17 +445,23 @@ class TestReferralPolicy:
         )
 
         # Should pass all checks
-        should_follow, reason = policy.should_follow_referral("ldaps://secure.example.com")
+        should_follow, reason = policy.should_follow_referral(
+            "ldaps://secure.example.com"
+        )
         assert should_follow is True
         assert reason == "Referral allowed by policy"
 
         # Fails security check
-        should_follow, reason = policy.should_follow_referral("ldap://secure.example.com")
+        should_follow, reason = policy.should_follow_referral(
+            "ldap://secure.example.com"
+        )
         assert should_follow is False
         assert "Strict security mode" in reason
 
         # Fails allowed servers check
-        should_follow, reason = policy.should_follow_referral("ldaps://other.example.com")
+        should_follow, reason = policy.should_follow_referral(
+            "ldaps://other.example.com"
+        )
         assert should_follow is False
         assert "not in allowed list" in reason
 
@@ -548,7 +570,10 @@ class TestReferralHandler:
 
         assert result.success is False
         assert len(result.referral_errors) == 1
-        assert "blocked.example.com: blocked.example.com is blocked" in result.referral_errors
+        assert (
+            "blocked.example.com: blocked.example.com is blocked"
+            in result.referral_errors
+        )
 
     @pytest.mark.asyncio
     async def test_process_referral_not_implemented(self) -> None:
@@ -557,7 +582,10 @@ class TestReferralHandler:
 
         referral_urls = ["ldap://server.example.com"]
 
-        with pytest.raises(NotImplementedError, match="Referral following requires LDAP connection integration"):
+        with pytest.raises(
+            NotImplementedError,
+            match="Referral following requires LDAP connection integration",
+        ):
             await handler.process_referral(
                 referral_urls,
                 "search",
@@ -626,10 +654,12 @@ class TestReferralHandler:
         assert handler._policy.max_referral_depth == 5
         assert handler._policy.max_referral_time == 300.0
 
-        handler.update_policy({
-            "max_referral_depth": 10,
-            "max_referral_time": 600.0,
-        })
+        handler.update_policy(
+            {
+                "max_referral_depth": 10,
+                "max_referral_time": 600.0,
+            }
+        )
 
         assert handler._policy.max_referral_depth == 10
         assert handler._policy.max_referral_time == 600.0
@@ -645,11 +675,17 @@ class TestReferralHandler:
         assert handler._policy.allowed_servers == ["server1.example.com"]
 
         handler.add_allowed_server("server2.example.com")
-        assert handler._policy.allowed_servers == ["server1.example.com", "server2.example.com"]
+        assert handler._policy.allowed_servers == [
+            "server1.example.com",
+            "server2.example.com",
+        ]
 
         # Duplicate should not be added
         handler.add_allowed_server("server1.example.com")
-        assert handler._policy.allowed_servers == ["server1.example.com", "server2.example.com"]
+        assert handler._policy.allowed_servers == [
+            "server1.example.com",
+            "server2.example.com",
+        ]
 
     def test_add_blocked_server(self) -> None:
         """Test add_blocked_server method."""
@@ -661,17 +697,28 @@ class TestReferralHandler:
         assert handler._policy.blocked_servers == ["bad1.example.com"]
 
         handler.add_blocked_server("bad2.example.com")
-        assert handler._policy.blocked_servers == ["bad1.example.com", "bad2.example.com"]
+        assert handler._policy.blocked_servers == [
+            "bad1.example.com",
+            "bad2.example.com",
+        ]
 
         # Duplicate should not be added
         handler.add_blocked_server("bad1.example.com")
-        assert handler._policy.blocked_servers == ["bad1.example.com", "bad2.example.com"]
+        assert handler._policy.blocked_servers == [
+            "bad1.example.com",
+            "bad2.example.com",
+        ]
 
     def test_remove_blocked_server(self) -> None:
         """Test remove_blocked_server method."""
-        handler = ReferralHandler(blocked_servers=["bad1.example.com", "bad2.example.com"])
+        handler = ReferralHandler(
+            blocked_servers=["bad1.example.com", "bad2.example.com"]
+        )
 
-        assert handler._policy.blocked_servers == ["bad1.example.com", "bad2.example.com"]
+        assert handler._policy.blocked_servers == [
+            "bad1.example.com",
+            "bad2.example.com",
+        ]
 
         handler.remove_blocked_server("bad1.example.com")
         assert handler._policy.blocked_servers == ["bad2.example.com"]
@@ -780,7 +827,9 @@ class TestConvenienceFunctions:
 
     def test_parse_referral_urls_single(self) -> None:
         """Test parse_referral_urls with single URL."""
-        urls = parse_referral_urls("ldap://server.example.com/ou=users,dc=example,dc=com")
+        urls = parse_referral_urls(
+            "ldap://server.example.com/ou=users,dc=example,dc=com"
+        )
         assert urls == ["ldap://server.example.com/ou=users,dc=example,dc=com"]
 
     def test_parse_referral_urls_multiple(self) -> None:
@@ -796,7 +845,9 @@ class TestConvenienceFunctions:
 
     def test_parse_referral_urls_mixed_content(self) -> None:
         """Test parse_referral_urls with mixed content."""
-        referral_response = "some text ldap://server.example.com other text ldaps://secure.example.com"
+        referral_response = (
+            "some text ldap://server.example.com other text ldaps://secure.example.com"
+        )
         urls = parse_referral_urls(referral_response)
 
         expected = [
@@ -820,7 +871,9 @@ class TestConvenienceFunctions:
     async def test_follow_referral_url_function(self) -> None:
         """Test follow_referral_url convenience function."""
         # Mock the ReferralHandler to avoid NotImplementedError
-        with patch("ldap_core_shared.referrals.handler.ReferralHandler") as mock_handler_class:
+        with patch(
+            "ldap_core_shared.referrals.handler.ReferralHandler"
+        ) as mock_handler_class:
             mock_handler = Mock()
             mock_result = ReferralResult(success=True)
             mock_handler.process_referral = AsyncMock(return_value=mock_result)
@@ -843,7 +896,9 @@ class TestConvenienceFunctions:
     @pytest.mark.asyncio
     async def test_follow_referral_url_with_credentials(self) -> None:
         """Test follow_referral_url with credentials."""
-        with patch("ldap_core_shared.referrals.handler.ReferralHandler") as mock_handler_class:
+        with patch(
+            "ldap_core_shared.referrals.handler.ReferralHandler"
+        ) as mock_handler_class:
             mock_handler = Mock()
             mock_result = ReferralResult(success=True)
             mock_handler.process_referral = AsyncMock(return_value=mock_result)
@@ -894,13 +949,19 @@ class TestIntegrationScenarios:
         assert handler._rebind_credentials == credentials
 
         # Test policy evaluation
-        should_follow, _reason = handler._policy.should_follow_referral("ldaps://trusted1.example.com")
+        should_follow, _reason = handler._policy.should_follow_referral(
+            "ldaps://trusted1.example.com"
+        )
         assert should_follow is True
 
-        should_follow, _reason = handler._policy.should_follow_referral("ldap://trusted1.example.com")
+        should_follow, _reason = handler._policy.should_follow_referral(
+            "ldap://trusted1.example.com"
+        )
         assert should_follow is False  # Strict security mode
 
-        should_follow, _reason = handler._policy.should_follow_referral("ldaps://malicious.example.com")
+        should_follow, _reason = handler._policy.should_follow_referral(
+            "ldaps://malicious.example.com"
+        )
         assert should_follow is False  # Blocked server
 
     def test_policy_management_workflow(self) -> None:
@@ -912,10 +973,12 @@ class TestIntegrationScenarios:
         handler.add_blocked_server("bad-server.example.com")
 
         # Update policy
-        handler.update_policy({
-            "max_referral_depth": 8,
-            "security_mode": ReferralSecurityMode.RELAXED,
-        })
+        handler.update_policy(
+            {
+                "max_referral_depth": 8,
+                "security_mode": ReferralSecurityMode.RELAXED,
+            }
+        )
 
         # Verify updates
         assert "new-server.example.com" in handler._policy.allowed_servers
@@ -1006,9 +1069,15 @@ class TestSecurityValidation:
         # Test domain variations to check for bypass attempts
         test_cases = [
             ("ldap://trusted.example.com", True),
-            ("ldap://sub.trusted.example.com", False),  # Subdomain not explicitly allowed
+            (
+                "ldap://sub.trusted.example.com",
+                False,
+            ),  # Subdomain not explicitly allowed
             ("ldap://malicious.example.com", False),
-            ("ldap://sub.malicious.example.com", True),  # Not blocked (only exact match)
+            (
+                "ldap://sub.malicious.example.com",
+                True,
+            ),  # Not blocked (only exact match)
             ("ldap://compromised.example.com", False),
             ("ldap://other.example.com", False),
         ]

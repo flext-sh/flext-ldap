@@ -43,9 +43,9 @@ References:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import ldap3
@@ -58,18 +58,18 @@ from ldap_core_shared.controls.base import LDAPControl
 class SyncRequestMode(Enum):
     """Modes for content synchronization requests."""
 
-    REFRESH_ONLY = "refresh_only"        # Full refresh without persistent sync
+    REFRESH_ONLY = "refresh_only"  # Full refresh without persistent sync
     REFRESH_AND_PERSIST = "refresh_persist"  # Full refresh then persistent sync
-    PERSIST_ONLY = "persist_only"        # Persistent sync only (incremental)
+    PERSIST_ONLY = "persist_only"  # Persistent sync only (incremental)
 
 
 class SyncReloadHint(Enum):
     """Hints for synchronization reload behavior."""
 
-    FULL_RELOAD = "full_reload"          # Perform full content reload
-    INCREMENTAL = "incremental"          # Incremental updates only
-    PARTIAL_RELOAD = "partial_reload"    # Partial content reload
-    OPTIMIZED = "optimized"             # Server-optimized synchronization
+    FULL_RELOAD = "full_reload"  # Perform full content reload
+    INCREMENTAL = "incremental"  # Incremental updates only
+    PARTIAL_RELOAD = "partial_reload"  # Partial content reload
+    OPTIMIZED = "optimized"  # Server-optimized synchronization
 
 
 class SyncCookie(BaseModel):
@@ -79,20 +79,23 @@ class SyncCookie(BaseModel):
 
     # Metadata (not sent to server)
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Cookie creation timestamp",
     )
 
-    last_used: Optional[datetime] = Field(
-        default=None, description="Last time cookie was used",
+    last_used: datetime | None = Field(
+        default=None,
+        description="Last time cookie was used",
     )
 
-    source_server: Optional[str] = Field(
-        default=None, description="Server that issued the cookie",
+    source_server: str | None = Field(
+        default=None,
+        description="Server that issued the cookie",
     )
 
-    sync_base_dn: Optional[str] = Field(
-        default=None, description="Base DN for synchronization",
+    sync_base_dn: str | None = Field(
+        default=None,
+        description="Base DN for synchronization",
     )
 
     def is_valid(self) -> bool:
@@ -113,7 +116,7 @@ class SyncCookie(BaseModel):
 
     def update_last_used(self) -> None:
         """Update last used timestamp."""
-        self.last_used = datetime.now(timezone.utc)
+        self.last_used = datetime.now(UTC)
 
     def get_age_seconds(self) -> float:
         """Get cookie age in seconds.
@@ -121,7 +124,7 @@ class SyncCookie(BaseModel):
         Returns:
             Cookie age in seconds
         """
-        return (datetime.now(timezone.utc) - self.created_at).total_seconds()
+        return (datetime.now(UTC) - self.created_at).total_seconds()
 
 
 class SyncRequestConfig(BaseModel):
@@ -129,8 +132,9 @@ class SyncRequestConfig(BaseModel):
 
     mode: SyncRequestMode = Field(description="Synchronization mode")
 
-    cookie: Optional[SyncCookie] = Field(
-        default=None, description="Synchronization state cookie",
+    cookie: SyncCookie | None = Field(
+        default=None,
+        description="Synchronization state cookie",
     )
 
     reload_hint: SyncReloadHint = Field(
@@ -139,34 +143,41 @@ class SyncRequestConfig(BaseModel):
     )
 
     # Size limits
-    size_limit: Optional[int] = Field(
-        default=None, description="Maximum number of entries to return",
+    size_limit: int | None = Field(
+        default=None,
+        description="Maximum number of entries to return",
     )
 
-    time_limit: Optional[int] = Field(
-        default=None, description="Time limit for synchronization in seconds",
+    time_limit: int | None = Field(
+        default=None,
+        description="Time limit for synchronization in seconds",
     )
 
     # Performance options
     return_deleted_entries: bool = Field(
-        default=True, description="Whether to return information about deleted entries",
+        default=True,
+        description="Whether to return information about deleted entries",
     )
 
     include_operational_attributes: bool = Field(
-        default=False, description="Whether to include operational attributes",
+        default=False,
+        description="Whether to include operational attributes",
     )
 
-    batch_size: Optional[int] = Field(
-        default=None, description="Preferred batch size for updates",
+    batch_size: int | None = Field(
+        default=None,
+        description="Preferred batch size for updates",
     )
 
     # Reliability options
     request_acknowledgment: bool = Field(
-        default=False, description="Whether to request acknowledgment",
+        default=False,
+        description="Whether to request acknowledgment",
     )
 
     enable_compression: bool = Field(
-        default=False, description="Whether to enable response compression",
+        default=False,
+        description="Whether to enable response compression",
     )
 
     def is_initial_sync(self) -> bool:
@@ -212,66 +223,79 @@ class SyncRequestResponse(BaseModel):
     sync_in_progress: bool = Field(description="Whether synchronization is in progress")
 
     # Updated synchronization state
-    new_cookie: Optional[SyncCookie] = Field(
-        default=None, description="New synchronization state cookie",
+    new_cookie: SyncCookie | None = Field(
+        default=None,
+        description="New synchronization state cookie",
     )
 
     refresh_required: bool = Field(
-        default=False, description="Whether full refresh is required",
+        default=False,
+        description="Whether full refresh is required",
     )
 
     # Synchronization metadata
     entries_returned: int = Field(
-        default=0, description="Number of entries returned",
+        default=0,
+        description="Number of entries returned",
     )
 
     entries_added: int = Field(
-        default=0, description="Number of entries added",
+        default=0,
+        description="Number of entries added",
     )
 
     entries_modified: int = Field(
-        default=0, description="Number of entries modified",
+        default=0,
+        description="Number of entries modified",
     )
 
     entries_deleted: int = Field(
-        default=0, description="Number of entries deleted",
+        default=0,
+        description="Number of entries deleted",
     )
 
     # Server state information
-    server_sync_state: Optional[str] = Field(
-        default=None, description="Server synchronization state",
+    server_sync_state: str | None = Field(
+        default=None,
+        description="Server synchronization state",
     )
 
     persistent_search_active: bool = Field(
-        default=False, description="Whether persistent search is active",
+        default=False,
+        description="Whether persistent search is active",
     )
 
-    estimated_remaining: Optional[int] = Field(
-        default=None, description="Estimated remaining entries",
+    estimated_remaining: int | None = Field(
+        default=None,
+        description="Estimated remaining entries",
     )
 
     # Error information
     result_code: int = Field(default=0, description="Synchronization result code")
 
-    result_message: Optional[str] = Field(
-        default=None, description="Synchronization result message",
+    result_message: str | None = Field(
+        default=None,
+        description="Synchronization result message",
     )
 
     sync_errors: list[str] = Field(
-        default_factory=list, description="Synchronization errors",
+        default_factory=list,
+        description="Synchronization errors",
     )
 
     # Performance metadata
-    sync_duration: Optional[float] = Field(
-        default=None, description="Synchronization duration in seconds",
+    sync_duration: float | None = Field(
+        default=None,
+        description="Synchronization duration in seconds",
     )
 
-    bandwidth_saved: Optional[int] = Field(
-        default=None, description="Estimated bandwidth saved in bytes",
+    bandwidth_saved: int | None = Field(
+        default=None,
+        description="Estimated bandwidth saved in bytes",
     )
 
     processed_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Response processing timestamp",
     )
 
@@ -341,9 +365,9 @@ class SyncRequestControl(LDAPControl):
     def __init__(
         self,
         mode: SyncRequestMode = SyncRequestMode.REFRESH_ONLY,
-        cookie: Optional[SyncCookie] = None,
+        cookie: SyncCookie | None = None,
         reload_hint: SyncReloadHint = SyncReloadHint.OPTIMIZED,
-        size_limit: Optional[int] = None,
+        size_limit: int | None = None,
         criticality: bool = False,
     ) -> None:
         """Initialize Sync Request control.
@@ -364,16 +388,15 @@ class SyncRequestControl(LDAPControl):
         )
 
         # Initialize response storage
-        self._response: Optional[SyncRequestResponse] = None
+        self._response: SyncRequestResponse | None = None
         self._response_available = False
 
         # Synchronization state
         self._sync_started = False
-        self._last_sync_time: Optional[datetime] = None
+        self._last_sync_time: datetime | None = None
 
         # Initialize base control
         super().__init__(
-
             criticality=criticality,
             control_value=self._encode_request(),
         )
@@ -387,25 +410,24 @@ class SyncRequestControl(LDAPControl):
         # Simple BER encoding for sync request
         # In production, this would use proper ASN.1 encoding
         from struct import pack
-        
+
         # Mode encoding (simplified)
         mode_value = {
             SyncRequestMode.REFRESH_ONLY: 1,
             SyncRequestMode.REFRESH_AND_PERSIST: 3,
             SyncRequestMode.PERSIST_ONLY: 4,
         }.get(self._config.mode, 1)
-        
+
         # Basic encoding: mode + cookie if present
-        encoded_parts = [pack('B', mode_value)]
-        
+        encoded_parts = [pack("B", mode_value)]
+
         if self._config.cookie and self._config.cookie.is_valid():
             cookie_data = self._config.cookie.cookie_value
-            encoded_parts.append(pack('B', len(cookie_data)))
-            encoded_parts.append(cookie_data)
+            encoded_parts.extend((pack("B", len(cookie_data)), cookie_data))
         else:
-            encoded_parts.append(pack('B', 0))  # Empty cookie
-            
-        return b''.join(encoded_parts)
+            encoded_parts.append(pack("B", 0))  # Empty cookie
+
+        return b"".join(encoded_parts)
 
     def process_response(self, response_value: bytes) -> None:
         """Process Sync Request control response from server.
@@ -425,31 +447,31 @@ class SyncRequestControl(LDAPControl):
             )
             self._response_available = True
             return
-            
+
         # Basic response parsing (simplified)
         from struct import unpack
-        
+
         try:
             # Parse response data (simplified format)
             offset = 0
             result_code = 0
-            new_cookie_data = b''
-            
+            new_cookie_data = b""
+
             if len(response_value) >= 1:
-                result_code = unpack('B', response_value[offset:offset+1])[0]
+                result_code = unpack("B", response_value[offset : offset + 1])[0]
                 offset += 1
-                
+
             if len(response_value) > offset:
-                cookie_len = unpack('B', response_value[offset:offset+1])[0]
+                cookie_len = unpack("B", response_value[offset : offset + 1])[0]
                 offset += 1
                 if cookie_len > 0 and len(response_value) >= offset + cookie_len:
-                    new_cookie_data = response_value[offset:offset+cookie_len]
-            
+                    new_cookie_data = response_value[offset : offset + cookie_len]
+
             # Create sync cookie if data present
             new_cookie = None
             if new_cookie_data:
                 new_cookie = SyncCookie(cookie_value=new_cookie_data)
-                
+
             # Create response object
             self._response = SyncRequestResponse(
                 sync_in_progress=result_code == 0,
@@ -459,7 +481,7 @@ class SyncRequestControl(LDAPControl):
                 result_message="Sync processed" if result_code == 0 else "Sync failed",
             )
             self._response_available = True
-            
+
         except Exception:
             # Fallback response on parsing error
             self._response = SyncRequestResponse(
@@ -502,7 +524,7 @@ class SyncRequestControl(LDAPControl):
         # Update control value
         self.control_value = self._encode_request()
 
-    def set_limits(self, size_limit: Optional[int], time_limit: Optional[int]) -> None:
+    def set_limits(self, size_limit: int | None, time_limit: int | None) -> None:
         """Set synchronization limits.
 
         Args:
@@ -528,7 +550,7 @@ class SyncRequestControl(LDAPControl):
         """
         return self._config.is_persistent_mode()
 
-    def get_current_cookie(self) -> Optional[SyncCookie]:
+    def get_current_cookie(self) -> SyncCookie | None:
         """Get current synchronization cookie.
 
         Returns:
@@ -543,11 +565,15 @@ class SyncRequestControl(LDAPControl):
             Dictionary with sync configuration and state
         """
         summary = self._config.get_sync_summary()
-        summary.update({
-            "sync_started": self._sync_started,
-            "last_sync_time": self._last_sync_time.isoformat() if self._last_sync_time else None,
-            "response_available": self._response_available,
-        })
+        summary.update(
+            {
+                "sync_started": self._sync_started,
+                "last_sync_time": self._last_sync_time.isoformat()
+                if self._last_sync_time
+                else None,
+                "response_available": self._response_available,
+            },
+        )
 
         if self._response:
             summary["statistics"] = self._response.get_sync_statistics()
@@ -555,7 +581,7 @@ class SyncRequestControl(LDAPControl):
         return summary
 
     @property
-    def response(self) -> Optional[SyncRequestResponse]:
+    def response(self) -> SyncRequestResponse | None:
         """Get Sync Request control response."""
         return self._response
 
@@ -574,7 +600,7 @@ class SyncRequestControl(LDAPControl):
         """Get synchronization configuration."""
         return self._config
 
-    def encode_value(self) -> Optional[bytes]:
+    def encode_value(self) -> bytes | None:
         """Encode sync request control value to ASN.1 bytes.
 
         Returns:
@@ -583,7 +609,7 @@ class SyncRequestControl(LDAPControl):
         return self.control_value
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> SyncRequestControl:
+    def decode_value(cls, control_value: bytes | None) -> SyncRequestControl:
         """Decode ASN.1 bytes to create sync request control instance.
 
         Args:
@@ -651,7 +677,7 @@ def create_incremental_sync_control(
 
 
 def create_persistent_sync_control(
-    cookie: Optional[SyncCookie] = None,
+    cookie: SyncCookie | None = None,
 ) -> SyncRequestControl:
     """Create Sync Request control for persistent synchronization.
 
@@ -673,8 +699,8 @@ async def perform_directory_sync(
     connection: ldap3.Connection,
     search_base: str,
     search_filter: str,
-    cookie: Optional[SyncCookie] = None,
-) -> tuple[list[dict[str, Any]], Optional[SyncCookie]]:
+    cookie: SyncCookie | None = None,
+) -> tuple[list[dict[str, Any]], SyncCookie | None]:
     """Perform directory synchronization with automatic cookie management.
 
     Args:
@@ -692,13 +718,13 @@ async def perform_directory_sync(
         mode = SyncRequestMode.REFRESH_ONLY  # Use existing cookie for incremental
     else:
         mode = SyncRequestMode.REFRESH_ONLY  # Initial sync
-        
+
     sync_control = SyncRequestControl(
         mode=mode,
         cookie=cookie,
         criticality=False,
     )
-    
+
     try:
         # Perform search with sync control
         success = connection.search(
@@ -706,28 +732,26 @@ async def perform_directory_sync(
             search_filter=search_filter,
             controls=[sync_control],
         )
-        
+
         if success:
             # Extract entries from search results
             entries = []
             for entry in connection.entries:
                 entry_dict = {
-                    'dn': entry.entry_dn,
-                    'attributes': dict(entry.entry_attributes_as_dict),
+                    "dn": entry.entry_dn,
+                    "attributes": dict(entry.entry_attributes_as_dict),
                 }
                 entries.append(entry_dict)
-                
+
             # Get new cookie from response
             new_cookie = None
             if sync_control.response and sync_control.response.new_cookie:
                 new_cookie = sync_control.response.new_cookie
-                
+
             return entries, new_cookie
-        else:
-            # Return empty results on failure
-            return [], cookie
-            
+        # Return empty results on failure
+        return [], cookie
+
     except Exception:
         # Return empty results on error
         return [], cookie
-

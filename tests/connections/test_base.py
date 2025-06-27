@@ -201,7 +201,11 @@ class TestLDAPConnectionInfo:
         base_dn=st.text(min_size=1, max_size=200),
     )
     def test_property_based_validation(
-        self, host: str, port: int, bind_dn: str, base_dn: str,
+        self,
+        host: str,
+        port: int,
+        bind_dn: str,
+        base_dn: str,
     ) -> None:
         """Property-based test for connection info validation."""
         try:
@@ -256,7 +260,8 @@ class TestLDAPConnectionOptions:
         )
 
     def test_basic_connection_options(
-        self, connection_info: LDAPConnectionInfo,
+        self,
+        connection_info: LDAPConnectionInfo,
     ) -> None:
         """Test basic connection options creation."""
         options = LDAPConnectionOptions(
@@ -286,7 +291,8 @@ class TestLDAPConnectionOptions:
         assert options.ssh_username == "sshuser"
 
     def test_connection_pool_validation(
-        self, connection_info: LDAPConnectionInfo,
+        self,
+        connection_info: LDAPConnectionInfo,
     ) -> None:
         """Test connection pool validation."""
         # Valid pool size

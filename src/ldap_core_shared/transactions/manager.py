@@ -39,9 +39,9 @@ from __future__ import annotations
 
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -86,18 +86,23 @@ class TransactionOperation(BaseModel):
         description="Operation-specific data (attributes, changes, etc.)",
     )
 
-    executed_at: Optional[datetime] = Field(
-        default=None, description="When operation was executed",
+    executed_at: datetime | None = Field(
+        default=None,
+        description="When operation was executed",
     )
 
-    result: Optional[dict[str, Any]] = Field(
-        default=None, description="Operation result",
+    result: dict[str, Any] | None = Field(
+        default=None,
+        description="Operation result",
     )
 
-    success: Optional[bool] = Field(default=None, description="Whether operation succeeded")
+    success: bool | None = Field(
+        default=None, description="Whether operation succeeded",
+    )
 
-    error_message: Optional[str] = Field(
-        default=None, description="Error message if operation failed",
+    error_message: str | None = Field(
+        default=None,
+        description="Error message if operation failed",
     )
 
 
@@ -107,12 +112,13 @@ class TransactionContext(BaseModel):
     transaction_id: str = Field(description="Unique transaction identifier")
 
     started_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Transaction start timestamp",
     )
 
     timeout_seconds: int = Field(
-        default=300, description="Transaction timeout in seconds",
+        default=300,
+        description="Transaction timeout in seconds",
     )
 
     isolation_level: TransactionIsolation = Field(
@@ -121,30 +127,36 @@ class TransactionContext(BaseModel):
     )
 
     state: TransactionState = Field(
-        default=TransactionState.ACTIVE, description="Current transaction state",
+        default=TransactionState.ACTIVE,
+        description="Current transaction state",
     )
 
     # Operations tracking
     operations: list[TransactionOperation] = Field(
-        default_factory=list, description="Operations within this transaction",
+        default_factory=list,
+        description="Operations within this transaction",
     )
 
     # Metadata
     client_info: dict[str, Any] = Field(
-        default_factory=dict, description="Client information and context",
+        default_factory=dict,
+        description="Client information and context",
     )
 
     performance_metrics: dict[str, Any] = Field(
-        default_factory=dict, description="Performance and timing metrics",
+        default_factory=dict,
+        description="Performance and timing metrics",
     )
 
     # Transaction completion timestamps
-    committed_at: Optional[datetime] = Field(
-        default=None, description="Transaction commit timestamp",
+    committed_at: datetime | None = Field(
+        default=None,
+        description="Transaction commit timestamp",
     )
 
-    aborted_at: Optional[datetime] = Field(
-        default=None, description="Transaction abort timestamp",
+    aborted_at: datetime | None = Field(
+        default=None,
+        description="Transaction abort timestamp",
     )
 
     def add_operation(
@@ -173,7 +185,7 @@ class TransactionContext(BaseModel):
         self.operations.append(operation)
         return operation_id
 
-    def get_operation(self, operation_id: str) -> Optional[TransactionOperation]:
+    def get_operation(self, operation_id: str) -> TransactionOperation | None:
         """Get operation by ID.
 
         Args:
@@ -193,7 +205,7 @@ class TransactionContext(BaseModel):
         Returns:
             True if transaction has exceeded timeout
         """
-        elapsed = (datetime.now(timezone.utc) - self.started_at).total_seconds()
+        elapsed = (datetime.now(UTC) - self.started_at).total_seconds()
         return elapsed > self.timeout_seconds
 
     def get_duration(self) -> float:
@@ -202,7 +214,7 @@ class TransactionContext(BaseModel):
         Returns:
             Duration since transaction start
         """
-        return (datetime.now(timezone.utc) - self.started_at).total_seconds()
+        return (datetime.now(UTC) - self.started_at).total_seconds()
 
     def get_statistics(self) -> dict[str, Any]:
         """Get transaction statistics.
@@ -226,7 +238,9 @@ class TransactionContext(BaseModel):
             "isolation_level": self.isolation_level.value,
         }
 
-    def mark_operation_successful(self, operation_id: str, result: dict[str, Any]) -> None:
+    def mark_operation_successful(
+        self, operation_id: str, result: dict[str, Any],
+    ) -> None:
         """Mark operation as successful with result.
 
         Args:
@@ -237,7 +251,7 @@ class TransactionContext(BaseModel):
         if operation:
             operation.success = True
             operation.result = result
-            operation.executed_at = datetime.now(timezone.utc)
+            operation.executed_at = datetime.now(UTC)
 
     def mark_operation_failed(self, operation_id: str, error_message: str) -> None:
         """Mark operation as failed with error.
@@ -250,7 +264,7 @@ class TransactionContext(BaseModel):
         if operation:
             operation.success = False
             operation.error_message = error_message
-            operation.executed_at = datetime.now(timezone.utc)
+            operation.executed_at = datetime.now(UTC)
 
 
 class LDAPTransaction:
@@ -286,7 +300,9 @@ class LDAPTransaction:
         self._operations_executed = 0
 
     async def add_entry(
-        self, dn: str, attributes: dict[str, Any],
+        self,
+        dn: str,
+        attributes: dict[str, Any],
     ) -> dict[str, Any]:
         """Add entry within transaction.
 
@@ -343,7 +359,9 @@ class LDAPTransaction:
             raise
 
     async def modify_entry(
-        self, dn: str, changes: dict[str, Any],
+        self,
+        dn: str,
+        changes: dict[str, Any],
     ) -> dict[str, Any]:
         """Modify entry within transaction.
 
@@ -367,6 +385,7 @@ class LDAPTransaction:
 
             # Convert changes to ldap3 format
             import ldap3
+
             modifications: dict[str, list[tuple[int, list[Any]]]] = {}
             for attr, value in changes.items():
                 if value is None:
@@ -468,7 +487,7 @@ class LDAPTransaction:
         self,
         search_base: str,
         search_filter: str = "(objectClass=*)",
-        attributes: Optional[list[str]] = None,
+        attributes: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         """Search entries within transaction context.
 
@@ -491,6 +510,7 @@ class LDAPTransaction:
 
             # Execute search operation with transaction control for consistency
             import ldap3
+
             result = self._connection.search(
                 search_base=search_base,
                 search_filter=search_filter,
@@ -547,7 +567,10 @@ class LDAPTransaction:
                 TransactionEndingControl,
                 TransactionEndType,
             )
-            commit_control = TransactionEndingControl(ending_type=TransactionEndType.COMMIT)
+
+            commit_control = TransactionEndingControl(
+                ending_type=TransactionEndType.COMMIT,
+            )
 
             # Perform commit operation (this depends on LDAP server implementation)
             # Some servers automatically commit on unbind, others need explicit commit
@@ -561,17 +584,17 @@ class LDAPTransaction:
 
                 if result or "commit" in str(self._connection.result).lower():
                     self._context.state = TransactionState.COMMITTED
-                    self._context.committed_at = datetime.now(timezone.utc)
+                    self._context.committed_at = datetime.now(UTC)
                     return True
                 # Fallback: assume commit on connection close
                 self._context.state = TransactionState.COMMITTED
-                self._context.committed_at = datetime.now(timezone.utc)
+                self._context.committed_at = datetime.now(UTC)
                 return True
 
             except Exception:
                 # Some servers commit automatically, so this might be expected
                 self._context.state = TransactionState.COMMITTED
-                self._context.committed_at = datetime.now(timezone.utc)
+                self._context.committed_at = datetime.now(UTC)
                 return True
 
         except Exception as e:
@@ -592,7 +615,10 @@ class LDAPTransaction:
 
         try:
             # Validate current state
-            if self._context.state not in {TransactionState.ACTIVE, TransactionState.ABORTING}:
+            if self._context.state not in {
+                TransactionState.ACTIVE,
+                TransactionState.ABORTING,
+            }:
                 if self._context.state == TransactionState.COMMITTED:
                     msg = "Cannot rollback committed transaction"
                     raise RuntimeError(msg)
@@ -606,7 +632,10 @@ class LDAPTransaction:
                 TransactionEndingControl,
                 TransactionEndType,
             )
-            rollback_control = TransactionEndingControl(ending_type=TransactionEndType.ABORT)
+
+            rollback_control = TransactionEndingControl(
+                ending_type=TransactionEndType.ABORT,
+            )
 
             try:
                 # Try explicit rollback if supported
@@ -623,13 +652,13 @@ class LDAPTransaction:
                         operation.result = {"rolled_back": True}
 
                 self._context.state = TransactionState.ABORTED
-                self._context.aborted_at = datetime.now(timezone.utc)
+                self._context.aborted_at = datetime.now(UTC)
                 return True
 
             except Exception:
                 # Some servers handle rollback automatically
                 self._context.state = TransactionState.ABORTED
-                self._context.aborted_at = datetime.now(timezone.utc)
+                self._context.aborted_at = datetime.now(UTC)
                 return True
 
         except Exception as e:
@@ -725,18 +754,21 @@ class TransactionManager:
                     controls=[tx_control.to_ldap3_control()],
                 )
 
-                if not result and "transaction" not in str(self._connection.result).lower():
+                if (
+                    not result
+                    and "transaction" not in str(self._connection.result).lower()
+                ):
                     # Some servers don't explicitly acknowledge transaction start
                     pass  # Continue anyway - transaction semantics handled by controls
 
                 context.state = TransactionState.ACTIVE
-                context.started_at = datetime.now(timezone.utc)
+                context.started_at = datetime.now(UTC)
 
             except Exception:
                 # If server doesn't support transactions, continue without them
                 # This provides compatibility with servers lacking transaction support
                 context.state = TransactionState.ACTIVE
-                context.started_at = datetime.now(timezone.utc)
+                context.started_at = datetime.now(UTC)
 
             yield transaction
 
@@ -756,7 +788,7 @@ class TransactionManager:
             # Clean up transaction
             self._active_transactions.pop(transaction_id, None)
 
-    async def get_transaction(self, transaction_id: str) -> Optional[LDAPTransaction]:
+    async def get_transaction(self, transaction_id: str) -> LDAPTransaction | None:
         """Get active transaction by ID.
 
         Args:
@@ -823,7 +855,9 @@ class TransactionManager:
         }
 
         if active_count > 0:
-            transaction_stats = [tx.get_statistics() for tx in self._active_transactions.values()]
+            transaction_stats = [
+                tx.get_statistics() for tx in self._active_transactions.values()
+            ]
             stats["transactions"] = transaction_stats
 
         return stats
@@ -894,6 +928,7 @@ async def create_transaction_manager(connection: Any) -> TransactionManager:
         Configured transaction manager
     """
     return TransactionManager(connection)
+
 
 # TODO: Integration points for implementation:
 #

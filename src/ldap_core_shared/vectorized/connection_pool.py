@@ -163,7 +163,9 @@ class PredictiveConnectionPool:
 
     async def warmup_pool(self) -> None:
         """Pre-warm pool with minimum connections."""
-        logger.info("Warming up connection pool with %s connections", self.min_pool_size)
+        logger.info(
+            "Warming up connection pool with %s connections", self.min_pool_size,
+        )
 
         for _ in range(self.min_pool_size):
             try:

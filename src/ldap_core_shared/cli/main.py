@@ -23,10 +23,10 @@ from __future__ import annotations
 import logging
 import sys
 import traceback
-from typing import Optional
 
 try:
     import click
+
     CLICK_AVAILABLE = True
 except ImportError:
     CLICK_AVAILABLE = False
@@ -41,12 +41,14 @@ if CLICK_AVAILABLE:
     @click.group()
     @click.version_option()
     @click.option(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         count=True,
         help="Increase verbosity (can be used multiple times)",
     )
     @click.option(
-        "--quiet", "-q",
+        "--quiet",
+        "-q",
         is_flag=True,
         help="Suppress output except errors",
     )
@@ -56,7 +58,9 @@ if CLICK_AVAILABLE:
         help="Configuration file path",
     )
     @click.pass_context
-    def main(ctx: click.Context, verbose: int, quiet: bool, config: Optional[str]) -> None:
+    def main(
+        ctx: click.Context, verbose: int, quiet: bool, config: str | None,
+    ) -> None:
         """LDAP Core Shared - Schema, ASN.1, and SASL Tools.
 
         This toolkit provides command-line utilities for LDAP schema management,
@@ -91,18 +95,21 @@ if CLICK_AVAILABLE:
     @click.argument("input_file", type=click.Path(exists=True))
     @click.argument("output_file", type=click.Path())
     @click.option(
-        "--format", "-f",
+        "--format",
+        "-f",
         type=click.Choice(["schema", "ldif", "auto"]),
         default="auto",
         help="Input format (auto-detected if not specified)",
     )
     @click.option(
-        "--validate", "-V",
+        "--validate",
+        "-V",
         is_flag=True,
         help="Validate schema before conversion",
     )
     @click.option(
-        "--pretty", "-p",
+        "--pretty",
+        "-p",
         is_flag=True,
         help="Pretty-print output with formatting",
     )
@@ -161,30 +168,38 @@ if CLICK_AVAILABLE:
             sys.exit(1)
 
     @main.command("ldap-schema-manager")
-    @click.argument("action", type=click.Choice(["install", "remove", "list", "validate", "backup"]))
+    @click.argument(
+        "action", type=click.Choice(["install", "remove", "list", "validate", "backup"]),
+    )
     @click.option(
-        "--file", "-f",
+        "--file",
+        "-f",
         type=click.Path(exists=True),
         help="Schema file to process",
     )
     @click.option(
-        "--name", "-n",
+        "--name",
+        "-n",
         help="Schema name for operations",
     )
     @click.option(
-        "--server", "-s",
+        "--server",
+        "-s",
         help="LDAP server URL",
     )
     @click.option(
-        "--bind-dn", "-D",
+        "--bind-dn",
+        "-D",
         help="Bind DN for LDAP operations",
     )
     @click.option(
-        "--bind-password", "-w",
+        "--bind-password",
+        "-w",
         help="Bind password (use -W for prompt)",
     )
     @click.option(
-        "--bind-password-prompt", "-W",
+        "--bind-password-prompt",
+        "-W",
         is_flag=True,
         help="Prompt for bind password",
     )
@@ -202,11 +217,11 @@ if CLICK_AVAILABLE:
     def ldap_schema_manager_command(
         ctx: click.Context,
         action: str,
-        file: Optional[str],
-        name: Optional[str],
-        server: Optional[str],
-        bind_dn: Optional[str],
-        bind_password: Optional[str],
+        file: str | None,
+        name: str | None,
+        server: str | None,
+        bind_dn: str | None,
+        bind_password: str | None,
         bind_password_prompt: bool,
         dry_run: bool,
         force: bool,
@@ -230,7 +245,6 @@ if CLICK_AVAILABLE:
           $ ldap-core-shared ldap-schema-manager validate -f schema.ldif
         """
         try:
-
             # Handle password prompt
             if bind_password_prompt:
                 bind_password = click.prompt("Bind password", hide_input=True)
@@ -260,19 +274,24 @@ if CLICK_AVAILABLE:
             sys.exit(1)
 
     @main.command("asn1-tool")
-    @click.argument("action", type=click.Choice(["encode", "decode", "dump", "validate"]))
+    @click.argument(
+        "action", type=click.Choice(["encode", "decode", "dump", "validate"]),
+    )
     @click.option(
-        "--input", "-i",
+        "--input",
+        "-i",
         type=click.Path(exists=True),
         help="Input file (stdin if not specified)",
     )
     @click.option(
-        "--output", "-o",
+        "--output",
+        "-o",
         type=click.Path(),
         help="Output file (stdout if not specified)",
     )
     @click.option(
-        "--format", "-f",
+        "--format",
+        "-f",
         type=click.Choice(["ber", "der", "hex", "base64"]),
         default="der",
         help="Encoding format",
@@ -286,10 +305,10 @@ if CLICK_AVAILABLE:
     def asn1_tool_command(
         ctx: click.Context,
         action: str,
-        input: Optional[str],
-        output: Optional[str],
+        input: str | None,
+        output: str | None,
         format: str,
-        schema: Optional[str],
+        schema: str | None,
     ) -> None:
         """ASN.1 encoding, decoding, and analysis tools.
 
@@ -307,7 +326,6 @@ if CLICK_AVAILABLE:
           $ ldap-core-shared asn1-tool dump -i data.der
         """
         try:
-
             success = run_asn1_tool(
                 action=action,
                 input_file=input,
@@ -331,30 +349,36 @@ if CLICK_AVAILABLE:
 
     @main.command("sasl-test")
     @click.option(
-        "--mechanism", "-m",
+        "--mechanism",
+        "-m",
         type=click.Choice(["PLAIN", "DIGEST-MD5", "EXTERNAL", "ANONYMOUS"]),
         required=True,
         help="SASL mechanism to test",
     )
     @click.option(
-        "--username", "-u",
+        "--username",
+        "-u",
         help="Username for authentication",
     )
     @click.option(
-        "--password", "-p",
+        "--password",
+        "-p",
         help="Password for authentication",
     )
     @click.option(
-        "--password-prompt", "-P",
+        "--password-prompt",
+        "-P",
         is_flag=True,
         help="Prompt for password",
     )
     @click.option(
-        "--realm", "-r",
+        "--realm",
+        "-r",
         help="Authentication realm",
     )
     @click.option(
-        "--server", "-s",
+        "--server",
+        "-s",
         default="localhost",
         help="Server hostname",
     )
@@ -364,7 +388,8 @@ if CLICK_AVAILABLE:
         help="Service name",
     )
     @click.option(
-        "--interactive", "-I",
+        "--interactive",
+        "-I",
         is_flag=True,
         help="Interactive mode for callbacks",
     )
@@ -372,10 +397,10 @@ if CLICK_AVAILABLE:
     def sasl_test_command(
         ctx: click.Context,
         mechanism: str,
-        username: Optional[str],
-        password: Optional[str],
+        username: str | None,
+        password: str | None,
         password_prompt: bool,
-        realm: Optional[str],
+        realm: str | None,
         server: str,
         service: str,
         interactive: bool,
@@ -396,7 +421,6 @@ if CLICK_AVAILABLE:
           $ ldap-core-shared sasl-test -m DIGEST-MD5 -I
         """
         try:
-
             # Handle password prompt
             if password_prompt:
                 password = click.prompt("Password", hide_input=True)

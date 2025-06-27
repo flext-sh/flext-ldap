@@ -101,10 +101,12 @@ class LDAPEntry(BaseModel):
     def get_display_name(self) -> str:
         """Get display name (cn, displayName, or name attribute)."""
         return (
-            self.get_attribute("displayName") or
-            self.get_attribute("cn") or
-            self.get_attribute("name") or
-            self.dn.split(",")[0].split("=")[1] if "=" in self.dn else self.dn
+            self.get_attribute("displayName")
+            or self.get_attribute("cn")
+            or self.get_attribute("name")
+            or self.dn.split(",")[0].split("=")[1]
+            if "=" in self.dn
+            else self.dn
         )
 
 
@@ -166,7 +168,9 @@ class MigrationStats(BaseModel):
         """Calculate success rate percentage."""
         if self.total_processed == 0:
             return 0.0
-        return ((self.successful + self.skipped) / self.total_processed) * DEFAULT_MAX_ITEMS
+        return (
+            (self.successful + self.skipped) / self.total_processed
+        ) * DEFAULT_MAX_ITEMS
 
 
 class MigrationStage(BaseModel):

@@ -52,7 +52,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import click
 
@@ -93,7 +93,7 @@ class EnterpriseConfig:
         self.debug = False
         self.verbose = False
         self.output_format = "json"
-        self.config_file: Optional[Path] = None
+        self.config_file: Path | None = None
 
     def setup_logging(self) -> None:
         """Setup logging based on configuration."""
@@ -109,7 +109,9 @@ class EnterpriseConfig:
 config = EnterpriseConfig()
 
 
-def output_result(result: dict[str, Any] | list[Any] | str | float | bool | None, success: bool = True) -> None:
+def output_result(
+    result: dict[str, Any] | list[Any] | str | float | bool | None, success: bool = True,
+) -> None:
     """Output result in configured format.
 
     Args:
@@ -134,10 +136,18 @@ def output_result(result: dict[str, Any] | list[Any] | str | float | bool | None
 @click.group()
 @click.option("--debug", is_flag=True, help="Enable debug logging")
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
-@click.option("--output-format", type=click.Choice(["json", "text"]), default="json",
-              help="Output format")
-@click.option("--config-file", type=click.Path(exists=True), help="Configuration file path")
-def cli(debug: bool, verbose: bool, output_format: str, config_file: Optional[str]) -> None:
+@click.option(
+    "--output-format",
+    type=click.Choice(["json", "text"]),
+    default="json",
+    help="Output format",
+)
+@click.option(
+    "--config-file", type=click.Path(exists=True), help="Configuration file path",
+)
+def cli(
+    debug: bool, verbose: bool, output_format: str, config_file: str | None,
+) -> None:
     """Enterprise LDAP Tools - Comprehensive LDAP management suite.
 
     This tool provides enterprise-grade LDAP operations including schema
@@ -161,9 +171,15 @@ def schema() -> None:
 @schema.command()
 @click.argument("schema_file", type=click.Path(exists=True))
 @click.option("--strict", is_flag=True, help="Enable strict validation")
-@click.option("--check-dependencies", is_flag=True, default=True, help="Check schema dependencies")
-@click.option("--check-conflicts", is_flag=True, default=True, help="Check name conflicts")
-def validate(schema_file: str, strict: bool, check_dependencies: bool, check_conflicts: bool) -> None:
+@click.option(
+    "--check-dependencies", is_flag=True, default=True, help="Check schema dependencies",
+)
+@click.option(
+    "--check-conflicts", is_flag=True, default=True, help="Check name conflicts",
+)
+def validate(
+    schema_file: str, strict: bool, check_dependencies: bool, check_conflicts: bool,
+) -> None:
     """Validate LDAP schema file.
 
     Performs comprehensive validation of schema files including RFC compliance,
@@ -201,7 +217,7 @@ def validate(schema_file: str, strict: bool, check_dependencies: bool, check_con
             sys.exit(1)
 
     except Exception as e:
-        logger.exception(f"Schema validation failed: {e}")
+        logger.exception("Schema validation failed: %s", e)
         output_result({"error": str(e)}, False)
         sys.exit(1)
 
@@ -211,8 +227,12 @@ def validate(schema_file: str, strict: bool, check_dependencies: bool, check_con
 @click.option("--server", default="ldapi:///", help="LDAP server URI")
 @click.option("--environment", default="development", help="Target environment")
 @click.option("--dry-run", is_flag=True, help="Perform dry run without changes")
-@click.option("--validate-first", is_flag=True, default=True, help="Validate before deployment")
-def deploy(schema_file: str, server: str, environment: str, dry_run: bool, validate_first: bool) -> None:
+@click.option(
+    "--validate-first", is_flag=True, default=True, help="Validate before deployment",
+)
+def deploy(
+    schema_file: str, server: str, environment: str, dry_run: bool, validate_first: bool,
+) -> None:
     """Deploy schema to LDAP server.
 
     Deploys schema file to LDAP server with validation and safety checks.
@@ -240,7 +260,7 @@ def deploy(schema_file: str, server: str, environment: str, dry_run: bool, valid
             sys.exit(1)
 
     except Exception as e:
-        logger.exception(f"Schema deployment failed: {e}")
+        logger.exception("Schema deployment failed: %s", e)
         output_result({"error": str(e)}, False)
         sys.exit(1)
 
@@ -267,7 +287,7 @@ def list_schemas(server: str, detailed: bool) -> None:
             sys.exit(1)
 
     except Exception as e:
-        logger.exception(f"Schema listing failed: {e}")
+        logger.exception("Schema listing failed: %s", e)
         output_result({"error": str(e)}, False)
         sys.exit(1)
 
@@ -279,12 +299,22 @@ def connection() -> None:
 
 @connection.command()
 @click.argument("servers", nargs=-1, required=True)
-@click.option("--strategy", type=click.Choice(["SYNC", "SAFE_SYNC", "SAFE_RESTARTABLE", "ASYNC", "POOLED"]),
-              default="SAFE_SYNC", help="Connection strategy")
+@click.option(
+    "--strategy",
+    type=click.Choice(["SYNC", "SAFE_SYNC", "SAFE_RESTARTABLE", "ASYNC", "POOLED"]),
+    default="SAFE_SYNC",
+    help="Connection strategy",
+)
 @click.option("--pool-size", default=10, help="Connection pool size")
 @click.option("--timeout", default=30.0, help="Connection timeout")
 @click.option("--retries", default=3, help="Maximum retry attempts")
-def test(servers: tuple[str, ...], strategy: str, pool_size: int, timeout: float, retries: int) -> None:
+def test(
+    servers: tuple[str, ...],
+    strategy: str,
+    pool_size: int,
+    timeout: float,
+    retries: int,
+) -> None:
     """Test LDAP server connections.
 
     Tests connectivity to LDAP servers with various connection strategies
@@ -315,18 +345,22 @@ def test(servers: tuple[str, ...], strategy: str, pool_size: int, timeout: float
                     search_result = conn.search("", "(objectClass=*)")
                     end_time = datetime.now()
 
-                    test_results.append({
-                        "server": server,
-                        "status": "success",
-                        "response_time": (end_time - start_time).total_seconds(),
-                        "search_result": search_result.success,
-                    })
+                    test_results.append(
+                        {
+                            "server": server,
+                            "status": "success",
+                            "response_time": (end_time - start_time).total_seconds(),
+                            "search_result": search_result.success,
+                        },
+                    )
             except Exception as e:
-                test_results.append({
-                    "server": server,
-                    "status": "failed",
-                    "error": str(e),
-                })
+                test_results.append(
+                    {
+                        "server": server,
+                        "status": "failed",
+                        "error": str(e),
+                    },
+                )
 
         # Get overall connection status
         status = manager.get_connection_status()
@@ -344,7 +378,7 @@ def test(servers: tuple[str, ...], strategy: str, pool_size: int, timeout: float
         manager.shutdown()
 
     except Exception as e:
-        logger.exception(f"Connection test failed: {e}")
+        logger.exception("Connection test failed: %s", e)
         output_result({"error": str(e)}, False)
         sys.exit(1)
 
@@ -368,16 +402,18 @@ def status(detailed: bool) -> None:
         }
 
         if detailed:
-            status_data.update({
-                "average_response_time": 0.05,
-                "last_health_check": datetime.now().isoformat(),
-                "connection_strategy": "SAFE_SYNC",
-            })
+            status_data.update(
+                {
+                    "average_response_time": 0.05,
+                    "last_health_check": datetime.now().isoformat(),
+                    "connection_strategy": "SAFE_SYNC",
+                },
+            )
 
         output_result(status_data)
 
     except Exception as e:
-        logger.exception(f"Status check failed: {e}")
+        logger.exception("Status check failed: %s", e)
         output_result({"error": str(e)}, False)
         sys.exit(1)
 
@@ -388,12 +424,24 @@ def asn1() -> None:
 
 
 @asn1.command()
-@click.option("--type", "asn1_type", type=click.Choice(["INTEGER", "STRING", "BOOLEAN", "NULL", "OID"]),
-              required=True, help="ASN.1 type to encode")
+@click.option(
+    "--type",
+    "asn1_type",
+    type=click.Choice(["INTEGER", "STRING", "BOOLEAN", "NULL", "OID"]),
+    required=True,
+    help="ASN.1 type to encode",
+)
 @click.option("--value", required=True, help="Value to encode")
-@click.option("--encoding", type=click.Choice(["BER", "DER"]), default="DER", help="Encoding rules")
+@click.option(
+    "--encoding",
+    type=click.Choice(["BER", "DER"]),
+    default="DER",
+    help="Encoding rules",
+)
 @click.option("--output-file", type=click.Path(), help="Output file for encoded data")
-def encode(asn1_type: str, value: str, encoding: str, output_file: Optional[str]) -> None:
+def encode(
+    asn1_type: str, value: str, encoding: str, output_file: str | None,
+) -> None:
     """Encode value to ASN.1 format.
 
     Encodes values using specified ASN.1 type and encoding rules.
@@ -438,16 +486,26 @@ def encode(asn1_type: str, value: str, encoding: str, output_file: Optional[str]
         output_result(result_data)
 
     except Exception as e:
-        logger.exception(f"ASN.1 encoding failed: {e}")
+        logger.exception("ASN.1 encoding failed: %s", e)
         output_result({"error": str(e)}, False)
         sys.exit(1)
 
 
 @asn1.command()
-@click.option("--file", "input_file", type=click.Path(exists=True), help="File containing encoded data")
+@click.option(
+    "--file",
+    "input_file",
+    type=click.Path(exists=True),
+    help="File containing encoded data",
+)
 @click.option("--hex", "hex_data", help="Hex-encoded data string")
-@click.option("--encoding", type=click.Choice(["BER", "DER"]), default="BER", help="Encoding rules")
-def decode(input_file: Optional[str], hex_data: Optional[str], encoding: str) -> None:
+@click.option(
+    "--encoding",
+    type=click.Choice(["BER", "DER"]),
+    default="BER",
+    help="Encoding rules",
+)
+def decode(input_file: str | None, hex_data: str | None, encoding: str) -> None:
     """Decode ASN.1 encoded data.
 
     Decodes ASN.1 data from file or hex string.
@@ -488,7 +546,7 @@ def decode(input_file: Optional[str], hex_data: Optional[str], encoding: str) ->
         output_result(result_data)
 
     except Exception as e:
-        logger.exception(f"ASN.1 decoding failed: {e}")
+        logger.exception("ASN.1 decoding failed: %s", e)
         output_result({"error": str(e)}, False)
         sys.exit(1)
 
@@ -499,8 +557,12 @@ def sasl() -> None:
 
 
 @sasl.command()
-@click.option("--mechanism", type=click.Choice(["PLAIN", "DIGEST-MD5", "GSSAPI"]),
-              default="PLAIN", help="SASL mechanism")
+@click.option(
+    "--mechanism",
+    type=click.Choice(["PLAIN", "DIGEST-MD5", "GSSAPI"]),
+    default="PLAIN",
+    help="SASL mechanism",
+)
 @click.option("--user", required=True, help="Username")
 @click.option("--password", prompt=True, hide_input=True, help="Password")
 @click.option("--server", default="localhost", help="LDAP server")
@@ -539,7 +601,7 @@ def test_auth(mechanism: str, user: str, password: str, server: str, port: int) 
         output_result(result_data)
 
     except Exception as e:
-        logger.exception(f"SASL authentication test failed: {e}")
+        logger.exception("SASL authentication test failed: %s", e)
         output_result({"error": str(e)}, False)
         sys.exit(1)
 
@@ -563,7 +625,7 @@ def version() -> None:
 
 @cli.command()
 @click.option("--output-file", type=click.Path(), help="Output configuration file")
-def generate_config(output_file: Optional[str]) -> None:
+def generate_config(output_file: str | None) -> None:
     """Generate sample configuration file."""
     sample_config = {
         "environments": {

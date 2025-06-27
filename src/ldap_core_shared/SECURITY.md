@@ -141,7 +141,7 @@ def test_secure_connection_config():
         use_ssl=True,
         verify_certificates=True,
     )
-    
+
     # Verify sensitive data is masked
     masked_data = config.mask_sensitive_data()
     assert masked_data["bind_password"] == SENSITIVE_DATA_MASK
@@ -154,13 +154,13 @@ async def test_password_authentication():
     """Test secure password authentication."""
     # Use test-only credentials
     test_password = os.getenv("TEST_LDAP_PASSWORD", "test-password-do-not-use-in-prod")
-    
+
     result = await auth_service.authenticate_user(
         user_dn="uid=testuser,ou=people,dc=test,dc=com",
         password=test_password,
         password_attribute=DEFAULT_PASSWORD_ATTRIBUTE,
     )
-    
+
     assert isinstance(result, bool)
 ```
 

@@ -96,11 +96,15 @@ class TestAuthorizationIdentityParser:
 
     def test_parse_dn_format_complex(self) -> None:
         """Test parsing complex DN format."""
-        identity_string = "dn:cn=Jane Smith+sn=Smith,ou=Engineering,ou=Staff,dc=company,dc=org"
+        identity_string = (
+            "dn:cn=Jane Smith+sn=Smith,ou=Engineering,ou=Staff,dc=company,dc=org"
+        )
         identity_type, value = AuthorizationIdentityParser.parse(identity_string)
 
         assert identity_type == IdentityType.DN
-        assert value == "cn=Jane Smith+sn=Smith,ou=Engineering,ou=Staff,dc=company,dc=org"
+        assert (
+            value == "cn=Jane Smith+sn=Smith,ou=Engineering,ou=Staff,dc=company,dc=org"
+        )
 
     def test_parse_userid_format_standard(self) -> None:
         """Test parsing standard User ID format."""
@@ -262,17 +266,19 @@ class TestAuthorizationIdentityParser:
         # Test with potentially malicious input
         malicious_inputs = [
             "dn:" + "a" * 10000,  # Very long DN
-            "u:" + "b" * 10000,   # Very long User ID
-            "dn:\x00\x01\x02",   # Control characters
-            "u:\n\r\t",          # Whitespace characters
+            "u:" + "b" * 10000,  # Very long User ID
+            "dn:\x00\x01\x02",  # Control characters
+            "u:\n\r\t",  # Whitespace characters
         ]
 
         for malicious_input in malicious_inputs:
             # Should not crash or hang
             try:
-                identity_type, value = AuthorizationIdentityParser.parse(malicious_input)
+                identity_type, value = AuthorizationIdentityParser.parse(
+                    malicious_input
+                )
                 assert identity_type in IdentityType
-                assert isinstance(value, (str, type(None)))
+                assert isinstance(value, str | type(None))
             except Exception:
                 # If an exception occurs, it should be a reasonable one
                 pass
@@ -507,7 +513,9 @@ class TestWhoAmIExtension:
         """Test decoding invalid UTF-8 response value."""
         invalid_bytes = b"\xff\xfe\xfd"  # Invalid UTF-8
 
-        with pytest.raises(ExtensionDecodingError, match="Failed to decode WhoAmI response"):
+        with pytest.raises(
+            ExtensionDecodingError, match="Failed to decode WhoAmI response"
+        ):
             WhoAmIExtension.decode_response_value(None, invalid_bytes)
 
     def test_create_class_method(self) -> None:
@@ -548,7 +556,10 @@ class TestConvenienceFunctions:
         """Test check_identity function (not implemented)."""
         mock_connection = object()
 
-        with pytest.raises(NotImplementedError, match="check_identity requires connection manager integration"):
+        with pytest.raises(
+            NotImplementedError,
+            match="check_identity requires connection manager integration",
+        ):
             check_identity(mock_connection)
 
 
@@ -598,7 +609,9 @@ class TestIntegrationScenarios:
 
         # 5. Verify result
         assert isinstance(result, WhoAmIResult)
-        assert result.authorization_identity == "dn:cn=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=company,dc=org"
+        assert (
+            result.authorization_identity == "dn:cn=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=company,dc=org"
+        )
         assert result.identity_type == IdentityType.DN
         assert result.get_dn() == "cn=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=company,dc=org"
         assert result.get_display_name() == "DN: cn=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=company,dc=org"

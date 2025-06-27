@@ -21,7 +21,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError as PydanticValidationError
 
-from ldap_core_shared.utilities.dn import DNParser, DNValidator
+from ldap_core_shared.utilities.dn import DNBuilder, DNParser, DNValidator
 
 # Using real classes imported from utilities.dn
 
@@ -139,7 +139,9 @@ class TestRFC4514DNStringRepresentation:
             assert is_valid == test["valid"]
 
             if test["valid"]:
-                attr_type_format = validator.get_attribute_type_format(test["attr_type"])
+                attr_type_format = validator.get_attribute_type_format(
+                    test["attr_type"]
+                )
                 assert attr_type_format == test["type"]
 
     def test_attribute_value_representation(self) -> None:
@@ -206,13 +208,13 @@ class TestRFC4514SpecialCharacterEscaping:
         # RFC 4514: These characters MUST be escaped in attribute values
 
         mandatory_escape_chars = [
-            (",", "\\,"),     # COMMA
-            ("+", "\\+"),     # PLUS
-            ('"', '\\"'),     # QUOTATION MARK
-            ("\\", "\\\\"),   # REVERSE SOLIDUS
-            ("<", "\\<"),     # LESS-THAN SIGN
-            (">", "\\>"),     # GREATER-THAN SIGN
-            (";", "\\;"),     # SEMICOLON
+            (",", "\\,"),  # COMMA
+            ("+", "\\+"),  # PLUS
+            ('"', '\\"'),  # QUOTATION MARK
+            ("\\", "\\\\"),  # REVERSE SOLIDUS
+            ("<", "\\<"),  # LESS-THAN SIGN
+            (">", "\\>"),  # GREATER-THAN SIGN
+            (";", "\\;"),  # SEMICOLON
         ]
 
         for char, escaped in mandatory_escape_chars:
@@ -266,11 +268,15 @@ class TestRFC4514SpecialCharacterEscaping:
 
         for test in space_tests:
             escaped_result = DNParser.escape_attribute_value(test["value"])
-            assert escaped_result == test["escaped"], f"Failed for {test['description']}"
+            assert escaped_result == test["escaped"], (
+                f"Failed for {test['description']}"
+            )
 
             # Test round-trip
             unescaped_result = DNParser.unescape_attribute_value(escaped_result)
-            assert unescaped_result == test["value"], f"Round-trip failed for {test['description']}"
+            assert unescaped_result == test["value"], (
+                f"Round-trip failed for {test['description']}"
+            )
 
     def test_hex_escaping_mechanism(self) -> None:
         """RFC 4514 Section 3 - Hexadecimal escaping mechanism."""
@@ -283,17 +289,17 @@ class TestRFC4514SpecialCharacterEscaping:
                 "description": "NULL character",
             },
             {
-                "value": "test\x0Anewline",
+                "value": "test\x0anewline",
                 "hex_escaped": "test\\0Anewline",
                 "description": "Newline character",
             },
             {
-                "value": "test\x0Dcarriage",
+                "value": "test\x0dcarriage",
                 "hex_escaped": "test\\0Dcarriage",
                 "description": "Carriage return",
             },
             {
-                "value": "test\x1Fcontrol",
+                "value": "test\x1fcontrol",
                 "hex_escaped": "test\\1Fcontrol",
                 "description": "Control character",
             },
@@ -302,11 +308,15 @@ class TestRFC4514SpecialCharacterEscaping:
         for test in hex_escape_tests:
             # Test hex escaping
             hex_escaped = DNParser.hex_escape_attribute_value(test["value"])
-            assert hex_escaped == test["hex_escaped"], f"Hex escaping failed for {test['description']}"
+            assert hex_escaped == test["hex_escaped"], (
+                f"Hex escaping failed for {test['description']}"
+            )
 
             # Test hex unescaping
             unescaped = DNParser.hex_unescape_attribute_value(hex_escaped)
-            assert unescaped == test["value"], f"Hex unescaping failed for {test['description']}"
+            assert unescaped == test["value"], (
+                f"Hex unescaping failed for {test['description']}"
+            )
 
     def test_hash_escaping_for_leading_hash(self) -> None:
         """RFC 4514 Section 3 - Leading hash character escaping."""
@@ -332,11 +342,15 @@ class TestRFC4514SpecialCharacterEscaping:
 
         for test in hash_tests:
             escaped_result = DNParser.escape_attribute_value(test["value"])
-            assert escaped_result == test["escaped"], f"Failed for {test['description']}"
+            assert escaped_result == test["escaped"], (
+                f"Failed for {test['description']}"
+            )
 
             # Test round-trip
             unescaped_result = DNParser.unescape_attribute_value(escaped_result)
-            assert unescaped_result == test["value"], f"Round-trip failed for {test['description']}"
+            assert unescaped_result == test["value"], (
+                f"Round-trip failed for {test['description']}"
+            )
 
 
 class TestRFC4514DNConstruction:
@@ -349,12 +363,13 @@ class TestRFC4514DNConstruction:
         builder = DNBuilder()
 
         # Build DN component by component
-        dn = (builder
-              .add_component("cn", "John Doe")
-              .add_component("ou", "People")
-              .add_component("o", "Example Corp")
-              .add_component("c", "US")
-              .build())
+        dn = (
+            builder.add_component("cn", "John Doe")
+            .add_component("ou", "People")
+            .add_component("o", "Example Corp")
+            .add_component("c", "US")
+            .build()
+        )
 
         # Verify DN structure
         expected_dn = "cn=John Doe,ou=People,o=Example Corp,c=US"
@@ -372,16 +387,19 @@ class TestRFC4514DNConstruction:
         builder = DNBuilder()
 
         # Build multi-valued RDN
-        dn = (builder
-              .add_multi_valued_component([
-                  ("cn", "John Doe"),
-                  ("sn", "Doe"),
-                  ("givenName", "John"),
-              ])
-              .add_component("ou", "People")
-              .add_component("dc", "example")
-              .add_component("dc", "com")
-              .build())
+        dn = (
+            builder.add_multi_valued_component(
+                [
+                    ("cn", "John Doe"),
+                    ("sn", "Doe"),
+                    ("givenName", "John"),
+                ]
+            )
+            .add_component("ou", "People")
+            .add_component("dc", "example")
+            .add_component("dc", "com")
+            .build()
+        )
 
         # Verify multi-valued RDN format
         assert "cn=John Doe+sn=Doe+givenName=John" in dn
@@ -405,13 +423,14 @@ class TestRFC4514DNConstruction:
         builder = DNBuilder()
 
         # Build DN with values requiring escaping
-        dn = (builder
-              .add_component("cn", "John, Jr.")
-              .add_component("ou", "R&D+Engineering")
-              .add_component("o", 'Company "Corp"')
-              .add_component("l", "City; State")
-              .add_component("c", "US")
-              .build())
+        dn = (
+            builder.add_component("cn", "John, Jr.")
+            .add_component("ou", "R&D+Engineering")
+            .add_component("o", 'Company "Corp"')
+            .add_component("l", "City; State")
+            .add_component("c", "US")
+            .build()
+        )
 
         # Verify proper escaping in DN
         assert "cn=John\\, Jr." in dn
@@ -464,7 +483,9 @@ class TestRFC4514DNNormalization:
             parsed_dn = DNParser.parse(test["input"])
             canonical_dn = parsed_dn.canonical
 
-            assert canonical_dn == test["canonical"], f"Failed for {test['description']}"
+            assert canonical_dn == test["canonical"], (
+                f"Failed for {test['description']}"
+            )
 
     def test_dn_comparison_equivalence(self) -> None:
         """RFC 4514 Section 4 - DN comparison equivalence."""
@@ -502,7 +523,9 @@ class TestRFC4514DNNormalization:
             dn2_parsed = DNParser.parse(test["dn2"])
 
             are_equivalent = dn1_parsed.is_equivalent(dn2_parsed)
-            assert are_equivalent == test["equivalent"], f"Failed for {test['description']}"
+            assert are_equivalent == test["equivalent"], (
+                f"Failed for {test['description']}"
+            )
 
     def test_rdn_ordering_normalization(self) -> None:
         """RFC 4514 Section 4 - RDN ordering normalization."""
@@ -525,7 +548,9 @@ class TestRFC4514DNNormalization:
             parsed_rdn = DNParser.parse_rdn(test["input_rdn"])
             normalized = parsed_rdn.normalize()
 
-            assert normalized == test["normalized_rdn"], f"Failed for {test['description']}"
+            assert normalized == test["normalized_rdn"], (
+                f"Failed for {test['description']}"
+            )
 
 
 class TestRFC4514DNValidation:
@@ -582,7 +607,9 @@ class TestRFC4514DNValidation:
 
         for test in validation_tests:
             is_valid = validator.validate_dn_syntax(test["dn"])
-            assert is_valid == test["valid"], f"Failed for {test['description']}: {test['dn']}"
+            assert is_valid == test["valid"], (
+                f"Failed for {test['description']}: {test['dn']}"
+            )
 
     def test_attribute_type_validation(self) -> None:
         """RFC 4514 Section 5 - Attribute type validation."""
@@ -630,7 +657,9 @@ class TestRFC4514DNValidation:
 
         for test in attribute_type_tests:
             is_valid = validator.is_valid_attribute_type(test["attr_type"])
-            assert is_valid == test["valid"], f"Failed for {test['description']}: {test['attr_type']}"
+            assert is_valid == test["valid"], (
+                f"Failed for {test['description']}: {test['attr_type']}"
+            )
 
     def test_escape_sequence_validation(self) -> None:
         """RFC 4514 Section 5 - Escape sequence validation."""
@@ -678,7 +707,9 @@ class TestRFC4514DNValidation:
 
         for test in escape_tests:
             is_valid = validator.validate_escape_sequences(test["value"])
-            assert is_valid == test["valid"], f"Failed for {test['description']}: {test['value']}"
+            assert is_valid == test["valid"], (
+                f"Failed for {test['description']}: {test['value']}"
+            )
 
 
 class TestRFC4514ComprehensiveCompliance:
@@ -690,12 +721,13 @@ class TestRFC4514ComprehensiveCompliance:
 
         # 1. DN Construction
         builder = DNBuilder()
-        original_dn = (builder
-                      .add_component("cn", "John, Jr.")
-                      .add_component("ou", "R&D+Engineering")
-                      .add_component("o", 'Example "Corp"')
-                      .add_component("c", "US")
-                      .build())
+        original_dn = (
+            builder.add_component("cn", "John, Jr.")
+            .add_component("ou", "R&D+Engineering")
+            .add_component("o", 'Example "Corp"')
+            .add_component("c", "US")
+            .build()
+        )
 
         # 2. DN Parsing
         parsed_dn = DNParser.parse(original_dn)
@@ -739,7 +771,9 @@ class TestRFC4514ComprehensiveCompliance:
         }
 
         # All checks must pass for RFC compliance
-        assert all(compliance_checks.values()), f"RFC 4514 compliance failed: {compliance_checks}"
+        assert all(compliance_checks.values()), (
+            f"RFC 4514 compliance failed: {compliance_checks}"
+        )
 
     def test_dn_interoperability_scenarios(self) -> None:
         """RFC 4514 - DN interoperability with different systems."""

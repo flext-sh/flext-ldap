@@ -213,7 +213,12 @@ class LDIFTransformer:
                         ]
                         new_attributes[attr_key] = new_values
                     except Exception as e:
-                        logger.warning("Failed to transform attribute %s in %s: %s", attr_key, entry.dn, e)
+                        logger.warning(
+                            "Failed to transform attribute %s in %s: %s",
+                            attr_key,
+                            entry.dn,
+                            e,
+                        )
 
             transformed.append(
                 LDIFEntry(
@@ -391,7 +396,12 @@ class LDIFTransformer:
             try:
                 new_attributes = self._apply_attribute_rule(new_attributes, rule)
             except Exception as e:
-                logger.warning("Failed to apply attribute rule %s to %s: %s", rule.name, entry.dn, e)
+                logger.warning(
+                    "Failed to apply attribute rule %s to %s: %s",
+                    rule.name,
+                    entry.dn,
+                    e,
+                )
 
         return LDIFEntry(
             dn=entry.dn,

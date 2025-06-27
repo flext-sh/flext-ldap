@@ -9,8 +9,9 @@ import asyncio
 import gc
 import statistics
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 # Constants for magic values
 BYTES_PER_KB = 1024
@@ -21,6 +22,7 @@ SECONDS_PER_MINUTE = 60
 try:
     import numpy as np
     import psutil
+
     VECTORIZED_AVAILABLE = True
 except ImportError:
     # Mock implementations for when vectorized dependencies are not available
@@ -38,6 +40,7 @@ except ImportError:
     def profile(func: Any) -> Any:
         """Dummy decorator when memory_profiler is not available."""
         return func
+
 
 import contextlib
 
@@ -111,7 +114,9 @@ class BenchmarkSuite:
         durations = [r.duration for r in self.results]
         mean = statistics.mean(durations)
         std_dev = statistics.stdev(durations)
-        margin = 1.96 * (std_dev / (len(durations) ** 0.5))  # DEFAULT_CONFIDENCE_PERCENT% CI
+        margin = 1.96 * (
+            std_dev / (len(durations) ** 0.5)
+        )  # DEFAULT_CONFIDENCE_PERCENT% CI
 
         return (mean - margin, mean + margin)
 
@@ -308,7 +313,7 @@ class PerformanceBenchmarker:
 
         # Calculate garbage collection activity
         gc_collections = (
-            sum(a - b for a, b in zip(gc_after, gc_before))
+            sum(a - b for a, b in zip(gc_after, gc_before, strict=False))
             if self.enable_gc_tracking
             else 0
         )
@@ -402,7 +407,8 @@ class PerformanceBenchmarker:
                 / optimized_suite.average_duration,
             },
             "statistical_significance": self._calculate_statistical_significance(
-                baseline_suite, optimized_suite,
+                baseline_suite,
+                optimized_suite,
             ),
         }
 
@@ -463,11 +469,15 @@ class PerformanceBenchmarker:
         )
 
         # Execute load test
-        results, errors, memory_samples, cpu_samples = await self._execute_load_test(context)
+        results, errors, memory_samples, cpu_samples = await self._execute_load_test(
+            context,
+        )
 
         # Generate final results
         if results:
-            return self._build_load_test_results(context, results, errors, memory_samples, cpu_samples)
+            return self._build_load_test_results(
+                context, results, errors, memory_samples, cpu_samples,
+            )
         logger.error("Load test failed: %s - No results collected", name)
         return {"error": "No results collected"}
 
@@ -637,12 +647,16 @@ class PerformanceBenchmarker:
         return {
             "significant": significant,
             "t_statistic": t_stat,
-            "confidence_level": DEFAULT_CONFIDENCE_PERCENT / 100.0 if significant else None,
+            "confidence_level": DEFAULT_CONFIDENCE_PERCENT / 100.0
+            if significant
+            else None,
             "baseline_mean": baseline_mean,
             "optimized_mean": optimized_mean,
         }
 
-    async def _execute_load_test(self, context: _LoadTestContext) -> tuple[list, list, list, list]:
+    async def _execute_load_test(
+        self, context: _LoadTestContext,
+    ) -> tuple[list, list, list, list]:
         """Execute the load test with monitoring.
 
         Args:
@@ -720,11 +734,16 @@ class PerformanceBenchmarker:
         while current_time < end_time:
             # Calculate current concurrency with ramp-up
             current_concurrency = self._calculate_current_concurrency(
-                current_time, start_time, context.ramp_up_seconds, context.concurrent_requests,
+                current_time,
+                start_time,
+                context.ramp_up_seconds,
+                context.concurrent_requests,
             )
 
             # Launch new tasks up to concurrency limit
-            await self._launch_new_tasks(context, semaphore, tasks, current_concurrency, end_time)
+            await self._launch_new_tasks(
+                context, semaphore, tasks, current_concurrency, end_time,
+            )
 
             # Process completed tasks
             await self._process_completed_tasks(tasks, results, errors)
@@ -811,7 +830,9 @@ class PerformanceBenchmarker:
             request_duration = time.perf_counter() - request_start
             return request_duration, success, error_msg
 
-    async def _process_completed_tasks(self, tasks: list, results: list, errors: list) -> None:
+    async def _process_completed_tasks(
+        self, tasks: list, results: list, errors: list,
+    ) -> None:
         """Process completed tasks and collect results.
 
         Args:
@@ -831,7 +852,9 @@ class PerformanceBenchmarker:
 
             tasks.remove(task)
 
-    async def _process_remaining_tasks(self, tasks: list, results: list, errors: list) -> None:
+    async def _process_remaining_tasks(
+        self, tasks: list, results: list, errors: list,
+    ) -> None:
         """Process any remaining tasks at test end.
 
         Args:
@@ -913,7 +936,9 @@ class PerformanceBenchmarker:
         self._log_load_test_completion(context.name, load_test_result)
         return load_test_result
 
-    def _calculate_response_time_stats(self, durations: list[float]) -> dict[str, float]:
+    def _calculate_response_time_stats(
+        self, durations: list[float],
+    ) -> dict[str, float]:
         """Calculate response time statistics.
 
         Args:
@@ -936,8 +961,12 @@ class PerformanceBenchmarker:
             sorted_durations = sorted(durations)
             p95_index = int(len(sorted_durations) * 0.95)
             p99_index = int(len(sorted_durations) * 0.99)
-            p95_response_time = sorted_durations[min(p95_index, len(sorted_durations) - 1)]
-            p99_response_time = sorted_durations[min(p99_index, len(sorted_durations) - 1)]
+            p95_response_time = sorted_durations[
+                min(p95_index, len(sorted_durations) - 1)
+            ]
+            p99_response_time = sorted_durations[
+                min(p99_index, len(sorted_durations) - 1)
+            ]
 
         return {
             "average_ms": avg_response_time * DEFAULT_LARGE_LIMIT,
@@ -947,7 +976,9 @@ class PerformanceBenchmarker:
             "p99_ms": p99_response_time * DEFAULT_LARGE_LIMIT,
         }
 
-    def _calculate_system_metrics(self, memory_samples: list, cpu_samples: list) -> dict[str, float]:
+    def _calculate_system_metrics(
+        self, memory_samples: list, cpu_samples: list,
+    ) -> dict[str, float]:
         """Calculate system metrics.
 
         Args:
@@ -987,6 +1018,7 @@ class PerformanceBenchmarker:
 @dataclass
 class _LoadTestContext:
     """Internal context for load test execution."""
+
     name: str
     func: Callable
     args: tuple

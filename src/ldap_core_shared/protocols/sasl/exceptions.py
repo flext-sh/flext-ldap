@@ -37,7 +37,7 @@ References:
 
 from __future__ import annotations
 
-from typing import Any, Optional, Union, cast
+from typing import Any, Union, cast
 
 # Type for SASL error context data
 SASLErrorContext = Union[str, int, bool, list[str], dict[str, Any], None]
@@ -64,12 +64,12 @@ class SASLError(AuthenticationError):
         self,
         message: str,
         *,
-        mechanism: Optional[str] = None,
-        challenge_step: Optional[int] = None,
-        server_message: Optional[str] = None,
-        error_code: Optional[str] = None,
-        context: Optional[dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
+        mechanism: str | None = None,
+        challenge_step: int | None = None,
+        server_message: str | None = None,
+        error_code: str | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         """Initialize SASL error.
 
@@ -116,8 +116,16 @@ class SASLError(AuthenticationError):
             True if message might contain sensitive data
         """
         sensitive_keywords = [
-            "password", "credential", "secret", "token", "key",
-            "digest", "hash", "nonce", "response", "challenge",
+            "password",
+            "credential",
+            "secret",
+            "token",
+            "key",
+            "digest",
+            "hash",
+            "nonce",
+            "response",
+            "challenge",
         ]
         return any(keyword in message.lower() for keyword in sensitive_keywords)
 
@@ -140,7 +148,7 @@ class SASLAuthenticationError(SASLError):
         self,
         message: str = "SASL authentication failed",
         *,
-        auth_failure_reason: Optional[str] = None,
+        auth_failure_reason: str | None = None,
         **kwargs: SASLErrorContext,
     ) -> None:
         """Initialize SASL authentication error.
@@ -159,12 +167,12 @@ class SASLAuthenticationError(SASLError):
 
         super().__init__(
             message,
-            mechanism=cast("Optional[str]", kwargs.get("mechanism")),
-            challenge_step=cast("Optional[int]", kwargs.get("challenge_step")),
-            server_message=cast("Optional[str]", kwargs.get("server_message")),
-            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            mechanism=cast("str | None", kwargs.get("mechanism")),
+            challenge_step=cast("int | None", kwargs.get("challenge_step")),
+            server_message=cast("str | None", kwargs.get("server_message")),
+            error_code=cast("str | None", kwargs.get("error_code")),
             context=context_dict,
-            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+            original_error=cast("Exception | None", kwargs.get("original_error")),
         )
 
         self.auth_failure_reason = auth_failure_reason
@@ -188,8 +196,8 @@ class SASLInvalidMechanismError(SASLError):
         self,
         message: str = "Invalid SASL mechanism",
         *,
-        requested_mechanism: Optional[str] = None,
-        available_mechanisms: Optional[list[str]] = None,
+        requested_mechanism: str | None = None,
+        available_mechanisms: list[str] | None = None,
         **kwargs: SASLErrorContext,
     ) -> None:
         """Initialize SASL mechanism error.
@@ -212,11 +220,11 @@ class SASLInvalidMechanismError(SASLError):
         super().__init__(
             message,
             mechanism=requested_mechanism,
-            challenge_step=cast("Optional[int]", kwargs.get("challenge_step")),
-            server_message=cast("Optional[str]", kwargs.get("server_message")),
-            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            challenge_step=cast("int | None", kwargs.get("challenge_step")),
+            server_message=cast("str | None", kwargs.get("server_message")),
+            error_code=cast("str | None", kwargs.get("error_code")),
             context=context_dict,
-            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+            original_error=cast("Exception | None", kwargs.get("original_error")),
         )
 
         self.requested_mechanism = requested_mechanism
@@ -242,9 +250,9 @@ class SASLSecurityError(SASLError):
         self,
         message: str = "SASL security error",
         *,
-        security_layer: Optional[str] = None,
-        qop_requested: Optional[str] = None,
-        qop_available: Optional[list[str]] = None,
+        security_layer: str | None = None,
+        qop_requested: str | None = None,
+        qop_available: list[str] | None = None,
         **kwargs: SASLErrorContext,
     ) -> None:
         """Initialize SASL security error.
@@ -269,12 +277,12 @@ class SASLSecurityError(SASLError):
 
         super().__init__(
             message,
-            mechanism=cast("Optional[str]", kwargs.get("mechanism")),
-            challenge_step=cast("Optional[int]", kwargs.get("challenge_step")),
-            server_message=cast("Optional[str]", kwargs.get("server_message")),
-            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            mechanism=cast("str | None", kwargs.get("mechanism")),
+            challenge_step=cast("int | None", kwargs.get("challenge_step")),
+            server_message=cast("str | None", kwargs.get("server_message")),
+            error_code=cast("str | None", kwargs.get("error_code")),
             context=context_dict,
-            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+            original_error=cast("Exception | None", kwargs.get("original_error")),
         )
 
         self.security_layer = security_layer
@@ -300,8 +308,8 @@ class SASLCallbackError(SASLError):
         self,
         message: str = "SASL callback error",
         *,
-        callback_type: Optional[str] = None,
-        callback_prompt: Optional[str] = None,
+        callback_type: str | None = None,
+        callback_prompt: str | None = None,
         **kwargs: SASLErrorContext,
     ) -> None:
         """Initialize SASL callback error.
@@ -323,12 +331,12 @@ class SASLCallbackError(SASLError):
 
         super().__init__(
             message,
-            mechanism=cast("Optional[str]", kwargs.get("mechanism")),
-            challenge_step=cast("Optional[int]", kwargs.get("challenge_step")),
-            server_message=cast("Optional[str]", kwargs.get("server_message")),
-            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            mechanism=cast("str | None", kwargs.get("mechanism")),
+            challenge_step=cast("int | None", kwargs.get("challenge_step")),
+            server_message=cast("str | None", kwargs.get("server_message")),
+            error_code=cast("str | None", kwargs.get("error_code")),
             context=context_dict,
-            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+            original_error=cast("Exception | None", kwargs.get("original_error")),
         )
 
         self.callback_type = callback_type
@@ -377,12 +385,12 @@ class SASLChallengeError(SASLError):
 
         super().__init__(
             message,
-            mechanism=cast("Optional[str]", kwargs.get("mechanism")),
-            challenge_step=cast("Optional[int]", kwargs.get("challenge_step")),
-            server_message=cast("Optional[str]", kwargs.get("server_message")),
-            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            mechanism=cast("str | None", kwargs.get("mechanism")),
+            challenge_step=cast("int | None", kwargs.get("challenge_step")),
+            server_message=cast("str | None", kwargs.get("server_message")),
+            error_code=cast("str | None", kwargs.get("error_code")),
             context=context_dict,
-            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+            original_error=cast("Exception | None", kwargs.get("original_error")),
         )
 
         self.challenge_malformed = challenge_malformed
@@ -407,8 +415,8 @@ class SASLMechanismError(SASLError):
         self,
         message: str = "SASL mechanism error",
         *,
-        mechanism_error: Optional[str] = None,
-        mechanism_detail: Optional[dict[str, Any]] = None,
+        mechanism_error: str | None = None,
+        mechanism_detail: dict[str, Any] | None = None,
         **kwargs: SASLErrorContext,
     ) -> None:
         """Initialize SASL mechanism error.
@@ -430,12 +438,12 @@ class SASLMechanismError(SASLError):
 
         super().__init__(
             message,
-            mechanism=cast("Optional[str]", kwargs.get("mechanism")),
-            challenge_step=cast("Optional[int]", kwargs.get("challenge_step")),
-            server_message=cast("Optional[str]", kwargs.get("server_message")),
-            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            mechanism=cast("str | None", kwargs.get("mechanism")),
+            challenge_step=cast("int | None", kwargs.get("challenge_step")),
+            server_message=cast("str | None", kwargs.get("server_message")),
+            error_code=cast("str | None", kwargs.get("error_code")),
             context=context_dict,
-            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+            original_error=cast("Exception | None", kwargs.get("original_error")),
         )
 
         self.mechanism_error = mechanism_error
@@ -443,6 +451,7 @@ class SASLMechanismError(SASLError):
 
 
 # Convenience functions for common error scenarios
+
 
 def sasl_authentication_failed(
     mechanism: str,
@@ -507,12 +516,37 @@ def sasl_callback_failed(
         SASLCallbackError instance
     """
     # Extract known kwargs for SASLCallbackError constructor
-    mechanism = cast("Optional[str]", kwargs.get("mechanism")) if "mechanism" in kwargs and isinstance(kwargs["mechanism"], str) else None
-    challenge_step = cast("Optional[int]", kwargs.get("challenge_step")) if "challenge_step" in kwargs and isinstance(kwargs["challenge_step"], int) else None
-    server_message = cast("Optional[str]", kwargs.get("server_message")) if "server_message" in kwargs and isinstance(kwargs["server_message"], str) else None
-    error_code = cast("Optional[str]", kwargs.get("error_code")) if "error_code" in kwargs and isinstance(kwargs["error_code"], str) else None
-    context = cast("Optional[dict[str, Any]]", kwargs.get("context")) if "context" in kwargs and isinstance(kwargs["context"], dict) else None
-    original_error = cast("Optional[Exception]", kwargs.get("original_error")) if "original_error" in kwargs and isinstance(kwargs["original_error"], Exception) else None
+    mechanism = (
+        cast("str | None", kwargs.get("mechanism"))
+        if "mechanism" in kwargs and isinstance(kwargs["mechanism"], str)
+        else None
+    )
+    challenge_step = (
+        cast("int | None", kwargs.get("challenge_step"))
+        if "challenge_step" in kwargs and isinstance(kwargs["challenge_step"], int)
+        else None
+    )
+    server_message = (
+        cast("str | None", kwargs.get("server_message"))
+        if "server_message" in kwargs and isinstance(kwargs["server_message"], str)
+        else None
+    )
+    error_code = (
+        cast("str | None", kwargs.get("error_code"))
+        if "error_code" in kwargs and isinstance(kwargs["error_code"], str)
+        else None
+    )
+    context = (
+        cast("dict[str, Any] | None", kwargs.get("context"))
+        if "context" in kwargs and isinstance(kwargs["context"], dict)
+        else None
+    )
+    original_error = (
+        cast("Exception | None", kwargs.get("original_error"))
+        if "original_error" in kwargs
+        and isinstance(kwargs["original_error"], Exception)
+        else None
+    )
 
     return SASLCallbackError(
         f"SASL {callback_type} callback failed: {reason}",

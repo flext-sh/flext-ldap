@@ -125,7 +125,9 @@ class TestSchemaInfo:
             schema_dn="cn=schema,cn=config",
             attribute_types=["( 2.5.4.3 NAME 'cn' )", "( 2.5.4.4 NAME 'sn' )"],
             object_classes=["( 2.5.6.6 NAME 'person' )"],
-            syntax_definitions=["( 1.3.6.1.4.1.1466.115.121.1.15 DESC 'Directory String' )"],
+            syntax_definitions=[
+                "( 1.3.6.1.4.1.1466.115.121.1.15 DESC 'Directory String' )"
+            ],
             matching_rules=["( 2.5.13.2 NAME 'caseIgnoreMatch' )"],
             server_controls=["2.16.840.1.113730.3.4.2", "1.2.840.113556.1.4.319"],
             extensions=["1.3.6.1.4.1.4203.1.11.1", "1.3.6.1.4.1.4203.1.11.3"],
@@ -313,11 +315,16 @@ class TestSchemaDiscovery:
         # Mock schema entry
         mock_entry = Mock()
         mock_entry.attributeTypes = Mock()
-        mock_entry.attributeTypes.values = ["( 2.5.4.3 NAME 'cn' )", "( 2.5.4.4 NAME 'sn' )"]
+        mock_entry.attributeTypes.values = [
+            "( 2.5.4.3 NAME 'cn' )",
+            "( 2.5.4.4 NAME 'sn' )",
+        ]
         mock_entry.objectClasses = Mock()
         mock_entry.objectClasses.values = ["( 2.5.6.6 NAME 'person' )"]
         mock_entry.ldapSyntaxes = Mock()
-        mock_entry.ldapSyntaxes.values = ["( 1.3.6.1.4.1.1466.115.121.1.15 DESC 'Directory String' )"]
+        mock_entry.ldapSyntaxes.values = [
+            "( 1.3.6.1.4.1.1466.115.121.1.15 DESC 'Directory String' )"
+        ]
         mock_entry.matchingRules = Mock()
         mock_entry.matchingRules.values = ["( 2.5.13.2 NAME 'caseIgnoreMatch' )"]
 
@@ -520,7 +527,9 @@ class TestSchemaDiscoveryIntegration:
         mock_server.info.supported_extensions = ["1.3.6.1.4.1.4203.1.11.1"]
 
         # Mock RootDSE search for schema DN
-        def mock_search(base_dn, filter_str, search_scope=None, attributes=None) -> None:
+        def mock_search(
+            base_dn, filter_str, search_scope=None, attributes=None
+        ) -> None:
             if base_dn == "":
                 # RootDSE search
                 mock_rootdse = Mock()
@@ -592,8 +601,10 @@ class TestSchemaDiscoveryIntegration:
 
         mock_conn.entries = [mock_entry]
 
-        with patch.object(minimal_discovery, "_get_schema_dn") as mock_get_dn1, \
-             patch.object(full_discovery, "_get_schema_dn") as mock_get_dn2:
+        with (
+            patch.object(minimal_discovery, "_get_schema_dn") as mock_get_dn1,
+            patch.object(full_discovery, "_get_schema_dn") as mock_get_dn2,
+        ):
             mock_get_dn1.return_value = "cn=schema"
             mock_get_dn2.return_value = "cn=schema"
 
@@ -643,9 +654,10 @@ class TestSchemaDiscoveryIntegration:
         connection_info.host = "error.example.com"
         connection_info.port = 389
 
-        with patch("ldap_core_shared.schema.discovery.ldap3") as mock_ldap3, \
-             patch("ldap_core_shared.schema.discovery.logger") as mock_logger:
-
+        with (
+            patch("ldap_core_shared.schema.discovery.ldap3") as mock_ldap3,
+            patch("ldap_core_shared.schema.discovery.logger") as mock_logger,
+        ):
             # Mock connection error
             mock_ldap3.Connection.side_effect = ValueError("Test connection error")
 
@@ -673,13 +685,13 @@ class TestSchemaDiscoveryIntegration:
         mock_server.info = Mock()
         mock_server.info.supported_controls = [
             "2.16.840.1.113730.3.4.2",  # ManageDsaIT
-            "1.2.840.113556.1.4.319",   # Paged Results
+            "1.2.840.113556.1.4.319",  # Paged Results
             "2.16.840.1.113730.3.4.18",  # Proxy Authorization
         ]
         mock_server.info.supported_extensions = [
             "1.3.6.1.4.1.4203.1.11.1",  # Modify Password
             "1.3.6.1.4.1.4203.1.11.3",  # Who Am I
-            "1.3.6.1.4.1.1466.20037",   # Start TLS
+            "1.3.6.1.4.1.1466.20037",  # Start TLS
         ]
 
         # Mock empty schema entry

@@ -47,9 +47,9 @@ References:
 """
 
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -59,30 +59,30 @@ from ldap_core_shared.controls.base import LDAPControl
 class SubentryVisibility(Enum):
     """Visibility modes for subentry processing."""
 
-    SUBENTRIES_ONLY = "subentries_only"      # Return only subentries
-    NORMAL_ENTRIES_ONLY = "normal_only"      # Return only normal entries
-    BOTH = "both"                            # Return both types
-    NONE = "none"                           # Special case for testing
+    SUBENTRIES_ONLY = "subentries_only"  # Return only subentries
+    NORMAL_ENTRIES_ONLY = "normal_only"  # Return only normal entries
+    BOTH = "both"  # Return both types
+    NONE = "none"  # Special case for testing
 
 
 class SubentryType(Enum):
     """Types of subentries."""
 
-    ACCESS_CONTROL = "access_control"        # Access control policies
-    COLLECTIVE_ATTRIBUTE = "collective"     # Collective attribute definitions
-    CONFIGURATION = "configuration"         # Configuration settings
-    SCHEMA = "schema"                       # Schema definitions
-    OPERATIONAL = "operational"            # Operational attributes
-    CUSTOM = "custom"                      # Custom REDACTED_LDAP_BIND_PASSWORDistrative entries
+    ACCESS_CONTROL = "access_control"  # Access control policies
+    COLLECTIVE_ATTRIBUTE = "collective"  # Collective attribute definitions
+    CONFIGURATION = "configuration"  # Configuration settings
+    SCHEMA = "schema"  # Schema definitions
+    OPERATIONAL = "operational"  # Operational attributes
+    CUSTOM = "custom"  # Custom REDACTED_LDAP_BIND_PASSWORDistrative entries
 
 
 class SubentryScope(Enum):
     """Scope of subentry influence."""
 
-    SINGLE_LEVEL = "single_level"          # Affects immediate children only
-    SUBTREE = "subtree"                    # Affects entire subtree
-    ADMINISTRATIVE_AREA = "REDACTED_LDAP_BIND_PASSWORD_area"     # Affects REDACTED_LDAP_BIND_PASSWORDistrative area
-    GLOBAL = "global"                      # Global influence
+    SINGLE_LEVEL = "single_level"  # Affects immediate children only
+    SUBTREE = "subtree"  # Affects entire subtree
+    ADMINISTRATIVE_AREA = "REDACTED_LDAP_BIND_PASSWORD_area"  # Affects REDACTED_LDAP_BIND_PASSWORDistrative area
+    GLOBAL = "global"  # Global influence
 
 
 class SubentryRequest(BaseModel):
@@ -90,43 +90,52 @@ class SubentryRequest(BaseModel):
 
     visibility: bool = Field(description="Subentry visibility flag")
 
-    subentry_types: Optional[list[SubentryType]] = Field(
-        default=None, description="Specific subentry types to include",
+    subentry_types: list[SubentryType] | None = Field(
+        default=None,
+        description="Specific subentry types to include",
     )
 
     # Filtering options
     include_operational_attributes: bool = Field(
-        default=True, description="Whether to include operational attributes",
+        default=True,
+        description="Whether to include operational attributes",
     )
 
     include_collective_attributes: bool = Field(
-        default=True, description="Whether to include collective attributes",
+        default=True,
+        description="Whether to include collective attributes",
     )
 
-    filter_by_scope: Optional[SubentryScope] = Field(
-        default=None, description="Filter subentries by scope",
+    filter_by_scope: SubentryScope | None = Field(
+        default=None,
+        description="Filter subentries by scope",
     )
 
     # Processing options
     expand_inheritance: bool = Field(
-        default=False, description="Whether to expand inheritance relationships",
+        default=False,
+        description="Whether to expand inheritance relationships",
     )
 
     resolve_references: bool = Field(
-        default=False, description="Whether to resolve subentry references",
+        default=False,
+        description="Whether to resolve subentry references",
     )
 
     validate_policies: bool = Field(
-        default=False, description="Whether to validate policy subentries",
+        default=False,
+        description="Whether to validate policy subentries",
     )
 
     # Performance settings
-    max_subentries: Optional[int] = Field(
-        default=None, description="Maximum number of subentries to return",
+    max_subentries: int | None = Field(
+        default=None,
+        description="Maximum number of subentries to return",
     )
 
     cache_results: bool = Field(
-        default=True, description="Whether to cache subentry results",
+        default=True,
+        description="Whether to cache subentry results",
     )
 
     def get_visibility_mode(self) -> SubentryVisibility:
@@ -179,40 +188,48 @@ class SubentryMetadata(BaseModel):
     scope: SubentryScope = Field(description="Scope of subentry influence")
 
     # Administrative metadata
-    REDACTED_LDAP_BIND_PASSWORDistrative_role: Optional[str] = Field(
-        default=None, description="Administrative role of subentry",
+    REDACTED_LDAP_BIND_PASSWORDistrative_role: str | None = Field(
+        default=None,
+        description="Administrative role of subentry",
     )
 
     affects_entries: list[str] = Field(
-        default_factory=list, description="DNs of entries affected by subentry",
+        default_factory=list,
+        description="DNs of entries affected by subentry",
     )
 
     parent_subentries: list[str] = Field(
-        default_factory=list, description="Parent subentries in hierarchy",
+        default_factory=list,
+        description="Parent subentries in hierarchy",
     )
 
     child_subentries: list[str] = Field(
-        default_factory=list, description="Child subentries in hierarchy",
+        default_factory=list,
+        description="Child subentries in hierarchy",
     )
 
     # Policy information
     policy_attributes: dict[str, Any] = Field(
-        default_factory=dict, description="Policy-related attributes",
+        default_factory=dict,
+        description="Policy-related attributes",
     )
 
     collective_attributes: dict[str, Any] = Field(
-        default_factory=dict, description="Collective attribute definitions",
+        default_factory=dict,
+        description="Collective attribute definitions",
     )
 
     # Status information
     is_active: bool = Field(default=True, description="Whether subentry is active")
 
-    last_modified: Optional[datetime] = Field(
-        default=None, description="Last modification timestamp",
+    last_modified: datetime | None = Field(
+        default=None,
+        description="Last modification timestamp",
     )
 
-    created_at: Optional[datetime] = Field(
-        default=None, description="Creation timestamp",
+    created_at: datetime | None = Field(
+        default=None,
+        description="Creation timestamp",
     )
 
     def get_influence_summary(self) -> dict[str, Any]:
@@ -237,63 +254,75 @@ class SubentriesResponse(BaseModel):
     subentries_found: bool = Field(description="Whether subentries were found")
 
     total_subentries: int = Field(
-        default=0, description="Total number of subentries found",
+        default=0,
+        description="Total number of subentries found",
     )
 
     total_normal_entries: int = Field(
-        default=0, description="Total number of normal entries found",
+        default=0,
+        description="Total number of normal entries found",
     )
 
     # Subentry metadata
     subentry_metadata: list[SubentryMetadata] = Field(
-        default_factory=list, description="Metadata for found subentries",
+        default_factory=list,
+        description="Metadata for found subentries",
     )
 
     subentry_types_found: set[SubentryType] = Field(
-        default_factory=set, description="Types of subentries found",
+        default_factory=set,
+        description="Types of subentries found",
     )
 
     REDACTED_LDAP_BIND_PASSWORDistrative_areas: set[str] = Field(
-        default_factory=set, description="Administrative areas discovered",
+        default_factory=set,
+        description="Administrative areas discovered",
     )
 
     # Processing results
     inheritance_resolved: bool = Field(
-        default=False, description="Whether inheritance was resolved",
+        default=False,
+        description="Whether inheritance was resolved",
     )
 
     references_resolved: bool = Field(
-        default=False, description="Whether references were resolved",
+        default=False,
+        description="Whether references were resolved",
     )
 
     policies_validated: bool = Field(
-        default=False, description="Whether policies were validated",
+        default=False,
+        description="Whether policies were validated",
     )
 
     # Error information
     result_code: int = Field(default=0, description="Operation result code")
 
-    result_message: Optional[str] = Field(
-        default=None, description="Operation result message",
+    result_message: str | None = Field(
+        default=None,
+        description="Operation result message",
     )
 
     processing_errors: list[str] = Field(
-        default_factory=list, description="Processing errors encountered",
+        default_factory=list,
+        description="Processing errors encountered",
     )
 
     validation_warnings: list[str] = Field(
-        default_factory=list, description="Policy validation warnings",
+        default_factory=list,
+        description="Policy validation warnings",
     )
 
     # Performance metadata
-    processing_time: Optional[float] = Field(
-        default=None, description="Processing time in seconds",
+    processing_time: float | None = Field(
+        default=None,
+        description="Processing time in seconds",
     )
 
     cache_hits: int = Field(default=0, description="Number of cache hits")
 
     processed_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Response processing timestamp",
     )
 
@@ -301,7 +330,9 @@ class SubentriesResponse(BaseModel):
         """Check if subentries operation was successful."""
         return self.result_code == 0
 
-    def get_subentries_by_type(self, subentry_type: SubentryType) -> list[SubentryMetadata]:
+    def get_subentries_by_type(
+        self, subentry_type: SubentryType,
+    ) -> list[SubentryMetadata]:
         """Get subentries of specific type.
 
         Args:
@@ -311,7 +342,8 @@ class SubentriesResponse(BaseModel):
             List of subentries of specified type
         """
         return [
-            metadata for metadata in self.subentry_metadata
+            metadata
+            for metadata in self.subentry_metadata
             if metadata.subentry_type == subentry_type
         ]
 
@@ -367,7 +399,7 @@ class SubentriesControl(LDAPControl):
     def __init__(
         self,
         visibility: bool = True,
-        subentry_types: Optional[list[SubentryType]] = None,
+        subentry_types: list[SubentryType] | None = None,
         include_operational: bool = True,
         expand_inheritance: bool = False,
         criticality: bool = False,
@@ -390,7 +422,7 @@ class SubentriesControl(LDAPControl):
         )
 
         # Initialize response storage
-        self._response: Optional[SubentriesResponse] = None
+        self._response: SubentriesResponse | None = None
         self._response_available = False
 
         # Processing state
@@ -399,7 +431,6 @@ class SubentriesControl(LDAPControl):
 
         # Initialize base control
         super().__init__(
-
             criticality=criticality,
             control_value=self._encode_request(),
         )
@@ -472,7 +503,10 @@ class SubentriesControl(LDAPControl):
         Args:
             subentry_type: Type of subentry to remove
         """
-        if self._request.subentry_types and subentry_type in self._request.subentry_types:
+        if (
+            self._request.subentry_types
+            and subentry_type in self._request.subentry_types
+        ):
             self._request.subentry_types.remove(subentry_type)
 
     def enable_inheritance_expansion(self, expand: bool = True) -> None:
@@ -517,7 +551,8 @@ class SubentriesControl(LDAPControl):
             "visibility": self._request.visibility,
             "subentry_types": (
                 [t.value for t in self._request.subentry_types]
-                if self._request.subentry_types else None
+                if self._request.subentry_types
+                else None
             ),
             "processing_options": self._request.get_processing_options(),
             "max_subentries": self._request.max_subentries,
@@ -525,7 +560,7 @@ class SubentriesControl(LDAPControl):
         }
 
     @property
-    def response(self) -> Optional[SubentriesResponse]:
+    def response(self) -> SubentriesResponse | None:
         """Get Subentries control response."""
         return self._response
 
@@ -540,11 +575,11 @@ class SubentriesControl(LDAPControl):
         return self._request.visibility
 
     @property
-    def subentry_types(self) -> Optional[list[SubentryType]]:
+    def subentry_types(self) -> list[SubentryType] | None:
         """Get configured subentry types."""
         return self._request.subentry_types
 
-    def encode_value(self) -> Optional[bytes]:
+    def encode_value(self) -> bytes | None:
         """Encode subentries control value to ASN.1 bytes.
 
         Returns:
@@ -553,7 +588,7 @@ class SubentriesControl(LDAPControl):
         return self.control_value
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> SubentriesControl:
+    def decode_value(cls, control_value: bytes | None) -> SubentriesControl:
         """Decode ASN.1 bytes to create subentries control instance.
 
         Args:
@@ -683,6 +718,7 @@ async def get_REDACTED_LDAP_BIND_PASSWORDistrative_areas(
         "to identify and return REDACTED_LDAP_BIND_PASSWORDistrative area boundaries."
     )
     raise NotImplementedError(msg)
+
 
 # TODO: Integration points for implementation:
 #

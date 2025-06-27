@@ -71,7 +71,15 @@ class TestFilterOperator:
     def test_filter_operator_completeness(self) -> None:
         """Test FilterOperator enumeration completeness."""
         expected_operators = {
-            "=", "~=", ">=", "<=", "=*", "substring", "&", "|", "!",
+            "=",
+            "~=",
+            ">=",
+            "<=",
+            "=*",
+            "substring",
+            "&",
+            "|",
+            "!",
         }
 
         actual_operators = {member.value for member in FilterOperator}
@@ -82,7 +90,15 @@ class TestFilterOperator:
         for operator in FilterOperator:
             assert isinstance(operator, FilterOperator)
             assert operator.value in {
-                "=", "~=", ">=", "<=", "=*", "substring", "&", "|", "!",
+                "=",
+                "~=",
+                ">=",
+                "<=",
+                "=*",
+                "substring",
+                "&",
+                "|",
+                "!",
             }
 
 
@@ -149,7 +165,9 @@ class TestFilterExpression:
     def test_filter_expression_is_simple(self) -> None:
         """Test is_simple method for complexity classification."""
         simple_expr = FilterExpression(filter_string="(cn=test)", complexity_score=1)
-        complex_expr = FilterExpression(filter_string="(&(cn=test)(sn=user))", complexity_score=3)
+        complex_expr = FilterExpression(
+            filter_string="(&(cn=test)(sn=user))", complexity_score=3
+        )
 
         assert simple_expr.is_simple() is True
         assert complex_expr.is_simple() is False
@@ -157,7 +175,9 @@ class TestFilterExpression:
     def test_filter_expression_is_complex(self) -> None:
         """Test is_complex method for complexity classification."""
         simple_expr = FilterExpression(filter_string="(cn=test)", complexity_score=1)
-        complex_expr = FilterExpression(filter_string="(&(cn=test)(sn=user))", complexity_score=3)
+        complex_expr = FilterExpression(
+            filter_string="(&(cn=test)(sn=user))", complexity_score=3
+        )
 
         assert simple_expr.is_complex() is False
         assert complex_expr.is_complex() is True
@@ -407,46 +427,43 @@ class TestFilterBuilder:
     def test_builder_and_filter(self) -> None:
         """Test building AND compound filter."""
         builder = FilterBuilder()
-        expr = (builder.and_()
-               .equal("cn", "test")
-               .equal("objectClass", "person")
-               .end()
-               .build())
+        expr = (
+            builder.and_()
+            .equal("cn", "test")
+            .equal("objectClass", "person")
+            .end()
+            .build()
+        )
 
         assert expr.filter_string == "(&(cn=test)(objectClass=person))"
 
     def test_builder_or_filter(self) -> None:
         """Test building OR compound filter."""
         builder = FilterBuilder()
-        expr = (builder.or_()
-               .equal("cn", "test1")
-               .equal("cn", "test2")
-               .end()
-               .build())
+        expr = builder.or_().equal("cn", "test1").equal("cn", "test2").end().build()
 
         assert expr.filter_string == "(|(cn=test1)(cn=test2))"
 
     def test_builder_not_filter(self) -> None:
         """Test building NOT compound filter."""
         builder = FilterBuilder()
-        expr = (builder.not_()
-               .equal("cn", "test")
-               .end()
-               .build())
+        expr = builder.not_().equal("cn", "test").end().build()
 
         assert expr.filter_string == "(!(cn=test))"
 
     def test_builder_nested_filters(self) -> None:
         """Test building nested compound filters."""
         builder = FilterBuilder()
-        expr = (builder.and_()
-               .equal("objectClass", "person")
-               .or_()
-               .equal("cn", "REDACTED_LDAP_BIND_PASSWORD")
-               .contains("title", "manager")
-               .end()
-               .end()
-               .build())
+        expr = (
+            builder.and_()
+            .equal("objectClass", "person")
+            .or_()
+            .equal("cn", "REDACTED_LDAP_BIND_PASSWORD")
+            .contains("title", "manager")
+            .end()
+            .end()
+            .build()
+        )
 
         filter_str = expr.filter_string
         assert filter_str.startswith("(&")
@@ -458,17 +475,19 @@ class TestFilterBuilder:
     def test_builder_complex_nested_structure(self) -> None:
         """Test building complex nested filter structure."""
         builder = FilterBuilder()
-        expr = (builder.and_()
-               .equal("objectClass", "person")
-               .or_()
-               .contains("cn", "REDACTED_LDAP_BIND_PASSWORD")
-               .not_()
-               .equal("accountExpired", "TRUE")
-               .end()
-               .end()
-               .greater_equal("uidNumber", 1000)
-               .end()
-               .build())
+        expr = (
+            builder.and_()
+            .equal("objectClass", "person")
+            .or_()
+            .contains("cn", "REDACTED_LDAP_BIND_PASSWORD")
+            .not_()
+            .equal("accountExpired", "TRUE")
+            .end()
+            .end()
+            .greater_equal("uidNumber", 1000)
+            .end()
+            .build()
+        )
 
         # Should be a complex nested structure
         assert expr.complexity_score > 5
@@ -481,11 +500,7 @@ class TestFilterBuilder:
         builder = FilterBuilder()
 
         # All methods should return builder for chaining
-        result = (builder
-                 .equal("cn", "test")
-                 .and_()
-                 .equal("objectClass", "person")
-                 .end())
+        result = builder.equal("cn", "test").and_().equal("objectClass", "person").end()
 
         assert result is builder
 
@@ -500,14 +515,18 @@ class TestFilterBuilder:
         """Test AND filter with insufficient conditions."""
         builder = FilterBuilder()
 
-        with pytest.raises(ValueError, match="AND filter requires at least .* conditions"):
+        with pytest.raises(
+            ValueError, match="AND filter requires at least .* conditions"
+        ):
             builder.and_().equal("cn", "test").end()
 
     def test_builder_or_filter_insufficient_conditions(self) -> None:
         """Test OR filter with insufficient conditions."""
         builder = FilterBuilder()
 
-        with pytest.raises(ValueError, match="OR filter requires at least .* conditions"):
+        with pytest.raises(
+            ValueError, match="OR filter requires at least .* conditions"
+        ):
             builder.or_().equal("cn", "test").end()
 
     def test_builder_not_filter_multiple_conditions(self) -> None:
@@ -515,10 +534,7 @@ class TestFilterBuilder:
         builder = FilterBuilder()
 
         with pytest.raises(ValueError, match="NOT filter requires exactly 1 condition"):
-            (builder.not_()
-             .equal("cn", "test1")
-             .equal("cn", "test2")
-             .end())
+            (builder.not_().equal("cn", "test1").equal("cn", "test2").end())
 
     def test_builder_build_without_conditions(self) -> None:
         """Test build() without adding conditions raises error."""
@@ -537,10 +553,7 @@ class TestFilterBuilder:
     def test_builder_build_multiple_top_level(self) -> None:
         """Test build() with multiple top-level filters."""
         builder = FilterBuilder()
-        expr = (builder
-               .equal("cn", "test")
-               .equal("objectClass", "person")
-               .build())
+        expr = builder.equal("cn", "test").equal("objectClass", "person").build()
 
         # Should wrap multiple top-level filters in AND
         assert expr.filter_string.startswith("(&")
@@ -571,15 +584,17 @@ class TestFilterBuilder:
 
         # Reset and build complex filter
         builder.reset()
-        complex_expr = (builder.and_()
-                       .equal("cn", "test")
-                       .equal("objectClass", "person")
-                       .or_()
-                       .contains("title", "REDACTED_LDAP_BIND_PASSWORD")
-                       .present("mail")
-                       .end()
-                       .end()
-                       .build())
+        complex_expr = (
+            builder.and_()
+            .equal("cn", "test")
+            .equal("objectClass", "person")
+            .or_()
+            .contains("title", "REDACTED_LDAP_BIND_PASSWORD")
+            .present("mail")
+            .end()
+            .end()
+            .build()
+        )
 
         assert complex_expr.complexity_score > 5
 
@@ -731,22 +746,24 @@ class TestFilterBuilderIntegration:
         builder = FilterBuilder()
 
         # Build a realistic corporate directory filter
-        expr = (builder.and_()
-               .equal("objectClass", "person")
-               .or_()
-               .contains("cn", "REDACTED_LDAP_BIND_PASSWORD")
-               .contains("title", "manager")
-               .and_()
-               .equal("department", "IT")
-               .not_()
-               .equal("accountExpired", "TRUE")
-               .end()
-               .end()
-               .end()
-               .greater_equal("uidNumber", 1000)
-               .present("mail")
-               .end()
-               .build())
+        expr = (
+            builder.and_()
+            .equal("objectClass", "person")
+            .or_()
+            .contains("cn", "REDACTED_LDAP_BIND_PASSWORD")
+            .contains("title", "manager")
+            .and_()
+            .equal("department", "IT")
+            .not_()
+            .equal("accountExpired", "TRUE")
+            .end()
+            .end()
+            .end()
+            .greater_equal("uidNumber", 1000)
+            .present("mail")
+            .end()
+            .build()
+        )
 
         # Verify structure and complexity
         assert expr.is_complex()
@@ -776,23 +793,25 @@ class TestFilterBuilderIntegration:
         builder = FilterBuilder()
 
         # Build deeply nested structure
-        expr = (builder.and_()
-               .or_()
-               .equal("cn", "test1")
-               .equal("cn", "test2")
-               .end()
-               .and_()
-               .present("objectClass")
-               .not_()
-               .equal("disabled", "TRUE")
-               .end()
-               .end()
-               .or_()
-               .contains("mail", "REDACTED_LDAP_BIND_PASSWORD")
-               .greater_equal("uidNumber", 1000)
-               .end()
-               .end()
-               .build())
+        expr = (
+            builder.and_()
+            .or_()
+            .equal("cn", "test1")
+            .equal("cn", "test2")
+            .end()
+            .and_()
+            .present("objectClass")
+            .not_()
+            .equal("disabled", "TRUE")
+            .end()
+            .end()
+            .or_()
+            .contains("mail", "REDACTED_LDAP_BIND_PASSWORD")
+            .greater_equal("uidNumber", 1000)
+            .end()
+            .end()
+            .build()
+        )
 
         # Should be valid and complex
         assert expr.is_valid
@@ -890,37 +909,43 @@ class TestFilterBuilderIntegration:
     def test_filter_composition_patterns(self) -> None:
         """Test common filter composition patterns."""
         # Pattern 1: User search filter
-        user_filter = (FilterBuilder()
-                      .and_()
-                      .equal("objectClass", "person")
-                      .or_()
-                      .contains("cn", "john")
-                      .contains("mail", "john")
-                      .contains("uid", "john")
-                      .end()
-                      .end()
-                      .build())
+        user_filter = (
+            FilterBuilder()
+            .and_()
+            .equal("objectClass", "person")
+            .or_()
+            .contains("cn", "john")
+            .contains("mail", "john")
+            .contains("uid", "john")
+            .end()
+            .end()
+            .build()
+        )
 
         # Pattern 2: Group membership filter
-        group_filter = (FilterBuilder()
-                       .and_()
-                       .equal("objectClass", "groupOfNames")
-                       .equal("member", "cn=john,ou=people,dc=example,dc=com")
-                       .end()
-                       .build())
+        group_filter = (
+            FilterBuilder()
+            .and_()
+            .equal("objectClass", "groupOfNames")
+            .equal("member", "cn=john,ou=people,dc=example,dc=com")
+            .end()
+            .build()
+        )
 
         # Pattern 3: Active account filter
-        active_filter = (FilterBuilder()
-                        .and_()
-                        .present("objectClass")
-                        .not_()
-                        .equal("accountExpired", "TRUE")
-                        .end()
-                        .not_()
-                        .equal("disabled", "TRUE")
-                        .end()
-                        .end()
-                        .build())
+        active_filter = (
+            FilterBuilder()
+            .and_()
+            .present("objectClass")
+            .not_()
+            .equal("accountExpired", "TRUE")
+            .end()
+            .not_()
+            .equal("disabled", "TRUE")
+            .end()
+            .end()
+            .build()
+        )
 
         # All patterns should be valid and properly structured
         for filter_expr in [user_filter, group_filter, active_filter]:
@@ -930,12 +955,14 @@ class TestFilterBuilderIntegration:
     def test_convenience_function_integration(self) -> None:
         """Test integration between builder and convenience functions."""
         # Build filter with builder
-        builder_filter = (FilterBuilder()
-                         .and_()
-                         .equal("cn", "test")
-                         .equal("objectClass", "person")
-                         .end()
-                         .build())
+        builder_filter = (
+            FilterBuilder()
+            .and_()
+            .equal("cn", "test")
+            .equal("objectClass", "person")
+            .end()
+            .build()
+        )
 
         # Build equivalent filter with convenience functions
         convenience_filter = and_filters(
@@ -974,11 +1001,13 @@ class TestFilterBuilderIntegration:
         # Build and discard many filters to test memory usage
         for i in range(100):
             builder = FilterBuilder()
-            expr = (builder.and_()
-                   .equal("cn", f"test{i}")
-                   .equal("objectClass", "person")
-                   .end()
-                   .build())
+            expr = (
+                builder.and_()
+                .equal("cn", f"test{i}")
+                .equal("objectClass", "person")
+                .end()
+                .build()
+            )
 
             # Use the filter to prevent optimization
             assert f"test{i}" in expr.filter_string

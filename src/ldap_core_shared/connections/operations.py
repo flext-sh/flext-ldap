@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 import ldap3
+from ldap3.core.exceptions import LDAPException
 
 from ldap_core_shared.connections.base import LDAPSearchConfig
 
@@ -29,7 +31,9 @@ class LDAPOperations:
     - D: Depends on connection abstraction
     """
 
-    def __init__(self, get_connection_func: Callable[[], AsyncContextManager[Any]]) -> None:
+    def __init__(
+        self, get_connection_func: Callable[[], AsyncContextManager[Any]],
+    ) -> None:
         """Initialize LDAP operations with connection provider.
 
         Args:
@@ -87,7 +91,7 @@ class LDAPOperations:
                         "attributes": dict(entry.entry_attributes_as_dict),
                     }
 
-            except ldap3.LDAPException as e:
+            except LDAPException as e:
                 logger.exception("LDAP search error: %s", e)
                 raise
 
@@ -119,7 +123,7 @@ class LDAPOperations:
 
                 return result
 
-            except ldap3.LDAPException as e:
+            except LDAPException as e:
                 logger.exception("LDAP modify error for %s: %s", dn, e)
                 raise
 
@@ -143,7 +147,7 @@ class LDAPOperations:
 
                 return result
 
-            except ldap3.LDAPException as e:
+            except LDAPException as e:
                 logger.exception("LDAP add error for %s: %s", dn, e)
                 raise
 
@@ -166,7 +170,7 @@ class LDAPOperations:
 
                 return result
 
-            except ldap3.LDAPException as e:
+            except LDAPException as e:
                 logger.exception("LDAP delete error for %s: %s", dn, e)
                 raise
 
@@ -202,7 +206,7 @@ class LDAPOperations:
 
                 return None
 
-            except ldap3.LDAPException as e:
+            except LDAPException as e:
                 logger.exception("LDAP get entry error for %s: %s", dn, e)
                 raise
 
@@ -221,7 +225,7 @@ class LDAPOperations:
             try:
                 return connection.compare(dn, attribute, value)
 
-            except ldap3.LDAPException as e:
+            except LDAPException as e:
                 logger.exception("LDAP compare error for %s.%s: %s", dn, attribute, e)
                 raise
 
@@ -247,15 +251,13 @@ class LDAPOperations:
                             else []
                         ),
                         "syntaxes": (
-                            list(schema.syntaxes.keys())
-                            if schema.syntaxes
-                            else []
+                            list(schema.syntaxes.keys()) if schema.syntaxes else []
                         ),
                     }
                 logger.warning("Schema information not available")
                 return {"object_classes": [], "attributes": [], "syntaxes": []}
 
-            except ldap3.LDAPException as e:
+            except LDAPException as e:
                 logger.exception("LDAP schema error: %s", e)
                 raise
 

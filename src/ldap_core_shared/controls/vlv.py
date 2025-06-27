@@ -45,8 +45,9 @@ References:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -65,34 +66,41 @@ class VLVRequest(BaseModel):
 
     # Target positioning
     target_type: VLVTargetType = Field(
-        default=VLVTargetType.BY_OFFSET, description="Type of target positioning",
+        default=VLVTargetType.BY_OFFSET,
+        description="Type of target positioning",
     )
 
-    target_position: Optional[int] = Field(
-        default=None, description="Target position (1-based) for offset targeting",
+    target_position: int | None = Field(
+        default=None,
+        description="Target position (1-based) for offset targeting",
     )
 
-    target_value: Optional[str] = Field(
-        default=None, description="Target value for value-based targeting",
+    target_value: str | None = Field(
+        default=None,
+        description="Target value for value-based targeting",
     )
 
     # Window configuration
     before_count: int = Field(
-        default=0, description="Number of entries to return before target",
+        default=0,
+        description="Number of entries to return before target",
     )
 
     after_count: int = Field(
-        default=9, description="Number of entries to return after target",
+        default=9,
+        description="Number of entries to return after target",
     )
 
     # Content information
     content_count: int = Field(
-        default=0, description="Estimated total content count (0 = unknown)",
+        default=0,
+        description="Estimated total content count (0 = unknown)",
     )
 
     # Context information from previous requests
-    context_id: Optional[bytes] = Field(
-        default=None, description="Context ID from previous VLV response",
+    context_id: bytes | None = Field(
+        default=None,
+        description="Context ID from previous VLV response",
     )
 
     def get_window_size(self) -> int:
@@ -126,29 +134,34 @@ class VLVResponse(BaseModel):
 
     content_count: int = Field(description="Total content count in result set")
 
-    context_id: Optional[bytes] = Field(
-        default=None, description="Context ID for subsequent requests",
+    context_id: bytes | None = Field(
+        default=None,
+        description="Context ID for subsequent requests",
     )
 
     # Response metadata
     result_code: int = Field(default=0, description="VLV operation result code")
 
-    result_message: Optional[str] = Field(
-        default=None, description="VLV operation result message",
+    result_message: str | None = Field(
+        default=None,
+        description="VLV operation result message",
     )
 
     # Window information
     actual_before_count: int = Field(
-        default=0, description="Actual number of entries returned before target",
+        default=0,
+        description="Actual number of entries returned before target",
     )
 
     actual_after_count: int = Field(
-        default=0, description="Actual number of entries returned after target",
+        default=0,
+        description="Actual number of entries returned after target",
     )
 
     # Performance metadata
-    server_processing_time: Optional[float] = Field(
-        default=None, description="Server processing time in seconds",
+    server_processing_time: float | None = Field(
+        default=None,
+        description="Server processing time in seconds",
     )
 
     def get_current_page_info(self) -> dict[str, Any]:
@@ -218,12 +231,12 @@ class VLVControl(LDAPControl):
 
     def __init__(
         self,
-        target_position: Optional[int] = None,
-        target_value: Optional[str] = None,
+        target_position: int | None = None,
+        target_value: str | None = None,
         before_count: int = 0,
         after_count: int = 9,
         content_count: int = 0,
-        context_id: Optional[bytes] = None,
+        context_id: bytes | None = None,
         criticality: bool = False,
     ) -> None:
         """Initialize VLV control.
@@ -261,7 +274,7 @@ class VLVControl(LDAPControl):
         self._request.validate_request()
 
         # Initialize response storage
-        self._response: Optional[VLVResponse] = None
+        self._response: VLVResponse | None = None
         self._response_available = False
 
         # Navigation state
@@ -313,7 +326,7 @@ class VLVControl(LDAPControl):
         )
         raise NotImplementedError(msg)
 
-    def goto_page(self, page_number: int, page_size: Optional[int] = None) -> None:
+    def goto_page(self, page_number: int, page_size: int | None = None) -> None:
         """Navigate to specific page.
 
         Args:
@@ -415,7 +428,7 @@ class VLVControl(LDAPControl):
         self.control_value = self._encode_request()
 
     @property
-    def response(self) -> Optional[VLVResponse]:
+    def response(self) -> VLVResponse | None:
         """Get VLV control response."""
         return self._response
 
@@ -457,7 +470,7 @@ class VLVControl(LDAPControl):
 
         return info
 
-    def encode_value(self) -> Optional[bytes]:
+    def encode_value(self) -> bytes | None:
         """Encode VLV control value to ASN.1 bytes.
 
         Returns:
@@ -466,7 +479,7 @@ class VLVControl(LDAPControl):
         return self.control_value
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> VLVControl:
+    def decode_value(cls, control_value: bytes | None) -> VLVControl:
         """Decode ASN.1 bytes to create VLV control instance.
 
         Args:
@@ -500,7 +513,7 @@ class VLVBrowsingHelper:
         self,
         search_base: str,
         search_filter: str = "(objectClass=*)",
-        sort_attributes: Optional[list[tuple[str, str]]] = None,
+        sort_attributes: list[tuple[str, str]] | None = None,
         page_size: int = 20,
     ) -> VLVPaginatedSearch:
         """Create paginated search with VLV.
@@ -530,7 +543,7 @@ class VLVBrowsingHelper:
         search_base: str,
         search_filter: str = "(objectClass=*)",
         sort_attribute: str = "cn",
-        browse_callback: Optional[Callable[..., Any]] = None,
+        browse_callback: Callable[..., Any] | None = None,
     ) -> None:
         """Browse directory using VLV for efficient navigation.
 
@@ -610,7 +623,7 @@ class VLVPaginatedSearch:
         )
         raise NotImplementedError(msg)
 
-    async def next_page(self) -> Optional[list[Any]]:
+    async def next_page(self) -> list[Any] | None:
         """Get next page of results.
 
         Returns:
@@ -620,7 +633,7 @@ class VLVPaginatedSearch:
             return await self.goto_page(self._current_page + 1)
         return None
 
-    async def previous_page(self) -> Optional[list[Any]]:
+    async def previous_page(self) -> list[Any] | None:
         """Get previous page of results.
 
         Returns:
@@ -651,7 +664,7 @@ class VLVPaginatedSearch:
 def create_vlv_control(
     page_number: int = 1,
     page_size: int = 20,
-    target_value: Optional[str] = None,
+    target_value: str | None = None,
 ) -> VLVControl:
     """Create VLV control for pagination.
 
@@ -718,6 +731,7 @@ async def browse_large_directory(
 
     # TODO: Set up browsing configuration
     # This would configure the helper for efficient browsing
+
 
 # TODO: Integration points for implementation:
 #

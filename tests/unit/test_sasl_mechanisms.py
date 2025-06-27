@@ -6,7 +6,7 @@ GSSAPI, and other mechanisms equivalent to perl-Authen-SASL mechanisms.
 
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -62,10 +62,11 @@ class TestPlainMechanism:
     """Test cases for SASL PLAIN mechanism."""
 
     @pytest.fixture
-    def plain_mechanism(self) -> Union[Any, Mock]:
+    def plain_mechanism(self) -> Any | Mock:
         """Create PLAIN mechanism instance for testing."""
         try:
             from ldap_core_shared.protocols.sasl.mechanisms.plain import PlainMechanism
+
             return PlainMechanism()
         except ImportError:
             return Mock()
@@ -81,7 +82,7 @@ class TestPlainMechanism:
 
     @pytest.mark.unit
     @pytest.mark.sasl
-    def test_plain_mechanism_name(self, plain_mechanism: Union[Any, Mock]) -> None:
+    def test_plain_mechanism_name(self, plain_mechanism: Any | Mock) -> None:
         """Test PLAIN mechanism name."""
         try:
             name = plain_mechanism.get_mechanism_name()
@@ -92,7 +93,9 @@ class TestPlainMechanism:
 
     @pytest.mark.unit
     @pytest.mark.sasl
-    def test_plain_mechanism_capabilities(self, plain_mechanism: Union[Any, Mock]) -> None:
+    def test_plain_mechanism_capabilities(
+        self, plain_mechanism: Any | Mock
+    ) -> None:
         """Test PLAIN mechanism capabilities."""
         try:
             if hasattr(plain_mechanism, "get_capabilities"):
@@ -106,7 +109,9 @@ class TestPlainMechanism:
 
     @pytest.mark.unit
     @pytest.mark.sasl
-    def test_plain_authentication_start(self, plain_mechanism: Union[Any, Mock], plain_credentials: dict[str, str]) -> None:
+    def test_plain_authentication_start(
+        self, plain_mechanism: Any | Mock, plain_credentials: dict[str, str]
+    ) -> None:
         """Test PLAIN mechanism authentication start."""
         try:
             auth_state = plain_mechanism.start(plain_credentials)
@@ -120,7 +125,9 @@ class TestPlainMechanism:
 
     @pytest.mark.unit
     @pytest.mark.sasl
-    def test_plain_initial_response(self, plain_mechanism: Union[Any, Mock], plain_credentials: dict[str, str]) -> None:
+    def test_plain_initial_response(
+        self, plain_mechanism: Any | Mock, plain_credentials: dict[str, str]
+    ) -> None:
         """Test PLAIN mechanism initial response generation."""
         try:
             auth_state = plain_mechanism.start(plain_credentials)
@@ -144,7 +151,9 @@ class TestPlainMechanism:
 
     @pytest.mark.unit
     @pytest.mark.sasl
-    def test_plain_authentication_step(self, plain_mechanism: Union[Any, Mock], plain_credentials: dict[str, str]) -> None:
+    def test_plain_authentication_step(
+        self, plain_mechanism: Any | Mock, plain_credentials: dict[str, str]
+    ) -> None:
         """Test PLAIN mechanism authentication step."""
         try:
             auth_state = plain_mechanism.start(plain_credentials)
@@ -155,14 +164,16 @@ class TestPlainMechanism:
 
                 if response:
                     assert hasattr(response, "data")
-                    assert isinstance(response.data, (bytes, type(None)))
+                    assert isinstance(response.data, bytes | type(None))
 
         except (AttributeError, ImportError, NotImplementedError):
             pytest.skip("PLAIN authentication step not implemented")
 
     @pytest.mark.unit
     @pytest.mark.sasl
-    def test_plain_completion(self, plain_mechanism: Union[Any, Mock], plain_credentials: dict[str, str]) -> None:
+    def test_plain_completion(
+        self, plain_mechanism: Any | Mock, plain_credentials: dict[str, str]
+    ) -> None:
         """Test PLAIN mechanism completion."""
         try:
             auth_state = plain_mechanism.start(plain_credentials)
@@ -182,7 +193,7 @@ class TestPlainMechanism:
 
     @pytest.mark.unit
     @pytest.mark.sasl
-    def test_plain_invalid_credentials(self, plain_mechanism: Union[Any, Mock]) -> None:
+    def test_plain_invalid_credentials(self, plain_mechanism: Any | Mock) -> None:
         """Test PLAIN mechanism with invalid credentials."""
         try:
             # Test missing username
@@ -211,6 +222,7 @@ class TestDigestMD5Mechanism:
             from ldap_core_shared.protocols.sasl.mechanisms.digest_md5 import (
                 DigestMD5Mechanism,
             )
+
             return DigestMD5Mechanism()
         except ImportError:
             return Mock()
@@ -233,8 +245,8 @@ class TestDigestMD5Mechanism:
             'realm="example.com",'
             'nonce="OThlMjNmZWQxNmI2MjM2NjYwZjQ4ZjBhODc0ODQ5Nzk=",'
             'qop="auth,auth-int,auth-conf",'
-            'charset=utf-8,'
-            'algorithm=md5-sess'
+            "charset=utf-8,"
+            "algorithm=md5-sess"
         )
         return challenge_data.encode("utf-8")
 
@@ -265,7 +277,9 @@ class TestDigestMD5Mechanism:
 
     @pytest.mark.unit
     @pytest.mark.sasl
-    def test_digest_authentication_start(self, digest_mechanism, digest_credentials) -> None:
+    def test_digest_authentication_start(
+        self, digest_mechanism, digest_credentials
+    ) -> None:
         """Test DIGEST-MD5 mechanism authentication start."""
         try:
             auth_state = digest_mechanism.start(digest_credentials)
@@ -279,7 +293,9 @@ class TestDigestMD5Mechanism:
 
     @pytest.mark.unit
     @pytest.mark.sasl
-    def test_digest_challenge_processing(self, digest_mechanism, digest_credentials, sample_challenge) -> None:
+    def test_digest_challenge_processing(
+        self, digest_mechanism, digest_credentials, sample_challenge
+    ) -> None:
         """Test DIGEST-MD5 challenge processing."""
         try:
             auth_state = digest_mechanism.start(digest_credentials)
@@ -301,7 +317,9 @@ class TestDigestMD5Mechanism:
 
     @pytest.mark.unit
     @pytest.mark.sasl
-    def test_digest_response_generation(self, digest_mechanism, digest_credentials, sample_challenge) -> None:
+    def test_digest_response_generation(
+        self, digest_mechanism, digest_credentials, sample_challenge
+    ) -> None:
         """Test DIGEST-MD5 response generation."""
         try:
             auth_state = digest_mechanism.start(digest_credentials)
@@ -364,6 +382,7 @@ class TestGSSAPIMechanism:
             from ldap_core_shared.protocols.sasl.mechanisms.gssapi import (
                 GSSAPIMechanism,
             )
+
             return GSSAPIMechanism()
         except ImportError:
             return Mock()
@@ -405,7 +424,9 @@ class TestGSSAPIMechanism:
 
     @pytest.mark.unit
     @pytest.mark.sasl
-    def test_gssapi_authentication_start(self, gssapi_mechanism, gssapi_credentials) -> None:
+    def test_gssapi_authentication_start(
+        self, gssapi_mechanism, gssapi_credentials
+    ) -> None:
         """Test GSSAPI mechanism authentication start."""
         try:
             auth_state = gssapi_mechanism.start(gssapi_credentials)
@@ -419,7 +440,9 @@ class TestGSSAPIMechanism:
 
     @pytest.mark.unit
     @pytest.mark.sasl
-    def test_gssapi_context_creation(self, gssapi_mechanism, gssapi_credentials) -> None:
+    def test_gssapi_context_creation(
+        self, gssapi_mechanism, gssapi_credentials
+    ) -> None:
         """Test GSSAPI security context creation."""
         try:
             auth_state = gssapi_mechanism.start(gssapi_credentials)
@@ -471,6 +494,7 @@ class TestAnonymousMechanism:
             from ldap_core_shared.protocols.sasl.mechanisms.anonymous import (
                 AnonymousMechanism,
             )
+
             return AnonymousMechanism()
         except ImportError:
             return Mock()
@@ -534,6 +558,7 @@ class TestExternalMechanism:
             from ldap_core_shared.protocols.sasl.mechanisms.external import (
                 ExternalMechanism,
             )
+
             return ExternalMechanism()
         except ImportError:
             return Mock()
@@ -669,6 +694,7 @@ class TestSASLMechanismPerformance:
             import time
 
             from ldap_core_shared.protocols.sasl.mechanisms.plain import PlainMechanism
+
             start_time = time.time()
 
             # Perform many PLAIN authentications
@@ -702,6 +728,7 @@ class TestSASLMechanismPerformance:
             from ldap_core_shared.protocols.sasl.mechanisms.digest_md5 import (
                 DigestMD5Mechanism,
             )
+
             start_time = time.time()
 
             # Perform many DIGEST-MD5 authentications

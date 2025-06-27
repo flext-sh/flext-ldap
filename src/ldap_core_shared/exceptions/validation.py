@@ -5,7 +5,7 @@ Exception classes for data validation and schema compliance errors.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from ldap_core_shared.exceptions.base import LDAPError
 
@@ -20,9 +20,9 @@ class ValidationError(LDAPError):
         self,
         message: str,
         *,
-        field_name: Optional[str] = None,
-        field_value: Optional[Any] = None,
-        validation_rule: Optional[str] = None,
+        field_name: str | None = None,
+        field_value: Any | None = None,
+        validation_rule: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize validation error.
@@ -53,9 +53,9 @@ class SchemaValidationError(ValidationError):
         self,
         message: str,
         *,
-        object_class: Optional[str] = None,
-        attribute_name: Optional[str] = None,
-        schema_rule: Optional[str] = None,
+        object_class: str | None = None,
+        attribute_name: str | None = None,
+        schema_rule: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize schema validation error.
@@ -86,8 +86,8 @@ class DNValidationError(ValidationError):
         self,
         message: str,
         *,
-        dn: Optional[str] = None,
-        component: Optional[str] = None,
+        dn: str | None = None,
+        component: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize DN validation error.
@@ -115,9 +115,9 @@ class FilterValidationError(ValidationError):
         self,
         message: str,
         *,
-        filter_string: Optional[str] = None,
-        filter_component: Optional[str] = None,
-        syntax_error: Optional[str] = None,
+        filter_string: str | None = None,
+        filter_component: str | None = None,
+        syntax_error: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize filter validation error.
@@ -148,10 +148,10 @@ class AttributeValidationError(ValidationError):
         self,
         message: str,
         *,
-        attribute_name: Optional[str] = None,
-        attribute_value: Optional[Any] = None,
-        attribute_syntax: Optional[str] = None,
-        validation_type: Optional[str] = None,
+        attribute_name: str | None = None,
+        attribute_value: Any | None = None,
+        attribute_syntax: str | None = None,
+        validation_type: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize attribute validation error.
@@ -185,9 +185,9 @@ class LDIFValidationError(ValidationError):
         self,
         message: str,
         *,
-        line_number: Optional[int] = None,
-        ldif_line: Optional[str] = None,
-        entry_dn: Optional[str] = None,
+        line_number: int | None = None,
+        ldif_line: str | None = None,
+        entry_dn: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize LDIF validation error.

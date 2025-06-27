@@ -37,7 +37,7 @@ References:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar
 
 from ldap_core_shared.protocols.sasl.callback import (
     AuthorizeCallback,
@@ -86,27 +86,29 @@ class ExternalMechanism(SASLMechanism):
     """
 
     MECHANISM_NAME: ClassVar[str] = "EXTERNAL"
-    MECHANISM_CAPABILITIES: ClassVar[SASLMechanismCapabilities] = SASLMechanismCapabilities(
-        mechanism_type=SASLMechanismType.CERTIFICATE,
-        supports_initial_response=True,
-        supports_server_challenges=False,  # EXTERNAL is single-message
-        requires_server_name=False,
-        requires_realm=False,
-        security_flags=[
-            SASLSecurityFlag.NO_ANONYMOUS,     # Provides authentication
-            SASLSecurityFlag.NO_PLAIN_TEXT,   # No plaintext credentials
-            SASLSecurityFlag.NO_ACTIVE,       # Depends on external security
-        ],
-        qop_supported=["auth"],  # Only authentication, security from transport
-        max_security_strength=0,  # Security from external mechanism
-        computational_cost=1,  # Very low computational cost
-        network_round_trips=0,  # Initial response only
+    MECHANISM_CAPABILITIES: ClassVar[SASLMechanismCapabilities] = (
+        SASLMechanismCapabilities(
+            mechanism_type=SASLMechanismType.CERTIFICATE,
+            supports_initial_response=True,
+            supports_server_challenges=False,  # EXTERNAL is single-message
+            requires_server_name=False,
+            requires_realm=False,
+            security_flags=[
+                SASLSecurityFlag.NO_ANONYMOUS,  # Provides authentication
+                SASLSecurityFlag.NO_PLAIN_TEXT,  # No plaintext credentials
+                SASLSecurityFlag.NO_ACTIVE,  # Depends on external security
+            ],
+            qop_supported=["auth"],  # Only authentication, security from transport
+            max_security_strength=0,  # Security from external mechanism
+            computational_cost=1,  # Very low computational cost
+            network_round_trips=0,  # Initial response only
+        )
     )
 
     def __init__(
         self,
         callback_handler: SASLCallbackHandler,
-        context: Optional[SASLContext] = None,
+        context: SASLContext | None = None,
     ) -> None:
         """Initialize EXTERNAL mechanism.
 
@@ -117,10 +119,10 @@ class ExternalMechanism(SASLMechanism):
         super().__init__(callback_handler, context)
 
         # EXTERNAL mechanism state
-        self._authorization_id: Optional[str] = None
+        self._authorization_id: str | None = None
         self._response_sent = False
 
-    def evaluate_challenge(self, challenge: bytes) -> Optional[bytes]:
+    def evaluate_challenge(self, challenge: bytes) -> bytes | None:
         """Evaluate challenge and generate EXTERNAL response.
 
         For EXTERNAL mechanism:
@@ -252,7 +254,10 @@ class ExternalMechanism(SASLMechanism):
         }
 
         # Try to determine external authentication source
-        if hasattr(self.callback_handler, "hostname") and self.callback_handler.hostname:
+        if (
+            hasattr(self.callback_handler, "hostname")
+            and self.callback_handler.hostname
+        ):
             info["source"] = "tls"  # Likely TLS client certificate
 
         if self._authorization_id:
@@ -278,7 +283,9 @@ class ExternalMechanism(SASLMechanism):
 
     def __str__(self) -> str:
         """String representation."""
-        authz_info = f", authz={self._authorization_id}" if self._authorization_id else ""
+        authz_info = (
+            f", authz={self._authorization_id}" if self._authorization_id else ""
+        )
         return f"ExternalMechanism(complete={self.is_complete()}{authz_info})"
 
     def __repr__(self) -> str:

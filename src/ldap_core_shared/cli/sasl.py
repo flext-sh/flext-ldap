@@ -16,14 +16,14 @@ Example Usage:
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 
 def run_sasl_test(
     mechanism: str,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
-    realm: Optional[str] = None,
+    username: str | None = None,
+    password: str | None = None,
+    realm: str | None = None,
     server: str = "localhost",
     service: str = "ldap",
     interactive: bool = False,
@@ -55,8 +55,15 @@ def run_sasl_test(
 
         # Create and configure client
         client = _create_sasl_client(
-            mechanism, username, password, realm, server, service, interactive,
-            SASLCallbackHandler, SASLClient,
+            mechanism,
+            username,
+            password,
+            realm,
+            server,
+            service,
+            interactive,
+            SASLCallbackHandler,
+            SASLClient,
         )
 
         # Start authentication process
@@ -84,6 +91,7 @@ def run_sasl_test(
     except Exception:
         if verbose:
             import traceback
+
             traceback.print_exc()
         return False
 
@@ -148,6 +156,7 @@ def sasl_cli() -> None:
     # Show available mechanisms
     try:
         from ldap_core_shared.protocols.sasl.mechanism import SASLMechanismRegistry
+
         SASLMechanismRegistry.get_available_mechanisms()
     except ImportError:
         pass
@@ -169,9 +178,9 @@ def _is_mechanism_available(mechanism: str, registry_class: type[Any]) -> bool:
 
 def _create_sasl_client(
     mechanism: str,
-    username: Optional[str],
-    password: Optional[str],
-    realm: Optional[str],
+    username: str | None,
+    password: str | None,
+    realm: str | None,
     server: str,
     service: str,
     interactive: bool,

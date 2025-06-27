@@ -42,8 +42,8 @@ References:
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
-from typing import Any, Optional, Union
+from datetime import UTC, datetime
+from typing import Any, ClassVar
 
 from ldap_core_shared.protocols.asn1.constants import (
     ASN1_BIT_STRING,
@@ -65,12 +65,12 @@ from ldap_core_shared.protocols.asn1.constants import (
 from ldap_core_shared.protocols.asn1.elements import ASN1Element, ASN1Tag
 
 # Validation constants for ASN.1 types
-BIT_STRING_MAX_UNUSED_BITS = 7      # Maximum unused bits in BIT STRING (0-7)
-BIT_STRING_MIN_UNUSED_BITS = 0      # Minimum unused bits in BIT STRING
-OID_MIN_COMPONENTS = 2              # Minimum components for valid OID
+BIT_STRING_MAX_UNUSED_BITS = 7  # Maximum unused bits in BIT STRING (0-7)
+BIT_STRING_MIN_UNUSED_BITS = 0  # Minimum unused bits in BIT STRING
+OID_MIN_COMPONENTS = 2  # Minimum components for valid OID
 OID_VALID_FIRST_COMPONENTS = [0, 1, 2]  # Valid values for first OID component
-OID_MAX_SECOND_COMPONENT_01 = 39     # Max value for second component when first is 0 or 1
-ASCII_MAX_VALUE = 127                # Maximum value for 7-bit ASCII characters (0-127)
+OID_MAX_SECOND_COMPONENT_01 = 39  # Max value for second component when first is 0 or 1
+ASCII_MAX_VALUE = 127  # Maximum value for 7-bit ASCII characters (0-127)
 
 
 class ASN1Boolean(ASN1Element):
@@ -88,7 +88,7 @@ class ASN1Boolean(ASN1Element):
     def __init__(
         self,
         value: bool = False,
-        tag: Optional[ASN1Tag] = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: bool = False,
     ) -> None:
@@ -120,9 +120,9 @@ class ASN1Boolean(ASN1Element):
             Encoded boolean as bytes
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
-        
+
         # BOOLEAN content: 0xFF for True, 0x00 for False
-        content = b"\xFF" if self._value else b"\x00"
+        content = b"\xff" if self._value else b"\x00"
         return TLVEncoder.encode_tlv(self.get_tag(), content, definite=True)
 
     @classmethod
@@ -136,33 +136,38 @@ class ASN1Boolean(ASN1Element):
         Returns:
             Tuple of (decoded boolean, next offset)
         """
-        from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
-        
         if offset >= len(data):
-            raise ValueError("Insufficient data for BOOLEAN decoding")
-        
+            msg = "Insufficient data for BOOLEAN decoding"
+            raise ValueError(msg)
+
         # Check tag
         expected_tag = cls().get_default_tag()
-        if data[offset] != (expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number):
-            raise ValueError(f"Expected BOOLEAN tag, got {data[offset]:02x}")
-        
+        if data[offset] != (
+            expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number
+        ):
+            msg = f"Expected BOOLEAN tag, got {data[offset]:02x}"
+            raise ValueError(msg)
+
         # Parse length
         length_offset = offset + 1
         if length_offset >= len(data):
-            raise ValueError("Insufficient data for length")
-        
+            msg = "Insufficient data for length"
+            raise ValueError(msg)
+
         length = data[length_offset]
         if length != 1:
-            raise ValueError(f"BOOLEAN length must be 1, got {length}")
-        
+            msg = f"BOOLEAN length must be 1, got {length}"
+            raise ValueError(msg)
+
         # Parse value
         value_offset = length_offset + 1
         if value_offset >= len(data):
-            raise ValueError("Insufficient data for BOOLEAN value")
-        
+            msg = "Insufficient data for BOOLEAN value"
+            raise ValueError(msg)
+
         value_byte = data[value_offset]
         value = value_byte != 0  # Any non-zero value is True
-        
+
         return cls(value), value_offset + 1
 
     def validate(self) -> list[str]:
@@ -194,7 +199,7 @@ class ASN1Integer(ASN1Element):
     def __init__(
         self,
         value: int = 0,
-        tag: Optional[ASN1Tag] = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: int = 0,
     ) -> None:
@@ -226,9 +231,14 @@ class ASN1Integer(ASN1Element):
             Encoded integer as bytes
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
-        
+
         value = self._value
-        
+
+        # Type guard: ensure value is an integer
+        if not isinstance(value, int):
+            msg = f"ASN1Integer value must be int, got {type(value).__name__}"
+            raise TypeError(msg)
+
         # Convert integer to two's complement bytes
         if value == 0:
             content = b"\x00"
@@ -236,7 +246,7 @@ class ASN1Integer(ASN1Element):
             # Positive integer
             byte_length = (value.bit_length() + 7) // 8
             content = value.to_bytes(byte_length, byteorder="big", signed=False)
-            
+
             # Add padding byte if MSB is set (to avoid negative interpretation)
             if content[0] & 0x80:
                 content = b"\x00" + content
@@ -244,7 +254,7 @@ class ASN1Integer(ASN1Element):
             # Negative integer (two's complement)
             byte_length = (value.bit_length() + 8) // 8
             content = value.to_bytes(byte_length, byteorder="big", signed=True)
-        
+
         return TLVEncoder.encode_tlv(self.get_tag(), content, definite=True)
 
     @classmethod
@@ -259,32 +269,39 @@ class ASN1Integer(ASN1Element):
             Tuple of (decoded integer, next offset)
         """
         if offset >= len(data):
-            raise ValueError("Insufficient data for INTEGER decoding")
-        
+            msg = "Insufficient data for INTEGER decoding"
+            raise ValueError(msg)
+
         # Check tag
         expected_tag = cls().get_default_tag()
-        if data[offset] != (expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number):
-            raise ValueError(f"Expected INTEGER tag, got {data[offset]:02x}")
-        
+        if data[offset] != (
+            expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number
+        ):
+            msg = f"Expected INTEGER tag, got {data[offset]:02x}"
+            raise ValueError(msg)
+
         # Parse length
         length_offset = offset + 1
         if length_offset >= len(data):
-            raise ValueError("Insufficient data for length")
-        
+            msg = "Insufficient data for length"
+            raise ValueError(msg)
+
         length = data[length_offset]
         if length == 0:
-            raise ValueError("INTEGER length cannot be 0")
-        
+            msg = "INTEGER length cannot be 0"
+            raise ValueError(msg)
+
         # Parse value bytes
         value_offset = length_offset + 1
         if value_offset + length > len(data):
-            raise ValueError("Insufficient data for INTEGER value")
-        
-        value_bytes = data[value_offset:value_offset + length]
-        
+            msg = "Insufficient data for INTEGER value"
+            raise ValueError(msg)
+
+        value_bytes = data[value_offset : value_offset + length]
+
         # Convert from two's complement
         value = int.from_bytes(value_bytes, byteorder="big", signed=True)
-        
+
         return cls(value), value_offset + length
 
     def validate(self) -> list[str]:
@@ -320,9 +337,9 @@ class ASN1BitString(ASN1Element):
 
     def __init__(
         self,
-        value: Union[str, bytes] = b"",
+        value: str | bytes = b"",
         unused_bits: int = 0,
-        tag: Optional[ASN1Tag] = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: Any = None,
     ) -> None:
@@ -397,7 +414,7 @@ class ASN1BitString(ASN1Element):
         # Convert to bytes
         bytes_data = b""
         for i in range(0, len(padded), 8):
-            byte_bits = padded[i:i + 8]
+            byte_bits = padded[i : i + 8]
             byte_value = int(byte_bits, 2)
             bytes_data += bytes([byte_value])
 
@@ -433,7 +450,7 @@ class ASN1BitString(ASN1Element):
             Encoded bit string as bytes
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
-        
+
         # BIT STRING content: unused_bits_byte + bit_data
         content = bytes([self._unused_bits]) + self._bytes_data
         return TLVEncoder.encode_tlv(self.get_tag(), content, definite=True)
@@ -450,33 +467,41 @@ class ASN1BitString(ASN1Element):
             Tuple of (decoded bit string, next offset)
         """
         if offset >= len(data):
-            raise ValueError("Insufficient data for BIT STRING decoding")
-        
+            msg = "Insufficient data for BIT STRING decoding"
+            raise ValueError(msg)
+
         # Check tag
         expected_tag = cls().get_default_tag()
-        if data[offset] != (expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number):
-            raise ValueError(f"Expected BIT STRING tag, got {data[offset]:02x}")
-        
+        if data[offset] != (
+            expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number
+        ):
+            msg = f"Expected BIT STRING tag, got {data[offset]:02x}"
+            raise ValueError(msg)
+
         # Parse length
         length_offset = offset + 1
         if length_offset >= len(data):
-            raise ValueError("Insufficient data for length")
-        
+            msg = "Insufficient data for length"
+            raise ValueError(msg)
+
         length = data[length_offset]
         if length == 0:
-            raise ValueError("BIT STRING length cannot be 0")
-        
+            msg = "BIT STRING length cannot be 0"
+            raise ValueError(msg)
+
         # Parse unused bits and data
         value_offset = length_offset + 1
         if value_offset + length > len(data):
-            raise ValueError("Insufficient data for BIT STRING value")
-        
+            msg = "Insufficient data for BIT STRING value"
+            raise ValueError(msg)
+
         unused_bits = data[value_offset]
         if unused_bits > 7:
-            raise ValueError(f"Invalid unused bits count: {unused_bits}")
-        
-        bit_data = data[value_offset + 1:value_offset + length]
-        
+            msg = f"Invalid unused bits count: {unused_bits}"
+            raise ValueError(msg)
+
+        bit_data = data[value_offset + 1 : value_offset + length]
+
         # Create from bytes but ensure consistent value representation
         instance = cls(bit_data, unused_bits)
         return instance, value_offset + length
@@ -489,7 +514,10 @@ class ASN1BitString(ASN1Element):
         """
         errors = []
 
-        if self._unused_bits < BIT_STRING_MIN_UNUSED_BITS or self._unused_bits > BIT_STRING_MAX_UNUSED_BITS:
+        if (
+            self._unused_bits < BIT_STRING_MIN_UNUSED_BITS
+            or self._unused_bits > BIT_STRING_MAX_UNUSED_BITS
+        ):
             errors.append(f"Unused bits must be 0-7, got {self._unused_bits}")
 
         if isinstance(self._value, str):
@@ -518,9 +546,9 @@ class ASN1OctetString(ASN1Element):
 
     def __init__(
         self,
-        value: Union[str, bytes] = b"",
+        value: str | bytes = b"",
         encoding: str = DEFAULT_STRING_ENCODING,
-        tag: Optional[ASN1Tag] = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: Any = None,
     ) -> None:
@@ -563,7 +591,7 @@ class ASN1OctetString(ASN1Element):
         """
         return self._bytes_data
 
-    def get_string(self, encoding: Optional[str] = None) -> Optional[str]:
+    def get_string(self, encoding: str | None = None) -> str | None:
         """Get string representation.
 
         Args:
@@ -590,7 +618,7 @@ class ASN1OctetString(ASN1Element):
             Encoded octet string as bytes
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
-        
+
         # OCTET STRING content is the raw bytes
         content = self._bytes_data
         return TLVEncoder.encode_tlv(self.get_tag(), content, definite=True)
@@ -607,27 +635,33 @@ class ASN1OctetString(ASN1Element):
             Tuple of (decoded octet string, next offset)
         """
         if offset >= len(data):
-            raise ValueError("Insufficient data for OCTET STRING decoding")
-        
+            msg = "Insufficient data for OCTET STRING decoding"
+            raise ValueError(msg)
+
         # Check tag
         expected_tag = cls().get_default_tag()
-        if data[offset] != (expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number):
-            raise ValueError(f"Expected OCTET STRING tag, got {data[offset]:02x}")
-        
+        if data[offset] != (
+            expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number
+        ):
+            msg = f"Expected OCTET STRING tag, got {data[offset]:02x}"
+            raise ValueError(msg)
+
         # Parse length
         length_offset = offset + 1
         if length_offset >= len(data):
-            raise ValueError("Insufficient data for length")
-        
+            msg = "Insufficient data for length"
+            raise ValueError(msg)
+
         length = data[length_offset]
-        
+
         # Parse data bytes
         value_offset = length_offset + 1
         if value_offset + length > len(data):
-            raise ValueError("Insufficient data for OCTET STRING value")
-        
-        octet_data = data[value_offset:value_offset + length]
-        
+            msg = "Insufficient data for OCTET STRING value"
+            raise ValueError(msg)
+
+        octet_data = data[value_offset : value_offset + length]
+
         return cls(octet_data), value_offset + length
 
     def validate(self) -> list[str]:
@@ -653,7 +687,7 @@ class ASN1Null(ASN1Element):
 
     def __init__(
         self,
-        tag: Optional[ASN1Tag] = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
     ) -> None:
         """Initialize NULL element.
@@ -682,7 +716,7 @@ class ASN1Null(ASN1Element):
             Encoded null as bytes
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
-        
+
         # NULL has no content (empty bytes)
         content = b""
         return TLVEncoder.encode_tlv(self.get_tag(), content, definite=True)
@@ -699,22 +733,28 @@ class ASN1Null(ASN1Element):
             Tuple of (decoded null, next offset)
         """
         if offset >= len(data):
-            raise ValueError("Insufficient data for NULL decoding")
-        
+            msg = "Insufficient data for NULL decoding"
+            raise ValueError(msg)
+
         # Check tag
         expected_tag = cls().get_default_tag()
-        if data[offset] != (expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number):
-            raise ValueError(f"Expected NULL tag, got {data[offset]:02x}")
-        
+        if data[offset] != (
+            expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number
+        ):
+            msg = f"Expected NULL tag, got {data[offset]:02x}"
+            raise ValueError(msg)
+
         # Parse length
         length_offset = offset + 1
         if length_offset >= len(data):
-            raise ValueError("Insufficient data for length")
-        
+            msg = "Insufficient data for length"
+            raise ValueError(msg)
+
         length = data[length_offset]
         if length != 0:
-            raise ValueError(f"NULL length must be 0, got {length}")
-        
+            msg = f"NULL length must be 0, got {length}"
+            raise ValueError(msg)
+
         return cls(), length_offset + 1
 
     def validate(self) -> list[str]:
@@ -750,8 +790,8 @@ class ASN1ObjectIdentifier(ASN1Element):
 
     def __init__(
         self,
-        value: Optional[Union[str, list[int]]] = None,
-        tag: Optional[ASN1Tag] = None,
+        value: str | list[int] | None = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: Any = None,
     ) -> None:
@@ -769,7 +809,7 @@ class ASN1ObjectIdentifier(ASN1Element):
             self._components = [int(x) for x in value.split(".")]
             self._dot_notation = value
             self._value = value  # Keep original string as value
-        elif isinstance(value, (list, tuple)):
+        elif isinstance(value, list | tuple):
             self._components = list(value)  # Convert tuple to list
             self._dot_notation = ".".join(str(x) for x in value)
             self._value = self._dot_notation  # Use dot notation as value
@@ -804,57 +844,59 @@ class ASN1ObjectIdentifier(ASN1Element):
 
     def _encode_oid_component(self, component: int) -> bytes:
         """Encode single OID component using base-128.
-        
+
         Args:
             component: OID component value
-            
+
         Returns:
             Encoded component bytes
         """
         if component == 0:
             return b"\x00"
-        
+
         # Convert to base-128 with continuation bits
         octets = []
         while component > 0:
             octets.insert(0, component & 0x7F)
             component >>= 7
-        
+
         # Set continuation bits (all except last)
         for i in range(len(octets) - 1):
             octets[i] |= 0x80
-        
+
         return bytes(octets)
 
     @classmethod
     def _decode_oid_component(cls, data: bytes, offset: int) -> tuple[int, int]:
         """Decode single OID component from base-128 encoding.
-        
+
         Args:
             data: OID component data
             offset: Starting offset
-            
+
         Returns:
             Tuple of (component value, bytes consumed)
         """
         if offset >= len(data):
-            raise ValueError("Insufficient data for OID component")
-        
+            msg = "Insufficient data for OID component"
+            raise ValueError(msg)
+
         component = 0
         bytes_read = 0
-        
+
         while offset + bytes_read < len(data):
             byte = data[offset + bytes_read]
             bytes_read += 1
-            
+
             component = (component << 7) | (byte & 0x7F)
-            
+
             # If continuation bit is not set, this is the last byte
             if (byte & 0x80) == 0:
                 break
         else:
-            raise ValueError("Unterminated OID component")
-        
+            msg = "Unterminated OID component"
+            raise ValueError(msg)
+
         return component, bytes_read
 
     def encode(self, encoding: str = DEFAULT_ENCODING) -> bytes:
@@ -867,18 +909,19 @@ class ASN1ObjectIdentifier(ASN1Element):
             Encoded OID as bytes
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
-        
+
         if len(self._components) < 2:
-            raise ValueError("OID must have at least 2 components")
-        
+            msg = "OID must have at least 2 components"
+            raise ValueError(msg)
+
         # First component: (first * 40) + second
         first_component = self._components[0] * 40 + self._components[1]
         content = self._encode_oid_component(first_component)
-        
+
         # Remaining components
         for component in self._components[2:]:
             content += self._encode_oid_component(component)
-        
+
         return TLVEncoder.encode_tlv(self.get_tag(), content, definite=True)
 
     @classmethod
@@ -893,30 +936,37 @@ class ASN1ObjectIdentifier(ASN1Element):
             Tuple of (decoded OID, next offset)
         """
         if offset >= len(data):
-            raise ValueError("Insufficient data for OBJECT IDENTIFIER decoding")
-        
+            msg = "Insufficient data for OBJECT IDENTIFIER decoding"
+            raise ValueError(msg)
+
         # Check tag
         expected_tag = cls().get_default_tag()
-        if data[offset] != (expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number):
-            raise ValueError(f"Expected OBJECT IDENTIFIER tag, got {data[offset]:02x}")
-        
+        if data[offset] != (
+            expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number
+        ):
+            msg = f"Expected OBJECT IDENTIFIER tag, got {data[offset]:02x}"
+            raise ValueError(msg)
+
         # Parse length
         length_offset = offset + 1
         if length_offset >= len(data):
-            raise ValueError("Insufficient data for length")
-        
+            msg = "Insufficient data for length"
+            raise ValueError(msg)
+
         length = data[length_offset]
         if length == 0:
-            raise ValueError("OBJECT IDENTIFIER length cannot be 0")
-        
+            msg = "OBJECT IDENTIFIER length cannot be 0"
+            raise ValueError(msg)
+
         # Parse OID components
         value_offset = length_offset + 1
         if value_offset + length > len(data):
-            raise ValueError("Insufficient data for OBJECT IDENTIFIER value")
-        
-        oid_data = data[value_offset:value_offset + length]
+            msg = "Insufficient data for OBJECT IDENTIFIER value"
+            raise ValueError(msg)
+
+        oid_data = data[value_offset : value_offset + length]
         components = []
-        
+
         # Decode first component (combined first two)
         first_component, bytes_read = cls._decode_oid_component(oid_data, 0)
         if first_component < 80:  # first * 40 + second < 80
@@ -925,16 +975,16 @@ class ASN1ObjectIdentifier(ASN1Element):
         else:
             first = 2
             second = first_component - 80
-        
+
         components.extend([first, second])
-        
+
         # Decode remaining components
         pos = bytes_read
         while pos < len(oid_data):
             component, bytes_read = cls._decode_oid_component(oid_data, pos)
             components.append(component)
             pos += bytes_read
-        
+
         # Create from components list but ensure consistent value representation
         instance = cls(components)
         return instance, value_offset + length
@@ -950,14 +1000,23 @@ class ASN1ObjectIdentifier(ASN1Element):
         if len(self._components) < OID_MIN_COMPONENTS:
             errors.append("OID must have at least 2 components")
 
-        if len(self._components) >= 1 and self._components[0] not in OID_VALID_FIRST_COMPONENTS:
+        if (
+            len(self._components) >= 1
+            and self._components[0] not in OID_VALID_FIRST_COMPONENTS
+        ):
             errors.append("First OID component must be 0, 1, or 2")
 
-        if len(self._components) >= OID_MIN_COMPONENTS:
-            if self._components[0] in {0, 1} and self._components[1] > OID_MAX_SECOND_COMPONENT_01:
-                errors.append("Second OID component must be <= 39 when first is 0 or 1")
+        if len(self._components) >= OID_MIN_COMPONENTS and (
+            self._components[0] in {0, 1}
+            and self._components[1] > OID_MAX_SECOND_COMPONENT_01
+        ):
+            errors.append("Second OID component must be <= 39 when first is 0 or 1")
 
-        errors.extend("OID components must be non-negative integers" for component in self._components if component < 0)
+        errors.extend(
+            "OID components must be non-negative integers"
+            for component in self._components
+            if component < 0
+        )
 
         return errors
 
@@ -976,7 +1035,7 @@ class ASN1UTF8String(ASN1Element):
     def __init__(
         self,
         value: str = "",
-        tag: Optional[ASN1Tag] = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: str = "",
     ) -> None:
@@ -1008,9 +1067,16 @@ class ASN1UTF8String(ASN1Element):
             Encoded UTF8 string as bytes
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
-        
+
         # UTF8String content is the UTF-8 encoded string
-        content = self._value.encode("utf-8")
+        value = self._value
+
+        # Type guard: ensure value is a string
+        if not isinstance(value, str):
+            msg = f"ASN1UTF8String value must be str, got {type(value).__name__}"
+            raise TypeError(msg)
+
+        content = value.encode("utf-8")
         return TLVEncoder.encode_tlv(self.get_tag(), content, definite=True)
 
     @classmethod
@@ -1025,32 +1091,39 @@ class ASN1UTF8String(ASN1Element):
             Tuple of (decoded UTF8 string, next offset)
         """
         if offset >= len(data):
-            raise ValueError("Insufficient data for UTF8String decoding")
-        
+            msg = "Insufficient data for UTF8String decoding"
+            raise ValueError(msg)
+
         # Check tag
         expected_tag = cls().get_default_tag()
-        if data[offset] != (expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number):
-            raise ValueError(f"Expected UTF8String tag, got {data[offset]:02x}")
-        
+        if data[offset] != (
+            expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number
+        ):
+            msg = f"Expected UTF8String tag, got {data[offset]:02x}"
+            raise ValueError(msg)
+
         # Parse length
         length_offset = offset + 1
         if length_offset >= len(data):
-            raise ValueError("Insufficient data for length")
-        
+            msg = "Insufficient data for length"
+            raise ValueError(msg)
+
         length = data[length_offset]
-        
+
         # Parse string data
         value_offset = length_offset + 1
         if value_offset + length > len(data):
-            raise ValueError("Insufficient data for UTF8String value")
-        
-        string_data = data[value_offset:value_offset + length]
-        
+            msg = "Insufficient data for UTF8String value"
+            raise ValueError(msg)
+
+        string_data = data[value_offset : value_offset + length]
+
         try:
             string_value = string_data.decode("utf-8")
         except UnicodeDecodeError as e:
-            raise ValueError(f"Invalid UTF-8 string: {e}") from e
-        
+            msg = f"Invalid UTF-8 string: {e}"
+            raise ValueError(msg) from e
+
         return cls(string_value), value_offset + length
 
     def validate(self) -> list[str]:
@@ -1085,17 +1158,14 @@ class ASN1PrintableString(ASN1Element):
     """
 
     # Allowed characters in PrintableString
-    ALLOWED_CHARS = set(
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz"
-        "0123456789"
-        " '()+,-./:=?",
+    ALLOWED_CHARS: ClassVar[set[str]] = set(
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 '()+,-./:=?",
     )
 
     def __init__(
         self,
         value: str = "",
-        tag: Optional[ASN1Tag] = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: str = "",
     ) -> None:
@@ -1127,14 +1197,21 @@ class ASN1PrintableString(ASN1Element):
             Encoded printable string as bytes
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
-        
+
+        # Type guard: ensure value is a string
+        value = self._value
+        if not isinstance(value, str):
+            msg = f"ASN1PrintableString value must be str, got {type(value).__name__}"
+            raise TypeError(msg)
+
         # Validate characters are in allowed set
-        invalid_chars = set(self._value) - self.ALLOWED_CHARS
+        invalid_chars = set(value) - self.ALLOWED_CHARS
         if invalid_chars:
-            raise ValueError(f"PrintableString contains invalid characters: {invalid_chars}")
-        
+            msg = f"PrintableString contains invalid characters: {invalid_chars}"
+            raise ValueError(msg)
+
         # PrintableString content is ASCII encoded
-        content = self._value.encode("ascii")
+        content = value.encode("ascii")
         return TLVEncoder.encode_tlv(self.get_tag(), content, definite=True)
 
     @classmethod
@@ -1149,37 +1226,45 @@ class ASN1PrintableString(ASN1Element):
             Tuple of (decoded printable string, next offset)
         """
         if offset >= len(data):
-            raise ValueError("Insufficient data for PrintableString decoding")
-        
+            msg = "Insufficient data for PrintableString decoding"
+            raise ValueError(msg)
+
         # Check tag
         expected_tag = cls().get_default_tag()
-        if data[offset] != (expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number):
-            raise ValueError(f"Expected PrintableString tag, got {data[offset]:02x}")
-        
+        if data[offset] != (
+            expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number
+        ):
+            msg = f"Expected PrintableString tag, got {data[offset]:02x}"
+            raise ValueError(msg)
+
         # Parse length
         length_offset = offset + 1
         if length_offset >= len(data):
-            raise ValueError("Insufficient data for length")
-        
+            msg = "Insufficient data for length"
+            raise ValueError(msg)
+
         length = data[length_offset]
-        
+
         # Parse string data
         value_offset = length_offset + 1
         if value_offset + length > len(data):
-            raise ValueError("Insufficient data for PrintableString value")
-        
-        string_data = data[value_offset:value_offset + length]
-        
+            msg = "Insufficient data for PrintableString value"
+            raise ValueError(msg)
+
+        string_data = data[value_offset : value_offset + length]
+
         try:
             string_value = string_data.decode("ascii")
         except UnicodeDecodeError as e:
-            raise ValueError(f"Invalid ASCII string: {e}") from e
-        
+            msg = f"Invalid ASCII string: {e}"
+            raise ValueError(msg) from e
+
         # Validate characters are in allowed set
         invalid_chars = set(string_value) - cls.ALLOWED_CHARS
         if invalid_chars:
-            raise ValueError(f"PrintableString contains invalid characters: {invalid_chars}")
-        
+            msg = f"PrintableString contains invalid characters: {invalid_chars}"
+            raise ValueError(msg)
+
         return cls(string_value), value_offset + length
 
     def validate(self) -> list[str]:
@@ -1195,7 +1280,9 @@ class ASN1PrintableString(ASN1Element):
         else:
             invalid_chars = set(self._value) - self.ALLOWED_CHARS
             if invalid_chars:
-                errors.append(f"PrintableString contains invalid characters: {invalid_chars}")
+                errors.append(
+                    f"PrintableString contains invalid characters: {invalid_chars}",
+                )
 
         return errors
 
@@ -1215,7 +1302,7 @@ class ASN1IA5String(ASN1Element):
     def __init__(
         self,
         value: str = "",
-        tag: Optional[ASN1Tag] = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: str = "",
     ) -> None:
@@ -1247,16 +1334,24 @@ class ASN1IA5String(ASN1Element):
             Encoded IA5 string as bytes
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
-        
+
+        # Type guard: ensure value is a string
+        value = self._value
+        if not isinstance(value, str):
+            msg = f"ASN1IA5String value must be str, got {type(value).__name__}"
+            raise TypeError(msg)
+
         # Validate all characters are in 7-bit ASCII range
         try:
-            encoded = self._value.encode("ascii")
+            encoded = value.encode("ascii")
             for byte in encoded:
                 if byte > ASCII_MAX_VALUE:
-                    raise ValueError(f"IA5String contains non-ASCII character: {chr(byte)}")
+                    msg = f"IA5String contains non-ASCII character: {chr(byte)}"
+                    raise ValueError(msg)
         except UnicodeEncodeError as e:
-            raise ValueError(f"IA5String contains non-ASCII characters: {e}") from e
-        
+            msg = f"IA5String contains non-ASCII characters: {e}"
+            raise ValueError(msg) from e
+
         # IA5String content is ASCII encoded
         content = encoded
         return TLVEncoder.encode_tlv(self.get_tag(), content, definite=True)
@@ -1273,37 +1368,45 @@ class ASN1IA5String(ASN1Element):
             Tuple of (decoded IA5 string, next offset)
         """
         if offset >= len(data):
-            raise ValueError("Insufficient data for IA5String decoding")
-        
+            msg = "Insufficient data for IA5String decoding"
+            raise ValueError(msg)
+
         # Check tag
         expected_tag = cls().get_default_tag()
-        if data[offset] != (expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number):
-            raise ValueError(f"Expected IA5String tag, got {data[offset]:02x}")
-        
+        if data[offset] != (
+            expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number
+        ):
+            msg = f"Expected IA5String tag, got {data[offset]:02x}"
+            raise ValueError(msg)
+
         # Parse length
         length_offset = offset + 1
         if length_offset >= len(data):
-            raise ValueError("Insufficient data for length")
-        
+            msg = "Insufficient data for length"
+            raise ValueError(msg)
+
         length = data[length_offset]
-        
+
         # Parse string data
         value_offset = length_offset + 1
         if value_offset + length > len(data):
-            raise ValueError("Insufficient data for IA5String value")
-        
-        string_data = data[value_offset:value_offset + length]
-        
+            msg = "Insufficient data for IA5String value"
+            raise ValueError(msg)
+
+        string_data = data[value_offset : value_offset + length]
+
         # Validate all bytes are in 7-bit ASCII range
         for byte in string_data:
             if byte > ASCII_MAX_VALUE:
-                raise ValueError(f"IA5String contains non-ASCII byte: {byte:02x}")
-        
+                msg = f"IA5String contains non-ASCII byte: {byte:02x}"
+                raise ValueError(msg)
+
         try:
             string_value = string_data.decode("ascii")
         except UnicodeDecodeError as e:
-            raise ValueError(f"Invalid ASCII string: {e}") from e
-        
+            msg = f"Invalid ASCII string: {e}"
+            raise ValueError(msg) from e
+
         return cls(string_value), value_offset + length
 
     def validate(self) -> list[str]:
@@ -1322,7 +1425,9 @@ class ASN1IA5String(ASN1Element):
                 # Check that all bytes are in 7-bit ASCII range
                 for byte in encoded:
                     if byte > ASCII_MAX_VALUE:
-                        errors.append(f"IA5String contains non-ASCII character: {chr(byte)}")
+                        errors.append(
+                            f"IA5String contains non-ASCII character: {chr(byte)}",
+                        )
                         break
             except UnicodeEncodeError:
                 errors.append("IA5String contains non-ASCII characters")
@@ -1349,8 +1454,8 @@ class ASN1UTCTime(ASN1Element):
 
     def __init__(
         self,
-        value: Optional[Union[datetime, str]] = None,
-        tag: Optional[ASN1Tag] = None,
+        value: datetime | str | None = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: Any = None,
     ) -> None:
@@ -1384,7 +1489,7 @@ class ASN1UTCTime(ASN1Element):
             tag_number=ASN1_UTC_TIME,
         )
 
-    def get_datetime(self) -> Optional[datetime]:
+    def get_datetime(self) -> datetime | None:
         """Get datetime representation.
 
         Returns:
@@ -1411,12 +1516,12 @@ class ASN1UTCTime(ASN1Element):
         """
         # Convert to UTC if needed
         if dt.tzinfo is not None:
-            dt = dt.astimezone(timezone.utc)
+            dt = dt.astimezone(UTC)
 
         # Format as YYMMDDHHMMSSZ
         return dt.strftime("%y%m%d%H%M%SZ")
 
-    def _utc_string_to_datetime(self, time_str: str) -> Optional[datetime]:
+    def _utc_string_to_datetime(self, time_str: str) -> datetime | None:
         """Convert UTC string to datetime.
 
         Args:
@@ -1426,25 +1531,25 @@ class ASN1UTCTime(ASN1Element):
             Datetime object or None if invalid
         """
         import re
-        
+
         # UTC time formats: YYMMDDHHMMSSZ or YYMMDDHHMMSS+HHMM
         if not time_str:
             return None
-        
+
         # Pattern for YYMMDDHHMMSSZ
-        utc_pattern = r'^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})Z$'
+        utc_pattern = r"^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})Z$"
         match = re.match(utc_pattern, time_str)
-        
+
         if match:
             year, month, day, hour, minute, second = match.groups()
             year = int(year)
-            
+
             # Interpret 2-digit year (Y2K rule: 00-49 = 20xx, 50-99 = 19xx)
             if year >= 50:
                 year += 1900
             else:
                 year += 2000
-            
+
             try:
                 return datetime(
                     year=year,
@@ -1453,11 +1558,11 @@ class ASN1UTCTime(ASN1Element):
                     hour=int(hour),
                     minute=int(minute),
                     second=int(second),
-                    tzinfo=timezone.utc,
+                    tzinfo=UTC,
                 )
             except ValueError:
                 return None
-        
+
         # Could add support for other formats (+HHMM, etc.) here
         return None
 
@@ -1471,10 +1576,11 @@ class ASN1UTCTime(ASN1Element):
             Encoded UTC time as bytes
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
-        
+
         if not self._time_string:
-            raise ValueError("UTCTime has no time string to encode")
-        
+            msg = "UTCTime has no time string to encode"
+            raise ValueError(msg)
+
         # UTCTime content is ASCII encoded time string
         content = self._time_string.encode("ascii")
         return TLVEncoder.encode_tlv(self.get_tag(), content, definite=True)
@@ -1491,32 +1597,39 @@ class ASN1UTCTime(ASN1Element):
             Tuple of (decoded UTC time, next offset)
         """
         if offset >= len(data):
-            raise ValueError("Insufficient data for UTCTime decoding")
-        
+            msg = "Insufficient data for UTCTime decoding"
+            raise ValueError(msg)
+
         # Check tag
         expected_tag = cls().get_default_tag()
-        if data[offset] != (expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number):
-            raise ValueError(f"Expected UTCTime tag, got {data[offset]:02x}")
-        
+        if data[offset] != (
+            expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number
+        ):
+            msg = f"Expected UTCTime tag, got {data[offset]:02x}"
+            raise ValueError(msg)
+
         # Parse length
         length_offset = offset + 1
         if length_offset >= len(data):
-            raise ValueError("Insufficient data for length")
-        
+            msg = "Insufficient data for length"
+            raise ValueError(msg)
+
         length = data[length_offset]
-        
+
         # Parse time string data
         value_offset = length_offset + 1
         if value_offset + length > len(data):
-            raise ValueError("Insufficient data for UTCTime value")
-        
-        time_data = data[value_offset:value_offset + length]
-        
+            msg = "Insufficient data for UTCTime value"
+            raise ValueError(msg)
+
+        time_data = data[value_offset : value_offset + length]
+
         try:
             time_string = time_data.decode("ascii")
         except UnicodeDecodeError as e:
-            raise ValueError(f"Invalid ASCII time string: {e}") from e
-        
+            msg = f"Invalid ASCII time string: {e}"
+            raise ValueError(msg) from e
+
         return cls(time_string), value_offset + length
 
     def validate(self) -> list[str]:
@@ -1529,13 +1642,14 @@ class ASN1UTCTime(ASN1Element):
 
         if self._datetime is None and self._time_string:
             errors.append("Invalid UTC time string format")
-        
+
         if self._time_string:
             # Validate time string format
             import re
-            if not re.match(r'^\d{12}Z$', self._time_string):
+
+            if not re.match(r"^\d{12}Z$", self._time_string):
                 errors.append("UTCTime must be in format YYMMDDHHMMSSZ")
-        
+
         if self._datetime:
             # Validate year range for UTCTime (1950-2049)
             year = self._datetime.year
@@ -1564,8 +1678,8 @@ class ASN1GeneralizedTime(ASN1Element):
 
     def __init__(
         self,
-        value: Optional[Union[datetime, str]] = None,
-        tag: Optional[ASN1Tag] = None,
+        value: datetime | str | None = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: Any = None,
     ) -> None:
@@ -1599,7 +1713,7 @@ class ASN1GeneralizedTime(ASN1Element):
             tag_number=ASN1_GENERALIZED_TIME,
         )
 
-    def get_datetime(self) -> Optional[datetime]:
+    def get_datetime(self) -> datetime | None:
         """Get datetime representation.
 
         Returns:
@@ -1626,12 +1740,12 @@ class ASN1GeneralizedTime(ASN1Element):
         """
         # Convert to UTC if needed
         if dt.tzinfo is not None:
-            dt = dt.astimezone(timezone.utc)
+            dt = dt.astimezone(UTC)
 
         # Format as YYYYMMDDHHMMSSZ
         return dt.strftime("%Y%m%d%H%M%SZ")
 
-    def _generalized_string_to_datetime(self, time_str: str) -> Optional[datetime]:
+    def _generalized_string_to_datetime(self, time_str: str) -> datetime | None:
         """Convert generalized time string to datetime.
 
         Args:
@@ -1641,18 +1755,18 @@ class ASN1GeneralizedTime(ASN1Element):
             Datetime object or None if invalid
         """
         import re
-        
+
         # GeneralizedTime formats: YYYYMMDDHHMMSSZ or YYYYMMDDHHMMSS+HHMM
         if not time_str:
             return None
-        
+
         # Pattern for YYYYMMDDHHMMSSZ
-        gen_pattern = r'^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})Z$'
+        gen_pattern = r"^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})Z$"
         match = re.match(gen_pattern, time_str)
-        
+
         if match:
             year, month, day, hour, minute, second = match.groups()
-            
+
             try:
                 return datetime(
                     year=int(year),
@@ -1661,11 +1775,11 @@ class ASN1GeneralizedTime(ASN1Element):
                     hour=int(hour),
                     minute=int(minute),
                     second=int(second),
-                    tzinfo=timezone.utc,
+                    tzinfo=UTC,
                 )
             except ValueError:
                 return None
-        
+
         # Could add support for other formats (+HHMM, fractional seconds, etc.) here
         return None
 
@@ -1679,10 +1793,11 @@ class ASN1GeneralizedTime(ASN1Element):
             Encoded generalized time as bytes
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
-        
+
         if not self._time_string:
-            raise ValueError("GeneralizedTime has no time string to encode")
-        
+            msg = "GeneralizedTime has no time string to encode"
+            raise ValueError(msg)
+
         # GeneralizedTime content is ASCII encoded time string
         content = self._time_string.encode("ascii")
         return TLVEncoder.encode_tlv(self.get_tag(), content, definite=True)
@@ -1699,32 +1814,39 @@ class ASN1GeneralizedTime(ASN1Element):
             Tuple of (decoded generalized time, next offset)
         """
         if offset >= len(data):
-            raise ValueError("Insufficient data for GeneralizedTime decoding")
-        
+            msg = "Insufficient data for GeneralizedTime decoding"
+            raise ValueError(msg)
+
         # Check tag
         expected_tag = cls().get_default_tag()
-        if data[offset] != (expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number):
-            raise ValueError(f"Expected GeneralizedTime tag, got {data[offset]:02x}")
-        
+        if data[offset] != (
+            expected_tag.tag_class | expected_tag.tag_form | expected_tag.tag_number
+        ):
+            msg = f"Expected GeneralizedTime tag, got {data[offset]:02x}"
+            raise ValueError(msg)
+
         # Parse length
         length_offset = offset + 1
         if length_offset >= len(data):
-            raise ValueError("Insufficient data for length")
-        
+            msg = "Insufficient data for length"
+            raise ValueError(msg)
+
         length = data[length_offset]
-        
+
         # Parse time string data
         value_offset = length_offset + 1
         if value_offset + length > len(data):
-            raise ValueError("Insufficient data for GeneralizedTime value")
-        
-        time_data = data[value_offset:value_offset + length]
-        
+            msg = "Insufficient data for GeneralizedTime value"
+            raise ValueError(msg)
+
+        time_data = data[value_offset : value_offset + length]
+
         try:
             time_string = time_data.decode("ascii")
         except UnicodeDecodeError as e:
-            raise ValueError(f"Invalid ASCII time string: {e}") from e
-        
+            msg = f"Invalid ASCII time string: {e}"
+            raise ValueError(msg) from e
+
         return cls(time_string), value_offset + length
 
     def validate(self) -> list[str]:
@@ -1737,18 +1859,21 @@ class ASN1GeneralizedTime(ASN1Element):
 
         if self._datetime is None and self._time_string:
             errors.append("Invalid generalized time string format")
-        
+
         if self._time_string:
             # Validate time string format
             import re
-            if not re.match(r'^\d{14}Z$', self._time_string):
+
+            if not re.match(r"^\d{14}Z$", self._time_string):
                 errors.append("GeneralizedTime must be in format YYYYMMDDHHMMSSZ")
-        
+
         if self._datetime:
             # Validate year range for GeneralizedTime (any reasonable range)
             year = self._datetime.year
             if year < 1000 or year > 9999:
-                errors.append(f"GeneralizedTime year {year} outside valid range (1000-9999)")
+                errors.append(
+                    f"GeneralizedTime year {year} outside valid range (1000-9999)",
+                )
 
         return errors
 

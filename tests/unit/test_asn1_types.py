@@ -463,9 +463,9 @@ class TestASN1BitString:
             assert bits1.get_value() == "101010"
 
             # Test with bytes
-            bits2 = ASN1BitString(b"\xAA")  # 10101010
+            bits2 = ASN1BitString(b"\xaa")  # 10101010
             if isinstance(bits2.get_value(), bytes):
-                assert bits2.get_value() == b"\xAA"
+                assert bits2.get_value() == b"\xaa"
 
         except ImportError:
             pytest.skip("ASN1BitString module not available")
@@ -617,6 +617,7 @@ class TestASN1TypePerformance:
             import time
 
             from ldap_core_shared.protocols.asn1.types import ASN1Integer
+
             start_time = time.time()
 
             # Create many large integers
@@ -644,6 +645,7 @@ class TestASN1TypePerformance:
             import time
 
             from ldap_core_shared.protocols.asn1.types import ASN1UTF8String
+
             start_time = time.time()
 
             # Create large string

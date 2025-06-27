@@ -14,9 +14,9 @@ Design principles:
 from __future__ import annotations
 
 import uuid
-from typing import Any, Literal, Union
 
-from typing_extensions import TypeAlias
+# Use typing_extensions for TypeAlias compatibility across Python versions
+from typing import Any, Literal, TypeAlias
 
 # ===== BASIC LDAP TYPES =====
 
@@ -30,7 +30,7 @@ RDN: TypeAlias = str
 AttributeName: TypeAlias = str
 
 #: LDAP attribute value (can be string, bytes, or list of either)
-AttributeValue: TypeAlias = Union[str, bytes, list[str], list[bytes]]
+AttributeValue: TypeAlias = str | bytes | list[str] | list[bytes]
 
 #: Dictionary of LDAP attributes
 Attributes: TypeAlias = dict[AttributeName, AttributeValue]
@@ -72,11 +72,11 @@ ResultMessage: TypeAlias = str
 #: Complete operation result
 OperationResult: TypeAlias = dict[
     Literal["result_code", "message", "dn"],
-    Union[ResultCode, ResultMessage, DN, None],
+    ResultCode | ResultMessage | DN | None,
 ]
 
 #: Entry result from search operation
-SearchResult: TypeAlias = dict[Literal["dn", "attributes"], Union[DN, Attributes]]
+SearchResult: TypeAlias = dict[Literal["dn", "attributes"], DN | Attributes]
 
 #: Collection of search results
 SearchResults: TypeAlias = list[SearchResult]
@@ -115,7 +115,7 @@ LDIFRecordType: TypeAlias = Literal["entry", "modification", "delete", "moddn"]
 #: LDIF record
 LDIFRecord: TypeAlias = dict[
     Literal["type", "dn", "attributes", "changes"],
-    Union[LDIFRecordType, DN, Attributes, list[dict[str, Any]], None],
+    LDIFRecordType | DN | Attributes | list[dict[str, Any]] | None,
 ]
 
 #: Collection of LDIF records
@@ -123,19 +123,23 @@ LDIFRecords: TypeAlias = list[LDIFRecord]
 
 #: Migration status
 MigrationStatus: TypeAlias = Literal[
-    "pending", "running", "completed", "failed", "cancelled",
+    "pending",
+    "running",
+    "completed",
+    "failed",
+    "cancelled",
 ]
 
 #: Migration result statistics
 MigrationStats: TypeAlias = dict[
     Literal["total_entries", "successful", "failed", "skipped", "duration"],
-    Union[int, float],
+    int | float,
 ]
 
 # ===== CONFIGURATION TYPES =====
 
 #: Configuration value (can be various types)
-ConfigValue: TypeAlias = Union[str, int, float, bool, list[Any], dict[str, Any], None]
+ConfigValue: TypeAlias = str | int | float | bool | list[Any] | dict[str, Any] | None
 
 #: Configuration dictionary
 Config: TypeAlias = dict[str, ConfigValue]
@@ -152,7 +156,7 @@ LogLevel: TypeAlias = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 MetricName: TypeAlias = str
 
 #: Metric value
-MetricValue: TypeAlias = Union[int, float]
+MetricValue: TypeAlias = int | float
 
 #: Metric labels/tags
 MetricLabels: TypeAlias = dict[str, str]
@@ -160,7 +164,7 @@ MetricLabels: TypeAlias = dict[str, str]
 #: Metric data point
 Metric: TypeAlias = dict[
     Literal["name", "value", "labels", "timestamp"],
-    Union[MetricName, MetricValue, MetricLabels, float],
+    MetricName | MetricValue | MetricLabels | float,
 ]
 
 #: Collection of metrics
@@ -215,7 +219,7 @@ ErrorContext: TypeAlias = dict[str, Any]
 #: Exception details
 ExceptionDetails: TypeAlias = dict[
     Literal["type", "message", "traceback", "context"],
-    Union[str, ErrorContext, None],
+    str | ErrorContext | None,
 ]
 
 # ===== VALIDATION TYPES =====
@@ -232,7 +236,7 @@ FieldPath: TypeAlias = str
 #: Validation result
 ValidationResult: TypeAlias = dict[
     Literal["valid", "errors"],
-    Union[bool, dict[FieldPath, list[ValidationError]]],
+    bool | dict[FieldPath, list[ValidationError]],
 ]
 
 # ===== PAGINATION AND FILTERING =====
@@ -252,7 +256,7 @@ PaginationToken: TypeAlias = str
 #: Pagination metadata
 PaginationMeta: TypeAlias = dict[
     Literal["page", "size", "total", "token"],
-    Union[PageNumber, PageSize, TotalCount, PaginationToken, None],
+    PageNumber | PageSize | TotalCount | PaginationToken | None,
 ]
 
 #: Sort field name
@@ -263,7 +267,8 @@ SortDirection: TypeAlias = Literal["asc", "desc"]
 
 #: Sort specification
 SortSpec: TypeAlias = dict[
-    Literal["field", "direction"], Union[SortField, SortDirection],
+    Literal["field", "direction"],
+    SortField | SortDirection,
 ]
 
 #: Collection of sort specifications

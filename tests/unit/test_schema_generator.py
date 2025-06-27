@@ -20,6 +20,7 @@ class TestLDIFGenerator:
     def ldif_generator(self):
         """Create LDIFGenerator instance for testing."""
         from ldap_core_shared.schema.generator import LDIFGenerator
+
         return LDIFGenerator()
 
     @pytest.fixture
@@ -72,7 +73,9 @@ class TestLDIFGenerator:
 
     @pytest.mark.unit
     @pytest.mark.schema
-    def test_generate_from_single_attribute(self, ldif_generator, sample_attribute_type) -> None:
+    def test_generate_from_single_attribute(
+        self, ldif_generator, sample_attribute_type
+    ) -> None:
         """Test generating LDIF from single attribute type."""
         try:
             result = ldif_generator.generate_from_elements(
@@ -95,7 +98,9 @@ class TestLDIFGenerator:
 
     @pytest.mark.unit
     @pytest.mark.schema
-    def test_generate_from_single_object_class(self, ldif_generator, sample_object_class) -> None:
+    def test_generate_from_single_object_class(
+        self, ldif_generator, sample_object_class
+    ) -> None:
         """Test generating LDIF from single object class."""
         try:
             result = ldif_generator.generate_from_elements(
@@ -114,7 +119,9 @@ class TestLDIFGenerator:
 
     @pytest.mark.unit
     @pytest.mark.schema
-    def test_generate_from_multiple_elements(self, ldif_generator, sample_attribute_type, sample_object_class) -> None:
+    def test_generate_from_multiple_elements(
+        self, ldif_generator, sample_attribute_type, sample_object_class
+    ) -> None:
         """Test generating LDIF from multiple schema elements."""
         try:
             result = ldif_generator.generate_from_elements(
@@ -134,7 +141,9 @@ class TestLDIFGenerator:
 
     @pytest.mark.unit
     @pytest.mark.schema
-    def test_generate_with_custom_config(self, ldif_generator, sample_attribute_type) -> None:
+    def test_generate_with_custom_config(
+        self, ldif_generator, sample_attribute_type
+    ) -> None:
         """Test generating LDIF with custom configuration."""
         try:
             from ldap_core_shared.schema.models import SchemaEntryConfig
@@ -352,7 +361,9 @@ class TestLDIFGeneratorWithFixtures:
 
     @pytest.mark.unit
     @pytest.mark.schema
-    def test_generate_to_file(self, ldif_generator, sample_attribute_type, temp_directory) -> None:
+    def test_generate_to_file(
+        self, ldif_generator, sample_attribute_type, temp_directory
+    ) -> None:
         """Test generating LDIF to file."""
         try:
             result = ldif_generator.generate_from_elements(
@@ -377,7 +388,9 @@ class TestLDIFGeneratorWithFixtures:
 
     @pytest.mark.unit
     @pytest.mark.schema
-    def test_generate_with_sample_ldif(self, ldif_generator, sample_ldif_content) -> None:
+    def test_generate_with_sample_ldif(
+        self, ldif_generator, sample_ldif_content
+    ) -> None:
         """Test comparing generated LDIF with sample."""
         try:
             # This test compares structure, not exact content
@@ -411,6 +424,7 @@ class TestLDIFGeneratorPerformance:
                 attribute_types.append(attr)
 
             import time
+
             start_time = time.time()
 
             result = ldif_generator.generate_from_elements(

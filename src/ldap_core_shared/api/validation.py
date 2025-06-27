@@ -16,21 +16,18 @@ from typing import TYPE_CHECKING, Any
 
 # Delegate to existing validation infrastructure
 from ldap_core_shared.utils.ldap_validation import (
-    validate_and_normalize_ldap_entry,
     validate_and_normalize_attribute_name,
     validate_and_normalize_attribute_value,
-    validate_dn,
     validate_and_normalize_file_path,
+    validate_and_normalize_ldap_entry,
     validate_configuration_value,
-    PathValidationError,
-    ConfigValidationError,
+    validate_dn,
 )
 from ldap_core_shared.utils.logging import get_logger
 
 if TYPE_CHECKING:
     from ldap_core_shared.api.config import LDAPConfig
     from ldap_core_shared.api.results import Result
-    from ldap_core_shared.domain.models import LDAPEntry
 
 logger = get_logger(__name__)
 
@@ -89,63 +86,81 @@ class LDAPValidation:
 
     def validate_entry(self, entry: dict[str, Any]) -> Result[dict[str, Any]]:
         """Validate LDAP entry - delegates to existing validation infrastructure.
-        
+
         Pure delegation to utils.ldap_validation.validate_and_normalize_ldap_entry
         which provides comprehensive entry validation and normalization.
         """
         from ldap_core_shared.api.results import Result
+
         try:
             # Pure delegation to existing validation infrastructure
             normalized_entry = validate_and_normalize_ldap_entry(entry)
-            return Result.ok(normalized_entry, message="Entry validation delegated to utils.ldap_validation")
+            return Result.ok(
+                normalized_entry,
+                message="Entry validation delegated to utils.ldap_validation",
+            )
         except Exception as e:
             return Result.from_exception(e, default_data={})
 
     def validate_attribute(self, name: str, value: Any) -> Result[tuple[str, Any]]:
         """Validate LDAP attribute - delegates to existing validation infrastructure."""
         from ldap_core_shared.api.results import Result
+
         try:
             # Pure delegation to existing validation infrastructure
             normalized_name = validate_and_normalize_attribute_name(name)
             normalized_value = validate_and_normalize_attribute_value(value)
-            return Result.ok((normalized_name, normalized_value), 
-                           message="Attribute validation delegated to utils.ldap_validation")
+            return Result.ok(
+                (normalized_name, normalized_value),
+                message="Attribute validation delegated to utils.ldap_validation",
+            )
         except Exception as e:
             return Result.from_exception(e, default_data=(name, value))
 
     def validate_dn(self, dn: str) -> Result[str]:
         """Validate DN - delegates to existing validation infrastructure."""
         from ldap_core_shared.api.results import Result
+
         try:
             # Pure delegation to existing validation infrastructure
             normalized_dn = validate_dn(dn)
-            return Result.ok(normalized_dn, message="DN validation delegated to utils.ldap_validation")
+            return Result.ok(
+                normalized_dn,
+                message="DN validation delegated to utils.ldap_validation",
+            )
         except Exception as e:
             return Result.from_exception(e, default_data=dn)
 
     def validate_config(self, config: LDAPConfig) -> Result[bool]:
         """Validate LDAP configuration - delegates to existing validation infrastructure."""
         from ldap_core_shared.api.results import Result
+
         try:
             # Delegate to existing configuration validation
-            if hasattr(config, 'server'):
+            if hasattr(config, "server"):
                 validate_configuration_value(config.server, "server")
-            if hasattr(config, 'base_dn'):
+            if hasattr(config, "base_dn"):
                 validate_dn(config.base_dn)
-            if hasattr(config, 'auth_dn'):
+            if hasattr(config, "auth_dn"):
                 validate_dn(config.auth_dn)
-                
-            return Result.ok(True, message="Config validation delegated to utils.ldap_validation")
+
+            return Result.ok(
+                True, message="Config validation delegated to utils.ldap_validation",
+            )
         except Exception as e:
             return Result.from_exception(e, default_data=False)
 
     def validate_file_path(self, path: str) -> Result[str]:
         """Validate file path - delegates to existing validation infrastructure."""
         from ldap_core_shared.api.results import Result
+
         try:
             # Pure delegation to existing path validation infrastructure
             normalized_path = validate_and_normalize_file_path(path)
-            return Result.ok(normalized_path, message="Path validation delegated to utils.ldap_validation")
+            return Result.ok(
+                normalized_path,
+                message="Path validation delegated to utils.ldap_validation",
+            )
         except Exception as e:
             return Result.from_exception(e, default_data=path)
 
@@ -153,6 +168,7 @@ class LDAPValidation:
 # ==============================================================================
 # CONVENIENCE FUNCTIONS - Direct delegation for common validation operations
 # ==============================================================================
+
 
 def validate_ldap_config(config: LDAPConfig) -> Result[bool]:
     """Validate LDAP configuration - convenience function with pure delegation."""

@@ -98,15 +98,21 @@ class TestWorkspaceVenvCompliance:
         expected_venv = "/home/marlonsc/pyauto/.venv"
         venv_path = Path(expected_venv)
 
-        assert venv_path.exists(), f"Workspace venv directory not found: {expected_venv}"
-        assert venv_path.is_dir(), f"Workspace venv path is not a directory: {expected_venv}"
+        assert venv_path.exists(), (
+            f"Workspace venv directory not found: {expected_venv}"
+        )
+        assert venv_path.is_dir(), (
+            f"Workspace venv path is not a directory: {expected_venv}"
+        )
 
         # Validate key venv components exist
         bin_dir = venv_path / "bin"
         assert bin_dir.exists(), f"Workspace venv bin directory not found: {bin_dir}"
 
         python_exe = bin_dir / "python"
-        assert python_exe.exists(), f"Python executable not found in workspace venv: {python_exe}"
+        assert python_exe.exists(), (
+            f"Python executable not found in workspace venv: {python_exe}"
+        )
 
     @pytest.mark.workspace_integration
     def test_python_executable_workspace_venv_validation(self) -> None:
@@ -154,9 +160,15 @@ class TestEnvSecurityCompliance:
         for env_var, value in os.environ.items():
             if any(pattern in env_var.lower() for pattern in sensitive_patterns):
                 # Allow empty values and variable references
-                if len(value) > 0 and not value.startswith("${") and not value.startswith("$"):
+                if (
+                    len(value) > 0
+                    and not value.startswith("${")
+                    and not value.startswith("$")
+                ):
                     # In test environment, warn about potential hardcoded secrets
-                    if len(value) > 3 and not value.isdigit():  # Ignore simple numeric values
+                    if (
+                        len(value) > 3 and not value.isdigit()
+                    ):  # Ignore simple numeric values
                         violations.append(f"{env_var}={value[:10]}...")
 
         # In test environment, we allow some test secrets but document them
@@ -247,14 +259,18 @@ class TestCLIDebugPatternsCompliance:
     def test_ldap_cli_debug_integration(self) -> None:
         """Test LDAP CLI debug integration patterns."""
         # Test LDAP-specific CLI debug patterns
-        with patch("sys.argv", [
-            "ldap-core-cli",
-            "--debug",
-            "--verbose",
-            "test-connection",
-        ]):
+        with patch(
+            "sys.argv",
+            [
+                "ldap-core-cli",
+                "--debug",
+                "--verbose",
+                "test-connection",
+            ],
+        ):
             # Validate CLI supports mandatory debug flags
             import sys
+
             args = sys.argv
 
             assert "--debug" in args, "CLI must support --debug flag"
@@ -286,7 +302,9 @@ class TestSOLIDPrinciplesCompliance:
     """Test SOLID principles compliance validation."""
 
     @pytest.mark.solid_compliance
-    def test_single_responsibility_principle_validation(self, solid_principles_validation) -> None:
+    def test_single_responsibility_principle_validation(
+        self, solid_principles_validation
+    ) -> None:
         """Test Single Responsibility Principle compliance."""
         validators = solid_principles_validation
         srp_validator = validators["srp_validator"]
@@ -299,12 +317,22 @@ class TestSOLIDPrinciplesCompliance:
         from ldap_core_shared.connections.base import LDAPConnectionInfo
 
         # LDAPConnectionInfo: Only handles connection configuration
-        connection_info_methods = [method for method in dir(LDAPConnectionInfo) if not method.startswith("_")]
-        config_methods = [m for m in connection_info_methods if "config" in m.lower() or "validate" in m.lower()]
-        assert len(config_methods) > 0, "LDAPConnectionInfo should have configuration methods"
+        connection_info_methods = [
+            method for method in dir(LDAPConnectionInfo) if not method.startswith("_")
+        ]
+        config_methods = [
+            m
+            for m in connection_info_methods
+            if "config" in m.lower() or "validate" in m.lower()
+        ]
+        assert len(config_methods) > 0, (
+            "LDAPConnectionInfo should have configuration methods"
+        )
 
     @pytest.mark.solid_compliance
-    def test_open_closed_principle_validation(self, solid_principles_validation) -> None:
+    def test_open_closed_principle_validation(
+        self, solid_principles_validation
+    ) -> None:
         """Test Open/Closed Principle compliance."""
         validators = solid_principles_validation
         ocp_validator = validators["ocp_validator"]
@@ -322,7 +350,9 @@ class TestSOLIDPrinciplesCompliance:
         assert hasattr(StandardConnectionFactory, "__bases__")
 
     @pytest.mark.solid_compliance
-    def test_liskov_substitution_principle_validation(self, solid_principles_validation) -> None:
+    def test_liskov_substitution_principle_validation(
+        self, solid_principles_validation
+    ) -> None:
         """Test Liskov Substitution Principle compliance."""
         validators = solid_principles_validation
         lsp_validator = validators["lsp_validator"]
@@ -342,7 +372,9 @@ class TestSOLIDPrinciplesCompliance:
         assert isinstance(factory, BaseConnectionComponent)
 
     @pytest.mark.solid_compliance
-    def test_interface_segregation_principle_validation(self, solid_principles_validation) -> None:
+    def test_interface_segregation_principle_validation(
+        self, solid_principles_validation
+    ) -> None:
         """Test Interface Segregation Principle compliance."""
         validators = solid_principles_validation
         isp_validator = validators["isp_validator"]
@@ -355,7 +387,11 @@ class TestSOLIDPrinciplesCompliance:
         from ldap_core_shared.connections.interfaces import BaseConnectionComponent
 
         # BaseConnectionComponent should have focused interface
-        base_methods = [method for method in dir(BaseConnectionComponent) if not method.startswith("_")]
+        base_methods = [
+            method
+            for method in dir(BaseConnectionComponent)
+            if not method.startswith("_")
+        ]
         assert "initialize" in base_methods
         assert "cleanup" in base_methods
         # Should not have methods unrelated to component lifecycle
@@ -363,7 +399,9 @@ class TestSOLIDPrinciplesCompliance:
         assert "send_email" not in base_methods
 
     @pytest.mark.solid_compliance
-    def test_dependency_inversion_principle_validation(self, solid_principles_validation) -> None:
+    def test_dependency_inversion_principle_validation(
+        self, solid_principles_validation
+    ) -> None:
         """Test Dependency Inversion Principle compliance."""
         validators = solid_principles_validation
         dip_validator = validators["dip_validator"]
@@ -379,7 +417,9 @@ class TestSOLIDPrinciplesCompliance:
         mock_security_manager = Mock()
 
         # Factory should accept abstractions through dependency injection
-        factory = StandardConnectionFactory(mock_connection_info, security_manager=mock_security_manager)
+        factory = StandardConnectionFactory(
+            mock_connection_info, security_manager=mock_security_manager
+        )
         assert hasattr(factory, "_security_manager")
         assert factory._security_manager == mock_security_manager
 
@@ -408,7 +448,9 @@ class TestWorkspaceCoordinationCompliance:
         expected_projects = ["client-a-oud-mig", "flx-ldap", "tap-ldap", "target-ldap"]
 
         for project in expected_projects:
-            assert project in dependent_projects, f"Missing dependent project: {project}"
+            assert project in dependent_projects, (
+                f"Missing dependent project: {project}"
+            )
 
     @pytest.mark.workspace_integration
     def test_shared_library_integration_patterns(self) -> None:
@@ -506,7 +548,9 @@ class TestSecurityEnforcementCompliance:
         log_protector = security["log_protector"]
 
         # Test log protector can be used to sanitize logs
-        assert hasattr(log_protector, "method_calls") or hasattr(log_protector, "_mock_name")
+        assert hasattr(log_protector, "method_calls") or hasattr(
+            log_protector, "_mock_name"
+        )
 
     @pytest.mark.security_enforcement
     def test_encryption_validation_patterns(self, security_enforcement) -> None:
@@ -521,7 +565,9 @@ class TestSecurityEnforcementCompliance:
         assert security["enforce_encryption"] is True
 
         # Validate encryption validator can be used
-        assert hasattr(encryption_validator, "method_calls") or hasattr(encryption_validator, "_mock_name")
+        assert hasattr(encryption_validator, "method_calls") or hasattr(
+            encryption_validator, "_mock_name"
+        )
 
 
 class TestLDAPSpecificCompliancePatterns:
@@ -533,16 +579,20 @@ class TestLDAPSpecificCompliancePatterns:
         # Test LDAP Core operations performance targets as defined in internal.invalid.md
         performance_targets = {
             "connection_establishment": 300,  # ms
-            "simple_search": 50,              # ms
-            "complex_search": 200,            # ms
-            "entry_modification": 100,        # ms
-            "schema_discovery": 500,          # ms
+            "simple_search": 50,  # ms
+            "complex_search": 200,  # ms
+            "entry_modification": 100,  # ms
+            "schema_discovery": 500,  # ms
         }
 
         # Validate performance targets are realistic
         for operation, target_ms in performance_targets.items():
-            assert target_ms > 0, f"Invalid performance target for {operation}: {target_ms}ms"
-            assert target_ms < 10000, f"Performance target too high for {operation}: {target_ms}ms"
+            assert target_ms > 0, (
+                f"Invalid performance target for {operation}: {target_ms}ms"
+            )
+            assert target_ms < 10000, (
+                f"Performance target too high for {operation}: {target_ms}ms"
+            )
 
     @pytest.mark.workspace_integration
     def test_ldap_integration_requirements_validation(self) -> None:

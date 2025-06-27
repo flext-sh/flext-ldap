@@ -26,7 +26,7 @@ try:
     from ldap_core_shared.api import LDAPConfig
 except ImportError:
     # Handle import order issues
-    LDAPConfig = None
+    LDAPConfig = None  # type: ignore[misc]
 
 # Import legacy configurations (DEPRECATED)
 from ldap_core_shared.config.base_config import (

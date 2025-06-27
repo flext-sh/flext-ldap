@@ -201,7 +201,9 @@ cn: user
 
         assert result.valid is False
         assert len(result.schema_errors) > 0
-        assert any("version specification" in error.lower() for error in result.schema_errors)
+        assert any(
+            "version specification" in error.lower() for error in result.schema_errors
+        )
 
     def test_validate_raw_content_invalid_version(self) -> None:
         """Test validating content with invalid version number."""
@@ -229,7 +231,9 @@ objectClass: person
             result = validator.validate_raw_content("test content")
 
             assert result.valid is False
-            assert any("Invalid UTF-8 encoding" in error for error in result.schema_errors)
+            assert any(
+                "Invalid UTF-8 encoding" in error for error in result.schema_errors
+            )
 
     def test_validate_raw_content_line_folding_compliance(self) -> None:
         """Test validating line folding compliance."""
@@ -495,7 +499,9 @@ cn:: invalid_base64!@#
         errors = validator._validate_version_specification(lines)
 
         assert len(errors) > 0
-        assert any("Missing required version specification" in error for error in errors)
+        assert any(
+            "Missing required version specification" in error for error in errors
+        )
 
     def test_validate_version_specification_invalid_number(self) -> None:
         """Test version specification validation with invalid version number."""
@@ -664,7 +670,9 @@ description: This string contains unsafe character: \x00
         ]
 
         for string in safe_strings:
-            assert validator._is_safe_string(string) is True, f"String should be safe: {string!r}"
+            assert validator._is_safe_string(string) is True, (
+                f"String should be safe: {string!r}"
+            )
 
     def test_is_safe_string_invalid_first_char(self) -> None:
         """Test safe string validation with invalid first character."""
@@ -684,7 +692,9 @@ description: This string contains unsafe character: \x00
         with patch.object(validator, "SAFE_CHAR_PATTERN") as mock_pattern:
             mock_pattern.match.side_effect = lambda char: char != "x"
 
-            assert validator._is_safe_string("teXt") is True  # All chars except 'x' are safe
+            assert (
+                validator._is_safe_string("teXt") is True
+            )  # All chars except 'x' are safe
             assert validator._is_safe_string("text") is False  # 'x' is not safe
 
     def test_validate_object_classes_present(self) -> None:
@@ -726,7 +736,9 @@ sn: User
 
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(valid_content)
             temp_path = Path(f.name)
 
@@ -761,7 +773,9 @@ cn: user
 
 """  # Missing version specification
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(invalid_content)
             temp_path = Path(f.name)
 
@@ -788,7 +802,10 @@ class TestLDIFValidatorBackwardCompatibility:
         validator2 = LDIFValidator()
 
         assert type(validator1) == type(validator2)
-        assert validator1.config.require_version_spec == validator2.config.require_version_spec
+        assert (
+            validator1.config.require_version_spec
+            == validator2.config.require_version_spec
+        )
 
 
 class TestLDIFValidatorPatterns:
@@ -802,7 +819,7 @@ class TestLDIFValidatorPatterns:
         safe_chars = "abcABC123 !#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
         for char in safe_chars:
             match = validator.SAFE_CHAR_PATTERN.match(char)
-            if char in "\x00\x0A\x0D":  # Excluded characters
+            if char in "\x00\x0a\x0d":  # Excluded characters
                 assert match is None, f"Character should not be safe: {char!r}"
             else:
                 assert match is not None, f"Character should be safe: {char!r}"

@@ -103,7 +103,10 @@ class LDAPConnectionPool:
             self._stats.total_connections = len(self._pool)
             self._initialized = True
 
-            self.logger.info("Connection pool initialized: %s/%s connections", len(self._pool, self.pool_size),
+            self.logger.info(
+                "Connection pool initialized: %s/%s connections",
+                len(self._pool),
+                self.pool_size,
             )
 
     async def _create_connection(self) -> Connection:
@@ -284,7 +287,9 @@ class LDAPOperationHelper:
 
             # Return unified Result error if available, otherwise raise
             if Result is not None:
-                return Result.from_exception(e, default_data=[], execution_time_ms=execution_time_ms)
+                return Result.from_exception(
+                    e, default_data=[], execution_time_ms=execution_time_ms,
+                )
             raise
 
     async def add_entry(self, entry: LDAPEntry) -> bool:

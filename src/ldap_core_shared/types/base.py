@@ -13,12 +13,17 @@ from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, ClassVar, Generic, TypeVar, final
+
+try:
+    from typing import Self
+except ImportError:
+    # Fallback for Python < 3.11
+    from typing import Self
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import ConfigDict, Field, model_validator
-from typing_extensions import Self
 
 # Generic type variables for reusable patterns
 TEntity = TypeVar("TEntity", bound="BaseEntity")
@@ -159,13 +164,13 @@ class BaseEntity(BaseModel, ABC):
 
     # Audit trail fields
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Timestamp when entity was created",
         json_schema_extra={"example": "2025-01-01T00:00:00Z"},
     )
 
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Timestamp when entity was last updated",
         json_schema_extra={"example": "2025-01-01T12:00:00Z"},
     )
@@ -218,7 +223,7 @@ class BaseEntity(BaseModel, ABC):
         """
         return self.model_copy(
             update={
-                "updated_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(UTC),
                 "version": self.version + 1,
             },
         )

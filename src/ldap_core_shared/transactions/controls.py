@@ -37,7 +37,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -61,23 +61,26 @@ class TransactionEndType(Enum):
 class TransactionRequest(BaseModel):
     """Request configuration for transaction operations."""
 
-    transaction_identifier: Optional[bytes] = Field(
-        default=None, description="Transaction identifier from server",
+    transaction_identifier: bytes | None = Field(
+        default=None,
+        description="Transaction identifier from server",
     )
 
-    isolation_level: Optional[str] = Field(
-        default=None, description="Requested isolation level",
+    isolation_level: str | None = Field(
+        default=None,
+        description="Requested isolation level",
     )
 
-    timeout_seconds: Optional[int] = Field(
-        default=None, description="Transaction timeout in seconds",
+    timeout_seconds: int | None = Field(
+        default=None,
+        description="Transaction timeout in seconds",
     )
 
     def has_transaction_id(self) -> bool:
         """Check if transaction identifier is present."""
         return self.transaction_identifier is not None
 
-    def get_transaction_id_hex(self) -> Optional[str]:
+    def get_transaction_id_hex(self) -> str | None:
         """Get transaction identifier as hex string."""
         if self.transaction_identifier:
             return self.transaction_identifier.hex()
@@ -87,29 +90,33 @@ class TransactionRequest(BaseModel):
 class TransactionResponse(BaseModel):
     """Response from transaction operations."""
 
-    transaction_identifier: Optional[bytes] = Field(
-        default=None, description="Transaction identifier from server",
+    transaction_identifier: bytes | None = Field(
+        default=None,
+        description="Transaction identifier from server",
     )
 
     result_code: int = Field(default=0, description="Transaction operation result code")
 
-    result_message: Optional[str] = Field(
-        default=None, description="Transaction operation result message",
+    result_message: str | None = Field(
+        default=None,
+        description="Transaction operation result message",
     )
 
-    server_info: Optional[dict[str, Any]] = Field(
-        default=None, description="Additional server information",
+    server_info: dict[str, Any] | None = Field(
+        default=None,
+        description="Additional server information",
     )
 
     processed_at: datetime = Field(
-        default_factory=datetime.now, description="When response was processed",
+        default_factory=datetime.now,
+        description="When response was processed",
     )
 
     def is_success(self) -> bool:
         """Check if transaction operation was successful."""
         return self.result_code == 0
 
-    def get_transaction_id_hex(self) -> Optional[str]:
+    def get_transaction_id_hex(self) -> str | None:
         """Get transaction identifier as hex string."""
         if self.transaction_identifier:
             return self.transaction_identifier.hex()
@@ -144,11 +151,13 @@ class TransactionSpecificationControl(LDAPControl):
     control_type = "1.3.6.1.1.21.2"  # RFC 5805 Transaction Specification control OID
 
     # Add the transaction identifier as a model field
-    transaction_identifier: Optional[bytes] = Field(default=None, description="Transaction identifier")
+    transaction_identifier: bytes | None = Field(
+        default=None, description="Transaction identifier",
+    )
 
     def __init__(
         self,
-        transaction_identifier: Optional[bytes] = None,
+        transaction_identifier: bytes | None = None,
         criticality: bool = True,
         **kwargs: Any,
     ) -> None:
@@ -170,7 +179,7 @@ class TransactionSpecificationControl(LDAPControl):
         )
 
         # Initialize response storage
-        self._response: Optional[TransactionResponse] = None
+        self._response: TransactionResponse | None = None
         self._response_available = False
 
         # Set control value
@@ -197,7 +206,9 @@ class TransactionSpecificationControl(LDAPControl):
             raise ControlEncodingError(msg) from e
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> TransactionSpecificationControl:
+    def decode_value(
+        cls, control_value: bytes | None,
+    ) -> TransactionSpecificationControl:
         """Decode Transaction Specification control value.
 
         Args:
@@ -255,7 +266,7 @@ class TransactionSpecificationControl(LDAPControl):
         # Update control value
         self.control_value = self._encode_request()
 
-    def get_transaction_identifier(self) -> Optional[bytes]:
+    def get_transaction_identifier(self) -> bytes | None:
         """Get current transaction identifier.
 
         Returns:
@@ -263,7 +274,7 @@ class TransactionSpecificationControl(LDAPControl):
         """
         return self.transaction_identifier
 
-    def get_transaction_id_hex(self) -> Optional[str]:
+    def get_transaction_id_hex(self) -> str | None:
         """Get transaction identifier as hex string.
 
         Returns:
@@ -282,7 +293,7 @@ class TransactionSpecificationControl(LDAPControl):
         return self.transaction_identifier is not None
 
     @property
-    def response(self) -> Optional[TransactionResponse]:
+    def response(self) -> TransactionResponse | None:
         """Get transaction control response."""
         return self._response
 
@@ -319,7 +330,9 @@ class TransactionEndingControl(LDAPControl):
     control_type = "1.3.6.1.1.21.4"  # RFC 5805 Transaction Ending control OID
 
     # Add the ending type as a model field
-    ending_type: TransactionEndType = Field(default=TransactionEndType.COMMIT, description="Transaction ending type")
+    ending_type: TransactionEndType = Field(
+        default=TransactionEndType.COMMIT, description="Transaction ending type",
+    )
 
     def __init__(
         self,
@@ -340,7 +353,7 @@ class TransactionEndingControl(LDAPControl):
         )
 
         # Initialize response storage
-        self._response: Optional[TransactionResponse] = None
+        self._response: TransactionResponse | None = None
         self._response_available = False
 
         # Set control value
@@ -361,14 +374,14 @@ class TransactionEndingControl(LDAPControl):
             commit_flag = self.ending_type == TransactionEndType.COMMIT
             # Simple BER encoding of BOOLEAN: 0x01 0x01 0xFF (TRUE) or 0x01 0x01 0x00 (FALSE)
             if commit_flag:
-                return b"\x01\x01\xFF"  # BOOLEAN TRUE
+                return b"\x01\x01\xff"  # BOOLEAN TRUE
             return b"\x01\x01\x00"  # BOOLEAN FALSE
         except Exception as e:
             msg = f"Failed to encode transaction ending control: {e}"
             raise ControlEncodingError(msg) from e
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> TransactionEndingControl:
+    def decode_value(cls, control_value: bytes | None) -> TransactionEndingControl:
         """Decode Transaction Ending control value.
 
         Args:
@@ -386,7 +399,7 @@ class TransactionEndingControl(LDAPControl):
                 return cls(TransactionEndType.COMMIT)
 
             # Simple BER decoding of BOOLEAN
-            if control_value == b"\x01\x01\xFF":
+            if control_value == b"\x01\x01\xff":
                 return cls(TransactionEndType.COMMIT)
             if control_value == b"\x01\x01\x00":
                 return cls(TransactionEndType.ABORT)
@@ -432,7 +445,7 @@ class TransactionEndingControl(LDAPControl):
         return self.ending_type == TransactionEndType.ABORT
 
     @property
-    def response(self) -> Optional[TransactionResponse]:
+    def response(self) -> TransactionResponse | None:
         """Get transaction ending response."""
         return self._response
 
@@ -447,12 +460,12 @@ class TransactionExtendedOperations:
     """Container for transaction-related extended operation OIDs."""
 
     START_TRANSACTION = "1.3.6.1.1.21.1"  # Start Transaction Extended Operation
-    END_TRANSACTION = "1.3.6.1.1.21.3"    # End Transaction Extended Operation
+    END_TRANSACTION = "1.3.6.1.1.21.3"  # End Transaction Extended Operation
 
 
 # Convenience functions
 def create_transaction_spec_control(
-    transaction_id: Optional[bytes] = None,
+    transaction_id: bytes | None = None,
 ) -> TransactionSpecificationControl:
     """Create Transaction Specification control.
 
@@ -540,6 +553,7 @@ async def end_transaction(
         "with proper commit/abort handling."
     )
     raise NotImplementedError(msg)
+
 
 # TODO: Integration points for implementation:
 #

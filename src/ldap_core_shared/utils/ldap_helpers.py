@@ -19,13 +19,13 @@ logger = logging.getLogger(__name__)
 
 class DNHelper:
     """Helper functions for Distinguished Name (DN) manipulation - Enterprise Delegation Facade.
-    
+
     TRUE FACADE PATTERN: 100% DELEGATION TO ENTERPRISE DN INFRASTRUCTURE
     ====================================================================
-    
+
     This class delegates entirely to the enterprise-grade DN utilities in
     utilities.dn without any reimplementation.
-    
+
     DELEGATION TARGET: utilities.dn.DistinguishedName - Enterprise DN processing
     with RFC 4514 compliance, comprehensive validation, advanced manipulation.
     """
@@ -45,16 +45,16 @@ class DNHelper:
 
         # Delegate to enterprise DN parsing
         from ldap_core_shared.utilities.dn import DistinguishedName
-        
+
         try:
             enterprise_dn = DistinguishedName(dn)
-            rdns = []
-            for comp in enterprise_dn.components:
-                rdns.append({
+            return [
+                {
                     "attribute": comp.attribute_type,
                     "value": comp.attribute_value,
-                })
-            return rdns
+                }
+                for comp in enterprise_dn.components
+            ]
         except Exception:
             return []
 
@@ -68,7 +68,11 @@ class DNHelper:
         Returns:
             Formatted Distinguished Name
         """
-        dn_parts = [f"{rdn['attribute']}={rdn['value']}" for rdn in rdns if "attribute" in rdn and "value" in rdn]
+        dn_parts = [
+            f"{rdn['attribute']}={rdn['value']}"
+            for rdn in rdns
+            if "attribute" in rdn and "value" in rdn
+        ]
 
         return ",".join(dn_parts)
 
@@ -87,7 +91,7 @@ class DNHelper:
 
         # Delegate to enterprise DN system
         from ldap_core_shared.utilities.dn import get_dn_parent
-        
+
         parent = get_dn_parent(dn)
         return parent or ""
 
@@ -106,7 +110,7 @@ class DNHelper:
 
         # Delegate to enterprise DN system
         from ldap_core_shared.utilities.dn import get_dn_rdn
-        
+
         rdn = get_dn_rdn(dn)
         return rdn or ""
 
@@ -122,7 +126,7 @@ class DNHelper:
         """
         # Delegate to enterprise DN escaping
         from ldap_core_shared.utilities.dn import escape_dn_value
-        
+
         return escape_dn_value(value)
 
     @staticmethod
@@ -140,7 +144,7 @@ class DNHelper:
 
         # Delegate to enterprise DN normalization
         from ldap_core_shared.utilities.dn import normalize_dn
-        
+
         return normalize_dn(dn)
 
 
@@ -493,7 +497,8 @@ class LDAPUrlHelper:
         result: dict[str, str | int | bool | list[str]] = {
             "scheme": parsed.scheme,
             "host": parsed.hostname or "",
-            "port": parsed.port or (LDAPS_DEFAULT_PORT if parsed.scheme == "ldaps" else LDAP_DEFAULT_PORT),
+            "port": parsed.port
+            or (LDAPS_DEFAULT_PORT if parsed.scheme == "ldaps" else LDAP_DEFAULT_PORT),
             "base_dn": unquote(parsed.path.lstrip("/") if parsed.path else ""),
             "attributes": [],
             "scope": "sub",

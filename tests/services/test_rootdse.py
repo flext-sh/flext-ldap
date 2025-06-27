@@ -38,7 +38,7 @@ Performance Testing:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import Mock
 
 import pytest
@@ -88,8 +88,14 @@ class TestServerVendor:
     def test_server_vendor_completeness(self) -> None:
         """Test that all expected server vendors are defined."""
         expected_vendors = {
-            "OPENLDAP", "MICROSOFT_AD", "IBM_DOMINO", "NOVELL_EDIRECTORY",
-            "SUN_DIRECTORY", "ORACLE_DIRECTORY", "APACHE_DIRECTORY", "UNKNOWN",
+            "OPENLDAP",
+            "MICROSOFT_AD",
+            "IBM_DOMINO",
+            "NOVELL_EDIRECTORY",
+            "SUN_DIRECTORY",
+            "ORACLE_DIRECTORY",
+            "APACHE_DIRECTORY",
+            "UNKNOWN",
         }
         actual_vendors = {member.name for member in ServerVendor}
         assert actual_vendors == expected_vendors
@@ -206,7 +212,7 @@ class TestServerInfo:
 
     def test_server_info_creation_complete(self) -> None:
         """Test creating server info with complete configuration."""
-        discovery_time = datetime.now(timezone.utc)
+        discovery_time = datetime.now(UTC)
 
         extensions = [
             ExtensionInfo(oid="1.3.6.1.4.1.4203.1.11.3", name="Who Am I"),
@@ -432,7 +438,9 @@ class TestRootDSEService:
         mock_connection = Mock()
         service = RootDSEService(mock_connection)
 
-        with pytest.raises(NotImplementedError, match="Root DSE discovery requires connection"):
+        with pytest.raises(
+            NotImplementedError, match="Root DSE discovery requires connection"
+        ):
             await service.discover_capabilities()
 
     async def test_discover_capabilities_uses_cache(self) -> None:
@@ -545,8 +553,8 @@ class TestRootDSEService:
         expected_extensions = {
             "1.3.6.1.4.1.4203.1.11.3",  # Who Am I
             "1.3.6.1.4.1.4203.1.11.1",  # Password Modify
-            "1.3.6.1.4.1.1466.20037",   # Start TLS
-            "1.3.6.1.1.8",              # Cancel
+            "1.3.6.1.4.1.1466.20037",  # Start TLS
+            "1.3.6.1.1.8",  # Cancel
             "1.3.6.1.4.1.4203.1.11.2",  # Refresh
         }
 
@@ -564,10 +572,10 @@ class TestRootDSEService:
         service = RootDSEService(Mock())
 
         expected_controls = {
-            "2.16.840.1.113730.3.4.2",   # ManageDsaIT
-            "1.2.840.113556.1.4.319",    # Paged Results
+            "2.16.840.1.113730.3.4.2",  # ManageDsaIT
+            "1.2.840.113556.1.4.319",  # Paged Results
             "2.16.840.1.113730.3.4.18",  # Proxy Authorization
-            "1.2.840.113556.1.4.473",    # Sort
+            "1.2.840.113556.1.4.473",  # Sort
             "1.3.6.1.4.1.42.2.27.8.5.1",  # Password Policy
         }
 
@@ -804,11 +812,11 @@ class TestRootDSEAttributeParsing:
             "supportedExtension": [
                 "1.3.6.1.4.1.4203.1.11.3",  # Who Am I
                 "1.3.6.1.4.1.4203.1.11.1",  # Password Modify
-                "1.3.6.1.4.1.1466.20037",   # Start TLS
+                "1.3.6.1.4.1.1466.20037",  # Start TLS
             ],
             "supportedControl": [
-                "2.16.840.1.113730.3.4.2",   # ManageDsaIT
-                "1.2.840.113556.1.4.319",    # Paged Results
+                "2.16.840.1.113730.3.4.2",  # ManageDsaIT
+                "1.2.840.113556.1.4.319",  # Paged Results
             ],
             "supportedSASLMechanisms": ["PLAIN", "EXTERNAL", "GSSAPI"],
             "supportedLDAPVersion": ["2", "3"],
@@ -883,7 +891,7 @@ class TestRootDSEAttributeParsing:
         attributes = {
             "supportedExtension": [
                 "1.3.6.1.4.1.4203.1.11.3",  # Known: Who Am I
-                "1.2.3.4.5.6.7.8.9",        # Unknown
+                "1.2.3.4.5.6.7.8.9",  # Unknown
             ],
         }
 
@@ -907,8 +915,8 @@ class TestRootDSEAttributeParsing:
 
         attributes = {
             "supportedControl": [
-                "2.16.840.1.113730.3.4.2",   # Known: ManageDsaIT
-                "9.8.7.6.5.4.3.2.1",        # Unknown
+                "2.16.840.1.113730.3.4.2",  # Known: ManageDsaIT
+                "9.8.7.6.5.4.3.2.1",  # Unknown
             ],
         }
 
@@ -1021,7 +1029,10 @@ class TestIntegrationScenarios:
             ({"vendorName": "IBM Corporation"}, ServerVendor.IBM_DOMINO),
             ({"vendorName": "Novell, Inc."}, ServerVendor.NOVELL_EDIRECTORY),
             ({"vendorName": "Sun Microsystems"}, ServerVendor.SUN_DIRECTORY),
-            ({"vendorName": "Apache Software Foundation"}, ServerVendor.APACHE_DIRECTORY),
+            (
+                {"vendorName": "Apache Software Foundation"},
+                ServerVendor.APACHE_DIRECTORY,
+            ),
             ({"vendorName": "Unknown Vendor"}, ServerVendor.UNKNOWN),
         ]
 
@@ -1061,8 +1072,13 @@ class TestSecurityValidation:
     def test_sasl_mechanism_validation(self) -> None:
         """Test SASL mechanism validation and security."""
         common_sasl_mechanisms = [
-            "PLAIN", "EXTERNAL", "GSSAPI", "DIGEST-MD5",
-            "CRAM-MD5", "NTLM", "ANONYMOUS",
+            "PLAIN",
+            "EXTERNAL",
+            "GSSAPI",
+            "DIGEST-MD5",
+            "CRAM-MD5",
+            "NTLM",
+            "ANONYMOUS",
         ]
 
         info = ServerInfo(supported_sasl_mechanisms=common_sasl_mechanisms)

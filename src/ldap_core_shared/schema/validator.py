@@ -165,7 +165,11 @@ class SchemaValidator:
         if not attr_type.names:
             errors.append(f"Attribute type {attr_type.oid} must have at least one name")
 
-        errors.extend(f"Invalid attribute name: {name}" for name in attr_type.names if not self._is_valid_attribute_name(name))
+        errors.extend(
+            f"Invalid attribute name: {name}"
+            for name in attr_type.names
+            if not self._is_valid_attribute_name(name)
+        )
 
         # Check usage values
         valid_usages = [
@@ -191,7 +195,11 @@ class SchemaValidator:
         if not obj_class.names:
             errors.append(f"Object class {obj_class.oid} must have at least one name")
 
-        errors.extend(f"Invalid object class name: {name}" for name in obj_class.names if not self._is_valid_object_class_name(name))
+        errors.extend(
+            f"Invalid object class name: {name}"
+            for name in obj_class.names
+            if not self._is_valid_object_class_name(name)
+        )
 
         # Check class type
         valid_types = ["STRUCTURAL", "AUXILIARY", "ABSTRACT"]
@@ -236,13 +244,25 @@ class SchemaValidator:
     ) -> list[str]:
         """Check object class dependencies."""
         # Check superior object classes
-        errors = [f"Superior object class not found: {superior}" for superior in obj_class.superior_classes if not self._find_object_class_by_name(superior, schema)]
+        errors = [
+            f"Superior object class not found: {superior}"
+            for superior in obj_class.superior_classes
+            if not self._find_object_class_by_name(superior, schema)
+        ]
 
         # Check required attributes
-        errors.extend(f"Required attribute not found: {attr_name}" for attr_name in obj_class.must_attributes if not self._find_attribute_by_name(attr_name, schema))
+        errors.extend(
+            f"Required attribute not found: {attr_name}"
+            for attr_name in obj_class.must_attributes
+            if not self._find_attribute_by_name(attr_name, schema)
+        )
 
         # Check optional attributes
-        errors.extend(f"Optional attribute not found: {attr_name}" for attr_name in obj_class.may_attributes if not self._find_attribute_by_name(attr_name, schema))
+        errors.extend(
+            f"Optional attribute not found: {attr_name}"
+            for attr_name in obj_class.may_attributes
+            if not self._find_attribute_by_name(attr_name, schema)
+        )
 
         return errors
 

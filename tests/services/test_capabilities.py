@@ -39,7 +39,7 @@ Security Testing:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import Mock
 
 import pytest
@@ -79,9 +79,17 @@ class TestFeatureCategory:
     def test_feature_category_completeness(self) -> None:
         """Test that all expected feature categories are defined."""
         expected_categories = {
-            "AUTHENTICATION", "AUTHORIZATION", "CONTROLS", "EXTENSIONS",
-            "PAGING", "PASSWORD_POLICY", "SCHEMA", "SECURITY", "SORTING",
-            "SYNC", "TRANSACTIONS",
+            "AUTHENTICATION",
+            "AUTHORIZATION",
+            "CONTROLS",
+            "EXTENSIONS",
+            "PAGING",
+            "PASSWORD_POLICY",
+            "SCHEMA",
+            "SECURITY",
+            "SORTING",
+            "SYNC",
+            "TRANSACTIONS",
         }
         actual_categories = {member.name for member in FeatureCategory}
         assert actual_categories == expected_categories
@@ -122,8 +130,14 @@ class TestServerType:
     def test_server_type_completeness(self) -> None:
         """Test that all expected server types are defined."""
         expected_types = {
-            "ACTIVE_DIRECTORY", "OPENLDAP", "IBM_DOMINO", "NOVELL_EDIRECTORY",
-            "SUN_DIRECTORY", "ORACLE_DIRECTORY", "APACHE_DIRECTORY", "UNKNOWN",
+            "ACTIVE_DIRECTORY",
+            "OPENLDAP",
+            "IBM_DOMINO",
+            "NOVELL_EDIRECTORY",
+            "SUN_DIRECTORY",
+            "ORACLE_DIRECTORY",
+            "APACHE_DIRECTORY",
+            "UNKNOWN",
         }
         actual_types = {member.name for member in ServerType}
         assert actual_types == expected_types
@@ -262,7 +276,7 @@ class TestServerCapabilities:
 
     def test_server_capabilities_creation_complete(self) -> None:
         """Test creating server capabilities with complete configuration."""
-        detection_time = datetime.now(timezone.utc)
+        detection_time = datetime.now(UTC)
 
         features = {
             "paging": FeatureInfo(
@@ -443,12 +457,16 @@ class TestServerCapabilities:
         assert paging_features[0] is paging_feature
 
         # Test authentication category
-        auth_features = capabilities.get_features_by_category(FeatureCategory.AUTHENTICATION)
+        auth_features = capabilities.get_features_by_category(
+            FeatureCategory.AUTHENTICATION
+        )
         assert len(auth_features) == 1
         assert auth_features[0] is auth_feature
 
         # Test empty category
-        security_features = capabilities.get_features_by_category(FeatureCategory.SECURITY)
+        security_features = capabilities.get_features_by_category(
+            FeatureCategory.SECURITY
+        )
         assert len(security_features) == 0
 
     def test_get_supported_features(self) -> None:
@@ -541,7 +559,9 @@ class TestServerCapabilities:
         assert summary["features_total"] == 2
         assert summary["support_percentage"] == 50.0  # 1/2 * 100
         assert summary["authentication_methods"] == 3  # 2 SASL + 1 simple
-        assert summary["security_level"] == "high"  # Should be high based on capabilities
+        assert (
+            summary["security_level"] == "high"
+        )  # Should be high based on capabilities
 
     def test_calculate_security_level_high(self) -> None:
         """Test _calculate_security_level returns high for secure server."""
@@ -660,47 +680,66 @@ class TestFeatureMatrix:
     def test_get_feature_support_known(self) -> None:
         """Test get_feature_support for known feature."""
         support = FeatureMatrix.get_feature_support(
-            ServerType.ACTIVE_DIRECTORY, "paging",
+            ServerType.ACTIVE_DIRECTORY,
+            "paging",
         )
         assert support == FeatureSupport.FULL
 
     def test_get_feature_support_unknown_feature(self) -> None:
         """Test get_feature_support for unknown feature."""
         support = FeatureMatrix.get_feature_support(
-            ServerType.ACTIVE_DIRECTORY, "nonexistent_feature",
+            ServerType.ACTIVE_DIRECTORY,
+            "nonexistent_feature",
         )
         assert support == FeatureSupport.UNKNOWN
 
     def test_get_feature_support_unknown_server(self) -> None:
         """Test get_feature_support for unknown server type."""
         support = FeatureMatrix.get_feature_support(
-            ServerType.UNKNOWN, "paging",
+            ServerType.UNKNOWN,
+            "paging",
         )
         assert support == FeatureSupport.UNKNOWN
 
     def test_is_feature_supported_true(self) -> None:
         """Test is_feature_supported returns True for supported feature."""
         # OpenLDAP supports paging fully
-        assert FeatureMatrix.is_feature_supported(
-            ServerType.OPENLDAP, "paging",
-        ) is True
+        assert (
+            FeatureMatrix.is_feature_supported(
+                ServerType.OPENLDAP,
+                "paging",
+            )
+            is True
+        )
 
         # Active Directory supports sorting
-        assert FeatureMatrix.is_feature_supported(
-            ServerType.ACTIVE_DIRECTORY, "sorting",
-        ) is True
+        assert (
+            FeatureMatrix.is_feature_supported(
+                ServerType.ACTIVE_DIRECTORY,
+                "sorting",
+            )
+            is True
+        )
 
     def test_is_feature_supported_false(self) -> None:
         """Test is_feature_supported returns False for unsupported feature."""
         # Active Directory doesn't support persistent search
-        assert FeatureMatrix.is_feature_supported(
-            ServerType.ACTIVE_DIRECTORY, "persistent_search",
-        ) is False
+        assert (
+            FeatureMatrix.is_feature_supported(
+                ServerType.ACTIVE_DIRECTORY,
+                "persistent_search",
+            )
+            is False
+        )
 
         # IBM Domino doesn't support transactions
-        assert FeatureMatrix.is_feature_supported(
-            ServerType.IBM_DOMINO, "transactions",
-        ) is False
+        assert (
+            FeatureMatrix.is_feature_supported(
+                ServerType.IBM_DOMINO,
+                "transactions",
+            )
+            is False
+        )
 
     def test_get_supported_features(self) -> None:
         """Test get_supported_features returns all supported features."""
@@ -709,8 +748,16 @@ class TestFeatureMatrix:
 
         # OpenLDAP should support most features
         expected_openldap = [
-            "paging", "sorting", "password_policy", "ssl_tls", "sasl_gssapi",
-            "sasl_digest_md5", "persistent_search", "sync_repl", "vlv", "transactions",
+            "paging",
+            "sorting",
+            "password_policy",
+            "ssl_tls",
+            "sasl_gssapi",
+            "sasl_digest_md5",
+            "persistent_search",
+            "sync_repl",
+            "vlv",
+            "transactions",
         ]
 
         for feature in expected_openldap:
@@ -750,7 +797,9 @@ class TestCapabilityDetection:
         mock_connection = Mock()
         detector = CapabilityDetection(mock_connection)
 
-        with pytest.raises(NotImplementedError, match="Capability detection requires Root DSE"):
+        with pytest.raises(
+            NotImplementedError, match="Capability detection requires Root DSE"
+        ):
             await detector.detect_capabilities()
 
     async def test_detect_capabilities_uses_cache(self) -> None:
@@ -1037,10 +1086,10 @@ class TestCapabilityDetectionParsing:
 
         root_dse = {
             "supportedControl": [
-                "1.2.840.113556.1.4.319",    # Paged Results
-                "1.2.840.113556.1.4.473",    # Sort
-                "2.16.840.1.113730.3.4.9",   # VLV
-                "2.16.840.1.113730.3.4.3",   # Persistent Search
+                "1.2.840.113556.1.4.319",  # Paged Results
+                "1.2.840.113556.1.4.473",  # Sort
+                "2.16.840.1.113730.3.4.9",  # VLV
+                "2.16.840.1.113730.3.4.3",  # Persistent Search
             ],
         }
 
@@ -1110,8 +1159,8 @@ class TestCapabilityDetectionParsing:
         # Low confidence scenario
         low_conf_caps = ServerCapabilities(
             server_type=ServerType.UNKNOWN,  # -0.3
-            server_version=None,             # -0.1
-            features={},                      # <5 features: -0.2
+            server_version=None,  # -0.1
+            features={},  # <5 features: -0.2
         )
 
         confidence = detector._calculate_detection_confidence(low_conf_caps)
@@ -1239,7 +1288,10 @@ class TestIntegrationScenarios:
         ]
 
         essential_features = [
-            "paging", "sorting", "ssl_tls", "password_policy",
+            "paging",
+            "sorting",
+            "ssl_tls",
+            "password_policy",
         ]
 
         for server_type in major_servers:
@@ -1255,24 +1307,30 @@ class TestIntegrationScenarios:
         """Test security level calculation for different scenarios."""
         test_scenarios = [
             # (capabilities, expected_level)
-            ({
-                "supports_ssl": True,
-                "supports_start_tls": True,
-                "supports_password_policy": True,
-                "requires_ssl_for_auth": True,
-                "supported_sasl_mechanisms": ["GSSAPI"],
-            }, "high"),
-
-            ({
-                "supports_ssl": True,
-                "supports_start_tls": True,
-                "supported_sasl_mechanisms": ["PLAIN"],
-            }, "medium"),
-
-            ({
-                "supports_start_tls": True,
-            }, "low"),
-
+            (
+                {
+                    "supports_ssl": True,
+                    "supports_start_tls": True,
+                    "supports_password_policy": True,
+                    "requires_ssl_for_auth": True,
+                    "supported_sasl_mechanisms": ["GSSAPI"],
+                },
+                "high",
+            ),
+            (
+                {
+                    "supports_ssl": True,
+                    "supports_start_tls": True,
+                    "supported_sasl_mechanisms": ["PLAIN"],
+                },
+                "medium",
+            ),
+            (
+                {
+                    "supports_start_tls": True,
+                },
+                "low",
+            ),
             ({}, "minimal"),
         ]
 
@@ -1296,7 +1354,7 @@ class TestSecurityValidation:
             supported_sasl_mechanisms=["GSSAPI", "EXTERNAL"],
             supports_simple_auth=True,
             supports_anonymous_auth=False,  # Should be False for security
-            requires_ssl_for_auth=True,     # Should be True for security
+            requires_ssl_for_auth=True,  # Should be True for security
             supports_ssl=True,
             supports_start_tls=True,
         )
@@ -1308,10 +1366,10 @@ class TestSecurityValidation:
             server_type=ServerType.UNKNOWN,
             supported_sasl_mechanisms=[],
             supports_simple_auth=True,
-            supports_anonymous_auth=True,   # Security risk
-            requires_ssl_for_auth=False,    # Security risk
-            supports_ssl=False,             # Security risk
-            supports_start_tls=False,        # Security risk
+            supports_anonymous_auth=True,  # Security risk
+            requires_ssl_for_auth=False,  # Security risk
+            supports_ssl=False,  # Security risk
+            supports_start_tls=False,  # Security risk
         )
 
         assert insecure_capabilities._calculate_security_level() == "minimal"

@@ -49,12 +49,13 @@ from __future__ import annotations
 import logging
 import threading
 import time
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from queue import Empty, Queue
-from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -81,32 +82,32 @@ logger = logging.getLogger(__name__)
 class ConnectionStrategy(Enum):
     """LDAP connection strategies inspired by ldap3."""
 
-    SYNC = "sync"                    # Simple synchronous connection
-    SAFE_SYNC = "safe_sync"         # Thread-safe synchronous connection
+    SYNC = "sync"  # Simple synchronous connection
+    SAFE_SYNC = "safe_sync"  # Thread-safe synchronous connection
     SAFE_RESTARTABLE = "safe_restartable"  # Restartable synchronous connection
-    ASYNC = "async"                 # Asynchronous connection
-    POOLED = "pooled"               # Connection pooling strategy
+    ASYNC = "async"  # Asynchronous connection
+    POOLED = "pooled"  # Connection pooling strategy
 
 
 class ConnectionState(Enum):
     """Connection state tracking."""
 
-    DISCONNECTED = "disconnected"   # Not connected
-    CONNECTING = "connecting"       # Connection in progress
-    CONNECTED = "connected"         # Successfully connected
+    DISCONNECTED = "disconnected"  # Not connected
+    CONNECTING = "connecting"  # Connection in progress
+    CONNECTED = "connected"  # Successfully connected
     AUTHENTICATING = "authenticating"  # Authentication in progress
     AUTHENTICATED = "authenticated"  # Successfully authenticated
-    ERROR = "error"                 # Connection error
-    CLOSED = "closed"               # Connection explicitly closed
+    ERROR = "error"  # Connection error
+    CLOSED = "closed"  # Connection explicitly closed
 
 
 class ServerHealth(Enum):
     """LDAP server health status."""
 
-    HEALTHY = "healthy"             # Server responding normally
-    DEGRADED = "degraded"           # Server responding slowly
-    UNHEALTHY = "unhealthy"         # Server not responding
-    UNKNOWN = "unknown"             # Health status unknown
+    HEALTHY = "healthy"  # Server responding normally
+    DEGRADED = "degraded"  # Server responding slowly
+    UNHEALTHY = "unhealthy"  # Server not responding
+    UNKNOWN = "unknown"  # Health status unknown
 
 
 @dataclass
@@ -117,9 +118,9 @@ class ConnectionMetrics:
     active_connections: int = 0
     failed_connections: int = 0
     avg_response_time: float = 0.0
-    last_connection_attempt: Optional[datetime] = None
-    last_successful_connection: Optional[datetime] = None
-    last_error: Optional[str] = None
+    last_connection_attempt: datetime | None = None
+    last_successful_connection: datetime | None = None
+    last_error: str | None = None
     total_operations: int = 0
     failed_operations: int = 0
 
@@ -131,7 +132,7 @@ class ServerInfo:
     uri: str
     health: ServerHealth = ServerHealth.UNKNOWN
     metrics: ConnectionMetrics = field(default_factory=ConnectionMetrics)
-    last_health_check: Optional[datetime] = None
+    last_health_check: datetime | None = None
     priority: int = 1  # Lower numbers = higher priority
     max_connections: int = 50
     active_connections: int = 0
@@ -152,8 +153,8 @@ class ConnectionConfig(BaseModel):
     )
 
     # Authentication
-    bind_dn: Optional[str] = Field(default=None, description="Bind DN")
-    bind_password: Optional[str] = Field(default=None, description="Bind password")
+    bind_dn: str | None = Field(default=None, description="Bind DN")
+    bind_password: str | None = Field(default=None, description="Bind password")
     use_tls: bool = Field(default=False, description="Use TLS encryption")
 
     # Connection pooling
@@ -180,7 +181,9 @@ class ConnectionConfig(BaseModel):
 
     # Monitoring
     enable_metrics: bool = Field(default=True, description="Enable metrics collection")
-    metrics_retention: int = Field(default=3600, description="Metrics retention seconds")
+    metrics_retention: int = Field(
+        default=3600, description="Metrics retention seconds",
+    )
 
 
 class LDAPConnection:
@@ -190,7 +193,7 @@ class LDAPConnection:
     using python-ldap, ldap3, or similar library.
     """
 
-    def __init__(self, server_uri: str, bind_dn: Optional[str] = None) -> None:
+    def __init__(self, server_uri: str, bind_dn: str | None = None) -> None:
         """Initialize mock connection."""
         self.server_uri = server_uri
         self.bind_dn = bind_dn
@@ -213,7 +216,7 @@ class LDAPConnection:
             self.state = ConnectionState.CONNECTED
             return True
         except Exception as e:
-            logger.exception(f"Connection failed: {e}")
+            logger.exception("Connection failed: %s", e)
             self.state = ConnectionState.ERROR
             return False
 
@@ -243,14 +246,14 @@ class LDAPConnection:
             # Simple validation: non-empty credentials required
             if self.bind_dn and password and len(password) > 0:
                 self.state = ConnectionState.AUTHENTICATED
-                logger.info(f"Authentication successful for {self.bind_dn}")
+                logger.info("Authentication successful for %s", self.bind_dn)
                 return True
 
             logger.error("Authentication failed: invalid credentials")
             self.state = ConnectionState.ERROR
             return False
         except Exception as e:
-            logger.exception(f"Authentication failed: {e}")
+            logger.exception("Authentication failed: %s", e)
             self.state = ConnectionState.ERROR
             return False
 
@@ -305,21 +308,22 @@ class ConnectionPool:
                     self._pool.put_nowait(conn)
                     self._created_connections += 1
             except Exception as e:
-                logger.warning(f"Failed to create initial connection: {e}")
+                logger.warning("Failed to create initial connection: %s", e)
 
-    def _create_connection(self) -> Optional[LDAPConnection]:
+    def _create_connection(self) -> LDAPConnection | None:
         """Create new LDAP connection."""
         try:
             conn = LDAPConnection(self.server_info.uri, self.config.bind_dn)
 
-            if conn.connect():
-                if (self.config.bind_dn and conn.bind(self.config.bind_password)) or not self.config.bind_dn:
-                    return conn
+            if conn.connect() and ((
+                self.config.bind_dn and conn.bind(self.config.bind_password)
+            ) or not self.config.bind_dn):
+                return conn
 
             return None
 
         except Exception as e:
-            logger.exception(f"Failed to create connection: {e}")
+            logger.exception("Failed to create connection: %s", e)
             return None
 
     @contextmanager
@@ -355,7 +359,7 @@ class ConnectionPool:
             yield conn
 
         except Exception as e:
-            logger.exception(f"Connection error: {e}")
+            logger.exception("Connection error: %s", e)
             self._metrics.failed_connections += 1
             raise
         finally:
@@ -389,7 +393,7 @@ class ConnectionPool:
                 result = conn.search("", "(objectClass=*)")
                 return result.success
         except Exception as e:
-            logger.warning(f"Health check failed for {self.server_info.uri}: {e}")
+            logger.warning("Health check failed for %s: %s", self.server_info.uri, e)
             return False
 
     def close_all(self) -> None:
@@ -415,7 +419,7 @@ class FailoverManager:
         self.pools: dict[str, ConnectionPool] = {}
         self._current_server = 0
         self._lock = threading.RLock()
-        self._health_check_thread: Optional[threading.Thread] = None
+        self._health_check_thread: threading.Thread | None = None
         self._shutdown = False
 
         # Initialize servers
@@ -434,13 +438,14 @@ class FailoverManager:
 
     def _start_health_monitoring(self) -> None:
         """Start background health monitoring."""
+
         def health_monitor() -> None:
             while not self._shutdown:
                 try:
                     self._perform_health_checks()
                     time.sleep(self.config.health_check_interval)
                 except Exception as e:
-                    logger.exception(f"Health monitoring error: {e}")
+                    logger.exception("Health monitoring error: %s", e)
 
         self._health_check_thread = threading.Thread(
             target=health_monitor,
@@ -462,7 +467,7 @@ class FailoverManager:
                     server_info.health = ServerHealth.UNHEALTHY
 
             except Exception as e:
-                logger.warning(f"Health check failed for {server_uri}: {e}")
+                logger.warning("Health check failed for %s: %s", server_uri, e)
                 server_info.health = ServerHealth.UNHEALTHY
 
     def get_healthy_servers(self) -> list[str]:
@@ -493,7 +498,7 @@ class FailoverManager:
                     yield conn
                 return
             except Exception as e:
-                logger.warning(f"Failed to get connection from {server_uri}: {e}")
+                logger.warning("Failed to get connection from %s: %s", server_uri, e)
                 last_error = e
                 continue
 
@@ -570,19 +575,21 @@ class ConnectionManager:
 
                 if attempt < max_retries:
                     logger.warning(
-                        f"Connection attempt {attempt + 1} failed: {e}. "
-                        f"Retrying in {retry_delay}s...",
+                        "Connection attempt %s failed: %s. Retrying in %ss...",
+                        attempt + 1,
+                        e,
+                        retry_delay,
                     )
                     time.sleep(retry_delay)
                     retry_delay *= self.config.retry_backoff
                 else:
-                    logger.exception(f"All connection attempts failed: {e}")
+                    logger.exception("All connection attempts failed: %s", e)
                     raise
 
     def execute_with_retry(
         self,
         operation: Callable[[LDAPConnection], T],
-        max_retries: Optional[int] = None,
+        max_retries: int | None = None,
     ) -> T:
         """Execute operation with automatic retry and failover.
 
@@ -608,13 +615,15 @@ class ConnectionManager:
 
                 if attempt < max_retries:
                     logger.warning(
-                        f"Operation attempt {attempt + 1} failed: {e}. "
-                        f"Retrying in {retry_delay}s...",
+                        "Operation attempt %s failed: %s. Retrying in %ss...",
+                        attempt + 1,
+                        e,
+                        retry_delay,
                     )
                     time.sleep(retry_delay)
                     retry_delay *= self.config.retry_backoff
                 else:
-                    logger.exception(f"All operation attempts failed: {e}")
+                    logger.exception("All operation attempts failed: %s", e)
                     raise
 
         # This should never be reached, but satisfies mypy
@@ -625,7 +634,7 @@ class ConnectionManager:
         self,
         base_dn: str,
         search_filter: str,
-        attributes: Optional[list[str]] = None,
+        attributes: list[str] | None = None,
     ) -> LDAPOperationResult[Any]:
         """Perform LDAP search with automatic retry and failover.
 
@@ -637,6 +646,7 @@ class ConnectionManager:
         Returns:
             Search operation result
         """
+
         def search_operation(conn: LDAPConnection) -> LDAPOperationResult[Any]:
             return conn.search(base_dn, search_filter)
 
@@ -730,6 +740,7 @@ class ConnectionManager:
 # ============================================================================
 # 🔄 UNIFIED CONFIG INTEGRATION - Convert api.LDAPConfig to ConnectionConfig
 # ============================================================================
+
 
 def create_connection_config_from_unified(
     unified_config: LDAPConfig,
@@ -885,6 +896,7 @@ def migrate_legacy_connection_setup(
         ...     result = conn.search(config.base_dn, "(objectClass=*)")
     """
     import warnings
+
     warnings.warn(
         "Legacy connection setup is deprecated. Use api.LDAPConfig and create_unified_connection_manager instead.",
         DeprecationWarning,

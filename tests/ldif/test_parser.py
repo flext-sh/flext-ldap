@@ -314,14 +314,19 @@ class TestLDIFParserConfiguration:
         parser_with_validation = LDIFParser(enable_validation=True)
         parser_without_validation = LDIFParser(enable_validation=False)
 
-        assert parser_with_validation.enable_validation != parser_without_validation.enable_validation
+        assert (
+            parser_with_validation.enable_validation
+            != parser_without_validation.enable_validation
+        )
 
     def test_configuration_metrics_impact(self) -> None:
         """Test configuration metrics setting impact."""
         parser_with_metrics = LDIFParser(enable_metrics=True)
         parser_without_metrics = LDIFParser(enable_metrics=False)
 
-        assert parser_with_metrics.enable_metrics != parser_without_metrics.enable_metrics
+        assert (
+            parser_with_metrics.enable_metrics != parser_without_metrics.enable_metrics
+        )
 
     def test_configuration_combinations(self) -> None:
         """Test all configuration combinations."""
@@ -441,13 +446,19 @@ class TestLDIFParserIntegration:
             result = await parser.parse_file("/data/enterprise.ldif")
 
             # Verify initialization logging
-            init_calls = [call for call in mock_logger.info.call_args_list
-                         if "Initialized enterprise LDIF parser" in str(call)]
+            init_calls = [
+                call
+                for call in mock_logger.info.call_args_list
+                if "Initialized enterprise LDIF parser" in str(call)
+            ]
             assert len(init_calls) >= 1
 
             # Verify parsing logging
-            parse_calls = [call for call in mock_logger.info.call_args_list
-                          if "LDIF parsing" in str(call)]
+            parse_calls = [
+                call
+                for call in mock_logger.info.call_args_list
+                if "LDIF parsing" in str(call)
+            ]
             assert len(parse_calls) >= 1
 
             # Verify result structure

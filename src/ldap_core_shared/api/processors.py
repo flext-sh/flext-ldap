@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
@@ -26,10 +26,10 @@ class BaseProcessor(ABC):
     def __init__(self, config: Any) -> None:
         """Initialize processor with configuration."""
         self.config = config
-        self._performance_metrics: Dict[str, Any] = {}
+        self._performance_metrics: dict[str, Any] = {}
 
     @abstractmethod
-    def process(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+    def process(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """Process data according to processor's responsibility.
 
         Returns:
@@ -51,7 +51,7 @@ class BaseProcessor(ABC):
             ),
         )
 
-    def get_performance_metrics(self) -> Dict[str, Any]:
+    def get_performance_metrics(self) -> dict[str, Any]:
         """Get accumulated performance metrics."""
         return self._performance_metrics.copy()
 
@@ -85,13 +85,14 @@ class LDIFProcessorBase(BaseProcessor):
         self.entries_processed += entry_count
         self.errors_encountered += error_count
 
-    def get_processing_stats(self) -> Dict[str, int]:
+    def get_processing_stats(self) -> dict[str, int | float]:
         """Get processing statistics."""
         return {
             "entries_processed": self.entries_processed,
             "errors_encountered": self.errors_encountered,
             "success_rate": (
-                (self.entries_processed - self.errors_encountered) / self.entries_processed
+                (self.entries_processed - self.errors_encountered)
+                / self.entries_processed
                 if self.entries_processed > 0
                 else 0
             ),
@@ -104,10 +105,10 @@ class HierarchyProcessorBase(BaseProcessor):
     def __init__(self, config: Any) -> None:
         """Initialize hierarchy processor."""
         super().__init__(config)
-        self.hierarchy_mappings: Dict[str, str] = {}
-        self.dependency_tree: Dict[str, list[str]] = {}
+        self.hierarchy_mappings: dict[str, str] = {}
+        self.dependency_tree: dict[str, list[str]] = {}
 
-    def _build_dependency_tree(self, entries: list[Dict[str, Any]]) -> None:
+    def _build_dependency_tree(self, entries: list[dict[str, Any]]) -> None:
         """Build dependency tree for hierarchy validation."""
         for entry in entries:
             dn = entry.get("dn", "")
@@ -115,7 +116,7 @@ class HierarchyProcessorBase(BaseProcessor):
             # with their own hierarchy logic
             self.hierarchy_mappings[dn] = dn
 
-    def get_hierarchy_info(self) -> Dict[str, Any]:
+    def get_hierarchy_info(self) -> dict[str, Any]:
         """Get hierarchy processing information."""
         return {
             "total_entries": len(self.hierarchy_mappings),
@@ -131,8 +132,8 @@ class ACLProcessorBase(BaseProcessor):
     def __init__(self, config: Any) -> None:
         """Initialize ACL processor."""
         super().__init__(config)
-        self.acl_conversions: Dict[str, str] = {}
-        self.acl_patterns: Dict[str, Any] = {}
+        self.acl_conversions: dict[str, str] = {}
+        self.acl_patterns: dict[str, Any] = {}
 
     def _convert_acl_values(self, values: list[str] | str) -> list[str]:
         """Convert ACL values using processor-specific patterns."""
@@ -155,7 +156,7 @@ class ACLProcessorBase(BaseProcessor):
         # Base implementation - should be overridden by specific processors
         return acl_value
 
-    def get_acl_conversion_stats(self) -> Dict[str, Any]:
+    def get_acl_conversion_stats(self) -> dict[str, Any]:
         """Get ACL conversion statistics."""
         return {
             "total_conversions": len(self.acl_conversions),
@@ -170,10 +171,10 @@ class SchemaProcessorBase(BaseProcessor):
     def __init__(self, config: Any) -> None:
         """Initialize schema processor."""
         super().__init__(config)
-        self.discovered_schema: Dict[str, Any] = {}
-        self.schema_mappings: Dict[str, str] = {}
+        self.discovered_schema: dict[str, Any] = {}
+        self.schema_mappings: dict[str, str] = {}
 
-    def _discover_schema_from_entries(self, entries: list[Dict[str, Any]]) -> None:
+    def _discover_schema_from_entries(self, entries: list[dict[str, Any]]) -> None:
         """Discover schema information from LDAP entries."""
         object_classes = set()
         attributes = set()
@@ -198,7 +199,7 @@ class SchemaProcessorBase(BaseProcessor):
             "total_attributes": len(attributes),
         }
 
-    def get_schema_info(self) -> Dict[str, Any]:
+    def get_schema_info(self) -> dict[str, Any]:
         """Get schema processing information."""
         return {
             "discovery_summary": self.discovered_schema,
@@ -207,7 +208,7 @@ class SchemaProcessorBase(BaseProcessor):
         }
 
 
-def create_processor_performance_monitor() -> Dict[str, Any]:
+def create_processor_performance_monitor() -> dict[str, Any]:
     """Create a performance monitoring context for processors."""
     return {
         "start_time": time.time(),
@@ -217,7 +218,7 @@ def create_processor_performance_monitor() -> Dict[str, Any]:
     }
 
 
-def finalize_processor_performance(monitor: Dict[str, Any]) -> Dict[str, Any]:
+def finalize_processor_performance(monitor: dict[str, Any]) -> dict[str, Any]:
     """Finalize performance monitoring and return metrics."""
     end_time = time.time()
     duration = end_time - monitor["start_time"]
@@ -228,7 +229,8 @@ def finalize_processor_performance(monitor: Dict[str, Any]) -> Dict[str, Any]:
         "total_errors": monitor["total_errors"],
         "average_rate": monitor["total_entries"] / duration if duration > 0 else 0,
         "success_rate": (
-            (monitor["total_entries"] - monitor["total_errors"]) / monitor["total_entries"]
+            (monitor["total_entries"] - monitor["total_errors"])
+            / monitor["total_entries"]
             if monitor["total_entries"] > 0
             else 0
         ),

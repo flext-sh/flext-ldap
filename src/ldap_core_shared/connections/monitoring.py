@@ -100,8 +100,8 @@ class PerformanceTracker(BaseConnectionComponent):
         failed_ops = [op for op in self._operations if not op["success"]]
 
         # Calculate averages
-        avg_duration = (
-            sum(op["duration"] for op in self._operations) / len(self._operations)
+        avg_duration = sum(op["duration"] for op in self._operations) / len(
+            self._operations,
         )
         success_rate = len(successful_ops) / len(self._operations) * DEFAULT_MAX_ITEMS
 
@@ -192,6 +192,7 @@ class StandardHealthMonitor(BaseConnectionComponent):
         try:
             # Create test connection
             from ldap_core_shared.connections.factories import StandardConnectionFactory
+
             factory = StandardConnectionFactory(self.connection_info)
             connection = factory.create_connection(self.connection_info)
 

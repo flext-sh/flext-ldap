@@ -19,6 +19,7 @@ class TestSASLClient:
         """Create SASLClient instance for testing."""
         try:
             from ldap_core_shared.protocols.sasl.client import SASLClient
+
             return SASLClient(
                 service="ldap",
                 host="example.com",
@@ -116,7 +117,7 @@ class TestSASLClient:
 
                 assert response is not None
                 if hasattr(response, "data"):
-                    assert isinstance(response.data, (bytes, type(None)))
+                    assert isinstance(response.data, bytes | type(None))
 
         except (ImportError, NotImplementedError, AttributeError):
             pytest.skip("SASL authentication step not implemented")
@@ -360,7 +361,9 @@ class TestSASLResponse:
 
             assert complete_response.data == b"final_response"
             assert complete_response.complete is True
-            assert complete_response.additional_data["authzid"] == "testuser@example.com"
+            assert (
+                complete_response.additional_data["authzid"] == "testuser@example.com"
+            )
 
         except ImportError:
             pytest.skip("SASLResponse completion not available")
@@ -410,7 +413,9 @@ class TestSASLSecurityLayer:
                 plaintext = b"test message"
                 encoded = security_layer.encode(plaintext)
                 assert isinstance(encoded, bytes)
-                assert len(encoded) >= len(plaintext)  # May include integrity/confidentiality data
+                assert len(encoded) >= len(
+                    plaintext
+                )  # May include integrity/confidentiality data
 
             # Test decoding operation
             if hasattr(security_layer, "decode"):
@@ -527,6 +532,7 @@ class TestSASLClientPerformance:
             import time
 
             from ldap_core_shared.protocols.sasl.client import SASLClient
+
             start_time = time.time()
 
             # Perform multiple authentications

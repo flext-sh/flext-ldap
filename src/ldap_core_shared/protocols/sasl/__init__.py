@@ -218,6 +218,7 @@ def get_mechanisms() -> list[str]:
     """
     try:
         from ldap_core_shared.protocols.sasl.mechanism import SASLMechanismRegistry
+
         return SASLMechanismRegistry.get_available_mechanisms()
     except ImportError:
         return ["PLAIN", "DIGEST-MD5", "EXTERNAL", "ANONYMOUS"]

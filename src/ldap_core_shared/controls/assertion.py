@@ -44,8 +44,6 @@ References:
 
 from __future__ import annotations
 
-from typing import Optional
-
 from pydantic import Field, validator
 
 from ldap_core_shared.controls.asn1_encoder import ASN1Decoder, ASN1Encoder
@@ -93,7 +91,7 @@ class AssertionControl(LDAPControl):
     )
 
     @validator("filter_expr")
-    def validate_filter_expression(cls, v: str) -> str:
+    def validate_filter_expression(self, v: str) -> str:
         """Validate LDAP filter expression syntax."""
         if not v or not v.strip():
             msg = "Filter expression cannot be empty"
@@ -156,7 +154,7 @@ class AssertionControl(LDAPControl):
             raise ControlEncodingError(msg) from e
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> AssertionControl:
+    def decode_value(cls, control_value: bytes | None) -> AssertionControl:
         """Decode assertion control value per RFC 4528.
 
         Args:
@@ -193,9 +191,11 @@ class AssertionControl(LDAPControl):
             return False
 
         inner = self.filter_expr[1:-1]
-        return "=" in inner and not any(op in inner for op in ["&", "|", "!", ">=", "<=", "~=", "*"])
+        return "=" in inner and not any(
+            op in inner for op in ["&", "|", "!", ">=", "<=", "~=", "*"]
+        )
 
-    def get_assertion_attribute(self) -> Optional[str]:
+    def get_assertion_attribute(self) -> str | None:
         """Get the attribute name for simple equality assertions.
 
         Returns:
@@ -209,7 +209,7 @@ class AssertionControl(LDAPControl):
             return inner.split("=", 1)[0].strip()
         return None
 
-    def get_assertion_value(self) -> Optional[str]:
+    def get_assertion_value(self) -> str | None:
         """Get the assertion value for simple equality assertions.
 
         Returns:
@@ -224,7 +224,9 @@ class AssertionControl(LDAPControl):
         return None
 
     @classmethod
-    def simple_equality(cls, attribute: str, value: str, critical: bool = True) -> AssertionControl:
+    def simple_equality(
+        cls, attribute: str, value: str, critical: bool = True,
+    ) -> AssertionControl:
         """Create assertion control for simple equality test.
 
         Args:
@@ -243,7 +245,9 @@ class AssertionControl(LDAPControl):
         return cls(filter_expr=filter_expr, criticality=critical)
 
     @classmethod
-    def attribute_exists(cls, attribute: str, critical: bool = True) -> AssertionControl:
+    def attribute_exists(
+        cls, attribute: str, critical: bool = True,
+    ) -> AssertionControl:
         """Create assertion control to test if attribute exists.
 
         Args:
@@ -261,7 +265,9 @@ class AssertionControl(LDAPControl):
         return cls(filter_expr=filter_expr, criticality=critical)
 
     @classmethod
-    def attribute_not_exists(cls, attribute: str, critical: bool = True) -> AssertionControl:
+    def attribute_not_exists(
+        cls, attribute: str, critical: bool = True,
+    ) -> AssertionControl:
         """Create assertion control to test if attribute does not exist.
 
         Args:
@@ -310,8 +316,9 @@ class AssertionControl(LDAPControl):
         else:
             # Multiple conditions
             op_char = "&" if operator.upper() == "AND" else "|"
-            condition_parts = [f"({cond})" if not cond.startswith("(") else cond
-                             for cond in conditions]
+            condition_parts = [
+                f"({cond})" if not cond.startswith("(") else cond for cond in conditions
+            ]
             filter_expr = f"({op_char}{''.join(condition_parts)})"
 
         return cls(filter_expr=filter_expr, criticality=critical)
@@ -330,7 +337,9 @@ class AssertionControl(LDAPControl):
 
 
 # Convenience functions for common assertion patterns
-def assert_equals(attribute: str, value: str, critical: bool = True) -> AssertionControl:
+def assert_equals(
+    attribute: str, value: str, critical: bool = True,
+) -> AssertionControl:
     """Create assertion that attribute equals value.
 
     Args:

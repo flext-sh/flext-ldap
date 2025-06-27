@@ -300,12 +300,13 @@ class TestFinalValidation:
 
         # Query example from docstring
         query = ldap.query()
-        chained_query = (query
-                        .users()
-                        .in_department("Engineering")
-                        .enabled_only()
-                        .select("cn", "mail", "title")
-                        .limit(25))
+        chained_query = (
+            query.users()
+            .in_department("Engineering")
+            .enabled_only()
+            .select("cn", "mail", "title")
+            .limit(25)
+        )
 
         assert chained_query is not None
 

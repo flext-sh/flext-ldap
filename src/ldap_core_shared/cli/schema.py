@@ -17,7 +17,7 @@ Example Usage:
 from __future__ import annotations
 
 import traceback
-from typing import Any, Optional
+from typing import Any
 
 from ldap_core_shared.schema.generator import LDIFGenerator
 from ldap_core_shared.schema.manager import SchemaManager
@@ -49,7 +49,6 @@ def run_schema2ldif(
         True if conversion successful
     """
     try:
-
         if verbose:
             pass
 
@@ -63,7 +62,10 @@ def run_schema2ldif(
                 # Try to detect from content
                 with open(input_file, encoding="utf-8") as f:
                     content = f.read(1000)  # Read first 1KB
-                    if "attributetype" in content.lower() or "objectclass" in content.lower():
+                    if (
+                        "attributetype" in content.lower()
+                        or "objectclass" in content.lower()
+                    ):
                         if content.strip().startswith("dn:"):
                             input_format = "ldif"
                         else:
@@ -165,11 +167,11 @@ def run_schema2ldif(
 
 def run_schema_manager(
     action: str,
-    file: Optional[str] = None,
-    name: Optional[str] = None,
-    server: Optional[str] = None,
-    bind_dn: Optional[str] = None,
-    bind_password: Optional[str] = None,
+    file: str | None = None,
+    name: str | None = None,
+    server: str | None = None,
+    bind_dn: str | None = None,
+    bind_password: str | None = None,
     dry_run: bool = False,
     force: bool = False,
     verbose: bool = False,
@@ -220,7 +222,7 @@ def schema_cli() -> None:
     """Schema CLI entry point for testing."""
 
 
-def _handle_validate_action(file: Optional[str], verbose: bool) -> bool:
+def _handle_validate_action(file: str | None, verbose: bool) -> bool:
     """Handle schema validation action.
 
     Args:
@@ -247,8 +249,8 @@ def _handle_validate_action(file: Optional[str], verbose: bool) -> bool:
 
 def _handle_install_action(
     manager: SchemaManager,
-    file: Optional[str],
-    name: Optional[str],
+    file: str | None,
+    name: str | None,
     dry_run: bool,
     verbose: bool,
 ) -> bool:
@@ -286,7 +288,7 @@ def _handle_install_action(
 
 def _handle_remove_action(
     manager: SchemaManager,
-    name: Optional[str],
+    name: str | None,
     force: bool,
     dry_run: bool,
     verbose: bool,
@@ -373,7 +375,7 @@ def _handle_backup_action(manager: SchemaManager, verbose: bool) -> bool:
     return True
 
 
-def _detect_input_format(input_file: str, input_format: str) -> Optional[str]:
+def _detect_input_format(input_file: str, input_format: str) -> str | None:
     """Detect input file format.
 
     Args:
@@ -404,7 +406,9 @@ def _detect_input_format(input_file: str, input_format: str) -> Optional[str]:
     return None
 
 
-def _parse_input_file(parser: SchemaParser, input_file: str, input_format: str) -> Optional[Any]:
+def _parse_input_file(
+    parser: SchemaParser, input_file: str, input_format: str,
+) -> Any | None:
     """Parse input file based on format.
 
     Args:
@@ -464,7 +468,9 @@ def _generate_output(
         True if generation successful
     """
     if output_file.endswith(".ldif"):
-        return _generate_ldif_output(result, output_file, pretty_print, include_comments)
+        return _generate_ldif_output(
+            result, output_file, pretty_print, include_comments,
+        )
     if output_file.endswith(".schema"):
         # TODO: Implement .schema format generation
         return False

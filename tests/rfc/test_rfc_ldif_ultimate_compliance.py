@@ -117,7 +117,7 @@ telephoneNumber: +1-555-1234-5678-9012-3456-7890
         # RFC 2849: Attributes with non-ASCII or special chars must be base64 encoded
 
         # Test with various binary and Unicode data
-        binary_data = b"\x00\x01\x02\x03\xFF\xFE\xFD"
+        binary_data = b"\x00\x01\x02\x03\xff\xfe\xfd"
         unicode_text = "Ção José García 田中太郎 محمد أحمد"
         complex_json = '{"users":["José","François","Müller"],"active":true}'
 
@@ -144,9 +144,15 @@ jsonData:: {base64_json}
         entry = entries[0]
 
         # Verify base64 decoding
-        assert entry.attributes["binaryData"][0] == base64.b64encode(binary_data).decode("ascii")
-        assert entry.attributes["unicodeText"][0] == base64.b64encode(unicode_text.encode("utf-8")).decode("ascii")
-        assert entry.attributes["jsonData"][0] == base64.b64encode(complex_json.encode("utf-8")).decode("ascii")
+        assert entry.attributes["binaryData"][0] == base64.b64encode(
+            binary_data
+        ).decode("ascii")
+        assert entry.attributes["unicodeText"][0] == base64.b64encode(
+            unicode_text.encode("utf-8")
+        ).decode("ascii")
+        assert entry.attributes["jsonData"][0] == base64.b64encode(
+            complex_json.encode("utf-8")
+        ).decode("ascii")
 
     def test_ldif_comment_handling_extreme(self) -> None:
         """RFC 2849 - LDIF comment handling extreme cases."""
@@ -252,7 +258,9 @@ deleteoldrdn: 1
         assert len(entries) == 4
 
         # Verify change types
-        change_types = [entry.changetype for entry in entries if hasattr(entry, "changetype")]
+        change_types = [
+            entry.changetype for entry in entries if hasattr(entry, "changetype")
+        ]
         expected_types = ["add", "modify", "delete", "moddn"]
 
         for expected_type in expected_types:
@@ -304,7 +312,9 @@ manager: uid=manager{(i // 100):04d},ou=People,dc=example,dc=com
             ldif_content = generate_massive_ldif(size)
 
             # Write to temporary file
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+            ) as f:
                 f.write(ldif_content)
                 temp_path = f.name
 
@@ -322,8 +332,11 @@ manager: uid=manager{(i // 100):04d},ou=People,dc=example,dc=com
                         # Take memory snapshots periodically
                         if entries_processed % 100 == 0:
                             import psutil
+
                             process = psutil.Process()
-                            memory_snapshots.append(process.memory_info().rss / 1024 / 1024)  # MB
+                            memory_snapshots.append(
+                                process.memory_info().rss / 1024 / 1024
+                            )  # MB
 
                         # Verify entry structure
                         assert entry.dn.startswith("uid=user")
@@ -389,7 +402,9 @@ sn: User{i:04d}
         # Generate and write LDIF
         ldif_content = generate_streaming_ldif()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(ldif_content)
             temp_path = f.name
 
@@ -421,7 +436,9 @@ sn: User{i:04d}
 
             # Verify streaming processing
             assert entries_processed == 1000
-            assert total_attributes > entries_processed * 10  # Each has at least 10+ attributes
+            assert (
+                total_attributes > entries_processed * 10
+            )  # Each has at least 10+ attributes
 
             # Analyze attribute distribution
             total_attributes / entries_processed
@@ -461,7 +478,9 @@ sequenceNumber: {i}
 """
 
             # Write to temp file
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+            ) as f:
                 f.write(ldif_content)
                 temp_path = f.name
 
@@ -523,7 +542,9 @@ sequenceNumber: {i}
         duration = metrics["concurrent_ldif_processing"]["duration"]
         total_entries / duration if duration > 0 else 0
 
-        assert total_entries > 1000  # Should have processed significant number of entries
+        assert (
+            total_entries > 1000
+        )  # Should have processed significant number of entries
 
 
 class TestLDIFDataIntegrityExtreme:
@@ -609,11 +630,15 @@ owner: cn=HR Manager,ou=People,dc=company,dc=com
         relationships = analysis_result.relationships
 
         # Manager-directReports relationship
-        manager_relationships = [r for r in relationships if r.relationship_type == "manager_directReports"]
+        manager_relationships = [
+            r for r in relationships if r.relationship_type == "manager_directReports"
+        ]
         assert len(manager_relationships) >= 1
 
         # Group membership relationships
-        member_relationships = [r for r in relationships if r.relationship_type == "group_membership"]
+        member_relationships = [
+            r for r in relationships if r.relationship_type == "group_membership"
+        ]
         assert len(member_relationships) >= 2
 
         # Verify no dangling references
@@ -714,7 +739,7 @@ member: cn=Valid Person,ou=People,dc=example,dc=com
             },
             {
                 "name": "Binary data",
-                "data": b"\x00\x01\x02\x03\xFF\xFE\xFD\xFC",
+                "data": b"\x00\x01\x02\x03\xff\xfe\xfd\xfc",
                 "should_base64": True,
             },
             {
@@ -738,13 +763,16 @@ member: cn=Valid Person,ou=People,dc=example,dc=com
             else:
                 needs_base64 = True  # Binary always needs base64
 
-            assert needs_base64 == scenario["should_base64"], \
+            assert needs_base64 == scenario["should_base64"], (
                 f"Encoding detection failed for {scenario['name']}"
+            )
 
             # Test actual encoding/decoding
             if needs_base64:
                 if isinstance(scenario["data"], str):
-                    encoded = base64.b64encode(scenario["data"].encode("utf-8")).decode("ascii")
+                    encoded = base64.b64encode(scenario["data"].encode("utf-8")).decode(
+                        "ascii"
+                    )
                 else:
                     encoded = base64.b64encode(scenario["data"]).decode("ascii")
 
@@ -961,7 +989,9 @@ homeDirectory: /home/jsmith
                     "givenName": ["Complex"],
                     "mail": ["complex@example.com"],
                     "description": ["A" * 200],  # Long description requiring folding
-                    "binaryData": [base64.b64encode(b"\x00\x01\x02\x03").decode("ascii")],
+                    "binaryData": [
+                        base64.b64encode(b"\x00\x01\x02\x03").decode("ascii")
+                    ],
                     "unicodeText": ["José García 田中太郎"],  # Unicode requiring base64
                     "multiValue": ["value1", "value2", "value3"],
                     "jsonData": ['{"key":"value","array":[1,2,3]}'],
@@ -973,7 +1003,9 @@ homeDirectory: /home/jsmith
         # Write to LDIF format
         writer = LDIFWriter()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             temp_path = f.name
 
         try:

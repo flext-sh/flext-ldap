@@ -67,9 +67,15 @@ class TestActiveDirectoryInteroperability:
                 "cn": ["John Doe"],
                 "sAMAccountName": ["jdoe"],  # AD-specific
                 "userPrincipalName": ["jdoe@example.com"],  # AD-specific
-                "distinguishedName": ["CN=John Doe,OU=Users,DC=example,DC=com"],  # AD format
-                "objectGUID": [b"\\x12\\x34\\x56\\x78\\x9A\\xBC\\xDE\\xF0\\x12\\x34\\x56\\x78\\x9A\\xBC\\xDE\\xF0"],  # AD-specific
-                "objectSid": [b"\\x01\\x05\\x00\\x00\\x00\\x00\\x00\\x05\\x15\\x00\\x00\\x00"],  # AD-specific
+                "distinguishedName": [
+                    "CN=John Doe,OU=Users,DC=example,DC=com"
+                ],  # AD format
+                "objectGUID": [
+                    b"\\x12\\x34\\x56\\x78\\x9A\\xBC\\xDE\\xF0\\x12\\x34\\x56\\x78\\x9A\\xBC\\xDE\\xF0"
+                ],  # AD-specific
+                "objectSid": [
+                    b"\\x01\\x05\\x00\\x00\\x00\\x00\\x00\\x05\\x15\\x00\\x00\\x00"
+                ],  # AD-specific
                 "whenCreated": ["20240626120000.0Z"],  # AD timestamp format
                 "whenChanged": ["20240626120000.0Z"],  # AD timestamp format
                 "userAccountControl": ["512"],  # AD-specific (Normal Account)
@@ -82,7 +88,10 @@ class TestActiveDirectoryInteroperability:
 
             mock_conn.search.return_value = True
             mock_conn.entries = [
-                MagicMock(entry_dn="CN=John Doe,OU=Users,DC=example,DC=com", entry_attributes_as_dict=ad_schema_attributes),
+                MagicMock(
+                    entry_dn="CN=John Doe,OU=Users,DC=example,DC=com",
+                    entry_attributes_as_dict=ad_schema_attributes,
+                ),
             ]
             mock_conn_class.return_value = mock_conn
 
@@ -101,7 +110,12 @@ class TestActiveDirectoryInteroperability:
                     search_base="DC=example,DC=com",
                     search_filter="(&(objectClass=user)(sAMAccountName=jdoe))",  # AD-specific filter
                     search_scope="SUBTREE",
-                    attributes=["sAMAccountName", "userPrincipalName", "objectGUID", "objectSid"],
+                    attributes=[
+                        "sAMAccountName",
+                        "userPrincipalName",
+                        "objectGUID",
+                        "objectSid",
+                    ],
                 )
 
                 # Should handle AD-specific attributes correctly
@@ -111,7 +125,12 @@ class TestActiveDirectoryInteroperability:
                 ad_user_entry = LDAPEntry(
                     dn="CN=New User,OU=Users,DC=example,DC=com",  # AD DN format
                     attributes={
-                        "objectClass": ["user", "person", "organizationalPerson", "top"],
+                        "objectClass": [
+                            "user",
+                            "person",
+                            "organizationalPerson",
+                            "top",
+                        ],
                         "cn": ["New User"],
                         "sAMAccountName": ["newuser"],  # Required in AD
                         "userPrincipalName": ["newuser@example.com"],  # AD email format
@@ -119,7 +138,9 @@ class TestActiveDirectoryInteroperability:
                         "sn": ["User"],
                         "displayName": ["New User"],
                         "userAccountControl": ["512"],  # Normal account
-                        "unicodePwd": ['"NewPassword123!"'],  # AD password format (UTF-16LE)
+                        "unicodePwd": [
+                            '"NewPassword123!"'
+                        ],  # AD password format (UTF-16LE)
                     },
                 )
 
@@ -186,7 +207,10 @@ class TestActiveDirectoryInteroperability:
 
                 # Mock AD-specific responses
                 if scenario["name"] == "kerberos_authentication":
-                    mock_conn.server.info.supported_sasl_mechanisms = ["GSSAPI", "GSS-SPNEGO"]
+                    mock_conn.server.info.supported_sasl_mechanisms = [
+                        "GSSAPI",
+                        "GSS-SPNEGO",
+                    ]
 
                 mock_conn_class.return_value = mock_conn
 
@@ -225,7 +249,9 @@ class TestActiveDirectoryInteroperability:
                 "cn": ["Global User"],
                 "sAMAccountName": ["gcuser"],
                 "userPrincipalName": ["gcuser@domain1.example.com"],
-                "distinguishedName": ["CN=Global User,OU=Users,DC=domain1,DC=example,DC=com"],
+                "distinguishedName": [
+                    "CN=Global User,OU=Users,DC=domain1,DC=example,DC=com"
+                ],
                 "memberOf": [
                     "CN=Universal Group,CN=Users,DC=example,DC=com",  # Universal group (GC replicated)
                     "CN=Global Group,CN=Users,DC=domain1,DC=example,DC=com",  # Global group
@@ -234,8 +260,10 @@ class TestActiveDirectoryInteroperability:
 
             mock_conn.search.return_value = True
             mock_conn.entries = [
-                MagicMock(entry_dn="CN=Global User,OU=Users,DC=domain1,DC=example,DC=com",
-                         entry_attributes_as_dict=gc_schema_attributes),
+                MagicMock(
+                    entry_dn="CN=Global User,OU=Users,DC=domain1,DC=example,DC=com",
+                    entry_attributes_as_dict=gc_schema_attributes,
+                ),
             ]
             mock_conn_class.return_value = mock_conn
 
@@ -279,15 +307,24 @@ class TestOpenLDAPInteroperability:
 
             # Mock OpenLDAP-specific schema response
             openldap_schema_attributes = {
-                "objectClass": ["inetOrgPerson", "person", "organizationalPerson", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "person",
+                    "organizationalPerson",
+                    "top",
+                ],
                 "cn": ["John Doe"],
                 "uid": ["jdoe"],  # Standard LDAP attribute
                 "mail": ["jdoe@example.com"],
-                "userPassword": ["{SSHA}encrypted_password_hash"],  # OpenLDAP password format
+                "userPassword": [
+                    "{SSHA}encrypted_password_hash"
+                ],  # OpenLDAP password format
                 "createTimestamp": ["20240626120000Z"],  # OpenLDAP timestamp
                 "modifyTimestamp": ["20240626120000Z"],  # OpenLDAP timestamp
                 "entryUUID": ["12345678-1234-5678-9abc-def012345678"],  # OpenLDAP UUID
-                "entryCSN": ["20240626120000.000000Z#000000#000#000000"],  # OpenLDAP CSN
+                "entryCSN": [
+                    "20240626120000.000000Z#000000#000#000000"
+                ],  # OpenLDAP CSN
                 "structuralObjectClass": ["inetOrgPerson"],  # OpenLDAP specific
                 "hasSubordinates": ["FALSE"],  # OpenLDAP operational attribute
                 "subschemaSubentry": ["cn=Subschema"],  # Schema location
@@ -295,7 +332,10 @@ class TestOpenLDAPInteroperability:
 
             mock_conn.search.return_value = True
             mock_conn.entries = [
-                MagicMock(entry_dn="uid=jdoe,ou=People,dc=example,dc=com", entry_attributes_as_dict=openldap_schema_attributes),
+                MagicMock(
+                    entry_dn="uid=jdoe,ou=People,dc=example,dc=com",
+                    entry_attributes_as_dict=openldap_schema_attributes,
+                ),
             ]
             mock_conn_class.return_value = mock_conn
 
@@ -321,13 +361,20 @@ class TestOpenLDAPInteroperability:
                 openldap_user_entry = LDAPEntry(
                     dn="uid=newuser,ou=People,dc=example,dc=com",  # OpenLDAP DN format
                     attributes={
-                        "objectClass": ["inetOrgPerson", "person", "organizationalPerson", "top"],
+                        "objectClass": [
+                            "inetOrgPerson",
+                            "person",
+                            "organizationalPerson",
+                            "top",
+                        ],
                         "uid": ["newuser"],  # Standard uid attribute
                         "cn": ["New User"],
                         "sn": ["User"],
                         "givenName": ["New"],
                         "mail": ["newuser@example.com"],
-                        "userPassword": ["{SSHA}encrypted_new_password"],  # OpenLDAP format
+                        "userPassword": [
+                            "{SSHA}encrypted_new_password"
+                        ],  # OpenLDAP format
                         "description": ["OpenLDAP test user"],
                     },
                 )
@@ -386,20 +433,26 @@ class TestOpenLDAPInteroperability:
                 # Add overlay-specific attributes
                 for attr in overlay["test_attributes"]:
                     if attr == "memberOf":
-                        overlay_attributes[attr] = ["cn=testgroup,ou=Groups,dc=example,dc=com"]
+                        overlay_attributes[attr] = [
+                            "cn=testgroup,ou=Groups,dc=example,dc=com"
+                        ]
                     elif attr == "pwdChangedTime":
                         overlay_attributes[attr] = ["20240626120000Z"]
                     elif attr == "reqStart":
                         overlay_attributes[attr] = ["20240626120000.000000Z"]
                     elif attr == "entryCSN":
-                        overlay_attributes[attr] = ["20240626120000.000000Z#000000#000#000000"]
+                        overlay_attributes[attr] = [
+                            "20240626120000.000000Z#000000#000#000000"
+                        ]
                     else:
                         overlay_attributes[attr] = ["test_value"]
 
                 mock_conn.search.return_value = True
                 mock_conn.entries = [
-                    MagicMock(entry_dn="uid=overlaytest,ou=People,dc=example,dc=com",
-                             entry_attributes_as_dict=overlay_attributes),
+                    MagicMock(
+                        entry_dn="uid=overlaytest,ou=People,dc=example,dc=com",
+                        entry_attributes_as_dict=overlay_attributes,
+                    ),
                 ]
                 mock_conn_class.return_value = mock_conn
 
@@ -439,14 +492,23 @@ class Test389DirectoryInteroperability:
 
             # Mock 389 DS specific schema response
             ds389_schema_attributes = {
-                "objectClass": ["inetOrgPerson", "person", "organizationalPerson", "top"],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "person",
+                    "organizationalPerson",
+                    "top",
+                ],
                 "cn": ["John Doe"],
                 "uid": ["jdoe"],
                 "mail": ["jdoe@example.com"],
-                "userPassword": ["{PBKDF2_SHA256}hashed_password"],  # 389 DS password format
+                "userPassword": [
+                    "{PBKDF2_SHA256}hashed_password"
+                ],  # 389 DS password format
                 "createTimestamp": ["20240626120000Z"],
                 "modifyTimestamp": ["20240626120000Z"],
-                "nsUniqueId": ["12345678-abcd-1234-5678-def012345678"],  # 389 DS specific
+                "nsUniqueId": [
+                    "12345678-abcd-1234-5678-def012345678"
+                ],  # 389 DS specific
                 "nsAccountLock": ["false"],  # 389 DS account status
                 "passwordExpirationTime": ["20250626120000Z"],  # 389 DS password policy
                 "nsRole": ["cn=users,ou=Roles,dc=example,dc=com"],  # 389 DS role
@@ -456,7 +518,10 @@ class Test389DirectoryInteroperability:
 
             mock_conn.search.return_value = True
             mock_conn.entries = [
-                MagicMock(entry_dn="uid=jdoe,ou=People,dc=example,dc=com", entry_attributes_as_dict=ds389_schema_attributes),
+                MagicMock(
+                    entry_dn="uid=jdoe,ou=People,dc=example,dc=com",
+                    entry_attributes_as_dict=ds389_schema_attributes,
+                ),
             ]
             mock_conn_class.return_value = mock_conn
 
@@ -482,7 +547,11 @@ class Test389DirectoryInteroperability:
                 ds389_role_entry = LDAPEntry(
                     dn="cn=manager,ou=Roles,dc=example,dc=com",  # 389 DS role DN format
                     attributes={
-                        "objectClass": ["nsRoleDefinition", "nsSimpleRoleDefinition", "top"],
+                        "objectClass": [
+                            "nsRoleDefinition",
+                            "nsSimpleRoleDefinition",
+                            "top",
+                        ],
                         "cn": ["manager"],
                         "description": ["Manager role for REDACTED_LDAP_BIND_PASSWORDistrative tasks"],
                         "nsRoleFilter": ["(title=manager)"],  # 389 DS role filter
@@ -528,15 +597,19 @@ class Test389DirectoryInteroperability:
                 replication_attributes = {
                     "objectClass": ["nsDS5Replica", "top"],
                     "nsDS5ReplicaRoot": ["dc=example,dc=com"],
-                    "nsDS5ReplicaType": ["3" if scenario["name"] == "master_server" else "2"],
+                    "nsDS5ReplicaType": [
+                        "3" if scenario["name"] == "master_server" else "2"
+                    ],
                     "nsDS5Flags": ["1"],
                     "nsDS5ReplicaId": [str(scenario["config"].get("replica_id", 0))],
                 }
 
                 mock_conn.search.return_value = True
                 mock_conn.entries = [
-                    MagicMock(entry_dn="cn=replica,cn=dc=example\\,dc=com,cn=mapping tree,cn=config",
-                             entry_attributes_as_dict=replication_attributes),
+                    MagicMock(
+                        entry_dn="cn=replica,cn=dc=example\\,dc=com,cn=mapping tree,cn=config",
+                        entry_attributes_as_dict=replication_attributes,
+                    ),
                 ]
                 mock_conn_class.return_value = mock_conn
 
@@ -555,7 +628,11 @@ class Test389DirectoryInteroperability:
                         search_base="cn=mapping tree,cn=config",
                         search_filter="(objectClass=nsDS5Replica)",
                         search_scope="SUBTREE",
-                        attributes=["nsDS5ReplicaRoot", "nsDS5ReplicaType", "nsDS5ReplicaId"],
+                        attributes=[
+                            "nsDS5ReplicaRoot",
+                            "nsDS5ReplicaType",
+                            "nsDS5ReplicaId",
+                        ],
                     )
 
                     # Should be able to query replication configuration
@@ -634,7 +711,9 @@ class TestCrossVendorCompatibility:
                     search_filter = f"({schema_mapping['username_attribute']}={test_user_data['username']})"
 
                     LDAPSearchParams(
-                        search_base=self._get_vendor_base_dn(vendor, test_user_data["domain"]),
+                        search_base=self._get_vendor_base_dn(
+                            vendor, test_user_data["domain"]
+                        ),
                         search_filter=search_filter,
                         search_scope="SUBTREE",
                         attributes=[
@@ -645,18 +724,27 @@ class TestCrossVendorCompatibility:
                     )
 
                     # Verify vendor-specific entry structure
-                    assert schema_mapping["username_attribute"] in vendor_entry.attributes
-                    assert schema_mapping["user_object_class"] in vendor_entry.attributes["objectClass"]
+                    assert (
+                        schema_mapping["username_attribute"] in vendor_entry.attributes
+                    )
+                    assert (
+                        schema_mapping["user_object_class"]
+                        in vendor_entry.attributes["objectClass"]
+                    )
 
                     # Test cross-vendor compatibility by normalizing to standard format
-                    normalized_entry = self._normalize_entry_cross_vendor(vendor_entry, schema_mapping)
+                    normalized_entry = self._normalize_entry_cross_vendor(
+                        vendor_entry, schema_mapping
+                    )
 
                     # Normalized entry should have standard attributes regardless of vendor
                     assert "username" in normalized_entry
                     assert "email" in normalized_entry
                     assert "unique_id" in normalized_entry
 
-    def _generate_vendor_specific_entry(self, user_data: dict[str, str], schema_mapping: dict[str, str], vendor: str) -> LDAPEntry:
+    def _generate_vendor_specific_entry(
+        self, user_data: dict[str, str], schema_mapping: dict[str, str], vendor: str
+    ) -> LDAPEntry:
         """Generate vendor-specific LDAP entry."""
         # Build vendor-specific DN
         if vendor == "active_directory":
@@ -676,11 +764,17 @@ class TestCrossVendorCompatibility:
 
         # Add vendor-specific unique identifier
         if vendor == "active_directory":
-            attributes[schema_mapping["unique_id_attribute"]] = [b"\\x12\\x34\\x56\\x78\\x9A\\xBC\\xDE\\xF0\\x12\\x34\\x56\\x78\\x9A\\xBC\\xDE\\xF0"]
+            attributes[schema_mapping["unique_id_attribute"]] = [
+                b"\\x12\\x34\\x56\\x78\\x9A\\xBC\\xDE\\xF0\\x12\\x34\\x56\\x78\\x9A\\xBC\\xDE\\xF0"
+            ]
         elif vendor == "openldap":
-            attributes[schema_mapping["unique_id_attribute"]] = ["12345678-1234-5678-9abc-def012345678"]
+            attributes[schema_mapping["unique_id_attribute"]] = [
+                "12345678-1234-5678-9abc-def012345678"
+            ]
         elif vendor == "389ds":
-            attributes[schema_mapping["unique_id_attribute"]] = ["12345678-abcd-1234-5678-def012345678"]
+            attributes[schema_mapping["unique_id_attribute"]] = [
+                "12345678-abcd-1234-5678-def012345678"
+            ]
 
         return LDAPEntry(dn=dn, attributes=attributes)
 
@@ -700,13 +794,19 @@ class TestCrossVendorCompatibility:
             return f"DC={domain.replace('.', ',DC=')}"
         return f"dc={domain.replace('.', ',dc=')}"
 
-    def _normalize_entry_cross_vendor(self, entry: LDAPEntry, schema_mapping: dict[str, str]) -> dict[str, Any]:
+    def _normalize_entry_cross_vendor(
+        self, entry: LDAPEntry, schema_mapping: dict[str, str]
+    ) -> dict[str, Any]:
         """Normalize vendor-specific entry to standard format."""
         return {
             "dn": entry.dn,
-            "username": entry.attributes.get(schema_mapping["username_attribute"], [None])[0],
+            "username": entry.attributes.get(
+                schema_mapping["username_attribute"], [None]
+            )[0],
             "email": entry.attributes.get(schema_mapping["email_attribute"], [None])[0],
-            "unique_id": entry.attributes.get(schema_mapping["unique_id_attribute"], [None])[0],
+            "unique_id": entry.attributes.get(
+                schema_mapping["unique_id_attribute"], [None]
+            )[0],
         }
 
     @pytest.mark.asyncio
@@ -763,7 +863,7 @@ class TestCrossVendorCompatibility:
                 async with LDAP(config):
                     # Test vendor-optimized search
                     for filter_attr in optimizations["optimized_filters"]:
-                        LDAPSearchParams(
+                        search_params = LDAPSearchParams(
                             search_base=self._get_vendor_base_dn(vendor, "example.com"),
                             search_filter=f"({filter_attr}=*)",
                             search_scope="SUBTREE",
@@ -773,11 +873,11 @@ class TestCrossVendorCompatibility:
                         # Simulate search performance
                         await asyncio.sleep(0.001)
 
-                performance_monitor.stop_measurement(f"vendor_performance_{vendor}")
+                        # Verify vendor-specific search optimization worked
+                        assert search_params.search_filter is not None
+                        assert search_params.search_base is not None
 
-                # Verify vendor-specific search optimization worked
-                assert search_params.search_filter is not None
-                assert search_params.search_base is not None
+                performance_monitor.stop_measurement(f"vendor_performance_{vendor}")
 
         # Analyze cross-vendor performance
         metrics = performance_monitor.get_metrics()

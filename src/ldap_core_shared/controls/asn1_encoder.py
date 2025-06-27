@@ -25,10 +25,10 @@ from __future__ import annotations
 from ldap_core_shared.exceptions.base import LDAPError
 
 # ASN.1 BER constants
-MAX_CONTEXT_TAG_NUMBER = 7    # Context tags are limited to 0-7
+MAX_CONTEXT_TAG_NUMBER = 7  # Context tags are limited to 0-7
 BER_SHORT_FORM_THRESHOLD = 0x80  # Values below this use short form length encoding
-MAX_LONG_FORM_OCTETS = 126    # Maximum octets in long form length encoding
-MAX_LENGTH_BYTES = 4          # Maximum length bytes supported for decoding
+MAX_LONG_FORM_OCTETS = 126  # Maximum octets in long form length encoding
+MAX_LENGTH_BYTES = 4  # Maximum length bytes supported for decoding
 
 
 class ASN1Error(LDAPError):
@@ -251,7 +251,9 @@ class ASN1Encoder:
             raise ASN1EncodingError(msg) from e
 
     @staticmethod
-    def encode_context_tag(tag_number: int, content: bytes, constructed: bool = False) -> bytes:
+    def encode_context_tag(
+        tag_number: int, content: bytes, constructed: bool = False,
+    ) -> bytes:
         """Encode content with context-specific tag.
 
         Args:
@@ -521,7 +523,9 @@ class ASN1Decoder:
             raise ASN1DecodingError(msg) from e
 
     @staticmethod
-    def decode_context_tag(data: bytes, offset: int, expected_tag: int) -> tuple[bytes, int]:
+    def decode_context_tag(
+        data: bytes, offset: int, expected_tag: int,
+    ) -> tuple[bytes, int]:
         """Decode context-specific tag.
 
         Args:
@@ -579,7 +583,7 @@ class ASN1Decoder:
                 msg = "Content extends beyond data"
                 raise ASN1DecodingError(msg)
 
-            content = data[offset:offset + length]
+            content = data[offset : offset + length]
             offset += length
 
             return tag, length, content, offset
@@ -713,7 +717,9 @@ def decode_attribute_list(data: bytes, offset: int = 0) -> tuple[list[str], int]
     seq_offset = 0
 
     while ASN1Decoder.has_more_data(sequence_content, seq_offset):
-        attr_name, seq_offset = ASN1Decoder.decode_utf8_string(sequence_content, seq_offset)
+        attr_name, seq_offset = ASN1Decoder.decode_utf8_string(
+            sequence_content, seq_offset,
+        )
         attributes.append(attr_name)
 
     return attributes, new_offset

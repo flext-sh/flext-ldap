@@ -50,16 +50,12 @@ def analyze_python_file(file_path: Path) -> ModuleInfo:
         functions = sum(
             1 for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
         )
-        classes = sum(
-            1 for node in ast.walk(tree) if isinstance(node, ast.ClassDef)
-        )
+        classes = sum(1 for node in ast.walk(tree) if isinstance(node, ast.ClassDef))
         lines = len(content.splitlines())
 
         # Check for NotImplementedError
         has_notimplemented = (
-            "NotImplementedError" in content
-            or "TODO" in content
-            or "FIXME" in content
+            "NotImplementedError" in content or "TODO" in content or "FIXME" in content
         )
 
         # Calculate complexity score (rough heuristic)
@@ -90,11 +86,13 @@ def analyze_test_file(file_path: Path) -> TestInfo:
 
         # Count test functions and classes
         test_functions = sum(
-            1 for node in ast.walk(tree)
+            1
+            for node in ast.walk(tree)
             if isinstance(node, ast.FunctionDef) and node.name.startswith("test_")
         )
         test_classes = sum(
-            1 for node in ast.walk(tree)
+            1
+            for node in ast.walk(tree)
             if isinstance(node, ast.ClassDef) and "Test" in node.name
         )
 
@@ -233,7 +231,9 @@ def main() -> int:
         for target in test_info.coverage_targets:
             # Extract module path from import
             if "ldap_core_shared." in target:
-                module_path = target.replace("ldap_core_shared.", "").replace(".", "/") + ".py"
+                module_path = (
+                    target.replace("ldap_core_shared.", "").replace(".", "/") + ".py"
+                )
                 tested_modules.add(module_path)
 
     # Identify coverage gaps
@@ -265,22 +265,26 @@ def main() -> int:
 
         # Only include gaps for critical modules or modules with insufficient tests
         if (is_critical and not has_adequate_tests) or module_info.has_notimplemented:
-            coverage_gaps.append(CoverageGap(
-                module_path=module_path,
-                criticality=criticality if is_critical else "LOW",
-                test_types_needed=test_types if is_critical else ["unit"],
-                implementation_complexity=impl_complexity,
-                functions_count=module_info.functions,
-                has_incomplete_impl=module_info.has_notimplemented,
-                reason=reason if is_critical else "Incomplete implementation",
-            ))
+            coverage_gaps.append(
+                CoverageGap(
+                    module_path=module_path,
+                    criticality=criticality if is_critical else "LOW",
+                    test_types_needed=test_types if is_critical else ["unit"],
+                    implementation_complexity=impl_complexity,
+                    functions_count=module_info.functions,
+                    has_incomplete_impl=module_info.has_notimplemented,
+                    reason=reason if is_critical else "Incomplete implementation",
+                )
+            )
 
     # Sort gaps by criticality and complexity
-    coverage_gaps.sort(key=lambda x: (
-        {"HIGH": 0, "MEDIUM": 1, "LOW": 2}[x.criticality],
-        {"HIGH": 0, "MEDIUM": 1, "LOW": 2}[x.implementation_complexity],
-        -x.functions_count,
-    ))
+    coverage_gaps.sort(
+        key=lambda x: (
+            {"HIGH": 0, "MEDIUM": 1, "LOW": 2}[x.criticality],
+            {"HIGH": 0, "MEDIUM": 1, "LOW": 2}[x.implementation_complexity],
+            -x.functions_count,
+        )
+    )
 
     # Generate report
 
@@ -306,7 +310,9 @@ def main() -> int:
     total_test_functions = sum(test.test_functions for test in tests_info.values())
     total_source_functions = sum(module.functions for module in modules_info.values())
 
-    (total_test_functions / total_source_functions * 100) if total_source_functions > 0 else 0
+    (
+        total_test_functions / total_source_functions * 100
+    ) if total_source_functions > 0 else 0
 
     return 0
 

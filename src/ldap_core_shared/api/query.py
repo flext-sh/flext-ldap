@@ -12,9 +12,7 @@ DESIGN PATTERN: BUILDER + FLUENT INTERFACE + DELEGATION
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Any
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Any, Self
 
 from ldap_core_shared.utils.logging import get_logger
 
@@ -533,10 +531,14 @@ class Query:
                     result.data.sort(key=lambda e: e.get_attribute(self._sort_by) or "")
                 except (AttributeError, TypeError, ValueError) as e:
                     # Sorting failed - log warning but don't fail the whole query
-                    logger.warning(f"Result sorting failed for attribute '{self._sort_by}': {e}")
+                    logger.warning(
+                        "Result sorting failed for attribute '%s': %s", self._sort_by, e,
+                    )
                 except Exception as e:
                     # Unexpected sorting error - log with more detail
-                    logger.error(f"Unexpected error during result sorting: {e}", exc_info=True)
+                    logger.error(
+                        "Unexpected error during result sorting: %s", e, exc_info=True,
+                    )
 
             execution_time = (time.time() - start_time) * 1000
             result.execution_time_ms = execution_time
@@ -547,7 +549,9 @@ class Query:
             from ldap_core_shared.api.results import Result
 
             execution_time = (time.time() - start_time) * 1000
-            return Result.from_exception(e, default_data=[], execution_time_ms=execution_time)
+            return Result.from_exception(
+                e, default_data=[], execution_time_ms=execution_time,
+            )
 
     async def first(self) -> Result[LDAPEntry]:
         """Get first result only.
@@ -575,7 +579,9 @@ class Query:
         if result.success:
             first_item = result.data[0] if result.data else None
             return Result.ok(first_item, result.execution_time_ms)
-        return Result.fail(result.error, result.error_code, result.execution_time_ms, None)
+        return Result.fail(
+            result.error, result.error_code, result.execution_time_ms, None,
+        )
 
     async def count(self) -> Result[int]:
         """Count results without returning data.

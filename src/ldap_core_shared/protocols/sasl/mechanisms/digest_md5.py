@@ -46,7 +46,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
-from typing import ClassVar, Optional
+from typing import ClassVar
 
 from ldap_core_shared.protocols.sasl.callback import (
     NameCallback,
@@ -91,27 +91,29 @@ class DigestMD5Mechanism(SASLMechanism):
     """
 
     MECHANISM_NAME: ClassVar[str] = "DIGEST-MD5"
-    MECHANISM_CAPABILITIES: ClassVar[SASLMechanismCapabilities] = SASLMechanismCapabilities(
-        mechanism_type=SASLMechanismType.CHALLENGE_RESPONSE,
-        supports_initial_response=False,  # Server sends first challenge
-        supports_server_challenges=True,
-        requires_server_name=True,  # For digest-uri
-        requires_realm=False,  # Realm can be discovered from challenge
-        security_flags=[
-            SASLSecurityFlag.NO_ANONYMOUS,     # Provides authentication
-            SASLSecurityFlag.NO_PLAIN_TEXT,   # No plaintext passwords
-            SASLSecurityFlag.MUTUAL_AUTH,     # Supports mutual authentication
-        ],
-        qop_supported=["auth", "auth-int"],  # Authentication and integrity
-        max_security_strength=128,  # MD5 provides ~128-bit equivalent
-        computational_cost=3,  # Moderate computational cost
-        network_round_trips=2,  # Challenge-response-verify
+    MECHANISM_CAPABILITIES: ClassVar[SASLMechanismCapabilities] = (
+        SASLMechanismCapabilities(
+            mechanism_type=SASLMechanismType.CHALLENGE_RESPONSE,
+            supports_initial_response=False,  # Server sends first challenge
+            supports_server_challenges=True,
+            requires_server_name=True,  # For digest-uri
+            requires_realm=False,  # Realm can be discovered from challenge
+            security_flags=[
+                SASLSecurityFlag.NO_ANONYMOUS,  # Provides authentication
+                SASLSecurityFlag.NO_PLAIN_TEXT,  # No plaintext passwords
+                SASLSecurityFlag.MUTUAL_AUTH,  # Supports mutual authentication
+            ],
+            qop_supported=["auth", "auth-int"],  # Authentication and integrity
+            max_security_strength=128,  # MD5 provides ~128-bit equivalent
+            computational_cost=3,  # Moderate computational cost
+            network_round_trips=2,  # Challenge-response-verify
+        )
     )
 
     def __init__(
         self,
         callback_handler: SASLCallbackHandler,
-        context: Optional[SASLContext] = None,
+        context: SASLContext | None = None,
     ) -> None:
         """Initialize DIGEST-MD5 mechanism.
 
@@ -122,22 +124,22 @@ class DigestMD5Mechanism(SASLMechanism):
         super().__init__(callback_handler, context)
 
         # DIGEST-MD5 state
-        self._username: Optional[str] = None
-        self._password: Optional[str] = None
-        self._realm: Optional[str] = None
+        self._username: str | None = None
+        self._password: str | None = None
+        self._realm: str | None = None
 
         # Challenge/response state
-        self._server_challenge: Optional[dict[str, str]] = None
-        self._client_nonce: Optional[str] = None
+        self._server_challenge: dict[str, str] | None = None
+        self._client_nonce: str | None = None
         self._nonce_count = 0
-        self._digest_uri: Optional[str] = None
-        self._qop: Optional[str] = None
+        self._digest_uri: str | None = None
+        self._qop: str | None = None
 
         # Authentication state
         self._expecting_challenge = True
         self._expecting_response_auth = False
 
-    def evaluate_challenge(self, challenge: bytes) -> Optional[bytes]:
+    def evaluate_challenge(self, challenge: bytes) -> bytes | None:
         """Evaluate DIGEST-MD5 challenge and generate response.
 
         DIGEST-MD5 has multiple phases:
@@ -237,7 +239,7 @@ class DigestMD5Mechanism(SASLMechanism):
         self._record_response(response)
         return response
 
-    def _process_response_auth(self, challenge: bytes) -> Optional[bytes]:
+    def _process_response_auth(self, challenge: bytes) -> bytes | None:
         """Process server response-auth.
 
         Args:
@@ -311,7 +313,9 @@ class DigestMD5Mechanism(SASLMechanism):
         callbacks.append(password_callback)
 
         # Realm callback (may use default from challenge)
-        default_realm = self._server_challenge.get("realm") if self._server_challenge else None
+        default_realm = (
+            self._server_challenge.get("realm") if self._server_challenge else None
+        )
         realm_callback = RealmCallback("Realm: ", default_realm)
         callbacks.append(realm_callback)
 
@@ -340,7 +344,11 @@ class DigestMD5Mechanism(SASLMechanism):
         """Select authentication realm."""
         if not self._realm:
             # Use first realm from challenge or empty
-            realms = (self._server_challenge.get("realm", "") if self._server_challenge else "").split(",")
+            realms = (
+                self._server_challenge.get("realm", "")
+                if self._server_challenge
+                else ""
+            ).split(",")
             self._realm = realms[0].strip() if realms and realms[0].strip() else ""
 
     def _build_digest_uri(self) -> None:
@@ -351,11 +359,18 @@ class DigestMD5Mechanism(SASLMechanism):
 
     def _select_qop(self) -> None:
         """Select Quality of Protection."""
-        server_qop = (self._server_challenge.get("qop", "auth") if self._server_challenge else "auth").split(",")
+        server_qop = (
+            self._server_challenge.get("qop", "auth")
+            if self._server_challenge
+            else "auth"
+        ).split(",")
         server_qop = [q.strip() for q in server_qop]
 
         # Prefer auth-int if available and supported
-        if "auth-int" in server_qop and "auth-int" in self.get_capabilities().qop_supported:
+        if (
+            "auth-int" in server_qop
+            and "auth-int" in self.get_capabilities().qop_supported
+        ):
             self._qop = "auth-int"
         else:
             self._qop = "auth"

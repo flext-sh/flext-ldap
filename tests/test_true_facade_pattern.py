@@ -12,6 +12,8 @@ Test Coverage:
 - ✅ Performance characteristics maintained
 """
 
+from __future__ import annotations
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -31,6 +33,7 @@ try:
         ldap_session,
         validate_ldap_config,
     )
+
     IMPORTS_SUCCESS = True
 except ImportError as e:
     IMPORTS_SUCCESS = False
@@ -46,6 +49,7 @@ try:
         results,
         validation,
     )
+
     API_MODULES_SUCCESS = True
 except ImportError as e:
     API_MODULES_SUCCESS = False
@@ -57,11 +61,15 @@ class TestImportsAndExports:
 
     def test_critical_imports_success(self) -> None:
         """Test that all critical imports work from main package."""
-        assert IMPORTS_SUCCESS, f"Critical imports failed: {IMPORT_ERROR if not IMPORTS_SUCCESS else 'Unknown error'}"
+        assert IMPORTS_SUCCESS, (
+            f"Critical imports failed: {IMPORT_ERROR if not IMPORTS_SUCCESS else 'Unknown error'}"
+        )
 
     def test_api_modules_imports_success(self) -> None:
         """Test that API modules can be imported individually."""
-        assert API_MODULES_SUCCESS, f"API modules import failed: {API_IMPORT_ERROR if not API_MODULES_SUCCESS else 'Unknown error'}"
+        assert API_MODULES_SUCCESS, (
+            f"API modules import failed: {API_IMPORT_ERROR if not API_MODULES_SUCCESS else 'Unknown error'}"
+        )
 
     def test_version_information_available(self) -> None:
         """Test that version information is properly exported."""
@@ -138,14 +146,22 @@ class TestLDAPConfigValueObject:
         try:
             result = await validate_ldap_config(config)
             # validate_ldap_config returns a Result object
-            assert hasattr(result, "success"), "validate_ldap_config should return Result object"
-            assert result.success is True, f"Config validation failed: {result.error if hasattr(result, 'error') else 'Unknown error'}"
+            assert hasattr(result, "success"), (
+                "validate_ldap_config should return Result object"
+            )
+            assert result.success is True, (
+                f"Config validation failed: {result.error if hasattr(result, 'error') else 'Unknown error'}"
+            )
         except TypeError:
             # Not async, try sync
             result = validate_ldap_config(config)
             # validate_ldap_config returns a Result object
-            assert hasattr(result, "success"), "validate_ldap_config should return Result object"
-            assert result.success is True, f"Config validation failed: {result.error if hasattr(result, 'error') else 'Unknown error'}"
+            assert hasattr(result, "success"), (
+                "validate_ldap_config should return Result object"
+            )
+            assert result.success is True, (
+                f"Config validation failed: {result.error if hasattr(result, 'error') else 'Unknown error'}"
+            )
 
 
 class TestResultPattern:
@@ -253,7 +269,9 @@ class TestTrueFacadePattern:
 
         for method_name in expected_methods:
             assert hasattr(ldap, method_name), f"Method {method_name} not found"
-            assert callable(getattr(ldap, method_name)), f"Method {method_name} not callable"
+            assert callable(getattr(ldap, method_name)), (
+                f"Method {method_name} not callable"
+            )
 
     def test_ldap_facade_context_manager(self, mock_config) -> None:
         """Test LDAP facade works as context manager."""
@@ -273,7 +291,9 @@ class TestTrueFacadePattern:
         # Mock the internal core operations to verify delegation
         with patch.object(ldap, "_get_core_operations") as mock_get_core_ops:
             mock_core_operations = AsyncMock()
-            mock_core_operations.find_user_by_email.return_value = Result.ok({"cn": "test"})
+            mock_core_operations.find_user_by_email.return_value = Result.ok(
+                {"cn": "test"}
+            )
             mock_get_core_ops.return_value = mock_core_operations
 
             # Test delegation
@@ -281,7 +301,9 @@ class TestTrueFacadePattern:
 
             # Verify delegation occurred
             mock_get_core_ops.assert_called_once()
-            mock_core_operations.find_user_by_email.assert_called_once_with("test@example.com")
+            mock_core_operations.find_user_by_email.assert_called_once_with(
+                "test@example.com"
+            )
             assert result.success is True
 
 
@@ -363,11 +385,13 @@ class TestBackwardCompatibility:
         """Test that existing import patterns still work."""
         # Test direct import
         from ldap_core_shared import LDAP, LDAPConfig
+
         assert LDAP is not None
         assert LDAPConfig is not None
 
         # Test star import
         import ldap_core_shared
+
         assert hasattr(ldap_core_shared, "LDAP")
         assert hasattr(ldap_core_shared, "LDAPConfig")
 
@@ -386,7 +410,9 @@ class TestBackwardCompatibility:
         ldap = LDAP(config)
         assert ldap is not None
 
-    def test_method_signatures_preserved(self, mock_config=None) -> None:
+    def test_method_signatures_preserved(
+        self, mock_config: LDAPConfig | None = None
+    ) -> None:
         """Test that method signatures are preserved."""
         if mock_config is None:
             mock_config = LDAPConfig(
@@ -420,7 +446,7 @@ class TestErrorHandling:
             # If validation happens later, we test that case separately
         except Exception as e:
             # Config validation should produce meaningful errors
-            assert isinstance(e, (ValueError, TypeError))
+            assert isinstance(e, ValueError | TypeError)
 
     def test_result_error_handling(self) -> None:
         """Test Result pattern error handling."""
@@ -438,11 +464,14 @@ class TestPerformanceCharacteristics:
         """Test that lazy loading is preserved."""
         # Import should be fast (no heavy initialization)
         import time
+
         start_time = time.time()
 
         import_time = time.time() - start_time
         # Import should be very fast (under 100ms for lazy loading)
-        assert import_time < 0.1, f"Import took {import_time:.3f}s, too slow for lazy loading"
+        assert import_time < 0.1, (
+            f"Import took {import_time:.3f}s, too slow for lazy loading"
+        )
 
     def test_module_metadata(self) -> None:
         """Test that module metadata indicates refactoring."""

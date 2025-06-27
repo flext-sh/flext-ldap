@@ -121,12 +121,16 @@ class TestTLSConfiguration:
 
     def test_configuration_validation_cert_without_key(self) -> None:
         """Test validation error when cert provided without key."""
-        with pytest.raises(ValueError, match="Client certificate requires corresponding private key"):
+        with pytest.raises(
+            ValueError, match="Client certificate requires corresponding private key"
+        ):
             TLSConfiguration(cert_file="/path/to/client.pem")
 
     def test_configuration_validation_key_without_cert(self) -> None:
         """Test validation error when key provided without cert."""
-        with pytest.raises(ValueError, match="Private key requires corresponding client certificate"):
+        with pytest.raises(
+            ValueError, match="Private key requires corresponding client certificate"
+        ):
             TLSConfiguration(key_file="/path/to/client.key")
 
     def test_configuration_with_security_settings(self) -> None:
@@ -220,7 +224,10 @@ class TestTLSConfiguration:
         )
         params = config.get_ssl_context_params()
 
-        assert params["cipher_suites"] == "HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA"
+        assert (
+            params["cipher_suites"]
+            == "HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA"
+        )
 
     def test_get_ssl_context_params_complete(self) -> None:
         """Test getting SSL context parameters with complete configuration."""
@@ -595,7 +602,10 @@ class TestTLSUpgradeManager:
         manager = TLSUpgradeManager()
         mock_connection = object()
 
-        with pytest.raises(NotImplementedError, match="TLSUpgradeManager requires connection manager integration"):
+        with pytest.raises(
+            NotImplementedError,
+            match="TLSUpgradeManager requires connection manager integration",
+        ):
             manager.upgrade_connection(mock_connection)
 
 
@@ -695,7 +705,10 @@ class TestIntegrationScenarios:
             ("default", StartTLSExtension()),
             ("insecure", StartTLSExtension.insecure()),
             ("ca_verify", StartTLSExtension.with_ca_verification("/path/to/ca.pem")),
-            ("client_cert", StartTLSExtension.with_client_cert("/cert.pem", "/key.pem")),
+            (
+                "client_cert",
+                StartTLSExtension.with_client_cert("/cert.pem", "/key.pem"),
+            ),
         ]
 
         for _name, extension in configs:
@@ -714,7 +727,9 @@ class TestIntegrationScenarios:
         assert insecure_extension.is_verification_enabled() is False
 
         # Test client cert configuration
-        client_cert_extension = StartTLSExtension.with_client_cert("/cert.pem", "/key.pem")
+        client_cert_extension = StartTLSExtension.with_client_cert(
+            "/cert.pem", "/key.pem"
+        )
         assert client_cert_extension.is_client_cert_enabled() is True
         assert client_cert_extension.is_verification_enabled() is True
 
@@ -779,7 +794,7 @@ class TestSecurityValidation:
             TLSConfiguration(cert_file="/path/to/client.pem")  # Missing key
 
         with pytest.raises(ValueError):
-            TLSConfiguration(key_file="/path/to/client.key")   # Missing cert
+            TLSConfiguration(key_file="/path/to/client.key")  # Missing cert
 
     def test_insecure_configuration_warnings(self) -> None:
         """Test insecure configuration identification."""

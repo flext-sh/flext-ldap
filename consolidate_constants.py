@@ -21,12 +21,26 @@ def consolidate_constants() -> None:
     # Patterns to replace with imports from utils.constants
     replacements = [
         # Magic number constants
-        (r"DEFAULT_MAX_ITEMS = 100", "from ldap_core_shared.utils.constants import DEFAULT_MAX_ITEMS"),
-        (r"DEFAULT_TIMEOUT_SECONDS = 30", "from ldap_core_shared.utils.constants import DEFAULT_TIMEOUT_SECONDS"),
-        (r"DEFAULT_LARGE_LIMIT = 1000", "from ldap_core_shared.utils.constants import DEFAULT_LARGE_LIMIT"),
-        (r"LDAPS_DEFAULT_PORT = 636", "from ldap_core_shared.utils.constants import LDAPS_DEFAULT_PORT"),
-        (r"LDAP_DEFAULT_PORT = 389", "from ldap_core_shared.utils.constants import LDAP_DEFAULT_PORT"),
-
+        (
+            r"DEFAULT_MAX_ITEMS = 100",
+            "from ldap_core_shared.utils.constants import DEFAULT_MAX_ITEMS",
+        ),
+        (
+            r"DEFAULT_TIMEOUT_SECONDS = 30",
+            "from ldap_core_shared.utils.constants import DEFAULT_TIMEOUT_SECONDS",
+        ),
+        (
+            r"DEFAULT_LARGE_LIMIT = 1000",
+            "from ldap_core_shared.utils.constants import DEFAULT_LARGE_LIMIT",
+        ),
+        (
+            r"LDAPS_DEFAULT_PORT = 636",
+            "from ldap_core_shared.utils.constants import LDAPS_DEFAULT_PORT",
+        ),
+        (
+            r"LDAP_DEFAULT_PORT = 389",
+            "from ldap_core_shared.utils.constants import LDAP_DEFAULT_PORT",
+        ),
         # Inline magic numbers in code
         (r"\b100\b(?=.*# Convert to|.*percent|.*DEFAULT_MAX)", "DEFAULT_MAX_ITEMS"),
         (r"\b1000\b(?=.*# Convert to|.*limit|.*DEFAULT_LARGE)", "DEFAULT_LARGE_LIMIT"),
@@ -48,7 +62,9 @@ def consolidate_constants() -> None:
                 content = f.read()
 
             original_content = content
-            has_constants_import = "from ldap_core_shared.utils.constants import" in content
+            has_constants_import = (
+                "from ldap_core_shared.utils.constants import" in content
+            )
             imports_to_add = set()
 
             # Apply replacements
@@ -58,13 +74,17 @@ def consolidate_constants() -> None:
                         # This is an import statement
                         imports_to_add.add(replacement)
                         # Remove the duplicate constant definition
-                        content = re.sub(f"^{pattern}.*$", "", content, flags=re.MULTILINE)
+                        content = re.sub(
+                            f"^{pattern}.*$", "", content, flags=re.MULTILINE
+                        )
                     else:
                         # This is a constant name replacement
                         content = re.sub(pattern, replacement, content)
                         # Ensure import is present
                         const_name = replacement
-                        imports_to_add.add(f"from ldap_core_shared.utils.constants import {const_name}")
+                        imports_to_add.add(
+                            f"from ldap_core_shared.utils.constants import {const_name}"
+                        )
 
             # Add missing imports
             if imports_to_add and not has_constants_import:

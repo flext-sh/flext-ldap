@@ -40,7 +40,7 @@ from __future__ import annotations
 
 import re
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -51,25 +51,25 @@ if TYPE_CHECKING:
 class DNEscapeMode(Enum):
     """DN escaping modes."""
 
-    RFC4514 = "rfc4514"        # Standard RFC 4514 escaping
-    MINIMAL = "minimal"        # Minimal escaping (only required chars)
-    FULL = "full"             # Full escaping (all special chars)
+    RFC4514 = "rfc4514"  # Standard RFC 4514 escaping
+    MINIMAL = "minimal"  # Minimal escaping (only required chars)
+    FULL = "full"  # Full escaping (all special chars)
 
 
 class AttributeType(Enum):
     """Common LDAP attribute types."""
 
-    CN = "cn"                 # Common Name
-    OU = "ou"                # Organizational Unit
-    O = "o"                  # Organization
-    C = "c"                  # Country
-    L = "l"                  # Locality
-    ST = "st"                # State/Province
-    STREET = "street"        # Street Address
-    DC = "dc"                # Domain Component
-    UID = "uid"              # User ID
-    MAIL = "mail"            # Email Address
-    SN = "sn"                # Surname
+    CN = "cn"  # Common Name
+    OU = "ou"  # Organizational Unit
+    O = "o"  # Organization
+    C = "c"  # Country
+    L = "l"  # Locality
+    ST = "st"  # State/Province
+    STREET = "street"  # Street Address
+    DC = "dc"  # Domain Component
+    UID = "uid"  # User ID
+    MAIL = "mail"  # Email Address
+    SN = "sn"  # Surname
     GIVEN_NAME = "givenName"  # Given Name
 
 
@@ -81,7 +81,8 @@ class DNComponent(BaseModel):
 
     # Escaping and formatting
     escape_mode: DNEscapeMode = Field(
-        default=DNEscapeMode.RFC4514, description="Escaping mode to use",
+        default=DNEscapeMode.RFC4514,
+        description="Escaping mode to use",
     )
 
     def get_escaped_value(self) -> str:
@@ -113,7 +114,7 @@ class DNComponent(BaseModel):
         attr_value = self.get_escaped_value() if escape_value else self.attribute_value
         return f"{attr_type}={attr_value}"
 
-    def matches_type(self, attribute_type: Union[str, AttributeType]) -> bool:
+    def matches_type(self, attribute_type: str | AttributeType) -> bool:
         """Check if component matches attribute type.
 
         Args:
@@ -139,9 +140,13 @@ class DNComponent(BaseModel):
             return False
 
         return (
-            self.get_normalized_type() == other.get_normalized_type() and
-            self.attribute_value == other.attribute_value
+            self.get_normalized_type() == other.get_normalized_type()
+            and self.attribute_value == other.attribute_value
         )
+
+    def __hash__(self) -> int:
+        """Hash for component."""
+        return hash((self.get_normalized_type(), self.attribute_value))
 
 
 class DistinguishedName:
@@ -172,14 +177,14 @@ class DistinguishedName:
 
     # Regex patterns for DN parsing
     DN_COMPONENT_PATTERN = re.compile(
-        r'([a-zA-Z][a-zA-Z0-9-]*|\d+(?:\.\d+)*)\s*=\s*'  # Attribute type
+        r"([a-zA-Z][a-zA-Z0-9-]*|\d+(?:\.\d+)*)\s*=\s*"  # Attribute type
         r'((?:[^,=+"<>#;\\]|\\[,=+"<>#;\\]|\\[0-9a-fA-F]{2})*)',  # Attribute value
     )
 
     ESCAPE_PATTERN = re.compile(r"\\(.)")
     HEX_ESCAPE_PATTERN = re.compile(r"\\([0-9a-fA-F]{2})")
 
-    def __init__(self, dn_string: Optional[str] = None) -> None:
+    def __init__(self, dn_string: str | None = None) -> None:
         """Initialize Distinguished Name.
 
         Args:
@@ -207,8 +212,8 @@ class DistinguishedName:
         # Split by commas, being careful about escaped commas
         component_strings = self._split_dn_components(dn_string)
 
-        for component_str in component_strings:
-            component_str = component_str.strip()
+        for raw_component_str in component_strings:
+            component_str = raw_component_str.strip()
             if not component_str:
                 continue
 
@@ -278,6 +283,7 @@ class DistinguishedName:
         Returns:
             Unescaped attribute value
         """
+
         # Handle hex escapes first
         def hex_replacer(match: Any) -> str:
             hex_code = match.group(1)
@@ -349,7 +355,7 @@ class DistinguishedName:
         return self._validation_errors.copy()
 
     @property
-    def rdn(self) -> Optional[DNComponent]:
+    def rdn(self) -> DNComponent | None:
         """Get Relative Distinguished Name (first component).
 
         Returns:
@@ -358,7 +364,7 @@ class DistinguishedName:
         return self._components[0] if self._components else None
 
     @property
-    def parent(self) -> Optional[DistinguishedName]:
+    def parent(self) -> DistinguishedName | None:
         """Get parent DN (all components except first).
 
         Returns:
@@ -389,7 +395,9 @@ class DistinguishedName:
         """
         return len(self._components)
 
-    def get_component_by_type(self, attribute_type: Union[str, AttributeType]) -> Optional[DNComponent]:
+    def get_component_by_type(
+        self, attribute_type: str | AttributeType,
+    ) -> DNComponent | None:
         """Get first component with specified attribute type.
 
         Args:
@@ -403,7 +411,9 @@ class DistinguishedName:
                 return component
         return None
 
-    def get_components_by_type(self, attribute_type: Union[str, AttributeType]) -> list[DNComponent]:
+    def get_components_by_type(
+        self, attribute_type: str | AttributeType,
+    ) -> list[DNComponent]:
         """Get all components with specified attribute type.
 
         Args:
@@ -412,7 +422,11 @@ class DistinguishedName:
         Returns:
             List of matching components
         """
-        return [component for component in self._components if component.matches_type(attribute_type)]
+        return [
+            component
+            for component in self._components
+            if component.matches_type(attribute_type)
+        ]
 
     def add_child(self, child_rdn: str) -> DistinguishedName:
         """Add child RDN to create new DN.
@@ -438,7 +452,7 @@ class DistinguishedName:
         new_dn._components = [child_dn._components[0], *self._components]
         return new_dn
 
-    def is_child_of(self, parent_dn: Union[str, DistinguishedName]) -> bool:
+    def is_child_of(self, parent_dn: str | DistinguishedName) -> bool:
         """Check if this DN is a child of specified parent DN.
 
         Args:
@@ -455,7 +469,7 @@ class DistinguishedName:
 
         # Check if parent components match the suffix of this DN
         parent_components = list(parent_dn.components)
-        our_suffix = self._components[-len(parent_components):]
+        our_suffix = self._components[-len(parent_components) :]
 
         for i, parent_component in enumerate(parent_components):
             if our_suffix[i] != parent_component:
@@ -463,7 +477,7 @@ class DistinguishedName:
 
         return True
 
-    def is_ancestor_of(self, child_dn: Union[str, DistinguishedName]) -> bool:
+    def is_ancestor_of(self, child_dn: str | DistinguishedName) -> bool:
         """Check if this DN is an ancestor of specified child DN.
 
         Args:
@@ -477,7 +491,9 @@ class DistinguishedName:
 
         return child_dn.is_child_of(self)
 
-    def get_common_ancestor(self, other_dn: Union[str, DistinguishedName]) -> Optional[DistinguishedName]:
+    def get_common_ancestor(
+        self, other_dn: str | DistinguishedName,
+    ) -> DistinguishedName | None:
         """Get common ancestor DN with another DN.
 
         Args:
@@ -510,7 +526,9 @@ class DistinguishedName:
         ancestor_dn._components = list(reversed(common_components))
         return ancestor_dn
 
-    def get_relative_name(self, base_dn: Union[str, DistinguishedName]) -> Optional[DistinguishedName]:
+    def get_relative_name(
+        self, base_dn: str | DistinguishedName,
+    ) -> DistinguishedName | None:
         """Get relative name from base DN.
 
         Args:
@@ -569,6 +587,11 @@ class DistinguishedName:
         other_normalized = other.normalize()
 
         return self_normalized._components == other_normalized._components
+
+    def __hash__(self) -> int:
+        """Hash for DN."""
+        normalized = self.normalize()
+        return hash(tuple(hash(comp) for comp in normalized._components))
 
     def __len__(self) -> int:
         """Get DN depth."""
@@ -720,7 +743,7 @@ class DNParser:
             if value[i] == "\\" and i + 2 < len(value):
                 try:
                     # Try to parse hex escape sequence
-                    hex_code = value[i + 1:i + 3]
+                    hex_code = value[i + 1 : i + 3]
                     char_code = int(hex_code, 16)
                     result += chr(char_code)
                     i += 3
@@ -747,7 +770,7 @@ class DNParser:
             dn = DistinguishedName(dn_string)
             hierarchy = []
 
-            current_dn: Optional[DistinguishedName] = dn
+            current_dn: DistinguishedName | None = dn
             while current_dn and current_dn.depth > 0:
                 hierarchy.append(str(current_dn))
                 current_dn = current_dn.parent
@@ -755,6 +778,55 @@ class DNParser:
             return hierarchy
         except Exception:
             return []
+
+
+class DNBuilder:
+    """Builder for constructing Distinguished Names."""
+
+    def __init__(self) -> None:
+        """Initialize DN builder."""
+        self._components: list[DNComponent] = []
+
+    def add_component(self, attribute_type: str, attribute_value: str) -> DNBuilder:
+        """Add component to DN.
+
+        Args:
+            attribute_type: Attribute type name
+            attribute_value: Attribute value
+
+        Returns:
+            Self for method chaining
+        """
+        component = DNComponent(
+            attribute_type=attribute_type,
+            attribute_value=attribute_value,
+        )
+        self._components.append(component)
+        return self
+
+    def build(self) -> str:
+        """Build DN string.
+
+        Returns:
+            DN string representation
+        """
+        dn = DistinguishedName()
+        dn._components = self._components
+        return str(dn)
+
+    def from_parsed_dn(self, parsed_dn: DistinguishedName) -> DNBuilder:
+        """Create builder from parsed DN.
+
+        Args:
+            parsed_dn: Parsed DN to copy
+
+        Returns:
+            Self for method chaining
+        """
+        self._components = [
+            DNComponent(**component.dict()) for component in parsed_dn._components
+        ]
+        return self
 
 
 class DNValidator:
@@ -810,7 +882,9 @@ class DNValidator:
 
 
 # Utility functions
-def escape_dn_value(value: str, escape_mode: DNEscapeMode = DNEscapeMode.RFC4514) -> str:
+def escape_dn_value(
+    value: str, escape_mode: DNEscapeMode = DNEscapeMode.RFC4514,
+) -> str:
     """Escape DN attribute value.
 
     Args:
@@ -919,7 +993,7 @@ def is_valid_dn(dn_string: str) -> bool:
         return False
 
 
-def get_dn_parent(dn_string: str) -> Optional[str]:
+def get_dn_parent(dn_string: str) -> str | None:
     """Get parent DN string.
 
     Args:
@@ -936,7 +1010,7 @@ def get_dn_parent(dn_string: str) -> Optional[str]:
         return None
 
 
-def get_dn_rdn(dn_string: str) -> Optional[str]:
+def get_dn_rdn(dn_string: str) -> str | None:
     """Get RDN (first component) from DN string.
 
     Args:

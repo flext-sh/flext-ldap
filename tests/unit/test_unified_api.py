@@ -45,7 +45,9 @@ class TestLDAPConfig:
         assert config.auth_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
         assert config.auth_password == "secret123"
         assert config.base_dn == "dc=example,dc=com"
-        assert config.port == 636  # Default for plain hostname with use_tls=True (default)
+        assert (
+            config.port == 636
+        )  # Default for plain hostname with use_tls=True (default)
         assert config.use_tls is True  # Default value
 
     def test_ldaps_url_auto_configuration(self) -> None:
@@ -282,7 +284,9 @@ class TestQuery:
         # Test select basic for groups
         group_basic_query = Query(mock_ldap).groups().select_basic()
         expected_group_attrs = ["cn", "description", "member"]
-        assert all(attr in group_basic_query._attributes for attr in expected_group_attrs)
+        assert all(
+            attr in group_basic_query._attributes for attr in expected_group_attrs
+        )
 
     def test_result_modifiers(self, mock_ldap) -> None:
         """Test result modifier methods."""
@@ -298,14 +302,16 @@ class TestQuery:
 
     def test_fluent_chaining(self, mock_ldap) -> None:
         """Test fluent method chaining."""
-        query = (Query(mock_ldap)
+        query = (
+            Query(mock_ldap)
             .users()
             .in_department("IT")
             .with_title("*Manager*")
             .enabled_only()
             .select("cn", "mail", "title")
             .limit(25)
-            .sort_by("cn"))
+            .sort_by("cn")
+        )
 
         assert query._object_class == "person"
         assert "(department=IT)" in query._filters
@@ -329,11 +335,9 @@ class TestQuery:
         mock_result = Result.ok(mock_entries, execution_time_ms=50.0)
         mock_ldap._search.return_value = mock_result
 
-        query = (Query(mock_ldap)
-            .users()
-            .in_department("IT")
-            .select("cn", "mail")
-            .limit(10))
+        query = (
+            Query(mock_ldap).users().in_department("IT").select("cn", "mail").limit(10)
+        )
 
         result = await query.execute()
 
@@ -481,9 +485,10 @@ class TestLDAP:
         mock_user = Mock()
         mock_user.dn = "cn=testuser,ou=users,dc=test,dc=com"
 
-        with patch.object(ldap, "find_user_by_name") as mock_find_user, \
-             patch.object(ldap, "_search") as mock_search:
-
+        with (
+            patch.object(ldap, "find_user_by_name") as mock_find_user,
+            patch.object(ldap, "_search") as mock_search,
+        ):
             mock_find_user.return_value = Result.ok(mock_user, execution_time_ms=10.0)
             mock_groups = [Mock(), Mock()]
             mock_search.return_value = Result.ok(mock_groups, execution_time_ms=25.0)
@@ -502,7 +507,9 @@ class TestLDAP:
         mock_group.get_attribute.return_value = "TestGroup"
 
         with patch.object(ldap, "get_user_groups") as mock_get_groups:
-            mock_get_groups.return_value = Result.ok([mock_group], execution_time_ms=20.0)
+            mock_get_groups.return_value = Result.ok(
+                [mock_group], execution_time_ms=20.0
+            )
 
             result = await ldap.is_user_in_group("testuser", "TestGroup")
 
@@ -543,9 +550,10 @@ class TestLDAP:
         ldap = LDAP(valid_config)
 
         # Mock various count operations
-        with patch.object(ldap, "query") as mock_query_factory, \
-             patch.object(ldap, "find_empty_groups") as mock_empty_groups:
-
+        with (
+            patch.object(ldap, "query") as mock_query_factory,
+            patch.object(ldap, "find_empty_groups") as mock_empty_groups,
+        ):
             # Setup mock query instances
             mock_query = Mock()
             mock_query.users.return_value = mock_query
@@ -559,12 +567,14 @@ class TestLDAP:
             # Setup return values
             mock_query.count.side_effect = [
                 Result.ok(150, execution_time_ms=20.0),  # total users
-                Result.ok(25, execution_time_ms=15.0),   # total groups
+                Result.ok(25, execution_time_ms=15.0),  # total groups
                 Result.ok(140, execution_time_ms=18.0),  # enabled users
-                Result.ok(10, execution_time_ms=12.0),    # disabled users
+                Result.ok(10, execution_time_ms=12.0),  # disabled users
             ]
 
-            mock_empty_groups.return_value = Result.ok([Mock(), Mock()], execution_time_ms=10.0)  # 2 empty groups
+            mock_empty_groups.return_value = Result.ok(
+                [Mock(), Mock()], execution_time_ms=10.0
+            )  # 2 empty groups
 
             result = await ldap.get_directory_stats()
 
@@ -651,12 +661,14 @@ class TestUnifiedAPIIntegration:
         # Test context manager usage
         async with ldap:
             # Test query building and execution (placeholder implementation)
-            result = await (ldap.query()
+            result = await (
+                ldap.query()
                 .users()
                 .in_department("IT")
                 .select("cn", "mail")
                 .limit(5)
-                .execute())
+                .execute()
+            )
 
             # Should succeed with placeholder implementation
             assert result.success is True
@@ -690,11 +702,13 @@ def sample_ldap_entries():
     for i in range(5):
         entry = Mock(spec=LDAPEntry)
         entry.dn = f"cn=user{i},ou=users,dc=test,dc=com"
-        entry.get_attribute = Mock(side_effect={
-            "cn": f"user{i}",
-            "mail": f"user{i}@test.com",
-            "department": "IT" if i % 2 == 0 else "HR",
-        }.get)
+        entry.get_attribute = Mock(
+            side_effect={
+                "cn": f"user{i}",
+                "mail": f"user{i}@test.com",
+                "department": "IT" if i % 2 == 0 else "HR",
+            }.get
+        )
         entries.append(entry)
 
     return entries

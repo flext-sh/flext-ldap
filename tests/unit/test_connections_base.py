@@ -87,7 +87,9 @@ class TestLDAPConnectionInfo:
             "timeout": 60,
         }
 
-    def test_create_valid_connection_info(self, valid_connection_data: dict[str, Any]) -> None:
+    def test_create_valid_connection_info(
+        self, valid_connection_data: dict[str, Any]
+    ) -> None:
         """Test creating LDAPConnectionInfo with valid data."""
         # Arrange & Act
         conn_info = LDAPConnectionInfo(**valid_connection_data)
@@ -103,7 +105,9 @@ class TestLDAPConnectionInfo:
         assert conn_info.auto_bind is True  # default
         assert conn_info.authentication == LDAPAuthenticationMethod.SIMPLE  # default
 
-    def test_create_ssl_connection_info(self, valid_ssl_connection_data: dict[str, Any]) -> None:
+    def test_create_ssl_connection_info(
+        self, valid_ssl_connection_data: dict[str, Any]
+    ) -> None:
         """Test creating SSL-enabled connection info."""
         # Arrange & Act
         conn_info = LDAPConnectionInfo(**valid_ssl_connection_data)
@@ -114,7 +118,9 @@ class TestLDAPConnectionInfo:
         assert conn_info.use_ssl is True
         assert conn_info.timeout == 60
 
-    def test_model_config_immutability(self, valid_connection_data: dict[str, Any]) -> None:
+    def test_model_config_immutability(
+        self, valid_connection_data: dict[str, Any]
+    ) -> None:
         """Test that connection info is immutable after creation."""
         # Arrange
         conn_info = LDAPConnectionInfo(**valid_connection_data)
@@ -123,7 +129,9 @@ class TestLDAPConnectionInfo:
         with pytest.raises((ValidationError, AttributeError)):
             conn_info.host = "malicious.com"
 
-    def test_model_config_extra_fields_forbidden(self, valid_connection_data: dict[str, Any]) -> None:
+    def test_model_config_extra_fields_forbidden(
+        self, valid_connection_data: dict[str, Any]
+    ) -> None:
         """Test that extra fields are forbidden."""
         # Arrange
         data_with_extra = valid_connection_data.copy()
@@ -135,7 +143,9 @@ class TestLDAPConnectionInfo:
 
         assert "extra_field" in str(exc_info.value)
 
-    def test_host_validation_empty_host(self, valid_connection_data: dict[str, Any]) -> None:
+    def test_host_validation_empty_host(
+        self, valid_connection_data: dict[str, Any]
+    ) -> None:
         """Test host validation with empty host."""
         # Arrange
         data = valid_connection_data.copy()
@@ -145,11 +155,15 @@ class TestLDAPConnectionInfo:
         with pytest.raises(ValidationError) as exc_info:
             LDAPConnectionInfo(**data)
 
-        assert ("cannot be empty" in str(exc_info.value).lower() or
-                "string should have at least 1 character" in str(exc_info.value).lower() or
-                "forbidden characters" in str(exc_info.value).lower())
+        assert (
+            "cannot be empty" in str(exc_info.value).lower()
+            or "string should have at least 1 character" in str(exc_info.value).lower()
+            or "forbidden characters" in str(exc_info.value).lower()
+        )
 
-    def test_host_validation_whitespace_host(self, valid_connection_data: dict[str, Any]) -> None:
+    def test_host_validation_whitespace_host(
+        self, valid_connection_data: dict[str, Any]
+    ) -> None:
         """Test host validation with whitespace-only host."""
         # Arrange
         data = valid_connection_data.copy()
@@ -159,11 +173,15 @@ class TestLDAPConnectionInfo:
         with pytest.raises(ValidationError) as exc_info:
             LDAPConnectionInfo(**data)
 
-        assert ("cannot be empty" in str(exc_info.value).lower() or
-                "string should have at least 1 character" in str(exc_info.value).lower() or
-                "forbidden characters" in str(exc_info.value).lower())
+        assert (
+            "cannot be empty" in str(exc_info.value).lower()
+            or "string should have at least 1 character" in str(exc_info.value).lower()
+            or "forbidden characters" in str(exc_info.value).lower()
+        )
 
-    def test_host_validation_protocol_prefix(self, valid_connection_data: dict[str, Any]) -> None:
+    def test_host_validation_protocol_prefix(
+        self, valid_connection_data: dict[str, Any]
+    ) -> None:
         """Test host validation rejects protocol prefixes."""
         # Arrange
         test_cases = [
@@ -182,7 +200,9 @@ class TestLDAPConnectionInfo:
 
             assert "protocol" in str(exc_info.value).lower()
 
-    def test_host_validation_forbidden_characters(self, valid_connection_data: dict[str, Any]) -> None:
+    def test_host_validation_forbidden_characters(
+        self, valid_connection_data: dict[str, Any]
+    ) -> None:
         """Test host validation rejects forbidden characters."""
         # Arrange
         forbidden_hosts = [
@@ -228,7 +248,9 @@ class TestLDAPConnectionInfo:
             conn_info = LDAPConnectionInfo(**data)
             assert conn_info.port == port
 
-    def test_port_validation_invalid_range(self, valid_connection_data: dict[str, Any]) -> None:
+    def test_port_validation_invalid_range(
+        self, valid_connection_data: dict[str, Any]
+    ) -> None:
         """Test port validation rejects invalid range."""
         # Arrange
         invalid_ports = [0, -1, 65536, 100000]
@@ -258,7 +280,9 @@ class TestLDAPConnectionInfo:
         assert conn_info.port == 636
         assert conn_info.use_ssl is False
 
-    def test_dn_validation_empty_dn(self, valid_connection_data: dict[str, Any]) -> None:
+    def test_dn_validation_empty_dn(
+        self, valid_connection_data: dict[str, Any]
+    ) -> None:
         """Test DN validation with empty DN."""
         # Arrange
         data = valid_connection_data.copy()
@@ -270,7 +294,9 @@ class TestLDAPConnectionInfo:
 
         assert "string should have at least" in str(exc_info.value).lower()
 
-    def test_dn_validation_no_equals(self, valid_connection_data: dict[str, Any]) -> None:
+    def test_dn_validation_no_equals(
+        self, valid_connection_data: dict[str, Any]
+    ) -> None:
         """Test DN validation requires equals sign."""
         # Arrange
         data = valid_connection_data.copy()
@@ -282,7 +308,9 @@ class TestLDAPConnectionInfo:
 
         assert "attribute=value" in str(exc_info.value).lower()
 
-    def test_dn_validation_comma_boundaries(self, valid_connection_data: dict[str, Any]) -> None:
+    def test_dn_validation_comma_boundaries(
+        self, valid_connection_data: dict[str, Any]
+    ) -> None:
         """Test DN validation rejects leading/trailing commas."""
         # Arrange
         invalid_dns = [
@@ -301,7 +329,9 @@ class TestLDAPConnectionInfo:
 
             assert "comma" in str(exc_info.value).lower()
 
-    def test_dn_validation_valid_components(self, valid_connection_data: dict[str, Any]) -> None:
+    def test_dn_validation_valid_components(
+        self, valid_connection_data: dict[str, Any]
+    ) -> None:
         """Test DN validation accepts valid component types."""
         # Arrange
         valid_dns = [
@@ -319,7 +349,9 @@ class TestLDAPConnectionInfo:
             conn_info = LDAPConnectionInfo(**data)
             assert conn_info.bind_dn == valid_dn
 
-    def test_dn_validation_invalid_components(self, valid_connection_data: dict[str, Any]) -> None:
+    def test_dn_validation_invalid_components(
+        self, valid_connection_data: dict[str, Any]
+    ) -> None:
         """Test DN validation rejects unrecognized components."""
         # Arrange
         data = valid_connection_data.copy()
@@ -361,7 +393,9 @@ class TestLDAPConnectionInfo:
             with pytest.raises(ValidationError):
                 LDAPConnectionInfo(**data)
 
-    def test_get_ldap3_authentication(self, valid_connection_data: dict[str, Any]) -> None:
+    def test_get_ldap3_authentication(
+        self, valid_connection_data: dict[str, Any]
+    ) -> None:
         """Test LDAP3 authentication method mapping."""
         # Arrange
         import ldap3
@@ -448,7 +482,9 @@ class TestLDAPSearchConfig:
             "time_limit": 30,
         }
 
-    def test_create_valid_search_config(self, valid_search_data: dict[str, Any]) -> None:
+    def test_create_valid_search_config(
+        self, valid_search_data: dict[str, Any]
+    ) -> None:
         """Test creating valid search configuration."""
         # Arrange & Act
         search_config = LDAPSearchConfig(**valid_search_data)
@@ -483,9 +519,11 @@ class TestLDAPSearchConfig:
                 search_filter="",
             )
 
-        assert ("cannot be empty" in str(exc_info.value).lower() or
-                "string should have at least" in str(exc_info.value).lower() or
-                "forbidden characters" in str(exc_info.value).lower())
+        assert (
+            "cannot be empty" in str(exc_info.value).lower()
+            or "string should have at least" in str(exc_info.value).lower()
+            or "forbidden characters" in str(exc_info.value).lower()
+        )
 
     def test_search_filter_validation_no_parentheses(self) -> None:
         """Test search filter validation requires parentheses."""
@@ -611,7 +649,9 @@ class TestLDAPConnectionOptions:
             base_dn="dc=example,dc=com",
         )
 
-    def test_create_basic_connection_options(self, valid_connection_info: LDAPConnectionInfo) -> None:
+    def test_create_basic_connection_options(
+        self, valid_connection_info: LDAPConnectionInfo
+    ) -> None:
         """Test creating basic connection options."""
         # Arrange & Act
         options = LDAPConnectionOptions(
@@ -627,7 +667,9 @@ class TestLDAPConnectionOptions:
         assert options.connection_pool_enabled is True  # default
         assert options.max_pool_size == 10  # default
 
-    def test_create_ssh_tunnel_options(self, valid_connection_info: LDAPConnectionInfo) -> None:
+    def test_create_ssh_tunnel_options(
+        self, valid_connection_info: LDAPConnectionInfo
+    ) -> None:
         """Test creating options with SSH tunnel."""
         # Arrange & Act
         options = LDAPConnectionOptions(
@@ -644,7 +686,9 @@ class TestLDAPConnectionOptions:
         assert options.ssh_port == 2222
         assert options.ssh_username == "sshuser"
 
-    def test_ssh_validation_tunnel_enabled_no_host(self, valid_connection_info: LDAPConnectionInfo) -> None:
+    def test_ssh_validation_tunnel_enabled_no_host(
+        self, valid_connection_info: LDAPConnectionInfo
+    ) -> None:
         """Test SSH validation requires host when tunnel enabled."""
         # Arrange & Act & Assert
         with pytest.raises(ValidationError) as exc_info:
@@ -671,7 +715,9 @@ class TestLDAPConnectionOptions:
 
         assert "tunnel is disabled" in str(exc_info.value).lower()
 
-    def test_ssh_port_validation(self, valid_connection_info: LDAPConnectionInfo) -> None:
+    def test_ssh_port_validation(
+        self, valid_connection_info: LDAPConnectionInfo
+    ) -> None:
         """Test SSH port validation."""
         # Valid ports
         valid_ports = [1, 22, 2222, 65535]
@@ -691,7 +737,9 @@ class TestLDAPConnectionOptions:
                     ssh_port=port,
                 )
 
-    def test_pool_size_validation(self, valid_connection_info: LDAPConnectionInfo) -> None:
+    def test_pool_size_validation(
+        self, valid_connection_info: LDAPConnectionInfo
+    ) -> None:
         """Test connection pool size validation."""
         # Valid sizes
         valid_sizes = [1, 5, 10, 50, 100]

@@ -10,13 +10,13 @@ Use imports like:
 from __future__ import annotations
 
 import warnings
-from typing import Any, Optional
+from typing import Any
 
 from ldap_core_shared.core.exceptions import (
     AuthenticationError as CoreAuthenticationError,
 )
 from ldap_core_shared.core.exceptions import (
-    ConnectionError as CoreConnectionError,
+    LDAPConnectionError as CoreConnectionError,
 )
 
 # Import from the unified exception system
@@ -32,9 +32,14 @@ from ldap_core_shared.core.exceptions import (
 class LDAPError(LDAPCoreError):
     """DEPRECATED: Use LDAPCoreError from core.exceptions instead."""
 
-    def __init__(self, message: str, *, error_code: Optional[str] = None,
-                 context: Optional[dict[str, Any]] = None,
-                 original_error: Optional[Exception] = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_code: str | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
+    ) -> None:
         warnings.warn(
             "LDAPError is deprecated. Use LDAPCoreError from core.exceptions instead.",
             DeprecationWarning,
@@ -50,12 +55,17 @@ class LDAPError(LDAPCoreError):
         )
 
 
-class ConnectionError(CoreConnectionError):
+class LDAPConnectionError(CoreConnectionError):
     """DEPRECATED: Use ConnectionError from core.exceptions instead."""
 
-    def __init__(self, message: str, *, error_code: Optional[str] = None,
-                 context: Optional[dict[str, Any]] = None,
-                 original_error: Optional[Exception] = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_code: str | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
+    ) -> None:
         warnings.warn(
             "ConnectionError is deprecated. Use ConnectionError from core.exceptions instead.",
             DeprecationWarning,
@@ -67,9 +77,14 @@ class ConnectionError(CoreConnectionError):
 class AuthenticationError(CoreAuthenticationError):
     """DEPRECATED: Use AuthenticationError from core.exceptions instead."""
 
-    def __init__(self, message: str, *, error_code: Optional[str] = None,
-                 context: Optional[dict[str, Any]] = None,
-                 original_error: Optional[Exception] = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_code: str | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
+    ) -> None:
         warnings.warn(
             "AuthenticationError is deprecated. Use AuthenticationError from core.exceptions instead.",
             DeprecationWarning,
@@ -81,9 +96,14 @@ class AuthenticationError(CoreAuthenticationError):
 class ValidationError(CoreValidationError):
     """DEPRECATED: Use ValidationError from core.exceptions instead."""
 
-    def __init__(self, message: str, *, error_code: Optional[str] = None,
-                 context: Optional[dict[str, Any]] = None,
-                 original_error: Optional[Exception] = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_code: str | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
+    ) -> None:
         warnings.warn(
             "ValidationError is deprecated. Use ValidationError from core.exceptions instead.",
             DeprecationWarning,

@@ -39,7 +39,7 @@ Performance Testing:
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -145,7 +145,9 @@ class TestReferralCredentials:
 
     def test_credentials_validation_sasl_missing_mechanism(self) -> None:
         """Test validation failure for SASL credentials without mechanism."""
-        with pytest.raises(ValueError, match="sasl_mechanism required for SASL credentials"):
+        with pytest.raises(
+            ValueError, match="sasl_mechanism required for SASL credentials"
+        ):
             ReferralCredentials(
                 credential_type=CredentialType.SASL,
                 sasl_username="user",
@@ -520,7 +522,10 @@ class TestReferralChaser:
         chaser = ReferralChaser()
 
         # This will raise NotImplementedError but should parse URL correctly first
-        with pytest.raises(NotImplementedError, match="Referral chasing requires LDAP connection library integration"):
+        with pytest.raises(
+            NotImplementedError,
+            match="Referral chasing requires LDAP connection library integration",
+        ):
             await chaser.chase_referral(
                 "ldap://server.example.com:389/ou=users,dc=example,dc=com",
                 "search",
@@ -602,7 +607,10 @@ class TestReferralChaser:
             use_ssl=False,
         )
 
-        with pytest.raises(NotImplementedError, match="Connection establishment requires LDAP client library integration"):
+        with pytest.raises(
+            NotImplementedError,
+            match="Connection establishment requires LDAP client library integration",
+        ):
             await chaser._establish_connection(connection_info)
 
     @pytest.mark.asyncio
@@ -615,7 +623,10 @@ class TestReferralChaser:
             password="password",
         )
 
-        with pytest.raises(NotImplementedError, match="Connection authentication requires LDAP client library integration"):
+        with pytest.raises(
+            NotImplementedError,
+            match="Connection authentication requires LDAP client library integration",
+        ):
             await chaser._authenticate_connection(mock_connection, credentials)
 
     @pytest.mark.asyncio
@@ -624,7 +635,10 @@ class TestReferralChaser:
         chaser = ReferralChaser()
         mock_connection = Mock()
 
-        with pytest.raises(NotImplementedError, match="Operation execution requires LDAP client library integration"):
+        with pytest.raises(
+            NotImplementedError,
+            match="Operation execution requires LDAP client library integration",
+        ):
             await chaser._execute_operation(
                 mock_connection,
                 "search",
@@ -714,7 +728,9 @@ class TestConvenienceFunctions:
 
     def test_create_simple_credentials(self) -> None:
         """Test create_simple_credentials function."""
-        credentials = create_simple_credentials("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "REDACTED_LDAP_BIND_PASSWORD_password")
+        credentials = create_simple_credentials(
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "REDACTED_LDAP_BIND_PASSWORD_password"
+        )
 
         assert isinstance(credentials, ReferralCredentials)
         assert credentials.credential_type == CredentialType.SIMPLE
@@ -760,7 +776,9 @@ class TestConvenienceFunctions:
     @pytest.mark.asyncio
     async def test_quick_chase_without_credentials(self) -> None:
         """Test quick_chase convenience function without credentials."""
-        with patch("ldap_core_shared.referrals.chaser.ReferralChaser") as mock_chaser_class:
+        with patch(
+            "ldap_core_shared.referrals.chaser.ReferralChaser"
+        ) as mock_chaser_class:
             mock_chaser = Mock()
             mock_result = ReferralChasingResult(success=True)
             mock_chaser.chase_referral = AsyncMock(return_value=mock_result)
@@ -783,7 +801,9 @@ class TestConvenienceFunctions:
     @pytest.mark.asyncio
     async def test_quick_chase_with_credentials(self) -> None:
         """Test quick_chase convenience function with credentials."""
-        with patch("ldap_core_shared.referrals.chaser.ReferralChaser") as mock_chaser_class:
+        with patch(
+            "ldap_core_shared.referrals.chaser.ReferralChaser"
+        ) as mock_chaser_class:
             mock_chaser = Mock()
             mock_result = ReferralChasingResult(success=True)
             mock_chaser.chase_referral = AsyncMock(return_value=mock_result)
@@ -854,11 +874,11 @@ class TestIntegrationScenarios:
         )
 
         # Simulate connection establishment
-        connection_info.connected_at = datetime.now(timezone.utc)
+        connection_info.connected_at = datetime.now(UTC)
         connection_info.connection_time = 0.5
 
         # Simulate authentication
-        connection_info.authenticated_at = datetime.now(timezone.utc)
+        connection_info.authenticated_at = datetime.now(UTC)
 
         # Record operations
         for i in range(5):
@@ -874,8 +894,16 @@ class TestIntegrationScenarios:
         """Test workflow with multiple credential types."""
         # Test all credential types
         credential_configs = [
-            ("simple", create_simple_credentials("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "REDACTED_LDAP_BIND_PASSWORD_password")),
-            ("sasl", create_sasl_credentials("PLAIN", "user@example.com", "user_password")),
+            (
+                "simple",
+                create_simple_credentials(
+                    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "REDACTED_LDAP_BIND_PASSWORD_password"
+                ),
+            ),
+            (
+                "sasl",
+                create_sasl_credentials("PLAIN", "user@example.com", "user_password"),
+            ),
             ("anonymous", create_anonymous_credentials()),
         ]
 
@@ -988,7 +1016,7 @@ class TestSecurityValidation:
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             password="REDACTED_LDAP_BIND_PASSWORD_password",
             connection_timeout=3600,  # 1 hour
-            bind_timeout=1800,        # 30 minutes
+            bind_timeout=1800,  # 30 minutes
         )
 
         assert long_timeout_credentials.connection_timeout == 3600
@@ -1120,7 +1148,7 @@ class TestErrorHandling:
         # Test validation errors are properly raised
         validation_errors = [
             (CredentialType.SIMPLE, {"password": "password"}),  # Missing bind_dn
-            (CredentialType.SASL, {"sasl_username": "user"}),   # Missing mechanism
+            (CredentialType.SASL, {"sasl_username": "user"}),  # Missing mechanism
         ]
 
         for cred_type, kwargs in validation_errors:

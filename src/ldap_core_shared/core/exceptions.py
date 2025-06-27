@@ -94,21 +94,21 @@ class Logger(Protocol):
 class ErrorSeverity(Enum):
     """Error severity levels for categorization and handling."""
 
-    LOW = "low"           # Minor issues, warnings
-    MEDIUM = "medium"     # Recoverable errors
-    HIGH = "high"         # Serious errors requiring attention
+    LOW = "low"  # Minor issues, warnings
+    MEDIUM = "medium"  # Recoverable errors
+    HIGH = "high"  # Serious errors requiring attention
     CRITICAL = "critical"  # System-threatening errors
 
 
 class ErrorCategory(Enum):
     """Error category for classification and routing."""
 
-    VALIDATION = "validation"     # Data/configuration validation errors
-    CONNECTION = "connection"     # Network and connection errors
-    OPERATION = "operation"       # LDAP operation errors
-    ENCODING = "encoding"         # ASN.1 and data encoding errors
+    VALIDATION = "validation"  # Data/configuration validation errors
+    CONNECTION = "connection"  # Network and connection errors
+    OPERATION = "operation"  # LDAP operation errors
+    ENCODING = "encoding"  # ASN.1 and data encoding errors
     AUTHENTICATION = "authentication"  # SASL and auth errors
-    SYSTEM = "system"            # System and infrastructure errors
+    SYSTEM = "system"  # System and infrastructure errors
     CONFIGURATION = "configuration"  # Configuration and setup errors
 
 
@@ -118,12 +118,18 @@ class ErrorContext(BaseModel):
     model_config = ConfigDict(strict=True, extra="allow")
 
     operation: str | None = Field(default=None, description="Operation being performed")
-    component: str | None = Field(default=None, description="Component where error occurred")
+    component: str | None = Field(
+        default=None, description="Component where error occurred",
+    )
     resource: str | None = Field(default=None, description="Resource being accessed")
     user: str | None = Field(default=None, description="User performing operation")
     session_id: str | None = Field(default=None, description="Session identifier")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Error occurrence time")
-    additional_data: dict[str, Any] = Field(default_factory=dict, description="Additional context data")
+    timestamp: datetime = Field(
+        default_factory=datetime.now, description="Error occurrence time",
+    )
+    additional_data: dict[str, Any] = Field(
+        default_factory=dict, description="Additional context data",
+    )
 
     def __getattr__(self, name: str) -> Any:
         """Allow dynamic attribute access for extra fields.
@@ -292,10 +298,12 @@ class SchemaValidationError(ValidationError):
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
-            context.update({
-                "schema_file": schema_file,
-                "line_number": line_number,
-            })
+            context.update(
+                {
+                    "schema_file": schema_file,
+                    "line_number": line_number,
+                },
+            )
 
         super().__init__(message, context=context, **kwargs)
 
@@ -320,15 +328,17 @@ class ConfigurationValidationError(ValidationError):
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
-            context.update({
-                "config_section": config_section,
-                "config_key": config_key,
-            })
+            context.update(
+                {
+                    "config_section": config_section,
+                    "config_key": config_key,
+                },
+            )
 
         super().__init__(message, context=context, **kwargs)
 
 
-class ConnectionError(LDAPCoreError):
+class LDAPConnectionError(LDAPCoreError):
     """Base class for connection-related errors."""
 
     def __init__(
@@ -356,7 +366,7 @@ class ConnectionError(LDAPCoreError):
         )
 
 
-class ServerConnectionError(ConnectionError):
+class ServerLDAPConnectionError(LDAPConnectionError):
     """LDAP server connection specific errors."""
 
     def __init__(
@@ -381,7 +391,7 @@ class ServerConnectionError(ConnectionError):
         super().__init__(message, server_uri=server_uri, context=context, **kwargs)
 
 
-class AuthenticationError(ConnectionError):
+class AuthenticationError(LDAPConnectionError):
     """Authentication specific errors."""
 
     def __init__(
@@ -401,10 +411,12 @@ class AuthenticationError(ConnectionError):
         """
         context = kwargs.pop("context", {})
         if isinstance(context, dict):
-            context.update({
-                "mechanism": mechanism,
-                "username": username,
-            })
+            context.update(
+                {
+                    "mechanism": mechanism,
+                    "username": username,
+                },
+            )
 
         # Remove category from kwargs to avoid conflict
         kwargs.pop("category", None)
@@ -419,7 +431,7 @@ class AuthenticationError(ConnectionError):
         self.category = ErrorCategory.AUTHENTICATION
 
 
-class PoolExhaustedError(ConnectionError):
+class PoolExhaustedError(LDAPConnectionError):
     """Connection pool exhaustion errors."""
 
     def __init__(
@@ -439,12 +451,16 @@ class PoolExhaustedError(ConnectionError):
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
-            context.update({
-                "pool_size": pool_size,
-                "active_connections": active_connections,
-            })
+            context.update(
+                {
+                    "pool_size": pool_size,
+                    "active_connections": active_connections,
+                },
+            )
 
-        super().__init__(message, context=context, severity=ErrorSeverity.HIGH, **kwargs)
+        super().__init__(
+            message, context=context, severity=ErrorSeverity.HIGH, **kwargs,
+        )
 
 
 class OperationError(LDAPCoreError):
@@ -496,10 +512,12 @@ class OperationTimeoutError(OperationError):
         # Create context with timeout-specific information
         context = kwargs.pop("context", {})
         if isinstance(context, dict):
-            context.update({
-                "timeout_seconds": timeout_seconds,
-                "operation_type": operation_type,
-            })
+            context.update(
+                {
+                    "timeout_seconds": timeout_seconds,
+                    "operation_type": operation_type,
+                },
+            )
 
         super().__init__(
             message=message,
@@ -531,10 +549,12 @@ class SchemaOperationError(OperationError):
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
-            context.update({
-                "schema_name": schema_name,
-                "operation_id": operation_id,
-            })
+            context.update(
+                {
+                    "schema_name": schema_name,
+                    "operation_id": operation_id,
+                },
+            )
 
         super().__init__(message, operation_type="schema", context=context, **kwargs)
 
@@ -587,10 +607,12 @@ class ASN1EncodingError(EncodingError):
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
-            context.update({
-                "element_type": element_type,
-                "tag_number": tag_number,
-            })
+            context.update(
+                {
+                    "element_type": element_type,
+                    "tag_number": tag_number,
+                },
+            )
 
         super().__init__(message, encoding_type="ASN.1", context=context, **kwargs)
 
@@ -615,10 +637,12 @@ class ASN1DecodingError(EncodingError):
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
-            context.update({
-                "data_offset": data_offset,
-                "data_length": data_length,
-            })
+            context.update(
+                {
+                    "data_offset": data_offset,
+                    "data_length": data_length,
+                },
+            )
 
         super().__init__(message, encoding_type="ASN.1", context=context, **kwargs)
 
@@ -758,7 +782,6 @@ __all__ = [
     "SAMLError",
     "SchemaOperationError",
     "SchemaValidationError",
-    "ServerConnectionError",
     # Validation errors
     "ValidationError",
     # Utilities

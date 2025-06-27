@@ -39,7 +39,7 @@ References:
 
 from __future__ import annotations
 
-from typing import Any, Optional, Union
+from typing import Any
 
 from pydantic import Field, validator
 
@@ -121,7 +121,7 @@ class AuthorizationIdentity:
         """Check if identity is in user ID form."""
         return self.identity.startswith("u:")
 
-    def get_dn(self) -> Optional[str]:
+    def get_dn(self) -> str | None:
         """Get DN if identity is in DN form.
 
         Returns:
@@ -131,7 +131,7 @@ class AuthorizationIdentity:
             return self.identity[3:]  # Remove "dn:" prefix
         return None
 
-    def get_user_id(self) -> Optional[str]:
+    def get_user_id(self) -> str | None:
         """Get user ID if identity is in user ID form.
 
         Returns:
@@ -176,7 +176,7 @@ class ProxyAuthorizationControl(LDAPControl):
 
     def __init__(
         self,
-        authorization_identity: Union[str, AuthorizationIdentity],
+        authorization_identity: str | AuthorizationIdentity,
         criticality: bool = True,  # Typically critical
         **kwargs: Any,
     ) -> None:
@@ -197,7 +197,8 @@ class ProxyAuthorizationControl(LDAPControl):
 
     @validator("authorization_identity", pre=True)
     def validate_authorization_identity(
-        cls, v: Union[str, AuthorizationIdentity],
+        self,
+        v: str | AuthorizationIdentity,
     ) -> AuthorizationIdentity:
         """Validate and convert authorization identity."""
         if isinstance(v, str):
@@ -226,7 +227,7 @@ class ProxyAuthorizationControl(LDAPControl):
             raise ControlEncodingError(msg) from e
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> ProxyAuthorizationControl:
+    def decode_value(cls, control_value: bytes | None) -> ProxyAuthorizationControl:
         """Decode proxy authorization control value.
 
         Args:
@@ -264,7 +265,9 @@ class ProxyAuthorizationControl(LDAPControl):
 
     @classmethod
     def for_user_id(
-        cls, user_id: str, criticality: bool = True,
+        cls,
+        user_id: str,
+        criticality: bool = True,
     ) -> ProxyAuthorizationControl:
         """Create proxy control for a user ID.
 
@@ -279,7 +282,9 @@ class ProxyAuthorizationControl(LDAPControl):
 
     @classmethod
     def for_auth_id(
-        cls, auth_id: str, criticality: bool = True,
+        cls,
+        auth_id: str,
+        criticality: bool = True,
     ) -> ProxyAuthorizationControl:
         """Create proxy control for an authorization ID.
 
@@ -292,7 +297,7 @@ class ProxyAuthorizationControl(LDAPControl):
         """
         return cls(authorization_identity=auth_id, criticality=criticality)
 
-    def get_proxy_dn(self) -> Optional[str]:
+    def get_proxy_dn(self) -> str | None:
         """Get the DN being proxied, if available.
 
         Returns:
@@ -300,7 +305,7 @@ class ProxyAuthorizationControl(LDAPControl):
         """
         return self.authorization_identity.get_dn()
 
-    def get_proxy_user_id(self) -> Optional[str]:
+    def get_proxy_user_id(self) -> str | None:
         """Get the user ID being proxied, if available.
 
         Returns:
@@ -338,7 +343,7 @@ class ProxyAuthorizationBuilder:
 
     def __init__(self) -> None:
         """Initialize the builder."""
-        self._authorization_identity: Optional[str] = None
+        self._authorization_identity: str | None = None
         self._criticality: bool = True
 
     def proxy_as_dn(self, dn: str) -> ProxyAuthorizationBuilder:
@@ -453,6 +458,7 @@ def proxy_as_REDACTED_LDAP_BIND_PASSWORD() -> ProxyAuthorizationControl:
         This assumes an "REDACTED_LDAP_BIND_PASSWORD" user ID. Adjust based on your directory schema.
     """
     return ProxyAuthorizationControl.for_user_id("REDACTED_LDAP_BIND_PASSWORD", criticality=True)
+
 
 # TODO: Integration points for implementation:
 #

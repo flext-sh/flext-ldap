@@ -47,7 +47,7 @@ import subprocess
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -62,24 +62,24 @@ logger = logging.getLogger(__name__)
 class SchemaOperationType(Enum):
     """Schema operation types."""
 
-    INSERT = "insert"        # Insert new schema
-    MODIFY = "modify"        # Modify existing schema
-    REPLACE = "replace"      # Replace existing schema completely
-    DELETE = "delete"        # Delete schema (empty attributes/classes)
-    LIST = "list"           # List installed schemas
-    VALIDATE = "validate"    # Validate schema without deployment
-    BACKUP = "backup"        # Backup current schema
-    RESTORE = "restore"      # Restore from backup
+    INSERT = "insert"  # Insert new schema
+    MODIFY = "modify"  # Modify existing schema
+    REPLACE = "replace"  # Replace existing schema completely
+    DELETE = "delete"  # Delete schema (empty attributes/classes)
+    LIST = "list"  # List installed schemas
+    VALIDATE = "validate"  # Validate schema without deployment
+    BACKUP = "backup"  # Backup current schema
+    RESTORE = "restore"  # Restore from backup
 
 
 class SchemaOperationStatus(Enum):
     """Schema operation status."""
 
-    PENDING = "pending"         # Operation queued
-    VALIDATING = "validating"   # Schema validation in progress
-    EXECUTING = "executing"     # LDAP operations in progress
-    COMPLETED = "completed"     # Operation successful
-    FAILED = "failed"          # Operation failed
+    PENDING = "pending"  # Operation queued
+    VALIDATING = "validating"  # Schema validation in progress
+    EXECUTING = "executing"  # LDAP operations in progress
+    COMPLETED = "completed"  # Operation successful
+    FAILED = "failed"  # Operation failed
     ROLLED_BACK = "rolled_back"  # Operation rolled back
 
 
@@ -126,26 +126,28 @@ class SchemaOperation(BaseModel):
     status: SchemaOperationStatus = Field(description="Current status")
     schema_name: str = Field(description="Schema name being processed")
     started_at: datetime = Field(description="Operation start time")
-    completed_at: Optional[datetime] = Field(
+    completed_at: datetime | None = Field(
         default=None,
         description="Operation completion time",
     )
 
     # Operation details
-    source_file: Optional[str] = Field(default=None, description="Source schema file")
-    generated_ldif: Optional[str] = Field(default=None, description="Generated LDIF file")
-    backup_file: Optional[str] = Field(default=None, description="Backup file created")
+    source_file: str | None = Field(default=None, description="Source schema file")
+    generated_ldif: str | None = Field(
+        default=None, description="Generated LDIF file",
+    )
+    backup_file: str | None = Field(default=None, description="Backup file created")
 
     # Results
-    validation_result: Optional[dict[str, Any]] = Field(
+    validation_result: dict[str, Any] | None = Field(
         default=None,
         description="Schema validation results",
     )
-    ldap_result: Optional[dict[str, Any]] = Field(
+    ldap_result: dict[str, Any] | None = Field(
         default=None,
         description="LDAP operation results",
     )
-    error_message: Optional[str] = Field(
+    error_message: str | None = Field(
         default=None,
         description="Error message if failed",
     )
@@ -183,9 +185,9 @@ class SchemaManager:
     def __init__(
         self,
         config: SchemaEnvironmentConfig,
-        parser: Optional[SchemaParser] = None,
-        validator: Optional[SchemaValidator] = None,
-        generator: Optional[LDIFGenerator] = None,
+        parser: SchemaParser | None = None,
+        validator: SchemaValidator | None = None,
+        generator: LDIFGenerator | None = None,
     ) -> None:
         """Initialize schema manager.
 
@@ -223,6 +225,7 @@ class SchemaManager:
         """Check if user has required privileges."""
         if self.config.require_root:
             import os
+
             if os.geteuid() != 0:
                 msg = "Root privileges required for schema operations"
                 raise PermissionError(msg)
@@ -230,6 +233,7 @@ class SchemaManager:
     def _generate_operation_id(self) -> str:
         """Generate unique operation ID."""
         import uuid
+
         return f"schema_op_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
 
     def list_installed_schemas(self) -> LDAPOperationResult:
@@ -243,7 +247,8 @@ class SchemaManager:
             search_cmd = [
                 "ldapsearch",
                 *self.config.bind_options.split(),
-                "-b", "cn=schema,cn=config",
+                "-b",
+                "cn=schema,cn=config",
                 "cn={*}*",
                 "cn",
             ]
@@ -436,7 +441,10 @@ class SchemaManager:
             if not dry_run:
                 operation.status = SchemaOperationStatus.EXECUTING
                 result = self._execute_ldap_add(ldif_file)
-                operation.ldap_result = {"returncode": result.returncode, "output": result.stdout}
+                operation.ldap_result = {
+                    "returncode": result.returncode,
+                    "output": result.stdout,
+                }
 
                 if result.returncode != 0:
                     operation.status = SchemaOperationStatus.FAILED
@@ -542,7 +550,9 @@ class SchemaManager:
         )
         raise NotImplementedError(msg)
 
-    def _prepare_ldif_file(self, schema_file: str, operation: SchemaOperation) -> Optional[str]:
+    def _prepare_ldif_file(
+        self, schema_file: str, operation: SchemaOperation,
+    ) -> str | None:
         """Prepare LDIF file from schema file.
 
         Args:
@@ -579,7 +589,7 @@ class SchemaManager:
             if schema_path.suffix == ".ldif":
                 # Already LDIF format
                 return str(schema_path)
-            logger.error(f"Unsupported schema file format: {schema_path.suffix}")
+            logger.error("Unsupported schema file format: %s", schema_path.suffix)
             return None
 
         except Exception as e:
@@ -600,7 +610,8 @@ class SchemaManager:
             search_cmd = [
                 "ldapsearch",
                 *self.config.bind_options.split(),
-                "-b", "cn=schema,cn=config",
+                "-b",
+                "cn=schema,cn=config",
                 f"cn={{*}}{schema_name}",
                 "cn",
             ]
@@ -630,7 +641,8 @@ class SchemaManager:
         add_cmd = [
             "ldapadd",
             *self.config.bind_options.split(),
-            "-f", ldif_file,
+            "-f",
+            ldif_file,
         ]
 
         return subprocess.run(
@@ -640,7 +652,7 @@ class SchemaManager:
             check=False,
         )
 
-    def get_operation_status(self, operation_id: str) -> Optional[SchemaOperation]:
+    def get_operation_status(self, operation_id: str) -> SchemaOperation | None:
         """Get status of specific operation.
 
         Args:

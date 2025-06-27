@@ -42,47 +42,47 @@ from __future__ import annotations
 # =============================================================================
 
 # Basic Universal Types
-ASN1_BOOLEAN = 0x01           # BOOLEAN
-ASN1_INTEGER = 0x02           # INTEGER
-ASN1_BIT_STRING = 0x03        # BIT STRING
-ASN1_OCTET_STRING = 0x04      # OCTET STRING
-ASN1_NULL = 0x05              # NULL
+ASN1_BOOLEAN = 0x01  # BOOLEAN
+ASN1_INTEGER = 0x02  # INTEGER
+ASN1_BIT_STRING = 0x03  # BIT STRING
+ASN1_OCTET_STRING = 0x04  # OCTET STRING
+ASN1_NULL = 0x05  # NULL
 ASN1_OBJECT_IDENTIFIER = 0x06  # OBJECT IDENTIFIER
 ASN1_OBJECT_DESCRIPTOR = 0x07  # ObjectDescriptor
-ASN1_EXTERNAL = 0x08          # EXTERNAL
-ASN1_REAL = 0x09              # REAL
-ASN1_ENUMERATED = 0x0A        # ENUMERATED
-ASN1_EMBEDDED_PDV = 0x0B      # EMBEDDED PDV
-ASN1_UTF8_STRING = 0x0C       # UTF8String
-ASN1_RELATIVE_OID = 0x0D      # RELATIVE-OID
+ASN1_EXTERNAL = 0x08  # EXTERNAL
+ASN1_REAL = 0x09  # REAL
+ASN1_ENUMERATED = 0x0A  # ENUMERATED
+ASN1_EMBEDDED_PDV = 0x0B  # EMBEDDED PDV
+ASN1_UTF8_STRING = 0x0C  # UTF8String
+ASN1_RELATIVE_OID = 0x0D  # RELATIVE-OID
 
 # Constructed Universal Types
-ASN1_SEQUENCE = 0x10          # SEQUENCE, SEQUENCE OF
-ASN1_SET = 0x11               # SET, SET OF
+ASN1_SEQUENCE = 0x10  # SEQUENCE, SEQUENCE OF
+ASN1_SET = 0x11  # SET, SET OF
 
 # Character String Types
-ASN1_NUMERIC_STRING = 0x12    # NumericString
+ASN1_NUMERIC_STRING = 0x12  # NumericString
 ASN1_PRINTABLE_STRING = 0x13  # PrintableString
-ASN1_T61_STRING = 0x14        # T61String, TeletexString
-ASN1_VIDEOTEX_STRING = 0x15   # VideotexString
-ASN1_IA5_STRING = 0x16        # IA5String
-ASN1_UTC_TIME = 0x17          # UTCTime
+ASN1_T61_STRING = 0x14  # T61String, TeletexString
+ASN1_VIDEOTEX_STRING = 0x15  # VideotexString
+ASN1_IA5_STRING = 0x16  # IA5String
+ASN1_UTC_TIME = 0x17  # UTCTime
 ASN1_GENERALIZED_TIME = 0x18  # GeneralizedTime
-ASN1_GRAPHIC_STRING = 0x19    # GraphicString
-ASN1_VISIBLE_STRING = 0x1A    # VisibleString, ISO646String
-ASN1_GENERAL_STRING = 0x1B    # GeneralString
+ASN1_GRAPHIC_STRING = 0x19  # GraphicString
+ASN1_VISIBLE_STRING = 0x1A  # VisibleString, ISO646String
+ASN1_GENERAL_STRING = 0x1B  # GeneralString
 ASN1_UNIVERSAL_STRING = 0x1C  # UniversalString
 ASN1_CHARACTER_STRING = 0x1D  # CHARACTER STRING
-ASN1_BMP_STRING = 0x1E        # BMPString
+ASN1_BMP_STRING = 0x1E  # BMPString
 
 # =============================================================================
 # TAG CLASS IDENTIFIERS
 # =============================================================================
 
-ASN1_UNIVERSAL = 0x00         # Universal class
-ASN1_APPLICATION = 0x40       # Application class
-ASN1_CONTEXT = 0x80           # Context-specific class
-ASN1_PRIVATE = 0xC0           # Private class
+ASN1_UNIVERSAL = 0x00  # Universal class
+ASN1_APPLICATION = 0x40  # Application class
+ASN1_CONTEXT = 0x80  # Context-specific class
+ASN1_PRIVATE = 0xC0  # Private class
 
 # Class mask for extracting tag class
 ASN1_CLASS_MASK = 0xC0
@@ -91,8 +91,8 @@ ASN1_CLASS_MASK = 0xC0
 # CONSTRUCTED/PRIMITIVE FORM
 # =============================================================================
 
-ASN1_PRIMITIVE = 0x00         # Primitive encoding
-ASN1_CONSTRUCTED = 0x20       # Constructed encoding
+ASN1_PRIMITIVE = 0x00  # Primitive encoding
+ASN1_CONSTRUCTED = 0x20  # Constructed encoding
 
 # Form mask for extracting constructed bit
 ASN1_FORM_MASK = 0x20
@@ -101,33 +101,33 @@ ASN1_FORM_MASK = 0x20
 # LENGTH ENCODING CONSTANTS
 # =============================================================================
 
-ASN1_LONG_LENGTH = 0x80       # Long form length indicator
+ASN1_LONG_LENGTH = 0x80  # Long form length indicator
 ASN1_INDEFINITE_LENGTH = 0x80  # Indefinite length (constructed only)
-ASN1_LENGTH_MASK = 0x7F       # Length value mask
+ASN1_LENGTH_MASK = 0x7F  # Length value mask
 
 # Maximum values for different length encodings
-ASN1_SHORT_LENGTH_MAX = 127   # Maximum short form length
-ASN1_LONG_LENGTH_MAX = 0x7F   # Maximum number of length octets
+ASN1_SHORT_LENGTH_MAX = 127  # Maximum short form length
+ASN1_LONG_LENGTH_MAX = 0x7F  # Maximum number of length octets
 
 # =============================================================================
 # TAG NUMBER CONSTANTS
 # =============================================================================
 
-ASN1_TAG_NUMBER_MASK = 0x1F   # Tag number mask for short form
-ASN1_LONG_TAG_FORM = 0x1F     # Long form tag indicator
+ASN1_TAG_NUMBER_MASK = 0x1F  # Tag number mask for short form
+ASN1_LONG_TAG_FORM = 0x1F  # Long form tag indicator
 ASN1_TAG_CONTINUATION = 0x80  # Tag continuation bit
-ASN1_TAG_VALUE_MASK = 0x7F    # Tag value mask for long form
+ASN1_TAG_VALUE_MASK = 0x7F  # Tag value mask for long form
 
 # =============================================================================
 # ENCODING MODE CONSTANTS
 # =============================================================================
 
 # Encoding rules
-ENCODING_BER = "BER"          # Basic Encoding Rules
-ENCODING_DER = "DER"          # Distinguished Encoding Rules
-ENCODING_CER = "CER"          # Canonical Encoding Rules
-ENCODING_PER = "PER"          # Packed Encoding Rules
-ENCODING_XER = "XER"          # XML Encoding Rules
+ENCODING_BER = "BER"  # Basic Encoding Rules
+ENCODING_DER = "DER"  # Distinguished Encoding Rules
+ENCODING_CER = "CER"  # Canonical Encoding Rules
+ENCODING_PER = "PER"  # Packed Encoding Rules
+ENCODING_XER = "XER"  # XML Encoding Rules
 
 # Default encoding
 DEFAULT_ENCODING = ENCODING_BER
@@ -148,10 +148,10 @@ DEFAULT_TAGGING = TAGGING_IMPLICIT
 # =============================================================================
 
 # Real encoding formats
-REAL_BINARY = "binary"        # Binary encoding
-REAL_DECIMAL_NR1 = "nr1"      # Decimal NR1 form
-REAL_DECIMAL_NR2 = "nr2"      # Decimal NR2 form
-REAL_DECIMAL_NR3 = "nr3"      # Decimal NR3 form
+REAL_BINARY = "binary"  # Binary encoding
+REAL_DECIMAL_NR1 = "nr1"  # Decimal NR1 form
+REAL_DECIMAL_NR2 = "nr2"  # Decimal NR2 form
+REAL_DECIMAL_NR3 = "nr3"  # Decimal NR3 form
 
 # Default real encoding
 DEFAULT_REAL_ENCODING = REAL_BINARY
@@ -161,9 +161,9 @@ DEFAULT_REAL_ENCODING = REAL_BINARY
 # =============================================================================
 
 # Time encoding modes
-TIME_UTC = "utctime"          # Encode as UTC without zone
-TIME_WITH_ZONE = "withzone"   # Encode with timezone
-TIME_LOCAL = "local"          # Encode as local time
+TIME_UTC = "utctime"  # Encode as UTC without zone
+TIME_WITH_ZONE = "withzone"  # Encode with timezone
+TIME_LOCAL = "local"  # Encode as local time
 
 # Default time encoding
 DEFAULT_TIME_ENCODING = TIME_WITH_ZONE
@@ -407,6 +407,7 @@ def make_tag(tag_class: int, form: int, number: int) -> int:
 # =============================================================================
 # CONSTANT VALIDATION
 # =============================================================================
+
 
 def validate_constants() -> None:
     """Validate ASN.1 constant definitions for consistency."""

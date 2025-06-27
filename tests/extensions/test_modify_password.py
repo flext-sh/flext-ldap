@@ -248,12 +248,16 @@ class TestModifyPasswordExtension:
 
     def test_user_identity_validation_invalid_dn(self) -> None:
         """Test user identity validation with invalid DN."""
-        with pytest.raises(PasswordValidationError, match="User identity must be a valid DN"):
+        with pytest.raises(
+            PasswordValidationError, match="User identity must be a valid DN"
+        ):
             ModifyPasswordExtension(user_identity="invalid_dn_format")
 
     def test_old_password_validation_empty_string(self) -> None:
         """Test old password validation with empty string."""
-        with pytest.raises(PasswordValidationError, match="Old password cannot be empty string"):
+        with pytest.raises(
+            PasswordValidationError, match="Old password cannot be empty string"
+        ):
             ModifyPasswordExtension(old_password="")
 
     def test_old_password_validation_none(self) -> None:
@@ -263,7 +267,9 @@ class TestModifyPasswordExtension:
 
     def test_new_password_validation_empty_string(self) -> None:
         """Test new password validation with empty string."""
-        with pytest.raises(PasswordValidationError, match="New password cannot be empty string"):
+        with pytest.raises(
+            PasswordValidationError, match="New password cannot be empty string"
+        ):
             ModifyPasswordExtension(new_password="")
 
     def test_new_password_validation_none(self) -> None:
@@ -362,7 +368,9 @@ class TestModifyPasswordExtension:
         """Test decoding response value with invalid data."""
         invalid_data = b"\xff\xfe\xfd"  # Invalid ASN.1
 
-        with pytest.raises(ExtensionDecodingError, match="Failed to decode password modify response"):
+        with pytest.raises(
+            ExtensionDecodingError, match="Failed to decode password modify response"
+        ):
             ModifyPasswordExtension.decode_response_value(None, invalid_data)
 
     def test_self_service_change_class_method(self) -> None:
@@ -610,11 +618,7 @@ class TestPasswordChangeBuilder:
         """Test builder build method for REDACTED_LDAP_BIND_PASSWORD reset."""
         builder = PasswordChangeBuilder()
         user_dn = "uid=test,ou=people,dc=example,dc=com"
-        extension = (
-            builder.for_user(user_dn)
-            .with_new_password("reset123")
-            .build()
-        )
+        extension = builder.for_user(user_dn).with_new_password("reset123").build()
 
         assert isinstance(extension, ModifyPasswordExtension)
         assert extension.user_identity == user_dn
@@ -625,11 +629,7 @@ class TestPasswordChangeBuilder:
         """Test builder build method for password generation."""
         builder = PasswordChangeBuilder()
         user_dn = "uid=test,ou=people,dc=example,dc=com"
-        extension = (
-            builder.for_user(user_dn)
-            .generate_new_password()
-            .build()
-        )
+        extension = builder.for_user(user_dn).generate_new_password().build()
 
         assert isinstance(extension, ModifyPasswordExtension)
         assert extension.user_identity == user_dn
@@ -705,14 +705,17 @@ class TestIntegrationScenarios:
 
         # Test case 2: Administrative password reset
         extension2 = ModifyPasswordExtension.REDACTED_LDAP_BIND_PASSWORD_reset(
-            "uid=test,dc=example,dc=com", "reset123",
+            "uid=test,dc=example,dc=com",
+            "reset123",
         )
 
         assert extension2.is_REDACTED_LDAP_BIND_PASSWORD_operation() is True
         assert extension2.requires_old_password() is False
 
         # Test case 3: Server-generated password
-        extension3 = ModifyPasswordExtension.generate_password("uid=test,dc=example,dc=com")
+        extension3 = ModifyPasswordExtension.generate_password(
+            "uid=test,dc=example,dc=com"
+        )
 
         assert extension3.is_password_generation() is True
 
@@ -743,8 +746,16 @@ class TestIntegrationScenarios:
         """Test multiple operation types."""
         operations = [
             ("self_service", ModifyPasswordExtension.self_service_change("old", "new")),
-            ("REDACTED_LDAP_BIND_PASSWORD_reset", ModifyPasswordExtension.REDACTED_LDAP_BIND_PASSWORD_reset("uid=test,dc=example,dc=com", "reset")),
-            ("generate", ModifyPasswordExtension.generate_password("uid=test,dc=example,dc=com")),
+            (
+                "REDACTED_LDAP_BIND_PASSWORD_reset",
+                ModifyPasswordExtension.REDACTED_LDAP_BIND_PASSWORD_reset(
+                    "uid=test,dc=example,dc=com", "reset"
+                ),
+            ),
+            (
+                "generate",
+                ModifyPasswordExtension.generate_password("uid=test,dc=example,dc=com"),
+            ),
             ("self_generate", ModifyPasswordExtension.self_service_generate()),
         ]
 
@@ -839,9 +850,9 @@ class TestSecurityValidation:
         """Test Unicode password handling."""
         unicode_passwords = [
             "contraseña123",  # Spanish
-            "пароль123",      # Russian
-            "密码123",        # Chinese
-            "パスワード123",   # Japanese
+            "пароль123",  # Russian
+            "密码123",  # Chinese
+            "パスワード123",  # Japanese
         ]
 
         for password in unicode_passwords:
@@ -968,9 +979,9 @@ class TestErrorHandling:
         """Test decoding error handling."""
         # Test various malformed response data
         malformed_data = [
-            b"\xff\xfe\xfd",        # Invalid ASN.1
-            b"\x30\xff",           # Invalid length
-            b"\x30\x02\xff\xfe",   # Invalid content
+            b"\xff\xfe\xfd",  # Invalid ASN.1
+            b"\x30\xff",  # Invalid length
+            b"\x30\x02\xff\xfe",  # Invalid content
         ]
 
         for data in malformed_data:

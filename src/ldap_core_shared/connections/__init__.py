@@ -48,17 +48,17 @@ from ldap_core_shared.connections.manager import (
 )
 
 __all__ = [
-    "ConnectionConfig",       # Legacy configuration class
+    "ConnectionConfig",  # Legacy configuration class
     # LEGACY: Core connection management (still valid but less preferred)
-    "ConnectionManager",      # Legacy connection manager
-    "ConnectionMetrics",     # Performance metrics
+    "ConnectionManager",  # Legacy connection manager
+    "ConnectionMetrics",  # Performance metrics
     # Connection state and monitoring
-    "ConnectionState",        # Connection state tracking
-    "ConnectionStrategy",     # Connection strategies enum
-    "ServerHealth",          # Server health status
-    "ServerInfo",            # Server information
+    "ConnectionState",  # Connection state tracking
+    "ConnectionStrategy",  # Connection strategies enum
+    "ServerHealth",  # Server health status
+    "ServerInfo",  # Server information
     "create_connection_config_from_unified",  # Config conversion helper
     # PREFERRED: Unified integration
-    "create_unified_connection_manager",     # Main function for unified config
-    "migrate_legacy_connection_setup",       # Migration helper
+    "create_unified_connection_manager",  # Main function for unified config
+    "migrate_legacy_connection_setup",  # Migration helper
 ]

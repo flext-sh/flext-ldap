@@ -7,6 +7,7 @@ This guide helps you migrate from the current LDAP Core Shared API to the new st
 ## 🚀 **Why Migrate?**
 
 ### **Current API Challenges:**
+
 - ❌ Inconsistent parameter naming across modules
 - ❌ Mixed return types (some wrapped, some direct)
 - ❌ Multiple configuration patterns
@@ -14,6 +15,7 @@ This guide helps you migrate from the current LDAP Core Shared API to the new st
 - ❌ No structured query building
 
 ### **Standardized API Benefits:**
+
 - ✅ **Consistent Interfaces** - All operations follow identical patterns
 - ✅ **Structured Results** - Rich error information and execution metrics
 - ✅ **Fluent Queries** - Chainable query building for complex searches
@@ -24,12 +26,15 @@ This guide helps you migrate from the current LDAP Core Shared API to the new st
 ## 📋 **Migration Strategy**
 
 ### **Phase 1: No Changes Required (Immediate)**
+
 Your existing code continues to work unchanged. The library provides full backward compatibility.
 
 ### **Phase 2: Gradual Adoption (Recommended)**
+
 Start using new APIs for new code while keeping existing code unchanged.
 
 ### **Phase 3: Full Migration (Optional)**
+
 Migrate existing code to new APIs when convenient, following deprecation guidance.
 
 ## 🔄 **Migration Examples**
@@ -37,6 +42,7 @@ Migrate existing code to new APIs when convenient, following deprecation guidanc
 ### **1. Basic Connection and Search**
 
 #### **Before (Current API):**
+
 ```python
 from ldap_core_shared import LDAP
 
@@ -52,6 +58,7 @@ else:
 ```
 
 #### **After (Standardized API):**
+
 ```python
 from ldap_core_shared.standardized_api import LDAPConfiguration, StandardizedLDAPSession
 
@@ -64,7 +71,7 @@ config = (LDAPConfiguration.builder()
 
 async with StandardizedLDAPSession.create(config) as session:
     result = await session.find_users_by_department("IT")
-    
+
     if result.success:
         print(f"Found {len(result.data)} users in {result.execution_time_ms:.1f}ms")
         for user in result.data:
@@ -75,6 +82,7 @@ async with StandardizedLDAPSession.create(config) as session:
 ```
 
 #### **Key Improvements:**
+
 - ✅ **Structured configuration** with fluent builder
 - ✅ **Rich result information** with success/failure and timing
 - ✅ **Detailed error context** with error codes and messages
@@ -85,12 +93,13 @@ async with StandardizedLDAPSession.create(config) as session:
 ### **2. Complex Search Operations**
 
 #### **Before (Current API):**
+
 ```python
 # Current approach - manual filter building
 filter_expr = "(&(objectClass=person)(department=Engineering)(title=*Manager*))"
 users = await ldap.search_for(
-    "users", 
-    in_location="ou=people", 
+    "users",
+    in_location="ou=people",
     matching=filter_expr,
     limit=50
 )
@@ -101,6 +110,7 @@ if not users:
 ```
 
 #### **After (Standardized API):**
+
 ```python
 # New fluent query approach
 result = await (session.query()
@@ -125,6 +135,7 @@ else:
 ```
 
 #### **Key Improvements:**
+
 - ✅ **Chainable query building** - no manual filter construction
 - ✅ **Attribute selection** - only retrieve needed data
 - ✅ **Result sorting** - built-in sorting capabilities
@@ -135,6 +146,7 @@ else:
 ### **3. User and Group Operations**
 
 #### **Before (Current API):**
+
 ```python
 # Current approach - multiple separate operations
 user = await ldap.find_user_by_name("john.doe")
@@ -146,6 +158,7 @@ else:
 ```
 
 #### **After (Standardized API):**
+
 ```python
 # New semantic operations approach
 user_result = await session.find_user_by_email("john.doe@company.com")
@@ -153,10 +166,10 @@ user_result = await session.find_user_by_email("john.doe@company.com")
 if user_result.success and user_result.data:
     user = user_result.data
     print(f"Found user: {user.get_attribute('cn')}")
-    
+
     # Get user's groups with structured result
     groups_result = await session.get_user_groups(user.get_attribute("cn"))
-    
+
     if groups_result.success:
         print(f"User is in {len(groups_result.data)} groups:")
         for group in groups_result.data:
@@ -168,6 +181,7 @@ else:
 ```
 
 #### **Key Improvements:**
+
 - ✅ **Semantic operations** - domain-specific methods
 - ✅ **Consistent result structure** - all operations return same format
 - ✅ **Better error handling** - specific error messages and codes
@@ -177,6 +191,7 @@ else:
 ### **4. Configuration Management**
 
 #### **Before (Current API):**
+
 ```python
 # Current approach - multiple configuration classes
 from ldap_core_shared.api import ServerConfig, AuthConfig
@@ -198,6 +213,7 @@ ldap = LDAP(server_config, auth_config)
 ```
 
 #### **After (Standardized API):**
+
 ```python
 # New unified configuration approach
 config = (LDAPConfiguration.builder()
@@ -214,6 +230,7 @@ session = StandardizedLDAPSession.create(config)
 ```
 
 #### **Key Improvements:**
+
 - ✅ **Single configuration interface** - no multiple config classes
 - ✅ **Fluent builder pattern** - intuitive configuration building
 - ✅ **Built-in validation** - immediate feedback on configuration errors
@@ -224,6 +241,7 @@ session = StandardizedLDAPSession.create(config)
 ### **5. Error Handling**
 
 #### **Before (Current API):**
+
 ```python
 # Current approach - basic exception handling
 try:
@@ -238,6 +256,7 @@ except Exception as e:
 ```
 
 #### **After (Standardized API):**
+
 ```python
 # New structured error handling
 result = await session.find_users_by_department("Engineering")
@@ -250,11 +269,11 @@ else:
     print(f"Operation failed: {result.error_message}")
     print(f"Error code: {result.error_code}")
     print(f"Execution time: {result.execution_time_ms:.1f}ms")
-    
+
     # Rich context information
     if result.context:
         print(f"Context: {result.context}")
-    
+
     # Recovery suggestions (if available)
     if "recovery_suggestions" in result.metadata:
         print("Suggestions:")
@@ -263,6 +282,7 @@ else:
 ```
 
 #### **Key Improvements:**
+
 - ✅ **No exceptions for normal operations** - structured results instead
 - ✅ **Rich error context** - detailed information about failures
 - ✅ **Performance metrics** - execution timing for all operations
@@ -275,6 +295,7 @@ else:
 ### **1. Batch Operations**
 
 #### **Before:**
+
 ```python
 departments = ["IT", "HR", "Engineering"]
 all_users = []
@@ -287,6 +308,7 @@ print(f"Total users: {len(all_users)}")
 ```
 
 #### **After:**
+
 ```python
 departments = ["IT", "HR", "Engineering"]
 
@@ -313,6 +335,7 @@ print(f"Total users: {total_users}")
 ### **2. Complex Query Building**
 
 #### **Before:**
+
 ```python
 # Manual filter construction
 base_filter = "(objectClass=person)"
@@ -330,6 +353,7 @@ users = await ldap.search_for(
 ```
 
 #### **After:**
+
 ```python
 # Fluent query building
 result = await (session.query()
@@ -345,6 +369,7 @@ result = await (session.query()
 ### **3. Directory Analysis**
 
 #### **Before:**
+
 ```python
 # Manual statistics gathering
 users = await ldap.find_users()
@@ -363,6 +388,7 @@ print(f"Empty groups: {len(empty_groups)}")
 ```
 
 #### **After:**
+
 ```python
 # Built-in directory statistics
 stats_result = await session.get_directory_statistics()
@@ -380,6 +406,7 @@ else:
 ## 🔄 **Gradual Migration Strategy**
 
 ### **Step 1: Install and Test (No Code Changes)**
+
 ```bash
 # Update to latest version
 pip install --upgrade ldap-core-shared
@@ -389,6 +416,7 @@ python your_existing_script.py
 ```
 
 ### **Step 2: Try New APIs in New Code**
+
 ```python
 # Use new APIs for new functionality
 from ldap_core_shared.standardized_api import LDAPConfiguration, StandardizedLDAPSession
@@ -405,18 +433,22 @@ ldap = LDAP.connect_to(...)
 ```
 
 ### **Step 3: Migrate High-Value Code**
+
 Prioritize migrating code that would benefit most:
+
 1. **Complex searches** → Fluent query interface
 2. **Error-prone operations** → Structured error handling
 3. **Performance-critical code** → Built-in optimization
 4. **Frequently modified code** → Better maintainability
 
 ### **Step 4: Complete Migration (Optional)**
+
 When you're ready, migrate remaining code following deprecation warnings.
 
 ## 🛠️ **Migration Tools and Helpers**
 
 ### **Compatibility Adapter (Temporary)**
+
 For gradual migration, you can use the compatibility adapter:
 
 ```python
@@ -433,6 +465,7 @@ users = await legacy.find_users(in_location="ou=people", limit=50)
 ```
 
 ### **Migration Validation Script**
+
 ```python
 """Validate migration by comparing old and new API results."""
 
@@ -440,13 +473,13 @@ async def validate_migration():
     # Old API
     old_ldap = LDAP.connect_to("server.com", "REDACTED_LDAP_BIND_PASSWORD", "secret")
     old_users = await old_ldap.find_users()
-    
+
     # New API
     config = LDAPConfiguration.builder()...
     async with StandardizedLDAPSession.create(config) as session:
         new_result = await session.query().where("(objectClass=person)").execute()
         new_users = new_result.data if new_result.success else []
-    
+
     # Compare results
     assert len(old_users) == len(new_users), "User count mismatch"
     print("✅ Migration validation passed")
@@ -455,18 +488,21 @@ async def validate_migration():
 ## 📊 **Migration Checklist**
 
 ### **Before Migration:**
+
 - [ ] Update to latest ldap-core-shared version
 - [ ] Test existing code works unchanged
 - [ ] Review new API documentation
 - [ ] Identify high-value migration candidates
 
 ### **During Migration:**
+
 - [ ] Start with new code using standardized APIs
 - [ ] Migrate complex searches to fluent queries
 - [ ] Update error handling to use structured results
 - [ ] Test both old and new APIs side-by-side
 
 ### **After Migration:**
+
 - [ ] Remove deprecated API usage
 - [ ] Update documentation and examples
 - [ ] Train team on new API patterns
@@ -475,6 +511,7 @@ async def validate_migration():
 ## 🎯 **Best Practices for New API**
 
 ### **1. Always Use Context Managers**
+
 ```python
 # ✅ Good
 async with StandardizedLDAPSession.create(config) as session:
@@ -487,6 +524,7 @@ result = await session.find_users_by_department("IT")
 ```
 
 ### **2. Check Success Before Using Data**
+
 ```python
 # ✅ Good
 result = await session.find_user_by_email("user@company.com")
@@ -502,6 +540,7 @@ user = result.data  # Could be None if error occurred
 ```
 
 ### **3. Use Fluent Queries for Complex Searches**
+
 ```python
 # ✅ Good - readable and maintainable
 result = await (session.query()
@@ -519,6 +558,7 @@ filter_expr = "(&(objectClass=person)(department=Engineering)(enabled=true))"
 ```
 
 ### **4. Leverage Semantic Operations**
+
 ```python
 # ✅ Good - use domain-specific methods
 users = await session.find_users_by_department("IT")
@@ -534,6 +574,7 @@ stats = await session.get_directory_statistics()
 The standardized LDAP API provides a significant improvement in usability, maintainability, and functionality while maintaining 100% backward compatibility. Migration is optional and can be done gradually, allowing you to benefit from the new features immediately while preserving existing investments.
 
 **Key Benefits of Migration:**
+
 - 🎯 **Simpler, more intuitive APIs**
 - 📊 **Better error handling and debugging**
 - ⚡ **Enhanced performance and monitoring**
@@ -541,6 +582,7 @@ The standardized LDAP API provides a significant improvement in usability, maint
 - 🛡️ **Improved type safety and validation**
 
 **Start Today:**
+
 1. Install the latest version
 2. Try the new APIs in new code
 3. Gradually migrate existing code when convenient

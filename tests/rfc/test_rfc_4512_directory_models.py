@@ -24,6 +24,7 @@ from pydantic import ValidationError as PydanticValidationError
 from ldap_core_shared.domain.models import LDAPEntry
 from ldap_core_shared.domain.results import LDAPSearchResult
 from ldap_core_shared.schema.validator import SchemaValidator
+from ldap_core_shared.utilities.dn import DNParser
 
 
 class TestRFC4512DirectoryInformationTree:
@@ -36,10 +37,10 @@ class TestRFC4512DirectoryInformationTree:
 
         # Test hierarchical DIT structure
         dit_entries = [
-            "dc=example,dc=com",                           # Root
-            "ou=People,dc=example,dc=com",                 # Organizational Unit
-            "ou=Groups,dc=example,dc=com",                 # Organizational Unit
-            "cn=John Doe,ou=People,dc=example,dc=com",     # Person entry
+            "dc=example,dc=com",  # Root
+            "ou=People,dc=example,dc=com",  # Organizational Unit
+            "ou=Groups,dc=example,dc=com",  # Organizational Unit
+            "cn=John Doe,ou=People,dc=example,dc=com",  # Person entry
             "cn=Administrators,ou=Groups,dc=example,dc=com",  # Group entry
         ]
 
@@ -121,10 +122,10 @@ class TestRFC4512EntryStructure:
             dn="cn=John Doe,ou=People,dc=example,dc=com",
             attributes={
                 "objectClass": ["person", "inetOrgPerson"],  # Multi-valued
-                "cn": ["John Doe"],                          # Single-valued
-                "sn": ["Doe"],                               # Single-valued
-                "givenName": ["John"],                       # Single-valued
-                "mail": ["john.doe@example.com"],            # Single-valued
+                "cn": ["John Doe"],  # Single-valued
+                "sn": ["Doe"],  # Single-valued
+                "givenName": ["John"],  # Single-valued
+                "mail": ["john.doe@example.com"],  # Single-valued
                 "telephoneNumber": ["+1-555-1234", "+1-555-5678"],  # Multi-valued
             },
         )
@@ -259,7 +260,10 @@ class TestRFC4512ObjectClasses:
                 "valid": True,
             },
             {
-                "objectClasses": ["person", "inetOrgPerson"],  # Multiple structural - invalid
+                "objectClasses": [
+                    "person",
+                    "inetOrgPerson",
+                ],  # Multiple structural - invalid
                 "valid": False,
             },
             {
@@ -272,14 +276,16 @@ class TestRFC4512ObjectClasses:
             if test["valid"]:
                 # Should have exactly one structural object class
                 structural_count = sum(
-                    1 for oc in test["objectClasses"]
+                    1
+                    for oc in test["objectClasses"]
                     if oc in {"person", "inetOrgPerson", "organizationalUnit"}
                 )
                 assert structural_count == 1
             else:
                 # Should not have valid structural object class configuration
                 structural_count = sum(
-                    1 for oc in test["objectClasses"]
+                    1
+                    for oc in test["objectClasses"]
                     if oc in {"person", "inetOrgPerson", "organizationalUnit"}
                 )
                 assert structural_count != 1
@@ -293,8 +299,8 @@ class TestRFC4512ObjectClasses:
             dn="cn=John Doe,ou=People,dc=example,dc=com",
             attributes={
                 "objectClass": ["person"],
-                "cn": ["John Doe"],     # Required by person
-                "sn": ["Doe"],          # Required by person
+                "cn": ["John Doe"],  # Required by person
+                "sn": ["Doe"],  # Required by person
                 "telephoneNumber": ["+1-555-1234"],  # Optional for person
             },
         )
@@ -441,9 +447,9 @@ class TestRFC4512AttributeDescriptions:
                 "attribute": "cn",
                 "matching_rule": "caseIgnoreMatch",
                 "test_values": [
-                    ("John Doe", "john doe", True),     # Case insensitive match
-                    ("John Doe", "JOHN DOE", True),     # Case insensitive match
-                    ("John Doe", "Jane Doe", False),    # Different values
+                    ("John Doe", "john doe", True),  # Case insensitive match
+                    ("John Doe", "JOHN DOE", True),  # Case insensitive match
+                    ("John Doe", "Jane Doe", False),  # Different values
                 ],
             },
             {
@@ -469,7 +475,9 @@ class TestRFC4512AttributeDescriptions:
                 if should_match:
                     # Values should be considered equal under the matching rule
                     # This would be implemented in the actual LDAP comparison logic
-                    assert value1.lower() == value2.lower()  # Simplified case-insensitive test
+                    assert (
+                        value1.lower() == value2.lower()
+                    )  # Simplified case-insensitive test
                 else:
                     # Values should not be considered equal
                     assert value1.lower() != value2.lower()
@@ -530,10 +538,10 @@ class TestRFC4512SchemaDefinitions:
                 "supportedLDAPVersion": ["3"],
                 "supportedControl": [
                     "2.16.840.1.113730.3.4.2",  # Manage DSA IT
-                    "1.2.840.113556.1.4.319",   # Paged Results
+                    "1.2.840.113556.1.4.319",  # Paged Results
                 ],
                 "supportedExtension": [
-                    "1.3.6.1.4.1.1466.20037",   # Start TLS
+                    "1.3.6.1.4.1.1466.20037",  # Start TLS
                 ],
                 "supportedSASLMechanisms": [
                     "GSSAPI",
@@ -589,12 +597,12 @@ class TestRFC4512DSAInformationalModel:
                 "supportedLDAPVersion": ["2", "3"],
                 "supportedControl": [
                     "2.16.840.1.113730.3.4.2",  # Manage DSA IT Control
-                    "1.2.840.113556.1.4.319",   # Paged Results Control
+                    "1.2.840.113556.1.4.319",  # Paged Results Control
                     "1.2.826.0.1.3344810.2.3",  # Persistent Search Control
                 ],
                 "supportedExtension": [
-                    "1.3.6.1.4.1.1466.20037",   # Start TLS Extension
-                    "1.3.6.1.4.1.1466.20036",   # Cancel Extended Operation
+                    "1.3.6.1.4.1.1466.20037",  # Start TLS Extension
+                    "1.3.6.1.4.1.1466.20036",  # Cancel Extended Operation
                 ],
                 "supportedSASLMechanisms": [
                     "EXTERNAL",
@@ -603,7 +611,7 @@ class TestRFC4512DSAInformationalModel:
                     "PLAIN",
                 ],
                 "supportedFeatures": [
-                    "1.3.6.1.1.14",             # Modify Password
+                    "1.3.6.1.1.14",  # Modify Password
                     "1.3.6.1.4.1.4203.1.5.1",  # All Operational Attributes
                 ],
                 "vendorName": ["OpenLDAP Foundation"],
@@ -642,7 +650,6 @@ class TestRFC4512DSAInformationalModel:
                 "cn": ["John Doe"],
                 "sn": ["Doe"],
                 "mail": ["john.doe@example.com"],
-
                 # Operational attributes (would be returned with "+" in search)
                 "createTimestamp": ["20240101000000Z"],
                 "modifyTimestamp": ["20240615120000Z"],
@@ -714,11 +721,11 @@ class TestRFC4512ComprehensiveCompliance:
 
         # 1. Directory Information Tree structure
         dit_structure = [
-            "dc=company,dc=com",                                    # Root
-            "ou=People,dc=company,dc=com",                         # People container
-            "ou=Groups,dc=company,dc=com",                         # Groups container
-            "cn=John Doe,ou=People,dc=company,dc=com",             # Person entry
-            "cn=Engineering,ou=Groups,dc=company,dc=com",          # Group entry
+            "dc=company,dc=com",  # Root
+            "ou=People,dc=company,dc=com",  # People container
+            "ou=Groups,dc=company,dc=com",  # Groups container
+            "cn=John Doe,ou=People,dc=company,dc=com",  # Person entry
+            "cn=Engineering,ou=Groups,dc=company,dc=com",  # Group entry
         ]
 
         for dn in dit_structure:
@@ -802,7 +809,9 @@ class TestRFC4512ComprehensiveCompliance:
         }
 
         # All checks must pass for RFC compliance
-        assert all(compliance_checks.values()), f"RFC 4512 compliance failed: {compliance_checks}"
+        assert all(compliance_checks.values()), (
+            f"RFC 4512 compliance failed: {compliance_checks}"
+        )
 
     def test_directory_information_model_interoperability(self) -> None:
         """RFC 4512 - Directory information model interoperability."""

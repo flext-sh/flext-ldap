@@ -56,7 +56,12 @@ from ldap_core_shared.protocols.asn1.encoder import (
 class MockASN1Tag:
     """Mock ASN.1 tag for testing."""
 
-    def __init__(self, tag_class: int = ASN1_UNIVERSAL, tag_form: int = ASN1_PRIMITIVE, tag_number: int = ASN1_INTEGER) -> None:
+    def __init__(
+        self,
+        tag_class: int = ASN1_UNIVERSAL,
+        tag_form: int = ASN1_PRIMITIVE,
+        tag_number: int = ASN1_INTEGER,
+    ) -> None:
         self.tag_class = tag_class
         self.tag_form = tag_form
         self.tag_number = tag_number
@@ -65,7 +70,12 @@ class MockASN1Tag:
 class MockASN1Element:
     """Mock ASN.1 element for testing."""
 
-    def __init__(self, tag: MockASN1Tag | None = None, value: Any = None, validate_errors: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        tag: MockASN1Tag | None = None,
+        value: Any = None,
+        validate_errors: list[str] | None = None,
+    ) -> None:
         self.tag = tag or MockASN1Tag()
         self.value = value
         self.validate_errors = validate_errors or []
@@ -159,10 +169,9 @@ class TestTLVEncoder:
         content = b"test"
         result = TLVEncoder.encode_tlv(tag, content, definite=False)
 
-        expected = (bytes([ASN1_OCTET_STRING]) +
-                   bytes([0x80]) +
-                   content +
-                   bytes([0x00, 0x00]))
+        expected = (
+            bytes([ASN1_OCTET_STRING]) + bytes([0x80]) + content + bytes([0x00, 0x00])
+        )
         assert result == expected
 
 

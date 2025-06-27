@@ -118,7 +118,7 @@ class OpenLDAPPersistentSearchControl(LDAPControl):
             control_data = {
                 "changeTypes": self.change_types,
                 "changesOnly": self.changes_only,
-                "returnECs": self.return_ecs,
+                "returnECs": self._return_controls,
             }
 
             return codec.encode(control_data)
@@ -128,10 +128,20 @@ class OpenLDAPPersistentSearchControl(LDAPControl):
             # This is a simplified implementation that creates a basic BER structure
             change_types_bytes = self.change_types.to_bytes(4, byteorder="big")
             changes_only_byte = b"\xff" if self.changes_only else b"\x00"
-            return_ecs_byte = b"\xff" if self.return_ecs else b"\x00"
+            return_ecs_byte = b"\xff" if self._return_controls else b"\x00"
 
             # Simple concatenation (not proper BER, but functional for testing)
             return change_types_bytes + changes_only_byte + return_ecs_byte
+
+    @property
+    def change_types(self) -> int:
+        """Get change types bitmask."""
+        return self._change_types
+
+    @property
+    def changes_only(self) -> bool:
+        """Get changes only flag."""
+        return self._changes_only
 
 
 class OpenLDAPControls:
@@ -150,7 +160,9 @@ class OpenLDAPControls:
     ) -> OpenLDAPPersistentSearchControl:
         """Create persistent search control."""
         return OpenLDAPPersistentSearchControl(
-            change_types, changes_only, return_controls,
+            change_types,
+            changes_only,
+            return_controls,
         )
 
 
@@ -161,7 +173,9 @@ class OpenLDAPExtensions:
         """Initialize OpenLDAP extensions."""
         self._controls = OpenLDAPControls()
 
-    def create_proxy_authorization_control(self, authorization_id: str) -> OpenLDAPProxyAuthControl:
+    def create_proxy_authorization_control(
+        self, authorization_id: str,
+    ) -> OpenLDAPProxyAuthControl:
         """Create proxy authorization control.
 
         Args:

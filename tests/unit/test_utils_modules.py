@@ -74,8 +74,8 @@ class TestLDAPHelpers:
 
                 # Split by commas, normalize each component
                 components = []
-                for component in dn.split(","):
-                    component = component.strip()
+                for raw_component in dn.split(","):
+                    component = raw_component.strip()
                     if "=" in component:
                         attr, value = component.split("=", 1)
                         attr = attr.strip().lower()
@@ -95,13 +95,16 @@ class TestLDAPHelpers:
 
                 # Check for basic DN structure
                 if "=" not in dn:
-                    return {"valid": False, "error": "DN must contain at least one attribute=value pair"}
+                    return {
+                        "valid": False,
+                        "error": "DN must contain at least one attribute=value pair",
+                    }
 
                 components = []
                 errors = []
 
-                for component in dn.split(","):
-                    component = component.strip()
+                for raw_component in dn.split(","):
+                    component = raw_component.strip()
                     if not component:
                         errors.append("Empty component in DN")
                         continue
@@ -136,7 +139,10 @@ class TestLDAPHelpers:
 
                 # Basic LDAP URL format: ldap[s]://host[:port][/base_dn[?attributes[?scope[?filter]]]]
                 if not url.startswith(("ldap://", "ldaps://")):
-                    return {"valid": False, "error": "URL must start with ldap:// or ldaps://"}
+                    return {
+                        "valid": False,
+                        "error": "URL must start with ldap:// or ldaps://",
+                    }
 
                 parsed = {
                     "valid": True,
@@ -151,7 +157,9 @@ class TestLDAPHelpers:
 
                 try:
                     # Remove scheme
-                    remaining = url[len(parsed["scheme"]) + 3 :]  # Remove 'ldap://' or 'ldaps://'
+                    remaining = url[
+                        len(parsed["scheme"]) + 3 :
+                    ]  # Remove 'ldap://' or 'ldaps://'
 
                     # Parse host and port
                     if "/" in remaining:
@@ -197,7 +205,9 @@ class TestLDAPHelpers:
                     if isinstance(value, list):
                         # Multiple values - create OR condition
                         if len(value) == 1:
-                            filter_parts.append(f"({attr}={MockLDAPHelpers.escape_filter_chars(str(value[0]))})")
+                            filter_parts.append(
+                                f"({attr}={MockLDAPHelpers.escape_filter_chars(str(value[0]))})"
+                            )
                         else:
                             or_parts = [
                                 f"({attr}={MockLDAPHelpers.escape_filter_chars(str(v))})"
@@ -206,7 +216,9 @@ class TestLDAPHelpers:
                             filter_parts.append(f"(|{''.join(or_parts)})")
                     else:
                         # Single value
-                        filter_parts.append(f"({attr}={MockLDAPHelpers.escape_filter_chars(str(value))})")
+                        filter_parts.append(
+                            f"({attr}={MockLDAPHelpers.escape_filter_chars(str(value))})"
+                        )
 
                 if len(filter_parts) == 1:
                     return filter_parts[0]
@@ -326,7 +338,9 @@ class TestLDAPOperations:
                 }
 
             @staticmethod
-            def build_add_request(dn: str, attributes: dict[str, Any]) -> dict[str, Any]:
+            def build_add_request(
+                dn: str, attributes: dict[str, Any]
+            ) -> dict[str, Any]:
                 """Build an LDAP add request."""
                 if not dn:
                     return {"valid": False, "error": "DN is required"}
@@ -336,7 +350,10 @@ class TestLDAPOperations:
 
                 # Validate required objectClass
                 if "objectClass" not in attributes:
-                    return {"valid": False, "error": "objectClass attribute is required"}
+                    return {
+                        "valid": False,
+                        "error": "objectClass attribute is required",
+                    }
 
                 # Normalize attribute values to lists
                 normalized_attrs = {}
@@ -357,7 +374,9 @@ class TestLDAPOperations:
                 }
 
             @staticmethod
-            def build_modify_request(dn: str, changes: dict[str, Any]) -> dict[str, Any]:
+            def build_modify_request(
+                dn: str, changes: dict[str, Any]
+            ) -> dict[str, Any]:
                 """Build an LDAP modify request."""
                 if not dn:
                     return {"valid": False, "error": "DN is required"}
@@ -383,13 +402,18 @@ class TestLDAPOperations:
                         values = [str(change_spec)]
 
                     if operation not in valid_operations:
-                        return {"valid": False, "error": f"Invalid operation: {operation}"}
+                        return {
+                            "valid": False,
+                            "error": f"Invalid operation: {operation}",
+                        }
 
-                    processed_changes.append({
-                        "attribute": attr,
-                        "operation": operation,
-                        "values": values,
-                    })
+                    processed_changes.append(
+                        {
+                            "attribute": attr,
+                            "operation": operation,
+                            "values": values,
+                        }
+                    )
 
                 return {
                     "valid": True,
@@ -436,11 +460,17 @@ class TestLDAPOperations:
                         else:
                             for i, value in enumerate(values):
                                 if value is None:
-                                    warnings.append(f"Attribute {attr}[{i}] has None value")
+                                    warnings.append(
+                                        f"Attribute {attr}[{i}] has None value"
+                                    )
                                 elif isinstance(value, str) and not value:
-                                    warnings.append(f"Attribute {attr}[{i}] has empty string")
+                                    warnings.append(
+                                        f"Attribute {attr}[{i}] has empty string"
+                                    )
                     else:
-                        warnings.append(f"Attribute {attr} has unexpected type: {type(values)}")
+                        warnings.append(
+                            f"Attribute {attr} has unexpected type: {type(values)}"
+                        )
 
                 return {
                     "valid": len(errors) == 0,
@@ -538,14 +568,18 @@ class TestLDAPOperations:
             "mail": ["john@example.com"],
             "telephoneNumber": "+1234567890",
         }
-        add_req = ops.build_add_request("cn=John Doe,ou=Users,dc=example,dc=com", add_attrs)
+        add_req = ops.build_add_request(
+            "cn=John Doe,ou=Users,dc=example,dc=com", add_attrs
+        )
         assert add_req["valid"] is True
         assert add_req["operation"] == "add"
         assert isinstance(add_req["attributes"]["cn"], list)
         assert add_req["attributes"]["cn"] == ["John Doe"]
 
         # Test add without objectClass
-        invalid_add = ops.build_add_request("cn=test,dc=example,dc=com", {"cn": ["test"]})
+        invalid_add = ops.build_add_request(
+            "cn=test,dc=example,dc=com", {"cn": ["test"]}
+        )
         assert invalid_add["valid"] is False
 
         # Test build_modify_request
@@ -554,7 +588,9 @@ class TestLDAPOperations:
             "telephoneNumber": ["555-1234"],  # Shorthand for replace
             "description": "Updated description",  # Single value replace
         }
-        modify_req = ops.build_modify_request("cn=John Doe,ou=Users,dc=example,dc=com", modify_changes)
+        modify_req = ops.build_modify_request(
+            "cn=John Doe,ou=Users,dc=example,dc=com", modify_changes
+        )
         assert modify_req["valid"] is True
         assert modify_req["operation"] == "modify"
         assert len(modify_req["changes"]) == 3
@@ -572,8 +608,8 @@ class TestLDAPOperations:
         # Test problematic attributes
         problematic_attrs = {
             "": ["empty name"],  # Empty attribute name
-            "validAttr": [],      # Empty list
-            "nullAttr": None,     # None value
+            "validAttr": [],  # Empty list
+            "nullAttr": None,  # None value
         }
         validation = ops.validate_attributes(problematic_attrs)
         assert validation["valid"] is False
@@ -625,15 +661,17 @@ class TestDNUtils:
                     return []
 
                 components = []
-                for component in dn.split(","):
-                    component = component.strip()
+                for raw_component in dn.split(","):
+                    component = raw_component.strip()
                     if "=" in component:
                         attr, value = component.split("=", 1)
-                        components.append({
-                            "attribute": attr.strip(),
-                            "value": value.strip(),
-                            "raw": component,
-                        })
+                        components.append(
+                            {
+                                "attribute": attr.strip(),
+                                "value": value.strip(),
+                                "raw": component,
+                            }
+                        )
 
                 return components
 
@@ -662,7 +700,7 @@ class TestDNUtils:
 
                 # Remove the first component
                 first_comma = dn.find(",")
-                return dn[first_comma + 1:].strip()
+                return dn[first_comma + 1 :].strip()
 
             @staticmethod
             def is_dn_child_of(child_dn: str, parent_dn: str) -> bool:
@@ -676,9 +714,9 @@ class TestDNUtils:
 
                 # Child must end with parent and have at least one more component
                 return (
-                    child_normalized.endswith(parent_normalized) and
-                    len(child_normalized) > len(parent_normalized) and
-                    child_normalized[:-len(parent_normalized)].endswith(",")
+                    child_normalized.endswith(parent_normalized)
+                    and len(child_normalized) > len(parent_normalized)
+                    and child_normalized[: -len(parent_normalized)].endswith(",")
                 )
 
             @staticmethod
@@ -769,7 +807,9 @@ class TestPerformanceUtils:
 
         class MockPerformanceUtils:
             @staticmethod
-            def benchmark_operation(operation_func, iterations: int = 100, *args, **kwargs) -> dict[str, Any]:
+            def benchmark_operation(
+                operation_func, iterations: int = 100, *args, **kwargs
+            ) -> dict[str, Any]:
                 """Benchmark an operation."""
                 start_time = time.time()
                 results = []
@@ -791,7 +831,9 @@ class TestPerformanceUtils:
                     avg_time = sum(results) / successful_iterations
                     min_time = min(results)
                     max_time = max(results)
-                    operations_per_second = successful_iterations / total_time if total_time > 0 else 0
+                    operations_per_second = (
+                        successful_iterations / total_time if total_time > 0 else 0
+                    )
                 else:
                     avg_time = min_time = max_time = operations_per_second = 0
 
@@ -804,7 +846,9 @@ class TestPerformanceUtils:
                     "min_time": min_time,
                     "max_time": max_time,
                     "operations_per_second": operations_per_second,
-                    "success_rate": successful_iterations / iterations if iterations > 0 else 0,
+                    "success_rate": successful_iterations / iterations
+                    if iterations > 0
+                    else 0,
                 }
 
             @staticmethod
@@ -828,7 +872,9 @@ class TestPerformanceUtils:
                 final_objects = 105  # Mock object count
 
                 # Mock memory values (in MB)
-                peak_memory = 50.5 + (end_time - start_time) * 10  # Simulate memory usage
+                peak_memory = (
+                    50.5 + (end_time - start_time) * 10
+                )  # Simulate memory usage
                 memory_delta = 2.3  # Simulate memory increase
 
                 return {
@@ -846,6 +892,7 @@ class TestPerformanceUtils:
             @staticmethod
             def track_timing(operation_name: str = "operation"):
                 """Context manager for timing operations."""
+
                 class TimingContext:
                     def __init__(self, name: str) -> None:
                         self.name = name
@@ -871,9 +918,13 @@ class TestPerformanceUtils:
                             "operation": self.name,
                             "duration": duration,
                             "success": getattr(self, "exc_type", None) is None,
-                            "performance_rating": "excellent" if duration < 0.1 else
-                                               "good" if duration < 0.5 else
-                                               "acceptable" if duration < 1.0 else "slow",
+                            "performance_rating": "excellent"
+                            if duration < 0.1
+                            else "good"
+                            if duration < 0.5
+                            else "acceptable"
+                            if duration < 1.0
+                            else "slow",
                         }
 
                 return TimingContext(operation_name)
@@ -905,8 +956,14 @@ class TestPerformanceUtils:
                     "duration": duration,
                     "call_count": call_count,
                     "cpu_usage_percent": min(100, duration * 50),  # Mock CPU usage
-                    "memory_impact": "low" if duration < 0.1 else "medium" if duration < 0.5 else "high",
-                    "efficiency_score": max(0, 100 - (duration * 100)),  # Higher is better
+                    "memory_impact": "low"
+                    if duration < 0.1
+                    else "medium"
+                    if duration < 0.5
+                    else "high",
+                    "efficiency_score": max(
+                        0, 100 - (duration * 100)
+                    ),  # Higher is better
                 }
 
         # Test mock performance utilities
@@ -988,7 +1045,7 @@ class TestConstants:
             assert DEFAULT_LDAP_PORT == 389
             assert DEFAULT_LDAPS_PORT == 636
             assert DEFAULT_TIMEOUT > 0
-            assert isinstance(LDAP_SCOPES, (list, tuple))
+            assert isinstance(LDAP_SCOPES, list | tuple)
 
         except ImportError:
             # Create mock test since module doesn't exist yet
@@ -1121,9 +1178,13 @@ class TestLoggingUtils:
                         }
                         self.messages.append(log_entry)
 
-                    def get_messages(self, level: str | None = None) -> list[dict[str, Any]]:
+                    def get_messages(
+                        self, level: str | None = None
+                    ) -> list[dict[str, Any]]:
                         if level:
-                            return [msg for msg in self.messages if msg["level"] == level]
+                            return [
+                                msg for msg in self.messages if msg["level"] == level
+                            ]
                         return self.messages.copy()
 
                     def clear_messages(self) -> None:

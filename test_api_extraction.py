@@ -7,7 +7,6 @@ da API monolítica original.
 
 import os
 import sys
-from typing import Optional
 
 # Adiciona o src ao path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
@@ -81,13 +80,15 @@ def test_query_extraction() -> None:
     mock_facade = MockFacade()
 
     # Test query building
-    query = (Query(mock_facade)
-            .users()
-            .in_department("Engineering")
-            .with_title("*Senior*")
-            .enabled_only()
-            .select("cn", "mail", "department")
-            .limit(25))
+    query = (
+        Query(mock_facade)
+        .users()
+        .in_department("Engineering")
+        .with_title("*Senior*")
+        .enabled_only()
+        .select("cn", "mail", "department")
+        .limit(25)
+    )
 
     # Verify internal state
     assert query._object_class == "person"
@@ -113,7 +114,7 @@ def test_package_structure() -> None:
     assert Query is QueryClass
 
 
-def main() -> Optional[bool]:
+def main() -> bool | None:
     """Executa todos os testes de extração."""
     try:
         test_config_extraction()
@@ -125,6 +126,7 @@ def main() -> Optional[bool]:
 
     except Exception:
         import traceback
+
         traceback.print_exc()
         return False
 

@@ -105,7 +105,9 @@ class TestRFC5805TransactionSpecificationControl:
 
         # RFC 5805: Controls can receive responses from server
         # Note: This will raise NotImplementedError until response processing is implemented
-        with pytest.raises(NotImplementedError, match="response processing not yet implemented"):
+        with pytest.raises(
+            NotImplementedError, match="response processing not yet implemented"
+        ):
             control.process_response(b"\x04\x08test_response")
 
     def test_transaction_request_model_validation(self) -> None:
@@ -175,7 +177,7 @@ class TestRFC5805TransactionEndingControl:
         # RFC 5805: Control value must be BER-encoded
         # Test commit control encoding
         commit_encoded = commit_control.encode_value()
-        assert commit_encoded == b"\x01\x01\xFF"  # BOOLEAN TRUE
+        assert commit_encoded == b"\x01\x01\xff"  # BOOLEAN TRUE
 
         # Test abort control encoding
         abort_encoded = abort_control.encode_value()
@@ -187,7 +189,9 @@ class TestRFC5805TransactionEndingControl:
 
         # RFC 5805: Controls can receive responses from server
         # Note: This will raise NotImplementedError until response processing is implemented
-        with pytest.raises(NotImplementedError, match="response processing not yet implemented"):
+        with pytest.raises(
+            NotImplementedError, match="response processing not yet implemented"
+        ):
             control.process_response(b"\x04\x08end_response")
 
 
@@ -209,7 +213,9 @@ class TestRFC5805ExtendedOperations:
         from ldap_core_shared.transactions.controls import start_transaction
 
         # Note: This will raise NotImplementedError until extended operations are implemented
-        with pytest.raises(NotImplementedError, match="Transaction start requires LDAP connection"):
+        with pytest.raises(
+            NotImplementedError, match="Transaction start requires LDAP connection"
+        ):
             # This would normally require a real LDAP connection
             mock_connection = MagicMock()
             await start_transaction(mock_connection)
@@ -219,7 +225,9 @@ class TestRFC5805ExtendedOperations:
         from ldap_core_shared.transactions.controls import end_transaction
 
         # Note: This will raise NotImplementedError until extended operations are implemented
-        with pytest.raises(NotImplementedError, match="Transaction end requires LDAP connection"):
+        with pytest.raises(
+            NotImplementedError, match="Transaction end requires LDAP connection"
+        ):
             # This would normally require a real LDAP connection
             mock_connection = MagicMock()
             tx_id = b"test_transaction"
@@ -261,8 +269,13 @@ class TestRFC5805TransactionWorkflow:
         tx1_control = TransactionSpecificationControl(transaction_identifier=b"tx1")
         tx2_control = TransactionSpecificationControl(transaction_identifier=b"tx2")
 
-        assert tx1_control.get_transaction_identifier() != tx2_control.get_transaction_identifier()
-        assert tx1_control.get_transaction_id_hex() != tx2_control.get_transaction_id_hex()
+        assert (
+            tx1_control.get_transaction_identifier()
+            != tx2_control.get_transaction_identifier()
+        )
+        assert (
+            tx1_control.get_transaction_id_hex() != tx2_control.get_transaction_id_hex()
+        )
 
     def test_transaction_atomicity_specification(self) -> None:
         """RFC 5805 Section 6.2 - Transaction atomicity specification."""
@@ -281,9 +294,9 @@ class TestRFC5805TransactionWorkflow:
 
         # All operations use same transaction
         assert (
-            modify_control.get_transaction_id_hex() ==
-            add_control.get_transaction_id_hex() ==
-            delete_control.get_transaction_id_hex()
+            modify_control.get_transaction_id_hex()
+            == add_control.get_transaction_id_hex()
+            == delete_control.get_transaction_id_hex()
         )
 
     def test_transaction_durability_interface(self) -> None:
@@ -415,15 +428,17 @@ class TestRFC5805ErrorHandling:
         """RFC 5805 - Transaction identifier binary data safety."""
         # Test with various binary data patterns
         binary_patterns = [
-            b"\x00\x01\x02\x03",          # Null bytes
-            b"\xff\xfe\xfd\xfc",          # High bytes
-            b"normal_ascii_string",        # ASCII string
-            b"\x80\x81\x82\x83",          # Extended ASCII
-            bytes(range(256)),             # All possible byte values
+            b"\x00\x01\x02\x03",  # Null bytes
+            b"\xff\xfe\xfd\xfc",  # High bytes
+            b"normal_ascii_string",  # ASCII string
+            b"\x80\x81\x82\x83",  # Extended ASCII
+            bytes(range(256)),  # All possible byte values
         ]
 
         for binary_data in binary_patterns:
-            control = TransactionSpecificationControl(transaction_identifier=binary_data)
+            control = TransactionSpecificationControl(
+                transaction_identifier=binary_data
+            )
 
             assert control.get_transaction_identifier() == binary_data
             assert control.has_transaction_id()
@@ -477,9 +492,15 @@ class TestRFC5805ComprehensiveCompliance:
         assert start_control.get_transaction_identifier() == server_tx_id
 
         # 3. Create operation controls with transaction ID
-        modify_control = TransactionSpecificationControl(transaction_identifier=server_tx_id)
-        add_control = TransactionSpecificationControl(transaction_identifier=server_tx_id)
-        delete_control = TransactionSpecificationControl(transaction_identifier=server_tx_id)
+        modify_control = TransactionSpecificationControl(
+            transaction_identifier=server_tx_id
+        )
+        add_control = TransactionSpecificationControl(
+            transaction_identifier=server_tx_id
+        )
+        delete_control = TransactionSpecificationControl(
+            transaction_identifier=server_tx_id
+        )
 
         # Verify all operations use same transaction
         assert modify_control.get_transaction_identifier() == server_tx_id
@@ -509,7 +530,9 @@ class TestRFC5805ComprehensiveCompliance:
         }
 
         # All checks must pass for RFC compliance
-        assert all(compliance_checks.values()), f"RFC 5805 compliance failed: {compliance_checks}"
+        assert all(compliance_checks.values()), (
+            f"RFC 5805 compliance failed: {compliance_checks}"
+        )
 
     def test_interoperability_requirements(self) -> None:
         """RFC 5805 - Interoperability requirements verification."""
@@ -519,7 +542,9 @@ class TestRFC5805ComprehensiveCompliance:
         typical_tx_id = b"typical_ldap_transaction_identifier"
 
         # Create controls for typical transaction operations
-        spec_control = TransactionSpecificationControl(transaction_identifier=typical_tx_id)
+        spec_control = TransactionSpecificationControl(
+            transaction_identifier=typical_tx_id
+        )
         commit_control = TransactionEndingControl(TransactionEndType.COMMIT)
         abort_control = TransactionEndingControl(TransactionEndType.ABORT)
 

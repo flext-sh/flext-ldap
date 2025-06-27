@@ -226,33 +226,23 @@
           "patterns": {
             "true": {
               "frequency": 1,
-              "solutions": [
-                "complete_delegation_to_existing_modules"
-              ]
+              "solutions": ["complete_delegation_to_existing_modules"]
             },
             "comprehensive": {
               "frequency": 1,
-              "solutions": [
-                "85_plus_modules_across_20_categories"
-              ]
+              "solutions": ["85_plus_modules_across_20_categories"]
             },
             "enterprise": {
               "frequency": 1,
-              "solutions": [
-                "async_transaction_vectorized_operations"
-              ]
+              "solutions": ["async_transaction_vectorized_operations"]
             },
             "zero": {
               "frequency": 1,
-              "solutions": [
-                "pure_delegation_pattern"
-              ]
+              "solutions": ["pure_delegation_pattern"]
             },
             "backward": {
               "frequency": 1,
-              "solutions": [
-                "100_percent_api_preservation"
-              ]
+              "solutions": ["100_percent_api_preservation"]
             }
           },
           "high_frequency_patterns": [],

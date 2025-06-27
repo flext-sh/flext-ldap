@@ -15,7 +15,6 @@ from ldap_core_shared.core.exceptions import (
     ASN1EncodingError,
     AuthenticationError,
     ConfigurationValidationError,
-    ConnectionError,
     EncodingError,
     ErrorCategory,
     ErrorContext,
@@ -27,8 +26,13 @@ from ldap_core_shared.core.exceptions import (
     SAMLError,
     SchemaOperationError,
     SchemaValidationError,
-    ServerConnectionError,
     ValidationError,
+)
+from ldap_core_shared.core.exceptions import (
+    LDAPConnectionError as ConnectionError,
+)
+from ldap_core_shared.core.exceptions import (
+    ServerLDAPConnectionError as ServerConnectionError,
 )
 
 # Backward compatibility - deprecated imports
@@ -40,31 +44,31 @@ __all__ = [
     "ASN1DecodingError",
     # Specific encoding errors
     "ASN1EncodingError",
-    "AuthenticationError",     # Auth errors
+    "AuthenticationError",  # Auth errors
     "ConfigurationValidationError",
-    "ConnectionError",         # Connection errors
-    "EncodingError",           # ASN.1/encoding errors
+    "ConnectionError",  # Connection errors
+    "EncodingError",  # ASN.1/encoding errors
     "ErrorCategory",
     "ErrorContext",
     # Error metadata
     "ErrorSeverity",
     # PREFERRED: Use these unified exceptions from core.exceptions
-    "LDAPCoreError",           # Main base exception
+    "LDAPCoreError",  # Main base exception
     # DEPRECATED: Use LDAPCoreError instead
     "LDAPError",
     # Specific SASL errors
     "MechanismError",
     # PROJECT-SPECIFIC: These remain for specific project needs
-    "MigrationError",          # Migration-specific errors
-    "OperationError",          # LDAP operation errors
+    "MigrationError",  # Migration-specific errors
+    "OperationError",  # LDAP operation errors
     "PoolExhaustedError",
-    "SAMLError",              # SASL/SAML errors
-    "SchemaError",             # Legacy schema errors
+    "SAMLError",  # SASL/SAML errors
+    "SchemaError",  # Legacy schema errors
     # Specific operation errors
     "SchemaOperationError",
     # Specific validation errors
     "SchemaValidationError",
     # Specific connection errors
     "ServerConnectionError",
-    "ValidationError",         # Validation errors
+    "ValidationError",  # Validation errors
 ]

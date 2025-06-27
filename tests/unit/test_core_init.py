@@ -97,8 +97,11 @@ class TestCoreInitialization:
             "logging": {"level": "INFO", "console_enabled": True},
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
+        ) as f:
             import json
+
             json.dump(config_data, f)
             config_file = f.name
 
@@ -231,7 +234,9 @@ class TestCoreStateManagement:
 
         assert new_config is not original_config
         assert new_config.debug is True
-        assert new_config.environment == Environment.DEVELOPMENT  # Should preserve environment
+        assert (
+            new_config.environment == Environment.DEVELOPMENT
+        )  # Should preserve environment
 
     def test_reconfigure_before_initialization(self) -> None:
         """Test reconfigure before initialization raises error."""
@@ -251,8 +256,11 @@ class TestCoreStateManagement:
             "logging": {"level": "DEBUG"},
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
+        ) as f:
             import json
+
             json.dump(new_config_data, f)
             config_file = f.name
 
@@ -449,6 +457,7 @@ class TestCoreInitializationIntegration:
         # Test performance monitoring
         with monitor.time_operation("integration_test"):
             import time
+
             time.sleep(0.001)  # Small delay
 
     def test_configuration_override_hierarchy(self) -> None:
@@ -460,17 +469,23 @@ class TestCoreInitializationIntegration:
             "logging": {"level": "INFO"},
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
+        ) as f:
             import json
+
             json.dump(file_config, f)
             config_file = f.name
 
         try:
             # Set environment variables
-            with patch.dict(os.environ, {
-                "LDAP_CORE_DEBUG": "true",
-                "LDAP_CORE_LOGGING_LEVEL": "WARNING",
-            }):
+            with patch.dict(
+                os.environ,
+                {
+                    "LDAP_CORE_DEBUG": "true",
+                    "LDAP_CORE_LOGGING_LEVEL": "WARNING",
+                },
+            ):
                 # Override values should have highest priority
                 config = initialize_core(
                     config_file=config_file,
@@ -493,7 +508,9 @@ class TestCoreInitializationIntegration:
     def test_initialization_with_invalid_config_file(self) -> None:
         """Test initialization with invalid config file."""
         # Create invalid JSON file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
+        ) as f:
             f.write("invalid json content {")
             invalid_config_file = f.name
 
@@ -535,6 +552,7 @@ class TestCoreInitializationIntegration:
 
         # Test security logging
         from ldap_core_shared.core.logging import SecurityEventType
+
         logger.security(
             "Security event",
             SecurityEventType.AUTHENTICATION_SUCCESS,
@@ -614,8 +632,11 @@ def sample_config_file():
         },
     }
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, encoding="utf-8"
+    ) as f:
         import json
+
         json.dump(config_data, f)
         yield f.name
 

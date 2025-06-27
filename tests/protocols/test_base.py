@@ -33,7 +33,7 @@ Performance Testing:
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, NoReturn
 from unittest.mock import AsyncMock
 
@@ -69,8 +69,13 @@ class TestProtocolState:
     def test_protocol_state_completeness(self) -> None:
         """Test that all expected protocol states are defined."""
         expected_states = {
-            "DISCONNECTED", "CONNECTING", "CONNECTED",
-            "AUTHENTICATING", "AUTHENTICATED", "DISCONNECTING", "ERROR",
+            "DISCONNECTED",
+            "CONNECTING",
+            "CONNECTED",
+            "AUTHENTICATING",
+            "AUTHENTICATED",
+            "DISCONNECTING",
+            "ERROR",
         }
         actual_states = {member.name for member in ProtocolState}
         assert actual_states == expected_states
@@ -84,14 +89,19 @@ class TestAuthenticationState:
         assert AuthenticationState.UNAUTHENTICATED.value == "unauthenticated"
         assert AuthenticationState.AUTHENTICATING.value == "authenticating"
         assert AuthenticationState.AUTHENTICATED.value == "authenticated"
-        assert AuthenticationState.AUTHENTICATION_FAILED.value == "authentication_failed"
+        assert (
+            AuthenticationState.AUTHENTICATION_FAILED.value == "authentication_failed"
+        )
         assert AuthenticationState.EXPIRED.value == "expired"
 
     def test_authentication_state_completeness(self) -> None:
         """Test that all expected authentication states are defined."""
         expected_states = {
-            "UNAUTHENTICATED", "AUTHENTICATING", "AUTHENTICATED",
-            "AUTHENTICATION_FAILED", "EXPIRED",
+            "UNAUTHENTICATED",
+            "AUTHENTICATING",
+            "AUTHENTICATED",
+            "AUTHENTICATION_FAILED",
+            "EXPIRED",
         }
         actual_states = {member.name for member in AuthenticationState}
         assert actual_states == expected_states
@@ -114,8 +124,14 @@ class TestProtocolCapability:
     def test_protocol_capability_completeness(self) -> None:
         """Test that all expected protocol capabilities are defined."""
         expected_capabilities = {
-            "START_TLS", "SASL_AUTHENTICATION", "CONTROLS", "EXTENSIONS",
-            "REFERRALS", "PAGING", "PERSISTENT_SEARCH", "SYNC_REPLICATION",
+            "START_TLS",
+            "SASL_AUTHENTICATION",
+            "CONTROLS",
+            "EXTENSIONS",
+            "REFERRALS",
+            "PAGING",
+            "PERSISTENT_SEARCH",
+            "SYNC_REPLICATION",
         }
         actual_capabilities = {member.name for member in ProtocolCapability}
         assert actual_capabilities == expected_capabilities
@@ -141,7 +157,7 @@ class TestConnectionMetrics:
 
     def test_metrics_initialization_with_values(self) -> None:
         """Test metrics initialization with specific values."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         metrics = ConnectionMetrics(
             connection_established_at=now,
             operations_performed=100,
@@ -342,7 +358,10 @@ class TestLDAPProtocol:
         """Test authenticate method not implemented."""
         protocol = MockLDAPProtocol()
 
-        with pytest.raises(NotImplementedError, match="Base authentication framework not yet implemented"):
+        with pytest.raises(
+            NotImplementedError,
+            match="Base authentication framework not yet implemented",
+        ):
             await protocol.authenticate("simple")
 
     def test_set_state(self) -> None:
@@ -747,7 +766,9 @@ class TestProtocolConnection:
 
         await connection.authenticate("simple", username="test", password="pass")
 
-        protocol.authenticate.assert_called_once_with("simple", username="test", password="pass")
+        protocol.authenticate.assert_called_once_with(
+            "simple", username="test", password="pass"
+        )
 
     @pytest.mark.asyncio
     async def test_authenticate_when_not_connected(self) -> None:
@@ -865,7 +886,9 @@ class TestUtilityFunctions:
 
         for url in valid_urls:
             errors = validate_ldap_url(url)
-            assert len(errors) == 0, f"URL {url} should be valid but got errors: {errors}"
+            assert len(errors) == 0, (
+                f"URL {url} should be valid but got errors: {errors}"
+            )
 
     def test_validate_ldap_url_invalid_scheme(self) -> None:
         """Test validation of URLs with invalid scheme."""
@@ -1168,7 +1191,9 @@ class TestErrorHandling:
 
         for url, description in edge_cases:
             errors = validate_ldap_url(url)
-            assert len(errors) > 0, f"URL '{url}' ({description}) should have validation errors"
+            assert len(errors) > 0, (
+                f"URL '{url}' ({description}) should have validation errors"
+            )
 
 
 if __name__ == "__main__":

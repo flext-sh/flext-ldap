@@ -55,13 +55,15 @@ class TestRFC2891SortKeySpecification:
 
     def test_sort_key_ber_encoding_structure(self) -> None:
         """RFC 2891 Section 1.2 - SortKey BER encoding structure."""
-        sort_control = ServerSideSortControl([
-            SortKey(
-                attribute="cn",
-                order=SortOrder.ASCENDING,
-                matching_rule="caseIgnoreOrderingMatch",
-            ),
-        ])
+        sort_control = ServerSideSortControl(
+            [
+                SortKey(
+                    attribute="cn",
+                    order=SortOrder.ASCENDING,
+                    matching_rule="caseIgnoreOrderingMatch",
+                ),
+            ]
+        )
 
         encoded = sort_control.encode_value()
 
@@ -91,12 +93,14 @@ class TestRFC2891SortKeySpecification:
         encoded_no_rule = control_no_rule.encode_value()
 
         # With ordering rule
-        control_with_rule = ServerSideSortControl([
-            SortKey(
-                attribute="cn",
-                matching_rule="caseIgnoreOrderingMatch",
-            ),
-        ])
+        control_with_rule = ServerSideSortControl(
+            [
+                SortKey(
+                    attribute="cn",
+                    matching_rule="caseIgnoreOrderingMatch",
+                ),
+            ]
+        )
         encoded_with_rule = control_with_rule.encode_value()
 
         # Encoded version with rule should be longer
@@ -105,11 +109,15 @@ class TestRFC2891SortKeySpecification:
     def test_reverse_order_boolean_encoding(self) -> None:
         """RFC 2891 Section 1.2 - reverseOrder [1] BOOLEAN encoding."""
         # Default ascending (reverseOrder = FALSE)
-        control_asc = ServerSideSortControl([SortKey(attribute="cn", order=SortOrder.ASCENDING)])
+        control_asc = ServerSideSortControl(
+            [SortKey(attribute="cn", order=SortOrder.ASCENDING)]
+        )
         encoded_asc = control_asc.encode_value()
 
         # Explicit descending (reverseOrder = TRUE)
-        control_desc = ServerSideSortControl([SortKey(attribute="cn", order=SortOrder.DESCENDING)])
+        control_desc = ServerSideSortControl(
+            [SortKey(attribute="cn", order=SortOrder.DESCENDING)]
+        )
         encoded_desc = control_desc.encode_value()
 
         # Descending should include the reverseOrder field
@@ -117,13 +125,15 @@ class TestRFC2891SortKeySpecification:
 
     def test_sort_key_decoding_roundtrip(self) -> None:
         """RFC 2891 Compliance - Encoding/decoding must be lossless."""
-        original_control = ServerSideSortControl([
-            SortKey(
-                attribute="telephoneNumber",
-                order=SortOrder.DESCENDING,
-                matching_rule="telephoneNumberMatch",
-            ),
-        ])
+        original_control = ServerSideSortControl(
+            [
+                SortKey(
+                    attribute="telephoneNumber",
+                    order=SortOrder.DESCENDING,
+                    matching_rule="telephoneNumberMatch",
+                ),
+            ]
+        )
 
         # Encode
         encoded = original_control.encode_value()
@@ -186,9 +196,9 @@ class TestRFC2891SortControlEncoding:
         """RFC 2891 Section 2 - Sort key precedence order."""
         # RFC 2891: "The first key is the primary sort key"
         sort_keys = [
-            SortKey(attribute="o"),          # Primary sort key
-            SortKey(attribute="ou"),         # Secondary sort key
-            SortKey(attribute="cn"),          # Tertiary sort key
+            SortKey(attribute="o"),  # Primary sort key
+            SortKey(attribute="ou"),  # Secondary sort key
+            SortKey(attribute="cn"),  # Tertiary sort key
         ]
 
         control = ServerSideSortControl(sort_keys)
@@ -196,9 +206,9 @@ class TestRFC2891SortControlEncoding:
         decoded = ServerSideSortControl.decode_value(encoded)
 
         # Verify precedence order is preserved
-        assert decoded.sort_keys[0].attribute == "o"    # Primary
-        assert decoded.sort_keys[1].attribute == "ou"   # Secondary
-        assert decoded.sort_keys[2].attribute == "cn"   # Tertiary
+        assert decoded.sort_keys[0].attribute == "o"  # Primary
+        assert decoded.sort_keys[1].attribute == "ou"  # Secondary
+        assert decoded.sort_keys[2].attribute == "cn"  # Tertiary
 
 
 class TestRFC2891SortResponseControl:
@@ -317,7 +327,9 @@ class TestRFC2891MatchingRules:
         ]
 
         for rule in standard_rules:
-            control = ServerSideSortControl([SortKey(attribute="cn", matching_rule=rule)])
+            control = ServerSideSortControl(
+                [SortKey(attribute="cn", matching_rule=rule)]
+            )
 
             encoded = control.encode_value()
             decoded = ServerSideSortControl.decode_value(encoded)
@@ -327,7 +339,9 @@ class TestRFC2891MatchingRules:
     def test_custom_matching_rule_support(self) -> None:
         """RFC 2891 - Support for custom/extension matching rules."""
         custom_rule = "1.2.3.4.5.6.7.8.9.customOrderingMatch"
-        control = ServerSideSortControl([SortKey(attribute="customAttr", matching_rule=custom_rule)])
+        control = ServerSideSortControl(
+            [SortKey(attribute="customAttr", matching_rule=custom_rule)]
+        )
 
         encoded = control.encode_value()
         decoded = ServerSideSortControl.decode_value(encoded)
@@ -338,7 +352,9 @@ class TestRFC2891MatchingRules:
         """RFC 2891 - Matching rule names are case-sensitive."""
         # Test case sensitivity preservation
         case_sensitive_rule = "CaseIgnoreOrderingMatch"  # Intentional case variation
-        control = ServerSideSortControl([SortKey(attribute="cn", matching_rule=case_sensitive_rule)])
+        control = ServerSideSortControl(
+            [SortKey(attribute="cn", matching_rule=case_sensitive_rule)]
+        )
 
         encoded = control.encode_value()
         decoded = ServerSideSortControl.decode_value(encoded)
@@ -354,10 +370,12 @@ class TestRFC2891SearchBehavior:
     def test_sort_control_in_search_request(self, mock_connection) -> None:
         """RFC 2891 Section 3 - Sort control in search request."""
         # RFC 2891: Sort control is included in search request
-        sort_control = ServerSideSortControl([
-            SortKey(attribute="sn"),
-            SortKey(attribute="givenName"),
-        ])
+        sort_control = ServerSideSortControl(
+            [
+                SortKey(attribute="sn"),
+                SortKey(attribute="givenName"),
+            ]
+        )
 
         # Verify control can be serialized for network transmission
         encoded = sort_control.encode_value()
@@ -415,7 +433,11 @@ class TestRFC2891ConvenienceFunctions:
         sort_keys = [
             SortKey(attribute="sn", order=SortOrder.ASCENDING),
             SortKey(attribute="givenName", order=SortOrder.DESCENDING),
-            SortKey(attribute="mail", order=SortOrder.ASCENDING, matching_rule="caseIgnoreOrderingMatch"),
+            SortKey(
+                attribute="mail",
+                order=SortOrder.ASCENDING,
+                matching_rule="caseIgnoreOrderingMatch",
+            ),
         ]
         control = ServerSideSortControl(sort_keys)
 
@@ -469,7 +491,7 @@ class TestRFC2891ErrorHandling:
         """RFC 2891 - Malformed sort response handling."""
         # Test invalid SEQUENCE tag
         with pytest.raises(ControlDecodingError):
-            ServerSideSortResponse.decode_value(b"\x31\x03\x0A\x01\x00")
+            ServerSideSortResponse.decode_value(b"\x31\x03\x0a\x01\x00")
 
         # Test invalid ENUMERATED tag
         with pytest.raises(ControlDecodingError):
@@ -535,16 +557,20 @@ class TestRFC2891ComprehensiveCompliance:
         }
 
         # All checks must pass for RFC compliance
-        assert all(compliance_checks.values()), f"RFC 2891 compliance failed: {compliance_checks}"
+        assert all(compliance_checks.values()), (
+            f"RFC 2891 compliance failed: {compliance_checks}"
+        )
 
     def test_interoperability_requirements(self) -> None:
         """RFC 2891 - Interoperability requirements."""
         # RFC 2891: Must interoperate with standard LDAP implementations
 
         # Test with typical Active Directory sort request
-        ad_sort = ServerSideSortControl([
-            SortKey(attribute="sAMAccountName", order=SortOrder.ASCENDING),
-        ])
+        ad_sort = ServerSideSortControl(
+            [
+                SortKey(attribute="sAMAccountName", order=SortOrder.ASCENDING),
+            ]
+        )
 
         encoded_ad = ad_sort.encode_value()
         decoded_ad = ServerSideSortControl.decode_value(encoded_ad)
@@ -552,10 +578,12 @@ class TestRFC2891ComprehensiveCompliance:
         assert decoded_ad.sort_keys[0].attribute == "sAMAccountName"
 
         # Test with typical OpenLDAP sort request
-        openldap_sort = ServerSideSortControl([
-            SortKey(attribute="uid", order=SortOrder.ASCENDING),
-            SortKey(attribute="cn", order=SortOrder.ASCENDING),
-        ])
+        openldap_sort = ServerSideSortControl(
+            [
+                SortKey(attribute="uid", order=SortOrder.ASCENDING),
+                SortKey(attribute="cn", order=SortOrder.ASCENDING),
+            ]
+        )
 
         encoded_openldap = openldap_sort.encode_value()
         decoded_openldap = ServerSideSortControl.decode_value(encoded_openldap)

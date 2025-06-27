@@ -68,20 +68,30 @@ class TestConnectionPoolsWorkspaceCompliance:
         # Fixture automatically validates workspace venv usage
         expected_venv = "/home/marlonsc/pyauto/.venv"
         current_venv = os.environ.get("VIRTUAL_ENV")
-        assert current_venv == expected_venv, f"Pool tests must use workspace venv: {expected_venv}"
+        assert current_venv == expected_venv, (
+            f"Pool tests must use workspace venv: {expected_venv}"
+        )
 
     @pytest.mark.env_security
     def test_pool_env_security_enforcement(self, validate_env_security) -> None:
         """Test connection pool .env security enforcement as required by CLAUDE.md."""
         # Test connection pool configuration security
-        with patch.dict(os.environ, {
-            "LDAP_CORE_ENABLE_CONNECTION_POOLING": "true",
-            "LDAP_CORE_CONNECTION_TIMEOUT": "30",
-        }, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "LDAP_CORE_ENABLE_CONNECTION_POOLING": "true",
+                "LDAP_CORE_CONNECTION_TIMEOUT": "30",
+            },
+            clear=False,
+        ):
             # Validate no hardcoded secrets in pool configuration
             for key, value in os.environ.items():
-                if "pool" in key.lower() and ("password" in key.lower() or "secret" in key.lower()):
-                    assert value.startswith("${") or len(value) == 0, f"Hardcoded secret in pool config: {key}"
+                if "pool" in key.lower() and (
+                    "password" in key.lower() or "secret" in key.lower()
+                ):
+                    assert value.startswith("${") or len(value) == 0, (
+                        f"Hardcoded secret in pool config: {key}"
+                    )
 
     @pytest.mark.cli_debug
     def test_pool_cli_debug_patterns(self, cli_debug_patterns) -> None:
@@ -95,7 +105,9 @@ class TestConnectionPoolsWorkspaceCompliance:
         assert os.environ.get("LDAP_CORE_CLI_DEBUG") == "true"
 
     @pytest.mark.solid_compliance
-    def test_pool_solid_principles_compliance(self, solid_principles_validation) -> None:
+    def test_pool_solid_principles_compliance(
+        self, solid_principles_validation
+    ) -> None:
         """Test connection pool SOLID principles compliance."""
         # Validate AsyncConnectionPool follows SOLID principles
         from ldap_core_shared.connections.interfaces import BaseConnectionComponent
@@ -282,7 +294,11 @@ class TestAsyncConnectionPool:
         mock_conn3 = Mock()
         mock_conn3.bind.return_value = True  # Success
 
-        mock_factory.create_connection.side_effect = [mock_conn1, mock_conn2, mock_conn3]
+        mock_factory.create_connection.side_effect = [
+            mock_conn1,
+            mock_conn2,
+            mock_conn3,
+        ]
 
         pool = AsyncConnectionPool(
             connection_info=mock_connection_info,
@@ -758,7 +774,10 @@ class TestAsyncConnectionPoolIntegration:
             mock_conn.bound = True
             mock_new_connections.append(mock_conn)
 
-        mock_factory.create_connection.side_effect = [mock_initial_conn, *mock_new_connections]
+        mock_factory.create_connection.side_effect = [
+            mock_initial_conn,
+            *mock_new_connections,
+        ]
 
         # Acquire multiple connections simultaneously
         async def acquire_connection():

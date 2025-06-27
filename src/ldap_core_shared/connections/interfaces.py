@@ -159,6 +159,7 @@ class ISecurityManager(Protocol):
             True if credentials are valid
         """
 
+
 # ============================================================================
 # 🔥 INTERFACE SEGREGATION PRINCIPLE - SMALL, FOCUSED INTERFACES
 # ============================================================================
@@ -269,6 +270,7 @@ class IConnectionLifecycle(Protocol):
     async def refresh(self) -> None:
         """Refresh connections."""
 
+
 # ============================================================================
 # 🔥 OPEN/CLOSED PRINCIPLE - EXTENSIBLE ABSTRACTIONS
 # ============================================================================
@@ -305,12 +307,17 @@ class BaseOperationHandler(ABC):
     """
 
     @abstractmethod
-    async def execute(self, *args: str | int | bool, **kwargs: str | int | bool | list[str] | None) -> bool | list[Attributes] | None:
+    async def execute(
+        self, *args: str | int | bool, **kwargs: str | int | bool | list[str] | None,
+    ) -> bool | list[Attributes] | None:
         """Execute operation."""
 
     @abstractmethod
-    def validate_parameters(self, *args: str | int | bool, **kwargs: str | int | bool | list[str] | None) -> bool:
+    def validate_parameters(
+        self, *args: str | int | bool, **kwargs: str | int | bool | list[str] | None,
+    ) -> bool:
         """Validate operation parameters."""
+
 
 # ============================================================================
 # 🔥 DEPENDENCY INVERSION PRINCIPLE - DEPEND ON ABSTRACTIONS
@@ -379,6 +386,7 @@ class IConnectionManagerFactory(Protocol):
             Connection manager instance
         """
 
+
 # ============================================================================
 # 🔥 LISKOV SUBSTITUTION PRINCIPLE - INTERCHANGEABLE IMPLEMENTATIONS
 # ============================================================================
@@ -417,6 +425,7 @@ class ConnectionManagerContract(ABC):
 
         All implementations must handle errors the same way.
         """
+
 
 # ============================================================================
 # 🔥 COMPOSITION INTERFACES - ENABLE DEPENDENCY INJECTION
@@ -477,6 +486,7 @@ class ILogger(Protocol):
     @abstractmethod
     def log_debug(self, message: str, **kwargs) -> None:
         """Log debug message."""
+
 
 # ============================================================================
 # 🔥 SOLID PRINCIPLE VALIDATION

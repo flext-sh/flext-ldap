@@ -37,9 +37,9 @@ References:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -49,27 +49,27 @@ from ldap_core_shared.controls.base import LDAPControl
 class SyncStateValue(Enum):
     """Synchronization state values for entries."""
 
-    PRESENT = "present"          # Entry is present and unchanged
-    ADD = "add"                 # Entry was added
-    MODIFY = "modify"           # Entry was modified
-    DELETE = "delete"           # Entry was deleted
+    PRESENT = "present"  # Entry is present and unchanged
+    ADD = "add"  # Entry was added
+    MODIFY = "modify"  # Entry was modified
+    DELETE = "delete"  # Entry was deleted
 
 
 class EntryChangeType(Enum):
     """Types of entry changes for synchronization."""
 
-    CONTENT_CHANGE = "content_change"        # Content attributes changed
+    CONTENT_CHANGE = "content_change"  # Content attributes changed
     STRUCTURAL_CHANGE = "structural_change"  # Structural changes (DN, etc.)
     OPERATIONAL_CHANGE = "operational_change"  # Operational attributes changed
-    METADATA_CHANGE = "metadata_change"     # Metadata or timestamps changed
+    METADATA_CHANGE = "metadata_change"  # Metadata or timestamps changed
 
 
 class SyncContextType(Enum):
     """Types of synchronization context."""
 
-    REFRESH = "refresh"          # Refresh synchronization context
-    PERSIST = "persist"          # Persistent synchronization context
-    HYBRID = "hybrid"           # Hybrid refresh and persist context
+    REFRESH = "refresh"  # Refresh synchronization context
+    PERSIST = "persist"  # Persistent synchronization context
+    HYBRID = "hybrid"  # Hybrid refresh and persist context
 
 
 class EntryUUID(BaseModel):
@@ -79,12 +79,13 @@ class EntryUUID(BaseModel):
 
     # Metadata
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="UUID creation timestamp",
     )
 
-    entry_dn: Optional[str] = Field(
-        default=None, description="Distinguished name of entry",
+    entry_dn: str | None = Field(
+        default=None,
+        description="Distinguished name of entry",
     )
 
     def get_uuid_string(self) -> str:
@@ -137,56 +138,68 @@ class SyncStateInfo(BaseModel):
 
     state: SyncStateValue = Field(description="Synchronization state of entry")
 
-    entry_uuid: Optional[EntryUUID] = Field(
-        default=None, description="UUID of synchronized entry",
+    entry_uuid: EntryUUID | None = Field(
+        default=None,
+        description="UUID of synchronized entry",
     )
 
-    cookie: Optional[bytes] = Field(
-        default=None, description="Synchronization state cookie",
+    cookie: bytes | None = Field(
+        default=None,
+        description="Synchronization state cookie",
     )
 
     # Change information
-    change_type: Optional[EntryChangeType] = Field(
-        default=None, description="Type of change for entry",
+    change_type: EntryChangeType | None = Field(
+        default=None,
+        description="Type of change for entry",
     )
 
-    change_timestamp: Optional[datetime] = Field(
-        default=None, description="Timestamp of entry change",
+    change_timestamp: datetime | None = Field(
+        default=None,
+        description="Timestamp of entry change",
     )
 
-    change_number: Optional[int] = Field(
-        default=None, description="Change sequence number",
+    change_number: int | None = Field(
+        default=None,
+        description="Change sequence number",
     )
 
     # Context information
     sync_context: SyncContextType = Field(
-        default=SyncContextType.REFRESH, description="Synchronization context type",
+        default=SyncContextType.REFRESH,
+        description="Synchronization context type",
     )
 
-    context_id: Optional[str] = Field(
-        default=None, description="Synchronization context identifier",
+    context_id: str | None = Field(
+        default=None,
+        description="Synchronization context identifier",
     )
 
     # Metadata
-    previous_state: Optional[SyncStateValue] = Field(
-        default=None, description="Previous synchronization state",
+    previous_state: SyncStateValue | None = Field(
+        default=None,
+        description="Previous synchronization state",
     )
 
     replicated_servers: list[str] = Field(
-        default_factory=list, description="Servers that have replicated this change",
+        default_factory=list,
+        description="Servers that have replicated this change",
     )
 
-    conflict_resolution: Optional[str] = Field(
-        default=None, description="Conflict resolution information",
+    conflict_resolution: str | None = Field(
+        default=None,
+        description="Conflict resolution information",
     )
 
     # Performance tracking
-    processing_time: Optional[float] = Field(
-        default=None, description="State processing time in seconds",
+    processing_time: float | None = Field(
+        default=None,
+        description="State processing time in seconds",
     )
 
-    replication_lag: Optional[float] = Field(
-        default=None, description="Replication lag in seconds",
+    replication_lag: float | None = Field(
+        default=None,
+        description="Replication lag in seconds",
     )
 
     def is_change_state(self) -> bool:
@@ -207,9 +220,10 @@ class SyncStateInfo(BaseModel):
         Returns:
             True if change affects entry structure
         """
-        return (
-            self.change_type == EntryChangeType.STRUCTURAL_CHANGE or self.state in {SyncStateValue.ADD, SyncStateValue.DELETE}
-        )
+        return self.change_type == EntryChangeType.STRUCTURAL_CHANGE or self.state in {
+            SyncStateValue.ADD,
+            SyncStateValue.DELETE,
+        }
 
     def get_state_summary(self) -> dict[str, Any]:
         """Get state summary information.
@@ -222,10 +236,14 @@ class SyncStateInfo(BaseModel):
             "is_change": self.is_change_state(),
             "change_type": self.change_type.value if self.change_type else None,
             "has_uuid": self.entry_uuid is not None,
-            "uuid_string": self.entry_uuid.get_uuid_string() if self.entry_uuid else None,
+            "uuid_string": self.entry_uuid.get_uuid_string()
+            if self.entry_uuid
+            else None,
             "has_cookie": self.cookie is not None,
             "sync_context": self.sync_context.value,
-            "change_timestamp": self.change_timestamp.isoformat() if self.change_timestamp else None,
+            "change_timestamp": self.change_timestamp.isoformat()
+            if self.change_timestamp
+            else None,
             "processing_time": self.processing_time,
         }
 
@@ -261,8 +279,8 @@ class SyncStateControl(LDAPControl):
     def __init__(
         self,
         state: SyncStateValue = SyncStateValue.PRESENT,
-        entry_uuid: Optional[EntryUUID] = None,
-        cookie: Optional[bytes] = None,
+        entry_uuid: EntryUUID | None = None,
+        cookie: bytes | None = None,
         criticality: bool = False,
     ) -> None:
         """Initialize Sync State control.
@@ -285,11 +303,10 @@ class SyncStateControl(LDAPControl):
 
         # Processing state
         self._processed = False
-        self._processing_start: Optional[datetime] = None
+        self._processing_start: datetime | None = None
 
         # Initialize base control
         super().__init__(
-
             criticality=criticality,
             control_value=self._encode_request(),
         )
@@ -323,7 +340,7 @@ class SyncStateControl(LDAPControl):
         Raises:
             NotImplementedError: Response processing not yet implemented
         """
-        self._processing_start = datetime.now(timezone.utc)
+        self._processing_start = datetime.now(UTC)
 
         try:
             # TODO: Implement BER decoding of Sync State response
@@ -339,7 +356,7 @@ class SyncStateControl(LDAPControl):
         finally:
             if self._processing_start:
                 processing_time = (
-                    datetime.now(timezone.utc) - self._processing_start
+                    datetime.now(UTC) - self._processing_start
                 ).total_seconds()
                 self._sync_state_info.processing_time = processing_time
 
@@ -348,8 +365,8 @@ class SyncStateControl(LDAPControl):
     def update_change_info(
         self,
         change_type: EntryChangeType,
-        change_timestamp: Optional[datetime] = None,
-        change_number: Optional[int] = None,
+        change_timestamp: datetime | None = None,
+        change_number: int | None = None,
     ) -> None:
         """Update change information for entry.
 
@@ -359,15 +376,15 @@ class SyncStateControl(LDAPControl):
             change_number: Change sequence number
         """
         self._sync_state_info.change_type = change_type
-        self._sync_state_info.change_timestamp = (
-            change_timestamp or datetime.now(timezone.utc)
+        self._sync_state_info.change_timestamp = change_timestamp or datetime.now(
+            UTC,
         )
         self._sync_state_info.change_number = change_number
 
     def set_context_info(
         self,
         sync_context: SyncContextType,
-        context_id: Optional[str] = None,
+        context_id: str | None = None,
     ) -> None:
         """Set synchronization context information.
 
@@ -411,7 +428,7 @@ class SyncStateControl(LDAPControl):
         """
         return self._sync_state_info.is_structural_change()
 
-    def get_entry_uuid_string(self) -> Optional[str]:
+    def get_entry_uuid_string(self) -> str | None:
         """Get entry UUID as string.
 
         Returns:
@@ -419,7 +436,8 @@ class SyncStateControl(LDAPControl):
         """
         return (
             self._sync_state_info.entry_uuid.get_uuid_string()
-            if self._sync_state_info.entry_uuid else None
+            if self._sync_state_info.entry_uuid
+            else None
         )
 
     def get_state_summary(self) -> dict[str, Any]:
@@ -429,14 +447,20 @@ class SyncStateControl(LDAPControl):
             Dictionary with state summary and metadata
         """
         summary = self._sync_state_info.get_state_summary()
-        summary.update({
-            "control_processed": self._processed,
-            "processing_start": (
-                self._processing_start.isoformat() if self._processing_start else None
-            ),
-            "replication_servers": len(self._sync_state_info.replicated_servers),
-            "has_conflict_resolution": bool(self._sync_state_info.conflict_resolution),
-        })
+        summary.update(
+            {
+                "control_processed": self._processed,
+                "processing_start": (
+                    self._processing_start.isoformat()
+                    if self._processing_start
+                    else None
+                ),
+                "replication_servers": len(self._sync_state_info.replicated_servers),
+                "has_conflict_resolution": bool(
+                    self._sync_state_info.conflict_resolution,
+                ),
+            },
+        )
 
         return summary
 
@@ -451,16 +475,16 @@ class SyncStateControl(LDAPControl):
         return self._sync_state_info.state
 
     @property
-    def entry_uuid(self) -> Optional[EntryUUID]:
+    def entry_uuid(self) -> EntryUUID | None:
         """Get entry UUID."""
         return self._sync_state_info.entry_uuid
 
     @property
-    def cookie(self) -> Optional[bytes]:
+    def cookie(self) -> bytes | None:
         """Get synchronization cookie."""
         return self._sync_state_info.cookie
 
-    def encode_value(self) -> Optional[bytes]:
+    def encode_value(self) -> bytes | None:
         """Encode sync state control value to ASN.1 bytes.
 
         Returns:
@@ -469,7 +493,7 @@ class SyncStateControl(LDAPControl):
         return self.control_value
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> SyncStateControl:
+    def decode_value(cls, control_value: bytes | None) -> SyncStateControl:
         """Decode ASN.1 bytes to create sync state control instance.
 
         Args:
@@ -498,8 +522,8 @@ class SyncStateControl(LDAPControl):
 # Convenience functions
 def create_sync_state_control(
     state: SyncStateValue,
-    entry_uuid: Optional[bytes] = None,
-    cookie: Optional[bytes] = None,
+    entry_uuid: bytes | None = None,
+    cookie: bytes | None = None,
 ) -> SyncStateControl:
     """Create Sync State control with basic information.
 
@@ -532,10 +556,16 @@ def process_sync_state_controls(controls: list[LDAPControl]) -> list[SyncStateIn
     Returns:
         List of sync state information objects
     """
-    return [control.sync_state_info for control in controls if isinstance(control, SyncStateControl)]
+    return [
+        control.sync_state_info
+        for control in controls
+        if isinstance(control, SyncStateControl)
+    ]
 
 
-def extract_entry_changes(controls: list[LDAPControl]) -> list[tuple[SyncStateValue, Optional[str]]]:
+def extract_entry_changes(
+    controls: list[LDAPControl],
+) -> list[tuple[SyncStateValue, str | None]]:
     """Extract entry changes from sync state controls.
 
     Args:
@@ -564,7 +594,11 @@ def filter_changed_entries(controls: list[LDAPControl]) -> list[SyncStateControl
     Returns:
         List of sync state controls for changed entries
     """
-    return [control for control in controls if isinstance(control, SyncStateControl) and control.is_change_state()]
+    return [
+        control
+        for control in controls
+        if isinstance(control, SyncStateControl) and control.is_change_state()
+    ]
 
 
 async def track_entry_synchronization(
@@ -593,6 +627,7 @@ async def track_entry_synchronization(
         "change history maintenance for ongoing synchronization."
     )
     raise NotImplementedError(msg)
+
 
 # TODO: Integration points for implementation:
 #

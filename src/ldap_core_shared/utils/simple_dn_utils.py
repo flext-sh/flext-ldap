@@ -11,15 +11,16 @@ with RFC 4514 compliance, comprehensive validation, advanced manipulation.
 
 MIGRATION BENEFITS:
 - Eliminated simple DN implementation duplication
-- Leverages enterprise validation and RFC compliance  
+- Leverages enterprise validation and RFC compliance
 - Automatic improvements from enterprise DN system
 - Consistent behavior with simplified interface
 """
 
-
 # Delegate to enterprise DN infrastructure
 from ldap_core_shared.utilities.dn import (
     DistinguishedName as EnterpriseDistinguishedName,
+)
+from ldap_core_shared.utilities.dn import (
     normalize_dn as enterprise_normalize_dn,
 )
 
@@ -42,13 +43,12 @@ def simple_parse_dn(dn_string: str) -> list[tuple[str, str]]:
 
     # Delegate to enterprise DN parsing
     enterprise_dn = EnterpriseDistinguishedName(dn_string)
-    
+
     # Convert to simple tuple format with lowercase attributes for backward compatibility
-    components = []
-    for comp in enterprise_dn.components:
-        components.append((comp.attribute_type.lower(), comp.attribute_value))
-    
-    return components
+    return [
+        (comp.attribute_type.lower(), comp.attribute_value)
+        for comp in enterprise_dn.components
+    ]
 
 
 def simple_normalize_dn(dn_string: str) -> str:

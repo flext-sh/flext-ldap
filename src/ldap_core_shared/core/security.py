@@ -8,8 +8,13 @@ import time
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 
+try:
+    from typing import Self
+except ImportError:
+    # Fallback for Python < 3.11
+    from typing import Self
+
 from pydantic import BaseModel, ConfigDict, Field
-from typing_extensions import Self
 
 # Constants for magic values
 from ldap_core_shared.utils.constants import (
@@ -42,6 +47,7 @@ class SSHTunnelConfig(BaseModel):
     ssh_key_password: str | None = None
 
     # Tunnel settings
+    local_bind_host: str | None = Field(default=None)
     local_bind_port: int | None = Field(default=None, gt=0, lt=65536)
     remote_host: str = "localhost"
     remote_port: int = Field(default=22, gt=0, lt=65536)
@@ -99,7 +105,10 @@ class SSHTunnel:
                     self.config.remote_host,
                     self.config.remote_port,
                 ),
-                "local_bind_address": (self.config.local_bind_host or "127.0.0.1", local_port),
+                "local_bind_address": (
+                    self.config.local_bind_host or "127.0.0.1",
+                    local_port,
+                ),
                 "compression": self.config.compression,
             }
 
@@ -291,7 +300,9 @@ class SecurityManager:
         self._security_events: list[dict[str, Any]] = []
 
     @contextmanager
-    def secure_tunnel(self, config: SSHTunnelConfig, tunnel_id: str | None = None) -> Generator[SSHTunnel, None, None]:
+    def secure_tunnel(
+        self, config: SSHTunnelConfig, tunnel_id: str | None = None,
+    ) -> Generator[SSHTunnel, None, None]:
         """Create secure SSH tunnel context.
 
         Args:
@@ -429,6 +440,12 @@ class SecurityManager:
                 with context.wrap_socket(sock, server_hostname=host) as ssock:
                     cert = ssock.getpeercert()
 
+                    if cert is None:
+                        return {
+                            "valid": False,
+                            "error": "No certificate received from server",
+                        }
+
                     return {
                         "valid": True,
                         "subject": dict(x[0] for x in cert.get("subject", [])),
@@ -445,7 +462,9 @@ class SecurityManager:
                 "error": str(e),
             }
 
-    def get_security_events(self, limit: int = DEFAULT_MAX_ITEMS) -> list[dict[str, Any]]:
+    def get_security_events(
+        self, limit: int = DEFAULT_MAX_ITEMS,
+    ) -> list[dict[str, Any]]:
         """Get recent security events.
 
         Args:

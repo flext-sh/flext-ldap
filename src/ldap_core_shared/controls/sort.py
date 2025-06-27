@@ -53,7 +53,6 @@ References:
 SECONDS_PER_MINUTE = 60
 
 from enum import Enum
-from typing import Optional, Union
 
 from pydantic import BaseModel, Field, validator
 
@@ -137,19 +136,22 @@ class SortKey(BaseModel):
     attribute: str = Field(description="LDAP attribute name to sort by", min_length=1)
 
     order: SortOrder = Field(
-        default=SortOrder.ASCENDING, description="Sort order for this attribute",
+        default=SortOrder.ASCENDING,
+        description="Sort order for this attribute",
     )
 
-    matching_rule: Optional[str] = Field(
-        default=None, description="OID of matching rule for comparison",
+    matching_rule: str | None = Field(
+        default=None,
+        description="OID of matching rule for comparison",
     )
 
     reverse_order: bool = Field(
-        default=False, description="Whether to reverse the natural sort order",
+        default=False,
+        description="Whether to reverse the natural sort order",
     )
 
     @validator("attribute")
-    def validate_attribute_name(cls, v: str) -> str:
+    def validate_attribute_name(self, v: str) -> str:
         """Validate attribute name format."""
         if not v or not v.strip():
             msg = "Attribute name cannot be empty"
@@ -164,7 +166,7 @@ class SortKey(BaseModel):
         return v
 
     @validator("order", pre=True)
-    def validate_sort_order(cls, v: Union[str, SortOrder]) -> SortOrder:
+    def validate_sort_order(self, v: str | SortOrder) -> SortOrder:
         """Validate and convert sort order."""
         if isinstance(v, str):
             v = v.lower()
@@ -222,11 +224,12 @@ class ServerSideSortControl(LDAPControl):
     control_type = ControlOIDs.SERVER_SIDE_SORT
 
     sort_keys: list[SortKey] = Field(
-        description="List of sort key specifications", min_length=1,
+        description="List of sort key specifications",
+        min_length=1,
     )
 
     @validator("sort_keys")
-    def validate_sort_keys(cls, v: list[SortKey]) -> list[SortKey]:
+    def validate_sort_keys(self, v: list[SortKey]) -> list[SortKey]:
         """Validate sort keys list."""
         if not v:
             msg = "At least one sort key is required"
@@ -265,7 +268,9 @@ class ServerSideSortControl(LDAPControl):
 
                 # Add ordering rule if specified (context tag [0])
                 if sort_key.matching_rule:
-                    rule_encoded = ASN1Encoder.encode_utf8_string(sort_key.matching_rule)
+                    rule_encoded = ASN1Encoder.encode_utf8_string(
+                        sort_key.matching_rule,
+                    )
                     rule_tagged = ASN1Encoder.encode_context_tag(0, rule_encoded)
                     key_content += rule_tagged
 
@@ -293,7 +298,7 @@ class ServerSideSortControl(LDAPControl):
             raise ControlEncodingError(msg) from e
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> ServerSideSortControl:
+    def decode_value(cls, control_value: bytes | None) -> ServerSideSortControl:
         """Decode server side sort control value per RFC 2891.
 
         Args:
@@ -319,7 +324,9 @@ class ServerSideSortControl(LDAPControl):
             # Decode each SortKey SEQUENCE
             while ASN1Decoder.has_more_data(sequence_content, offset):
                 # Decode individual SortKey SEQUENCE
-                key_content, next_offset = ASN1Decoder.decode_sequence(sequence_content, offset)
+                key_content, next_offset = ASN1Decoder.decode_sequence(
+                    sequence_content, offset,
+                )
 
                 # Decode attribute type (UTF8String)
                 attribute, key_offset = ASN1Decoder.decode_utf8_string(key_content, 0)
@@ -334,14 +341,20 @@ class ServerSideSortControl(LDAPControl):
 
                     if tag == ASN1Tags.CONTEXT_0:  # Context tag [0] - ordering rule
                         rule_content, key_offset = ASN1Decoder.decode_context_tag(
-                            key_content, key_offset, 0,
+                            key_content,
+                            key_offset,
+                            0,
                         )
                         # Decode the UTF8String inside the context tag
-                        matching_rule, _ = ASN1Decoder.decode_utf8_string(rule_content, 0)
+                        matching_rule, _ = ASN1Decoder.decode_utf8_string(
+                            rule_content, 0,
+                        )
 
                     elif tag == ASN1Tags.CONTEXT_1:  # Context tag [1] - reverse order
                         bool_content, key_offset = ASN1Decoder.decode_context_tag(
-                            key_content, key_offset, 1,
+                            key_content,
+                            key_offset,
+                            1,
                         )
                         # Decode the BOOLEAN inside the context tag
                         reverse_order, _ = ASN1Decoder.decode_boolean(bool_content, 0)
@@ -372,8 +385,8 @@ class ServerSideSortControl(LDAPControl):
     def single_sort(
         cls,
         attribute: str,
-        order: Union[str, SortOrder] = SortOrder.ASCENDING,
-        matching_rule: Optional[str] = None,
+        order: str | SortOrder = SortOrder.ASCENDING,
+        matching_rule: str | None = None,
     ) -> ServerSideSortControl:
         """Create control for sorting by a single attribute.
 
@@ -386,13 +399,16 @@ class ServerSideSortControl(LDAPControl):
             ServerSideSortControl for single attribute
         """
         sort_key = SortKey(
-            attribute=attribute, order=order, matching_rule=matching_rule,
+            attribute=attribute,
+            order=order,
+            matching_rule=matching_rule,
         )
         return cls(sort_keys=[sort_key])
 
     @classmethod
     def multi_sort(
-        cls, *sort_specs: Union[str, tuple[str, str], tuple[str, str, str], SortKey],
+        cls,
+        *sort_specs: str | tuple[str, str] | tuple[str, str, str] | SortKey,
     ) -> ServerSideSortControl:
         """Create control for multi-attribute sorting.
 
@@ -482,8 +498,9 @@ class ServerSideSortResponse(LDAPControl):
 
     sort_result: SortResult = Field(description="Result code for sort operation")
 
-    attribute_type_error: Optional[str] = Field(
-        default=None, description="Attribute that caused sort error",
+    attribute_type_error: str | None = Field(
+        default=None,
+        description="Attribute that caused sort error",
     )
 
     def encode_value(self) -> bytes:
@@ -512,7 +529,7 @@ class ServerSideSortResponse(LDAPControl):
             raise ControlEncodingError(msg) from e
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> ServerSideSortResponse:
+    def decode_value(cls, control_value: bytes | None) -> ServerSideSortResponse:
         """Decode sort response control value per RFC 2891.
 
         Args:
@@ -539,7 +556,9 @@ class ServerSideSortResponse(LDAPControl):
             # Decode optional attribute error
             attribute_error = None
             if ASN1Decoder.has_more_data(sequence_content, offset):
-                attribute_error, _ = ASN1Decoder.decode_utf8_string(sequence_content, offset)
+                attribute_error, _ = ASN1Decoder.decode_utf8_string(
+                    sequence_content, offset,
+                )
 
             return cls(sort_result=sort_result, attribute_type_error=attribute_error)
 
@@ -551,7 +570,7 @@ class ServerSideSortResponse(LDAPControl):
         """Check if sort was successful."""
         return self.sort_result == SortResult.SUCCESS
 
-    def get_error_message(self) -> Optional[str]:
+    def get_error_message(self) -> str | None:
         """Get human-readable error message."""
         if self.is_successful():
             return None
@@ -600,6 +619,7 @@ def sort_descending(*attributes: str) -> ServerSideSortControl:
     """
     specs = [(attr, "descending") for attr in attributes]
     return ServerSideSortControl.multi_sort(*specs)
+
 
 # TODO: Integration points for implementation:
 #

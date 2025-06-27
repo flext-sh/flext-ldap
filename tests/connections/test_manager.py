@@ -109,7 +109,8 @@ class TestConnectionManager:
 
     @pytest.fixture
     def connection_options(
-        self, connection_info: LDAPConnectionInfo,
+        self,
+        connection_info: LDAPConnectionInfo,
     ) -> LDAPConnectionOptions:
         """Create test connection options."""
         return LDAPConnectionOptions(
@@ -146,7 +147,8 @@ class TestConnectionManager:
         assert len(manager._active_connections) == 0
 
     def test_from_options_creation(
-        self, connection_options: LDAPConnectionOptions,
+        self,
+        connection_options: LDAPConnectionOptions,
     ) -> None:
         """Test creating manager from options."""
         manager = ConnectionManager.from_options(connection_options)
@@ -158,7 +160,10 @@ class TestConnectionManager:
     @patch("ldap3.Connection")
     @patch("ldap3.Server")
     def test_create_connection(
-        self, mock_server: Any, mock_connection: Any, manager: Any,
+        self,
+        mock_server: Any,
+        mock_connection: Any,
+        manager: Any,
     ) -> None:
         """Test connection creation."""
         # Mock server and connection
@@ -306,10 +311,13 @@ class TestConnectionManager:
         mock_connection.return_value = mock_connection_instance
 
         # Test search
-        results = [result async for result in manager.search(
-            search_base="dc=test,dc=com",
-            search_filter="(objectClass=person)",
-        )]
+        results = [
+            result
+            async for result in manager.search(
+                search_base="dc=test,dc=com",
+                search_filter="(objectClass=person)",
+            )
+        ]
 
         # Verify results
         assert len(results) == 1
@@ -440,7 +448,10 @@ class TestConnectionManager:
     @patch("ldap3.Server")
     @pytest.mark.asyncio
     async def test_health_check(
-        self, mock_server: Any, mock_connection: Any, manager: Any,
+        self,
+        mock_server: Any,
+        mock_connection: Any,
+        manager: Any,
     ) -> None:
         """Test health check operation."""
         # Setup mock connection
@@ -553,7 +564,10 @@ class TestConnectionManager:
     @patch("ldap3.Server")
     @pytest.mark.asyncio
     async def test_error_handling(
-        self, mock_server: Any, mock_connection: Any, manager: Any,
+        self,
+        mock_server: Any,
+        mock_connection: Any,
+        manager: Any,
     ) -> None:
         """Test error handling in operations."""
         # Setup mock connection that raises exception
@@ -622,9 +636,9 @@ class TestPerformanceBenchmarks:
         acquisition_time = time.time() - start_time
 
         # Verify performance target (<10ms)
-        assert (
-            acquisition_time < 0.01
-        ), f"Connection acquisition took {acquisition_time:.3f}s, target <0.01s"
+        assert acquisition_time < 0.01, (
+            f"Connection acquisition took {acquisition_time:.3f}s, target <0.01s"
+        )
 
     @pytest.mark.benchmark
     @pytest.mark.asyncio
@@ -659,9 +673,9 @@ class TestPerformanceBenchmarks:
         throughput = total_entries / elapsed_time
 
         # Verify performance target (12K+ entries/second)
-        assert (
-            throughput > 12000
-        ), f"Search throughput {throughput:.0f} entries/s, target >12K/s"
+        assert throughput > 12000, (
+            f"Search throughput {throughput:.0f} entries/s, target >12K/s"
+        )
 
 
 class TestIntegrationScenarios:

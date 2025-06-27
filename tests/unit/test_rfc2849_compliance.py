@@ -131,10 +131,12 @@ description: This is a very long description that spans
         entry = result.data[0]
         description = entry.get_attribute_values("description")[0]
 
-        expected = ("This is a very long description that spans"
-                   "multiple lines and demonstrates the line folding"
-                   "capability of RFC 2849 compliant LDIF processors"
-                   "and ensures proper handling of continuation lines.")
+        expected = (
+            "This is a very long description that spans"
+            "multiple lines and demonstrates the line folding"
+            "capability of RFC 2849 compliant LDIF processors"
+            "and ensures proper handling of continuation lines."
+        )
         assert description == expected
 
     def test_invalid_line_folding_empty_previous_line(self) -> None:
@@ -150,7 +152,9 @@ dn: cn=test,dc=example,dc=com
         result = validator.validate_raw_content(ldif_content)
 
         assert result.is_valid is False
-        assert any("Folding into empty line not permitted" in error for error in result.errors)
+        assert any(
+            "Folding into empty line not permitted" in error for error in result.errors
+        )
 
 
 class TestRFC2849Base64Encoding:
@@ -443,7 +447,9 @@ class TestRFC2849URLReferences:
         processor = RFC2849LDIFProcessor()
 
         # Create a temporary file with content
-        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt", encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".txt", encoding="utf-8"
+        ) as f:
             f.write("This is content from a file URL reference")
             temp_file_path = f.name
 
@@ -604,7 +610,9 @@ telephonenumber: +1 408 555 1212
 
         # Verify first entry
         barbara = result.data[0]
-        assert barbara.dn == "cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com"
+        assert (
+            barbara.dn == "cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com"
+        )
         assert "Barbara Jensen" in barbara.get_attribute_values("cn")
         assert "A big sailing fan." in barbara.get_attribute_values("description")
 
@@ -752,7 +760,9 @@ objectClass: person
 cn: test
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(ldif_content)
             f.flush()
 

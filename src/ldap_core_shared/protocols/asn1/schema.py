@@ -48,7 +48,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -76,16 +76,19 @@ class ASN1Constraint(BaseModel):
     """
 
     constraint_type: str = Field(description="Type of constraint (SIZE, VALUE, etc.)")
-    min_value: Optional[int] = Field(default=None, description="Minimum value")
-    max_value: Optional[int] = Field(default=None, description="Maximum value")
-    permitted_values: Optional[list[Any]] = Field(
-        default=None, description="Permitted values",
+    min_value: int | None = Field(default=None, description="Minimum value")
+    max_value: int | None = Field(default=None, description="Maximum value")
+    permitted_values: list[Any] | None = Field(
+        default=None,
+        description="Permitted values",
     )
-    excluded_values: Optional[list[Any]] = Field(
-        default=None, description="Excluded values",
+    excluded_values: list[Any] | None = Field(
+        default=None,
+        description="Excluded values",
     )
     extension_marker: bool = Field(
-        default=False, description="Extension marker present",
+        default=False,
+        description="Extension marker present",
     )
 
     def validate_value(self, value: Any) -> bool:
@@ -98,7 +101,7 @@ class ASN1Constraint(BaseModel):
             True if value satisfies constraint
         """
         if self.constraint_type == "SIZE":
-            if isinstance(value, (str, bytes, list)):
+            if isinstance(value, str | bytes | list):
                 size = len(value)
                 if self.min_value is not None and size < self.min_value:
                     return False
@@ -138,22 +141,25 @@ class ASN1TypeDefinition(BaseModel):
     name: str = Field(description="Type name")
     base_type: str = Field(description="Base ASN.1 type (SEQUENCE, INTEGER, etc.)")
     constraints: list[ASN1Constraint] = Field(
-        default_factory=list, description="Type constraints",
+        default_factory=list,
+        description="Type constraints",
     )
-    tag: Optional[str] = Field(default=None, description="Custom tag specification")
+    tag: str | None = Field(default=None, description="Custom tag specification")
     optional: bool = Field(default=False, description="Whether type is optional")
-    default_value: Optional[Any] = Field(default=None, description="Default value")
+    default_value: Any | None = Field(default=None, description="Default value")
 
     # For constructed types
     components: list[ASN1TypeDefinition] = Field(
-        default_factory=list, description="Sequence/Set components",
+        default_factory=list,
+        description="Sequence/Set components",
     )
     choice_alternatives: dict[str, ASN1TypeDefinition] = Field(
-        default_factory=dict, description="Choice alternatives",
+        default_factory=dict,
+        description="Choice alternatives",
     )
 
     # Metadata
-    description: Optional[str] = Field(default=None, description="Type description")
+    description: str | None = Field(default=None, description="Type description")
     references: list[str] = Field(default_factory=list, description="Referenced types")
 
     def validate_constraints(self, value: Any) -> list[str]:
@@ -165,7 +171,11 @@ class ASN1TypeDefinition(BaseModel):
         Returns:
             List of constraint violation errors
         """
-        return [f"Value {value} violates constraint {constraint}" for constraint in self.constraints if not constraint.validate_value(value)]
+        return [
+            f"Value {value} violates constraint {constraint}"
+            for constraint in self.constraints
+            if not constraint.validate_value(value)
+        ]
 
     def get_referenced_types(self) -> set[str]:
         """Get all types referenced by this type definition.
@@ -247,7 +257,7 @@ class ASN1ValueAssignment(BaseModel):
     name: str = Field(description="Value name")
     type_name: str = Field(description="Type of the value")
     value: Any = Field(description="Assigned value")
-    description: Optional[str] = Field(default=None, description="Value description")
+    description: str | None = Field(default=None, description="Value description")
 
     def to_asn1_notation(self) -> str:
         """Convert value assignment to ASN.1 notation.
@@ -266,8 +276,9 @@ class ASN1ImportExport(BaseModel):
 
     symbols: list[str] = Field(description="Imported/exported symbols")
     module_name: str = Field(description="Source/target module name")
-    module_oid: Optional[str] = Field(
-        default=None, description="Module object identifier",
+    module_oid: str | None = Field(
+        default=None,
+        description="Module object identifier",
     )
 
     def to_asn1_notation(self, import_export: str) -> str:
@@ -299,36 +310,43 @@ class ASN1Module(BaseModel):
     """
 
     name: str = Field(description="Module name")
-    oid: Optional[str] = Field(default=None, description="Module object identifier")
+    oid: str | None = Field(default=None, description="Module object identifier")
     tag_default: str = Field(
-        default="EXPLICIT", description="Default tagging (EXPLICIT/IMPLICIT)",
+        default="EXPLICIT",
+        description="Default tagging (EXPLICIT/IMPLICIT)",
     )
     extensibility_implied: bool = Field(
-        default=False, description="Extensibility implied",
+        default=False,
+        description="Extensibility implied",
     )
 
     # Module contents
     type_definitions: dict[str, ASN1TypeDefinition] = Field(
-        default_factory=dict, description="Type definitions",
+        default_factory=dict,
+        description="Type definitions",
     )
     value_assignments: dict[str, ASN1ValueAssignment] = Field(
-        default_factory=dict, description="Value assignments",
+        default_factory=dict,
+        description="Value assignments",
     )
     imports: list[ASN1ImportExport] = Field(
-        default_factory=list, description="Import specifications",
+        default_factory=list,
+        description="Import specifications",
     )
-    exports: Optional[ASN1ImportExport] = Field(
-        default=None, description="Export specification",
+    exports: ASN1ImportExport | None = Field(
+        default=None,
+        description="Export specification",
     )
 
     # Metadata
-    description: Optional[str] = Field(default=None, description="Module description")
-    version: Optional[str] = Field(default=None, description="Module version")
+    description: str | None = Field(default=None, description="Module description")
+    version: str | None = Field(default=None, description="Module version")
     created_date: datetime = Field(
-        default_factory=datetime.now, description="Creation date",
+        default_factory=datetime.now,
+        description="Creation date",
     )
 
-    def get_type_definition(self, name: str) -> Optional[ASN1TypeDefinition]:
+    def get_type_definition(self, name: str) -> ASN1TypeDefinition | None:
         """Get type definition by name.
 
         Args:
@@ -339,7 +357,7 @@ class ASN1Module(BaseModel):
         """
         return self.type_definitions.get(name)
 
-    def get_value_assignment(self, name: str) -> Optional[ASN1ValueAssignment]:
+    def get_value_assignment(self, name: str) -> ASN1ValueAssignment | None:
         """Get value assignment by name.
 
         Args:
@@ -382,7 +400,11 @@ class ASN1Module(BaseModel):
         # Check each type definition
         for type_def in self.type_definitions.values():
             referenced = type_def.get_referenced_types()
-            errors.extend(f"Type '{type_def.name}' references undefined type '{ref_type}'" for ref_type in referenced if ref_type not in all_types and not self._is_builtin_type(ref_type))
+            errors.extend(
+                f"Type '{type_def.name}' references undefined type '{ref_type}'"
+                for ref_type in referenced
+                if ref_type not in all_types and not self._is_builtin_type(ref_type)
+            )
 
         return errors
 
@@ -396,14 +418,38 @@ class ASN1Module(BaseModel):
             True if builtin type
         """
         builtin_types = {
-            "BOOLEAN", "INTEGER", "BIT STRING", "OCTET STRING", "NULL",
-            "OBJECT IDENTIFIER", "ObjectDescriptor", "EXTERNAL", "REAL",
-            "ENUMERATED", "EMBEDDED PDV", "UTF8String", "RELATIVE-OID",
-            "SEQUENCE", "SEQUENCE OF", "SET", "SET OF", "CHOICE",
-            "NumericString", "PrintableString", "T61String", "VideotexString",
-            "IA5String", "UTCTime", "GeneralizedTime", "GraphicString",
-            "VisibleString", "GeneralString", "UniversalString", "BMPString",
-            "UnrestrictedCharacterString", "CHARACTER STRING",
+            "BOOLEAN",
+            "INTEGER",
+            "BIT STRING",
+            "OCTET STRING",
+            "NULL",
+            "OBJECT IDENTIFIER",
+            "ObjectDescriptor",
+            "EXTERNAL",
+            "REAL",
+            "ENUMERATED",
+            "EMBEDDED PDV",
+            "UTF8String",
+            "RELATIVE-OID",
+            "SEQUENCE",
+            "SEQUENCE OF",
+            "SET",
+            "SET OF",
+            "CHOICE",
+            "NumericString",
+            "PrintableString",
+            "T61String",
+            "VideotexString",
+            "IA5String",
+            "UTCTime",
+            "GeneralizedTime",
+            "GraphicString",
+            "VisibleString",
+            "GeneralString",
+            "UniversalString",
+            "BMPString",
+            "UnrestrictedCharacterString",
+            "CHARACTER STRING",
         }
         return type_name in builtin_types
 
@@ -455,11 +501,12 @@ class ASN1SchemaParseResult(BaseModel):
     """Result of ASN.1 schema parsing operation."""
 
     success: bool = Field(description="Whether parsing succeeded")
-    module: Optional[ASN1Module] = Field(default=None, description="Parsed module")
+    module: ASN1Module | None = Field(default=None, description="Parsed module")
     errors: list[str] = Field(default_factory=list, description="Parse errors")
     warnings: list[str] = Field(default_factory=list, description="Parse warnings")
-    parse_time_ms: Optional[float] = Field(
-        default=None, description="Parse time in milliseconds",
+    parse_time_ms: float | None = Field(
+        default=None,
+        description="Parse time in milliseconds",
     )
 
     def add_error(self, error: str) -> None:
@@ -531,6 +578,7 @@ class ASN1SchemaParser:
             Parse result with module or errors
         """
         import time
+
         start_time = time.time()
 
         result = ASN1SchemaParseResult(success=True)
@@ -613,7 +661,9 @@ class ASN1SchemaParser:
         return cleaned.strip()
 
     def _parse_module_header(
-        self, schema_text: str, result: ASN1SchemaParseResult,
+        self,
+        schema_text: str,
+        result: ASN1SchemaParseResult,
     ) -> ASN1Module:
         """Parse module header.
 
@@ -640,7 +690,10 @@ class ASN1SchemaParser:
         )
 
     def _parse_module_body(
-        self, schema_text: str, module: ASN1Module, result: ASN1SchemaParseResult,
+        self,
+        schema_text: str,
+        module: ASN1Module,
+        result: ASN1SchemaParseResult,
     ) -> None:
         """Parse module body content.
 
@@ -657,7 +710,7 @@ class ASN1SchemaParser:
             result.add_error("Could not find module BEGIN/END markers")
             return
 
-        body = schema_text[begin_pos + 5:end_pos].strip()
+        body = schema_text[begin_pos + 5 : end_pos].strip()
 
         # Parse imports
         self._parse_imports(body, module, result)
@@ -669,7 +722,10 @@ class ASN1SchemaParser:
         self._parse_type_assignments(body, module, result)
 
     def _parse_imports(
-        self, body: str, module: ASN1Module, result: ASN1SchemaParseResult,
+        self,
+        body: str,
+        module: ASN1Module,
+        result: ASN1SchemaParseResult,
     ) -> None:
         """Parse import statements.
 
@@ -683,13 +739,18 @@ class ASN1SchemaParser:
             match.group(1).strip()
             # TODO: Parse detailed import syntax
             # For now, create a simple import entry
-            module.imports.append(ASN1ImportExport(
-                symbols=["ImportedType"],
-                module_name="ImportedModule",
-            ))
+            module.imports.append(
+                ASN1ImportExport(
+                    symbols=["ImportedType"],
+                    module_name="ImportedModule",
+                ),
+            )
 
     def _parse_exports(
-        self, body: str, module: ASN1Module, result: ASN1SchemaParseResult,
+        self,
+        body: str,
+        module: ASN1Module,
+        result: ASN1SchemaParseResult,
     ) -> None:
         """Parse export statements.
 
@@ -708,7 +769,10 @@ class ASN1SchemaParser:
             )
 
     def _parse_type_assignments(
-        self, body: str, module: ASN1Module, result: ASN1SchemaParseResult,
+        self,
+        body: str,
+        module: ASN1Module,
+        result: ASN1SchemaParseResult,
     ) -> None:
         """Parse type assignments.
 
@@ -786,27 +850,29 @@ class ASN1SchemaCompiler:
         ]
 
         # TODO: Generate actual implementation based on type
-        lines.extend([
-            "    def __init__(self, value=None):",
-            "        super().__init__(value)",
-            "",
-            "    def get_default_tag(self):",
-            "        # TODO: Return appropriate tag",
-            "        return ASN1Tag(ASN1_UNIVERSAL, ASN1_PRIMITIVE, 0)",
-            "",
-            "    def encode(self, encoding='BER'):",
-            "        # TODO: Implement encoding",
-            "        raise NotImplementedError('Encoding not implemented')",
-            "",
-            "    @classmethod",
-            "    def decode(cls, data, offset=0):",
-            "        # TODO: Implement decoding",
-            "        raise NotImplementedError('Decoding not implemented')",
-            "",
-            "    def validate(self):",
-            "        # TODO: Implement validation",
-            "        return []",
-        ])
+        lines.extend(
+            [
+                "    def __init__(self, value=None):",
+                "        super().__init__(value)",
+                "",
+                "    def get_default_tag(self):",
+                "        # TODO: Return appropriate tag",
+                "        return ASN1Tag(ASN1_UNIVERSAL, ASN1_PRIMITIVE, 0)",
+                "",
+                "    def encode(self, encoding='BER'):",
+                "        # TODO: Implement encoding",
+                "        raise NotImplementedError('Encoding not implemented')",
+                "",
+                "    @classmethod",
+                "    def decode(cls, data, offset=0):",
+                "        # TODO: Implement decoding",
+                "        raise NotImplementedError('Decoding not implemented')",
+                "",
+                "    def validate(self):",
+                "        # TODO: Implement validation",
+                "        return []",
+            ],
+        )
 
         return lines
 

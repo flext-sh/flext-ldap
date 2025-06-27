@@ -225,6 +225,7 @@ class Result(Generic[T, TError]):
             return func(self.unwrap())
         return Result.error(self.unwrap_error())
 
+
 # ===== OPTION PATTERN GENERICS =====
 
 
@@ -350,6 +351,7 @@ class Option(Generic[T]):
             return func(self.unwrap())
         return Option.none()
 
+
 # ===== REPOSITORY PATTERN GENERICS =====
 
 
@@ -422,6 +424,7 @@ class Repository(BaseRepository[TEntity], Generic[TEntity]):
             Total number of entities
         """
         return len(self._entities)
+
 
 # ===== SERVICE PATTERN GENERICS =====
 
@@ -525,6 +528,7 @@ class Service(BaseService, Generic[TEntity]):
         except Exception as e:
             return Result.error(e)
 
+
 # ===== SPECIFICATION PATTERN GENERICS =====
 
 
@@ -572,6 +576,7 @@ class Specification(Protocol[T]):
         Returns:
             Negated specification
         """
+
 
 # ===== ITERATOR PATTERN GENERICS =====
 
@@ -660,6 +665,7 @@ class AsyncIteratorWrapper(Generic[T]):
         # Yield remaining items if any
         if batch:
             yield batch
+
 
 # ===== TYPE ALIASES FOR COMMON GENERIC PATTERNS =====
 

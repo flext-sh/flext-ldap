@@ -14,14 +14,14 @@ hierarchical loading, environment management, validation, type safety.
 
 PREFERRED PATTERN:
     from ldap_core_shared.core.config import ConfigManager, LDAPConnectionConfig
-    
+
     # Enterprise pattern:
     config = ConfigManager.load_config("production")
     ldap_config = config.connection
 
 LEGACY COMPATIBILITY:
     from ldap_core_shared.config.base_config import LDAPServerConfig
-    
+
     # Still works but delegates to enterprise config internally
     config = LDAPServerConfig(host="server.com", bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD", ...)
 
@@ -36,21 +36,21 @@ from __future__ import annotations
 
 import json
 import warnings
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from pydantic import Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Delegate to enterprise configuration infrastructure
 from ldap_core_shared.core.config import (
-    ApplicationConfig,
-    ConfigManager,
     LDAPConnectionConfig as EnterpriseLDAPConnectionConfig,
-    LoggingConfig as EnterpriseLoggingConfig,
-    SecurityConfig as EnterpriseSecurityConfig,
-    Environment,
 )
-
+from ldap_core_shared.core.config import (
+    LoggingConfig as EnterpriseLoggingConfig,
+)
+from ldap_core_shared.core.config import (
+    SecurityConfig as EnterpriseSecurityConfig,
+)
 from ldap_core_shared.utils.constants import (
     DEFAULT_LARGE_LIMIT,
     DEFAULT_MAX_ITEMS,
@@ -97,16 +97,16 @@ class BaseConfig(BaseSettings):
 
 class LDAPServerConfig:
     """LDAP server connection configuration - True Facade with Pure Delegation.
-    
+
     TRUE FACADE PATTERN: 100% DELEGATION TO ENTERPRISE CONFIG INFRASTRUCTURE
     ======================================================================
-    
+
     This class delegates entirely to the enterprise configuration system
     in core.config.LDAPConnectionConfig while providing backward compatibility.
-    
+
     DELEGATION TARGET: core.config.LDAPConnectionConfig - Enterprise LDAP config
     with validation, environment loading, security standards, monitoring.
-    
+
     MIGRATION BENEFITS:
     - Eliminated configuration duplication
     - Leverages enterprise validation and loading
@@ -114,14 +114,14 @@ class LDAPServerConfig:
     - Consistent behavior across all LDAP configuration usage
     """
 
-    def __init__(self, host: str, port: int = LDAP_DEFAULT_PORT, bind_dn: str = "", 
-                 password: str = "", base_dn: str = "", use_ssl: bool = False, 
-                 use_tls: bool = False, timeout: int = DEFAULT_TIMEOUT_SECONDS, 
-                 pool_size: int = 10, **kwargs):
+    def __init__(self, host: str, port: int = LDAP_DEFAULT_PORT, bind_dn: str = "",
+                 password: str = "", base_dn: str = "", use_ssl: bool = False,
+                 use_tls: bool = False, timeout: int = DEFAULT_TIMEOUT_SECONDS,
+                 pool_size: int = 10, **kwargs) -> None:
         """Initialize LDAP server config facade.
-        
+
         Args:
-            host: LDAP server hostname  
+            host: LDAP server hostname
             port: LDAP server port
             bind_dn: Bind DN for authentication
             password: Password for authentication
@@ -134,18 +134,22 @@ class LDAPServerConfig:
         """
         # Store base_dn for legacy compatibility (not used by enterprise config)
         self._base_dn = base_dn
-        
+
         # Delegate to enterprise LDAP connection configuration
         servers = [f"{'ldaps' if use_ssl else 'ldap'}://{host}:{port}"]
-        
+
+        # Handle bind_password parameter conflict
+        kwargs_filtered = {k: v for k, v in kwargs.items() if k != "bind_password"}
+        actual_password = kwargs.get("bind_password", password)
+
         self._enterprise_config = EnterpriseLDAPConnectionConfig(
             servers=servers,
             bind_dn=bind_dn,
-            bind_password=password,
+            bind_password=actual_password,
             use_tls=use_ssl or use_tls,
             connection_timeout=float(timeout),
             pool_size=pool_size,
-            **kwargs
+            **kwargs_filtered,
         )
 
     @property
@@ -252,19 +256,19 @@ class ProcessingConfig(BaseConfig):
 
 class LoggingConfig:
     """Logging configuration - True Facade with Pure Delegation.
-    
+
     Delegates entirely to enterprise logging configuration system.
     """
 
-    def __init__(self, level: str = "INFO", format: str = None, file_path: Union[Path, None] = None,
+    def __init__(self, level: str = "INFO", format: str | None = None, file_path: Path | None = None,
                  max_file_size_mb: int = DEFAULT_MAX_ITEMS, backup_count: int = 5,
-                 enable_console: bool = True, mask_sensitive_data: bool = True, **kwargs):
+                 enable_console: bool = True, mask_sensitive_data: bool = True, **kwargs) -> None:
         """Initialize logging config facade."""
         from ldap_core_shared.core.config import LogLevel
-        
+
         # Convert string level to enterprise LogLevel enum
         log_level = LogLevel(level.upper())
-        
+
         self._enterprise_config = EnterpriseLoggingConfig(
             level=log_level,
             format=format or "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -272,7 +276,7 @@ class LoggingConfig:
             max_file_size=max_file_size_mb * 1024 * 1024,  # Convert MB to bytes
             backup_count=backup_count,
             console_enabled=enable_console,
-            **kwargs
+            **kwargs,
         )
 
     @property
@@ -286,7 +290,7 @@ class LoggingConfig:
         return self._enterprise_config.format
 
     @property
-    def file_path(self) -> Union[Path, None]:
+    def file_path(self) -> Path | None:
         """Get file path from enterprise config."""
         return self._enterprise_config.log_file
 
@@ -314,23 +318,23 @@ class LoggingConfig:
 
 class SecurityConfig:
     """Security and authentication configuration - True Facade with Pure Delegation.
-    
+
     Delegates entirely to enterprise security configuration system.
     """
 
-    def __init__(self, verify_ssl: bool = True, ca_cert_file: Union[Path, None] = None,
-                 client_cert_file: Union[Path, None] = None, client_key_file: Union[Path, None] = None,
-                 encryption_key: Union[str, None] = None, mask_sensitive_data: bool = True, **kwargs):
+    def __init__(self, verify_ssl: bool = True, ca_cert_file: Path | None = None,
+                 client_cert_file: Path | None = None, client_key_file: Path | None = None,
+                 encryption_key: str | None = None, mask_sensitive_data: bool = True, **kwargs) -> None:
         """Initialize security config facade."""
         from pydantic import SecretStr
-        
+
         self._enterprise_config = EnterpriseSecurityConfig(
             encryption_key=SecretStr(encryption_key) if encryption_key else None,
             secret_key=SecretStr(""),
             require_authentication=True,
-            **kwargs
+            **kwargs,
         )
-        
+
         # Store legacy fields for compatibility
         self._verify_ssl = verify_ssl
         self._ca_cert_file = ca_cert_file
@@ -344,22 +348,22 @@ class SecurityConfig:
         return self._verify_ssl
 
     @property
-    def ca_cert_file(self) -> Union[Path, None]:
+    def ca_cert_file(self) -> Path | None:
         """Get CA cert file."""
         return self._ca_cert_file
 
     @property
-    def client_cert_file(self) -> Union[Path, None]:
+    def client_cert_file(self) -> Path | None:
         """Get client cert file."""
         return self._client_cert_file
 
     @property
-    def client_key_file(self) -> Union[Path, None]:
+    def client_key_file(self) -> Path | None:
         """Get client key file."""
         return self._client_key_file
 
     @property
-    def encryption_key(self) -> Union[str, None]:
+    def encryption_key(self) -> str | None:
         """Get encryption key from enterprise config."""
         if self._enterprise_config.encryption_key:
             return self._enterprise_config.encryption_key.get_secret_value()

@@ -7,13 +7,12 @@ This demonstrates only the new core infrastructure without dependencies.
 import contextlib
 import sys
 from pathlib import Path
-from typing import Optional
 
 # Add the src directory to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 
-def main() -> Optional[int]:
+def main() -> int | None:
     """Demonstrate the core infrastructure."""
     try:
         # Test 1: Direct imports of core modules
@@ -41,16 +40,13 @@ def main() -> Optional[int]:
         ApplicationConfig()
 
         # Test 3: Exception system
-        try:
-            LDAPCoreError(
-                message="Test exception for infrastructure demo",
-                error_code="DEMO_TEST_001",
-                severity=ErrorSeverity.LOW,
-                category=ErrorCategory.SYSTEM,
-                context={"demo": True, "test_id": "infrastructure_001"},
-            )
-        except Exception:
-            raise
+        LDAPCoreError(
+            message="Test exception for infrastructure demo",
+            error_code="DEMO_TEST_001",
+            severity=ErrorSeverity.LOW,
+            category=ErrorCategory.SYSTEM,
+            context={"demo": True, "test_id": "infrastructure_001"},
+        )
 
         # Test 4: Logging system
         LoggerManager.initialize()
@@ -84,6 +80,7 @@ def main() -> Optional[int]:
 
     except Exception:
         import traceback
+
         traceback.print_exc()
         return 1
 

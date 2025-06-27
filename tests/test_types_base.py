@@ -21,9 +21,19 @@ ZERO DUPLICATION ACHIEVED:
 from typing import Any
 
 import pytest
-from pydantic import ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
-# TestUser is defined within test files that need it
+
+class TestUser(BaseModel):
+    """Test user model for testing purposes."""
+
+    username: str = Field(description="User name")
+    email: str = Field(description="Email address")
+    age: int = Field(description="User age")
+
+    class Config:
+        frozen = True  # Make immutable
+        extra = "forbid"  # Forbid extra fields
 
 
 class TestBaseModel:
@@ -76,7 +86,9 @@ class TestBaseModel:
 class TestBaseEntity:
     """🔥🔥 Test BaseEntity using DRY patterns and shared fixtures."""
 
-    def test_entity_creation_with_id(self, sample_user: Any, assert_helper: Any) -> None:
+    def test_entity_creation_with_id(
+        self, sample_user: Any, assert_helper: Any
+    ) -> None:
         """🔥 Test entity creation using DRY validation."""
         assert_helper.assert_valid_entity(sample_user)
         assert sample_user.username == "john_doe"
@@ -179,7 +191,9 @@ class TestBaseValueObject:
         email_set = {sample_email, email_copy}
         assert len(email_set) == 1  # Deduplicated
 
-    def test_value_object_validation(self, sample_email: Any, invalid_email: Any) -> None:
+    def test_value_object_validation(
+        self, sample_email: Any, invalid_email: Any
+    ) -> None:
         """🔥 Test value object validation using shared fixtures."""
         assert sample_email.is_valid() is True
         assert invalid_email.is_valid() is False

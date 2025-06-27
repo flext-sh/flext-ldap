@@ -171,7 +171,9 @@ class TestSecurityManager:
 
         # Test successful authentication
         success, message = auth_manager.authenticate(
-            "cn=user,dc=example,dc=com", "password123", mock_connection,
+            "cn=user,dc=example,dc=com",
+            "password123",
+            mock_connection,
         )
 
         assert success is True
@@ -195,7 +197,9 @@ class TestSecurityManager:
         # Simulate multiple failed attempts
         for i in range(6):  # More than max_attempts (5)
             success, message = auth_manager.authenticate(
-                "cn=attacker,dc=example,dc=com", "wrongpassword", mock_connection,
+                "cn=attacker,dc=example,dc=com",
+                "wrongpassword",
+                mock_connection,
             )
 
             if i < 5:

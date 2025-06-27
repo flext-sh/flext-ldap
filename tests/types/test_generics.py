@@ -1054,7 +1054,12 @@ class TestGenericPatternIntegration:
         wrapper = AsyncIteratorWrapper(entity_iterator())
 
         # Filter and map entities
-        high_value_names = [name async for name in wrapper.filter(lambda e: e.value >= 5).map(lambda e: e.name)]
+        high_value_names = [
+            name
+            async for name in wrapper.filter(lambda e: e.value >= 5).map(
+                lambda e: e.name
+            )
+        ]
 
         # Should get entities with value >= 5
         expected_names = [f"Entity{i}" for i in range(5, 10)]

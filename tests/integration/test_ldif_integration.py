@@ -166,9 +166,13 @@ sn: Three
 """
 
     @pytest.mark.asyncio
-    async def test_processor_parser_coordination(self, complex_ldif_content: str) -> None:
+    async def test_processor_parser_coordination(
+        self, complex_ldif_content: str
+    ) -> None:
         """🔥 Test coordination between processor and parser."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(complex_ldif_content)
             ldif_path = f.name
 
@@ -205,7 +209,9 @@ sn: Three
     @pytest.mark.asyncio
     async def test_categorization_integration(self, complex_ldif_content: str) -> None:
         """🔥 Test entry categorization integration across components."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(complex_ldif_content)
             ldif_path = f.name
 
@@ -249,7 +255,9 @@ sn: Three
     @pytest.mark.asyncio
     async def test_error_handling_integration(self, ldif_with_errors: Any) -> None:
         """🔥 Test error handling integration across LDIF components."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(ldif_with_errors)
             ldif_path = f.name
 
@@ -305,7 +313,9 @@ sn: Three
         """🔥 Test performance monitoring integration with LDIF processing."""
         monitor = PerformanceMonitor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(complex_ldif_content)
             ldif_path = f.name
 
@@ -391,7 +401,8 @@ mail: user{i}_2@domain{i}.com
             with tempfile.NamedTemporaryFile(
                 mode="w",
                 suffix=f"_domain{i}.ldif",
-                delete=False, encoding="utf-8",
+                delete=False,
+                encoding="utf-8",
             ) as f:
                 f.write(content)
                 files.append(f.name)
@@ -523,7 +534,9 @@ mail: user{i:04d}@large.com
 
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(large_ldif_content)
             large_ldif_path = f.name
 
@@ -609,7 +622,9 @@ cn: Second Duplicate
 sn: Duplicate
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(validation_ldif)
             ldif_path = f.name
 
@@ -657,9 +672,13 @@ sn: Duplicate
             os.unlink(ldif_path)
 
     @pytest.mark.asyncio
-    async def test_schema_validation_integration(self, complex_ldif_content: str) -> None:
+    async def test_schema_validation_integration(
+        self, complex_ldif_content: str
+    ) -> None:
         """🔥 Test schema validation integration across components."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(complex_ldif_content)
             ldif_path = f.name
 

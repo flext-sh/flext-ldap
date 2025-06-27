@@ -1,4 +1,13 @@
+"""Core LDAP value objects for shared use across projects."""
+
 from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import Any
+
+from pydantic import BaseModel, Field, field_validator
 
 from ldap_core_shared.utils.constants import (
     DEFAULT_TIMEOUT_SECONDS,
@@ -6,20 +15,10 @@ from ldap_core_shared.utils.constants import (
     TCP_PORT_MIN,
 )
 
-"""Core LDAP value objects for shared use across projects."""
-
-
-import re
-from dataclasses import dataclass
-from enum import Enum
-from typing import Any
-
-from pydantic import BaseModel, Field, field_validator
-
 # Constants for magic values
 
 
-class MigrationStatus(str, Enum):
+class MigrationStatus(StrEnum):
     """Migration status enumeration."""
 
     PENDING = "pending"
@@ -30,7 +29,7 @@ class MigrationStatus(str, Enum):
     ROLLBACK = "rollback"
 
 
-class LDAPObjectClass(str, Enum):
+class LDAPObjectClass(StrEnum):
     """Standard LDAP object classes."""
 
     TOP = "top"
@@ -251,7 +250,7 @@ class TransformationRule:
             raise ValueError(msg)
 
 
-class SchemaCompatibility(str, Enum):
+class SchemaCompatibility(StrEnum):
     """Schema compatibility levels."""
 
     FULL = "full"  # Fully compatible

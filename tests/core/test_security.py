@@ -220,7 +220,9 @@ class TestSSHTunnel:
     def test_tunnel_start_with_sshtunnel_unavailable(self, mock_forwarder: Any) -> None:
         """Test tunnel start when sshtunnel module is unavailable."""
         # Simulate ImportError for sshtunnel
-        with patch("builtins.__import__", side_effect=ImportError("sshtunnel not available")):
+        with patch(
+            "builtins.__import__", side_effect=ImportError("sshtunnel not available")
+        ):
             tunnel = SSHTunnel(self.config)
 
             with patch.object(tunnel, "_find_free_port", return_value=12345):
@@ -233,7 +235,10 @@ class TestSSHTunnel:
         """Test tunnel start failure handling."""
         tunnel = SSHTunnel(self.config)
 
-        with patch("ldap_core_shared.core.security.SSHTunnelForwarder", side_effect=Exception("Connection failed")):
+        with patch(
+            "ldap_core_shared.core.security.SSHTunnelForwarder",
+            side_effect=Exception("Connection failed"),
+        ):
             with pytest.raises(RuntimeError, match="Failed to start SSH tunnel"):
                 tunnel.start()
 
@@ -303,7 +308,9 @@ class TestSSHTunnel:
         )
         tunnel = SSHTunnel(config)
 
-        with patch("ldap_core_shared.core.security.SSHTunnelForwarder") as mock_forwarder:
+        with patch(
+            "ldap_core_shared.core.security.SSHTunnelForwarder"
+        ) as mock_forwarder:
             mock_instance = Mock()
             mock_forwarder.return_value = mock_instance
             mock_instance.local_bind_port = 12345
@@ -325,7 +332,9 @@ class TestSSHTunnel:
         )
         tunnel = SSHTunnel(config)
 
-        with patch("ldap_core_shared.core.security.SSHTunnelForwarder") as mock_forwarder:
+        with patch(
+            "ldap_core_shared.core.security.SSHTunnelForwarder"
+        ) as mock_forwarder:
             mock_instance = Mock()
             mock_forwarder.return_value = mock_instance
             mock_instance.local_bind_port = 12345
@@ -395,7 +404,9 @@ class TestAuthenticationManager:
             self.auth_manager.authenticate(dn, "wrongpass", self.mock_connection)
 
         # Next attempt should be locked out
-        success, message = self.auth_manager.authenticate(dn, "wrongpass", self.mock_connection)
+        success, message = self.auth_manager.authenticate(
+            dn, "wrongpass", self.mock_connection
+        )
 
         assert success is False
         assert "temporarily locked" in message.lower()
@@ -411,14 +422,18 @@ class TestAuthenticationManager:
 
         # Successful authentication should clear attempts
         self.mock_connection.bind_success = True
-        success, message = self.auth_manager.authenticate(dn, "correctpass", self.mock_connection)
+        success, message = self.auth_manager.authenticate(
+            dn, "correctpass", self.mock_connection
+        )
 
         assert success is True
         assert message == "Authentication successful"
 
         # Should not be locked out after success
         self.mock_connection.bind_success = False
-        success, message = self.auth_manager.authenticate(dn, "wrongpass", self.mock_connection)
+        success, message = self.auth_manager.authenticate(
+            dn, "wrongpass", self.mock_connection
+        )
         assert "locked" not in message.lower()
 
     def test_lockout_expiration(self) -> None:
@@ -434,14 +449,18 @@ class TestAuthenticationManager:
                 self.auth_manager.authenticate(dn, "wrongpass", self.mock_connection)
 
             # Should be locked out
-            _success, message = self.auth_manager.authenticate(dn, "wrongpass", self.mock_connection)
+            _success, message = self.auth_manager.authenticate(
+                dn, "wrongpass", self.mock_connection
+            )
             assert "locked" in message.lower()
 
             # Advance time beyond lockout duration
             mock_time.return_value = 1000 + 400  # Exceed 300s lockout
 
             # Should no longer be locked out
-            _success, message = self.auth_manager.authenticate(dn, "wrongpass", self.mock_connection)
+            _success, message = self.auth_manager.authenticate(
+                dn, "wrongpass", self.mock_connection
+            )
             assert "locked" not in message.lower()
 
     def test_authentication_statistics(self) -> None:
@@ -477,11 +496,15 @@ class TestAuthenticationManager:
             self.auth_manager.authenticate(user1, "wrong", self.mock_connection)
 
         # User1 should be locked
-        _success, message = self.auth_manager.authenticate(user1, "wrong", self.mock_connection)
+        _success, message = self.auth_manager.authenticate(
+            user1, "wrong", self.mock_connection
+        )
         assert "locked" in message.lower()
 
         # User2 should not be locked
-        _success, message = self.auth_manager.authenticate(user2, "wrong", self.mock_connection)
+        _success, message = self.auth_manager.authenticate(
+            user2, "wrong", self.mock_connection
+        )
         assert "locked" not in message.lower()
 
 
@@ -501,7 +524,9 @@ class TestSecurityManager:
     def test_secure_tunnel_context_manager(self) -> None:
         """Test secure tunnel context manager."""
         with patch.object(SSHTunnel, "_find_free_port", return_value=12345):
-            with self.security_manager.secure_tunnel(self.ssh_config, "test_tunnel") as tunnel:
+            with self.security_manager.secure_tunnel(
+                self.ssh_config, "test_tunnel"
+            ) as tunnel:
                 assert tunnel.is_active is True
                 assert tunnel.local_port == 12345
                 assert "test_tunnel" in self.security_manager._active_tunnels
@@ -556,7 +581,9 @@ class TestSecurityManager:
 
     @patch("socket.create_connection")
     @patch("ssl.create_default_context")
-    def test_ssl_certificate_validation_success(self, mock_ssl_context: Any, mock_socket: Any) -> None:
+    def test_ssl_certificate_validation_success(
+        self, mock_ssl_context: Any, mock_socket: Any
+    ) -> None:
         """Test successful SSL certificate validation."""
         # Mock SSL certificate
         mock_cert = {
@@ -584,7 +611,9 @@ class TestSecurityManager:
 
     def test_ssl_certificate_validation_failure(self) -> None:
         """Test SSL certificate validation failure."""
-        with patch("socket.create_connection", side_effect=Exception("Connection failed")):
+        with patch(
+            "socket.create_connection", side_effect=Exception("Connection failed")
+        ):
             result = self.security_manager.validate_ssl_certificate("invalid.com", 636)
 
         assert result["valid"] is False

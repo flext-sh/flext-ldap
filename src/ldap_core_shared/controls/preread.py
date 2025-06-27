@@ -49,8 +49,6 @@ References:
 
 from __future__ import annotations
 
-from typing import Optional
-
 from pydantic import BaseModel, Field, field_validator
 
 from ldap_core_shared.controls.base import (
@@ -199,8 +197,8 @@ class AttributeSelection(BaseModel):
             msg = "Truncated AttributeSelection: incomplete content"
             raise ValueError(msg)
 
-        content = data[pos:pos + content_length]
-        remaining = data[pos + content_length:]
+        content = data[pos : pos + content_length]
+        remaining = data[pos + content_length :]
 
         # Decode attributes from content
         attributes = []
@@ -245,7 +243,7 @@ class AttributeSelection(BaseModel):
                 msg = "Truncated attribute: incomplete value"
                 raise ValueError(msg)
 
-            attr_bytes = content[attr_pos:attr_pos + attr_length]
+            attr_bytes = content[attr_pos : attr_pos + attr_length]
             attr_pos += attr_length
 
             try:
@@ -318,9 +316,13 @@ class SearchResultEntry(BaseModel):
                 while temp_length > 0:
                     length_octets.insert(0, temp_length & 0xFF)
                     temp_length >>= 8
-                type_length_bytes = bytes([0x80 | len(length_octets)]) + bytes(length_octets)
+                type_length_bytes = bytes([0x80 | len(length_octets)]) + bytes(
+                    length_octets,
+                )
 
-            encoded_type = bytes([BER_OCTET_STRING_TAG]) + type_length_bytes + type_bytes
+            encoded_type = (
+                bytes([BER_OCTET_STRING_TAG]) + type_length_bytes + type_bytes
+            )
 
             # Encode attribute values as SET OF
             encoded_values = []
@@ -336,9 +338,13 @@ class SearchResultEntry(BaseModel):
                     while temp_length > 0:
                         length_octets.insert(0, temp_length & 0xFF)
                         temp_length >>= 8
-                    value_length_bytes = bytes([0x80 | len(length_octets)]) + bytes(length_octets)
+                    value_length_bytes = bytes([0x80 | len(length_octets)]) + bytes(
+                        length_octets,
+                    )
 
-                encoded_value = bytes([BER_OCTET_STRING_TAG]) + value_length_bytes + value_bytes
+                encoded_value = (
+                    bytes([BER_OCTET_STRING_TAG]) + value_length_bytes + value_bytes
+                )
                 encoded_values.append(encoded_value)
 
             # Encode SET OF values
@@ -353,9 +359,13 @@ class SearchResultEntry(BaseModel):
                 while temp_length > 0:
                     length_octets.insert(0, temp_length & 0xFF)
                     temp_length >>= 8
-                values_length_bytes = bytes([0x80 | len(length_octets)]) + bytes(length_octets)
+                values_length_bytes = bytes([0x80 | len(length_octets)]) + bytes(
+                    length_octets,
+                )
 
-            encoded_values_set = bytes([0x31]) + values_length_bytes + values_content  # SET tag = 0x31
+            encoded_values_set = (
+                bytes([0x31]) + values_length_bytes + values_content
+            )  # SET tag = 0x31
 
             # Encode PartialAttribute as SEQUENCE
             attr_content = encoded_type + encoded_values_set
@@ -369,7 +379,9 @@ class SearchResultEntry(BaseModel):
                 while temp_length > 0:
                     length_octets.insert(0, temp_length & 0xFF)
                     temp_length >>= 8
-                attr_length_bytes = bytes([0x80 | len(length_octets)]) + bytes(length_octets)
+                attr_length_bytes = bytes([0x80 | len(length_octets)]) + bytes(
+                    length_octets,
+                )
 
             encoded_attr = bytes([BER_SEQUENCE_TAG]) + attr_length_bytes + attr_content
             encoded_attrs.append(encoded_attr)
@@ -386,9 +398,13 @@ class SearchResultEntry(BaseModel):
             while temp_length > 0:
                 length_octets.insert(0, temp_length & 0xFF)
                 temp_length >>= 8
-            attrs_length_bytes = bytes([0x80 | len(length_octets)]) + bytes(length_octets)
+            attrs_length_bytes = bytes([0x80 | len(length_octets)]) + bytes(
+                length_octets,
+            )
 
-        encoded_attrs_list = bytes([BER_SEQUENCE_TAG]) + attrs_length_bytes + attrs_content
+        encoded_attrs_list = (
+            bytes([BER_SEQUENCE_TAG]) + attrs_length_bytes + attrs_content
+        )
 
         # Encode SearchResultEntry as [APPLICATION 4] SEQUENCE
         entry_content = encoded_dn + encoded_attrs_list
@@ -402,7 +418,9 @@ class SearchResultEntry(BaseModel):
             while temp_length > 0:
                 length_octets.insert(0, temp_length & 0xFF)
                 temp_length >>= 8
-            entry_length_bytes = bytes([0x80 | len(length_octets)]) + bytes(length_octets)
+            entry_length_bytes = bytes([0x80 | len(length_octets)]) + bytes(
+                length_octets,
+            )
 
         return bytes([BER_APPLICATION_TAG_4]) + entry_length_bytes + entry_content
 
@@ -454,8 +472,8 @@ class SearchResultEntry(BaseModel):
             msg = "Truncated SearchResultEntry: incomplete content"
             raise ValueError(msg)
 
-        content = data[pos:pos + content_length]
-        remaining = data[pos + content_length:]
+        content = data[pos : pos + content_length]
+        remaining = data[pos + content_length :]
 
         # Decode object name (LDAPDN)
         if not content or content[0] != BER_OCTET_STRING_TAG:
@@ -468,7 +486,7 @@ class SearchResultEntry(BaseModel):
             msg = "Long form length not implemented for LDAPDN"
             raise ValueError(msg)
 
-        dn_bytes = content[2:2 + dn_length]
+        dn_bytes = content[2 : 2 + dn_length]
         try:
             object_name = dn_bytes.decode("utf-8")
         except UnicodeDecodeError as e:
@@ -548,7 +566,7 @@ class PreReadControl(LDAPControl):
             raise ControlEncodingError(msg) from e
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> PreReadControl:
+    def decode_value(cls, control_value: bytes | None) -> PreReadControl:
         """Decode pre-read control value per RFC 4527.
 
         Args:
@@ -631,8 +649,9 @@ class PreReadControl(LDAPControl):
 
         if "+" in self.attributes:
             # All operational attributes + any explicitly listed
-            return (self._is_operational_attribute(attribute) or
-                    attr_lower in [a.lower() for a in self.attributes if a != "+"])
+            return self._is_operational_attribute(attribute) or attr_lower in [
+                a.lower() for a in self.attributes if a != "+"
+            ]
 
         # Explicit attribute list
         return attr_lower in [a.lower() for a in self.attributes]
@@ -647,9 +666,18 @@ class PreReadControl(LDAPControl):
 
         # Common operational attributes per RFC 4512
         operational_attrs = {
-            "createtimestamp", "creatorsname", "modifytimestamp", "modifiersname",
-            "structuralobjectclass", "governingstructurerule", "subschemasubentry",
-            "entrydn", "entryuuid", "pwdchangedtime", "pwdhistory", "pwdpolicysubentry",
+            "createtimestamp",
+            "creatorsname",
+            "modifytimestamp",
+            "modifiersname",
+            "structuralobjectclass",
+            "governingstructurerule",
+            "subschemasubentry",
+            "entrydn",
+            "entryuuid",
+            "pwdchangedtime",
+            "pwdhistory",
+            "pwdpolicysubentry",
         }
 
         return attr_lower in operational_attrs
@@ -689,7 +717,7 @@ class PreReadResponse(LDAPControl):
 
     control_type = RFC4527_PRE_READ_OID
 
-    entry: Optional[SearchResultEntry] = Field(
+    entry: SearchResultEntry | None = Field(
         default=None,
         description="SearchResultEntry with pre-operation state",
     )
@@ -719,7 +747,7 @@ class PreReadResponse(LDAPControl):
             raise ControlEncodingError(msg) from e
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> PreReadResponse:
+    def decode_value(cls, control_value: bytes | None) -> PreReadResponse:
         """Decode pre-read response per RFC 4527.
 
         Args:
@@ -749,7 +777,7 @@ class PreReadResponse(LDAPControl):
         """
         return self.entry is not None and bool(self.entry.object_name)
 
-    def get_attribute_values(self, attribute: str) -> Optional[list[str]]:
+    def get_attribute_values(self, attribute: str) -> list[str] | None:
         """Get attribute values from entry.
 
         Args:
@@ -763,7 +791,7 @@ class PreReadResponse(LDAPControl):
 
         return self.entry.attributes.get(attribute)
 
-    def get_dn(self) -> Optional[str]:
+    def get_dn(self) -> str | None:
         """Get entry distinguished name.
 
         Returns:
@@ -842,8 +870,15 @@ def preread_user_profile_attributes() -> PreReadControl:
         PreReadControl for typical user profile attributes
     """
     return PreReadControl.specific_attributes(
-        "cn", "sn", "givenName", "mail", "telephoneNumber",
-        "title", "department", "manager", "employeeNumber",
+        "cn",
+        "sn",
+        "givenName",
+        "mail",
+        "telephoneNumber",
+        "title",
+        "department",
+        "manager",
+        "employeeNumber",
     )
 
 

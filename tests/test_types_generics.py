@@ -1061,7 +1061,7 @@ class TestSpecification:
         active_spec = MockSpecification(lambda user: user.is_active)
         REDACTED_LDAP_BIND_PASSWORD_spec = MockSpecification(lambda user: user.username == "REDACTED_LDAP_BIND_PASSWORD")
 
-        complex_spec = (adult_spec.and_(active_spec).or_(REDACTED_LDAP_BIND_PASSWORD_spec))
+        complex_spec = adult_spec.and_(active_spec).or_(REDACTED_LDAP_BIND_PASSWORD_spec)
 
         # Test cases
         test_cases = [
@@ -1115,9 +1115,9 @@ class TestSpecification:
 
         for user, expected in test_cases:
             result = complex_spec.is_satisfied_by(user)
-            assert (
-                result == expected
-            ), f"Failed for user: {user.username}, age: {user.age}, active: {user.is_active}"
+            assert result == expected, (
+                f"Failed for user: {user.username}, age: {user.age}, active: {user.is_active}"
+            )
 
 
 if __name__ == "__main__":

@@ -226,9 +226,9 @@ class TestRFC4511SearchOperation:
         # baseObject (0), singleLevel (1), wholeSubtree (2)
 
         scope_mappings = {
-            "BASE": 0,        # baseObject
-            "ONELEVEL": 1,    # singleLevel
-            "SUBTREE": 2,      # wholeSubtree
+            "BASE": 0,  # baseObject
+            "ONELEVEL": 1,  # singleLevel
+            "SUBTREE": 2,  # wholeSubtree
         }
 
         for scope_name, scope_value in scope_mappings.items():
@@ -447,8 +447,8 @@ class TestRFC4511AddOperation:
 
         attributes = {
             "cn": ["John Doe", "Johnny Doe"],  # Multi-valued
-            "sn": ["Doe"],                     # Single-valued
-            "mail": ["john@example.com"],      # Single-valued
+            "sn": ["Doe"],  # Single-valued
+            "mail": ["john@example.com"],  # Single-valued
             "objectClass": ["person", "inetOrgPerson"],  # Multi-valued
         }
 
@@ -655,7 +655,7 @@ class TestRFC4511DNSyntax:
             "uid=jdoe,ou=Users,dc=example,dc=org",
             "mail=REDACTED_LDAP_BIND_PASSWORD@example.com,cn=Administrators,dc=example,dc=com",
             "cn=Test\\,User,ou=People,dc=example,dc=com",  # Escaped comma
-            "cn=Test\\+User,ou=People,dc=example,dc=com",   # Escaped plus
+            "cn=Test\\+User,ou=People,dc=example,dc=com",  # Escaped plus
         ]
 
         for dn in valid_dns:
@@ -669,10 +669,10 @@ class TestRFC4511DNSyntax:
         """RFC 4511 - DN validation requirements."""
         # Test invalid DNs
         invalid_dns = [
-            "",                    # Empty DN
-            "invalid",             # No attribute=value format
-            "cn=",                 # Empty value
-            "=value",              # Empty attribute
+            "",  # Empty DN
+            "invalid",  # No attribute=value format
+            "cn=",  # Empty value
+            "=value",  # Empty attribute
         ]
 
         for invalid_dn in invalid_dns:
@@ -767,7 +767,9 @@ class TestRFC4511ComprehensiveCompliance:
         }
 
         # All checks must pass for RFC compliance
-        assert all(compliance_checks.values()), f"RFC 4511 compliance failed: {compliance_checks}"
+        assert all(compliance_checks.values()), (
+            f"RFC 4511 compliance failed: {compliance_checks}"
+        )
 
     def test_protocol_interoperability_requirements(self) -> None:
         """RFC 4511 - Protocol interoperability requirements."""

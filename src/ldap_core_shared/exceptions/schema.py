@@ -5,7 +5,7 @@ Exception classes for LDAP schema discovery, validation, and migration errors.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from ldap_core_shared.exceptions.base import LDAPError
 
@@ -20,8 +20,8 @@ class SchemaError(LDAPError):
         self,
         message: str,
         *,
-        schema_element: Optional[str] = None,
-        element_type: Optional[str] = None,
+        schema_element: str | None = None,
+        element_type: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize schema error.
@@ -49,8 +49,8 @@ class SchemaDiscoveryError(SchemaError):
         self,
         message: str,
         *,
-        server_type: Optional[str] = None,
-        discovery_method: Optional[str] = None,
+        server_type: str | None = None,
+        discovery_method: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize schema discovery error.
@@ -78,9 +78,9 @@ class SchemaComparisonError(SchemaError):
         self,
         message: str,
         *,
-        source_schema: Optional[str] = None,
-        target_schema: Optional[str] = None,
-        comparison_type: Optional[str] = None,
+        source_schema: str | None = None,
+        target_schema: str | None = None,
+        comparison_type: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize schema comparison error.
@@ -111,9 +111,9 @@ class SchemaMappingError(SchemaError):
         self,
         message: str,
         *,
-        source_element: Optional[str] = None,
-        target_element: Optional[str] = None,
-        mapping_rule: Optional[str] = None,
+        source_element: str | None = None,
+        target_element: str | None = None,
+        mapping_rule: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize schema mapping error.
@@ -144,10 +144,10 @@ class SchemaCompatibilityError(SchemaError):
         self,
         message: str,
         *,
-        source_schema: Optional[str] = None,
-        target_schema: Optional[str] = None,
-        compatibility_issue: Optional[str] = None,
-        resolution_suggestion: Optional[str] = None,
+        source_schema: str | None = None,
+        target_schema: str | None = None,
+        compatibility_issue: str | None = None,
+        resolution_suggestion: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize schema compatibility error.
@@ -181,9 +181,9 @@ class SchemaConflictError(SchemaError):
         self,
         message: str,
         *,
-        conflicting_elements: Optional[list[str]] = None,
-        conflict_type: Optional[str] = None,
-        resolution_suggestion: Optional[str] = None,
+        conflicting_elements: list[str] | None = None,
+        conflict_type: str | None = None,
+        resolution_suggestion: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize schema conflict error.

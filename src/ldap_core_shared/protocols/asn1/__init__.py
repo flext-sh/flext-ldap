@@ -91,7 +91,7 @@ try:
         ASN1Sequence,
         ASN1Set,
     )
-    from ldap_core_shared.protocols.asn1.schema import (  # type: ignore[import-not-found]
+    from ldap_core_shared.protocols.asn1.schema import (  # type: ignore[import-not-found, attr-defined]
         ASN1Constraint,
         ASN1Module,
         ASN1Schema,
@@ -100,7 +100,7 @@ try:
         ASN1TypeDefinition,
         ASN1ValueAssignment,
     )
-    from ldap_core_shared.protocols.asn1.types import (  # type: ignore[import-not-found]
+    from ldap_core_shared.protocols.asn1.types import (  # type: ignore[import-not-found, attr-defined]
         # Import specific types instead of wildcard
         ASN1BitString,
         ASN1Boolean,
@@ -198,7 +198,7 @@ except ImportError:
 
 
 # Convenience factory function equivalent to perl-Convert-ASN1->new()
-def new(**options):
+def new(**options: Any) -> Any:
     """Create new ASN.1 encoder/decoder instance.
 
     This function provides perl-Convert-ASN1 API compatibility by creating
@@ -225,6 +225,7 @@ def new(**options):
     """
     try:
         from ldap_core_shared.protocols.asn1.codec import ASN1Codec
+
         return ASN1Codec(**options)
     except ImportError:
         # TODO: Implement ASN1Codec class for perl-Convert-ASN1 compatibility
@@ -254,11 +255,15 @@ def new(**options):
                         sequence = univ.Sequence()
                         for i, (_key, value) in enumerate(data.items()):
                             if isinstance(value, str):
-                                sequence.setComponentByPosition(i, univ.OctetString(value.encode()))
+                                sequence.setComponentByPosition(
+                                    i, univ.OctetString(value.encode()),
+                                )
                             elif isinstance(value, int):
                                 sequence.setComponentByPosition(i, univ.Integer(value))
                             else:
-                                sequence.setComponentByPosition(i, univ.OctetString(str(value).encode()))
+                                sequence.setComponentByPosition(
+                                    i, univ.OctetString(str(value).encode()),
+                                )
                         return self._encoder.encode(sequence)
                     if isinstance(data, str):
                         return self._encoder.encode(univ.OctetString(data.encode()))
@@ -272,13 +277,17 @@ def new(**options):
                         decoded, _ = self._decoder.decode(data)
                         return decoded
                     except Exception as e:
-                        logging.getLogger(__name__).warning(f"ASN.1 decode failed: {e}")
+                        logging.getLogger(__name__).warning(
+                            "ASN.1 decode failed: %s", e,
+                        )
                         return None
 
             return BasicASN1Codec()
 
         except ImportError:
-            logging.getLogger(__name__).warning("pyasn1 not available, using minimal ASN.1 implementation")
+            logging.getLogger(__name__).warning(
+                "pyasn1 not available, using minimal ASN.1 implementation",
+            )
 
             class MinimalASN1Codec:
                 """Minimal ASN.1 codec for basic functionality."""
@@ -371,3 +380,89 @@ def new(**options):
 #     - Drop-in replacement functionality
 #     - Same method signatures and behavior
 #     - Identical encoding/decoding results
+
+
+# Make BasicASN1Codec available at module level - always available
+try:
+    # Try to use pyasn1 for ASN.1 encoding/decoding
+    from pyasn1.codec.der import decoder, encoder
+    from pyasn1.type import univ
+
+    _PYASN1_AVAILABLE = True
+except ImportError:
+    _PYASN1_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "pyasn1 not available, using minimal ASN.1 implementation",
+    )
+
+
+class BasicASN1Codec:
+    """Basic ASN.1 codec implementation - always available."""
+
+    def __init__(self, schema: str | None = None) -> None:
+        self.schema = schema
+        if _PYASN1_AVAILABLE:
+            from pyasn1.codec.der import decoder, encoder
+
+            self._encoder = encoder
+            self._decoder = decoder
+        else:
+            self._encoder = None
+            self._decoder = None
+
+    def prepare(self, schema: str) -> bool:
+        """Prepare codec with ASN.1 schema."""
+        self.schema = schema
+        return True
+
+    def encode(self, data: object) -> bytes:
+        """Encode data to ASN.1 DER format."""
+        if _PYASN1_AVAILABLE and self._encoder:
+            from pyasn1.type import univ
+
+            if isinstance(data, dict):
+                # Simple dict-to-ASN.1 conversion
+                sequence = univ.Sequence()
+                for i, (_key, value) in enumerate(data.items()):
+                    if isinstance(value, str):
+                        sequence.setComponentByPosition(
+                            i, univ.OctetString(value.encode()),
+                        )
+                    elif isinstance(value, int):
+                        sequence.setComponentByPosition(i, univ.Integer(value))
+                    else:
+                        sequence.setComponentByPosition(
+                            i, univ.OctetString(str(value).encode()),
+                        )
+                return self._encoder.encode(sequence)
+            if isinstance(data, str):
+                return self._encoder.encode(univ.OctetString(data.encode()))
+            if isinstance(data, int):
+                return self._encoder.encode(univ.Integer(data))
+            return self._encoder.encode(univ.OctetString(str(data).encode()))
+        # Fallback implementation without pyasn1
+        if isinstance(data, bytes):
+            return data
+        if isinstance(data, str):
+            return data.encode("utf-8")
+        return str(data).encode("utf-8")
+
+    def decode(self, data: bytes) -> object:
+        """Decode ASN.1 DER data."""
+        if _PYASN1_AVAILABLE and self._decoder:
+            try:
+                decoded, _ = self._decoder.decode(data)
+                return decoded
+            except Exception as e:
+                logging.getLogger(__name__).warning("ASN.1 decode failed: %s", e)
+                return None
+        else:
+            # Fallback implementation without pyasn1
+            try:
+                return data.decode("utf-8")
+            except UnicodeDecodeError:
+                return data.hex()
+
+
+# Create an alias for MinimalASN1Codec
+MinimalASN1Codec = BasicASN1Codec

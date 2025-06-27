@@ -41,7 +41,7 @@ References:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from pydantic import Field, validator
 
@@ -80,19 +80,23 @@ class CancelResult(ExtensionResult):
     """
 
     operation_cancelled: bool = Field(
-        default=False, description="Whether the target operation was cancelled",
+        default=False,
+        description="Whether the target operation was cancelled",
     )
 
     operation_completed: bool = Field(
-        default=False, description="Whether operation completed before cancellation",
+        default=False,
+        description="Whether operation completed before cancellation",
     )
 
-    target_message_id: Optional[int] = Field(
-        default=None, description="Message ID of the operation that was targeted",
+    target_message_id: int | None = Field(
+        default=None,
+        description="Message ID of the operation that was targeted",
     )
 
-    cancellation_reason: Optional[str] = Field(
-        default=None, description="Reason for cancellation result",
+    cancellation_reason: str | None = Field(
+        default=None,
+        description="Reason for cancellation result",
     )
 
     def was_effective(self) -> bool:
@@ -155,12 +159,13 @@ class CancelExtension(LDAPExtension):
 
     message_id: int = Field(description="Message ID of the operation to cancel")
 
-    timeout_seconds: Optional[int] = Field(
-        default=None, description="Timeout for the cancel operation itself",
+    timeout_seconds: int | None = Field(
+        default=None,
+        description="Timeout for the cancel operation itself",
     )
 
     @validator("message_id")
-    def validate_message_id(cls, v: int) -> int:
+    def validate_message_id(self, v: int) -> int:
         """Validate message ID."""
         if v < 1:
             msg = "Message ID must be positive"
@@ -173,7 +178,7 @@ class CancelExtension(LDAPExtension):
         return v
 
     @validator("timeout_seconds")
-    def validate_timeout(cls, v: Optional[int]) -> Optional[int]:
+    def validate_timeout(self, v: int | None) -> int | None:
         """Validate timeout value."""
         if v is not None and v < 1:
             msg = "Timeout must be positive"
@@ -203,7 +208,9 @@ class CancelExtension(LDAPExtension):
 
     @classmethod
     def decode_response_value(
-        cls, response_name: Optional[OID], response_value: Optional[bytes],
+        cls,
+        response_name: OID | None,
+        response_value: bytes | None,
     ) -> CancelResult:
         """Decode cancel response value.
 
@@ -231,7 +238,9 @@ class CancelExtension(LDAPExtension):
 
     @classmethod
     def for_operation(
-        cls, message_id: int, timeout_seconds: Optional[int] = None,
+        cls,
+        message_id: int,
+        timeout_seconds: int | None = None,
     ) -> CancelExtension:
         """Create cancel extension for specific operation.
 
@@ -277,7 +286,7 @@ class CancelExtension(LDAPExtension):
         """Check if cancel operation has a timeout configured."""
         return self.timeout_seconds is not None
 
-    def get_timeout_seconds(self) -> Optional[int]:
+    def get_timeout_seconds(self) -> int | None:
         """Get timeout in seconds."""
         return self.timeout_seconds
 
@@ -351,7 +360,7 @@ class OperationTracker:
 
     def __init__(self) -> None:
         """Initialize operation tracker."""
-        self._operations: dict[int, dict] = {}
+        self._operations: dict[int, dict[str, Any]] = {}
         self._next_message_id = 1
 
     def start_operation(self, operation_type: str, operation_details: str = "") -> int:
@@ -391,7 +400,7 @@ class OperationTracker:
             return True
         return False
 
-    def cancel_operation(self, message_id: int) -> Optional[CancelExtension]:
+    def cancel_operation(self, message_id: int) -> CancelExtension | None:
         """Create cancel extension for tracked operation.
 
         Args:
@@ -458,7 +467,7 @@ class OperationTracker:
 
         return len(completed_ids)
 
-    def get_operation_info(self, message_id: int) -> Optional[dict]:
+    def get_operation_info(self, message_id: int) -> dict[str, Any] | None:
         """Get information about tracked operation.
 
         Args:
@@ -468,6 +477,7 @@ class OperationTracker:
             Operation information dictionary or None
         """
         return self._operations.get(message_id)
+
 
 # TODO: Integration points for implementation:
 #

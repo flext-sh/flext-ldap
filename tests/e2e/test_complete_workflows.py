@@ -275,7 +275,9 @@ userPassword: {SSHA}monitoring_password_hash
         """🔥🔥🔥🔥 Test complete LDIF import and validation workflow."""
         monitor = PerformanceMonitor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(enterprise_ldif_data)
             ldif_path = f.name
 
@@ -289,9 +291,9 @@ userPassword: {SSHA}monitoring_password_hash
 
             # Parse using processor since LDIFParser doesn't exist
             parse_result = processor.parse_file(ldif_path)
-            assert (
-                parse_result.success
-            ), f"Failed to parse LDIF: {parse_result.error_message}"
+            assert parse_result.success, (
+                f"Failed to parse LDIF: {parse_result.error_message}"
+            )
             parsed_entries = parse_result.data or []
 
             monitor.stop_measurement("ldif_parsing")
@@ -484,11 +486,14 @@ userPassword: {SSHA}monitoring_password_hash
                 monitor.start_measurement("access_verification")
 
                 # Verify user can be found in searches
-                search_results = [result async for result in manager.search(
-                    search_base="ou=people,dc=enterprise,dc=com",
-                    search_filter="(uid=new.employee)",
-                    attributes=["cn", "title", "departmentNumber"],
-                )]
+                search_results = [
+                    result
+                    async for result in manager.search(
+                        search_base="ou=people,dc=enterprise,dc=com",
+                        search_filter="(uid=new.employee)",
+                        attributes=["cn", "title", "departmentNumber"],
+                    )
+                ]
 
                 assert len(search_results) == 1
                 user_data = search_results[0]
@@ -497,11 +502,14 @@ userPassword: {SSHA}monitoring_password_hash
                 )
 
                 # Verify group memberships
-                group_search_results = [result async for result in manager.search(
-                    search_base="ou=groups,dc=enterprise,dc=com",
-                    search_filter=f"(member={new_user_dn})",
-                    attributes=["cn", "description"],
-                )]
+                group_search_results = [
+                    result
+                    async for result in manager.search(
+                        search_base="ou=groups,dc=enterprise,dc=com",
+                        search_filter=f"(member={new_user_dn})",
+                        attributes=["cn", "description"],
+                    )
+                ]
 
                 assert (
                     len(group_search_results) >= 2
@@ -570,7 +578,9 @@ userPassword: {SSHA}monitoring_password_hash
         """🔥🔥 Test organizational restructuring workflow."""
         monitor = PerformanceMonitor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(enterprise_ldif_data)
             ldif_path = f.name
 
@@ -735,11 +745,14 @@ userPassword: {SSHA}monitoring_password_hash
                         # In real implementation, would verify department and title changes
 
                     # Verify new group structure
-                    group_search_results = [result async for result in manager.search(
-                        search_base="ou=groups,dc=enterprise,dc=com",
-                        search_filter="(objectClass=groupOfNames)",
-                        attributes=["cn", "description", "member"],
-                    )]
+                    group_search_results = [
+                        result
+                        async for result in manager.search(
+                            search_base="ou=groups,dc=enterprise,dc=com",
+                            search_filter="(objectClass=groupOfNames)",
+                            attributes=["cn", "description", "member"],
+                        )
+                    ]
 
                     # Should have original groups plus new ones
                     assert len(group_search_results) >= 8  # Original 6 + 2 new groups
@@ -781,7 +794,9 @@ userPassword: {SSHA}monitoring_password_hash
         """🔥🔥 Test backup and recovery workflow."""
         monitor = PerformanceMonitor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(enterprise_ldif_data)
             original_ldif_path = f.name
 
@@ -806,34 +821,47 @@ userPassword: {SSHA}monitoring_password_hash
                     # Simulate backup by searching all entries
 
                     # Backup all organizational units
-                    backup_entries = [{
-                                "type": "ou",
-                                "entry": entry,
-                            } async for entry in manager.search(
-                        search_base="dc=enterprise,dc=com",
-                        search_filter="(objectClass=organizationalUnit)",
-                        attributes=["*"],
-                    )]
+                    backup_entries = [
+                        {
+                            "type": "ou",
+                            "entry": entry,
+                        }
+                        async for entry in manager.search(
+                            search_base="dc=enterprise,dc=com",
+                            search_filter="(objectClass=organizationalUnit)",
+                            attributes=["*"],
+                        )
+                    ]
 
                     # Backup all people
-                    backup_entries.extend([{
+                    backup_entries.extend(
+                        [
+                            {
                                 "type": "person",
                                 "entry": entry,
-                            } async for entry in manager.search(
-                        search_base="ou=people,dc=enterprise,dc=com",
-                        search_filter="(objectClass=inetOrgPerson)",
-                        attributes=["*"],
-                    )])
+                            }
+                            async for entry in manager.search(
+                                search_base="ou=people,dc=enterprise,dc=com",
+                                search_filter="(objectClass=inetOrgPerson)",
+                                attributes=["*"],
+                            )
+                        ]
+                    )
 
                     # Backup all groups
-                    backup_entries.extend([{
+                    backup_entries.extend(
+                        [
+                            {
                                 "type": "group",
                                 "entry": entry,
-                            } async for entry in manager.search(
-                        search_base="ou=groups,dc=enterprise,dc=com",
-                        search_filter="(objectClass=groupOfNames)",
-                        attributes=["*"],
-                    )])
+                            }
+                            async for entry in manager.search(
+                                search_base="ou=groups,dc=enterprise,dc=com",
+                                search_filter="(objectClass=groupOfNames)",
+                                attributes=["*"],
+                            )
+                        ]
+                    )
 
                     monitor.stop_measurement("backup_creation")
 

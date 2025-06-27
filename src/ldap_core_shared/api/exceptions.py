@@ -7,7 +7,7 @@ by any LDAP migration project to ensure consistent error handling and reporting.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +18,8 @@ class LDAPMigrationError(Exception):
     def __init__(
         self,
         message: str,
-        operation: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        operation: str | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message)
         self.operation = operation
@@ -39,8 +39,8 @@ class LDAPConnectionError(LDAPMigrationError):
     def __init__(
         self,
         message: str,
-        host: Optional[str] = None,
-        port: Optional[int] = None,
+        host: str | None = None,
+        port: int | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(message, "Connection", kwargs)
@@ -54,8 +54,8 @@ class LDAPSchemaError(LDAPMigrationError):
     def __init__(
         self,
         message: str,
-        element_name: Optional[str] = None,
-        element_type: Optional[str] = None,
+        element_name: str | None = None,
+        element_type: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(message, "Schema", kwargs)
@@ -69,8 +69,8 @@ class LDIFProcessingError(LDAPMigrationError):
     def __init__(
         self,
         message: str,
-        file_path: Optional[str] = None,
-        line_number: Optional[int] = None,
+        file_path: str | None = None,
+        line_number: int | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(message, "LDIF", kwargs)
@@ -84,7 +84,7 @@ class MigrationConfigurationError(LDAPMigrationError):
     def __init__(
         self,
         message: str,
-        config_field: Optional[str] = None,
+        config_field: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(message, "Configuration", kwargs)
@@ -97,7 +97,7 @@ class MigrationValidationError(LDAPMigrationError):
     def __init__(
         self,
         message: str,
-        validation_type: Optional[str] = None,
+        validation_type: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(message, "Validation", kwargs)
@@ -110,7 +110,7 @@ class ProcessorError(LDAPMigrationError):
     def __init__(
         self,
         message: str,
-        processor_type: Optional[str] = None,
+        processor_type: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(message, "Processor", kwargs)
@@ -123,8 +123,8 @@ class HierarchyError(LDAPMigrationError):
     def __init__(
         self,
         message: str,
-        dn: Optional[str] = None,
-        parent_dn: Optional[str] = None,
+        dn: str | None = None,
+        parent_dn: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(message, "Hierarchy", kwargs)
@@ -138,8 +138,8 @@ class ACLProcessingError(LDAPMigrationError):
     def __init__(
         self,
         message: str,
-        acl_type: Optional[str] = None,
-        acl_value: Optional[str] = None,
+        acl_type: str | None = None,
+        acl_value: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(message, "ACL", kwargs)
@@ -153,10 +153,10 @@ class PathValidationError(MigrationValidationError):
     def __init__(
         self,
         message: str,
-        path: Optional[str] = None,
+        path: str | None = None,
         **kwargs: Any,
     ) -> None:
-        super().__init__(message, "PathValidation", kwargs)
+        super().__init__(message, "PathValidation", **kwargs)
         self.path = path
 
 
@@ -166,11 +166,11 @@ class ConfigValidationError(MigrationValidationError):
     def __init__(
         self,
         message: str,
-        config_key: Optional[str] = None,
-        expected_type: Optional[str] = None,
+        config_key: str | None = None,
+        expected_type: str | None = None,
         **kwargs: Any,
     ) -> None:
-        super().__init__(message, "ConfigValidation", kwargs)
+        super().__init__(message, "ConfigValidation", **kwargs)
         self.config_key = config_key
         self.expected_type = expected_type
 
@@ -178,22 +178,22 @@ class ConfigValidationError(MigrationValidationError):
 def create_detailed_error(
     base_exception: Exception,
     operation: str,
-    context: Optional[Dict[str, Any]] = None,
+    context: dict[str, Any] | None = None,
 ) -> LDAPMigrationError:
     """Create a detailed migration error from a base exception.
-    
+
     Args:
         base_exception: The original exception
         operation: The operation that was being performed
         context: Additional context information
-        
+
     Returns:
         LDAPMigrationError with detailed information
     """
     message = str(base_exception)
     details = context or {}
     details["original_exception_type"] = type(base_exception).__name__
-    
+
     return LDAPMigrationError(
         message=message,
         operation=operation,
@@ -203,35 +203,35 @@ def create_detailed_error(
 
 def log_migration_error(error: LDAPMigrationError, level: str = "error") -> None:
     """Log a migration error with structured information.
-    
+
     Args:
         error: The migration error to log
         level: Log level (debug, info, warning, error, critical)
     """
     log_func = getattr(logger, level.lower(), logger.error)
-    
+
     log_func(f"Migration error: {error}")
-    
+
     if error.operation:
         log_func(f"  Operation: {error.operation}")
-    
+
     if error.details:
         for key, value in error.details.items():
             log_func(f"  {key}: {value}")
-    
+
     # Log specific attributes for different error types
     if isinstance(error, LDAPConnectionError):
         if error.host:
             log_func(f"  Host: {error.host}")
         if error.port:
             log_func(f"  Port: {error.port}")
-    
+
     elif isinstance(error, LDAPSchemaError):
         if error.element_name:
             log_func(f"  Element: {error.element_name}")
         if error.element_type:
             log_func(f"  Type: {error.element_type}")
-    
+
     elif isinstance(error, LDIFProcessingError):
         if error.file_path:
             log_func(f"  File: {error.file_path}")
@@ -242,20 +242,20 @@ def log_migration_error(error: LDAPMigrationError, level: str = "error") -> None
 def handle_migration_exception(
     operation: str,
     exception: Exception,
-    context: Optional[Dict[str, Any]] = None,
+    context: dict[str, Any] | None = None,
     reraise: bool = True,
-) -> Optional[LDAPMigrationError]:
+) -> LDAPMigrationError | None:
     """Handle and optionally re-raise migration exceptions.
-    
+
     Args:
         operation: The operation that failed
         exception: The exception that occurred
         context: Additional context information
         reraise: Whether to re-raise the exception
-        
+
     Returns:
         LDAPMigrationError if not re-raising, None otherwise
-        
+
     Raises:
         LDAPMigrationError: If reraise is True
     """
@@ -263,10 +263,10 @@ def handle_migration_exception(
         migration_error = exception
     else:
         migration_error = create_detailed_error(exception, operation, context)
-    
+
     log_migration_error(migration_error)
-    
+
     if reraise:
         raise migration_error
-    
+
     return migration_error

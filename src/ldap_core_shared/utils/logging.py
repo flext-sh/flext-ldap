@@ -6,9 +6,7 @@ import logging
 import logging.handlers
 import sys
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Any, Self
 
 from ldap_core_shared.config.base_config import LoggingConfig
 from ldap_core_shared.utils.constants import DEFAULT_LARGE_LIMIT, DEFAULT_MAX_ITEMS
@@ -122,6 +120,7 @@ class LDAPLogger:
 
             # Convert to Path if it's a string
             from pathlib import Path
+
             if isinstance(self.config.file_path, str):
                 file_path = Path(self.config.file_path)
             else:
@@ -262,7 +261,7 @@ class LDAPLogger:
         # Convert extra_data values to compatible types
         converted_extra = {}
         for key, value in extra_data.items():
-            if isinstance(value, (str, int, float, bool)):
+            if isinstance(value, str | int | float | bool):
                 converted_extra[key] = value
             else:
                 converted_extra[key] = str(value)
@@ -368,9 +367,14 @@ class PerformanceTimer:
 
             if self.auto_log:
                 self.logger.info(
-                    f"Operation completed: {self.operation}",
+                    "Operation completed: %s",
+                    self.operation,
                     duration_s=round(self.duration, 3),
-                    **{k: v for k, v in self.extra_data.items() if isinstance(v, (str, int, float, bool))},
+                    **{
+                        k: v
+                        for k, v in self.extra_data.items()
+                        if isinstance(v, str | int | float | bool)
+                    },
                 )
 
     def get_duration(self) -> float | None:

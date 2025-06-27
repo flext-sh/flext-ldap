@@ -45,7 +45,7 @@ from __future__ import annotations
 
 import logging
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -65,13 +65,13 @@ class SASLState(Enum):
     initial setup through completion or failure.
     """
 
-    INITIAL = "initial"                    # Initial state, not started
+    INITIAL = "initial"  # Initial state, not started
     MECHANISM_SELECTED = "mechanism_selected"  # Mechanism chosen
-    IN_PROGRESS = "in_progress"           # Authentication in progress
-    NEEDS_RESPONSE = "needs_response"     # Waiting for challenge response
-    COMPLETE = "complete"                 # Authentication completed successfully
-    FAILED = "failed"                     # Authentication failed
-    DISPOSED = "disposed"                 # Context disposed/cleaned up
+    IN_PROGRESS = "in_progress"  # Authentication in progress
+    NEEDS_RESPONSE = "needs_response"  # Waiting for challenge response
+    COMPLETE = "complete"  # Authentication completed successfully
+    FAILED = "failed"  # Authentication failed
+    DISPOSED = "disposed"  # Context disposed/cleaned up
 
 
 class QualityOfProtection(Enum):
@@ -81,9 +81,9 @@ class QualityOfProtection(Enum):
     successful SASL authentication.
     """
 
-    AUTH = "auth"                         # Authentication only
-    AUTH_INT = "auth-int"                 # Authentication + integrity
-    AUTH_CONF = "auth-conf"               # Authentication + confidentiality
+    AUTH = "auth"  # Authentication only
+    AUTH_INT = "auth-int"  # Authentication + integrity
+    AUTH_CONF = "auth-conf"  # Authentication + confidentiality
 
 
 class SASLProperties(BaseModel):
@@ -131,7 +131,7 @@ class SASLProperties(BaseModel):
     )
 
     # Digest options (for DIGEST-MD5)
-    digest_uri: Optional[str] = Field(
+    digest_uri: str | None = Field(
         default=None,
         description="Digest URI for DIGEST-MD5 mechanism",
     )
@@ -162,7 +162,7 @@ class SASLProperties(BaseModel):
                 continue
         return result
 
-    def supports_qop(self, qop: Union[str, QualityOfProtection]) -> bool:
+    def supports_qop(self, qop: str | QualityOfProtection) -> bool:
         """Check if QOP is supported.
 
         Args:
@@ -203,75 +203,92 @@ class SASLContext(BaseModel):
     """
 
     # Basic context information
-    mechanism: Optional[str] = Field(
-        default=None, description="Selected SASL mechanism",
+    mechanism: str | None = Field(
+        default=None,
+        description="Selected SASL mechanism",
     )
     service: str = Field(default="ldap", description="Service name")
-    hostname: Optional[str] = Field(default=None, description="Server hostname")
+    hostname: str | None = Field(default=None, description="Server hostname")
 
     # Authentication state
     state: SASLState = Field(
-        default=SASLState.INITIAL, description="Current authentication state",
+        default=SASLState.INITIAL,
+        description="Current authentication state",
     )
 
     # Identity information
-    authentication_id: Optional[str] = Field(
-        default=None, description="Authentication identity (authcid)",
+    authentication_id: str | None = Field(
+        default=None,
+        description="Authentication identity (authcid)",
     )
-    authorization_id: Optional[str] = Field(
-        default=None, description="Authorization identity (authzid)",
+    authorization_id: str | None = Field(
+        default=None,
+        description="Authorization identity (authzid)",
     )
-    realm: Optional[str] = Field(default=None, description="Authentication realm")
+    realm: str | None = Field(default=None, description="Authentication realm")
 
     # Security properties
     properties: SASLProperties = Field(
-        default_factory=SASLProperties, description="SASL properties",
+        default_factory=SASLProperties,
+        description="SASL properties",
     )
 
     # Negotiated security parameters
-    negotiated_qop: Optional[QualityOfProtection] = Field(
-        default=None, description="Negotiated QOP",
+    negotiated_qop: QualityOfProtection | None = Field(
+        default=None,
+        description="Negotiated QOP",
     )
-    negotiated_cipher: Optional[str] = Field(
-        default=None, description="Negotiated cipher",
+    negotiated_cipher: str | None = Field(
+        default=None,
+        description="Negotiated cipher",
     )
-    negotiated_buffer_size: Optional[int] = Field(
-        default=None, description="Negotiated buffer size",
+    negotiated_buffer_size: int | None = Field(
+        default=None,
+        description="Negotiated buffer size",
     )
 
     # Security layer state
     security_layer_active: bool = Field(
-        default=False, description="Security layer is active",
+        default=False,
+        description="Security layer is active",
     )
-    integrity_key: Optional[bytes] = Field(
-        default=None, description="Integrity protection key",
+    integrity_key: bytes | None = Field(
+        default=None,
+        description="Integrity protection key",
     )
-    confidentiality_key: Optional[bytes] = Field(
-        default=None, description="Confidentiality key",
+    confidentiality_key: bytes | None = Field(
+        default=None,
+        description="Confidentiality key",
     )
 
     # Challenge-response state
     challenge_count: int = Field(
-        default=0, description="Number of challenges processed",
+        default=0,
+        description="Number of challenges processed",
     )
-    last_challenge: Optional[bytes] = Field(
-        default=None, description="Last challenge received",
+    last_challenge: bytes | None = Field(
+        default=None,
+        description="Last challenge received",
     )
-    last_response: Optional[bytes] = Field(
-        default=None, description="Last response sent",
+    last_response: bytes | None = Field(
+        default=None,
+        description="Last response sent",
     )
 
     # Session information
-    session_id: Optional[str] = Field(default=None, description="Session identifier")
-    created_at: Optional[float] = Field(
-        default=None, description="Context creation timestamp",
+    session_id: str | None = Field(default=None, description="Session identifier")
+    created_at: float | None = Field(
+        default=None,
+        description="Context creation timestamp",
     )
-    completed_at: Optional[float] = Field(
-        default=None, description="Authentication completion timestamp",
+    completed_at: float | None = Field(
+        default=None,
+        description="Authentication completion timestamp",
     )
 
     class Config:
         """Pydantic configuration."""
+
         arbitrary_types_allowed = True
         use_enum_values = True
         allow_reuse = True
@@ -294,7 +311,7 @@ class SASLContext(BaseModel):
         """
         self.authentication_id = authcid
 
-    def set_authorization_id(self, authzid: Optional[str]) -> None:
+    def set_authorization_id(self, authzid: str | None) -> None:
         """Set authorization identity.
 
         Args:
@@ -302,7 +319,7 @@ class SASLContext(BaseModel):
         """
         self.authorization_id = authzid
 
-    def get_effective_authorization_id(self) -> Optional[str]:
+    def get_effective_authorization_id(self) -> str | None:
         """Get effective authorization identity.
 
         Returns:
@@ -310,7 +327,7 @@ class SASLContext(BaseModel):
         """
         return self.authorization_id or self.authentication_id
 
-    def set_realm(self, realm: Optional[str]) -> None:
+    def set_realm(self, realm: str | None) -> None:
         """Set authentication realm.
 
         Args:
@@ -318,7 +335,7 @@ class SASLContext(BaseModel):
         """
         self.realm = realm
 
-    def set_state(self, state: Union[SASLState, str]) -> None:
+    def set_state(self, state: SASLState | str) -> None:
         """Set authentication state.
 
         Args:
@@ -375,8 +392,8 @@ class SASLContext(BaseModel):
     def negotiate_security_layer(
         self,
         qop: QualityOfProtection,
-        cipher: Optional[str] = None,
-        buffer_size: Optional[int] = None,
+        cipher: str | None = None,
+        buffer_size: int | None = None,
     ) -> None:
         """Negotiate security layer parameters.
 
@@ -413,8 +430,8 @@ class SASLContext(BaseModel):
 
     def activate_security_layer(
         self,
-        integrity_key: Optional[bytes] = None,
-        confidentiality_key: Optional[bytes] = None,
+        integrity_key: bytes | None = None,
+        confidentiality_key: bytes | None = None,
     ) -> None:
         """Activate security layer with keys.
 
@@ -443,7 +460,8 @@ class SASLContext(BaseModel):
 
         # Set integrity key for auth-int and auth-conf
         if self.negotiated_qop in {
-            QualityOfProtection.AUTH_INT, QualityOfProtection.AUTH_CONF,
+            QualityOfProtection.AUTH_INT,
+            QualityOfProtection.AUTH_CONF,
         }:
             if integrity_key is None:
                 msg = "Integrity key required for negotiated QOP"
@@ -481,12 +499,10 @@ class SASLContext(BaseModel):
         Returns:
             True if integrity protection is active
         """
-        return (
-            self.security_layer_active and
-            self.negotiated_qop in {
-                QualityOfProtection.AUTH_INT, QualityOfProtection.AUTH_CONF,
-            }
-        )
+        return self.security_layer_active and self.negotiated_qop in {
+            QualityOfProtection.AUTH_INT,
+            QualityOfProtection.AUTH_CONF,
+        }
 
     def requires_confidentiality(self) -> bool:
         """Check if confidentiality protection is required.
@@ -495,8 +511,8 @@ class SASLContext(BaseModel):
             True if confidentiality protection is active
         """
         return (
-            self.security_layer_active and
-            self.negotiated_qop == QualityOfProtection.AUTH_CONF
+            self.security_layer_active
+            and self.negotiated_qop == QualityOfProtection.AUTH_CONF
         )
 
     def dispose(self) -> None:
@@ -593,6 +609,19 @@ class SASLSecurityLayer:
 
         self.context = context
         self._sequence_number = 0
+        # Extract QOP from context properties
+        if (
+            context.properties
+            and hasattr(context.properties, "qop")
+            and context.properties.qop
+        ):
+            self.qop = (
+                context.properties.qop[0]
+                if isinstance(context.properties.qop, list)
+                else context.properties.qop
+            )
+        else:
+            self.qop = "auth"  # Default to authentication only
 
     def wrap(self, data: bytes) -> bytes:
         """Wrap data with security layer protection.
@@ -628,7 +657,9 @@ class SASLSecurityLayer:
                 # Simple integrity protection using HMAC-SHA256
                 if not hasattr(self, "_integrity_key") or not self._integrity_key:
                     # Generate integrity key from mechanism-specific data
-                    self._integrity_key = hashlib.sha256(b"sasl-integrity-" + str(id(self)).encode()).digest()
+                    self._integrity_key = hashlib.sha256(
+                        b"sasl-integrity-" + str(id(self)).encode(),
+                    ).digest()
 
                 # Create MAC for integrity
                 mac = hmac.new(self._integrity_key, data, hashlib.sha256).digest()
@@ -638,7 +669,9 @@ class SASLSecurityLayer:
                 return length_bytes + data + mac
 
             except ImportError:
-                logging.getLogger(__name__).warning("HMAC/hashlib not available for integrity protection")
+                logging.getLogger(__name__).warning(
+                    "HMAC/hashlib not available for integrity protection",
+                )
                 return data
 
         elif self.qop == "auth-conf":
@@ -649,7 +682,10 @@ class SASLSecurityLayer:
                 # Generate encryption key if not exists
                 if not hasattr(self, "_encryption_key") or not self._encryption_key:
                     import base64
-                    key_material = hashlib.sha256(b"sasl-encryption-" + str(id(self)).encode()).digest()
+
+                    key_material = hashlib.sha256(
+                        b"sasl-encryption-" + str(id(self)).encode(),
+                    ).digest()
                     self._encryption_key = base64.urlsafe_b64encode(key_material)
 
                 fernet = Fernet(self._encryption_key)
@@ -660,12 +696,16 @@ class SASLSecurityLayer:
                 return length_bytes + encrypted_data
 
             except ImportError:
-                logging.getLogger(__name__).warning("Cryptography package not available for confidentiality protection")
+                logging.getLogger(__name__).warning(
+                    "Cryptography package not available for confidentiality protection",
+                )
                 # Fallback to integrity protection
                 return self.wrap(data)  # Recursive call with auth-int fallback
 
         else:
-            logging.getLogger(__name__).warning(f"Unknown QOP level: {self.qop}, using authentication only")
+            logging.getLogger(__name__).warning(
+                "Unknown QOP level: %s, using authentication only", self.qop,
+            )
             return data
 
     def unwrap(self, protected_data: bytes) -> bytes:
@@ -699,21 +739,27 @@ class SASLSecurityLayer:
                 import hashlib
                 import hmac
 
-                if len(protected_data) < MIN_INTEGRITY_DATA_SIZE:  # 4 bytes length + minimum data + 32 bytes MAC
+                if (
+                    len(protected_data) < MIN_INTEGRITY_DATA_SIZE
+                ):  # 4 bytes length + minimum data + 32 bytes MAC
                     msg = "Protected data too short for integrity verification"
                     raise ValueError(msg)
 
                 # Extract components: [4 bytes length][data][32 bytes MAC]
                 data_length = int.from_bytes(protected_data[:4], byteorder="big")
-                data = protected_data[4:4 + data_length]
-                received_mac = protected_data[4 + data_length:4 + data_length + 32]
+                data = protected_data[4 : 4 + data_length]
+                received_mac = protected_data[4 + data_length : 4 + data_length + 32]
 
                 # Verify integrity
                 if not hasattr(self, "_integrity_key") or not self._integrity_key:
                     # Generate same integrity key as in wrap()
-                    self._integrity_key = hashlib.sha256(b"sasl-integrity-" + str(id(self)).encode()).digest()
+                    self._integrity_key = hashlib.sha256(
+                        b"sasl-integrity-" + str(id(self)).encode(),
+                    ).digest()
 
-                expected_mac = hmac.new(self._integrity_key, data, hashlib.sha256).digest()
+                expected_mac = hmac.new(
+                    self._integrity_key, data, hashlib.sha256,
+                ).digest()
 
                 if not hmac.compare_digest(received_mac, expected_mac):
                     msg = "Integrity verification failed - data may be corrupted"
@@ -722,7 +768,9 @@ class SASLSecurityLayer:
                 return data
 
             except ImportError:
-                logging.getLogger(__name__).warning("HMAC/hashlib not available for integrity verification")
+                logging.getLogger(__name__).warning(
+                    "HMAC/hashlib not available for integrity verification",
+                )
                 return protected_data
 
         elif self.qop == "auth-conf":
@@ -736,24 +784,31 @@ class SASLSecurityLayer:
 
                 # Extract components: [4 bytes length][encrypted data]
                 data_length = int.from_bytes(protected_data[:4], byteorder="big")
-                encrypted_data = protected_data[4:4 + data_length]
+                encrypted_data = protected_data[4 : 4 + data_length]
 
                 # Decrypt using same key as in wrap()
                 if not hasattr(self, "_encryption_key") or not self._encryption_key:
                     import base64
-                    key_material = hashlib.sha256(b"sasl-encryption-" + str(id(self)).encode()).digest()
+
+                    key_material = hashlib.sha256(
+                        b"sasl-encryption-" + str(id(self)).encode(),
+                    ).digest()
                     self._encryption_key = base64.urlsafe_b64encode(key_material)
 
                 fernet = Fernet(self._encryption_key)
                 return fernet.decrypt(encrypted_data)
 
             except ImportError:
-                logging.getLogger(__name__).warning("Cryptography package not available for decryption")
+                logging.getLogger(__name__).warning(
+                    "Cryptography package not available for decryption",
+                )
                 # Try integrity verification instead
                 return self.unwrap(protected_data)
 
         else:
-            logging.getLogger(__name__).warning(f"Unknown QOP level: {self.qop}, returning data as-is")
+            logging.getLogger(__name__).warning(
+                "Unknown QOP level: %s, returning data as-is", self.qop,
+            )
             return protected_data
 
     def get_max_send_size(self) -> int:

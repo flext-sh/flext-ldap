@@ -71,8 +71,16 @@ class TestFilterType:
     def test_filter_type_enumeration_completeness(self) -> None:
         """Test FilterType enumeration completeness."""
         expected_types = {
-            "equality", "substring", "greater_equal", "less_equal",
-            "present", "approximate", "and", "or", "not", "extensible",
+            "equality",
+            "substring",
+            "greater_equal",
+            "less_equal",
+            "present",
+            "approximate",
+            "and",
+            "or",
+            "not",
+            "extensible",
         }
 
         actual_types = {member.value for member in FilterType}
@@ -84,8 +92,16 @@ class TestFilterType:
         for filter_type in FilterType:
             assert isinstance(filter_type, FilterType)
             assert filter_type.value in {
-                "equality", "substring", "greater_equal", "less_equal",
-                "present", "approximate", "and", "or", "not", "extensible",
+                "equality",
+                "substring",
+                "greater_equal",
+                "less_equal",
+                "present",
+                "approximate",
+                "and",
+                "or",
+                "not",
+                "extensible",
             }
 
 
@@ -103,7 +119,9 @@ class TestFilterSyntaxError:
     def test_syntax_error_creation_with_position(self) -> None:
         """Test creating syntax error with position information."""
         filter_string = "(cn=test"
-        error = FilterSyntaxError("Missing closing parenthesis", position=7, filter_string=filter_string)
+        error = FilterSyntaxError(
+            "Missing closing parenthesis", position=7, filter_string=filter_string
+        )
 
         assert "Missing closing parenthesis at position 7" in str(error)
         assert error.position == 7
@@ -112,7 +130,9 @@ class TestFilterSyntaxError:
     def test_syntax_error_context_generation(self) -> None:
         """Test error context generation around position."""
         filter_string = "(&(cn=user)(objectClass=person))"
-        error = FilterSyntaxError("Error here", position=15, filter_string=filter_string)
+        error = FilterSyntaxError(
+            "Error here", position=15, filter_string=filter_string
+        )
 
         error_str = str(error)
         assert "position 15" in error_str
@@ -187,7 +207,9 @@ class TestParsedFilter:
         )
 
         # AND filter with insufficient children should raise error
-        with pytest.raises(ValidationError, match="AND filter must have at least 2 children"):
+        with pytest.raises(
+            ValidationError, match="AND filter must have at least 2 children"
+        ):
             ParsedFilter(
                 filter_type=FilterType.AND,
                 children=[child],  # Only 1 child
@@ -205,7 +227,9 @@ class TestParsedFilter:
         )
 
         # OR filter with insufficient children should raise error
-        with pytest.raises(ValidationError, match="OR filter must have at least 2 children"):
+        with pytest.raises(
+            ValidationError, match="OR filter must have at least 2 children"
+        ):
             ParsedFilter(
                 filter_type=FilterType.OR,
                 children=[child],  # Only 1 child
@@ -231,7 +255,9 @@ class TestParsedFilter:
         )
 
         # NOT filter with wrong number of children should raise error
-        with pytest.raises(ValidationError, match="NOT filter must have exactly 1 child"):
+        with pytest.raises(
+            ValidationError, match="NOT filter must have exactly 1 child"
+        ):
             ParsedFilter(
                 filter_type=FilterType.NOT,
                 children=[child1, child2],  # 2 children
@@ -632,28 +658,36 @@ class TestFilterParser:
         """Test parsing AND filter with insufficient children."""
         parser = FilterParser()
 
-        with pytest.raises(FilterSyntaxError, match="AND filter requires at least 2 child filters"):
+        with pytest.raises(
+            FilterSyntaxError, match="AND filter requires at least 2 child filters"
+        ):
             parser.parse("(&(cn=test))")
 
     def test_parse_insufficient_or_children(self) -> None:
         """Test parsing OR filter with insufficient children."""
         parser = FilterParser()
 
-        with pytest.raises(FilterSyntaxError, match="OR filter requires at least 2 child filters"):
+        with pytest.raises(
+            FilterSyntaxError, match="OR filter requires at least 2 child filters"
+        ):
             parser.parse("(|(cn=test))")
 
     def test_parse_not_filter_no_child(self) -> None:
         """Test parsing NOT filter without child."""
         parser = FilterParser()
 
-        with pytest.raises(FilterSyntaxError, match="NOT filter requires a child filter"):
+        with pytest.raises(
+            FilterSyntaxError, match="NOT filter requires a child filter"
+        ):
             parser.parse("(!)")
 
     def test_parse_trailing_characters(self) -> None:
         """Test parsing filter with trailing characters."""
         parser = FilterParser()
 
-        with pytest.raises(FilterSyntaxError, match="Unexpected characters after filter"):
+        with pytest.raises(
+            FilterSyntaxError, match="Unexpected characters after filter"
+        ):
             parser.parse("(cn=test)extra")
 
     def test_parse_attribute_with_hyphens(self) -> None:
@@ -710,7 +744,9 @@ class TestFilterAnalyzer:
 
         assert result["valid"] is True
         assert result["complexity_score"] > 10
-        assert any("Complex nested filter" in hint for hint in result["performance_hints"])
+        assert any(
+            "Complex nested filter" in hint for hint in result["performance_hints"]
+        )
 
     def test_analyze_substring_filter_performance(self) -> None:
         """Test analyzing substring filter for performance hints."""
@@ -734,7 +770,9 @@ class TestFilterAnalyzer:
         result = analyzer.analyze("(objectClass=*)")  # Very broad filter
 
         assert result["valid"] is True
-        assert any("excessive results" in warning for warning in result["security_warnings"])
+        assert any(
+            "excessive results" in warning for warning in result["security_warnings"]
+        )
 
     def test_analyze_injection_patterns_security(self) -> None:
         """Test analyzing potential injection patterns."""
@@ -750,7 +788,10 @@ class TestFilterAnalyzer:
         result = analyzer.analyze("(&(cn=*test*)(objectClass=person))")
 
         assert result["valid"] is True
-        assert any("equality filters" in suggestion for suggestion in result["optimization_suggestions"])
+        assert any(
+            "equality filters" in suggestion
+            for suggestion in result["optimization_suggestions"]
+        )
 
     def test_analyze_has_substring_filters(self) -> None:
         """Test internal _has_substring_filters method."""

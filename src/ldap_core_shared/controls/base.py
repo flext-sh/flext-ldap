@@ -21,9 +21,15 @@ References:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    try:
+        import ldap3
+    except ImportError:
+        ldap3 = None  # type: ignore[assignment]
 
 from ldap_core_shared.exceptions.base import LDAPError
 from ldap_core_shared.utils.constants import PLACEHOLDER_OID
@@ -69,10 +75,12 @@ class LDAPControl(BaseModel, ABC):
 
     # Control properties
     criticality: bool = Field(
-        default=False, description="Whether this control is critical to the operation",
+        default=False,
+        description="Whether this control is critical to the operation",
     )
-    control_value: Optional[bytes] = Field(
-        default=None, description="Control-specific value (ASN.1 encoded)",
+    control_value: bytes | None = Field(
+        default=None,
+        description="Control-specific value (ASN.1 encoded)",
     )
 
     class Config:
@@ -89,7 +97,7 @@ class LDAPControl(BaseModel, ABC):
             ControlRegistry.register(cls.control_type, cls)
 
     @abstractmethod
-    def encode_value(self) -> Optional[bytes]:
+    def encode_value(self) -> bytes | None:
         """Encode the control value to ASN.1 bytes.
 
         Returns:
@@ -106,7 +114,7 @@ class LDAPControl(BaseModel, ABC):
 
     @classmethod
     @abstractmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> LDAPControl:
+    def decode_value(cls, control_value: bytes | None) -> LDAPControl:
         """Decode ASN.1 bytes to create a control instance.
 
         Args:
@@ -143,6 +151,29 @@ class LDAPControl(BaseModel, ABC):
             result["controlValue"] = encoded_value
 
         return result
+
+    def to_ldap3_control(self) -> Any:
+        """Convert to ldap3 Control object format.
+
+        Returns:
+            ldap3 Control object compatible format
+
+        Note:
+            This method provides compatibility with ldap3 library control format.
+            Returns the same dictionary as to_ldap_control for ldap3 compatibility.
+        """
+        try:
+            import ldap3
+            # Create ldap3.Control object if available
+            encoded_value = self.encode_value()
+            return ldap3.Control(  # type: ignore[attr-defined]
+                oid=self.control_type,
+                critical=self.criticality,
+                value=encoded_value,
+            )
+        except ImportError:
+            # Fallback to dictionary format if ldap3 not available
+            return self.to_ldap_control()
 
     @classmethod
     def from_ldap_control(cls, control_dict: dict[str, Any]) -> LDAPControl:
@@ -195,7 +226,7 @@ class ControlRegistry:
     enabling automatic control instantiation from LDAP responses.
     """
 
-    _registry: dict[OID, type[LDAPControl]] = {}
+    _registry: ClassVar[dict[OID, type[LDAPControl]]] = {}
 
     @classmethod
     def register(cls, control_type: OID, control_class: type[LDAPControl]) -> None:
@@ -208,7 +239,7 @@ class ControlRegistry:
         cls._registry[control_type] = control_class
 
     @classmethod
-    def get(cls, control_type: OID) -> Optional[type[LDAPControl]]:
+    def get(cls, control_type: OID) -> type[LDAPControl] | None:
         """Get control implementation by OID.
 
         Args:
@@ -253,7 +284,7 @@ class GenericControl(LDAPControl):
     def __init__(
         self,
         control_type: OID,
-        control_value: Optional[bytes] = None,
+        control_value: bytes | None = None,
         criticality: bool = False,
         **kwargs: Any,
     ) -> None:
@@ -262,12 +293,12 @@ class GenericControl(LDAPControl):
         # Set the control type dynamically
         object.__setattr__(self, "control_type", control_type)
 
-    def encode_value(self) -> Optional[bytes]:
+    def encode_value(self) -> bytes | None:
         """Return the control value as-is."""
         return self.control_value
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> LDAPControl:
+    def decode_value(cls, control_value: bytes | None) -> LDAPControl:
         """Create generic control with raw value."""
         return cls(
             control_type=PLACEHOLDER_OID,  # Will be overridden
@@ -319,6 +350,7 @@ class ControlOIDs:
 
     # Matched Values Control (RFC 3876)
     MATCHED_VALUES = "1.2.826.0.1.3344810.2.3"
+
 
 # TODO: Implement the following critical controls:
 # 1. PagedResultsControl (CRITICAL - RFC 2696)

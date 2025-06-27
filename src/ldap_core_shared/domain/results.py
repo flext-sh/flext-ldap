@@ -19,7 +19,7 @@ PREFERRED PATTERN:
 from __future__ import annotations
 
 import warnings
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
@@ -70,7 +70,7 @@ class LDAPConnectionResult(BaseModel):
     ldap_info: dict[str, Any] = Field(default_factory=dict)
     ssh_info: dict[str, Any] = Field(default_factory=dict)
 
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @computed_field
     def has_errors(self) -> bool:
@@ -120,7 +120,7 @@ class LDAPSearchResult(BaseModel):
     errors: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
 
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @computed_field
     def has_errors(self) -> bool:
@@ -167,7 +167,7 @@ class LDAPOperationResult(BaseModel, Generic[T]):
     # Rollback information
     rollback_data: dict[str, Any] = Field(default_factory=dict)
 
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @computed_field
     def has_error(self) -> bool:
@@ -221,7 +221,7 @@ class LDAPBulkResult(BaseModel):
     errors: list[str] = Field(default_factory=list)
     critical_errors: list[str] = Field(default_factory=list)
 
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @computed_field
     def success_rate(self) -> float:
@@ -270,7 +270,7 @@ class LDAPPerformanceResult(BaseModel):
     pool_utilization: float = Field(default=0.0, ge=0.0, le=DEFAULT_MAX_ITEMS)
     connection_reuse_rate: float = Field(default=0.0, ge=0.0, le=DEFAULT_MAX_ITEMS)
 
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @computed_field
     def success_rate(self) -> float:
@@ -309,7 +309,7 @@ class LDAPValidationResult(BaseModel):
     # Performance metrics
     validation_duration: float = Field(default=0.0, ge=0.0)
 
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @computed_field
     def has_errors(self) -> bool:
@@ -413,7 +413,10 @@ def merge_bulk_results(results: list[LDAPBulkResult]) -> LDAPBulkResult:
 # 🔄 MIGRATION UTILITIES - Convert legacy results to unified api.Result[T]
 # ============================================================================
 
-def migrate_connection_result_to_unified(legacy_result: LDAPConnectionResult) -> Result[bool]:
+
+def migrate_connection_result_to_unified(
+    legacy_result: LDAPConnectionResult,
+) -> Result[bool]:
     """Convert LDAPConnectionResult to unified Result[bool].
 
     DEPRECATED: Use api.Result[bool] directly for new connection testing.
@@ -434,7 +437,11 @@ def migrate_connection_result_to_unified(legacy_result: LDAPConnectionResult) ->
     from ldap_core_shared.api import Result
 
     if legacy_result.has_errors:
-        error_msg = legacy_result.connection_error or legacy_result.auth_error or "Connection failed"
+        error_msg = (
+            legacy_result.connection_error
+            or legacy_result.auth_error
+            or "Connection failed"
+        )
         return Result.fail(error_msg, default_data=False)
 
     return Result.ok(
@@ -448,7 +455,9 @@ def migrate_connection_result_to_unified(legacy_result: LDAPConnectionResult) ->
     )
 
 
-def migrate_search_result_to_unified(legacy_result: LDAPSearchResult) -> Result[list[dict[str, Any]]]:
+def migrate_search_result_to_unified(
+    legacy_result: LDAPSearchResult,
+) -> Result[list[dict[str, Any]]]:
     """Convert LDAPSearchResult to unified Result[list[LDAPEntry]].
 
     DEPRECATED: Use api.Result[list[LDAPEntry]] with LDAP.search() instead.
@@ -469,7 +478,9 @@ def migrate_search_result_to_unified(legacy_result: LDAPSearchResult) -> Result[
     from ldap_core_shared.api import Result
 
     if not legacy_result.success or legacy_result.has_errors:
-        error_msg = "; ".join(legacy_result.errors) if legacy_result.errors else "Search failed"
+        error_msg = (
+            "; ".join(legacy_result.errors) if legacy_result.errors else "Search failed"
+        )
         return Result.fail(error_msg, default_data=[])
 
     return Result.ok(
@@ -484,7 +495,9 @@ def migrate_search_result_to_unified(legacy_result: LDAPSearchResult) -> Result[
     )
 
 
-def migrate_operation_result_to_unified(legacy_result: LDAPOperationResult[T]) -> Result[T]:
+def migrate_operation_result_to_unified(
+    legacy_result: LDAPOperationResult[T],
+) -> Result[T]:
     """Convert LDAPOperationResult to unified Result[T].
 
     DEPRECATED: Use api.Result[T] directly for LDAP operations.
@@ -507,7 +520,9 @@ def migrate_operation_result_to_unified(legacy_result: LDAPOperationResult[T]) -
     if legacy_result.has_error:
         return Result.fail(
             legacy_result.error_message or "Operation failed",
-            code=str(legacy_result.ldap_error_code) if legacy_result.ldap_error_code else None,
+            code=str(legacy_result.ldap_error_code)
+            if legacy_result.ldap_error_code
+            else None,
             execution_time_ms=legacy_result.operation_duration * 1000,
             default_data=legacy_result.data,
         )
@@ -523,7 +538,9 @@ def migrate_operation_result_to_unified(legacy_result: LDAPOperationResult[T]) -
     )
 
 
-def migrate_bulk_result_to_unified(legacy_result: LDAPBulkResult) -> Result[dict[str, Any]]:
+def migrate_bulk_result_to_unified(
+    legacy_result: LDAPBulkResult,
+) -> Result[dict[str, Any]]:
     """Convert LDAPBulkResult to unified Result[dict].
 
     DEPRECATED: Use api.Result[dict] for bulk operation summaries.
