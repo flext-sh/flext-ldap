@@ -5,7 +5,7 @@ Exception classes for LDAP migration and data transfer errors.
 
 from __future__ import annotations
 
-from typing import Any, Optional, Union, cast
+from typing import Any, Union, cast
 
 # Type for error context data passed to exception constructors
 ErrorContext = Union[str, int, float, bool, list[str], dict[str, Any], None]
@@ -23,12 +23,12 @@ class MigrationError(LDAPError):
         self,
         message: str,
         *,
-        migration_phase: Optional[str] = None,
-        source_dn: Optional[str] = None,
-        target_dn: Optional[str] = None,
-        error_code: Optional[str] = None,
-        context: Optional[dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
+        migration_phase: str | None = None,
+        source_dn: str | None = None,
+        target_dn: str | None = None,
+        error_code: str | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         """Initialize migration error.
 
@@ -64,8 +64,8 @@ class SchemaValidationError(MigrationError):
         self,
         message: str,
         *,
-        schema_element: Optional[str] = None,
-        validation_type: Optional[str] = None,
+        schema_element: str | None = None,
+        validation_type: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize schema validation error.
@@ -84,9 +84,9 @@ class SchemaValidationError(MigrationError):
 
         super().__init__(
             message,
-            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            error_code=cast("str | None", kwargs.get("error_code")),
             context=context,
-            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+            original_error=cast("Exception | None", kwargs.get("original_error")),
         )
 
 
@@ -97,9 +97,9 @@ class DataIntegrityError(MigrationError):
         self,
         message: str,
         *,
-        integrity_check: Optional[str] = None,
-        expected_value: Optional[str | int | float | bool] = None,
-        actual_value: Optional[str | int | float | bool] = None,
+        integrity_check: str | None = None,
+        expected_value: str | int | float | bool | None = None,
+        actual_value: str | int | float | bool | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize data integrity error.
@@ -121,9 +121,9 @@ class DataIntegrityError(MigrationError):
 
         super().__init__(
             message,
-            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            error_code=cast("str | None", kwargs.get("error_code")),
             context=context,
-            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+            original_error=cast("Exception | None", kwargs.get("original_error")),
         )
 
 
@@ -134,9 +134,9 @@ class PerformanceThresholdError(MigrationError):
         self,
         message: str,
         *,
-        metric_name: Optional[str] = None,
-        threshold_value: Optional[float] = None,
-        actual_value: Optional[float] = None,
+        metric_name: str | None = None,
+        threshold_value: float | None = None,
+        actual_value: float | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize performance threshold error.
@@ -158,9 +158,9 @@ class PerformanceThresholdError(MigrationError):
 
         super().__init__(
             message,
-            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            error_code=cast("str | None", kwargs.get("error_code")),
             context=context,
-            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+            original_error=cast("Exception | None", kwargs.get("original_error")),
         )
 
 
@@ -171,8 +171,8 @@ class MigrationValidationError(MigrationError):
         self,
         message: str,
         *,
-        validation_rule: Optional[str] = None,
-        entry_count: Optional[int] = None,
+        validation_rule: str | None = None,
+        entry_count: int | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize migration validation error.
@@ -191,9 +191,9 @@ class MigrationValidationError(MigrationError):
 
         super().__init__(
             message,
-            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            error_code=cast("str | None", kwargs.get("error_code")),
             context=context,
-            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+            original_error=cast("Exception | None", kwargs.get("original_error")),
         )
 
 
@@ -204,9 +204,9 @@ class MigrationPerformanceError(MigrationError):
         self,
         message: str,
         *,
-        performance_metric: Optional[str] = None,
-        expected_value: Optional[float] = None,
-        actual_value: Optional[float] = None,
+        performance_metric: str | None = None,
+        expected_value: float | None = None,
+        actual_value: float | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize migration performance error.
@@ -228,9 +228,9 @@ class MigrationPerformanceError(MigrationError):
 
         super().__init__(
             message,
-            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            error_code=cast("str | None", kwargs.get("error_code")),
             context=context,
-            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+            original_error=cast("Exception | None", kwargs.get("original_error")),
         )
 
 
@@ -241,8 +241,8 @@ class MigrationDataError(MigrationError):
         self,
         message: str,
         *,
-        data_issue: Optional[str] = None,
-        affected_attributes: Optional[list[str]] = None,
+        data_issue: str | None = None,
+        affected_attributes: list[str] | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize migration data error.
@@ -261,9 +261,9 @@ class MigrationDataError(MigrationError):
 
         super().__init__(
             message,
-            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            error_code=cast("str | None", kwargs.get("error_code")),
             context=context,
-            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+            original_error=cast("Exception | None", kwargs.get("original_error")),
         )
 
 
@@ -274,8 +274,8 @@ class MigrationConfigurationError(MigrationError):
         self,
         message: str,
         *,
-        config_parameter: Optional[str] = None,
-        config_value: Optional[str | int | float | bool] = None,
+        config_parameter: str | None = None,
+        config_value: str | int | float | bool | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize migration configuration error.
@@ -294,7 +294,7 @@ class MigrationConfigurationError(MigrationError):
 
         super().__init__(
             message,
-            error_code=cast("Optional[str]", kwargs.get("error_code")),
+            error_code=cast("str | None", kwargs.get("error_code")),
             context=context,
-            original_error=cast("Optional[Exception]", kwargs.get("original_error")),
+            original_error=cast("Exception | None", kwargs.get("original_error")),
         )

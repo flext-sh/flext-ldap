@@ -38,9 +38,9 @@ References:
 from __future__ import annotations
 
 import base64
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -51,11 +51,11 @@ if TYPE_CHECKING:
 class LDIFEntryType(Enum):
     """Types of LDIF entries for schema elements."""
 
-    SCHEMA_ROOT = "schema_root"           # cn=schema root entry
-    ATTRIBUTE_TYPE = "attribute_type"     # olcAttributeTypes entry
-    OBJECT_CLASS = "object_class"         # olcObjectClasses entry
-    SYNTAX = "syntax"                     # olcLdapSyntaxes entry
-    MATCHING_RULE = "matching_rule"       # olcMatchingRules entry
+    SCHEMA_ROOT = "schema_root"  # cn=schema root entry
+    ATTRIBUTE_TYPE = "attribute_type"  # olcAttributeTypes entry
+    OBJECT_CLASS = "object_class"  # olcObjectClasses entry
+    SYNTAX = "syntax"  # olcLdapSyntaxes entry
+    MATCHING_RULE = "matching_rule"  # olcMatchingRules entry
 
 
 class SchemaEntryConfig(BaseModel):
@@ -63,37 +63,45 @@ class SchemaEntryConfig(BaseModel):
 
     # OpenLDAP configuration
     schema_dn: str = Field(
-        default="cn=schema,cn=config", description="Schema base DN",
+        default="cn=schema,cn=config",
+        description="Schema base DN",
     )
 
     include_oids: bool = Field(
-        default=True, description="Include OIDs in generated entries",
+        default=True,
+        description="Include OIDs in generated entries",
     )
 
     include_descriptions: bool = Field(
-        default=True, description="Include description attributes",
+        default=True,
+        description="Include description attributes",
     )
 
     # LDIF formatting options
     line_wrap_length: int = Field(
-        default=76, description="Maximum line length before wrapping",
+        default=76,
+        description="Maximum line length before wrapping",
     )
 
     include_timestamps: bool = Field(
-        default=True, description="Include creation timestamps",
+        default=True,
+        description="Include creation timestamps",
     )
 
     base64_encode_non_ascii: bool = Field(
-        default=True, description="Base64 encode non-ASCII values",
+        default=True,
+        description="Base64 encode non-ASCII values",
     )
 
     # Schema organization
     separate_files: bool = Field(
-        default=False, description="Generate separate files per schema type",
+        default=False,
+        description="Generate separate files per schema type",
     )
 
     schema_name: str = Field(
-        default="custom", description="Schema name for DN generation",
+        default="custom",
+        description="Schema name for DN generation",
     )
 
 
@@ -103,19 +111,21 @@ class SchemaLDIFEntry(BaseModel):
     dn: str = Field(description="Distinguished name of entry")
 
     attributes: dict[str, list[str]] = Field(
-        default_factory=dict, description="Entry attributes",
+        default_factory=dict,
+        description="Entry attributes",
     )
 
     entry_type: LDIFEntryType = Field(description="Type of schema entry")
 
     # Metadata
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Entry creation timestamp",
     )
 
-    source_element: Optional[str] = Field(
-        default=None, description="Source schema element identifier",
+    source_element: str | None = Field(
+        default=None,
+        description="Source schema element identifier",
     )
 
     def add_attribute(self, name: str, value: str) -> None:
@@ -168,13 +178,17 @@ class SchemaLDIFEntry(BaseModel):
             for value in self.attributes[attr_name]:
                 # Check if value needs base64 encoding
                 if self._needs_base64_encoding(value, config):
-                    encoded_value = base64.b64encode(value.encode("utf-8")).decode("ascii")
+                    encoded_value = base64.b64encode(value.encode("utf-8")).decode(
+                        "ascii",
+                    )
                     lines.append(f"{attr_name}:: {encoded_value}")
                 else:
                     # Wrap long lines
                     ldif_line = f"{attr_name}: {value}"
                     if len(ldif_line) > config.line_wrap_length:
-                        lines.extend(self._wrap_ldif_line(ldif_line, config.line_wrap_length))
+                        lines.extend(
+                            self._wrap_ldif_line(ldif_line, config.line_wrap_length),
+                        )
                     else:
                         lines.append(ldif_line)
 
@@ -237,21 +251,24 @@ class SchemaLDIF(BaseModel):
     """Complete LDIF representation of schema."""
 
     entries: list[SchemaLDIFEntry] = Field(
-        default_factory=list, description="Schema LDIF entries",
+        default_factory=list,
+        description="Schema LDIF entries",
     )
 
     config: SchemaEntryConfig = Field(
-        default_factory=SchemaEntryConfig, description="LDIF generation configuration",
+        default_factory=SchemaEntryConfig,
+        description="LDIF generation configuration",
     )
 
     # Metadata
     generated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="LDIF generation timestamp",
     )
 
-    source_file: Optional[str] = Field(
-        default=None, description="Source schema file path",
+    source_file: str | None = Field(
+        default=None,
+        description="Source schema file path",
     )
 
     def add_entry(self, entry: SchemaLDIFEntry) -> None:
@@ -318,10 +335,14 @@ class SchemaLDIF(BaseModel):
         return {
             "total_entries": len(self.entries),
             "schema_roots": len(self.get_entries_by_type(LDIFEntryType.SCHEMA_ROOT)),
-            "attribute_types": len(self.get_entries_by_type(LDIFEntryType.ATTRIBUTE_TYPE)),
+            "attribute_types": len(
+                self.get_entries_by_type(LDIFEntryType.ATTRIBUTE_TYPE),
+            ),
             "object_classes": len(self.get_entries_by_type(LDIFEntryType.OBJECT_CLASS)),
             "syntaxes": len(self.get_entries_by_type(LDIFEntryType.SYNTAX)),
-            "matching_rules": len(self.get_entries_by_type(LDIFEntryType.MATCHING_RULE)),
+            "matching_rules": len(
+                self.get_entries_by_type(LDIFEntryType.MATCHING_RULE),
+            ),
         }
 
 
@@ -355,9 +376,9 @@ class LDIFGenerator:
         self,
         attribute_types: list[AttributeType],
         object_classes: list[ObjectClass],
-        syntaxes: Optional[list[Any]] = None,
-        matching_rules: Optional[list[Any]] = None,
-        config: Optional[SchemaEntryConfig] = None,
+        syntaxes: list[Any] | None = None,
+        matching_rules: list[Any] | None = None,
+        config: SchemaEntryConfig | None = None,
     ) -> SchemaLDIF:
         """Generate LDIF from schema elements.
 
@@ -425,7 +446,7 @@ class LDIFGenerator:
         entry.add_attribute("cn", f"{{{0}}}{config.schema_name}")
 
         if config.include_timestamps:
-            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%SZ")
+            timestamp = datetime.now(UTC).strftime("%Y%m%d%H%M%SZ")
             entry.add_attribute("createTimestamp", timestamp)
 
         return entry
@@ -624,7 +645,9 @@ class LDIFGenerator:
 
         return f"( {' '.join(parts)} )"
 
-    def _convert_syntax(self, syntax: Any, config: SchemaEntryConfig) -> SchemaLDIFEntry:
+    def _convert_syntax(
+        self, syntax: Any, config: SchemaEntryConfig,
+    ) -> SchemaLDIFEntry:
         """Convert syntax to LDIF entry.
 
         Args:
@@ -643,7 +666,9 @@ class LDIFGenerator:
             entry_type=LDIFEntryType.SYNTAX,
         )
 
-    def _convert_matching_rule(self, rule: Any, config: SchemaEntryConfig) -> SchemaLDIFEntry:
+    def _convert_matching_rule(
+        self, rule: Any, config: SchemaEntryConfig,
+    ) -> SchemaLDIFEntry:
         """Convert matching rule to LDIF entry.
 
         Args:
@@ -667,7 +692,7 @@ class LDIFGenerator:
 def generate_ldif_from_schema_file(
     schema_file_path: str,
     output_file_path: str,
-    config: Optional[SchemaEntryConfig] = None,
+    config: SchemaEntryConfig | None = None,
 ) -> SchemaLDIF:
     """Generate LDIF from schema file (schema2ldif functionality).
 
@@ -685,50 +710,59 @@ def generate_ldif_from_schema_file(
     # Basic schema to LDIF conversion implementation
     try:
         from ldap_core_shared.schema.parser import SchemaParser
-        
+
         # Use schema parser to parse the schema file
         parser = SchemaParser()
         schema_elements = parser.parse_schema_file(schema_file_path)
-        
+
         # Convert parsed schema to LDIF format
         ldif_lines = []
         ldif_lines.append("version: 1")
         ldif_lines.append("")
-        
+
         # Add schema DN entry
         ldif_lines.append("dn: cn=schema")
         ldif_lines.append("objectClass: subschema")
         ldif_lines.append("cn: schema")
-        
+
         # Add object classes
-        for obj_class in schema_elements.get('objectClasses', []):
-            ldif_lines.append(f"objectClasses: {obj_class}")
-        
+        ldif_lines.extend(
+            f"objectClasses: {obj_class}"
+            for obj_class in schema_elements.get("objectClasses", [])
+        )
+
         # Add attribute types
-        for attr_type in schema_elements.get('attributeTypes', []):
-            ldif_lines.append(f"attributeTypes: {attr_type}")
-        
+        ldif_lines.extend(
+            f"attributeTypes: {attr_type}"
+            for attr_type in schema_elements.get("attributeTypes", [])
+        )
+
         # Add LDAP syntaxes
-        for syntax in schema_elements.get('ldapSyntaxes', []):
-            ldif_lines.append(f"ldapSyntaxes: {syntax}")
-        
+        ldif_lines.extend(
+            f"ldapSyntaxes: {syntax}"
+            for syntax in schema_elements.get("ldapSyntaxes", [])
+        )
+
         # Add matching rules
-        for rule in schema_elements.get('matchingRules', []):
-            ldif_lines.append(f"matchingRules: {rule}")
-        
+        ldif_lines.extend(
+            f"matchingRules: {rule}"
+            for rule in schema_elements.get("matchingRules", [])
+        )
+
         return "\n".join(ldif_lines) + "\n"
-        
+
     except Exception as e:
         # Fallback to basic schema conversion
         from ldap_core_shared.utils.logging import get_logger
+
         logger = get_logger(__name__)
-        logger.warning(f"Advanced schema parsing failed, using basic conversion: {e}")
-        
+        logger.warning("Advanced schema parsing failed, using basic conversion: %s", e)
+
         # Basic file-based conversion
         try:
-            with open(schema_file_path, 'r', encoding='utf-8') as f:
+            with open(schema_file_path, encoding="utf-8") as f:
                 schema_content = f.read()
-            
+
             # Simple schema to LDIF conversion
             ldif_lines = []
             ldif_lines.append("version: 1")
@@ -736,19 +770,19 @@ def generate_ldif_from_schema_file(
             ldif_lines.append("dn: cn=schema")
             ldif_lines.append("objectClass: subschema")
             ldif_lines.append("cn: schema")
-            
+
             # Extract basic schema elements (simplified)
-            for line in schema_content.split('\n'):
-                line = line.strip()
-                if line.startswith('objectclass') or line.startswith('objectClass'):
+            for raw_line in schema_content.split("\n"):
+                line = raw_line.strip()
+                if line.startswith(("objectclass", "objectClass")):
                     ldif_lines.append(f"objectClasses: {line}")
-                elif line.startswith('attributetype') or line.startswith('attributeType'):
+                elif line.startswith(("attributetype", "attributeType")):
                     ldif_lines.append(f"attributeTypes: {line}")
-            
+
             return "\n".join(ldif_lines) + "\n"
-            
+
         except Exception as file_error:
-            logger.error(f"Basic schema conversion also failed: {file_error}")
+            logger.exception("Basic schema conversion also failed: %s", file_error)
             # Return minimal valid LDIF
             return """version: 1
 
@@ -773,48 +807,50 @@ def validate_ldif_schema(ldif_content: str) -> list[str]:
     """
     # Basic LDIF schema validation implementation
     errors = []
-    
+
     try:
-        lines = ldif_content.strip().split('\n')
-        
+        lines = ldif_content.strip().split("\n")
+
         # Check for version line
-        if not lines or not lines[0].startswith('version:'):
+        if not lines or not lines[0].startswith("version:"):
             errors.append("Missing 'version:' directive at start of LDIF")
-        
+
         # Check for schema DN
         schema_dn_found = False
         object_class_found = False
-        
-        for line in lines:
-            line = line.strip()
-            
-            if line.startswith('dn:') and 'schema' in line.lower():
+
+        for raw_line in lines:
+            line = raw_line.strip()
+
+            if line.startswith("dn:") and "schema" in line.lower():
                 schema_dn_found = True
-            elif line.startswith('objectClass:') and 'subschema' in line:
+            elif line.startswith("objectClass:") and "subschema" in line:
                 object_class_found = True
-            elif line.startswith('objectClasses:'):
+            elif line.startswith("objectClasses:"):
                 # Validate object class format
-                if not ('(' in line and ')' in line):
+                if not ("(" in line and ")" in line):
                     errors.append(f"Invalid objectClass format: {line}")
-            elif line.startswith('attributeTypes:'):
+            elif line.startswith("attributeTypes:"):
                 # Validate attribute type format
-                if not ('(' in line and ')' in line):
+                if not ("(" in line and ")" in line):
                     errors.append(f"Invalid attributeType format: {line}")
-        
+
         if not schema_dn_found:
             errors.append("Missing schema DN entry")
-        
+
         if not object_class_found:
             errors.append("Missing subschema objectClass")
-        
+
         # Check for empty content
-        content_lines = [line for line in lines if line.strip() and not line.startswith('#')]
+        content_lines = [
+            line for line in lines if line.strip() and not line.startswith("#")
+        ]
         if len(content_lines) < 3:  # version + dn + objectClass minimum
             errors.append("LDIF content appears to be empty or incomplete")
-        
+
     except Exception as e:
         errors.append(f"LDIF parsing error: {e}")
-    
+
     return errors
 
 

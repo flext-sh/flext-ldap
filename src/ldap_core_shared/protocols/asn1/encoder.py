@@ -46,7 +46,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -74,26 +74,26 @@ logger = __import__("logging").getLogger(__name__)
 
 # BER/DER encoding constants
 BER_SHORT_FORM_THRESHOLD = 0x80  # 128 - Values below use short form length encoding
-BER_MAX_LONG_FORM_OCTETS = 126   # Maximum number of octets in long form length encoding
-OID_MIN_COMPONENTS = 2           # Minimum number of components required for valid OID
+BER_MAX_LONG_FORM_OCTETS = 126  # Maximum number of octets in long form length encoding
+OID_MIN_COMPONENTS = 2  # Minimum number of components required for valid OID
 BER_INDEFINITE_LENGTH_MARKER = 0x80  # Marker byte for indefinite length encoding
 OID_FIRST_COMPONENT_MULTIPLIER = 40  # OID encoding: first component multiplied by 40
-OID_CONTINUATION_BIT = 0x80          # High bit set for continuation in OID encoding
-INTEGER_MSB_MASK = 0x80              # Most significant bit mask for integer sign detection
+OID_CONTINUATION_BIT = 0x80  # High bit set for continuation in OID encoding
+INTEGER_MSB_MASK = 0x80  # Most significant bit mask for integer sign detection
 
 
 class EncodingRules(Enum):
     """ASN.1 encoding rules."""
 
-    BER = "BER"    # Basic Encoding Rules
-    DER = "DER"    # Distinguished Encoding Rules
-    CER = "CER"    # Canonical Encoding Rules
+    BER = "BER"  # Basic Encoding Rules
+    DER = "DER"  # Distinguished Encoding Rules
+    CER = "CER"  # Canonical Encoding Rules
 
 
 class EncodingError(Exception):
     """ASN.1 encoding error."""
 
-    def __init__(self, message: str, element: Optional[ASN1Element] = None) -> None:
+    def __init__(self, message: str, element: ASN1Element | None = None) -> None:
         """Initialize encoding error.
 
         Args:
@@ -110,9 +110,13 @@ class EncodingContext(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid")
 
     rules: EncodingRules = Field(description="Encoding rules to use")
-    definite_length: bool = Field(default=True, description="Use definite length encoding")
+    definite_length: bool = Field(
+        default=True, description="Use definite length encoding",
+    )
     canonical_order: bool = Field(default=False, description="Use canonical ordering")
-    validate_elements: bool = Field(default=True, description="Validate elements before encoding")
+    validate_elements: bool = Field(
+        default=True, description="Validate elements before encoding",
+    )
     max_depth: int = Field(default=100, description="Maximum nesting depth")
     current_depth: int = Field(default=0, description="Current nesting depth")
 
@@ -153,7 +157,7 @@ class TLVEncoder:
                 result += b"\x00"
             else:
                 # Convert to base-128 with continuation bits
-                octets = []
+                octets: list[int] = []
                 while tag_number > 0:
                     octets.insert(0, tag_number & 0x7F)
                     tag_number >>= 7
@@ -199,7 +203,7 @@ class TLVEncoder:
 
             # Long form length (length >= 128)
             # Convert length to bytes (big-endian)
-            length_bytes = []
+            length_bytes: list[int] = []
             temp_length = length
             while temp_length > 0:
                 length_bytes.insert(0, temp_length & 0xFF)
@@ -244,7 +248,7 @@ class TLVEncoder:
 class ASN1EncoderBase(ABC):
     """Abstract base class for ASN.1 encoders."""
 
-    def __init__(self, context: Optional[EncodingContext] = None) -> None:
+    def __init__(self, context: EncodingContext | None = None) -> None:
         """Initialize encoder.
 
         Args:
@@ -344,8 +348,10 @@ class BEREncoder(ASN1EncoderBase):
     def _encode_boolean(self, element: ASN1Element) -> bytes:
         """Encode BOOLEAN element."""
         value = element.get_value()
-        content = b"\xFF" if value else b"\x00"
-        return TLVEncoder.encode_tlv(element.get_tag(), content, self.context.definite_length)
+        content = b"\xff" if value else b"\x00"
+        return TLVEncoder.encode_tlv(
+            element.get_tag(), content, self.context.definite_length,
+        )
 
     def _encode_integer(self, element: ASN1Element) -> bytes:
         """Encode INTEGER element."""
@@ -370,7 +376,9 @@ class BEREncoder(ASN1EncoderBase):
             byte_length = (value.bit_length() + 8) // 8
             content = value.to_bytes(byte_length, byteorder="big", signed=True)
 
-        return TLVEncoder.encode_tlv(element.get_tag(), content, self.context.definite_length)
+        return TLVEncoder.encode_tlv(
+            element.get_tag(), content, self.context.definite_length,
+        )
 
     def _encode_bit_string(self, element: ASN1Element) -> bytes:
         """Encode BIT STRING element."""
@@ -384,7 +392,9 @@ class BEREncoder(ASN1EncoderBase):
 
         # Content: unused_bits_byte + bit_data
         content = bytes([unused_bits]) + bit_data
-        return TLVEncoder.encode_tlv(element.get_tag(), content, self.context.definite_length)
+        return TLVEncoder.encode_tlv(
+            element.get_tag(), content, self.context.definite_length,
+        )
 
     def _encode_octet_string(self, element: ASN1Element) -> bytes:
         """Encode OCTET STRING element."""
@@ -401,12 +411,16 @@ class BEREncoder(ASN1EncoderBase):
                 msg = f"Cannot encode OCTET STRING from {type(value)}"
                 raise EncodingError(msg, element)
 
-        return TLVEncoder.encode_tlv(element.get_tag(), content, self.context.definite_length)
+        return TLVEncoder.encode_tlv(
+            element.get_tag(), content, self.context.definite_length,
+        )
 
     def _encode_null(self, element: ASN1Element) -> bytes:
         """Encode NULL element."""
         content = b""  # NULL has no content
-        return TLVEncoder.encode_tlv(element.get_tag(), content, self.context.definite_length)
+        return TLVEncoder.encode_tlv(
+            element.get_tag(), content, self.context.definite_length,
+        )
 
     def _encode_object_identifier(self, element: ASN1Element) -> bytes:
         """Encode OBJECT IDENTIFIER element."""
@@ -428,7 +442,9 @@ class BEREncoder(ASN1EncoderBase):
         for component in components[2:]:
             content += self._encode_oid_component(component)
 
-        return TLVEncoder.encode_tlv(element.get_tag(), content, self.context.definite_length)
+        return TLVEncoder.encode_tlv(
+            element.get_tag(), content, self.context.definite_length,
+        )
 
     def _encode_oid_component(self, component: int) -> bytes:
         """Encode single OID component using base-128."""
@@ -436,7 +452,7 @@ class BEREncoder(ASN1EncoderBase):
             return b"\x00"
 
         # Convert to base-128 with continuation bits
-        octets = []
+        octets: list[int] = []
         while component > 0:
             octets.insert(0, component & 0x7F)
             component >>= 7
@@ -455,7 +471,9 @@ class BEREncoder(ASN1EncoderBase):
             raise EncodingError(msg, element)
 
         content = value.encode("utf-8")
-        return TLVEncoder.encode_tlv(element.get_tag(), content, self.context.definite_length)
+        return TLVEncoder.encode_tlv(
+            element.get_tag(), content, self.context.definite_length,
+        )
 
     def _encode_printable_string(self, element: ASN1Element) -> bytes:
         """Encode PrintableString element."""
@@ -465,7 +483,9 @@ class BEREncoder(ASN1EncoderBase):
             raise EncodingError(msg, element)
 
         content = value.encode("ascii")
-        return TLVEncoder.encode_tlv(element.get_tag(), content, self.context.definite_length)
+        return TLVEncoder.encode_tlv(
+            element.get_tag(), content, self.context.definite_length,
+        )
 
     def _encode_ia5_string(self, element: ASN1Element) -> bytes:
         """Encode IA5String element."""
@@ -475,7 +495,9 @@ class BEREncoder(ASN1EncoderBase):
             raise EncodingError(msg, element)
 
         content = value.encode("ascii")
-        return TLVEncoder.encode_tlv(element.get_tag(), content, self.context.definite_length)
+        return TLVEncoder.encode_tlv(
+            element.get_tag(), content, self.context.definite_length,
+        )
 
     def _encode_utc_time(self, element: ASN1Element) -> bytes:
         """Encode UTCTime element."""
@@ -494,7 +516,9 @@ class BEREncoder(ASN1EncoderBase):
                 raise EncodingError(msg, element)
 
         content = time_string.encode("ascii")
-        return TLVEncoder.encode_tlv(element.get_tag(), content, self.context.definite_length)
+        return TLVEncoder.encode_tlv(
+            element.get_tag(), content, self.context.definite_length,
+        )
 
     def _encode_generalized_time(self, element: ASN1Element) -> bytes:
         """Encode GeneralizedTime element."""
@@ -513,7 +537,9 @@ class BEREncoder(ASN1EncoderBase):
                 raise EncodingError(msg, element)
 
         content = time_string.encode("ascii")
-        return TLVEncoder.encode_tlv(element.get_tag(), content, self.context.definite_length)
+        return TLVEncoder.encode_tlv(
+            element.get_tag(), content, self.context.definite_length,
+        )
 
     def _encode_sequence(self, element: ASN1Element) -> bytes:
         """Encode SEQUENCE element."""
@@ -530,20 +556,24 @@ class BEREncoder(ASN1EncoderBase):
                 msg = "SEQUENCE element is not iterable"
                 raise EncodingError(msg, element)
 
-            return TLVEncoder.encode_tlv(element.get_tag(), content, self.context.definite_length)
+            return TLVEncoder.encode_tlv(
+                element.get_tag(), content, self.context.definite_length,
+            )
         finally:
             self.context.current_depth -= 1
 
     def _encode_set(self, element: ASN1Element) -> bytes:
         """Encode SET element."""
-        encoded_elements = []
+        encoded_elements: list[bytes] = []
 
         # Increase depth
         self.context.current_depth += 1
         try:
             # Encode all elements in set
             if hasattr(element, "__iter__"):
-                encoded_elements.extend(self.encode_element(sub_element) for sub_element in element)
+                encoded_elements.extend(
+                    self.encode_element(sub_element) for sub_element in element
+                )
             else:
                 msg = "SET element is not iterable"
                 raise EncodingError(msg, element)
@@ -553,7 +583,9 @@ class BEREncoder(ASN1EncoderBase):
                 encoded_elements.sort()
 
             content = b"".join(encoded_elements)
-            return TLVEncoder.encode_tlv(element.get_tag(), content, self.context.definite_length)
+            return TLVEncoder.encode_tlv(
+                element.get_tag(), content, self.context.definite_length,
+            )
         finally:
             self.context.current_depth -= 1
 
@@ -571,7 +603,9 @@ class BEREncoder(ASN1EncoderBase):
             # Try to serialize as string
             content = str(value).encode("utf-8")
 
-        return TLVEncoder.encode_tlv(element.get_tag(), content, self.context.definite_length)
+        return TLVEncoder.encode_tlv(
+            element.get_tag(), content, self.context.definite_length,
+        )
 
 
 class DEREncoder(BEREncoder):
@@ -581,13 +615,13 @@ class DEREncoder(BEREncoder):
     DER is a subset of BER with additional constraints for canonical encoding.
     """
 
-    def __init__(self, context: Optional[EncodingContext] = None) -> None:
+    def __init__(self, context: EncodingContext | None = None) -> None:
         """Initialize DER encoder."""
         if context is None:
             context = EncodingContext(
                 rules=EncodingRules.DER,
                 definite_length=True,  # DER requires definite length
-                canonical_order=True,   # DER requires canonical ordering
+                canonical_order=True,  # DER requires canonical ordering
             )
         else:
             # Enforce DER constraints
@@ -598,14 +632,16 @@ class DEREncoder(BEREncoder):
 
     def _encode_set(self, element: ASN1Element) -> bytes:
         """Encode SET element with DER canonical ordering."""
-        encoded_elements = []
+        encoded_elements: list[bytes] = []
 
         # Increase depth
         self.context.current_depth += 1
         try:
             # Encode all elements in set
             if hasattr(element, "__iter__"):
-                encoded_elements.extend(self.encode_element(sub_element) for sub_element in element)
+                encoded_elements.extend(
+                    self.encode_element(sub_element) for sub_element in element
+                )
             else:
                 msg = "SET element is not iterable"
                 raise EncodingError(msg, element)
@@ -615,7 +651,9 @@ class DEREncoder(BEREncoder):
             encoded_elements.sort()
 
             content = b"".join(encoded_elements)
-            return TLVEncoder.encode_tlv(element.get_tag(), content, True)  # Always definite length
+            return TLVEncoder.encode_tlv(
+                element.get_tag(), content, True,
+            )  # Always definite length
         finally:
             self.context.current_depth -= 1
 
@@ -627,9 +665,11 @@ class ASN1Encoder:
     for different encoding rules (BER, DER, CER).
     """
 
+    _encoder: ASN1EncoderBase
+
     def __init__(
         self,
-        encoding_rules: Union[str, EncodingRules] = EncodingRules.BER,
+        encoding_rules: str | EncodingRules = EncodingRules.BER,
         definite_length: bool = True,
         validate_elements: bool = True,
     ) -> None:

@@ -265,7 +265,9 @@ member: uid=user2,ou=users,dc=example,dc=com
         sample_connection_info: Any,
     ) -> None:
         """🔥 Test LDIF processor integration with connection manager."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(sample_ldif_content)
             ldif_path = f.name
 
@@ -305,7 +307,9 @@ member: uid=user2,ou=users,dc=example,dc=com
         monitor = PerformanceMonitor()
         processor = LDIFProcessor()
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(sample_ldif_content)
             ldif_path = f.name
 

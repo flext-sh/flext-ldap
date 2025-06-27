@@ -36,7 +36,7 @@ from __future__ import annotations
 
 import time
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -46,10 +46,10 @@ from ldap_core_shared.controls.base import LDAPControl
 class SyncCompletionStatus(Enum):
     """Status of synchronization completion."""
 
-    SUCCESS = "success"                  # Synchronization completed successfully
-    PARTIAL = "partial"                 # Partial synchronization completed
-    INTERRUPTED = "interrupted"         # Synchronization was interrupted
-    ERROR = "error"                    # Synchronization failed with error
+    SUCCESS = "success"  # Synchronization completed successfully
+    PARTIAL = "partial"  # Partial synchronization completed
+    INTERRUPTED = "interrupted"  # Synchronization was interrupted
+    ERROR = "error"  # Synchronization failed with error
     REFRESH_REQUIRED = "refresh_required"  # Full refresh required
 
 
@@ -57,21 +57,23 @@ class SyncPhase(Enum):
     """Phases of synchronization operation."""
 
     REFRESH_PRESENT = "refresh_present"  # Refresh phase with present entries
-    REFRESH_DELETE = "refresh_delete"   # Refresh phase with deleted entries
-    PERSIST = "persist"                 # Persistent synchronization phase
-    COMPLETE = "complete"              # Synchronization complete
+    REFRESH_DELETE = "refresh_delete"  # Refresh phase with deleted entries
+    PERSIST = "persist"  # Persistent synchronization phase
+    COMPLETE = "complete"  # Synchronization complete
 
 
 class SyncDoneInfo(BaseModel):
     """Information about completed synchronization operation."""
 
     # Synchronization state
-    cookie: Optional[bytes] = Field(
-        default=None, description="Updated synchronization state cookie",
+    cookie: bytes | None = Field(
+        default=None,
+        description="Updated synchronization state cookie",
     )
 
     refresh_deletes: bool = Field(
-        default=False, description="Whether refresh delete phase is needed",
+        default=False,
+        description="Whether refresh delete phase is needed",
     )
 
     # Completion status
@@ -87,50 +89,61 @@ class SyncDoneInfo(BaseModel):
 
     # Statistics
     entries_processed: int = Field(
-        default=0, description="Number of entries processed",
+        default=0,
+        description="Number of entries processed",
     )
 
     entries_added: int = Field(
-        default=0, description="Number of entries added",
+        default=0,
+        description="Number of entries added",
     )
 
     entries_modified: int = Field(
-        default=0, description="Number of entries modified",
+        default=0,
+        description="Number of entries modified",
     )
 
     entries_deleted: int = Field(
-        default=0, description="Number of entries deleted",
+        default=0,
+        description="Number of entries deleted",
     )
 
     # Server information
     server_continuation_required: bool = Field(
-        default=False, description="Whether server continuation is required",
+        default=False,
+        description="Whether server continuation is required",
     )
 
-    estimated_remaining: Optional[int] = Field(
-        default=None, description="Estimated remaining entries",
+    estimated_remaining: int | None = Field(
+        default=None,
+        description="Estimated remaining entries",
     )
 
-    next_phase_hint: Optional[SyncPhase] = Field(
-        default=None, description="Hint for next synchronization phase",
+    next_phase_hint: SyncPhase | None = Field(
+        default=None,
+        description="Hint for next synchronization phase",
     )
 
     # Performance metadata
-    sync_duration: Optional[float] = Field(
-        default=None, description="Synchronization duration in seconds",
+    sync_duration: float | None = Field(
+        default=None,
+        description="Synchronization duration in seconds",
     )
 
-    bandwidth_used: Optional[int] = Field(
-        default=None, description="Bandwidth used in bytes",
+    bandwidth_used: int | None = Field(
+        default=None,
+        description="Bandwidth used in bytes",
     )
 
     # Error information
-    error_message: Optional[str] = Field(
-        default=None, description="Error message if completion failed",
+    error_message: str | None = Field(
+        default=None,
+        description="Error message if completion failed",
     )
 
     warning_messages: list[str] = Field(
-        default_factory=list, description="Warning messages from synchronization",
+        default_factory=list,
+        description="Warning messages from synchronization",
     )
 
     def is_successful(self) -> bool:
@@ -148,12 +161,12 @@ class SyncDoneInfo(BaseModel):
             True if continuation is needed
         """
         return (
-            self.server_continuation_required or
-            self.completion_status == SyncCompletionStatus.PARTIAL or
-            self.sync_phase != SyncPhase.COMPLETE
+            self.server_continuation_required
+            or self.completion_status == SyncCompletionStatus.PARTIAL
+            or self.sync_phase != SyncPhase.COMPLETE
         )
 
-    def get_cookie_hex(self) -> Optional[str]:
+    def get_cookie_hex(self) -> str | None:
         """Get cookie as hex string.
 
         Returns:
@@ -217,7 +230,7 @@ class SyncDoneControl(LDAPControl):
 
     def __init__(
         self,
-        cookie: Optional[bytes] = None,
+        cookie: bytes | None = None,
         refresh_deletes: bool = False,
         criticality: bool = False,
     ) -> None:
@@ -239,11 +252,10 @@ class SyncDoneControl(LDAPControl):
 
         # Processing state
         self._processed = False
-        self._processing_time: Optional[float] = None
+        self._processing_time: float | None = None
 
         # Initialize base control
         super().__init__(
-
             criticality=criticality,
             control_value=self._encode_request(),
         )
@@ -317,7 +329,7 @@ class SyncDoneControl(LDAPControl):
     def set_completion_status(
         self,
         status: SyncCompletionStatus,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
     ) -> None:
         """Set synchronization completion status.
 
@@ -339,8 +351,8 @@ class SyncDoneControl(LDAPControl):
 
     def set_performance_metrics(
         self,
-        sync_duration: Optional[float] = None,
-        bandwidth_used: Optional[int] = None,
+        sync_duration: float | None = None,
+        bandwidth_used: int | None = None,
     ) -> None:
         """Set performance metrics for synchronization.
 
@@ -367,7 +379,7 @@ class SyncDoneControl(LDAPControl):
         """
         return self._sync_done_info.is_successful()
 
-    def get_updated_cookie(self) -> Optional[bytes]:
+    def get_updated_cookie(self) -> bytes | None:
         """Get updated synchronization cookie.
 
         Returns:
@@ -382,12 +394,14 @@ class SyncDoneControl(LDAPControl):
             Dictionary with sync summary and metadata
         """
         summary = self._sync_done_info.get_sync_summary()
-        summary.update({
-            "control_processed": self._processed,
-            "processing_time": self._processing_time,
-            "cookie_available": self._sync_done_info.cookie is not None,
-            "cookie_hex": self._sync_done_info.get_cookie_hex(),
-        })
+        summary.update(
+            {
+                "control_processed": self._processed,
+                "processing_time": self._processing_time,
+                "cookie_available": self._sync_done_info.cookie is not None,
+                "cookie_hex": self._sync_done_info.get_cookie_hex(),
+            },
+        )
 
         return summary
 
@@ -397,7 +411,7 @@ class SyncDoneControl(LDAPControl):
         return self._sync_done_info
 
     @property
-    def cookie(self) -> Optional[bytes]:
+    def cookie(self) -> bytes | None:
         """Get synchronization cookie."""
         return self._sync_done_info.cookie
 
@@ -411,7 +425,7 @@ class SyncDoneControl(LDAPControl):
         """Get completion status."""
         return self._sync_done_info.completion_status
 
-    def encode_value(self) -> Optional[bytes]:
+    def encode_value(self) -> bytes | None:
         """Encode sync done control value to ASN.1 bytes.
 
         Returns:
@@ -420,7 +434,7 @@ class SyncDoneControl(LDAPControl):
         return self.control_value
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> SyncDoneControl:
+    def decode_value(cls, control_value: bytes | None) -> SyncDoneControl:
         """Decode ASN.1 bytes to create sync done control instance.
 
         Args:
@@ -446,7 +460,7 @@ class SyncDoneControl(LDAPControl):
 
 # Convenience functions
 def create_sync_done_control(
-    cookie: Optional[bytes] = None,
+    cookie: bytes | None = None,
     refresh_deletes: bool = False,
 ) -> SyncDoneControl:
     """Create Sync Done control with basic information.
@@ -467,7 +481,7 @@ def create_sync_done_control(
     )
 
 
-def process_sync_done_controls(controls: list[LDAPControl]) -> Optional[SyncDoneInfo]:
+def process_sync_done_controls(controls: list[LDAPControl]) -> SyncDoneInfo | None:
     """Process Sync Done controls from server response.
 
     Args:
@@ -483,7 +497,7 @@ def process_sync_done_controls(controls: list[LDAPControl]) -> Optional[SyncDone
     return None
 
 
-def extract_sync_cookie(controls: list[LDAPControl]) -> Optional[bytes]:
+def extract_sync_cookie(controls: list[LDAPControl]) -> bytes | None:
     """Extract synchronization cookie from response controls.
 
     Args:
@@ -533,6 +547,7 @@ async def handle_sync_completion(
         "storage and state management for ongoing synchronization."
     )
     raise NotImplementedError(msg)
+
 
 # TODO: Integration points for implementation:
 #

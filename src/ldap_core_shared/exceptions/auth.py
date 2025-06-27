@@ -5,7 +5,7 @@ Exception classes for LDAP authentication and authorization errors.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from ldap_core_shared.exceptions.base import LDAPError
 
@@ -20,11 +20,11 @@ class AuthenticationError(LDAPError):
         self,
         message: str,
         *,
-        bind_dn: Optional[str] = None,
-        auth_method: Optional[str] = None,
-        error_code: Optional[str] = None,
-        context: Optional[dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
+        bind_dn: str | None = None,
+        auth_method: str | None = None,
+        error_code: str | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         """Initialize authentication error.
 
@@ -61,9 +61,9 @@ class AuthorizationError(LDAPError):
         self,
         message: str,
         *,
-        operation: Optional[str] = None,
-        target_dn: Optional[str] = None,
-        required_permission: Optional[str] = None,
+        operation: str | None = None,
+        target_dn: str | None = None,
+        required_permission: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize authorization error.

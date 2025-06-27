@@ -51,9 +51,9 @@ class TestASN1ElementIntegration:
 
             # Verify tags
             assert bool_element.get_tag().tag_number == 1  # BOOLEAN
-            assert int_element.get_tag().tag_number == 2   # INTEGER
+            assert int_element.get_tag().tag_number == 2  # INTEGER
             assert string_element.get_tag().tag_number == 4  # OCTET STRING
-            assert null_element.get_tag().tag_number == 5   # NULL
+            assert null_element.get_tag().tag_number == 5  # NULL
 
             # Verify validation
             bool_errors = bool_element.validate()
@@ -76,11 +76,13 @@ class TestASN1ElementIntegration:
             from ldap_core_shared.protocols.asn1.types import ASN1Boolean, ASN1Integer
 
             # Create sequence with elements
-            sequence = ASN1Sequence([
-                ASN1Integer(1),
-                ASN1Boolean(True),
-                ASN1Integer(42),
-            ])
+            sequence = ASN1Sequence(
+                [
+                    ASN1Integer(1),
+                    ASN1Boolean(True),
+                    ASN1Integer(42),
+                ]
+            )
 
             # Test sequence operations
             assert len(sequence) == 3
@@ -94,11 +96,13 @@ class TestASN1ElementIntegration:
             assert sequence[3].get_value() == 100
 
             # Create set with elements
-            asn1_set = ASN1Set([
-                ASN1Integer(10),
-                ASN1Boolean(False),
-                ASN1Integer(20),
-            ])
+            asn1_set = ASN1Set(
+                [
+                    ASN1Integer(10),
+                    ASN1Boolean(False),
+                    ASN1Integer(20),
+                ]
+            )
 
             # Test set operations
             assert len(asn1_set) == 3
@@ -126,11 +130,13 @@ class TestASN1ElementIntegration:
             )
 
             # Define choice alternatives
-            choice = ASN1Choice({
-                "integer": ASN1Integer,
-                "boolean": ASN1Boolean,
-                "string": ASN1UTF8String,
-            })
+            choice = ASN1Choice(
+                {
+                    "integer": ASN1Integer,
+                    "boolean": ASN1Boolean,
+                    "string": ASN1UTF8String,
+                }
+            )
 
             # Test integer choice
             choice.set_choice("integer", 42)
@@ -208,8 +214,12 @@ class TestASN1ElementIntegration:
             explicit_errors = explicit_tagged.validate()
             implicit_errors = implicit_tagged.validate()
 
-            assert len(explicit_errors) == 0, f"Explicit tagged validation failed: {explicit_errors}"
-            assert len(implicit_errors) == 0, f"Implicit tagged validation failed: {implicit_errors}"
+            assert len(explicit_errors) == 0, (
+                f"Explicit tagged validation failed: {explicit_errors}"
+            )
+            assert len(implicit_errors) == 0, (
+                f"Implicit tagged validation failed: {implicit_errors}"
+            )
 
         except ImportError:
             pytest.skip("ASN.1 tagged element modules not available")
@@ -256,11 +266,13 @@ class TestASN1EncodingIntegration:
             from ldap_core_shared.protocols.asn1.types import ASN1Boolean, ASN1Integer
 
             # Create complex structure
-            data_structure = ASN1Sequence([
-                ASN1Integer(42),
-                ASN1Boolean(True),
-                ASN1Integer(100),
-            ])
+            data_structure = ASN1Sequence(
+                [
+                    ASN1Integer(42),
+                    ASN1Boolean(True),
+                    ASN1Integer(100),
+                ]
+            )
 
             # Test encoding preparation (actual encoding not implemented yet)
             try:
@@ -472,4 +484,5 @@ if __name__ == "__main__":
 
     except Exception:
         import traceback
+
         traceback.print_exc()

@@ -85,6 +85,7 @@ def validate_workspace_venv() -> None:
     # Validate LDAP3 availability as required by CLAUDE.local.md
     try:
         import ldap3
+
         # Validate ldap3 is available
         assert hasattr(ldap3, "Connection"), "LDAP3 Connection class not available"
     except ImportError as e:
@@ -134,7 +135,9 @@ def validate_env_security() -> Generator[None, None, None]:
 
     for env_var, value in os.environ.items():
         if any(pattern in env_var.lower() for pattern in sensitive_patterns):
-            if len(value) > 0 and not value.startswith("${"):  # Allow variable references
+            if len(value) > 0 and not value.startswith(
+                "${"
+            ):  # Allow variable references
                 # This is a test environment, so we just warn for now
                 # In production, this would raise a SecurityError
                 pass
@@ -169,11 +172,14 @@ def cli_debug_patterns() -> Generator[dict[str, bool], None, None]:
     }
 
     # Mock CLI environment for testing
-    with patch.dict(os.environ, {
-        "LDAP_CORE_DEBUG_LEVEL": "INFO",
-        "LDAP_CORE_CLI_DEBUG": "true",
-        "LDAP_CORE_VERBOSE": "true",
-    }):
+    with patch.dict(
+        os.environ,
+        {
+            "LDAP_CORE_DEBUG_LEVEL": "INFO",
+            "LDAP_CORE_CLI_DEBUG": "true",
+            "LDAP_CORE_VERBOSE": "true",
+        },
+    ):
         yield debug_config
 
 
@@ -228,13 +234,15 @@ def workspace_coordination() -> dict[str, str]:
             pass
 
     # Set project context as required by CLAUDE.local.md
-    coordination_context.update({
-        "PROJECT_CONTEXT": "ldap-core-shared",
-        "STATUS": "development-shared-library",
-        "DEPENDENCY_FOR": "algar-oud-mig,flx-ldap,tap-ldap,target-ldap",
-        "WORKSPACE_ROOT": PYAUTO_WORKSPACE_ROOT,
-        "VENV_PATH": PYAUTO_WORKSPACE_VENV,
-    })
+    coordination_context.update(
+        {
+            "PROJECT_CONTEXT": "ldap-core-shared",
+            "STATUS": "development-shared-library",
+            "DEPENDENCY_FOR": "algar-oud-mig,flx-ldap,tap-ldap,target-ldap",
+            "WORKSPACE_ROOT": PYAUTO_WORKSPACE_ROOT,
+            "VENV_PATH": PYAUTO_WORKSPACE_VENV,
+        }
+    )
 
     return coordination_context
 
@@ -355,7 +363,9 @@ def pytest_configure(config: pytest.Config) -> None:
     )
 
 
-def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
     """Modify test collection to enforce workspace standards.
 
     This function modifies the test collection to add workspace standards

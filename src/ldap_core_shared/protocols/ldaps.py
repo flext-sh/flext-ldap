@@ -47,11 +47,12 @@ import asyncio
 import ssl
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, validator
 
+from ldap_core_shared.api.exceptions import LDAPConnectionError
 from ldap_core_shared.protocols.base import (
     LDAPProtocol,
     ProtocolConnection,
@@ -72,112 +73,132 @@ class SSLVersion(Enum):
 class CertificateVerification(Enum):
     """Certificate verification modes."""
 
-    REQUIRED = "required"      # Strict certificate verification
-    OPTIONAL = "optional"      # Verify if certificate present
-    DISABLED = "disabled"      # No certificate verification (insecure)
+    REQUIRED = "required"  # Strict certificate verification
+    OPTIONAL = "optional"  # Verify if certificate present
+    DISABLED = "disabled"  # No certificate verification (insecure)
     ALLOW_SELF_SIGNED = "allow_self_signed"  # Allow self-signed certificates
 
 
 class CipherSuite(Enum):
     """SSL/TLS cipher suite categories."""
 
-    HIGH_SECURITY = "high_security"    # High security ciphers only
+    HIGH_SECURITY = "high_security"  # High security ciphers only
     MEDIUM_SECURITY = "medium_security"  # Medium security ciphers
-    COMPATIBILITY = "compatibility"   # Compatibility ciphers
-    CUSTOM = "custom"                 # Custom cipher string
+    COMPATIBILITY = "compatibility"  # Compatibility ciphers
+    CUSTOM = "custom"  # Custom cipher string
 
 
 class LDAPSConfiguration(BaseModel):
     """Configuration for LDAPS connections."""
 
     # SSL/TLS settings
-    ssl_version: Optional[SSLVersion] = Field(
-        default=None, description="Minimum SSL/TLS version (None = system default)",
+    ssl_version: SSLVersion | None = Field(
+        default=None,
+        description="Minimum SSL/TLS version (None = system default)",
     )
 
-    max_ssl_version: Optional[SSLVersion] = Field(
-        default=None, description="Maximum SSL/TLS version",
+    max_ssl_version: SSLVersion | None = Field(
+        default=None,
+        description="Maximum SSL/TLS version",
     )
 
     cipher_suite: CipherSuite = Field(
-        default=CipherSuite.HIGH_SECURITY, description="Cipher suite selection",
+        default=CipherSuite.HIGH_SECURITY,
+        description="Cipher suite selection",
     )
 
-    custom_ciphers: Optional[str] = Field(
-        default=None, description="Custom cipher string",
+    custom_ciphers: str | None = Field(
+        default=None,
+        description="Custom cipher string",
     )
 
     # Certificate settings
     cert_verification: CertificateVerification = Field(
-        default=CertificateVerification.REQUIRED, description="Certificate verification mode",
+        default=CertificateVerification.REQUIRED,
+        description="Certificate verification mode",
     )
 
-    ca_cert_file: Optional[str] = Field(
-        default=None, description="CA certificate file path",
+    ca_cert_file: str | None = Field(
+        default=None,
+        description="CA certificate file path",
     )
 
-    ca_cert_dir: Optional[str] = Field(
-        default=None, description="CA certificate directory path",
+    ca_cert_dir: str | None = Field(
+        default=None,
+        description="CA certificate directory path",
     )
 
-    client_cert_file: Optional[str] = Field(
-        default=None, description="Client certificate file path",
+    client_cert_file: str | None = Field(
+        default=None,
+        description="Client certificate file path",
     )
 
-    client_key_file: Optional[str] = Field(
-        default=None, description="Client private key file path",
+    client_key_file: str | None = Field(
+        default=None,
+        description="Client private key file path",
     )
 
-    client_key_password: Optional[str] = Field(
-        default=None, description="Client private key password",
+    client_key_password: str | None = Field(
+        default=None,
+        description="Client private key password",
     )
 
     # Verification settings
     check_hostname: bool = Field(
-        default=True, description="Whether to verify hostname against certificate",
+        default=True,
+        description="Whether to verify hostname against certificate",
     )
 
-    verify_mode: Optional[str] = Field(
-        default=None, description="Certificate verification mode (CERT_REQUIRED, etc.)",
+    verify_mode: str | None = Field(
+        default=None,
+        description="Certificate verification mode (CERT_REQUIRED, etc.)",
     )
 
     # Connection settings
     connect_timeout: float = Field(
-        default=DEFAULT_TIMEOUT_SECONDS, description="SSL handshake timeout in seconds",
+        default=DEFAULT_TIMEOUT_SECONDS,
+        description="SSL handshake timeout in seconds",
     )
 
     handshake_timeout: float = Field(
-        default=10.0, description="SSL handshake timeout",
+        default=10.0,
+        description="SSL handshake timeout",
     )
 
     # Security options
     disable_compression: bool = Field(
-        default=True, description="Whether to disable SSL compression",
+        default=True,
+        description="Whether to disable SSL compression",
     )
 
     disable_renegotiation: bool = Field(
-        default=True, description="Whether to disable SSL renegotiation",
+        default=True,
+        description="Whether to disable SSL renegotiation",
     )
 
     enable_sni: bool = Field(
-        default=True, description="Whether to enable Server Name Indication",
+        default=True,
+        description="Whether to enable Server Name Indication",
     )
 
     # Advanced settings
     session_reuse: bool = Field(
-        default=True, description="Whether to enable SSL session reuse",
+        default=True,
+        description="Whether to enable SSL session reuse",
     )
 
     ocsp_check: bool = Field(
-        default=False, description="Whether to perform OCSP certificate checking",
+        default=False,
+        description="Whether to perform OCSP certificate checking",
     )
 
     crl_check: bool = Field(
-        default=False, description="Whether to perform CRL certificate checking",
+        default=False,
+        description="Whether to perform CRL certificate checking",
     )
 
     @validator("ca_cert_file")
-    def validate_ca_cert_file(cls, v: str | None) -> str | None:
+    def validate_ca_cert_file(self, v: str | None) -> str | None:
         """Validate CA certificate file exists."""
         if v and not Path(v).exists():
             msg = f"CA certificate file not found: {v}"
@@ -185,7 +206,7 @@ class LDAPSConfiguration(BaseModel):
         return v
 
     @validator("client_cert_file")
-    def validate_client_cert_file(cls, v: str | None) -> str | None:
+    def validate_client_cert_file(self, v: str | None) -> str | None:
         """Validate client certificate file exists."""
         if v and not Path(v).exists():
             msg = f"Client certificate file not found: {v}"
@@ -193,7 +214,7 @@ class LDAPSConfiguration(BaseModel):
         return v
 
     @validator("client_key_file")
-    def validate_client_key_file(cls, v: str | None) -> str | None:
+    def validate_client_key_file(self, v: str | None) -> str | None:
         """Validate client key file exists."""
         if v and not Path(v).exists():
             msg = f"Client key file not found: {v}"
@@ -214,7 +235,9 @@ class LDAPSConfiguration(BaseModel):
             context.minimum_version = self._get_ssl_version_constant(self.ssl_version)
 
         if self.max_ssl_version:
-            context.maximum_version = self._get_ssl_version_constant(self.max_ssl_version)
+            context.maximum_version = self._get_ssl_version_constant(
+                self.max_ssl_version,
+            )
 
         # Configure certificate verification
         if self.cert_verification == CertificateVerification.DISABLED:
@@ -267,7 +290,7 @@ class LDAPSConfiguration(BaseModel):
         }
         return version_mapping.get(version, ssl.TLSVersion.TLSv1_2)
 
-    def _get_cipher_string(self) -> Optional[str]:
+    def _get_cipher_string(self) -> str | None:
         """Get cipher string for configuration."""
         if self.cipher_suite == CipherSuite.CUSTOM:
             return self.custom_ciphers
@@ -290,14 +313,20 @@ class LDAPSConfiguration(BaseModel):
 
         # Check cipher configuration
         if self.cipher_suite == CipherSuite.CUSTOM and not self.custom_ciphers:
-            errors.append("Custom cipher string required when using CUSTOM cipher suite")
+            errors.append(
+                "Custom cipher string required when using CUSTOM cipher suite",
+            )
 
         # Check client certificate configuration
         if self.client_cert_file and not self.client_key_file:
-            errors.append("Client key file required when client certificate is specified")
+            errors.append(
+                "Client key file required when client certificate is specified",
+            )
 
         if self.client_key_file and not self.client_cert_file:
-            errors.append("Client certificate file required when client key is specified")
+            errors.append(
+                "Client certificate file required when client key is specified",
+            )
 
         # Check timeout values
         if self.connect_timeout <= 0:
@@ -320,10 +349,10 @@ class LDAPSTransport:
         """
         self._config = config
         self._ssl_context = config.create_ssl_context()
-        self._reader: Optional[asyncio.StreamReader] = None
-        self._writer: Optional[asyncio.StreamWriter] = None
+        self._reader: asyncio.StreamReader | None = None
+        self._writer: asyncio.StreamWriter | None = None
         self._connected = False
-        self._ssl_object: Optional[ssl.SSLObject] = None
+        self._ssl_object: ssl.SSLObject | None = None
 
     async def connect(self, hostname: str, port: int) -> None:
         """Connect with SSL/TLS encryption.
@@ -339,7 +368,8 @@ class LDAPSTransport:
             # Establish SSL connection
             self._reader, self._writer = await asyncio.wait_for(
                 asyncio.open_connection(
-                    hostname, port,
+                    hostname,
+                    port,
                     ssl=self._ssl_context,
                     server_hostname=hostname if self._config.enable_sni else None,
                 ),
@@ -357,7 +387,7 @@ class LDAPSTransport:
                 self._writer.close()
                 await self._writer.wait_closed()
             msg = f"Failed to establish SSL connection to {hostname}:{port}: {e}"
-            raise ConnectionError(msg)
+            raise LDAPConnectionError(msg)
 
     async def disconnect(self) -> None:
         """Disconnect SSL/TLS transport."""
@@ -384,7 +414,7 @@ class LDAPSTransport:
         """
         if not self._writer:
             msg = "Not connected"
-            raise ConnectionError(msg)
+            raise LDAPConnectionError(msg)
 
         self._writer.write(data)
         await self._writer.drain()
@@ -401,7 +431,7 @@ class LDAPSTransport:
         """
         if not self._reader:
             msg = "Not connected"
-            raise ConnectionError(msg)
+            raise LDAPConnectionError(msg)
 
         return await self._reader.read(size)
 
@@ -446,19 +476,19 @@ class LDAPSProtocol(LDAPProtocol):
     protocol_name = "ldaps"
     default_port = 636
 
-    def __init__(self, config: Optional[LDAPSConfiguration] = None) -> None:
+    def __init__(self, config: LDAPSConfiguration | None = None) -> None:
         """Initialize LDAPS protocol.
 
         Args:
             config: LDAPS configuration
         """
         self._config = config or LDAPSConfiguration()
-        self._transport: Optional[LDAPSTransport] = None
-        self._hostname: Optional[str] = None
-        self._port: Optional[int] = None
+        self._transport: LDAPSTransport | None = None
+        self._hostname: str | None = None
+        self._port: int | None = None
         super().__init__()
 
-    async def connect(self, url: str, **kwargs) -> None:
+    async def connect(self, url: str, **kwargs: Any) -> None:
         """Connect using LDAPS protocol.
 
         Args:
@@ -533,15 +563,17 @@ class LDAPSProtocol(LDAPProtocol):
                 ssl.match_hostname(peer_cert, self._hostname)
                 verification_result["hostname_match"] = True
             except ssl.CertificateError as e:
-                verification_result["errors"].append(f"Hostname verification failed: {e}")
+                verification_result["errors"].append(
+                    f"Hostname verification failed: {e}",
+                )
         else:
             verification_result["hostname_match"] = True  # Skipped
 
         # Additional verification could be added here
         verification_result["verified"] = (
-            verification_result["certificate_present"] and
-            verification_result["hostname_match"] and
-            not verification_result["errors"]
+            verification_result["certificate_present"]
+            and verification_result["hostname_match"]
+            and not verification_result["errors"]
         )
 
         return verification_result
@@ -552,7 +584,7 @@ class LDAPSProtocol(LDAPProtocol):
         return self._transport.connected if self._transport else False
 
     @property
-    def transport(self) -> Optional[LDAPSTransport]:
+    def transport(self) -> LDAPSTransport | None:
         """Get LDAPS transport."""
         return self._transport
 
@@ -568,10 +600,10 @@ class LDAPSConnection(ProtocolConnection):
     def __init__(
         self,
         url: str,
-        ssl_context: Optional[ssl.SSLContext] = None,
-        ca_cert_file: Optional[str] = None,
-        client_cert_file: Optional[str] = None,
-        client_key_file: Optional[str] = None,
+        ssl_context: ssl.SSLContext | None = None,
+        ca_cert_file: str | None = None,
+        client_cert_file: str | None = None,
+        client_key_file: str | None = None,
         verify_ssl: bool = True,
         **kwargs: Any,
     ) -> None:
@@ -592,7 +624,8 @@ class LDAPSConnection(ProtocolConnection):
             client_cert_file=client_cert_file,
             client_key_file=client_key_file,
             cert_verification=(
-                CertificateVerification.REQUIRED if verify_ssl
+                CertificateVerification.REQUIRED
+                if verify_ssl
                 else CertificateVerification.DISABLED
             ),
         )
@@ -651,12 +684,14 @@ class LDAPSConnection(ProtocolConnection):
             Dictionary with connection details
         """
         info = super().get_connection_info()
-        info.update({
-            "protocol": "ldaps",
-            "encrypted": True,
-            "ssl_info": self.get_ssl_info(),
-            "certificate_verification": self.verify_certificate(),
-        })
+        info.update(
+            {
+                "protocol": "ldaps",
+                "encrypted": True,
+                "ssl_info": self.get_ssl_info(),
+                "certificate_verification": self.verify_certificate(),
+            },
+        )
         return info
 
     @property
@@ -674,7 +709,7 @@ class LDAPSConnection(ProtocolConnection):
 def create_ldaps_connection(
     hostname: str,
     port: int = 636,
-    ca_cert_file: Optional[str] = None,
+    ca_cert_file: str | None = None,
     verify_ssl: bool = True,
 ) -> LDAPSConnection:
     """Create LDAPS connection with basic settings.
@@ -698,9 +733,9 @@ def create_ldaps_connection(
 
 
 def create_secure_ssl_context(
-    ca_cert_file: Optional[str] = None,
-    client_cert_file: Optional[str] = None,
-    client_key_file: Optional[str] = None,
+    ca_cert_file: str | None = None,
+    client_cert_file: str | None = None,
+    client_key_file: str | None = None,
 ) -> ssl.SSLContext:
     """Create secure SSL context for LDAPS.
 
@@ -725,19 +760,24 @@ def create_secure_ssl_context(
 
 async def test_ldaps_connection(
     hostname: str,
-    port: int = 636,
-    timeout: float = 10.0,
+    port: int | None = None,
+    timeout: float | None = None,
 ) -> dict[str, Any]:
     """Test LDAPS connection and SSL configuration.
 
     Args:
         hostname: Server hostname
-        port: Server port
-        timeout: Connection timeout
+        port: Server port (defaults to 636 if None)
+        timeout: Connection timeout (defaults to 10.0 if None)
 
     Returns:
         Dictionary with test results
     """
+    if port is None:
+        port = 636
+    if timeout is None:
+        timeout = 10.0
+
     results: dict[str, Any] = {
         "hostname": hostname,
         "port": port,
@@ -769,6 +809,7 @@ async def test_ldaps_connection(
         errors_list.append(str(e))
 
     return results
+
 
 # TODO: Integration points for implementation:
 #

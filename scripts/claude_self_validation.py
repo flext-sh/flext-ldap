@@ -28,21 +28,21 @@ from datetime import datetime
 from pathlib import Path
 
 # Constants for pattern analysis effectiveness thresholds
-PATTERN_EFFECTIVENESS_HIGH_THRESHOLD = 5    # Unique patterns for HIGH effectiveness
+PATTERN_EFFECTIVENESS_HIGH_THRESHOLD = 5  # Unique patterns for HIGH effectiveness
 PATTERN_EFFECTIVENESS_MEDIUM_THRESHOLD = 2  # Unique patterns for MEDIUM effectiveness
 
 # Constants for parsing pattern memory entries
-PATTERN_PARTS_MINIMUM = 4               # Minimum parts for valid pattern entry
-SOLUTION_PARTS_MINIMUM = 3              # Minimum parts for solution entry
-FAILURE_PARTS_MINIMUM = 2               # Minimum parts for failure entry
-PREVENTION_PARTS_MINIMUM = 2            # Minimum parts for prevention entry
+PATTERN_PARTS_MINIMUM = 4  # Minimum parts for valid pattern entry
+SOLUTION_PARTS_MINIMUM = 3  # Minimum parts for solution entry
+FAILURE_PARTS_MINIMUM = 2  # Minimum parts for failure entry
+PREVENTION_PARTS_MINIMUM = 2  # Minimum parts for prevention entry
 
 # Constants for failure analysis thresholds
-FAILURE_EFFECTIVENESS_HIGH_THRESHOLD = 3    # Failures for HIGH effectiveness rating
+FAILURE_EFFECTIVENESS_HIGH_THRESHOLD = 3  # Failures for HIGH effectiveness rating
 FAILURE_EFFECTIVENESS_MEDIUM_THRESHOLD = 1  # Failures for MEDIUM effectiveness rating
 
 # Constants for overall health assessment
-CRITICAL_SYSTEMS_GOOD_THRESHOLD = 2     # Minimum critical systems for GOOD health
+CRITICAL_SYSTEMS_GOOD_THRESHOLD = 2  # Minimum critical systems for GOOD health
 
 # Import our documentation validator
 from claude_documentation_validator import CLAUDEDocumentationValidator
@@ -51,6 +51,7 @@ from claude_documentation_validator import CLAUDEDocumentationValidator
 @dataclass
 class SelfValidationReport:
     """Complete self-validation report following CLAUDE.md patterns."""
+
     timestamp: str
     project_name: str
     workspace: str
@@ -115,7 +116,11 @@ class CLAUDESelfValidationSystem:
                 "ENHANCED SELF-VALIDATION SYSTEM",
             ]
 
-            issues.extend(f"Missing key methodology section: {section}" for section in key_sections if section not in content)
+            issues.extend(
+                f"Missing key methodology section: {section}"
+                for section in key_sections
+                if section not in content
+            )
 
         # Check workspace methodology compliance
         workspace_claude = self.workspace_root / "CLAUDE.md"
@@ -163,7 +168,9 @@ class CLAUDESelfValidationSystem:
                 memory_analysis[filename] = {
                     "exists": True,
                     "lines_count": len(lines),
-                    "last_modified": datetime.fromtimestamp(filepath.stat().st_mtime).isoformat(),
+                    "last_modified": datetime.fromtimestamp(
+                        filepath.stat().st_mtime
+                    ).isoformat(),
                     "description": description,
                     "status": "ACTIVE" if lines else "EMPTY",
                 }
@@ -178,12 +185,22 @@ class CLAUDESelfValidationSystem:
         # Analyze pattern recognition effectiveness
         pattern_file = self.project_root / ".pattern_memory"
         if pattern_file.exists():
-            patterns = [line for line in pattern_file.read_text().split("\n") if line.startswith("PATTERN_")]
-            unique_patterns = len({line.split("_")[1] for line in patterns if "_" in line})
+            patterns = [
+                line
+                for line in pattern_file.read_text().split("\n")
+                if line.startswith("PATTERN_")
+            ]
+            unique_patterns = len(
+                {line.split("_")[1] for line in patterns if "_" in line}
+            )
             memory_analysis["pattern_analysis"] = {
                 "total_patterns": len(patterns),
                 "unique_patterns": unique_patterns,
-                "effectiveness": "HIGH" if unique_patterns > PATTERN_EFFECTIVENESS_HIGH_THRESHOLD else "MEDIUM" if unique_patterns > PATTERN_EFFECTIVENESS_MEDIUM_THRESHOLD else "LOW",
+                "effectiveness": "HIGH"
+                if unique_patterns > PATTERN_EFFECTIVENESS_HIGH_THRESHOLD
+                else "MEDIUM"
+                if unique_patterns > PATTERN_EFFECTIVENESS_MEDIUM_THRESHOLD
+                else "LOW",
             }
 
         return memory_analysis
@@ -213,7 +230,9 @@ class CLAUDESelfValidationSystem:
                 "agent_entries": len(agent_entries),
                 "objective_entries": len(objective_entries),
                 "completion_entries": len(completion_entries),
-                "coordination_health": "GOOD" if agent_entries and completion_entries else "NEEDS_IMPROVEMENT",
+                "coordination_health": "GOOD"
+                if agent_entries and completion_entries
+                else "NEEDS_IMPROVEMENT",
             }
 
         else:
@@ -250,11 +269,17 @@ class CLAUDESelfValidationSystem:
                     parts = line.split("_")
                     if len(parts) >= PATTERN_PARTS_MINIMUM:
                         pattern_name = parts[1]
-                        frequency = line.split("_FREQUENCY_")[-1] if "_FREQUENCY_" in line else "0"
+                        frequency = (
+                            line.split("_FREQUENCY_")[-1]
+                            if "_FREQUENCY_" in line
+                            else "0"
+                        )
 
                         if pattern_name not in patterns:
                             patterns[pattern_name] = {
-                                "frequency": int(frequency) if frequency.isdigit() else 0,
+                                "frequency": int(frequency)
+                                if frequency.isdigit()
+                                else 0,
                                 "solutions": [],
                             }
 
@@ -264,7 +289,9 @@ class CLAUDESelfValidationSystem:
                     parts = line.split("_")
                     if len(parts) >= SOLUTION_PARTS_MINIMUM:
                         pattern_name = parts[1]
-                        solution = line.split("_SOLUTION_")[-1] if "_SOLUTION_" in line else ""
+                        solution = (
+                            line.split("_SOLUTION_")[-1] if "_SOLUTION_" in line else ""
+                        )
 
                         if pattern_name in patterns:
                             patterns[pattern_name]["solutions"].append(solution)
@@ -272,8 +299,14 @@ class CLAUDESelfValidationSystem:
             pattern_analysis = {
                 "total_patterns": len(patterns),
                 "patterns": patterns,
-                "high_frequency_patterns": [p for p, data in patterns.items() if data["frequency"] > 1],
-                "effectiveness": "HIGH" if len(patterns) > PATTERN_EFFECTIVENESS_HIGH_THRESHOLD else "MEDIUM" if len(patterns) > PATTERN_EFFECTIVENESS_MEDIUM_THRESHOLD else "LOW",
+                "high_frequency_patterns": [
+                    p for p, data in patterns.items() if data["frequency"] > 1
+                ],
+                "effectiveness": "HIGH"
+                if len(patterns) > PATTERN_EFFECTIVENESS_HIGH_THRESHOLD
+                else "MEDIUM"
+                if len(patterns) > PATTERN_EFFECTIVENESS_MEDIUM_THRESHOLD
+                else "LOW",
             }
 
             for _pattern, _data in list(patterns.items())[:3]:  # Show first 3
@@ -330,8 +363,17 @@ class CLAUDESelfValidationSystem:
             failure_analysis = {
                 "total_failures_documented": len(failures),
                 "failures": failures,
-                "prevention_coverage": len([f for f in failures.values() if f["prevention"]]) / len(failures) if failures else 0,
-                "effectiveness": "HIGH" if len(failures) > FAILURE_EFFECTIVENESS_HIGH_THRESHOLD else "MEDIUM" if len(failures) > FAILURE_EFFECTIVENESS_MEDIUM_THRESHOLD else "LOW",
+                "prevention_coverage": len(
+                    [f for f in failures.values() if f["prevention"]]
+                )
+                / len(failures)
+                if failures
+                else 0,
+                "effectiveness": "HIGH"
+                if len(failures) > FAILURE_EFFECTIVENESS_HIGH_THRESHOLD
+                else "MEDIUM"
+                if len(failures) > FAILURE_EFFECTIVENESS_MEDIUM_THRESHOLD
+                else "LOW",
             }
 
             for failure_type, data in list(failures.items())[:3]:  # Show first 3
@@ -465,7 +507,9 @@ def main() -> None:
         context_file = project_root / ".context_memory"
         if context_file.exists():
             with open(context_file, "a", encoding="utf-8") as f:
-                f.write(f"\nSELF_VALIDATION_SUCCESS_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+                f.write(
+                    f"\nSELF_VALIDATION_SUCCESS_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                )
 
     # Exit with appropriate code
     success_code = 0 if report.overall_health in {"EXCELLENT", "GOOD"} else 1

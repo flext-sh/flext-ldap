@@ -50,7 +50,7 @@ References:
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -201,8 +201,8 @@ class AttributeSelection(BaseModel):
             msg = "Truncated AttributeSelection: incomplete content"
             raise ValueError(msg)
 
-        content = data[pos:pos + content_length]
-        remaining = data[pos + content_length:]
+        content = data[pos : pos + content_length]
+        remaining = data[pos + content_length :]
 
         # Decode attributes from content
         attributes = []
@@ -247,7 +247,7 @@ class AttributeSelection(BaseModel):
                 msg = "Truncated attribute: incomplete value"
                 raise ValueError(msg)
 
-            attr_bytes = content[attr_pos:attr_pos + attr_length]
+            attr_bytes = content[attr_pos : attr_pos + attr_length]
             attr_pos += attr_length
 
             try:
@@ -320,9 +320,13 @@ class SearchResultEntry(BaseModel):
                 while temp_length > 0:
                     length_octets_list.insert(0, temp_length & 0xFF)
                     temp_length >>= 8
-                type_length_bytes = bytes([0x80 | len(length_octets_list)]) + bytes(length_octets_list)
+                type_length_bytes = bytes([0x80 | len(length_octets_list)]) + bytes(
+                    length_octets_list,
+                )
 
-            encoded_type = bytes([BER_OCTET_STRING_TAG]) + type_length_bytes + type_bytes
+            encoded_type = (
+                bytes([BER_OCTET_STRING_TAG]) + type_length_bytes + type_bytes
+            )
 
             # Encode attribute values as SET OF
             encoded_values = []
@@ -338,9 +342,13 @@ class SearchResultEntry(BaseModel):
                     while temp_length > 0:
                         value_length_octets.insert(0, temp_length & 0xFF)
                         temp_length >>= 8
-                    value_length_bytes = bytes([0x80 | len(value_length_octets)]) + bytes(value_length_octets)
+                    value_length_bytes = bytes(
+                        [0x80 | len(value_length_octets)],
+                    ) + bytes(value_length_octets)
 
-                encoded_value = bytes([BER_OCTET_STRING_TAG]) + value_length_bytes + value_bytes
+                encoded_value = (
+                    bytes([BER_OCTET_STRING_TAG]) + value_length_bytes + value_bytes
+                )
                 encoded_values.append(encoded_value)
 
             # Encode SET OF values
@@ -355,9 +363,13 @@ class SearchResultEntry(BaseModel):
                 while temp_length > 0:
                     values_length_octets_list.insert(0, temp_length & 0xFF)
                     temp_length >>= 8
-                values_length_bytes = bytes([0x80 | len(values_length_octets_list)]) + bytes(values_length_octets_list)
+                values_length_bytes = bytes(
+                    [0x80 | len(values_length_octets_list)],
+                ) + bytes(values_length_octets_list)
 
-            encoded_values_set = bytes([BER_SET_TAG]) + values_length_bytes + values_content
+            encoded_values_set = (
+                bytes([BER_SET_TAG]) + values_length_bytes + values_content
+            )
 
             # Encode PartialAttribute as SEQUENCE
             attr_content = encoded_type + encoded_values_set
@@ -371,7 +383,9 @@ class SearchResultEntry(BaseModel):
                 while temp_length > 0:
                     attr_length_octets_list.insert(0, temp_length & 0xFF)
                     temp_length >>= 8
-                attr_length_bytes = bytes([0x80 | len(attr_length_octets_list)]) + bytes(attr_length_octets_list)
+                attr_length_bytes = bytes(
+                    [0x80 | len(attr_length_octets_list)],
+                ) + bytes(attr_length_octets_list)
 
             encoded_attr = bytes([BER_SEQUENCE_TAG]) + attr_length_bytes + attr_content
             encoded_attrs.append(encoded_attr)
@@ -388,9 +402,13 @@ class SearchResultEntry(BaseModel):
             while temp_length > 0:
                 attrs_length_octets_list.insert(0, temp_length & 0xFF)
                 temp_length >>= 8
-            attrs_length_bytes = bytes([0x80 | len(attrs_length_octets_list)]) + bytes(attrs_length_octets_list)
+            attrs_length_bytes = bytes([0x80 | len(attrs_length_octets_list)]) + bytes(
+                attrs_length_octets_list,
+            )
 
-        encoded_attrs_list = bytes([BER_SEQUENCE_TAG]) + attrs_length_bytes + attrs_content
+        encoded_attrs_list = (
+            bytes([BER_SEQUENCE_TAG]) + attrs_length_bytes + attrs_content
+        )
 
         # Encode SearchResultEntry as [APPLICATION 4] SEQUENCE
         entry_content = encoded_dn + encoded_attrs_list
@@ -404,7 +422,9 @@ class SearchResultEntry(BaseModel):
             while temp_length > 0:
                 entry_length_octets_list.insert(0, temp_length & 0xFF)
                 temp_length >>= 8
-            entry_length_bytes = bytes([0x80 | len(entry_length_octets_list)]) + bytes(entry_length_octets_list)
+            entry_length_bytes = bytes([0x80 | len(entry_length_octets_list)]) + bytes(
+                entry_length_octets_list,
+            )
 
         return bytes([BER_APPLICATION_TAG_4]) + entry_length_bytes + entry_content
 
@@ -456,8 +476,8 @@ class SearchResultEntry(BaseModel):
             msg = "Truncated SearchResultEntry: incomplete content"
             raise ValueError(msg)
 
-        content = data[pos:pos + content_length]
-        remaining = data[pos + content_length:]
+        content = data[pos : pos + content_length]
+        remaining = data[pos + content_length :]
 
         # Decode object name (LDAPDN)
         if not content or content[0] != BER_OCTET_STRING_TAG:
@@ -470,7 +490,7 @@ class SearchResultEntry(BaseModel):
             msg = "Long form length not implemented for LDAPDN"
             raise ValueError(msg)
 
-        dn_bytes = content[2:2 + dn_length]
+        dn_bytes = content[2 : 2 + dn_length]
         try:
             object_name = dn_bytes.decode("utf-8")
         except UnicodeDecodeError as e:
@@ -550,7 +570,7 @@ class PostReadControl(LDAPControl):
             raise ControlEncodingError(msg) from e
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> PostReadControl:
+    def decode_value(cls, control_value: bytes | None) -> PostReadControl:
         """Decode post-read control value per RFC 4527.
 
         Args:
@@ -633,8 +653,9 @@ class PostReadControl(LDAPControl):
 
         if "+" in self.attributes:
             # All operational attributes + any explicitly listed
-            return (self._is_operational_attribute(attribute) or
-                    attr_lower in [a.lower() for a in self.attributes if a != "+"])
+            return self._is_operational_attribute(attribute) or attr_lower in [
+                a.lower() for a in self.attributes if a != "+"
+            ]
 
         # Explicit attribute list
         return attr_lower in [a.lower() for a in self.attributes]
@@ -649,9 +670,18 @@ class PostReadControl(LDAPControl):
 
         # Common operational attributes per RFC 4512
         operational_attrs = {
-            "createtimestamp", "creatorsname", "modifytimestamp", "modifiersname",
-            "structuralobjectclass", "governingstructurerule", "subschemasubentry",
-            "entrydn", "entryuuid", "pwdchangedtime", "pwdhistory", "pwdpolicysubentry",
+            "createtimestamp",
+            "creatorsname",
+            "modifytimestamp",
+            "modifiersname",
+            "structuralobjectclass",
+            "governingstructurerule",
+            "subschemasubentry",
+            "entrydn",
+            "entryuuid",
+            "pwdchangedtime",
+            "pwdhistory",
+            "pwdpolicysubentry",
         }
 
         return attr_lower in operational_attrs
@@ -691,7 +721,7 @@ class PostReadResponse(LDAPControl):
 
     control_type = RFC4527_POST_READ_OID
 
-    entry: Optional[SearchResultEntry] = Field(
+    entry: SearchResultEntry | None = Field(
         default=None,
         description="SearchResultEntry with post-operation state",
     )
@@ -721,7 +751,7 @@ class PostReadResponse(LDAPControl):
             raise ControlEncodingError(msg) from e
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> PostReadResponse:
+    def decode_value(cls, control_value: bytes | None) -> PostReadResponse:
         """Decode post-read response per RFC 4527.
 
         Args:
@@ -751,7 +781,7 @@ class PostReadResponse(LDAPControl):
         """
         return self.entry is not None and bool(self.entry.object_name)
 
-    def get_attribute_values(self, attribute: str) -> Optional[list[str]]:
+    def get_attribute_values(self, attribute: str) -> list[str] | None:
         """Get attribute values from entry.
 
         Args:
@@ -765,7 +795,7 @@ class PostReadResponse(LDAPControl):
 
         return self.entry.attributes.get(attribute)
 
-    def get_dn(self) -> Optional[str]:
+    def get_dn(self) -> str | None:
         """Get entry distinguished name.
 
         Returns:
@@ -875,7 +905,12 @@ def postread_for_change_verification(*changed_attributes: str) -> PostReadContro
     Returns:
         PostReadControl with verification-optimized attribute selection
     """
-    verification_attrs = [*list(changed_attributes), "modifyTimestamp", "modifiersName", "entryUUID"]
+    verification_attrs = [
+        *list(changed_attributes),
+        "modifyTimestamp",
+        "modifiersName",
+        "entryUUID",
+    ]
     return PostReadControl.specific_attributes(*verification_attrs)
 
 
@@ -898,9 +933,17 @@ def postread_user_profile_attributes() -> PostReadControl:
         PostReadControl for typical user profile attributes
     """
     return PostReadControl.specific_attributes(
-        "cn", "sn", "givenName", "mail", "telephoneNumber",
-        "title", "department", "manager", "employeeNumber",
-        "modifyTimestamp", "modifiersName",
+        "cn",
+        "sn",
+        "givenName",
+        "mail",
+        "telephoneNumber",
+        "title",
+        "department",
+        "manager",
+        "employeeNumber",
+        "modifyTimestamp",
+        "modifiersName",
     )
 
 
@@ -1004,11 +1047,13 @@ class ChangeVerificationHelper:
 
             if operation_type == "add":
                 verification_results = ChangeVerificationHelper.verify_add_operation(
-                    response, expected_changes,
+                    response,
+                    expected_changes,
                 )
             elif operation_type == "modify":
                 verification_results = ChangeVerificationHelper.verify_modify_operation(
-                    response, expected_changes,
+                    response,
+                    expected_changes,
                 )
             else:
                 verification_results = {}

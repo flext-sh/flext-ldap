@@ -39,36 +39,36 @@ References:
 from __future__ import annotations
 
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class TimeFormat(Enum):
     """LDAP time format types."""
 
-    GENERALIZED_TIME = "generalized_time"    # YYYYMMDDHHmmssZ format
-    UTC_TIME = "utc_time"                   # YYMMDDHHmmssZ format (deprecated)
-    UNIX_TIMESTAMP = "unix_timestamp"        # Seconds since epoch
-    ISO_8601 = "iso_8601"                   # ISO 8601 format
+    GENERALIZED_TIME = "generalized_time"  # YYYYMMDDHHmmssZ format
+    UTC_TIME = "utc_time"  # YYMMDDHHmmssZ format (deprecated)
+    UNIX_TIMESTAMP = "unix_timestamp"  # Seconds since epoch
+    ISO_8601 = "iso_8601"  # ISO 8601 format
 
 
 class TimePrecision(Enum):
     """Time precision levels."""
 
-    SECONDS = "seconds"          # YYYYMMDDHHMMSSZ
-    MINUTES = "minutes"          # YYYYMMDDHHMM00Z
-    HOURS = "hours"             # YYYYMMDDHH0000Z
-    DAYS = "days"               # YYYYMMDD000000Z
-    FRACTIONAL = "fractional"    # YYYYMMDDHHMMSS.fZ
+    SECONDS = "seconds"  # YYYYMMDDHHMMSSZ
+    MINUTES = "minutes"  # YYYYMMDDHHMM00Z
+    HOURS = "hours"  # YYYYMMDDHH0000Z
+    DAYS = "days"  # YYYYMMDD000000Z
+    FRACTIONAL = "fractional"  # YYYYMMDDHHMMSS.fZ
 
 
 class TimeZoneType(Enum):
     """Time zone representation types."""
 
-    UTC = "utc"                 # Z suffix (UTC)
-    OFFSET = "offset"           # +/-HHMM offset
-    LOCAL = "local"             # No timezone (local time)
+    UTC = "utc"  # Z suffix (UTC)
+    OFFSET = "offset"  # +/-HHMM offset
+    LOCAL = "local"  # No timezone (local time)
 
 
 class GeneralizedTime:
@@ -107,7 +107,7 @@ class GeneralizedTime:
 
     def __init__(
         self,
-        dt: Optional[datetime] = None,
+        dt: datetime | None = None,
         precision: TimePrecision = TimePrecision.SECONDS,
         timezone_type: TimeZoneType = TimeZoneType.UTC,
     ) -> None:
@@ -118,13 +118,13 @@ class GeneralizedTime:
             precision: Time precision level
             timezone_type: Timezone representation type
         """
-        self._datetime = dt or datetime.now(timezone.utc)
+        self._datetime = dt or datetime.now(UTC)
         self._precision = precision
         self._timezone_type = timezone_type
 
         # Ensure datetime has timezone info
         if self._datetime.tzinfo is None:
-            self._datetime = self._datetime.replace(tzinfo=timezone.utc)
+            self._datetime = self._datetime.replace(tzinfo=UTC)
 
     @classmethod
     def now(cls, precision: TimePrecision = TimePrecision.SECONDS) -> GeneralizedTime:
@@ -136,7 +136,7 @@ class GeneralizedTime:
         Returns:
             GeneralizedTime for current time
         """
-        return cls(datetime.now(timezone.utc), precision, TimeZoneType.UTC)
+        return cls(datetime.now(UTC), precision, TimeZoneType.UTC)
 
     @classmethod
     def from_datetime(
@@ -191,7 +191,7 @@ class GeneralizedTime:
                 microsecond = int(fraction)
 
             # Handle timezone
-            tz_info: Optional[timezone] = timezone.utc
+            tz_info: timezone | None = UTC
             timezone_type = TimeZoneType.UTC
 
             if tz and tz != "Z":
@@ -235,7 +235,7 @@ class GeneralizedTime:
             second = int(second)
 
             # Handle timezone
-            tz_info = timezone.utc
+            tz_info = UTC
             timezone_type = TimeZoneType.UTC
 
             if tz and tz != "Z":
@@ -265,7 +265,7 @@ class GeneralizedTime:
         Returns:
             GeneralizedTime object
         """
-        dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        dt = datetime.fromtimestamp(timestamp, tz=UTC)
         return cls(dt, TimePrecision.SECONDS, TimeZoneType.UTC)
 
     @classmethod
@@ -279,7 +279,9 @@ class GeneralizedTime:
             GeneralizedTime object
         """
         dt = datetime.fromisoformat(iso_string.replace("Z", "+00:00"))
-        precision = TimePrecision.FRACTIONAL if "." in iso_string else TimePrecision.SECONDS
+        precision = (
+            TimePrecision.FRACTIONAL if "." in iso_string else TimePrecision.SECONDS
+        )
         return cls(dt, precision, TimeZoneType.UTC)
 
     def to_ldap_string(self, force_utc: bool = True) -> str:
@@ -295,7 +297,7 @@ class GeneralizedTime:
 
         # Convert to UTC if requested
         if force_utc and dt.tzinfo is not None:
-            dt = dt.astimezone(timezone.utc)
+            dt = dt.astimezone(UTC)
 
         # Apply precision
         if self._precision == TimePrecision.DAYS:
@@ -361,9 +363,9 @@ class GeneralizedTime:
         """
         if self._datetime.tzinfo is None:
             # Assume local time, convert to UTC
-            utc_dt = self._datetime.replace(tzinfo=timezone.utc)
+            utc_dt = self._datetime.replace(tzinfo=UTC)
         else:
-            utc_dt = self._datetime.astimezone(timezone.utc)
+            utc_dt = self._datetime.astimezone(UTC)
 
         return GeneralizedTime(utc_dt, self._precision, TimeZoneType.UTC)
 
@@ -489,7 +491,7 @@ class GeneralizedTime:
         return self.add_seconds(-seconds)
 
     # Utility methods
-    def is_expired(self, reference_time: Optional[GeneralizedTime] = None) -> bool:
+    def is_expired(self, reference_time: GeneralizedTime | None = None) -> bool:
         """Check if time is in the past.
 
         Args:
@@ -501,7 +503,7 @@ class GeneralizedTime:
         ref = reference_time or GeneralizedTime.now()
         return self._datetime < ref._datetime
 
-    def is_future(self, reference_time: Optional[GeneralizedTime] = None) -> bool:
+    def is_future(self, reference_time: GeneralizedTime | None = None) -> bool:
         """Check if time is in the future.
 
         Args:
@@ -535,7 +537,7 @@ class GeneralizedTime:
         """
         return self._datetime - reference_time._datetime
 
-    def format_age(self, reference_time: Optional[GeneralizedTime] = None) -> str:
+    def format_age(self, reference_time: GeneralizedTime | None = None) -> str:
         """Format age relative to reference time.
 
         Args:
@@ -582,6 +584,10 @@ class GeneralizedTime:
         if not isinstance(other, GeneralizedTime):
             return False
         return self._datetime == other._datetime
+
+    def __hash__(self) -> int:
+        """Hash for GeneralizedTime."""
+        return hash(self._datetime)
 
     def __lt__(self, other: Any) -> bool:
         """Check if time is less than other."""
@@ -708,7 +714,7 @@ class LDAPTimeUtils:
     @staticmethod
     def get_expiry_time(
         duration_days: int,
-        base_time: Optional[GeneralizedTime] = None,
+        base_time: GeneralizedTime | None = None,
     ) -> GeneralizedTime:
         """Calculate expiry time from duration.
 
@@ -780,7 +786,7 @@ def datetime_to_ldap_time(dt: datetime) -> str:
     return GeneralizedTime.from_datetime(dt).to_ldap_string()
 
 
-def is_time_expired(ldap_time: str, reference_time: Optional[str] = None) -> bool:
+def is_time_expired(ldap_time: str, reference_time: str | None = None) -> bool:
     """Check if LDAP time is expired.
 
     Args:

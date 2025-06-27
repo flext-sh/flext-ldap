@@ -42,7 +42,7 @@ References:
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any
 from urllib.parse import quote, unquote, urlparse, urlunparse
 
 from pydantic import BaseModel, Field
@@ -71,33 +71,36 @@ class URLComponents(BaseModel):
     # Basic URL components
     scheme: LDAPUrlScheme = Field(description="URL scheme (ldap, ldaps, ldapi)")
 
-    hostname: Optional[str] = Field(default=None, description="Server hostname")
+    hostname: str | None = Field(default=None, description="Server hostname")
 
-    port: Optional[int] = Field(default=None, description="Server port number")
+    port: int | None = Field(default=None, description="Server port number")
 
     # LDAP-specific components
     base_dn: str = Field(default="", description="Base distinguished name")
 
     attributes: list[str] = Field(
-        default_factory=list, description="Attributes to retrieve",
+        default_factory=list,
+        description="Attributes to retrieve",
     )
 
-    scope: Optional[LDAPScope] = Field(default=None, description="Search scope")
+    scope: LDAPScope | None = Field(default=None, description="Search scope")
 
     filter: str = Field(default="", description="LDAP search filter")
 
     extensions: dict[str, str] = Field(
-        default_factory=dict, description="URL extensions",
+        default_factory=dict,
+        description="URL extensions",
     )
 
     # Additional components
     query_params: dict[str, str] = Field(
-        default_factory=dict, description="Additional query parameters",
+        default_factory=dict,
+        description="Additional query parameters",
     )
 
-    fragment: Optional[str] = Field(default=None, description="URL fragment")
+    fragment: str | None = Field(default=None, description="URL fragment")
 
-    def get_default_port(self) -> Optional[int]:
+    def get_default_port(self) -> int | None:
         """Get default port for scheme."""
         port_mapping = {
             LDAPUrlScheme.LDAP: 389,
@@ -143,7 +146,7 @@ class LDAPUrl:
         >>> new_url = str(url)
     """
 
-    def __init__(self, url: Optional[str] = None) -> None:
+    def __init__(self, url: str | None = None) -> None:
         """Initialize LDAP URL.
 
         Args:
@@ -209,7 +212,9 @@ class LDAPUrl:
         # Attributes (second part)
         if len(parts) > 1 and parts[1]:
             attributes = parts[1].split(",")
-            self._components.attributes = [unquote(attr.strip()) for attr in attributes if attr.strip()]
+            self._components.attributes = [
+                unquote(attr.strip()) for attr in attributes if attr.strip()
+            ]
 
         # Scope (third part)
         if len(parts) > 2 and parts[2]:
@@ -274,7 +279,9 @@ class LDAPUrl:
 
         # Attributes
         if self._components.attributes:
-            attrs = ",".join(quote(attr, safe="") for attr in self._components.attributes)
+            attrs = ",".join(
+                quote(attr, safe="") for attr in self._components.attributes
+            )
             path_parts.append(attrs)
         else:
             path_parts.append("")
@@ -382,14 +389,14 @@ class LDAPUrl:
         """Get URL scheme."""
         return self._components.scheme
 
-    def set_scheme(self, scheme: Union[LDAPUrlScheme, str]) -> None:
+    def set_scheme(self, scheme: LDAPUrlScheme | str) -> None:
         """Set URL scheme."""
         if isinstance(scheme, str):
             scheme = LDAPUrlScheme(scheme)
         self._components.scheme = scheme
 
     @property
-    def hostname(self) -> Optional[str]:
+    def hostname(self) -> str | None:
         """Get hostname."""
         return self._components.hostname
 
@@ -398,7 +405,7 @@ class LDAPUrl:
         self._components.hostname = hostname
 
     @property
-    def port(self) -> Optional[int]:
+    def port(self) -> int | None:
         """Get port number."""
         return self._components.port or self._components.get_default_port()
 
@@ -445,11 +452,11 @@ class LDAPUrl:
             return False
 
     @property
-    def scope(self) -> Optional[LDAPScope]:
+    def scope(self) -> LDAPScope | None:
         """Get search scope."""
         return self._components.scope
 
-    def set_scope(self, scope: Union[LDAPScope, str]) -> None:
+    def set_scope(self, scope: LDAPScope | str) -> None:
         """Set search scope."""
         if isinstance(scope, str):
             scope = LDAPScope(scope)
@@ -550,6 +557,21 @@ class LDAPUrl:
             return False
         return self._components == other._components
 
+    def __hash__(self) -> int:
+        """Hash for LDAPUrl."""
+        return hash(
+            (
+                self._components.scheme,
+                self._components.hostname,
+                self._components.port,
+                self._components.base_dn,
+                tuple(self._components.attributes),
+                self._components.scope,
+                self._components.filter,
+                tuple(sorted(self._components.extensions.items())),
+            ),
+        )
+
 
 # Utility functions
 def parse_ldap_url(url: str) -> LDAPUrl:
@@ -566,12 +588,12 @@ def parse_ldap_url(url: str) -> LDAPUrl:
 
 def build_ldap_url(
     hostname: str,
-    port: Optional[int] = None,
+    port: int | None = None,
     base_dn: str = "",
-    attributes: Optional[list[str]] = None,
-    scope: Optional[Union[LDAPScope, str]] = None,
+    attributes: list[str] | None = None,
+    scope: LDAPScope | str | None = None,
     filter_str: str = "",
-    scheme: Union[LDAPUrlScheme, str] = LDAPUrlScheme.LDAP,
+    scheme: LDAPUrlScheme | str = LDAPUrlScheme.LDAP,
     **extensions: Any,
 ) -> LDAPUrl:
     """Build LDAP URL from components.
@@ -679,6 +701,7 @@ def extract_search_info(url: str) -> dict[str, Any]:
         return ldap_url.get_search_params()
     except Exception:
         return {}
+
 
 # TODO: Integration points for implementation:
 #

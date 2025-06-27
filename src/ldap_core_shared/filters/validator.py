@@ -6,12 +6,14 @@ from ldap_core_shared.utils.constants import (
 )
 
 # Constants for filter performance and security validation
-SUBSTRING_WILDCARD_LIMIT = 2          # Maximum wildcards in substring filters for good performance
-EXCELLENT_COMPLEXITY_THRESHOLD = 5    # Complexity threshold for excellent rating
-GOOD_COMPLEXITY_THRESHOLD = 15        # Complexity threshold for good rating
-MAX_PERFORMANCE_ISSUES_GOOD = 1       # Maximum performance issues for good rating
-MAX_SECURITY_ISSUES_WARNING = 1       # Maximum security issues for warning rating
-MAX_SECURITY_ISSUES_FAIR = 3          # Maximum security issues for fair rating
+SUBSTRING_WILDCARD_LIMIT = (
+    2  # Maximum wildcards in substring filters for good performance
+)
+EXCELLENT_COMPLEXITY_THRESHOLD = 5  # Complexity threshold for excellent rating
+GOOD_COMPLEXITY_THRESHOLD = 15  # Complexity threshold for good rating
+MAX_PERFORMANCE_ISSUES_GOOD = 1  # Maximum performance issues for good rating
+MAX_SECURITY_ISSUES_WARNING = 1  # Maximum security issues for warning rating
+MAX_SECURITY_ISSUES_FAIR = 3  # Maximum security issues for fair rating
 
 """LDAP Filter Validator Implementation.
 
@@ -54,7 +56,7 @@ References:
 
 import re
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -93,16 +95,19 @@ class ValidationIssue(BaseModel):
 
     message: str = Field(description="Human-readable issue description")
 
-    position: Optional[int] = Field(
-        default=None, description="Character position where issue occurs",
+    position: int | None = Field(
+        default=None,
+        description="Character position where issue occurs",
     )
 
-    attribute: Optional[str] = Field(
-        default=None, description="Attribute name related to the issue",
+    attribute: str | None = Field(
+        default=None,
+        description="Attribute name related to the issue",
     )
 
-    suggestion: Optional[str] = Field(
-        default=None, description="Suggested fix for the issue",
+    suggestion: str | None = Field(
+        default=None,
+        description="Suggested fix for the issue",
     )
 
     def __str__(self) -> str:
@@ -128,12 +133,14 @@ class FilterValidationResult(BaseModel):
 
     filter_string: str = Field(description="Original filter string that was validated")
 
-    parsed_filter: Optional[ParsedFilter] = Field(
-        default=None, description="Parsed filter structure (if syntax is valid)",
+    parsed_filter: ParsedFilter | None = Field(
+        default=None,
+        description="Parsed filter structure (if syntax is valid)",
     )
 
     issues: list[ValidationIssue] = Field(
-        default_factory=list, description="All validation issues found",
+        default_factory=list,
+        description="All validation issues found",
     )
 
     complexity_score: int = Field(default=0, description="Filter complexity score")
@@ -144,7 +151,8 @@ class FilterValidationResult(BaseModel):
     )
 
     security_rating: str = Field(
-        default="unknown", description="Security rating (secure, warning, risk, danger)",
+        default="unknown",
+        description="Security rating (secure, warning, risk, danger)",
     )
 
     @property
@@ -229,7 +237,9 @@ class ValidationRule:
         self.severity = severity
 
     def validate(
-        self, parsed_filter: ParsedFilter, context: dict[str, Any],
+        self,
+        parsed_filter: ParsedFilter,
+        context: dict[str, Any],
     ) -> list[ValidationIssue]:
         """Validate filter against this rule.
 
@@ -255,7 +265,9 @@ class SyntaxRule(ValidationRule):
         )
 
     def validate(
-        self, parsed_filter: ParsedFilter, context: dict[str, Any],
+        self,
+        parsed_filter: ParsedFilter,
+        context: dict[str, Any],
     ) -> list[ValidationIssue]:
         """Validate basic syntax - already handled by parser."""
         # If we have a parsed filter, syntax is valid
@@ -276,7 +288,9 @@ class AttributeNameRule(ValidationRule):
         self._attr_pattern = re.compile(r"^[a-zA-Z][a-zA-Z0-9\-]*$")
 
     def validate(
-        self, parsed_filter: ParsedFilter, context: dict[str, Any],
+        self,
+        parsed_filter: ParsedFilter,
+        context: dict[str, Any],
     ) -> list[ValidationIssue]:
         """Validate attribute names."""
         issues = []
@@ -320,7 +334,9 @@ class ComplexityRule(ValidationRule):
         self.max_complexity = max_complexity
 
     def validate(
-        self, parsed_filter: ParsedFilter, context: dict[str, Any],
+        self,
+        parsed_filter: ParsedFilter,
+        context: dict[str, Any],
     ) -> list[ValidationIssue]:
         """Validate filter complexity."""
         issues = []
@@ -364,7 +380,9 @@ class SecurityRule(ValidationRule):
         ]
 
     def validate(
-        self, parsed_filter: ParsedFilter, context: dict[str, Any],
+        self,
+        parsed_filter: ParsedFilter,
+        context: dict[str, Any],
     ) -> list[ValidationIssue]:
         """Validate security aspects."""
         issues = []
@@ -372,19 +390,22 @@ class SecurityRule(ValidationRule):
         def check_security(filter_node: ParsedFilter) -> None:
             if filter_node.value:
                 # Check for suspicious patterns in values
-                issues.extend(ValidationIssue(
-                                severity=self.severity,
-                                code="SUSPICIOUS_PATTERN",
-                                message=(
-                                    f"Potentially suspicious pattern in filter value: "
-                                    f"{filter_node.value}"
-                                ),
-                                attribute=filter_node.attribute,
-                                suggestion=(
-                                    "Ensure filter values are properly escaped "
-                                    "and validated"
-                                ),
-                            ) for pattern in self._suspicious_patterns if re.search(pattern, filter_node.value))
+                issues.extend(
+                    ValidationIssue(
+                        severity=self.severity,
+                        code="SUSPICIOUS_PATTERN",
+                        message=(
+                            f"Potentially suspicious pattern in filter value: "
+                            f"{filter_node.value}"
+                        ),
+                        attribute=filter_node.attribute,
+                        suggestion=(
+                            "Ensure filter values are properly escaped and validated"
+                        ),
+                    )
+                    for pattern in self._suspicious_patterns
+                    if re.search(pattern, filter_node.value)
+                )
 
                 # Check for excessively long values (potential DoS)
                 if len(filter_node.value) > DEFAULT_LARGE_LIMIT:
@@ -445,7 +466,9 @@ class PerformanceRule(ValidationRule):
         )
 
     def validate(
-        self, parsed_filter: ParsedFilter, context: dict[str, Any],
+        self,
+        parsed_filter: ParsedFilter,
+        context: dict[str, Any],
     ) -> list[ValidationIssue]:
         """Validate performance characteristics."""
         issues = []
@@ -493,7 +516,7 @@ class PerformanceRule(ValidationRule):
 class SchemaRule(ValidationRule):
     """Rule for schema-aware validation."""
 
-    def __init__(self, schema: Optional[dict[str, Any]] = None) -> None:
+    def __init__(self, schema: dict[str, Any] | None = None) -> None:
         super().__init__(
             name="schema",
             description="LDAP schema validation",
@@ -502,7 +525,9 @@ class SchemaRule(ValidationRule):
         self.schema = schema or {}
 
     def validate(
-        self, parsed_filter: ParsedFilter, context: dict[str, Any],
+        self,
+        parsed_filter: ParsedFilter,
+        context: dict[str, Any],
     ) -> list[ValidationIssue]:
         """Validate against LDAP schema."""
         issues: list[ValidationIssue] = []
@@ -568,8 +593,8 @@ class FilterValidator:
     def __init__(
         self,
         level: ValidationLevel = ValidationLevel.STANDARD,
-        schema: Optional[dict] = None,
-        custom_rules: Optional[list[ValidationRule]] = None,
+        schema: dict[str, Any] | None = None,
+        custom_rules: list[ValidationRule] | None = None,
         schema_aware: bool = False,
     ) -> None:
         """Initialize filter validator.
@@ -616,7 +641,9 @@ class FilterValidator:
 
             # Return early for syntax errors
             return FilterValidationResult(
-                is_valid=False, filter_string=filter_string, issues=issues,
+                is_valid=False,
+                filter_string=filter_string,
+                issues=issues,
             )
 
         # Step 2: Apply validation rules
@@ -661,7 +688,8 @@ class FilterValidator:
         )
 
     def _initialize_rules(
-        self, custom_rules: list[ValidationRule],
+        self,
+        custom_rules: list[ValidationRule],
     ) -> list[ValidationRule]:
         """Initialize validation rules based on validation level."""
         rules = []
@@ -694,7 +722,9 @@ class FilterValidator:
         return rules
 
     def _calculate_performance_rating(
-        self, parsed_filter: ParsedFilter, issues: list[ValidationIssue],
+        self,
+        parsed_filter: ParsedFilter,
+        issues: list[ValidationIssue],
     ) -> str:
         """Calculate performance rating based on filter and issues."""
         performance_issues = [
@@ -707,9 +737,15 @@ class FilterValidator:
 
         if complexity <= EXCELLENT_COMPLEXITY_THRESHOLD and not performance_issues:
             return "excellent"
-        if complexity <= GOOD_COMPLEXITY_THRESHOLD and len(performance_issues) <= MAX_PERFORMANCE_ISSUES_GOOD:
+        if (
+            complexity <= GOOD_COMPLEXITY_THRESHOLD
+            and len(performance_issues) <= MAX_PERFORMANCE_ISSUES_GOOD
+        ):
             return "good"
-        if complexity <= DEFAULT_TIMEOUT_SECONDS and len(performance_issues) <= MAX_SECURITY_ISSUES_FAIR:
+        if (
+            complexity <= DEFAULT_TIMEOUT_SECONDS
+            and len(performance_issues) <= MAX_SECURITY_ISSUES_FAIR
+        ):
             return "fair"
         return "poor"
 
@@ -732,7 +768,8 @@ class FilterValidator:
 
 # Convenience functions
 def validate_filter(
-    filter_string: str, level: ValidationLevel = ValidationLevel.STANDARD,
+    filter_string: str,
+    level: ValidationLevel = ValidationLevel.STANDARD,
 ) -> FilterValidationResult:
     """Validate LDAP filter with specified level.
 
@@ -777,6 +814,7 @@ def get_filter_performance_rating(filter_string: str) -> str:
     """
     result = validate_filter(filter_string, ValidationLevel.ENTERPRISE)
     return result.performance_rating
+
 
 # TODO: Integration points for implementation:
 #

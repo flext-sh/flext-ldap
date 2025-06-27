@@ -42,7 +42,7 @@ from __future__ import annotations
 
 import getpass
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, SecretStr
 
@@ -62,7 +62,7 @@ class SASLCallback(ABC):
         ...         pass
     """
 
-    def __init__(self, prompt: Optional[str] = None) -> None:
+    def __init__(self, prompt: str | None = None) -> None:
         """Initialize callback.
 
         Args:
@@ -130,7 +130,9 @@ class NameCallback(SASLCallback):
         >>> username = callback.get_value()
     """
 
-    def __init__(self, prompt: str = "Username: ", default_name: Optional[str] = None) -> None:
+    def __init__(
+        self, prompt: str = "Username: ", default_name: str | None = None,
+    ) -> None:
         """Initialize name callback.
 
         Args:
@@ -221,7 +223,9 @@ class RealmCallback(SASLCallback):
         >>> realm = callback.get_value()
     """
 
-    def __init__(self, prompt: str = "Realm: ", default_realm: Optional[str] = None) -> None:
+    def __init__(
+        self, prompt: str = "Realm: ", default_realm: str | None = None,
+    ) -> None:
         """Initialize realm callback.
 
         Args:
@@ -264,8 +268,8 @@ class AuthorizeCallback(SASLCallback):
     def __init__(
         self,
         prompt: str = "Authorize as: ",
-        authentication_id: Optional[str] = None,
-        default_authorization_id: Optional[str] = None,
+        authentication_id: str | None = None,
+        default_authorization_id: str | None = None,
     ) -> None:
         """Initialize authorize callback.
 
@@ -320,21 +324,30 @@ class SASLCallbackHandler(BaseModel):
     """
 
     # Stored credentials (optional)
-    username: Optional[str] = Field(default=None, description="Username for authentication")
-    password: Optional[SecretStr] = Field(default=None, description="Password for authentication")
-    realm: Optional[str] = Field(default=None, description="Authentication realm")
-    authorization_id: Optional[str] = Field(default=None, description="Authorization identity")
+    username: str | None = Field(
+        default=None, description="Username for authentication",
+    )
+    password: SecretStr | None = Field(
+        default=None, description="Password for authentication",
+    )
+    realm: str | None = Field(default=None, description="Authentication realm")
+    authorization_id: str | None = Field(
+        default=None, description="Authorization identity",
+    )
 
     # Configuration
     interactive: bool = Field(default=False, description="Allow interactive prompts")
     service: str = Field(default="ldap", description="Service name")
-    hostname: Optional[str] = Field(default=None, description="Server hostname")
+    hostname: str | None = Field(default=None, description="Server hostname")
 
     # Additional properties
-    properties: dict[str, Any] = Field(default_factory=dict, description="Additional SASL properties")
+    properties: dict[str, Any] = Field(
+        default_factory=dict, description="Additional SASL properties",
+    )
 
     class Config:
         """Pydantic configuration."""
+
         arbitrary_types_allowed = True
 
     def handle_callbacks(self, callbacks: list[SASLCallback]) -> None:
@@ -349,7 +362,9 @@ class SASLCallbackHandler(BaseModel):
         for callback in callbacks:
             callback.handle(self)
 
-    def get_username(self, prompt: Optional[str] = None, default: Optional[str] = None) -> Optional[str]:
+    def get_username(
+        self, prompt: str | None = None, default: str | None = None,
+    ) -> str | None:
         """Get username for authentication.
 
         Args:
@@ -376,7 +391,9 @@ class SASLCallbackHandler(BaseModel):
 
         return None
 
-    def get_password(self, prompt: Optional[str] = None, echo_on: bool = False) -> Optional[str]:
+    def get_password(
+        self, prompt: str | None = None, echo_on: bool = False,
+    ) -> str | None:
         """Get password for authentication.
 
         Args:
@@ -401,7 +418,9 @@ class SASLCallbackHandler(BaseModel):
 
         return None
 
-    def get_realm(self, prompt: Optional[str] = None, default: Optional[str] = None) -> Optional[str]:
+    def get_realm(
+        self, prompt: str | None = None, default: str | None = None,
+    ) -> str | None:
         """Get authentication realm.
 
         Args:
@@ -431,10 +450,10 @@ class SASLCallbackHandler(BaseModel):
 
     def get_authorization_id(
         self,
-        prompt: Optional[str] = None,
-        authentication_id: Optional[str] = None,
-        default: Optional[str] = None,
-    ) -> Optional[str]:
+        prompt: str | None = None,
+        authentication_id: str | None = None,
+        default: str | None = None,
+    ) -> str | None:
         """Get authorization identity.
 
         Args:
@@ -518,10 +537,11 @@ class SASLCallbackHandler(BaseModel):
 
 # Convenience functions for common callback scenarios
 
+
 def create_simple_callback(
-    username: Optional[str] = None,
-    password: Optional[str] = None,
-    realm: Optional[str] = None,
+    username: str | None = None,
+    password: str | None = None,
+    realm: str | None = None,
     **kwargs: Any,
 ) -> SASLCallbackHandler:
     """Create simple callback handler with credentials.

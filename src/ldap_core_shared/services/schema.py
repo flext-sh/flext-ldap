@@ -35,7 +35,7 @@ References:
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -66,50 +66,60 @@ class AttributeInfo(BaseModel):
     name: str = Field(description="Primary attribute name")
 
     aliases: list[str] = Field(
-        default_factory=list, description="Alternative names for the attribute",
+        default_factory=list,
+        description="Alternative names for the attribute",
     )
 
     oid: str = Field(description="Object identifier for the attribute")
 
-    description: Optional[str] = Field(
-        default=None, description="Human-readable description",
+    description: str | None = Field(
+        default=None,
+        description="Human-readable description",
     )
 
     syntax: str = Field(description="Attribute syntax OID")
 
-    syntax_name: Optional[str] = Field(
-        default=None, description="Human-readable syntax name",
+    syntax_name: str | None = Field(
+        default=None,
+        description="Human-readable syntax name",
     )
 
-    equality_rule: Optional[str] = Field(
-        default=None, description="Equality matching rule OID",
+    equality_rule: str | None = Field(
+        default=None,
+        description="Equality matching rule OID",
     )
 
-    ordering_rule: Optional[str] = Field(
-        default=None, description="Ordering matching rule OID",
+    ordering_rule: str | None = Field(
+        default=None,
+        description="Ordering matching rule OID",
     )
 
-    substring_rule: Optional[str] = Field(
-        default=None, description="Substring matching rule OID",
+    substring_rule: str | None = Field(
+        default=None,
+        description="Substring matching rule OID",
     )
 
     usage: AttributeUsage = Field(
-        default=AttributeUsage.USER_APPLICATIONS, description="Attribute usage type",
+        default=AttributeUsage.USER_APPLICATIONS,
+        description="Attribute usage type",
     )
 
     is_single_valued: bool = Field(
-        default=False, description="Whether attribute allows only single value",
+        default=False,
+        description="Whether attribute allows only single value",
     )
 
     is_user_modifiable: bool = Field(
-        default=True, description="Whether attribute can be modified by users",
+        default=True,
+        description="Whether attribute can be modified by users",
     )
 
     is_operational: bool = Field(
-        default=False, description="Whether attribute is operational",
+        default=False,
+        description="Whether attribute is operational",
     )
 
-    superior: Optional[str] = Field(default=None, description="Superior attribute type")
+    superior: str | None = Field(default=None, description="Superior attribute type")
 
     def get_all_names(self) -> list[str]:
         """Get all names (primary + aliases) for this attribute."""
@@ -149,27 +159,32 @@ class ObjectClassInfo(BaseModel):
     name: str = Field(description="Primary object class name")
 
     aliases: list[str] = Field(
-        default_factory=list, description="Alternative names for the object class",
+        default_factory=list,
+        description="Alternative names for the object class",
     )
 
     oid: str = Field(description="Object identifier for the object class")
 
-    description: Optional[str] = Field(
-        default=None, description="Human-readable description",
+    description: str | None = Field(
+        default=None,
+        description="Human-readable description",
     )
 
     type: ObjectClassType = Field(description="Object class type")
 
     superior_classes: list[str] = Field(
-        default_factory=list, description="Superior object classes",
+        default_factory=list,
+        description="Superior object classes",
     )
 
     must_attributes: list[str] = Field(
-        default_factory=list, description="Required attributes",
+        default_factory=list,
+        description="Required attributes",
     )
 
     may_attributes: list[str] = Field(
-        default_factory=list, description="Optional attributes",
+        default_factory=list,
+        description="Optional attributes",
     )
 
     is_obsolete: bool = Field(default=False, description="Whether class is obsolete")
@@ -200,12 +215,13 @@ class SyntaxInfo(BaseModel):
 
     oid: str = Field(description="Syntax OID")
 
-    name: Optional[str] = Field(default=None, description="Human-readable name")
+    name: str | None = Field(default=None, description="Human-readable name")
 
-    description: Optional[str] = Field(default=None, description="Syntax description")
+    description: str | None = Field(default=None, description="Syntax description")
 
     is_human_readable: bool = Field(
-        default=True, description="Whether syntax is human-readable",
+        default=True,
+        description="Whether syntax is human-readable",
     )
 
 
@@ -214,10 +230,11 @@ class MatchingRuleInfo(BaseModel):
 
     oid: str = Field(description="Matching rule OID")
 
-    name: Optional[str] = Field(default=None, description="Human-readable name")
+    name: str | None = Field(default=None, description="Human-readable name")
 
-    description: Optional[str] = Field(
-        default=None, description="Matching rule description",
+    description: str | None = Field(
+        default=None,
+        description="Matching rule description",
     )
 
     syntax: str = Field(description="Associated syntax OID")
@@ -235,11 +252,13 @@ class SchemaValidationResult(BaseModel):
     warnings: list[str] = Field(default_factory=list, description="Validation warnings")
 
     missing_attributes: list[str] = Field(
-        default_factory=list, description="Missing required attributes",
+        default_factory=list,
+        description="Missing required attributes",
     )
 
     invalid_attributes: list[str] = Field(
-        default_factory=list, description="Invalid or unknown attributes",
+        default_factory=list,
+        description="Invalid or unknown attributes",
     )
 
     def add_error(self, message: str) -> None:
@@ -264,45 +283,53 @@ class LDAPSchema(BaseModel):
     """Comprehensive LDAP schema representation."""
 
     # Schema metadata
-    schema_dn: Optional[str] = Field(
-        default=None, description="Schema naming context DN",
+    schema_dn: str | None = Field(
+        default=None,
+        description="Schema naming context DN",
     )
 
-    modify_timestamp: Optional[datetime] = Field(
-        default=None, description="Last schema modification timestamp",
+    modify_timestamp: datetime | None = Field(
+        default=None,
+        description="Last schema modification timestamp",
     )
 
-    server_vendor: Optional[str] = Field(default=None, description="LDAP server vendor")
+    server_vendor: str | None = Field(default=None, description="LDAP server vendor")
 
-    schema_version: Optional[str] = Field(default=None, description="Schema version")
+    schema_version: str | None = Field(default=None, description="Schema version")
 
     # Schema components
     object_classes: dict[str, ObjectClassInfo] = Field(
-        default_factory=dict, description="Object class definitions by name",
+        default_factory=dict,
+        description="Object class definitions by name",
     )
 
     attributes: dict[str, AttributeInfo] = Field(
-        default_factory=dict, description="Attribute type definitions by name",
+        default_factory=dict,
+        description="Attribute type definitions by name",
     )
 
     syntaxes: dict[str, SyntaxInfo] = Field(
-        default_factory=dict, description="Syntax definitions by OID",
+        default_factory=dict,
+        description="Syntax definitions by OID",
     )
 
     matching_rules: dict[str, MatchingRuleInfo] = Field(
-        default_factory=dict, description="Matching rule definitions by OID",
+        default_factory=dict,
+        description="Matching rule definitions by OID",
     )
 
     # Aliases and cross-references
     object_class_aliases: dict[str, str] = Field(
-        default_factory=dict, description="Object class alias to primary name mapping",
+        default_factory=dict,
+        description="Object class alias to primary name mapping",
     )
 
     attribute_aliases: dict[str, str] = Field(
-        default_factory=dict, description="Attribute alias to primary name mapping",
+        default_factory=dict,
+        description="Attribute alias to primary name mapping",
     )
 
-    def get_object_class(self, name: str) -> Optional[ObjectClassInfo]:
+    def get_object_class(self, name: str) -> ObjectClassInfo | None:
         """Get object class by name or alias."""
         # Try primary name first
         if name in self.object_classes:
@@ -315,7 +342,7 @@ class LDAPSchema(BaseModel):
 
         return None
 
-    def get_attribute(self, name: str) -> Optional[AttributeInfo]:
+    def get_attribute(self, name: str) -> AttributeInfo | None:
         """Get attribute by name or alias."""
         # Try primary name first
         if name in self.attributes:
@@ -328,11 +355,11 @@ class LDAPSchema(BaseModel):
 
         return None
 
-    def get_syntax(self, oid: str) -> Optional[SyntaxInfo]:
+    def get_syntax(self, oid: str) -> SyntaxInfo | None:
         """Get syntax by OID."""
         return self.syntaxes.get(oid)
 
-    def get_matching_rule(self, oid: str) -> Optional[MatchingRuleInfo]:
+    def get_matching_rule(self, oid: str) -> MatchingRuleInfo | None:
         """Get matching rule by OID."""
         return self.matching_rules.get(oid)
 
@@ -402,8 +429,8 @@ class SchemaService:
             connection: Active LDAP connection
         """
         self._connection = connection
-        self._cached_schema: Optional[LDAPSchema] = None
-        self._schema_dn: Optional[str] = None
+        self._cached_schema: LDAPSchema | None = None
+        self._schema_dn: str | None = None
 
     async def load_schema(self, force_refresh: bool = False) -> LDAPSchema:
         """Load complete LDAP schema from directory.
@@ -429,7 +456,9 @@ class SchemaService:
         raise NotImplementedError(msg)
 
     def validate_entry(
-        self, object_class: str, attributes: dict[str, Any],
+        self,
+        object_class: str,
+        attributes: dict[str, Any],
     ) -> SchemaValidationResult:
         """Validate entry against schema.
 
@@ -471,7 +500,9 @@ class SchemaService:
         return result
 
     def validate_object_class(
-        self, object_class: str, provided_attributes: list[str],
+        self,
+        object_class: str,
+        provided_attributes: list[str],
     ) -> SchemaValidationResult:
         """Validate object class usage with provided attributes.
 
@@ -570,7 +601,7 @@ class SchemaService:
         oc_info = self._cached_schema.get_object_class(object_class)
         return attribute in oc_info.get_all_attributes() if oc_info else False
 
-    def get_attribute_syntax(self, attribute: str) -> Optional[str]:
+    def get_attribute_syntax(self, attribute: str) -> str | None:
         """Get syntax OID for attribute.
 
         Args:
@@ -698,28 +729,30 @@ class SchemaService:
         return schema
 
     def _parse_object_class_definition(
-        self, definition: str,
-    ) -> Optional[ObjectClassInfo]:
+        self,
+        definition: str,
+    ) -> ObjectClassInfo | None:
         """Parse object class definition string."""
         # This is a simplified parser - real implementation would be more comprehensive
         # TODO: Implement full RFC 4512 object class definition parsing
         return None
 
-    def _parse_attribute_definition(self, definition: str) -> Optional[AttributeInfo]:
+    def _parse_attribute_definition(self, definition: str) -> AttributeInfo | None:
         """Parse attribute type definition string."""
         # This is a simplified parser - real implementation would be more comprehensive
         # TODO: Implement full RFC 4512 attribute type definition parsing
         return None
 
-    def _parse_syntax_definition(self, definition: str) -> Optional[SyntaxInfo]:
+    def _parse_syntax_definition(self, definition: str) -> SyntaxInfo | None:
         """Parse syntax definition string."""
         # This is a simplified parser - real implementation would be more comprehensive
         # TODO: Implement full RFC 4512 syntax definition parsing
         return None
 
     def _parse_matching_rule_definition(
-        self, definition: str,
-    ) -> Optional[MatchingRuleInfo]:
+        self,
+        definition: str,
+    ) -> MatchingRuleInfo | None:
         """Parse matching rule definition string."""
         # This is a simplified parser - real implementation would be more comprehensive
         # TODO: Implement full RFC 4512 matching rule definition parsing
@@ -741,7 +774,9 @@ async def load_schema(connection: Any) -> LDAPSchema:
 
 
 def validate_entry_schema(
-    schema: LDAPSchema, object_class: str, attributes: dict[str, Any],
+    schema: LDAPSchema,
+    object_class: str,
+    attributes: dict[str, Any],
 ) -> SchemaValidationResult:
     """Validate entry against schema.
 
@@ -759,7 +794,7 @@ def validate_entry_schema(
     return service.validate_entry(object_class, attributes)
 
 
-def get_object_class_info(schema: LDAPSchema, name: str) -> Optional[ObjectClassInfo]:
+def get_object_class_info(schema: LDAPSchema, name: str) -> ObjectClassInfo | None:
     """Get object class information from schema.
 
     Args:
@@ -772,7 +807,7 @@ def get_object_class_info(schema: LDAPSchema, name: str) -> Optional[ObjectClass
     return schema.get_object_class(name)
 
 
-def get_attribute_info(schema: LDAPSchema, name: str) -> Optional[AttributeInfo]:
+def get_attribute_info(schema: LDAPSchema, name: str) -> AttributeInfo | None:
     """Get attribute information from schema.
 
     Args:
@@ -783,6 +818,7 @@ def get_attribute_info(schema: LDAPSchema, name: str) -> Optional[AttributeInfo]
         Attribute information or None
     """
     return schema.get_attribute(name)
+
 
 # TODO: Integration points for implementation:
 #

@@ -24,5 +24,6 @@ except ImportError:
     sys.exit(1)
 except KeyboardInterrupt:
     sys.exit(130)
-except Exception:
+except Exception:  # noqa: BLE001
+    # Catch-all for unexpected errors to prevent crashes
     sys.exit(1)

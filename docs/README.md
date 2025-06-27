@@ -61,9 +61,7 @@ docs/
 
 ### 📖 **What is LDAP?**
 
-
 LDAP (Lightweight Directory Access Protocol) is a protocol for accessing and maintaining distributed directory information services. Think of it as a phone book for your network - but much more powerful!
-
 
 ### 🎯 **5-Minute Quick Start**
 
@@ -73,7 +71,6 @@ LDAP (Lightweight Directory Access Protocol) is a protocol for accessing and mai
 4. **Test safely**: Set up a [test environment](#-test-environments)
 
 ### 🎓 **Learning Roadmap**
-
 
 #### 🟢 **Beginner Path** (2-4 hours)
 
@@ -128,13 +125,11 @@ LDAP (Lightweight Directory Access Protocol) is a protocol for accessing and mai
 |     |                                |                          |                  |                                                             |                              |
 | 📈  | **Completion Rate**            | **Learn these first**    | **90% coverage** | **10 modules**                                              | **Foundation complete**      |
 
-
 ## 🗂️ Schema Management
 
 **Master LDAP data modeling and schema management:**
 
 ### 🎯 **Schema Quick Start**
-
 
 1. **Understand schemas**: [What are LDAP schemas?](#what-are-schemas)
 
@@ -143,7 +138,6 @@ LDAP (Lightweight Directory Access Protocol) is a protocol for accessing and mai
 4. **Validate**: [Schema compliance](IMPLEMENTATION_CHECKLIST.md#schema-validation)
 
 ### 📚 **What are Schemas?**
-
 
 Schemas define the structure of data in LDAP directories. They specify:
 
@@ -175,17 +169,16 @@ Schemas define the structure of data in LDAP directories. They specify:
 | 🟢  | [4530](schema/rfc4530.txt)        | **entryUUID**            | **MEDIUM**   | [🔧 Operational attrs](reference/schemas-collection/README.md#operational-schemas) | Unique identifiers     |
 | 🟢  | [5020](schema/rfc5020.txt)        | **entryDN**              | **MEDIUM**   | [🔧 Operational attrs](reference/schemas-collection/README.md#operational-schemas) | DN references          |
 
-| 🟢  | [3687](schema/rfc3687.txt)        | **Component Matching**   | **MEDIUM**   | [🔍 Advanced search](../src/ldap_core_shared/core/search_engine.py)                | Complex queries        |
+| 🟢 | [3687](schema/rfc3687.txt) | **Component Matching** | **MEDIUM** | [🔍 Advanced search](../src/ldap_core_shared/core/search_engine.py) | Complex queries |
 
-| 🟢  | [3698](schema/rfc3698.txt)        | **Additional Matching**  | **MEDIUM**   | [🔍 Advanced search](../src/ldap_core_shared/core/search_engine.py)                | Extended matching      |
-| 🔵  | [2926](schema/rfc2926.txt)        | **Schema Conversion**    | **LOW**      | [🔄 Conversion tools](reference/README.md#schema-tools)                            | SLP integration        |
+| 🟢 | [3698](schema/rfc3698.txt) | **Additional Matching** | **MEDIUM** | [🔍 Advanced search](../src/ldap_core_shared/core/search_engine.py) | Extended matching |
+| 🔵 | [2926](schema/rfc2926.txt) | **Schema Conversion** | **LOW** | [🔄 Conversion tools](reference/README.md#schema-tools) | SLP integration |
 
 ## 🎛️ **Advanced Controls & Extensions**
 
 **Supercharge your LDAP applications with advanced features:**
 
 ### 🚀 **Why Use Controls?**
-
 
 Controls extend LDAP's basic functionality with advanced features like:
 
@@ -208,28 +201,27 @@ Controls extend LDAP's basic functionality with advanced features like:
 
 **Complete catalog of LDAP advanced features:**
 
-| 🎯  | RFC                                     | Title                     | Priority         | Implementation                                                    | Use Case                  |
-| :-: | --------------------------------------- | ------------------------- | ---------------- | ----------------------------------------------------------------- | ------------------------- |
-| 🔥  | [2696](controls-extensions/rfc2696.txt) | **Paged Results**         | **CRITICAL**     | [🔍 Search Engine](../src/ldap_core_shared/core/search_engine.py) | Large result sets         |
-| 🔥  | [3062](controls-extensions/rfc3062.txt) | **Password Modify**       | **CRITICAL**     | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Secure password changes   |
-| 🔥  | [4370](controls-extensions/rfc4370.txt) | **Proxy Authorization**   | **HIGH**         | [🔐 Security](../src/ldap_core_shared/core/security.py)           | Advanced security         |
-| 🟡  | [2891](controls-extensions/rfc2891.txt) | **Server Sorting**        | **HIGH**         | [🔍 Search Engine](../src/ldap_core_shared/core/search_engine.py) | Result ordering           |
-| 🟡  | [4533](controls-extensions/rfc4533.txt) | **Content Sync**          | **HIGH**         | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Directory synchronization |
-| 🟡  | [3671](controls-extensions/rfc3671.txt) | **Collective Attributes** | **MEDIUM**       | [📊 Schema Analyzer](../src/ldap_core_shared/schema/analyzer.py)  | Shared attributes         |
-| 🟡  | [4527](controls-extensions/rfc4527.txt) | **Read Entry Controls**   | **MEDIUM**       | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Entry retrieval           |
-| 🟡  | [4528](controls-extensions/rfc4528.txt) | **Assertion Control**     | **MEDIUM**       | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Conditional operations    |
-| 🟢  | [3829](controls-extensions/rfc3829.txt) | **Auth Identity**         | **MEDIUM**       | [🔐 Security](../src/ldap_core_shared/core/security.py)           | Identity discovery        |
-| 🟢  | [3876](controls-extensions/rfc3876.txt) | **Matched Values**        | **MEDIUM**       | [🔍 Search Engine](../src/ldap_core_shared/core/search_engine.py) | Partial results           |
-| 🟢  | [3909](controls-extensions/rfc3909.txt) | **Cancel Operation**      | **MEDIUM**       | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Operation cancellation    |
-| 🟢  | [4532](controls-extensions/rfc4532.txt) | **"Who am I?"**           | **MEDIUM**       | [🔐 Security](../src/ldap_core_shared/core/security.py)           | Identity verification     |
-| 🔵  | [2589](controls-extensions/rfc2589.txt) | **Dynamic Services**      | **LOW**          | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Dynamic entries           |
-| 🔵  | [3296](controls-extensions/rfc3296.txt) | **Named References**      | **LOW**          | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Referral management       |
+| 🎯  | RFC                                     | Title                     | Priority     | Implementation                                                    | Use Case                  |
+| :-: | --------------------------------------- | ------------------------- | ------------ | ----------------------------------------------------------------- | ------------------------- |
+| 🔥  | [2696](controls-extensions/rfc2696.txt) | **Paged Results**         | **CRITICAL** | [🔍 Search Engine](../src/ldap_core_shared/core/search_engine.py) | Large result sets         |
+| 🔥  | [3062](controls-extensions/rfc3062.txt) | **Password Modify**       | **CRITICAL** | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Secure password changes   |
+| 🔥  | [4370](controls-extensions/rfc4370.txt) | **Proxy Authorization**   | **HIGH**     | [🔐 Security](../src/ldap_core_shared/core/security.py)           | Advanced security         |
+| 🟡  | [2891](controls-extensions/rfc2891.txt) | **Server Sorting**        | **HIGH**     | [🔍 Search Engine](../src/ldap_core_shared/core/search_engine.py) | Result ordering           |
+| 🟡  | [4533](controls-extensions/rfc4533.txt) | **Content Sync**          | **HIGH**     | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Directory synchronization |
+| 🟡  | [3671](controls-extensions/rfc3671.txt) | **Collective Attributes** | **MEDIUM**   | [📊 Schema Analyzer](../src/ldap_core_shared/schema/analyzer.py)  | Shared attributes         |
+| 🟡  | [4527](controls-extensions/rfc4527.txt) | **Read Entry Controls**   | **MEDIUM**   | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Entry retrieval           |
+| 🟡  | [4528](controls-extensions/rfc4528.txt) | **Assertion Control**     | **MEDIUM**   | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Conditional operations    |
+| 🟢  | [3829](controls-extensions/rfc3829.txt) | **Auth Identity**         | **MEDIUM**   | [🔐 Security](../src/ldap_core_shared/core/security.py)           | Identity discovery        |
+| 🟢  | [3876](controls-extensions/rfc3876.txt) | **Matched Values**        | **MEDIUM**   | [🔍 Search Engine](../src/ldap_core_shared/core/search_engine.py) | Partial results           |
+| 🟢  | [3909](controls-extensions/rfc3909.txt) | **Cancel Operation**      | **MEDIUM**   | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Operation cancellation    |
+| 🟢  | [4532](controls-extensions/rfc4532.txt) | **"Who am I?"**           | **MEDIUM**   | [🔐 Security](../src/ldap_core_shared/core/security.py)           | Identity verification     |
+| 🔵  | [2589](controls-extensions/rfc2589.txt) | **Dynamic Services**      | **LOW**      | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Dynamic entries           |
+| 🔵  | [3296](controls-extensions/rfc3296.txt) | **Named References**      | **LOW**      | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Referral management       |
 
-| 🔵  | [3672](controls-extensions/rfc3672.txt) | **Subentries**            | **LOW**          | [📊 Schema Analyzer](../src/ldap_core_shared/schema/analyzer.py)  | Administrative entries    |
-| 🔵  | [4531](controls-extensions/rfc4531.txt) | **Turn Operation**        | **LOW**          | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | Role reversal             |
-| 🟣  | [5805](controls-extensions/rfc5805.txt) | **Transactions**          | **EXPERIMENTAL** | [🔧 Operations](../src/ldap_core_shared/core/operations.py)       | ACID transactions         |
-| ❌  | [6171](controls-extensions/rfc6171.txt) | **Don't Use Copy**        | **DEPRECATED**   | ❌ Not recommended                                                | Legacy copy control       |
-
+| 🔵 | [3672](controls-extensions/rfc3672.txt) | **Subentries** | **LOW** | [📊 Schema Analyzer](../src/ldap_core_shared/schema/analyzer.py) | Administrative entries |
+| 🔵 | [4531](controls-extensions/rfc4531.txt) | **Turn Operation** | **LOW** | [🔧 Operations](../src/ldap_core_shared/core/operations.py) | Role reversal |
+| 🟣 | [5805](controls-extensions/rfc5805.txt) | **Transactions** | **EXPERIMENTAL** | [🔧 Operations](../src/ldap_core_shared/core/operations.py) | ACID transactions |
+| ❌ | [6171](controls-extensions/rfc6171.txt) | **Don't Use Copy** | **DEPRECATED** | ❌ Not recommended | Legacy copy control |
 
 ## 📚 **Best Practices & Informational Guides**
 
@@ -251,31 +243,31 @@ Controls extend LDAP's basic functionality with advanced features like:
 
 ## 📚 **Complete Informational RFC Catalog**
 
-| 🎯  | RFC                               | Title                    | Priority       | Implementation                                                                      | Learn This For           |
-| :-: | --------------------------------- | ------------------------ | -------------- | ----------------------------------------------------------------------------------- | ------------------------ |
-| ⭐  | [2849](informational/rfc2849.txt) | **LDIF Format**          | **CRITICAL**   | [📄 LDIF Suite](../src/ldap_core_shared/ldif/)                                      | Data import/export       |
-| ⭐  | [4520](informational/rfc4520.txt) | **IANA Registry**        | **CRITICAL**   | [📋 Constants](../src/ldap_core_shared/utils/constants.py)                          | Official OID assignments |
-| ⭐  | [4521](informational/rfc4521.txt) | **Extension Guidelines** | **CRITICAL**   | [🛠️ Development guide](reference/README.md)                                         | Proper LDAP extensions   |
-| 🟡  | [2307](informational/rfc2307.txt) | **LDAP as NIS**          | **HIGH**       | [🐧 NIS schemas](reference/schemas-collection/README.md#nis-schemas)                | Unix/Linux integration   |
-| 🟡  | [2377](informational/rfc2377.txt) | **Directory Naming**     | **HIGH**       | [🏷️ DN Utils](../src/ldap_core_shared/utils/dn_utils.py)                            | Naming best practices    |
-| 🟡  | [2713](informational/rfc2713.txt) | **Java Objects**         | **HIGH**       | [☕ Java schemas](reference/schemas-collection/README.md#java-schemas)              | Java integration         |
-| 🟡  | [1823](informational/rfc1823.txt) | **LDAP API**             | **HIGH**       | [🔧 Operations](../src/ldap_core_shared/core/operations.py)                         | API design patterns      |
-| 🟢  | [4525](informational/rfc4525.txt) | **Modify-Increment**     | **MEDIUM**     | [🔧 Operations](../src/ldap_core_shared/core/operations.py)                         | Atomic increments        |
-| 🟢  | [4529](informational/rfc4529.txt) | **Query by ObjectClass** | **MEDIUM**     | [🔍 Search Engine](../src/ldap_core_shared/core/search_engine.py)                   | Efficient queries        |
-| 🟢  | [2820](informational/rfc2820.txt) | **Access Control**       | **MEDIUM**     | [🔐 Security](../src/ldap_core_shared/core/security.py)                             | Authorization design     |
-| 🟢  | [3384](informational/rfc3384.txt) | **Replication**          | **MEDIUM**     | [🔄 Sync patterns](reference/README.md#replication-tools)                           | Directory replication    |
-| 🟢  | [3703](informational/rfc3703.txt) | **Policy Schema**        | **MEDIUM**     | [📋 Policy schemas](reference/schemas-collection/README.md#policy-schemas)          | Policy management        |
+| 🎯  | RFC                               | Title                    | Priority     | Implementation                                                             | Learn This For           |
+| :-: | --------------------------------- | ------------------------ | ------------ | -------------------------------------------------------------------------- | ------------------------ |
+| ⭐  | [2849](informational/rfc2849.txt) | **LDIF Format**          | **CRITICAL** | [📄 LDIF Suite](../src/ldap_core_shared/ldif/)                             | Data import/export       |
+| ⭐  | [4520](informational/rfc4520.txt) | **IANA Registry**        | **CRITICAL** | [📋 Constants](../src/ldap_core_shared/utils/constants.py)                 | Official OID assignments |
+| ⭐  | [4521](informational/rfc4521.txt) | **Extension Guidelines** | **CRITICAL** | [🛠️ Development guide](reference/README.md)                                | Proper LDAP extensions   |
+| 🟡  | [2307](informational/rfc2307.txt) | **LDAP as NIS**          | **HIGH**     | [🐧 NIS schemas](reference/schemas-collection/README.md#nis-schemas)       | Unix/Linux integration   |
+| 🟡  | [2377](informational/rfc2377.txt) | **Directory Naming**     | **HIGH**     | [🏷️ DN Utils](../src/ldap_core_shared/utils/dn_utils.py)                   | Naming best practices    |
+| 🟡  | [2713](informational/rfc2713.txt) | **Java Objects**         | **HIGH**     | [☕ Java schemas](reference/schemas-collection/README.md#java-schemas)     | Java integration         |
+| 🟡  | [1823](informational/rfc1823.txt) | **LDAP API**             | **HIGH**     | [🔧 Operations](../src/ldap_core_shared/core/operations.py)                | API design patterns      |
+| 🟢  | [4525](informational/rfc4525.txt) | **Modify-Increment**     | **MEDIUM**   | [🔧 Operations](../src/ldap_core_shared/core/operations.py)                | Atomic increments        |
+| 🟢  | [4529](informational/rfc4529.txt) | **Query by ObjectClass** | **MEDIUM**   | [🔍 Search Engine](../src/ldap_core_shared/core/search_engine.py)          | Efficient queries        |
+| 🟢  | [2820](informational/rfc2820.txt) | **Access Control**       | **MEDIUM**   | [🔐 Security](../src/ldap_core_shared/core/security.py)                    | Authorization design     |
+| 🟢  | [3384](informational/rfc3384.txt) | **Replication**          | **MEDIUM**   | [🔄 Sync patterns](reference/README.md#replication-tools)                  | Directory replication    |
+| 🟢  | [3703](informational/rfc3703.txt) | **Policy Schema**        | **MEDIUM**   | [📋 Policy schemas](reference/schemas-collection/README.md#policy-schemas) | Policy management        |
 
-| 🟢  | [4876](informational/rfc4876.txt) | **Config Schema**        | **MEDIUM**     | [⚙️ Config schemas](reference/schemas-collection/README.md#config-schemas)          | Configuration management |
-| 🟢  | [5803](informational/rfc5803.txt) | **SCRAM Secrets**        | **MEDIUM**     | [🔐 Auth schemas](reference/schemas-collection/README.md#security-schemas)          | Modern authentication    |
-| 🔵  | [2079](informational/rfc2079.txt) | **URI Attributes**       | **LOW**        | [🔗 URI handling](../src/ldap_core_shared/utils/ldap_helpers.py)                    | URI attribute types      |
-| 🔵  | [2649](informational/rfc2649.txt) | **S/MIME Signatures**    | **LOW**        | [🔐 Security](../src/ldap_core_shared/core/security.py)                             | Digital signatures       |
-| 🔵  | [2714](informational/rfc2714.txt) | **CORBA Objects**        | **LOW**        | [🏢 Enterprise schemas](reference/schemas-collection/README.md#enterprise-schemas)  | CORBA integration        |
-| 🔵  | [2739](informational/rfc2739.txt) | **Calendar Attributes**  | **LOW**        | [📅 Calendar schemas](reference/schemas-collection/README.md#calendar-schemas)      | Calendar integration     |
+| 🟢 | [4876](informational/rfc4876.txt) | **Config Schema** | **MEDIUM** | [⚙️ Config schemas](reference/schemas-collection/README.md#config-schemas) | Configuration management |
+| 🟢 | [5803](informational/rfc5803.txt) | **SCRAM Secrets** | **MEDIUM** | [🔐 Auth schemas](reference/schemas-collection/README.md#security-schemas) | Modern authentication |
+| 🔵 | [2079](informational/rfc2079.txt) | **URI Attributes** | **LOW** | [🔗 URI handling](../src/ldap_core_shared/utils/ldap_helpers.py) | URI attribute types |
+| 🔵 | [2649](informational/rfc2649.txt) | **S/MIME Signatures** | **LOW** | [🔐 Security](../src/ldap_core_shared/core/security.py) | Digital signatures |
+| 🔵 | [2714](informational/rfc2714.txt) | **CORBA Objects** | **LOW** | [🏢 Enterprise schemas](reference/schemas-collection/README.md#enterprise-schemas) | CORBA integration |
+| 🔵 | [2739](informational/rfc2739.txt) | **Calendar Attributes** | **LOW** | [📅 Calendar schemas](reference/schemas-collection/README.md#calendar-schemas) | Calendar integration |
 
-| 🔵  | [4403](informational/rfc4403.txt) | **UDDI Schema**          | **LOW**        | [🌐 Web service schemas](reference/schemas-collection/README.md#webservice-schemas) | Web service discovery    |
+| 🔵 | [4403](informational/rfc4403.txt) | **UDDI Schema** | **LOW** | [🌐 Web service schemas](reference/schemas-collection/README.md#webservice-schemas) | Web service discovery |
 
-| 📚  | [3494](informational/rfc3494.txt) | **LDAPv2 Historic**      | **HISTORICAL** | ❌ Legacy information                                                               | Understanding evolution  |
+| 📚 | [3494](informational/rfc3494.txt) | **LDAPv2 Historic** | **HISTORICAL** | ❌ Legacy information | Understanding evolution |
 
 ## 🧪 **Experimental & Cutting-Edge Features**
 
@@ -292,21 +284,19 @@ Controls extend LDAP's basic functionality with advanced features like:
 
 **Experimental RFCs are not stable standards!** Use them for:
 
-
 - ✅ Research and development
 - ✅ Proof of concept projects
 - ✅ Future technology evaluation
 - ❌ **NOT for production systems**
 
-
 ## 🧪 **Experimental RFC Catalog**
 
-| 🧪  | RFC                              | Title                            | Status           | Innovation Area       | Potential Impact          |
-| :-: | -------------------------------- | -------------------------------- | ---------------- | --------------------- | ------------------------- |
-| 🔬  | [3088](experimental/rfc3088.txt) | **OpenLDAP Root Service**        | **EXPERIMENTAL** | Referral architecture | Global directory services |
-| 🔬  | [3663](experimental/rfc3663.txt) | **Domain Administrative Data**   | **EXPERIMENTAL** | Domain management     | DNS-LDAP integration      |
+| 🧪  | RFC                              | Title                          | Status           | Innovation Area       | Potential Impact          |
+| :-: | -------------------------------- | ------------------------------ | ---------------- | --------------------- | ------------------------- |
+| 🔬  | [3088](experimental/rfc3088.txt) | **OpenLDAP Root Service**      | **EXPERIMENTAL** | Referral architecture | Global directory services |
+| 🔬  | [3663](experimental/rfc3663.txt) | **Domain Administrative Data** | **EXPERIMENTAL** | Domain management     | DNS-LDAP integration      |
 
-| 🔬  | [4373](experimental/rfc4373.txt) | **Bulk Update Protocol (LBURP)** | **EXPERIMENTAL** | Mass operations       | High-performance updates  |
+| 🔬 | [4373](experimental/rfc4373.txt) | **Bulk Update Protocol (LBURP)** | **EXPERIMENTAL** | Mass operations | High-performance updates |
 
 ### 🎯 **Experimental Feature Analysis**
 
@@ -337,23 +327,21 @@ Controls extend LDAP's basic functionality with advanced features like:
 
 **Your comprehensive LDAP knowledge base:**
 
-| Category             | RFCs    | Priority Distribution                   | Implementation Coverage |
-| -------------------- | ------- | --------------------------------------- | ----------------------- |
+| Category | RFCs | Priority Distribution | Implementation Coverage |
+| -------- | ---- | --------------------- | ----------------------- |
 
-| 🔴 **Core Specs**    | **10**  | Critical: 6, High: 4                    | **100%** implemented    |
+| 🔴 **Core Specs** | **10** | Critical: 6, High: 4 | **100%** implemented |
 
-| 🎛️ **Controls**      | **18**  | Critical: 2, High: 5, Medium: 8, Low: 3 | **85%** implemented     |
-| 🗂️ **Schema**        | **11**  | Critical: 2, High: 4, Medium: 4, Low: 1 | **90%** implemented     |
-| 📚 **Informational** | **20**  | Critical: 3, High: 5, Medium: 8, Low: 4 | **70%** reference       |
-| 🧪 **Experimental**  | **3**   | All experimental status                 | **20%** research        |
-|                      |         |                                         |                         |
-| 📊 **TOTALS**        | **86+** | **18 Critical, 23 High**                | **80% average**         |
-
+| 🎛️ **Controls** | **18** | Critical: 2, High: 5, Medium: 8, Low: 3 | **85%** implemented |
+| 🗂️ **Schema** | **11** | Critical: 2, High: 4, Medium: 4, Low: 1 | **90%** implemented |
+| 📚 **Informational** | **20** | Critical: 3, High: 5, Medium: 8, Low: 4 | **70%** reference |
+| 🧪 **Experimental** | **3** | All experimental status | **20%** research |
+| | | | |
+| 📊 **TOTALS** | **86+** | **18 Critical, 23 High** | **80% average** |
 
 ## 🎯 **Implementation Priorities**
 
 ### 🔴 **Must Implement** (18 RFCs)
-
 
 **Critical for any LDAP application:**
 
@@ -369,14 +357,12 @@ Controls extend LDAP's basic functionality with advanced features like:
 
 **Important for production systems:**
 
-
 - Advanced Controls (Proxy Auth, Server Sort, Content Sync)
 - Security Features (Auth Identity, "Who am I?")
 - Enterprise Schemas (NIS, Java, X.509)
 - Best Practice Guides (Naming, API Design)
 
 ### 🟢 **Nice to Have** (35+ RFCs)
-
 
 **For specialized needs and completeness**
 
@@ -409,8 +395,8 @@ Controls extend LDAP's basic functionality with advanced features like:
 
 - [IETF LDAP Working Group](https://datatracker.ietf.org/wg/ldapbis/documents/) - Official standards
 - [LDAP.com RFC List](https://ldap.com/ldap-related-rfcs/) - Community resource
-- [OpenLDAP Documentation](https://www.openlda
-p.org/doc/) - Implementation guide
+- [OpenLDAP Documentation](<https://www.openlda>
+  p.org/doc/) - Implementation guide
 - [RFC Editor](https://www.rfc-editor.org/) - RFC publication process
 
 ## 📈 **Collection Status**

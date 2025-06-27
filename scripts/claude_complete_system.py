@@ -28,7 +28,6 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 
 class CLAUDECompleteSystem:
@@ -56,12 +55,16 @@ class CLAUDECompleteSystem:
         """Run documentation validation system."""
         script_path = self.scripts_dir / self.systems["documentation"]
         if not script_path.exists():
-            return {"success": False, "error": "Documentation validator script not found"}
+            return {
+                "success": False,
+                "error": "Documentation validator script not found",
+            }
 
         try:
             result = subprocess.run(
                 [sys.executable, str(script_path)],
-                check=False, cwd=self.project_root,
+                check=False,
+                cwd=self.project_root,
                 capture_output=True,
                 text=True,
             )
@@ -93,7 +96,8 @@ class CLAUDECompleteSystem:
         try:
             result = subprocess.run(
                 [sys.executable, str(script_path)],
-                check=False, cwd=self.project_root,
+                check=False,
+                cwd=self.project_root,
                 capture_output=True,
                 text=True,
             )
@@ -125,7 +129,8 @@ class CLAUDECompleteSystem:
         try:
             result = subprocess.run(
                 [sys.executable, str(script_path)],
-                check=False, cwd=self.project_root,
+                check=False,
+                cwd=self.project_root,
                 capture_output=True,
                 text=True,
             )
@@ -169,7 +174,12 @@ class CLAUDECompleteSystem:
                 integrity_results["overall_integrity"] = False
 
         # Check memory files
-        memory_files = [".context_memory", ".pattern_memory", ".failure_memory", ".resolution_memory"]
+        memory_files = [
+            ".context_memory",
+            ".pattern_memory",
+            ".failure_memory",
+            ".resolution_memory",
+        ]
         for memory_file in memory_files:
             file_path = self.project_root / memory_file
             exists = file_path.exists()
@@ -244,20 +254,27 @@ class CLAUDECompleteSystem:
             "recommendations": recommendations,
             "summary": {
                 "systems_run": len(self.results),
-                "successful_systems": len([r for r in self.results.values() if r.get("success", False)]),
+                "successful_systems": len(
+                    [r for r in self.results.values() if r.get("success", False)]
+                ),
                 "critical_issues_count": len(critical_issues),
                 "recommendations_count": len(recommendations),
             },
         }
 
-    def run_complete_system(self, systems_to_run: Optional[list[str]] = None) -> dict:
+    def run_complete_system(self, systems_to_run: list[str] | None = None) -> dict:
         """Run complete CLAUDE.md system integration.
 
         Args:
             systems_to_run: List of specific systems to run, or None for all
         """
         if systems_to_run is None:
-            systems_to_run = ["integrity", "documentation", "self_validation", "freshness"]
+            systems_to_run = [
+                "integrity",
+                "documentation",
+                "self_validation",
+                "freshness",
+            ]
 
         # Run system integrity check
         if "integrity" in systems_to_run:
@@ -309,14 +326,26 @@ class CLAUDECompleteSystem:
 
 def main() -> None:
     """Main execution with command line interface."""
-    parser = argparse.ArgumentParser(description="CLAUDE.md Complete System Integration")
-    parser.add_argument("--project-root", type=Path, default=Path.cwd(),
-                       help="Project root directory (default: current directory)")
-    parser.add_argument("--systems", nargs="*",
-                       choices=["integrity", "documentation", "self_validation", "freshness"],
-                       help="Specific systems to run (default: all)")
-    parser.add_argument("--output", type=Path,
-                       help="Output file for comprehensive report (default: claude_complete_report.json)")
+    parser = argparse.ArgumentParser(
+        description="CLAUDE.md Complete System Integration"
+    )
+    parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Project root directory (default: current directory)",
+    )
+    parser.add_argument(
+        "--systems",
+        nargs="*",
+        choices=["integrity", "documentation", "self_validation", "freshness"],
+        help="Specific systems to run (default: all)",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Output file for comprehensive report (default: claude_complete_report.json)",
+    )
 
     args = parser.parse_args()
 
@@ -334,7 +363,9 @@ def main() -> None:
     # Update system memory
     system_memory_file = args.project_root / ".system_memory"
     with open(system_memory_file, "a", encoding="utf-8") as f:
-        f.write(f"\nCLAUDE_COMPLETE_SYSTEM_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{report['overall_health']}")
+        f.write(
+            f"\nCLAUDE_COMPLETE_SYSTEM_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{report['overall_health']}"
+        )
 
     # Exit with appropriate code
     success_code = 0 if report["overall_health"] in {"EXCELLENT", "GOOD"} else 1

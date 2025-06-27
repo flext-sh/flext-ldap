@@ -85,7 +85,9 @@ class TestExtremePerformanceStress:
                                         search_scope="SUBTREE",
                                     )
                                     # Validate search
-                                    assert search_params.search_base == "dc=stress,dc=com"
+                                    assert (
+                                        search_params.search_base == "dc=stress,dc=com"
+                                    )
                                     # Simulate search
                                     await asyncio.sleep(0.001)
 
@@ -107,7 +109,12 @@ class TestExtremePerformanceStress:
                                     LDAPOperationRequest(
                                         operation_type="modify",
                                         dn=f"cn=stress{task_id}_{i},ou=People,dc=stress,dc=com",
-                                        changes={"description": {"operation": "replace", "values": [f"Updated{i}"]}},
+                                        changes={
+                                            "description": {
+                                                "operation": "replace",
+                                                "values": [f"Updated{i}"],
+                                            }
+                                        },
                                     )
                                     await asyncio.sleep(0.001)
 
@@ -138,7 +145,10 @@ class TestExtremePerformanceStress:
                     "duration": end_time - start_time,
                     "operations_completed": operations_completed,
                     "errors_encountered": errors_encountered,
-                    "operations_per_second": operations_completed / (end_time - start_time) if end_time > start_time else 0,
+                    "operations_per_second": operations_completed
+                    / (end_time - start_time)
+                    if end_time > start_time
+                    else 0,
                 }
 
             # Launch massive concurrent stress test
@@ -150,10 +160,7 @@ class TestExtremePerformanceStress:
             process.cpu_percent()
 
             # Create 200 concurrent connection tasks (extreme stress)
-            stress_tasks = [
-                stress_connection_task(task_id)
-                for task_id in range(200)
-            ]
+            stress_tasks = [stress_connection_task(task_id) for task_id in range(200)]
 
             # Execute all tasks concurrently
             task_results = await asyncio.gather(*stress_tasks, return_exceptions=True)
@@ -168,21 +175,35 @@ class TestExtremePerformanceStress:
             successful_tasks = [r for r in task_results if isinstance(r, dict)]
             failed_tasks = [r for r in task_results if isinstance(r, Exception)]
 
-            assert len(successful_tasks) >= 180, f"Too many failed tasks: {len(failed_tasks)}"
+            assert len(successful_tasks) >= 180, (
+                f"Too many failed tasks: {len(failed_tasks)}"
+            )
 
             # Performance analysis
-            total_operations = sum(task["operations_completed"] for task in successful_tasks)
+            total_operations = sum(
+                task["operations_completed"] for task in successful_tasks
+            )
             total_errors = sum(task["errors_encountered"] for task in successful_tasks)
-            sum(task["operations_per_second"] for task in successful_tasks) / len(successful_tasks)
+            sum(task["operations_per_second"] for task in successful_tasks) / len(
+                successful_tasks
+            )
 
             metrics = performance_monitor.get_metrics()
             total_duration = metrics["massive_concurrent_stress"]["duration"]
-            overall_throughput = total_operations / total_duration if total_duration > 0 else 0
+            overall_throughput = (
+                total_operations / total_duration if total_duration > 0 else 0
+            )
 
             # Performance assertions
-            assert overall_throughput > 1000, f"Overall throughput too low: {overall_throughput}"
-            assert (total_errors / total_operations) < 0.05, f"Error rate too high: {total_errors}/{total_operations}"
-            assert (final_memory - initial_memory) < 500, f"Memory leak detected: {final_memory - initial_memory}MB"
+            assert overall_throughput > 1000, (
+                f"Overall throughput too low: {overall_throughput}"
+            )
+            assert (total_errors / total_operations) < 0.05, (
+                f"Error rate too high: {total_errors}/{total_operations}"
+            )
+            assert (final_memory - initial_memory) < 500, (
+                f"Memory leak detected: {final_memory - initial_memory}MB"
+            )
 
     @pytest.mark.asyncio
     async def test_extreme_search_performance_stress(self) -> None:
@@ -249,7 +270,9 @@ class TestExtremePerformanceStress:
             ]
 
             for scenario in search_scenarios:
-                performance_monitor.start_measurement(f"search_stress_{scenario['name']}")
+                performance_monitor.start_measurement(
+                    f"search_stress_{scenario['name']}"
+                )
 
                 async with LDAP(config):
                     searches_completed = 0
@@ -282,7 +305,9 @@ class TestExtremePerformanceStress:
                     search_tasks = [single_search(i) for i in range(100)]
                     await asyncio.gather(*search_tasks)
 
-                performance_monitor.stop_measurement(f"search_stress_{scenario['name']}")
+                performance_monitor.stop_measurement(
+                    f"search_stress_{scenario['name']}"
+                )
 
                 # Analyze performance
                 metrics = performance_monitor.get_metrics()
@@ -290,9 +315,12 @@ class TestExtremePerformanceStress:
                 throughput = searches_completed / duration if duration > 0 else 0
 
                 # Performance assertions based on complexity
-                assert throughput >= scenario["expected_min_throughput"], \
+                assert throughput >= scenario["expected_min_throughput"], (
                     f"Throughput too low for {scenario['name']}: {throughput} < {scenario['expected_min_throughput']}"
-                assert searches_completed >= 95, f"Too many failed searches: {searches_completed}/100"
+                )
+                assert searches_completed >= 95, (
+                    f"Too many failed searches: {searches_completed}/100"
+                )
 
     @pytest.mark.asyncio
     async def test_memory_leak_detection_extreme(self) -> None:
@@ -314,11 +342,13 @@ class TestExtremePerformanceStress:
             def take_memory_snapshot(label: str):
                 gc.collect()  # Force garbage collection
                 memory_mb = process.memory_info().rss / 1024 / 1024
-                memory_snapshots.append({
-                    "label": label,
-                    "memory_mb": memory_mb,
-                    "timestamp": time.time(),
-                })
+                memory_snapshots.append(
+                    {
+                        "label": label,
+                        "memory_mb": memory_mb,
+                        "timestamp": time.time(),
+                    }
+                )
                 return memory_mb
 
             initial_memory = take_memory_snapshot("initial")
@@ -336,11 +366,17 @@ class TestExtremePerformanceStress:
                                 dn=f"uid=cycle{cycle}_op{operation}_entry{entry_id},ou=Test,dc=memory,dc=com",
                                 attributes={
                                     "objectClass": ["person", "inetOrgPerson"],
-                                    "uid": [f"cycle{cycle}_op{operation}_entry{entry_id}"],
+                                    "uid": [
+                                        f"cycle{cycle}_op{operation}_entry{entry_id}"
+                                    ],
                                     "cn": [f"Test User {cycle}-{operation}-{entry_id}"],
                                     "sn": [f"User{entry_id}"],
-                                    "mail": [f"test{cycle}_{operation}_{entry_id}@memory.com"],
-                                    "description": ["A" * 1000],  # Large attribute to stress memory
+                                    "mail": [
+                                        f"test{cycle}_{operation}_{entry_id}@memory.com"
+                                    ],
+                                    "description": [
+                                        "A" * 1000
+                                    ],  # Large attribute to stress memory
                                 },
                             )
 
@@ -350,7 +386,9 @@ class TestExtremePerformanceStress:
                                 pass
                             elif entry_id % 4 == 1:
                                 # Simulate modify
-                                entry.attributes["description"] = ["Modified " + "B" * 1000]
+                                entry.attributes["description"] = [
+                                    "Modified " + "B" * 1000
+                                ]
                             elif entry_id % 4 == 2:
                                 # Simulate search result processing
                                 for attr_values in entry.attributes.values():
@@ -367,7 +405,9 @@ class TestExtremePerformanceStress:
                 cycle_memory_increase = cycle_end_memory - cycle_start_memory
 
                 # Check for excessive memory growth within cycle
-                assert cycle_memory_increase < 100, f"Excessive memory growth in cycle {cycle}: {cycle_memory_increase}MB"
+                assert cycle_memory_increase < 100, (
+                    f"Excessive memory growth in cycle {cycle}: {cycle_memory_increase}MB"
+                )
 
             final_memory = take_memory_snapshot("final")
             total_memory_increase = final_memory - initial_memory
@@ -376,8 +416,15 @@ class TestExtremePerformanceStress:
             memory_increases = []
             for i in range(1, len(memory_snapshots)):
                 if "end" in memory_snapshots[i]["label"]:
-                    prev_start = next(s for s in memory_snapshots[:i] if s["label"].replace("end", "start") == memory_snapshots[i]["label"].replace("end", "start"))
-                    increase = memory_snapshots[i]["memory_mb"] - prev_start["memory_mb"]
+                    prev_start = next(
+                        s
+                        for s in memory_snapshots[:i]
+                        if s["label"].replace("end", "start")
+                        == memory_snapshots[i]["label"].replace("end", "start")
+                    )
+                    increase = (
+                        memory_snapshots[i]["memory_mb"] - prev_start["memory_mb"]
+                    )
                     memory_increases.append(increase)
 
             # Check for memory leak patterns
@@ -387,9 +434,15 @@ class TestExtremePerformanceStress:
                 growth_acceleration = recent_avg - early_avg
 
                 # Assertions for memory leak detection
-                assert total_memory_increase < 500, f"Potential memory leak: {total_memory_increase}MB total increase"
-                assert recent_avg < 50, f"Excessive recent memory growth: {recent_avg}MB/cycle"
-                assert growth_acceleration < 20, f"Memory growth acceleration detected: {growth_acceleration}MB/cycle"
+                assert total_memory_increase < 500, (
+                    f"Potential memory leak: {total_memory_increase}MB total increase"
+                )
+                assert recent_avg < 50, (
+                    f"Excessive recent memory growth: {recent_avg}MB/cycle"
+                )
+                assert growth_acceleration < 20, (
+                    f"Memory growth acceleration detected: {growth_acceleration}MB/cycle"
+                )
 
     def test_cpu_intensive_operations_stress(self) -> None:
         """CPU-intensive operations stress testing."""
@@ -403,7 +456,9 @@ class TestExtremePerformanceStress:
             mock_conn.bound = True
             mock_conn_class.return_value = mock_conn
 
-            def cpu_intensive_task(task_id: int, operations_count: int) -> dict[str, Any]:
+            def cpu_intensive_task(
+                task_id: int, operations_count: int
+            ) -> dict[str, Any]:
                 """CPU-intensive task simulation."""
                 start_time = time.time()
                 start_cpu = time.process_time()
@@ -422,7 +477,9 @@ class TestExtremePerformanceStress:
 
                     # Simulate attribute processing
                     for attr_count in range(50):  # 50 attributes per entry
-                        attr_value = f"Value{task_id}_{operation}_{attr_count}" * 10  # Long values
+                        attr_value = (
+                            f"Value{task_id}_{operation}_{attr_count}" * 10
+                        )  # Long values
 
                         # Simulate attribute validation and processing
                         processed_value = attr_value.upper().lower().replace("_", "-")
@@ -430,7 +487,12 @@ class TestExtremePerformanceStress:
                             processed_value = processed_value[:100]
 
                     # Simulate schema validation
-                    object_classes = ["top", "person", "inetOrgPerson", f"customClass{operation % 5}"]
+                    object_classes = [
+                        "top",
+                        "person",
+                        "inetOrgPerson",
+                        f"customClass{operation % 5}",
+                    ]
                     for oc in object_classes:
                         # Simulate object class hierarchy validation
                         len(oc) > 3 and oc.isalpha()
@@ -445,7 +507,9 @@ class TestExtremePerformanceStress:
                     "operations_completed": operations_completed,
                     "wall_time": end_time - start_time,
                     "cpu_time": end_cpu - start_cpu,
-                    "cpu_efficiency": (end_cpu - start_cpu) / (end_time - start_time) if end_time > start_time else 0,
+                    "cpu_efficiency": (end_cpu - start_cpu) / (end_time - start_time)
+                    if end_time > start_time
+                    else 0,
                 }
 
             # Run CPU stress test with multiple threads
@@ -458,7 +522,9 @@ class TestExtremePerformanceStress:
             # Launch CPU-intensive tasks in multiple threads
             with ThreadPoolExecutor(max_workers=8) as executor:
                 cpu_tasks = [
-                    executor.submit(cpu_intensive_task, task_id, 500)  # 500 operations per task
+                    executor.submit(
+                        cpu_intensive_task, task_id, 500
+                    )  # 500 operations per task
                     for task_id in range(8)  # 8 concurrent CPU-intensive tasks
                 ]
 
@@ -471,20 +537,34 @@ class TestExtremePerformanceStress:
             process.cpu_percent(interval=1)
 
             # Analyze CPU stress results
-            total_operations = sum(result["operations_completed"] for result in task_results)
+            total_operations = sum(
+                result["operations_completed"] for result in task_results
+            )
             total_wall_time = max(result["wall_time"] for result in task_results)
             total_cpu_time = sum(result["cpu_time"] for result in task_results)
-            avg_cpu_efficiency = sum(result["cpu_efficiency"] for result in task_results) / len(task_results)
+            avg_cpu_efficiency = sum(
+                result["cpu_efficiency"] for result in task_results
+            ) / len(task_results)
 
             metrics = performance_monitor.get_metrics()
             test_duration = metrics["cpu_intensive_stress"]["duration"]
-            overall_throughput = total_operations / test_duration if test_duration > 0 else 0
+            overall_throughput = (
+                total_operations / test_duration if test_duration > 0 else 0
+            )
 
             # Performance assertions
-            assert total_operations == 8 * 500, f"Not all operations completed: {total_operations}/4000"
-            assert overall_throughput > 100, f"CPU throughput too low: {overall_throughput}"
-            assert avg_cpu_efficiency > 0.5, f"CPU efficiency too low: {avg_cpu_efficiency}"
-            assert total_cpu_time < total_wall_time * 10, f"Excessive CPU time: {total_cpu_time}s vs {total_wall_time}s wall time"
+            assert total_operations == 8 * 500, (
+                f"Not all operations completed: {total_operations}/4000"
+            )
+            assert overall_throughput > 100, (
+                f"CPU throughput too low: {overall_throughput}"
+            )
+            assert avg_cpu_efficiency > 0.5, (
+                f"CPU efficiency too low: {avg_cpu_efficiency}"
+            )
+            assert total_cpu_time < total_wall_time * 10, (
+                f"Excessive CPU time: {total_cpu_time}s vs {total_wall_time}s wall time"
+            )
 
     @pytest.mark.asyncio
     async def test_extreme_error_recovery_stress(self) -> None:
@@ -570,7 +650,9 @@ class TestExtremePerformanceStress:
                                         attributes={
                                             "objectClass": ["person"],
                                             "uid": [f"resilience{task_id}_{operation}"],
-                                            "cn": [f"Resilience Test {task_id}-{operation}"],
+                                            "cn": [
+                                                f"Resilience Test {task_id}-{operation}"
+                                            ],
                                             "sn": ["Test"],
                                         },
                                     )
@@ -581,7 +663,12 @@ class TestExtremePerformanceStress:
                                     LDAPOperationRequest(
                                         operation_type="modify",
                                         dn=f"uid=resilience{task_id}_{operation},ou=Test,dc=resilience,dc=com",
-                                        changes={"description": {"operation": "replace", "values": [f"Updated{operation}"]}},
+                                        changes={
+                                            "description": {
+                                                "operation": "replace",
+                                                "values": [f"Updated{operation}"],
+                                            }
+                                        },
                                     )
                                     await asyncio.sleep(0.001)
 
@@ -600,7 +687,9 @@ class TestExtremePerformanceStress:
                         except ConnectionError:
                             if retry < max_retries - 1:
                                 errors_recovered += 1
-                                await asyncio.sleep(0.1 * (retry + 1))  # Exponential backoff
+                                await asyncio.sleep(
+                                    0.1 * (retry + 1)
+                                )  # Exponential backoff
                             else:
                                 fatal_errors += 1
                                 break
@@ -619,8 +708,13 @@ class TestExtremePerformanceStress:
                     "operations_succeeded": operations_succeeded,
                     "errors_recovered": errors_recovered,
                     "fatal_errors": fatal_errors,
-                    "success_rate": operations_succeeded / operations_attempted if operations_attempted > 0 else 0,
-                    "recovery_rate": errors_recovered / (errors_recovered + fatal_errors) if (errors_recovered + fatal_errors) > 0 else 1.0,
+                    "success_rate": operations_succeeded / operations_attempted
+                    if operations_attempted > 0
+                    else 0,
+                    "recovery_rate": errors_recovered
+                    / (errors_recovered + fatal_errors)
+                    if (errors_recovered + fatal_errors) > 0
+                    else 1.0,
                 }
 
             # Launch resilience test
@@ -636,18 +730,34 @@ class TestExtremePerformanceStress:
             performance_monitor.stop_measurement("extreme_error_recovery")
 
             # Analyze resilience results
-            total_attempted = sum(result["operations_attempted"] for result in task_results)
-            total_succeeded = sum(result["operations_succeeded"] for result in task_results)
+            total_attempted = sum(
+                result["operations_attempted"] for result in task_results
+            )
+            total_succeeded = sum(
+                result["operations_succeeded"] for result in task_results
+            )
             total_recovered = sum(result["errors_recovered"] for result in task_results)
             total_fatal = sum(result["fatal_errors"] for result in task_results)
 
-            overall_success_rate = total_succeeded / total_attempted if total_attempted > 0 else 0
-            overall_recovery_rate = total_recovered / (total_recovered + total_fatal) if (total_recovered + total_fatal) > 0 else 1.0
+            overall_success_rate = (
+                total_succeeded / total_attempted if total_attempted > 0 else 0
+            )
+            overall_recovery_rate = (
+                total_recovered / (total_recovered + total_fatal)
+                if (total_recovered + total_fatal) > 0
+                else 1.0
+            )
 
             # Resilience assertions
-            assert overall_success_rate > 0.85, f"Success rate too low: {overall_success_rate}"
-            assert overall_recovery_rate > 0.80, f"Recovery rate too low: {overall_recovery_rate}"
-            assert total_fatal < total_attempted * 0.1, f"Too many fatal errors: {total_fatal}/{total_attempted}"
+            assert overall_success_rate > 0.85, (
+                f"Success rate too low: {overall_success_rate}"
+            )
+            assert overall_recovery_rate > 0.80, (
+                f"Recovery rate too low: {overall_recovery_rate}"
+            )
+            assert total_fatal < total_attempted * 0.1, (
+                f"Too many fatal errors: {total_fatal}/{total_attempted}"
+            )
 
 
 if __name__ == "__main__":

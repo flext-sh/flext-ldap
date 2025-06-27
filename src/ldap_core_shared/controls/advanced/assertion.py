@@ -39,9 +39,9 @@ References:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field, validator
 
@@ -57,10 +57,10 @@ LDAP_ASSERTION_FAILED_CODE = 122
 class AssertionType(Enum):
     """Types of assertion operations."""
 
-    SIMPLE = "simple"          # Simple filter assertion
-    COMPLEX = "complex"        # Complex multi-condition assertion
-    PRESENCE = "presence"      # Attribute presence assertion
-    VALUE = "value"           # Specific value assertion
+    SIMPLE = "simple"  # Simple filter assertion
+    COMPLEX = "complex"  # Complex multi-condition assertion
+    PRESENCE = "presence"  # Attribute presence assertion
+    VALUE = "value"  # Specific value assertion
 
 
 class AssertionRequest(BaseModel):
@@ -69,33 +69,39 @@ class AssertionRequest(BaseModel):
     assertion_filter: str = Field(description="LDAP filter for assertion")
 
     assertion_type: AssertionType = Field(
-        default=AssertionType.SIMPLE, description="Type of assertion",
+        default=AssertionType.SIMPLE,
+        description="Type of assertion",
     )
 
     # Assertion options
     case_sensitive: bool = Field(
-        default=True, description="Whether assertion is case-sensitive",
+        default=True,
+        description="Whether assertion is case-sensitive",
     )
 
     approximate_match: bool = Field(
-        default=False, description="Whether to use approximate matching",
+        default=False,
+        description="Whether to use approximate matching",
     )
 
-    timeout_seconds: Optional[int] = Field(
-        default=None, description="Assertion timeout in seconds",
+    timeout_seconds: int | None = Field(
+        default=None,
+        description="Assertion timeout in seconds",
     )
 
     # Validation settings
     validate_syntax: bool = Field(
-        default=True, description="Whether to validate filter syntax",
+        default=True,
+        description="Whether to validate filter syntax",
     )
 
     require_indexed: bool = Field(
-        default=False, description="Whether to require indexed attributes",
+        default=False,
+        description="Whether to require indexed attributes",
     )
 
     @validator("assertion_filter")
-    def validate_filter(cls, v: str) -> str:
+    def validate_filter(self, v: str) -> str:
         """Validate assertion filter syntax."""
         if not v or not v.strip():
             msg = "Assertion filter cannot be empty"
@@ -120,6 +126,7 @@ class AssertionRequest(BaseModel):
 
         # Simple extraction for basic filters
         import re
+
         # Match patterns like (attr=value) or (attr>=value)
         pattern = r"\(([a-zA-Z][a-zA-Z0-9-]*)[><=~]"
         matches = re.findall(pattern, self.assertion_filter)
@@ -134,6 +141,7 @@ class AssertionRequest(BaseModel):
             True if filter is simple equality assertion
         """
         import re
+
         # Pattern for simple equality: (attr=value)
         pattern = r"^\([a-zA-Z][a-zA-Z0-9-]*=.*\)$"
         return bool(re.match(pattern, self.assertion_filter))
@@ -146,30 +154,35 @@ class AssertionResponse(BaseModel):
 
     result_code: int = Field(default=0, description="Assertion result code")
 
-    result_message: Optional[str] = Field(
-        default=None, description="Assertion result message",
+    result_message: str | None = Field(
+        default=None,
+        description="Assertion result message",
     )
 
     # Performance metadata
-    evaluation_time: Optional[float] = Field(
-        default=None, description="Assertion evaluation time in seconds",
+    evaluation_time: float | None = Field(
+        default=None,
+        description="Assertion evaluation time in seconds",
     )
 
     attributes_checked: list[str] = Field(
-        default_factory=list, description="Attributes evaluated in assertion",
+        default_factory=list,
+        description="Attributes evaluated in assertion",
     )
 
     # Error information
-    error_message: Optional[str] = Field(
-        default=None, description="Error message if assertion failed",
+    error_message: str | None = Field(
+        default=None,
+        description="Error message if assertion failed",
     )
 
-    syntax_error: Optional[str] = Field(
-        default=None, description="Filter syntax error if invalid",
+    syntax_error: str | None = Field(
+        default=None,
+        description="Filter syntax error if invalid",
     )
 
     processed_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Response processing timestamp",
     )
 
@@ -227,7 +240,7 @@ class AssertionControl(LDAPControl):
         assertion_type: AssertionType = AssertionType.SIMPLE,
         case_sensitive: bool = True,
         criticality: bool = True,
-        timeout_seconds: Optional[int] = None,
+        timeout_seconds: int | None = None,
     ) -> None:
         """Initialize Assertion control.
 
@@ -247,7 +260,7 @@ class AssertionControl(LDAPControl):
         )
 
         # Initialize response storage
-        self._response: Optional[AssertionResponse] = None
+        self._response: AssertionResponse | None = None
         self._response_available = False
 
         # Initialize base control
@@ -269,16 +282,16 @@ class AssertionControl(LDAPControl):
         try:
             # The control value is just the assertion filter as LDAPString (UTF-8)
             if self._assertion_filter:
-                return self._assertion_filter.encode('utf-8')
-            else:
-                # Empty assertion filter
-                return b''
+                return self._assertion_filter.encode("utf-8")
+            # Empty assertion filter
+            return b""
         except Exception as e:
             from ldap_core_shared.utils.logging import get_logger
+
             logger = get_logger(__name__)
-            logger.error(f"Assertion control encoding failed: {e}")
+            logger.exception("Assertion control encoding failed: %s", e)
             # Fallback to empty control value
-            return b''
+            return b""
 
     def process_response(self, response_value: bytes) -> None:
         """Process Assertion control response from server.
@@ -296,12 +309,13 @@ class AssertionControl(LDAPControl):
             if response_value:
                 # If there is response data, log it for debugging
                 from ldap_core_shared.utils.logging import get_logger
+
                 logger = get_logger(__name__)
-                logger.debug(f"Assertion control received response: {response_value!r}")
-                
+                logger.debug("Assertion control received response: %r", response_value)
+
                 # Basic response processing - could be error information
                 try:
-                    response_text = response_value.decode('utf-8')
+                    response_text = response_value.decode("utf-8")
                     self._response_data = {
                         "response_received": True,
                         "response_content": response_text,
@@ -322,11 +336,12 @@ class AssertionControl(LDAPControl):
                     "response_content": None,
                     "assertion_processed": True,
                 }
-                
+
         except Exception as e:
             from ldap_core_shared.utils.logging import get_logger
+
             logger = get_logger(__name__)
-            logger.error(f"Assertion response processing failed: {e}")
+            logger.exception("Assertion response processing failed: %s", e)
             self._response_data = {
                 "response_received": False,
                 "error": str(e),
@@ -369,7 +384,7 @@ class AssertionControl(LDAPControl):
         return self._request.is_simple_equality()
 
     @property
-    def response(self) -> Optional[AssertionResponse]:
+    def response(self) -> AssertionResponse | None:
         """Get assertion control response."""
         return self._response
 
@@ -383,7 +398,7 @@ class AssertionControl(LDAPControl):
         """Get assertion type."""
         return self._request.assertion_type
 
-    def encode_value(self) -> Optional[bytes]:
+    def encode_value(self) -> bytes | None:
         """Encode assertion control value to ASN.1 bytes.
 
         Returns:
@@ -392,7 +407,7 @@ class AssertionControl(LDAPControl):
         return self.control_value
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> AssertionControl:
+    def decode_value(cls, control_value: bytes | None) -> AssertionControl:
         """Decode ASN.1 bytes to create assertion control instance.
 
         Args:
@@ -483,34 +498,35 @@ async def test_assertion(
     try:
         # Create assertion control
         assertion_control = AssertionControl(assertion_filter=assertion_filter)
-        
+
         # Perform search on specific entry with assertion control
-        if hasattr(connection, 'search'):
+        if hasattr(connection, "search"):
             success = connection.search(
                 search_base=dn,
                 search_filter="(objectClass=*)",  # Simple filter to retrieve entry
                 search_scope=0,  # Base scope - just the specified entry
                 controls=[assertion_control],
             )
-            
+
             # If search succeeded, assertion passed
-            if success and hasattr(connection, 'entries') and connection.entries:
+            if success and hasattr(connection, "entries") and connection.entries:
                 return True
-            else:
-                # Assertion failed or entry not found
-                return False
-        else:
-            # Fallback when connection doesn't support search
-            from ldap_core_shared.utils.logging import get_logger
-            logger = get_logger(__name__)
-            logger.warning("Connection does not support search - cannot test assertion")
+            # Assertion failed or entry not found
             return False
-            
+        # Fallback when connection doesn't support search
+        from ldap_core_shared.utils.logging import get_logger
+
+        logger = get_logger(__name__)
+        logger.warning("Connection does not support search - cannot test assertion")
+        return False
+
     except Exception as e:
         from ldap_core_shared.utils.logging import get_logger
+
         logger = get_logger(__name__)
-        logger.error(f"Assertion test failed: {e}")
+        logger.exception("Assertion test failed: %s", e)
         return False
+
 
 # TODO: Integration points for implementation:
 #

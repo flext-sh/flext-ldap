@@ -180,7 +180,6 @@ member: cn=admin,dc=example,dc=com
 
             # 2. RFC 4511: LDAP Protocol Operations
             async with LDAP(comprehensive_ldap_config) as ldap_client:
-
                 # Test connection establishment
                 connection_result = await ldap_client.test_connection()
                 assert connection_result.success is True
@@ -203,14 +202,19 @@ member: cn=admin,dc=example,dc=com
                 assert simple_filter == "(cn=John Doe)"
 
                 # Test complex boolean filter
-                complex_filter = (FilterBuilder()
-                                .and_()
-                                .add(FilterBuilder().equals("objectClass", "person"))
-                                .add(FilterBuilder().or_()
-                                     .add(FilterBuilder().starts_with("cn", "John"))
-                                     .add(FilterBuilder().starts_with("cn", "Jane")))
-                                .add(FilterBuilder().present("mail"))
-                                .build())
+                complex_filter = (
+                    FilterBuilder()
+                    .and_()
+                    .add(FilterBuilder().equals("objectClass", "person"))
+                    .add(
+                        FilterBuilder()
+                        .or_()
+                        .add(FilterBuilder().starts_with("cn", "John"))
+                        .add(FilterBuilder().starts_with("cn", "Jane"))
+                    )
+                    .add(FilterBuilder().present("mail"))
+                    .build()
+                )
 
                 # Test search with complex filter
                 search_result = await ldap_client.search(
@@ -231,7 +235,9 @@ member: cn=admin,dc=example,dc=com
                 assert parsed_dn.parent == "ou=People,dc=example,dc=com"
 
                 # Test DN with special characters
-                special_dn = 'cn=John\\, Jr.,ou=R&D\\+Engineering,o=Company \\"Corp\\",c=US'
+                special_dn = (
+                    'cn=John\\, Jr.,ou=R&D\\+Engineering,o=Company \\"Corp\\",c=US'
+                )
                 parsed_special = DNParser.parse(special_dn)
                 assert parsed_special is not None
                 assert parsed_special.get_attribute_value("cn") == "John, Jr."
@@ -257,7 +263,10 @@ member: cn=admin,dc=example,dc=com
                 modify_result = await ldap_client.modify_entry(
                     dn="cn=Test User,ou=People,dc=example,dc=com",
                     changes={
-                        "telephoneNumber": {"operation": "add", "values": ["+1-555-9999"]},
+                        "telephoneNumber": {
+                            "operation": "add",
+                            "values": ["+1-555-9999"],
+                        },
                         "title": {"operation": "replace", "values": ["Test Engineer"]},
                     },
                 )
@@ -319,7 +328,9 @@ member: cn=admin,dc=example,dc=com
         """🔥 LDIF processing RFC compliance test."""
         # RFC 2849: LDIF specification compliance
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(comprehensive_test_data)
             ldif_path = f.name
 
@@ -367,6 +378,7 @@ member: cn=admin,dc=example,dc=com
 
         finally:
             import os
+
             os.unlink(ldif_path)
 
     @pytest.mark.asyncio
@@ -398,7 +410,6 @@ member: cn=admin,dc=example,dc=com
                 pool_size=10,
                 enable_monitoring=True,
             ) as manager:
-
                 # Test connection acquisition
                 connections = []
                 for _ in range(5):
@@ -596,12 +607,17 @@ member: cn=admin,dc=example,dc=com
         for test in syntax_tests:
             for value in test["values"]:
                 is_valid = schema_validator.validate_attribute_syntax(
-                    test["attribute"], value,
+                    test["attribute"],
+                    value,
                 )
                 if test["valid"]:
-                    assert is_valid is True, f"Should be valid: {test['description']} - {value}"
+                    assert is_valid is True, (
+                        f"Should be valid: {test['description']} - {value}"
+                    )
                 else:
-                    assert is_valid is False, f"Should be invalid: {test['description']} - {value}"
+                    assert is_valid is False, (
+                        f"Should be invalid: {test['description']} - {value}"
+                    )
 
     def test_rfc_compliance_comprehensive_summary(self) -> None:
         """🔥🔥🔥 Comprehensive RFC compliance verification summary."""
@@ -612,7 +628,6 @@ member: cn=admin,dc=example,dc=com
             "rfc_4510_roadmap_compliance": True,
             "ldap_v3_specification_adherence": True,
             "extension_architecture_support": True,
-
             # RFC 4511: LDAP Protocol
             "protocol_data_units_support": True,
             "bind_operation_compliance": True,
@@ -624,7 +639,6 @@ member: cn=admin,dc=example,dc=com
             "extended_operation_support": True,
             "abandon_operation_support": True,
             "unbind_operation_compliance": True,
-
             # RFC 4512: Directory Information Models
             "dit_structure_compliance": True,
             "entry_structure_compliance": True,
@@ -634,7 +648,6 @@ member: cn=admin,dc=example,dc=com
             "subschema_discovery_support": True,
             "operational_attributes_support": True,
             "dsa_informational_model": True,
-
             # RFC 4513: Authentication and Security
             "anonymous_authentication_support": True,
             "simple_authentication_support": True,
@@ -644,7 +657,6 @@ member: cn=admin,dc=example,dc=com
             "authorization_identity_determination": True,
             "access_control_evaluation": True,
             "security_layer_support": True,
-
             # RFC 4514: Distinguished Name Representation
             "dn_string_representation_compliance": True,
             "rdn_format_compliance": True,
@@ -653,7 +665,6 @@ member: cn=admin,dc=example,dc=com
             "dn_normalization_support": True,
             "dn_comparison_equivalence": True,
             "dn_syntax_validation": True,
-
             # RFC 4515: Search Filter Representation
             "filter_string_representation_compliance": True,
             "equality_filter_support": True,
@@ -664,7 +675,6 @@ member: cn=admin,dc=example,dc=com
             "extensible_match_support": True,
             "filter_syntax_validation": True,
             "filter_escaping_compliance": True,
-
             # Additional Core Features
             "ldif_processing_compliance": True,
             "connection_management_compliance": True,
@@ -677,12 +687,16 @@ member: cn=admin,dc=example,dc=com
         }
 
         # ALL checks must pass for complete RFC compliance
-        failed_checks = [check for check, passed in comprehensive_compliance.items() if not passed]
+        failed_checks = [
+            check for check, passed in comprehensive_compliance.items() if not passed
+        ]
         assert len(failed_checks) == 0, f"RFC compliance failed for: {failed_checks}"
 
         # Verify comprehensive coverage
         total_checks = len(comprehensive_compliance)
-        assert total_checks >= 50, f"Comprehensive test coverage insufficient: {total_checks} checks"
+        assert total_checks >= 50, (
+            f"Comprehensive test coverage insufficient: {total_checks} checks"
+        )
 
 
 class TestRFCInteroperabilityScenarios:
@@ -735,8 +749,16 @@ class TestRFCInteroperabilityScenarios:
             assert parsed_group is not None
 
             # Test filter construction for vendor-specific object classes
-            user_filter = FilterBuilder().equals("objectClass", scenario["user_object_class"]).build()
-            group_filter = FilterBuilder().equals("objectClass", scenario["group_object_class"]).build()
+            user_filter = (
+                FilterBuilder()
+                .equals("objectClass", scenario["user_object_class"])
+                .build()
+            )
+            group_filter = (
+                FilterBuilder()
+                .equals("objectClass", scenario["group_object_class"])
+                .build()
+            )
 
             assert user_filter == f"(objectClass={scenario['user_object_class']})"
             assert group_filter == f"(objectClass={scenario['group_object_class']})"
@@ -794,7 +816,9 @@ class TestRFCInteroperabilityScenarios:
             # Test feature availability
             for feature, supported in test["features"].items():
                 feature_available = config.supports_feature(feature)
-                assert feature_available == supported, f"Feature {feature} support mismatch for LDAPv{test['version']}"
+                assert feature_available == supported, (
+                    f"Feature {feature} support mismatch for LDAPv{test['version']}"
+                )
 
     @pytest.mark.asyncio
     async def test_character_encoding_compliance(self) -> None:
@@ -851,7 +875,9 @@ class TestRFCInteroperabilityScenarios:
             for attr, values in test["attributes"].items():
                 for value in values:
                     filter_str = FilterBuilder().equals(attr, value).build()
-                    assert value in filter_str, f"International character handling failed for {test['description']}"
+                    assert value in filter_str, (
+                        f"International character handling failed for {test['description']}"
+                    )
 
 
 if __name__ == "__main__":

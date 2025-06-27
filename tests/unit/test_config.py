@@ -148,7 +148,14 @@ class TestDatabaseConfig:
 
     def test_ssl_mode_validation(self) -> None:
         """Test SSL mode validation."""
-        valid_modes = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
+        valid_modes = [
+            "disable",
+            "allow",
+            "prefer",
+            "require",
+            "verify-ca",
+            "verify-full",
+        ]
 
         for mode in valid_modes:
             config = DatabaseConfig(ssl_mode=mode)
@@ -176,7 +183,9 @@ class TestDatabaseConfig:
         # With password
         config.password = "testpass"
         url_with_password = config.get_connection_url(include_password=True)
-        expected_with_password = "postgresql://testuser:testpass@example.com:5432/testdb?sslmode=require"
+        expected_with_password = (
+            "postgresql://testuser:testpass@example.com:5432/testdb?sslmode=require"
+        )
         assert url_with_password == expected_with_password
 
     def test_pool_configuration_validation(self) -> None:
@@ -382,7 +391,14 @@ class TestSecurityConfig:
 
     def test_sasl_mechanism_validation(self) -> None:
         """Test SASL mechanism validation."""
-        valid_mechanisms = ["PLAIN", "LOGIN", "DIGEST-MD5", "CRAM-MD5", "EXTERNAL", "GSSAPI"]
+        valid_mechanisms = [
+            "PLAIN",
+            "LOGIN",
+            "DIGEST-MD5",
+            "CRAM-MD5",
+            "EXTERNAL",
+            "GSSAPI",
+        ]
 
         config = SecurityConfig(sasl_mechanisms=valid_mechanisms)
         assert config.sasl_mechanisms == valid_mechanisms
@@ -396,7 +412,7 @@ class TestSecurityConfig:
         # Valid timeouts
         config = SecurityConfig(
             session_timeout=1800,  # 30 minutes
-            lockout_duration=900,   # 15 minutes
+            lockout_duration=900,  # 15 minutes
         )
 
         assert config.session_timeout == 1800
@@ -608,7 +624,10 @@ class TestApplicationConfig:
         )
 
         errors = config.validate_full_config()
-        assert any("Debug mode should not be enabled in production" in error for error in errors)
+        assert any(
+            "Debug mode should not be enabled in production" in error
+            for error in errors
+        )
 
     def test_security_validation_rules(self) -> None:
         """Test security-related validation rules."""
@@ -619,7 +638,9 @@ class TestApplicationConfig:
         )
 
         errors = config.validate_full_config()
-        assert any("Authentication is required in production" in error for error in errors)
+        assert any(
+            "Authentication is required in production" in error for error in errors
+        )
 
     def test_tls_validation_rules(self) -> None:
         """Test TLS validation rules."""
@@ -641,7 +662,10 @@ class TestApplicationConfig:
         )
 
         errors = config.validate_full_config()
-        assert any("Debug logging should not be used in production" in error for error in errors)
+        assert any(
+            "Debug logging should not be used in production" in error
+            for error in errors
+        )
 
     def test_consistency_validation_rules(self) -> None:
         """Test configuration consistency validation."""
@@ -701,7 +725,9 @@ class TestConfigManager:
             },
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False, encoding="utf-8"
+        ) as f:
             yaml.dump(config_data, f)
             config_file = f.name
 
@@ -731,7 +757,9 @@ class TestConfigManager:
             },
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
+        ) as f:
             json.dump(config_data, f)
             config_file = f.name
 
@@ -745,14 +773,17 @@ class TestConfigManager:
         finally:
             Path(config_file).unlink()
 
-    @patch.dict(os.environ, {
-        "LDAP_CORE_ENV": "testing",
-        "LDAP_CORE_DEBUG": "true",
-        "LDAP_CORE_DATABASE_HOST": "env-db.example.com",
-        "LDAP_CORE_DATABASE_PORT": "5433",
-        "LDAP_CORE_CONNECTION_USE_TLS": "true",
-        "LDAP_CORE_LOGGING_LEVEL": "DEBUG",
-    })
+    @patch.dict(
+        os.environ,
+        {
+            "LDAP_CORE_ENV": "testing",
+            "LDAP_CORE_DEBUG": "true",
+            "LDAP_CORE_DATABASE_HOST": "env-db.example.com",
+            "LDAP_CORE_DATABASE_PORT": "5433",
+            "LDAP_CORE_CONNECTION_USE_TLS": "true",
+            "LDAP_CORE_LOGGING_LEVEL": "DEBUG",
+        },
+    )
     def test_load_config_from_environment(self) -> None:
         """Test loading configuration from environment variables."""
         config = ConfigManager.load_config()
@@ -787,7 +818,9 @@ class TestConfigManager:
         override_values = {
             "environment": "production",
             "debug": True,  # Should trigger validation error in production
-            "security": {"require_authentication": False},  # Should trigger validation error
+            "security": {
+                "require_authentication": False
+            },  # Should trigger validation error
         }
 
         with pytest.raises(ConfigurationValidationError):
@@ -902,7 +935,9 @@ def temp_config_file():
         },
     }
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, encoding="utf-8") as f:
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".yaml", delete=False, encoding="utf-8"
+    ) as f:
         yaml.dump(config_data, f)
         yield f.name
 

@@ -5,9 +5,7 @@ from __future__ import annotations
 import contextlib
 import logging
 import time
-from typing import TYPE_CHECKING, Any
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Any, Self
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, AsyncIterator
@@ -91,10 +89,15 @@ class SOLIDConnectionManager:
         self._security_manager = components.security_manager or StandardSecurityManager(
             connection_info,
         )
-        self._performance_tracker = components.performance_tracker or PerformanceTracker(
+        self._performance_tracker = (
+            components.performance_tracker
+            or PerformanceTracker(
+                connection_info,
+            )
+        )
+        self._health_monitor = components.health_monitor or StandardHealthMonitor(
             connection_info,
         )
-        self._health_monitor = components.health_monitor or StandardHealthMonitor(connection_info)
         self._pool = components.pool or AsyncConnectionPool(
             connection_info,
             self._factory,
@@ -170,7 +173,10 @@ class SOLIDConnectionManager:
         self,
         search_base: str,
         search_filter: str = "(objectClass=*)",
-        **kwargs: str | list[str] | int | None,  # LDAP search parameters: attributes, scope, size_limit, time_limit
+        **kwargs: str
+        | list[str]
+        | int
+        | None,  # LDAP search parameters: attributes, scope, size_limit, time_limit
     ) -> AsyncIterator[dict[str, Any]]:
         """🔥 Perform search using SOLID composition.
 
@@ -353,6 +359,7 @@ class SOLIDConnectionManager:
     ) -> None:
         """Async context manager exit."""
         await self.cleanup()
+
 
 # ============================================================================
 # 🔥 DEPENDENCY INJECTION FACTORY

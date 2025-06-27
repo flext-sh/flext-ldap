@@ -5,12 +5,12 @@ Exception classes for LDAP connection and network-related errors.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from ldap_core_shared.exceptions.base import LDAPError
 
 
-class ConnectionError(LDAPError):
+class LDAPConnectionError(LDAPError):
     """🔌 Exception for LDAP connection failures.
 
     Raised when connection to LDAP server fails, times out, or is lost.
@@ -20,11 +20,11 @@ class ConnectionError(LDAPError):
         self,
         message: str,
         *,
-        host: Optional[str] = None,
-        port: Optional[int] = None,
-        error_code: Optional[str] = None,
-        context: Optional[dict[str, Any]] = None,
-        original_error: Optional[Exception] = None,
+        host: str | None = None,
+        port: int | None = None,
+        error_code: str | None = None,
+        context: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         """Initialize connection error.
 
@@ -57,9 +57,9 @@ class ConnectionPoolError(ConnectionError):
         self,
         message: str,
         *,
-        pool_size: Optional[int] = None,
-        active_connections: Optional[int] = None,
-        pool_status: Optional[str] = None,
+        pool_size: int | None = None,
+        active_connections: int | None = None,
+        pool_status: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize connection pool error.
@@ -90,9 +90,9 @@ class ConnectionTimeoutError(ConnectionError):
         self,
         message: str,
         *,
-        timeout_seconds: Optional[float] = None,
-        operation: Optional[str] = None,
-        connection_attempts: Optional[int] = None,
+        timeout_seconds: float | None = None,
+        operation: str | None = None,
+        connection_attempts: int | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize connection timeout error.
@@ -123,9 +123,9 @@ class AuthenticationError(ConnectionError):
         self,
         message: str,
         *,
-        bind_dn: Optional[str] = None,
-        auth_method: Optional[str] = None,
-        failure_reason: Optional[str] = None,
+        bind_dn: str | None = None,
+        auth_method: str | None = None,
+        failure_reason: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize authentication error.
@@ -149,15 +149,15 @@ class AuthenticationError(ConnectionError):
         super().__init__(message, **kwargs)
 
 
-class TimeoutError(ConnectionError):
+class LDAPTimeoutError(LDAPConnectionError):
     """⏱️ Exception for LDAP operation timeouts."""
 
     def __init__(
         self,
         message: str,
         *,
-        timeout_seconds: Optional[float] = None,
-        operation: Optional[str] = None,
+        timeout_seconds: float | None = None,
+        operation: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize timeout error.
@@ -185,7 +185,7 @@ class SSLError(ConnectionError):
         self,
         message: str,
         *,
-        certificate_error: Optional[str] = None,
+        certificate_error: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize SSL error.

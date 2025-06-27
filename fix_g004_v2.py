@@ -44,7 +44,8 @@ def fix_g004_in_file(file_path: Path) -> int:
     # Fix single quote f-strings
     content = re.sub(
         r"logger\.(debug|info|warning|error|exception|critical)\(f'([^']*)'(?:\)|,)",
-        lambda m: f'logger.{m.group(1)}("{m.group(2)}")' + (")" if m.group(0).endswith(")") else ", "),
+        lambda m: f'logger.{m.group(1)}("{m.group(2)}")'
+        + (")" if m.group(0).endswith(")") else ", "),
         content,
     )
 
@@ -57,7 +58,11 @@ def fix_g004_in_file(file_path: Path) -> int:
 
     if content != original_content:
         file_path.write_text(content, encoding="utf-8")
-        fixes = original_content.count('f"') + original_content.count("f'") - (content.count('f"') + content.count("f'"))
+        fixes = (
+            original_content.count('f"')
+            + original_content.count("f'")
+            - (content.count('f"') + content.count("f'"))
+        )
 
     return max(0, fixes)
 

@@ -26,12 +26,12 @@ import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
 class ValidationResult:
     """Validation result following CLAUDE.md Result pattern."""
+
     success: bool
     message: str
     details: dict
@@ -42,11 +42,12 @@ class ValidationResult:
 @dataclass
 class DocumentationHierarchy:
     """Documentation hierarchy structure following CLAUDE.md patterns."""
-    global_claude: Optional[Path]
-    global_local: Optional[Path]
-    workspace_claude: Optional[Path]
-    workspace_local: Optional[Path]
-    project_local: Optional[Path]
+
+    global_claude: Path | None
+    global_local: Path | None
+    workspace_claude: Path | None
+    workspace_local: Path | None
+    project_local: Path | None
 
 
 class CLAUDEDocumentationValidator:
@@ -114,7 +115,11 @@ class CLAUDEDocumentationValidator:
                 "/home/marlonsc/CLAUDE.local.md",
             ]
 
-            issues.extend(f"Missing reference to {ref} in project CLAUDE.local.md" for ref in expected_refs if ref not in content)
+            issues.extend(
+                f"Missing reference to {ref} in project CLAUDE.local.md"
+                for ref in expected_refs
+                if ref not in content
+            )
 
         execution_time = (datetime.now() - start_time).total_seconds() * 1000
 
@@ -136,14 +141,17 @@ class CLAUDEDocumentationValidator:
         broken_refs = []
 
         # Extract and validate references from all documentation files
-        for file_path in [f for f in [
-            self.hierarchy.global_claude,
-            self.hierarchy.global_local,
-            self.hierarchy.workspace_claude,
-            self.hierarchy.workspace_local,
-            self.hierarchy.project_local,
-        ] if f and f.exists()]:
-
+        for file_path in [
+            f
+            for f in [
+                self.hierarchy.global_claude,
+                self.hierarchy.global_local,
+                self.hierarchy.workspace_claude,
+                self.hierarchy.workspace_local,
+                self.hierarchy.project_local,
+            ]
+            if f and f.exists()
+        ]:
             content = file_path.read_text()
 
             # Find reference patterns
@@ -165,18 +173,23 @@ class CLAUDEDocumentationValidator:
                             abs_path = (file_path.parent / ref_path).resolve()
 
                         if not abs_path.exists():
-                            broken_refs.append({
-                                "file": str(file_path),
-                                "reference": ref_path,
-                                "resolved_path": str(abs_path),
-                            })
+                            broken_refs.append(
+                                {
+                                    "file": str(file_path),
+                                    "reference": ref_path,
+                                    "resolved_path": str(abs_path),
+                                }
+                            )
 
         execution_time = (datetime.now() - start_time).total_seconds() * 1000
 
         return ValidationResult(
             success=len(broken_refs) == 0,
             message=f"Cross-reference validation {'passed' if len(broken_refs) == 0 else 'failed'}",
-            details={"broken_references": broken_refs, "total_checked": len(broken_refs)},
+            details={
+                "broken_references": broken_refs,
+                "total_checked": len(broken_refs),
+            },
             timestamp=datetime.now().isoformat(),
             execution_time_ms=execution_time,
         )
@@ -193,36 +206,47 @@ class CLAUDEDocumentationValidator:
         # Check for stale documentation (>7 days without update)
         cutoff_date = datetime.now() - timedelta(days=7)
 
-        for file_path in [f for f in [
-            self.hierarchy.workspace_claude,
-            self.hierarchy.workspace_local,
-            self.hierarchy.project_local,
-        ] if f and f.exists()]:
-
+        for file_path in [
+            f
+            for f in [
+                self.hierarchy.workspace_claude,
+                self.hierarchy.workspace_local,
+                self.hierarchy.project_local,
+            ]
+            if f and f.exists()
+        ]:
             # Get file modification time
             mod_time = datetime.fromtimestamp(file_path.stat().st_mtime)
 
             if mod_time < cutoff_date:
                 # Check if file has "Last Updated" field
                 content = file_path.read_text()
-                last_updated_match = re.search(r"Last Updated.*?(\d{4}-\d{2}-\d{2})", content)
+                last_updated_match = re.search(
+                    r"Last Updated.*?(\d{4}-\d{2}-\d{2})", content
+                )
 
                 if last_updated_match:
-                    last_updated = datetime.strptime(last_updated_match.group(1), "%Y-%m-%d")
+                    last_updated = datetime.strptime(
+                        last_updated_match.group(1), "%Y-%m-%d"
+                    )
                     if last_updated < cutoff_date:
-                        stale_files.append({
+                        stale_files.append(
+                            {
+                                "file": str(file_path),
+                                "last_modified": mod_time.isoformat(),
+                                "last_updated_field": last_updated.isoformat(),
+                                "days_stale": (datetime.now() - last_updated).days,
+                            }
+                        )
+                else:
+                    stale_files.append(
+                        {
                             "file": str(file_path),
                             "last_modified": mod_time.isoformat(),
-                            "last_updated_field": last_updated.isoformat(),
-                            "days_stale": (datetime.now() - last_updated).days,
-                        })
-                else:
-                    stale_files.append({
-                        "file": str(file_path),
-                        "last_modified": mod_time.isoformat(),
-                        "last_updated_field": None,
-                        "days_stale": (datetime.now() - mod_time).days,
-                    })
+                            "last_updated_field": None,
+                            "days_stale": (datetime.now() - mod_time).days,
+                        }
+                    )
 
         execution_time = (datetime.now() - start_time).total_seconds() * 1000
 
@@ -255,22 +279,28 @@ class CLAUDEDocumentationValidator:
                 "MANDATORY.*CLI Usage",
             ]
 
-            violations.extend({
-                        "file": str(self.hierarchy.project_local),
-                        "violation": f"Missing required section: {section}",
-                        "severity": "high",
-                    } for section in required_sections if not re.search(section, content, re.IGNORECASE))
+            violations.extend(
+                {
+                    "file": str(self.hierarchy.project_local),
+                    "violation": f"Missing required section: {section}",
+                    "severity": "high",
+                }
+                for section in required_sections
+                if not re.search(section, content, re.IGNORECASE)
+            )
 
         # Check for proper hierarchy references
         if self.hierarchy.project_local.exists():
             content = self.hierarchy.project_local.read_text()
 
             if not re.search(r"Reference.*CLAUDE\.md.*Universal principles", content):
-                violations.append({
-                    "file": str(self.hierarchy.project_local),
-                    "violation": "Missing universal principles reference",
-                    "severity": "medium",
-                })
+                violations.append(
+                    {
+                        "file": str(self.hierarchy.project_local),
+                        "violation": "Missing universal principles reference",
+                        "severity": "medium",
+                    }
+                )
 
         execution_time = (datetime.now() - start_time).total_seconds() * 1000
 
@@ -292,14 +322,18 @@ class CLAUDEDocumentationValidator:
         memory_issues = []
 
         # Check for .token files and coordination
-        token_files = list(self.project_root.glob("*.token")) + list(self.project_root.glob(".token"))
+        token_files = list(self.project_root.glob("*.token")) + list(
+            self.project_root.glob(".token")
+        )
 
         if not token_files:
-            memory_issues.append({
-                "issue": "No .token files found for agent coordination",
-                "severity": "medium",
-                "location": str(self.project_root),
-            })
+            memory_issues.append(
+                {
+                    "issue": "No .token files found for agent coordination",
+                    "severity": "medium",
+                    "location": str(self.project_root),
+                }
+            )
 
         # Check for memory optimization files
         memory_files = [
@@ -309,18 +343,25 @@ class CLAUDEDocumentationValidator:
             ".resolution_memory",
         ]
 
-        memory_issues.extend({
-                    "issue": f"Missing memory optimization file: {memory_file}",
-                    "severity": "low",
-                    "location": str(self.project_root / memory_file),
-                } for memory_file in memory_files if not (self.project_root / memory_file).exists())
+        memory_issues.extend(
+            {
+                "issue": f"Missing memory optimization file: {memory_file}",
+                "severity": "low",
+                "location": str(self.project_root / memory_file),
+            }
+            for memory_file in memory_files
+            if not (self.project_root / memory_file).exists()
+        )
 
         execution_time = (datetime.now() - start_time).total_seconds() * 1000
 
         return ValidationResult(
             success=len(memory_issues) == 0,
             message=f"Memory optimization {'passed' if len(memory_issues) == 0 else 'failed'}",
-            details={"memory_issues": memory_issues, "token_files_found": len(token_files)},
+            details={
+                "memory_issues": memory_issues,
+                "token_files_found": len(token_files),
+            },
             timestamp=datetime.now().isoformat(),
             execution_time_ms=execution_time,
         )

@@ -22,19 +22,14 @@ def fix_syntax_errors_in_file(file_path: Path) -> int:
     patterns = [
         # Fix uuid.uuid4( without closing )
         (r"uuid\.uuid4\(\s*$", "uuid.uuid4()"),
-
         # Fix str(uuid.uuid4( without closing ))
         (r"str\(uuid\.uuid4\(\s*$", "str(uuid.uuid4())"),
-
         # Fix function calls missing closing parentheses at end of line
         (r"([a-zA-Z_][a-zA-Z0-9_]*\([^)]+)\s*$", r"\1)"),
-
         # Fix double closing parentheses
         (r"\)\)", ")"),
-
         # Fix missing closing ) in isinstance calls
         (r"isinstance\([^)]+\):\s*$", lambda m: m.group(0).replace("):", "):")),
-
         # Fix missing closing parentheses in raise statements
         (r"raise [A-Z][a-zA-Z]*\([^)]+$", lambda m: m.group(0) + ")"),
     ]
@@ -54,7 +49,12 @@ def fix_syntax_errors_in_file(file_path: Path) -> int:
     content = re.sub(r"time\.time\(\s*$", "time.time()", content, flags=re.MULTILINE)
 
     # Fix missing parentheses in datetime.now() calls
-    content = re.sub(r"datetime\.now\([^)]*$", lambda m: m.group(0) + ")", content, flags=re.MULTILINE)
+    content = re.sub(
+        r"datetime\.now\([^)]*$",
+        lambda m: m.group(0) + ")",
+        content,
+        flags=re.MULTILINE,
+    )
 
     if content != original_content:
         file_path.write_text(content, encoding="utf-8")

@@ -108,7 +108,11 @@ class EventDispatcher:
                 try:
                     await handler.handle(event)
                 except Exception as e:
-                    self._logger.exception("Error in sync event handler %s: %s", handler.__class__.__name__, e)
+                    self._logger.exception(
+                        "Error in sync event handler %s: %s",
+                        handler.__class__.__name__,
+                        e,
+                    )
 
         self._logger.debug(
             "Processed event %s with %d async and %d sync handlers",
@@ -196,9 +200,10 @@ class LoggingEventHandler(EventHandler):
     async def handle(self, event: DomainEvent) -> None:
         """Log the event."""
         self.logger.info(
-            f"Event: {event.event_type} | "
-            f"Source: {event.source} | "
-            f"Time: {event.timestamp.isoformat()}",
+            "Event: %s | Source: %s | Time: %s",
+            event.event_type,
+            event.source,
+            event.timestamp.isoformat(),
         )
 
     @property

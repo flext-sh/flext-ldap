@@ -46,6 +46,7 @@ class TestSchemaConverterCLI:
         """Test CLI module can be imported."""
         try:
             import ldap_core_shared.cli
+
             assert ldap_core_shared.cli is not None
 
         except ImportError:
@@ -92,7 +93,9 @@ class TestSchemaConverterCLI:
 
     @pytest.mark.unit
     @pytest.mark.cli
-    def test_schema_converter_output_format(self, temp_schema_file, temp_directory) -> None:
+    def test_schema_converter_output_format(
+        self, temp_schema_file, temp_directory
+    ) -> None:
         """Test schema converter output format options."""
         try:
             from ldap_core_shared.cli.schema_converter import main as schema_main
@@ -100,12 +103,17 @@ class TestSchemaConverterCLI:
             output_file = temp_directory / "output.ldif"
 
             # Test LDIF output format
-            with patch("sys.argv", [
-                "schema-converter",
-                str(temp_schema_file),
-                "--output", str(output_file),
-                "--format", "ldif",
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "schema-converter",
+                    str(temp_schema_file),
+                    "--output",
+                    str(output_file),
+                    "--format",
+                    "ldif",
+                ],
+            ):
                 try:
                     schema_main()
 
@@ -129,11 +137,14 @@ class TestSchemaConverterCLI:
             from ldap_core_shared.cli.schema_converter import main as schema_main
 
             # Test verbose option
-            with patch("sys.argv", [
-                "schema-converter",
-                str(temp_schema_file),
-                "--verbose",
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "schema-converter",
+                    str(temp_schema_file),
+                    "--verbose",
+                ],
+            ):
                 try:
                     schema_main()
                     # Verbose mode should provide additional output
@@ -178,11 +189,14 @@ class TestASN1ToolsCLI:
             from ldap_core_shared.cli.asn1_tools import main as asn1_main
 
             # Test ASN.1 parsing command
-            with patch("sys.argv", [
-                "asn1-tools",
-                "parse",
-                str(sample_asn1_schema),
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "asn1-tools",
+                    "parse",
+                    str(sample_asn1_schema),
+                ],
+            ):
                 try:
                     asn1_main()
                     assert True
@@ -203,12 +217,16 @@ class TestASN1ToolsCLI:
             output_file = temp_directory / "generated.py"
 
             # Test ASN.1 compilation command
-            with patch("sys.argv", [
-                "asn1-tools",
-                "compile",
-                str(sample_asn1_schema),
-                "--output", str(output_file),
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "asn1-tools",
+                    "compile",
+                    str(sample_asn1_schema),
+                    "--output",
+                    str(output_file),
+                ],
+            ):
                 try:
                     asn1_main()
 
@@ -233,12 +251,17 @@ class TestASN1ToolsCLI:
             from ldap_core_shared.cli.asn1_tools import main as asn1_main
 
             # Test ASN.1 encoding command
-            with patch("sys.argv", [
-                "asn1-tools",
-                "encode",
-                "--type", "INTEGER",
-                "--value", "42",
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "asn1-tools",
+                    "encode",
+                    "--type",
+                    "INTEGER",
+                    "--value",
+                    "42",
+                ],
+            ):
                 try:
                     asn1_main()
                     assert True
@@ -258,12 +281,17 @@ class TestASN1ToolsCLI:
 
             # Test ASN.1 decoding command
             # DER encoding of INTEGER 42 is 02012A
-            with patch("sys.argv", [
-                "asn1-tools",
-                "decode",
-                "--data", "02012A",
-                "--format", "hex",
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "asn1-tools",
+                    "decode",
+                    "--data",
+                    "02012A",
+                    "--format",
+                    "hex",
+                ],
+            ):
                 try:
                     asn1_main()
                     assert True
@@ -286,15 +314,23 @@ class TestSASLToolsCLI:
             from ldap_core_shared.cli.sasl_tools import main as sasl_main
 
             # Test SASL authentication test
-            with patch("sys.argv", [
-                "sasl-tools",
-                "test",
-                "--mechanism", "PLAIN",
-                "--username", "testuser",
-                "--password", "testpass",
-                "--service", "ldap",
-                "--host", "localhost",
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "sasl-tools",
+                    "test",
+                    "--mechanism",
+                    "PLAIN",
+                    "--username",
+                    "testuser",
+                    "--password",
+                    "testpass",
+                    "--service",
+                    "ldap",
+                    "--host",
+                    "localhost",
+                ],
+            ):
                 try:
                     sasl_main()
                     assert True
@@ -313,10 +349,13 @@ class TestSASLToolsCLI:
             from ldap_core_shared.cli.sasl_tools import main as sasl_main
 
             # Test listing SASL mechanisms
-            with patch("sys.argv", [
-                "sasl-tools",
-                "list-mechanisms",
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "sasl-tools",
+                    "list-mechanisms",
+                ],
+            ):
                 try:
                     sasl_main()
                     assert True
@@ -335,13 +374,19 @@ class TestSASLToolsCLI:
             from ldap_core_shared.cli.sasl_tools import main as sasl_main
 
             # Test SASL encoding (for security layer)
-            with patch("sys.argv", [
-                "sasl-tools",
-                "encode",
-                "--mechanism", "DIGEST-MD5",
-                "--data", "test message",
-                "--qop", "auth-conf",
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "sasl-tools",
+                    "encode",
+                    "--mechanism",
+                    "DIGEST-MD5",
+                    "--data",
+                    "test message",
+                    "--qop",
+                    "auth-conf",
+                ],
+            ):
                 try:
                     sasl_main()
                     assert True
@@ -360,15 +405,23 @@ class TestSASLToolsCLI:
             from ldap_core_shared.cli.sasl_tools import main as sasl_main
 
             # Test interactive SASL session
-            with patch("sys.argv", [
-                "sasl-tools",
-                "interactive",
-                "--service", "ldap",
-                "--host", "localhost",
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "sasl-tools",
+                    "interactive",
+                    "--service",
+                    "ldap",
+                    "--host",
+                    "localhost",
+                ],
+            ):
                 try:
                     # Mock interactive input
-                    with patch("builtins.input", side_effect=["PLAIN", "testuser", "testpass", "quit"]):
+                    with patch(
+                        "builtins.input",
+                        side_effect=["PLAIN", "testuser", "testpass", "quit"],
+                    ):
                         sasl_main()
                     assert True
                 except (NotImplementedError, EOFError):
@@ -390,11 +443,14 @@ class TestCLIUtilities:
             from ldap_core_shared.cli.utils import parse_common_args
 
             # Test common argument parsing
-            args = parse_common_args([
-                "--verbose",
-                "--debug",
-                "--config", "/path/to/config.json",
-            ])
+            args = parse_common_args(
+                [
+                    "--verbose",
+                    "--debug",
+                    "--config",
+                    "/path/to/config.json",
+                ]
+            )
 
             if args:
                 assert hasattr(args, "verbose")
@@ -468,8 +524,11 @@ class TestCLIUtilities:
             }
 
             # Mock configuration file
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False, encoding="utf-8"
+            ) as f:
                 import json
+
                 json.dump(config_data, f)
                 config_file = f.name
 
@@ -518,13 +577,18 @@ class TestCLIIntegration:
             output_file = temp_directory / "converted.ldif"
 
             # Complete pipeline: schema file -> LDIF
-            with patch("sys.argv", [
-                "schema-converter",
-                str(temp_schema_file),
-                "--output", str(output_file),
-                "--format", "ldif",
-                "--validate",
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "schema-converter",
+                    str(temp_schema_file),
+                    "--output",
+                    str(output_file),
+                    "--format",
+                    "ldif",
+                    "--validate",
+                ],
+            ):
                 try:
                     schema_main()
 
@@ -552,14 +616,19 @@ class TestCLIIntegration:
             python_file = temp_directory / "compiled.py"
 
             # Complete workflow: ASN.1 schema -> Python code
-            with patch("sys.argv", [
-                "asn1-tools",
-                "compile",
-                str(sample_asn1_schema),
-                "--output", str(python_file),
-                "--language", "python",
-                "--optimize",
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "asn1-tools",
+                    "compile",
+                    str(sample_asn1_schema),
+                    "--output",
+                    str(python_file),
+                    "--language",
+                    "python",
+                    "--optimize",
+                ],
+            ):
                 try:
                     asn1_main()
 
@@ -584,17 +653,26 @@ class TestCLIIntegration:
             from ldap_core_shared.cli.sasl_tools import main as sasl_main
 
             # Complete workflow: credential input -> authentication -> result
-            with patch("sys.argv", [
-                "sasl-tools",
-                "authenticate",
-                "--mechanism", "PLAIN",
-                "--username", "testuser",
-                "--password", "testpass",
-                "--service", "ldap",
-                "--host", "test.example.com",
-                "--port", "389",
-                "--dry-run",
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "sasl-tools",
+                    "authenticate",
+                    "--mechanism",
+                    "PLAIN",
+                    "--username",
+                    "testuser",
+                    "--password",
+                    "testpass",
+                    "--service",
+                    "ldap",
+                    "--host",
+                    "test.example.com",
+                    "--port",
+                    "389",
+                    "--dry-run",
+                ],
+            ):
                 try:
                     sasl_main()
                     # Dry run should simulate authentication without actual connection
@@ -619,13 +697,16 @@ class TestCLIPerformance:
         # Generate large schema file
         large_schema_file = temp_directory / "large.schema"
 
-        schema_parts = [f"""
+        schema_parts = [
+            f"""
             attributetype ( 1.2.3.4.5.{i}
                 NAME 'testAttribute{i}'
                 DESC 'Test attribute {i}'
                 EQUALITY caseIgnoreMatch
                 SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
-            """ for i in range(1000)]
+            """
+            for i in range(1000)
+        ]
 
         large_schema_content = "\n".join(schema_parts)
         large_schema_file.write_text(large_schema_content)
@@ -634,16 +715,22 @@ class TestCLIPerformance:
             import time
 
             from ldap_core_shared.cli.schema_converter import main as schema_main
+
             start_time = time.time()
 
             output_file = temp_directory / "large_output.ldif"
 
-            with patch("sys.argv", [
-                "schema-converter",
-                str(large_schema_file),
-                "--output", str(output_file),
-                "--format", "ldif",
-            ]):
+            with patch(
+                "sys.argv",
+                [
+                    "schema-converter",
+                    str(large_schema_file),
+                    "--output",
+                    str(output_file),
+                    "--format",
+                    "ldif",
+                ],
+            ):
                 try:
                     schema_main()
 

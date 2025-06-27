@@ -38,6 +38,7 @@ import pytest
 try:
     import numpy as np
     import pandas as pd
+
     VECTORIZED_AVAILABLE = True
 except ImportError:
     VECTORIZED_AVAILABLE = False
@@ -134,17 +135,21 @@ class TestVectorizedProcessingStats:
         assert stats_dict["success_rate"] == 95.0
 
 
-@pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+@pytest.mark.skipif(
+    not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+)
 class TestVectorizedFunctions:
     """Test cases for vectorized utility functions."""
 
     def test_validate_dns_vectorized_valid_dns(self) -> None:
         """Test vectorized DN validation with valid DNs."""
-        dns_array = np.array([
-            "cn=test,dc=example,dc=com",
-            "uid=user,ou=people,dc=example,dc=com",
-            "cn=admin,ou=admins,dc=example,dc=com",
-        ])
+        dns_array = np.array(
+            [
+                "cn=test,dc=example,dc=com",
+                "uid=user,ou=people,dc=example,dc=com",
+                "cn=admin,ou=admins,dc=example,dc=com",
+            ]
+        )
 
         results = _validate_dns_vectorized(dns_array)
 
@@ -155,12 +160,14 @@ class TestVectorizedFunctions:
 
     def test_validate_dns_vectorized_invalid_dns(self) -> None:
         """Test vectorized DN validation with invalid DNs."""
-        dns_array = np.array([
-            "",  # Empty DN
-            "invalid",  # No equals sign
-            "cn",  # Too short
-            "valid=test,dc=example,dc=com",  # Valid one
-        ])
+        dns_array = np.array(
+            [
+                "",  # Empty DN
+                "invalid",  # No equals sign
+                "cn",  # Too short
+                "valid=test,dc=example,dc=com",  # Valid one
+            ]
+        )
 
         results = _validate_dns_vectorized(dns_array)
 
@@ -168,15 +175,17 @@ class TestVectorizedFunctions:
         assert not results[0]  # Empty
         assert not results[1]  # No equals
         assert not results[2]  # Too short
-        assert results[3]      # Valid
+        assert results[3]  # Valid
 
     def test_validate_dns_vectorized_edge_cases(self) -> None:
         """Test vectorized DN validation with edge cases."""
-        dns_array = np.array([
-            "a=b",  # Minimal valid DN
-            "cn=test with spaces,dc=example,dc=com",  # Spaces
-            "cn=test,with,commas=value,dc=example,dc=com",  # Multiple commas
-        ])
+        dns_array = np.array(
+            [
+                "a=b",  # Minimal valid DN
+                "cn=test with spaces,dc=example,dc=com",  # Spaces
+                "cn=test,with,commas=value,dc=example,dc=com",  # Multiple commas
+            ]
+        )
 
         results = _validate_dns_vectorized(dns_array)
 
@@ -260,7 +269,9 @@ class TestVectorizedBulkProcessor:
         with pytest.raises(ValueError, match="Entries list cannot be empty"):
             await self.processor.process_entries_vectorized([])
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     @pytest.mark.asyncio
     async def test_process_entries_basic(self) -> None:
         """Test basic entry processing."""
@@ -279,13 +290,18 @@ class TestVectorizedBulkProcessor:
         assert result.operation_type == "vectorized_bulk_add"
         assert result.transaction_id == "test-transaction-123"
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     @pytest.mark.asyncio
     async def test_process_entries_with_failures(self) -> None:
         """Test processing with some entry failures."""
         entries = [
             {"dn": "cn=test1,dc=example,dc=com", "attributes": {"cn": "test1"}},
-            {"dn": "cn=fail,dc=example,dc=com", "attributes": {"cn": "fail"}},  # Will fail
+            {
+                "dn": "cn=fail,dc=example,dc=com",
+                "attributes": {"cn": "fail"},
+            },  # Will fail
             {"dn": "cn=test3,dc=example,dc=com", "attributes": {"cn": "test3"}},
         ]
 
@@ -296,7 +312,9 @@ class TestVectorizedBulkProcessor:
         assert result.failed_entries == 1
         assert self.processor.stats.success_rate == pytest.approx(66.67, rel=1e-2)
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     @pytest.mark.asyncio
     async def test_create_dataframe_async(self) -> None:
         """Test async DataFrame creation."""
@@ -321,7 +339,9 @@ class TestVectorizedBulkProcessor:
         assert df["_processed"].dtype == bool
         assert df["_success"].dtype == bool
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     @pytest.mark.asyncio
     async def test_validate_entries_vectorized_valid(self) -> None:
         """Test vectorized validation with valid entries."""
@@ -335,7 +355,9 @@ class TestVectorizedBulkProcessor:
         # Should not raise exception for valid entries
         await self.processor._validate_entries_vectorized(df)
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     @pytest.mark.asyncio
     async def test_validate_entries_missing_columns(self) -> None:
         """Test validation with missing required columns."""
@@ -345,7 +367,9 @@ class TestVectorizedBulkProcessor:
         with pytest.raises(ValueError, match="Missing required columns"):
             await self.processor._validate_entries_vectorized(df)
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     @pytest.mark.asyncio
     async def test_process_single_batch(self) -> None:
         """Test processing of a single batch."""
@@ -362,7 +386,9 @@ class TestVectorizedBulkProcessor:
             progress_calls.append((current, total, dn))
 
         result_df = await self.processor._process_single_batch(
-            df, 0, progress_callback,
+            df,
+            0,
+            progress_callback,
         )
 
         assert isinstance(result_df, pd.DataFrame)
@@ -371,7 +397,9 @@ class TestVectorizedBulkProcessor:
         assert all(result_df["_success"])
         assert len(progress_calls) == 2  # Called for each entry
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     @pytest.mark.asyncio
     async def test_check_failure_rate_adaptive_normal(self) -> None:
         """Test adaptive failure rate checking with normal rate."""
@@ -387,7 +415,9 @@ class TestVectorizedBulkProcessor:
         # Should not raise exception for low failure rate
         await self.processor._check_failure_rate_adaptive(df, 1)
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     @pytest.mark.asyncio
     async def test_check_failure_rate_adaptive_high(self) -> None:
         """Test adaptive failure rate checking with high failure rate."""
@@ -403,7 +433,9 @@ class TestVectorizedBulkProcessor:
         with pytest.raises(LDAPBulkOperationError, match="High failure rate detected"):
             await self.processor._check_failure_rate_adaptive(df, 1)
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     @pytest.mark.asyncio
     async def test_create_bulk_result(self) -> None:
         """Test bulk result creation with statistics."""
@@ -436,7 +468,9 @@ class TestVectorizedBulkProcessor:
             {"dn": "cn=test1,dc=example,dc=com", "attributes": {"cn": "test1"}},
         ]
 
-        with pytest.raises(LDAPBulkOperationError, match="Vectorized processing failed"):
+        with pytest.raises(
+            LDAPBulkOperationError, match="Vectorized processing failed"
+        ):
             await self.processor.process_entries_vectorized(entries)
 
 
@@ -478,7 +512,9 @@ class TestPerformanceOptimization:
         """Set up performance test fixtures."""
         self.mock_transaction = MockEnterpriseTransaction()
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     @pytest.mark.asyncio
     async def test_large_dataset_processing(self) -> None:
         """Test processing of large datasets for performance validation."""
@@ -506,12 +542,14 @@ class TestPerformanceOptimization:
         assert duration < 10.0  # Should complete within 10 seconds
         assert processor.stats.entries_per_second > 50  # Reasonable throughput
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     def test_memory_efficiency(self) -> None:
         """Test memory-efficient batch size calculation."""
         # Test various memory constraints
         test_cases = [
-            (10000, 1.0),   # Small memory
+            (10000, 1.0),  # Small memory
             (10000, 10.0),  # Medium memory
             (10000, 100.0),  # Large memory
         ]
@@ -527,14 +565,15 @@ class TestPerformanceOptimization:
             # Verify all entries are covered
             assert sum(batch_sizes) == total_entries
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     def test_vectorized_validation_performance(self) -> None:
         """Test performance of vectorized validation."""
         # Create large DN array
-        dns_array = np.array([
-            f"cn=user{i},ou=people,dc=example,dc=com"
-            for i in range(10000)
-        ])
+        dns_array = np.array(
+            [f"cn=user{i},ou=people,dc=example,dc=com" for i in range(10000)]
+        )
 
         start_time = time.time()
         results = _validate_dns_vectorized(dns_array)
@@ -575,7 +614,7 @@ class TestSecurityValidation:
         """Test protection against memory exhaustion attacks."""
         # Test with extremely large memory request
         huge_memory_mb = 10000.0  # 10GB
-        total_entries = 1000000   # 1M entries
+        total_entries = 1000000  # 1M entries
 
         # Should create reasonable batch sizes even with large memory
         batch_sizes = _calculate_batch_sizes(total_entries, huge_memory_mb)
@@ -589,7 +628,9 @@ class TestSecurityValidation:
         for batch_size in batch_sizes:
             assert batch_size <= max_reasonable_batch
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     @pytest.mark.asyncio
     async def test_failure_rate_threshold_enforcement(self) -> None:
         """Test failure rate threshold enforcement for security."""
@@ -611,7 +652,7 @@ class TestSecurityValidation:
         processor = VectorizedBulkProcessor(
             transaction=self.mock_transaction,
             max_memory_mb=1024.0,  # 1GB
-            max_parallel_tasks=16,   # 16 tasks
+            max_parallel_tasks=16,  # 16 tasks
         )
 
         assert processor.max_memory_mb == 1024.0
@@ -636,7 +677,9 @@ class TestEdgeCases:
         """Set up edge case test fixtures."""
         self.mock_transaction = MockEnterpriseTransaction()
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     def test_single_entry_processing(self) -> None:
         """Test processing with single entry."""
         VectorizedBulkProcessor(transaction=self.mock_transaction)
@@ -655,7 +698,9 @@ class TestEdgeCases:
         assert len(batch_sizes) >= 1
         assert sum(batch_sizes) == 100
 
-    @pytest.mark.skipif(not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available")
+    @pytest.mark.skipif(
+        not VECTORIZED_AVAILABLE, reason="Vectorized dependencies not available"
+    )
     def test_empty_dn_array_validation(self) -> None:
         """Test validation with empty DN array."""
         dns_array = np.array([])

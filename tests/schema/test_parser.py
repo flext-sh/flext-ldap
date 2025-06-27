@@ -207,7 +207,9 @@ class TestSyntaxDefinition:
     def test_syntax_definition_strict_mode(self) -> None:
         """Test syntax definition strict mode rejects extra fields."""
         with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
-            SyntaxDefinition(oid="1.3.6.1.4.1.1466.115.121.1.15", extra_field="not_allowed")
+            SyntaxDefinition(
+                oid="1.3.6.1.4.1.1466.115.121.1.15", extra_field="not_allowed"
+            )
 
     def test_syntax_definition_oid_required(self) -> None:
         """Test syntax definition validation requires OID."""
@@ -417,7 +419,11 @@ class TestSchemaParser:
         assert result.data.superior_classes == ["top"]
         assert result.data.class_type == "STRUCTURAL"
         assert result.data.must_attributes == ["sn", "cn"]
-        assert result.data.may_attributes == ["userPassword", "telephoneNumber", "description"]
+        assert result.data.may_attributes == [
+            "userPassword",
+            "telephoneNumber",
+            "description",
+        ]
 
     def test_parse_object_class_types(self) -> None:
         """Test parsing object class with different types."""
@@ -605,7 +611,7 @@ class TestSchemaParser:
 
         attribute_types = [
             "( 2.5.4.3 NAME 'cn' )",  # Valid
-            "INVALID DEFINITION",      # Invalid
+            "INVALID DEFINITION",  # Invalid
         ]
 
         result = parser.parse_schema_definitions(attribute_types=attribute_types)
@@ -840,7 +846,9 @@ class TestSchemaParserErrorHandling:
 
         # Force exception by modifying internal state
         original_parse = parser.parse_attribute_type
-        parser.parse_attribute_type = lambda x: (_ for _ in ()).throw(ValueError("Test error"))
+        parser.parse_attribute_type = lambda x: (_ for _ in ()).throw(
+            ValueError("Test error")
+        )
 
         try:
             result = parser.parse_schema_definitions(attribute_types=["test"])
@@ -944,10 +952,10 @@ class TestSchemaParserIntegration:
         # Mix of valid and invalid definitions
         mixed_definitions = [
             "( 2.5.4.3 NAME 'cn' DESC 'Valid definition' )",  # Valid
-            "INVALID DEFINITION WITHOUT OID",                 # Invalid
+            "INVALID DEFINITION WITHOUT OID",  # Invalid
             "( 2.5.4.4 NAME 'sn' DESC 'Another valid one' )",  # Valid
-            "( MALFORMED OID NAME 'bad' )",                   # Invalid
-            "( 2.5.4.5 NAME 'mail' DESC 'Valid again' )",     # Valid
+            "( MALFORMED OID NAME 'bad' )",  # Invalid
+            "( 2.5.4.5 NAME 'mail' DESC 'Valid again' )",  # Valid
         ]
 
         result = parser.parse_schema_definitions(attribute_types=mixed_definitions)

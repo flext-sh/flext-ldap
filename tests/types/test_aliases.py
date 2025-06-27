@@ -539,7 +539,7 @@ class TestMonitoringTypes:
         metric_labels: MetricLabels = {"server": "ldap1", "status": "active"}
 
         assert isinstance(metric_name, str)
-        assert isinstance(metric_value, (int, float))
+        assert isinstance(metric_value, int | float)
         assert isinstance(metric_labels, dict)
         assert all(
             isinstance(k, str) and isinstance(v, str) for k, v in metric_labels.items()

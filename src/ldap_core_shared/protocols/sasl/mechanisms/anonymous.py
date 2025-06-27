@@ -35,7 +35,7 @@ References:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar
 
 from ldap_core_shared.protocols.sasl.exceptions import SASLAuthenticationError
 from ldap_core_shared.protocols.sasl.mechanism import (
@@ -49,9 +49,9 @@ if TYPE_CHECKING:
     from ldap_core_shared.protocols.sasl.context import SASLContext
 
 # ANONYMOUS mechanism constants
-MAX_TRACE_INFO_LENGTH = 255      # Maximum length for trace information (RFC 4505)
-ASCII_PRINTABLE_START = 32       # Start of printable ASCII range (space character)
-ASCII_PRINTABLE_END = 127        # End of 7-bit ASCII range
+MAX_TRACE_INFO_LENGTH = 255  # Maximum length for trace information (RFC 4505)
+ASCII_PRINTABLE_START = 32  # Start of printable ASCII range (space character)
+ASCII_PRINTABLE_END = 127  # End of 7-bit ASCII range
 
 
 class AnonymousMechanism(SASLMechanism):
@@ -83,24 +83,26 @@ class AnonymousMechanism(SASLMechanism):
     """
 
     MECHANISM_NAME: ClassVar[str] = "ANONYMOUS"
-    MECHANISM_CAPABILITIES: ClassVar[SASLMechanismCapabilities] = SASLMechanismCapabilities(
-        mechanism_type=SASLMechanismType.ANONYMOUS,
-        supports_initial_response=True,
-        supports_server_challenges=False,  # ANONYMOUS is single-message
-        requires_server_name=False,
-        requires_realm=False,
-        security_flags=[],  # No security flags - anonymous mechanism
-        qop_supported=["auth"],  # Only authentication (anonymous)
-        max_security_strength=0,  # No encryption
-        computational_cost=1,  # Minimal computational cost
-        network_round_trips=0,  # Initial response only
+    MECHANISM_CAPABILITIES: ClassVar[SASLMechanismCapabilities] = (
+        SASLMechanismCapabilities(
+            mechanism_type=SASLMechanismType.ANONYMOUS,
+            supports_initial_response=True,
+            supports_server_challenges=False,  # ANONYMOUS is single-message
+            requires_server_name=False,
+            requires_realm=False,
+            security_flags=[],  # No security flags - anonymous mechanism
+            qop_supported=["auth"],  # Only authentication (anonymous)
+            max_security_strength=0,  # No encryption
+            computational_cost=1,  # Minimal computational cost
+            network_round_trips=0,  # Initial response only
+        )
     )
 
     def __init__(
         self,
         callback_handler: SASLCallbackHandler,
-        context: Optional[SASLContext] = None,
-        trace_info: Optional[str] = None,
+        context: SASLContext | None = None,
+        trace_info: str | None = None,
     ) -> None:
         """Initialize ANONYMOUS mechanism.
 
@@ -118,7 +120,7 @@ class AnonymousMechanism(SASLMechanism):
         # Set anonymous identity in context
         self.context.set_authentication_id("anonymous")
 
-    def evaluate_challenge(self, challenge: bytes) -> Optional[bytes]:
+    def evaluate_challenge(self, challenge: bytes) -> bytes | None:
         """Evaluate challenge and generate ANONYMOUS response.
 
         For ANONYMOUS mechanism:
@@ -224,7 +226,11 @@ class AnonymousMechanism(SASLMechanism):
             return False
 
         # Character check (printable ASCII + common Unicode)
-        if not all((ord(c) >= ASCII_PRINTABLE_START and ord(c) < ASCII_PRINTABLE_END) or c == "\t" for c in trace_info):
+        if not all(
+            (ord(c) >= ASCII_PRINTABLE_START and ord(c) < ASCII_PRINTABLE_END)
+            or c == "\t"
+            for c in trace_info
+        ):
             # Allow basic Unicode but be restrictive
             try:
                 trace_info.encode("ascii")
@@ -235,14 +241,21 @@ class AnonymousMechanism(SASLMechanism):
 
         # Security check - avoid sensitive-looking patterns
         sensitive_patterns = [
-            "password", "passwd", "secret", "key", "token",
-            "credential", "auth", "login", "pass",
+            "password",
+            "passwd",
+            "secret",
+            "key",
+            "token",
+            "credential",
+            "auth",
+            "login",
+            "pass",
         ]
 
         trace_lower = trace_info.lower()
         return all(pattern not in trace_lower for pattern in sensitive_patterns)
 
-    def set_trace_info(self, trace_info: Optional[str]) -> None:
+    def set_trace_info(self, trace_info: str | None) -> None:
         """Set trace information for anonymous authentication.
 
         Args:
@@ -262,7 +275,7 @@ class AnonymousMechanism(SASLMechanism):
 
         self._trace_info = trace_info
 
-    def get_trace_info(self) -> Optional[str]:
+    def get_trace_info(self) -> str | None:
         """Get trace information.
 
         Returns:

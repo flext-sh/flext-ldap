@@ -18,21 +18,23 @@ MIGRATION BENEFITS:
 
 from __future__ import annotations
 
-# Delegate to enterprise DN infrastructure  
-from ldap_core_shared.utilities.dn import (
-    DistinguishedName as EnterpriseDistinguishedName,
-    DNComponent as EnterpriseDNComponent,
-    DNParser,
-    escape_dn_value,
-    unescape_dn_value,
-    normalize_dn as enterprise_normalize_dn,
-    is_valid_dn,
-    get_dn_parent,
-    get_dn_rdn,
-)
-
 # Keep domain imports for compatibility but use enterprise implementations
 from ldap_core_shared.domain.value_objects import DNComponent, LdapDn
+
+# Delegate to enterprise DN infrastructure
+from ldap_core_shared.utilities.dn import (
+    DistinguishedName as EnterpriseDistinguishedName,
+)
+from ldap_core_shared.utilities.dn import (
+    DNParser,
+    escape_dn_value,
+    get_dn_parent,
+    get_dn_rdn,
+    is_valid_dn,
+)
+from ldap_core_shared.utilities.dn import (
+    normalize_dn as enterprise_normalize_dn,
+)
 
 
 def parse_dn(dn_string: str) -> LdapDn:
@@ -49,16 +51,15 @@ def parse_dn(dn_string: str) -> LdapDn:
     """
     # Delegate to enterprise DN parser and convert to domain object
     enterprise_dn = EnterpriseDistinguishedName(dn_string)
-    
+
     # Convert enterprise DN to domain LdapDn
     components = []
     for comp in enterprise_dn.components:
         domain_component = DNComponent(
-            attribute=comp.attribute_type,
-            value=comp.attribute_value
+            attribute=comp.attribute_type, value=comp.attribute_value,
         )
         components.append(domain_component)
-    
+
     return LdapDn(components=components)
 
 
@@ -212,11 +213,10 @@ def validate_dn_format(dn_string: str) -> tuple[bool, str | None]:
     # Delegate to enterprise validation
     if is_valid_dn(dn_string):
         return True, None
-    else:
-        # Get detailed validation errors from enterprise system
-        errors = DNParser.validate_dn_syntax(dn_string)
-        error_message = "; ".join(errors) if errors else "Invalid DN format"
-        return False, error_message
+    # Get detailed validation errors from enterprise system
+    errors = DNParser.validate_dn_syntax(dn_string)
+    error_message = "; ".join(errors) if errors else "Invalid DN format"
+    return False, error_message
 
 
 def get_dn_depth(dn_string: str) -> int:

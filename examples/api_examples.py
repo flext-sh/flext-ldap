@@ -60,9 +60,9 @@ async def fluent_query_examples() -> None:
     )
 
     async with LDAP(config) as ldap:
-
         # Example 1: Find IT department managers
-        managers = await (ldap.query()
+        managers = await (
+            ldap.query()
             .users()
             .in_department("IT")
             .with_title("*Manager*")
@@ -70,19 +70,17 @@ async def fluent_query_examples() -> None:
             .select("cn", "mail", "title", "department")
             .limit(10)
             .sort_by("cn")
-            .execute())
+            .execute()
+        )
 
         if managers.success:
             for _user in managers.data[:3]:
                 pass
 
         # Example 2: Find disabled user accounts
-        disabled_users = await (ldap.query()
-            .users()
-            .disabled_only()
-            .select("cn", "mail")
-            .limit(5)
-            .execute())
+        disabled_users = await (
+            ldap.query().users().disabled_only().select("cn", "mail").limit(5).execute()
+        )
 
         if disabled_users.success:
             pass
@@ -104,7 +102,6 @@ async def semantic_operations_examples() -> None:
     )
 
     async with LDAP(config) as ldap:
-
         # Example 1: Find user by email and get their groups
         user_email = "john.doe@company.com"
 
@@ -205,16 +202,17 @@ async def performance_examples() -> None:
     )
 
     async with LDAP(config) as ldap:
-
         # Example 1: Efficient attribute selection
         asyncio.get_event_loop().time()
 
         # Only select needed attributes instead of "*"
-        users = await (ldap.query()
+        users = await (
+            ldap.query()
             .users()
             .select("cn", "mail")  # Only essential attributes
             .limit(100)
-            .execute())
+            .execute()
+        )
 
         asyncio.get_event_loop().time()
 
@@ -227,16 +225,13 @@ async def performance_examples() -> None:
         asyncio.get_event_loop().time()
 
         # Process multiple departments concurrently
-        tasks = [
-            ldap.find_users_in_department(dept)
-            for dept in departments
-        ]
+        tasks = [ldap.find_users_in_department(dept) for dept in departments]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
         asyncio.get_event_loop().time()
 
         total_users = 0
-        for _dept, result in zip(departments, results):
+        for _dept, result in zip(departments, results, strict=False):
             if hasattr(result, "success") and result.success:
                 count = len(result.data)
                 total_users += count
@@ -245,6 +240,7 @@ async def performance_examples() -> None:
 # ============================================================================
 # 🚀 MAIN EXECUTION - Run all examples
 # ============================================================================
+
 
 async def main() -> None:
     """Run all API examples to demonstrate functionality."""
@@ -262,6 +258,7 @@ async def main() -> None:
             await example_func()
         except Exception:
             import traceback
+
             traceback.print_exc()
 
 

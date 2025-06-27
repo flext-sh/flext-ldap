@@ -32,6 +32,7 @@ from pathlib import Path
 @dataclass
 class FreshnessReport:
     """Freshness monitoring report following CLAUDE.md patterns."""
+
     timestamp: str
     project_name: str
     files_checked: int
@@ -64,9 +65,9 @@ class CLAUDEFreshnessMonitor:
 
         # Freshness thresholds (from CLAUDE.md)
         self.freshness_thresholds = {
-            "critical": 7,    # CLAUDE.md files should be updated weekly
-            "warning": 30,    # General documentation monthly
-            "stale": 90,       # Consider stale after 3 months
+            "critical": 7,  # CLAUDE.md files should be updated weekly
+            "warning": 30,  # General documentation monthly
+            "stale": 90,  # Consider stale after 3 months
         }
 
         # Files to monitor
@@ -120,7 +121,9 @@ class CLAUDEFreshnessMonitor:
             "file": str(file_path),
             "status": "EXISTS",
             "last_modified": mod_time.isoformat(),
-            "last_updated_field": last_updated.isoformat() if last_updated_match else None,
+            "last_updated_field": last_updated.isoformat()
+            if last_updated_match
+            else None,
             "days_since_update": days_since_update,
             "freshness_level": freshness_level,
         }
@@ -154,7 +157,11 @@ class CLAUDEFreshnessMonitor:
                     if "CLAUDE.md" in ref_text or "CLAUDE.local.md" in ref_text:
                         # Extract file path if possible
                         if "/" in ref_text:
-                            ref_path_text = ref_text.split("→")[0].strip() if "→" in ref_text else ref_text
+                            ref_path_text = (
+                                ref_text.split("→")[0].strip()
+                                if "→" in ref_text
+                                else ref_text
+                            )
 
                             # Try to resolve path
                             if ref_path_text.startswith("/"):
@@ -167,18 +174,29 @@ class CLAUDEFreshnessMonitor:
                             if ref_path.exists():
                                 ref_freshness = self.check_file_freshness(ref_path)
 
-                                if ref_freshness["freshness_level"] in {"STALE", "CRITICAL"}:
-                                    cross_ref_issues.append({
-                                        "referencing_file": str(file_path),
-                                        "referenced_file": str(ref_path),
-                                        "reference_text": ref_text,
-                                        "referenced_freshness": ref_freshness["freshness_level"],
-                                        "days_since_update": ref_freshness["days_since_update"],
-                                    })
+                                if ref_freshness["freshness_level"] in {
+                                    "STALE",
+                                    "CRITICAL",
+                                }:
+                                    cross_ref_issues.append(
+                                        {
+                                            "referencing_file": str(file_path),
+                                            "referenced_file": str(ref_path),
+                                            "reference_text": ref_text,
+                                            "referenced_freshness": ref_freshness[
+                                                "freshness_level"
+                                            ],
+                                            "days_since_update": ref_freshness[
+                                                "days_since_update"
+                                            ],
+                                        }
+                                    )
 
         return cross_ref_issues
 
-    def generate_update_recommendations(self, freshness_results: list[dict]) -> list[str]:
+    def generate_update_recommendations(
+        self, freshness_results: list[dict]
+    ) -> list[str]:
         """Generate update recommendations based on freshness analysis.
 
         CLAUDE.md REQUIREMENT: Update recommendation generation
@@ -187,38 +205,85 @@ class CLAUDEFreshnessMonitor:
         recommendations = []
 
         # Analyze freshness results
-        critical_files = [f for f in freshness_results if f["freshness_level"] == "CRITICAL"]
+        critical_files = [
+            f for f in freshness_results if f["freshness_level"] == "CRITICAL"
+        ]
         stale_files = [f for f in freshness_results if f["freshness_level"] == "STALE"]
-        warning_files = [f for f in freshness_results if f["freshness_level"] == "WARNING"]
+        warning_files = [
+            f for f in freshness_results if f["freshness_level"] == "WARNING"
+        ]
 
         # Critical recommendations
         if critical_files:
-            recommendations.append(f"URGENT: Update {len(critical_files)} critical files (>90 days stale)")
+            recommendations.append(
+                f"URGENT: Update {len(critical_files)} critical files (>90 days stale)"
+            )
             # Show first 3
-            recommendations.extend(f"  - {Path(file_info['file']).name}: {file_info['days_since_update']} days stale" for file_info in critical_files[:3])
+            recommendations.extend(
+                f"  - {Path(file_info['file']).name}: {file_info['days_since_update']} days stale"
+                for file_info in critical_files[:3]
+            )
 
         # Stale recommendations
         if stale_files:
-            recommendations.append(f"HIGH PRIORITY: Update {len(stale_files)} stale files (>30 days)")
+            recommendations.append(
+                f"HIGH PRIORITY: Update {len(stale_files)} stale files (>30 days)"
+            )
             # Show first 3
-            recommendations.extend(f"  - {Path(file_info['file']).name}: {file_info['days_since_update']} days stale" for file_info in stale_files[:3])
+            recommendations.extend(
+                f"  - {Path(file_info['file']).name}: {file_info['days_since_update']} days stale"
+                for file_info in stale_files[:3]
+            )
 
         # Warning recommendations
         if warning_files:
-            recommendations.append(f"MEDIUM PRIORITY: Review {len(warning_files)} files approaching staleness (>7 days)")
+            recommendations.append(
+                f"MEDIUM PRIORITY: Review {len(warning_files)} files approaching staleness (>7 days)"
+            )
 
         # Specific CLAUDE.md recommendations
-        global_claude = next((f for f in freshness_results if "CLAUDE.md" in f["file"] and "/home/marlonsc" in f["file"]), None)
+        global_claude = next(
+            (
+                f
+                for f in freshness_results
+                if "CLAUDE.md" in f["file"] and "/home/marlonsc" in f["file"]
+            ),
+            None,
+        )
         if global_claude and global_claude["freshness_level"] != "FRESH":
-            recommendations.append("CRITICAL: Global CLAUDE.md requires immediate update (universal methodology)")
+            recommendations.append(
+                "CRITICAL: Global CLAUDE.md requires immediate update (universal methodology)"
+            )
 
-        workspace_claude = next((f for f in freshness_results if "CLAUDE.md" in f["file"] and self.workspace_root.name in f["file"]), None)
+        workspace_claude = next(
+            (
+                f
+                for f in freshness_results
+                if "CLAUDE.md" in f["file"] and self.workspace_root.name in f["file"]
+            ),
+            None,
+        )
         if workspace_claude and workspace_claude["freshness_level"] != "FRESH":
-            recommendations.append("HIGH: Workspace CLAUDE.md requires update (workspace patterns)")
+            recommendations.append(
+                "HIGH: Workspace CLAUDE.md requires update (workspace patterns)"
+            )
 
-        project_claude = next((f for f in freshness_results if "CLAUDE.local.md" in f["file"] and self.project_root.name in f["file"]), None)
-        if project_claude and project_claude["freshness_level"] in {"STALE", "CRITICAL"}:
-            recommendations.append("MEDIUM: Project CLAUDE.local.md requires update (project specifics)")
+        project_claude = next(
+            (
+                f
+                for f in freshness_results
+                if "CLAUDE.local.md" in f["file"]
+                and self.project_root.name in f["file"]
+            ),
+            None,
+        )
+        if project_claude and project_claude["freshness_level"] in {
+            "STALE",
+            "CRITICAL",
+        }:
+            recommendations.append(
+                "MEDIUM: Project CLAUDE.local.md requires update (project specifics)"
+            )
 
         return recommendations
 
@@ -237,13 +302,18 @@ class CLAUDEFreshnessMonitor:
 
         try:
             # Create backup directory
-            backup_dir = self.project_root / f"backup_claude_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            backup_dir = (
+                self.project_root
+                / f"backup_claude_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            )
             backup_dir.mkdir(exist_ok=True)
 
             # Backup all CLAUDE files
             for file_path in self.monitored_files:
                 if file_path.exists():
-                    backup_file = backup_dir / f"{file_path.parent.name}_{file_path.name}"
+                    backup_file = (
+                        backup_dir / f"{file_path.parent.name}_{file_path.name}"
+                    )
                     shutil.copy2(file_path, backup_file)
                     backup_info["files_backed_up"].append(str(file_path))
 
@@ -280,14 +350,16 @@ class CLAUDEFreshnessMonitor:
             if "CLAUDE" in file_path.name:
                 required_patterns = [
                     r"#{1,3}\s+.*CONFIGURATION",  # Configuration section
-                    r"Reference.*?→",              # Reference pattern
+                    r"Reference.*?→",  # Reference pattern
                     r"Last Updated.*?\d{4}-\d{2}-\d{2}",  # Last updated field
                 ]
 
                 for pattern in required_patterns:
                     if not re.search(pattern, content):
                         validation_result["syntax_valid"] = False
-                        validation_result["issues"].append(f"Missing required pattern: {pattern}")
+                        validation_result["issues"].append(
+                            f"Missing required pattern: {pattern}"
+                        )
 
             # Validate cross-references
             ref_patterns = [r"Reference.*?→\s*([^\n]+)"]
@@ -296,7 +368,9 @@ class CLAUDEFreshnessMonitor:
                 for match in matches:
                     if "/" in match and not match.startswith("http"):
                         # Try to resolve file reference
-                        ref_path = match.split("→")[0].strip() if "→" in match else match
+                        ref_path = (
+                            match.split("→")[0].strip() if "→" in match else match
+                        )
 
                         if ref_path.startswith("/"):
                             resolved_path = Path(ref_path)
@@ -307,7 +381,9 @@ class CLAUDEFreshnessMonitor:
 
                         if not resolved_path.exists():
                             validation_result["references_valid"] = False
-                            validation_result["issues"].append(f"Broken reference: {ref_path}")
+                            validation_result["issues"].append(
+                                f"Broken reference: {ref_path}"
+                            )
 
         except Exception as e:
             validation_result["syntax_valid"] = False
@@ -351,14 +427,20 @@ class CLAUDEFreshnessMonitor:
         recommendations = self.generate_update_recommendations(freshness_results)
 
         # Determine overall status
-        critical_count = len([f for f in freshness_results if f["freshness_level"] == "CRITICAL"])
-        stale_count = len([f for f in freshness_results if f["freshness_level"] == "STALE"])
+        critical_count = len(
+            [f for f in freshness_results if f["freshness_level"] == "CRITICAL"]
+        )
+        stale_count = len(
+            [f for f in freshness_results if f["freshness_level"] == "STALE"]
+        )
 
         if critical_count > 0:
             overall_status = "CRITICAL"
         elif stale_count > 0:
             overall_status = "NEEDS_UPDATE"
-        elif len([f for f in freshness_results if f["freshness_level"] == "WARNING"]) > 0:
+        elif (
+            len([f for f in freshness_results if f["freshness_level"] == "WARNING"]) > 0
+        ):
             overall_status = "WARNING"
         else:
             overall_status = "FRESH"
@@ -368,7 +450,11 @@ class CLAUDEFreshnessMonitor:
             timestamp=datetime.now().isoformat(),
             project_name=self.project_root.name,
             files_checked=len(freshness_results),
-            stale_files=[f for f in freshness_results if f["freshness_level"] in {"STALE", "CRITICAL"}],
+            stale_files=[
+                f
+                for f in freshness_results
+                if f["freshness_level"] in {"STALE", "CRITICAL"}
+            ],
             freshness_violations=cross_ref_issues,
             update_recommendations=recommendations,
             overall_status=overall_status,
@@ -416,7 +502,9 @@ def main() -> None:
     # Update freshness memory
     freshness_memory_file = project_root / ".freshness_memory"
     with open(freshness_memory_file, "a", encoding="utf-8") as f:
-        f.write(f"\nFRESHNESS_CHECK_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{report.overall_status}")
+        f.write(
+            f"\nFRESHNESS_CHECK_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{report.overall_status}"
+        )
 
     # Exit with appropriate code
     success_code = 0 if report.overall_status in {"FRESH", "WARNING"} else 1

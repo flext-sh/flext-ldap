@@ -14,7 +14,7 @@ with comprehensive validation, environment management, security standards.
 
 DESIGN PATTERN: VALUE OBJECT + DELEGATION
 - Immutable configuration data
-- Auto-detection capabilities  
+- Auto-detection capabilities
 - Enterprise validation and security
 - Integration with existing config modules
 """
@@ -22,6 +22,8 @@ DESIGN PATTERN: VALUE OBJECT + DELEGATION
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 # Delegate to enterprise configuration infrastructure
 from ldap_core_shared.core.config import (
@@ -44,7 +46,7 @@ class LDAPConfig:
 
     RESPONSIBILITIES:
     - Store LDAP connection parameters (delegated to enterprise config)
-    - Auto-detect configuration from server URLs  
+    - Auto-detect configuration from server URLs
     - Provide sensible defaults for common scenarios
     - Enterprise-grade validation and type safety
 
@@ -81,11 +83,22 @@ class LDAPConfig:
     automatically converted for use with enterprise components.
     """
 
-    def __init__(self, server: str, auth_dn: str, auth_password: str, base_dn: str,
-                 port: int | None = None, use_tls: bool = True, verify_certs: bool = True,
-                 timeout: int = 30, pool_size: int = 5, **kwargs):
+    def __init__(
+        self,
+        server: str,
+        auth_dn: str,
+        auth_password: str,
+        base_dn: str,
+        *,  # Force keyword-only arguments
+        port: int | None = None,
+        use_tls: bool = True,
+        verify_certs: bool = True,
+        timeout: int = 30,
+        pool_size: int = 5,
+        **kwargs: Any,
+    ) -> None:
         """Initialize LDAP config with enterprise delegation.
-        
+
         Args:
             server: Server URL or hostname
             auth_dn: Authentication DN
@@ -101,14 +114,16 @@ class LDAPConfig:
         # Store base_dn for API compatibility (not used by enterprise config)
         self._base_dn = base_dn
         self._original_server = server
-        
+
         # Auto-configure settings from server URL
-        parsed_server, parsed_port, parsed_use_tls = self._parse_server_url(server, port, use_tls)
-        
-        # Build server list for enterprise config  
+        parsed_server, parsed_port, parsed_use_tls = self._parse_server_url(
+            server, port, use_tls,
+        )
+
+        # Build server list for enterprise config
         protocol = "ldaps" if parsed_use_tls else "ldap"
         server_url = f"{protocol}://{parsed_server}:{parsed_port}"
-        
+
         # Delegate to enterprise LDAP connection configuration
         self._enterprise_config = EnterpriseLDAPConnectionConfig(
             servers=[server_url],
@@ -118,12 +133,14 @@ class LDAPConfig:
             tls_verify=verify_certs,
             connection_timeout=float(timeout),
             pool_size=pool_size,
-            **kwargs
+            **kwargs,
         )
 
-    def _parse_server_url(self, server: str, port: int | None, use_tls: bool) -> tuple[str, int, bool]:
+    def _parse_server_url(
+        self, server: str, port: int | None, use_tls: bool,
+    ) -> tuple[str, int, bool]:
         """Parse server URL for auto-configuration.
-        
+
         Auto-detection rules:
         - ldaps:// URLs → use_tls=True, port=636 (if not specified)
         - ldap:// URLs → use_tls=False, port=389 (if not specified)
@@ -132,7 +149,7 @@ class LDAPConfig:
         parsed_server = server
         parsed_port = port
         parsed_use_tls = use_tls
-        
+
         if "://" in server:
             # Parse URL for auto-configuration
             if server.startswith("ldaps://"):
@@ -142,7 +159,7 @@ class LDAPConfig:
                 parsed_use_tls = False
                 parsed_port = port or 389
 
-            # Extract hostname from URL  
+            # Extract hostname from URL
             url_parts = server.split("://")[1]
             if ":" in url_parts:
                 parsed_server = url_parts.split(":")[0]
@@ -153,7 +170,7 @@ class LDAPConfig:
         # Plain hostname - only set port if not already specified
         elif parsed_port is None:
             parsed_port = 636 if parsed_use_tls else 389
-            
+
         return parsed_server, parsed_port, parsed_use_tls
 
     @property
@@ -215,112 +232,149 @@ class LDAPConfig:
 @dataclass
 class MigrationConfig:
     """Generic migration configuration for LDAP migration projects.
-    
-    This configuration class provides common migration settings that can be 
+
+    This configuration class provides common migration settings that can be
     used by any LDAP migration project (like Algar-OUD-Migration).
     """
-    
+
     # Source and output paths
     source_ldif_path: str
     output_path: str
-    
+
     # Migration processing settings
     batch_size: int = 1000
     max_workers: int = 4
     continue_on_errors: bool = False
     generate_summary: bool = True
     enable_transformations: bool = True
-    
+
     # LDAP operation settings
     search_timeout: int = 30
     bind_timeout: int = 30
     page_size: int = 1000
     scope: str = "SUBTREE"
-    
+
     # Validation settings
     enable_strict_validation: bool = True
     validation_stop_on_error: bool = False
     max_validation_errors: int = 100
-    
+
     # Output formatting
     output_encoding: str = "utf-8"
     line_wrap_length: int = 76
     include_headers: bool = True
-    
+
     # Additional required fields for ALGAR compatibility
     base_dn: str = ""
     log_level: str = "INFO"
     rules_file_path: str = "rules.json"
-    
+
     @property
-    def source_ldif_path_obj(self):
+    def source_ldif_path_obj(self) -> Path:
         """Get source path as Path object."""
         from pathlib import Path
+
         return Path(self.source_ldif_path)
-    
+
     @property
-    def output_path_obj(self):
+    def output_path_obj(self) -> Path:
         """Get output path as Path object."""
         from pathlib import Path
+
         return Path(self.output_path)
 
 
 def validate_configuration_value(name: str, value: any) -> None:
     """Validate configuration value is not None or empty.
-    
+
     Args:
         name: Configuration parameter name
         value: Configuration value to validate
-        
+
     Raises:
         ValueError: If value is None or empty
     """
     if value is None:
-        raise ValueError(f"Configuration parameter '{name}' cannot be None")
-    
+        msg = f"Configuration parameter '{name}' cannot be None"
+        raise ValueError(msg)
+
     if isinstance(value, str) and not value.strip():
-        raise ValueError(f"Configuration parameter '{name}' cannot be empty")
+        msg = f"Configuration parameter '{name}' cannot be empty"
+        raise ValueError(msg)
 
 
 def load_migration_config_from_env(env_prefix: str = "") -> MigrationConfig:
     """Load migration configuration from environment variables.
-    
+
     Args:
         env_prefix: Optional prefix for environment variables
-        
+
     Returns:
         MigrationConfig instance with values from environment
-        
+
     Raises:
         ValueError: If required environment variables are missing
     """
     import os
-    
+
     # Get required environment variables
     source_path = os.getenv(f"{env_prefix}SOURCE_LDIF_PATH")
     output_path = os.getenv(f"{env_prefix}OUTPUT_PATH")
     base_dn = os.getenv(f"{env_prefix}BASE_DN", "")
-    
+
     if not source_path:
-        raise ValueError("SOURCE_LDIF_PATH environment variable is required")
+        msg = "SOURCE_LDIF_PATH environment variable is required"
+        raise ValueError(msg)
     if not output_path:
-        raise ValueError("OUTPUT_PATH environment variable is required")
-    
+        msg = "OUTPUT_PATH environment variable is required"
+        raise ValueError(msg)
+
     # Get optional environment variables with defaults
-    batch_size = int(os.getenv(f"{env_prefix}MIGRATION_BATCH_SIZE", os.getenv(f"{env_prefix}BATCH_SIZE", "1000")))
-    max_workers = int(os.getenv(f"{env_prefix}MIGRATION_MAX_WORKERS", os.getenv(f"{env_prefix}MAX_WORKERS", "4")))
-    search_timeout = int(os.getenv(f"{env_prefix}LDAP_SEARCH_TIMEOUT", os.getenv(f"{env_prefix}SEARCH_TIMEOUT", "30")))
+    batch_size = int(
+        os.getenv(
+            f"{env_prefix}MIGRATION_BATCH_SIZE",
+            os.getenv(f"{env_prefix}BATCH_SIZE", "1000"),
+        ),
+    )
+    max_workers = int(
+        os.getenv(
+            f"{env_prefix}MIGRATION_MAX_WORKERS",
+            os.getenv(f"{env_prefix}MAX_WORKERS", "4"),
+        ),
+    )
+    search_timeout = int(
+        os.getenv(
+            f"{env_prefix}LDAP_SEARCH_TIMEOUT",
+            os.getenv(f"{env_prefix}SEARCH_TIMEOUT", "30"),
+        ),
+    )
     bind_timeout = int(os.getenv(f"{env_prefix}LDAP_BIND_TIMEOUT", "30"))
     page_size = int(os.getenv(f"{env_prefix}LDAP_PAGE_SIZE", "1000"))
     scope = os.getenv(f"{env_prefix}LDAP_SCOPE", "SUBTREE")
-    
-    continue_on_errors = os.getenv(f"{env_prefix}MIGRATION_CONTINUE_ON_ERRORS", os.getenv(f"{env_prefix}CONTINUE_ON_ERRORS", "false")).lower() == "true"
-    generate_summary = os.getenv(f"{env_prefix}MIGRATION_GENERATE_SUMMARY", os.getenv(f"{env_prefix}GENERATE_SUMMARY", "true")).lower() == "true"
-    enable_transformations = os.getenv(f"{env_prefix}ENABLE_TRANSFORMATIONS", "true").lower() == "true"
-    enable_strict_validation = os.getenv(f"{env_prefix}ENABLE_STRICT_VALIDATION", "true").lower() == "true"
-    
+
+    continue_on_errors = (
+        os.getenv(
+            f"{env_prefix}MIGRATION_CONTINUE_ON_ERRORS",
+            os.getenv(f"{env_prefix}CONTINUE_ON_ERRORS", "false"),
+        ).lower()
+        == "true"
+    )
+    generate_summary = (
+        os.getenv(
+            f"{env_prefix}MIGRATION_GENERATE_SUMMARY",
+            os.getenv(f"{env_prefix}GENERATE_SUMMARY", "true"),
+        ).lower()
+        == "true"
+    )
+    enable_transformations = (
+        os.getenv(f"{env_prefix}ENABLE_TRANSFORMATIONS", "true").lower() == "true"
+    )
+    enable_strict_validation = (
+        os.getenv(f"{env_prefix}ENABLE_STRICT_VALIDATION", "true").lower() == "true"
+    )
+
     log_level = os.getenv(f"{env_prefix}LOG_LEVEL", "INFO")
-    
+
     return MigrationConfig(
         source_ldif_path=source_path,
         output_path=output_path,

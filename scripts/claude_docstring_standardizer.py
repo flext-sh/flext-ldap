@@ -27,26 +27,26 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 # Constants for docstring compliance thresholds
-COMPLIANCE_THRESHOLD_MINIMUM = 0.8   # Minimum compliance score required for acceptance
-COMPLIANCE_THRESHOLD_HIGH = 0.9      # High compliance score for recommendations
-COMPLIANCE_THRESHOLD_WARNING = 0.7   # Warning threshold for compliance display
-SUCCESS_RETURN_CODE = 0               # Exit code for successful compliance
+COMPLIANCE_THRESHOLD_MINIMUM = 0.8  # Minimum compliance score required for acceptance
+COMPLIANCE_THRESHOLD_HIGH = 0.9  # High compliance score for recommendations
+COMPLIANCE_THRESHOLD_WARNING = 0.7  # Warning threshold for compliance display
+SUCCESS_RETURN_CODE = 0  # Exit code for successful compliance
 
 
 @dataclass
 class DocstringStandard:
     """Standard docstring format following CLAUDE.md patterns."""
+
     brief_description: str
-    detailed_description: Optional[str] = None
-    design_pattern: Optional[str] = None
+    detailed_description: str | None = None
+    design_pattern: str | None = None
     pattern_details: list[str] = None
-    usage_example: Optional[str] = None
+    usage_example: str | None = None
     references: list[str] = None
     args: dict[str, str] = None
-    returns: Optional[str] = None
+    returns: str | None = None
     raises: dict[str, str] = None
 
     def __post_init__(self):
@@ -174,13 +174,17 @@ Usage Example:
         except Exception:
             return None
 
-    def extract_current_docstring(self, node: ast.AST) -> Optional[str]:
+    def extract_current_docstring(self, node: ast.AST) -> str | None:
         """Extract current docstring from AST node."""
-        if (isinstance(node, (ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef, ast.Module)) and
-            node.body and
-            isinstance(node.body[0], ast.Expr) and
-            isinstance(node.body[0].value, ast.Constant) and
-            isinstance(node.body[0].value.value, str)):
+        if (
+            isinstance(
+                node, ast.FunctionDef | ast.ClassDef | ast.AsyncFunctionDef | ast.Module
+            )
+            and node.body
+            and isinstance(node.body[0], ast.Expr)
+            and isinstance(node.body[0].value, ast.Constant)
+            and isinstance(node.body[0].value.value, str)
+        ):
             return node.body[0].value.value
         return None
 
@@ -199,7 +203,9 @@ Usage Example:
 
         if not docstring:
             compliance_result["missing_elements"] = ["entire_docstring"]
-            compliance_result["recommendations"] = [f"Add complete {docstring_type} docstring following CLAUDE.md patterns"]
+            compliance_result["recommendations"] = [
+                f"Add complete {docstring_type} docstring following CLAUDE.md patterns"
+            ]
             return compliance_result
 
         # Check for brief description (first line)
@@ -210,7 +216,9 @@ Usage Example:
             compliance_result["missing_elements"].append("brief_description")
 
         # Check for design pattern section
-        if re.search(r"DESIGN PATTERN:|ARCHITECTURE:|PATTERN:", docstring, re.IGNORECASE):
+        if re.search(
+            r"DESIGN PATTERN:|ARCHITECTURE:|PATTERN:", docstring, re.IGNORECASE
+        ):
             compliance_result["has_design_pattern"] = True
         else:
             compliance_result["missing_elements"].append("design_pattern")
@@ -235,35 +243,43 @@ Usage Example:
 
         # Calculate compliance score
         total_elements = 5
-        compliant_elements = sum([
-            compliance_result["has_brief"],
-            compliance_result["has_design_pattern"],
-            compliance_result["has_pattern_details"],
-            compliance_result["has_usage_example"],
-            compliance_result["has_references"],
-        ])
+        compliant_elements = sum(
+            [
+                compliance_result["has_brief"],
+                compliance_result["has_design_pattern"],
+                compliance_result["has_pattern_details"],
+                compliance_result["has_usage_example"],
+                compliance_result["has_references"],
+            ]
+        )
         compliance_result["compliance_score"] = compliant_elements / total_elements
 
         # Generate recommendations
         if compliance_result["missing_elements"]:
             compliance_result["recommendations"] = [
-                f"Add {element.replace('_', ' ')}" for element in compliance_result["missing_elements"]
+                f"Add {element.replace('_', ' ')}"
+                for element in compliance_result["missing_elements"]
             ]
 
         return compliance_result
 
-    def generate_standard_docstring(self, node_type: str, node_name: str,
-                                   current_docstring: Optional[str] = None) -> str:
+    def generate_standard_docstring(
+        self, node_type: str, node_name: str, current_docstring: str | None = None
+    ) -> str:
         """Generate standardized docstring following CLAUDE.md patterns."""
         if node_type == "module":
             return self._generate_module_docstring(node_name, current_docstring)
         if node_type == "class":
             return self._generate_class_docstring(node_name, current_docstring)
         if node_type in {"method", "function"}:
-            return self._generate_method_function_docstring(node_name, node_type, current_docstring)
+            return self._generate_method_function_docstring(
+                node_name, node_type, current_docstring
+            )
         return current_docstring or f'"""{node_name} following CLAUDE.md patterns."""'
 
-    def _generate_module_docstring(self, module_name: str, current: Optional[str]) -> str:
+    def _generate_module_docstring(
+        self, module_name: str, current: str | None
+    ) -> str:
         """Generate module docstring following CLAUDE.md patterns."""
         # Determine module purpose based on name patterns
         if "facade" in module_name.lower():
@@ -300,7 +316,7 @@ This module implements {module_name.lower()} following {pattern.lower()}
 with enterprise-grade functionality and comprehensive integration capabilities.
 
 DESIGN PATTERN: {pattern}
-{'=' * (len(pattern) + 16)}
+{"=" * (len(pattern) + 16)}
 
 {chr(10).join(details)}
 
@@ -316,7 +332,7 @@ References:
     - ./CLAUDE.local.md → Project-specific issues
 """'''
 
-    def _generate_class_docstring(self, class_name: str, current: Optional[str]) -> str:
+    def _generate_class_docstring(self, class_name: str, current: str | None) -> str:
         """Generate class docstring following CLAUDE.md patterns."""
         # Determine architecture type based on class name
         if "facade" in class_name.lower():
@@ -324,10 +340,14 @@ References:
             description = "Implements true facade pattern with complete delegation to existing modules"
         elif "manager" in class_name.lower():
             arch_type = "MANAGER ARCHITECTURE"
-            description = "Implements manager pattern for centralized resource coordination"
+            description = (
+                "Implements manager pattern for centralized resource coordination"
+            )
         elif "processor" in class_name.lower():
             arch_type = "PROCESSOR ARCHITECTURE"
-            description = "Implements processor pattern for systematic data transformation"
+            description = (
+                "Implements processor pattern for systematic data transformation"
+            )
         else:
             arch_type = "ENTERPRISE ARCHITECTURE"
             description = "Implements enterprise-grade architecture with comprehensive functionality"
@@ -345,14 +365,22 @@ References:
     - Integration with existing infrastructure
     """'''
 
-    def _generate_method_function_docstring(self, name: str, type_: str, current: Optional[str]) -> str:
+    def _generate_method_function_docstring(
+        self, name: str, type_: str, current: str | None
+    ) -> str:
         """Generate method/function docstring following CLAUDE.md patterns."""
         if "async_" in name:
             description = f"Async {name.replace('async_', '')} (delegates to existing async operations)"
-        elif any(keyword in name.lower() for keyword in ["search", "add", "modify", "delete"]):
-            description = f"LDAP {name} operation (delegates to existing core operations)"
+        elif any(
+            keyword in name.lower() for keyword in ["search", "add", "modify", "delete"]
+        ):
+            description = (
+                f"LDAP {name} operation (delegates to existing core operations)"
+            )
         else:
-            description = f"Enterprise {name} operation (delegates to existing infrastructure)"
+            description = (
+                f"Enterprise {name} operation (delegates to existing infrastructure)"
+            )
 
         return f'"""{description}."""'
 
@@ -376,7 +404,8 @@ References:
         module_docstring = self.extract_current_docstring(tree)
         if module_docstring:
             analysis_result["module_docstring"] = self.analyze_docstring_compliance(
-                module_docstring, "module",
+                module_docstring,
+                "module",
             )
         else:
             analysis_result["module_docstring"] = {
@@ -389,45 +418,72 @@ References:
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
                 class_docstring = self.extract_current_docstring(node)
-                analysis_result["classes"][node.name] = self.analyze_docstring_compliance(
-                    class_docstring, "class",
+                analysis_result["classes"][node.name] = (
+                    self.analyze_docstring_compliance(
+                        class_docstring,
+                        "class",
+                    )
                 )
 
                 # Analyze methods in class
                 for item in node.body:
-                    if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if isinstance(item, ast.FunctionDef | ast.AsyncFunctionDef):
                         method_docstring = self.extract_current_docstring(item)
                         method_key = f"{node.name}.{item.name}"
-                        analysis_result["methods"][method_key] = self.analyze_docstring_compliance(
-                            method_docstring, "method",
+                        analysis_result["methods"][method_key] = (
+                            self.analyze_docstring_compliance(
+                                method_docstring,
+                                "method",
+                            )
                         )
 
-            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            elif isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                 # Top-level functions
-                if not any(isinstance(parent, ast.ClassDef) for parent in ast.walk(tree)
-                          if any(child is node for child in ast.iter_child_nodes(parent))):
+                if not any(
+                    isinstance(parent, ast.ClassDef)
+                    for parent in ast.walk(tree)
+                    if any(child is node for child in ast.iter_child_nodes(parent))
+                ):
                     function_docstring = self.extract_current_docstring(node)
-                    analysis_result["functions"][node.name] = self.analyze_docstring_compliance(
-                        function_docstring, "function",
+                    analysis_result["functions"][node.name] = (
+                        self.analyze_docstring_compliance(
+                            function_docstring,
+                            "function",
+                        )
                     )
 
         # Calculate overall compliance
         all_compliance_scores = []
         if analysis_result["module_docstring"]:
-            all_compliance_scores.append(analysis_result["module_docstring"]["compliance_score"])
+            all_compliance_scores.append(
+                analysis_result["module_docstring"]["compliance_score"]
+            )
 
-        all_compliance_scores.extend(class_analysis["compliance_score"] for class_analysis in analysis_result["classes"].values())
+        all_compliance_scores.extend(
+            class_analysis["compliance_score"]
+            for class_analysis in analysis_result["classes"].values()
+        )
 
-        all_compliance_scores.extend(method_analysis["compliance_score"] for method_analysis in analysis_result["methods"].values())
+        all_compliance_scores.extend(
+            method_analysis["compliance_score"]
+            for method_analysis in analysis_result["methods"].values()
+        )
 
-        all_compliance_scores.extend(function_analysis["compliance_score"] for function_analysis in analysis_result["functions"].values())
+        all_compliance_scores.extend(
+            function_analysis["compliance_score"]
+            for function_analysis in analysis_result["functions"].values()
+        )
 
         if all_compliance_scores:
-            analysis_result["overall_compliance"] = sum(all_compliance_scores) / len(all_compliance_scores)
+            analysis_result["overall_compliance"] = sum(all_compliance_scores) / len(
+                all_compliance_scores
+            )
 
         return analysis_result
 
-    def standardize_file_docstrings(self, file_path: Path, analysis_result: dict) -> bool:
+    def standardize_file_docstrings(
+        self, file_path: Path, analysis_result: dict
+    ) -> bool:
         """Standardize docstrings in file based on analysis."""
         try:
             with open(file_path, encoding="utf-8") as f:
@@ -443,17 +499,26 @@ References:
             module_docstring = self.extract_current_docstring(tree)
             module_analysis = analysis_result.get("module_docstring", {})
 
-            if module_analysis.get("compliance_score", 0) < COMPLIANCE_THRESHOLD_MINIMUM:
+            if (
+                module_analysis.get("compliance_score", 0)
+                < COMPLIANCE_THRESHOLD_MINIMUM
+            ):
                 # Generate new module docstring
                 new_module_docstring = self.generate_standard_docstring(
-                    "module", file_path.stem, module_docstring,
+                    "module",
+                    file_path.stem,
+                    module_docstring,
                 )
-                modifications.append({
-                    "type": "module_docstring",
-                    "line_start": 1,
-                    "line_end": len(module_docstring.split("\n")) if module_docstring else 1,
-                    "new_content": new_module_docstring,
-                })
+                modifications.append(
+                    {
+                        "type": "module_docstring",
+                        "line_start": 1,
+                        "line_end": len(module_docstring.split("\n"))
+                        if module_docstring
+                        else 1,
+                        "new_content": new_module_docstring,
+                    }
+                )
 
             # Apply modifications if any
             if modifications:
@@ -467,7 +532,9 @@ References:
         except Exception:
             return False
 
-    def run_docstring_standardization(self, target_dirs: Optional[list[str]] = None) -> dict:
+    def run_docstring_standardization(
+        self, target_dirs: list[str] | None = None
+    ) -> dict:
         """Run comprehensive docstring standardization."""
         if target_dirs is None:
             target_dirs = ["src", "scripts"]
@@ -502,7 +569,9 @@ References:
 
                 if analysis_result.get("success", True):
                     standardization_report["files_processed"] += 1
-                    standardization_report["detailed_results"][str(py_file)] = analysis_result
+                    standardization_report["detailed_results"][str(py_file)] = (
+                        analysis_result
+                    )
 
                     # Count docstrings
                     file_docstring_count = 0
@@ -510,48 +579,76 @@ References:
 
                     if analysis_result["module_docstring"]:
                         file_docstring_count += 1
-                        if analysis_result["module_docstring"]["compliance_score"] >= COMPLIANCE_THRESHOLD_MINIMUM:
+                        if (
+                            analysis_result["module_docstring"]["compliance_score"]
+                            >= COMPLIANCE_THRESHOLD_MINIMUM
+                        ):
                             file_compliant_count += 1
 
                     file_docstring_count += len(analysis_result["classes"])
-                    file_compliant_count += len([c for c in analysis_result["classes"].values()
-                                                if c["compliance_score"] >= COMPLIANCE_THRESHOLD_MINIMUM])
+                    file_compliant_count += len(
+                        [
+                            c
+                            for c in analysis_result["classes"].values()
+                            if c["compliance_score"] >= COMPLIANCE_THRESHOLD_MINIMUM
+                        ]
+                    )
 
                     file_docstring_count += len(analysis_result["methods"])
-                    file_compliant_count += len([m for m in analysis_result["methods"].values()
-                                                if m["compliance_score"] >= COMPLIANCE_THRESHOLD_MINIMUM])
+                    file_compliant_count += len(
+                        [
+                            m
+                            for m in analysis_result["methods"].values()
+                            if m["compliance_score"] >= COMPLIANCE_THRESHOLD_MINIMUM
+                        ]
+                    )
 
                     file_docstring_count += len(analysis_result["functions"])
-                    file_compliant_count += len([f for f in analysis_result["functions"].values()
-                                                if f["compliance_score"] >= COMPLIANCE_THRESHOLD_MINIMUM])
+                    file_compliant_count += len(
+                        [
+                            f
+                            for f in analysis_result["functions"].values()
+                            if f["compliance_score"] >= COMPLIANCE_THRESHOLD_MINIMUM
+                        ]
+                    )
 
                     standardization_report["total_docstrings"] += file_docstring_count
-                    standardization_report["compliant_docstrings"] += file_compliant_count
+                    standardization_report["compliant_docstrings"] += (
+                        file_compliant_count
+                    )
 
                     # Standardize if needed
-                    if analysis_result["overall_compliance"] < COMPLIANCE_THRESHOLD_MINIMUM:
-                        if self.standardize_file_docstrings(py_file, analysis_result):
-                            standardization_report["files_standardized"] += 1
+                    if (
+                        analysis_result["overall_compliance"]
+                        < COMPLIANCE_THRESHOLD_MINIMUM
+                    ) and self.standardize_file_docstrings(py_file, analysis_result):
+                        standardization_report["files_standardized"] += 1
 
         # Calculate overall compliance
         if standardization_report["total_docstrings"] > 0:
             standardization_report["overall_compliance"] = (
-                standardization_report["compliant_docstrings"] /
-                standardization_report["total_docstrings"]
+                standardization_report["compliant_docstrings"]
+                / standardization_report["total_docstrings"]
             )
 
         # Generate recommendations
         if standardization_report["overall_compliance"] < COMPLIANCE_THRESHOLD_HIGH:
-            standardization_report["recommendations"].extend([
-                "Continue standardizing docstrings to achieve >90% compliance",
-                "Focus on module-level docstrings with design patterns",
-                "Add usage examples to all public APIs",
-                "Include proper reference patterns in all documentation",
-            ])
+            standardization_report["recommendations"].extend(
+                [
+                    "Continue standardizing docstrings to achieve >90% compliance",
+                    "Focus on module-level docstrings with design patterns",
+                    "Add usage examples to all public APIs",
+                    "Include proper reference patterns in all documentation",
+                ]
+            )
 
         # Print summary
 
-        "✅" if standardization_report["overall_compliance"] >= COMPLIANCE_THRESHOLD_HIGH else "🟡" if standardization_report["overall_compliance"] >= COMPLIANCE_THRESHOLD_WARNING else "🔴"
+        "✅" if standardization_report[
+            "overall_compliance"
+        ] >= COMPLIANCE_THRESHOLD_HIGH else "🟡" if standardization_report[
+            "overall_compliance"
+        ] >= COMPLIANCE_THRESHOLD_WARNING else "🔴"
 
         if standardization_report["recommendations"]:
             for _i, _rec in enumerate(standardization_report["recommendations"], 1):
@@ -578,15 +675,23 @@ def main() -> None:
     # Update pattern memory with docstring patterns
     pattern_memory_file = project_root / ".pattern_memory"
     with open(pattern_memory_file, "a", encoding="utf-8") as f:
-        f.write(f"\nDOCSTRING_STANDARDIZATION_{datetime.now().strftime('%Y%m%d_%H%M%S')}_COMPLIANCE_{report['overall_compliance']:.1%}")
+        f.write(
+            f"\nDOCSTRING_STANDARDIZATION_{datetime.now().strftime('%Y%m%d_%H%M%S')}_COMPLIANCE_{report['overall_compliance']:.1%}"
+        )
 
     # Update context memory
     context_memory_file = project_root / ".context_memory"
     with open(context_memory_file, "a", encoding="utf-8") as f:
-        f.write(f"\nDOCSTRING_SYSTEM_COMPLETE_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+        f.write(
+            f"\nDOCSTRING_SYSTEM_COMPLETE_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        )
 
     # Exit with appropriate code
-    success_code = SUCCESS_RETURN_CODE if report["overall_compliance"] >= COMPLIANCE_THRESHOLD_MINIMUM else 1
+    success_code = (
+        SUCCESS_RETURN_CODE
+        if report["overall_compliance"] >= COMPLIANCE_THRESHOLD_MINIMUM
+        else 1
+    )
     sys.exit(success_code)
 
 

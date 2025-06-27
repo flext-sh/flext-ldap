@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import time
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from contextlib import _GeneratorContextManager
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
@@ -19,9 +22,6 @@ from ldap_core_shared.utils.constants import (
     TARGET_POOL_EFFICIENCY_MS,
     TARGET_SUCCESS_RATE,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
 
 
 class LDAPMetrics(BaseModel):
@@ -49,7 +49,7 @@ class LDAPMetrics(BaseModel):
     average_duration: float = Field(default=0.0, ge=0.0)
 
     # Timestamp
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @computed_field
     def success_rate(self) -> float:
@@ -68,7 +68,9 @@ class LDAPMetrics(BaseModel):
     @computed_field
     def meets_sla(self) -> bool:
         """Check if metrics meet SLA requirements."""
-        target_success: float = float(TARGET_SUCCESS_RATE) * float(PERCENTAGE_CALCULATION_BASE)
+        target_success: float = float(TARGET_SUCCESS_RATE) * float(
+            PERCENTAGE_CALCULATION_BASE,
+        )
         target_ops: float = float(TARGET_OPERATIONS_PER_SECOND) * 0.8
         return (
             self.success_rate >= target_success  # type: ignore[operator]
@@ -78,7 +80,7 @@ class LDAPMetrics(BaseModel):
     def __getitem__(self, key: str) -> dict[str, Any]:
         """Enable dict-like access for backward compatibility with tests."""
         if hasattr(self, "_measurements"):
-            measurements = self._measurements
+            measurements: dict[str, dict[str, Any]] = self._measurements
             return measurements.get(key, {})
         return {}
 
@@ -116,7 +118,7 @@ class ConnectionPoolMetrics(BaseModel):
     pool_utilization: float = Field(default=0.0, ge=0.0, le=1.0)
 
     # Timestamp
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @computed_field
     def total_connections(self) -> int:
@@ -134,7 +136,9 @@ class ConnectionPoolMetrics(BaseModel):
     @computed_field
     def efficiency_grade(self) -> str:
         """Calculate pool efficiency grade."""
-        target_reuse: float = float(TARGET_CONNECTION_REUSE_RATE) * float(PERCENTAGE_CALCULATION_BASE)
+        target_reuse: float = float(TARGET_CONNECTION_REUSE_RATE) * float(
+            PERCENTAGE_CALCULATION_BASE,
+        )
         target_ms: float = float(TARGET_POOL_EFFICIENCY_MS)
         if (
             self.reuse_rate >= target_reuse  # type: ignore[operator]
@@ -260,15 +264,12 @@ class PerformanceMonitor:
         # Add raw measurements to the metrics for backward compatibility
         structured_metrics._measurements = self._measurements  # type: ignore[attr-defined]
 
-        # Also make measurements accessible as dict-like access
-        measurements = self._measurements  # Capture in closure
-        structured_metrics.__getitem__ = lambda key: measurements.get(key, {})
-        structured_metrics.__contains__ = lambda key: key in measurements
-
         return structured_metrics
 
     @contextmanager
-    def measure_operation(self, operation_name: str = "ldap_operation") -> Generator[dict[str, Any], None, None]:
+    def measure_operation(
+        self, operation_name: str = "ldap_operation",
+    ) -> _GeneratorContextManager[dict[str, Any]]:
         """Context manager to measure operation performance.
 
         Args:
@@ -310,20 +311,22 @@ class PerformanceMonitor:
             success: bool = bool(operation_ctx["success"])
             self.record_operation(duration, success)
 
-    def track_operation(self, operation_name: str = "ldap_operation") -> Generator[dict[str, Any], None, None]:
+    def track_operation(
+        self, operation_name: str = "ldap_operation",
+    ) -> _GeneratorContextManager[dict[str, Any]]:
         """Alias for measure_operation for backward compatibility.
-        
+
         Args:
             operation_name: Name of operation being measured
-            
+
         Yields:
             dict: Operation context with timing information
         """
         return self.measure_operation(operation_name)
-    
+
     def _get_current_time(self) -> float:
         """Get current time for internal use.
-        
+
         Returns:
             Current time as float timestamp
         """
@@ -416,7 +419,7 @@ class PerformanceAnalyzer:
                 "degraded": duration_degradation,
             },
             "data_points": len(self._metrics_history),
-            "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
+            "analysis_timestamp": datetime.now(UTC).isoformat(),
         }
 
     def generate_performance_report(self) -> dict[str, Any]:
@@ -457,7 +460,8 @@ class PerformanceAnalyzer:
             "total_operations": total_operations,
             "overall_success_rate": overall_success_rate,
             "average_operations_per_second": avg_ops_per_second,
-            "average_duration_ms": avg_duration * DEFAULT_LARGE_LIMIT,  # Convert to milliseconds
+            "average_duration_ms": avg_duration
+            * DEFAULT_LARGE_LIMIT,  # Convert to milliseconds
             "total_errors": total_errors,
             "measurement_period": {
                 "start": self._metrics_history[0].timestamp.isoformat(),
@@ -465,7 +469,7 @@ class PerformanceAnalyzer:
                 "data_points": len(self._metrics_history),
             },
             "degradation_analysis": self.detect_performance_degradation(),
-            "report_timestamp": datetime.now(timezone.utc).isoformat(),
+            "report_timestamp": datetime.now(UTC).isoformat(),
         }
 
     def _calculate_performance_grade(
@@ -479,7 +483,8 @@ class PerformanceAnalyzer:
         if (
             ops_per_second >= TARGET_OPERATIONS_PER_SECOND
             and success_rate >= TARGET_SUCCESS_RATE * PERCENTAGE_CALCULATION_BASE
-            and avg_duration <= TARGET_POOL_EFFICIENCY_MS / DEFAULT_LARGE_LIMIT  # Convert to seconds
+            and avg_duration
+            <= TARGET_POOL_EFFICIENCY_MS / DEFAULT_LARGE_LIMIT  # Convert to seconds
         ):
             return "A+"
 

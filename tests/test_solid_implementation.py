@@ -85,7 +85,8 @@ class TestSingleResponsibilityPrinciple:
 
         for method in factory_methods:
             assert method in connection_methods or hasattr(
-                object, method,
+                object,
+                method,
             ), f"Factory has non-connection method: {method}"
 
     def test_performance_tracker_single_responsibility(
@@ -109,7 +110,8 @@ class TestSingleResponsibilityPrinciple:
 
         for method in tracker_methods:
             assert method in performance_methods or hasattr(
-                object, method,
+                object,
+                method,
             ), f"Tracker has non-performance method: {method}"
 
     def test_health_monitor_single_responsibility(
@@ -134,7 +136,8 @@ class TestSingleResponsibilityPrinciple:
 
         for method in monitor_methods:
             assert method in health_methods or hasattr(
-                object, method,
+                object,
+                method,
             ), f"Monitor has non-health method: {method}"
 
 
@@ -456,7 +459,12 @@ class TestSOLIDIntegration:
                 )
 
                 # Test search
-                [result async for result in manager.search("dc=test,dc=com", "(objectClass=*)")]
+                [
+                    result
+                    async for result in manager.search(
+                        "dc=test,dc=com", "(objectClass=*)"
+                    )
+                ]
 
                 await manager.delete_entry("cn=test,dc=test,dc=com")
 
@@ -548,9 +556,9 @@ class TestSOLIDPerformance:
             )
 
             # Should maintain high performance (>1000 entries/second even with SOLID overhead)
-            assert (
-                throughput > 1000
-            ), f"SOLID throughput {throughput:.0f} entries/s too low"
+            assert throughput > 1000, (
+                f"SOLID throughput {throughput:.0f} entries/s too low"
+            )
             assert total_entries == 100, "Should process all entries"
 
     @pytest.mark.asyncio
@@ -582,9 +590,9 @@ class TestSOLIDPerformance:
                 avg_acquisition_time = elapsed_time / 10
 
                 # Should be fast (<50ms per acquisition including SOLID overhead)
-                assert (
-                    avg_acquisition_time < 0.05
-                ), f"Acquisition time {avg_acquisition_time:.3f}s too slow"
+                assert avg_acquisition_time < 0.05, (
+                    f"Acquisition time {avg_acquisition_time:.3f}s too slow"
+                )
 
 
 # ============================================================================

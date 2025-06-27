@@ -43,6 +43,7 @@ class StandardConnectionFactory(BaseConnectionComponent):
         """
         super().__init__(connection_info)
         from ldap_core_shared.connections.security import StandardSecurityManager
+
         self._security_manager = security_manager or StandardSecurityManager(
             connection_info,
         )

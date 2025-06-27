@@ -43,7 +43,6 @@ from __future__ import annotations
 
 import re
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -51,16 +50,16 @@ from pydantic import BaseModel, Field
 class FilterType(Enum):
     """LDAP filter operation types."""
 
-    AND = "and"                    # (&(filter1)(filter2)...)
-    OR = "or"                     # (|(filter1)(filter2)...)
-    NOT = "not"                   # (!(filter))
-    EQUALS = "equals"             # (attr=value)
-    SUBSTRING = "substring"       # (attr=value*)
+    AND = "and"  # (&(filter1)(filter2)...)
+    OR = "or"  # (|(filter1)(filter2)...)
+    NOT = "not"  # (!(filter))
+    EQUALS = "equals"  # (attr=value)
+    SUBSTRING = "substring"  # (attr=value*)
     GREATER_EQUAL = "greater_equal"  # (attr>=value)
-    LESS_EQUAL = "less_equal"     # (attr<=value)
-    PRESENT = "present"           # (attr=*)
-    APPROX = "approx"            # (attr~=value)
-    EXTENSIBLE = "extensible"     # (attr:dn:rule:=value)
+    LESS_EQUAL = "less_equal"  # (attr<=value)
+    PRESENT = "present"  # (attr=*)
+    APPROX = "approx"  # (attr~=value)
+    EXTENSIBLE = "extensible"  # (attr:dn:rule:=value)
 
 
 class MatchingRule(Enum):
@@ -83,21 +82,24 @@ class FilterComponent(BaseModel):
 
     filter_type: FilterType = Field(description="Type of filter operation")
 
-    attribute: Optional[str] = Field(default=None, description="Attribute name")
+    attribute: str | None = Field(default=None, description="Attribute name")
 
-    value: Optional[str] = Field(default=None, description="Filter value")
+    value: str | None = Field(default=None, description="Filter value")
 
     subfilters: list[FilterComponent] = Field(
-        default_factory=list, description="Sub-filters for logical operations",
+        default_factory=list,
+        description="Sub-filters for logical operations",
     )
 
     # Extensible matching components
-    matching_rule: Optional[str] = Field(
-        default=None, description="Matching rule OID or name",
+    matching_rule: str | None = Field(
+        default=None,
+        description="Matching rule OID or name",
     )
 
     dn_attributes: bool = Field(
-        default=False, description="Whether to match DN attributes",
+        default=False,
+        description="Whether to match DN attributes",
     )
 
     # Metadata
@@ -181,13 +183,13 @@ class LDAPFilter:
     SIMPLE_FILTER_PATTERN = re.compile(r"^([^()]+?)([~<>=]+)(.*)$")
     EXTENSIBLE_PATTERN = re.compile(r"^([^:]*):?([^:]*):?([^:]*):?=(.*)$")
 
-    def __init__(self, filter_string: Optional[str] = None) -> None:
+    def __init__(self, filter_string: str | None = None) -> None:
         """Initialize LDAP filter.
 
         Args:
             filter_string: LDAP filter string to parse (optional)
         """
-        self._root_component: Optional[FilterComponent] = None
+        self._root_component: FilterComponent | None = None
         self._original_string = filter_string
         self._validation_errors: list[str] = []
 
@@ -227,7 +229,9 @@ class LDAPFilter:
             )
         return self._parse_simple_filter(inner_filter)
 
-    def _parse_logical_filter(self, filter_str: str, op_type: FilterType) -> FilterComponent:
+    def _parse_logical_filter(
+        self, filter_str: str, op_type: FilterType,
+    ) -> FilterComponent:
         """Parse logical filter (AND/OR).
 
         Args:
@@ -350,11 +354,15 @@ class LDAPFilter:
             String representation of component
         """
         if component.filter_type == FilterType.AND:
-            subfilter_strings = [self._component_to_string(sf) for sf in component.subfilters]
+            subfilter_strings = [
+                self._component_to_string(sf) for sf in component.subfilters
+            ]
             return f"(&{''.join(subfilter_strings)})"
 
         if component.filter_type == FilterType.OR:
-            subfilter_strings = [self._component_to_string(sf) for sf in component.subfilters]
+            subfilter_strings = [
+                self._component_to_string(sf) for sf in component.subfilters
+            ]
             return f"(|{''.join(subfilter_strings)})"
 
         if component.filter_type == FilterType.NOT:
@@ -603,6 +611,10 @@ class LDAPFilter:
             return False
         return self.to_string() == other.to_string()
 
+    def __hash__(self) -> int:
+        """Hash for LDAPFilter."""
+        return hash(self.to_string())
+
 
 class FilterBuilder:
     """Builder for programmatic filter construction."""
@@ -688,9 +700,9 @@ class FilterBuilder:
 
     def extensible(
         self,
-        attribute: Optional[str],
+        attribute: str | None,
         value: str,
-        matching_rule: Optional[str] = None,
+        matching_rule: str | None = None,
         dn_attributes: bool = False,
     ) -> LDAPFilter:
         """Create extensible match filter."""

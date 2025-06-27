@@ -211,7 +211,7 @@ class TestLDAPSearchEngine:
         # Test search method if it exists
         if hasattr(engine, "search"):
             result = engine.search(config)
-            assert isinstance(result, (LDAPSearchResult, list))
+            assert isinstance(result, LDAPSearchResult | list)
 
     def test_search_with_pagination(self, mock_connection_manager) -> None:
         """Test search with pagination."""
@@ -237,7 +237,8 @@ class TestLDAPSearchEngine:
             assert result is not None
 
     def test_search_engine_performance_monitoring(
-        self, mock_connection_manager,
+        self,
+        mock_connection_manager,
     ) -> None:
         """Test search engine performance monitoring."""
         engine = LDAPSearchEngine(connection_manager=mock_connection_manager)

@@ -90,6 +90,7 @@ class TestASN1Sequence:
         """Create sample ASN.1 elements for testing."""
         try:
             from ldap_core_shared.protocols.asn1.types import ASN1Boolean, ASN1Integer
+
             return [
                 ASN1Integer(42),
                 ASN1Boolean(True),
@@ -458,7 +459,7 @@ class TestASN1Any:
             from ldap_core_shared.protocols.asn1.elements import ASN1Any
 
             # Test with raw bytes
-            raw_data = b"\x02\x01\x2A"  # INTEGER 42
+            raw_data = b"\x02\x01\x2a"  # INTEGER 42
             any_element = ASN1Any(raw_data)
 
             assert any_element is not None
@@ -523,7 +524,7 @@ class TestASN1ElementEncoding:
 
             # Test decoding (may raise NotImplementedError)
             try:
-                test_data = b"\x02\x01\x2A"  # INTEGER 42
+                test_data = b"\x02\x01\x2a"  # INTEGER 42
                 decoded, offset = ASN1Integer.decode(test_data)
                 assert decoded is not None
                 assert isinstance(offset, int)

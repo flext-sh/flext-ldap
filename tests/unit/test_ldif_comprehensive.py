@@ -50,8 +50,8 @@ class TestLDIFParser:
                 entries = []
                 current_entry = {}
 
-                for line in ldif_content.strip().split("\n"):
-                    line = line.strip()
+                for raw_line in ldif_content.strip().split("\n"):
+                    line = raw_line.strip()
                     if not line:
                         if current_entry:
                             entries.append(current_entry)
@@ -164,7 +164,9 @@ cn: testuser
 mail: testuser@example.com
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(ldif_content)
             temp_file = f.name
 
@@ -308,7 +310,9 @@ class TestLDIFMerger:
 
         class MockLDIFMerger:
             def merge_entries(
-                self, entries1: list[dict[str, Any]], entries2: list[dict[str, Any]],
+                self,
+                entries1: list[dict[str, Any]],
+                entries2: list[dict[str, Any]],
             ) -> list[dict[str, Any]]:
                 """Mock merging of LDIF entries."""
                 merged = {}
@@ -364,7 +368,8 @@ class TestLDIFMerger:
 
         # Find merged user1 entry
         user1_entry = next(
-            (e for e in merged if e["dn"] == "cn=user1,dc=example,dc=com"), None,
+            (e for e in merged if e["dn"] == "cn=user1,dc=example,dc=com"),
+            None,
         )
         assert user1_entry is not None
         assert "mail" in user1_entry["attributes"]
@@ -391,7 +396,9 @@ class TestLDIFTransformer:
 
         class MockLDIFTransformer:
             def transform_entries(
-                self, entries: list[dict[str, Any]], rules: dict[str, Any],
+                self,
+                entries: list[dict[str, Any]],
+                rules: dict[str, Any],
             ) -> list[dict[str, Any]]:
                 """Mock transformation of LDIF entries."""
                 transformed = []
@@ -576,7 +583,9 @@ class TestLDIFWriter:
                 return "\n".join(lines)
 
             def write_to_file(
-                self, entries: list[dict[str, Any]], file_path: str,
+                self,
+                entries: list[dict[str, Any]],
+                file_path: str,
             ) -> None:
                 """Mock writing LDIF to file."""
                 content = self.write_entries(entries)
@@ -603,7 +612,9 @@ class TestLDIFWriter:
         assert "mail: user1@example.com" in ldif_content
 
         # Test writing to file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             temp_file = f.name
 
         try:
@@ -628,7 +639,9 @@ class TestLDIFIntegration:
         # Mock the complete pipeline
         class MockPipeline:
             def process_ldif(
-                self, input_content: str, transformation_rules: dict[str, Any],
+                self,
+                input_content: str,
+                transformation_rules: dict[str, Any],
             ) -> str:
                 """Mock complete LDIF processing pipeline."""
                 # Parse
@@ -646,8 +659,8 @@ class TestLDIFIntegration:
                 lines = content.strip().split("\n")
                 current_entry = {}
 
-                for line in lines:
-                    line = line.strip()
+                for raw_line in lines:
+                    line = raw_line.strip()
                     if not line:
                         if current_entry:
                             entries.append(current_entry)
@@ -674,7 +687,9 @@ class TestLDIFIntegration:
                 return entries
 
             def _transform(
-                self, entries: list[dict[str, Any]], rules: dict[str, Any],
+                self,
+                entries: list[dict[str, Any]],
+                rules: dict[str, Any],
             ) -> list[dict[str, Any]]:
                 """Mock transformation."""
                 if not rules:
@@ -690,7 +705,8 @@ class TestLDIFIntegration:
                         new_domain = rules["domain_mapping"].get("new")
                         if old_domain and new_domain:
                             new_entry["dn"] = new_entry["dn"].replace(
-                                old_domain, new_domain,
+                                old_domain,
+                                new_domain,
                             )
 
                     transformed.append(new_entry)

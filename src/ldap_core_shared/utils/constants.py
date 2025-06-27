@@ -104,7 +104,9 @@ OPERATION_RETRY_BASE_DELAY_SECONDS = 0.1  # Base delay for exponential backoff
 TARGET_OPERATIONS_PER_SECOND: int = 12000
 TARGET_OPERATIONS_PER_SECOND_A_GRADE: int = 8000
 TARGET_OPERATIONS_PER_SECOND_B_GRADE: int = 4000
-TARGET_CONNECTION_REUSE_RATE: float = DEFAULT_CONFIDENCE_PERCENT / 100.0  # 95% as decimal
+TARGET_CONNECTION_REUSE_RATE: float = (
+    DEFAULT_CONFIDENCE_PERCENT / 100.0
+)  # 95% as decimal
 TARGET_POOL_EFFICIENCY_MS: int = 10  # <10ms connection acquisition
 TARGET_SUCCESS_RATE: float = 0.99  # 99%
 
@@ -178,7 +180,9 @@ ENCRYPTION_ALGORITHM = "AES-256-GCM"
 # These should be set via environment variables or secure config management
 DEFAULT_PASSWORD_ATTRIBUTE = "userPassword"  # LDAP standard attribute name
 SENSITIVE_DATA_MASK = "***MASKED***"  # Standard mask for sensitive data logging
-PLACEHOLDER_OID = "0.0.0.0"  # Placeholder OID value (not a network binding)  # noqa: S104
+PLACEHOLDER_OID = (
+    "0.0.0.0"  # Placeholder OID value (not a network binding)  # noqa: S104
+)
 
 # Status and State Constants
 CONNECTION_STATES = {

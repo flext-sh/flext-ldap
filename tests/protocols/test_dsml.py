@@ -104,7 +104,9 @@ class TestDSMLProtocol:
         """Create test DSML protocol."""
         return DSMLProtocol(dsml_config)
 
-    def test_dsml_protocol_initialization(self, dsml_protocol: DSMLProtocol, dsml_config: DSMLConfiguration) -> None:
+    def test_dsml_protocol_initialization(
+        self, dsml_protocol: DSMLProtocol, dsml_config: DSMLConfiguration
+    ) -> None:
         """Test DSMLProtocol initialization."""
         assert dsml_protocol._config == dsml_config
         assert dsml_protocol._transport is None
@@ -119,7 +121,9 @@ class TestDSMLProtocol:
         assert protocol._config.service_url == "http://localhost/dsml"
 
     @patch("ldap_core_shared.protocols.dsml.DSMLTransport")
-    async def test_dsml_protocol_connect_success(self, mock_transport_class: MagicMock, dsml_protocol: DSMLProtocol) -> None:
+    async def test_dsml_protocol_connect_success(
+        self, mock_transport_class: MagicMock, dsml_protocol: DSMLProtocol
+    ) -> None:
         """Test successful DSML protocol connection."""
         mock_transport = AsyncMock()
         mock_transport_class.return_value = mock_transport
@@ -131,7 +135,9 @@ class TestDSMLProtocol:
         assert dsml_protocol._transport == mock_transport
 
     @patch("ldap_core_shared.protocols.dsml.DSMLTransport")
-    async def test_dsml_protocol_disconnect(self, mock_transport_class: MagicMock, dsml_protocol: DSMLProtocol) -> None:
+    async def test_dsml_protocol_disconnect(
+        self, mock_transport_class: MagicMock, dsml_protocol: DSMLProtocol
+    ) -> None:
         """Test DSML protocol disconnection."""
         mock_transport = AsyncMock()
         mock_transport_class.return_value = mock_transport
@@ -145,7 +151,9 @@ class TestDSMLProtocol:
         mock_transport.disconnect.assert_called_once()
         assert dsml_protocol._transport is None
 
-    async def test_dsml_protocol_send_operation_not_connected(self, dsml_protocol: DSMLProtocol) -> None:
+    async def test_dsml_protocol_send_operation_not_connected(
+        self, dsml_protocol: DSMLProtocol
+    ) -> None:
         """Test sending operation when not connected raises error."""
         mock_message = MagicMock()
 
@@ -153,7 +161,9 @@ class TestDSMLProtocol:
             await dsml_protocol.send_dsml_operation(mock_message)
 
     @patch("ldap_core_shared.protocols.dsml.DSMLTransport")
-    async def test_dsml_protocol_send_operation_success(self, mock_transport_class: MagicMock, dsml_protocol: DSMLProtocol) -> None:
+    async def test_dsml_protocol_send_operation_success(
+        self, mock_transport_class: MagicMock, dsml_protocol: DSMLProtocol
+    ) -> None:
         """Test successful DSML operation sending."""
         # Setup mocks
         mock_transport = AsyncMock()
@@ -181,7 +191,9 @@ class TestDSMLProtocol:
             assert result == mock_response
 
     @patch("ldap_core_shared.protocols.dsml.DSMLTransport")
-    async def test_dsml_protocol_send_operation_with_errors(self, mock_transport_class: MagicMock, dsml_protocol: DSMLProtocol) -> None:
+    async def test_dsml_protocol_send_operation_with_errors(
+        self, mock_transport_class: MagicMock, dsml_protocol: DSMLProtocol
+    ) -> None:
         """Test DSML operation sending with response errors."""
         # Setup mocks
         mock_transport = AsyncMock()
@@ -202,10 +214,14 @@ class TestDSMLProtocol:
             # Connect and send operation
             await dsml_protocol.connect("http://test.local/dsml")
 
-            with pytest.raises(RuntimeError, match="DSML operation failed: LDAP error: Invalid DN"):
+            with pytest.raises(
+                RuntimeError, match="DSML operation failed: LDAP error: Invalid DN"
+            ):
                 await dsml_protocol.send_dsml_operation(mock_message)
 
-    def test_dsml_protocol_connected_property(self, dsml_protocol: DSMLProtocol) -> None:
+    def test_dsml_protocol_connected_property(
+        self, dsml_protocol: DSMLProtocol
+    ) -> None:
         """Test connected property."""
         # Not connected initially
         assert not dsml_protocol.connected
@@ -217,7 +233,9 @@ class TestDSMLProtocol:
 
         assert dsml_protocol.connected
 
-    def test_dsml_protocol_transport_property(self, dsml_protocol: DSMLProtocol) -> None:
+    def test_dsml_protocol_transport_property(
+        self, dsml_protocol: DSMLProtocol
+    ) -> None:
         """Test transport property getter."""
         assert dsml_protocol.transport is None
 
@@ -226,7 +244,9 @@ class TestDSMLProtocol:
 
         assert dsml_protocol.transport == mock_transport
 
-    def test_dsml_protocol_configuration_property(self, dsml_protocol: DSMLProtocol, dsml_config: DSMLConfiguration) -> None:
+    def test_dsml_protocol_configuration_property(
+        self, dsml_protocol: DSMLProtocol, dsml_config: DSMLConfiguration
+    ) -> None:
         """Test configuration property getter."""
         assert dsml_protocol.configuration == dsml_config
 
@@ -243,14 +263,18 @@ class TestDSMLConnection:
             http_auth_password="testpass",
         )
 
-    def test_dsml_connection_initialization(self, dsml_connection: DSMLConnection) -> None:
+    def test_dsml_connection_initialization(
+        self, dsml_connection: DSMLConnection
+    ) -> None:
         """Test DSMLConnection initialization."""
         assert dsml_connection._service_url == "http://test.local/dsml"
         assert dsml_connection._dsml_version == DSMLVersion.DSML_2_0
         assert dsml_connection._transport_type == DSMLTransportType.SOAP
 
     @patch("ldap_core_shared.protocols.dsml.DSMLProtocol")
-    async def test_dsml_connection_connect_success(self, mock_protocol_class: MagicMock, dsml_connection: DSMLConnection) -> None:
+    async def test_dsml_connection_connect_success(
+        self, mock_protocol_class: MagicMock, dsml_connection: DSMLConnection
+    ) -> None:
         """Test successful DSML connection."""
         mock_protocol = AsyncMock()
         mock_protocol_class.return_value = mock_protocol
@@ -260,7 +284,9 @@ class TestDSMLConnection:
         mock_protocol.connect.assert_called_once_with("http://test.local/dsml")
 
     @patch("ldap_core_shared.protocols.dsml.DSMLProtocol")
-    async def test_dsml_connection_disconnect(self, mock_protocol_class: MagicMock, dsml_connection: DSMLConnection) -> None:
+    async def test_dsml_connection_disconnect(
+        self, mock_protocol_class: MagicMock, dsml_connection: DSMLConnection
+    ) -> None:
         """Test DSML connection disconnection."""
         mock_protocol = AsyncMock()
         mock_protocol_class.return_value = mock_protocol
@@ -272,7 +298,12 @@ class TestDSMLConnection:
 
     @patch("ldap_core_shared.protocols.dsml.DSMLProtocol")
     @patch("ldap_core_shared.protocols.dsml.DSMLMessage")
-    async def test_dsml_connection_search_success(self, mock_dsml_message: MagicMock, mock_protocol_class: MagicMock, dsml_connection: DSMLConnection) -> None:
+    async def test_dsml_connection_search_success(
+        self,
+        mock_dsml_message: MagicMock,
+        mock_protocol_class: MagicMock,
+        dsml_connection: DSMLConnection,
+    ) -> None:
         """Test successful DSML search operation."""
         # Setup mocks
         mock_protocol = AsyncMock()
@@ -304,11 +335,18 @@ class TestDSMLConnection:
             scope="subtree",
         )
         mock_protocol.send_dsml_operation.assert_called_once_with(mock_search_message)
-        assert results == [{"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": "test"}}]
+        assert results == [
+            {"dn": "cn=test,dc=example,dc=com", "attributes": {"cn": "test"}}
+        ]
 
     @patch("ldap_core_shared.protocols.dsml.DSMLProtocol")
     @patch("ldap_core_shared.protocols.dsml.DSMLMessage")
-    async def test_dsml_connection_add_success(self, mock_dsml_message: MagicMock, mock_protocol_class: MagicMock, dsml_connection: DSMLConnection) -> None:
+    async def test_dsml_connection_add_success(
+        self,
+        mock_dsml_message: MagicMock,
+        mock_protocol_class: MagicMock,
+        dsml_connection: DSMLConnection,
+    ) -> None:
         """Test successful DSML add operation."""
         # Setup mocks
         mock_protocol = AsyncMock()
@@ -338,7 +376,12 @@ class TestDSMLConnection:
 
     @patch("ldap_core_shared.protocols.dsml.DSMLProtocol")
     @patch("ldap_core_shared.protocols.dsml.DSMLMessage")
-    async def test_dsml_connection_modify_success(self, mock_dsml_message: MagicMock, mock_protocol_class: MagicMock, dsml_connection: DSMLConnection) -> None:
+    async def test_dsml_connection_modify_success(
+        self,
+        mock_dsml_message: MagicMock,
+        mock_protocol_class: MagicMock,
+        dsml_connection: DSMLConnection,
+    ) -> None:
         """Test successful DSML modify operation."""
         # Setup mocks
         mock_protocol = AsyncMock()
@@ -355,20 +398,37 @@ class TestDSMLConnection:
         await dsml_connection.connect()
         result = await dsml_connection.modify(
             dn="cn=testuser,dc=example,dc=com",
-            modifications=[{"operation": "replace", "attribute": "mail", "values": ["new@example.com"]}],
+            modifications=[
+                {
+                    "operation": "replace",
+                    "attribute": "mail",
+                    "values": ["new@example.com"],
+                }
+            ],
         )
 
         # Verify calls
         mock_dsml_message.create_modify_request.assert_called_once_with(
             dn="cn=testuser,dc=example,dc=com",
-            modifications=[{"operation": "replace", "attribute": "mail", "values": ["new@example.com"]}],
+            modifications=[
+                {
+                    "operation": "replace",
+                    "attribute": "mail",
+                    "values": ["new@example.com"],
+                }
+            ],
         )
         mock_protocol.send_dsml_operation.assert_called_once_with(mock_modify_message)
         assert result is True
 
     @patch("ldap_core_shared.protocols.dsml.DSMLProtocol")
     @patch("ldap_core_shared.protocols.dsml.DSMLMessage")
-    async def test_dsml_connection_delete_success(self, mock_dsml_message: MagicMock, mock_protocol_class: MagicMock, dsml_connection: DSMLConnection) -> None:
+    async def test_dsml_connection_delete_success(
+        self,
+        mock_dsml_message: MagicMock,
+        mock_protocol_class: MagicMock,
+        dsml_connection: DSMLConnection,
+    ) -> None:
         """Test successful DSML delete operation."""
         # Setup mocks
         mock_protocol = AsyncMock()
@@ -386,12 +446,16 @@ class TestDSMLConnection:
         result = await dsml_connection.delete(dn="cn=deleteuser,dc=example,dc=com")
 
         # Verify calls
-        mock_dsml_message.create_delete_request.assert_called_once_with(dn="cn=deleteuser,dc=example,dc=com")
+        mock_dsml_message.create_delete_request.assert_called_once_with(
+            dn="cn=deleteuser,dc=example,dc=com"
+        )
         mock_protocol.send_dsml_operation.assert_called_once_with(mock_delete_message)
         assert result is True
 
     @patch("ldap_core_shared.protocols.dsml.DSMLProtocol")
-    async def test_dsml_connection_operation_failure(self, mock_protocol_class: MagicMock, dsml_connection: DSMLConnection) -> None:
+    async def test_dsml_connection_operation_failure(
+        self, mock_protocol_class: MagicMock, dsml_connection: DSMLConnection
+    ) -> None:
         """Test DSML operation failure handling."""
         # Setup mocks
         mock_protocol = AsyncMock()
@@ -400,10 +464,14 @@ class TestDSMLConnection:
 
         await dsml_connection.connect()
 
-        with pytest.raises(RuntimeError, match="DSML search operation failed: Connection failed"):
+        with pytest.raises(
+            RuntimeError, match="DSML search operation failed: Connection failed"
+        ):
             await dsml_connection.search("dc=example,dc=com")
 
-    def test_dsml_connection_get_connection_info(self, dsml_connection: DSMLConnection) -> None:
+    def test_dsml_connection_get_connection_info(
+        self, dsml_connection: DSMLConnection
+    ) -> None:
         """Test getting connection information."""
         info = dsml_connection.get_connection_info()
 
@@ -461,7 +529,10 @@ class TestDSMLHelperFunctions:
         xml = create_soap_dsml_message(
             DSMLOperationType.ADD_REQUEST,
             dn="cn=newuser,dc=example,dc=com",
-            attributes={"cn": "newuser", "mail": ["user@example.com", "user2@example.com"]},
+            attributes={
+                "cn": "newuser",
+                "mail": ["user@example.com", "user2@example.com"],
+            },
         )
 
         assert "dsml:addRequest" in xml
@@ -550,7 +621,9 @@ class TestDSMLHelperFunctions:
         assert "No batch response found" in result["errors"]
 
     @patch("aiohttp.ClientSession")
-    async def test_test_dsml_service_success(self, mock_session_class: MagicMock) -> None:
+    async def test_test_dsml_service_success(
+        self, mock_session_class: MagicMock
+    ) -> None:
         """Test successful DSML service testing."""
         mock_session = AsyncMock()
         mock_response = AsyncMock()
@@ -569,11 +642,14 @@ class TestDSMLHelperFunctions:
         assert len(result["errors"]) == 0
 
     @patch("aiohttp.ClientSession")
-    async def test_test_dsml_service_connection_error(self, mock_session_class: MagicMock) -> None:
+    async def test_test_dsml_service_connection_error(
+        self, mock_session_class: MagicMock
+    ) -> None:
         """Test DSML service testing with connection error."""
         mock_session = AsyncMock()
         mock_session.get.side_effect = aiohttp.ClientConnectorError(
-            connection_key=None, os_error=None,
+            connection_key=None,
+            os_error=None,
         )
 
         mock_session_class.return_value.__aenter__.return_value = mock_session
@@ -584,7 +660,9 @@ class TestDSMLHelperFunctions:
         assert len(result["errors"]) > 0
 
     @patch("aiohttp.ClientSession")
-    async def test_test_dsml_service_soap_support(self, mock_session_class: MagicMock) -> None:
+    async def test_test_dsml_service_soap_support(
+        self, mock_session_class: MagicMock
+    ) -> None:
         """Test DSML service testing with SOAP support detection."""
         mock_session = AsyncMock()
         mock_response = AsyncMock()

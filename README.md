@@ -169,6 +169,7 @@ async with processor.process_stream("large_export.ldif", config) as stream:
 ## 📋 Compatibility
 
 ### Python Versions
+
 - ✅ Python 3.9
 - ✅ Python 3.10
 - ✅ Python 3.11
@@ -176,6 +177,7 @@ async with processor.process_stream("large_export.ldif", config) as stream:
 - ✅ Python 3.13
 
 ### LDAP Servers
+
 - ✅ Oracle Internet Directory (OID)
 - ✅ Oracle Unified Directory (OUD)
 - ✅ Microsoft Active Directory
@@ -185,6 +187,7 @@ async with processor.process_stream("large_export.ldif", config) as stream:
 - ✅ Any RFC 4511 compliant LDAP server
 
 ### Protocols
+
 - ✅ LDAP v2/v3 (RFC 4511 compliant)
 - ✅ SSL/TLS encryption
 - ✅ SASL authentication
@@ -194,16 +197,19 @@ async with processor.process_stream("large_export.ldif", config) as stream:
 ## 🎯 Use Cases
 
 ### Enterprise Directory Migration
+
 - **Oracle OID → Oracle OUD**: Complete migration with schema mapping
 - **Active Directory Integration**: Cross-platform directory synchronization
 - **Legacy Modernization**: Migrate from older directory systems
 
 ### High-Performance Applications
+
 - **User Authentication**: Fast, secure user login systems
 - **Directory Search**: High-speed directory queries and filtering
 - **Data Synchronization**: Real-time directory data sync
 
 ### Development & Testing
+
 - **Local Development**: Easy LDAP testing with Docker containers
 - **CI/CD Integration**: Automated directory testing in pipelines
 - **Schema Validation**: Ensure directory schema compliance
@@ -220,12 +226,14 @@ async with processor.process_stream("large_export.ldif", config) as stream:
 ## ⚡ Performance
 
 ### Benchmarks
+
 - **Search Operations**: 50,000+ queries/second
 - **LDIF Processing**: 12,000+ entries/second (A+ grade)
 - **Connection Pooling**: Sub-millisecond connection acquisition
 - **Memory Usage**: <100MB for 100K+ entries
 
 ### Optimization Features
+
 - Async-first design for maximum concurrency
 - Connection pooling with intelligent reuse
 - Memory-efficient streaming for large datasets
@@ -234,6 +242,7 @@ async with processor.process_stream("large_export.ldif", config) as stream:
 ## 🛠️ Development
 
 ### Requirements
+
 - Python 3.9+
 - Poetry for dependency management
 - Pre-commit hooks for code quality
@@ -279,6 +288,7 @@ poetry run pytest --cov=ldap_core_shared --cov-fail-under=100
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 ### Key Areas for Contribution
+
 - 🐛 **Bug Reports**: Found an issue? Please report it!
 - ✨ **Feature Requests**: Ideas for new features are welcome
 - 📚 **Documentation**: Help improve our documentation
@@ -306,4 +316,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ by the LDAP Core Team**
 
-*Enterprise-grade Python LDAP library for modern applications*
+_Enterprise-grade Python LDAP library for modern applications_

@@ -43,14 +43,15 @@ References:
 """
 
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any
 from urllib.parse import urlparse
 
 import aiohttp
 from pydantic import BaseModel, Field, validator
 
+from ldap_core_shared.api.exceptions import LDAPConnectionError
 from ldap_core_shared.protocols.base import (
     LDAPProtocol,
     ProtocolConnection,
@@ -93,18 +94,21 @@ class DSMLConfiguration(BaseModel):
 
     # DSML settings
     dsml_version: DSMLVersion = Field(
-        default=DSMLVersion.DSML_2_0, description="DSML protocol version",
+        default=DSMLVersion.DSML_2_0,
+        description="DSML protocol version",
     )
 
     transport_type: DSMLTransportType = Field(
-        default=DSMLTransportType.SOAP, description="Transport type",
+        default=DSMLTransportType.SOAP,
+        description="Transport type",
     )
 
     # Service endpoint settings
     service_url: str = Field(description="DSML service endpoint URL")
 
-    soap_action: Optional[str] = Field(
-        default=None, description="SOAP action header value",
+    soap_action: str | None = Field(
+        default=None,
+        description="SOAP action header value",
     )
 
     namespace_uri: str = Field(
@@ -116,20 +120,24 @@ class DSMLConfiguration(BaseModel):
     http_method: str = Field(default="POST", description="HTTP method")
 
     content_type: str = Field(
-        default="text/xml; charset=utf-8", description="Content-Type header",
+        default="text/xml; charset=utf-8",
+        description="Content-Type header",
     )
 
     user_agent: str = Field(
-        default="ldap-core-shared/1.0 DSML Client", description="User-Agent header",
+        default="ldap-core-shared/1.0 DSML Client",
+        description="User-Agent header",
     )
 
     # Authentication settings
-    http_auth_username: Optional[str] = Field(
-        default=None, description="HTTP basic auth username",
+    http_auth_username: str | None = Field(
+        default=None,
+        description="HTTP basic auth username",
     )
 
-    http_auth_password: Optional[str] = Field(
-        default=None, description="HTTP basic auth password",
+    http_auth_password: str | None = Field(
+        default=None,
+        description="HTTP basic auth password",
     )
 
     # Connection settings
@@ -139,35 +147,41 @@ class DSMLConfiguration(BaseModel):
     )
 
     request_timeout: float = Field(
-        default=300.0, description="Request timeout in seconds",
+        default=300.0,
+        description="Request timeout in seconds",
     )
 
     max_retry_attempts: int = Field(
-        default=3, description="Maximum retry attempts",
+        default=3,
+        description="Maximum retry attempts",
     )
 
     # XML processing settings
     xml_encoding: str = Field(default="utf-8", description="XML encoding")
 
     pretty_print: bool = Field(
-        default=False, description="Whether to pretty-print XML",
+        default=False,
+        description="Whether to pretty-print XML",
     )
 
     validate_xml: bool = Field(
-        default=True, description="Whether to validate XML responses",
+        default=True,
+        description="Whether to validate XML responses",
     )
 
     # Performance settings
     max_concurrent_requests: int = Field(
-        default=10, description="Maximum concurrent requests",
+        default=10,
+        description="Maximum concurrent requests",
     )
 
     connection_pool_size: int = Field(
-        default=20, description="HTTP connection pool size",
+        default=20,
+        description="HTTP connection pool size",
     )
 
     @validator("service_url")
-    def validate_service_url(cls, v: str) -> str:
+    def validate_service_url(self, v: str) -> str:
         """Validate DSML service URL."""
         if not v or not v.strip():
             msg = "Service URL cannot be empty"
@@ -214,44 +228,51 @@ class DSMLMessage(BaseModel):
 
     operation_type: DSMLOperationType = Field(description="Type of DSML operation")
 
-    request_id: Optional[str] = Field(
-        default=None, description="Request identifier",
+    request_id: str | None = Field(
+        default=None,
+        description="Request identifier",
     )
 
     # XML content
-    xml_content: Optional[str] = Field(
-        default=None, description="Raw XML content",
+    xml_content: str | None = Field(
+        default=None,
+        description="Raw XML content",
     )
 
-    xml_element: Optional[Any] = Field(
-        default=None, description="Parsed XML element",
+    xml_element: Any | None = Field(
+        default=None,
+        description="Parsed XML element",
     )
 
     # Operation parameters
-    base_dn: Optional[str] = Field(default=None, description="Base DN for operation")
+    base_dn: str | None = Field(default=None, description="Base DN for operation")
 
-    search_filter: Optional[str] = Field(
-        default=None, description="LDAP search filter",
+    search_filter: str | None = Field(
+        default=None,
+        description="LDAP search filter",
     )
 
     attributes: list[str] = Field(
-        default_factory=list, description="Attributes to retrieve",
+        default_factory=list,
+        description="Attributes to retrieve",
     )
 
-    scope: Optional[str] = Field(default=None, description="Search scope")
+    scope: str | None = Field(default=None, description="Search scope")
 
     # Entry data for add/modify operations
     entry_attributes: dict[str, list[str]] = Field(
-        default_factory=dict, description="Entry attributes",
+        default_factory=dict,
+        description="Entry attributes",
     )
 
     modifications: list[dict[str, Any]] = Field(
-        default_factory=list, description="Modification operations",
+        default_factory=list,
+        description="Modification operations",
     )
 
     # Message metadata
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Message creation timestamp",
     )
 
@@ -319,10 +340,14 @@ class DSMLMessage(BaseModel):
             if not self.entry_attributes:
                 errors.append("Entry attributes required for add operation")
 
-        elif self.operation_type in {
-            DSMLOperationType.MODIFY_REQUEST,
-            DSMLOperationType.DELETE_REQUEST,
-        } and not self.base_dn:
+        elif (
+            self.operation_type
+            in {
+                DSMLOperationType.MODIFY_REQUEST,
+                DSMLOperationType.DELETE_REQUEST,
+            }
+            and not self.base_dn
+        ):
             errors.append("Base DN required for modify/delete operation")
 
         return errors
@@ -371,9 +396,9 @@ class DSMLMessage(BaseModel):
         cls,
         base_dn: str,
         search_filter: str,
-        attributes: Optional[list[str]] = None,
+        attributes: list[str] | None = None,
         scope: str = "subtree",
-        request_id: Optional[str] = None,
+        request_id: str | None = None,
     ) -> DSMLMessage:
         """Create search request message.
 
@@ -401,7 +426,7 @@ class DSMLMessage(BaseModel):
         cls,
         dn: str,
         attributes: dict[str, list[str]],
-        request_id: Optional[str] = None,
+        request_id: str | None = None,
     ) -> DSMLMessage:
         """Create add request message.
 
@@ -425,7 +450,7 @@ class DSMLMessage(BaseModel):
         cls,
         dn: str,
         modifications: list[dict[str, Any]],
-        request_id: Optional[str] = None,
+        request_id: str | None = None,
     ) -> DSMLMessage:
         """Create modify request message.
 
@@ -448,7 +473,7 @@ class DSMLMessage(BaseModel):
     def create_delete_request(
         cls,
         dn: str,
-        request_id: Optional[str] = None,
+        request_id: str | None = None,
     ) -> DSMLMessage:
         """Create delete request message.
 
@@ -476,7 +501,7 @@ class DSMLTransport:
             config: DSML configuration
         """
         self._config = config
-        self._session: Optional[aiohttp.ClientSession] = None
+        self._session: aiohttp.ClientSession | None = None
         self._connected = False
 
     async def connect(self) -> None:
@@ -532,7 +557,7 @@ class DSMLTransport:
         """
         if not self._session:
             msg = "Not connected - call connect() first"
-            raise ConnectionError(msg)
+            raise LDAPConnectionError(msg)
 
         # TODO: Implement DSML request sending
         # This would send DSML XML over HTTP/HTTPS with proper error handling
@@ -555,17 +580,17 @@ class DSMLProtocol(LDAPProtocol):
     protocol_name = "dsml"
     default_port = None  # DSML uses HTTP/HTTPS ports
 
-    def __init__(self, config: Optional[DSMLConfiguration] = None) -> None:
+    def __init__(self, config: DSMLConfiguration | None = None) -> None:
         """Initialize DSML protocol.
 
         Args:
             config: DSML configuration
         """
         self._config = config or DSMLConfiguration(service_url="http://localhost/dsml")
-        self._transport: Optional[DSMLTransport] = None
+        self._transport: DSMLTransport | None = None
         super().__init__()
 
-    async def connect(self, url: str, **kwargs) -> None:
+    async def connect(self, url: str, **kwargs: Any) -> None:
         """Connect using DSML protocol.
 
         Args:
@@ -603,7 +628,7 @@ class DSMLProtocol(LDAPProtocol):
         """
         if not self._transport:
             msg = "Not connected"
-            raise ConnectionError(msg)
+            raise LDAPConnectionError(msg)
 
         try:
             # Send DSML operation via transport
@@ -632,7 +657,7 @@ class DSMLProtocol(LDAPProtocol):
         return self._transport.connected if self._transport else False
 
     @property
-    def transport(self) -> Optional[DSMLTransport]:
+    def transport(self) -> DSMLTransport | None:
         """Get DSML transport."""
         return self._transport
 
@@ -650,9 +675,9 @@ class DSMLConnection(ProtocolConnection):
         service_url: str,
         dsml_version: DSMLVersion = DSMLVersion.DSML_2_0,
         transport_type: DSMLTransportType = DSMLTransportType.SOAP,
-        soap_action: Optional[str] = None,
-        http_auth_username: Optional[str] = None,
-        http_auth_password: Optional[str] = None,
+        soap_action: str | None = None,
+        http_auth_username: str | None = None,
+        http_auth_password: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize DSML connection.
@@ -697,7 +722,7 @@ class DSMLConnection(ProtocolConnection):
         self,
         base_dn: str,
         search_filter: str = "(objectClass=*)",
-        attributes: Optional[list[str]] = None,
+        attributes: list[str] | None = None,
         scope: str = "subtree",
     ) -> list[dict[str, Any]]:
         """Perform DSML search operation.
@@ -736,7 +761,7 @@ class DSMLConnection(ProtocolConnection):
     async def add(
         self,
         dn: str,
-        attributes: dict[str, Union[str, list[str]]],
+        attributes: dict[str, str | list[str]],
     ) -> bool:
         """Perform DSML add operation.
 
@@ -834,12 +859,14 @@ class DSMLConnection(ProtocolConnection):
             Dictionary with connection details
         """
         info = super().get_connection_info()
-        info.update({
-            "protocol": "dsml",
-            "service_url": self._service_url,
-            "dsml_version": self._dsml_version.value,
-            "transport_type": self._transport_type.value,
-        })
+        info.update(
+            {
+                "protocol": "dsml",
+                "service_url": self._service_url,
+                "dsml_version": self._dsml_version.value,
+                "transport_type": self._transport_type.value,
+            },
+        )
         return info
 
     @property
@@ -861,8 +888,8 @@ class DSMLConnection(ProtocolConnection):
 # Convenience functions
 def create_dsml_connection(
     service_url: str,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
+    username: str | None = None,
+    password: str | None = None,
 ) -> DSMLConnection:
     """Create DSML connection with basic settings.
 
@@ -911,14 +938,15 @@ def create_soap_dsml_message(
 </soap:Envelope>"""
 
     import uuid
+
     request_id = str(uuid.uuid4())
 
     # Generate operation-specific content
     if operation_type == DSMLOperationType.SEARCH_REQUEST:
         operation_content = f"""
-        <dsml:baseObject>{operation_params.get('base_dn', '')}</dsml:baseObject>
-        <dsml:scope>{operation_params.get('scope', 'wholeSubtree')}</dsml:scope>
-        <dsml:filter>{operation_params.get('filter', '(objectClass=*)')}</dsml:filter>
+        <dsml:baseObject>{operation_params.get("base_dn", "")}</dsml:baseObject>
+        <dsml:scope>{operation_params.get("scope", "wholeSubtree")}</dsml:scope>
+        <dsml:filter>{operation_params.get("filter", "(objectClass=*)")}</dsml:filter>
         """
     elif operation_type == DSMLOperationType.ADD_REQUEST:
         attributes_xml = ""
@@ -927,16 +955,15 @@ def create_soap_dsml_message(
                 for value in values:
                     attributes_xml += (
                         f'<dsml:attr name="{attr}">'
-                        f'<dsml:value>{value}</dsml:value></dsml:attr>'
+                        f"<dsml:value>{value}</dsml:value></dsml:attr>"
                     )
             else:
                 attributes_xml += (
                     f'<dsml:attr name="{attr}">'
-                    f'<dsml:value>{values}</dsml:value></dsml:attr>'
+                    f"<dsml:value>{values}</dsml:value></dsml:attr>"
                 )
         operation_content = (
-            f'<dsml:dn>{operation_params.get("dn", "")}</dsml:dn>'
-            f'{attributes_xml}'
+            f"<dsml:dn>{operation_params.get('dn', '')}</dsml:dn>{attributes_xml}"
         )
     else:
         operation_content = ""
@@ -990,7 +1017,9 @@ def parse_dsml_response(xml_content: str) -> dict[str, Any]:
             return response_data
 
         # Process search responses
-        for search_response in batch_response.findall(".//dsml:searchResponse", namespaces):
+        for search_response in batch_response.findall(
+            ".//dsml:searchResponse", namespaces,
+        ):
             # Check for errors
             search_result = search_response.find("dsml:searchResultDone", namespaces)
             if search_result is not None:
@@ -1012,15 +1041,23 @@ def parse_dsml_response(xml_content: str) -> dict[str, Any]:
                 # Extract attributes
                 for attr in entry.findall("dsml:attr", namespaces):
                     attr_name = attr.get("name", "")
-                    attr_values = [value.text for value in attr.findall("dsml:value", namespaces)]
-                    entry_data["attributes"][attr_name] = attr_values if len(attr_values) > 1 else (attr_values[0] if attr_values else "")
+                    attr_values = [
+                        value.text for value in attr.findall("dsml:value", namespaces)
+                    ]
+                    entry_data["attributes"][attr_name] = (
+                        attr_values
+                        if len(attr_values) > 1
+                        else (attr_values[0] if attr_values else "")
+                    )
 
                 entries_list = response_data["entries"]
                 assert isinstance(entries_list, list)
                 entries_list.append(entry_data)
 
         # Process other operation responses (add, modify, delete)
-        for operation_response in batch_response.findall(".//dsml:addResponse", namespaces):
+        for operation_response in batch_response.findall(
+            ".//dsml:addResponse", namespaces,
+        ):
             result_code = operation_response.get("resultCode", "0")
             response_data["result_code"] = int(result_code)
             response_data["success"] = result_code == "0"
@@ -1037,16 +1074,21 @@ def parse_dsml_response(xml_content: str) -> dict[str, Any]:
         }
 
 
-async def test_dsml_service(service_url: str, timeout: float = 30.0) -> dict[str, Any]:
+async def test_dsml_service(
+    service_url: str, timeout: float | None = None,
+) -> dict[str, Any]:
     """Test DSML service availability.
 
     Args:
         service_url: DSML service URL
-        timeout: Request timeout
+        timeout: Request timeout (defaults to 30.0 if None)
 
     Returns:
         Dictionary with test results
     """
+    if timeout is None:
+        timeout = 30.0
+
     results = {
         "service_url": service_url,
         "reachable": False,
@@ -1058,19 +1100,20 @@ async def test_dsml_service(service_url: str, timeout: float = 30.0) -> dict[str
 
     try:
         # Test basic HTTP connectivity
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
-            async with session.get(service_url) as response:
-                results["reachable"] = True
-                results["http_status"] = response.status
+        async with aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=timeout),
+        ) as session, session.get(service_url) as response:
+            results["reachable"] = True
+            results["http_status"] = response.status
 
-                # Check for DSML indicators in response
-                content = await response.text()
-                if "dsml" in content.lower() or "directory" in content.lower():
-                    results["responds_to_dsml"] = True
+            # Check for DSML indicators in response
+            content = await response.text()
+            if "dsml" in content.lower() or "directory" in content.lower():
+                results["responds_to_dsml"] = True
 
-                # Check headers for SOAP support
-                if "soap" in response.headers.get("content-type", "").lower():
-                    results["soap_supported"] = True
+            # Check headers for SOAP support
+            if "soap" in response.headers.get("content-type", "").lower():
+                results["soap_supported"] = True
 
     except Exception as e:
         errors_list = results["errors"]
@@ -1078,6 +1121,7 @@ async def test_dsml_service(service_url: str, timeout: float = 30.0) -> dict[str
         errors_list.append(str(e))
 
     return results
+
 
 # TODO: Integration points for implementation:
 #

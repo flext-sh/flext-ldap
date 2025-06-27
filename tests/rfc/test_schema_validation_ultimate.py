@@ -63,13 +63,59 @@ class TestObjectClassValidationUltimate:
             "organizationalPerson": {
                 "type": "structural",
                 "must_attributes": [],
-                "may_attributes": ["title", "x121Address", "registeredAddress", "destinationIndicator", "preferredDeliveryMethod", "telexNumber", "teletexTerminalIdentifier", "internationaliSDNNumber", "facsimileTelephoneNumber", "street", "postOfficeBox", "postalCode", "postalAddress", "physicalDeliveryOfficeName", "ou", "st", "l"],
+                "may_attributes": [
+                    "title",
+                    "x121Address",
+                    "registeredAddress",
+                    "destinationIndicator",
+                    "preferredDeliveryMethod",
+                    "telexNumber",
+                    "teletexTerminalIdentifier",
+                    "internationaliSDNNumber",
+                    "facsimileTelephoneNumber",
+                    "street",
+                    "postOfficeBox",
+                    "postalCode",
+                    "postalAddress",
+                    "physicalDeliveryOfficeName",
+                    "ou",
+                    "st",
+                    "l",
+                ],
                 "superior_classes": ["person"],
             },
             "inetOrgPerson": {
                 "type": "structural",
                 "must_attributes": [],
-                "may_attributes": ["audio", "businessCategory", "carLicense", "departmentNumber", "displayName", "employeeNumber", "employeeType", "givenName", "homePhone", "homePostalAddress", "initials", "jpegPhoto", "labeledURI", "mail", "manager", "mobile", "o", "pager", "photo", "roomNumber", "secretary", "uid", "userCertificate", "x500uniqueIdentifier", "preferredLanguage", "userSMIMECertificate", "userPKCS12"],
+                "may_attributes": [
+                    "audio",
+                    "businessCategory",
+                    "carLicense",
+                    "departmentNumber",
+                    "displayName",
+                    "employeeNumber",
+                    "employeeType",
+                    "givenName",
+                    "homePhone",
+                    "homePostalAddress",
+                    "initials",
+                    "jpegPhoto",
+                    "labeledURI",
+                    "mail",
+                    "manager",
+                    "mobile",
+                    "o",
+                    "pager",
+                    "photo",
+                    "roomNumber",
+                    "secretary",
+                    "uid",
+                    "userCertificate",
+                    "x500uniqueIdentifier",
+                    "preferredLanguage",
+                    "userSMIMECertificate",
+                    "userPKCS12",
+                ],
                 "superior_classes": ["organizationalPerson"],
             },
             "customEmployee": {
@@ -87,7 +133,12 @@ class TestObjectClassValidationUltimate:
         valid_entry = LDAPEntry(
             dn="cn=John Doe,ou=People,dc=example,dc=com",
             attributes={
-                "objectClass": ["top", "person", "organizationalPerson", "inetOrgPerson"],
+                "objectClass": [
+                    "top",
+                    "person",
+                    "organizationalPerson",
+                    "inetOrgPerson",
+                ],
                 "cn": ["John Doe"],
                 "sn": ["Doe"],
                 "givenName": ["John"],
@@ -148,7 +199,9 @@ class TestObjectClassValidationUltimate:
 
         validation_result = validator.validate_entry(multiple_structural)
         assert validation_result.is_valid is False
-        assert any("structural" in error.message.lower() for error in validation_result.errors)
+        assert any(
+            "structural" in error.message.lower() for error in validation_result.errors
+        )
 
         # Test no structural object class (invalid)
         no_structural = LDAPEntry(
@@ -166,7 +219,10 @@ class TestObjectClassValidationUltimate:
         valid_structural = LDAPEntry(
             dn="cn=Valid,ou=People,dc=example,dc=com",
             attributes={
-                "objectClass": ["person", "customEmployee"],  # One structural + auxiliary
+                "objectClass": [
+                    "person",
+                    "customEmployee",
+                ],  # One structural + auxiliary
                 "cn": ["Valid"],
                 "sn": ["Test"],
                 "employeeId": ["EMP123"],
@@ -187,7 +243,12 @@ class TestObjectClassValidationUltimate:
             "person": {
                 "type": "structural",
                 "must_attributes": ["cn", "sn"],
-                "may_attributes": ["description", "telephoneNumber", "mail", "mobile"],  # Added new optional attributes
+                "may_attributes": [
+                    "description",
+                    "telephoneNumber",
+                    "mail",
+                    "mobile",
+                ],  # Added new optional attributes
                 "superior_classes": ["top"],
             },
         }
@@ -237,11 +298,15 @@ class TestAttributeSyntaxValidationExtreme:
         syntax_rules = {
             "1.3.6.1.4.1.1466.115.121.1.15": {  # Directory String
                 "name": "directoryString",
-                "validator": lambda value: isinstance(value, str) and len(value) <= 32768,
+                "validator": lambda value: isinstance(value, str)
+                and len(value) <= 32768,
             },
             "1.3.6.1.4.1.1466.115.121.1.26": {  # IA5 String (email)
                 "name": "ia5String",
-                "validator": lambda value: re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", value) is not None,
+                "validator": lambda value: re.match(
+                    r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", value
+                )
+                is not None,
             },
             "1.3.6.1.4.1.1466.115.121.1.36": {  # Numeric String
                 "name": "numericString",
@@ -249,11 +314,13 @@ class TestAttributeSyntaxValidationExtreme:
             },
             "1.3.6.1.4.1.1466.115.121.1.50": {  # Telephone Number
                 "name": "telephoneNumber",
-                "validator": lambda value: re.match(r"^\+?[0-9\s\-\(\)\.]+$", value) is not None,
+                "validator": lambda value: re.match(r"^\+?[0-9\s\-\(\)\.]+$", value)
+                is not None,
             },
             "1.3.6.1.4.1.1466.115.121.1.12": {  # Distinguished Name
                 "name": "distinguishedName",
-                "validator": lambda value: ("=" in value and "," in value) or value.count("=") == 1,
+                "validator": lambda value: ("=" in value and "," in value)
+                or value.count("=") == 1,
             },
         }
 
@@ -261,9 +328,18 @@ class TestAttributeSyntaxValidationExtreme:
         attribute_definitions = {
             "cn": {"syntax": "1.3.6.1.4.1.1466.115.121.1.15", "single_value": False},
             "mail": {"syntax": "1.3.6.1.4.1.1466.115.121.1.26", "single_value": False},
-            "employeeNumber": {"syntax": "1.3.6.1.4.1.1466.115.121.1.36", "single_value": True},
-            "telephoneNumber": {"syntax": "1.3.6.1.4.1.1466.115.121.1.50", "single_value": False},
-            "manager": {"syntax": "1.3.6.1.4.1.1466.115.121.1.12", "single_value": True},
+            "employeeNumber": {
+                "syntax": "1.3.6.1.4.1.1466.115.121.1.36",
+                "single_value": True,
+            },
+            "telephoneNumber": {
+                "syntax": "1.3.6.1.4.1.1466.115.121.1.50",
+                "single_value": False,
+            },
+            "manager": {
+                "syntax": "1.3.6.1.4.1.1466.115.121.1.12",
+                "single_value": True,
+            },
         }
 
         validator = SchemaValidator()
@@ -273,16 +349,27 @@ class TestAttributeSyntaxValidationExtreme:
         # Test valid attribute values
         valid_tests = [
             {"attribute": "cn", "values": ["John Doe", "Johnny"]},
-            {"attribute": "mail", "values": ["john@example.com", "test.email@domain.org"]},
+            {
+                "attribute": "mail",
+                "values": ["john@example.com", "test.email@domain.org"],
+            },
             {"attribute": "employeeNumber", "values": ["12345"]},
-            {"attribute": "telephoneNumber", "values": ["+1-555-1234", "(555) 123-4567"]},
-            {"attribute": "manager", "values": ["cn=Manager,ou=People,dc=example,dc=com"]},
+            {
+                "attribute": "telephoneNumber",
+                "values": ["+1-555-1234", "(555) 123-4567"],
+            },
+            {
+                "attribute": "manager",
+                "values": ["cn=Manager,ou=People,dc=example,dc=com"],
+            },
         ]
 
         for test in valid_tests:
             for value in test["values"]:
                 is_valid = validator.validate_attribute_syntax(test["attribute"], value)
-                assert is_valid is True, f"Valid value failed: {test['attribute']}={value}"
+                assert is_valid is True, (
+                    f"Valid value failed: {test['attribute']}={value}"
+                )
 
         # Test invalid attribute values
         invalid_tests = [
@@ -295,7 +382,9 @@ class TestAttributeSyntaxValidationExtreme:
         for test in invalid_tests:
             for value in test["values"]:
                 is_valid = validator.validate_attribute_syntax(test["attribute"], value)
-                assert is_valid is False, f"Invalid value passed: {test['attribute']}={value}"
+                assert is_valid is False, (
+                    f"Invalid value passed: {test['attribute']}={value}"
+                )
 
     def test_attribute_value_length_constraints(self) -> None:
         """Test attribute value length constraints."""
@@ -319,11 +408,27 @@ class TestAttributeSyntaxValidationExtreme:
             {"attribute": "cn", "value": "A" * 257, "valid": False},  # Too long
             {"attribute": "description", "value": "", "valid": True},  # Empty allowed
             {"attribute": "description", "value": "A" * 1024, "valid": True},  # Maximum
-            {"attribute": "description", "value": "A" * 1025, "valid": False},  # Too long
-            {"attribute": "userPassword", "value": "1234567", "valid": False},  # Too short
-            {"attribute": "userPassword", "value": "12345678", "valid": True},  # Minimum
+            {
+                "attribute": "description",
+                "value": "A" * 1025,
+                "valid": False,
+            },  # Too long
+            {
+                "attribute": "userPassword",
+                "value": "1234567",
+                "valid": False,
+            },  # Too short
+            {
+                "attribute": "userPassword",
+                "value": "12345678",
+                "valid": True,
+            },  # Minimum
             {"attribute": "userPassword", "value": "A" * 128, "valid": True},  # Maximum
-            {"attribute": "userPassword", "value": "A" * 129, "valid": False},  # Too long
+            {
+                "attribute": "userPassword",
+                "value": "A" * 129,
+                "valid": False,
+            },  # Too long
         ]
 
         for test in length_tests:
@@ -331,8 +436,9 @@ class TestAttributeSyntaxValidationExtreme:
                 test["attribute"],
                 test["value"],
             )
-            assert is_valid == test["valid"], \
+            assert is_valid == test["valid"], (
                 f"Length validation failed: {test['attribute']}='{test['value'][:20]}...'"
+            )
 
     def test_attribute_cardinality_validation(self) -> None:
         """Test attribute cardinality validation."""
@@ -373,7 +479,10 @@ class TestAttributeSyntaxValidationExtreme:
                         "cn": ["Valid"],
                         "sn": ["User"],
                         "employeeNumber": ["12345"],  # Single value OK
-                        "mail": ["test@example.com", "test2@example.com"],  # Multi-value OK
+                        "mail": [
+                            "test@example.com",
+                            "test2@example.com",
+                        ],  # Multi-value OK
                     },
                 ),
                 "valid": True,
@@ -386,8 +495,10 @@ class TestAttributeSyntaxValidationExtreme:
             assert validation_result.is_valid == test["valid"]
 
             if not test["valid"]:
-                assert any(test["violation"].split()[0] in error.message
-                          for error in validation_result.errors)
+                assert any(
+                    test["violation"].split()[0] in error.message
+                    for error in validation_result.errors
+                )
 
 
 class TestSchemaMatchingRulesExtreme:
@@ -417,12 +528,14 @@ class TestSchemaMatchingRulesExtreme:
             "telephoneNumberMatch": {
                 "oid": "2.5.13.20",
                 "syntax": "telephoneNumber",
-                "comparator": lambda a, b: re.sub(r"[^\d]", "", a) == re.sub(r"[^\d]", "", b),
+                "comparator": lambda a, b: re.sub(r"[^\d]", "", a)
+                == re.sub(r"[^\d]", "", b),
             },
             "distinguishedNameMatch": {
                 "oid": "2.5.13.1",
                 "syntax": "distinguishedName",
-                "comparator": lambda a, b: a.lower().replace(" ", "") == b.lower().replace(" ", ""),
+                "comparator": lambda a, b: a.lower().replace(" ", "")
+                == b.lower().replace(" ", ""),
             },
         }
 
@@ -442,8 +555,9 @@ class TestSchemaMatchingRulesExtreme:
                 test["value2"],
                 "caseIgnoreMatch",
             )
-            assert matches == test["should_match"], \
+            assert matches == test["should_match"], (
                 f"Case ignore match failed: '{test['value1']}' vs '{test['value2']}'"
+            )
 
         # Test telephone number matching (ignoring formatting)
         phone_tests = [
@@ -458,8 +572,9 @@ class TestSchemaMatchingRulesExtreme:
                 test["value2"],
                 "telephoneNumberMatch",
             )
-            assert matches == test["should_match"], \
+            assert matches == test["should_match"], (
                 f"Phone match failed: '{test['value1']}' vs '{test['value2']}'"
+            )
 
         # Test DN matching (case-insensitive, space-insensitive)
         dn_tests = [
@@ -481,8 +596,9 @@ class TestSchemaMatchingRulesExtreme:
                 test["value2"],
                 "distinguishedNameMatch",
             )
-            assert matches == test["should_match"], \
+            assert matches == test["should_match"], (
                 f"DN match failed: '{test['value1']}' vs '{test['value2']}'"
+            )
 
     def test_substring_matching_rules(self) -> None:
         """Test substring matching rules."""
@@ -491,9 +607,14 @@ class TestSchemaMatchingRulesExtreme:
         substring_rules = {
             "caseIgnoreSubstringsMatch": {
                 "oid": "2.5.13.4",
-                "initial_match": lambda value, initial: value.lower().startswith(initial.lower()),
-                "any_match": lambda value, substring: substring.lower() in value.lower(),
-                "final_match": lambda value, final: value.lower().endswith(final.lower()),
+                "initial_match": lambda value, initial: value.lower().startswith(
+                    initial.lower()
+                ),
+                "any_match": lambda value, substring: substring.lower()
+                in value.lower(),
+                "final_match": lambda value, final: value.lower().endswith(
+                    final.lower()
+                ),
             },
         }
 
@@ -535,8 +656,9 @@ class TestSchemaMatchingRulesExtreme:
                 test["filter"],
                 "caseIgnoreSubstringsMatch",
             )
-            assert matches == test["should_match"], \
+            assert matches == test["should_match"], (
                 f"Substring match failed: '{test['value']}' with filter {test['filter']}"
+            )
 
 
 class TestSchemaPerformanceExtreme:
@@ -616,7 +738,9 @@ class TestSchemaPerformanceExtreme:
         performance_monitor = PerformanceMonitor()
         validator = SchemaValidator()
 
-        async def validate_entry_batch(batch_id: int, entry_count: int) -> dict[str, Any]:
+        async def validate_entry_batch(
+            batch_id: int, entry_count: int
+        ) -> dict[str, Any]:
             """Validate a batch of entries concurrently."""
             validation_results = []
 
@@ -652,8 +776,7 @@ class TestSchemaPerformanceExtreme:
         performance_monitor.start_measurement("concurrent_validation")
 
         concurrent_tasks = [
-            validate_entry_batch(batch_id, 200)
-            for batch_id in range(10)
+            validate_entry_batch(batch_id, 200) for batch_id in range(10)
         ]
 
         # Execute all batches concurrently
@@ -729,7 +852,9 @@ class TestSchemaPerformanceExtreme:
         cached_duration = metrics["cached_validation"]["duration"]
 
         # Cached validation should be significantly faster
-        speedup_ratio = uncached_duration / cached_duration if cached_duration > 0 else 0
+        speedup_ratio = (
+            uncached_duration / cached_duration if cached_duration > 0 else 0
+        )
 
         # Caching should provide at least 2x speedup
         assert speedup_ratio >= 2.0
@@ -747,7 +872,12 @@ class TestSchemaExtensibilityExtreme:
             "customEmployee": {
                 "type": "auxiliary",
                 "must_attributes": ["employeeId"],
-                "may_attributes": ["badge", "securityClearance", "costCenter", "workspace"],
+                "may_attributes": [
+                    "badge",
+                    "securityClearance",
+                    "costCenter",
+                    "workspace",
+                ],
                 "superior_classes": ["top"],
             },
             "contractor": {
@@ -759,7 +889,11 @@ class TestSchemaExtensibilityExtreme:
             "securityPrincipal": {
                 "type": "auxiliary",
                 "must_attributes": ["securityId"],
-                "may_attributes": ["securityGroups", "accessLevel", "lastSecurityReview"],
+                "may_attributes": [
+                    "securityGroups",
+                    "accessLevel",
+                    "lastSecurityReview",
+                ],
                 "superior_classes": ["top"],
             },
         }
@@ -771,7 +905,12 @@ class TestSchemaExtensibilityExtreme:
         custom_entry = LDAPEntry(
             dn="cn=Custom Employee,ou=People,dc=example,dc=com",
             attributes={
-                "objectClass": ["person", "inetOrgPerson", "customEmployee", "securityPrincipal"],
+                "objectClass": [
+                    "person",
+                    "inetOrgPerson",
+                    "customEmployee",
+                    "securityPrincipal",
+                ],
                 "cn": ["Custom Employee"],
                 "sn": ["Employee"],
                 "mail": ["custom@example.com"],
@@ -820,7 +959,13 @@ class TestSchemaExtensibilityExtreme:
             "person": {
                 "type": "structural",
                 "must_attributes": ["cn", "sn"],
-                "may_attributes": ["description", "telephoneNumber", "mail", "mobile", "title"],
+                "may_attributes": [
+                    "description",
+                    "telephoneNumber",
+                    "mail",
+                    "mobile",
+                    "title",
+                ],
                 "superior_classes": ["top"],
             },
         }

@@ -43,9 +43,9 @@ References:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -58,19 +58,19 @@ if TYPE_CHECKING:
 class DsaITOperationType(Enum):
     """Types of DSA-IT operations."""
 
-    SEARCH = "search"          # Search with referral bypass
-    MODIFY = "modify"          # Modify referral objects
-    ADD = "add"               # Add referral objects
-    DELETE = "delete"         # Delete referral objects
-    COMPARE = "compare"       # Compare referral objects
+    SEARCH = "search"  # Search with referral bypass
+    MODIFY = "modify"  # Modify referral objects
+    ADD = "add"  # Add referral objects
+    DELETE = "delete"  # Delete referral objects
+    COMPARE = "compare"  # Compare referral objects
 
 
 class ReferralHandlingMode(Enum):
     """Modes for referral handling bypass."""
 
-    BYPASS_ALL = "bypass_all"              # Bypass all referral processing
+    BYPASS_ALL = "bypass_all"  # Bypass all referral processing
     TREAT_AS_OBJECTS = "treat_as_objects"  # Treat referrals as normal objects
-    SELECTIVE = "selective"                # Selective referral handling
+    SELECTIVE = "selective"  # Selective referral handling
     PRESERVE_STRUCTURE = "preserve_structure"  # Preserve directory structure
 
 
@@ -142,9 +142,9 @@ class ManageDsaITRequest(BaseModel):
             True if special handling is required
         """
         return (
-            self.allow_structural_changes or
-            self.validate_references or
-            not self.preserve_object_classes
+            self.allow_structural_changes
+            or self.validate_references
+            or not self.preserve_object_classes
         )
 
 
@@ -157,47 +157,56 @@ class ManageDsaITResponse(BaseModel):
 
     result_code: int = Field(default=0, description="Operation result code")
 
-    result_message: Optional[str] = Field(
-        default=None, description="Operation result message",
+    result_message: str | None = Field(
+        default=None,
+        description="Operation result message",
     )
 
     # Operation metadata
     referrals_bypassed: int = Field(
-        default=0, description="Number of referrals bypassed",
+        default=0,
+        description="Number of referrals bypassed",
     )
 
     special_entries_processed: int = Field(
-        default=0, description="Number of special entries processed",
+        default=0,
+        description="Number of special entries processed",
     )
 
     structural_changes_made: int = Field(
-        default=0, description="Number of structural changes made",
+        default=0,
+        description="Number of structural changes made",
     )
 
     # Performance metadata
-    processing_time: Optional[float] = Field(
-        default=None, description="Processing time in seconds",
+    processing_time: float | None = Field(
+        default=None,
+        description="Processing time in seconds",
     )
 
-    local_processing_time: Optional[float] = Field(
-        default=None, description="Local processing time in seconds",
+    local_processing_time: float | None = Field(
+        default=None,
+        description="Local processing time in seconds",
     )
 
     # Error information
-    error_message: Optional[str] = Field(
-        default=None, description="Error message if operation failed",
+    error_message: str | None = Field(
+        default=None,
+        description="Error message if operation failed",
     )
 
-    privilege_error: Optional[str] = Field(
-        default=None, description="Privilege-related error",
+    privilege_error: str | None = Field(
+        default=None,
+        description="Privilege-related error",
     )
 
     validation_errors: list[str] = Field(
-        default_factory=list, description="Reference validation errors",
+        default_factory=list,
+        description="Reference validation errors",
     )
 
     processed_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Response processing timestamp",
     )
 
@@ -279,7 +288,7 @@ class ManageDsaITControl(LDAPControl):
         )
 
         # Initialize response storage
-        self._response: Optional[ManageDsaITResponse] = None
+        self._response: ManageDsaITResponse | None = None
         self._response_available = False
 
         # Operation tracking
@@ -330,7 +339,9 @@ class ManageDsaITControl(LDAPControl):
             if response_value:
                 # Some servers may provide operational metadata
                 # For now, we'll log it and treat as successful
-                logger.debug(f"ManageDsaIT response received: {len(response_value)} bytes")
+                logger.debug(
+                    "ManageDsaIT response received: %s bytes", len(response_value),
+                )
                 result_message = "Server provided response metadata"
             else:
                 result_message = "ManageDsaIT control processed successfully"
@@ -352,14 +363,15 @@ class ManageDsaITControl(LDAPControl):
             self._response_available = True
 
             logger.info(
-                f"ManageDsaIT response processed: "
-                f"referrals_bypassed={self._referrals_encountered}, "
-                f"special_entries={self._special_entries_found}, "
-                f"time={processing_time:.3f}s"
+                "ManageDsaIT response processed: "
+                "referrals_bypassed=%s, special_entries=%s, time=%.3fs",
+                self._referrals_encountered,
+                self._special_entries_found,
+                processing_time,
             )
 
         except Exception as e:
-            logger.error(f"Error processing ManageDsaIT response: {e}")
+            logger.exception("Error processing ManageDsaIT response: %s", e)
 
             # Create error response
             self._response = ManageDsaITResponse(
@@ -422,7 +434,7 @@ class ManageDsaITControl(LDAPControl):
         }
 
     @property
-    def response(self) -> Optional[ManageDsaITResponse]:
+    def response(self) -> ManageDsaITResponse | None:
         """Get ManageDsaIT control response."""
         return self._response
 
@@ -441,7 +453,7 @@ class ManageDsaITControl(LDAPControl):
         """Get current referral handling mode."""
         return self._request.referral_handling
 
-    def encode_value(self) -> Optional[bytes]:
+    def encode_value(self) -> bytes | None:
         """Encode control value to ASN.1 bytes.
 
         Returns:
@@ -450,7 +462,7 @@ class ManageDsaITControl(LDAPControl):
         return None
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> ManageDsaITControl:
+    def decode_value(cls, control_value: bytes | None) -> ManageDsaITControl:
         """Decode ASN.1 bytes to create control instance.
 
         Args:
@@ -538,8 +550,9 @@ async def search_referral_objects(
         manage_control = create_referral_search_control()
 
         logger.info(
-            f"Searching for referral objects: base='{search_base}', "
-            f"filter='{search_filter}'"
+            "Searching for referral objects: base='%s', filter='%s'",
+            search_base,
+            search_filter,
         )
 
         # Perform search with ManageDsaIT control
@@ -577,7 +590,7 @@ async def search_referral_objects(
 
                 results.append(entry_dict)
 
-        logger.info(f"Found {len(results)} referral objects")
+        logger.info("Found %s referral objects", len(results))
 
         # Update control statistics
         if hasattr(manage_control, "_special_entries_found"):
@@ -586,8 +599,9 @@ async def search_referral_objects(
         return results
 
     except Exception as e:
-        logger.error(f"Error searching referral objects: {e}")
-        raise Exception(f"Referral search failed: {e}") from e
+        logger.exception("Error searching referral objects: %s", e)
+        msg = f"Referral search failed: {e}"
+        raise Exception(msg) from e
 
 
 async def modify_referral_target(
@@ -608,7 +622,6 @@ async def modify_referral_target(
     Raises:
         Exception: If modification operation fails
     """
-    import re
     from urllib.parse import urlparse
 
     from ldap_core_shared.utils.logging import get_logger
@@ -618,19 +631,23 @@ async def modify_referral_target(
     try:
         # Validate new target URL format
         if not new_target.startswith(("ldap://", "ldaps://")):
-            raise ValueError(f"Invalid LDAP URL format: {new_target}")
+            msg = f"Invalid LDAP URL format: {new_target}"
+            raise ValueError(msg)
 
         # Parse URL to validate structure
         try:
             parsed_url = urlparse(new_target)
             if not parsed_url.hostname:
-                raise ValueError(f"Invalid LDAP URL - missing hostname: {new_target}")
+                msg = f"Invalid LDAP URL - missing hostname: {new_target}"
+                raise ValueError(msg)
         except Exception as e:
-            raise ValueError(f"Invalid LDAP URL format: {new_target}") from e
+            msg = f"Invalid LDAP URL format: {new_target}"
+            raise ValueError(msg) from e
 
         logger.info(
-            f"Modifying referral target: dn='{referral_dn}', "
-            f"new_target='{new_target}'"
+            "Modifying referral target: dn='%s', new_target='%s'",
+            referral_dn,
+            new_target,
         )
 
         # Create ManageDsaIT control for referral modification
@@ -646,29 +663,28 @@ async def modify_referral_target(
         )
 
         if not connection.entries:
-            raise Exception(f"Referral object not found: {referral_dn}")
+            msg = f"Referral object not found: {referral_dn}"
+            raise Exception(msg)
 
         entry = connection.entries[0]
 
         # Verify it's a referral object
         object_classes = [str(oc).lower() for oc in entry.objectClass.values]
         if "referral" not in object_classes:
-            raise Exception(
-                f"Object is not a referral: {referral_dn}, "
-                f"objectClass={object_classes}"
+            msg = (
+                f"Object is not a referral: {referral_dn}, objectClass={object_classes}"
             )
+            raise Exception(msg)
 
         # Get current referral targets
-        current_refs = entry.ref.values if hasattr(entry, "ref") and entry.ref.values else []
-
-        logger.debug(
-            f"Current referral targets for {referral_dn}: {current_refs}"
+        current_refs = (
+            entry.ref.values if hasattr(entry, "ref") and entry.ref.values else []
         )
 
+        logger.debug("Current referral targets for %s: %s", referral_dn, current_refs)
+
         # Prepare modification - replace all referral targets with new one
-        changes = {
-            "ref": [("MODIFY_REPLACE", [new_target])]
-        }
+        changes = {"ref": [("MODIFY_REPLACE", [new_target])]}
 
         # Perform modification with ManageDsaIT control
         result = connection.modify(
@@ -679,7 +695,9 @@ async def modify_referral_target(
 
         if result:
             logger.info(
-                f"Successfully modified referral target: {referral_dn} -> {new_target}"
+                "Successfully modified referral target: %s -> %s",
+                referral_dn,
+                new_target,
             )
 
             # Update control statistics
@@ -689,13 +707,16 @@ async def modify_referral_target(
             return True
         error_msg = getattr(connection, "last_error", "Unknown error")
         logger.error(
-            f"Failed to modify referral target: {referral_dn}, error: {error_msg}"
+            "Failed to modify referral target: %s, error: %s", referral_dn, error_msg,
         )
-        raise Exception(f"LDAP modify failed: {error_msg}")
+        msg = f"LDAP modify failed: {error_msg}"
+        raise Exception(msg)
 
     except Exception as e:
-        logger.error(f"Error modifying referral target: {e}")
-        raise Exception(f"Referral modification failed: {e}") from e
+        logger.exception("Error modifying referral target: {e}")
+        msg = f"Referral modification failed: {e}"
+        raise Exception(msg) from e
+
 
 # TODO: Integration points for implementation:
 #

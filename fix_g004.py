@@ -17,29 +17,36 @@ def fix_g004_in_file(file_path: Path) -> int:
     # Pattern to match f-string logging statements
     patterns = [
         # logger.info(f"...")
-        (r'logger\.(debug|info|warning|error|exception|critical)\(f"([^"]*)"',
-         lambda m: f'logger.{m.group(1)}("{m.group(2)}")'),
-
+        (
+            r'logger\.(debug|info|warning|error|exception|critical)\(f"([^"]*)"',
+            lambda m: f'logger.{m.group(1)}("{m.group(2)}")',
+        ),
         # logger.info(f'...')
-        (r"logger\.(debug|info|warning|error|exception|critical)\(f'([^']*)'",
-         lambda m: f'logger.{m.group(1)}("{m.group(2)}")'),
-
+        (
+            r"logger\.(debug|info|warning|error|exception|critical)\(f'([^']*)'",
+            lambda m: f'logger.{m.group(1)}("{m.group(2)}")',
+        ),
         # Handle simple f-string with single variable: f"text {var}"
-        (r'logger\.(debug|info|warning|error|exception|critical)\(f"([^"]*\{[^}]+\}[^"]*)"',
-         lambda m: convert_fstring_to_format(m.group(1), m.group(2))),
-
+        (
+            r'logger\.(debug|info|warning|error|exception|critical)\(f"([^"]*\{[^}]+\}[^"]*)"',
+            lambda m: convert_fstring_to_format(m.group(1), m.group(2)),
+        ),
         # Handle complex f-strings with multiple variables
-        (r'logger\.(debug|info|warning|error|exception|critical)\(\s*f"([^"]*)"',
-         lambda m: convert_complex_fstring(m.group(1), m.group(2))),
+        (
+            r'logger\.(debug|info|warning|error|exception|critical)\(\s*f"([^"]*)"',
+            lambda m: convert_complex_fstring(m.group(1), m.group(2)),
+        ),
     ]
 
     for pattern, replacement in patterns:
         if callable(replacement):
+
             def repl_func(match: re.Match[str]) -> str:
                 try:
                     return replacement(match)
                 except:
                     return match.group(0)  # Return original if conversion fails
+
             content = re.sub(pattern, repl_func, content)
         else:
             content = re.sub(pattern, replacement, content)
@@ -47,7 +54,8 @@ def fix_g004_in_file(file_path: Path) -> int:
     if content != original_content:
         file_path.write_text(content, encoding="utf-8")
         fixes = (
-            original_content.count('f"') + original_content.count("f'")
+            original_content.count('f"')
+            + original_content.count("f'")
             - (content.count('f"') + content.count("f'"))
         )
 

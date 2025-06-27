@@ -39,9 +39,12 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable, Optional, Union
+from typing import Any, Union
+
+from ldap_core_shared.api.exceptions import LDAPConnectionError
 
 # Type for protocol connection parameters
 ProtocolParams = Union[str, int, bool, float, list[str], None]
@@ -50,8 +53,8 @@ ProtocolParams = Union[str, int, bool, float, list[str], None]
 AuthMethod = Union[Callable[..., bool], str]
 
 # Network protocol constants
-MIN_PORT_NUMBER = 1           # Minimum valid TCP/UDP port number
-MAX_PORT_NUMBER = 65535       # Maximum valid TCP/UDP port number
+MIN_PORT_NUMBER = 1  # Minimum valid TCP/UDP port number
+MAX_PORT_NUMBER = 65535  # Maximum valid TCP/UDP port number
 AddressInfo = Union[str, tuple[str, int]]
 
 from pydantic import BaseModel, Field
@@ -96,29 +99,35 @@ class ConnectionMetrics(BaseModel):
     """Metrics for protocol connections."""
 
     # Connection timing
-    connection_established_at: Optional[datetime] = Field(
-        default=None, description="When connection was established",
+    connection_established_at: datetime | None = Field(
+        default=None,
+        description="When connection was established",
     )
 
-    last_activity_at: Optional[datetime] = Field(
-        default=None, description="Last activity timestamp",
+    last_activity_at: datetime | None = Field(
+        default=None,
+        description="Last activity timestamp",
     )
 
-    total_connection_time: Optional[float] = Field(
-        default=None, description="Total connection time in seconds",
+    total_connection_time: float | None = Field(
+        default=None,
+        description="Total connection time in seconds",
     )
 
     # Operation statistics
     operations_performed: int = Field(
-        default=0, description="Total operations performed",
+        default=0,
+        description="Total operations performed",
     )
 
     successful_operations: int = Field(
-        default=0, description="Successful operations",
+        default=0,
+        description="Successful operations",
     )
 
     failed_operations: int = Field(
-        default=0, description="Failed operations",
+        default=0,
+        description="Failed operations",
     )
 
     # Data transfer
@@ -126,12 +135,14 @@ class ConnectionMetrics(BaseModel):
     bytes_received: int = Field(default=0, description="Bytes received")
 
     # Performance metrics
-    average_response_time: Optional[float] = Field(
-        default=None, description="Average response time in seconds",
+    average_response_time: float | None = Field(
+        default=None,
+        description="Average response time in seconds",
     )
 
-    peak_memory_usage: Optional[int] = Field(
-        default=None, description="Peak memory usage in bytes",
+    peak_memory_usage: int | None = Field(
+        default=None,
+        description="Peak memory usage in bytes",
     )
 
     def get_success_rate(self) -> float:
@@ -140,10 +151,12 @@ class ConnectionMetrics(BaseModel):
             return 100.0
         return (self.successful_operations / self.operations_performed) * 100.0
 
-    def record_operation(self, success: bool, response_time: Optional[float] = None) -> None:
+    def record_operation(
+        self, success: bool, response_time: float | None = None,
+    ) -> None:
         """Record operation metrics."""
         self.operations_performed += 1
-        self.last_activity_at = datetime.now(timezone.utc)
+        self.last_activity_at = datetime.now(UTC)
 
         if success:
             self.successful_operations += 1
@@ -157,16 +170,16 @@ class ConnectionMetrics(BaseModel):
             else:
                 # Simple moving average
                 self.average_response_time = (
-                    (self.average_response_time * (self.operations_performed - 1) + response_time)
-                    / self.operations_performed
-                )
+                    self.average_response_time * (self.operations_performed - 1)
+                    + response_time
+                ) / self.operations_performed
 
 
 class LDAPProtocol(ABC):
     """Abstract base class for LDAP protocol implementations."""
 
     protocol_name: str = "base"
-    default_port: Optional[int] = None
+    default_port: int | None = None
 
     def __init__(self) -> None:
         """Initialize LDAP protocol."""
@@ -174,7 +187,7 @@ class LDAPProtocol(ABC):
         self._auth_state = AuthenticationState.UNAUTHENTICATED
         self._capabilities: set[ProtocolCapability] = set()
         self._metrics = ConnectionMetrics()
-        self._last_error: Optional[str] = None
+        self._last_error: str | None = None
 
     @abstractmethod
     async def connect(self, url: str, **kwargs: ProtocolParams) -> None:
@@ -212,7 +225,7 @@ class LDAPProtocol(ABC):
         """Set protocol state."""
         self._state = state
         if state == ProtocolState.CONNECTED:
-            self._metrics.connection_established_at = datetime.now(timezone.utc)
+            self._metrics.connection_established_at = datetime.now(UTC)
 
     def set_auth_state(self, auth_state: AuthenticationState) -> None:
         """Set authentication state."""
@@ -272,7 +285,7 @@ class LDAPProtocol(ABC):
         return self._metrics
 
     @property
-    def last_error(self) -> Optional[str]:
+    def last_error(self) -> str | None:
         """Get last error."""
         return self._last_error
 
@@ -325,8 +338,8 @@ class ProtocolTransport(ABC):
     def __init__(self) -> None:
         """Initialize protocol transport."""
         self._connected = False
-        self._local_address: Optional[tuple[str, int]] = None
-        self._remote_address: Optional[tuple[str, int]] = None
+        self._local_address: tuple[str, int] | None = None
+        self._remote_address: tuple[str, int] | None = None
 
     @abstractmethod
     async def connect(self, address: AddressInfo, **kwargs: ProtocolParams) -> None:
@@ -369,12 +382,12 @@ class ProtocolTransport(ABC):
         return self._connected
 
     @property
-    def local_address(self) -> Optional[tuple[str, int]]:
+    def local_address(self) -> tuple[str, int] | None:
         """Get local address."""
         return self._local_address
 
     @property
-    def remote_address(self) -> Optional[tuple[str, int]]:
+    def remote_address(self) -> tuple[str, int] | None:
         """Get remote address."""
         return self._remote_address
 
@@ -403,9 +416,9 @@ class ProtocolConnection:
         self._connection_params = kwargs
 
         # Connection state
-        self._url: Optional[str] = None
+        self._url: str | None = None
         self._connected = False
-        self._last_operation_time: Optional[datetime] = None
+        self._last_operation_time: datetime | None = None
 
     async def connect(self, url: str, **kwargs: ProtocolParams) -> None:
         """Connect to LDAP server.
@@ -430,10 +443,10 @@ class ProtocolConnection:
             except Exception as e:
                 last_error = e
                 if attempt < self._retry_attempts - 1:
-                    await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                    await asyncio.sleep(2**attempt)  # Exponential backoff
 
         msg = f"Failed to connect after {self._retry_attempts} attempts: {last_error}"
-        raise ConnectionError(msg)
+        raise LDAPConnectionError(msg)
 
     async def disconnect(self) -> None:
         """Disconnect from LDAP server."""
@@ -450,18 +463,20 @@ class ProtocolConnection:
         """
         if not self._connected:
             msg = "Not connected to LDAP server"
-            raise ConnectionError(msg)
+            raise LDAPConnectionError(msg)
 
         await self._protocol.authenticate(method, **kwargs)
 
-    def record_operation(self, success: bool, response_time: Optional[float] = None) -> None:
+    def record_operation(
+        self, success: bool, response_time: float | None = None,
+    ) -> None:
         """Record operation metrics.
 
         Args:
             success: Whether operation was successful
             response_time: Operation response time
         """
-        self._last_operation_time = datetime.now(timezone.utc)
+        self._last_operation_time = datetime.now(UTC)
         self._protocol.metrics.record_operation(success, response_time)
 
     def get_connection_info(self) -> dict[str, Any]:
@@ -478,7 +493,9 @@ class ProtocolConnection:
             "connected": self._connected,
             "authenticated": self._protocol.authenticated,
             "capabilities": [cap.value for cap in self._protocol.capabilities],
-            "last_operation": self._last_operation_time.isoformat() if self._last_operation_time else None,
+            "last_operation": self._last_operation_time.isoformat()
+            if self._last_operation_time
+            else None,
             "metrics": self._protocol.metrics.dict(),
         }
 
@@ -498,7 +515,7 @@ class ProtocolConnection:
         return self._protocol
 
     @property
-    def url(self) -> Optional[str]:
+    def url(self) -> str | None:
         """Get connection URL."""
         return self._url
 
@@ -560,13 +577,16 @@ def validate_ldap_url(url: str) -> list[str]:
             errors.append("Hostname required for ldap/ldaps URLs")
 
         # Check port range
-        if parsed["port"] is not None and not (MIN_PORT_NUMBER <= parsed["port"] <= MAX_PORT_NUMBER):
+        if parsed["port"] is not None and not (
+            MIN_PORT_NUMBER <= parsed["port"] <= MAX_PORT_NUMBER
+        ):
             errors.append(f"Invalid port: {parsed['port']}")
 
     except Exception as e:
         errors.append(f"URL parsing error: {e}")
 
     return errors
+
 
 # TODO: Integration points for implementation:
 #

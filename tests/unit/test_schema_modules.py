@@ -15,7 +15,7 @@ ZERO TOLERANCE TESTING PRINCIPLES:
 from __future__ import annotations
 
 import time
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -131,7 +131,9 @@ class TestSchemaDiscovery:
                 return schema
 
             def discover_attribute_usage(
-                self, connection: Any, base_dn: str,
+                self,
+                connection: Any,
+                base_dn: str,
             ) -> dict[str, Any]:
                 """Discover how attributes are used in the directory."""
                 return {
@@ -332,12 +334,14 @@ class TestSchemaAnalyzer:
                         ),
                     },
                     "recommendations": self._generate_recommendations(
-                        missing_attrs, inheritance_map,
+                        missing_attrs,
+                        inheritance_map,
                     ),
                 }
 
             def _calculate_max_inheritance_depth(
-                self, inheritance_map: dict[str, list[str]],
+                self,
+                inheritance_map: dict[str, list[str]],
             ) -> int:
                 """Calculate maximum inheritance depth."""
 
@@ -358,7 +362,9 @@ class TestSchemaAnalyzer:
                 )
 
             def _generate_recommendations(
-                self, missing_attrs: set, inheritance_map: dict,
+                self,
+                missing_attrs: set,
+                inheritance_map: dict,
             ) -> list[str]:
                 """Generate schema improvement recommendations."""
                 recommendations = []
@@ -380,8 +386,8 @@ class TestSchemaAnalyzer:
                 for superiors in inheritance_map.values():
                     classes_with_superiors.update(superiors)
 
-                orphaned = (
-                    set(inheritance_map.keys() - classes_with_superiors - {"top"})
+                orphaned = set(
+                    inheritance_map.keys() - classes_with_superiors - {"top"}
                 )
                 if orphaned:
                     recommendations.append(
@@ -391,7 +397,9 @@ class TestSchemaAnalyzer:
                 return recommendations
 
             def analyze_schema_evolution(
-                self, old_schema: dict[str, Any], new_schema: dict[str, Any],
+                self,
+                old_schema: dict[str, Any],
+                new_schema: dict[str, Any],
             ) -> dict[str, Any]:
                 """Analyze changes between schema versions."""
                 old_classes = {
@@ -414,9 +422,17 @@ class TestSchemaAnalyzer:
                 removed_attrs = set(old_attrs.keys()) - set(new_attrs.keys())
 
                 # Detect modifications
-                modified_classes = [name for name in set(old_classes.keys()) & set(new_classes.keys()) if old_classes[name] != new_classes[name]]
+                modified_classes = [
+                    name
+                    for name in set(old_classes.keys()) & set(new_classes.keys())
+                    if old_classes[name] != new_classes[name]
+                ]
 
-                modified_attrs = [name for name in set(old_attrs.keys()) & set(new_attrs.keys()) if old_attrs[name] != new_attrs[name]]
+                modified_attrs = [
+                    name
+                    for name in set(old_attrs.keys()) & set(new_attrs.keys())
+                    if old_attrs[name] != new_attrs[name]
+                ]
 
                 return {
                     "changes": {
@@ -437,12 +453,17 @@ class TestSchemaAnalyzer:
                         + len(modified_classes),
                     },
                     "migration_complexity": self._assess_migration_complexity(
-                        len(removed_classes), len(removed_attrs), len(modified_classes),
+                        len(removed_classes),
+                        len(removed_attrs),
+                        len(modified_classes),
                     ),
                 }
 
             def _assess_migration_complexity(
-                self, removed_classes: int, removed_attrs: int, modified_classes: int,
+                self,
+                removed_classes: int,
+                removed_attrs: int,
+                modified_classes: int,
             ) -> str:
                 """Assess migration complexity based on changes."""
                 if removed_classes > 0 or removed_attrs > 5:
@@ -563,7 +584,9 @@ class TestSchemaComparator:
                 self.comparison_cache = {}
 
             def compare_schemas(
-                self, source_schema: dict[str, Any], target_schema: dict[str, Any],
+                self,
+                source_schema: dict[str, Any],
+                target_schema: dict[str, Any],
             ) -> dict[str, Any]:
                 """Compare two schemas and identify differences."""
                 source_classes = {
@@ -583,7 +606,8 @@ class TestSchemaComparator:
 
                 # Find differences
                 class_differences = self._compare_object_classes(
-                    source_classes, target_classes,
+                    source_classes,
+                    target_classes,
                 )
                 attr_differences = self._compare_attributes(source_attrs, target_attrs)
 
@@ -599,7 +623,8 @@ class TestSchemaComparator:
                 )
 
                 compatibility_score = max(
-                    0, (total_items - differences_count) / max(total_items, 1) * 100,
+                    0,
+                    (total_items - differences_count) / max(total_items, 1) * 100,
                 )
 
                 return {
@@ -618,7 +643,9 @@ class TestSchemaComparator:
                 }
 
             def _compare_object_classes(
-                self, source_classes: dict, target_classes: dict,
+                self,
+                source_classes: dict,
+                target_classes: dict,
             ) -> dict[str, Any]:
                 """Compare object classes between schemas."""
                 source_names = set(source_classes.keys())
@@ -628,14 +655,19 @@ class TestSchemaComparator:
                 only_in_target = target_names - source_names
                 common = source_names & target_names
 
-                different = [{
-                                "name": name,
-                                "source": source_classes[name],
-                                "target": target_classes[name],
-                                "differences": self._find_class_differences(
-                                    source_classes[name], target_classes[name],
-                                ),
-                            } for name in common if source_classes[name] != target_classes[name]]
+                different = [
+                    {
+                        "name": name,
+                        "source": source_classes[name],
+                        "target": target_classes[name],
+                        "differences": self._find_class_differences(
+                            source_classes[name],
+                            target_classes[name],
+                        ),
+                    }
+                    for name in common
+                    if source_classes[name] != target_classes[name]
+                ]
 
                 return {
                     "only_in_source": list(only_in_source),
@@ -649,7 +681,9 @@ class TestSchemaComparator:
                 }
 
             def _compare_attributes(
-                self, source_attrs: dict, target_attrs: dict,
+                self,
+                source_attrs: dict,
+                target_attrs: dict,
             ) -> dict[str, Any]:
                 """Compare attributes between schemas."""
                 source_names = set(source_attrs.keys())
@@ -659,14 +693,19 @@ class TestSchemaComparator:
                 only_in_target = target_names - source_names
                 common = source_names & target_names
 
-                different = [{
-                                "name": name,
-                                "source": source_attrs[name],
-                                "target": target_attrs[name],
-                                "differences": self._find_attr_differences(
-                                    source_attrs[name], target_attrs[name],
-                                ),
-                            } for name in common if source_attrs[name] != target_attrs[name]]
+                different = [
+                    {
+                        "name": name,
+                        "source": source_attrs[name],
+                        "target": target_attrs[name],
+                        "differences": self._find_attr_differences(
+                            source_attrs[name],
+                            target_attrs[name],
+                        ),
+                    }
+                    for name in common
+                    if source_attrs[name] != target_attrs[name]
+                ]
 
                 return {
                     "only_in_source": list(only_in_source),
@@ -680,7 +719,9 @@ class TestSchemaComparator:
                 }
 
             def _find_class_differences(
-                self, source_class: dict, target_class: dict,
+                self,
+                source_class: dict,
+                target_class: dict,
             ) -> list[str]:
                 """Find specific differences between object classes."""
                 differences = []
@@ -701,7 +742,9 @@ class TestSchemaComparator:
                 return differences
 
             def _find_attr_differences(
-                self, source_attr: dict, target_attr: dict,
+                self,
+                source_attr: dict,
+                target_attr: dict,
             ) -> list[str]:
                 """Find specific differences between attributes."""
                 differences = []
@@ -718,7 +761,8 @@ class TestSchemaComparator:
                 return differences
 
             def generate_migration_plan(
-                self, comparison_result: dict[str, Any],
+                self,
+                comparison_result: dict[str, Any],
             ) -> dict[str, Any]:
                 """Generate migration plan based on schema comparison."""
                 steps = []
@@ -928,13 +972,15 @@ class TestSchemaParser:
                 lines = ldif_content.strip().split("\n")
                 current_entry = {}
 
-                for line in lines:
-                    line = line.strip()
+                for raw_line in lines:
+                    line = raw_line.strip()
                     if not line:
                         # Process completed entry
                         if current_entry:
                             self._process_schema_entry(
-                                current_entry, object_classes, attribute_types,
+                                current_entry,
+                                object_classes,
+                                attribute_types,
                             )
                             current_entry = {}
                         continue
@@ -953,7 +999,9 @@ class TestSchemaParser:
                 # Process final entry
                 if current_entry:
                     self._process_schema_entry(
-                        current_entry, object_classes, attribute_types,
+                        current_entry,
+                        object_classes,
+                        attribute_types,
                     )
 
                 return {
@@ -964,7 +1012,10 @@ class TestSchemaParser:
                 }
 
             def _process_schema_entry(
-                self, entry: dict, object_classes: list, attribute_types: list,
+                self,
+                entry: dict,
+                object_classes: list,
+                attribute_types: list,
             ) -> None:
                 """Process a single schema entry."""
                 try:
@@ -992,7 +1043,7 @@ class TestSchemaParser:
                 except Exception as e:
                     self.parsing_errors.append(f"Error processing entry {dn}: {e!s}")
 
-            def _parse_object_class_definition(self, definition: str) -> Optional[dict]:
+            def _parse_object_class_definition(self, definition: str) -> dict | None:
                 """Parse object class definition string."""
                 try:
                     # Mock parsing of object class definition
@@ -1065,8 +1116,9 @@ class TestSchemaParser:
                     return None
 
             def _parse_attribute_type_definition(
-                self, definition: str,
-            ) -> Optional[dict]:
+                self,
+                definition: str,
+            ) -> dict | None:
                 """Parse attribute type definition string."""
                 try:
                     # Mock parsing of attribute type definition
@@ -1212,7 +1264,8 @@ attributeTypes: ( 0.9.2342.19200300.100.1.3 NAME 'mail' SYNTAX 1.3.6.1.4.1.1466.
         object_classes = parsed_schema["object_classes"]
         assert len(object_classes) >= 1
         person_class = next(
-            (oc for oc in object_classes if oc["name"] == "person"), None,
+            (oc for oc in object_classes if oc["name"] == "person"),
+            None,
         )
         assert person_class is not None
         assert "cn" in person_class["required_attributes"]
@@ -1291,7 +1344,8 @@ class TestSchemaValidator:
 
                 # Cross-validate between object classes and attributes
                 cross_errors, cross_warnings = self._cross_validate(
-                    object_classes, attribute_types,
+                    object_classes,
+                    attribute_types,
                 )
                 errors.extend(cross_errors)
                 warnings.extend(cross_warnings)
@@ -1310,7 +1364,8 @@ class TestSchemaValidator:
                 }
 
             def _validate_object_classes(
-                self, object_classes: list,
+                self,
+                object_classes: list,
             ) -> tuple[list[str], list[str]]:
                 """Validate object class definitions."""
                 errors = []
@@ -1362,7 +1417,8 @@ class TestSchemaValidator:
                 return errors, warnings
 
             def _validate_attribute_types(
-                self, attribute_types: list,
+                self,
+                attribute_types: list,
             ) -> tuple[list[str], list[str]]:
                 """Validate attribute type definitions."""
                 errors = []
@@ -1415,7 +1471,9 @@ class TestSchemaValidator:
                 return errors, warnings
 
             def _cross_validate(
-                self, object_classes: list, attribute_types: list,
+                self,
+                object_classes: list,
+                attribute_types: list,
             ) -> tuple[list[str], list[str]]:
                 """Cross-validate object classes and attribute types."""
                 errors = []
@@ -1433,7 +1491,11 @@ class TestSchemaValidator:
                         "optional_attributes",
                     ]:
                         attrs = oc.get(attr_list_name, [])
-                        errors.extend(f"Object class '{oc_name}' references undefined attribute: {attr_name}" for attr_name in attrs if attr_name not in defined_attrs)
+                        errors.extend(
+                            f"Object class '{oc_name}' references undefined attribute: {attr_name}"
+                            for attr_name in attrs
+                            if attr_name not in defined_attrs
+                        )
 
                 # Check for unused attribute types
                 referenced_attrs = set()
@@ -1469,7 +1531,9 @@ class TestSchemaValidator:
                 return False
 
             def validate_entry_against_schema(
-                self, entry: dict[str, Any], schema: dict[str, Any],
+                self,
+                entry: dict[str, Any],
+                schema: dict[str, Any],
             ) -> dict[str, Any]:
                 """Validate a directory entry against the schema."""
                 errors = []
@@ -1511,10 +1575,18 @@ class TestSchemaValidator:
                         )
 
                 # Check required attributes are present
-                errors.extend(f"Entry '{entry_dn}' missing required attribute: {required_attr}" for required_attr in all_required if required_attr not in entry_attrs)
+                errors.extend(
+                    f"Entry '{entry_dn}' missing required attribute: {required_attr}"
+                    for required_attr in all_required
+                    if required_attr not in entry_attrs
+                )
 
                 # Check no forbidden attributes are present
-                warnings.extend(f"Entry '{entry_dn}' has non-schema attribute: {attr_name}" for attr_name in entry_attrs if attr_name != "objectClass" and attr_name not in all_allowed)
+                warnings.extend(
+                    f"Entry '{entry_dn}' has non-schema attribute: {attr_name}"
+                    for attr_name in entry_attrs
+                    if attr_name != "objectClass" and attr_name not in all_allowed
+                )
 
                 # Validate attribute syntax (basic check)
                 for attr_name, values in entry_attrs.items():
@@ -1634,7 +1706,8 @@ class TestSchemaValidator:
         }
 
         entry_validation = validator.validate_entry_against_schema(
-            test_entry, valid_schema,
+            test_entry,
+            valid_schema,
         )
         assert entry_validation["valid"] is True
         assert entry_validation["entry_dn"] == test_entry["dn"]
@@ -1650,7 +1723,8 @@ class TestSchemaValidator:
         }
 
         invalid_entry_result = validator.validate_entry_against_schema(
-            invalid_entry, valid_schema,
+            invalid_entry,
+            valid_schema,
         )
         assert invalid_entry_result["valid"] is False
         assert any(
@@ -1683,7 +1757,9 @@ class TestSchemaMigrator:
                 self.dry_run_mode = False
 
             def create_migration_plan(
-                self, source_schema: dict[str, Any], target_schema: dict[str, Any],
+                self,
+                source_schema: dict[str, Any],
+                target_schema: dict[str, Any],
             ) -> dict[str, Any]:
                 """Create migration plan from source to target schema."""
                 plan_id = f"migration_{int(time.time())}"
@@ -1735,9 +1811,14 @@ class TestSchemaMigrator:
                     )
 
                 # Step 3: Modify existing object classes
-                modified_classes = [class_name for class_name in set(source_classes.keys()) & set(
-                    target_classes.keys(),
-                ) if source_classes[class_name] != target_classes[class_name]]
+                modified_classes = [
+                    class_name
+                    for class_name in set(source_classes.keys())
+                    & set(
+                        target_classes.keys(),
+                    )
+                    if source_classes[class_name] != target_classes[class_name]
+                ]
 
                 if modified_classes:
                     migration_steps.append(
@@ -1804,7 +1885,9 @@ class TestSchemaMigrator:
                 }
 
             def execute_migration(
-                self, migration_plan: dict[str, Any], connection: Any = None,
+                self,
+                migration_plan: dict[str, Any],
+                connection: Any = None,
             ) -> dict[str, Any]:
                 """Execute migration plan."""
                 plan_id = migration_plan["plan_id"]
@@ -1876,7 +1959,9 @@ class TestSchemaMigrator:
                 return migration_record
 
             def _execute_migration_step(
-                self, step: dict[str, Any], connection: Any,
+                self,
+                step: dict[str, Any],
+                connection: Any,
             ) -> dict[str, Any]:
                 """Execute a single migration step."""
                 step_type = step["type"]
@@ -1922,22 +2007,24 @@ class TestSchemaMigrator:
                 raise ValueError(msg)
 
             def _simulate_migration(
-                self, migration_plan: dict[str, Any],
+                self,
+                migration_plan: dict[str, Any],
             ) -> dict[str, Any]:
                 """Simulate migration execution without making changes."""
                 plan_id = migration_plan["plan_id"]
                 steps = migration_plan["migration_steps"]
 
-                simulation_log = [{
-                            "step_id": step["step_id"],
-                            "type": step["type"],
-                            "status": "SIMULATED",
-                            "items_to_process": len(step["items"]),
-                            "estimated_duration_minutes": step[
-                                "estimated_time_minutes"
-                            ],
-                            "risk_level": step["risk_level"],
-                        } for step in steps]
+                simulation_log = [
+                    {
+                        "step_id": step["step_id"],
+                        "type": step["type"],
+                        "status": "SIMULATED",
+                        "items_to_process": len(step["items"]),
+                        "estimated_duration_minutes": step["estimated_time_minutes"],
+                        "risk_level": step["risk_level"],
+                    }
+                    for step in steps
+                ]
 
                 return {
                     "plan_id": plan_id,
@@ -1953,7 +2040,8 @@ class TestSchemaMigrator:
                 }
 
             def rollback_migration(
-                self, migration_record: dict[str, Any],
+                self,
+                migration_record: dict[str, Any],
             ) -> dict[str, Any]:
                 """Rollback a previously executed migration."""
                 plan_id = migration_record["plan_id"]

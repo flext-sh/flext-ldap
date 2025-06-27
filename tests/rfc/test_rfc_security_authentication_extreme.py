@@ -41,6 +41,7 @@ from ldap_core_shared.exceptions.auth import AuthenticationError
 
 # from ldap_core_shared.exceptions.connection import ConnectionSecurityError  # Not available yet
 
+
 # Simple mock class for testing
 class ConnectionSecurityError(Exception):
     """Mock connection security error for testing."""
@@ -120,7 +121,10 @@ class TestRFC4513AuthenticationExtreme:
                         msg = f"Anonymous should have succeeded: {scenario['description']}"
                         raise AssertionError(msg)
                     # Expected failure for forbidden anonymous
-                    assert "anonymous" in str(e).lower() or "authentication" in str(e).lower()
+                    assert (
+                        "anonymous" in str(e).lower()
+                        or "authentication" in str(e).lower()
+                    )
 
     @pytest.mark.asyncio
     async def test_simple_authentication_security_extreme(self) -> None:
@@ -160,7 +164,10 @@ class TestRFC4513AuthenticationExtreme:
                 mock_conn = MagicMock()
 
                 # Configure mock behavior based on scenario
-                if scenario["expected_result"] == "success" or scenario["expected_result"] == "warning":
+                if (
+                    scenario["expected_result"] == "success"
+                    or scenario["expected_result"] == "warning"
+                ):
                     mock_conn.bind.return_value = True
                     mock_conn.bound = True
                     # Mock should warn about weak password
@@ -170,7 +177,9 @@ class TestRFC4513AuthenticationExtreme:
 
                 mock_conn.result = {
                     "result": 0 if scenario["expected_result"] == "success" else 49,
-                    "description": "success" if scenario["expected_result"] == "success" else "invalidCredentials",
+                    "description": "success"
+                    if scenario["expected_result"] == "success"
+                    else "invalidCredentials",
                 }
                 mock_conn_class.return_value = mock_conn
 
@@ -270,23 +279,29 @@ class TestRFC4513AuthenticationExtreme:
 
                 # Configure appropriate security settings for each mechanism
                 config_params = {
-                    "server": "ldaps://sasl.example.com" if mechanism.get("requires_tls") else "ldap://sasl.example.com",
+                    "server": "ldaps://sasl.example.com"
+                    if mechanism.get("requires_tls")
+                    else "ldap://sasl.example.com",
                     "auth_method": "SASL",
                     "sasl_mechanism": mechanism["mechanism"],
                     "auth_dn": "uid=testuser,ou=People,dc=example,dc=com",
                 }
 
                 if mechanism.get("requires_tls"):
-                    config_params.update({
-                        "require_tls": True,
-                        "min_tls_version": ssl.TLSVersion.TLSv1_2,
-                    })
+                    config_params.update(
+                        {
+                            "require_tls": True,
+                            "min_tls_version": ssl.TLSVersion.TLSv1_2,
+                        }
+                    )
 
                 if mechanism.get("client_cert_required"):
-                    config_params.update({
-                        "client_cert_file": "/path/to/client.crt",
-                        "client_key_file": "/path/to/client.key",
-                    })
+                    config_params.update(
+                        {
+                            "client_cert_file": "/path/to/client.crt",
+                            "client_key_file": "/path/to/client.key",
+                        }
+                    )
 
                 config = LDAPConfig(**config_params)
 
@@ -392,7 +407,9 @@ class TestRFC4513AuthenticationExtreme:
 
                 if scenario["expected_security_level"] == "rejected":
                     # Should reject insecure configurations
-                    with pytest.raises((ConnectionSecurityError, ValueError, ssl.SSLError)):
+                    with pytest.raises(
+                        (ConnectionSecurityError, ValueError, ssl.SSLError)
+                    ):
                         async with LDAP(config) as ldap_client:
                             pass
                 else:
@@ -401,7 +418,10 @@ class TestRFC4513AuthenticationExtreme:
                         assert ldap_client is not None
 
                         # Verify TLS security properties
-                        if scenario["name"] == "maximum_security" or scenario["name"] == "high_security":
+                        if (
+                            scenario["name"] == "maximum_security"
+                            or scenario["name"] == "high_security"
+                        ):
                             assert "ldaps" in config.server
                             assert config.server.endswith(":636")
 
@@ -445,7 +465,9 @@ class TestRFC4513AuthenticationExtreme:
 
         with patch("ldap3.Connection") as mock_conn_class:
             mock_conn = MagicMock()
-            mock_conn.bind.return_value = False  # Default to rejecting malicious requests
+            mock_conn.bind.return_value = (
+                False  # Default to rejecting malicious requests
+            )
             mock_conn.bound = False
             mock_conn.result = {"result": 34, "description": "invalidDNSyntax"}
             mock_conn_class.return_value = mock_conn
@@ -463,7 +485,9 @@ class TestRFC4513AuthenticationExtreme:
                     with pytest.raises((ValueError, Exception)):
                         async with LDAP(config):
                             LDAPSearchParams(
-                                search_base=attack["malicious_input"],  # Malicious search base
+                                search_base=attack[
+                                    "malicious_input"
+                                ],  # Malicious search base
                                 search_filter="(objectClass=person)",
                                 search_scope="SUBTREE",
                             )
@@ -500,7 +524,9 @@ class TestRFC4513AuthenticationExtreme:
                         config = LDAPConfig(
                             server="ldap://test.example.com",
                             auth_dn="cn=test,dc=example,dc=com",
-                            auth_password=attack["malicious_input"],  # Malicious password
+                            auth_password=attack[
+                                "malicious_input"
+                            ],  # Malicious password
                         )
                         async with LDAP(config):
                             pass  # Should fail during authentication
@@ -520,7 +546,9 @@ class TestRFC4513AuthenticationExtreme:
                                 attributes={
                                     "objectClass": ["person"],
                                     "cn": ["test"],
-                                    "description": [attack["malicious_input"]],  # Malicious attribute
+                                    "description": [
+                                        attack["malicious_input"]
+                                    ],  # Malicious attribute
                                 },
                             )
                             # Should be rejected due to malicious content
@@ -546,7 +574,9 @@ class TestRFC4513AuthenticationExtreme:
             )
 
             # Test rapid fire requests (DoS simulation)
-            async def rapid_fire_requests(client_id: int, request_count: int) -> dict[str, Any]:
+            async def rapid_fire_requests(
+                client_id: int, request_count: int
+            ) -> dict[str, Any]:
                 """Simulate rapid fire requests from single client."""
                 start_time = time.time()
                 successful_requests = 0
@@ -566,7 +596,10 @@ class TestRFC4513AuthenticationExtreme:
                             successful_requests += 1
 
                         except Exception as e:
-                            if "rate limit" in str(e).lower() or "throttled" in str(e).lower():
+                            if (
+                                "rate limit" in str(e).lower()
+                                or "throttled" in str(e).lower()
+                            ):
                                 throttled_requests += 1
                             else:
                                 raise
@@ -578,7 +611,8 @@ class TestRFC4513AuthenticationExtreme:
                     "successful_requests": successful_requests,
                     "throttled_requests": throttled_requests,
                     "duration": end_time - start_time,
-                    "requests_per_second": (successful_requests + throttled_requests) / (end_time - start_time),
+                    "requests_per_second": (successful_requests + throttled_requests)
+                    / (end_time - start_time),
                 }
 
             # Launch DoS simulation
@@ -595,11 +629,17 @@ class TestRFC4513AuthenticationExtreme:
             performance_monitor.stop_measurement("dos_protection_test")
 
             # Analyze DoS protection results
-            total_successful = sum(result["successful_requests"] for result in dos_results)
-            total_throttled = sum(result["throttled_requests"] for result in dos_results)
+            total_successful = sum(
+                result["successful_requests"] for result in dos_results
+            )
+            total_throttled = sum(
+                result["throttled_requests"] for result in dos_results
+            )
             total_requests = total_successful + total_throttled
 
-            sum(result["requests_per_second"] for result in dos_results) / len(dos_results)
+            sum(result["requests_per_second"] for result in dos_results) / len(
+                dos_results
+            )
 
             # Rate limiting assertions
             # Simulate rate limiting behavior (would be implemented in real system)
@@ -607,8 +647,12 @@ class TestRFC4513AuthenticationExtreme:
 
             # Should have throttled some requests under DoS conditions
             if total_requests > 1000:  # Only check throttling for high volume
-                assert total_throttled > 0, "DoS protection should have throttled some requests"
-                assert total_throttled / total_requests < 0.8, "Too many requests throttled"
+                assert total_throttled > 0, (
+                    "DoS protection should have throttled some requests"
+                )
+                assert total_throttled / total_requests < 0.8, (
+                    "Too many requests throttled"
+                )
 
     @pytest.mark.asyncio
     async def test_certificate_validation_extreme(self) -> None:
@@ -718,7 +762,9 @@ class TestRFC4513AuthenticationExtreme:
 
                 else:
                     # Should fail certificate validation
-                    with pytest.raises((ssl.SSLError, ConnectionSecurityError, Exception)):
+                    with pytest.raises(
+                        (ssl.SSLError, ConnectionSecurityError, Exception)
+                    ):
                         async with LDAP(config) as ldap_client:
                             pass
 

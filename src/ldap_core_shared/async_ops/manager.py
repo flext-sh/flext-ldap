@@ -54,16 +54,21 @@ References:
 import asyncio
 import contextlib
 import uuid
-from datetime import datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, TypeVar
 
-from typing_extensions import TypeAlias
+try:
+    from typing import TypeAlias
+except ImportError:
+    # Fallback for Python < 3.10
+    from typing import TypeAlias
 
 try:
     import ldap3
 except ImportError:
-    ldap3 = None
+    ldap3 = None  # type: ignore[assignment]
 
 
 # Type aliases for better readability
@@ -108,34 +113,39 @@ class AsyncOperationRequest(BaseModel):
 
     operation_type: OperationType = Field(description="Type of LDAP operation")
 
-    target_dn: Optional[str] = Field(
-        default=None, description="Target DN for operation",
+    target_dn: str | None = Field(
+        default=None,
+        description="Target DN for operation",
     )
 
     # Search-specific parameters
-    search_base: Optional[str] = Field(default=None, description="Search base DN")
+    search_base: str | None = Field(default=None, description="Search base DN")
 
-    search_filter: Optional[str] = Field(default=None, description="LDAP search filter")
+    search_filter: str | None = Field(default=None, description="LDAP search filter")
 
-    search_scope: Optional[str] = Field(default=None, description="Search scope")
+    search_scope: str | None = Field(default=None, description="Search scope")
 
-    attributes: Optional[list[str]] = Field(
-        default=None, description="Attributes to retrieve",
+    attributes: list[str] | None = Field(
+        default=None,
+        description="Attributes to retrieve",
     )
 
     # Modify-specific parameters
-    changes: Optional[dict[str, Any]] = Field(
-        default=None, description="Changes for modify operations",
+    changes: dict[str, Any] | None = Field(
+        default=None,
+        description="Changes for modify operations",
     )
 
     # Add-specific parameters
-    entry_attributes: Optional[dict[str, Any]] = Field(
-        default=None, description="Attributes for add operations",
+    entry_attributes: dict[str, Any] | None = Field(
+        default=None,
+        description="Attributes for add operations",
     )
 
     # Operation settings
-    timeout_seconds: Optional[int] = Field(
-        default=None, description="Operation timeout",
+    timeout_seconds: int | None = Field(
+        default=None,
+        description="Operation timeout",
     )
 
     priority: int = Field(default=5, description="Operation priority (1-10)")
@@ -143,16 +153,18 @@ class AsyncOperationRequest(BaseModel):
     retry_count: int = Field(default=0, description="Number of retry attempts")
 
     # Callback configuration
-    callback_function: Optional[str] = Field(
-        default=None, description="Callback function identifier",
+    callback_function: str | None = Field(
+        default=None,
+        description="Callback function identifier",
     )
 
-    progress_callback: Optional[str] = Field(
-        default=None, description="Progress callback function identifier",
+    progress_callback: str | None = Field(
+        default=None,
+        description="Progress callback function identifier",
     )
 
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Request creation timestamp",
     )
 
@@ -165,51 +177,61 @@ class AsyncResult(BaseModel):
     operation_type: OperationType = Field(description="Type of operation")
 
     status: OperationStatus = Field(
-        default=OperationStatus.PENDING, description="Current operation status",
+        default=OperationStatus.PENDING,
+        description="Current operation status",
     )
 
     # Result data
-    result_data: Optional[Any] = Field(
-        default=None, description="Operation result data",
+    result_data: Any | None = Field(
+        default=None,
+        description="Operation result data",
     )
 
-    entries: Optional[list[dict[str, Any]]] = Field(
-        default=None, description="Search result entries",
+    entries: list[dict[str, Any]] | None = Field(
+        default=None,
+        description="Search result entries",
     )
 
-    result_code: Optional[int] = Field(default=None, description="LDAP result code")
+    result_code: int | None = Field(default=None, description="LDAP result code")
 
-    result_message: Optional[str] = Field(
-        default=None, description="LDAP result message",
+    result_message: str | None = Field(
+        default=None,
+        description="LDAP result message",
     )
 
     # Error information
-    error: Optional[str] = Field(default=None, description="Error message if failed")
+    error: str | None = Field(default=None, description="Error message if failed")
 
-    exception: Optional[str] = Field(
-        default=None, description="Exception details if failed",
+    exception: str | None = Field(
+        default=None,
+        description="Exception details if failed",
     )
 
     # Timing information
-    started_at: Optional[datetime] = Field(
-        default=None, description="Operation start timestamp",
+    started_at: datetime | None = Field(
+        default=None,
+        description="Operation start timestamp",
     )
 
-    completed_at: Optional[datetime] = Field(
-        default=None, description="Operation completion timestamp",
+    completed_at: datetime | None = Field(
+        default=None,
+        description="Operation completion timestamp",
     )
 
-    duration_seconds: Optional[float] = Field(
-        default=None, description="Operation duration",
+    duration_seconds: float | None = Field(
+        default=None,
+        description="Operation duration",
     )
 
     # Progress information
     progress_percentage: float = Field(
-        default=0.0, description="Operation progress (0.0-DEFAULT_MAX_ITEMS)",
+        default=0.0,
+        description="Operation progress (0.0-DEFAULT_MAX_ITEMS)",
     )
 
-    progress_message: Optional[str] = Field(
-        default=None, description="Progress status message",
+    progress_message: str | None = Field(
+        default=None,
+        description="Progress status message",
     )
 
     def is_pending(self) -> bool:
@@ -274,13 +296,13 @@ class AsyncResult(BaseModel):
 
         return self.entries or []
 
-    def get_duration(self) -> Optional[float]:
+    def get_duration(self) -> float | None:
         """Get operation duration in seconds."""
         if self.started_at and self.completed_at:
             return (self.completed_at - self.started_at).total_seconds()
         return self.duration_seconds
 
-    def update_progress(self, percentage: float, message: Optional[str] = None) -> None:
+    def update_progress(self, percentage: float, message: str | None = None) -> None:
         """Update operation progress.
 
         Args:
@@ -307,8 +329,9 @@ class OperationFuture:
         self._future: asyncio.Future[AsyncResult] = asyncio.Future()
         self._callbacks: list[Callable[[AsyncResult], None]] = []
         self._progress_callbacks: list[Callable[[float, str], None]] = []
+        self._task: asyncio.Task[Any] | None = None
 
-    async def __await__(self):
+    async def __await__(self) -> AsyncResult:
         """Await operation completion."""
         return await self._future
 
@@ -320,7 +343,7 @@ class OperationFuture:
         """Check if operation was cancelled."""
         return self._result.is_cancelled()
 
-    def result(self, timeout: Optional[float] = None) -> OperationResult:
+    def result(self, timeout: float | None = None) -> OperationResult:
         """Get operation result.
 
         Args:
@@ -363,7 +386,8 @@ class OperationFuture:
                 pass  # Ignore callback errors
 
     def add_progress_callback(
-        self, callback: Callable[[float, str], None],
+        self,
+        callback: Callable[[float, str], None],
     ) -> None:
         """Add progress callback.
 
@@ -382,7 +406,7 @@ class OperationFuture:
             return False
 
         self._result.status = OperationStatus.CANCELLED
-        self._result.completed_at = datetime.now(timezone.utc)
+        self._result.completed_at = datetime.now(UTC)
         self._future.cancel()
 
         # Call completion callbacks
@@ -396,7 +420,7 @@ class OperationFuture:
         """Complete operation with result."""
         self._result.status = OperationStatus.COMPLETED
         self._result.result_data = result_data
-        self._result.completed_at = datetime.now(timezone.utc)
+        self._result.completed_at = datetime.now(UTC)
         self._result.duration_seconds = self._result.get_duration()
 
         self._future.set_result(result_data)
@@ -411,7 +435,7 @@ class OperationFuture:
         self._result.status = OperationStatus.FAILED
         self._result.error = str(error)
         self._result.exception = repr(error)
-        self._result.completed_at = datetime.now(timezone.utc)
+        self._result.completed_at = datetime.now(UTC)
         self._result.duration_seconds = self._result.get_duration()
 
         self._future.set_exception(error)
@@ -422,7 +446,9 @@ class OperationFuture:
                 callback(self._result)
 
     def _update_progress(
-        self, percentage: float, message: Optional[str] = None,
+        self,
+        percentage: float,
+        message: str | None = None,
     ) -> None:
         """Update operation progress."""
         self._result.update_progress(percentage, message)
@@ -447,18 +473,22 @@ class SearchConfig(BaseModel):
     """Configuration for LDAP search operations."""
 
     search_filter: str = Field(
-        default="(objectClass=*)", description="LDAP search filter",
+        default="(objectClass=*)",
+        description="LDAP search filter",
     )
     search_scope: str = Field(default="SUBTREE", description="Search scope")
-    attributes: Optional[list[str]] = Field(
-        default=None, description="Attributes to retrieve",
+    attributes: list[str] | None = Field(
+        default=None,
+        description="Attributes to retrieve",
     )
-    timeout: Optional[int] = Field(default=None, description="Operation timeout")
-    callback: Optional[Callable[[AsyncResult], None]] = Field(
-        default=None, description="Completion callback",
+    timeout: int | None = Field(default=None, description="Operation timeout")
+    callback: Callable[[AsyncResult], None] | None = Field(
+        default=None,
+        description="Completion callback",
     )
-    progress_callback: Optional[Callable[[float, str], None]] = Field(
-        default=None, description="Progress callback",
+    progress_callback: Callable[[float, str], None] | None = Field(
+        default=None,
+        description="Progress callback",
     )
 
 
@@ -520,7 +550,7 @@ class AsyncLDAPOperations:
     def _create_operation_future(
         self,
         operation_type: OperationType,
-        callback: Optional[Callable[[AsyncResult], None]] = None,
+        callback: Callable[[AsyncResult], None] | None = None,
     ) -> tuple[str, OperationFuture]:
         """Create operation future with consistent setup.
 
@@ -553,7 +583,7 @@ class AsyncLDAPOperations:
     async def search_async(
         self,
         search_base: str,
-        config: Optional[SearchConfig] = None,
+        config: SearchConfig | None = None,
     ) -> OperationFuture:
         """Perform asynchronous LDAP search.
 
@@ -584,7 +614,7 @@ class AsyncLDAPOperations:
 
                 # Start the operation
                 future.result_object.status = OperationStatus.RUNNING
-                future.result_object.started_at = datetime.now(timezone.utc)
+                future.result_object.started_at = datetime.now(UTC)
 
                 future._update_progress(25.0, "Connecting to LDAP server")
 
@@ -628,7 +658,8 @@ class AsyncLDAPOperations:
                     entries.append(entry_dict)
 
                 future._update_progress(
-                    100.0, f"Search completed: {len(entries)} entries found",
+                    100.0,
+                    f"Search completed: {len(entries)} entries found",
                 )
 
                 # Store results
@@ -640,15 +671,17 @@ class AsyncLDAPOperations:
                 raise
 
         # Execute asynchronously
-        asyncio.create_task(self._execute_operation(future, _execute_search))
+        task = asyncio.create_task(self._execute_operation(future, _execute_search))
+        # Store task reference to prevent garbage collection
+        future._task = task
         return future
 
     async def add_async(
         self,
         dn: str,
         attributes: dict[str, Any],
-        timeout: Optional[int] = None,
-        callback: Optional[Callable[[AsyncResult], None]] = None,
+        timeout: int | None = None,
+        callback: Callable[[AsyncResult], None] | None = None,
     ) -> OperationFuture:
         """Perform asynchronous LDAP add operation.
 
@@ -674,7 +707,7 @@ class AsyncLDAPOperations:
             try:
                 # Start the operation
                 future.result_object.status = OperationStatus.RUNNING
-                future.result_object.started_at = datetime.now(timezone.utc)
+                future.result_object.started_at = datetime.now(UTC)
 
                 # Execute the add operation
                 success = self._connection.add(dn, attributes=attributes)
@@ -684,7 +717,9 @@ class AsyncLDAPOperations:
                     raise RuntimeError(error_msg)
 
                 return {
-                    "dn": dn, "success": True, "message": "Entry added successfully",
+                    "dn": dn,
+                    "success": True,
+                    "message": "Entry added successfully",
                 }
 
             except Exception:
@@ -692,15 +727,17 @@ class AsyncLDAPOperations:
                 raise
 
         # Execute asynchronously
-        asyncio.create_task(self._execute_operation(future, _execute_add))
+        task = asyncio.create_task(self._execute_operation(future, _execute_add))
+        # Store task reference to prevent garbage collection
+        future._task = task
         return future
 
     async def modify_async(
         self,
         dn: str,
         changes: dict[str, Any],
-        timeout: Optional[int] = None,
-        callback: Optional[Callable[[AsyncResult], None]] = None,
+        timeout: int | None = None,
+        callback: Callable[[AsyncResult], None] | None = None,
     ) -> OperationFuture:
         """Perform asynchronous LDAP modify operation.
 
@@ -726,7 +763,7 @@ class AsyncLDAPOperations:
             try:
                 # Start the operation
                 future.result_object.status = OperationStatus.RUNNING
-                future.result_object.started_at = datetime.now(timezone.utc)
+                future.result_object.started_at = datetime.now(UTC)
 
                 # Prepare modifications
                 if ldap3 is None:
@@ -745,24 +782,32 @@ class AsyncLDAPOperations:
                 success = self._connection.modify(dn, modifications)
 
                 if not success:
-                    error_msg = f"Modify operation failed: {self._connection.last_error}"
+                    error_msg = (
+                        f"Modify operation failed: {self._connection.last_error}"
+                    )
                     raise RuntimeError(error_msg)
 
-                return {"dn": dn, "success": True, "message": "Entry modified successfully"}
+                return {
+                    "dn": dn,
+                    "success": True,
+                    "message": "Entry modified successfully",
+                }
 
             except Exception:
                 self._failed_operations += 1
                 raise
 
         # Execute asynchronously
-        asyncio.create_task(self._execute_operation(future, _execute_modify))
+        task = asyncio.create_task(self._execute_operation(future, _execute_modify))
+        # Store task reference to prevent garbage collection
+        future._task = task
         return future
 
     async def delete_async(
         self,
         dn: str,
-        timeout: Optional[int] = None,
-        callback: Optional[Callable[[AsyncResult], None]] = None,
+        timeout: int | None = None,
+        callback: Callable[[AsyncResult], None] | None = None,
     ) -> OperationFuture:
         """Perform asynchronous LDAP delete operation.
 
@@ -799,26 +844,34 @@ class AsyncLDAPOperations:
             try:
                 # Start the operation
                 future.result_object.status = OperationStatus.RUNNING
-                future.result_object.started_at = datetime.now(timezone.utc)
+                future.result_object.started_at = datetime.now(UTC)
 
                 # Execute the delete operation
                 success = self._connection.delete(dn)
 
                 if not success:
-                    error_msg = f"Delete operation failed: {self._connection.last_error}"
+                    error_msg = (
+                        f"Delete operation failed: {self._connection.last_error}"
+                    )
                     raise RuntimeError(error_msg)
 
-                return {"dn": dn, "success": True, "message": "Entry deleted successfully"}
+                return {
+                    "dn": dn,
+                    "success": True,
+                    "message": "Entry deleted successfully",
+                }
 
             except Exception:
                 self._failed_operations += 1
                 raise
 
         # Execute asynchronously
-        asyncio.create_task(self._execute_operation(future, _execute_delete))
+        task = asyncio.create_task(self._execute_operation(future, _execute_delete))
+        # Store task reference to prevent garbage collection
+        future._task = task
         return future
 
-    async def wait_for_all(self, timeout: Optional[float] = None) -> list[AsyncResult]:
+    async def wait_for_all(self, timeout: float | None = None) -> list[AsyncResult]:
         """Wait for all active operations to complete.
 
         Args:
@@ -837,7 +890,7 @@ class AsyncLDAPOperations:
                 asyncio.gather(*[f._future for f in futures], return_exceptions=True),
                 timeout=timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             # Cancel incomplete operations
             for future in futures:
                 if not future.done():
@@ -859,7 +912,7 @@ class AsyncLDAPOperations:
 
         return cancelled_count
 
-    def get_operation(self, operation_id: str) -> Optional[OperationFuture]:
+    def get_operation(self, operation_id: str) -> OperationFuture | None:
         """Get operation future by ID.
 
         Args:
@@ -877,7 +930,8 @@ class AsyncLDAPOperations:
             List of active operation IDs
         """
         return [
-            op_id for op_id, future in self._active_operations.items()
+            op_id
+            for op_id, future in self._active_operations.items()
             if not future.done()
         ]
 
@@ -904,7 +958,11 @@ class AsyncLDAPOperations:
         }
 
     async def _execute_operation(
-        self, future: OperationFuture, operation_func: Callable, *args, **kwargs,
+        self,
+        future: OperationFuture,
+        operation_func: Callable[..., Any],
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """Execute operation with concurrency control.
 
@@ -916,7 +974,7 @@ class AsyncLDAPOperations:
         """
         async with self._operation_semaphore:
             future.result_object.status = OperationStatus.RUNNING
-            future.result_object.started_at = datetime.now(timezone.utc)
+            future.result_object.started_at = datetime.now(UTC)
 
             try:
                 result = await operation_func(*args, **kwargs)
@@ -935,7 +993,7 @@ async def search_async(
     connection: ldap3.Connection,
     search_base: str,
     search_filter: str = "(objectClass=*)",
-    attributes: Optional[list[str]] = None,
+    attributes: list[str] | None = None,
 ) -> AsyncResult:
     """Convenience function for async search.
 
@@ -949,15 +1007,19 @@ async def search_async(
         Async result object
     """
     async_ops = AsyncLDAPOperations(connection)
-    future = await async_ops.search_async(
-        search_base, search_filter, attributes=attributes,
+    # Create search config with filter and attributes
+    from ldap_core_shared.config.search import SearchConfig
+    search_config = SearchConfig(
+        search_filter=search_filter,
+        attributes=attributes or [],
     )
+    future = await async_ops.search_async(search_base, search_config)
     return await future
 
 
 async def concurrent_operations(
     connection: ldap3.Connection,
-    operations: list[tuple[str, tuple, dict]],
+    operations: list[tuple[str, tuple[Any, ...], dict[str, Any]]],
     max_concurrent: int = 5,
 ) -> list[AsyncResult]:
     """Execute multiple operations concurrently.
@@ -971,7 +1033,8 @@ async def concurrent_operations(
         List of async results
     """
     async_ops = AsyncLDAPOperations(
-        connection, max_concurrent_operations=max_concurrent,
+        connection,
+        max_concurrent_operations=max_concurrent,
     )
     futures = []
 
@@ -992,6 +1055,7 @@ async def concurrent_operations(
     # Wait for all operations to complete
     await asyncio.gather(*futures, return_exceptions=True)
     return [f.result_object for f in futures]
+
 
 # TODO: Integration points for implementation:
 #

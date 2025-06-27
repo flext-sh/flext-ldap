@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import socket
 import stat
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import Mock, patch
 
 import pytest
@@ -65,7 +65,10 @@ class TestLDAPIAuthMethod:
     def test_auth_method_completeness(self) -> None:
         """Test that all expected authentication methods are defined."""
         expected_methods = {
-            "EXTERNAL", "SIMPLE", "ANONYMOUS", "PEER_CREDENTIALS",
+            "EXTERNAL",
+            "SIMPLE",
+            "ANONYMOUS",
+            "PEER_CREDENTIALS",
         }
         actual_methods = {member.name for member in LDAPIAuthMethod}
         assert actual_methods == expected_methods
@@ -193,7 +196,9 @@ class TestLDAPIConfiguration:
 
     @patch("os.path.exists")
     @patch("os.stat")
-    def test_validate_socket_security_not_socket(self, mock_stat: Mock, mock_exists: Mock) -> None:
+    def test_validate_socket_security_not_socket(
+        self, mock_stat: Mock, mock_exists: Mock
+    ) -> None:
         """Test validate_socket_security with non-socket file."""
         mock_exists.return_value = True
         mock_stat.return_value = Mock(st_mode=0o100644)  # Regular file
@@ -206,7 +211,9 @@ class TestLDAPIConfiguration:
 
     @patch("os.path.exists")
     @patch("os.stat")
-    def test_validate_socket_security_insecure_permissions(self, mock_stat: Mock, mock_exists: Mock) -> None:
+    def test_validate_socket_security_insecure_permissions(
+        self, mock_stat: Mock, mock_exists: Mock
+    ) -> None:
         """Test validate_socket_security with insecure permissions."""
         mock_exists.return_value = True
         mock_stat.return_value = Mock(
@@ -226,7 +233,9 @@ class TestLDAPIConfiguration:
     @patch("os.path.exists")
     @patch("os.stat")
     @patch("os.getuid")
-    def test_validate_socket_security_wrong_owner(self, mock_getuid: Mock, mock_stat: Mock, mock_exists: Mock) -> None:
+    def test_validate_socket_security_wrong_owner(
+        self, mock_getuid: Mock, mock_stat: Mock, mock_exists: Mock
+    ) -> None:
         """Test validate_socket_security with wrong owner."""
         mock_exists.return_value = True
         mock_getuid.return_value = 1000
@@ -246,7 +255,9 @@ class TestLDAPIConfiguration:
 
     @patch("os.path.exists")
     @patch("os.stat")
-    def test_validate_socket_security_allowed_owner(self, mock_stat: Mock, mock_exists: Mock) -> None:
+    def test_validate_socket_security_allowed_owner(
+        self, mock_stat: Mock, mock_exists: Mock
+    ) -> None:
         """Test validate_socket_security with allowed owner."""
         mock_exists.return_value = True
         mock_stat.return_value = Mock(
@@ -265,7 +276,9 @@ class TestLDAPIConfiguration:
 
     @patch("os.path.exists")
     @patch("os.stat")
-    def test_validate_socket_security_os_error(self, mock_stat: Mock, mock_exists: Mock) -> None:
+    def test_validate_socket_security_os_error(
+        self, mock_stat: Mock, mock_exists: Mock
+    ) -> None:
         """Test validate_socket_security with OS error."""
         mock_exists.return_value = True
         mock_stat.side_effect = OSError("Permission denied")
@@ -295,7 +308,7 @@ class TestLDAPICredentials:
 
     def test_credentials_creation_complete(self) -> None:
         """Test creating credentials with all fields."""
-        obtained_time = datetime.now(timezone.utc)
+        obtained_time = datetime.now(UTC)
         creds = LDAPICredentials(
             pid=12345,
             uid=1000,
@@ -321,8 +334,14 @@ class TestLDAPICredentials:
     @patch("os.getpid")
     @patch("os.getgroups")
     @patch("pwd.getpwuid")
-    def test_from_current_process_success(self, mock_getpwuid: Mock, mock_getgroups: Mock,
-                                        mock_getpid: Mock, mock_getgid: Mock, mock_getuid: Mock) -> None:
+    def test_from_current_process_success(
+        self,
+        mock_getpwuid: Mock,
+        mock_getgroups: Mock,
+        mock_getpid: Mock,
+        mock_getgid: Mock,
+        mock_getuid: Mock,
+    ) -> None:
         """Test from_current_process class method success."""
         mock_getuid.return_value = 1000
         mock_getgid.return_value = 1000
@@ -343,8 +362,14 @@ class TestLDAPICredentials:
     @patch("os.getpid")
     @patch("os.getgroups")
     @patch("pwd.getpwuid")
-    def test_from_current_process_no_username(self, mock_getpwuid: Mock, mock_getgroups: Mock,
-                                            mock_getpid: Mock, mock_getgid: Mock, mock_getuid: Mock) -> None:
+    def test_from_current_process_no_username(
+        self,
+        mock_getpwuid: Mock,
+        mock_getgroups: Mock,
+        mock_getpid: Mock,
+        mock_getgid: Mock,
+        mock_getuid: Mock,
+    ) -> None:
         """Test from_current_process when username lookup fails."""
         mock_getuid.return_value = 1000
         mock_getgid.return_value = 1000
@@ -422,7 +447,9 @@ class TestLDAPITransport:
 
     @patch.object(LDAPIConfiguration, "validate_socket_security")
     @patch("socket.socket")
-    async def test_connect_socket_creation_failure(self, mock_socket_class: Mock, mock_validate: Mock) -> None:
+    async def test_connect_socket_creation_failure(
+        self, mock_socket_class: Mock, mock_validate: Mock
+    ) -> None:
         """Test connect with socket creation failure."""
         mock_validate.return_value = []  # No security errors
         mock_socket_class.side_effect = OSError("Socket creation failed")
@@ -435,7 +462,9 @@ class TestLDAPITransport:
 
     @patch.object(LDAPIConfiguration, "validate_socket_security")
     @patch("socket.socket")
-    async def test_connect_success_minimal(self, mock_socket_class: Mock, mock_validate: Mock) -> None:
+    async def test_connect_success_minimal(
+        self, mock_socket_class: Mock, mock_validate: Mock
+    ) -> None:
         """Test successful connect with minimal configuration."""
         mock_validate.return_value = []  # No security errors
         mock_socket = Mock()
@@ -456,7 +485,9 @@ class TestLDAPITransport:
 
     @patch.object(LDAPIConfiguration, "validate_socket_security")
     @patch("socket.socket")
-    async def test_connect_success_with_buffer_sizes(self, mock_socket_class: Mock, mock_validate: Mock) -> None:
+    async def test_connect_success_with_buffer_sizes(
+        self, mock_socket_class: Mock, mock_validate: Mock
+    ) -> None:
         """Test successful connect with buffer size configuration."""
         mock_validate.return_value = []  # No security errors
         mock_socket = Mock()
@@ -481,7 +512,9 @@ class TestLDAPITransport:
     @patch.object(LDAPIConfiguration, "validate_socket_security")
     @patch("socket.socket")
     @patch.object(LDAPITransport, "_get_peer_credentials")
-    async def test_connect_with_peer_credentials(self, mock_get_creds: Mock, mock_socket_class: Mock, mock_validate: Mock) -> None:
+    async def test_connect_with_peer_credentials(
+        self, mock_get_creds: Mock, mock_socket_class: Mock, mock_validate: Mock
+    ) -> None:
         """Test connect with peer credentials enabled."""
         mock_validate.return_value = []  # No security errors
         mock_socket = Mock()
@@ -502,7 +535,9 @@ class TestLDAPITransport:
 
     @patch.object(LDAPIConfiguration, "validate_socket_security")
     @patch("socket.socket")
-    async def test_connect_failure_cleanup(self, mock_socket_class: Mock, mock_validate: Mock) -> None:
+    async def test_connect_failure_cleanup(
+        self, mock_socket_class: Mock, mock_validate: Mock
+    ) -> None:
         """Test connect failure performs proper cleanup."""
         mock_validate.return_value = []  # No security errors
         mock_socket = Mock()
@@ -574,6 +609,7 @@ class TestLDAPITransport:
         mock_socket = Mock()
         # Pack pid=123, uid=1000, gid=1000 as 3 32-bit integers
         import struct
+
         creds_data = struct.pack("3i", 123, 1000, 1000)
         mock_socket.getsockopt.return_value = creds_data
         transport._socket = mock_socket
@@ -670,7 +706,9 @@ class TestLDAPIProtocol:
         await protocol.disconnect()
 
     @patch.object(LDAPITransport, "disconnect")
-    async def test_disconnect_with_transport(self, mock_transport_disconnect: Mock) -> None:
+    async def test_disconnect_with_transport(
+        self, mock_transport_disconnect: Mock
+    ) -> None:
         """Test disconnect with active transport."""
         mock_transport_disconnect.return_value = None
 
@@ -688,7 +726,9 @@ class TestLDAPIProtocol:
         """Test authenticate_external raises NotImplementedError."""
         protocol = LDAPIProtocol()
 
-        with pytest.raises(NotImplementedError, match="LDAPI EXTERNAL authentication requires SASL"):
+        with pytest.raises(
+            NotImplementedError, match="LDAPI EXTERNAL authentication requires SASL"
+        ):
             await protocol.authenticate_external()
 
     def test_get_peer_credentials_no_transport(self) -> None:
@@ -781,7 +821,9 @@ class TestLDAPIConnection:
         """Test bind_external raises NotImplementedError."""
         connection = LDAPIConnection("/var/run/ldapi")
 
-        with pytest.raises(NotImplementedError, match="LDAPI EXTERNAL bind requires SASL"):
+        with pytest.raises(
+            NotImplementedError, match="LDAPI EXTERNAL bind requires SASL"
+        ):
             await connection.bind_external()
 
     def test_get_connection_info(self) -> None:
@@ -910,7 +952,9 @@ class TestSocketTesting:
 
     @patch("os.path.exists")
     @patch("os.stat")
-    async def test_test_ldapi_socket_exists_not_socket(self, mock_stat: Mock, mock_exists: Mock) -> None:
+    async def test_test_ldapi_socket_exists_not_socket(
+        self, mock_stat: Mock, mock_exists: Mock
+    ) -> None:
         """Test test_ldapi_socket with existing non-socket file."""
         mock_exists.return_value = True
         mock_stat.return_value = Mock(
@@ -928,7 +972,9 @@ class TestSocketTesting:
     @patch("os.path.exists")
     @patch("os.stat")
     @patch("socket.socket")
-    async def test_test_ldapi_socket_accessible(self, mock_socket_class: Mock, mock_stat: Mock, mock_exists: Mock) -> None:
+    async def test_test_ldapi_socket_accessible(
+        self, mock_socket_class: Mock, mock_stat: Mock, mock_exists: Mock
+    ) -> None:
         """Test test_ldapi_socket with accessible socket."""
         mock_exists.return_value = True
         mock_stat.return_value = Mock(
@@ -957,7 +1003,9 @@ class TestSocketTesting:
     @patch("os.path.exists")
     @patch("os.stat")
     @patch("socket.socket")
-    async def test_test_ldapi_socket_not_accessible(self, mock_socket_class: Mock, mock_stat: Mock, mock_exists: Mock) -> None:
+    async def test_test_ldapi_socket_not_accessible(
+        self, mock_socket_class: Mock, mock_stat: Mock, mock_exists: Mock
+    ) -> None:
         """Test test_ldapi_socket with inaccessible socket."""
         mock_exists.return_value = True
         mock_stat.return_value = Mock(
@@ -976,7 +1024,9 @@ class TestSocketTesting:
 
     @patch("os.path.exists")
     @patch("os.stat")
-    async def test_test_ldapi_socket_stat_error(self, mock_stat: Mock, mock_exists: Mock) -> None:
+    async def test_test_ldapi_socket_stat_error(
+        self, mock_stat: Mock, mock_exists: Mock
+    ) -> None:
         """Test test_ldapi_socket with stat error."""
         mock_exists.return_value = True
         mock_stat.side_effect = OSError("Permission denied")
@@ -995,9 +1045,12 @@ class TestIntegrationScenarios:
         # This would be an integration test with actual socket
         # For unit testing, we mock the components
 
-        with patch.object(LDAPIConfiguration, "validate_socket_security") as mock_validate, \
-             patch("socket.socket") as mock_socket_class:
-
+        with (
+            patch.object(
+                LDAPIConfiguration, "validate_socket_security"
+            ) as mock_validate,
+            patch("socket.socket") as mock_socket_class,
+        ):
             mock_validate.return_value = []  # No security errors
             mock_socket = Mock()
             mock_socket_class.return_value = mock_socket
@@ -1083,7 +1136,9 @@ class TestSecurityValidation:
 
     @patch("os.path.exists")
     @patch("os.stat")
-    def test_comprehensive_security_validation(self, mock_stat: Mock, mock_exists: Mock) -> None:
+    def test_comprehensive_security_validation(
+        self, mock_stat: Mock, mock_exists: Mock
+    ) -> None:
         """Test comprehensive security validation."""
         mock_exists.return_value = True
 
@@ -1091,13 +1146,19 @@ class TestSecurityValidation:
         security_scenarios = [
             # (mode, uid, current_uid, allowed_owners, should_have_errors)
             (stat.S_IFSOCK | 0o600, 1000, 1000, [], False),  # Owner access
-            (stat.S_IFSOCK | 0o777, 1000, 1000, [], True),   # World writable
-            (stat.S_IFSOCK | 0o600, 0, 1000, [], False),     # Root owned
+            (stat.S_IFSOCK | 0o777, 1000, 1000, [], True),  # World writable
+            (stat.S_IFSOCK | 0o600, 0, 1000, [], False),  # Root owned
             (stat.S_IFSOCK | 0o600, 2000, 1000, [2000], False),  # Allowed owner
-            (stat.S_IFSOCK | 0o600, 2000, 1000, [], True),   # Wrong owner
+            (stat.S_IFSOCK | 0o600, 2000, 1000, [], True),  # Wrong owner
         ]
 
-        for mode, uid, current_uid, allowed_owners, should_have_errors in security_scenarios:
+        for (
+            mode,
+            uid,
+            current_uid,
+            allowed_owners,
+            should_have_errors,
+        ) in security_scenarios:
             mock_stat.return_value = Mock(st_mode=mode, st_uid=uid)
 
             with patch("os.getuid", return_value=current_uid):
@@ -1175,7 +1236,9 @@ class TestPerformanceValidation:
 
     @patch("os.path.exists")
     @patch("os.stat")
-    def test_security_validation_performance(self, mock_stat: Mock, mock_exists: Mock) -> None:
+    def test_security_validation_performance(
+        self, mock_stat: Mock, mock_exists: Mock
+    ) -> None:
         """Test security validation performance."""
         import time
 

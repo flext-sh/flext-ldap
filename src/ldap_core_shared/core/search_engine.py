@@ -259,7 +259,9 @@ class LDAPSearchEngine:
     """
 
     def __init__(
-        self, connection_manager: LDAPConnectionManager, use_vectorized: bool = True,
+        self,
+        connection_manager: LDAPConnectionManager,
+        use_vectorized: bool = True,
     ) -> None:
         """Initialize search engine with vectorized capabilities.
 

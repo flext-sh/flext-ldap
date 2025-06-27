@@ -67,28 +67,44 @@ class TestConnectionFactoriesWorkspaceCompliance:
     """Test PyAuto workspace standards compliance for connection factories module."""
 
     @pytest.mark.workspace_integration
-    def test_factory_workspace_venv_validation(self, validate_workspace_venv: None) -> None:
+    def test_factory_workspace_venv_validation(
+        self, validate_workspace_venv: None
+    ) -> None:
         """Test connection factory workspace venv validation as required by CLAUDE.md."""
         # Fixture automatically validates workspace venv usage
         expected_venv = "/home/marlonsc/pyauto/.venv"
         current_venv = os.environ.get("VIRTUAL_ENV")
-        assert current_venv == expected_venv, f"Factory tests must use workspace venv: {expected_venv}"
+        assert current_venv == expected_venv, (
+            f"Factory tests must use workspace venv: {expected_venv}"
+        )
 
     @pytest.mark.env_security
-    def test_factory_env_security_enforcement(self, validate_env_security: Generator[None, None, None]) -> None:
+    def test_factory_env_security_enforcement(
+        self, validate_env_security: Generator[None, None, None]
+    ) -> None:
         """Test connection factory .env security enforcement as required by CLAUDE.md."""
         # Test factory configuration security
-        with patch.dict(os.environ, {
-            "LDAP_CORE_TLS_VALIDATION": "strict",
-            "LDAP_CORE_CONNECTION_TIMEOUT": "30",
-        }, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "LDAP_CORE_TLS_VALIDATION": "strict",
+                "LDAP_CORE_CONNECTION_TIMEOUT": "30",
+            },
+            clear=False,
+        ):
             # Validate no hardcoded secrets in factory configuration
             for key, value in os.environ.items():
-                if "factory" in key.lower() and ("password" in key.lower() or "secret" in key.lower()):
-                    assert value.startswith("${") or len(value) == 0, f"Hardcoded secret in factory config: {key}"
+                if "factory" in key.lower() and (
+                    "password" in key.lower() or "secret" in key.lower()
+                ):
+                    assert value.startswith("${") or len(value) == 0, (
+                        f"Hardcoded secret in factory config: {key}"
+                    )
 
     @pytest.mark.cli_debug
-    def test_factory_cli_debug_patterns(self, cli_debug_patterns: Generator[dict[str, bool], None, None]) -> None:
+    def test_factory_cli_debug_patterns(
+        self, cli_debug_patterns: Generator[dict[str, bool], None, None]
+    ) -> None:
         """Test connection factory CLI debug patterns as required by CLAUDE.md."""
         # Test factory debug configuration
         assert cli_debug_patterns["debug_enabled"] is True
@@ -99,7 +115,9 @@ class TestConnectionFactoriesWorkspaceCompliance:
         assert os.environ.get("LDAP_CORE_CLI_DEBUG") == "true"
 
     @pytest.mark.solid_compliance
-    def test_factory_solid_principles_compliance(self, solid_principles_validation: Generator[dict[str, object], None, None]) -> None:
+    def test_factory_solid_principles_compliance(
+        self, solid_principles_validation: Generator[dict[str, object], None, None]
+    ) -> None:
         """Test connection factory SOLID principles compliance."""
         # Validate StandardConnectionFactory follows SOLID principles
         from ldap_core_shared.connections.interfaces import BaseConnectionComponent
@@ -214,7 +232,9 @@ class TestStandardConnectionFactory:
         """Test factory initialization creates default security manager."""
         mock_connection_info = Mock()
 
-        with patch("ldap_core_shared.connections.factories.StandardSecurityManager") as mock_security_class:
+        with patch(
+            "ldap_core_shared.connections.factories.StandardSecurityManager"
+        ) as mock_security_class:
             mock_security_instance = Mock()
             mock_security_class.return_value = mock_security_instance
 
@@ -236,7 +256,9 @@ class TestStandardConnectionFactory:
 
         await factory.initialize()
 
-        mock_security_manager.validate_credentials.assert_called_once_with(mock_connection_info)
+        mock_security_manager.validate_credentials.assert_called_once_with(
+            mock_connection_info
+        )
 
     @pytest.mark.asyncio
     async def test_factory_cleanup(self) -> None:
@@ -510,7 +532,9 @@ class TestStandardConnectionFactory:
 
         # Initialize
         await factory.initialize()
-        mock_security_manager.validate_credentials.assert_called_once_with(mock_connection_info)
+        mock_security_manager.validate_credentials.assert_called_once_with(
+            mock_connection_info
+        )
 
         # Cleanup
         await factory.cleanup()
@@ -523,7 +547,9 @@ class TestStandardConnectionFactory:
         """Test factory initialization with credential validation failure."""
         mock_connection_info = Mock()
         mock_security_manager = AsyncMock()
-        mock_security_manager.validate_credentials.side_effect = ValueError("Invalid credentials")
+        mock_security_manager.validate_credentials.side_effect = ValueError(
+            "Invalid credentials"
+        )
 
         factory = StandardConnectionFactory(
             mock_connection_info,
@@ -597,7 +623,9 @@ class TestStandardConnectionFactoryIntegration:
 
     @patch("ldap_core_shared.connections.factories.ldap3")
     @patch("ldap_core_shared.connections.factories.ssl")
-    def test_ssl_tls_configuration_integration(self, mock_ssl: Mock, mock_ldap3: Mock) -> None:
+    def test_ssl_tls_configuration_integration(
+        self, mock_ssl: Mock, mock_ldap3: Mock
+    ) -> None:
         """Test SSL/TLS configuration integration."""
         mock_connection_info = Mock()
         mock_connection_info.host = "ldaps.example.com"
@@ -646,7 +674,9 @@ class TestStandardConnectionFactoryIntegration:
 
         await factory.initialize()
 
-        mock_security_manager.validate_credentials.assert_called_once_with(mock_connection_info)
+        mock_security_manager.validate_credentials.assert_called_once_with(
+            mock_connection_info
+        )
 
     @patch("ldap_core_shared.connections.factories.ldap3")
     def test_factory_multiple_connection_creation(self, mock_ldap3: Mock) -> None:
@@ -837,7 +867,9 @@ class TestStandardConnectionFactoryIntegration:
         await factory.cleanup()
 
     @pytest.mark.solid_compliance
-    def test_factory_solid_principles_compliance_enhanced(self, solid_principles_validation: Generator[dict[str, object], None, None]) -> None:
+    def test_factory_solid_principles_compliance_enhanced(
+        self, solid_principles_validation: Generator[dict[str, object], None, None]
+    ) -> None:
         """Test factory compliance with SOLID principles enhanced validation."""
         validators = solid_principles_validation
         mock_connection_info = Mock()
@@ -853,6 +885,7 @@ class TestStandardConnectionFactoryIntegration:
 
         # Liskov Substitution: Can be used wherever BaseConnectionComponent is expected
         from ldap_core_shared.connections.interfaces import BaseConnectionComponent
+
         assert isinstance(factory, BaseConnectionComponent)
         validators["lsp_validator"].validate_substitutability.assert_called()
 

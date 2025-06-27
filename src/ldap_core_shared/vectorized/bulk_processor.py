@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any
 
 # Constants for magic values
 BYTES_PER_KB = 1024
@@ -16,6 +17,7 @@ try:
     import numpy as np
     import pandas as pd
     from numba import jit  # type: ignore[import-not-found]
+
     VECTORIZED_AVAILABLE = True
 except ImportError:
     # Mock implementations for when vectorized dependencies are not available
@@ -25,9 +27,12 @@ except ImportError:
 
     def jit(*args, **kwargs) -> Callable[[Any], Any]:
         """Mock jit decorator when numba is not available."""
+
         def decorator(func: Any) -> Any:
             return func
+
         return decorator
+
 
 from ldap_core_shared.core.operations import (
     BulkOperationResult,
@@ -169,7 +174,7 @@ class VectorizedBulkProcessor:
     async def process_entries_vectorized(
         self,
         entries: list[dict[str, Any]],
-        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+        progress_callback: Callable[[int, int, str], None] | None = None,
     ) -> BulkOperationResult:
         """Process entries using vectorized operations for maximum performance.
 
@@ -223,7 +228,8 @@ class VectorizedBulkProcessor:
             raise LDAPBulkOperationError(msg) from e
 
     async def _create_dataframe_async(
-        self, entries: list[dict[str, Any]],
+        self,
+        entries: list[dict[str, Any]],
     ) -> pd.DataFrame:
         """Create pandas DataFrame from entries asynchronously.
 
@@ -304,7 +310,7 @@ class VectorizedBulkProcessor:
     async def _process_batches_parallel(
         self,
         df: pd.DataFrame,
-        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+        progress_callback: Callable[[int, int, str], None] | None = None,
     ) -> None:
         """Process entries in parallel batches for maximum throughput.
 
@@ -336,11 +342,14 @@ class VectorizedBulkProcessor:
         semaphore = asyncio.Semaphore(self.max_parallel_tasks)
 
         async def process_batch_with_semaphore(
-            batch_df: pd.DataFrame, batch_idx: int,
+            batch_df: pd.DataFrame,
+            batch_idx: int,
         ) -> pd.DataFrame:
             async with semaphore:
                 return await self._process_single_batch(
-                    batch_df, batch_idx, progress_callback,
+                    batch_df,
+                    batch_idx,
+                    progress_callback,
                 )
 
         # Execute batches in parallel
@@ -366,7 +375,7 @@ class VectorizedBulkProcessor:
         self,
         batch_df: pd.DataFrame,
         batch_idx: int,
-        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+        progress_callback: Callable[[int, int, str], None] | None = None,
     ) -> pd.DataFrame:
         """Process a single batch of entries.
 
@@ -434,7 +443,9 @@ class VectorizedBulkProcessor:
         return batch_df
 
     async def _check_failure_rate_adaptive(
-        self, batch_df: pd.DataFrame, current_idx: int,
+        self,
+        batch_df: pd.DataFrame,
+        current_idx: int,
     ) -> None:
         """Check failure rate and adapt processing if needed.
 
@@ -484,7 +495,8 @@ class VectorizedBulkProcessor:
         }
 
         self.transaction.context.add_checkpoint(
-            "vectorized_bulk_complete", **final_checkpoint,
+            "vectorized_bulk_complete",
+            **final_checkpoint,
         )
 
         logger.info(

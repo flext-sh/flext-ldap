@@ -45,13 +45,14 @@ References:
 import os
 import socket
 import stat
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import unquote, urlparse
 
 from pydantic import BaseModel, Field, validator
 
+from ldap_core_shared.api.exceptions import LDAPConnectionError
 from ldap_core_shared.protocols.base import LDAPProtocol, ProtocolConnection
 
 
@@ -78,43 +79,57 @@ class LDAPIConfiguration(BaseModel):
     socket_path: str = Field(description="Path to Unix domain socket")
 
     socket_type: LDAPISocketType = Field(
-        default=LDAPISocketType.STREAM, description="Type of Unix socket",
+        default=LDAPISocketType.STREAM,
+        description="Type of Unix socket",
     )
 
     # Authentication settings
     auth_method: LDAPIAuthMethod = Field(
-        default=LDAPIAuthMethod.EXTERNAL, description="Authentication method",
+        default=LDAPIAuthMethod.EXTERNAL,
+        description="Authentication method",
     )
 
     use_peer_credentials: bool = Field(
-        default=True, description="Whether to use peer credential passing",
+        default=True,
+        description="Whether to use peer credential passing",
     )
 
     # Connection settings
-    connect_timeout: float = Field(default=DEFAULT_TIMEOUT_SECONDS, description="Connection timeout in seconds")
+    connect_timeout: float = Field(
+        default=DEFAULT_TIMEOUT_SECONDS, description="Connection timeout in seconds",
+    )
 
-    socket_permissions: Optional[int] = Field(
-        default=None, description="Socket file permissions (octal)",
+    socket_permissions: int | None = Field(
+        default=None,
+        description="Socket file permissions (octal)",
     )
 
     # Security settings
-    verify_socket_owner: bool = Field(default=True, description="Whether to verify socket owner")
+    verify_socket_owner: bool = Field(
+        default=True, description="Whether to verify socket owner",
+    )
 
     allowed_socket_owners: list[int] = Field(
-        default_factory=list, description="List of allowed socket owner UIDs",
+        default_factory=list,
+        description="List of allowed socket owner UIDs",
     )
 
     require_secure_path: bool = Field(
-        default=True, description="Whether socket path must be secure",
+        default=True,
+        description="Whether socket path must be secure",
     )
 
     # Performance settings
-    send_buffer_size: Optional[int] = Field(default=None, description="Socket send buffer size")
+    send_buffer_size: int | None = Field(
+        default=None, description="Socket send buffer size",
+    )
 
-    recv_buffer_size: Optional[int] = Field(default=None, description="Socket receive buffer size")
+    recv_buffer_size: int | None = Field(
+        default=None, description="Socket receive buffer size",
+    )
 
     @validator("socket_path")
-    def validate_socket_path(cls, v: str) -> str:
+    def validate_socket_path(self, v: str) -> str:
         """Validate Unix socket path."""
         if not v or not v.strip():
             msg = "Socket path cannot be empty"
@@ -189,21 +204,23 @@ class LDAPICredentials(BaseModel):
     """Unix credentials for LDAPI authentication."""
 
     # Unix process credentials
-    pid: Optional[int] = Field(default=None, description="Process ID")
-    uid: Optional[int] = Field(default=None, description="User ID")
-    gid: Optional[int] = Field(default=None, description="Group ID")
+    pid: int | None = Field(default=None, description="Process ID")
+    uid: int | None = Field(default=None, description="User ID")
+    gid: int | None = Field(default=None, description="Group ID")
 
     # Additional credentials
-    username: Optional[str] = Field(default=None, description="Unix username")
-    groups: list[int] = Field(default_factory=list, description="Supplementary group IDs")
+    username: str | None = Field(default=None, description="Unix username")
+    groups: list[int] = Field(
+        default_factory=list, description="Supplementary group IDs",
+    )
 
     # Authentication data
-    auth_id: Optional[str] = Field(default=None, description="Authentication identity")
-    authz_id: Optional[str] = Field(default=None, description="Authorization identity")
+    auth_id: str | None = Field(default=None, description="Authentication identity")
+    authz_id: str | None = Field(default=None, description="Authorization identity")
 
     # Credential metadata
     obtained_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="When credentials were obtained",
     )
 
@@ -257,9 +274,9 @@ class LDAPITransport:
             config: LDAPI configuration
         """
         self._config = config
-        self._socket: Optional[socket.socket] = None
+        self._socket: socket.socket | None = None
         self._connected = False
-        self._peer_credentials: Optional[LDAPICredentials] = None
+        self._peer_credentials: LDAPICredentials | None = None
 
     async def connect(self) -> None:
         """Connect to Unix domain socket.
@@ -279,18 +296,23 @@ class LDAPITransport:
         try:
             # Create socket
             self._socket = socket.socket(
-                self._config.get_socket_family(), self._config.get_socket_type(),
+                self._config.get_socket_family(),
+                self._config.get_socket_type(),
             )
 
             # Configure socket options
             if self._config.send_buffer_size:
                 self._socket.setsockopt(
-                    socket.SOL_SOCKET, socket.SO_SNDBUF, self._config.send_buffer_size,
+                    socket.SOL_SOCKET,
+                    socket.SO_SNDBUF,
+                    self._config.send_buffer_size,
                 )
 
             if self._config.recv_buffer_size:
                 self._socket.setsockopt(
-                    socket.SOL_SOCKET, socket.SO_RCVBUF, self._config.recv_buffer_size,
+                    socket.SOL_SOCKET,
+                    socket.SO_RCVBUF,
+                    self._config.recv_buffer_size,
                 )
 
             # Set socket timeout
@@ -309,7 +331,7 @@ class LDAPITransport:
                 self._socket.close()
                 self._socket = None
             msg = f"Failed to connect to Unix socket {self._config.socket_path}: {e}"
-            raise ConnectionError(
+            raise LDAPConnectionError(
                 msg,
             )
 
@@ -325,7 +347,7 @@ class LDAPITransport:
                 self._connected = False
                 self._peer_credentials = None
 
-    def _get_peer_credentials(self) -> Optional[LDAPICredentials]:
+    def _get_peer_credentials(self) -> LDAPICredentials | None:
         """Get peer credentials from socket.
 
         Returns:
@@ -337,7 +359,9 @@ class LDAPITransport:
         try:
             # Try to get peer credentials (Linux-specific)
             if hasattr(socket, "SO_PEERCRED"):
-                creds = self._socket.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12)
+                creds = self._socket.getsockopt(
+                    socket.SOL_SOCKET, socket.SO_PEERCRED, 12,
+                )
                 import struct
 
                 pid, uid, gid = struct.unpack("3i", creds)
@@ -354,12 +378,12 @@ class LDAPITransport:
         return self._connected and self._socket is not None
 
     @property
-    def peer_credentials(self) -> Optional[LDAPICredentials]:
+    def peer_credentials(self) -> LDAPICredentials | None:
         """Get peer credentials."""
         return self._peer_credentials
 
     @property
-    def socket(self) -> Optional[socket.socket]:
+    def socket(self) -> socket.socket | None:
         """Get underlying socket."""
         return self._socket
 
@@ -370,14 +394,14 @@ class LDAPIProtocol(LDAPProtocol):
     protocol_name = "ldapi"
     default_port = None  # Unix sockets don't use ports
 
-    def __init__(self, config: Optional[LDAPIConfiguration] = None) -> None:
+    def __init__(self, config: LDAPIConfiguration | None = None) -> None:
         """Initialize LDAPI protocol.
 
         Args:
             config: LDAPI configuration
         """
         self._config = config or LDAPIConfiguration(socket_path="/var/run/ldapi")
-        self._transport: Optional[LDAPITransport] = None
+        self._transport: LDAPITransport | None = None
         super().__init__()
 
     async def connect(self, url: str, **kwargs: Any) -> None:
@@ -430,7 +454,7 @@ class LDAPIProtocol(LDAPProtocol):
         )
         raise NotImplementedError(msg)
 
-    def get_peer_credentials(self) -> Optional[LDAPICredentials]:
+    def get_peer_credentials(self) -> LDAPICredentials | None:
         """Get peer credentials from connection.
 
         Returns:
@@ -444,7 +468,7 @@ class LDAPIProtocol(LDAPProtocol):
         return self._transport.connected if self._transport else False
 
     @property
-    def transport(self) -> Optional[LDAPITransport]:
+    def transport(self) -> LDAPITransport | None:
         """Get LDAPI transport."""
         return self._transport
 
@@ -639,6 +663,7 @@ async def test_ldapi_socket(socket_path: str) -> dict[str, Any]:
             results["error"] = str(e)
 
     return results
+
 
 # TODO: Integration points for implementation:
 #

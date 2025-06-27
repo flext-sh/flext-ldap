@@ -7,6 +7,7 @@ import contextlib
 import logging
 from typing import TYPE_CHECKING
 
+from ldap_core_shared.api.exceptions import LDAPConnectionError
 from ldap_core_shared.connections.interfaces import (
     BaseConnectionComponent,
     IConnectionFactory,
@@ -91,7 +92,9 @@ class AsyncConnectionPool(BaseConnectionComponent):
                         logger.warning("Failed to bind pooled connection %s", i + 1)
                 except Exception as e:
                     logger.exception(
-                        "Failed to create pooled connection %s: %s", i + 1, e,
+                        "Failed to create pooled connection %s: %s",
+                        i + 1,
+                        e,
                     )
 
     async def cleanup_pool(self) -> None:
@@ -131,10 +134,10 @@ class AsyncConnectionPool(BaseConnectionComponent):
                     connection = self._factory.create_connection(self.connection_info)
                     if not connection.bind():
                         msg = "Failed to bind new connection"
-                        raise ConnectionError(msg)
+                        raise LDAPConnectionError(msg)
                 else:
                     msg = "Pool exhausted and at maximum size"
-                    raise ConnectionError(msg)
+                    raise LDAPConnectionError(msg)
 
                 self._active_connections.add(connection)
 

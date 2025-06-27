@@ -225,7 +225,7 @@ class TestSensitiveDataFilter:
             "secret_key": "key123",
             "authorization": "Bearer abc123",
             "username": "john_doe",  # Not sensitive
-            "operation": "login",    # Not sensitive
+            "operation": "login",  # Not sensitive
             "timestamp": "2023-01-01T00:00:00Z",  # Not sensitive
         }
 

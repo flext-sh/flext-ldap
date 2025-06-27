@@ -88,8 +88,8 @@ class StandardSecurityManager(BaseConnectionComponent):
 
         # Check for common DN patterns
         dn_components = dn.split(",")
-        for component in dn_components:
-            component = component.strip()
+        for raw_component in dn_components:
+            component = raw_component.strip()
             if "=" not in component:
                 return False
 
@@ -161,8 +161,8 @@ class StandardSecurityManager(BaseConnectionComponent):
         return {
             "ssl_enabled": self.connection_info.use_ssl,
             "credentials_valid": bool(
-                self.connection_info.bind_dn and
-                self.connection_info.bind_password.get_secret_value(),
+                self.connection_info.bind_dn
+                and self.connection_info.bind_password.get_secret_value(),
             ),
             "host_configured": bool(self.connection_info.host),
             "port_configured": bool(self.connection_info.port),

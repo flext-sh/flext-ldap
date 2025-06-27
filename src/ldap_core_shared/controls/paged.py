@@ -1,10 +1,21 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from ldap_core_shared.utils.constants import DEFAULT_LARGE_LIMIT
 
 # Constants for magic values
 HTTP_INTERNAL_ERROR = 500
 MAX_ENTRIES_LIMIT = 10000
+
+
+@dataclass
+class PagedSearchCookie:
+    """Cookie for tracking paged search state."""
+
+    cookie_value: bytes
+    page_number: int
+
 
 """LDAP Paged Results Control Implementation.
 
@@ -43,7 +54,7 @@ References:
 """
 
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from pydantic import Field, validator
 
@@ -87,12 +98,13 @@ class PagedResultsControl(LDAPControl):
         # Note: validation handled by @validator below for custom error messages
     )
 
-    cookie: Optional[bytes] = Field(
-        default=None, description="Opaque server cookie for pagination state",
+    cookie: bytes | None = Field(
+        default=None,
+        description="Opaque server cookie for pagination state",
     )
 
     @validator("page_size")
-    def validate_page_size(cls, v: int) -> int:
+    def validate_page_size(self, v: int) -> int:
         """Validate page size is reasonable."""
         if v <= 0:
             msg = "Page size must be positive"
@@ -138,7 +150,7 @@ class PagedResultsControl(LDAPControl):
             raise ControlEncodingError(msg) from e
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> PagedResultsControl:
+    def decode_value(cls, control_value: bytes | None) -> PagedResultsControl:
         """Decode ASN.1 control value to PagedResultsControl per RFC 2696.
 
         Args:
@@ -194,8 +206,9 @@ class PagedResultsControl(LDAPControl):
         return cls(page_size=page_size, cookie=None)
 
     def next_page(
-        self, server_cookie: Optional[bytes],
-    ) -> Optional[PagedResultsControl]:
+        self,
+        server_cookie: bytes | None,
+    ) -> PagedResultsControl | None:
         """Create control for next page request.
 
         Args:
@@ -233,13 +246,13 @@ class PagedSearchIterator:
     def __init__(
         self,
         connection: LDAPConnectionManager,
-        base_dn: Optional[str] = None,
+        base_dn: str | None = None,
         filter_expr: str = "(objectClass=*)",
-        attributes: Optional[list[str]] = None,
+        attributes: list[str] | None = None,
         page_size: int = DEFAULT_LARGE_LIMIT,
         scope: str = "subtree",
-        timeout: Optional[int] = None,
-        search_params: Optional[dict] = None,
+        timeout: int | None = None,
+        search_params: dict | None = None,
     ) -> None:
         """Initialize paged search iterator.
 
@@ -270,7 +283,7 @@ class PagedSearchIterator:
         self._page_size = page_size
         self.timeout = timeout
 
-        self._current_control: Optional[PagedResultsControl] = None
+        self._current_control: PagedResultsControl | None = None
         self._finished = False
         self._cookie = None
 
@@ -313,7 +326,7 @@ class PagedSearchIterator:
 
         Returns:
             List of entries in current page
-            
+
         Note:
             Integrates with LDAP connection's search functionality with paging controls
         """
@@ -322,12 +335,12 @@ class PagedSearchIterator:
             # Create paged search control with current cookie
             control = PagedResultsControl(
                 size=self._page_size,
-                cookie=self._cookie.cookie_value if self._cookie else b'',
+                cookie=self._cookie.cookie_value if self._cookie else b"",
                 criticality=True,
             )
-            
+
             # Perform search operation with paging control
-            if hasattr(self._connection, 'search'):
+            if hasattr(self._connection, "search"):
                 success = self._connection.search(
                     search_base=self._search_base,
                     search_filter=self._search_filter,
@@ -335,40 +348,49 @@ class PagedSearchIterator:
                     attributes=self._attributes,
                     controls=[control],
                 )
-                
-                if success and hasattr(self._connection, 'entries'):
+
+                if success and hasattr(self._connection, "entries"):
                     # Extract entries from connection
-                    entries = []
-                    for entry in self._connection.entries:
-                        entries.append({
-                            'dn': entry.entry_dn,
-                            'attributes': dict(entry.entry_attributes_as_dict)
-                        })
-                    
+                    entries = [
+                        {
+                            "dn": entry.entry_dn,
+                            "attributes": dict(entry.entry_attributes_as_dict),
+                        }
+                        for entry in self._connection.entries
+                    ]
+
                     # Update cookie for next page from control response
-                    if hasattr(self._connection, 'result') and 'controls' in self._connection.result:
-                        for response_control in self._connection.result['controls']:
-                            if response_control.get('type') == PagedResultsControl.control_type:
+                    if (
+                        hasattr(self._connection, "result")
+                        and "controls" in self._connection.result
+                    ):
+                        for response_control in self._connection.result["controls"]:
+                            if (
+                                response_control.get("type")
+                                == PagedResultsControl.control_type
+                            ):
                                 self._cookie = PagedSearchCookie(
-                                    cookie_value=response_control.get('value', b''),
-                                    page_number=self._cookie.page_number + 1 if self._cookie else 1,
+                                    cookie_value=response_control.get("value", b""),
+                                    page_number=self._cookie.page_number + 1
+                                    if self._cookie
+                                    else 1,
                                 )
                                 break
-                    
+
                     return entries
-                else:
-                    return []
-            else:
-                # Fallback when connection doesn't support search
-                from ldap_core_shared.utils.logging import get_logger
-                logger = get_logger(__name__)
-                logger.warning("Connection does not support search operation")
                 return []
-                
+            # Fallback when connection doesn't support search
+            from ldap_core_shared.utils.logging import get_logger
+
+            logger = get_logger(__name__)
+            logger.warning("Connection does not support search operation")
+            return []
+
         except Exception as e:
             from ldap_core_shared.utils.logging import get_logger
+
             logger = get_logger(__name__)
-            logger.error(f"Paged search failed: {e}")
+            logger.exception("Paged search failed: %s", e)
             return []
 
     def _has_more_pages(self) -> bool:
@@ -378,7 +400,8 @@ class PagedSearchIterator:
         )
 
     def _update_control_from_response(
-        self, response_control: PagedResultsControl,
+        self,
+        response_control: PagedResultsControl,
     ) -> None:
         """Update pagination control based on server response.
 
@@ -392,6 +415,7 @@ class PagedSearchIterator:
                 )
         else:
             self._current_control = None  # No more pages
+
 
 # Paged Search Implementation Notes:
 #

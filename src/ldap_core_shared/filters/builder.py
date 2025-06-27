@@ -45,7 +45,7 @@ References:
 
 import re
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field, validator
 
@@ -87,11 +87,12 @@ class FilterExpression(BaseModel):
     is_valid: bool = Field(default=True, description="Whether filter syntax is valid")
 
     complexity_score: int = Field(
-        default=1, description="Estimated filter complexity (1-DEFAULT_MAX_ITEMS)",
+        default=1,
+        description="Estimated filter complexity (1-DEFAULT_MAX_ITEMS)",
     )
 
     @validator("filter_string")
-    def validate_filter_string(cls, v: str) -> str:
+    def validate_filter_string(self, v: str) -> str:
         """Validate filter string format."""
         if not v or not v.strip():
             msg = "Filter string cannot be empty"
@@ -133,7 +134,7 @@ class FilterEscaping:
     """
 
     # Characters that must be escaped in LDAP filter values
-    ESCAPE_CHARS = {
+    ESCAPE_CHARS: ClassVar[dict[str, str]] = {
         "\\": r"\5c",
         "*": r"\2a",
         "(": r"\28",
@@ -383,9 +384,9 @@ class FilterBuilder:
     def substring(
         self,
         attribute: str,
-        initial: Optional[str] = None,
-        any_parts: Optional[list[str]] = None,
-        final: Optional[str] = None,
+        initial: str | None = None,
+        any_parts: list[str] | None = None,
+        final: str | None = None,
     ) -> FilterBuilder:
         """Add substring filter with precise control.
 
@@ -534,7 +535,8 @@ class FilterBuilder:
             filter_string = f"(&{''.join(self._filter_stack)})"
 
         return FilterExpression(
-            filter_string=filter_string, complexity_score=max(1, self._complexity),
+            filter_string=filter_string,
+            complexity_score=max(1, self._complexity),
         )
 
     def reset(self) -> FilterBuilder:
@@ -599,7 +601,7 @@ def present(attribute: str) -> FilterExpression:
     return FilterBuilder().present(attribute).build()
 
 
-def and_filters(*filters: Union[FilterExpression, str]) -> FilterExpression:
+def and_filters(*filters: FilterExpression | str) -> FilterExpression:
     """Combine multiple filters with AND logic.
 
     Args:
@@ -626,7 +628,7 @@ def and_filters(*filters: Union[FilterExpression, str]) -> FilterExpression:
     return builder.end().build()
 
 
-def or_filters(*filters: Union[FilterExpression, str]) -> FilterExpression:
+def or_filters(*filters: FilterExpression | str) -> FilterExpression:
     """Combine multiple filters with OR logic.
 
     Args:
@@ -653,7 +655,7 @@ def or_filters(*filters: Union[FilterExpression, str]) -> FilterExpression:
     return builder.end().build()
 
 
-def not_filter(filter_expr: Union[FilterExpression, str]) -> FilterExpression:
+def not_filter(filter_expr: FilterExpression | str) -> FilterExpression:
     """Negate a filter with NOT logic.
 
     Args:
@@ -673,6 +675,7 @@ def not_filter(filter_expr: Union[FilterExpression, str]) -> FilterExpression:
         builder._add_filter_part(f"({filter_expr})")
 
     return builder.end().build()
+
 
 # TODO: Integration points for implementation:
 #

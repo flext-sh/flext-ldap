@@ -40,9 +40,9 @@ References:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -84,7 +84,7 @@ class ADPagedSearchControl(LDAPControl):
     def __init__(
         self,
         page_size: int = 1000,
-        cookie: Optional[bytes] = None,
+        cookie: bytes | None = None,
         criticality: bool = False,
     ) -> None:
         """Initialize AD Paged Search control.
@@ -221,7 +221,6 @@ class ADDomainScopeControl(LDAPControl):
             criticality: Whether control is critical
         """
         super().__init__(
-
             criticality=criticality,
             control_value=b"",  # No value for domain scope control
         )
@@ -243,7 +242,6 @@ class ADLazyCommitControl(LDAPControl):
             criticality: Whether control is critical
         """
         super().__init__(
-
             criticality=criticality,
             control_value=b"",  # No value for lazy commit control
         )
@@ -265,7 +263,6 @@ class ADNotificationControl(LDAPControl):
             criticality: Whether control is critical
         """
         super().__init__(
-
             criticality=criticality,
             control_value=b"",  # No value for notification control
         )
@@ -275,12 +272,16 @@ class MSADControls:
     """Collection of Microsoft Active Directory controls."""
 
     @staticmethod
-    def paged_search(page_size: int = 1000, cookie: Optional[bytes] = None) -> ADPagedSearchControl:
+    def paged_search(
+        page_size: int = 1000, cookie: bytes | None = None,
+    ) -> ADPagedSearchControl:
         """Create paged search control."""
         return ADPagedSearchControl(page_size, cookie)
 
     @staticmethod
-    def security_descriptor(security_flags: int = 0x0000000F) -> ADSecurityDescriptorControl:
+    def security_descriptor(
+        security_flags: int = 0x0000000F,
+    ) -> ADSecurityDescriptorControl:
         """Create security descriptor control."""
         return ADSecurityDescriptorControl(security_flags)
 
@@ -304,20 +305,24 @@ class ADSecurityDescriptor(BaseModel):
     """Active Directory Security Descriptor representation."""
 
     # Security descriptor components
-    owner_sid: Optional[str] = Field(default=None, description="Owner SID")
-    group_sid: Optional[str] = Field(default=None, description="Primary group SID")
+    owner_sid: str | None = Field(default=None, description="Owner SID")
+    group_sid: str | None = Field(default=None, description="Primary group SID")
 
     # Access control lists
     dacl: list[dict[str, Any]] = Field(
-        default_factory=list, description="Discretionary Access Control List",
+        default_factory=list,
+        description="Discretionary Access Control List",
     )
 
     sacl: list[dict[str, Any]] = Field(
-        default_factory=list, description="System Access Control List",
+        default_factory=list,
+        description="System Access Control List",
     )
 
     # Security descriptor flags
-    control_flags: int = Field(default=0, description="Security descriptor control flags")
+    control_flags: int = Field(
+        default=0, description="Security descriptor control flags",
+    )
 
     def parse_sd_binary(self, sd_binary: bytes) -> None:
         """Parse binary security descriptor.
@@ -347,7 +352,15 @@ class ADSecurityDescriptor(BaseModel):
             # Bytes 16-19: DACL offset (little-endian)
 
             header = struct.unpack("<BBHLLLL", sd_binary[:20])
-            revision, sbz1, control, owner_offset, group_offset, sacl_offset, dacl_offset = header
+            (
+                revision,
+                _sbz1,
+                control,
+                owner_offset,
+                group_offset,
+                sacl_offset,
+                dacl_offset,
+            ) = header
 
             if revision != 1:
                 return  # Unsupported revision
@@ -420,10 +433,10 @@ class ADSecurityDescriptor(BaseModel):
         # Parse sub-authorities
         sub_authorities = []
         offset = 8
-        for i in range(sub_authority_count):
+        for _i in range(sub_authority_count):
             if offset + 4 > len(sid_data):
                 break
-            sub_auth = struct.unpack("<L", sid_data[offset:offset + 4])[0]
+            sub_auth = struct.unpack("<L", sid_data[offset : offset + 4])[0]
             sub_authorities.append(str(sub_auth))
             offset += 4
 
@@ -455,15 +468,15 @@ class ADSecurityDescriptor(BaseModel):
         # Bytes 6-7: Sbz2 (reserved)
 
         header = struct.unpack("<BBHHH", acl_data[:8])
-        acl_revision, sbz1, acl_size, ace_count, sbz2 = header
+        acl_revision, _sbz1, _acl_size, ace_count, _sbz2 = header
 
-        if acl_revision not in (2, 4) or ace_count > 1024:  # Reasonable limits
+        if acl_revision not in {2, 4} or ace_count > 1024:  # Reasonable limits
             return []  # Invalid ACL
 
         aces = []
         offset = 8
 
-        for i in range(ace_count):
+        for _i in range(ace_count):
             if offset + 8 > len(acl_data):
                 break  # Not enough data for ACE header
 
@@ -473,14 +486,14 @@ class ADSecurityDescriptor(BaseModel):
             # Bytes 2-3: AceSize (little-endian)
             # Bytes 4-7: AccessMask (little-endian)
 
-            ace_header = struct.unpack("<BBHL", acl_data[offset:offset + 8])
+            ace_header = struct.unpack("<BBHL", acl_data[offset : offset + 8])
             ace_type, ace_flags, ace_size, access_mask = ace_header
 
             if ace_size < 8 or offset + ace_size > len(acl_data):
                 break  # Invalid ACE size
 
             # Extract SID from ACE (starts at offset 8 within ACE)
-            ace_sid_data = acl_data[offset + 8:offset + ace_size]
+            ace_sid_data = acl_data[offset + 8 : offset + ace_size]
             try:
                 ace_sid = self._parse_sid_from_binary(ace_sid_data)
             except Exception:
@@ -624,7 +637,7 @@ class ADSecurityDescriptor(BaseModel):
             if access_mask & 0x00080000:  # WRITE_OWNER (duplicate check)
                 pass  # Already handled
 
-        return "".join(rights) if rights else hex(access_mask)[2:].upper()
+        return "".join(rights) if rights else f"{access_mask:x}".upper()
 
 
 class ADDomainInfo(BaseModel):
@@ -632,28 +645,32 @@ class ADDomainInfo(BaseModel):
 
     domain_dn: str = Field(description="Domain distinguished name")
     domain_name: str = Field(description="DNS domain name")
-    netbios_name: Optional[str] = Field(default=None, description="NetBIOS domain name")
+    netbios_name: str | None = Field(default=None, description="NetBIOS domain name")
 
     # Domain controllers
     domain_controllers: list[str] = Field(
-        default_factory=list, description="List of domain controller DNs",
+        default_factory=list,
+        description="List of domain controller DNs",
     )
 
     # Domain functional level
-    functional_level: Optional[int] = Field(
-        default=None, description="Domain functional level",
+    functional_level: int | None = Field(
+        default=None,
+        description="Domain functional level",
     )
 
     # Forest information
-    forest_dn: Optional[str] = Field(default=None, description="Forest root DN")
+    forest_dn: str | None = Field(default=None, description="Forest root DN")
 
     # Security settings
-    min_password_length: Optional[int] = Field(
-        default=None, description="Minimum password length",
+    min_password_length: int | None = Field(
+        default=None,
+        description="Minimum password length",
     )
 
-    max_password_age: Optional[int] = Field(
-        default=None, description="Maximum password age in days",
+    max_password_age: int | None = Field(
+        default=None,
+        description="Maximum password age in days",
     )
 
 
@@ -684,7 +701,7 @@ class ActiveDirectoryExtensions:
     def create_paged_search_control(
         self,
         page_size: int = 1000,
-        cookie: Optional[bytes] = None,
+        cookie: bytes | None = None,
     ) -> ADPagedSearchControl:
         """Create paged search control for large result sets.
 
@@ -817,10 +834,10 @@ class ActiveDirectoryExtensions:
             # Parse sub-authorities
             sub_authorities = []
             offset = 8
-            for i in range(sub_authority_count):
+            for _i in range(sub_authority_count):
                 if offset + 4 > len(sid_bytes):
                     break
-                sub_auth = struct.unpack("<L", sid_bytes[offset:offset + 4])[0]
+                sub_auth = struct.unpack("<L", sid_bytes[offset : offset + 4])[0]
                 sub_authorities.append(str(sub_auth))
                 offset += 4
 
@@ -862,7 +879,7 @@ class ActiveDirectoryExtensions:
                     "dnsHostName",
                     "forestFunctionality",
                     "domainFunctionality",
-                ]
+                ],
             )
 
             if not rootdse_result or not rootdse_result.entries:
@@ -873,9 +890,13 @@ class ActiveDirectoryExtensions:
                 )
 
             rootdse = rootdse_result.entries[0]
-            default_naming_context = str(rootdse.defaultNamingContext.value or "dc=domain,dc=local")
-            root_domain_context = str(rootdse.rootDomainNamingContext.value or default_naming_context)
-            dns_host_name = str(rootdse.dnsHostName.value or "localhost")
+            default_naming_context = str(
+                rootdse.defaultNamingContext.value or "dc=domain,dc=local",
+            )
+            root_domain_context = str(
+                rootdse.rootDomainNamingContext.value or default_naming_context,
+            )
+            str(rootdse.dnsHostName.value or "localhost")
             domain_functionality = int(rootdse.domainFunctionality.value or 0)
 
             # Extract domain name from DN
@@ -893,7 +914,7 @@ class ActiveDirectoryExtensions:
                     "maxPwdAge",
                     "lockoutDuration",
                     "lockoutThreshold",
-                ]
+                ],
             )
 
             netbios_name = None
@@ -902,23 +923,40 @@ class ActiveDirectoryExtensions:
 
             if domain_result and domain_result.entries:
                 domain_obj = domain_result.entries[0]
-                netbios_name = str(domain_obj.netBIOSName.value) if hasattr(domain_obj, 'netBIOSName') and domain_obj.netBIOSName.value else None
-                min_password_length = int(domain_obj.minPwdLength.value or 0) if hasattr(domain_obj, 'minPwdLength') and domain_obj.minPwdLength.value else None
-                max_password_age = int(domain_obj.maxPwdAge.value or 0) if hasattr(domain_obj, 'maxPwdAge') and domain_obj.maxPwdAge.value else None
+                netbios_name = (
+                    str(domain_obj.netBIOSName.value)
+                    if hasattr(domain_obj, "netBIOSName")
+                    and domain_obj.netBIOSName.value
+                    else None
+                )
+                min_password_length = (
+                    int(domain_obj.minPwdLength.value or 0)
+                    if hasattr(domain_obj, "minPwdLength")
+                    and domain_obj.minPwdLength.value
+                    else None
+                )
+                max_password_age = (
+                    int(domain_obj.maxPwdAge.value or 0)
+                    if hasattr(domain_obj, "maxPwdAge") and domain_obj.maxPwdAge.value
+                    else None
+                )
 
             # Query for domain controllers
             dc_result = connection.search(
                 search_base=f"cn=Configuration,{default_naming_context}",
                 search_filter="(objectClass=nTDSDSA)",
                 search_scope="SUBTREE",
-                attributes=["serverReference"]
+                attributes=["serverReference"],
             )
 
             domain_controllers = []
             if dc_result and dc_result.entries:
-                for dc_entry in dc_result.entries[:10]:  # Limit to 10 DCs
-                    if hasattr(dc_entry, 'serverReference') and dc_entry.serverReference.value:
-                        domain_controllers.append(str(dc_entry.serverReference.value))
+                domain_controllers.extend(
+                    str(dc_entry.serverReference.value)
+                    for dc_entry in dc_result.entries[:10]  # Limit to 10 DCs
+                    if hasattr(dc_entry, "serverReference")
+                    and dc_entry.serverReference.value
+                )
 
             return ADDomainInfo(
                 domain_dn=default_naming_context,
@@ -950,8 +988,8 @@ class ActiveDirectoryExtensions:
         try:
             # Parse DC components from DN: dc=example,dc=com -> example.com
             parts = []
-            for component in domain_dn.split(","):
-                component = component.strip()
+            for raw_component in domain_dn.split(","):
+                component = raw_component.strip()
                 if component.lower().startswith("dc="):
                     dc_value = component[3:].strip()
                     parts.append(dc_value)
@@ -998,7 +1036,9 @@ class ActiveDirectoryExtensions:
 
             # Check for domain controller object classes or attributes
             # This is a heuristic approach since we can't query the server directly here
-            if "dc=" in server_dn_lower and ("cn=" in server_dn_lower or "ou=" in server_dn_lower):
+            if "dc=" in server_dn_lower and (
+                "cn=" in server_dn_lower or "ou=" in server_dn_lower
+            ):
                 # If it's in a domain context and has computer/server indicators
                 return "computer" in server_dn_lower or "server" in server_dn_lower
 
@@ -1033,42 +1073,49 @@ class ActiveDirectoryExtensions:
                 search_base=user_dn,
                 search_filter="(objectClass=user)",
                 search_scope="BASE",
-                attributes=["memberOf"]
+                attributes=["memberOf"],
             )
 
             if user_result and user_result.entries:
                 user_entry = user_result.entries[0]
-                if hasattr(user_entry, 'memberOf') and user_entry.memberOf:
+                if hasattr(user_entry, "memberOf") and user_entry.memberOf:
                     # Add direct group memberships
-                    for group_dn in user_entry.memberOf:
-                        all_groups.add(str(group_dn))
+                    all_groups.update(str(group_dn) for group_dn in user_entry.memberOf)
 
             # Method 2: Use AD-specific nested group query with LDAP_MATCHING_RULE_IN_CHAIN
             # This finds all nested group memberships in a single query
             try:
                 nested_result = connection.search(
-                    search_base=connection.server.info.other.get("defaultNamingContext", ["dc=domain,dc=com"])[0],
+                    search_base=connection.server.info.other.get(
+                        "defaultNamingContext", ["dc=domain,dc=com"],
+                    )[0],
                     search_filter=f"(&(objectClass=group)(member:1.2.840.113556.1.4.1941:={user_dn}))",
                     search_scope="SUBTREE",
-                    attributes=["distinguishedName", "name"]
+                    attributes=["distinguishedName", "name"],
                 )
 
                 if nested_result and nested_result.entries:
                     for group_entry in nested_result.entries:
-                        group_dn = str(group_entry.distinguishedName.value or group_entry.entry_dn)
+                        group_dn = str(
+                            group_entry.distinguishedName.value or group_entry.entry_dn,
+                        )
                         all_groups.add(group_dn)
 
             except Exception:
                 # If nested query fails, fall back to manual traversal
-                all_groups.update(self._get_nested_groups_manual(connection, list(all_groups)))
+                all_groups.update(
+                    self._get_nested_groups_manual(connection, list(all_groups)),
+                )
 
-            return sorted(list(all_groups))
+            return sorted(all_groups)
 
         except Exception:
             # Return empty list if query fails
             return []
 
-    def _get_nested_groups_manual(self, connection: Any, direct_groups: list[str]) -> set[str]:
+    def _get_nested_groups_manual(
+        self, connection: Any, direct_groups: list[str],
+    ) -> set[str]:
         """Manually traverse nested group memberships.
 
         Args:
@@ -1101,12 +1148,12 @@ class ActiveDirectoryExtensions:
                     search_base=current_group,
                     search_filter="(objectClass=group)",
                     search_scope="BASE",
-                    attributes=["memberOf"]
+                    attributes=["memberOf"],
                 )
 
                 if group_result and group_result.entries:
                     group_entry = group_result.entries[0]
-                    if hasattr(group_entry, 'memberOf') and group_entry.memberOf:
+                    if hasattr(group_entry, "memberOf") and group_entry.memberOf:
                         for parent_group_dn in group_entry.memberOf:
                             parent_group_str = str(parent_group_dn)
                             if parent_group_str not in processed_groups:
@@ -1158,7 +1205,7 @@ def parse_ad_timestamp(timestamp_str: str) -> datetime:
     # Difference: 11644473600 seconds
     unix_timestamp = (timestamp_int / 10000000) - 11644473600
 
-    return datetime.fromtimestamp(unix_timestamp, tz=timezone.utc)
+    return datetime.fromtimestamp(unix_timestamp, tz=UTC)
 
 
 def format_ad_timestamp(dt: datetime) -> str:

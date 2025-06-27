@@ -14,9 +14,9 @@ from ldap_core_shared.utils.constants import DEFAULT_MAX_ITEMS, DEFAULT_TIMEOUT_
 
 # Constants for magic values
 HTTP_OK = 200
-MIN_GOOD_DN_LENGTH = 20        # Minimum DN length for good structure
-GOOD_ATTRIBUTE_DIVERSITY = 5   # Threshold for good attribute diversity
-MIN_ATTRIBUTE_DIVERSITY = 2    # Minimum attribute diversity threshold
+MIN_GOOD_DN_LENGTH = 20  # Minimum DN length for good structure
+GOOD_ATTRIBUTE_DIVERSITY = 5  # Threshold for good attribute diversity
+MIN_ATTRIBUTE_DIVERSITY = 2  # Minimum attribute diversity threshold
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -219,7 +219,9 @@ class LDIFAnalyzer:
         report.append(
             f"Average Attributes per Entry: {analysis.average_attributes_per_entry:.2f}",
         )
-        report.append(f"Data Quality Score: {analysis.data_quality_score:.1f}/DEFAULT_MAX_ITEMS")
+        report.append(
+            f"Data Quality Score: {analysis.data_quality_score:.1f}/DEFAULT_MAX_ITEMS",
+        )
         report.append("")
 
         # Object class distribution
@@ -309,7 +311,7 @@ class LDIFAnalyzer:
             1 for entry in entries if not entry.get_object_classes()
         )
         if entries_without_oc > 0:
-            score -= (entries_without_oc / len(entries) * DEFAULT_TIMEOUT_SECONDS)
+            score -= entries_without_oc / len(entries) * DEFAULT_TIMEOUT_SECONDS
 
         # Penalize for very short or very long DNs
         dn_lengths = [len(entry.dn) for entry in entries]
@@ -322,7 +324,9 @@ class LDIFAnalyzer:
         # Reward attribute diversity
         attr_diversity = len(unique_attrs) / len(entries) if entries else 0
         if attr_diversity > GOOD_ATTRIBUTE_DIVERSITY:  # Good attribute diversity
-            score += min(GOOD_ATTRIBUTE_DIVERSITY, attr_diversity - GOOD_ATTRIBUTE_DIVERSITY)
+            score += min(
+                GOOD_ATTRIBUTE_DIVERSITY, attr_diversity - GOOD_ATTRIBUTE_DIVERSITY,
+            )
         elif attr_diversity < MIN_ATTRIBUTE_DIVERSITY:  # Poor attribute diversity
             score -= 10
 

@@ -19,6 +19,7 @@ class TestSchemaParser:
     def schema_parser(self):
         """Create SchemaParser instance for testing."""
         from ldap_core_shared.schema.parser import SchemaParser
+
         return SchemaParser()
 
     @pytest.mark.unit
@@ -318,18 +319,22 @@ class TestSchemaParserPerformance:
     def test_parse_large_schema_performance(self, schema_parser) -> None:
         """Test parsing large schema file performance."""
         # Generate large schema content
-        large_schema = [f"""
+        large_schema = [
+            f"""
             attributetype ( 1.2.3.4.5.{i}
                 NAME 'testAttribute{i}'
                 DESC 'Test attribute {i}'
                 EQUALITY caseIgnoreMatch
                 SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
-            """ for i in range(1000)]
+            """
+            for i in range(1000)
+        ]
 
         large_schema_text = "\n".join(large_schema)
 
         try:
             import time
+
             start_time = time.time()
 
             schema_parser.parse_schema_text(large_schema_text)

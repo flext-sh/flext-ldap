@@ -140,7 +140,9 @@ class TestRFC2696PagedResultsControl:
 
                     # Simulate processing pages
                     page_count = 0
-                    async for _page in ldap_client.search_paged_generator(search_params):
+                    async for _page in ldap_client.search_paged_generator(
+                        search_params
+                    ):
                         page_count += 1
                         if page_count >= 5:  # Limit for testing
                             break
@@ -148,7 +150,9 @@ class TestRFC2696PagedResultsControl:
                 performance_monitor.stop_measurement(f"paged_search_{page_size}")
 
                 metrics = performance_monitor.get_metrics()
-                performance_results[page_size] = metrics[f"paged_search_{page_size}"]["duration"]
+                performance_results[page_size] = metrics[f"paged_search_{page_size}"][
+                    "duration"
+                ]
 
             # Verify performance characteristics
             assert len(performance_results) == len(page_sizes)
@@ -297,7 +301,10 @@ class TestRFC3062AssertionControl:
                     operation_type="modify",
                     dn=test_dn,
                     changes={
-                        "title": {"operation": "replace", "values": ["Senior Engineer"]},
+                        "title": {
+                            "operation": "replace",
+                            "values": ["Senior Engineer"],
+                        },
                     },
                     assertion_filter=assertion_filter,
                 )
@@ -314,7 +321,9 @@ class TestRFC3062AssertionControl:
                 )
 
                 assert delete_request.operation_type == "delete"
-                assert delete_request.assertion_filter == "(objectClass=temporaryAccount)"
+                assert (
+                    delete_request.assertion_filter == "(objectClass=temporaryAccount)"
+                )
 
 
 class TestRFC4527ReadEntryControls:
@@ -353,7 +362,9 @@ class TestRFC4527ReadEntryControls:
         """RFC 4527 - Post-Read Control specification compliance."""
         # RFC 4527: Control to read entry attributes after modification
 
-        post_read_control = PostReadControl(attributes=["cn", "modifyTimestamp", "entryCSN"])
+        post_read_control = PostReadControl(
+            attributes=["cn", "modifyTimestamp", "entryCSN"]
+        )
 
         # RFC 4527: Post-Read Control OID is 1.3.6.1.1.13.2
         assert post_read_control.control_type == "1.3.6.1.1.13.2"
@@ -378,7 +389,9 @@ class TestRFC4527ReadEntryControls:
                 modify_request = LDAPOperationRequest(
                     operation_type="modify",
                     dn="cn=test,ou=People,dc=example,dc=com",
-                    changes={"description": {"operation": "replace", "values": ["Updated"]}},
+                    changes={
+                        "description": {"operation": "replace", "values": ["Updated"]}
+                    },
                     controls=[post_read_control],
                 )
 
@@ -406,15 +419,23 @@ class TestRFC4527ReadEntryControls:
             async with LDAP(config):
                 # Create both controls
                 pre_read = PreReadControl(attributes=["cn", "department", "title"])
-                post_read = PostReadControl(attributes=["cn", "department", "title", "modifyTimestamp"])
+                post_read = PostReadControl(
+                    attributes=["cn", "department", "title", "modifyTimestamp"]
+                )
 
                 # Test modify operation with both controls
                 modify_request = LDAPOperationRequest(
                     operation_type="modify",
                     dn="cn=Employee,ou=People,dc=example,dc=com",
                     changes={
-                        "title": {"operation": "replace", "values": ["Senior Developer"]},
-                        "department": {"operation": "replace", "values": ["Engineering"]},
+                        "title": {
+                            "operation": "replace",
+                            "values": ["Senior Developer"],
+                        },
+                        "department": {
+                            "operation": "replace",
+                            "values": ["Engineering"],
+                        },
                     },
                     controls=[pre_read, post_read],
                 )
@@ -552,7 +573,9 @@ class TestRFC4532WhoAmIExtension:
                     if scenario["auth_method"] != "anonymous":
                         assert result.data is not None
                         if scenario["expected_identity_prefix"]:
-                            assert result.data.startswith(scenario["expected_identity_prefix"])
+                            assert result.data.startswith(
+                                scenario["expected_identity_prefix"]
+                            )
 
 
 class TestRFC4533ContentSynchronization:
@@ -668,7 +691,9 @@ class TestAdvancedLDAPOperationsIntegration:
             async with LDAP(config):
                 # Create multiple controls
                 paged_control = PagedResultsControl(page_size=100)
-                sort_control = ServerSideSortControl(sort_keys=[SortKey(attribute="cn", order="ascending")])
+                sort_control = ServerSideSortControl(
+                    sort_keys=[SortKey(attribute="cn", order="ascending")]
+                )
                 pre_read = PreReadControl(attributes=["*"])
                 post_read = PostReadControl(attributes=["*", "+"])
 
@@ -687,8 +712,14 @@ class TestAdvancedLDAPOperationsIntegration:
                     operation_type="modify",
                     dn="cn=Employee,ou=People,dc=example,dc=com",
                     changes={
-                        "title": {"operation": "replace", "values": ["Principal Engineer"]},
-                        "department": {"operation": "replace", "values": ["Advanced Engineering"]},
+                        "title": {
+                            "operation": "replace",
+                            "values": ["Principal Engineer"],
+                        },
+                        "department": {
+                            "operation": "replace",
+                            "values": ["Advanced Engineering"],
+                        },
                     },
                     controls=[pre_read, post_read],
                 )
@@ -746,12 +777,20 @@ class TestAdvancedLDAPOperationsIntegration:
                         request = LDAPOperationRequest(
                             operation_type="modify",
                             dn="cn=target,ou=People,dc=example,dc=com",
-                            changes={"description": {"operation": "replace", "values": ["Proxy modified"]}},
+                            changes={
+                                "description": {
+                                    "operation": "replace",
+                                    "values": ["Proxy modified"],
+                                }
+                            },
                             controls=[proxy_control],
                         )
 
                         assert len(request.controls) == 1
-                        assert request.controls[0].control_type == "2.16.840.1.113730.3.4.18"
+                        assert (
+                            request.controls[0].control_type
+                            == "2.16.840.1.113730.3.4.18"
+                        )
 
     @pytest.mark.asyncio
     async def test_extended_operations_comprehensive(self) -> None:
@@ -836,7 +875,9 @@ class TestPerformanceStressAdvanced:
             ]
 
             for scenario in stress_scenarios:
-                performance_monitor.start_measurement(f"stress_paged_{scenario['page_size']}")
+                performance_monitor.start_measurement(
+                    f"stress_paged_{scenario['page_size']}"
+                )
 
                 async with LDAP(config) as ldap_client:
                     search_params = LDAPSearchParams(
@@ -851,7 +892,9 @@ class TestPerformanceStressAdvanced:
                     # Simulate processing large result set
                     async for page in ldap_client.search_paged_generator(search_params):
                         pages_processed += 1
-                        entries_processed += len(page.entries) if page.entries else scenario["page_size"]
+                        entries_processed += (
+                            len(page.entries) if page.entries else scenario["page_size"]
+                        )
 
                         # Stop at max pages for testing
                         if pages_processed >= scenario["max_pages"]:
@@ -860,7 +903,9 @@ class TestPerformanceStressAdvanced:
                         # Simulate processing delay
                         await asyncio.sleep(0.001)
 
-                performance_monitor.stop_measurement(f"stress_paged_{scenario['page_size']}")
+                performance_monitor.stop_measurement(
+                    f"stress_paged_{scenario['page_size']}"
+                )
 
                 # Verify performance metrics
                 metrics = performance_monitor.get_metrics()
@@ -928,7 +973,12 @@ class TestPerformanceStressAdvanced:
                         LDAPOperationRequest(
                             operation_type="modify",
                             dn=f"cn=test{operation_id},ou=People,dc=example,dc=com",
-                            changes={"description": {"operation": "replace", "values": [f"Updated {operation_id}"]}},
+                            changes={
+                                "description": {
+                                    "operation": "replace",
+                                    "values": [f"Updated {operation_id}"],
+                                }
+                            },
                             controls=op["controls"],
                         )
 
@@ -940,9 +990,7 @@ class TestPerformanceStressAdvanced:
             # Launch concurrent operations
             performance_monitor.start_measurement("concurrent_controls")
 
-            concurrent_tasks = [
-                concurrent_operation(i) for i in range(20)
-            ]
+            concurrent_tasks = [concurrent_operation(i) for i in range(20)]
 
             results = await asyncio.gather(*concurrent_tasks)
 

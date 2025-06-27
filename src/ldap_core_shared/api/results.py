@@ -73,17 +73,17 @@ class Result(BaseModel, Generic[T]):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     # Core result data
-    success: bool                                    # Operation succeeded
-    data: T                                          # Result data (typed)
-    error: str | None = None                         # Error message if failed
-    error_code: str | None = None                    # Error code if failed
+    success: bool  # Operation succeeded
+    data: T  # Result data (typed)
+    error: str | None = None  # Error message if failed
+    error_code: str | None = None  # Error code if failed
 
     # Performance and context information
-    execution_time_ms: float = 0.0                  # Execution time in milliseconds
+    execution_time_ms: float = 0.0  # Execution time in milliseconds
     context: dict[str, Any] = Field(default_factory=dict)  # Additional context
 
     @classmethod
-    def ok(cls, data: T, execution_time_ms: float = 0.0, **context) -> Result[T]:
+    def ok(cls, data: T, execution_time_ms: float = 0.0, **context: Any) -> Result[T]:
         """Create successful result.
 
         FACTORY METHOD: Creates Result object for successful operations.
@@ -108,8 +108,13 @@ class Result(BaseModel, Generic[T]):
         )
 
     @classmethod
-    def fail(cls, message: str, code: str | None = None,
-              execution_time_ms: float = 0.0, default_data: T | None = None) -> Result[T]:
+    def fail(
+        cls,
+        message: str,
+        code: str | None = None,
+        execution_time_ms: float = 0.0,
+        default_data: T | None = None,
+    ) -> Result[T]:
         """Create failed result.
 
         FACTORY METHOD: Creates Result object for failed operations.
@@ -136,8 +141,12 @@ class Result(BaseModel, Generic[T]):
         )
 
     @classmethod
-    def from_exception(cls, exc: Exception, default_data: T | None = None,
-                      execution_time_ms: float = 0.0) -> Result[T]:
+    def from_exception(
+        cls,
+        exc: Exception,
+        default_data: T | None = None,
+        execution_time_ms: float = 0.0,
+    ) -> Result[T]:
         """Create result from exception.
 
         FACTORY METHOD: Converts exceptions into Result objects for consistent

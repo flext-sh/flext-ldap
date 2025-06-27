@@ -335,7 +335,9 @@ class SchemaAnalyzer:
         # Check for proper camelCase or kebab-case
         import re
 
-        return bool(re.match(r"^[a-z][a-zA-Z0-9-]*$", name) and len(name) >= MIN_NAME_LENGTH)
+        return bool(
+            re.match(r"^[a-z][a-zA-Z0-9-]*$", name) and len(name) >= MIN_NAME_LENGTH,
+        )
 
     def _check_naming_consistency(self, schema: ParsedSchema) -> list[str]:
         """Check for naming consistency issues."""

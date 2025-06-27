@@ -37,7 +37,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from pydantic import BaseModel, Field
 
@@ -54,22 +54,22 @@ if TYPE_CHECKING:
 class SASLMechanismType(Enum):
     """SASL mechanism type classification."""
 
-    SIMPLE = "simple"                     # Simple username/password
+    SIMPLE = "simple"  # Simple username/password
     CHALLENGE_RESPONSE = "challenge_response"  # Challenge-response based
-    TOKEN = "token"                       # Token-based authentication
-    CERTIFICATE = "certificate"          # Certificate-based authentication
-    ANONYMOUS = "anonymous"               # Anonymous authentication
+    TOKEN = "token"  # Token-based authentication
+    CERTIFICATE = "certificate"  # Certificate-based authentication
+    ANONYMOUS = "anonymous"  # Anonymous authentication
 
 
 class SASLSecurityFlag(Enum):
     """SASL mechanism security flags."""
 
-    NO_ANONYMOUS = "no_anonymous"         # Mechanism provides authentication
-    NO_PLAIN_TEXT = "no_plain_text"      # No plaintext credentials
-    NO_ACTIVE = "no_active"               # Immune to active attacks
-    NO_DICTIONARY = "no_dictionary"      # Immune to dictionary attacks
-    FORWARD_SECRECY = "forward_secrecy"   # Provides forward secrecy
-    MUTUAL_AUTH = "mutual_auth"           # Supports mutual authentication
+    NO_ANONYMOUS = "no_anonymous"  # Mechanism provides authentication
+    NO_PLAIN_TEXT = "no_plain_text"  # No plaintext credentials
+    NO_ACTIVE = "no_active"  # Immune to active attacks
+    NO_DICTIONARY = "no_dictionary"  # Immune to dictionary attacks
+    FORWARD_SECRECY = "forward_secrecy"  # Provides forward secrecy
+    MUTUAL_AUTH = "mutual_auth"  # Supports mutual authentication
     PASS_CREDENTIALS = "pass_credentials"  # Supports credential delegation
 
 
@@ -89,7 +89,9 @@ class SASLMechanismCapabilities(BaseModel):
     """
 
     # Basic mechanism properties
-    mechanism_type: SASLMechanismType = Field(description="Mechanism type classification")
+    mechanism_type: SASLMechanismType = Field(
+        description="Mechanism type classification",
+    )
 
     # Protocol capabilities
     supports_initial_response: bool = Field(
@@ -201,7 +203,7 @@ class SASLMechanism(ABC):
     def __init__(
         self,
         callback_handler: SASLCallbackHandler,
-        context: Optional[SASLContext] = None,
+        context: SASLContext | None = None,
     ) -> None:
         """Initialize SASL mechanism.
 
@@ -219,8 +221,8 @@ class SASLMechanism(ABC):
         # Authentication state
         self._complete = False
         self._challenge_count = 0
-        self._last_challenge: Optional[bytes] = None
-        self._last_response: Optional[bytes] = None
+        self._last_challenge: bytes | None = None
+        self._last_response: bytes | None = None
 
         # Mechanism-specific state
         self._mechanism_state: dict[str, Any] = {}
@@ -276,7 +278,7 @@ class SASLMechanism(ABC):
         return self.context
 
     @abstractmethod
-    def evaluate_challenge(self, challenge: bytes) -> Optional[bytes]:
+    def evaluate_challenge(self, challenge: bytes) -> bytes | None:
         """Evaluate server challenge and generate response.
 
         This is the main authentication method that processes server
@@ -292,7 +294,7 @@ class SASLMechanism(ABC):
             SASLError: If challenge evaluation fails
         """
 
-    def get_initial_response(self) -> Optional[bytes]:
+    def get_initial_response(self) -> bytes | None:
         """Get initial response for mechanisms that support it.
 
         Returns:
@@ -330,7 +332,11 @@ class SASLMechanism(ABC):
             Property value or None if not negotiated
         """
         if property_name == "qop":
-            return self.context.negotiated_qop.value if self.context.negotiated_qop else None
+            return (
+                self.context.negotiated_qop.value
+                if self.context.negotiated_qop
+                else None
+            )
         if property_name == "cipher":
             return self.context.negotiated_cipher
         if property_name == "maxbuf":
@@ -352,7 +358,7 @@ class SASLMechanism(ABC):
         self._challenge_count += 1
         self.context.record_challenge(challenge)
 
-    def _record_response(self, response: Optional[bytes]) -> None:
+    def _record_response(self, response: bytes | None) -> None:
         """Record response for debugging and state tracking.
 
         Args:
@@ -406,7 +412,7 @@ class SASLMechanismRegistry:
         >>> mechanism = SASLMechanismRegistry.create_mechanism("CUSTOM", callback)
     """
 
-    _mechanisms: dict[str, type[SASLMechanism]] = {}
+    _mechanisms: ClassVar[dict[str, type[SASLMechanism]]] = {}
     _initialized = False
 
     @classmethod
@@ -495,7 +501,7 @@ class SASLMechanismRegistry:
         cls,
         mechanism_name: str,
         callback_handler: SASLCallbackHandler,
-        context: Optional[SASLContext] = None,
+        context: SASLContext | None = None,
     ) -> SASLMechanism:
         """Create mechanism instance.
 
@@ -514,7 +520,9 @@ class SASLMechanismRegistry:
         return mechanism_class(callback_handler, context)
 
     @classmethod
-    def get_mechanism_capabilities(cls, mechanism_name: str) -> SASLMechanismCapabilities:
+    def get_mechanism_capabilities(
+        cls, mechanism_name: str,
+    ) -> SASLMechanismCapabilities:
         """Get mechanism capabilities.
 
         Args:
@@ -533,8 +541,8 @@ class SASLMechanismRegistry:
     def select_mechanism(
         cls,
         available_mechanisms: list[str],
-        security_requirements: Optional[dict[str, Any]] = None,
-    ) -> Optional[str]:
+        security_requirements: dict[str, Any] | None = None,
+    ) -> str | None:
         """Select best mechanism from available list.
 
         Args:
@@ -548,8 +556,7 @@ class SASLMechanismRegistry:
 
         # Filter to registered mechanisms only
         candidates = [
-            name for name in available_mechanisms
-            if cls.is_mechanism_available(name)
+            name for name in available_mechanisms if cls.is_mechanism_available(name)
         ]
 
         if not candidates:
@@ -558,12 +565,17 @@ class SASLMechanismRegistry:
         # Apply security requirements if provided
         if security_requirements:
             candidates = cls._filter_by_security_requirements(
-                candidates, security_requirements,
+                candidates,
+                security_requirements,
             )
 
         # Select by preference order (could be customized)
         preference_order = [
-            "GSSAPI", "DIGEST-MD5", "CRAM-MD5", "PLAIN", "ANONYMOUS",
+            "GSSAPI",
+            "DIGEST-MD5",
+            "CRAM-MD5",
+            "PLAIN",
+            "ANONYMOUS",
         ]
 
         for preferred in preference_order:
@@ -601,12 +613,16 @@ class SASLMechanismRegistry:
 
                 # Check required security flags
                 required_flags = requirements.get("required_security_flags", [])
-                if not all(capabilities.has_security_flag(flag) for flag in required_flags):
+                if not all(
+                    capabilities.has_security_flag(flag) for flag in required_flags
+                ):
                     continue
 
                 # Check forbidden security flags
                 forbidden_flags = requirements.get("forbidden_security_flags", [])
-                if any(capabilities.has_security_flag(flag) for flag in forbidden_flags):
+                if any(
+                    capabilities.has_security_flag(flag) for flag in forbidden_flags
+                ):
                     continue
 
                 # Check QOP requirements
@@ -631,6 +647,7 @@ class SASLMechanismRegistry:
         # Register standard mechanisms when they become available
         try:
             from ldap_core_shared.protocols.sasl.mechanisms.plain import PlainMechanism
+
             cls.register_mechanism(PlainMechanism)
         except ImportError:
             pass
@@ -639,6 +656,7 @@ class SASLMechanismRegistry:
             from ldap_core_shared.protocols.sasl.mechanisms.digest_md5 import (
                 DigestMD5Mechanism,
             )
+
             cls.register_mechanism(DigestMD5Mechanism)
         except ImportError:
             pass
@@ -647,6 +665,7 @@ class SASLMechanismRegistry:
             from ldap_core_shared.protocols.sasl.mechanisms.external import (
                 ExternalMechanism,
             )
+
             cls.register_mechanism(ExternalMechanism)
         except ImportError:
             pass
@@ -655,6 +674,7 @@ class SASLMechanismRegistry:
             from ldap_core_shared.protocols.sasl.mechanisms.anonymous import (
                 AnonymousMechanism,
             )
+
             cls.register_mechanism(AnonymousMechanism)
         except ImportError:
             pass

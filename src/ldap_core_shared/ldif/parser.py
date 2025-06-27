@@ -91,7 +91,7 @@ class LDIFParser:
 
         # Convert to string if needed
         file_path_str = str(file_path)
-        logger.info(f"Starting LDIF parsing: {file_path_str}")
+        logger.info("Starting LDIF parsing: %s", file_path_str)
 
         # Mock implementation for demonstration
         return ParsingResult(

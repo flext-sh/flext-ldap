@@ -513,7 +513,9 @@ class TestValidationRule:
         mock_parsed = Mock()
         context = {}
 
-        with pytest.raises(NotImplementedError, match="Subclasses must implement validate method"):
+        with pytest.raises(
+            NotImplementedError, match="Subclasses must implement validate method"
+        ):
             rule.validate(mock_parsed, context)
 
 
@@ -756,6 +758,7 @@ class TestSecurityRule:
 
         # Import FilterType for comparison
         from ldap_core_shared.filters.parser import FilterType
+
         mock_parsed.filter_type = FilterType.PRESENT
 
         assert rule._is_overly_broad(mock_parsed) is True
@@ -767,6 +770,7 @@ class TestSecurityRule:
         # Mock substring filter with many wildcards
         mock_parsed = Mock()
         from ldap_core_shared.filters.parser import FilterType
+
         mock_parsed.filter_type = FilterType.SUBSTRING
         mock_parsed.value = "*test*with*many*wildcards*"
 
@@ -793,6 +797,7 @@ class TestPerformanceRule:
         # Mock equality filter (good performance)
         mock_parsed = Mock()
         from ldap_core_shared.filters.parser import FilterType
+
         mock_parsed.filter_type = FilterType.EQUALITY
         mock_parsed.value = "test"
         mock_parsed.attribute = "cn"
@@ -810,6 +815,7 @@ class TestPerformanceRule:
         # Mock substring filter with leading wildcard
         mock_parsed = Mock()
         from ldap_core_shared.filters.parser import FilterType
+
         mock_parsed.filter_type = FilterType.SUBSTRING
         mock_parsed.value = "*test"  # Leading wildcard
         mock_parsed.attribute = "cn"
@@ -829,6 +835,7 @@ class TestPerformanceRule:
         # Mock presence filter
         mock_parsed = Mock()
         from ldap_core_shared.filters.parser import FilterType
+
         mock_parsed.filter_type = FilterType.PRESENT
         mock_parsed.attribute = "objectClass"
         mock_parsed.children = []
@@ -1148,14 +1155,14 @@ class TestFilterValidatorIntegration:
 
         # Test various types of filters
         test_filters = [
-            "(cn=test)",                                    # Simple equality
-            "(&(cn=test)(objectClass=person))",           # Compound AND
-            "(|(cn=admin)(cn=administrator))",             # Compound OR
-            "(!(cn=guest))",                              # NOT filter
-            "(cn=*admin*)",                               # Substring
-            "(objectClass=*)",                            # Presence
-            "(uidNumber>=1000)",                          # Greater-equal
-            "(cn~=test)",                                 # Approximate
+            "(cn=test)",  # Simple equality
+            "(&(cn=test)(objectClass=person))",  # Compound AND
+            "(|(cn=admin)(cn=administrator))",  # Compound OR
+            "(!(cn=guest))",  # NOT filter
+            "(cn=*admin*)",  # Substring
+            "(objectClass=*)",  # Presence
+            "(uidNumber>=1000)",  # Greater-equal
+            "(cn~=test)",  # Approximate
         ]
 
         for filter_str in test_filters:
@@ -1265,8 +1272,8 @@ class TestFilterValidatorIntegration:
 
         # Various potentially problematic filters
         security_test_filters = [
-            "(objectClass=*)",              # Very broad
-            "(cn=*)",                       # Broad substring
+            "(objectClass=*)",  # Very broad
+            "(cn=*)",  # Broad substring
             "(cn=test" + "x" * 500 + ")",  # Long value
         ]
 
@@ -1283,11 +1290,11 @@ class TestFilterValidatorIntegration:
 
         # Test various error conditions
         error_cases = [
-            "",                    # Empty filter
-            "(cn=test",           # Unclosed parenthesis
-            "cn=test)",           # Missing opening parenthesis
-            "(=test)",            # Missing attribute
-            "(cn)",               # Missing operator and value
+            "",  # Empty filter
+            "(cn=test",  # Unclosed parenthesis
+            "cn=test)",  # Missing opening parenthesis
+            "(=test)",  # Missing attribute
+            "(cn)",  # Missing operator and value
         ]
 
         for filter_str in error_cases:

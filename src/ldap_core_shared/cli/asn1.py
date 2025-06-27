@@ -19,24 +19,24 @@ from __future__ import annotations
 import base64
 import binascii
 import sys
-from typing import Any, Optional
+from typing import Any
 
 # Constants for ASCII character ranges
 ASCII_PRINTABLE_START = 32  # Space character
-ASCII_PRINTABLE_END = 126   # Tilde character
+ASCII_PRINTABLE_END = 126  # Tilde character
 
 # Constants for ASN.1 processing
 MAX_ELEMENTS_TO_SHOW = 10  # Maximum elements to show in structure dump
-HEX_DUMP_WIDTH = 16        # Bytes per line in hex dump
+HEX_DUMP_WIDTH = 16  # Bytes per line in hex dump
 MIN_ASN1_STRUCTURE_SIZE = 2  # Minimum bytes needed for valid ASN.1 structure
 
 
 def run_asn1_tool(
     action: str,
-    input_file: Optional[str] = None,
-    output_file: Optional[str] = None,
+    input_file: str | None = None,
+    output_file: str | None = None,
     format: str = "der",
-    schema_file: Optional[str] = None,
+    schema_file: str | None = None,
     verbose: bool = False,
 ) -> bool:
     """Run ASN.1 processing tool.
@@ -67,7 +67,12 @@ def run_asn1_tool(
 
         # Execute action
         return _execute_asn1_action(
-            action, input_data, output_file, format, schema_file, verbose,
+            action,
+            input_data,
+            output_file,
+            format,
+            schema_file,
+            verbose,
         )
 
     except ImportError:
@@ -77,13 +82,14 @@ def run_asn1_tool(
     except Exception:
         if verbose:
             import traceback
+
             traceback.print_exc()
         return False
 
 
 def _decode_asn1(
     input_data: bytes,
-    output_file: Optional[str],
+    output_file: str | None,
     format: str,
     verbose: bool,
 ) -> bool:
@@ -118,18 +124,35 @@ def _decode_asn1(
             tag_number = first_byte & 0x1F
 
             class_names = ["Universal", "Application", "Context", "Private"]
-            output_lines.extend(("First Tag:", f"  Class: {class_names[tag_class]} ({tag_class})", f"  Constructed: {constructed}", f"  Tag Number: {tag_number}", ""))
+            output_lines.extend(
+                (
+                    "First Tag:",
+                    f"  Class: {class_names[tag_class]} ({tag_class})",
+                    f"  Constructed: {constructed}",
+                    f"  Tag Number: {tag_number}",
+                    "",
+                ),
+            )
 
         # Hex dump
         output_lines.extend(("Hex Dump:", "-" * 20))
 
         for i in range(0, len(asn1_data), HEX_DUMP_WIDTH):
-            chunk = asn1_data[i:i + HEX_DUMP_WIDTH]
+            chunk = asn1_data[i : i + HEX_DUMP_WIDTH]
             hex_part = " ".join(f"{b:02x}" for b in chunk)
-            ascii_part = "".join(chr(b) if ASCII_PRINTABLE_START <= b <= ASCII_PRINTABLE_END else "." for b in chunk)
+            ascii_part = "".join(
+                chr(b) if ASCII_PRINTABLE_START <= b <= ASCII_PRINTABLE_END else "."
+                for b in chunk
+            )
             output_lines.append(f"{i:08x}: {hex_part:<48} |{ascii_part}|")
 
-        output_lines.extend(("", "Note: Full ASN.1 decoding is under development", "This provides basic structure analysis only"))
+        output_lines.extend(
+            (
+                "",
+                "Note: Full ASN.1 decoding is under development",
+                "This provides basic structure analysis only",
+            ),
+        )
 
         # Write output
         output_text = "\n".join(output_lines)
@@ -148,7 +171,7 @@ def _decode_asn1(
 
 def _encode_asn1(
     input_data: bytes,
-    output_file: Optional[str],
+    output_file: str | None,
     format: str,
     verbose: bool,
 ) -> bool:
@@ -166,7 +189,9 @@ def _encode_asn1(
         if format == "hex":
             output_data = binascii.hexlify(asn1_data).decode("ascii")
             # Format as readable hex
-            formatted_hex = " ".join(output_data[i:i + 2] for i in range(0, len(output_data), 2))
+            formatted_hex = " ".join(
+                output_data[i : i + 2] for i in range(0, len(output_data), 2)
+            )
             output_bytes = formatted_hex.encode("ascii")
         elif format == "base64":
             output_data = base64.b64encode(asn1_data).decode("ascii")
@@ -194,7 +219,7 @@ def _encode_asn1(
 
 def _dump_asn1(
     input_data: bytes,
-    output_file: Optional[str],
+    output_file: str | None,
     format: str,
     verbose: bool,
 ) -> bool:
@@ -218,7 +243,7 @@ def _dump_asn1(
 
 def _validate_asn1(
     input_data: bytes,
-    schema_file: Optional[str],
+    schema_file: str | None,
     format: str,
     verbose: bool,
 ) -> bool:
@@ -287,7 +312,7 @@ def _validate_asn1(
 
 def _parse_asn1_schema(
     input_data: bytes,
-    output_file: Optional[str],
+    output_file: str | None,
     verbose: bool,
 ) -> bool:
     """Parse ASN.1 schema definition."""
@@ -315,13 +340,14 @@ def _parse_asn1_schema(
     except Exception:
         if verbose:
             import traceback
+
             traceback.print_exc()
         return False
 
 
 def _compile_asn1_schema(
     input_data: bytes,
-    output_file: Optional[str],
+    output_file: str | None,
     verbose: bool,
 ) -> bool:
     """Compile ASN.1 schema to Python code."""
@@ -367,6 +393,7 @@ def _compile_asn1_schema(
     except Exception:
         if verbose:
             import traceback
+
             traceback.print_exc()
         return False
 
@@ -412,7 +439,13 @@ def _add_success_output(output_lines: list[str], module: Any) -> None:
     output_lines.append(f"✓ Module parsed successfully: {module.name}")
     if module.oid:
         output_lines.append(f"  Object Identifier: {module.oid}")
-    output_lines.extend((f"  Tag Default: {module.tag_default}", f"  Extensibility: {module.extensibility_implied}", ""))
+    output_lines.extend(
+        (
+            f"  Tag Default: {module.tag_default}",
+            f"  Extensibility: {module.extensibility_implied}",
+            "",
+        ),
+    )
 
     # Add module components
     _add_type_definitions(output_lines, module.type_definitions)
@@ -420,7 +453,7 @@ def _add_success_output(output_lines: list[str], module: Any) -> None:
     _add_imports_exports(output_lines, module.imports, module.exports)
 
 
-def _add_failure_output(output_lines: list[str], errors: list) -> None:
+def _add_failure_output(output_lines: list[str], errors: list[str]) -> None:
     """Add failure output with errors.
 
     Args:
@@ -431,7 +464,7 @@ def _add_failure_output(output_lines: list[str], errors: list) -> None:
     output_lines.extend(f"  - {error}" for error in errors)
 
 
-def _add_warnings_output(output_lines: list[str], warnings: list) -> None:
+def _add_warnings_output(output_lines: list[str], warnings: list[str]) -> None:
     """Add warnings output.
 
     Args:
@@ -442,7 +475,7 @@ def _add_warnings_output(output_lines: list[str], warnings: list) -> None:
     output_lines.extend(f"  - {warning}" for warning in warnings)
 
 
-def _add_type_definitions(output_lines: list[str], type_definitions: dict) -> None:
+def _add_type_definitions(output_lines: list[str], type_definitions: dict[str, Any]) -> None:
     """Add type definitions to output.
 
     Args:
@@ -462,7 +495,7 @@ def _add_type_definitions(output_lines: list[str], type_definitions: dict) -> No
     output_lines.append("")
 
 
-def _add_value_assignments(output_lines: list[str], value_assignments: dict) -> None:
+def _add_value_assignments(output_lines: list[str], value_assignments: dict[str, Any]) -> None:
     """Add value assignments to output.
 
     Args:
@@ -474,11 +507,15 @@ def _add_value_assignments(output_lines: list[str], value_assignments: dict) -> 
 
     output_lines.append(f"Value Assignments ({len(value_assignments)}):")
     for value_name, value_assign in value_assignments.items():
-        output_lines.append(f"  - {value_name}: {value_assign.type_name} = {value_assign.value}")
+        output_lines.append(
+            f"  - {value_name}: {value_assign.type_name} = {value_assign.value}",
+        )
     output_lines.append("")
 
 
-def _add_imports_exports(output_lines: list[str], imports: list[Any], exports: Any | None) -> None:
+def _add_imports_exports(
+    output_lines: list[str], imports: list[Any], exports: Any | None,
+) -> None:
     """Add imports and exports to output.
 
     Args:
@@ -488,14 +525,19 @@ def _add_imports_exports(output_lines: list[str], imports: list[Any], exports: A
     """
     if imports:
         output_lines.append(f"Imports ({len(imports)}):")
-        output_lines.extend(f"  - From {import_spec.module_name}: {', '.join(import_spec.symbols)}" for import_spec in imports)
+        output_lines.extend(
+            f"  - From {import_spec.module_name}: {', '.join(import_spec.symbols)}"
+            for import_spec in imports
+        )
         output_lines.append("")
 
     if exports:
         output_lines.extend((f"Exports: {', '.join(exports.symbols)}", ""))
 
 
-def _write_schema_output(output_text: str, output_file: Optional[str], verbose: bool) -> None:
+def _write_schema_output(
+    output_text: str, output_file: str | None, verbose: bool,
+) -> None:
     """Write schema output to file or stdout.
 
     Args:
@@ -550,7 +592,13 @@ def _build_asn1_dump_output(asn1_data: bytes) -> list[str]:
         # Analyze ASN.1 elements
         _analyze_asn1_elements(asn1_data, output_lines)
 
-    output_lines.extend(("", "Note: This is basic structure analysis", "Full ASN.1 parsing is under development"))
+    output_lines.extend(
+        (
+            "",
+            "Note: This is basic structure analysis",
+            "Full ASN.1 parsing is under development",
+        ),
+    )
 
     return output_lines
 
@@ -579,7 +627,7 @@ def _analyze_asn1_elements(asn1_data: bytes, output_lines: list[str]) -> None:
         output_lines.append(f"... and {len(asn1_data) - offset} more bytes")
 
 
-def _parse_asn1_element(asn1_data: bytes, offset: int) -> Optional[dict]:
+def _parse_asn1_element(asn1_data: bytes, offset: int) -> dict[str, Any] | None:
     """Parse a single ASN.1 element.
 
     Args:
@@ -608,9 +656,12 @@ def _parse_asn1_element(asn1_data: bytes, offset: int) -> Optional[dict]:
     content_length = length_info["length"]
     content_preview = None
 
-    if (content_length > 0 and
-        content_offset + min(content_length, HEX_DUMP_WIDTH) <= len(asn1_data)):
-        content = asn1_data[content_offset:content_offset + min(content_length, HEX_DUMP_WIDTH)]
+    if content_length > 0 and content_offset + min(
+        content_length, HEX_DUMP_WIDTH,
+    ) <= len(asn1_data):
+        content = asn1_data[
+            content_offset : content_offset + min(content_length, HEX_DUMP_WIDTH)
+        ]
         hex_content = " ".join(f"{b:02x}" for b in content)
         if content_length > HEX_DUMP_WIDTH:
             hex_content += "..."
@@ -627,7 +678,7 @@ def _parse_asn1_element(asn1_data: bytes, offset: int) -> Optional[dict]:
     }
 
 
-def _parse_asn1_length(asn1_data: bytes, offset: int) -> Optional[dict]:
+def _parse_asn1_length(asn1_data: bytes, offset: int) -> dict[str, Any] | None:
     """Parse ASN.1 length encoding.
 
     Args:
@@ -664,7 +715,9 @@ def _parse_asn1_length(asn1_data: bytes, offset: int) -> Optional[dict]:
     }
 
 
-def _add_element_info(output_lines: list[str], element_num: int, offset: int, element_info: dict) -> None:
+def _add_element_info(
+    output_lines: list[str], element_num: int, offset: int, element_info: dict[str, Any],
+) -> None:
     """Add element information to output.
 
     Args:
@@ -675,13 +728,30 @@ def _add_element_info(output_lines: list[str], element_num: int, offset: int, el
     """
     class_names = ["Universal", "Application", "Context", "Private"]
     tag_names = {
-        1: "BOOLEAN", 2: "INTEGER", 3: "BIT STRING", 4: "OCTET STRING",
-        5: "NULL", 6: "OBJECT IDENTIFIER", 9: "REAL", 10: "ENUMERATED",
-        16: "SEQUENCE", 17: "SET", 19: "PrintableString", 22: "IA5String",
-        23: "UTCTime", 24: "GeneralizedTime",
+        1: "BOOLEAN",
+        2: "INTEGER",
+        3: "BIT STRING",
+        4: "OCTET STRING",
+        5: "NULL",
+        6: "OBJECT IDENTIFIER",
+        9: "REAL",
+        10: "ENUMERATED",
+        16: "SEQUENCE",
+        17: "SET",
+        19: "PrintableString",
+        22: "IA5String",
+        23: "UTCTime",
+        24: "GeneralizedTime",
     }
 
-    output_lines.extend((f"Element {element_num} at offset {offset}:", f"  Tag: 0x{element_info['tag_byte']:02x}", f"  Class: {class_names[element_info['tag_class']]}", f"  Constructed: {element_info['constructed']}"))
+    output_lines.extend(
+        (
+            f"Element {element_num} at offset {offset}:",
+            f"  Tag: 0x{element_info['tag_byte']:02x}",
+            f"  Class: {class_names[element_info['tag_class']]}",
+            f"  Constructed: {element_info['constructed']}",
+        ),
+    )
 
     if element_info["tag_class"] == 0 and element_info["tag_number"] in tag_names:
         output_lines.append(f"  Type: {tag_names[element_info['tag_number']]}")
@@ -696,7 +766,9 @@ def _add_element_info(output_lines: list[str], element_num: int, offset: int, el
     output_lines.append("")
 
 
-def _write_asn1_output(output_text: str, output_file: Optional[str], verbose: bool) -> None:
+def _write_asn1_output(
+    output_text: str, output_file: str | None, verbose: bool,
+) -> None:
     """Write ASN.1 output to file or stdout.
 
     Args:
@@ -713,7 +785,7 @@ def _write_asn1_output(output_text: str, output_file: Optional[str], verbose: bo
         pass  # Could print to stdout here
 
 
-def _read_input_data(input_file: Optional[str], verbose: bool) -> bytes:
+def _read_input_data(input_file: str | None, verbose: bool) -> bytes:
     """Read input data from file or stdin.
 
     Args:
@@ -735,9 +807,9 @@ def _read_input_data(input_file: Optional[str], verbose: bool) -> bytes:
 def _execute_asn1_action(
     action: str,
     input_data: bytes,
-    output_file: Optional[str],
+    output_file: str | None,
     format: str,
-    schema_file: Optional[str],
+    schema_file: str | None,
     verbose: bool,
 ) -> bool:
     """Execute ASN.1 action based on action type.
@@ -759,7 +831,9 @@ def _execute_asn1_action(
         "dump": lambda: _dump_asn1(input_data, output_file, format, verbose),
         "validate": lambda: _validate_asn1(input_data, schema_file, format, verbose),
         "parse-schema": lambda: _parse_asn1_schema(input_data, output_file, verbose),
-        "compile-schema": lambda: _compile_asn1_schema(input_data, output_file, verbose),
+        "compile-schema": lambda: _compile_asn1_schema(
+            input_data, output_file, verbose,
+        ),
     }
 
     handler = action_handlers.get(action)

@@ -80,7 +80,9 @@ class ConnectionState:
             return 0.0
         return sum(self.operation_times) / len(self.operation_times)
 
-    def should_perform_health_check(self, interval: float = DEFAULT_TIMEOUT_SECONDS) -> bool:
+    def should_perform_health_check(
+        self, interval: float = DEFAULT_TIMEOUT_SECONDS,
+    ) -> bool:
         """Check if health check should be performed.
 
         Args:
@@ -139,14 +141,18 @@ class ConnectionState:
         current_stats = self.stats.model_dump()
 
         # Update counters
-        current_stats["total_connections"] = self.get_pool_size() + self.get_active_connections_count()
+        current_stats["total_connections"] = (
+            self.get_pool_size() + self.get_active_connections_count()
+        )
         current_stats["active_connections"] = self.get_active_connections_count()
         current_stats["successful_operations"] += successful_ops
         current_stats["failed_operations"] += failed_ops
         current_stats["total_operation_time"] += operation_time
 
         # Calculate average
-        total_ops = current_stats["successful_operations"] + current_stats["failed_operations"]
+        total_ops = (
+            current_stats["successful_operations"] + current_stats["failed_operations"]
+        )
         if total_ops > 0:
             current_stats["average_operation_time"] = (
                 current_stats["total_operation_time"] / total_ops

@@ -238,7 +238,10 @@ class PerformanceBenchmark:
         manager.get_connection = mock_get_connection
 
         async def search_task():
-            results = [result async for result in manager.search("dc=test,dc=com", "(objectClass=*)")]
+            results = [
+                result
+                async for result in manager.search("dc=test,dc=com", "(objectClass=*)")
+            ]
             return len(results)
 
         # Run 50 concurrent operations

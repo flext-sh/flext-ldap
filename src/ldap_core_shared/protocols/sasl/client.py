@@ -33,7 +33,7 @@ References:
 
 from __future__ import annotations
 
-from typing import Any, Optional, Union
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -76,7 +76,7 @@ class SASLClient(BaseModel):
         default_factory=list,
         description="Preferred SASL mechanisms in order",
     )
-    callback: Optional[SASLCallbackHandler] = Field(
+    callback: SASLCallbackHandler | None = Field(
         default=None,
         description="Callback handler for credentials",
     )
@@ -84,7 +84,7 @@ class SASLClient(BaseModel):
         default="ldap",
         description="Service name for SASL authentication",
     )
-    hostname: Optional[str] = Field(
+    hostname: str | None = Field(
         default=None,
         description="Server hostname",
     )
@@ -95,12 +95,13 @@ class SASLClient(BaseModel):
 
     # State
     _context: SASLContext
-    _mechanism: Optional[SASLMechanism] = None
-    _selected_mechanism: Optional[str] = None
+    _mechanism: SASLMechanism | None = None
+    _selected_mechanism: str | None = None
     _started: bool = False
 
     class Config:
         """Pydantic configuration."""
+
         arbitrary_types_allowed = True
 
     def __init__(self, **data) -> None:
@@ -114,7 +115,7 @@ class SASLClient(BaseModel):
             properties=self.callback.properties if self.callback else {},
         )
 
-    def client_start(self, mechanism: Optional[str] = None) -> bool:
+    def client_start(self, mechanism: str | None = None) -> bool:
         """Start SASL authentication (perl-Authen-SASL compatible).
 
         This method initializes the SASL authentication process by
@@ -174,7 +175,7 @@ class SASLClient(BaseModel):
 
         return True
 
-    def client_step(self, challenge: Union[bytes, str, None] = None) -> Optional[bytes]:
+    def client_step(self, challenge: bytes | str | None = None) -> bytes | None:
         """Process challenge and generate response (perl-Authen-SASL compatible).
 
         This method processes a server challenge and generates the
@@ -226,7 +227,7 @@ class SASLClient(BaseModel):
                 original_error=e,
             ) from e
 
-    def get_initial_response(self) -> Optional[bytes]:
+    def get_initial_response(self) -> bytes | None:
         """Get initial response if mechanism supports it.
 
         Returns:
@@ -262,7 +263,7 @@ class SASLClient(BaseModel):
 
         return self._mechanism.is_complete()
 
-    def get_mechanism(self) -> Optional[str]:
+    def get_mechanism(self) -> str | None:
         """Get selected mechanism name.
 
         Returns:
@@ -270,7 +271,7 @@ class SASLClient(BaseModel):
         """
         return self._selected_mechanism
 
-    def get_context(self) -> Optional[SASLContext]:
+    def get_context(self) -> SASLContext | None:
         """Get SASL context.
 
         Returns:
@@ -292,7 +293,7 @@ class SASLClient(BaseModel):
 
         return self._mechanism.get_negotiated_property(property_name)
 
-    def error(self) -> Optional[str]:
+    def error(self) -> str | None:
         """Get last error message (perl-Authen-SASL compatible).
 
         Returns:
@@ -302,7 +303,7 @@ class SASLClient(BaseModel):
             return "Authentication failed"
         return None
 
-    def _select_best_mechanism(self) -> Optional[str]:
+    def _select_best_mechanism(self) -> str | None:
         """Select best available mechanism from preferences.
 
         Returns:
@@ -312,7 +313,12 @@ class SASLClient(BaseModel):
 
         # Use provided mechanism list or default preference order
         preferences = self.mechanisms or [
-            "GSSAPI", "DIGEST-MD5", "CRAM-MD5", "PLAIN", "EXTERNAL", "ANONYMOUS",
+            "GSSAPI",
+            "DIGEST-MD5",
+            "CRAM-MD5",
+            "PLAIN",
+            "EXTERNAL",
+            "ANONYMOUS",
         ]
 
         # Find first available mechanism from preferences
@@ -351,7 +357,11 @@ class SASLClient(BaseModel):
     def __str__(self) -> str:
         """String representation."""
         mechanism = self._selected_mechanism or "none"
-        state = "complete" if self.is_complete() else ("started" if self._started else "not-started")
+        state = (
+            "complete"
+            if self.is_complete()
+            else ("started" if self._started else "not-started")
+        )
         return f"SASLClient(mechanism={mechanism}, state={state})"
 
     def __repr__(self) -> str:
@@ -384,13 +394,13 @@ class SASLClientFactory:
 
     @staticmethod
     def create_client(
-        mechanisms: Optional[list[str]] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        realm: Optional[str] = None,
+        mechanisms: list[str] | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        realm: str | None = None,
         service: str = "ldap",
-        hostname: Optional[str] = None,
-        callback: Optional[SASLCallbackHandler] = None,
+        hostname: str | None = None,
+        callback: SASLCallbackHandler | None = None,
         **properties: Any,
     ) -> SASLClient:
         """Create configured SASL client.
@@ -411,6 +421,7 @@ class SASLClientFactory:
         # Create callback handler if not provided
         if callback is None:
             from ldap_core_shared.protocols.sasl.callback import create_simple_callback
+
             callback = create_simple_callback(
                 username=username,
                 password=password,
@@ -433,7 +444,7 @@ class SASLClientFactory:
         username: str,
         password: str,
         service: str = "ldap",
-        hostname: Optional[str] = None,
+        hostname: str | None = None,
     ) -> SASLClient:
         """Create client for PLAIN authentication.
 
@@ -458,9 +469,9 @@ class SASLClientFactory:
     def create_digest_md5_client(
         username: str,
         password: str,
-        realm: Optional[str] = None,
+        realm: str | None = None,
         service: str = "ldap",
-        hostname: Optional[str] = None,
+        hostname: str | None = None,
     ) -> SASLClient:
         """Create client for DIGEST-MD5 authentication.
 
@@ -485,9 +496,9 @@ class SASLClientFactory:
 
     @staticmethod
     def create_external_client(
-        authorization_id: Optional[str] = None,
+        authorization_id: str | None = None,
         service: str = "ldap",
-        hostname: Optional[str] = None,
+        hostname: str | None = None,
     ) -> SASLClient:
         """Create client for EXTERNAL authentication.
 
@@ -516,9 +527,9 @@ class SASLClientFactory:
 
     @staticmethod
     def create_anonymous_client(
-        trace_info: Optional[str] = None,
+        trace_info: str | None = None,
         service: str = "ldap",
-        hostname: Optional[str] = None,
+        hostname: str | None = None,
     ) -> SASLClient:
         """Create client for ANONYMOUS authentication.
 

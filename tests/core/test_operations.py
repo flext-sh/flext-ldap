@@ -511,7 +511,9 @@ class TestEnterpriseTransaction:
             enterprise_transaction.rollback()
 
     def test_rollback_behavior(
-        self, mock_connection: Any, transaction_context: Any,
+        self,
+        mock_connection: Any,
+        transaction_context: Any,
     ) -> None:
         """Test rollback behavior."""
         transaction = EnterpriseTransaction(mock_connection, transaction_context)
@@ -539,7 +541,9 @@ class TestEnterpriseTransaction:
             transaction.commit()
 
     def test_operations_summary(
-        self, enterprise_transaction: Any, data_generator: Any,
+        self,
+        enterprise_transaction: Any,
+        data_generator: Any,
     ) -> None:
         """Test operations summary generation."""
         # Perform multiple operations
@@ -589,7 +593,9 @@ class TestLDAPOperations:
             LDAPOperations(None)
 
     def test_transaction_context_manager(
-        self, ldap_operations: Any, data_generator: Any,
+        self,
+        ldap_operations: Any,
+        data_generator: Any,
     ) -> None:
         """Test transaction context manager functionality."""
         dn = data_generator.valid_dn()
@@ -842,9 +848,9 @@ class TestBulkOperations:
         ops_per_second = len(entries) / duration if duration > 0 else float("inf")
 
         # Should process at least 1000 ops/second (relaxed for testing)
-        assert (
-            ops_per_second >= 1000
-        ), f"Performance: {ops_per_second:.1f} ops/s < 1000 ops/s"
+        assert ops_per_second >= 1000, (
+            f"Performance: {ops_per_second:.1f} ops/s < 1000 ops/s"
+        )
 
         # Validate memory usage
         assert performance_validator.validate_memory_usage(max_memory_mb=100)
@@ -1211,9 +1217,9 @@ class TestPerformanceBenchmarks:
 
         # Large operations should be at least 50% as efficient as small ones
         efficiency_ratio = large_perf / small_perf
-        assert (
-            efficiency_ratio >= 0.5
-        ), f"Performance degradation too severe: {efficiency_ratio:.2f}"
+        assert efficiency_ratio >= 0.5, (
+            f"Performance degradation too severe: {efficiency_ratio:.2f}"
+        )
 
     @pytest.mark.performance
     def test_memory_usage_stability(
@@ -1240,9 +1246,9 @@ class TestPerformanceBenchmarks:
         memory_increase = final_memory - initial_memory
 
         # Memory increase should be reasonable (less than 50MB)
-        assert (
-            memory_increase < 50
-        ), f"Memory usage increased by {memory_increase:.1f}MB"
+        assert memory_increase < 50, (
+            f"Memory usage increased by {memory_increase:.1f}MB"
+        )
 
 
 # TEST CONFIGURATION AND MARKERS
@@ -1296,6 +1302,6 @@ def test_module_all_exports() -> None:
 
     actual_exports = set(ops_module.__all__)
 
-    assert (
-        actual_exports == expected_exports
-    ), f"Missing or extra exports: {actual_exports.symmetric_difference(expected_exports)}"
+    assert actual_exports == expected_exports, (
+        f"Missing or extra exports: {actual_exports.symmetric_difference(expected_exports)}"
+    )

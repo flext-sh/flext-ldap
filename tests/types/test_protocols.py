@@ -14,7 +14,7 @@ Test categories:
 from __future__ import annotations
 
 import uuid
-from datetime import timezone
+from datetime import UTC
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -321,7 +321,7 @@ class TestTrackable:
         """Initialize with timestamps."""
         from datetime import datetime
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         self._created_at = now.isoformat()
         self._updated_at = now.isoformat()
         self._version = 1
@@ -474,11 +474,14 @@ class TestSearchableProtocol:
 
     async def test_search_all_attributes(self, searchable: TestSearchable) -> None:
         """Test search returning all attributes."""
-        results = [result async for result in searchable.search(
-            "dc=example,dc=com",
-            "(objectClass=*)",
-            "subtree",
-        )]
+        results = [
+            result
+            async for result in searchable.search(
+                "dc=example,dc=com",
+                "(objectClass=*)",
+                "subtree",
+            )
+        ]
 
         assert len(results) == 2
         assert "dn" in results[0]
@@ -487,12 +490,15 @@ class TestSearchableProtocol:
 
     async def test_search_specific_attributes(self, searchable: TestSearchable) -> None:
         """Test search with attribute filtering."""
-        results = [result async for result in searchable.search(
-            "dc=example,dc=com",
-            "(objectClass=*)",
-            "subtree",
-            ["cn"],
-        )]
+        results = [
+            result
+            async for result in searchable.search(
+                "dc=example,dc=com",
+                "(objectClass=*)",
+                "subtree",
+                ["cn"],
+            )
+        ]
 
         assert len(results) == 2
         assert "dn" in results[0]

@@ -44,18 +44,24 @@ import asyncio
 import contextlib
 import time
 import uuid
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable, Optional, Union
+from typing import Any
+
+try:
+    from typing import TypeAlias
+except ImportError:
+    # Fallback for Python < 3.10
+    from typing import TypeAlias
 
 from pydantic import BaseModel, Field
-from typing_extensions import TypeAlias
 
 from ldap_core_shared.utils.constants import DEFAULT_MAX_ITEMS, DEFAULT_TIMEOUT_SECONDS
 
 # Type aliases for complex types
-CallbackResult: TypeAlias = Union[dict[str, Any], list[Any], str, int, float, bool, None]
+CallbackResult: TypeAlias = dict[str, Any] | list[Any] | str | int | float | bool | None
 
 
 class CallbackType(Enum):
@@ -86,46 +92,53 @@ class CallbackEvent(BaseModel):
     operation_id: str = Field(description="Associated operation identifier")
 
     # Event data
-    result_data: Optional[Any] = Field(
-        default=None, description="Result data for event",
+    result_data: Any | None = Field(
+        default=None,
+        description="Result data for event",
     )
 
-    progress_percentage: Optional[float] = Field(
-        default=None, description="Progress percentage (0.0-DEFAULT_MAX_ITEMS)",
+    progress_percentage: float | None = Field(
+        default=None,
+        description="Progress percentage (0.0-DEFAULT_MAX_ITEMS)",
     )
 
-    progress_message: Optional[str] = Field(
-        default=None, description="Progress status message",
+    progress_message: str | None = Field(
+        default=None,
+        description="Progress status message",
     )
 
-    error_info: Optional[str] = Field(default=None, description="Error information")
+    error_info: str | None = Field(default=None, description="Error information")
 
-    exception_details: Optional[str] = Field(
-        default=None, description="Exception details",
+    exception_details: str | None = Field(
+        default=None,
+        description="Exception details",
     )
 
     # Event metadata
-    custom_data: Optional[dict[str, Any]] = Field(
-        default=None, description="Custom event data",
+    custom_data: dict[str, Any] | None = Field(
+        default=None,
+        description="Custom event data",
     )
 
     priority: CallbackPriority = Field(
-        default=CallbackPriority.NORMAL, description="Event priority",
+        default=CallbackPriority.NORMAL,
+        description="Event priority",
     )
 
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Event creation timestamp",
     )
 
     # Processing state
     processed: bool = Field(default=False, description="Whether event was processed")
 
-    processing_time: Optional[float] = Field(
-        default=None, description="Processing time in seconds",
+    processing_time: float | None = Field(
+        default=None,
+        description="Processing time in seconds",
     )
 
-    def mark_processed(self, processing_time: Optional[float] = None) -> None:
+    def mark_processed(self, processing_time: float | None = None) -> None:
         """Mark event as processed."""
         self.processed = True
         self.processing_time = processing_time
@@ -134,20 +147,24 @@ class CallbackEvent(BaseModel):
 class CallbackConfig(BaseModel):
     """Configuration for callback registration."""
 
-    operation_filter: Optional[str] = Field(
-        default=None, description="Operation ID pattern filter",
+    operation_filter: str | None = Field(
+        default=None,
+        description="Operation ID pattern filter",
     )
 
     priority: CallbackPriority = Field(
-        default=CallbackPriority.NORMAL, description="Callback priority",
+        default=CallbackPriority.NORMAL,
+        description="Callback priority",
     )
 
     async_execution: bool = Field(
-        default=False, description="Whether to execute callback asynchronously",
+        default=False,
+        description="Whether to execute callback asynchronously",
     )
 
-    max_execution_time: Optional[float] = Field(
-        default=None, description="Maximum callback execution time",
+    max_execution_time: float | None = Field(
+        default=None,
+        description="Maximum callback execution time",
     )
 
 
@@ -161,42 +178,49 @@ class CallbackRegistration(BaseModel):
     callback_function: Callable[..., Any] = Field(description="Callback function")
 
     # Configuration from CallbackConfig
-    operation_filter: Optional[str] = Field(
-        default=None, description="Operation ID pattern filter",
+    operation_filter: str | None = Field(
+        default=None,
+        description="Operation ID pattern filter",
     )
 
     priority: CallbackPriority = Field(
-        default=CallbackPriority.NORMAL, description="Callback priority",
+        default=CallbackPriority.NORMAL,
+        description="Callback priority",
     )
 
     async_execution: bool = Field(
-        default=False, description="Whether to execute callback asynchronously",
+        default=False,
+        description="Whether to execute callback asynchronously",
     )
 
-    max_execution_time: Optional[float] = Field(
-        default=None, description="Maximum callback execution time",
+    max_execution_time: float | None = Field(
+        default=None,
+        description="Maximum callback execution time",
     )
 
     retry_on_error: bool = Field(
-        default=False, description="Whether to retry on callback errors",
+        default=False,
+        description="Whether to retry on callback errors",
     )
 
     max_retries: int = Field(default=3, description="Maximum retry attempts")
 
     # State tracking
     registration_time: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Registration timestamp",
     )
 
     call_count: int = Field(
-        default=0, description="Number of times callback was called",
+        default=0,
+        description="Number of times callback was called",
     )
 
     error_count: int = Field(default=0, description="Number of callback errors")
 
-    last_called: Optional[datetime] = Field(
-        default=None, description="Last callback execution time",
+    last_called: datetime | None = Field(
+        default=None,
+        description="Last callback execution time",
     )
 
     def should_execute_for_operation(self, operation_id: str) -> bool:
@@ -210,7 +234,7 @@ class CallbackRegistration(BaseModel):
     def record_execution(self, success: bool = True) -> None:
         """Record callback execution."""
         self.call_count += 1
-        self.last_called = datetime.now(timezone.utc)
+        self.last_called = datetime.now(UTC)
         if not success:
             self.error_count += 1
 
@@ -229,7 +253,7 @@ class CallbackRegistry:
         self,
         callback_function: Callable[..., Any],
         callback_type: CallbackType,
-        config: Optional[CallbackConfig] = None,
+        config: CallbackConfig | None = None,
     ) -> str:
         """Register callback function.
 
@@ -265,10 +289,10 @@ class CallbackRegistry:
         self,
         callback_function: Callable[..., Any],
         callback_type: CallbackType,
-        operation_filter: Optional[str] = None,
+        operation_filter: str | None = None,
         priority: CallbackPriority = CallbackPriority.NORMAL,
         async_execution: bool = False,
-        max_execution_time: Optional[float] = None,
+        max_execution_time: float | None = None,
     ) -> str:
         """Register callback function with individual parameters (legacy method).
 
@@ -316,7 +340,8 @@ class CallbackRegistry:
         return True
 
     def get_callbacks_for_type(
-        self, callback_type: CallbackType,
+        self,
+        callback_type: CallbackType,
     ) -> list[CallbackRegistration]:
         """Get all callbacks for specific type.
 
@@ -345,7 +370,8 @@ class CallbackRegistry:
         """
         callbacks = self.get_callbacks_for_type(callback_type)
         return [
-            callback for callback in callbacks
+            callback
+            for callback in callbacks
             if callback.should_execute_for_operation(operation_id)
         ]
 
@@ -397,7 +423,7 @@ class CallbackManager:
 
         # Event processing
         self._event_queue: asyncio.Queue[CallbackEvent] = asyncio.Queue()
-        self._processing_task: Optional[asyncio.Task[None]] = None
+        self._processing_task: asyncio.Task[None] | None = None
         self._processing_active = False
 
         # Execution management
@@ -433,13 +459,14 @@ class CallbackManager:
         # Wait for completion
         if self._active_callbacks:
             await asyncio.gather(
-                *self._active_callbacks.values(), return_exceptions=True,
+                *self._active_callbacks.values(),
+                return_exceptions=True,
             )
 
     def register_completion_callback(
         self,
         callback_function: Callable[[Any], None],
-        operation_filter: Optional[str] = None,
+        operation_filter: str | None = None,
         priority: CallbackPriority = CallbackPriority.NORMAL,
     ) -> str:
         """Register completion callback.
@@ -462,7 +489,7 @@ class CallbackManager:
     def register_progress_callback(
         self,
         callback_function: Callable[[float, str], None],
-        operation_filter: Optional[str] = None,
+        operation_filter: str | None = None,
         priority: CallbackPriority = CallbackPriority.NORMAL,
     ) -> str:
         """Register progress callback.
@@ -485,7 +512,7 @@ class CallbackManager:
     def register_error_callback(
         self,
         callback_function: Callable[[str, Exception], None],
-        operation_filter: Optional[str] = None,
+        operation_filter: str | None = None,
         priority: CallbackPriority = CallbackPriority.NORMAL,
     ) -> str:
         """Register error callback.
@@ -569,7 +596,7 @@ class CallbackManager:
         self,
         operation_id: str,
         error_message: str,
-        exception: Optional[Exception] = None,
+        exception: Exception | None = None,
         priority: CallbackPriority = CallbackPriority.HIGH,
     ) -> None:
         """Emit error event.
@@ -602,7 +629,7 @@ class CallbackManager:
                 await self._process_event(event)
                 self._events_processed += 1
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Periodic cleanup of completed callback tasks
                 await self._cleanup_completed_callbacks()
                 continue
@@ -621,7 +648,8 @@ class CallbackManager:
         try:
             # Get callbacks for this event
             callbacks = self._registry.get_callbacks_for_operation(
-                event.event_type, event.operation_id,
+                event.event_type,
+                event.operation_id,
             )
 
             # Sort by priority
@@ -671,7 +699,7 @@ class CallbackManager:
             callback_reg.record_execution(success=True)
             self._callbacks_executed += 1
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             # Cancel timed-out callback
             task.cancel()
             callback_reg.record_execution(success=False)
@@ -701,11 +729,13 @@ class CallbackManager:
             await callback_reg.callback_function(event.result_data)
         elif event.event_type == CallbackType.PROGRESS:
             await callback_reg.callback_function(
-                event.progress_percentage, event.progress_message,
+                event.progress_percentage,
+                event.progress_message,
             )
         elif event.event_type == CallbackType.ERROR:
             await callback_reg.callback_function(
-                event.error_info, event.exception_details,
+                event.error_info,
+                event.exception_details,
             )
 
     async def _execute_sync_callback(
@@ -723,7 +753,9 @@ class CallbackManager:
 
         if event.event_type == CallbackType.COMPLETION:
             await loop.run_in_executor(
-                self._executor, callback_reg.callback_function, event.result_data,
+                self._executor,
+                callback_reg.callback_function,
+                event.result_data,
             )
         elif event.event_type == CallbackType.PROGRESS:
             await loop.run_in_executor(
@@ -743,8 +775,7 @@ class CallbackManager:
     async def _cleanup_completed_callbacks(self) -> None:
         """Clean up completed callback tasks."""
         completed_tasks = [
-            task_id for task_id, task in self._active_callbacks.items()
-            if task.done()
+            task_id for task_id, task in self._active_callbacks.items() if task.done()
         ]
 
         for task_id in completed_tasks:
@@ -769,9 +800,11 @@ class CallbackManager:
             "success_rate": (
                 (
                     (self._callbacks_executed - self._callback_errors)
-                    / self._callbacks_executed * DEFAULT_MAX_ITEMS
+                    / self._callbacks_executed
+                    * DEFAULT_MAX_ITEMS
                 )
-                if self._callbacks_executed > 0 else DEFAULT_MAX_ITEMS
+                if self._callbacks_executed > 0
+                else DEFAULT_MAX_ITEMS
             ),
         }
 
@@ -811,9 +844,9 @@ def create_progress_callback(
 
 async def execute_with_callbacks(
     operation_func: Callable[..., Any],
-    completion_callback: Optional[Callable[..., Any]] = None,
-    progress_callback: Optional[Callable[..., Any]] = None,
-    error_callback: Optional[Callable[..., Any]] = None,
+    completion_callback: Callable[..., Any] | None = None,
+    progress_callback: Callable[..., Any] | None = None,
+    error_callback: Callable[..., Any] | None = None,
 ) -> CallbackResult:
     """Execute operation with callback support.
 
@@ -837,6 +870,7 @@ async def execute_with_callbacks(
         "event emission for completion, progress, and error handling."
     )
     raise NotImplementedError(msg)
+
 
 # TODO: Integration points for implementation:
 #

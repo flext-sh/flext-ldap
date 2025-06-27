@@ -59,7 +59,9 @@ class TestLDAPEntry:
         # Test with empty DN should cause validation error
         with pytest.raises(ValidationError):
             LDAPEntry(
-                dn="", attributes={"cn": ["user"]}, raw_attributes={},
+                dn="",
+                attributes={"cn": ["user"]},
+                raw_attributes={},
             )
 
     def test_ldap_entry_attribute_access(self) -> None:

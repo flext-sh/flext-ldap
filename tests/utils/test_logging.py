@@ -51,7 +51,9 @@ class MockLoggingConfig:
 
     def __init__(self, **kwargs) -> None:
         self.level = kwargs.get("level", "INFO")
-        self.format = kwargs.get("format", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        self.format = kwargs.get(
+            "format", "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
         self.file_path = kwargs.get("file_path")
         self.max_file_size_mb = kwargs.get("max_file_size_mb", DEFAULT_MAX_ITEMS)
         self.backup_count = kwargs.get("backup_count", 5)
@@ -130,6 +132,7 @@ class TestStructuredFormatter:
             raise ValueError(msg)
         except ValueError:
             import sys
+
             exc_info = sys.exc_info()
 
         record = logging.LogRecord(
@@ -197,7 +200,10 @@ class TestLDAPLogger:
     def test_logger_initialization_fallback_config(self) -> None:
         """Test logger initialization with fallback config."""
         # Mock Pydantic config failure
-        with patch("ldap_core_shared.config.base_config.LoggingConfig", side_effect=Exception("Mock failure")):
+        with patch(
+            "ldap_core_shared.config.base_config.LoggingConfig",
+            side_effect=Exception("Mock failure"),
+        ):
             logger = LDAPLogger("test.logger")
 
             assert logger.name == "test.logger"
@@ -234,7 +240,11 @@ class TestLDAPLogger:
 
             # Should have file handler
             handlers = logger.logger.handlers
-            file_handlers = [h for h in handlers if isinstance(h, logging.handlers.RotatingFileHandler)]
+            file_handlers = [
+                h
+                for h in handlers
+                if isinstance(h, logging.handlers.RotatingFileHandler)
+            ]
             assert len(file_handlers) == 1
 
     def test_logger_file_setup_failure(self) -> None:
@@ -362,7 +372,17 @@ class TestLDAPLogger:
         masked = logger._mask_sensitive_data(test_data)
 
         # Check sensitive data is masked
-        for key in ["password", "passwd", "pwd", "secret", "token", "key", "auth", "credential", "bind_password"]:
+        for key in [
+            "password",
+            "passwd",
+            "pwd",
+            "secret",
+            "token",
+            "key",
+            "auth",
+            "credential",
+            "bind_password",
+        ]:
             assert masked[key] == "***MASKED***"
 
         # Check non-sensitive data is preserved
@@ -658,6 +678,7 @@ class TestSecurityValidation:
 
             # Make parent directory read-only (on Unix systems)
             import os
+
             if os.name == "posix":
                 restricted_dir = log_file.parent
                 restricted_dir.mkdir(exist_ok=True)
@@ -687,7 +708,7 @@ class TestPerformanceValidation:
 
         # Log many messages quickly
         for i in range(1000):
-            logger.info(f"Message {i}", count=i, operation="test")
+            logger.info("Message %s", i, count=i, operation="test")
 
         duration = time.time() - start_time
 

@@ -46,7 +46,7 @@ References:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from pydantic import Field, validator
 
@@ -84,20 +84,24 @@ class ModifyPasswordResult(ExtensionResult):
         generate a new password and return it in generated_password.
     """
 
-    generated_password: Optional[str] = Field(
-        default=None, description="Server-generated password (if applicable)",
+    generated_password: str | None = Field(
+        default=None,
+        description="Server-generated password (if applicable)",
     )
 
     password_changed: bool = Field(
-        default=False, description="Whether password was successfully changed",
+        default=False,
+        description="Whether password was successfully changed",
     )
 
     old_password_required: bool = Field(
-        default=False, description="Whether old password was required but missing",
+        default=False,
+        description="Whether old password was required but missing",
     )
 
     policy_violations: list[str] = Field(
-        default_factory=list, description="List of password policy violations",
+        default_factory=list,
+        description="List of password policy violations",
     )
 
     def has_generated_password(self) -> bool:
@@ -150,21 +154,23 @@ class ModifyPasswordExtension(LDAPExtension):
 
     request_name = ExtensionOIDs.MODIFY_PASSWORD
 
-    user_identity: Optional[str] = Field(
+    user_identity: str | None = Field(
         default=None,
         description="DN of user whose password to change (None = current user)",
     )
 
-    old_password: Optional[str] = Field(
-        default=None, description="Current password (required for self-service)",
+    old_password: str | None = Field(
+        default=None,
+        description="Current password (required for self-service)",
     )
 
-    new_password: Optional[str] = Field(
-        default=None, description="New password (None = server generates)",
+    new_password: str | None = Field(
+        default=None,
+        description="New password (None = server generates)",
     )
 
     @validator("user_identity")
-    def validate_user_identity(cls, v: Optional[str]) -> Optional[str]:
+    def validate_user_identity(self, v: str | None) -> str | None:
         """Validate user identity format."""
         if v is not None:
             v = v.strip()
@@ -179,7 +185,7 @@ class ModifyPasswordExtension(LDAPExtension):
         return v
 
     @validator("old_password")
-    def validate_old_password(cls, v: Optional[str]) -> Optional[str]:
+    def validate_old_password(self, v: str | None) -> str | None:
         """Validate old password."""
         if v is not None and not v:
             msg = "Old password cannot be empty string"
@@ -187,7 +193,7 @@ class ModifyPasswordExtension(LDAPExtension):
         return v
 
     @validator("new_password")
-    def validate_new_password(cls, v: Optional[str]) -> Optional[str]:
+    def validate_new_password(self, v: str | None) -> str | None:
         """Validate new password."""
         if v is not None and not v:
             msg = "New password cannot be empty string"
@@ -245,7 +251,9 @@ class ModifyPasswordExtension(LDAPExtension):
 
     @classmethod
     def decode_response_value(
-        cls, response_name: Optional[OID], response_value: Optional[bytes],
+        cls,
+        response_name: OID | None,
+        response_value: bytes | None,
     ) -> ModifyPasswordResult:
         """Decode password modify response value.
 
@@ -284,7 +292,9 @@ class ModifyPasswordExtension(LDAPExtension):
 
     @classmethod
     def self_service_change(
-        cls, old_password: str, new_password: str,
+        cls,
+        old_password: str,
+        new_password: str,
     ) -> ModifyPasswordExtension:
         """Create extension for self-service password change.
 
@@ -303,7 +313,9 @@ class ModifyPasswordExtension(LDAPExtension):
 
     @classmethod
     def admin_reset(
-        cls, user_identity: str, new_password: str,
+        cls,
+        user_identity: str,
+        new_password: str,
     ) -> ModifyPasswordExtension:
         """Create extension for administrative password reset.
 
@@ -474,9 +486,9 @@ class PasswordChangeBuilder:
 
     def __init__(self) -> None:
         """Initialize the builder."""
-        self._user_identity: Optional[str] = None
-        self._old_password: Optional[str] = None
-        self._new_password: Optional[str] = None
+        self._user_identity: str | None = None
+        self._old_password: str | None = None
+        self._new_password: str | None = None
 
     def for_user(self, user_dn: str) -> PasswordChangeBuilder:
         """Set target user for password change.
@@ -546,6 +558,7 @@ class PasswordChangeBuilder:
             old_password=self._old_password,
             new_password=self._new_password,
         )
+
 
 # TODO: Integration points for implementation:
 #

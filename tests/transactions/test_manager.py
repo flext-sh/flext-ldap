@@ -21,7 +21,7 @@ Following LDAP Core Shared requirements:
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -59,7 +59,7 @@ class TestTransactionOperation:
 
     def test_transaction_operation_with_execution_data(self) -> None:
         """Test TransactionOperation with execution results."""
-        executed_time = datetime.now(timezone.utc)
+        executed_time = datetime.now(UTC)
         operation = TransactionOperation(
             operation_id="op-456",
             operation_type="modify",
@@ -102,10 +102,14 @@ class TestTransactionContext:
             timeout_seconds=300,
         )
 
-    def test_transaction_context_initialization(self, transaction_context: TransactionContext) -> None:
+    def test_transaction_context_initialization(
+        self, transaction_context: TransactionContext
+    ) -> None:
         """Test TransactionContext initialization."""
         assert transaction_context.transaction_id == "tx-123"
-        assert transaction_context.isolation_level == TransactionIsolation.READ_COMMITTED
+        assert (
+            transaction_context.isolation_level == TransactionIsolation.READ_COMMITTED
+        )
         assert transaction_context.timeout_seconds == 300
         assert transaction_context.state == TransactionState.ACTIVE
         assert len(transaction_context.operations) == 0
@@ -113,7 +117,9 @@ class TestTransactionContext:
         assert transaction_context.committed_at is None
         assert transaction_context.aborted_at is None
 
-    def test_transaction_context_add_operation(self, transaction_context: TransactionContext) -> None:
+    def test_transaction_context_add_operation(
+        self, transaction_context: TransactionContext
+    ) -> None:
         """Test adding operations to transaction context."""
         operation_id = transaction_context.add_operation(
             "add",
@@ -127,9 +133,13 @@ class TestTransactionContext:
         assert operation.operation_type == "add"
         assert operation.target_dn == "cn=newuser,dc=example,dc=com"
 
-    def test_transaction_context_mark_operation_successful(self, transaction_context: TransactionContext) -> None:
+    def test_transaction_context_mark_operation_successful(
+        self, transaction_context: TransactionContext
+    ) -> None:
         """Test marking operation as successful."""
-        operation_id = transaction_context.add_operation("add", "cn=test,dc=example,dc=com", {})
+        operation_id = transaction_context.add_operation(
+            "add", "cn=test,dc=example,dc=com", {}
+        )
         result = {"result_code": 0, "description": "Success"}
 
         transaction_context.mark_operation_successful(operation_id, result)
@@ -139,9 +149,13 @@ class TestTransactionContext:
         assert operation.result == result
         assert operation.executed_at is not None
 
-    def test_transaction_context_mark_operation_failed(self, transaction_context: TransactionContext) -> None:
+    def test_transaction_context_mark_operation_failed(
+        self, transaction_context: TransactionContext
+    ) -> None:
         """Test marking operation as failed."""
-        operation_id = transaction_context.add_operation("delete", "cn=test,dc=example,dc=com", {})
+        operation_id = transaction_context.add_operation(
+            "delete", "cn=test,dc=example,dc=com", {}
+        )
         error_message = "Insufficient access rights"
 
         transaction_context.mark_operation_failed(operation_id, error_message)
@@ -151,13 +165,17 @@ class TestTransactionContext:
         assert operation.error_message == error_message
         assert operation.executed_at is not None
 
-    def test_transaction_context_mark_operation_nonexistent(self, transaction_context: TransactionContext) -> None:
+    def test_transaction_context_mark_operation_nonexistent(
+        self, transaction_context: TransactionContext
+    ) -> None:
         """Test marking nonexistent operation raises no error."""
         # Should not raise exception for nonexistent operation
         transaction_context.mark_operation_successful("nonexistent", {})
         transaction_context.mark_operation_failed("nonexistent", "error")
 
-    def test_transaction_context_is_expired(self, transaction_context: TransactionContext) -> None:
+    def test_transaction_context_is_expired(
+        self, transaction_context: TransactionContext
+    ) -> None:
         """Test transaction expiration detection."""
         # Fresh transaction should not be expired
         assert not transaction_context.is_expired()
@@ -170,18 +188,26 @@ class TestTransactionContext:
         # Even 0 timeout should allow some processing time
         assert not short_timeout_context.is_expired()
 
-    def test_transaction_context_get_duration(self, transaction_context: TransactionContext) -> None:
+    def test_transaction_context_get_duration(
+        self, transaction_context: TransactionContext
+    ) -> None:
         """Test transaction duration calculation."""
         duration = transaction_context.get_duration()
         assert duration >= 0
         assert isinstance(duration, float)
 
-    def test_transaction_context_get_statistics(self, transaction_context: TransactionContext) -> None:
+    def test_transaction_context_get_statistics(
+        self, transaction_context: TransactionContext
+    ) -> None:
         """Test transaction statistics generation."""
         # Add various operations
         transaction_context.add_operation("add", "cn=user1,dc=example,dc=com", {})
-        op2_id = transaction_context.add_operation("modify", "cn=user2,dc=example,dc=com", {})
-        op3_id = transaction_context.add_operation("delete", "cn=user3,dc=example,dc=com", {})
+        op2_id = transaction_context.add_operation(
+            "modify", "cn=user2,dc=example,dc=com", {}
+        )
+        op3_id = transaction_context.add_operation(
+            "delete", "cn=user3,dc=example,dc=com", {}
+        )
 
         # Mark operations with different outcomes
         transaction_context.mark_operation_successful(op2_id, {"result_code": 0})
@@ -302,7 +328,12 @@ class TestLDAPTransaction:
         """Test modify entry with list values."""
         await ldap_transaction.modify_entry(
             "cn=user,dc=example,dc=com",
-            {"memberOf": ["cn=group1,dc=example,dc=com", "cn=group2,dc=example,dc=com"]},
+            {
+                "memberOf": [
+                    "cn=group1,dc=example,dc=com",
+                    "cn=group2,dc=example,dc=com",
+                ]
+            },
         )
 
         # Verify ldap3 modify format was used
@@ -331,7 +362,10 @@ class TestLDAPTransaction:
         # Mock search results
         mock_entry = MagicMock()
         mock_entry.entry_dn = "cn=testuser,dc=example,dc=com"
-        mock_entry.entry_attributes_as_dict = {"cn": ["testuser"], "mail": ["test@example.com"]}
+        mock_entry.entry_attributes_as_dict = {
+            "cn": ["testuser"],
+            "mail": ["test@example.com"],
+        }
         mock_entry.entry_raw_attributes = {"cn": [b"testuser"]}
         mock_connection.entries = [mock_entry]
 
@@ -384,10 +418,14 @@ class TestLDAPTransaction:
     ) -> None:
         """Test commit with failed operations."""
         # Manually add a failed operation
-        operation_id = ldap_transaction._context.add_operation("add", "cn=test,dc=example,dc=com", {})
+        operation_id = ldap_transaction._context.add_operation(
+            "add", "cn=test,dc=example,dc=com", {}
+        )
         ldap_transaction._context.mark_operation_failed(operation_id, "Test failure")
 
-        with pytest.raises(RuntimeError, match="Cannot commit transaction with .* failed operations"):
+        with pytest.raises(
+            RuntimeError, match="Cannot commit transaction with .* failed operations"
+        ):
             await ldap_transaction.commit()
 
         assert ldap_transaction._context.state == TransactionState.ABORTED
@@ -564,7 +602,9 @@ class TestTransactionManager:
 
             async with transaction_manager.begin_transaction() as tx2:
                 assert len(transaction_manager.get_active_transactions()) == 2
-                assert tx2.transaction_id in transaction_manager.get_active_transactions()
+                assert (
+                    tx2.transaction_id in transaction_manager.get_active_transactions()
+                )
 
         # Should be cleaned up after context managers
         assert len(transaction_manager.get_active_transactions()) == 0
@@ -603,8 +643,12 @@ class TestTransactionManager:
         """Test aborting all active transactions."""
         # Create multiple transactions but don't use context managers
         # so they stay active
-        tx1_task = asyncio.create_task(self._create_long_running_transaction(transaction_manager))
-        tx2_task = asyncio.create_task(self._create_long_running_transaction(transaction_manager))
+        tx1_task = asyncio.create_task(
+            self._create_long_running_transaction(transaction_manager)
+        )
+        tx2_task = asyncio.create_task(
+            self._create_long_running_transaction(transaction_manager)
+        )
 
         # Wait for transactions to start
         await asyncio.sleep(0.1)
@@ -622,7 +666,9 @@ class TestTransactionManager:
         tx2_task.cancel()
         await asyncio.gather(tx1_task, tx2_task, return_exceptions=True)
 
-    async def _create_long_running_transaction(self, manager: TransactionManager) -> None:
+    async def _create_long_running_transaction(
+        self, manager: TransactionManager
+    ) -> None:
         """Helper to create long-running transaction for testing."""
         try:
             async with manager.begin_transaction():
@@ -657,7 +703,9 @@ class TestTransactionIntegration:
 
         manager = TransactionManager(mock_connection)
 
-        with patch("ldap_core_shared.transactions.controls.TransactionSpecificationControl"):
+        with patch(
+            "ldap_core_shared.transactions.controls.TransactionSpecificationControl"
+        ):
             async with manager.begin_transaction() as tx:
                 # Add user
                 await tx.add_entry(
@@ -694,9 +742,13 @@ class TestTransactionPerformance:
         manager = TransactionManager(mock_connection)
 
         async def single_transaction(index: int) -> None:
-            with patch("ldap_core_shared.transactions.controls.TransactionSpecificationControl"):
+            with patch(
+                "ldap_core_shared.transactions.controls.TransactionSpecificationControl"
+            ):
                 async with manager.begin_transaction() as tx:
-                    await tx.add_entry(f"cn=user{index},dc=example,dc=com", {"cn": f"user{index}"})
+                    await tx.add_entry(
+                        f"cn=user{index},dc=example,dc=com", {"cn": f"user{index}"}
+                    )
 
         # Run 10 concurrent transactions
         tasks = [single_transaction(i) for i in range(10)]

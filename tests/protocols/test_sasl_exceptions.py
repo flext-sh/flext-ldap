@@ -483,7 +483,10 @@ class TestConvenienceFunctions:
         )
 
         assert isinstance(error, SASLAuthenticationError)
-        assert str(error) == "SASL PLAIN authentication failed: Invalid username or password"
+        assert (
+            str(error)
+            == "SASL PLAIN authentication failed: Invalid username or password"
+        )
         assert error.mechanism == "PLAIN"
         assert error.auth_failure_reason == "Invalid username or password"
 
@@ -536,7 +539,9 @@ class TestConvenienceFunctions:
         )
 
         assert isinstance(error, SASLCallbackError)
-        assert str(error) == "SASL PasswordCallback callback failed: Password not provided"
+        assert (
+            str(error) == "SASL PasswordCallback callback failed: Password not provided"
+        )
         assert error.callback_type == "PasswordCallback"
 
     def test_sasl_callback_failed_with_kwargs(self) -> None:

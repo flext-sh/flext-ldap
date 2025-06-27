@@ -41,7 +41,7 @@ from __future__ import annotations
 
 import base64
 from enum import Enum
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
 
 from pydantic import BaseModel, Field
 
@@ -51,35 +51,38 @@ from ldap_core_shared.utilities.dn import DistinguishedName
 class AttributeValueType(Enum):
     """LDAP attribute value types."""
 
-    STRING = "string"         # UTF-8 string value
-    BINARY = "binary"         # Binary data value
-    INTEGER = "integer"       # Integer value
-    BOOLEAN = "boolean"       # Boolean value
-    TIME = "time"            # Generalized time value
-    DN = "dn"                # Distinguished name value
+    STRING = "string"  # UTF-8 string value
+    BINARY = "binary"  # Binary data value
+    INTEGER = "integer"  # Integer value
+    BOOLEAN = "boolean"  # Boolean value
+    TIME = "time"  # Generalized time value
+    DN = "dn"  # Distinguished name value
 
 
 class ModificationType(Enum):
     """LDAP modification operation types."""
 
-    ADD = "add"              # Add attribute values
-    DELETE = "delete"        # Delete attribute values
-    REPLACE = "replace"      # Replace all attribute values
+    ADD = "add"  # Add attribute values
+    DELETE = "delete"  # Delete attribute values
+    REPLACE = "replace"  # Replace all attribute values
     INCREMENT = "increment"  # Increment integer value
 
 
 class AttributeValue(BaseModel):
     """Individual LDAP attribute value representation."""
 
-    value: Union[str, bytes, int, bool] = Field(description="Attribute value")
+    value: str | bytes | int | bool = Field(description="Attribute value")
 
     value_type: AttributeValueType = Field(
-        default=AttributeValueType.STRING, description="Type of attribute value",
+        default=AttributeValueType.STRING,
+        description="Type of attribute value",
     )
 
     is_binary: bool = Field(default=False, description="Whether value is binary")
 
-    encoding: str = Field(default="utf-8", description="Text encoding for string values")
+    encoding: str = Field(
+        default="utf-8", description="Text encoding for string values",
+    )
 
     def get_string_value(self) -> str:
         """Get value as string.
@@ -93,7 +96,7 @@ class AttributeValue(BaseModel):
             if self.is_binary:
                 return base64.b64encode(self.value).decode("ascii")
             return self.value.decode(self.encoding, errors="replace")
-        if isinstance(self.value, (int, bool)):
+        if isinstance(self.value, int | bool):
             return str(self.value)
         # Handle any other types (defensive programming)
         msg = f"Unsupported value type: {type(self.value)}"  # type: ignore[unreachable]
@@ -120,7 +123,7 @@ class AttributeValue(BaseModel):
         else:
             return str(self.value).encode(self.encoding)
 
-    def get_typed_value(self) -> Union[str, bytes, int, bool]:
+    def get_typed_value(self) -> str | bytes | int | bool:
         """Get value in its appropriate type.
 
         Returns:
@@ -145,7 +148,7 @@ class AttributeValue(BaseModel):
         else:
             return self.get_string_value()
 
-    def is_equal_to(self, other_value: Union[str, bytes, AttributeValue]) -> bool:
+    def is_equal_to(self, other_value: str | bytes | AttributeValue) -> bool:
         """Check if value is equal to another value.
 
         Args:
@@ -165,9 +168,13 @@ class AttributeValue(BaseModel):
 
     def __eq__(self, other: object) -> bool:
         """Check value equality."""
-        if isinstance(other, (str, bytes, AttributeValue)):
+        if isinstance(other, str | bytes | AttributeValue):
             return self.is_equal_to(other)
         return False
+
+    def __hash__(self) -> int:
+        """Hash for AttributeValue."""
+        return hash((self.get_string_value(), self.value_type, self.is_binary))
 
 
 class LDAPEntry:
@@ -206,8 +213,8 @@ class LDAPEntry:
 
     def __init__(
         self,
-        dn: Optional[str] = None,
-        attributes: Optional[dict[str, Union[list[str], list[bytes], list[Any]]]] = None,
+        dn: str | None = None,
+        attributes: dict[str, list[str] | list[bytes] | list[Any]] | None = None,
     ) -> None:
         """Initialize LDAP entry.
 
@@ -223,7 +230,7 @@ class LDAPEntry:
                 self.set_attribute(attr_name, values)
 
     @property
-    def dn(self) -> Optional[DistinguishedName]:
+    def dn(self) -> DistinguishedName | None:
         """Get entry DN.
 
         Returns:
@@ -231,7 +238,7 @@ class LDAPEntry:
         """
         return self._dn
 
-    def set_dn(self, dn: Union[str, DistinguishedName]) -> None:
+    def set_dn(self, dn: str | DistinguishedName) -> None:
         """Set entry DN.
 
         Args:
@@ -261,7 +268,7 @@ class LDAPEntry:
         """
         return attribute_name.lower() in {name.lower() for name in self._attributes}
 
-    def get_attribute(self, attribute_name: str) -> Optional[str]:
+    def get_attribute(self, attribute_name: str) -> str | None:
         """Get first value of attribute.
 
         Args:
@@ -305,7 +312,9 @@ class LDAPEntry:
 
         return []
 
-    def set_attribute(self, attribute_name: str, values: Union[str, list[str], list[bytes], list[Any]]) -> None:
+    def set_attribute(
+        self, attribute_name: str, values: str | list[str] | list[bytes] | list[Any],
+    ) -> None:
         """Set attribute values (replace existing).
 
         Args:
@@ -322,17 +331,25 @@ class LDAPEntry:
             else:
                 # Determine value type
                 is_binary = isinstance(value, bytes)
-                value_type = AttributeValueType.BINARY if is_binary else AttributeValueType.STRING
+                value_type = (
+                    AttributeValueType.BINARY
+                    if is_binary
+                    else AttributeValueType.STRING
+                )
 
-                attribute_values.append(AttributeValue(
-                    value=value,
-                    value_type=value_type,
-                    is_binary=is_binary,
-                ))
+                attribute_values.append(
+                    AttributeValue(
+                        value=value,
+                        value_type=value_type,
+                        is_binary=is_binary,
+                    ),
+                )
 
         self._attributes[attribute_name] = attribute_values
 
-    def add_attribute(self, attribute_name: str, values: Union[str, list[str], list[bytes], list[Any]]) -> None:
+    def add_attribute(
+        self, attribute_name: str, values: str | list[str] | list[bytes] | list[Any],
+    ) -> None:
         """Add values to attribute (append to existing).
 
         Args:
@@ -350,13 +367,19 @@ class LDAPEntry:
             else:
                 # Determine value type
                 is_binary = isinstance(value, bytes)
-                value_type = AttributeValueType.BINARY if is_binary else AttributeValueType.STRING
+                value_type = (
+                    AttributeValueType.BINARY
+                    if is_binary
+                    else AttributeValueType.STRING
+                )
 
-                existing_values.append(AttributeValue(
-                    value=value,
-                    value_type=value_type,
-                    is_binary=is_binary,
-                ))
+                existing_values.append(
+                    AttributeValue(
+                        value=value,
+                        value_type=value_type,
+                        is_binary=is_binary,
+                    ),
+                )
 
         self._attributes[attribute_name] = existing_values
 
@@ -377,7 +400,9 @@ class LDAPEntry:
 
         return False
 
-    def remove_attribute_value(self, attribute_name: str, value: Union[str, bytes]) -> bool:
+    def remove_attribute_value(
+        self, attribute_name: str, value: str | bytes,
+    ) -> bool:
         """Remove specific value from attribute.
 
         Args:
@@ -393,10 +418,7 @@ class LDAPEntry:
                 original_count = len(values)
 
                 # Remove matching values
-                remaining_values = [
-                    val for val in values
-                    if not val.is_equal_to(value)
-                ]
+                remaining_values = [val for val in values if not val.is_equal_to(value)]
 
                 if len(remaining_values) < original_count:
                     if remaining_values:
@@ -409,7 +431,9 @@ class LDAPEntry:
 
         return False
 
-    def replace_attribute(self, attribute_name: str, values: Union[str, list[str], list[bytes], list[Any]]) -> None:
+    def replace_attribute(
+        self, attribute_name: str, values: str | list[str] | list[bytes] | list[Any],
+    ) -> None:
         """Replace attribute values (alias for set_attribute).
 
         Args:
@@ -517,7 +541,9 @@ class LDAPEntry:
             for value in values:
                 if value.is_binary:
                     # Binary values are base64 encoded
-                    encoded_value = base64.b64encode(value.get_binary_value()).decode("ascii")
+                    encoded_value = base64.b64encode(value.get_binary_value()).decode(
+                        "ascii",
+                    )
                     lines.append(f"{attr_name}:: {encoded_value}")
                 else:
                     lines.append(f"{attr_name}: {value.get_string_value()}")
@@ -557,7 +583,9 @@ class LDAPEntry:
 
         # Check DN validity
         if self._dn and not self._dn.is_valid():
-            errors.extend([f"DN error: {error}" for error in self._dn.get_validation_errors()])
+            errors.extend(
+                [f"DN error: {error}" for error in self._dn.get_validation_errors()],
+            )
 
         # Check for empty attributes
         for attr_name, values in self._attributes.items():
@@ -589,9 +617,23 @@ class LDAPEntry:
         if not isinstance(other, LDAPEntry):
             return False
 
-        return (
-            self._dn == other._dn and
-            self._attributes == other._attributes
+        return self._dn == other._dn and self._attributes == other._attributes
+
+    def __hash__(self) -> int:
+        """Hash for LDAPEntry."""
+        return hash(
+            (
+                self._dn,
+                tuple(
+                    sorted(
+                        (
+                            attr_name,
+                            tuple(values) if isinstance(values, list) else values,
+                        )
+                        for attr_name, values in self._attributes.items()
+                    ),
+                ),
+            ),
         )
 
 
@@ -639,30 +681,38 @@ class EntryProcessor:
             if values1 != values2:
                 if not values1:
                     # Attribute added
-                    modifications.append({
-                        "operation": ModificationType.ADD.value,
-                        "attribute": attr_name,
-                        "values": list(values2),
-                    })
+                    modifications.append(
+                        {
+                            "operation": ModificationType.ADD.value,
+                            "attribute": attr_name,
+                            "values": list(values2),
+                        },
+                    )
                 elif not values2:
                     # Attribute removed
-                    modifications.append({
-                        "operation": ModificationType.DELETE.value,
-                        "attribute": attr_name,
-                        "values": list(values1),
-                    })
+                    modifications.append(
+                        {
+                            "operation": ModificationType.DELETE.value,
+                            "attribute": attr_name,
+                            "values": list(values1),
+                        },
+                    )
                 else:
                     # Attribute modified
-                    modifications.append({
-                        "operation": ModificationType.REPLACE.value,
-                        "attribute": attr_name,
-                        "values": list(values2),
-                    })
+                    modifications.append(
+                        {
+                            "operation": ModificationType.REPLACE.value,
+                            "attribute": attr_name,
+                            "values": list(values2),
+                        },
+                    )
 
         return modifications
 
     @staticmethod
-    def filter_entry_attributes(entry: LDAPEntry, allowed_attributes: set[str]) -> LDAPEntry:
+    def filter_entry_attributes(
+        entry: LDAPEntry, allowed_attributes: set[str],
+    ) -> LDAPEntry:
         """Filter entry to include only allowed attributes.
 
         Args:
@@ -710,7 +760,7 @@ class EntryProcessor:
 
 
 # Convenience functions
-def create_entry(dn: str, attributes: dict[str, Union[str, list[str]]]) -> LDAPEntry:
+def create_entry(dn: str, attributes: dict[str, str | list[str]]) -> LDAPEntry:
     """Create LDAP entry from dictionary.
 
     Args:
@@ -728,10 +778,16 @@ def create_entry(dn: str, attributes: dict[str, Union[str, list[str]]]) -> LDAPE
         else:
             normalized_attrs[name] = value
 
-    return LDAPEntry(dn, cast("Optional[dict[str, Union[list[str], list[bytes], list[Any]]]]", normalized_attrs))
+    return LDAPEntry(
+        dn,
+        cast(
+            "dict[str, list[str] | list[bytes] | list[Any]] | None",
+            normalized_attrs,
+        ),
+    )
 
 
-def parse_ldif_entry(ldif_text: str) -> Optional[LDAPEntry]:
+def parse_ldif_entry(ldif_text: str) -> LDAPEntry | None:
     """Parse LDIF text into entry.
 
     Args:
@@ -763,6 +819,7 @@ def entry_to_json(entry: LDAPEntry) -> str:
         JSON representation of entry
     """
     import json
+
     return json.dumps(entry.to_dict(), indent=2, sort_keys=True)
 
 

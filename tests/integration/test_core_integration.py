@@ -116,6 +116,7 @@ class TestSystemInitializationIntegration:
 
         # Verify system is properly shut down
         from ldap_core_shared.core import is_initialized
+
         assert is_initialized() is False
 
     def test_configuration_hierarchy_integration(self) -> None:
@@ -135,7 +136,9 @@ class TestSystemInitializationIntegration:
             },
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
+        ) as f:
             json.dump(file_config, f)
             config_file = f.name
 
@@ -173,25 +176,37 @@ class TestSystemInitializationIntegration:
     def test_multi_environment_configuration_validation(self) -> None:
         """Test configuration validation across different environments."""
         environments_and_configs = [
-            ("development", {
-                "debug": True,
-                "logging": {"level": "DEBUG"},
-            }),
-            ("testing", {
-                "debug": True,
-                "logging": {"level": "INFO"},
-            }),
-            ("staging", {
-                "debug": False,
-                "logging": {"level": "INFO"},
-                "security": {"require_authentication": True},
-            }),
-            ("production", {
-                "debug": False,
-                "logging": {"level": "WARNING"},
-                "security": {"require_authentication": True},
-                "connection": {"use_tls": True},
-            }),
+            (
+                "development",
+                {
+                    "debug": True,
+                    "logging": {"level": "DEBUG"},
+                },
+            ),
+            (
+                "testing",
+                {
+                    "debug": True,
+                    "logging": {"level": "INFO"},
+                },
+            ),
+            (
+                "staging",
+                {
+                    "debug": False,
+                    "logging": {"level": "INFO"},
+                    "security": {"require_authentication": True},
+                },
+            ),
+            (
+                "production",
+                {
+                    "debug": False,
+                    "logging": {"level": "WARNING"},
+                    "security": {"require_authentication": True},
+                    "connection": {"use_tls": True},
+                },
+            ),
         ]
 
         for env_name, overrides in environments_and_configs:
@@ -224,12 +239,14 @@ class TestLoggingExceptionIntegration:
     def test_exception_logging_integration(self) -> None:
         """Test integration between exception and logging systems."""
         # Initialize with structured logging
-        initialize_core(override_values={
-            "logging": {
-                "structured_logging": True,
-                "security_logging": True,
-            },
-        })
+        initialize_core(
+            override_values={
+                "logging": {
+                    "structured_logging": True,
+                    "security_logging": True,
+                },
+            }
+        )
 
         logger = get_logger("integration.exceptions")
 
@@ -258,6 +275,7 @@ class TestLoggingExceptionIntegration:
         # Test security exception logging
         try:
             from ldap_core_shared.core.exceptions import SecurityViolationError
+
             raise SecurityViolationError(
                 message="Unauthorized access attempt",
                 violation_type="unauthorized_access",
@@ -288,13 +306,15 @@ class TestLoggingExceptionIntegration:
 
     def test_performance_monitoring_logging_integration(self) -> None:
         """Test integration between performance monitoring and logging."""
-        initialize_core(override_values={
-            "logging": {
-                "performance_logging": True,
-                "slow_query_threshold": 0.01,  # Very low threshold
-            },
-            "monitoring": {"enabled": True},
-        })
+        initialize_core(
+            override_values={
+                "logging": {
+                    "performance_logging": True,
+                    "slow_query_threshold": 0.01,  # Very low threshold
+                },
+                "monitoring": {"enabled": True},
+            }
+        )
 
         logger = get_logger("integration.performance")
         monitor = get_performance_monitor()
@@ -325,24 +345,26 @@ class TestConfigurationComponentIntegration:
     def test_configuration_affects_all_components(self) -> None:
         """Test that configuration changes affect all components."""
         # Initialize with specific configuration
-        initialize_core(override_values={
-            "debug": True,
-            "logging": {
-                "level": "DEBUG",
-                "structured_logging": True,
-                "performance_logging": True,
-                "slow_query_threshold": 0.1,
-            },
-            "security": {
-                "require_authentication": True,
-                "session_timeout": 7200,
-            },
-            "monitoring": {
-                "enabled": True,
-                "health_check_enabled": True,
-                "health_check_interval": 60,
-            },
-        })
+        initialize_core(
+            override_values={
+                "debug": True,
+                "logging": {
+                    "level": "DEBUG",
+                    "structured_logging": True,
+                    "performance_logging": True,
+                    "slow_query_threshold": 0.1,
+                },
+                "security": {
+                    "require_authentication": True,
+                    "session_timeout": 7200,
+                },
+                "monitoring": {
+                    "enabled": True,
+                    "health_check_enabled": True,
+                    "health_check_interval": 60,
+                },
+            }
+        )
 
         # Verify configuration propagated to logging system
         logger = get_logger("integration.config")
@@ -419,13 +441,19 @@ class TestConfigurationComponentIntegration:
 
             # Load and validate template
             import yaml
+
             with template_file.open("r") as f:
                 template_data = yaml.safe_load(f)
 
             # Verify all required sections are present
             required_sections = [
-                "environment", "database", "connection",
-                "schema", "security", "logging", "monitoring",
+                "environment",
+                "database",
+                "connection",
+                "schema",
+                "security",
+                "logging",
+                "monitoring",
             ]
 
             for section in required_sections:
@@ -470,12 +498,14 @@ class TestErrorHandlingIntegration:
 
     def test_logging_error_handling_integration(self) -> None:
         """Test error handling in logging system integration."""
-        initialize_core(override_values={
-            "logging": {
-                "structured_logging": True,
-                "console_enabled": True,
-            },
-        })
+        initialize_core(
+            override_values={
+                "logging": {
+                    "structured_logging": True,
+                    "console_enabled": True,
+                },
+            }
+        )
 
         logger = get_logger("integration.error_handling")
 
@@ -497,10 +527,12 @@ class TestErrorHandlingIntegration:
 
     def test_performance_monitoring_error_handling(self) -> None:
         """Test error handling in performance monitoring integration."""
-        initialize_core(override_values={
-            "logging": {"performance_logging": True},
-            "monitoring": {"enabled": True},
-        })
+        initialize_core(
+            override_values={
+                "logging": {"performance_logging": True},
+                "monitoring": {"enabled": True},
+            }
+        )
 
         logger = get_logger("integration.perf_errors")
         monitor = get_performance_monitor()
@@ -524,12 +556,14 @@ class TestSecurityIntegration:
 
     def test_sensitive_data_protection_integration(self) -> None:
         """Test sensitive data protection across all components."""
-        initialize_core(override_values={
-            "logging": {
-                "structured_logging": True,
-                "security_logging": True,
-            },
-        })
+        initialize_core(
+            override_values={
+                "logging": {
+                    "structured_logging": True,
+                    "security_logging": True,
+                },
+            }
+        )
 
         logger = get_logger("integration.security")
 
@@ -562,16 +596,18 @@ class TestSecurityIntegration:
 
     def test_security_event_lifecycle_integration(self) -> None:
         """Test complete security event lifecycle integration."""
-        initialize_core(override_values={
-            "logging": {
-                "security_logging": True,
-                "audit_logging": True,
-            },
-            "security": {
-                "require_authentication": True,
-                "max_login_attempts": 3,
-            },
-        })
+        initialize_core(
+            override_values={
+                "logging": {
+                    "security_logging": True,
+                    "audit_logging": True,
+                },
+                "security": {
+                    "require_authentication": True,
+                    "max_login_attempts": 3,
+                },
+            }
+        )
 
         logger = get_logger("integration.security_events")
 
@@ -612,13 +648,15 @@ class TestResourceManagementIntegration:
             log_file = Path(f.name)
 
         try:
-            initialize_core(override_values={
-                "logging": {
-                    "log_file": str(log_file),
-                    "structured_logging": True,
-                },
-                "monitoring": {"enabled": True},
-            })
+            initialize_core(
+                override_values={
+                    "logging": {
+                        "log_file": str(log_file),
+                        "structured_logging": True,
+                    },
+                    "monitoring": {"enabled": True},
+                }
+            )
 
             # Use various components to create resources
             logger = get_logger("integration.cleanup")
@@ -627,7 +665,7 @@ class TestResourceManagementIntegration:
             # Generate some activity
             for i in range(10):
                 with logger.context(iteration=i):
-                    logger.info(f"Test iteration {i}")
+                    logger.info("Test iteration %s", i)
 
                     with monitor.time_operation(f"operation_{i}"):
                         time.sleep(0.001)
@@ -641,6 +679,7 @@ class TestResourceManagementIntegration:
 
             # Verify cleanup
             from ldap_core_shared.core import is_initialized
+
             assert is_initialized() is False
 
         finally:
@@ -651,10 +690,12 @@ class TestResourceManagementIntegration:
     def test_memory_usage_integration(self) -> None:
         """Test memory usage patterns across components."""
         # Initialize system
-        initialize_core(override_values={
-            "logging": {"performance_logging": True},
-            "monitoring": {"enabled": True},
-        })
+        initialize_core(
+            override_values={
+                "logging": {"performance_logging": True},
+                "monitoring": {"enabled": True},
+            }
+        )
 
         logger = get_logger("integration.memory")
         monitor = get_performance_monitor()
@@ -662,7 +703,7 @@ class TestResourceManagementIntegration:
         # Generate activity to test memory patterns
         for batch in range(5):
             with logger.context(batch=batch):
-                logger.info(f"Processing batch {batch}")
+                logger.info("Processing batch %s", batch)
 
                 # Simulate multiple operations
                 for op in range(20):
@@ -699,7 +740,10 @@ def sample_production_config():
             "pool_size": 20,
         },
         "connection": {
-            "servers": ["ldaps://ldap1.example.com:636", "ldaps://ldap2.example.com:636"],
+            "servers": [
+                "ldaps://ldap1.example.com:636",
+                "ldaps://ldap2.example.com:636",
+            ],
             "use_tls": True,
             "tls_verify": True,
         },

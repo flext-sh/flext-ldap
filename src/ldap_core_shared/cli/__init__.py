@@ -50,6 +50,7 @@ except ImportError:
     # Import only available modules
     try:
         from ldap_core_shared.cli.enterprise_tools import cli as enterprise_cli
+
         __all__ = ["enterprise_cli"]
     except ImportError:
         __all__ = []
@@ -63,6 +64,7 @@ def get_version() -> str:
     """
     try:
         from ldap_core_shared import __version__
+
         return __version__
     except ImportError:
         return "0.1.0-dev"

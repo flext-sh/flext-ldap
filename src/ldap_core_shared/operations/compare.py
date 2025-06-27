@@ -50,7 +50,7 @@ References:
 import hashlib
 import time
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -95,24 +95,29 @@ class CompareResult(BaseModel):
     attribute: str = Field(description="Attribute that was compared")
 
     operation_duration: float = Field(
-        default=0.0, description="Operation duration in seconds",
+        default=0.0,
+        description="Operation duration in seconds",
     )
 
-    server_response: Optional[str] = Field(
-        default=None, description="Server response message",
+    server_response: str | None = Field(
+        default=None,
+        description="Server response message",
     )
 
-    error_message: Optional[str] = Field(
-        default=None, description="Error message if operation failed",
+    error_message: str | None = Field(
+        default=None,
+        description="Error message if operation failed",
     )
 
     # Security metadata
     is_authenticated: bool = Field(
-        default=False, description="Whether this was an authentication check",
+        default=False,
+        description="Whether this was an authentication check",
     )
 
-    hash_type_detected: Optional[PasswordHashType] = Field(
-        default=None, description="Detected password hash type",
+    hash_type_detected: PasswordHashType | None = Field(
+        default=None,
+        description="Detected password hash type",
     )
 
     def is_true(self) -> bool:
@@ -138,19 +143,24 @@ class CompareRequest(BaseModel):
     value: str = Field(description="Value to compare against")
 
     # Operation settings
-    timeout_seconds: int = Field(default=DEFAULT_TIMEOUT_SECONDS, description="Operation timeout in seconds")
+    timeout_seconds: int = Field(
+        default=DEFAULT_TIMEOUT_SECONDS, description="Operation timeout in seconds",
+    )
 
     # Security settings for password comparisons
     is_password_check: bool = Field(
-        default=False, description="Whether this is a password comparison",
+        default=False,
+        description="Whether this is a password comparison",
     )
 
     hash_password: bool = Field(
-        default=False, description="Whether to hash the value before comparison",
+        default=False,
+        description="Whether to hash the value before comparison",
     )
 
-    expected_hash_type: Optional[PasswordHashType] = Field(
-        default=None, description="Expected password hash type",
+    expected_hash_type: PasswordHashType | None = Field(
+        default=None,
+        description="Expected password hash type",
     )
 
 
@@ -259,7 +269,10 @@ class CompareOperations:
             True if user is member of group, False otherwise
         """
         result = await self.compare_attribute(
-            group_dn, member_attribute, member_dn, timeout_seconds,
+            group_dn,
+            member_attribute,
+            member_dn,
+            timeout_seconds,
         )
         return result.is_true()
 
@@ -286,7 +299,10 @@ class CompareOperations:
         for value in values:
             try:
                 result = await self.compare_attribute(
-                    dn, attribute, value, timeout_seconds,
+                    dn,
+                    attribute,
+                    value,
+                    timeout_seconds,
                 )
                 results[value] = result
             except Exception as e:
@@ -332,7 +348,10 @@ class CompareOperations:
         return PasswordHashType.PLAINTEXT
 
     def _hash_password_for_comparison(
-        self, plaintext: str, hash_type: PasswordHashType, salt: Optional[str] = None,
+        self,
+        plaintext: str,
+        hash_type: PasswordHashType,
+        salt: str | None = None,
     ) -> str:
         """Hash password for comparison with stored hash.
 
@@ -366,7 +385,11 @@ class CompareOperations:
         raise NotImplementedError(msg)
 
     async def _execute_ldap_compare(
-        self, dn: str, attribute: str, value: str, timeout_seconds: int,
+        self,
+        dn: str,
+        attribute: str,
+        value: str,
+        timeout_seconds: int,
     ) -> CompareResult:
         """Execute actual LDAP compare operation.
 
@@ -477,7 +500,9 @@ class PasswordCompare:
             True if authentication successful
         """
         return await self._compare_ops.compare_password(
-            user_dn, password_attribute, password,
+            user_dn,
+            password_attribute,
+            password,
         )
 
     async def validate_password_policy(
@@ -506,7 +531,9 @@ class PasswordCompare:
 
         # Verify current password
         results["current_password_valid"] = await self.authenticate_user(
-            user_dn, current_password, password_attribute,
+            user_dn,
+            current_password,
+            password_attribute,
         )
 
         # Check if new password is different
@@ -526,7 +553,10 @@ class PasswordCompare:
 
 # Convenience functions
 async def compare_attribute(
-    connection: Any, dn: str, attribute: str, value: str,
+    connection: Any,
+    dn: str,
+    attribute: str,
+    value: str,
 ) -> bool:
     """Convenience function for attribute comparison.
 
@@ -560,7 +590,9 @@ async def authenticate_user(connection: Any, user_dn: str, password: str) -> boo
 
 
 async def check_group_membership(
-    connection: Any, group_dn: str, member_dn: str,
+    connection: Any,
+    group_dn: str,
+    member_dn: str,
 ) -> bool:
     """Convenience function for group membership check.
 
@@ -574,6 +606,7 @@ async def check_group_membership(
     """
     compare_ops = CompareOperations(connection)
     return await compare_ops.compare_group_membership(group_dn, member_dn)
+
 
 # TODO: Integration points for implementation:
 #

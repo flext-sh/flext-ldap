@@ -50,9 +50,9 @@ References:
 
 
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field
@@ -63,17 +63,17 @@ from ldap_core_shared.referrals.chaser import ReferralChaser, ReferralCredential
 class ReferralHandlingMode(Enum):
     """Modes for referral handling."""
 
-    AUTOMATIC = "automatic"     # Automatically follow all referrals
-    MANUAL = "manual"          # Return referrals to caller for manual processing
-    SELECTIVE = "selective"    # Follow referrals based on policy
-    DISABLED = "disabled"      # Never follow referrals
+    AUTOMATIC = "automatic"  # Automatically follow all referrals
+    MANUAL = "manual"  # Return referrals to caller for manual processing
+    SELECTIVE = "selective"  # Follow referrals based on policy
+    DISABLED = "disabled"  # Never follow referrals
 
 
 class ReferralSecurityMode(Enum):
     """Security modes for referral following."""
 
-    STRICT = "strict"          # Only follow secure referrals (TLS/SSL)
-    RELAXED = "relaxed"        # Follow both secure and insecure referrals
+    STRICT = "strict"  # Only follow secure referrals (TLS/SSL)
+    RELAXED = "relaxed"  # Follow both secure and insecure referrals
     SAME_SECURITY = "same_security"  # Match security level of original connection
 
 
@@ -83,15 +83,18 @@ class ReferralOperation(BaseModel):
     operation_type: str = Field(description="Type of LDAP operation")
 
     operation_args: dict[str, Any] = Field(
-        default_factory=dict, description="Arguments for the operation",
+        default_factory=dict,
+        description="Arguments for the operation",
     )
 
-    original_dn: Optional[str] = Field(
-        default=None, description="Original DN for the operation",
+    original_dn: str | None = Field(
+        default=None,
+        description="Original DN for the operation",
     )
 
     referral_urls: list[str] = Field(
-        default_factory=list, description="List of referral URLs",
+        default_factory=list,
+        description="List of referral URLs",
     )
 
     referral_depth: int = Field(default=0, description="Current referral depth")
@@ -99,7 +102,7 @@ class ReferralOperation(BaseModel):
     max_depth: int = Field(default=5, description="Maximum referral depth")
 
     started_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Operation start timestamp",
     )
 
@@ -113,7 +116,7 @@ class ReferralOperation(BaseModel):
 
     def get_duration(self) -> float:
         """Get operation duration in seconds."""
-        return (datetime.now(timezone.utc) - self.started_at).total_seconds()
+        return (datetime.now(UTC) - self.started_at).total_seconds()
 
 
 class ReferralResult(BaseModel):
@@ -122,47 +125,57 @@ class ReferralResult(BaseModel):
     success: bool = Field(description="Whether referral processing succeeded")
 
     # Result data
-    entries: Optional[list[dict[str, Any]]] = Field(
-        default=None, description="Search result entries",
+    entries: list[dict[str, Any]] | None = Field(
+        default=None,
+        description="Search result entries",
     )
 
-    result_data: Optional[Any] = Field(
-        default=None, description="General operation result data",
+    result_data: Any | None = Field(
+        default=None,
+        description="General operation result data",
     )
 
     # Referral metadata
     referral_urls_processed: list[str] = Field(
-        default_factory=list, description="Referral URLs that were processed",
+        default_factory=list,
+        description="Referral URLs that were processed",
     )
 
-    successful_referral_url: Optional[str] = Field(
-        default=None, description="Referral URL that succeeded",
+    successful_referral_url: str | None = Field(
+        default=None,
+        description="Referral URL that succeeded",
     )
 
-    final_server: Optional[str] = Field(
-        default=None, description="Final server that provided results",
+    final_server: str | None = Field(
+        default=None,
+        description="Final server that provided results",
     )
 
     total_referrals_followed: int = Field(
-        default=0, description="Total number of referrals followed",
+        default=0,
+        description="Total number of referrals followed",
     )
 
     # Error information
-    error_message: Optional[str] = Field(
-        default=None, description="Error message if processing failed",
+    error_message: str | None = Field(
+        default=None,
+        description="Error message if processing failed",
     )
 
     referral_errors: list[str] = Field(
-        default_factory=list, description="Errors from individual referrals",
+        default_factory=list,
+        description="Errors from individual referrals",
     )
 
     # Performance metadata
-    total_processing_time: Optional[float] = Field(
-        default=None, description="Total processing time in seconds",
+    total_processing_time: float | None = Field(
+        default=None,
+        description="Total processing time in seconds",
     )
 
     per_referral_times: dict[str, float] = Field(
-        default_factory=dict, description="Processing time per referral URL",
+        default_factory=dict,
+        description="Processing time per referral URL",
     )
 
     def get_entries(self) -> list[dict[str, Any]]:
@@ -202,45 +215,55 @@ class ReferralPolicy(BaseModel):
     """Policy configuration for referral handling."""
 
     handling_mode: ReferralHandlingMode = Field(
-        default=ReferralHandlingMode.AUTOMATIC, description="Referral handling mode",
+        default=ReferralHandlingMode.AUTOMATIC,
+        description="Referral handling mode",
     )
 
     security_mode: ReferralSecurityMode = Field(
-        default=ReferralSecurityMode.SAME_SECURITY, description="Security requirements",
+        default=ReferralSecurityMode.SAME_SECURITY,
+        description="Security requirements",
     )
 
     max_referral_depth: int = Field(
-        default=5, description="Maximum referral depth to follow",
+        default=5,
+        description="Maximum referral depth to follow",
     )
 
     max_referral_time: float = Field(
-        default=300.0, description="Maximum time for referral processing (seconds)",
+        default=300.0,
+        description="Maximum time for referral processing (seconds)",
     )
 
     # Server filtering
-    allowed_servers: Optional[list[str]] = Field(
-        default=None, description="List of allowed servers (None = allow all)",
+    allowed_servers: list[str] | None = Field(
+        default=None,
+        description="List of allowed servers (None = allow all)",
     )
 
     blocked_servers: list[str] = Field(
-        default_factory=list, description="List of blocked servers",
+        default_factory=list,
+        description="List of blocked servers",
     )
 
-    allowed_domains: Optional[list[str]] = Field(
-        default=None, description="List of allowed domains (None = allow all)",
+    allowed_domains: list[str] | None = Field(
+        default=None,
+        description="List of allowed domains (None = allow all)",
     )
 
     # Authentication policy
     use_rebind_credentials: bool = Field(
-        default=True, description="Whether to use rebind credentials",
+        default=True,
+        description="Whether to use rebind credentials",
     )
 
     inherit_original_credentials: bool = Field(
-        default=True, description="Whether to inherit original connection credentials",
+        default=True,
+        description="Whether to inherit original connection credentials",
     )
 
     require_authentication: bool = Field(
-        default=False, description="Whether to require authentication for referrals",
+        default=False,
+        description="Whether to require authentication for referrals",
     )
 
     def should_follow_referral(self, referral_url: str) -> tuple[bool, str]:
@@ -322,10 +345,10 @@ class ReferralHandler:
         max_referral_depth: int = 5,
         max_referral_time: float = 300.0,
         follow_referrals: bool = True,
-        rebind_credentials: Optional[Union[ReferralCredentials, dict[str, str]]] = None,
+        rebind_credentials: ReferralCredentials | dict[str, str] | None = None,
         security_mode: ReferralSecurityMode = ReferralSecurityMode.SAME_SECURITY,
-        allowed_servers: Optional[list[str]] = None,
-        blocked_servers: Optional[list[str]] = None,
+        allowed_servers: list[str] | None = None,
+        blocked_servers: list[str] | None = None,
     ) -> None:
         """Initialize referral handler.
 
@@ -340,7 +363,9 @@ class ReferralHandler:
         """
         # Create policy configuration
         self._policy = ReferralPolicy(
-            handling_mode=ReferralHandlingMode.AUTOMATIC if follow_referrals else ReferralHandlingMode.MANUAL,
+            handling_mode=ReferralHandlingMode.AUTOMATIC
+            if follow_referrals
+            else ReferralHandlingMode.MANUAL,
             security_mode=security_mode,
             max_referral_depth=max_referral_depth,
             max_referral_time=max_referral_time,
@@ -369,8 +394,8 @@ class ReferralHandler:
         self,
         referral_urls: list[str],
         operation_type: str,
-        operation_args: Optional[dict[str, Any]] = None,
-        original_dn: Optional[str] = None,
+        operation_args: dict[str, Any] | None = None,
+        original_dn: str | None = None,
         referral_depth: int = 0,
     ) -> ReferralResult:
         """Process LDAP referral URLs.
@@ -413,7 +438,9 @@ class ReferralHandler:
 
             # Process each referral URL
             for referral_url in referral_urls:
-                should_follow, reason = self._policy.should_follow_referral(referral_url)
+                should_follow, reason = self._policy.should_follow_referral(
+                    referral_url,
+                )
 
                 if not should_follow:
                     result.add_referral_error(referral_url, reason)
@@ -473,7 +500,9 @@ class ReferralHandler:
         # Check time limit
         return not operation.get_duration() > self._policy.max_referral_time
 
-    def set_rebind_credentials(self, credentials: Union[ReferralCredentials, dict[str, str]]) -> None:
+    def set_rebind_credentials(
+        self, credentials: ReferralCredentials | dict[str, str],
+    ) -> None:
         """Set credentials for rebinding to referral servers.
 
         Args:
@@ -532,7 +561,7 @@ class ReferralHandler:
         return self._policy
 
     @property
-    def rebind_credentials(self) -> Optional[ReferralCredentials]:
+    def rebind_credentials(self) -> ReferralCredentials | None:
         """Get current rebind credentials."""
         return self._rebind_credentials
 
@@ -547,8 +576,11 @@ class ReferralHandler:
             "successful_referrals": self._successful_referrals,
             "failed_referrals": self._failed_referrals,
             "success_rate": (
-                self._successful_referrals / self._total_referrals_processed * DEFAULT_MAX_ITEMS
-                if self._total_referrals_processed > 0 else 0
+                self._successful_referrals
+                / self._total_referrals_processed
+                * DEFAULT_MAX_ITEMS
+                if self._total_referrals_processed > 0
+                else 0
             ),
             "policy": {
                 "handling_mode": self._policy.handling_mode.value,
@@ -562,8 +594,8 @@ class ReferralHandler:
 # Convenience functions
 def create_referral_handler(
     follow_referrals: bool = True,
-    bind_dn: Optional[str] = None,
-    password: Optional[str] = None,
+    bind_dn: str | None = None,
+    password: str | None = None,
     max_depth: int = 5,
 ) -> ReferralHandler:
     """Create referral handler with basic configuration.
@@ -605,7 +637,11 @@ def parse_referral_urls(referral_response: str) -> list[str]:
     if referral_response:
         # Split on whitespace and filter valid URLs
         potential_urls = referral_response.split()
-        urls.extend(url.strip() for url in potential_urls if url.startswith(("ldap://", "ldaps://")))
+        urls.extend(
+            url.strip()
+            for url in potential_urls
+            if url.startswith(("ldap://", "ldaps://"))
+        )
 
     return urls
 
@@ -614,7 +650,7 @@ async def follow_referral_url(
     referral_url: str,
     operation_type: str,
     operation_args: dict[str, Any],
-    credentials: Optional[ReferralCredentials] = None,
+    credentials: ReferralCredentials | None = None,
 ) -> ReferralResult:
     """Convenience function to follow single referral URL.
 
@@ -634,6 +670,7 @@ async def follow_referral_url(
         operation_type,
         operation_args,
     )
+
 
 # TODO: Integration points for implementation:
 #

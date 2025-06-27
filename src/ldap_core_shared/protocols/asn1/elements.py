@@ -44,7 +44,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Union, cast
 
 from pydantic import BaseModel, Field
 
@@ -71,10 +71,10 @@ ASN1Value = Union[str, int, bool, bytes, list[Any], dict[str, Any], datetime, No
 class ASN1ElementType(Enum):
     """ASN.1 element type categories."""
 
-    PRIMITIVE = "primitive"        # Primitive types (leaf values)
-    CONSTRUCTED = "constructed"    # Constructed types (containers)
-    CHOICE = "choice"             # Choice types (alternatives)
-    ANY = "any"                   # Any type (unknown)
+    PRIMITIVE = "primitive"  # Primitive types (leaf values)
+    CONSTRUCTED = "constructed"  # Constructed types (containers)
+    CHOICE = "choice"  # Choice types (alternatives)
+    ANY = "any"  # Any type (unknown)
 
 
 class ASN1Tag(BaseModel):
@@ -112,10 +112,14 @@ class ASN1Tag(BaseModel):
         if not isinstance(other, ASN1Tag):
             return False
         return (
-            self.tag_class == other.tag_class and
-            self.tag_form == other.tag_form and
-            self.tag_number == other.tag_number
+            self.tag_class == other.tag_class
+            and self.tag_form == other.tag_form
+            and self.tag_number == other.tag_number
         )
+
+    def __hash__(self) -> int:
+        """Hash for tag."""
+        return hash((self.tag_class, self.tag_form, self.tag_number))
 
 
 class ASN1Element(ABC):
@@ -136,7 +140,7 @@ class ASN1Element(ABC):
     def __init__(
         self,
         value: ASN1Value = None,
-        tag: Optional[ASN1Tag] = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: ASN1Value = None,
     ) -> None:
@@ -152,7 +156,7 @@ class ASN1Element(ABC):
         self._tag = tag
         self._optional = optional
         self._default = default
-        self._encoded_data: Optional[bytes] = None
+        self._encoded_data: bytes | None = None
 
     @abstractmethod
     def get_default_tag(self) -> ASN1Tag:
@@ -221,38 +225,34 @@ class ASN1Element(ABC):
 
     def __eq__(self, other: object) -> bool:
         """Check element equality.
-        
+
         Args:
             other: Object to compare with
-            
+
         Returns:
             True if elements are equal
         """
         if not isinstance(other, ASN1Element):
             return False
-        
+
         return (
-            self._value == other._value and
-            self.get_tag() == other.get_tag() and
-            self._optional == other._optional and
-            self._default == other._default
+            self._value == other._value
+            and self.get_tag() == other.get_tag()
+            and self._optional == other._optional
+            and self._default == other._default
         )
 
     def __hash__(self) -> int:
         """Compute element hash.
-        
+
         Returns:
             Hash value for the element
         """
         # Hash based on value and tag
         tag = self.get_tag()
-        return hash((
-            self._value,
-            tag.tag_class,
-            tag.tag_form, 
-            tag.tag_number,
-            self._optional
-        ))
+        return hash(
+            (self._value, tag.tag_class, tag.tag_form, tag.tag_number, self._optional),
+        )
 
     @abstractmethod
     def encode(self, encoding: str = DEFAULT_ENCODING) -> bytes:
@@ -323,62 +323,60 @@ class ASN1Element(ABC):
         """Detailed string representation."""
         tag = self.get_tag()
         return f"{self.__class__.__name__}(value={self._value!r}, tag=({tag.tag_class:#x}, {tag.tag_form:#x}, {tag.tag_number}))"
-        
+
     def _encode_length(self, length: int) -> bytes:
         """Encode length in BER format.
-        
+
         Args:
             length: Length to encode
-            
+
         Returns:
             Encoded length bytes
         """
         if length < 0x80:
             # Short form - length fits in 7 bits
             return bytes([length])
-        else:
-            # Long form - first byte indicates number of length bytes
-            length_bytes = []
-            temp_length = length
-            while temp_length > 0:
-                length_bytes.insert(0, temp_length & 0xFF)
-                temp_length >>= 8
-            return bytes([0x80 | len(length_bytes)]) + bytes(length_bytes)
-            
+        # Long form - first byte indicates number of length bytes
+        length_bytes: list[int] = []
+        temp_length = length
+        while temp_length > 0:
+            length_bytes.insert(0, temp_length & 0xFF)
+            temp_length >>= 8
+        return bytes([0x80 | len(length_bytes)]) + bytes(length_bytes)
+
     def _decode_length(self, data: bytes, offset: int) -> tuple[int, int]:
         """Decode length from BER format.
-        
+
         Args:
             data: Encoded data
             offset: Starting offset
-            
+
         Returns:
             Tuple of (length, next_offset)
         """
         if offset >= len(data):
             return 0, offset
-            
+
         first_byte = data[offset]
         offset += 1
-        
+
         if first_byte & 0x80 == 0:
             # Short form
             return first_byte, offset
-        else:
-            # Long form
-            length_bytes_count = first_byte & 0x7F
-            if length_bytes_count == 0:
-                # Indefinite form (not supported in basic implementation)
-                return 0, offset
-                
-            if offset + length_bytes_count > len(data):
-                return 0, offset
-                
-            length = 0
-            for i in range(length_bytes_count):
-                length = (length << 8) | data[offset + i]
-            
-            return length, offset + length_bytes_count
+        # Long form
+        length_bytes_count = first_byte & 0x7F
+        if length_bytes_count == 0:
+            # Indefinite form (not supported in basic implementation)
+            return 0, offset
+
+        if offset + length_bytes_count > len(data):
+            return 0, offset
+
+        length = 0
+        for i in range(length_bytes_count):
+            length = (length << 8) | data[offset + i]
+
+        return length, offset + length_bytes_count
 
 
 class ASN1Sequence(ASN1Element):
@@ -403,8 +401,8 @@ class ASN1Sequence(ASN1Element):
 
     def __init__(
         self,
-        elements: Optional[list[ASN1Element]] = None,
-        tag: Optional[ASN1Tag] = None,
+        elements: list[ASN1Element] | None = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: ASN1Value = None,
     ) -> None:
@@ -493,16 +491,16 @@ class ASN1Sequence(ASN1Element):
         """
         # Basic SEQUENCE encoding
         # In production, this would use proper ASN.1 BER/DER encoding
-        content = b''
-        
+        content = b""
+
         # Encode all elements
         for element in self._elements:
             content += element.encode(encoding)
-            
+
         # Create SEQUENCE tag and length
         tag_byte = ASN1_UNIVERSAL | ASN1_CONSTRUCTED | ASN1_SEQUENCE
         length_bytes = self._encode_length(len(content))
-        
+
         return bytes([tag_byte]) + length_bytes + content
 
     @classmethod
@@ -519,26 +517,26 @@ class ASN1Sequence(ASN1Element):
         # Basic SEQUENCE decoding
         if offset >= len(data):
             return cls([]), offset
-            
+
         # Read tag byte
         tag_byte = data[offset]
         offset += 1
-        
+
         # Verify it's a SEQUENCE
         expected_tag = ASN1_UNIVERSAL | ASN1_CONSTRUCTED | ASN1_SEQUENCE
         if tag_byte != expected_tag:
             return cls([]), offset
-            
+
         # Create temporary instance to use helper methods
         temp_instance = cls([])
-        
+
         # Decode length
         length, offset = temp_instance._decode_length(data, offset)
-        
+
         # For basic implementation, create empty sequence
         # In production, this would decode all contained elements
-        elements = []
-        
+        elements: list[ASN1Element] = []
+
         return cls(elements), offset + length
 
     def validate(self) -> list[str]:
@@ -577,8 +575,8 @@ class ASN1Set(ASN1Element):
 
     def __init__(
         self,
-        elements: Optional[list[ASN1Element]] = None,
-        tag: Optional[ASN1Tag] = None,
+        elements: list[ASN1Element] | None = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: ASN1Value = None,
     ) -> None:
@@ -627,6 +625,7 @@ class ASN1Set(ASN1Element):
         Returns:
             Elements sorted in canonical order
         """
+
         # Basic canonical ordering by encoded form
         # In production, this would use proper DER canonical ordering rules
         def sort_key(element: ASN1Element) -> bytes:
@@ -634,8 +633,8 @@ class ASN1Set(ASN1Element):
                 return element.encode()
             except Exception:
                 # Fallback to string representation
-                return str(element).encode('utf-8')
-                
+                return str(element).encode("utf-8")
+
         return sorted(self._elements, key=sort_key)
 
     def __len__(self) -> int:
@@ -657,22 +656,22 @@ class ASN1Set(ASN1Element):
         """
         # Basic SET encoding
         # In production, this would use proper ASN.1 BER/DER encoding
-        content = b''
-        
+        content = b""
+
         # Get elements in canonical order for DER
-        if encoding.upper() == 'DER':
+        if encoding.upper() == "DER":
             elements = self.get_canonical_order()
         else:
             elements = self._elements
-        
+
         # Encode all elements
         for element in elements:
             content += element.encode(encoding)
-            
+
         # Create SET tag and length
         tag_byte = ASN1_UNIVERSAL | ASN1_CONSTRUCTED | ASN1_SET
         length_bytes = self._encode_length(len(content))
-        
+
         return bytes([tag_byte]) + length_bytes + content
 
     @classmethod
@@ -689,26 +688,26 @@ class ASN1Set(ASN1Element):
         # Basic SET decoding
         if offset >= len(data):
             return cls([]), offset
-            
+
         # Read tag byte
         tag_byte = data[offset]
         offset += 1
-        
+
         # Verify it's a SET
         expected_tag = ASN1_UNIVERSAL | ASN1_CONSTRUCTED | ASN1_SET
         if tag_byte != expected_tag:
             return cls([]), offset
-            
+
         # Create temporary instance to use helper methods
         temp_instance = cls([])
-        
+
         # Decode length
         length, offset = temp_instance._decode_length(data, offset)
-        
+
         # For basic implementation, create empty set
         # In production, this would decode all contained elements
-        elements = []
-        
+        elements: list[ASN1Element] = []
+
         return cls(elements), offset + length
 
     def validate(self) -> list[str]:
@@ -748,8 +747,8 @@ class ASN1Choice(ASN1Element):
 
     def __init__(
         self,
-        alternatives: Optional[dict[str, type]] = None,
-        tag: Optional[ASN1Tag] = None,
+        alternatives: dict[str, type] | None = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: ASN1Value = None,
     ) -> None:
@@ -763,8 +762,8 @@ class ASN1Choice(ASN1Element):
         """
         super().__init__(None, tag, optional, default)
         self._alternatives = alternatives or {}
-        self._chosen_name: Optional[str] = None
-        self._chosen_element: Optional[ASN1Element] = None
+        self._chosen_name: str | None = None
+        self._chosen_element: ASN1Element | None = None
 
     def get_default_tag(self) -> ASN1Tag:
         """Get default tag (inherited from chosen element)."""
@@ -797,7 +796,7 @@ class ASN1Choice(ASN1Element):
         self._value = cast("ASN1Value", (name, value))
         self._encoded_data = None
 
-    def get_choice(self) -> Optional[tuple[str, Any]]:
+    def get_choice(self) -> tuple[str, Any] | None:
         """Get chosen alternative.
 
         Returns:
@@ -807,7 +806,7 @@ class ASN1Choice(ASN1Element):
             return (self._chosen_name, self._chosen_element.get_value())
         return None
 
-    def get_chosen_element(self) -> Optional[ASN1Element]:
+    def get_chosen_element(self) -> ASN1Element | None:
         """Get chosen element instance.
 
         Returns:
@@ -857,22 +856,22 @@ class ASN1Choice(ASN1Element):
         # In production, this would try each alternative until one succeeds
         if offset >= len(data):
             return cls({}), offset
-            
+
         # For basic implementation, create empty choice
         # Real implementation would parse tag and try alternatives
         choice = cls({})
-        
+
         # Skip over the data assuming successful decode
         # This is a simplified approach
         if offset < len(data):
-            tag_byte = data[offset]
+            data[offset]
             offset += 1
-            
+
             # Create temporary instance to decode length
             temp_choice = cls({})
             length, offset = temp_choice._decode_length(data, offset)
             offset += length
-        
+
         return choice, offset
 
     def validate(self) -> list[str]:
@@ -992,22 +991,20 @@ class ASN1Tagged(ASN1Element):
         """
         # Basic tagged element encoding
         inner_encoded = self._inner_element.encode(encoding)
-        
+
         if self._explicit:
             # Explicit tagging: add tag wrapper around inner element
             tag = self.get_tag()
             tag_byte = tag.get_tag_byte()
             length_bytes = self._encode_length(len(inner_encoded))
             return bytes([tag_byte]) + length_bytes + inner_encoded
-        else:
-            # Implicit tagging: replace inner element's tag
-            if len(inner_encoded) >= 1:
-                # Replace first byte (tag) with new tag
-                tag = self.get_tag()
-                tag_byte = tag.get_tag_byte()
-                return bytes([tag_byte]) + inner_encoded[1:]
-            else:
-                return inner_encoded
+        # Implicit tagging: replace inner element's tag
+        if len(inner_encoded) >= 1:
+            # Replace first byte (tag) with new tag
+            tag = self.get_tag()
+            tag_byte = tag.get_tag_byte()
+            return bytes([tag_byte]) + inner_encoded[1:]
+        return inner_encoded
 
     @classmethod
     def decode(cls, data: bytes, offset: int = 0) -> tuple[ASN1Tagged, int]:
@@ -1023,30 +1020,31 @@ class ASN1Tagged(ASN1Element):
         # Basic tagged element decoding
         if offset >= len(data):
             # Create a dummy tagged element for empty data
-            from ldap_core_shared.protocols.asn1.types import ASN1NULL
-            dummy_inner = ASN1NULL()
+            from ldap_core_shared.protocols.asn1.types import ASN1Null
+
+            dummy_inner = ASN1Null()
             return cls(dummy_inner, tag_number=0), offset
-            
+
         # Read tag byte
         tag_byte = data[offset]
         offset += 1
-        
+
         # Extract tag information
         tag_class = tag_byte & 0xC0
         tag_form = tag_byte & 0x20
         tag_number = tag_byte & 0x1F
-        
+
         # Create temporary instance to decode length
-        temp_inner = ASN1NULL()
+        temp_inner = ASN1Null()
         temp_tagged = cls(temp_inner, tag_class=tag_class, tag_number=tag_number)
-        
+
         # Decode length
         length, offset = temp_tagged._decode_length(data, offset)
-        
+
         # For basic implementation, skip over content and create dummy element
         # Real implementation would decode the inner element based on context
         next_offset = offset + length
-        
+
         # Create tagged element with dummy inner element
         tagged_element = cls(
             temp_inner,
@@ -1054,7 +1052,7 @@ class ASN1Tagged(ASN1Element):
             tag_number=tag_number,
             explicit=(tag_form == ASN1_CONSTRUCTED),
         )
-        
+
         return tagged_element, next_offset
 
     def validate(self) -> list[str]:
@@ -1097,7 +1095,7 @@ class ASN1Any(ASN1Element):
     def __init__(
         self,
         value: ASN1Value = None,
-        tag: Optional[ASN1Tag] = None,
+        tag: ASN1Tag | None = None,
         optional: bool = False,
         default: ASN1Value = None,
     ) -> None:
@@ -1110,8 +1108,8 @@ class ASN1Any(ASN1Element):
             default: Default value
         """
         super().__init__(value, tag, optional, default)
-        self._raw_data: Optional[bytes] = None
-        self._decoded_element: Optional[ASN1Element] = None
+        self._raw_data: bytes | None = None
+        self._decoded_element: ASN1Element | None = None
 
         if isinstance(value, bytes):
             self._raw_data = value
@@ -1143,7 +1141,7 @@ class ASN1Any(ASN1Element):
         """Get element type."""
         return ASN1ElementType.ANY
 
-    def get_raw_data(self) -> Optional[bytes]:
+    def get_raw_data(self) -> bytes | None:
         """Get raw encoded data.
 
         Returns:
@@ -1151,7 +1149,7 @@ class ASN1Any(ASN1Element):
         """
         return self._raw_data
 
-    def get_decoded_element(self) -> Optional[ASN1Element]:
+    def get_decoded_element(self) -> ASN1Element | None:
         """Get decoded element.
 
         Returns:
@@ -1199,28 +1197,27 @@ class ASN1Any(ASN1Element):
         """
         # Basic ANY element decoding - store raw data
         if offset >= len(data):
-            return cls(value=b''), offset
-            
+            return cls(value=b""), offset
+
         # Read tag byte
-        tag_byte = data[offset]
+        data[offset]
         start_offset = offset
         offset += 1
-        
+
         # Create temporary instance to decode length
         temp_any = cls()
-        
+
         # Decode length
         length, offset = temp_any._decode_length(data, offset)
-        
+
         # Extract the complete TLV (Tag-Length-Value)
         end_offset = offset + length
         if end_offset <= len(data):
             raw_element_data = data[start_offset:end_offset]
             return cls(value=raw_element_data), end_offset
-        else:
-            # Data truncated - take what we can
-            raw_element_data = data[start_offset:]
-            return cls(value=raw_element_data), len(data)
+        # Data truncated - take what we can
+        raw_element_data = data[start_offset:]
+        return cls(value=raw_element_data), len(data)
 
     def validate(self) -> list[str]:
         """Validate ANY element.
@@ -1246,7 +1243,7 @@ class ASN1Any(ASN1Element):
 #
 # All elements support:
 # - Basic BER encoding/decoding with proper TLV structure
-# - Type validation and constraint checking  
+# - Type validation and constraint checking
 # - Canonical ordering for SET elements in DER mode
 # - Explicit/implicit tagging with context-specific support
 # - Error handling and recovery during decode operations

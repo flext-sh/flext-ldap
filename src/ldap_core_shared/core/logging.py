@@ -56,9 +56,9 @@ import sys
 import threading
 import time
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, ClassVar
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -116,27 +116,27 @@ class LogContext(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     correlation_id: str = Field(default_factory=lambda: str(uuid4()))
-    session_id: Optional[str] = Field(default=None)
-    user_id: Optional[str] = Field(default=None)
-    operation: Optional[str] = Field(default=None)
-    component: Optional[str] = Field(default=None)
-    request_id: Optional[str] = Field(default=None)
-    trace_id: Optional[str] = Field(default=None)
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    session_id: str | None = Field(default=None)
+    user_id: str | None = Field(default=None)
+    operation: str | None = Field(default=None)
+    component: str | None = Field(default=None)
+    request_id: str | None = Field(default=None)
+    trace_id: str | None = Field(default=None)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     # Performance context
-    start_time: Optional[float] = Field(default=None)
-    duration: Optional[float] = Field(default=None)
+    start_time: float | None = Field(default=None)
+    duration: float | None = Field(default=None)
 
     # Security context
-    ip_address: Optional[str] = Field(default=None)
-    user_agent: Optional[str] = Field(default=None)
-    security_level: Optional[str] = Field(default=None)
+    ip_address: str | None = Field(default=None)
+    user_agent: str | None = Field(default=None)
+    security_level: str | None = Field(default=None)
 
     # Business context
-    tenant_id: Optional[str] = Field(default=None)
-    environment: Optional[str] = Field(default=None)
-    version: Optional[str] = Field(default=None)
+    tenant_id: str | None = Field(default=None)
+    environment: str | None = Field(default=None)
+    version: str | None = Field(default=None)
 
 
 class LogRecord(BaseModel):
@@ -152,9 +152,9 @@ class LogRecord(BaseModel):
     context: LogContext
 
     # Optional fields
-    exception: Optional[dict[str, Any]] = Field(default=None)
-    stack_trace: Optional[str] = Field(default=None)
-    metrics: Optional[dict[str, Any]] = Field(default=None)
+    exception: dict[str, Any] | None = Field(default=None)
+    stack_trace: str | None = Field(default=None)
+    metrics: dict[str, Any] | None = Field(default=None)
     tags: list[str] = Field(default_factory=list)
 
     def to_json(self) -> str:
@@ -169,7 +169,7 @@ class LogRecord(BaseModel):
 class SensitiveDataFilter:
     """Filter for removing sensitive data from logs."""
 
-    SENSITIVE_PATTERNS = [
+    SENSITIVE_PATTERNS: ClassVar[list[str]] = [
         r'password["\']?\s*[:=]\s*["\']?([^"\'}\s,]+)',
         r'token["\']?\s*[:=]\s*["\']?([^"\'}\s,]+)',
         r'secret["\']?\s*[:=]\s*["\']?([^"\'}\s,]+)',
@@ -191,7 +191,9 @@ class SensitiveDataFilter:
 
         filtered = message
         for pattern in cls.SENSITIVE_PATTERNS:
-            filtered = re.sub(pattern, r"\1***REDACTED***", filtered, flags=re.IGNORECASE)
+            filtered = re.sub(
+                pattern, r"\1***REDACTED***", filtered, flags=re.IGNORECASE,
+            )
 
         return filtered
 
@@ -206,8 +208,16 @@ class SensitiveDataFilter:
             Filtered dictionary with sensitive values redacted
         """
         sensitive_keys = {
-            "password", "passwd", "pwd", "secret", "token", "key",
-            "authorization", "auth", "credential", "cred",
+            "password",
+            "passwd",
+            "pwd",
+            "secret",
+            "token",
+            "key",
+            "authorization",
+            "auth",
+            "credential",
+            "cred",
         }
 
         filtered = {}
@@ -252,7 +262,7 @@ class StructuredFormatter(logging.Formatter):
 
         # Create structured record
         log_record = LogRecord(
-            timestamp=datetime.fromtimestamp(record.created, tz=timezone.utc),
+            timestamp=datetime.fromtimestamp(record.created, tz=UTC),
             level=record.levelname,
             logger_name=record.name,
             message=SensitiveDataFilter.filter_message(record.getMessage()),
@@ -317,7 +327,9 @@ class PerformanceMonitor:
             return time.time() - start_time
 
     @contextmanager
-    def time_operation(self, operation_name: str, logger: Optional[StructuredLogger] = None) -> Generator[str, None, None]:
+    def time_operation(
+        self, operation_name: str, logger: StructuredLogger | None = None,
+    ) -> Generator[str, None, None]:
         """Context manager for timing operations.
 
         Args:
@@ -337,12 +349,15 @@ class PerformanceMonitor:
             # Log slow operations
             if duration > self.slow_threshold and logger:
                 logger.warning(
-                    f"Slow operation detected: {operation_name}",
-                    event_type=EventType.PERFORMANCE,
-                    metrics={
-                        "operation": operation_name,
-                        "duration": duration,
-                        "threshold": self.slow_threshold,
+                    "Slow operation detected: %s",
+                    operation_name,
+                    extra={
+                        "event_type": EventType.PERFORMANCE,
+                        "metrics": {
+                            "operation": operation_name,
+                            "duration": duration,
+                            "threshold": self.slow_threshold,
+                        },
                     },
                 )
 
@@ -368,7 +383,7 @@ class StructuredLogger:
             return self._local.context
         return LogContext(component=self.name)
 
-    def _merge_context(self, **kwargs) -> LogContext:
+    def _merge_context(self, **kwargs: Any) -> LogContext:
         """Merge current context with additional data."""
         current = self._get_current_context()
         context_dict = current.model_dump()
@@ -396,9 +411,9 @@ class StructuredLogger:
         level: int,
         message: str,
         event_type: EventType = EventType.SYSTEM,
-        exception: Optional[Exception] = None,
-        metrics: Optional[dict[str, Any]] = None,
-        tags: Optional[list[str]] = None,
+        exception: Exception | None = None,
+        metrics: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
         **context_data: Any,
     ) -> None:
         """Internal logging method with structured data.
@@ -444,31 +459,33 @@ class StructuredLogger:
 
         self.logger.handle(record)
 
-    def trace(self, message: str, **kwargs) -> None:
+    def trace(self, message: str, **kwargs: Any) -> None:
         """Log trace message."""
         self._log(LogLevel.TRACE.value, message, **kwargs)
 
-    def debug(self, message: str, **kwargs) -> None:
+    def debug(self, message: str, **kwargs: Any) -> None:
         """Log debug message."""
         self._log(LogLevel.DEBUG.value, message, **kwargs)
 
-    def info(self, message: str, **kwargs) -> None:
+    def info(self, message: str, **kwargs: Any) -> None:
         """Log info message."""
         self._log(LogLevel.INFO.value, message, **kwargs)
 
-    def warning(self, message: str, **kwargs) -> None:
+    def warning(self, message: str, **kwargs: Any) -> None:
         """Log warning message."""
         self._log(LogLevel.WARNING.value, message, **kwargs)
 
-    def error(self, message: str, **kwargs) -> None:
+    def error(self, message: str, **kwargs: Any) -> None:
         """Log error message."""
         self._log(LogLevel.ERROR.value, message, **kwargs)
 
-    def critical(self, message: str, **kwargs) -> None:
+    def critical(self, message: str, **kwargs: Any) -> None:
         """Log critical message."""
         self._log(LogLevel.CRITICAL.value, message, **kwargs)
 
-    def security(self, message: str, security_event: SecurityEventType, **kwargs) -> None:
+    def security(
+        self, message: str, security_event: SecurityEventType, **kwargs,
+    ) -> None:
         """Log security event.
 
         Args:
@@ -477,7 +494,9 @@ class StructuredLogger:
             **kwargs: Additional context
         """
         kwargs["security_event_type"] = security_event.value
-        self._log(LogLevel.SECURITY.value, message, event_type=EventType.SECURITY, **kwargs)
+        self._log(
+            LogLevel.SECURITY.value, message, event_type=EventType.SECURITY, **kwargs,
+        )
 
     def audit(self, message: str, **kwargs) -> None:
         """Log audit event.
@@ -509,12 +528,12 @@ class LoggerManager:
     """Central logger management for the application."""
 
     _initialized: bool = False
-    _loggers: dict[str, StructuredLogger] = {}
-    _performance_monitor: Optional[PerformanceMonitor] = None
-    _config: Optional[LoggingConfig] = None
+    _loggers: ClassVar[dict[str, StructuredLogger]] = {}
+    _performance_monitor: PerformanceMonitor | None = None
+    _config: LoggingConfig | None = None
 
     @classmethod
-    def initialize(cls, config: Optional[LoggingConfig] = None) -> None:
+    def initialize(cls, config: LoggingConfig | None = None) -> None:
         """Initialize logging system.
 
         Args:
@@ -588,7 +607,7 @@ class LoggerManager:
         return cls._loggers[name]
 
     @classmethod
-    def get_performance_monitor(cls) -> Optional[PerformanceMonitor]:
+    def get_performance_monitor(cls) -> PerformanceMonitor | None:
         """Get performance monitor instance.
 
         Returns:
@@ -618,7 +637,7 @@ def get_logger(name: str) -> StructuredLogger:
     return LoggerManager.get_logger(name)
 
 
-def get_performance_monitor() -> Optional[PerformanceMonitor]:
+def get_performance_monitor() -> PerformanceMonitor | None:
     """Get performance monitor instance.
 
     Returns:

@@ -29,6 +29,7 @@ from ldap_core_shared.core.security import SecurityManager
 # from ldap_core_shared.protocols.sasl.mechanisms.external import ExternalMechanism  # Not available yet
 # from ldap_core_shared.protocols.sasl.mechanisms.plain import PlainMechanism  # Not available yet
 
+
 # Simple mock classes for testing
 class TLSConfig:
     def __init__(self, **kwargs) -> None:
@@ -64,10 +65,10 @@ class TestRFC4513AnonymousAuthentication:
 
         # Test anonymous bind request structure
         anonymous_bind = {
-            "version": 3,                    # LDAPv3
-            "name": "",                      # Empty DN for anonymous
+            "version": 3,  # LDAPv3
+            "name": "",  # Empty DN for anonymous
             "authentication": {
-                "simple": "",                # Empty password for anonymous
+                "simple": "",  # Empty password for anonymous
             },
         }
 
@@ -130,17 +131,17 @@ class TestRFC4513AnonymousAuthentication:
             {
                 "base_dn": "dc=example,dc=com",
                 "scope": "base",
-                "expected_access": True,     # Base object search usually allowed
+                "expected_access": True,  # Base object search usually allowed
             },
             {
                 "base_dn": "dc=example,dc=com",
                 "scope": "subtree",
-                "expected_access": True,     # Public information search may be allowed
+                "expected_access": True,  # Public information search may be allowed
             },
             {
                 "base_dn": "ou=Private,dc=example,dc=com",
                 "scope": "subtree",
-                "expected_access": False,    # Private areas should be restricted
+                "expected_access": False,  # Private areas should be restricted
             },
         ]
 
@@ -168,9 +169,9 @@ class TestRFC4513SimpleAuthentication:
         # Test simple bind request structure
         simple_bind = {
             "version": 3,
-            "name": "cn=admin,dc=example,dc=com",     # Bind DN
+            "name": "cn=admin,dc=example,dc=com",  # Bind DN
             "authentication": {
-                "simple": "secret_password",          # Password
+                "simple": "secret_password",  # Password
             },
         }
 
@@ -182,7 +183,9 @@ class TestRFC4513SimpleAuthentication:
         # Verify DN format
         bind_dn = simple_bind["name"]
         assert "=" in bind_dn  # Must be proper DN format
-        assert "," in bind_dn or bind_dn.count("=") == 1  # Single RDN or multiple components
+        assert (
+            "," in bind_dn or bind_dn.count("=") == 1
+        )  # Single RDN or multiple components
 
     def test_simple_authentication_security_considerations(self) -> None:
         """RFC 4513 Section 5.2 - Simple authentication security."""
@@ -290,7 +293,10 @@ class TestRFC4513SimpleAuthentication:
             )
 
             # Authenticated users should have access based on their privileges
-            assert access_allowed in {True, False}  # Specific access depends on implementation
+            assert access_allowed in {
+                True,
+                False,
+            }  # Specific access depends on implementation
 
 
 class TestRFC4513SASLAuthentication:
@@ -370,7 +376,7 @@ class TestRFC4513SASLAuthentication:
         # Test DIGEST-MD5 challenge-response
         server_challenge = (
             b'realm="example.com",nonce="OA6MG9tEQGm2hh",qop="auth",'
-            b'algorithm=md5-sess,charset=utf-8'
+            b"algorithm=md5-sess,charset=utf-8"
         )
 
         # Process server challenge
@@ -438,9 +444,18 @@ class TestRFC4513SASLAuthentication:
 
             if mechanism:
                 # Verify security capabilities
-                assert mechanism.supports_integrity_protection == mechanism_info["integrity"]
-                assert mechanism.supports_confidentiality_protection == mechanism_info["confidentiality"]
-                assert mechanism.supports_mutual_authentication == mechanism_info["mutual_auth"]
+                assert (
+                    mechanism.supports_integrity_protection
+                    == mechanism_info["integrity"]
+                )
+                assert (
+                    mechanism.supports_confidentiality_protection
+                    == mechanism_info["confidentiality"]
+                )
+                assert (
+                    mechanism.supports_mutual_authentication
+                    == mechanism_info["mutual_auth"]
+                )
 
 
 class TestRFC4513SecurityMechanisms:
@@ -828,7 +843,9 @@ class TestRFC4513ComprehensiveCompliance:
         }
 
         # All checks must pass for RFC compliance
-        assert all(compliance_checks.values()), f"RFC 4513 compliance failed: {compliance_checks}"
+        assert all(compliance_checks.values()), (
+            f"RFC 4513 compliance failed: {compliance_checks}"
+        )
 
     def test_authentication_interoperability(self) -> None:
         """RFC 4513 - Authentication mechanism interoperability."""

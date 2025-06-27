@@ -19,6 +19,7 @@ class TestASN1SchemaParser:
         """Create ASN1SchemaParser instance for testing."""
         try:
             from ldap_core_shared.protocols.asn1.schema import ASN1SchemaParser
+
             return ASN1SchemaParser()
         except ImportError:
             return Mock()
@@ -126,7 +127,13 @@ class TestASN1SchemaParser:
 
                 # Check for expected type names
                 type_names = [t.name for t in types if hasattr(t, "name")]
-                expected_names = ["MyInteger", "MyString", "MyBoolean", "MyNull", "MyOID"]
+                expected_names = [
+                    "MyInteger",
+                    "MyString",
+                    "MyBoolean",
+                    "MyNull",
+                    "MyOID",
+                ]
                 for name in expected_names:
                     if type_names:  # Only check if we have type names
                         assert name in type_names
@@ -299,6 +306,7 @@ class TestASN1SchemaCompiler:
         """Create ASN1SchemaCompiler instance for testing."""
         try:
             from ldap_core_shared.protocols.asn1.schema import ASN1SchemaCompiler
+
             return ASN1SchemaCompiler()
         except ImportError:
             return Mock()
@@ -596,20 +604,24 @@ class TestASN1SchemaPerformance:
         # Generate large schema
         large_schema_parts = ["LargeModule DEFINITIONS ::= BEGIN"]
 
-        large_schema_parts.extend(f"""
+        large_schema_parts.extend(
+            f"""
             Type{i} ::= SEQUENCE {{
                 id          INTEGER,
                 name        UTF8String,
                 value{i}    INTEGER (0..{i + 1000}),
                 optional{i} BOOLEAN OPTIONAL
             }}
-            """ for i in range(1000))
+            """
+            for i in range(1000)
+        )
 
         large_schema_parts.append("END")
         large_schema = "\n".join(large_schema_parts)
 
         try:
             import time
+
             start_time = time.time()
 
             schema_parser.parse_module(large_schema)

@@ -34,23 +34,26 @@ async def test_facade_pattern() -> None:
     # 3. Teste da facade LDAP com ConnectionManager
     try:
         async with LDAP(config, use_connection_manager=True) as ldap:
-
             # Teste de informações de conexão
             ldap.get_connection_info()
 
             # Teste de builder de queries (Builder Pattern)
-            (ldap.query()
-                    .users()
-                    .in_department("IT")
-                    .enabled_only()
-                    .select("cn", "mail")
-                    .limit(10))
+            (
+                ldap.query()
+                .users()
+                .in_department("IT")
+                .enabled_only()
+                .select("cn", "mail")
+                .limit(10)
+            )
 
             # Teste de operações semânticas
             await ldap.find_users_in_department("Engineering")
 
             # Teste de validação de schema
-            await validate_ldap_config(config, test_connection=False, validate_schema=False)
+            await validate_ldap_config(
+                config, test_connection=False, validate_schema=False
+            )
 
     except Exception:
         pass

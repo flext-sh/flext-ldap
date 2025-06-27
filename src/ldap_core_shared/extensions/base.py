@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from pydantic import BaseModel, Field
 
@@ -53,24 +53,29 @@ class ExtensionResult(BaseModel):
 
     result_code: int = Field(description="LDAP result code (0 = success)")
 
-    matched_dn: Optional[str] = Field(
-        default=None, description="Matched DN from server response",
+    matched_dn: str | None = Field(
+        default=None,
+        description="Matched DN from server response",
     )
 
-    error_message: Optional[str] = Field(
-        default=None, description="Error message if operation failed",
+    error_message: str | None = Field(
+        default=None,
+        description="Error message if operation failed",
     )
 
-    referrals: Optional[list[str]] = Field(
-        default=None, description="List of referral URLs",
+    referrals: list[str] | None = Field(
+        default=None,
+        description="List of referral URLs",
     )
 
-    response_name: Optional[OID] = Field(
-        default=None, description="OID of the extension response",
+    response_name: OID | None = Field(
+        default=None,
+        description="OID of the extension response",
     )
 
-    response_value: Optional[bytes] = Field(
-        default=None, description="Raw response value from server",
+    response_value: bytes | None = Field(
+        default=None,
+        description="Raw response value from server",
     )
 
     class Config:
@@ -88,7 +93,7 @@ class ExtensionResult(BaseModel):
         """Check if the extension operation failed."""
         return self.result_code != 0
 
-    def get_error_description(self) -> Optional[str]:
+    def get_error_description(self) -> str | None:
         """Get human-readable error description."""
         if self.is_success():
             return None
@@ -126,7 +131,8 @@ class ExtensionResult(BaseModel):
         }
 
         return error_codes.get(
-            self.result_code, f"Unknown error (code {self.result_code})",
+            self.result_code,
+            f"Unknown error (code {self.result_code})",
         )
 
 
@@ -149,8 +155,9 @@ class LDAPExtension(BaseModel, ABC):
     request_name: ClassVar[OID]
 
     # Extension properties
-    request_value: Optional[bytes] = Field(
-        default=None, description="Extension-specific request value (ASN.1 encoded)",
+    request_value: bytes | None = Field(
+        default=None,
+        description="Extension-specific request value (ASN.1 encoded)",
     )
 
     class Config:
@@ -167,7 +174,7 @@ class LDAPExtension(BaseModel, ABC):
             ExtensionRegistry.register(cls.request_name, cls)
 
     @abstractmethod
-    def encode_request_value(self) -> Optional[bytes]:
+    def encode_request_value(self) -> bytes | None:
         """Encode the extension request value to ASN.1 bytes.
 
         Returns:
@@ -185,7 +192,9 @@ class LDAPExtension(BaseModel, ABC):
     @classmethod
     @abstractmethod
     def decode_response_value(
-        cls, response_name: Optional[OID], response_value: Optional[bytes],
+        cls,
+        response_name: OID | None,
+        response_value: bytes | None,
     ) -> ExtensionResult:
         """Decode extension response value to create a result instance.
 
@@ -226,7 +235,8 @@ class LDAPExtension(BaseModel, ABC):
 
     @classmethod
     def from_ldap_extended_response(
-        cls, response_dict: dict[str, Any],
+        cls,
+        response_dict: dict[str, Any],
     ) -> ExtensionResult:
         """Create extension result from LDAP extended response dictionary.
 
@@ -254,7 +264,8 @@ class LDAPExtension(BaseModel, ABC):
 
         try:
             result = extension_class.decode_response_value(
-                response_name, response_value,
+                response_name,
+                response_value,
             )
 
             # Set additional response metadata
@@ -291,7 +302,7 @@ class ExtensionRegistry:
     enabling automatic extension instantiation from LDAP responses.
     """
 
-    _registry: dict[OID, type[LDAPExtension]] = {}
+    _registry: ClassVar[dict[OID, type[LDAPExtension]]] = {}
 
     @classmethod
     def register(cls, request_name: OID, extension_class: type[LDAPExtension]) -> None:
@@ -304,7 +315,7 @@ class ExtensionRegistry:
         cls._registry[request_name] = extension_class
 
     @classmethod
-    def get(cls, request_name: OID) -> Optional[type[LDAPExtension]]:
+    def get(cls, request_name: OID) -> type[LDAPExtension] | None:
         """Get extension implementation by OID.
 
         Args:
@@ -348,20 +359,25 @@ class GenericExtension(LDAPExtension):
     request_name: ClassVar[OID] = PLACEHOLDER_OID  # Will be set dynamically
 
     def __init__(
-        self, request_name: OID, request_value: Optional[bytes] = None, **kwargs: Any,
+        self,
+        request_name: OID,
+        request_value: bytes | None = None,
+        **kwargs: Any,
     ) -> None:
         """Initialize generic extension with dynamic type."""
         super().__init__(request_value=request_value, **kwargs)
         # Set the request name dynamically
         object.__setattr__(self, "request_name", request_name)
 
-    def encode_request_value(self) -> Optional[bytes]:
+    def encode_request_value(self) -> bytes | None:
         """Return the request value as-is."""
         return self.request_value
 
     @classmethod
     def decode_response_value(
-        cls, response_name: Optional[OID], response_value: Optional[bytes],
+        cls,
+        response_name: OID | None,
+        response_value: bytes | None,
     ) -> ExtensionResult:
         """Create generic result with raw values."""
         return ExtensionResult(
@@ -398,6 +414,7 @@ class ExtensionOIDs:
 
     # OpenLDAP specific extensions
     MODIFY_PASSWD = "1.3.6.1.4.1.4203.1.11.1"
+
 
 # TODO: Implement the following critical extensions:
 # 1. WhoAmIExtension (CRITICAL - RFC 4532)

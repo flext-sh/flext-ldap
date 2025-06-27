@@ -106,7 +106,9 @@ cn: john
 sn: doe
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(ldif_content)
             f.flush()
 
@@ -133,7 +135,9 @@ cn: user2
 objectClass: person
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(ldif_content)
             f.flush()
 
@@ -165,7 +169,9 @@ cn: user3
 objectClass: person
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(ldif_content)
             f.flush()
 

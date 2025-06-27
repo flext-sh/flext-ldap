@@ -130,22 +130,33 @@ except ImportError:
             return Mock()
 
         def get_metrics(self):
-            return Mock(operation_count=0, success_rate=100.0, total_duration=0.0, operations_per_second=0.0)
+            return Mock(
+                operation_count=0,
+                success_rate=100.0,
+                total_duration=0.0,
+                operations_per_second=0.0,
+            )
 
 
 class TestAlgarOudMigWorkspaceCompliance:
     """Test PyAuto workspace standards compliance for algar-oud-mig integration."""
 
     @pytest.mark.workspace_integration
-    def test_algar_integration_workspace_venv_validation(self, validate_workspace_venv) -> None:
+    def test_algar_integration_workspace_venv_validation(
+        self, validate_workspace_venv
+    ) -> None:
         """Test algar-oud-mig integration workspace venv validation as required by CLAUDE.md."""
         # Fixture automatically validates workspace venv usage
         expected_venv = "/home/marlonsc/pyauto/.venv"
         current_venv = os.environ.get("VIRTUAL_ENV")
-        assert current_venv == expected_venv, f"Algar integration tests must use workspace venv: {expected_venv}"
+        assert current_venv == expected_venv, (
+            f"Algar integration tests must use workspace venv: {expected_venv}"
+        )
 
     @pytest.mark.env_security
-    def test_algar_integration_env_security_enforcement(self, validate_env_security) -> None:
+    def test_algar_integration_env_security_enforcement(
+        self, validate_env_security
+    ) -> None:
         """Test algar-oud-mig integration .env security enforcement as required by CLAUDE.md."""
         # Test ALGAR-specific configuration security
         algar_env_vars = {
@@ -159,11 +170,17 @@ class TestAlgarOudMigWorkspaceCompliance:
         with patch.dict(os.environ, algar_env_vars, clear=False):
             # Validate no hardcoded secrets in ALGAR configuration
             for key, value in os.environ.items():
-                if "algar" in key.lower() and ("password" in key.lower() or "secret" in key.lower()):
-                    assert value.startswith("${") or len(value) == 0, f"Hardcoded secret in ALGAR config: {key}"
+                if "algar" in key.lower() and (
+                    "password" in key.lower() or "secret" in key.lower()
+                ):
+                    assert value.startswith("${") or len(value) == 0, (
+                        f"Hardcoded secret in ALGAR config: {key}"
+                    )
 
     @pytest.mark.workspace_integration
-    def test_algar_integration_workspace_coordination(self, workspace_coordination) -> None:
+    def test_algar_integration_workspace_coordination(
+        self, workspace_coordination
+    ) -> None:
         """Test algar-oud-mig workspace coordination as required by CLAUDE.local.md."""
         coordination = workspace_coordination
 
@@ -180,7 +197,9 @@ class TestAlgarOudMigWorkspaceCompliance:
         assert coordination["VENV_PATH"] == "/home/marlonsc/pyauto/.venv"
 
     @pytest.mark.solid_compliance
-    def test_algar_integration_solid_principles_compliance(self, solid_principles_validation) -> None:
+    def test_algar_integration_solid_principles_compliance(
+        self, solid_principles_validation
+    ) -> None:
         """Test algar-oud-mig integration SOLID principles compliance."""
         validators = solid_principles_validation
 
@@ -210,7 +229,9 @@ class TestAlgarOudMigLDIFProcessorCompatibility:
 
     @pytest.mark.workspace_integration
     @pytest.mark.performance
-    def test_ldif_processor_algar_interface_compatibility(self, workspace_coordination) -> None:
+    def test_ldif_processor_algar_interface_compatibility(
+        self, workspace_coordination
+    ) -> None:
         """Test LDIF processor provides interface expected by algar-oud-mig."""
         # Test ALGAR-optimized configuration
         config = LDIFProcessingConfig(
@@ -224,7 +245,9 @@ class TestAlgarOudMigLDIFProcessorCompatibility:
         processor = LDIFProcessor(config)
 
         # Validate interface expected by algar-oud-mig
-        assert hasattr(processor, "parse_file"), "algar-oud-mig expects parse_file method"
+        assert hasattr(processor, "parse_file"), (
+            "algar-oud-mig expects parse_file method"
+        )
         assert hasattr(processor, "config"), "algar-oud-mig expects config property"
 
         # Test configuration matches ALGAR requirements
@@ -238,7 +261,9 @@ class TestAlgarOudMigLDIFProcessorCompatibility:
 
     @pytest.mark.performance
     @pytest.mark.security_enforcement
-    def test_ldif_processor_algar_performance_requirements(self, security_enforcement) -> None:
+    def test_ldif_processor_algar_performance_requirements(
+        self, security_enforcement
+    ) -> None:
         """Test LDIF processor meets ALGAR performance requirements."""
         config = LDIFProcessingConfig(
             chunk_size=500,  # ALGAR batch size
@@ -271,7 +296,9 @@ member: cn=algar-user1,ou=people,dc=algar,dc=com
 """
 
         # Test with temporary ALGAR LDIF file
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".ldif", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".ldif", delete=False
+        ) as f:
             f.write(algar_ldif_content)
             temp_file = f.name
 
@@ -283,8 +310,14 @@ member: cn=algar-user1,ou=people,dc=algar,dc=com
                 mock_result.data = [
                     {"dn": "ou=people,dc=algar,dc=com", "attributes": {"ou": "people"}},
                     {"dn": "ou=groups,dc=algar,dc=com", "attributes": {"ou": "groups"}},
-                    {"dn": "cn=algar-user1,ou=people,dc=algar,dc=com", "attributes": {"cn": "algar-user1"}},
-                    {"dn": "cn=algar-group1,ou=groups,dc=algar,dc=com", "attributes": {"cn": "algar-group1"}},
+                    {
+                        "dn": "cn=algar-user1,ou=people,dc=algar,dc=com",
+                        "attributes": {"cn": "algar-user1"},
+                    },
+                    {
+                        "dn": "cn=algar-group1,ou=groups,dc=algar,dc=com",
+                        "attributes": {"cn": "algar-group1"},
+                    },
                 ]
                 mock_result.error_message = None
                 mock_result.entries_per_second = 150  # Within ALGAR range (50-200)
@@ -293,10 +326,18 @@ member: cn=algar-user1,ou=people,dc=algar,dc=com
                 result = processor.parse_file(temp_file)
 
                 # Validate ALGAR performance requirements
-                assert result.success is True, "ALGAR migration requires successful parsing"
-                assert result.error_message is None, "ALGAR migration requires clean processing"
-                assert result.entries_per_second >= 50, "Must meet ALGAR minimum performance"
-                assert result.entries_per_second <= 500, "Should stay within reasonable ALGAR range"
+                assert result.success is True, (
+                    "ALGAR migration requires successful parsing"
+                )
+                assert result.error_message is None, (
+                    "ALGAR migration requires clean processing"
+                )
+                assert result.entries_per_second >= 50, (
+                    "Must meet ALGAR minimum performance"
+                )
+                assert result.entries_per_second <= 500, (
+                    "Should stay within reasonable ALGAR range"
+                )
 
                 # Validate ALGAR data structure
                 assert len(result.data) == 4
@@ -357,14 +398,20 @@ class TestAlgarOudMigPerformanceMonitorCompatibility:
 
     @pytest.mark.performance
     @pytest.mark.workspace_integration
-    def test_performance_monitor_algar_interface_compatibility(self, workspace_coordination) -> None:
+    def test_performance_monitor_algar_interface_compatibility(
+        self, workspace_coordination
+    ) -> None:
         """Test performance monitor provides interface expected by algar-oud-mig."""
         # Test ALGAR migration performance monitor
         monitor = PerformanceMonitor("algar_migration")
 
         # Validate interface expected by algar-oud-mig
-        assert hasattr(monitor, "measure_operation"), "algar-oud-mig expects measure_operation method"
-        assert hasattr(monitor, "get_metrics"), "algar-oud-mig expects get_metrics method"
+        assert hasattr(monitor, "measure_operation"), (
+            "algar-oud-mig expects measure_operation method"
+        )
+        assert hasattr(monitor, "get_metrics"), (
+            "algar-oud-mig expects get_metrics method"
+        )
 
         # Test measure_operation context manager (expected by algar-oud-mig)
         with monitor.measure_operation("ldif_parsing") as ctx:
@@ -375,10 +422,16 @@ class TestAlgarOudMigPerformanceMonitorCompatibility:
 
         # Test get_metrics returns expected structure
         metrics = monitor.get_metrics()
-        assert hasattr(metrics, "operation_count"), "algar-oud-mig expects operation_count"
+        assert hasattr(metrics, "operation_count"), (
+            "algar-oud-mig expects operation_count"
+        )
         assert hasattr(metrics, "success_rate"), "algar-oud-mig expects success_rate"
-        assert hasattr(metrics, "total_duration"), "algar-oud-mig expects total_duration"
-        assert hasattr(metrics, "operations_per_second"), "algar-oud-mig expects operations_per_second"
+        assert hasattr(metrics, "total_duration"), (
+            "algar-oud-mig expects total_duration"
+        )
+        assert hasattr(metrics, "operations_per_second"), (
+            "algar-oud-mig expects operations_per_second"
+        )
 
         # Validate workspace coordination
         assert workspace_coordination["PROJECT_CONTEXT"] == "ldap-core-shared"
@@ -407,7 +460,9 @@ class TestAlgarOudMigPerformanceMonitorCompatibility:
 
         # ALGAR expects these specific metrics
         assert metrics.operation_count >= 4, "ALGAR migration has multiple operations"
-        assert metrics.success_rate == 100.0, "ALGAR migration expects high success rate"
+        assert metrics.success_rate == 100.0, (
+            "ALGAR migration expects high success rate"
+        )
         assert metrics.total_duration > 0, "ALGAR migration tracks total duration"
         assert metrics.operations_per_second >= 0, "ALGAR migration tracks throughput"
 
@@ -416,30 +471,57 @@ class TestAlgarOudMigExceptionHandlingCompatibility:
     """Test exception handling compatibility with algar-oud-mig requirements."""
 
     @pytest.mark.security_enforcement
-    def test_algar_exception_hierarchy_compatibility(self, security_enforcement) -> None:
+    def test_algar_exception_hierarchy_compatibility(
+        self, security_enforcement
+    ) -> None:
         """Test exception hierarchy provides expected exceptions for algar-oud-mig."""
         if not LDAP_CORE_SHARED_AVAILABLE:
             pytest.skip("ldap-core-shared components not available")
 
         # Test connection exceptions expected by algar-oud-mig
-        connection_exceptions = [AuthenticationError, ConnectionPoolError, ConnectionTimeoutError]
+        connection_exceptions = [
+            AuthenticationError,
+            ConnectionPoolError,
+            ConnectionTimeoutError,
+        ]
         for exc_class in connection_exceptions:
-            assert issubclass(exc_class, Exception), f"{exc_class.__name__} should be an Exception subclass"
+            assert issubclass(exc_class, Exception), (
+                f"{exc_class.__name__} should be an Exception subclass"
+            )
 
         # Test migration exceptions expected by algar-oud-mig
-        migration_exceptions = [DataIntegrityError, MigrationError, PerformanceThresholdError, SchemaValidationError]
+        migration_exceptions = [
+            DataIntegrityError,
+            MigrationError,
+            PerformanceThresholdError,
+            SchemaValidationError,
+        ]
         for exc_class in migration_exceptions:
-            assert issubclass(exc_class, Exception), f"{exc_class.__name__} should be an Exception subclass"
+            assert issubclass(exc_class, Exception), (
+                f"{exc_class.__name__} should be an Exception subclass"
+            )
 
         # Test schema exceptions expected by algar-oud-mig
-        schema_exceptions = [SchemaCompatibilityError, SchemaDiscoveryError, SchemaMappingError]
+        schema_exceptions = [
+            SchemaCompatibilityError,
+            SchemaDiscoveryError,
+            SchemaMappingError,
+        ]
         for exc_class in schema_exceptions:
-            assert issubclass(exc_class, Exception), f"{exc_class.__name__} should be an Exception subclass"
+            assert issubclass(exc_class, Exception), (
+                f"{exc_class.__name__} should be an Exception subclass"
+            )
 
         # Test validation exceptions expected by algar-oud-mig
-        validation_exceptions = [AttributeValidationError, DNValidationError, FilterValidationError]
+        validation_exceptions = [
+            AttributeValidationError,
+            DNValidationError,
+            FilterValidationError,
+        ]
         for exc_class in validation_exceptions:
-            assert issubclass(exc_class, Exception), f"{exc_class.__name__} should be an Exception subclass"
+            assert issubclass(exc_class, Exception), (
+                f"{exc_class.__name__} should be an Exception subclass"
+            )
 
         # Validate security enforcement during exception handling
         assert security_enforcement["protect_logs"] is True
@@ -513,7 +595,9 @@ class TestAlgarOudMigSchemaCompatibility:
         discovery = SchemaDiscovery(config)
 
         # Validate interface expected by algar-oud-mig
-        assert hasattr(discovery, "discover_from_server"), "algar-oud-mig expects discover_from_server method"
+        assert hasattr(discovery, "discover_from_server"), (
+            "algar-oud-mig expects discover_from_server method"
+        )
         assert hasattr(discovery, "config"), "algar-oud-mig expects config property"
 
         # Test with mock connection info
@@ -525,7 +609,11 @@ class TestAlgarOudMigSchemaCompatibility:
         with patch.object(discovery, "discover_from_server") as mock_discover:
             mock_result = Mock()
             mock_result.success = True
-            mock_result.object_classes = ["inetOrgPerson", "groupOfNames", "organizationalUnit"]
+            mock_result.object_classes = [
+                "inetOrgPerson",
+                "groupOfNames",
+                "organizationalUnit",
+            ]
             mock_result.attribute_types = ["cn", "sn", "mail", "member", "ou"]
             mock_discover.return_value = mock_result
 
@@ -587,7 +675,9 @@ class TestAlgarOudMigComprehensiveIntegration:
     @pytest.mark.performance
     @pytest.mark.security_enforcement
     def test_complete_algar_migration_workflow_simulation(
-        self, workspace_coordination, security_enforcement,
+        self,
+        workspace_coordination,
+        security_enforcement,
     ) -> None:
         """Test complete ALGAR migration workflow simulation."""
         # Simulate complete ALGAR migration workflow using ldap-core-shared
@@ -732,7 +822,9 @@ class TestAlgarOudMigComprehensiveIntegration:
         total_deps = len(all_deps)
         available_percentage = (len(available_deps) / total_deps) * 100
 
-        assert available_percentage >= 50, "At least 50% of dependencies should be available for algar-oud-mig integration"
+        assert available_percentage >= 50, (
+            "At least 50% of dependencies should be available for algar-oud-mig integration"
+        )
 
 
 if __name__ == "__main__":

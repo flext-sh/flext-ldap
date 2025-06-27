@@ -14,16 +14,15 @@ ZERO TOLERANCE TESTING PRINCIPLES:
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from ldap_core_shared.connections.manager import ConnectionManager
 from ldap_core_shared.core.connection_manager import (
     ConnectionInfo,
-    LDAPConnectionManager,
 )
-from ldap_core_shared.connections.manager import ConnectionManager
 
 
 class TestConnectionInfo:
@@ -116,7 +115,9 @@ class TestConnectionManager:
     @patch("ldap3.Connection")
     @patch("ldap3.Server")
     def test_connection_manager_get_connection(
-        self, mock_server, mock_connection: Any,
+        self,
+        mock_server,
+        mock_connection: Any,
     ) -> None:
         """Test getting connection from manager."""
         # Setup mocks
@@ -213,7 +214,12 @@ class TestConnectionBase:
 
         class MockLDAPConnectionInfo:
             def __init__(
-                self, host: str, port: int, bind_dn: str, bind_password: str, **kwargs,
+                self,
+                host: str,
+                port: int,
+                bind_dn: str,
+                bind_password: str,
+                **kwargs,
             ) -> None:
                 self.host = host
                 self.port = port
@@ -305,7 +311,10 @@ class TestConnectionImplementations:
 
         class MockStandardLDAPConnection(MockConnectionBase):
             def search(
-                self, base_dn: str, search_filter: str, **kwargs,
+                self,
+                base_dn: str,
+                search_filter: str,
+                **kwargs,
             ) -> list[dict[str, Any]]:
                 """Mock search operation."""
                 if not self.connected:
@@ -419,7 +428,9 @@ class TestConnectionInterfaces:
             def connect(self) -> bool: ...
             def disconnect(self) -> None: ...
             def search(
-                self, base_dn: str, search_filter: str,
+                self,
+                base_dn: str,
+                search_filter: str,
             ) -> list[dict[str, Any]]: ...
             def add(self, dn: str, attributes: dict[str, Any]) -> bool: ...
             def modify(self, dn: str, changes: dict[str, Any]) -> bool: ...
@@ -433,7 +444,9 @@ class TestConnectionInterfaces:
         class MockIConnectionFactory(Protocol):
             def create_connection(self, connection_info: Any) -> Any: ...
             def create_pooled_connection(
-                self, connection_info: Any, pool_size: int,
+                self,
+                connection_info: Any,
+                pool_size: int,
             ) -> Any: ...
 
         # Test that interfaces define the expected methods
@@ -487,7 +500,7 @@ class TestConnectionInterfaces:
         assert "test" in results[0]["dn"]
 
 
-class TestConnectionManager:
+class TestConnectionManagerModule:
     """🔥🔥🔥🔥 Test connection manager module."""
 
     def test_connection_manager_import(self) -> None:
@@ -512,7 +525,9 @@ class TestConnectionManager:
                 self.default_pool_size = 5
 
             def create_connection(
-                self, connection_id: str, connection_info: Any,
+                self,
+                connection_id: str,
+                connection_info: Any,
             ) -> Any:
                 """Create a new connection."""
                 connection = MagicMock()
@@ -535,7 +550,7 @@ class TestConnectionManager:
                 self,
                 pool_id: str,
                 connection_info: Any,
-                pool_size: Optional[int] = None,
+                pool_size: int | None = None,
             ) -> None:
                 """Create connection pool."""
                 pool_size = pool_size or self.default_pool_size
@@ -654,7 +669,10 @@ class TestConnectionIntegration:
                 self.connection_factory = MagicMock()
 
             def execute_ldap_operation(
-                self, connection_info: Any, operation: str, **kwargs,
+                self,
+                connection_info: Any,
+                operation: str,
+                **kwargs,
             ) -> dict[str, Any]:
                 """Execute complete LDAP operation workflow."""
                 # Step 1: Create connection
@@ -688,7 +706,10 @@ class TestConnectionIntegration:
                 return True
 
             def _execute_operation(
-                self, connection: Any, operation: str, **kwargs,
+                self,
+                connection: Any,
+                operation: str,
+                **kwargs,
             ) -> Any:
                 """Execute LDAP operation."""
                 if operation == "search":

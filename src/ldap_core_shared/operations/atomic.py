@@ -45,11 +45,13 @@ References:
 import asyncio
 import time
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any, ClassVar, Union
 
 # Type aliases for LDAP operations
 LDAPConnection = Any  # Could be ldap3.Connection, python-ldap connection, etc.
-LDAPAttributeValue = Union[str, bytes, list[str], list[bytes], int]  # LDAP attribute values
+LDAPAttributeValue = Union[
+    str, bytes, list[str], list[bytes], int,
+]  # LDAP attribute values
 
 from pydantic import BaseModel, Field
 
@@ -71,29 +73,34 @@ class IncrementResult(BaseModel):
 
     attribute: str = Field(description="Attribute that was incremented")
 
-    old_value: Optional[int] = Field(
-        default=None, description="Original value before increment",
+    old_value: int | None = Field(
+        default=None,
+        description="Original value before increment",
     )
 
-    new_value: Optional[int] = Field(
-        default=None, description="New value after increment",
+    new_value: int | None = Field(
+        default=None,
+        description="New value after increment",
     )
 
     increment_amount: int = Field(description="Amount that was incremented")
 
     operation_duration: float = Field(
-        default=0.0, description="Operation duration in seconds",
+        default=0.0,
+        description="Operation duration in seconds",
     )
 
-    server_response: Optional[str] = Field(
-        default=None, description="Server response message",
+    server_response: str | None = Field(
+        default=None,
+        description="Server response message",
     )
 
-    error_message: Optional[str] = Field(
-        default=None, description="Error message if operation failed",
+    error_message: str | None = Field(
+        default=None,
+        description="Error message if operation failed",
     )
 
-    def get_delta(self) -> Optional[int]:
+    def get_delta(self) -> int | None:
         """Get the actual change in value."""
         if self.old_value is not None and self.new_value is not None:
             return self.new_value - self.old_value
@@ -111,20 +118,24 @@ class CompareAndSwapResult(BaseModel):
 
     new_value: Any = Field(description="New value set if comparison succeeded")
 
-    actual_value: Optional[Any] = Field(
-        default=None, description="Actual value found during comparison",
+    actual_value: Any | None = Field(
+        default=None,
+        description="Actual value found during comparison",
     )
 
     was_swapped: bool = Field(
-        default=False, description="Whether the value was actually swapped",
+        default=False,
+        description="Whether the value was actually swapped",
     )
 
     operation_duration: float = Field(
-        default=0.0, description="Operation duration in seconds",
+        default=0.0,
+        description="Operation duration in seconds",
     )
 
-    error_message: Optional[str] = Field(
-        default=None, description="Error message if operation failed",
+    error_message: str | None = Field(
+        default=None,
+        description="Error message if operation failed",
     )
 
 
@@ -138,27 +149,33 @@ class AtomicModifyRequest(BaseModel):
     attribute: str = Field(description="Attribute to modify")
 
     # For increment/decrement operations
-    increment_value: Optional[int] = Field(
-        default=None, description="Value to increment/decrement by",
+    increment_value: int | None = Field(
+        default=None,
+        description="Value to increment/decrement by",
     )
 
     # For compare-and-swap operations
-    expected_value: Optional[Any] = Field(
-        default=None, description="Expected current value",
+    expected_value: Any | None = Field(
+        default=None,
+        description="Expected current value",
     )
 
-    new_value: Optional[Any] = Field(default=None, description="New value to set")
+    new_value: Any | None = Field(default=None, description="New value to set")
 
     # Operation settings
     retry_attempts: int = Field(
-        default=3, description="Number of retry attempts for race conditions",
+        default=3,
+        description="Number of retry attempts for race conditions",
     )
 
     retry_delay_ms: int = Field(
-        default=DEFAULT_MAX_ITEMS, description="Delay between retries in milliseconds",
+        default=DEFAULT_MAX_ITEMS,
+        description="Delay between retries in milliseconds",
     )
 
-    timeout_seconds: int = Field(default=DEFAULT_TIMEOUT_SECONDS, description="Operation timeout in seconds")
+    timeout_seconds: int = Field(
+        default=DEFAULT_TIMEOUT_SECONDS, description="Operation timeout in seconds",
+    )
 
 
 class AtomicOperations:
@@ -179,7 +196,7 @@ class AtomicOperations:
     """
 
     # Well-known increment-capable attributes
-    NUMERIC_ATTRIBUTES = {
+    NUMERIC_ATTRIBUTES: ClassVar[set[str]] = {
         "uidNumber",
         "gidNumber",
         "employeeNumber",
@@ -251,7 +268,10 @@ class AtomicOperations:
         """
         # Decrement is just increment with negative value
         return await self.increment_attribute(
-            dn, attribute, -decrement_value, retry_attempts,
+            dn,
+            attribute,
+            -decrement_value,
+            retry_attempts,
         )
 
     async def compare_and_swap(
@@ -440,7 +460,8 @@ class AtomicOperations:
 
                 # Step 3: Modify with new value
                 modify_result = self._connection.modify(
-                    dn, {attribute: [(self._get_modify_action(), [str(new_value)])]},
+                    dn,
+                    {attribute: [(self._get_modify_action(), [str(new_value)])]},
                 )
 
                 if modify_result:
@@ -490,7 +511,10 @@ class AtomicOperations:
         return "MODIFY_REPLACE"  # Placeholder
 
     async def _validate_increment_request(
-        self, dn: str, attribute: str, increment_value: int,
+        self,
+        dn: str,
+        attribute: str,
+        increment_value: int,
     ) -> None:
         """Validate increment operation request.
 
@@ -522,7 +546,10 @@ class AtomicOperations:
 
 # Convenience functions
 async def increment_attribute(
-    connection: LDAPConnection, dn: str, attribute: str, increment_value: int = 1,
+    connection: LDAPConnection,
+    dn: str,
+    attribute: str,
+    increment_value: int = 1,
 ) -> IncrementResult:
     """Convenience function for atomic increment.
 
@@ -539,7 +566,9 @@ async def increment_attribute(
     return await atomic.increment_attribute(dn, attribute, increment_value)
 
 
-async def allocate_uid_number(connection: LDAPConnection, counter_dn: str) -> Optional[int]:
+async def allocate_uid_number(
+    connection: LDAPConnection, counter_dn: str,
+) -> int | None:
     """Convenience function for UID number allocation.
 
     Args:
@@ -553,7 +582,9 @@ async def allocate_uid_number(connection: LDAPConnection, counter_dn: str) -> Op
     return result.new_value if result.success else None
 
 
-async def allocate_gid_number(connection: LDAPConnection, counter_dn: str) -> Optional[int]:
+async def allocate_gid_number(
+    connection: LDAPConnection, counter_dn: str,
+) -> int | None:
     """Convenience function for GID number allocation.
 
     Args:
@@ -565,6 +596,7 @@ async def allocate_gid_number(connection: LDAPConnection, counter_dn: str) -> Op
     """
     result = await increment_attribute(connection, counter_dn, "gidNumber", 1)
     return result.new_value if result.success else None
+
 
 # TODO: Integration points for implementation:
 #

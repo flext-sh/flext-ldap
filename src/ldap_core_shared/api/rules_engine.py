@@ -19,16 +19,14 @@ from __future__ import annotations
 import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
-from ldap_core_shared.api.exceptions import (
-    ConfigValidationError,
-    MigrationConfigurationError,
-)
-from ldap_core_shared.api.results import Result
-from ldap_core_shared.utils.ldap_validation import validate_configuration_value
 from loguru import logger
+
+from ldap_core_shared.api.results import Result
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 T = TypeVar("T")
 
@@ -44,28 +42,31 @@ class GenericRule:
     rule_id: str
     rule_type: str
     priority: int
-    conditions: Dict[str, Any]
-    actions: Dict[str, Any]
-    metadata: Optional[Dict[str, Any]] = None
+    conditions: dict[str, Any]
+    actions: dict[str, Any]
+    metadata: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         """Validate generic rule structure."""
         if not self.rule_id:
-            raise ValueError("rule_id cannot be empty")
+            msg = "rule_id cannot be empty"
+            raise ValueError(msg)
         if not self.rule_type:
-            raise ValueError("rule_type cannot be empty")
+            msg = "rule_type cannot be empty"
+            raise ValueError(msg)
         if self.priority < 0:
-            raise ValueError("priority must be non-negative")
+            msg = "priority must be non-negative"
+            raise ValueError(msg)
 
 
 @dataclass
 class RuleExecutionContext:
     """Context for rule execution - generic information only."""
 
-    entry: Dict[str, Any]
+    entry: dict[str, Any]
     entry_index: int
     total_entries: int
-    execution_metadata: Dict[str, Any]
+    execution_metadata: dict[str, Any]
 
 
 class RuleProcessor(Protocol):
@@ -76,8 +77,8 @@ class RuleProcessor(Protocol):
         ...
 
     def process_rule(
-        self, rule: GenericRule, context: RuleExecutionContext
-    ) -> Result[Dict[str, Any]]:
+        self, rule: GenericRule, context: RuleExecutionContext,
+    ) -> Result[dict[str, Any]]:
         """Process rule against context and return result."""
         ...
 
@@ -91,9 +92,9 @@ class GenericRulesEngine:
 
     def __init__(self) -> None:
         """Initialize generic rules engine."""
-        self.rules: List[GenericRule] = []
-        self.processors: List[RuleProcessor] = []
-        self.execution_stats: Dict[str, Any] = {}
+        self.rules: list[GenericRule] = []
+        self.processors: list[RuleProcessor] = []
+        self.execution_stats: dict[str, Any] = {}
 
         logger.debug("✅ Generic rules engine initialized")
 
@@ -104,7 +105,7 @@ class GenericRulesEngine:
             processor: Rule processor implementing the protocol
         """
         self.processors.append(processor)
-        logger.debug(f"➕ Registered rule processor: {type(processor).__name__}")
+        logger.debug("➕ Registered rule processor: %s", type(processor).__name__)
 
     def load_rules_from_file(self, rules_file: Path) -> Result[int]:
         """Load rules from JSON configuration file.
@@ -119,7 +120,7 @@ class GenericRulesEngine:
             if not rules_file.exists():
                 return Result.fail(f"Rules file does not exist: {rules_file}")
 
-            with open(rules_file, "r", encoding="utf-8") as f:
+            with open(rules_file, encoding="utf-8") as f:
                 rules_data = json.load(f)
 
             return self._parse_rules_data(rules_data)
@@ -129,7 +130,7 @@ class GenericRulesEngine:
         except Exception as e:
             return Result.fail(f"Failed to load rules file: {e}")
 
-    def _parse_rules_data(self, rules_data: Dict[str, Any]) -> Result[int]:
+    def _parse_rules_data(self, rules_data: dict[str, Any]) -> Result[int]:
         """Parse rules data from configuration.
 
         Args:
@@ -155,15 +156,15 @@ class GenericRulesEngine:
             rules_list.sort(key=lambda r: r.priority)
             self.rules = rules_list
 
-            logger.info(f"✅ Loaded {len(self.rules)} rules from configuration")
+            logger.info("✅ Loaded %s rules from configuration", len(self.rules))
             return Result.ok(len(self.rules))
 
         except Exception as e:
             return Result.fail(f"Failed to parse rules data: {e}")
 
     def _create_rule_from_data(
-        self, rule_data: Dict[str, Any], section_name: str
-    ) -> Optional[GenericRule]:
+        self, rule_data: dict[str, Any], section_name: str,
+    ) -> GenericRule | None:
         """Create a generic rule from data.
 
         Args:
@@ -191,10 +192,12 @@ class GenericRulesEngine:
             )
 
         except Exception as e:
-            logger.warning(f"⚠️ Failed to create rule from data: {e}")
+            logger.warning("⚠️ Failed to create rule from data: %s", e)
             return None
 
-    def execute_rules(self, entries: List[Dict[str, Any]]) -> Result[List[Dict[str, Any]]]:
+    def execute_rules(
+        self, entries: list[dict[str, Any]],
+    ) -> Result[list[dict[str, Any]]]:
         """Execute rules against entries.
 
         Args:
@@ -227,11 +230,13 @@ class GenericRulesEngine:
                     execution_metadata={},
                 )
 
-                processed_entry = self._execute_rules_for_entry(context, execution_stats)
+                processed_entry = self._execute_rules_for_entry(
+                    context, execution_stats,
+                )
                 processed_entries.append(processed_entry)
 
             self.execution_stats = execution_stats
-            logger.info(f"✅ Executed rules for {len(processed_entries)} entries")
+            logger.info("✅ Executed rules for %s entries", len(processed_entries))
 
             return Result.ok(processed_entries)
 
@@ -239,8 +244,8 @@ class GenericRulesEngine:
             return Result.fail(f"Rule execution failed: {e}")
 
     def _execute_rules_for_entry(
-        self, context: RuleExecutionContext, execution_stats: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, context: RuleExecutionContext, execution_stats: dict[str, Any],
+    ) -> dict[str, Any]:
         """Execute rules for a single entry.
 
         Args:
@@ -272,15 +277,15 @@ class GenericRulesEngine:
                     execution_stats["rule_stats"][rule_type] += 1
                 elif not result.success:
                     execution_stats["processing_errors"] += 1
-                    logger.warning(f"⚠️ Rule {rule.rule_id} failed: {result.error_message}")
+                    logger.warning("⚠️ Rule {rule.rule_id} failed: %s", result.error)
 
             except Exception as e:
                 execution_stats["processing_errors"] += 1
-                logger.warning(f"⚠️ Rule {rule.rule_id} processing error: {e}")
+                logger.warning("⚠️ Rule {rule.rule_id} processing error: %s", e)
 
         return entry
 
-    def _find_processor_for_rule(self, rule: GenericRule) -> Optional[RuleProcessor]:
+    def _find_processor_for_rule(self, rule: GenericRule) -> RuleProcessor | None:
         """Find processor that can handle the rule.
 
         Args:
@@ -294,7 +299,7 @@ class GenericRulesEngine:
                 return processor
         return None
 
-    def validate_rules(self) -> Result[List[str]]:
+    def validate_rules(self) -> Result[list[str]]:
         """Validate loaded rules and return issues.
 
         Returns:
@@ -309,7 +314,7 @@ class GenericRulesEngine:
 
             # Check for duplicate rule IDs
             rule_ids = [rule.rule_id for rule in self.rules]
-            duplicates = set([rid for rid in rule_ids if rule_ids.count(rid) > 1])
+            duplicates = {rid for rid in rule_ids if rule_ids.count(rid) > 1}
             if duplicates:
                 issues.append(f"Duplicate rule IDs found: {duplicates}")
 
@@ -323,7 +328,7 @@ class GenericRulesEngine:
         except Exception as e:
             return Result.fail(f"Rules validation failed: {e}")
 
-    def _validate_rule(self, rule: GenericRule) -> List[str]:
+    def _validate_rule(self, rule: GenericRule) -> list[str]:
         """Validate a single rule.
 
         Args:
@@ -339,7 +344,7 @@ class GenericRulesEngine:
             processor = self._find_processor_for_rule(rule)
             if not processor:
                 issues.append(
-                    f"No processor found for rule {rule.rule_id} of type {rule.rule_type}"
+                    f"No processor found for rule {rule.rule_id} of type {rule.rule_type}",
                 )
 
             # Validate rule structure
@@ -353,7 +358,7 @@ class GenericRulesEngine:
 
         return issues
 
-    def get_execution_statistics(self) -> Dict[str, Any]:
+    def get_execution_statistics(self) -> dict[str, Any]:
         """Get rule execution statistics.
 
         Returns:
@@ -361,7 +366,7 @@ class GenericRulesEngine:
         """
         return self.execution_stats.copy()
 
-    def get_rules_summary(self) -> Dict[str, Any]:
+    def get_rules_summary(self) -> dict[str, Any]:
         """Get summary of loaded rules.
 
         Returns:
@@ -387,14 +392,14 @@ class GenericRuleProcessor(ABC):
     Provides common functionality for rule processing without business-specific logic.
     """
 
-    def __init__(self, supported_types: List[str]) -> None:
+    def __init__(self, supported_types: list[str]) -> None:
         """Initialize generic rule processor.
 
         Args:
             supported_types: List of rule types this processor can handle
         """
         self.supported_types = supported_types
-        self.processing_stats: Dict[str, Any] = {}
+        self.processing_stats: dict[str, Any] = {}
 
     def can_process(self, rule: GenericRule) -> bool:
         """Check if processor can handle this rule type.
@@ -409,8 +414,8 @@ class GenericRuleProcessor(ABC):
 
     @abstractmethod
     def process_rule(
-        self, rule: GenericRule, context: RuleExecutionContext
-    ) -> Result[Dict[str, Any]]:
+        self, rule: GenericRule, context: RuleExecutionContext,
+    ) -> Result[dict[str, Any]]:
         """Process rule against context - MUST be implemented by subclasses.
 
         Args:
@@ -422,7 +427,7 @@ class GenericRuleProcessor(ABC):
         """
         ...
 
-    def get_processing_statistics(self) -> Dict[str, Any]:
+    def get_processing_statistics(self) -> dict[str, Any]:
         """Get processing statistics.
 
         Returns:
@@ -440,7 +445,7 @@ def create_rules_engine() -> GenericRulesEngine:
     return GenericRulesEngine()
 
 
-def validate_rules_file(rules_file: Path) -> Result[Dict[str, Any]]:
+def validate_rules_file(rules_file: Path) -> Result[dict[str, Any]]:
     """Validate rules file structure and content.
 
     Args:
@@ -453,7 +458,7 @@ def validate_rules_file(rules_file: Path) -> Result[Dict[str, Any]]:
         if not rules_file.exists():
             return Result.fail(f"Rules file does not exist: {rules_file}")
 
-        with open(rules_file, "r", encoding="utf-8") as f:
+        with open(rules_file, encoding="utf-8") as f:
             rules_data = json.load(f)
 
         # Basic structure validation
@@ -489,10 +494,10 @@ def validate_rules_file(rules_file: Path) -> Result[Dict[str, Any]]:
 
 __all__ = [
     "GenericRule",
+    "GenericRuleProcessor",
+    "GenericRulesEngine",
     "RuleExecutionContext",
     "RuleProcessor",
-    "GenericRulesEngine",
-    "GenericRuleProcessor",
     "create_rules_engine",
     "validate_rules_file",
 ]

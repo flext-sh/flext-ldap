@@ -50,7 +50,7 @@ import json
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Any, ClassVar, Optional, Union
+from typing import Any, ClassVar
 
 import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
@@ -163,7 +163,14 @@ class DatabaseConfig(BaseConfig):
     @classmethod
     def validate_ssl_mode(cls, v: str) -> str:
         """Validate SSL mode value."""
-        valid_modes = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
+        valid_modes = [
+            "disable",
+            "allow",
+            "prefer",
+            "require",
+            "verify-ca",
+            "verify-full",
+        ]
         if v not in valid_modes:
             msg = f"Invalid SSL mode: {v}. Must be one of {valid_modes}"
             raise ValueError(msg)
@@ -195,11 +202,11 @@ class LDAPConnectionConfig(BaseConfig):
         default_factory=lambda: ["ldap://localhost:389"],
         description="List of LDAP server URIs",
     )
-    bind_dn: Optional[str] = Field(
+    bind_dn: str | None = Field(
         default=None,
         description="Bind DN for authentication",
     )
-    bind_password: Optional[SecretStr] = Field(
+    bind_password: SecretStr | None = Field(
         default=None,
         description="Bind password for authentication",
     )
@@ -211,7 +218,7 @@ class LDAPConnectionConfig(BaseConfig):
         default=True,
         description="Verify TLS certificates",
     )
-    tls_ca_file: Optional[Path] = Field(
+    tls_ca_file: Path | None = Field(
         default=None,
         description="TLS CA certificate file",
     )
@@ -402,7 +409,7 @@ class SecurityConfig(BaseConfig):
     """Security and authentication configuration."""
 
     # Encryption settings
-    encryption_key: Optional[SecretStr] = Field(
+    encryption_key: SecretStr | None = Field(
         default=None,
         description="Encryption key for sensitive data",
     )
@@ -450,7 +457,7 @@ class SecurityConfig(BaseConfig):
         default_factory=lambda: ["TLSv1.2", "TLSv1.3"],
         description="Supported TLS protocol versions",
     )
-    tls_ciphers: Optional[str] = Field(
+    tls_ciphers: str | None = Field(
         default=None,
         description="TLS cipher suite specification",
     )
@@ -460,8 +467,15 @@ class SecurityConfig(BaseConfig):
     def validate_sasl_mechanisms(cls, v: list[str]) -> list[str]:
         """Validate SASL mechanisms."""
         valid_mechanisms = [
-            "PLAIN", "LOGIN", "DIGEST-MD5", "CRAM-MD5",
-            "EXTERNAL", "ANONYMOUS", "GSSAPI", "SCRAM-SHA-1", "SCRAM-SHA-256",
+            "PLAIN",
+            "LOGIN",
+            "DIGEST-MD5",
+            "CRAM-MD5",
+            "EXTERNAL",
+            "ANONYMOUS",
+            "GSSAPI",
+            "SCRAM-SHA-1",
+            "SCRAM-SHA-256",
         ]
 
         for mechanism in v:
@@ -485,7 +499,7 @@ class LoggingConfig(BaseConfig):
     )
 
     # File logging
-    log_file: Optional[Path] = Field(
+    log_file: Path | None = Field(
         default=None,
         description="Log file path",
     )
@@ -584,7 +598,7 @@ class MonitoringConfig(BaseConfig):
         default=False,
         description="Enable alerting",
     )
-    alert_webhook_url: Optional[str] = Field(
+    alert_webhook_url: str | None = Field(
         default=None,
         description="Webhook URL for alerts",
     )
@@ -666,7 +680,7 @@ class ApplicationConfig(BaseConfig):
 class ConfigManager:
     """Configuration manager for loading and managing application configuration."""
 
-    _instance: Optional[ApplicationConfig] = None
+    _instance: ApplicationConfig | None = None
     _config_file_paths: ClassVar[list[str]] = [
         "ldap-core.yaml",
         "ldap-core.yml",
@@ -678,9 +692,9 @@ class ConfigManager:
     @classmethod
     def load_config(
         cls,
-        environment: Optional[Union[str, Environment]] = None,
-        config_file: Optional[Union[str, Path]] = None,
-        override_values: Optional[dict[str, Any]] = None,
+        environment: str | Environment | None = None,
+        config_file: str | Path | None = None,
+        override_values: dict[str, Any] | None = None,
     ) -> ApplicationConfig:
         """Load configuration from various sources.
 
@@ -805,7 +819,7 @@ class ConfigManager:
         for key, value in os.environ.items():
             if key.startswith(prefix):
                 # Convert LDAP_CORE_CONNECTION_POOL_SIZE to nested dict
-                config_key = key[len(prefix):].lower()
+                config_key = key[len(prefix) :].lower()
                 parts = config_key.split("_")
 
                 # Navigate/create nested structure

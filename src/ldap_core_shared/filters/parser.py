@@ -39,14 +39,16 @@ from __future__ import annotations
 
 import re
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, validator
 
 # Constants for filter validation
 MIN_COMPOUND_FILTER_CHILDREN = 2  # Minimum children for AND/OR filters
-EXACT_NOT_FILTER_CHILDREN = 1     # Exact children for NOT filters
-COMPLEXITY_PERFORMANCE_THRESHOLD = 10  # Complexity score threshold for performance warnings
+EXACT_NOT_FILTER_CHILDREN = 1  # Exact children for NOT filters
+COMPLEXITY_PERFORMANCE_THRESHOLD = (
+    10  # Complexity score threshold for performance warnings
+)
 
 
 class FilterType(Enum):
@@ -70,8 +72,8 @@ class FilterSyntaxError(Exception):
     def __init__(
         self,
         message: str,
-        position: Optional[int] = None,
-        filter_string: Optional[str] = None,
+        position: int | None = None,
+        filter_string: str | None = None,
     ) -> None:
         """Initialize syntax error with context.
 
@@ -126,20 +128,24 @@ class ParsedFilter(BaseModel):
 
     filter_type: FilterType = Field(description="Type of LDAP filter")
 
-    attribute: Optional[str] = Field(
-        default=None, description="Attribute name for simple filters",
+    attribute: str | None = Field(
+        default=None,
+        description="Attribute name for simple filters",
     )
 
-    value: Optional[str] = Field(
-        default=None, description="Filter value for simple filters",
+    value: str | None = Field(
+        default=None,
+        description="Filter value for simple filters",
     )
 
-    operator: Optional[str] = Field(
-        default=None, description="Comparison operator (=, >=, <=, ~=)",
+    operator: str | None = Field(
+        default=None,
+        description="Comparison operator (=, >=, <=, ~=)",
     )
 
     children: list[ParsedFilter] = Field(
-        default_factory=list, description="Child filters for compound filters",
+        default_factory=list,
+        description="Child filters for compound filters",
     )
 
     is_negated: bool = Field(default=False, description="Whether filter is negated")
@@ -147,16 +153,18 @@ class ParsedFilter(BaseModel):
     raw_filter: str = Field(description="Original filter string")
 
     # Extensible match components
-    matching_rule: Optional[str] = Field(
-        default=None, description="Matching rule OID for extensible matches",
+    matching_rule: str | None = Field(
+        default=None,
+        description="Matching rule OID for extensible matches",
     )
 
     dn_attributes: bool = Field(
-        default=False, description="Whether extensible match includes DN attributes",
+        default=False,
+        description="Whether extensible match includes DN attributes",
     )
 
     @validator("children")
-    def validate_children(cls, v: list[Any], values: dict[str, Any]) -> list[Any]:
+    def validate_children(self, v: list[Any], values: dict[str, Any]) -> list[Any]:
         """Validate children based on filter type."""
         filter_type = values.get("filter_type")
 
@@ -391,7 +399,9 @@ class FilterParser:
             raise FilterSyntaxError(msg, self._position, self._filter_string)
 
         return ParsedFilter(
-            filter_type=FilterType.OR, children=children, raw_filter=self._filter_string,
+            filter_type=FilterType.OR,
+            children=children,
+            raw_filter=self._filter_string,
         )
 
     def _parse_not_filter(self) -> ParsedFilter:
@@ -797,6 +807,7 @@ class FilterAnalyzer:
         """Check if presence filter can be used instead."""
         # Simple heuristic for demonstration
         return parsed.filter_type == FilterType.EQUALITY and parsed.value == ""
+
 
 # TODO: Integration points for implementation:
 #

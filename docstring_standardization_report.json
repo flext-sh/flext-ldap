@@ -44,12 +44,8 @@
         "has_usage_example": true,
         "has_references": false,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "references"
-        ],
-        "recommendations": [
-          "Add references"
-        ]
+        "missing_elements": ["references"],
+        "recommendations": ["Add references"]
       },
       "classes": {},
       "functions": {},
@@ -66,11 +62,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -242,11 +234,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "pattern_details",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["pattern_details", "usage_example", "references"],
         "recommendations": [
           "Add pattern details",
           "Add usage example",
@@ -806,12 +794,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/domain/models.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "LDAPConnectionConfig": {
@@ -1245,12 +1229,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/domain/value_objects.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "MigrationStatus": {
@@ -1809,11 +1789,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "pattern_details",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["pattern_details", "usage_example", "references"],
         "recommendations": [
           "Add pattern details",
           "Add usage example",
@@ -2418,14 +2394,8 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.6,
-        "missing_elements": [
-          "usage_example",
-          "references"
-        ],
-        "recommendations": [
-          "Add usage example",
-          "Add references"
-        ]
+        "missing_elements": ["usage_example", "references"],
+        "recommendations": ["Add usage example", "Add references"]
       },
       "classes": {},
       "functions": {},
@@ -2933,12 +2903,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/utils/ldap_helpers.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "DNHelper": {
@@ -4049,12 +4015,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/utils/ldap_operations.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "SearchScope": {
@@ -4515,9 +4477,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete class docstring following CLAUDE.md patterns"
           ]
@@ -5091,12 +5051,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/events/domain_events.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "DomainEvent": {
@@ -5309,9 +5265,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -5323,9 +5277,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -5337,9 +5289,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -5351,9 +5301,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -5365,9 +5313,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -5379,9 +5325,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -5393,9 +5337,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -5407,9 +5349,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -5998,12 +5938,8 @@
         "has_usage_example": true,
         "has_references": false,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "references"
-        ],
-        "recommendations": [
-          "Add references"
-        ]
+        "missing_elements": ["references"],
+        "recommendations": ["Add references"]
       },
       "classes": {
         "CoreInitializationError": {
@@ -6213,11 +6149,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -6452,11 +6384,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -6874,9 +6802,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -6888,9 +6814,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -6962,9 +6886,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -7522,14 +7444,8 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.6,
-        "missing_elements": [
-          "usage_example",
-          "references"
-        ],
-        "recommendations": [
-          "Add usage example",
-          "Add references"
-        ]
+        "missing_elements": ["usage_example", "references"],
+        "recommendations": ["Add usage example", "Add references"]
       },
       "classes": {
         "SearchFilter": {
@@ -8940,11 +8856,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -8958,11 +8870,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -9119,11 +9027,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -9137,11 +9041,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -9155,11 +9055,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -9173,11 +9069,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -9211,11 +9103,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -9349,11 +9237,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -9664,14 +9548,8 @@
         "has_usage_example": true,
         "has_references": false,
         "compliance_score": 0.6,
-        "missing_elements": [
-          "design_pattern",
-          "references"
-        ],
-        "recommendations": [
-          "Add design pattern",
-          "Add references"
-        ]
+        "missing_elements": ["design_pattern", "references"],
+        "recommendations": ["Add design pattern", "Add references"]
       },
       "classes": {
         "Logger": {
@@ -10671,12 +10549,8 @@
         "has_usage_example": true,
         "has_references": false,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "references"
-        ],
-        "recommendations": [
-          "Add references"
-        ]
+        "missing_elements": ["references"],
+        "recommendations": ["Add references"]
       },
       "classes": {
         "Environment": {
@@ -11195,12 +11069,8 @@
         "has_usage_example": true,
         "has_references": false,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "references"
-        ],
-        "recommendations": [
-          "Add references"
-        ]
+        "missing_elements": ["references"],
+        "recommendations": ["Add references"]
       },
       "classes": {
         "LogLevel": {
@@ -12000,14 +11870,8 @@
         "has_usage_example": true,
         "has_references": false,
         "compliance_score": 0.6,
-        "missing_elements": [
-          "design_pattern",
-          "references"
-        ],
-        "recommendations": [
-          "Add design pattern",
-          "Add references"
-        ]
+        "missing_elements": ["design_pattern", "references"],
+        "recommendations": ["Add design pattern", "Add references"]
       },
       "classes": {},
       "functions": {},
@@ -12674,11 +12538,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -12775,9 +12635,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -12789,9 +12647,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -13071,11 +12927,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -13439,11 +13291,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -13642,12 +13490,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/ldif/transformer.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "TransformationRule": {
@@ -14044,11 +13888,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -14125,9 +13965,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -14139,9 +13977,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -14316,12 +14152,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/ldif/parser.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "ParsingResult": {
@@ -14351,14 +14183,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         }
       },
       "functions": {},
@@ -14411,12 +14237,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/schema/__init__.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {},
       "functions": {},
@@ -14428,12 +14250,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/schema/discovery.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "SchemaDiscoveryConfig": {
@@ -14592,11 +14410,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -15120,11 +14934,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -15508,11 +15318,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -15836,11 +15642,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -16064,11 +15866,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -16125,9 +15923,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -17465,11 +17261,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "pattern_details",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["pattern_details", "usage_example", "references"],
         "recommendations": [
           "Add pattern details",
           "Add usage example",
@@ -17491,11 +17283,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -17550,14 +17338,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         },
         "LDAPSearchConfig": {
           "has_brief": true,
@@ -18080,9 +17862,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -18094,9 +17874,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -18150,11 +17928,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -18654,11 +18428,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -20264,11 +20034,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -20305,9 +20071,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -20626,11 +20390,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -20754,11 +20514,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -20942,11 +20698,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -20960,11 +20712,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -21208,11 +20956,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -21645,11 +21389,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -21664,11 +21404,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -21684,9 +21420,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -21926,11 +21660,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -21952,11 +21682,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -21971,14 +21697,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         },
         "BaseEntity": {
           "has_brief": true,
@@ -21987,14 +21707,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         },
         "BaseValueObject": {
           "has_brief": true,
@@ -22003,14 +21717,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         },
         "BaseRepository": {
           "has_brief": true,
@@ -22019,14 +21727,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         },
         "BaseService": {
           "has_brief": true,
@@ -22035,14 +21737,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         }
       },
       "functions": {},
@@ -22400,11 +22096,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -23326,11 +23018,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -23345,14 +23033,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         },
         "Option": {
           "has_brief": true,
@@ -23361,14 +23043,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         },
         "Repository": {
           "has_brief": true,
@@ -23377,11 +23053,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -24284,11 +23956,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -24310,11 +23978,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -24336,11 +24000,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -24438,9 +24098,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -24452,9 +24110,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -24466,9 +24122,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -24480,9 +24134,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -25850,11 +25502,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -25876,11 +25524,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -25915,11 +25559,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -26013,9 +25653,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -26027,9 +25665,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -26041,9 +25677,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -26243,11 +25877,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -26302,11 +25932,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -26422,9 +26048,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -26639,12 +26263,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/vectorized/search_engine.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "VectorizedSearchStats": {
@@ -26694,11 +26314,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -26792,9 +26408,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -26806,9 +26420,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -27083,12 +26695,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/vectorized/connection_pool.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "ConnectionPoolStats": {
@@ -27118,11 +26726,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -27361,12 +26965,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/vectorized/benchmarks.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "BenchmarkResult": {
@@ -27436,11 +27036,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -28119,12 +27715,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/controls/__init__.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {},
       "functions": {},
@@ -28141,12 +27733,8 @@
         "has_usage_example": false,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "usage_example"
-        ],
-        "recommendations": [
-          "Add usage example"
-        ]
+        "missing_elements": ["usage_example"],
+        "recommendations": ["Add usage example"]
       },
       "classes": {
         "ControlError": {
@@ -28620,12 +28208,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/controls/paged.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "PagedResultsControl": {
@@ -28635,11 +28219,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -28694,11 +28274,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -28933,12 +28509,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/controls/password_policy.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "PasswordPolicyError": {
@@ -28988,11 +28560,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -29466,11 +29034,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -29484,11 +29048,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -30125,12 +29685,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/controls/sort.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "SortOrder": {
@@ -30200,11 +29756,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -30522,14 +30074,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         },
         "ServerSideSortControl.get_primary_sort_attribute": {
           "has_brief": true,
@@ -30755,11 +30301,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -30773,11 +30315,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -30935,11 +30473,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -31410,11 +30944,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -31428,11 +30958,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -31630,11 +31156,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -33792,12 +33314,8 @@
         "has_usage_example": false,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "usage_example"
-        ],
-        "recommendations": [
-          "Add usage example"
-        ]
+        "missing_elements": ["usage_example"],
+        "recommendations": ["Add usage example"]
       },
       "classes": {
         "ASN1Error": {
@@ -34457,12 +33975,8 @@
         "has_usage_example": true,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "design_pattern"
-        ],
-        "recommendations": [
-          "Add design pattern"
-        ]
+        "missing_elements": ["design_pattern"],
+        "recommendations": ["Add design pattern"]
       },
       "classes": {
         "AssertionControl": {
@@ -34834,12 +34348,8 @@
         "has_usage_example": true,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "design_pattern"
-        ],
-        "recommendations": [
-          "Add design pattern"
-        ]
+        "missing_elements": ["design_pattern"],
+        "recommendations": ["Add design pattern"]
       },
       "classes": {},
       "functions": {},
@@ -35477,11 +34987,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -35515,11 +35021,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -35815,11 +35317,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -35950,11 +35448,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -36747,11 +36241,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -37047,11 +36537,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -38829,12 +38315,8 @@
         "has_usage_example": true,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "design_pattern"
-        ],
-        "recommendations": [
-          "Add design pattern"
-        ]
+        "missing_elements": ["design_pattern"],
+        "recommendations": ["Add design pattern"]
       },
       "classes": {
         "OpenLDAPControlType": {
@@ -39253,14 +38735,8 @@
         "has_usage_example": false,
         "has_references": true,
         "compliance_score": 0.6,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example"
-        ],
-        "recommendations": [
-          "Add design pattern",
-          "Add usage example"
-        ]
+        "missing_elements": ["design_pattern", "usage_example"],
+        "recommendations": ["Add design pattern", "Add usage example"]
       },
       "classes": {
         "IBMExtensions": {
@@ -39339,14 +38815,8 @@
         "has_usage_example": false,
         "has_references": true,
         "compliance_score": 0.6,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example"
-        ],
-        "recommendations": [
-          "Add design pattern",
-          "Add usage example"
-        ]
+        "missing_elements": ["design_pattern", "usage_example"],
+        "recommendations": ["Add design pattern", "Add usage example"]
       },
       "classes": {
         "NovellExtensions": {
@@ -39425,14 +38895,8 @@
         "has_usage_example": false,
         "has_references": true,
         "compliance_score": 0.6,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example"
-        ],
-        "recommendations": [
-          "Add design pattern",
-          "Add usage example"
-        ]
+        "missing_elements": ["design_pattern", "usage_example"],
+        "recommendations": ["Add design pattern", "Add usage example"]
       },
       "classes": {
         "OracleExtensions": {
@@ -40401,12 +39865,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/filters/validator.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "ValidationLevel": {
@@ -40716,9 +40176,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -40730,9 +40188,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -40744,9 +40200,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -40758,9 +40212,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -40994,9 +40446,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -41008,11 +40458,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -41026,9 +40472,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -41060,9 +40504,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -41094,9 +40536,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -41148,9 +40588,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -41182,9 +40620,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -41317,12 +40753,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/filters/builder.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "FilterOperator": {
@@ -43851,12 +43283,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/services/capabilities.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "FeatureCategory": {
@@ -44629,12 +44057,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/operations/__init__.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {},
       "functions": {},
@@ -44646,12 +44070,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/operations/atomic.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "AtomicOperationType": {
@@ -45064,12 +44484,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/operations/compare.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "CompareResultCode": {
@@ -47012,12 +46428,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/async_ops/manager.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "OperationStatus": {
@@ -47207,9 +46619,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -47221,9 +46631,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -47235,9 +46643,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -47249,9 +46655,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -48745,12 +48149,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/referrals/handler.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "ReferralHandlingMode": {
@@ -49303,12 +48703,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/referrals/chaser.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "CredentialType": {
@@ -49826,12 +49222,8 @@
         "has_usage_example": true,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "design_pattern"
-        ],
-        "recommendations": [
-          "Add design pattern"
-        ]
+        "missing_elements": ["design_pattern"],
+        "recommendations": ["Add design pattern"]
       },
       "classes": {},
       "functions": {},
@@ -49843,12 +49235,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/protocols/ldapi.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "LDAPIAuthMethod": {
@@ -51684,12 +51072,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/protocols/ldaps.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "SSLVersion": {
@@ -52524,12 +51908,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/protocols/dsml.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "DSMLVersion": {
@@ -53509,12 +52889,8 @@
         "has_usage_example": true,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "design_pattern"
-        ],
-        "recommendations": [
-          "Add design pattern"
-        ]
+        "missing_elements": ["design_pattern"],
+        "recommendations": ["Add design pattern"]
       },
       "classes": {},
       "functions": {},
@@ -56859,9 +56235,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -56873,9 +56247,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -58842,11 +58214,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -59129,11 +58497,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -59656,11 +59020,7 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.4,
-        "missing_elements": [
-          "design_pattern",
-          "usage_example",
-          "references"
-        ],
+        "missing_elements": ["design_pattern", "usage_example", "references"],
         "recommendations": [
           "Add design pattern",
           "Add usage example",
@@ -59943,12 +59303,8 @@
         "has_usage_example": false,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "usage_example"
-        ],
-        "recommendations": [
-          "Add usage example"
-        ]
+        "missing_elements": ["usage_example"],
+        "recommendations": ["Add usage example"]
       },
       "classes": {
         "EnterpriseConfig": {
@@ -60000,11 +59356,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -60766,14 +60118,8 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.6,
-        "missing_elements": [
-          "usage_example",
-          "references"
-        ],
-        "recommendations": [
-          "Add usage example",
-          "Add references"
-        ]
+        "missing_elements": ["usage_example", "references"],
+        "recommendations": ["Add usage example", "Add references"]
       },
       "classes": {
         "LDAPConfig": {
@@ -60783,12 +60129,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.8,
-          "missing_elements": [
-            "references"
-          ],
-          "recommendations": [
-            "Add references"
-          ]
+          "missing_elements": ["references"],
+          "recommendations": ["Add references"]
         }
       },
       "functions": {},
@@ -60800,11 +60142,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -60824,14 +60162,8 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.6,
-        "missing_elements": [
-          "usage_example",
-          "references"
-        ],
-        "recommendations": [
-          "Add usage example",
-          "Add references"
-        ]
+        "missing_elements": ["usage_example", "references"],
+        "recommendations": ["Add usage example", "Add references"]
       },
       "classes": {
         "Result": {
@@ -60841,12 +60173,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.8,
-          "missing_elements": [
-            "references"
-          ],
-          "recommendations": [
-            "Add references"
-          ]
+          "missing_elements": ["references"],
+          "recommendations": ["Add references"]
         }
       },
       "functions": {},
@@ -60918,14 +60246,8 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.6,
-        "missing_elements": [
-          "usage_example",
-          "references"
-        ],
-        "recommendations": [
-          "Add usage example",
-          "Add references"
-        ]
+        "missing_elements": ["usage_example", "references"],
+        "recommendations": ["Add usage example", "Add references"]
       },
       "classes": {
         "Query": {
@@ -60935,12 +60257,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.8,
-          "missing_elements": [
-            "references"
-          ],
-          "recommendations": [
-            "Add references"
-          ]
+          "missing_elements": ["references"],
+          "recommendations": ["Add references"]
         }
       },
       "functions": {},
@@ -61260,14 +60578,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         },
         "Query.limit": {
           "has_brief": true,
@@ -61312,14 +60624,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         },
         "Query.first": {
           "has_brief": true,
@@ -61370,14 +60676,8 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.6,
-        "missing_elements": [
-          "usage_example",
-          "references"
-        ],
-        "recommendations": [
-          "Add usage example",
-          "Add references"
-        ]
+        "missing_elements": ["usage_example", "references"],
+        "recommendations": ["Add usage example", "Add references"]
       },
       "classes": {},
       "functions": {},
@@ -61394,14 +60694,8 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.6,
-        "missing_elements": [
-          "usage_example",
-          "references"
-        ],
-        "recommendations": [
-          "Add usage example",
-          "Add references"
-        ]
+        "missing_elements": ["usage_example", "references"],
+        "recommendations": ["Add usage example", "Add references"]
       },
       "classes": {
         "LDAPOperations": {
@@ -61411,12 +60705,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.8,
-          "missing_elements": [
-            "references"
-          ],
-          "recommendations": [
-            "Add references"
-          ]
+          "missing_elements": ["references"],
+          "recommendations": ["Add references"]
         }
       },
       "functions": {
@@ -61427,9 +60717,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete function docstring following CLAUDE.md patterns"
           ]
@@ -61463,11 +60751,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -61727,14 +61011,8 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.6,
-        "missing_elements": [
-          "usage_example",
-          "references"
-        ],
-        "recommendations": [
-          "Add usage example",
-          "Add references"
-        ]
+        "missing_elements": ["usage_example", "references"],
+        "recommendations": ["Add usage example", "Add references"]
       },
       "classes": {
         "LDAPValidation": {
@@ -61744,12 +61022,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.8,
-          "missing_elements": [
-            "references"
-          ],
-          "recommendations": [
-            "Add references"
-          ]
+          "missing_elements": ["references"],
+          "recommendations": ["Add references"]
         }
       },
       "functions": {},
@@ -61861,11 +61135,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -61879,11 +61149,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -61897,11 +61163,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -61915,11 +61177,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -62093,11 +61351,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -62111,11 +61365,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -62129,11 +61379,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -62153,14 +61399,8 @@
         "has_usage_example": false,
         "has_references": false,
         "compliance_score": 0.6,
-        "missing_elements": [
-          "usage_example",
-          "references"
-        ],
-        "recommendations": [
-          "Add usage example",
-          "Add references"
-        ]
+        "missing_elements": ["usage_example", "references"],
+        "recommendations": ["Add usage example", "Add references"]
       },
       "classes": {
         "LDAP": {
@@ -62170,14 +61410,8 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "usage_example",
-            "references"
-          ],
-          "recommendations": [
-            "Add usage example",
-            "Add references"
-          ]
+          "missing_elements": ["usage_example", "references"],
+          "recommendations": ["Add usage example", "Add references"]
         },
         "SearchPage": {
           "has_brief": false,
@@ -62186,9 +61420,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete class docstring following CLAUDE.md patterns"
           ]
@@ -62264,11 +61496,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -63761,14 +62989,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         }
       },
       "methods": {
@@ -63779,9 +63001,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -63853,9 +63073,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.0,
-          "missing_elements": [
-            "entire_docstring"
-          ],
+          "missing_elements": ["entire_docstring"],
           "recommendations": [
             "Add complete method docstring following CLAUDE.md patterns"
           ]
@@ -63887,11 +63105,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -63905,11 +63119,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -69004,14 +68214,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         },
         "get_mechanisms": {
           "has_brief": true,
@@ -72462,12 +71666,8 @@
         "has_usage_example": true,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "design_pattern"
-        ],
-        "recommendations": [
-          "Add design pattern"
-        ]
+        "missing_elements": ["design_pattern"],
+        "recommendations": ["Add design pattern"]
       },
       "classes": {
         "PlainMechanism": {
@@ -72477,14 +71677,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         }
       },
       "functions": {},
@@ -72516,11 +71710,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -72640,12 +71830,8 @@
         "has_usage_example": true,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "design_pattern"
-        ],
-        "recommendations": [
-          "Add design pattern"
-        ]
+        "missing_elements": ["design_pattern"],
+        "recommendations": ["Add design pattern"]
       },
       "classes": {
         "ExternalMechanism": {
@@ -72655,14 +71841,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         }
       },
       "functions": {},
@@ -72694,11 +71874,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -72732,11 +71908,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -72856,12 +72028,8 @@
         "has_usage_example": true,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "design_pattern"
-        ],
-        "recommendations": [
-          "Add design pattern"
-        ]
+        "missing_elements": ["design_pattern"],
+        "recommendations": ["Add design pattern"]
       },
       "classes": {
         "AnonymousMechanism": {
@@ -72871,14 +72039,8 @@
           "has_usage_example": true,
           "has_references": false,
           "compliance_score": 0.6,
-          "missing_elements": [
-            "design_pattern",
-            "references"
-          ],
-          "recommendations": [
-            "Add design pattern",
-            "Add references"
-          ]
+          "missing_elements": ["design_pattern", "references"],
+          "recommendations": ["Add design pattern", "Add references"]
         }
       },
       "functions": {},
@@ -72910,11 +72072,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -72928,11 +72086,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -73112,12 +72266,8 @@
         "has_usage_example": true,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "design_pattern"
-        ],
-        "recommendations": [
-          "Add design pattern"
-        ]
+        "missing_elements": ["design_pattern"],
+        "recommendations": ["Add design pattern"]
       },
       "classes": {
         "DigestMD5Mechanism": {
@@ -74645,12 +73795,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/controls/advanced/matched_values.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "ValueMatchingMode": {
@@ -75343,12 +74489,8 @@
       "file": "/home/marlonsc/pyauto/ldap-core-shared/src/ldap_core_shared/controls/advanced/subentries.py",
       "module_docstring": {
         "compliance_score": 0.0,
-        "missing_elements": [
-          "entire_docstring"
-        ],
-        "recommendations": [
-          "Add complete module docstring"
-        ]
+        "missing_elements": ["entire_docstring"],
+        "recommendations": ["Add complete module docstring"]
       },
       "classes": {
         "SubentryVisibility": {
@@ -78902,12 +78044,8 @@
         "has_usage_example": false,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "usage_example"
-        ],
-        "recommendations": [
-          "Add usage example"
-        ]
+        "missing_elements": ["usage_example"],
+        "recommendations": ["Add usage example"]
       },
       "classes": {
         "ValidationResult": {
@@ -78957,11 +78095,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -79165,12 +78299,8 @@
         "has_usage_example": false,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "usage_example"
-        ],
-        "recommendations": [
-          "Add usage example"
-        ]
+        "missing_elements": ["usage_example"],
+        "recommendations": ["Add usage example"]
       },
       "classes": {
         "SelfValidationReport": {
@@ -79200,11 +78330,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -79388,12 +78514,8 @@
         "has_usage_example": false,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "usage_example"
-        ],
-        "recommendations": [
-          "Add usage example"
-        ]
+        "missing_elements": ["usage_example"],
+        "recommendations": ["Add usage example"]
       },
       "classes": {
         "FreshnessReport": {
@@ -79423,11 +78545,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",
@@ -79611,12 +78729,8 @@
         "has_usage_example": false,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "usage_example"
-        ],
-        "recommendations": [
-          "Add usage example"
-        ]
+        "missing_elements": ["usage_example"],
+        "recommendations": ["Add usage example"]
       },
       "classes": {
         "CLAUDECompleteSystem": {
@@ -79816,12 +78930,8 @@
         "has_usage_example": false,
         "has_references": true,
         "compliance_score": 0.8,
-        "missing_elements": [
-          "usage_example"
-        ],
-        "recommendations": [
-          "Add usage example"
-        ]
+        "missing_elements": ["usage_example"],
+        "recommendations": ["Add usage example"]
       },
       "classes": {
         "DocstringStandard": {
@@ -79851,11 +78961,7 @@
           "has_usage_example": false,
           "has_references": false,
           "compliance_score": 0.4,
-          "missing_elements": [
-            "design_pattern",
-            "usage_example",
-            "references"
-          ],
+          "missing_elements": ["design_pattern", "usage_example", "references"],
           "recommendations": [
             "Add design pattern",
             "Add usage example",

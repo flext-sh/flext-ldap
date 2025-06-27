@@ -37,13 +37,15 @@ async def test_facade_validation() -> None:
     ldap = LDAP(config, use_connection_manager=True)
 
     # 4. Teste Query Builder sem execução
-    (ldap.query()
-            .users()
-            .in_department("Engineering")
-            .with_title("*Senior*")
-            .enabled_only()
-            .select("cn", "mail", "department")
-            .limit(25))
+    (
+        ldap.query()
+        .users()
+        .in_department("Engineering")
+        .with_title("*Senior*")
+        .enabled_only()
+        .select("cn", "mail", "department")
+        .limit(25)
+    )
 
     # 5. Teste Result Pattern
 

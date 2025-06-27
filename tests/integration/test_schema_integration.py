@@ -92,11 +92,15 @@ class TestSchemaConversionIntegration:
             from ldap_core_shared.schema.parser import SchemaParser
 
             # Create temporary files
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".schema", delete=False, encoding="utf-8") as schema_file:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".schema", delete=False, encoding="utf-8"
+            ) as schema_file:
                 schema_file.write(SAMPLE_SCHEMA_CONTENT)
                 schema_path = schema_file.name
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as ldif_file:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+            ) as ldif_file:
                 ldif_path = ldif_file.name
 
             try:
@@ -104,7 +108,9 @@ class TestSchemaConversionIntegration:
                 parser = SchemaParser()
                 parse_result = parser.parse_schema_file(schema_path)
 
-                assert parse_result.success, f"Schema parsing failed: {parse_result.errors}"
+                assert parse_result.success, (
+                    f"Schema parsing failed: {parse_result.errors}"
+                )
                 assert len(parse_result.attribute_types) == 2
                 assert len(parse_result.object_classes) == 1
 
@@ -115,7 +121,9 @@ class TestSchemaConversionIntegration:
                     parse_result.object_classes,
                 )
 
-                assert ldif_result.success, f"LDIF generation failed: {ldif_result.errors}"
+                assert ldif_result.success, (
+                    f"LDIF generation failed: {ldif_result.errors}"
+                )
                 assert ldif_result.content is not None
 
                 # Write and verify output
@@ -151,7 +159,9 @@ class TestSchemaConversionIntegration:
             validator = SchemaValidator()
 
             # Test valid schema
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".schema", delete=False, encoding="utf-8") as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".schema", delete=False, encoding="utf-8"
+            ) as f:
                 f.write(SAMPLE_SCHEMA_CONTENT)
                 schema_path = f.name
 
@@ -164,7 +174,9 @@ class TestSchemaConversionIntegration:
                     parse_result.object_classes,
                 )
 
-                assert validation_result.is_valid, f"Validation failed: {validation_result.errors}"
+                assert validation_result.is_valid, (
+                    f"Validation failed: {validation_result.errors}"
+                )
 
             finally:
                 Path(schema_path).unlink(missing_ok=True)
@@ -178,11 +190,15 @@ class TestSchemaConversionIntegration:
             from ldap_core_shared.cli.schema import run_schema2ldif
 
             # Create test files
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".schema", delete=False, encoding="utf-8") as schema_file:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".schema", delete=False, encoding="utf-8"
+            ) as schema_file:
                 schema_file.write(SAMPLE_SCHEMA_CONTENT)
                 schema_path = schema_file.name
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as ldif_file:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+            ) as ldif_file:
                 ldif_path = ldif_file.name
 
             try:
@@ -226,7 +242,9 @@ class TestSchemaConversionIntegration:
                 SYNTAX invalid.syntax )
             """
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".schema", delete=False, encoding="utf-8") as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".schema", delete=False, encoding="utf-8"
+            ) as f:
                 f.write(invalid_schema)
                 schema_path = f.name
 
@@ -255,7 +273,9 @@ class TestSchemaManagerIntegration:
             manager = SchemaManager()
 
             # Create test LDIF file
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+            ) as f:
                 f.write(EXPECTED_LDIF_CONTENT)
                 ldif_path = f.name
 
@@ -268,7 +288,9 @@ class TestSchemaManagerIntegration:
                 )
 
                 # Should succeed in dry run mode
-                assert operation.success, f"Schema installation dry run failed: {operation.error}"
+                assert operation.success, (
+                    f"Schema installation dry run failed: {operation.error}"
+                )
 
             finally:
                 Path(ldif_path).unlink(missing_ok=True)
@@ -315,4 +337,5 @@ if __name__ == "__main__":
 
     except Exception:
         import traceback
+
         traceback.print_exc()

@@ -59,34 +59,52 @@ class TestLDIFProcessorWorkspaceCompliance:
     """Test PyAuto workspace standards compliance for LDIF processor module."""
 
     @pytest.mark.workspace_integration
-    def test_ldif_processor_workspace_venv_validation(self, validate_workspace_venv) -> None:
+    def test_ldif_processor_workspace_venv_validation(
+        self, validate_workspace_venv
+    ) -> None:
         """Test LDIF processor workspace venv validation as required by CLAUDE.md."""
         # Fixture automatically validates workspace venv usage
         expected_venv = "/home/marlonsc/pyauto/.venv"
         current_venv = os.environ.get("VIRTUAL_ENV")
-        assert current_venv == expected_venv, f"LDIF processor tests must use workspace venv: {expected_venv}"
+        assert current_venv == expected_venv, (
+            f"LDIF processor tests must use workspace venv: {expected_venv}"
+        )
 
     @pytest.mark.env_security
-    def test_ldif_processor_env_security_enforcement(self, validate_env_security) -> None:
+    def test_ldif_processor_env_security_enforcement(
+        self, validate_env_security
+    ) -> None:
         """Test LDIF processor .env security enforcement as required by CLAUDE.md."""
         # Test LDIF processor configuration security
-        with patch.dict(os.environ, {
-            "LDAP_CORE_DEBUG_LEVEL": "INFO",
-            "LDIF_PROCESSING_CHUNK_SIZE": "1000",
-            "LDIF_PROCESSING_MAX_ENTRIES": "100000",
-        }, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "LDAP_CORE_DEBUG_LEVEL": "INFO",
+                "LDIF_PROCESSING_CHUNK_SIZE": "1000",
+                "LDIF_PROCESSING_MAX_ENTRIES": "100000",
+            },
+            clear=False,
+        ):
             # Validate no hardcoded secrets in LDIF configuration
             for key, value in os.environ.items():
-                if "ldif" in key.lower() and ("password" in key.lower() or "secret" in key.lower()):
-                    assert value.startswith("${") or len(value) == 0, f"Hardcoded secret in LDIF config: {key}"
+                if "ldif" in key.lower() and (
+                    "password" in key.lower() or "secret" in key.lower()
+                ):
+                    assert value.startswith("${") or len(value) == 0, (
+                        f"Hardcoded secret in LDIF config: {key}"
+                    )
 
     @pytest.mark.solid_compliance
-    def test_ldif_processor_solid_principles_compliance(self, solid_principles_validation) -> None:
+    def test_ldif_processor_solid_principles_compliance(
+        self, solid_principles_validation
+    ) -> None:
         """Test LDIF processor SOLID principles compliance."""
         # Test Single Responsibility: LDIFProcessor only processes LDIF files
         assert hasattr(LDIFProcessor, "parse_file")
         assert hasattr(LDIFProcessor, "stream_chunks")
-        assert not hasattr(LDIFProcessor, "connect_to_ldap")  # Should not handle LDAP connections
+        assert not hasattr(
+            LDIFProcessor, "connect_to_ldap"
+        )  # Should not handle LDAP connections
 
         # Test Open/Closed: Can be extended through configuration
         config = LDIFProcessingConfig()
@@ -94,7 +112,9 @@ class TestLDIFProcessorWorkspaceCompliance:
         assert hasattr(processor, "config")
 
         # Test Interface Segregation: Focused on LDIF processing only
-        ldif_methods = [method for method in dir(LDIFProcessor) if not method.startswith("_")]
+        ldif_methods = [
+            method for method in dir(LDIFProcessor) if not method.startswith("_")
+        ]
         assert "parse_file" in ldif_methods
         assert "stream_chunks" in ldif_methods
         # Should not have methods unrelated to LDIF processing
@@ -102,7 +122,9 @@ class TestLDIFProcessorWorkspaceCompliance:
         assert "manage_users" not in ldif_methods
 
     @pytest.mark.workspace_integration
-    def test_algar_oud_mig_integration_compatibility(self, workspace_coordination) -> None:
+    def test_algar_oud_mig_integration_compatibility(
+        self, workspace_coordination
+    ) -> None:
         """Test LDIF processor compatibility with algar-oud-mig project."""
         coordination = workspace_coordination
 
@@ -412,7 +434,9 @@ mail: test2@example.com
     @pytest.fixture
     def temp_ldif_file(self, sample_ldif_content: str) -> Generator[Path, None, None]:
         """Create temporary LDIF file for testing."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(sample_ldif_content)
             temp_path = Path(f.name)
 
@@ -500,7 +524,9 @@ mail: test2@example.com
 
     def test_parse_file_empty_file(self, processor: LDIFProcessor) -> None:
         """Test parsing empty file."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             empty_file = Path(f.name)
 
         try:
@@ -746,7 +772,9 @@ description: Test user number {i:04d}
         processor = LDIFProcessor()
 
         # Create temporary file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ldif", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
             f.write(large_ldif_content)
             temp_path = Path(f.name)
 

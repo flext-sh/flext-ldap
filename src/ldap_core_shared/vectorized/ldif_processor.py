@@ -6,9 +6,10 @@ import asyncio
 import mmap
 import multiprocessing as mp
 import time
+from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any
 
 # Constants for magic values
 BYTES_PER_KB = 1024
@@ -17,6 +18,7 @@ HTTP_OK = 200
 try:
     import numpy as np
     from numba import jit  # type: ignore[import-not-found]
+
     VECTORIZED_AVAILABLE = True
 except ImportError:
     # Mock implementations for when vectorized dependencies are not available
@@ -25,9 +27,12 @@ except ImportError:
 
     def jit(*args, **kwargs) -> Callable[[Any], Any]:
         """Mock jit decorator when numba is not available."""
+
         def decorator(func: Any) -> Any:
             return func
+
         return decorator
+
 
 from ldap_core_shared.domain.models import LDAPEntry
 from ldap_core_shared.utils.logging import get_logger
@@ -150,8 +155,8 @@ def _process_ldif_chunk(chunk_data: tuple[bytes, int, int]) -> dict[str, Any]:
         entries = []
         current_entry: list[str] = []
 
-        for line in chunk_text.split("\n"):
-            line = line.strip()
+        for raw_line in chunk_text.split("\n"):
+            line = raw_line.strip()
 
             if not line:
                 # End of entry
@@ -226,7 +231,7 @@ class VectorizedLDIFProcessor:
     def __init__(
         self,
         chunk_size_mb: float = 64.0,
-        max_workers: Optional[int] = None,
+        max_workers: int | None = None,
         memory_limit_mb: float = 512.0,
         enable_streaming: bool = True,
     ) -> None:
@@ -353,7 +358,8 @@ class VectorizedLDIFProcessor:
         return await self._process_chunks_parallel(chunks)
 
     async def _stream_file_chunks(
-        self, file_path: Path,
+        self,
+        file_path: Path,
     ) -> AsyncIterator[list[LDAPEntry]]:
         """Stream file chunks for memory-efficient processing.
 
@@ -428,7 +434,8 @@ class VectorizedLDIFProcessor:
         return chunks
 
     async def _process_chunks_parallel(
-        self, chunks: list[tuple[bytes, int, int]],
+        self,
+        chunks: list[tuple[bytes, int, int]],
     ) -> list[LDAPEntry]:
         """Process chunks in parallel using ProcessPoolExecutor.
 
@@ -482,7 +489,9 @@ class VectorizedLDIFProcessor:
         return all_entries
 
     async def _process_chunk_async(
-        self, chunk_data: bytes, offset: int,
+        self,
+        chunk_data: bytes,
+        offset: int,
     ) -> list[LDAPEntry]:
         """Process a single chunk asynchronously.
 
@@ -554,7 +563,8 @@ class VectorizedLDIFProcessor:
         return df
 
     def _create_processing_result(
-        self, entries: list[LDAPEntry],
+        self,
+        entries: list[LDAPEntry],
     ) -> LDIFProcessingResult:
         """Create comprehensive processing result.
 

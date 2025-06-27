@@ -346,7 +346,10 @@ class TestRFC2696IntegrationWorkflow:
             # First page response
             {"entries": [f"entry_{i}" for i in range(100)], "cookie": b"page_1_cookie"},
             # Second page response
-            {"entries": [f"entry_{i}" for i in range(100, 150)], "cookie": b"page_2_cookie"},
+            {
+                "entries": [f"entry_{i}" for i in range(100, 150)],
+                "cookie": b"page_2_cookie",
+            },
             # Final page response (fewer entries + empty cookie)
             {"entries": [f"entry_{i}" for i in range(150, 175)], "cookie": b""},
         ]
@@ -400,4 +403,6 @@ class TestRFC2696IntegrationWorkflow:
         }
 
         # All checks must pass for RFC compliance
-        assert all(compliance_checks.values()), f"RFC 2696 compliance failed: {compliance_checks}"
+        assert all(compliance_checks.values()), (
+            f"RFC 2696 compliance failed: {compliance_checks}"
+        )

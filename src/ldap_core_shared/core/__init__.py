@@ -82,14 +82,14 @@ if TYPE_CHECKING:
 
 # Global state management
 _core_initialized: bool = False
-_application_config: Optional[ApplicationConfig] = None
+_application_config: ApplicationConfig | None = None
 _shutdown_handlers: list[callable] = []
 
 
 class CoreInitializationError(LDAPCoreError):
     """Error during core infrastructure initialization."""
 
-    def __init__(self, message: str, cause: Optional[Exception] = None) -> None:
+    def __init__(self, message: str, cause: Exception | None = None) -> None:
         """Initialize core initialization error.
 
         Args:
@@ -107,9 +107,9 @@ class CoreInitializationError(LDAPCoreError):
 
 
 def initialize_core(
-    environment: Optional[Union[str, Environment]] = None,
-    config_file: Optional[Union[str, Path]] = None,
-    override_values: Optional[dict[str, Any]] = None,
+    environment: str | Environment | None = None,
+    config_file: str | Path | None = None,
+    override_values: dict[str, Any] | None = None,
     force_reinit: bool = False,
 ) -> ApplicationConfig:
     """Initialize core infrastructure for LDAP Core Shared.
@@ -217,13 +217,13 @@ def initialize_core(
         try:
             # Try to get a basic logger for error reporting
             error_logger = logging.getLogger("core.initialization.error")
-            error_logger.critical(f"Core initialization failed: {e}")
+            error_logger.critical("Core initialization failed: %s", e)
         except Exception:
             # If logging setup failed, use stderr
             pass
 
         # Wrap in core initialization error
-        if isinstance(e, (ConfigurationValidationError, LDAPCoreError)):
+        if isinstance(e, ConfigurationValidationError | LDAPCoreError):
             msg = f"Configuration or infrastructure error: {e}"
             raise CoreInitializationError(
                 msg,
@@ -236,7 +236,9 @@ def initialize_core(
         ) from e
 
 
-def _validate_core_dependencies(config: ApplicationConfig, logger: StructuredLogger) -> None:
+def _validate_core_dependencies(
+    config: ApplicationConfig, logger: StructuredLogger,
+) -> None:
     """Validate core dependencies and environment requirements.
 
     Args:
@@ -270,10 +272,13 @@ def _validate_core_dependencies(config: ApplicationConfig, logger: StructuredLog
         for path in critical_paths:
             if not path.exists():
                 logger.warning(
-                    f"Critical path does not exist: {path}",
-                    event_type=EventType.SYSTEM,
-                    path=str(path),
-                    environment=config.environment.value,
+                    "Critical path does not exist: %s",
+                    path,
+                    extra={
+                        "event_type": EventType.SYSTEM,
+                        "path": str(path),
+                        "environment": config.environment.value,
+                    },
                 )
 
     # Check required environment variables for production
@@ -282,9 +287,12 @@ def _validate_core_dependencies(config: ApplicationConfig, logger: StructuredLog
         missing_vars = [var for var in required_env_vars if not os.getenv(var)]
         if missing_vars:
             logger.warning(
-                f"Missing recommended environment variables: {missing_vars}",
-                event_type=EventType.SYSTEM,
-                missing_variables=missing_vars,
+                "Missing recommended environment variables: %s",
+                missing_vars,
+                extra={
+                    "event_type": EventType.SYSTEM,
+                    "missing_variables": missing_vars,
+                },
             )
 
     logger.debug("Core dependency validation completed")
@@ -303,7 +311,7 @@ def _setup_shutdown_handlers(logger: StructuredLogger) -> None:
         try:
             shutdown_core()
         except Exception as e:
-            logger.exception(f"Error during shutdown: {e}", exception=e)
+            logger.exception("Error during shutdown: %s", e, exception=e)
 
     # Register shutdown handler
     atexit.register(shutdown_handler)
@@ -389,8 +397,8 @@ def get_config() -> ApplicationConfig:
 
 
 def reconfigure(
-    config_file: Optional[Union[str, Path]] = None,
-    override_values: Optional[dict[str, Any]] = None,
+    config_file: str | Path | None = None,
+    override_values: dict[str, Any] | None = None,
 ) -> ApplicationConfig:
     """Reconfigure the application with new settings.
 

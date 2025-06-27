@@ -43,9 +43,10 @@ References:
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -68,29 +69,35 @@ class ChangeNotification(BaseModel):
 
     entry_dn: str = Field(description="Distinguished name of changed entry")
 
-    change_number: Optional[int] = Field(
-        default=None, description="Server-assigned change sequence number",
+    change_number: int | None = Field(
+        default=None,
+        description="Server-assigned change sequence number",
     )
 
-    entry_data: Optional[dict[str, list[str]]] = Field(
-        default=None, description="Entry data if requested",
+    entry_data: dict[str, list[str]] | None = Field(
+        default=None,
+        description="Entry data if requested",
     )
 
     timestamp: datetime = Field(
-        default_factory=datetime.now, description="When change was detected",
+        default_factory=datetime.now,
+        description="When change was detected",
     )
 
     # Additional metadata
-    previous_dn: Optional[str] = Field(
-        default=None, description="Previous DN for MODDN operations",
+    previous_dn: str | None = Field(
+        default=None,
+        description="Previous DN for MODDN operations",
     )
 
     change_controls: list[str] = Field(
-        default_factory=list, description="Additional controls returned with change",
+        default_factory=list,
+        description="Additional controls returned with change",
     )
 
-    server_info: Optional[dict[str, Any]] = Field(
-        default=None, description="Server-specific change information",
+    server_info: dict[str, Any] | None = Field(
+        default=None,
+        description="Server-specific change information",
     )
 
     def is_add(self) -> bool:
@@ -109,7 +116,7 @@ class ChangeNotification(BaseModel):
         """Check if this is a modify DN operation."""
         return self.change_type == ChangeType.MODDN
 
-    def get_attribute_value(self, attribute: str) -> Optional[str]:
+    def get_attribute_value(self, attribute: str) -> str | None:
         """Get value for specific attribute from entry data.
 
         Args:
@@ -140,8 +147,7 @@ class ChangeNotification(BaseModel):
             return False
 
         return any(
-            attr_name.lower() == attribute.lower()
-            for attr_name in self.entry_data
+            attr_name.lower() == attribute.lower() for attr_name in self.entry_data
         )
 
 
@@ -154,11 +160,13 @@ class PersistentSearchRequest(BaseModel):
     )
 
     changes_only: bool = Field(
-        default=True, description="Return only changes, not initial search results",
+        default=True,
+        description="Return only changes, not initial search results",
     )
 
     return_entry_change_notification: bool = Field(
-        default=True, description="Return entry change notification control",
+        default=True,
+        description="Return entry change notification control",
     )
 
     def get_change_types_mask(self) -> int:
@@ -210,7 +218,7 @@ class PersistentSearchControl(LDAPControl):
 
     def __init__(
         self,
-        change_types: Optional[list[ChangeType]] = None,
+        change_types: list[ChangeType] | None = None,
         changes_only: bool = True,
         return_entry_change_notification: bool = True,
         criticality: bool = True,
@@ -233,15 +241,15 @@ class PersistentSearchControl(LDAPControl):
 
         # Initialize notification storage
         self._notifications: list[ChangeNotification] = []
-        self._notification_callback: Optional[Callable[[ChangeNotification], None]] = (
+        self._notification_callback: Callable[[ChangeNotification], None] | None = (
             None
         )
         self._is_active = False
         self._total_notifications = 0
 
         # Performance tracking
-        self._start_time: Optional[datetime] = None
-        self._last_notification_time: Optional[datetime] = None
+        self._start_time: datetime | None = None
+        self._last_notification_time: datetime | None = None
 
         # Initialize base control
         super().__init__(
@@ -279,7 +287,8 @@ class PersistentSearchControl(LDAPControl):
         self._is_active = False
 
     def set_notification_callback(
-        self, callback: Callable[[ChangeNotification], None],
+        self,
+        callback: Callable[[ChangeNotification], None],
     ) -> None:
         """Set callback function for change notifications.
 
@@ -289,7 +298,10 @@ class PersistentSearchControl(LDAPControl):
         self._notification_callback = callback
 
     def process_change_notification(
-        self, entry_dn: str, change_type: ChangeType, entry_data: Optional[dict[str, Any]] = None,
+        self,
+        entry_dn: str,
+        change_type: ChangeType,
+        entry_data: dict[str, Any] | None = None,
     ) -> None:
         """Process incoming change notification.
 
@@ -384,7 +396,7 @@ class PersistentSearchControl(LDAPControl):
         """Clear all accumulated notifications."""
         self._notifications.clear()
 
-    def encode_value(self) -> Optional[bytes]:
+    def encode_value(self) -> bytes | None:
         """Encode persistent search control value to ASN.1 bytes.
 
         Returns:
@@ -393,7 +405,7 @@ class PersistentSearchControl(LDAPControl):
         return self.control_value
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> PersistentSearchControl:
+    def decode_value(cls, control_value: bytes | None) -> PersistentSearchControl:
         """Decode ASN.1 bytes to create persistent search control instance.
 
         Args:
@@ -404,13 +416,19 @@ class PersistentSearchControl(LDAPControl):
         """
         if not control_value:
             # Default persistent search control for all changes
-            return cls(change_types=[ChangeType.ADD, ChangeType.DELETE, ChangeType.MODIFY],
-                      changes_only=True, return_entry_change_controls=True)
+            return cls(
+                change_types=[ChangeType.ADD, ChangeType.DELETE, ChangeType.MODIFY],
+                changes_only=True,
+                return_entry_change_controls=True,
+            )
 
         # For now, return a default control since proper ASN.1 decoding
         # would require more complex implementation
-        return cls(change_types=[ChangeType.ADD, ChangeType.DELETE, ChangeType.MODIFY],
-                  changes_only=True, return_entry_change_controls=True)
+        return cls(
+            change_types=[ChangeType.ADD, ChangeType.DELETE, ChangeType.MODIFY],
+            changes_only=True,
+            return_entry_change_controls=True,
+        )
 
 
 # High-level persistent search monitoring
@@ -431,8 +449,8 @@ class PersistentSearchMonitor:
         self,
         search_base: str,
         search_filter: str = "(objectClass=*)",
-        change_types: Optional[list[ChangeType]] = None,
-        monitor_id: Optional[str] = None,
+        change_types: list[ChangeType] | None = None,
+        monitor_id: str | None = None,
     ) -> str:
         """Start monitoring changes in specified scope.
 
@@ -571,7 +589,7 @@ class PersistentSearchMonitor:
 
 # Convenience functions
 def create_persistent_search(
-    change_types: Optional[list[ChangeType]] = None,
+    change_types: list[ChangeType] | None = None,
     changes_only: bool = True,
 ) -> PersistentSearchControl:
     """Create persistent search control with common settings.
@@ -650,6 +668,7 @@ async def monitor_directory_changes(
     )
 
     return monitor
+
 
 # TODO: Integration points for implementation:
 #

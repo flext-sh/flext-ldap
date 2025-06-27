@@ -143,7 +143,8 @@ def demo_exception_handling() -> None:
         )
     except LDAPCoreError as e:
         logger.exception(
-            f"Caught LDAP error: {e.message}",
+            "Caught LDAP error: %s",
+            e.message,
             exception=e,
             error_code=e.error_code,
             severity=e.severity.value,
@@ -165,7 +166,8 @@ def demo_exception_handling() -> None:
             )
     except LDAPCoreError as e:
         logger.exception(
-            f"Schema processing error: {e.message}",
+            "Schema processing error: %s",
+            e.message,
             exception=e,
             original_cause=str(e.cause) if e.cause else None,
         )
@@ -216,6 +218,7 @@ def main() -> None:
 
     except Exception:
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

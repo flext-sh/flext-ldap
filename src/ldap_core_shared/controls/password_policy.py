@@ -53,7 +53,7 @@ References:
 """
 
 from enum import IntEnum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import Field, validator
 
@@ -120,23 +120,25 @@ class PasswordPolicyControl(LDAPControl):
     control_type = ControlOIDs.PASSWORD_POLICY
 
     # Response fields (populated by server)
-    warning_type: Optional[PasswordPolicyWarning] = Field(
-        default=None, description="Type of password policy warning",
+    warning_type: PasswordPolicyWarning | None = Field(
+        default=None,
+        description="Type of password policy warning",
     )
 
-    warning_value: Optional[int] = Field(
+    warning_value: int | None = Field(
         default=None,
         description="Warning-specific value (time in seconds or count)",
         ge=0,
     )
 
-    error: Optional[PasswordPolicyError] = Field(
-        default=None, description="Password policy error code",
+    error: PasswordPolicyError | None = Field(
+        default=None,
+        description="Password policy error code",
     )
 
     # Convenience properties for common warning types
     @property
-    def grace_logins_remaining(self) -> Optional[int]:
+    def grace_logins_remaining(self) -> int | None:
         """Number of grace logins remaining."""
         if (
             self.warning_type == PasswordPolicyWarning.GRACE_LOGINS_REMAINING
@@ -146,7 +148,7 @@ class PasswordPolicyControl(LDAPControl):
         return None
 
     @property
-    def time_before_expiration(self) -> Optional[int]:
+    def time_before_expiration(self) -> int | None:
         """Seconds until password expires."""
         if (
             self.warning_type == PasswordPolicyWarning.TIME_BEFORE_EXPIRATION
@@ -156,14 +158,16 @@ class PasswordPolicyControl(LDAPControl):
         return None
 
     @validator("warning_value")
-    def validate_warning_value(cls, v: Optional[int], values: dict[str, Any]) -> Optional[int]:
+    def validate_warning_value(
+        self, v: int | None, values: dict[str, Any],
+    ) -> int | None:
         """Validate warning value is consistent with warning type."""
         if v is not None and v < 0:
             msg = "Warning value must be non-negative"
             raise ValueError(msg)
         return v
 
-    def encode_value(self) -> Optional[bytes]:
+    def encode_value(self) -> bytes | None:
         """Encode password policy control value.
 
         For client requests, this is typically None (no value).
@@ -226,7 +230,7 @@ class PasswordPolicyControl(LDAPControl):
             raise ControlEncodingError(msg) from e
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> PasswordPolicyControl:
+    def decode_value(cls, control_value: bytes | None) -> PasswordPolicyControl:
         """Decode password policy control value.
 
         Args:
@@ -259,10 +263,14 @@ class PasswordPolicyControl(LDAPControl):
 
                     # Decode warning choice
                     warning_tag = warning_content[0]
-                    if warning_tag == BER_CONTEXT_TAG_0_SIMPLE:  # Context tag [0] - timeBeforeExpiration
+                    if (
+                        warning_tag == BER_CONTEXT_TAG_0_SIMPLE
+                    ):  # Context tag [0] - timeBeforeExpiration
                         warning_type = PasswordPolicyWarning.TIME_BEFORE_EXPIRATION
                         warning_value = cls._decode_integer(warning_content[2:])[0]
-                    elif warning_tag == BER_CONTEXT_TAG_1:  # Context tag [1] - graceLoginsRemaining
+                    elif (
+                        warning_tag == BER_CONTEXT_TAG_1
+                    ):  # Context tag [1] - graceLoginsRemaining
                         warning_type = PasswordPolicyWarning.GRACE_LOGINS_REMAINING
                         warning_value = cls._decode_integer(warning_content[2:])[0]
 
@@ -275,7 +283,9 @@ class PasswordPolicyControl(LDAPControl):
                     pos += 1  # Skip unknown tags
 
             return cls(
-                warning_type=warning_type, warning_value=warning_value, error=error,
+                warning_type=warning_type,
+                warning_value=warning_value,
+                error=error,
             )
 
         except Exception as e:
@@ -310,7 +320,9 @@ class PasswordPolicyControl(LDAPControl):
         """Check if account is locked."""
         return self.error == PasswordPolicyError.ACCOUNT_LOCKED
 
-    def is_password_expiring_soon(self, threshold_seconds: int = 86400) -> bool:  # 24 hours
+    def is_password_expiring_soon(
+        self, threshold_seconds: int = 86400,
+    ) -> bool:  # 24 hours
         """Check if password is expiring soon.
 
         Args:
@@ -323,7 +335,7 @@ class PasswordPolicyControl(LDAPControl):
             return self.time_before_expiration <= threshold_seconds
         return False
 
-    def get_error_message(self) -> Optional[str]:
+    def get_error_message(self) -> str | None:
         """Get human-readable error message.
 
         Returns:
@@ -350,7 +362,7 @@ class PasswordPolicyControl(LDAPControl):
 
         return error_messages.get(self.error, f"Unknown error: {self.error}")
 
-    def get_warning_message(self) -> Optional[str]:
+    def get_warning_message(self) -> str | None:
         """Get human-readable warning message.
 
         Returns:
@@ -447,6 +459,7 @@ class PasswordPolicyControl(LDAPControl):
         length = data[pos + 1]
         content = data[pos + 2 : pos + 2 + length]
         return content, pos + 2 + length
+
 
 # TODO: Integration points for implementation:
 #

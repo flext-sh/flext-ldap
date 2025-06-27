@@ -58,7 +58,9 @@ class TestLDAPProtocolIntegration:
                 MAY ( description ) )
             """
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".schema", delete=False, encoding="utf-8") as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".schema", delete=False, encoding="utf-8"
+            ) as f:
                 f.write(schema_content)
                 schema_path = f.name
 
@@ -66,7 +68,9 @@ class TestLDAPProtocolIntegration:
                 # Parse schema
                 parser = SchemaParser()
                 schema_result = parser.parse_schema_file(schema_path)
-                assert schema_result.success, f"Schema parsing failed: {schema_result.errors}"
+                assert schema_result.success, (
+                    f"Schema parsing failed: {schema_result.errors}"
+                )
 
                 # 2. Setup SASL authentication (perl-Authen-SASL equivalent)
                 sasl_client = SASLClient()
@@ -79,7 +83,9 @@ class TestLDAPProtocolIntegration:
 
                 # Select authentication mechanism
                 mech_result = sasl_client.select_mechanism("PLAIN")
-                assert mech_result.success, f"SASL mechanism selection failed: {mech_result.error}"
+                assert mech_result.success, (
+                    f"SASL mechanism selection failed: {mech_result.error}"
+                )
 
                 # 3. Create ASN.1 encoded authentication data (perl-Convert-ASN1 equivalent)
                 auth_id = ASN1OctetString(b"testuser")
@@ -135,15 +141,19 @@ class TestLDAPProtocolIntegration:
             )
 
             # Create ASN.1 structure representing schema data
-            schema_sequence = ASN1Sequence([
-                ASN1UTF8String("schema"),
-                ASN1Integer(1),  # version
-                ASN1UTF8String("test-schema"),
-            ])
+            schema_sequence = ASN1Sequence(
+                [
+                    ASN1UTF8String("schema"),
+                    ASN1Integer(1),  # version
+                    ASN1UTF8String("test-schema"),
+                ]
+            )
 
             # Validate ASN.1 structure
             asn1_errors = schema_sequence.validate()
-            assert len(asn1_errors) == 0, f"ASN.1 schema validation failed: {asn1_errors}"
+            assert len(asn1_errors) == 0, (
+                f"ASN.1 schema validation failed: {asn1_errors}"
+            )
 
             # Verify integration
             assert ldif_result is not None
@@ -181,14 +191,18 @@ class TestLDAPProtocolIntegration:
             auth_data = ASN1OctetString(response.response_data)
 
             # Create authentication sequence
-            auth_sequence = ASN1Sequence([
-                ASN1OctetString(b"PLAIN"),  # mechanism name
-                auth_data,  # authentication data
-            ])
+            auth_sequence = ASN1Sequence(
+                [
+                    ASN1OctetString(b"PLAIN"),  # mechanism name
+                    auth_data,  # authentication data
+                ]
+            )
 
             # Validate complete structure
             seq_errors = auth_sequence.validate()
-            assert len(seq_errors) == 0, f"Authentication sequence validation failed: {seq_errors}"
+            assert len(seq_errors) == 0, (
+                f"Authentication sequence validation failed: {seq_errors}"
+            )
 
             # Verify integration
             assert response.complete is True
@@ -236,14 +250,18 @@ class TestEnterpriseWorkflowIntegration:
             """
 
             # Parse enterprise schema
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".schema", delete=False, encoding="utf-8") as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".schema", delete=False, encoding="utf-8"
+            ) as f:
                 f.write(enterprise_schema)
                 schema_path = f.name
 
             try:
                 parser = SchemaParser()
                 parse_result = parser.parse_schema_file(schema_path)
-                assert parse_result.success, f"Enterprise schema parsing failed: {parse_result.errors}"
+                assert parse_result.success, (
+                    f"Enterprise schema parsing failed: {parse_result.errors}"
+                )
 
                 # Generate LDIF for deployment
                 generator = LDIFGenerator()
@@ -252,7 +270,9 @@ class TestEnterpriseWorkflowIntegration:
                     parse_result.object_classes,
                 )
 
-                assert ldif_result.success, f"LDIF generation failed: {ldif_result.errors}"
+                assert ldif_result.success, (
+                    f"LDIF generation failed: {ldif_result.errors}"
+                )
 
                 # 2. Authentication Setup Phase
                 admin_sasl = SASLClient()
@@ -275,8 +295,12 @@ class TestEnterpriseWorkflowIntegration:
                 user_errors = user_data.validate()
                 role_errors = role_data.validate()
 
-                assert len(user_errors) == 0, f"User data validation failed: {user_errors}"
-                assert len(role_errors) == 0, f"Role data validation failed: {role_errors}"
+                assert len(user_errors) == 0, (
+                    f"User data validation failed: {user_errors}"
+                )
+                assert len(role_errors) == 0, (
+                    f"Role data validation failed: {role_errors}"
+                )
 
                 # 4. Workflow Verification
                 workflow_status = {
@@ -288,7 +312,9 @@ class TestEnterpriseWorkflowIntegration:
 
                 # Verify complete workflow success
                 all_success = all(workflow_status.values())
-                assert all_success, f"Workflow failed at: {[k for k, v in workflow_status.items() if not v]}"
+                assert all_success, (
+                    f"Workflow failed at: {[k for k, v in workflow_status.items() if not v]}"
+                )
 
             finally:
                 Path(schema_path).unlink(missing_ok=True)
@@ -312,7 +338,9 @@ class TestEnterpriseWorkflowIntegration:
                 SYNTAX invalid.syntax )
             """
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".schema", delete=False, encoding="utf-8") as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".schema", delete=False, encoding="utf-8"
+            ) as f:
                 f.write(invalid_schema)
                 schema_path = f.name
 
@@ -360,7 +388,9 @@ class TestEnterpriseWorkflowIntegration:
             ]
 
             for scenario in expected_scenarios:
-                assert scenario in error_scenarios, f"Expected error scenario not found: {scenario}"
+                assert scenario in error_scenarios, (
+                    f"Expected error scenario not found: {scenario}"
+                )
 
         except ImportError as e:
             pytest.skip(f"Required modules not available: {e}")
@@ -399,7 +429,9 @@ class TestPerformanceIntegration:
 
             # Performance assertions (reasonable thresholds)
             assert import_time < 5.0, f"Module import too slow: {import_time:.2f}s"
-            assert operation_time < 1.0, f"Basic operations too slow: {operation_time:.2f}s"
+            assert operation_time < 1.0, (
+                f"Basic operations too slow: {operation_time:.2f}s"
+            )
             assert total_time < 6.0, f"Total test time too slow: {total_time:.2f}s"
 
         except ImportError as e:
@@ -447,4 +479,5 @@ if __name__ == "__main__":
 
     except Exception:
         import traceback
+
         traceback.print_exc()

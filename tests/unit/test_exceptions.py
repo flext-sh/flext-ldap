@@ -68,6 +68,7 @@ class TestLDAPCoreError:
     def test_exception_with_all_parameters(self) -> None:
         """Test exception creation with all parameters specified."""
         from ldap_core_shared.core.exceptions import ErrorContext
+
         test_context = {"operation": "test_op", "user": "123"}
         inner_exception = ValueError("Inner error")
 
@@ -384,7 +385,12 @@ class TestErrorSeverity:
     def test_severity_ordering(self) -> None:
         """Test severity level ordering."""
         # Note: This would require implementing __lt__ on ErrorSeverity if needed
-        severities = [ErrorSeverity.LOW, ErrorSeverity.MEDIUM, ErrorSeverity.HIGH, ErrorSeverity.CRITICAL]
+        severities = [
+            ErrorSeverity.LOW,
+            ErrorSeverity.MEDIUM,
+            ErrorSeverity.HIGH,
+            ErrorSeverity.CRITICAL,
+        ]
         assert len(severities) == 4
 
 

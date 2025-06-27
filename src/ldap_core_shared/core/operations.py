@@ -5,11 +5,11 @@ from __future__ import annotations
 import time
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, AsyncIterator, Optional, Protocol
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any, Protocol
 
 try:
-    from typing_extensions import Never
+    from typing import Never
 except ImportError:
     # Fallback for older Python versions
     Never = type("Never", (), {})
@@ -53,8 +53,9 @@ from ldap_core_shared.utils.constants import (
 
 if TYPE_CHECKING:
     import asyncio
-    from collections.abc import Generator
+    from collections.abc import AsyncIterator, Generator
 
+    from ldap_core_shared.domain.models import LDAPEntry
     from ldap_core_shared.vectorized.bulk_processor import VectorizedBulkProcessor
 
 # Vectorized operations imports (lazy import to avoid circular dependency)
@@ -106,6 +107,7 @@ class TransactionManagerProtocol(Protocol):
     def rollback_transaction(self) -> None:
         """Rollback current transaction."""
         ...
+
 
 # ENTERPRISE DATA MODELS
 
@@ -220,7 +222,7 @@ class TransactionContext:
     """
 
     transaction_id: str = field(default_factory=lambda: str(uuid4()))
-    started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    started_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     timeout_seconds: int = field(default=SECONDS_PER_HOUR)  # 1 hour default
 
     # Mutable collections (frozen dataclass with mutable contents)
@@ -247,7 +249,7 @@ class TransactionContext:
     ) -> None:
         """Add operation to audit log."""
         log_entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "operation": operation,
             "dn": dn,
             "success": success,
@@ -263,7 +265,7 @@ class TransactionContext:
     ) -> None:
         """Add entry backup for rollback capability."""
         backup_entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "dn": dn,
             "operation": operation,
             "original_entry": original_entry,
@@ -273,7 +275,7 @@ class TransactionContext:
     def add_checkpoint(self, phase: str, **metadata: Any) -> None:
         """Add progress checkpoint."""
         checkpoint = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "phase": phase,
             "metadata": metadata,
         }
@@ -282,13 +284,14 @@ class TransactionContext:
     @property
     def is_expired(self) -> bool:
         """Check if transaction has expired."""
-        elapsed = (datetime.now(timezone.utc) - self.started_at).total_seconds()
+        elapsed = (datetime.now(UTC) - self.started_at).total_seconds()
         return elapsed > self.timeout_seconds
 
     @property
     def duration_seconds(self) -> float:
         """Get transaction duration in seconds."""
-        return (datetime.now(timezone.utc) - self.started_at).total_seconds()
+        return (datetime.now(UTC) - self.started_at).total_seconds()
+
 
 # CORE OPERATIONS CLASSES
 
@@ -360,13 +363,18 @@ class OperationLogger:
             error_details=error_details or {},
         )
         logger.error(
-            "LDAP %s failed", operation_type, extra={"dn": dn, "error": error_msg},
+            "LDAP %s failed",
+            operation_type,
+            extra={"dn": dn, "error": error_msg},
         )
 
     def log_skipped(self, operation_type: str, dn: str, reason: str) -> None:
         """Log skipped operation."""
         logger.warning(
-            "Entry %s - skipping %s", reason, operation_type, extra={"dn": dn},
+            "Entry %s - skipping %s",
+            reason,
+            operation_type,
+            extra={"dn": dn},
         )
         self._context.add_operation_log(
             operation_type,
@@ -381,7 +389,9 @@ class BulkOperationProcessor:
     """Helper class for processing bulk operations with reduced complexity."""
 
     def __init__(
-        self, transaction: EnterpriseTransaction, batch_size: int = DEFAULT_MAX_ITEMS,
+        self,
+        transaction: EnterpriseTransaction,
+        batch_size: int = DEFAULT_MAX_ITEMS,
     ) -> None:
         self.transaction = transaction
         self.batch_size = batch_size
@@ -650,7 +660,9 @@ class EnterpriseTransaction:
                 duration=duration,
             )
 
-            logger.error("Add operation failed", exc_info=True, extra={"dn": dn, "error": str(e)})
+            logger.error(
+                "Add operation failed", exc_info=True, extra={"dn": dn, "error": str(e)},
+            )
 
             if isinstance(e, LDAPOperationError):
                 raise
@@ -758,7 +770,11 @@ class EnterpriseTransaction:
                 duration=duration,
             )
 
-            logger.error("Modify operation failed", exc_info=True, extra={"dn": dn, "error": str(e)})
+            logger.error(
+                "Modify operation failed",
+                exc_info=True,
+                extra={"dn": dn, "error": str(e)},
+            )
 
             if isinstance(e, LDAPOperationError):
                 raise
@@ -844,7 +860,11 @@ class EnterpriseTransaction:
                 duration=duration,
             )
 
-            logger.error("Delete operation failed", exc_info=True, extra={"dn": dn, "error": str(e)})
+            logger.error(
+                "Delete operation failed",
+                exc_info=True,
+                extra={"dn": dn, "error": str(e)},
+            )
 
             if isinstance(e, LDAPOperationError):
                 raise
@@ -1009,6 +1029,7 @@ class EnterpriseTransaction:
         """Get transaction context."""
         return self._context
 
+
 # HIGH-LEVEL OPERATIONS MANAGER
 
 
@@ -1141,7 +1162,10 @@ class LDAPOperations:
                 )
             # Use traditional processing for small batches
             return self._bulk_add_traditional(
-                tx, entries, batch_size, progress_callback,
+                tx,
+                entries,
+                batch_size,
+                progress_callback,
             )
 
     async def _bulk_add_vectorized(
@@ -1314,6 +1338,7 @@ class LDAPOperations:
         """Get current active transaction."""
         return self._current_transaction
 
+
 # FACTORY FUNCTIONS
 
 
@@ -1352,6 +1377,7 @@ def create_transaction_context(
         timeout_seconds=timeout_seconds,
     )
 
+
 # ASYNC OPERATIONS (Future Implementation)
 
 
@@ -1372,10 +1398,11 @@ class AsyncLDAPOperations:
         search_base: str,
         search_filter: str,
         search_scope: int = 2,
-        attributes: Optional[list[str]] = None,
+        attributes: list[str] | None = None,
     ) -> list[LDAPEntry]:
         """Async search operation."""
         import asyncio
+
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,
@@ -1389,6 +1416,7 @@ class AsyncLDAPOperations:
     async def add(self, dn: str, attributes: dict[str, Any]) -> bool:
         """Async add operation."""
         import asyncio
+
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,
@@ -1400,6 +1428,7 @@ class AsyncLDAPOperations:
     async def modify(self, dn: str, changes: dict[str, Any]) -> bool:
         """Async modify operation."""
         import asyncio
+
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,
@@ -1411,6 +1440,7 @@ class AsyncLDAPOperations:
     async def delete(self, dn: str) -> bool:
         """Async delete operation."""
         import asyncio
+
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,
@@ -1419,21 +1449,31 @@ class AsyncLDAPOperations:
         )
 
     @asynccontextmanager
-    async def transaction(self, timeout_seconds: Optional[int] = None) -> AsyncIterator[TransactionContext]:
+    async def transaction(
+        self, timeout_seconds: int | None = None,
+    ) -> AsyncIterator[TransactionContext]:
         """Async transaction context manager."""
         import asyncio
+
         loop = asyncio.get_event_loop()
-        
+
         # Run sync transaction in executor
         sync_transaction = self._sync_operations.transaction(timeout_seconds)
-        transaction_context = await loop.run_in_executor(None, sync_transaction.__enter__)
-        
+        transaction_context = await loop.run_in_executor(
+            None, sync_transaction.__enter__,
+        )
+
         try:
             yield transaction_context
-            await loop.run_in_executor(None, sync_transaction.__exit__, None, None, None)
+            await loop.run_in_executor(
+                None, sync_transaction.__exit__, None, None, None,
+            )
         except Exception as e:
-            await loop.run_in_executor(None, sync_transaction.__exit__, type(e), e, e.__traceback__)
+            await loop.run_in_executor(
+                None, sync_transaction.__exit__, type(e), e, e.__traceback__,
+            )
             raise
+
 
 # MODULE EXPORTS
 

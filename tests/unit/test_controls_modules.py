@@ -41,7 +41,9 @@ class TestBaseControl:
         """Test base control with mock implementation."""
 
         class MockBaseControl:
-            def __init__(self, oid: str, critical: bool = False, value: bytes = b"") -> None:
+            def __init__(
+                self, oid: str, critical: bool = False, value: bytes = b""
+            ) -> None:
                 self.oid = oid
                 self.critical = critical
                 self.value = value
@@ -86,7 +88,9 @@ class TestBaseControl:
 
         # Test mock base control
         # Test valid control
-        control = MockBaseControl("1.2.840.113556.1.4.319", critical=True, value=b"test")
+        control = MockBaseControl(
+            "1.2.840.113556.1.4.319", critical=True, value=b"test"
+        )
         assert control.get_oid() == "1.2.840.113556.1.4.319"
         assert control.is_critical() is True
 
@@ -164,7 +168,9 @@ class TestPagedControl:
                     "control_value": self._encode_paged_request(),
                 }
 
-            def process_paged_response(self, response: dict[str, Any]) -> dict[str, Any]:
+            def process_paged_response(
+                self, response: dict[str, Any]
+            ) -> dict[str, Any]:
                 """Process paged search response."""
                 # Mock processing paged response
                 entries = response.get("entries", [])
@@ -317,7 +323,9 @@ class TestPasswordPolicyControl:
                 if pp_control:
                     policy_info.update(
                         {
-                            "password_expires_in": pp_control.get("time_before_expiration"),
+                            "password_expires_in": pp_control.get(
+                                "time_before_expiration"
+                            ),
                             "grace_logins_remaining": pp_control.get("grace_logins"),
                             "password_error": pp_control.get("error"),
                             "password_warning": pp_control.get("warning"),
@@ -347,7 +355,9 @@ class TestPasswordPolicyControl:
 
                 return policy_info
 
-            def check_password_policy(self, policy_info: dict[str, Any]) -> dict[str, Any]:
+            def check_password_policy(
+                self, policy_info: dict[str, Any]
+            ) -> dict[str, Any]:
                 """Check password policy compliance."""
                 issues = []
                 recommendations = []
@@ -370,17 +380,23 @@ class TestPasswordPolicyControl:
                     grace_logins = policy_info["grace_logins_remaining"]
                     if grace_logins <= 3:
                         issues.append(f"Only {grace_logins} grace logins remaining")
-                        recommendations.append("Change password before grace logins expire")
+                        recommendations.append(
+                            "Change password before grace logins expire"
+                        )
 
                 return {
                     "compliant": len(issues) == 0,
                     "issues": issues,
                     "recommendations": recommendations,
-                    "severity": "high" if any(
+                    "severity": "high"
+                    if any(
                         keyword in issue
                         for issue in issues
                         for keyword in ["expired", "locked"]
-                    ) else "medium" if issues else "low",
+                    )
+                    else "medium"
+                    if issues
+                    else "low",
                 }
 
             def get_policy_requirements(self) -> dict[str, Any]:
@@ -483,7 +499,9 @@ class TestPersistentSearchControl:
                 self.active = False
                 self.notifications_received = 0
 
-            def start_persistent_search(self, base_dn: str, search_filter: str) -> dict[str, Any]:
+            def start_persistent_search(
+                self, base_dn: str, search_filter: str
+            ) -> dict[str, Any]:
                 """Start persistent search."""
                 self.active = True
                 self.base_dn = base_dn
@@ -499,7 +517,9 @@ class TestPersistentSearchControl:
                     "persistent": True,
                 }
 
-            def process_change_notification(self, notification: dict[str, Any]) -> dict[str, Any]:
+            def process_change_notification(
+                self, notification: dict[str, Any]
+            ) -> dict[str, Any]:
                 """Process change notification from persistent search."""
                 if not self.active:
                     return {"error": "Persistent search not active"}
@@ -521,7 +541,9 @@ class TestPersistentSearchControl:
 
                 # Additional processing based on change type
                 if change_type == "add":
-                    processed_notification["new_entry"] = notification.get("attributes", {})
+                    processed_notification["new_entry"] = notification.get(
+                        "attributes", {}
+                    )
                 elif change_type == "delete":
                     processed_notification["deleted_entry"] = entry_dn
                 elif change_type == "modify":
@@ -573,7 +595,8 @@ class TestPersistentSearchControl:
 
         # Test starting persistent search
         search_result = ps_control.start_persistent_search(
-            "dc=example,dc=com", "(objectClass=person)",
+            "dc=example,dc=com",
+            "(objectClass=person)",
         )
         assert search_result["search_started"] is True
         assert search_result["persistent"] is True
@@ -596,7 +619,9 @@ class TestPersistentSearchControl:
         modify_notification = {
             "change_type": "modify",
             "dn": "cn=user1,dc=example,dc=com",
-            "changes": {"mail": {"old": ["old@example.com"], "new": ["new@example.com"]}},
+            "changes": {
+                "mail": {"old": ["old@example.com"], "new": ["new@example.com"]}
+            },
         }
 
         processed_modify = ps_control.process_change_notification(modify_notification)
@@ -711,7 +736,9 @@ class TestPostReadControl:
                 self.attributes = []
 
         # Test mock post-read control
-        postread_control = MockPostReadControl(attributes=["cn", "mail", "telephoneNumber"])
+        postread_control = MockPostReadControl(
+            attributes=["cn", "mail", "telephoneNumber"]
+        )
         assert postread_control.attributes == ["cn", "mail", "telephoneNumber"]
 
         # Test creating request
@@ -866,7 +893,9 @@ class TestProxyAuthControl:
                     "target_dn": target_dn,
                     "permission_type": "admin" if has_permission else "none",
                     "can_proxy": has_permission,
-                    "reason": "User in admin list" if has_permission else "User not authorized for proxy operations",
+                    "reason": "User in admin list"
+                    if has_permission
+                    else "User not authorized for proxy operations",
                 }
 
         # Test mock proxy authorization control
@@ -897,11 +926,15 @@ class TestProxyAuthControl:
         assert len(validation["errors"]) > 0
 
         # Test permission checking
-        permission_check = proxy_control.check_proxy_permissions("cn=admin,dc=example,dc=com")
+        permission_check = proxy_control.check_proxy_permissions(
+            "cn=admin,dc=example,dc=com"
+        )
         assert permission_check["has_permission"] is True
         assert permission_check["can_proxy"] is True
 
-        non_admin_check = proxy_control.check_proxy_permissions("cn=regularuser,dc=example,dc=com")
+        non_admin_check = proxy_control.check_proxy_permissions(
+            "cn=regularuser,dc=example,dc=com"
+        )
         assert non_admin_check["has_permission"] is False
         assert non_admin_check["can_proxy"] is False
 
@@ -930,7 +963,12 @@ class TestSortControl:
                 self.sort_keys = sort_keys or []
                 self.critical = False
 
-            def add_sort_key(self, attribute: str, reverse: bool = False, matching_rule: str | None = None) -> None:
+            def add_sort_key(
+                self,
+                attribute: str,
+                reverse: bool = False,
+                matching_rule: str | None = None,
+            ) -> None:
                 """Add a sort key."""
                 sort_key = {
                     "attribute": attribute,
@@ -961,7 +999,11 @@ class TestSortControl:
 
                     # Check for duplicate attributes
                     attr = key.get("attribute")
-                    if attr and sum(1 for k in self.sort_keys if k.get("attribute") == attr) > 1:
+                    if (
+                        attr
+                        and sum(1 for k in self.sort_keys if k.get("attribute") == attr)
+                        > 1
+                    ):
                         warnings.append(f"Duplicate sort key for attribute: {attr}")
 
                 return {
@@ -1009,7 +1051,9 @@ class TestSortControl:
                 return {
                     "sort_success": sort_success,
                     "result_code": result_code,
-                    "result_description": result_descriptions.get(result_code, "Unknown error"),
+                    "result_description": result_descriptions.get(
+                        result_code, "Unknown error"
+                    ),
                     "attribute_type_error": sort_result.get("attribute_type_error"),
                     "sorted": sort_success,
                 }
@@ -1028,7 +1072,9 @@ class TestSortControl:
 
                 return ",".join(encoded_keys).encode()
 
-            def sort_entries_locally(self, entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+            def sort_entries_locally(
+                self, entries: list[dict[str, Any]]
+            ) -> list[dict[str, Any]]:
                 """Sort entries locally using sort keys."""
                 if not self.sort_keys or not entries:
                     return entries

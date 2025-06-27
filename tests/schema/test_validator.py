@@ -228,7 +228,9 @@ class TestSchemaValidator:
         result = validator.validate_schema(schema)
 
         assert result.valid is False
-        assert any("Duplicate OID found: 2.5.4.3" in error for error in result.schema_errors)
+        assert any(
+            "Duplicate OID found: 2.5.4.3" in error for error in result.schema_errors
+        )
 
     def test_validate_schema_name_conflicts(self) -> None:
         """Test validating schema with name conflicts."""
@@ -246,7 +248,9 @@ class TestSchemaValidator:
         result = validator.validate_schema(schema)
 
         assert result.valid is False
-        assert any("Name conflict" in error and "cn" in error for error in result.schema_errors)
+        assert any(
+            "Name conflict" in error and "cn" in error for error in result.schema_errors
+        )
 
     def test_validate_schema_selective_checks(self) -> None:
         """Test validating schema with selective checks enabled."""
@@ -261,7 +265,9 @@ class TestSchemaValidator:
 
         # Create schema with multiple types of issues
         attr_type = AttributeType(oid="invalid.oid", names=["cn"])  # RFC issue
-        obj_class = ObjectClass(oid="invalid.oid", names=["cn"])    # Duplicate OID and name
+        obj_class = ObjectClass(
+            oid="invalid.oid", names=["cn"]
+        )  # Duplicate OID and name
 
         schema = ParsedSchema(
             attribute_types={"invalid.oid": attr_type},
@@ -325,7 +331,9 @@ class TestSchemaValidator:
         result = validator.validate_attribute_type(attr_type, schema)
 
         assert result.valid is False
-        assert any("must have at least one name" in error for error in result.schema_errors)
+        assert any(
+            "must have at least one name" in error for error in result.schema_errors
+        )
 
     def test_validate_attribute_type_invalid_names(self) -> None:
         """Test validating attribute type with invalid names."""
@@ -375,7 +383,9 @@ class TestSchemaValidator:
         result = validator.validate_attribute_type(attr_type, schema)
 
         assert result.valid is True  # Valid but with warning
-        assert any("is marked as obsolete" in warning for warning in result.syntax_errors)
+        assert any(
+            "is marked as obsolete" in warning for warning in result.syntax_errors
+        )
 
     def test_validate_attribute_type_allow_obsolete(self) -> None:
         """Test validating obsolete attribute type with obsolete allowed."""
@@ -411,7 +421,10 @@ class TestSchemaValidator:
         result = validator.validate_attribute_type(attr_type, schema)
 
         assert result.valid is False
-        assert any("Superior attribute type not found" in error for error in result.schema_errors)
+        assert any(
+            "Superior attribute type not found" in error
+            for error in result.schema_errors
+        )
 
     def test_validate_attribute_type_syntax_dependency(self) -> None:
         """Test validating attribute type syntax dependency."""
@@ -435,7 +448,9 @@ class TestSchemaValidator:
         result = validator.validate_attribute_type(attr_type, schema)
 
         assert result.valid is False
-        assert any("Syntax definition not found" in error for error in result.schema_errors)
+        assert any(
+            "Syntax definition not found" in error for error in result.schema_errors
+        )
 
     def test_validate_object_class_valid(self) -> None:
         """Test validating valid object class."""
@@ -488,7 +503,9 @@ class TestSchemaValidator:
         result = validator.validate_object_class(obj_class, schema)
 
         assert result.valid is False
-        assert any("must have at least one name" in error for error in result.schema_errors)
+        assert any(
+            "must have at least one name" in error for error in result.schema_errors
+        )
 
     def test_validate_object_class_invalid_names(self) -> None:
         """Test validating object class with invalid names."""
@@ -504,7 +521,9 @@ class TestSchemaValidator:
         result = validator.validate_object_class(obj_class, schema)
 
         assert result.valid is False
-        assert any("Invalid object class name" in error for error in result.schema_errors)
+        assert any(
+            "Invalid object class name" in error for error in result.schema_errors
+        )
 
     def test_validate_object_class_invalid_type(self) -> None:
         """Test validating object class with invalid type."""
@@ -521,7 +540,9 @@ class TestSchemaValidator:
         result = validator.validate_object_class(obj_class, schema)
 
         assert result.valid is False
-        assert any("Invalid object class type" in error for error in result.schema_errors)
+        assert any(
+            "Invalid object class type" in error for error in result.schema_errors
+        )
 
     def test_validate_object_class_dependencies(self) -> None:
         """Test validating object class dependencies."""
@@ -540,9 +561,15 @@ class TestSchemaValidator:
         result = validator.validate_object_class(obj_class, schema)
 
         assert result.valid is False
-        assert any("Superior object class not found" in error for error in result.schema_errors)
-        assert any("Required attribute not found" in error for error in result.schema_errors)
-        assert any("Optional attribute not found" in error for error in result.schema_errors)
+        assert any(
+            "Superior object class not found" in error for error in result.schema_errors
+        )
+        assert any(
+            "Required attribute not found" in error for error in result.schema_errors
+        )
+        assert any(
+            "Optional attribute not found" in error for error in result.schema_errors
+        )
 
 
 class TestSchemaValidatorHelperMethods:
@@ -579,7 +606,9 @@ class TestSchemaValidatorHelperMethods:
         ]
 
         for oid in invalid_oids:
-            assert validator._is_valid_oid(oid) is False, f"OID should be invalid: {oid}"
+            assert validator._is_valid_oid(oid) is False, (
+                f"OID should be invalid: {oid}"
+            )
 
     def test_is_valid_attribute_name_valid(self) -> None:
         """Test attribute name validation with valid names."""
@@ -598,7 +627,9 @@ class TestSchemaValidatorHelperMethods:
         ]
 
         for name in valid_names:
-            assert validator._is_valid_attribute_name(name) is True, f"Name should be valid: {name}"
+            assert validator._is_valid_attribute_name(name) is True, (
+                f"Name should be valid: {name}"
+            )
 
     def test_is_valid_attribute_name_invalid(self) -> None:
         """Test attribute name validation with invalid names."""
@@ -616,7 +647,9 @@ class TestSchemaValidatorHelperMethods:
         ]
 
         for name in invalid_names:
-            assert validator._is_valid_attribute_name(name) is False, f"Name should be invalid: {name}"
+            assert validator._is_valid_attribute_name(name) is False, (
+                f"Name should be invalid: {name}"
+            )
 
     def test_is_valid_object_class_name_valid(self) -> None:
         """Test object class name validation with valid names."""
@@ -634,7 +667,9 @@ class TestSchemaValidatorHelperMethods:
         ]
 
         for name in valid_names:
-            assert validator._is_valid_object_class_name(name) is True, f"Name should be valid: {name}"
+            assert validator._is_valid_object_class_name(name) is True, (
+                f"Name should be valid: {name}"
+            )
 
     def test_is_valid_object_class_name_invalid(self) -> None:
         """Test object class name validation with invalid names."""
@@ -651,7 +686,9 @@ class TestSchemaValidatorHelperMethods:
         ]
 
         for name in invalid_names:
-            assert validator._is_valid_object_class_name(name) is False, f"Name should be invalid: {name}"
+            assert validator._is_valid_object_class_name(name) is False, (
+                f"Name should be invalid: {name}"
+            )
 
     def test_find_attribute_by_name_found(self) -> None:
         """Test finding attribute by name when it exists."""
@@ -878,9 +915,13 @@ class TestSchemaValidatorIntegration:
         problems = [
             AttributeType(oid="invalid.oid.1", names=[]),  # Invalid OID + no names
             AttributeType(oid="2.5.4.3", names=["123invalid"]),  # Invalid name
-            AttributeType(oid="2.5.4.4", names=["attr"], usage="invalidUsage"),  # Invalid usage
+            AttributeType(
+                oid="2.5.4.4", names=["attr"], usage="invalidUsage"
+            ),  # Invalid usage
             ObjectClass(oid="invalid.oid.2", names=[]),  # Invalid OID + no names
-            ObjectClass(oid="2.5.6.6", names=["456invalid"], class_type="INVALID"),  # Invalid name + type
+            ObjectClass(
+                oid="2.5.6.6", names=["456invalid"], class_type="INVALID"
+            ),  # Invalid name + type
         ]
 
         schema = ParsedSchema(
@@ -958,9 +999,15 @@ class TestSchemaValidatorIntegration:
 
         # Create various types of name conflicts
         attr1 = AttributeType(oid="2.5.4.3", names=["cn", "commonName"])
-        attr2 = AttributeType(oid="2.5.4.4", names=["sn", "CN"])  # Case conflict with attr1
-        obj_class1 = ObjectClass(oid="2.5.6.6", names=["person", "COMMONNAME"])  # Case conflict
-        obj_class2 = ObjectClass(oid="2.5.6.7", names=["org", "sn"])  # Conflict with attr2
+        attr2 = AttributeType(
+            oid="2.5.4.4", names=["sn", "CN"]
+        )  # Case conflict with attr1
+        obj_class1 = ObjectClass(
+            oid="2.5.6.6", names=["person", "COMMONNAME"]
+        )  # Case conflict
+        obj_class2 = ObjectClass(
+            oid="2.5.6.7", names=["org", "sn"]
+        )  # Conflict with attr2
 
         schema = ParsedSchema(
             attribute_types={

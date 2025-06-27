@@ -35,7 +35,7 @@ References:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -47,9 +47,11 @@ from ldap_core_shared.protocols.sasl.exceptions import (
 from ldap_core_shared.protocols.sasl.mechanism import SASLMechanismRegistry
 
 # SASL PLAIN mechanism constants
-PLAIN_MIN_COMPONENTS = 2         # Minimum components for PLAIN response (authcid, passwd)
-PLAIN_STANDARD_COMPONENTS = 2    # Standard two-component PLAIN response
-PLAIN_EXTENDED_COMPONENTS = 3    # Extended three-component PLAIN response (authzid, authcid, passwd)
+PLAIN_MIN_COMPONENTS = 2  # Minimum components for PLAIN response (authcid, passwd)
+PLAIN_STANDARD_COMPONENTS = 2  # Standard two-component PLAIN response
+PLAIN_EXTENDED_COMPONENTS = (
+    3  # Extended three-component PLAIN response (authzid, authcid, passwd)
+)
 
 
 class SASLAuthenticationBackend(ABC):
@@ -71,9 +73,9 @@ class SASLAuthenticationBackend(ABC):
         self,
         username: str,
         password: str,
-        realm: Optional[str] = None,
-        mechanism: Optional[str] = None,
-        context: Optional[dict[str, Any]] = None,
+        realm: str | None = None,
+        mechanism: str | None = None,
+        context: dict[str, Any] | None = None,
     ) -> AuthenticationResult:
         """Authenticate user credentials.
 
@@ -92,9 +94,9 @@ class SASLAuthenticationBackend(ABC):
     def validate_authorization(
         self,
         authentication_id: str,
-        authorization_id: Optional[str] = None,
-        mechanism: Optional[str] = None,
-        context: Optional[dict[str, Any]] = None,
+        authorization_id: str | None = None,
+        mechanism: str | None = None,
+        context: dict[str, Any] | None = None,
     ) -> bool:
         """Validate authorization identity.
 
@@ -108,7 +110,7 @@ class SASLAuthenticationBackend(ABC):
             True if authorization is permitted
         """
 
-    def get_user_realm(self, username: str) -> Optional[str]:
+    def get_user_realm(self, username: str) -> str | None:
         """Get user's authentication realm.
 
         Args:
@@ -137,12 +139,20 @@ class AuthenticationResult(BaseModel):
     """
 
     success: bool = Field(description="Whether authentication succeeded")
-    user_id: Optional[str] = Field(default=None, description="Authenticated user identifier")
-    user_dn: Optional[str] = Field(default=None, description="User distinguished name (LDAP)")
-    realm: Optional[str] = Field(default=None, description="Authentication realm")
-    attributes: dict[str, Any] = Field(default_factory=dict, description="Additional user attributes")
-    error_message: Optional[str] = Field(default=None, description="Error message if failed")
-    error_code: Optional[str] = Field(default=None, description="Error code if failed")
+    user_id: str | None = Field(
+        default=None, description="Authenticated user identifier",
+    )
+    user_dn: str | None = Field(
+        default=None, description="User distinguished name (LDAP)",
+    )
+    realm: str | None = Field(default=None, description="Authentication realm")
+    attributes: dict[str, Any] = Field(
+        default_factory=dict, description="Additional user attributes",
+    )
+    error_message: str | None = Field(
+        default=None, description="Error message if failed",
+    )
+    error_code: str | None = Field(default=None, description="Error code if failed")
 
 
 class SASLServer(BaseModel):
@@ -170,7 +180,7 @@ class SASLServer(BaseModel):
         default_factory=list,
         description="Supported SASL mechanisms",
     )
-    authentication_backend: Optional[SASLAuthenticationBackend] = Field(
+    authentication_backend: SASLAuthenticationBackend | None = Field(
         default=None,
         description="Authentication backend",
     )
@@ -178,7 +188,7 @@ class SASLServer(BaseModel):
         default="ldap",
         description="Service name",
     )
-    hostname: Optional[str] = Field(
+    hostname: str | None = Field(
         default=None,
         description="Server hostname",
     )
@@ -192,6 +202,7 @@ class SASLServer(BaseModel):
 
     class Config:
         """Pydantic configuration."""
+
         arbitrary_types_allowed = True
 
     def get_supported_mechanisms(self) -> list[str]:
@@ -204,7 +215,11 @@ class SASLServer(BaseModel):
 
         if self.mechanisms:
             # Filter to configured mechanisms
-            return [m for m in self.mechanisms if m.upper() in [a.upper() for a in available]]
+            return [
+                m
+                for m in self.mechanisms
+                if m.upper() in [a.upper() for a in available]
+            ]
         # Return all available mechanisms
         return available
 
@@ -219,7 +234,7 @@ class SASLServer(BaseModel):
         """
         return mechanism.upper() in [m.upper() for m in self.get_supported_mechanisms()]
 
-    def create_session(self, mechanism: str, session_id: Optional[str] = None) -> str:
+    def create_session(self, mechanism: str, session_id: str | None = None) -> str:
         """Create new SASL authentication session.
 
         Args:
@@ -243,6 +258,7 @@ class SASLServer(BaseModel):
         # Generate session ID if not provided
         if session_id is None:
             import secrets
+
             session_id = secrets.token_hex(16)
 
         # Create context for session
@@ -256,7 +272,7 @@ class SASLServer(BaseModel):
         self.active_sessions[session_id] = context
         return session_id
 
-    def get_session(self, session_id: str) -> Optional[SASLContext]:
+    def get_session(self, session_id: str) -> SASLContext | None:
         """Get SASL session context.
 
         Args:
@@ -277,7 +293,9 @@ class SASLServer(BaseModel):
         if context:
             context.dispose()
 
-    def get_initial_challenge(self, mechanism: str, session_id: Optional[str] = None) -> Optional[bytes]:
+    def get_initial_challenge(
+        self, mechanism: str, session_id: str | None = None,
+    ) -> bytes | None:
         """Get initial challenge for mechanism.
 
         Some mechanisms (like DIGEST-MD5) require the server to send
@@ -320,7 +338,7 @@ class SASLServer(BaseModel):
         self,
         response: bytes,
         session_id: str,
-        expected_mechanism: Optional[str] = None,
+        expected_mechanism: str | None = None,
     ) -> AuthenticationResult:
         """Validate client authentication response.
 
@@ -388,7 +406,11 @@ class SASLServer(BaseModel):
         import secrets
 
         nonce = secrets.token_hex(16)
-        realms = self.authentication_backend.get_available_realms() if self.authentication_backend else []
+        realms = (
+            self.authentication_backend.get_available_realms()
+            if self.authentication_backend
+            else []
+        )
         realm_list = ",".join(f'"{realm}"' for realm in realms) if realms else '""'
 
         challenge_parts = [
@@ -402,7 +424,9 @@ class SASLServer(BaseModel):
         challenge = ",".join(challenge_parts)
         return challenge.encode("utf-8")
 
-    def _validate_plain_response(self, response: bytes, context: SASLContext) -> AuthenticationResult:
+    def _validate_plain_response(
+        self, response: bytes, context: SASLContext,
+    ) -> AuthenticationResult:
         """Validate PLAIN mechanism response.
 
         Args:
@@ -482,7 +506,9 @@ class SASLServer(BaseModel):
                 error_code="validation-error",
             )
 
-    def _validate_digest_md5_response(self, response: bytes, context: SASLContext) -> AuthenticationResult:
+    def _validate_digest_md5_response(
+        self, response: bytes, context: SASLContext,
+    ) -> AuthenticationResult:
         """Validate DIGEST-MD5 mechanism response.
 
         Args:
@@ -500,7 +526,9 @@ class SASLServer(BaseModel):
             error_message="DIGEST-MD5 validation not fully implemented",
         )
 
-    def _validate_external_response(self, response: bytes, context: SASLContext) -> AuthenticationResult:
+    def _validate_external_response(
+        self, response: bytes, context: SASLContext,
+    ) -> AuthenticationResult:
         """Validate EXTERNAL mechanism response.
 
         Args:
@@ -548,7 +576,9 @@ class SASLServer(BaseModel):
                 error_code="encoding-error",
             )
 
-    def _validate_anonymous_response(self, response: bytes, context: SASLContext) -> AuthenticationResult:
+    def _validate_anonymous_response(
+        self, response: bytes, context: SASLContext,
+    ) -> AuthenticationResult:
         """Validate ANONYMOUS mechanism response.
 
         Args:
@@ -590,10 +620,10 @@ class SASLServerFactory:
 
     @staticmethod
     def create_server(
-        mechanisms: Optional[list[str]] = None,
-        authentication_backend: Optional[SASLAuthenticationBackend] = None,
+        mechanisms: list[str] | None = None,
+        authentication_backend: SASLAuthenticationBackend | None = None,
         service: str = "ldap",
-        hostname: Optional[str] = None,
+        hostname: str | None = None,
         **properties: Any,
     ) -> SASLServer:
         """Create configured SASL server.

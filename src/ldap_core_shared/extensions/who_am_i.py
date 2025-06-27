@@ -36,7 +36,7 @@ from __future__ import annotations
 
 import re
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from pydantic import Field, validator
 
@@ -76,7 +76,7 @@ class AuthorizationIdentityParser:
     RAW_DN_PATTERN = re.compile(r"^[^=]+=.+$")  # Simple DN pattern
 
     @classmethod
-    def parse(cls, identity_string: str) -> tuple[IdentityType, Optional[str]]:
+    def parse(cls, identity_string: str) -> tuple[IdentityType, str | None]:
         """Parse authorization identity string.
 
         Args:
@@ -125,13 +125,13 @@ class AuthorizationIdentityParser:
         return identity_type == IdentityType.USER_ID
 
     @classmethod
-    def extract_dn(cls, identity_string: str) -> Optional[str]:
+    def extract_dn(cls, identity_string: str) -> str | None:
         """Extract DN from identity string if present."""
         identity_type, value = cls.parse(identity_string)
         return value if identity_type == IdentityType.DN else None
 
     @classmethod
-    def extract_user_id(cls, identity_string: str) -> Optional[str]:
+    def extract_user_id(cls, identity_string: str) -> str | None:
         """Extract User ID from identity string if present."""
         identity_type, value = cls.parse(identity_string)
         return value if identity_type == IdentityType.USER_ID else None
@@ -155,23 +155,27 @@ class WhoAmIResult(ExtensionResult):
     """
 
     authorization_identity: str = Field(
-        default="", description="Raw authorization identity from server",
+        default="",
+        description="Raw authorization identity from server",
     )
 
     identity_type: IdentityType = Field(
-        default=IdentityType.UNKNOWN, description="Parsed identity type",
+        default=IdentityType.UNKNOWN,
+        description="Parsed identity type",
     )
 
-    identity_value: Optional[str] = Field(
-        default=None, description="Parsed identity value (DN, user ID, etc.)",
+    identity_value: str | None = Field(
+        default=None,
+        description="Parsed identity value (DN, user ID, etc.)",
     )
 
     is_anonymous: bool = Field(
-        default=True, description="Whether identity represents anonymous access",
+        default=True,
+        description="Whether identity represents anonymous access",
     )
 
     @validator("authorization_identity", always=True)
-    def parse_identity(cls, v: str, values: dict) -> str:
+    def parse_identity(self, v: str, values: dict) -> str:
         """Parse authorization identity and set derived fields."""
         identity_type, identity_value = AuthorizationIdentityParser.parse(v)
 
@@ -182,7 +186,7 @@ class WhoAmIResult(ExtensionResult):
 
         return v
 
-    def get_dn(self) -> Optional[str]:
+    def get_dn(self) -> str | None:
         """Get DN if identity is DN-based.
 
         Returns:
@@ -190,7 +194,7 @@ class WhoAmIResult(ExtensionResult):
         """
         return self.identity_value if self.identity_type == IdentityType.DN else None
 
-    def get_user_id(self) -> Optional[str]:
+    def get_user_id(self) -> str | None:
         """Get User ID if identity is User ID-based.
 
         Returns:
@@ -257,7 +261,7 @@ class WhoAmIExtension(LDAPExtension):
         """
         super().__init__(request_value=None, **kwargs)
 
-    def encode_request_value(self) -> Optional[bytes]:
+    def encode_request_value(self) -> bytes | None:
         """Encode WhoAmI request value.
 
         Returns:
@@ -267,7 +271,9 @@ class WhoAmIExtension(LDAPExtension):
 
     @classmethod
     def decode_response_value(
-        cls, response_name: Optional[OID], response_value: Optional[bytes],
+        cls,
+        response_name: OID | None,
+        response_value: bytes | None,
     ) -> WhoAmIResult:
         """Decode WhoAmI response value.
 
@@ -364,8 +370,11 @@ def check_identity(connection: Any) -> WhoAmIResult:
             )
         # Mock implementation for testing/development
         from ldap_core_shared.utils.logging import get_logger
+
         logger = get_logger(__name__)
-        logger.warning("Connection does not support extended operations. Using mock identity.")
+        logger.warning(
+            "Connection does not support extended operations. Using mock identity.",
+        )
 
         return WhoAmIResult(
             result_code=0,
@@ -380,6 +389,6 @@ def check_identity(connection: Any) -> WhoAmIResult:
 
     except Exception as e:
         from ldap_core_shared.extensions.base import ExtensionError
+
         msg = f"WHO_AM_I operation failed: {e}"
         raise ExtensionError(msg) from e
-

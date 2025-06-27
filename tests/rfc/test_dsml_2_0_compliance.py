@@ -261,8 +261,10 @@ class TestDSML20SearchOperation:
         assert search_params["dn"].startswith("dc=")
         assert search_params["scope"] in {"baseObject", "singleLevel", "wholeSubtree"}
         assert search_params["derefAliases"] in {
-            "neverDerefAliases", "derefInSearching",
-            "derefFindingBaseObj", "derefAlways",
+            "neverDerefAliases",
+            "derefInSearching",
+            "derefFindingBaseObj",
+            "derefAlways",
         }
         assert int(search_params["sizeLimit"]) >= 0
         assert int(search_params["timeLimit"]) >= 0
@@ -461,7 +463,10 @@ class TestDSML20AuthenticationBinding:
         # Validate SASL authentication structure
         assert "mechanism" in sasl_auth["sasl"]
         assert sasl_auth["sasl"]["mechanism"] in {
-            "PLAIN", "DIGEST-MD5", "GSSAPI", "EXTERNAL",
+            "PLAIN",
+            "DIGEST-MD5",
+            "GSSAPI",
+            "EXTERNAL",
         }
 
     def test_anonymous_bind_support(self) -> None:
@@ -705,7 +710,9 @@ class TestDSML20ComprehensiveCompliance:
         }
 
         # All checks must pass for DSML 2.0 compliance
-        assert all(compliance_checks.values()), f"DSML 2.0 compliance failed: {compliance_checks}"
+        assert all(compliance_checks.values()), (
+            f"DSML 2.0 compliance failed: {compliance_checks}"
+        )
 
     def test_interoperability_requirements(self) -> None:
         """DSML 2.0 - Interoperability requirements verification."""
@@ -745,8 +752,14 @@ class TestDSML20ComprehensiveCompliance:
 
         # Test XML structure validation requirements
         xml_elements = {
-            "batchRequest": {"required_attrs": ["xmlns"], "optional_attrs": ["requestID"]},
-            "searchRequest": {"required_attrs": ["dn"], "optional_attrs": ["scope", "filter"]},
+            "batchRequest": {
+                "required_attrs": ["xmlns"],
+                "optional_attrs": ["requestID"],
+            },
+            "searchRequest": {
+                "required_attrs": ["dn"],
+                "optional_attrs": ["scope", "filter"],
+            },
             "addRequest": {"required_attrs": ["dn"], "optional_attrs": []},
             "modifyRequest": {"required_attrs": ["dn"], "optional_attrs": []},
             "delRequest": {"required_attrs": ["dn"], "optional_attrs": []},
@@ -789,4 +802,6 @@ class TestDSML20ComprehensiveCompliance:
         }
 
         # All security features must be supported
-        assert all(security_features.values()), f"DSML 2.0 security compliance failed: {security_features}"
+        assert all(security_features.values()), (
+            f"DSML 2.0 security compliance failed: {security_features}"
+        )

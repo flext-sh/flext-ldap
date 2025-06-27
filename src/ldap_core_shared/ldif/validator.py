@@ -25,11 +25,10 @@ from ldap_core_shared.domain.results import LDAPValidationResult
 
 # Constants for magic values
 LARGE_BUFFER_SIZE = 8192
-RDN_SPLIT_PARTS = 2           # Expected parts when splitting RDN by '='
-BASE64_SPLIT_PARTS = 2        # Expected parts when splitting by '::'
+RDN_SPLIT_PARTS = 2  # Expected parts when splitting RDN by '='
+BASE64_SPLIT_PARTS = 2  # Expected parts when splitting by '::'
 
 if TYPE_CHECKING:
-
     from ldap_core_shared.ldif.processor import LDIFEntry
 
 logger = logging.getLogger(__name__)
@@ -42,59 +41,79 @@ class LDIFValidationConfig(BaseModel):
 
     # Core RFC 2849 validations
     require_version_spec: bool = Field(
-        default=True, description="Require version: 1 specification",
+        default=True,
+        description="Require version: 1 specification",
     )
     validate_line_folding: bool = Field(
-        default=True, description="Validate line folding compliance",
+        default=True,
+        description="Validate line folding compliance",
     )
     validate_safe_strings: bool = Field(
-        default=True, description="Validate SAFE-STRING compliance",
+        default=True,
+        description="Validate SAFE-STRING compliance",
     )
     validate_base64_encoding: bool = Field(
-        default=True, description="Validate base64 encoding",
+        default=True,
+        description="Validate base64 encoding",
     )
     validate_utf8_encoding: bool = Field(
-        default=True, description="Validate UTF-8 encoding",
+        default=True,
+        description="Validate UTF-8 encoding",
     )
 
     # Extended validations
     validate_dn_format: bool = Field(
-        default=True, description="Validate DN format per RFC 2253",
+        default=True,
+        description="Validate DN format per RFC 2253",
     )
     validate_attribute_syntax: bool = Field(
-        default=True, description="Validate attribute syntax",
+        default=True,
+        description="Validate attribute syntax",
     )
     validate_object_classes: bool = Field(
-        default=True, description="Validate object class consistency",
+        default=True,
+        description="Validate object class consistency",
     )
     validate_required_attributes: bool = Field(
-        default=True, description="Check required attributes",
+        default=True,
+        description="Check required attributes",
     )
     validate_change_records: bool = Field(
-        default=True, description="Validate change record syntax",
+        default=True,
+        description="Validate change record syntax",
     )
     validate_controls: bool = Field(
-        default=True, description="Validate control specifications",
+        default=True,
+        description="Validate control specifications",
     )
     validate_url_references: bool = Field(
-        default=True, description="Validate URL references",
+        default=True,
+        description="Validate URL references",
     )
 
     # Limits and constraints
     allow_binary_attributes: bool = Field(
-        default=True, description="Allow binary attribute values",
+        default=True,
+        description="Allow binary attribute values",
     )
     max_dn_length: int = Field(
-        default=LARGE_BUFFER_SIZE, ge=1, description="Maximum DN length",
+        default=LARGE_BUFFER_SIZE,
+        ge=1,
+        description="Maximum DN length",
     )
     max_attribute_length: int = Field(
-        default=65536, ge=1, description="Maximum attribute value length",
+        default=65536,
+        ge=1,
+        description="Maximum attribute value length",
     )
     max_line_length: int = Field(
-        default=1000, ge=1, description="Maximum line length before folding",
+        default=1000,
+        ge=1,
+        description="Maximum line length before folding",
     )
     strict_rfc_compliance: bool = Field(
-        default=True, description="Enforce strict RFC 2849 compliance",
+        default=True,
+        description="Enforce strict RFC 2849 compliance",
     )
 
 
@@ -142,7 +161,7 @@ class RFC2849LDIFValidator:
             return self.validate_entries(result.data or [])
 
         except Exception as e:
-            logger.exception(f"File validation failed: {file_path}")
+            logger.exception("File validation failed: %s", file_path)
             return LDAPValidationResult(
                 valid=False,
                 error_count=1,
@@ -202,7 +221,10 @@ class RFC2849LDIFValidator:
         for i, entry in enumerate(entries):
             entry_result = self.validate_entry(entry)
             if not entry_result.valid:
-                errors.extend(f"Entry {i} ({entry.dn}): {error}" for error in entry_result.schema_errors)
+                errors.extend(
+                    f"Entry {i} ({entry.dn}): {error}"
+                    for error in entry_result.schema_errors
+                )
             warnings.extend(
                 [f"Entry {i} ({entry.dn}): {w}" for w in entry_result.syntax_errors],
             )
@@ -417,6 +439,7 @@ class RFC2849LDIFValidator:
                         # Try to decode to verify validity
                         try:
                             import base64
+
                             decoded = base64.b64decode(base64_value)
                             decoded.decode("utf-8")  # Must be valid UTF-8
                         except Exception as e:
@@ -461,7 +484,11 @@ class RFC2849LDIFValidator:
 
         # Validate changetype
         if change_record.changetype not in {
-            "add", "delete", "modify", "modrdn", "moddn",
+            "add",
+            "delete",
+            "modify",
+            "modrdn",
+            "moddn",
         }:
             errors.append(f"Invalid changetype: {change_record.changetype}")
 
@@ -474,7 +501,11 @@ class RFC2849LDIFValidator:
             if not change_record.modifications:
                 errors.append("Modify operation must include modifications")
             else:
-                errors.extend(f"Invalid modification operation: {mod.get('operation')}" for mod in change_record.modifications if mod.get("operation") not in {"add", "delete", "replace"})
+                errors.extend(
+                    f"Invalid modification operation: {mod.get('operation')}"
+                    for mod in change_record.modifications
+                    if mod.get("operation") not in {"add", "delete", "replace"}
+                )
 
         elif change_record.changetype in {"modrdn", "moddn"}:
             if not change_record.new_rdn:
@@ -489,19 +520,30 @@ class RFC2849LDIFValidator:
         errors = []
 
         for control in entry.controls:
-            # Validate OID format
-            control_type_str = str(control.control_type)
+            # Handle case where control might be a string or control object
+            if isinstance(control, str):
+                control_type_str = control
+            else:
+                # Validate OID format
+                control_type_str = str(control.control_type)
             if not self.LDAP_OID_PATTERN.match(control_type_str):
                 errors.append(f"Invalid control OID format: {control_type_str}")
 
             # Validate control value if present
-            if control.control_value:
+            control_value = None
+            if isinstance(control, str):
+                # String controls don't have control_value
+                continue
+            else:
+                control_value = control.control_value
+
+            if control_value:
                 try:
                     # Control value should be valid UTF-8
-                    str(control.control_value).encode("utf-8")
+                    str(control_value).encode("utf-8")
                 except UnicodeEncodeError:
                     errors.append(
-                        f"Control value contains invalid UTF-8: {control.control_type}",
+                        f"Control value contains invalid UTF-8: {control_type_str}",
                     )
 
         return errors

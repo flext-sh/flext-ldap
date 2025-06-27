@@ -72,20 +72,28 @@ class TestWorkspaceStandardsCompliance:
         # This test verifies the validation is working
         expected_venv = "/home/marlonsc/pyauto/.venv"
         current_venv = os.environ.get("VIRTUAL_ENV")
-        assert current_venv == expected_venv, f"Must use workspace venv: {expected_venv}"
+        assert current_venv == expected_venv, (
+            f"Must use workspace venv: {expected_venv}"
+        )
 
     @pytest.mark.env_security
     def test_env_security_enforcement_patterns(self, validate_env_security) -> None:
         """Test .env security enforcement patterns as required by CLAUDE.md."""
         # Test .env file security patterns
-        with patch.dict(os.environ, {
-            "LDAP_CORE_DEBUG_LEVEL": "INFO",
-            "LDAP_CORE_CONNECTION_TIMEOUT": "30",
-        }, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "LDAP_CORE_DEBUG_LEVEL": "INFO",
+                "LDAP_CORE_CONNECTION_TIMEOUT": "30",
+            },
+            clear=False,
+        ):
             # Validate no hardcoded secrets in environment
             for key, value in os.environ.items():
                 if "password" in key.lower() or "secret" in key.lower():
-                    assert value.startswith("${") or len(value) == 0, f"Hardcoded secret detected: {key}"
+                    assert value.startswith("${") or len(value) == 0, (
+                        f"Hardcoded secret detected: {key}"
+                    )
 
     @pytest.mark.cli_debug
     def test_cli_debug_patterns_enforcement(self, cli_debug_patterns) -> None:
@@ -100,7 +108,9 @@ class TestWorkspaceStandardsCompliance:
         assert os.environ.get("LDAP_CORE_CLI_DEBUG") == "true"
 
     @pytest.mark.solid_compliance
-    def test_solid_principles_compliance_validation(self, solid_principles_validation) -> None:
+    def test_solid_principles_compliance_validation(
+        self, solid_principles_validation
+    ) -> None:
         """Test SOLID principles compliance validation."""
         validators = solid_principles_validation
 
@@ -403,10 +413,10 @@ class TestPerformanceTracker:
         tracker = PerformanceTracker(mock_connection_info)
 
         # Record operations with known success/failure pattern
-        tracker.record_operation("op1", 0.1, True)   # Success
-        tracker.record_operation("op2", 0.1, True)   # Success
+        tracker.record_operation("op1", 0.1, True)  # Success
+        tracker.record_operation("op2", 0.1, True)  # Success
         tracker.record_operation("op3", 0.1, False)  # Failure
-        tracker.record_operation("op4", 0.1, True)   # Success
+        tracker.record_operation("op4", 0.1, True)  # Success
         tracker.record_operation("op5", 0.1, False)  # Failure
 
         with patch("ldap_core_shared.connections.monitoring.DEFAULT_MAX_ITEMS", 100):
@@ -504,7 +514,9 @@ class TestStandardHealthMonitor:
         monitor._last_check = 0.0
         monitor._consecutive_failures = 1  # Should reset to 0 on success
 
-        with patch("ldap_core_shared.connections.monitoring.StandardConnectionFactory") as mock_factory_class:
+        with patch(
+            "ldap_core_shared.connections.monitoring.StandardConnectionFactory"
+        ) as mock_factory_class:
             mock_factory = Mock()
             mock_connection = Mock()
 
@@ -541,7 +553,9 @@ class TestStandardHealthMonitor:
 
         monitor._last_check = 0.0
 
-        with patch("ldap_core_shared.connections.monitoring.StandardConnectionFactory") as mock_factory_class:
+        with patch(
+            "ldap_core_shared.connections.monitoring.StandardConnectionFactory"
+        ) as mock_factory_class:
             mock_factory = Mock()
             mock_connection = Mock()
 
@@ -564,7 +578,9 @@ class TestStandardHealthMonitor:
 
         monitor._last_check = 0.0
 
-        with patch("ldap_core_shared.connections.monitoring.StandardConnectionFactory") as mock_factory_class:
+        with patch(
+            "ldap_core_shared.connections.monitoring.StandardConnectionFactory"
+        ) as mock_factory_class:
             mock_factory = Mock()
             mock_connection = Mock()
 
@@ -590,7 +606,9 @@ class TestStandardHealthMonitor:
 
         monitor._last_check = 0.0
 
-        with patch("ldap_core_shared.connections.monitoring.StandardConnectionFactory") as mock_factory_class:
+        with patch(
+            "ldap_core_shared.connections.monitoring.StandardConnectionFactory"
+        ) as mock_factory_class:
             mock_factory_class.side_effect = Exception("Connection failed")
 
             result = await monitor.check_health()
@@ -604,7 +622,9 @@ class TestStandardHealthMonitor:
         mock_connection_info = Mock()
         monitor = StandardHealthMonitor(mock_connection_info)
 
-        with patch("ldap_core_shared.connections.monitoring.StandardConnectionFactory") as mock_factory_class:
+        with patch(
+            "ldap_core_shared.connections.monitoring.StandardConnectionFactory"
+        ) as mock_factory_class:
             mock_factory_class.side_effect = Exception("Connection failed")
 
             # Perform multiple failed health checks
@@ -665,7 +685,9 @@ class TestStandardHealthMonitor:
 
         original_last_check = monitor._last_check
 
-        with patch("ldap_core_shared.connections.monitoring.StandardConnectionFactory") as mock_factory_class:
+        with patch(
+            "ldap_core_shared.connections.monitoring.StandardConnectionFactory"
+        ) as mock_factory_class:
             mock_factory = Mock()
             mock_connection = Mock()
             mock_connection.bind.return_value = True
@@ -685,7 +707,9 @@ class TestMonitoringIntegration:
     """Test cases for monitoring integration scenarios with PyAuto workspace standards."""
 
     @pytest.mark.workspace_integration
-    def test_performance_tracker_with_health_monitor(self, workspace_coordination) -> None:
+    def test_performance_tracker_with_health_monitor(
+        self, workspace_coordination
+    ) -> None:
         """Test integration between performance tracker and health monitor."""
         mock_connection_info = Mock()
 

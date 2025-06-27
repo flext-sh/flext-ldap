@@ -19,15 +19,10 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, TypeVar
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
 from loguru import logger
 
-from ldap_core_shared.api.exceptions import (
-    LDAPMigrationError,
-    MigrationConfigurationError,
-    ProcessorError,
-)
 from ldap_core_shared.api.results import Result
 from ldap_core_shared.utils.performance import PerformanceMonitor
 
@@ -42,11 +37,11 @@ T = TypeVar("T")
 class MigrationProcessor(Protocol):
     """Protocol for migration processors - ZERO TOLERANCE for implementation details."""
 
-    def process(self, entries: List[Dict[str, Any]]) -> Result[List[Dict[str, Any]]]:
+    def process(self, entries: list[dict[str, Any]]) -> Result[list[dict[str, Any]]]:
         """Process entries and return result with success/error information."""
         ...
 
-    def get_performance_metrics(self) -> Dict[str, Any]:
+    def get_performance_metrics(self) -> dict[str, Any]:
         """Get performance metrics from processor."""
         ...
 
@@ -66,7 +61,7 @@ class GenericMigrationOrchestrator(ABC):
         """
         self.config = config
         self.performance_monitor = PerformanceMonitor("generic_migration")
-        self.processors: List[MigrationProcessor] = []
+        self.processors: list[MigrationProcessor] = []
 
         logger.info("✅ Generic migration orchestrator initialized")
 
@@ -77,10 +72,10 @@ class GenericMigrationOrchestrator(ABC):
             processor: Migration processor implementing the protocol
         """
         self.processors.append(processor)
-        logger.debug(f"➕ Added processor: {type(processor).__name__}")
+        logger.debug("➕ Added processor: %s", type(processor).__name__)
 
     @abstractmethod
-    def load_entries(self) -> Result[List[Dict[str, Any]]]:
+    def load_entries(self) -> Result[list[dict[str, Any]]]:
         """Load entries for migration - MUST be implemented by subclasses.
 
         Returns:
@@ -89,7 +84,9 @@ class GenericMigrationOrchestrator(ABC):
         ...
 
     @abstractmethod
-    def categorize_entries(self, entries: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    def categorize_entries(
+        self, entries: list[dict[str, Any]],
+    ) -> dict[str, list[dict[str, Any]]]:
         """Categorize entries - MUST be implemented by subclasses.
 
         Args:
@@ -102,8 +99,8 @@ class GenericMigrationOrchestrator(ABC):
 
     @abstractmethod
     def write_output(
-        self, categories: Dict[str, List[Dict[str, Any]]], output_dir: Path
-    ) -> Result[Dict[str, Any]]:
+        self, categories: dict[str, list[dict[str, Any]]], output_dir: Path,
+    ) -> Result[dict[str, Any]]:
         """Write categorized entries to output - MUST be implemented by subclasses.
 
         Args:
@@ -115,7 +112,9 @@ class GenericMigrationOrchestrator(ABC):
         """
         ...
 
-    def execute_migration(self, output_dir: Optional[Path] = None) -> Result[Dict[str, Any]]:
+    def execute_migration(
+        self, output_dir: Path | None = None,
+    ) -> Result[dict[str, Any]]:
         """Execute generic migration pipeline - NO business logic.
 
         Args:
@@ -135,7 +134,7 @@ class GenericMigrationOrchestrator(ABC):
                 return Result.fail(f"Failed to load entries: {load_result.error}")
 
             entries = load_result.data or []
-            logger.info(f"✅ Loaded {len(entries)} entries")
+            logger.info("✅ Loaded %s entries", len(entries))
 
             # Step 2: Process through pipeline
             logger.info("🔄 Processing entries through pipeline")
@@ -145,20 +144,22 @@ class GenericMigrationOrchestrator(ABC):
                 result = processor.process(processed_entries)
                 if not result.success:
                     return Result.fail(
-                        f"Processor {type(processor).__name__} failed: {result.error}"
+                        f"Processor {type(processor).__name__} failed: {result.error}",
                     )
                 processed_entries = result.data or []
 
-            logger.info(f"✅ Processed {len(processed_entries)} entries through pipeline")
+            logger.info(
+                "✅ Processed %s entries through pipeline", len(processed_entries),
+            )
 
             # Step 3: Categorize entries (delegate to subclass)
             logger.info("📂 Categorizing entries")
             categories = self.categorize_entries(processed_entries)
-            logger.info(f"✅ Categorized entries into {len(categories)} categories")
+            logger.info("✅ Categorized entries into %s categories", len(categories))
 
             # Step 4: Write output (delegate to subclass)
             if output_dir:
-                logger.info(f"💾 Writing output to {output_dir}")
+                logger.info("💾 Writing output to %s", output_dir)
                 output_result = self.write_output(categories, output_dir)
                 if not output_result.success:
                     return Result.fail(f"Failed to write output: {output_result.error}")
@@ -170,9 +171,13 @@ class GenericMigrationOrchestrator(ABC):
                 "success": True,
                 "total_entries": len(entries),
                 "processed_entries": len(processed_entries),
-                "categories": {cat: len(entries) for cat, entries in categories.items()},
+                "categories": {
+                    cat: len(entries) for cat, entries in categories.items()
+                },
                 "duration_seconds": duration,
-                "entries_per_second": len(processed_entries) / duration if duration > 0 else 0,
+                "entries_per_second": len(processed_entries) / duration
+                if duration > 0
+                else 0,
                 "processors_used": [type(p).__name__ for p in self.processors],
                 "performance_metrics": self.performance_monitor.get_metrics(),
             }
@@ -183,7 +188,7 @@ class GenericMigrationOrchestrator(ABC):
             return Result.ok(summary)
 
         except Exception as e:
-            logger.error(f"❌ Migration failed: {e}")
+            logger.error("❌ Migration failed: %s", e)
             return Result.fail(f"Migration execution failed: {e}")
 
     def validate_configuration(self) -> Result[bool]:
@@ -195,11 +200,13 @@ class GenericMigrationOrchestrator(ABC):
         try:
             # Generic validation - business-specific validation in subclasses
             if not self.config.source_ldif_path_obj.exists():
-                return Result.fail(f"Source path does not exist: {self.config.source_ldif_path}")
+                return Result.fail(
+                    f"Source path does not exist: {self.config.source_ldif_path}",
+                )
 
             if not self.config.output_path_obj.parent.exists():
                 return Result.fail(
-                    f"Output parent directory does not exist: {self.config.output_path}"
+                    f"Output parent directory does not exist: {self.config.output_path}",
                 )
 
             if self.config.batch_size <= 0:
@@ -214,7 +221,7 @@ class GenericMigrationOrchestrator(ABC):
         except Exception as e:
             return Result.fail(f"Configuration validation failed: {e}")
 
-    def get_migration_plan(self) -> Dict[str, Any]:
+    def get_migration_plan(self) -> dict[str, Any]:
         """Get generic migration plan - NO business logic.
 
         Returns:
@@ -248,7 +255,7 @@ class GenericEntryProcessor(ABC):
             config: Generic migration configuration
         """
         self.config = config
-        self.performance_metrics: Dict[str, Any] = {}
+        self.performance_metrics: dict[str, Any] = {}
 
     def _log_performance(self, operation: str, duration: float, count: int = 0) -> None:
         """Log performance metrics for operation.
@@ -264,9 +271,11 @@ class GenericEntryProcessor(ABC):
             "rate": count / duration if duration > 0 else 0,
         }
 
-        logger.info(f"⏱️ {operation}: {duration:.2f}s, {count} items, {count/duration:.1f}/s")
+        logger.info(
+            f"⏱️ {operation}: {duration:.2f}s, {count} items, {count / duration:.1f}/s",
+        )
 
-    def get_performance_metrics(self) -> Dict[str, Any]:
+    def get_performance_metrics(self) -> dict[str, Any]:
         """Get performance metrics.
 
         Returns:
@@ -275,7 +284,7 @@ class GenericEntryProcessor(ABC):
         return self.performance_metrics.copy()
 
     @abstractmethod
-    def process(self, entries: List[Dict[str, Any]]) -> Result[List[Dict[str, Any]]]:
+    def process(self, entries: list[dict[str, Any]]) -> Result[list[dict[str, Any]]]:
         """Process entries - MUST be implemented by subclasses.
 
         Args:
@@ -303,7 +312,7 @@ def create_migration_config_from_env() -> Result[MigrationConfig]:
         return Result.fail(f"Failed to load migration config from environment: {e}")
 
 
-def validate_migration_setup(config: MigrationConfig) -> Result[List[str]]:
+def validate_migration_setup(config: MigrationConfig) -> Result[list[str]]:
     """Validate migration setup and return list of issues.
 
     Args:
@@ -324,7 +333,9 @@ def validate_migration_setup(config: MigrationConfig) -> Result[List[str]]:
         # Check for LDIF files
         ldif_files = list(config.source_ldif_path_obj.glob("*.ldif"))
         if not ldif_files:
-            issues.append(f"No LDIF files found in source path: {config.source_ldif_path}")
+            issues.append(
+                f"No LDIF files found in source path: {config.source_ldif_path}",
+            )
 
         # Check output path can be created
         try:
@@ -346,9 +357,9 @@ def validate_migration_setup(config: MigrationConfig) -> Result[List[str]]:
 
 
 __all__ = [
-    "MigrationProcessor",
-    "GenericMigrationOrchestrator",
     "GenericEntryProcessor",
+    "GenericMigrationOrchestrator",
+    "MigrationProcessor",
     "create_migration_config_from_env",
     "validate_migration_setup",
 ]

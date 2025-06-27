@@ -38,9 +38,9 @@ References:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import ldap3
@@ -61,18 +61,18 @@ MAX_RETRY_MULTIPLIER = 4
 class DeletionMode(Enum):
     """Modes for tree deletion operations."""
 
-    RECURSIVE = "recursive"        # Delete all children recursively
-    LEAF_ONLY = "leaf_only"       # Only delete if no children exist
-    FORCED = "forced"             # Force deletion regardless of constraints
-    SAFE = "safe"                 # Safe deletion with validation
+    RECURSIVE = "recursive"  # Delete all children recursively
+    LEAF_ONLY = "leaf_only"  # Only delete if no children exist
+    FORCED = "forced"  # Force deletion regardless of constraints
+    SAFE = "safe"  # Safe deletion with validation
 
 
 class DeletionConstraint(Enum):
     """Constraints for tree deletion operations."""
 
-    NO_CONSTRAINTS = "no_constraints"      # No deletion constraints
+    NO_CONSTRAINTS = "no_constraints"  # No deletion constraints
     PRESERVE_CRITICAL = "preserve_critical"  # Preserve critical entries
-    REQUIRE_EMPTY_OU = "require_empty_ou"   # Require empty organizational units
+    REQUIRE_EMPTY_OU = "require_empty_ou"  # Require empty organizational units
     VALIDATE_REFERENCES = "validate_references"  # Validate no external references
 
 
@@ -80,42 +80,51 @@ class TreeDeletionPolicy(BaseModel):
     """Policy configuration for tree deletion operations."""
 
     deletion_mode: DeletionMode = Field(
-        default=DeletionMode.RECURSIVE, description="Mode for deletion operation",
+        default=DeletionMode.RECURSIVE,
+        description="Mode for deletion operation",
     )
 
     deletion_constraints: list[DeletionConstraint] = Field(
-        default_factory=list, description="Constraints to apply during deletion",
+        default_factory=list,
+        description="Constraints to apply during deletion",
     )
 
     # Safety settings
-    max_deletion_depth: Optional[int] = Field(
-        default=None, description="Maximum depth for recursive deletion",
+    max_deletion_depth: int | None = Field(
+        default=None,
+        description="Maximum depth for recursive deletion",
     )
 
-    max_entries_deleted: Optional[int] = Field(
-        default=None, description="Maximum number of entries to delete",
+    max_entries_deleted: int | None = Field(
+        default=None,
+        description="Maximum number of entries to delete",
     )
 
     require_confirmation: bool = Field(
-        default=False, description="Whether to require deletion confirmation",
+        default=False,
+        description="Whether to require deletion confirmation",
     )
 
     # Performance settings
-    batch_size: Optional[int] = Field(
-        default=None, description="Batch size for deletion operations",
+    batch_size: int | None = Field(
+        default=None,
+        description="Batch size for deletion operations",
     )
 
-    deletion_timeout: Optional[int] = Field(
-        default=None, description="Timeout for deletion operation",
+    deletion_timeout: int | None = Field(
+        default=None,
+        description="Timeout for deletion operation",
     )
 
     # Audit settings
     log_deletions: bool = Field(
-        default=True, description="Whether to log deletion operations",
+        default=True,
+        description="Whether to log deletion operations",
     )
 
     preserve_audit_trail: bool = Field(
-        default=False, description="Whether to preserve audit trail of deletions",
+        default=False,
+        description="Whether to preserve audit trail of deletions",
     )
 
     def validate_deletion_constraints(self) -> list[str]:
@@ -135,8 +144,10 @@ class TreeDeletionPolicy(BaseModel):
         if self.batch_size is not None and self.batch_size < 1:
             errors.append("Batch size must be at least 1")
 
-        if (self.deletion_mode == DeletionMode.LEAF_ONLY and
-            DeletionConstraint.NO_CONSTRAINTS in self.deletion_constraints):
+        if (
+            self.deletion_mode == DeletionMode.LEAF_ONLY
+            and DeletionConstraint.NO_CONSTRAINTS in self.deletion_constraints
+        ):
             errors.append("LEAF_ONLY mode incompatible with NO_CONSTRAINTS")
 
         return errors
@@ -169,38 +180,45 @@ class TreeDeleteRequest(BaseModel):
     )
 
     # Operation metadata
-    operation_id: Optional[str] = Field(
-        default=None, description="Unique operation identifier",
+    operation_id: str | None = Field(
+        default=None,
+        description="Unique operation identifier",
     )
 
-    requester_dn: Optional[str] = Field(
-        default=None, description="DN of user requesting deletion",
+    requester_dn: str | None = Field(
+        default=None,
+        description="DN of user requesting deletion",
     )
 
-    deletion_reason: Optional[str] = Field(
-        default=None, description="Reason for subtree deletion",
+    deletion_reason: str | None = Field(
+        default=None,
+        description="Reason for subtree deletion",
     )
 
     # Confirmation settings
-    confirmation_token: Optional[str] = Field(
-        default=None, description="Confirmation token for deletion",
+    confirmation_token: str | None = Field(
+        default=None,
+        description="Confirmation token for deletion",
     )
 
     dry_run: bool = Field(
-        default=False, description="Whether to perform dry run without actual deletion",
+        default=False,
+        description="Whether to perform dry run without actual deletion",
     )
 
     # Processing hints
-    expected_entry_count: Optional[int] = Field(
-        default=None, description="Expected number of entries to delete",
+    expected_entry_count: int | None = Field(
+        default=None,
+        description="Expected number of entries to delete",
     )
 
     processing_priority: int = Field(
-        default=5, description="Processing priority (1-10)",
+        default=5,
+        description="Processing priority (1-10)",
     )
 
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Request creation timestamp",
     )
 
@@ -225,8 +243,14 @@ class TreeDeleteRequest(BaseModel):
         if self.expected_entry_count is not None and self.expected_entry_count < 0:
             errors.append("Expected entry count cannot be negative")
 
-        if not (MIN_PROCESSING_PRIORITY <= self.processing_priority <= MAX_PROCESSING_PRIORITY):
-            errors.append(f"Processing priority must be between {MIN_PROCESSING_PRIORITY} and {MAX_PROCESSING_PRIORITY}")
+        if not (
+            MIN_PROCESSING_PRIORITY
+            <= self.processing_priority
+            <= MAX_PROCESSING_PRIORITY
+        ):
+            errors.append(
+                f"Processing priority must be between {MIN_PROCESSING_PRIORITY} and {MAX_PROCESSING_PRIORITY}",
+            )
 
         return errors
 
@@ -247,7 +271,10 @@ class TreeDeleteRequest(BaseModel):
         if self.deletion_policy.max_deletion_depth is None:
             complexity_factors += 1
 
-        if self.expected_entry_count and self.expected_entry_count > LARGE_OPERATION_THRESHOLD:
+        if (
+            self.expected_entry_count
+            and self.expected_entry_count > LARGE_OPERATION_THRESHOLD
+        ):
             complexity_factors += DEFAULT_RETRY_MULTIPLIER
 
         if len(self.deletion_policy.deletion_constraints) > DEFAULT_RETRY_MULTIPLIER:
@@ -268,56 +295,66 @@ class TreeDeleteResponse(BaseModel):
     # Deletion statistics
     entries_deleted: int = Field(default=0, description="Number of entries deleted")
 
-    levels_processed: int = Field(default=0, description="Number of hierarchy levels processed")
+    levels_processed: int = Field(
+        default=0, description="Number of hierarchy levels processed",
+    )
 
     deletion_order: list[str] = Field(
-        default_factory=list, description="Order of entry deletion (DNs)",
+        default_factory=list,
+        description="Order of entry deletion (DNs)",
     )
 
     # Error information
     result_code: int = Field(default=0, description="LDAP result code")
 
-    result_message: Optional[str] = Field(
-        default=None, description="LDAP result message",
+    result_message: str | None = Field(
+        default=None,
+        description="LDAP result message",
     )
 
     failed_deletions: list[str] = Field(
-        default_factory=list, description="DNs that failed to delete",
+        default_factory=list,
+        description="DNs that failed to delete",
     )
 
     constraint_violations: list[str] = Field(
-        default_factory=list, description="Constraint violations encountered",
+        default_factory=list,
+        description="Constraint violations encountered",
     )
 
     # Performance metadata
-    total_processing_time: Optional[float] = Field(
-        default=None, description="Total processing time in seconds",
+    total_processing_time: float | None = Field(
+        default=None,
+        description="Total processing time in seconds",
     )
 
-    average_deletion_time: Optional[float] = Field(
-        default=None, description="Average time per deletion in seconds",
+    average_deletion_time: float | None = Field(
+        default=None,
+        description="Average time per deletion in seconds",
     )
 
-    peak_memory_usage: Optional[int] = Field(
-        default=None, description="Peak memory usage during operation",
+    peak_memory_usage: int | None = Field(
+        default=None,
+        description="Peak memory usage during operation",
     )
 
     # Audit information
     deletion_timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Timestamp of deletion completion",
     )
 
     audit_trail: list[dict[str, Any]] = Field(
-        default_factory=list, description="Audit trail of deletion operations",
+        default_factory=list,
+        description="Audit trail of deletion operations",
     )
 
     def is_success(self) -> bool:
         """Check if tree deletion was completely successful."""
         return (
-            self.deletion_successful and
-            self.result_code == 0 and
-            not self.failed_deletions
+            self.deletion_successful
+            and self.result_code == 0
+            and not self.failed_deletions
         )
 
     def get_success_rate(self) -> float:
@@ -360,12 +397,14 @@ class TreeDeleteResponse(BaseModel):
             action: Action taken (delete, skip, fail)
             result: Result of action
         """
-        self.audit_trail.append({
-            "entry_dn": entry_dn,
-            "action": action,
-            "result": result,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+        self.audit_trail.append(
+            {
+                "entry_dn": entry_dn,
+                "action": action,
+                "result": result,
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
+        )
 
 
 class TreeDeleteControl(LDAPControl):
@@ -395,7 +434,7 @@ class TreeDeleteControl(LDAPControl):
 
     def __init__(
         self,
-        deletion_policy: Optional[TreeDeletionPolicy] = None,
+        deletion_policy: TreeDeletionPolicy | None = None,
         dry_run: bool = False,
         criticality: bool = True,
     ) -> None:
@@ -424,12 +463,11 @@ class TreeDeleteControl(LDAPControl):
             raise ValueError(msg)
 
         # Initialize response storage
-        self._response: Optional[TreeDeleteResponse] = None
+        self._response: TreeDeleteResponse | None = None
         self._response_available = False
 
         # Initialize base control
         super().__init__(
-
             criticality=criticality,
             control_value=self._encode_request(),
         )
@@ -443,22 +481,21 @@ class TreeDeleteControl(LDAPControl):
         # Standard Tree Delete control has no control value
         # The control presence itself indicates tree deletion request
         # Extended implementations could encode policy parameters here
-        
+
         if self._request.dry_run or self._request.deletion_policy.require_confirmation:
             # For enhanced features, encode basic parameters
             from struct import pack
-            
+
             # Simple encoding: dry_run flag + confirmation required flag
             flags = 0
             if self._request.dry_run:
                 flags |= 0x01
             if self._request.deletion_policy.require_confirmation:
                 flags |= 0x02
-                
-            return pack('B', flags)
-        else:
-            # Standard tree delete - no control value
-            return b''
+
+            return pack("B", flags)
+        # Standard tree delete - no control value
+        return b""
 
     def process_response(self, response_value: bytes) -> None:
         """Process Tree Delete control response from server.
@@ -478,38 +515,40 @@ class TreeDeleteControl(LDAPControl):
             )
             self._response_available = True
             return
-            
+
         # Basic response parsing for deletion metadata
         from struct import unpack
-        
+
         try:
             # Simple response format: result_code + entry_count + level_count
             offset = 0
             result_code = 0
             entries_deleted = 0
             levels_processed = 0
-            
+
             if len(response_value) >= 1:
-                result_code = unpack('B', response_value[offset:offset+1])[0]
+                result_code = unpack("B", response_value[offset : offset + 1])[0]
                 offset += 1
-                
+
             if len(response_value) >= offset + 2:
-                entries_deleted = unpack('H', response_value[offset:offset+2])[0]
+                entries_deleted = unpack("H", response_value[offset : offset + 2])[0]
                 offset += 2
-                
+
             if len(response_value) >= offset + 1:
-                levels_processed = unpack('B', response_value[offset:offset+1])[0]
-                
+                levels_processed = unpack("B", response_value[offset : offset + 1])[0]
+
             # Create response object
             self._response = TreeDeleteResponse(
                 deletion_successful=(result_code == 0),
                 entries_deleted=entries_deleted,
                 levels_processed=levels_processed,
                 result_code=result_code,
-                result_message="Tree deletion processed" if result_code == 0 else "Tree deletion failed",
+                result_message="Tree deletion processed"
+                if result_code == 0
+                else "Tree deletion failed",
             )
             self._response_available = True
-            
+
         except Exception:
             # Fallback response on parsing error
             self._response = TreeDeleteResponse(
@@ -537,7 +576,9 @@ class TreeDeleteControl(LDAPControl):
         """
         self._request.confirmation_token = token
 
-    def set_requester_info(self, requester_dn: str, reason: Optional[str] = None) -> None:
+    def set_requester_info(
+        self, requester_dn: str, reason: str | None = None,
+    ) -> None:
         """Set requester information for audit trail.
 
         Args:
@@ -572,7 +613,9 @@ class TreeDeleteControl(LDAPControl):
         return {
             "target_dn": self._request.target_dn,
             "deletion_mode": self._request.deletion_policy.deletion_mode.value,
-            "constraints": [c.value for c in self._request.deletion_policy.deletion_constraints],
+            "constraints": [
+                c.value for c in self._request.deletion_policy.deletion_constraints
+            ],
             "max_depth": self._request.deletion_policy.max_deletion_depth,
             "max_entries": self._request.deletion_policy.max_entries_deleted,
             "dry_run": self._request.dry_run,
@@ -582,7 +625,7 @@ class TreeDeleteControl(LDAPControl):
         }
 
     @property
-    def response(self) -> Optional[TreeDeleteResponse]:
+    def response(self) -> TreeDeleteResponse | None:
         """Get Tree Delete control response."""
         return self._response
 
@@ -606,7 +649,7 @@ class TreeDeleteControl(LDAPControl):
         """Check if configured for dry run."""
         return self._request.dry_run
 
-    def encode_value(self) -> Optional[bytes]:
+    def encode_value(self) -> bytes | None:
         """Encode tree delete control value to ASN.1 bytes.
 
         Returns:
@@ -615,7 +658,7 @@ class TreeDeleteControl(LDAPControl):
         return self.control_value
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> TreeDeleteControl:
+    def decode_value(cls, control_value: bytes | None) -> TreeDeleteControl:
         """Decode ASN.1 bytes to create tree delete control instance.
 
         Args:
@@ -646,7 +689,7 @@ class TreeDeleteControl(LDAPControl):
 # Convenience functions
 def create_tree_delete_control(
     safe_mode: bool = True,
-    max_depth: Optional[int] = None,
+    max_depth: int | None = None,
     dry_run: bool = False,
 ) -> TreeDeleteControl:
     """Create Tree Delete control with safety configuration.
@@ -665,7 +708,9 @@ def create_tree_delete_control(
         deletion_constraints=[
             DeletionConstraint.PRESERVE_CRITICAL,
             DeletionConstraint.VALIDATE_REFERENCES,
-        ] if safe_mode else [],
+        ]
+        if safe_mode
+        else [],
     )
 
     return TreeDeleteControl(
@@ -717,40 +762,38 @@ async def delete_subtree(
         max_depth=10 if safe_mode else None,
         dry_run=dry_run,
     )
-    
+
     # Set target DN for deletion
     tree_delete_control.set_target_dn(subtree_dn)
-    
+
     try:
         # Perform delete operation with tree delete control
         success = connection.delete(
             dn=subtree_dn,
             controls=[tree_delete_control],
         )
-        
+
         if success:
             # Process successful deletion
             if tree_delete_control.response:
                 return tree_delete_control.response
-            else:
-                # Create default success response
-                return TreeDeleteResponse(
-                    deletion_successful=True,
-                    entries_deleted=1,
-                    levels_processed=1,
-                    result_code=0,
-                    result_message="Subtree deleted successfully",
-                )
-        else:
-            # Handle deletion failure
+            # Create default success response
             return TreeDeleteResponse(
-                deletion_successful=False,
-                entries_deleted=0,
-                levels_processed=0,
-                result_code=1,
-                result_message=f"Failed to delete subtree: {subtree_dn}",
+                deletion_successful=True,
+                entries_deleted=1,
+                levels_processed=1,
+                result_code=0,
+                result_message="Subtree deleted successfully",
             )
-            
+        # Handle deletion failure
+        return TreeDeleteResponse(
+            deletion_successful=False,
+            entries_deleted=0,
+            levels_processed=0,
+            result_code=1,
+            result_message=f"Failed to delete subtree: {subtree_dn}",
+        )
+
     except Exception as e:
         # Handle operation error
         return TreeDeleteResponse(
@@ -760,4 +803,3 @@ async def delete_subtree(
             result_code=1,
             result_message=f"Subtree deletion error: {e}",
         )
-

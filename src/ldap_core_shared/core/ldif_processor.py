@@ -17,20 +17,26 @@ MIGRATION FROM DUPLICATED IMPLEMENTATION:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+from ldap_core_shared.domain.results import LDAPOperationResult
+from ldap_core_shared.ldif.processor import (
+    LDIFEntry,
+)
+from ldap_core_shared.ldif.processor import (
+    LDIFProcessingConfig as ProductionLDIFProcessingConfig,
+)
 
 # Delegate to existing production-validated LDIF infrastructure
 from ldap_core_shared.ldif.processor import (
     LDIFProcessor as ProductionLDIFProcessor,
-    LDIFProcessingConfig as ProductionLDIFProcessingConfig,
-    LDIFEntry,
 )
-from ldap_core_shared.domain.results import LDAPOperationResult
 from ldap_core_shared.utils.logging import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
     from ldap_core_shared.domain.results import LDAPOperationResult
 
 logger = get_logger(__name__)
@@ -38,11 +44,11 @@ logger = get_logger(__name__)
 
 class LDIFProcessingConfig:
     """LDIF processing config - delegates to production configuration."""
-    
-    def __init__(self, **kwargs):
+
+    def __init__(self, **kwargs) -> None:
         """Initialize config - creates production config internally."""
         self._production_config = ProductionLDIFProcessingConfig(**kwargs)
-    
+
     def __getattr__(self, name):
         """Delegate all attribute access to production config."""
         return getattr(self._production_config, name)
@@ -76,7 +82,7 @@ class LDIFProcessor:
     - Consistent behavior across all LDIF usage
     """
 
-    def __init__(self, config: LDIFProcessingConfig | dict[str, Any] | None = None):
+    def __init__(self, config: LDIFProcessingConfig | dict[str, Any] | None = None) -> None:
         """Initialize LDIF processor facade.
 
         Args:
@@ -86,25 +92,36 @@ class LDIFProcessor:
             config = {}
         elif isinstance(config, dict):
             config = LDIFProcessingConfig(**config)
-        
+
         # Delegate to existing production LDIF processor
         self._production_processor = ProductionLDIFProcessor(
-            config._production_config if hasattr(config, '_production_config') else config
+            config._production_config
+            if hasattr(config, "_production_config")
+            else config,
         )
 
-    def process_file(self, file_path: Path | str, **kwargs) -> LDAPOperationResult[list[LDIFEntry]]:
+    def process_file(
+        self, file_path: Path | str, **kwargs,
+    ) -> LDAPOperationResult[list[LDIFEntry]]:
         """Process LDIF file - delegates to production processor."""
         return self._production_processor.parse_file(file_path, **kwargs)
 
     def process_stream(self, stream, **kwargs) -> LDAPOperationResult[list[LDIFEntry]]:
         """Process LDIF stream - delegates to production processor."""
-        return self._production_processor.parse_string(stream, **kwargs)
+        # Handle stream by reading content first
+        if hasattr(stream, "read"):
+            content = stream.read()
+        elif hasattr(stream, "getvalue"):
+            content = stream.getvalue()
+        else:
+            content = str(stream)
+        return self._production_processor.parse_string(content, **kwargs)
 
     def validate_ldif(self, content: str | Path, **kwargs) -> bool:
         """Validate LDIF content - delegates to production processor."""
         # Production processor validates during parsing
         try:
-            if isinstance(content, (str, Path)):
+            if isinstance(content, str | Path):
                 if isinstance(content, str):
                     result = self._production_processor.parse_string(content)
                 else:
@@ -114,7 +131,9 @@ class LDIFProcessor:
         except Exception:
             return False
 
-    def parse_ldif_entries(self, content: str | Path, **kwargs) -> Iterator[dict[str, Any]]:
+    def parse_ldif_entries(
+        self, content: str | Path, **kwargs,
+    ) -> Iterator[dict[str, Any]]:
         """Parse LDIF entries - delegates to production processor."""
         if isinstance(content, str):
             result = self._production_processor.parse_string(content)
@@ -145,7 +164,7 @@ class LDIFProcessor:
 
     def close(self) -> None:
         """Close processor - delegates to production processor."""
-        if hasattr(self._production_processor, 'close'):
+        if hasattr(self._production_processor, "close"):
             self._production_processor.close()
 
 
@@ -153,12 +172,15 @@ class LDIFProcessor:
 # HELPER FUNCTIONS - Direct delegation for common operations
 # ================================================================================
 
+
 def create_ldif_processor(config: dict[str, Any] | None = None) -> LDIFProcessor:
     """Create LDIF processor - convenience function with pure delegation."""
     return LDIFProcessor(config)
 
 
-def process_ldif_file(file_path: Path | str, **kwargs) -> LDAPOperationResult[list[LDIFEntry]]:
+def process_ldif_file(
+    file_path: Path | str, **kwargs,
+) -> LDAPOperationResult[list[LDIFEntry]]:
     """Process LDIF file - convenience function with pure delegation."""
     processor = LDIFProcessor()
     return processor.process_file(file_path, **kwargs)

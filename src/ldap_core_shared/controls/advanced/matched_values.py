@@ -51,9 +51,9 @@ References:
 """
 
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from pydantic import BaseModel, Field, validator
 
@@ -63,18 +63,18 @@ from ldap_core_shared.controls.base import LDAPControl
 class ValueMatchingMode(Enum):
     """Modes for value matching operations."""
 
-    EXACT = "exact"            # Exact filter matching
-    SUBSTRING = "substring"    # Substring matching
+    EXACT = "exact"  # Exact filter matching
+    SUBSTRING = "substring"  # Substring matching
     APPROXIMATE = "approximate"  # Approximate matching
-    REGEX = "regex"           # Regular expression matching
+    REGEX = "regex"  # Regular expression matching
 
 
 class MatchingStrategy(Enum):
     """Strategies for matching value filters."""
 
-    ALL_FILTERS = "all_filters"      # All filters must match (AND)
-    ANY_FILTER = "any_filter"        # Any filter matches (OR)
-    SEQUENTIAL = "sequential"        # Sequential filter application
+    ALL_FILTERS = "all_filters"  # All filters must match (AND)
+    ANY_FILTER = "any_filter"  # Any filter matches (OR)
+    SEQUENTIAL = "sequential"  # Sequential filter application
     PRIORITY_BASED = "priority_based"  # Priority-based filter selection
 
 
@@ -83,38 +83,45 @@ class ValueFilter(BaseModel):
 
     filter_expression: str = Field(description="LDAP filter for value matching")
 
-    attribute_type: Optional[str] = Field(
-        default=None, description="Specific attribute type to match",
+    attribute_type: str | None = Field(
+        default=None,
+        description="Specific attribute type to match",
     )
 
     matching_mode: ValueMatchingMode = Field(
-        default=ValueMatchingMode.EXACT, description="Mode for value matching",
+        default=ValueMatchingMode.EXACT,
+        description="Mode for value matching",
     )
 
     # Filter options
     case_sensitive: bool = Field(
-        default=True, description="Whether matching is case-sensitive",
+        default=True,
+        description="Whether matching is case-sensitive",
     )
 
     include_subtypes: bool = Field(
-        default=False, description="Whether to include attribute subtypes",
+        default=False,
+        description="Whether to include attribute subtypes",
     )
 
     priority: int = Field(
-        default=0, description="Filter priority (higher = more important)",
+        default=0,
+        description="Filter priority (higher = more important)",
     )
 
     # Performance options
-    max_matches: Optional[int] = Field(
-        default=None, description="Maximum number of matching values",
+    max_matches: int | None = Field(
+        default=None,
+        description="Maximum number of matching values",
     )
 
-    timeout_seconds: Optional[int] = Field(
-        default=None, description="Filter matching timeout",
+    timeout_seconds: int | None = Field(
+        default=None,
+        description="Filter matching timeout",
     )
 
     @validator("filter_expression")
-    def validate_filter_syntax(cls, v: str) -> str:
+    def validate_filter_syntax(self, v: str) -> str:
         """Validate filter expression syntax."""
         if not v or not v.strip():
             msg = "Filter expression cannot be empty"
@@ -143,13 +150,14 @@ class ValueFilter(BaseModel):
             return attribute.startswith(self.attribute_type)
         return attribute.lower() == self.attribute_type.lower()
 
-    def extract_target_attribute(self) -> Optional[str]:
+    def extract_target_attribute(self) -> str | None:
         """Extract target attribute from filter expression.
 
         Returns:
             Attribute name from filter or None if not found
         """
         import re
+
         # Simple pattern to extract attribute from filter like (attr=value)
         pattern = r"^\(([a-zA-Z][a-zA-Z0-9-]*)[><=~]"
         match = re.match(pattern, self.filter_expression)
@@ -185,16 +193,19 @@ class MatchedValuesRequest(BaseModel):
     )
 
     # Performance settings
-    max_total_values: Optional[int] = Field(
-        default=None, description="Maximum total values to return",
+    max_total_values: int | None = Field(
+        default=None,
+        description="Maximum total values to return",
     )
 
-    processing_timeout: Optional[int] = Field(
-        default=None, description="Total processing timeout",
+    processing_timeout: int | None = Field(
+        default=None,
+        description="Total processing timeout",
     )
 
     optimize_filters: bool = Field(
-        default=True, description="Whether to optimize filter processing",
+        default=True,
+        description="Whether to optimize filter processing",
     )
 
     def get_target_attributes(self) -> set[str]:
@@ -225,10 +236,7 @@ class MatchedValuesRequest(BaseModel):
         Returns:
             List of applicable value filters
         """
-        return [
-            vf for vf in self.value_filters
-            if vf.matches_attribute(attribute)
-        ]
+        return [vf for vf in self.value_filters if vf.matches_attribute(attribute)]
 
     def validate_filters(self) -> list[str]:
         """Validate all value filters.
@@ -257,11 +265,13 @@ class MatchedValuesResponse(BaseModel):
     values_matched: bool = Field(description="Whether any values matched")
 
     total_values_examined: int = Field(
-        default=0, description="Total number of values examined",
+        default=0,
+        description="Total number of values examined",
     )
 
     total_values_matched: int = Field(
-        default=0, description="Total number of values matched",
+        default=0,
+        description="Total number of values matched",
     )
 
     # Per-attribute results
@@ -284,25 +294,29 @@ class MatchedValuesResponse(BaseModel):
     # Error information
     result_code: int = Field(default=0, description="Operation result code")
 
-    result_message: Optional[str] = Field(
-        default=None, description="Operation result message",
+    result_message: str | None = Field(
+        default=None,
+        description="Operation result message",
     )
 
     filter_errors: list[str] = Field(
-        default_factory=list, description="Filter processing errors",
+        default_factory=list,
+        description="Filter processing errors",
     )
 
     # Performance metadata
-    total_processing_time: Optional[float] = Field(
-        default=None, description="Total processing time in seconds",
+    total_processing_time: float | None = Field(
+        default=None,
+        description="Total processing time in seconds",
     )
 
-    memory_usage: Optional[int] = Field(
-        default=None, description="Memory usage in bytes",
+    memory_usage: int | None = Field(
+        default=None,
+        description="Memory usage in bytes",
     )
 
     processed_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Response processing timestamp",
     )
 
@@ -319,9 +333,11 @@ class MatchedValuesResponse(BaseModel):
         if self.total_values_examined == 0:
             return 0.0
 
-        return (self.total_values_matched / self.total_values_examined) * DEFAULT_MAX_ITEMS
+        return (
+            self.total_values_matched / self.total_values_examined
+        ) * DEFAULT_MAX_ITEMS
 
-    def get_attribute_summary(self, attribute: str) -> Optional[dict[str, Any]]:
+    def get_attribute_summary(self, attribute: str) -> dict[str, Any] | None:
         """Get summary for specific attribute.
 
         Args:
@@ -392,9 +408,7 @@ class MatchedValuesControl(LDAPControl):
         """
         # Convert string filters to ValueFilter objects
         if value_filters and isinstance(value_filters[0], str):
-            filter_objects = [
-                ValueFilter(filter_expression=f) for f in value_filters
-            ]
+            filter_objects = [ValueFilter(filter_expression=f) for f in value_filters]
         else:
             filter_objects = cast("list[ValueFilter]", value_filters)
 
@@ -412,12 +426,11 @@ class MatchedValuesControl(LDAPControl):
             raise ValueError(msg)
 
         # Initialize response storage
-        self._response: Optional[MatchedValuesResponse] = None
+        self._response: MatchedValuesResponse | None = None
         self._response_available = False
 
         # Initialize base control
         super().__init__(
-
             criticality=criticality,
             control_value=self._encode_request(),
         )
@@ -461,7 +474,9 @@ class MatchedValuesControl(LDAPControl):
         )
         raise NotImplementedError(msg)
 
-    def add_value_filter(self, filter_expression: str, attribute_type: Optional[str] = None) -> None:
+    def add_value_filter(
+        self, filter_expression: str, attribute_type: str | None = None,
+    ) -> None:
         """Add value filter to the control.
 
         Args:
@@ -489,7 +504,8 @@ class MatchedValuesControl(LDAPControl):
         original_count = len(self._request.value_filters)
 
         self._request.value_filters = [
-            vf for vf in self._request.value_filters
+            vf
+            for vf in self._request.value_filters
             if vf.filter_expression != filter_expression
         ]
 
@@ -530,7 +546,7 @@ class MatchedValuesControl(LDAPControl):
         }
 
     @property
-    def response(self) -> Optional[MatchedValuesResponse]:
+    def response(self) -> MatchedValuesResponse | None:
         """Get Matched Values control response."""
         return self._response
 
@@ -549,7 +565,7 @@ class MatchedValuesControl(LDAPControl):
         """Get current matching strategy."""
         return self._request.matching_strategy
 
-    def encode_value(self) -> Optional[bytes]:
+    def encode_value(self) -> bytes | None:
         """Encode matched values control value to ASN.1 bytes.
 
         Returns:
@@ -558,7 +574,7 @@ class MatchedValuesControl(LDAPControl):
         return self.control_value
 
     @classmethod
-    def decode_value(cls, control_value: Optional[bytes]) -> MatchedValuesControl:
+    def decode_value(cls, control_value: bytes | None) -> MatchedValuesControl:
         """Decode ASN.1 bytes to create matched values control instance.
 
         Args:
@@ -652,9 +668,9 @@ async def filter_attribute_values(
     try:
         # Create Matched Values control with the value filters
         matched_values_control = MatchedValuesControl(value_filters=value_filters)
-        
+
         # Perform search on specific entry with Matched Values control
-        if hasattr(connection, 'search'):
+        if hasattr(connection, "search"):
             success = connection.search(
                 search_base=entry_dn,
                 search_filter="(objectClass=*)",  # Simple filter to retrieve entry
@@ -662,49 +678,46 @@ async def filter_attribute_values(
                 attributes=[attribute],  # Only retrieve the specific attribute
                 controls=[matched_values_control],
             )
-            
-            if success and hasattr(connection, 'entries') and connection.entries:
+
+            if success and hasattr(connection, "entries") and connection.entries:
                 entry = connection.entries[0]
-                
+
                 # Extract values for the requested attribute
                 if hasattr(entry, attribute):
                     attr_values = getattr(entry, attribute)
-                    
+
                     # Convert to list of strings
                     if isinstance(attr_values, list):
                         return [str(val) for val in attr_values]
-                    elif attr_values is not None:
+                    if attr_values is not None:
                         return [str(attr_values)]
-                    else:
-                        return []
-                elif hasattr(entry, 'entry_attributes_as_dict'):
+                    return []
+                if hasattr(entry, "entry_attributes_as_dict"):
                     # Fallback to attributes dictionary
                     attr_dict = entry.entry_attributes_as_dict
                     if attribute in attr_dict:
                         values = attr_dict[attribute]
                         if isinstance(values, list):
                             return [str(val) for val in values]
-                        else:
-                            return [str(values)]
-                    else:
-                        return []
-                else:
+                        return [str(values)]
                     return []
-            else:
-                # Entry not found or search failed
                 return []
-        else:
-            # Fallback when connection doesn't support search
-            from ldap_core_shared.utils.logging import get_logger
-            logger = get_logger(__name__)
-            logger.warning("Connection does not support search - cannot filter values")
+            # Entry not found or search failed
             return []
-            
+        # Fallback when connection doesn't support search
+        from ldap_core_shared.utils.logging import get_logger
+
+        logger = get_logger(__name__)
+        logger.warning("Connection does not support search - cannot filter values")
+        return []
+
     except Exception as e:
         from ldap_core_shared.utils.logging import get_logger
+
         logger = get_logger(__name__)
-        logger.error(f"Attribute value filtering failed: {e}")
+        logger.exception("Attribute value filtering failed: %s", e)
         return []
+
 
 # TODO: Integration points for implementation:
 #

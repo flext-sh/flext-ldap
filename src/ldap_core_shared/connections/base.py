@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any, ClassVar, Literal
 
 import ldap3
@@ -37,7 +37,7 @@ from ldap_core_shared.utils.constants import (
 )
 
 
-class LDAPSearchScope(str, Enum):
+class LDAPSearchScope(StrEnum):
     """LDAP search scope enumeration."""
 
     BASE = "base"
@@ -45,7 +45,7 @@ class LDAPSearchScope(str, Enum):
     SUBTREE = "subtree"
 
 
-class LDAPAuthenticationMethod(str, Enum):
+class LDAPAuthenticationMethod(StrEnum):
     """LDAP authentication methods following RFC 4513.
 
     This enum defines the standardized authentication methods supported
@@ -161,7 +161,12 @@ class LDAPConnectionInfo(BaseModel):
     )
 
     # Class constants for validation
-    _VALID_LDAP_PORTS: ClassVar[set[int]] = {LDAP_DEFAULT_PORT, LDAPS_DEFAULT_PORT, LDAP_GC_PORT, LDAPS_GC_PORT}
+    _VALID_LDAP_PORTS: ClassVar[set[int]] = {
+        LDAP_DEFAULT_PORT,
+        LDAPS_DEFAULT_PORT,
+        LDAP_GC_PORT,
+        LDAPS_GC_PORT,
+    }
     _SECURE_PORTS: ClassVar[set[int]] = {LDAPS_DEFAULT_PORT, LDAPS_GC_PORT}
 
     @field_validator("host")

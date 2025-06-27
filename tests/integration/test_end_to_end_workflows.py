@@ -6,7 +6,7 @@ Perl module equivalents working together in enterprise scenarios.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 
@@ -84,7 +84,9 @@ class TestCompleteSchemaWorkflow:
 
     @pytest.mark.integration
     @pytest.mark.slow
-    def test_complete_schema_conversion_workflow(self, enterprise_schema_file: Any, temp_directory: Any) -> None:
+    def test_complete_schema_conversion_workflow(
+        self, enterprise_schema_file: Any, temp_directory: Any
+    ) -> None:
         """Test complete schema conversion workflow from file to LDIF."""
         try:
             # Step 1: Parse schema file
@@ -100,11 +102,15 @@ class TestCompleteSchemaWorkflow:
             # Step 2: Validate parsed schema
             for attr_type in parse_result.attribute_types:
                 errors = attr_type.validate()
-                assert len(errors) == 0, f"Attribute type {attr_type.names[0]} has validation errors: {errors}"
+                assert len(errors) == 0, (
+                    f"Attribute type {attr_type.names[0]} has validation errors: {errors}"
+                )
 
             for obj_class in parse_result.object_classes:
                 errors = obj_class.validate()
-                assert len(errors) == 0, f"Object class {obj_class.names[0]} has validation errors: {errors}"
+                assert len(errors) == 0, (
+                    f"Object class {obj_class.names[0]} has validation errors: {errors}"
+                )
 
             # Step 3: Generate LDIF
             from ldap_core_shared.schema.generator import LDIFGenerator
@@ -266,7 +272,9 @@ class TestCompleteASN1Workflow:
 
     @pytest.mark.integration
     @pytest.mark.slow
-    def test_complete_asn1_processing_workflow(self, ldap_asn1_schema: Any, temp_directory: Any) -> None:
+    def test_complete_asn1_processing_workflow(
+        self, ldap_asn1_schema: Any, temp_directory: Any
+    ) -> None:
         """Test complete ASN.1 schema processing workflow."""
         try:
             # Step 1: Parse ASN.1 schema
@@ -327,11 +335,13 @@ class TestCompleteASN1Workflow:
             )
 
             # Create simple LDAP bind request structure
-            bind_request = ASN1Sequence([
-                ASN1Integer(3),  # LDAP version 3
-                ASN1OctetString(b"cn=user,dc=example,dc=com"),  # DN
-                ASN1OctetString(b"password"),  # Simple authentication
-            ])
+            bind_request = ASN1Sequence(
+                [
+                    ASN1Integer(3),  # LDAP version 3
+                    ASN1OctetString(b"cn=user,dc=example,dc=com"),  # DN
+                    ASN1OctetString(b"password"),  # Simple authentication
+                ]
+            )
 
             # Test encoding
             try:
@@ -376,7 +386,9 @@ class TestCompleteSASLWorkflow:
             selected_mechanism = client.select_mechanism(server_mechanisms)
 
             assert selected_mechanism in server_mechanisms
-            assert selected_mechanism == "DIGEST-MD5"  # Should prefer stronger mechanism
+            assert (
+                selected_mechanism == "DIGEST-MD5"
+            )  # Should prefer stronger mechanism
 
             # Step 3: Start authentication
             credentials = {
@@ -457,8 +469,8 @@ class TestCompleteSASLWorkflow:
             if auth_state and hasattr(client, "negotiate_security_layer"):
                 # Negotiate security layer
                 security_props = {
-                    "min_ssf": 56,    # Minimum security strength factor
-                    "max_ssf": 256,   # Maximum security strength factor
+                    "min_ssf": 56,  # Minimum security strength factor
+                    "max_ssf": 256,  # Maximum security strength factor
                     "max_buffer_size": 65536,
                     "qop": "auth-conf",  # Authentication with confidentiality
                 }
@@ -471,16 +483,25 @@ class TestCompleteSASLWorkflow:
                 if security_layer:
                     assert security_layer.ssf >= security_props["min_ssf"]
                     assert security_layer.ssf <= security_props["max_ssf"]
-                    assert security_layer.max_buffer_size <= security_props["max_buffer_size"]
+                    assert (
+                        security_layer.max_buffer_size
+                        <= security_props["max_buffer_size"]
+                    )
 
                     # Test security layer encoding/decoding
-                    if hasattr(security_layer, "encode") and hasattr(security_layer, "decode"):
-                        test_message = b"This is a test message for security layer processing"
+                    if hasattr(security_layer, "encode") and hasattr(
+                        security_layer, "decode"
+                    ):
+                        test_message = (
+                            b"This is a test message for security layer processing"
+                        )
 
                         try:
                             encoded = security_layer.encode(test_message)
                             assert isinstance(encoded, bytes)
-                            assert len(encoded) >= len(test_message)  # May include integrity/confidentiality data
+                            assert len(encoded) >= len(
+                                test_message
+                            )  # May include integrity/confidentiality data
 
                             decoded = security_layer.decode(encoded)
                             assert decoded == test_message  # Should roundtrip correctly
@@ -526,6 +547,7 @@ class TestCrossModuleIntegration:
             schema_file.write_text(schema_content)
 
             from ldap_core_shared.schema.parser import SchemaParser
+
             parser = SchemaParser()
             schema_result = parser.parse_schema_file(str(schema_file))
 
@@ -539,14 +561,18 @@ class TestCrossModuleIntegration:
             )
 
             # Create LDAP bind request
-            ldap_bind_request = ASN1Sequence([
-                ASN1Integer(1),  # Message ID
-                ASN1Sequence([   # Bind request
-                    ASN1Integer(3),  # LDAP version 3
-                    ASN1OctetString(b"cn=Manager,dc=example,dc=com"),  # Bind DN
-                    ASN1OctetString(b"secret"),  # Simple password
-                ]),
-            ])
+            ldap_bind_request = ASN1Sequence(
+                [
+                    ASN1Integer(1),  # Message ID
+                    ASN1Sequence(
+                        [  # Bind request
+                            ASN1Integer(3),  # LDAP version 3
+                            ASN1OctetString(b"cn=Manager,dc=example,dc=com"),  # Bind DN
+                            ASN1OctetString(b"secret"),  # Simple password
+                        ]
+                    ),
+                ]
+            )
 
             # Step 3: Set up SASL authentication
             from ldap_core_shared.protocols.sasl.client import SASLClient
@@ -578,17 +604,25 @@ class TestCrossModuleIntegration:
 
                 if sasl_response and sasl_response.data:
                     # SASL authentication data would be embedded in LDAP bind request
-                    ldap_bind_with_sasl = ASN1Sequence([
-                        ASN1Integer(2),  # Message ID
-                        ASN1Sequence([   # Bind request with SASL
-                            ASN1Integer(3),  # LDAP version 3
-                            ASN1OctetString(b""),  # Empty DN for SASL
-                            ASN1Sequence([   # SASL credentials
-                                ASN1OctetString(b"PLAIN"),  # Mechanism
-                                ASN1OctetString(sasl_response.data),  # SASL data
-                            ]),
-                        ]),
-                    ])
+                    ldap_bind_with_sasl = ASN1Sequence(
+                        [
+                            ASN1Integer(2),  # Message ID
+                            ASN1Sequence(
+                                [  # Bind request with SASL
+                                    ASN1Integer(3),  # LDAP version 3
+                                    ASN1OctetString(b""),  # Empty DN for SASL
+                                    ASN1Sequence(
+                                        [  # SASL credentials
+                                            ASN1OctetString(b"PLAIN"),  # Mechanism
+                                            ASN1OctetString(
+                                                sasl_response.data
+                                            ),  # SASL data
+                                        ]
+                                    ),
+                                ]
+                            ),
+                        ]
+                    )
 
                     assert ldap_bind_with_sasl is not None
 
@@ -623,6 +657,7 @@ class TestCrossModuleIntegration:
 
             # Step 1: Initialize schema management
             from ldap_core_shared.schema.parser import SchemaParser
+
             SchemaParser()
 
             # Step 2: Initialize ASN.1 processing
@@ -663,23 +698,31 @@ class TestCrossModuleIntegration:
             assert auth_state is not None
 
             # Step 5: Simulate LDAP search operation
-            ldap_search_request = ASN1Sequence([
-                ASN1Integer(3),  # Message ID
-                ASN1Sequence([   # Search request
-                    ASN1OctetString(enterprise_config["base_dn"].encode()),  # Base DN
-                    ASN1Integer(2),  # Scope (subtree)
-                    ASN1Integer(0),  # Deref aliases (never)
-                    ASN1Integer(1000),  # Size limit
-                    ASN1Integer(60),   # Time limit
-                    ASN1Integer(0),    # Types only (false)
-                    ASN1OctetString(b"(objectClass=person)"),  # Filter
-                    ASN1Sequence([     # Attributes to return
-                        ASN1OctetString(b"cn"),
-                        ASN1OctetString(b"mail"),
-                        ASN1OctetString(b"employeeID"),
-                    ]),
-                ]),
-            ])
+            ldap_search_request = ASN1Sequence(
+                [
+                    ASN1Integer(3),  # Message ID
+                    ASN1Sequence(
+                        [  # Search request
+                            ASN1OctetString(
+                                enterprise_config["base_dn"].encode()
+                            ),  # Base DN
+                            ASN1Integer(2),  # Scope (subtree)
+                            ASN1Integer(0),  # Deref aliases (never)
+                            ASN1Integer(1000),  # Size limit
+                            ASN1Integer(60),  # Time limit
+                            ASN1Integer(0),  # Types only (false)
+                            ASN1OctetString(b"(objectClass=person)"),  # Filter
+                            ASN1Sequence(
+                                [  # Attributes to return
+                                    ASN1OctetString(b"cn"),
+                                    ASN1OctetString(b"mail"),
+                                    ASN1OctetString(b"employeeID"),
+                                ]
+                            ),
+                        ]
+                    ),
+                ]
+            )
 
             assert ldap_search_request is not None
 
@@ -707,13 +750,16 @@ class TestWorkflowPerformance:
             # Generate large schema with many attributes and object classes
 
             # Generate 500 attribute types
-            large_schema_parts = [f"""
+            large_schema_parts = [
+                f"""
                 attributetype ( 1.3.6.1.4.1.12345.1.{i}
                     NAME 'attr{i}'
                     DESC 'Generated attribute {i}'
                     EQUALITY caseIgnoreMatch
                     SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
-                """ for i in range(500)]
+                """
+                for i in range(500)
+            ]
 
             # Generate 100 object classes
             for i in range(100):
@@ -744,7 +790,9 @@ class TestWorkflowPerformance:
             parse_time = time.time() - start_time
 
             # Should parse reasonably quickly (less than 5 seconds)
-            assert parse_time < 5.0, f"Schema parsing took {parse_time:.2f} seconds (too slow)"
+            assert parse_time < 5.0, (
+                f"Schema parsing took {parse_time:.2f} seconds (too slow)"
+            )
 
             if parse_result.success:
                 assert len(parse_result.attribute_types) >= 500
@@ -763,7 +811,9 @@ class TestWorkflowPerformance:
                 generation_time = time.time() - start_time
 
                 # Should generate reasonably quickly (less than 3 seconds)
-                assert generation_time < 3.0, f"LDIF generation took {generation_time:.2f} seconds (too slow)"
+                assert generation_time < 3.0, (
+                    f"LDIF generation took {generation_time:.2f} seconds (too slow)"
+                )
 
                 if ldif_result.success:
                     assert len(ldif_result.content) > 0
@@ -788,7 +838,7 @@ class TestWorkflowPerformance:
             results = []
             results_lock = Lock()
 
-            def perform_authentication(user_id: Any) -> Optional[bool]:
+            def perform_authentication(user_id: Any) -> bool | None:
                 """Perform SASL authentication for a user."""
                 try:
                     client = SASLClient(
@@ -815,34 +865,46 @@ class TestWorkflowPerformance:
                         auth_time = time.time() - start_time
 
                         with results_lock:
-                            results.append({
-                                "user_id": user_id,
-                                "success": response is not None,
-                                "time": auth_time,
-                            })
+                            results.append(
+                                {
+                                    "user_id": user_id,
+                                    "success": response is not None,
+                                    "time": auth_time,
+                                }
+                            )
 
                         return True
 
                 except Exception:
                     with results_lock:
-                        results.append({
-                            "user_id": user_id,
-                            "success": False,
-                            "time": 0,
-                        })
+                        results.append(
+                            {
+                                "user_id": user_id,
+                                "success": False,
+                                "time": 0,
+                            }
+                        )
                     return False
 
             # Test concurrent authentications
             start_time = time.time()
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-                futures = [executor.submit(perform_authentication, i) for i in range(50)]
-                completed = sum(1 for future in concurrent.futures.as_completed(futures) if future.result())
+                futures = [
+                    executor.submit(perform_authentication, i) for i in range(50)
+                ]
+                completed = sum(
+                    1
+                    for future in concurrent.futures.as_completed(futures)
+                    if future.result()
+                )
 
             total_time = time.time() - start_time
 
             # Should complete reasonably quickly (less than 10 seconds)
-            assert total_time < 10.0, f"Concurrent authentications took {total_time:.2f} seconds (too slow)"
+            assert total_time < 10.0, (
+                f"Concurrent authentications took {total_time:.2f} seconds (too slow)"
+            )
 
             # Should have high success rate
             success_rate = completed / 50
@@ -850,8 +912,12 @@ class TestWorkflowPerformance:
 
             # Average authentication time should be reasonable
             if results:
-                avg_auth_time = sum(r["time"] for r in results if r["success"]) / len([r for r in results if r["success"]])
-                assert avg_auth_time < 0.5, f"Average authentication time {avg_auth_time:.3f}s too slow"
+                avg_auth_time = sum(r["time"] for r in results if r["success"]) / len(
+                    [r for r in results if r["success"]]
+                )
+                assert avg_auth_time < 0.5, (
+                    f"Average authentication time {avg_auth_time:.3f}s too slow"
+                )
 
         except ImportError:
             pytest.skip("Concurrent SASL authentication modules not available")

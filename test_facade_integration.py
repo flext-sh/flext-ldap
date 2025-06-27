@@ -23,13 +23,12 @@ import asyncio
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 
-def test_module_imports() -> Optional[bool]:
+def test_module_imports() -> bool | None:
     """Testa que todos os módulos podem ser importados corretamente."""
     try:
         # Test individual module imports
@@ -39,11 +38,12 @@ def test_module_imports() -> Optional[bool]:
 
     except Exception:
         import traceback
+
         traceback.print_exc()
         return False
 
 
-def test_config_value_object() -> Optional[bool]:
+def test_config_value_object() -> bool | None:
     """Testa o LDAPConfig Value Object."""
     try:
         from ldap_core_shared.api.config import LDAPConfig
@@ -76,7 +76,7 @@ def test_config_value_object() -> Optional[bool]:
         return False
 
 
-def test_result_pattern() -> Optional[bool]:
+def test_result_pattern() -> bool | None:
     """Testa o Result[T] pattern para tratamento de erros."""
     try:
         from ldap_core_shared.api.results import Result
@@ -109,7 +109,7 @@ def test_result_pattern() -> Optional[bool]:
         return False
 
 
-def test_query_builder() -> Optional[bool]:
+def test_query_builder() -> bool | None:
     """Testa o Query Builder com interface fluente."""
     try:
         from ldap_core_shared.api.config import LDAPConfig
@@ -126,14 +126,16 @@ def test_query_builder() -> Optional[bool]:
         ldap = LDAP(config, use_connection_manager=False)  # Disable real connections
 
         # Test fluent query building
-        query = (ldap.query()
+        query = (
+            ldap.query()
             .users()
             .in_department("Engineering")
             .with_title("*Manager*")
             .enabled_only()
             .select("cn", "mail", "title")
             .limit(25)
-            .sort_by("cn"))
+            .sort_by("cn")
+        )
 
         # Test that query maintains reference to facade (check operations object)
         assert query._ldap is not None, "Query deve manter referência ao facade"
@@ -142,11 +144,12 @@ def test_query_builder() -> Optional[bool]:
 
     except Exception:
         import traceback
+
         traceback.print_exc()
         return False
 
 
-async def test_facade_delegation() -> Optional[bool]:
+async def test_facade_delegation() -> bool | None:
     """Testa que o Facade delega corretamente para módulos especializados."""
     try:
         from ldap_core_shared.api.config import LDAPConfig
@@ -168,12 +171,16 @@ async def test_facade_delegation() -> Optional[bool]:
 
         # Access operations - should trigger initialization
         ldap._get_operations()
-        assert ldap._operations is not None, "Operations deve ser inicializado após acesso"
+        assert ldap._operations is not None, (
+            "Operations deve ser inicializado após acesso"
+        )
 
         # Validation module should be None initially
         assert ldap._validation is None, "Validation deve ser inicializado lazily"
         ldap._get_validation()
-        assert ldap._validation is not None, "Validation deve ser inicializado após acesso"
+        assert ldap._validation is not None, (
+            "Validation deve ser inicializado após acesso"
+        )
 
         # Test delegation methods exist and delegate correctly
         query = ldap.query()  # Should delegate to Query creation
@@ -189,11 +196,12 @@ async def test_facade_delegation() -> Optional[bool]:
 
     except Exception:
         import traceback
+
         traceback.print_exc()
         return False
 
 
-async def test_subsystem_integration() -> Optional[bool]:
+async def test_subsystem_integration() -> bool | None:
     """Testa integração com subsistemas existentes (ConnectionManager, domain, etc.)."""
     try:
         from ldap_core_shared.api.config import LDAPConfig
@@ -212,7 +220,6 @@ async def test_subsystem_integration() -> Optional[bool]:
 
         # Should initialize with ConnectionManager
         if ldap_enterprise._connection_manager is not None:
-
             # Test that connection info includes enterprise details
             info = ldap_enterprise.get_connection_info()
             assert info["status"]["connection_mode"] == "enterprise"
@@ -244,11 +251,12 @@ async def test_subsystem_integration() -> Optional[bool]:
 
     except Exception:
         import traceback
+
         traceback.print_exc()
         return False
 
 
-async def test_api_compatibility() -> Optional[bool]:
+async def test_api_compatibility() -> bool | None:
     """Testa que a API pública mantém compatibilidade total."""
     try:
         # Test that all original imports still work
@@ -272,6 +280,7 @@ async def test_api_compatibility() -> Optional[bool]:
 
             # Test that connect function exists and has correct signature
             import inspect
+
             connect_sig = inspect.signature(connect)
             expected_params = ["server", "auth_dn", "auth_password", "base_dn"]
             actual_params = list(connect_sig.parameters.keys())
@@ -295,9 +304,16 @@ async def test_api_compatibility() -> Optional[bool]:
         ldap = LDAP(config)
 
         expected_methods = [
-            "find_user_by_email", "find_user_by_name", "find_users_in_department",
-            "find_group_by_name", "get_user_groups", "get_group_members",
-            "query", "search", "test_connection", "validate_entry_schema",
+            "find_user_by_email",
+            "find_user_by_name",
+            "find_users_in_department",
+            "find_group_by_name",
+            "get_user_groups",
+            "get_group_members",
+            "query",
+            "search",
+            "test_connection",
+            "validate_entry_schema",
         ]
 
         for method in expected_methods:
@@ -311,11 +327,12 @@ async def test_api_compatibility() -> Optional[bool]:
 
     except Exception:
         import traceback
+
         traceback.print_exc()
         return False
 
 
-def test_performance_and_memory() -> Optional[bool]:
+def test_performance_and_memory() -> bool | None:
     """Testa que a refatoração não prejudicou performance ou uso de memória."""
     try:
         import gc

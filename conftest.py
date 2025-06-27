@@ -288,14 +288,18 @@ def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest with custom settings."""
     # Add custom markers
     config.addinivalue_line(
-        "markers", "integration: mark test as integration test",
+        "markers",
+        "integration: mark test as integration test",
     )
     config.addinivalue_line(
-        "markers", "slow: mark test as slow running test",
+        "markers",
+        "slow: mark test as slow running test",
     )
 
 
-def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
     """Modify test collection to add markers automatically."""
     for item in items:
         # Add integration marker to integration tests

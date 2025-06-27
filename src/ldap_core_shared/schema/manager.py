@@ -41,17 +41,16 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import ldap3
 from pydantic import BaseModel, Field
 
-from ldap_core_shared.ldif.processor import LDIFProcessor, LDIFProcessingConfig
-from ldap_core_shared.schema.validator import SchemaValidator, SchemaValidationConfig
+from ldap_core_shared.ldif.processor import LDIFProcessingConfig, LDIFProcessor
+from ldap_core_shared.schema.validator import SchemaValidationConfig, SchemaValidator
 from ldap_core_shared.utils.performance import PerformanceMonitor
 
 if TYPE_CHECKING:
@@ -63,22 +62,22 @@ logger = logging.getLogger(__name__)
 class SchemaOperationType(Enum):
     """Types of schema operations."""
 
-    INSTALL = "install"       # Install new schema
-    REMOVE = "remove"         # Remove existing schema
-    UPDATE = "update"         # Update existing schema
-    LIST = "list"            # List schemas
-    BACKUP = "backup"        # Backup schema
-    RESTORE = "restore"      # Restore from backup
-    VALIDATE = "validate"    # Validate schema
+    INSTALL = "install"  # Install new schema
+    REMOVE = "remove"  # Remove existing schema
+    UPDATE = "update"  # Update existing schema
+    LIST = "list"  # List schemas
+    BACKUP = "backup"  # Backup schema
+    RESTORE = "restore"  # Restore from backup
+    VALIDATE = "validate"  # Validate schema
 
 
 class SchemaOperationStatus(Enum):
     """Status of schema operations."""
 
-    PENDING = "pending"       # Operation pending
-    RUNNING = "running"       # Operation in progress
-    SUCCESS = "success"       # Operation successful
-    FAILED = "failed"         # Operation failed
+    PENDING = "pending"  # Operation pending
+    RUNNING = "running"  # Operation in progress
+    SUCCESS = "success"  # Operation successful
+    FAILED = "failed"  # Operation failed
     ROLLED_BACK = "rolled_back"  # Operation rolled back
 
 
@@ -87,8 +86,12 @@ class SchemaDependency(BaseModel):
 
     schema_name: str = Field(description="Dependent schema name")
     dependency_type: str = Field(description="Type of dependency")
-    required_version: Optional[str] = Field(default=None, description="Required version")
-    is_optional: bool = Field(default=False, description="Whether dependency is optional")
+    required_version: str | None = Field(
+        default=None, description="Required version",
+    )
+    is_optional: bool = Field(
+        default=False, description="Whether dependency is optional",
+    )
 
 
 class SchemaInfo(BaseModel):
@@ -98,27 +101,35 @@ class SchemaInfo(BaseModel):
     dn: str = Field(description="Schema DN")
 
     # Metadata
-    installed_at: Optional[datetime] = Field(default=None, description="Installation timestamp")
-    version: Optional[str] = Field(default=None, description="Schema version")
-    description: Optional[str] = Field(default=None, description="Schema description")
+    installed_at: datetime | None = Field(
+        default=None, description="Installation timestamp",
+    )
+    version: str | None = Field(default=None, description="Schema version")
+    description: str | None = Field(default=None, description="Schema description")
 
     # Components
-    attribute_types_count: int = Field(default=0, description="Number of attribute types")
+    attribute_types_count: int = Field(
+        default=0, description="Number of attribute types",
+    )
     object_classes_count: int = Field(default=0, description="Number of object classes")
     syntaxes_count: int = Field(default=0, description="Number of syntaxes")
     matching_rules_count: int = Field(default=0, description="Number of matching rules")
 
     # Dependencies
     dependencies: list[SchemaDependency] = Field(
-        default_factory=list, description="Schema dependencies",
+        default_factory=list,
+        description="Schema dependencies",
     )
 
     dependents: list[str] = Field(
-        default_factory=list, description="Schemas that depend on this one",
+        default_factory=list,
+        description="Schemas that depend on this one",
     )
 
     # Status
-    is_system_schema: bool = Field(default=False, description="Whether this is a system schema")
+    is_system_schema: bool = Field(
+        default=False, description="Whether this is a system schema",
+    )
     is_readonly: bool = Field(default=False, description="Whether schema is read-only")
 
 
@@ -129,57 +140,70 @@ class SchemaOperation(BaseModel):
     operation_type: SchemaOperationType = Field(description="Type of operation")
 
     # Target information
-    schema_name: Optional[str] = Field(default=None, description="Target schema name")
-    schema_dn: Optional[str] = Field(default=None, description="Target schema DN")
+    schema_name: str | None = Field(default=None, description="Target schema name")
+    schema_dn: str | None = Field(default=None, description="Target schema DN")
 
     # Operation details
     parameters: dict[str, Any] = Field(
-        default_factory=dict, description="Operation parameters",
+        default_factory=dict,
+        description="Operation parameters",
     )
 
     # Status tracking
     status: SchemaOperationStatus = Field(
-        default=SchemaOperationStatus.PENDING, description="Operation status",
+        default=SchemaOperationStatus.PENDING,
+        description="Operation status",
     )
 
-    error_message: Optional[str] = Field(default=None, description="Error message if failed")
+    error_message: str | None = Field(
+        default=None, description="Error message if failed",
+    )
 
     # Timing
-    started_at: Optional[datetime] = Field(default=None, description="Operation start time")
-    completed_at: Optional[datetime] = Field(default=None, description="Operation completion time")
+    started_at: datetime | None = Field(
+        default=None, description="Operation start time",
+    )
+    completed_at: datetime | None = Field(
+        default=None, description="Operation completion time",
+    )
 
     # Results
     result_data: dict[str, Any] = Field(
-        default_factory=dict, description="Operation result data",
+        default_factory=dict,
+        description="Operation result data",
     )
 
     changes_made: list[str] = Field(
-        default_factory=list, description="List of changes made",
+        default_factory=list,
+        description="List of changes made",
     )
 
     # Rollback information
-    rollback_data: Optional[dict[str, Any]] = Field(
-        default=None, description="Data needed for rollback",
+    rollback_data: dict[str, Any] | None = Field(
+        default=None,
+        description="Data needed for rollback",
     )
 
     def start_operation(self) -> None:
         """Mark operation as started."""
         self.status = SchemaOperationStatus.RUNNING
-        self.started_at = datetime.now(timezone.utc)
+        self.started_at = datetime.now(UTC)
 
-    def complete_operation(self, success: bool, error: Optional[str] = None) -> None:
+    def complete_operation(self, success: bool, error: str | None = None) -> None:
         """Mark operation as completed.
 
         Args:
             success: Whether operation was successful
             error: Error message if operation failed
         """
-        self.status = SchemaOperationStatus.SUCCESS if success else SchemaOperationStatus.FAILED
-        self.completed_at = datetime.now(timezone.utc)
+        self.status = (
+            SchemaOperationStatus.SUCCESS if success else SchemaOperationStatus.FAILED
+        )
+        self.completed_at = datetime.now(UTC)
         if error:
             self.error_message = error
 
-    def get_duration(self) -> Optional[float]:
+    def get_duration(self) -> float | None:
         """Get operation duration in seconds.
 
         Returns:
@@ -201,17 +225,18 @@ class SchemaBackup(BaseModel):
     # Backup content
     backup_ldif: str = Field(description="Complete LDIF backup")
     metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Backup metadata",
+        default_factory=dict,
+        description="Backup metadata",
     )
 
     # Timing
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Backup creation time",
     )
 
     # Verification
-    checksum: Optional[str] = Field(default=None, description="Backup checksum")
+    checksum: str | None = Field(default=None, description="Backup checksum")
     size_bytes: int = Field(default=0, description="Backup size in bytes")
 
 
@@ -269,46 +294,57 @@ class SchemaManager:
         """
         schemas = []
         performance_monitor = PerformanceMonitor()
-        
+
         with performance_monitor.track_operation("list_schemas"):
             try:
                 if not self._connection:
                     logger.warning("No LDAP connection available for schema listing")
                     return self._get_fallback_schema_list(include_system)
-                
+
                 # Try to search for schema entries in cn=schema,cn=config
                 try:
                     self._connection.search(
                         search_base=self._base_schema_dn,
                         search_filter="(objectClass=olcSchemaConfig)",
                         search_scope=ldap3.LEVEL,
-                        attributes=["cn", "objectClass", "createTimestamp", "modifyTimestamp"],
+                        attributes=[
+                            "cn",
+                            "objectClass",
+                            "createTimestamp",
+                            "modifyTimestamp",
+                        ],
                     )
-                    
+
                     for entry in self._connection.entries:
-                        schema_name = str(entry.cn.value) if hasattr(entry, 'cn') else "unknown"
+                        schema_name = (
+                            str(entry.cn.value) if hasattr(entry, "cn") else "unknown"
+                        )
                         schema_dn = entry.entry_dn
-                        
+
                         # Skip system schemas if not requested
                         if not include_system and self._is_system_schema(schema_name):
                             continue
-                            
+
                         # Get additional schema information
-                        schema_info = self._extract_schema_info(entry, schema_name, schema_dn)
+                        schema_info = self._extract_schema_info(
+                            entry, schema_name, schema_dn,
+                        )
                         schemas.append(schema_info)
-                        
+
                 except ldap3.LDAPException as e:
                     logger.warning("Failed to query schema entries: %s", e)
                     return self._get_fallback_schema_list(include_system)
-                    
+
             except Exception as e:
-                logger.error("Error listing schemas: %s", e)
+                logger.exception("Error listing schemas: %s", e)
                 return self._get_fallback_schema_list(include_system)
-                
-        logger.info("Listed %d schemas (include_system=%s)", len(schemas), include_system)
+
+        logger.info(
+            "Listed %d schemas (include_system=%s)", len(schemas), include_system,
+        )
         return schemas
 
-    def get_schema_info(self, schema_name: str) -> Optional[SchemaInfo]:
+    def get_schema_info(self, schema_name: str) -> SchemaInfo | None:
         """Get detailed information about a specific schema.
 
         Args:
@@ -318,49 +354,56 @@ class SchemaManager:
             Schema information or None if not found
         """
         performance_monitor = PerformanceMonitor()
-        
+
         with performance_monitor.track_operation("get_schema_info"):
             try:
                 if not self._connection:
                     logger.warning("No LDAP connection available for schema info")
                     return self._get_fallback_schema_info(schema_name)
-                    
+
                 # Search for specific schema entry
                 schema_dn = f"cn={schema_name},{self._base_schema_dn}"
-                
+
                 try:
                     self._connection.search(
                         search_base=schema_dn,
                         search_filter="(objectClass=olcSchemaConfig)",
                         search_scope=ldap3.BASE,
                         attributes=[
-                            "cn", "objectClass", "createTimestamp", "modifyTimestamp",
-                            "olcAttributeTypes", "olcObjectClasses", "description"
+                            "cn",
+                            "objectClass",
+                            "createTimestamp",
+                            "modifyTimestamp",
+                            "olcAttributeTypes",
+                            "olcObjectClasses",
+                            "description",
                         ],
                     )
-                    
+
                     if not self._connection.entries:
                         logger.warning("Schema '%s' not found", schema_name)
                         return None
-                        
+
                     entry = self._connection.entries[0]
-                    schema_info = self._extract_detailed_schema_info(entry, schema_name, schema_dn)
-                    
+                    schema_info = self._extract_detailed_schema_info(
+                        entry, schema_name, schema_dn,
+                    )
+
                     logger.info("Retrieved detailed info for schema '%s'", schema_name)
                     return schema_info
-                    
+
                 except ldap3.LDAPException as e:
                     logger.warning("Failed to query schema '%s': %s", schema_name, e)
                     return self._get_fallback_schema_info(schema_name)
-                    
+
             except Exception as e:
-                logger.error("Error getting schema info for '%s': %s", schema_name, e)
+                logger.exception("Error getting schema info for '%s': %s", schema_name, e)
                 return self._get_fallback_schema_info(schema_name)
 
     def install_schema_from_file(
         self,
         ldif_file_path: str,
-        schema_name: Optional[str] = None,
+        schema_name: str | None = None,
         dry_run: bool = False,
     ) -> SchemaOperation:
         """Install schema from LDIF file.
@@ -391,7 +434,9 @@ class SchemaManager:
             # create backup if needed, and install schema
 
             if dry_run:
-                operation.result_data["validation_results"] = "Schema validation passed (dry run)"
+                operation.result_data["validation_results"] = (
+                    "Schema validation passed (dry run)"
+                )
                 operation.complete_operation(success=True)
             else:
                 # Actual installation would go here
@@ -556,18 +601,18 @@ class SchemaManager:
             Schema backup information
         """
         performance_monitor = PerformanceMonitor()
-        
+
         with performance_monitor.track_operation("create_schema_backup"):
             backup_id = self._generate_backup_id(schema_name)
-            
+
             try:
                 # Extract schema LDIF
                 backup_ldif = self._extract_schema_ldif(schema_name)
-                
+
                 # Calculate checksum for integrity
-                checksum = hashlib.sha256(backup_ldif.encode('utf-8')).hexdigest()
-                size_bytes = len(backup_ldif.encode('utf-8'))
-                
+                checksum = hashlib.sha256(backup_ldif.encode("utf-8")).hexdigest()
+                size_bytes = len(backup_ldif.encode("utf-8"))
+
                 # Create metadata
                 metadata = {
                     "schema_name": schema_name,
@@ -576,7 +621,7 @@ class SchemaManager:
                     "backup_tool": "ldap-core-shared",
                     "backup_format": "ldif",
                 }
-                
+
                 # Create backup object
                 backup = SchemaBackup(
                     backup_id=backup_id,
@@ -586,27 +631,31 @@ class SchemaManager:
                     checksum=checksum,
                     size_bytes=size_bytes,
                 )
-                
+
                 # Store backup if backup is enabled
                 if self._backup_enabled:
                     self._store_backup(backup)
-                    
+
                 self._backups.append(backup)
-                
+
                 logger.info(
                     "Created backup for schema '%s': %s (%d bytes)",
-                    schema_name, backup_id, size_bytes
+                    schema_name,
+                    backup_id,
+                    size_bytes,
                 )
-                
+
                 return backup
-                
+
             except Exception as e:
-                logger.error("Failed to create backup for schema '%s': %s", schema_name, e)
+                logger.exception(
+                    "Failed to create backup for schema '%s': %s", schema_name, e,
+                )
                 # Return minimal backup with error information
                 return SchemaBackup(
                     backup_id=backup_id,
                     schema_name=schema_name,
-                    backup_ldif=f"# Backup failed: {str(e)}",
+                    backup_ldif=f"# Backup failed: {e!s}",
                     metadata={"error": str(e), "backup_failed": True},
                     checksum="",
                     size_bytes=0,
@@ -626,31 +675,29 @@ class SchemaManager:
             operation_type=SchemaOperationType.RESTORE,
             parameters={"backup_id": backup_id},
         )
-        
+
         operation.start_operation()
-        
+
         try:
             # Find backup
             backup = self._find_backup(backup_id)
             if not backup:
                 operation.complete_operation(
-                    success=False,
-                    error=f"Backup '{backup_id}' not found"
+                    success=False, error=f"Backup '{backup_id}' not found",
                 )
                 self._operations.append(operation)
                 return operation
-                
+
             operation.schema_name = backup.schema_name
-            
+
             # Verify backup integrity
             if not self._verify_backup_integrity(backup):
                 operation.complete_operation(
-                    success=False,
-                    error=f"Backup '{backup_id}' failed integrity check"
+                    success=False, error=f"Backup '{backup_id}' failed integrity check",
                 )
                 self._operations.append(operation)
                 return operation
-            
+
             # Create current schema backup before restore
             if self._safety_checks_enabled:
                 try:
@@ -661,11 +708,11 @@ class SchemaManager:
                     }
                 except Exception as e:
                     logger.warning("Failed to create rollback backup: %s", e)
-            
+
             # Restore schema from backup LDIF
             try:
                 restore_result = self._restore_from_ldif(backup.backup_ldif)
-                
+
                 if restore_result:
                     operation.result_data = {
                         "backup_id": backup_id,
@@ -674,26 +721,29 @@ class SchemaManager:
                         "backup_created": backup.created_at.isoformat(),
                         "restore_method": "ldif_import",
                     }
-                    operation.changes_made = [f"Restored schema '{backup.schema_name}' from backup '{backup_id}'"]
+                    operation.changes_made = [
+                        f"Restored schema '{backup.schema_name}' from backup '{backup_id}'",
+                    ]
                     operation.complete_operation(success=True)
-                    
-                    logger.info("Successfully restored schema '%s' from backup '%s'", 
-                              backup.schema_name, backup_id)
+
+                    logger.info(
+                        "Successfully restored schema '%s' from backup '%s'",
+                        backup.schema_name,
+                        backup_id,
+                    )
                 else:
                     operation.complete_operation(
-                        success=False,
-                        error="Schema restore operation failed"
+                        success=False, error="Schema restore operation failed",
                     )
-                    
+
             except Exception as e:
                 operation.complete_operation(
-                    success=False,
-                    error=f"Schema restore failed: {str(e)}"
+                    success=False, error=f"Schema restore failed: {e!s}",
                 )
-                
+
         except Exception as e:
             operation.complete_operation(success=False, error=str(e))
-            
+
         self._operations.append(operation)
         return operation
 
@@ -708,7 +758,7 @@ class SchemaManager:
         """
         errors = []
         performance_monitor = PerformanceMonitor()
-        
+
         with performance_monitor.track_operation("validate_schema_file"):
             try:
                 # Check if file exists
@@ -716,16 +766,16 @@ class SchemaManager:
                 if not file_path.exists():
                     errors.append(f"Schema file does not exist: {ldif_file_path}")
                     return errors
-                    
+
                 if not file_path.is_file():
                     errors.append(f"Path is not a file: {ldif_file_path}")
                     return errors
-                    
+
                 # Basic file checks
                 if file_path.stat().st_size == 0:
                     errors.append(f"Schema file is empty: {ldif_file_path}")
                     return errors
-                    
+
                 # Try to parse LDIF file
                 try:
                     config = LDIFProcessingConfig(
@@ -734,46 +784,50 @@ class SchemaManager:
                         error_tolerance=0,  # Strict validation
                     )
                     processor = LDIFProcessor(config)
-                    
+
                     # Process LDIF file
                     result = processor.process_ldif_file(str(file_path))
-                    
+
                     if not result.success:
                         errors.extend(result.errors)
                     else:
                         # Additional schema-specific validation
                         schema_errors = self._validate_schema_entries(result.entries)
                         errors.extend(schema_errors)
-                        
+
                 except Exception as e:
-                    errors.append(f"LDIF parsing error: {str(e)}")
-                    
+                    errors.append(f"LDIF parsing error: {e!s}")
+
                 # Schema syntax validation if available
                 try:
-                    schema_validator = SchemaValidator(
+                    SchemaValidator(
                         SchemaValidationConfig(
                             check_rfc_compliance=True,
                             check_dependencies=True,
                             check_name_conflicts=True,
                             check_oid_uniqueness=True,
-                        )
+                        ),
                     )
-                    
+
                     # Additional validation would go here if we had parsed schema
                     # For now, we rely on LDIF processing validation
-                    
+
                 except Exception as e:
                     logger.warning("Schema syntax validation failed: %s", e)
-                    errors.append(f"Schema syntax validation error: {str(e)}")
-                    
+                    errors.append(f"Schema syntax validation error: {e!s}")
+
             except Exception as e:
-                errors.append(f"Validation error: {str(e)}")
-                
+                errors.append(f"Validation error: {e!s}")
+
         if not errors:
             logger.info("Schema file validation passed: %s", ldif_file_path)
         else:
-            logger.warning("Schema file validation failed with %d errors: %s", len(errors), ldif_file_path)
-            
+            logger.warning(
+                "Schema file validation failed with %d errors: %s",
+                len(errors),
+                ldif_file_path,
+            )
+
         return errors
 
     def get_operations_history(self, limit: int = 100) -> list[SchemaOperation]:
@@ -787,7 +841,7 @@ class SchemaManager:
         """
         return self._operations[-limit:]
 
-    def get_operation_by_id(self, operation_id: str) -> Optional[SchemaOperation]:
+    def get_operation_by_id(self, operation_id: str) -> SchemaOperation | None:
         """Get operation by ID.
 
         Args:
@@ -808,46 +862,55 @@ class SchemaManager:
             Unique operation identifier
         """
         import uuid
+
         return str(uuid.uuid4())
-        
+
     def _generate_backup_id(self, schema_name: str) -> str:
         """Generate unique backup ID.
-        
+
         Args:
             schema_name: Name of schema being backed up
-            
+
         Returns:
             Unique backup identifier
         """
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         return f"{schema_name}_backup_{timestamp}"
-        
+
     def _is_system_schema(self, schema_name: str) -> bool:
         """Check if schema is a system schema.
-        
+
         Args:
             schema_name: Schema name to check
-            
+
         Returns:
             True if system schema
         """
         system_schemas = {
-            "core", "cosine", "inetorgperson", "nis", 
-            "openldap", "ppolicy", "system", "misc"
+            "core",
+            "cosine",
+            "inetorgperson",
+            "nis",
+            "openldap",
+            "ppolicy",
+            "system",
+            "misc",
         }
         return schema_name.lower() in system_schemas
-        
-    def _get_fallback_schema_list(self, include_system: bool = False) -> list[SchemaInfo]:
+
+    def _get_fallback_schema_list(
+        self, include_system: bool = False,
+    ) -> list[SchemaInfo]:
         """Get fallback schema list when LDAP query fails.
-        
+
         Args:
             include_system: Whether to include system schemas
-            
+
         Returns:
             List of basic schema info
         """
         fallback_schemas = []
-        
+
         # Common LDAP schemas
         schemas = [
             ("core", "Core LDAP schema", True),
@@ -856,11 +919,11 @@ class SchemaManager:
             ("nis", "Network Information Service", True),
             ("custom", "Custom application schema", False),
         ]
-        
+
         for schema_name, description, is_system in schemas:
             if not include_system and is_system:
                 continue
-                
+
             schema_info = SchemaInfo(
                 name=schema_name,
                 dn=f"cn={schema_name},{self._base_schema_dn}",
@@ -870,15 +933,15 @@ class SchemaManager:
                 object_classes_count=0,
             )
             fallback_schemas.append(schema_info)
-            
+
         return fallback_schemas
-        
-    def _get_fallback_schema_info(self, schema_name: str) -> Optional[SchemaInfo]:
+
+    def _get_fallback_schema_info(self, schema_name: str) -> SchemaInfo | None:
         """Get fallback schema info when LDAP query fails.
-        
+
         Args:
             schema_name: Schema name
-            
+
         Returns:
             Basic schema info or None
         """
@@ -890,33 +953,35 @@ class SchemaManager:
             attribute_types_count=0,
             object_classes_count=0,
         )
-        
-    def _extract_schema_info(self, entry: Any, schema_name: str, schema_dn: str) -> SchemaInfo:
+
+    def _extract_schema_info(
+        self, entry: Any, schema_name: str, schema_dn: str,
+    ) -> SchemaInfo:
         """Extract schema information from LDAP entry.
-        
+
         Args:
             entry: LDAP entry
             schema_name: Schema name
             schema_dn: Schema DN
-            
+
         Returns:
             Schema information
         """
         # Extract timestamps
         installed_at = None
-        if hasattr(entry, 'createTimestamp') and entry.createTimestamp.value:
+        if hasattr(entry, "createTimestamp") and entry.createTimestamp.value:
             installed_at = entry.createTimestamp.value
-            
+
         # Count components if available
         attr_count = 0
         obj_count = 0
-        
-        if hasattr(entry, 'olcAttributeTypes') and entry.olcAttributeTypes.value:
+
+        if hasattr(entry, "olcAttributeTypes") and entry.olcAttributeTypes.value:
             attr_count = len(entry.olcAttributeTypes.value)
-            
-        if hasattr(entry, 'olcObjectClasses') and entry.olcObjectClasses.value:
+
+        if hasattr(entry, "olcObjectClasses") and entry.olcObjectClasses.value:
             obj_count = len(entry.olcObjectClasses.value)
-            
+
         return SchemaInfo(
             name=schema_name,
             dn=schema_dn,
@@ -925,46 +990,48 @@ class SchemaManager:
             object_classes_count=obj_count,
             is_system_schema=self._is_system_schema(schema_name),
         )
-        
-    def _extract_detailed_schema_info(self, entry: Any, schema_name: str, schema_dn: str) -> SchemaInfo:
+
+    def _extract_detailed_schema_info(
+        self, entry: Any, schema_name: str, schema_dn: str,
+    ) -> SchemaInfo:
         """Extract detailed schema information from LDAP entry.
-        
+
         Args:
             entry: LDAP entry
             schema_name: Schema name
             schema_dn: Schema DN
-            
+
         Returns:
             Detailed schema information
         """
         # Start with basic info
         schema_info = self._extract_schema_info(entry, schema_name, schema_dn)
-        
+
         # Add description if available
-        if hasattr(entry, 'description') and entry.description.value:
+        if hasattr(entry, "description") and entry.description.value:
             schema_info.description = str(entry.description.value)
-            
+
         # TODO: Extract dependencies and dependents
         # This would require analyzing attribute types and object classes
         # for references to other schemas
-        
+
         return schema_info
-        
+
     def _extract_schema_ldif(self, schema_name: str) -> str:
         """Extract schema as LDIF.
-        
+
         Args:
             schema_name: Name of schema to extract
-            
+
         Returns:
             Schema LDIF content
         """
         try:
             if not self._connection:
                 return f"# No connection available for schema '{schema_name}'\n"
-                
+
             schema_dn = f"cn={schema_name},{self._base_schema_dn}"
-            
+
             # Search for schema entry with all attributes
             self._connection.search(
                 search_base=schema_dn,
@@ -972,46 +1039,45 @@ class SchemaManager:
                 search_scope=ldap3.BASE,
                 attributes=ldap3.ALL_ATTRIBUTES,
             )
-            
+
             if not self._connection.entries:
                 return f"# Schema '{schema_name}' not found\n"
-                
+
             # Convert to LDIF format
             entry = self._connection.entries[0]
             ldif_lines = [f"dn: {entry.entry_dn}"]
-            
+
             for attr_name, attr_values in entry.entry_attributes_as_dict.items():
                 if isinstance(attr_values, list):
-                    for value in attr_values:
-                        ldif_lines.append(f"{attr_name}: {value}")
+                    ldif_lines.extend(f"{attr_name}: {value}" for value in attr_values)
                 else:
                     ldif_lines.append(f"{attr_name}: {attr_values}")
-                    
+
             ldif_lines.append("")  # Empty line at end
-            
+
             return "\n".join(ldif_lines)
-            
+
         except Exception as e:
-            logger.error("Failed to extract LDIF for schema '%s': %s", schema_name, e)
-            return f"# Error extracting schema '{schema_name}': {str(e)}\n"
-            
+            logger.exception("Failed to extract LDIF for schema '%s': %s", schema_name, e)
+            return f"# Error extracting schema '{schema_name}': {e!s}\n"
+
     def _get_server_info(self) -> str:
         """Get LDAP server information.
-        
+
         Returns:
             Server information string
         """
         try:
-            if self._connection and hasattr(self._connection, 'server'):
+            if self._connection and hasattr(self._connection, "server"):
                 server = self._connection.server
                 return f"{server.host}:{server.port}"
         except Exception:
             pass
         return "unknown"
-        
+
     def _store_backup(self, backup: SchemaBackup) -> None:
         """Store backup to persistent storage.
-        
+
         Args:
             backup: Backup to store
         """
@@ -1019,11 +1085,11 @@ class SchemaManager:
             # Create backups directory if it doesn't exist
             backup_dir = Path("backups/schemas")
             backup_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Store LDIF content
             backup_file = backup_dir / f"{backup.backup_id}.ldif"
-            backup_file.write_text(backup.backup_ldif, encoding='utf-8')
-            
+            backup_file.write_text(backup.backup_ldif, encoding="utf-8")
+
             # Store metadata
             metadata_file = backup_dir / f"{backup.backup_id}.json"
             metadata = {
@@ -1034,19 +1100,19 @@ class SchemaManager:
                 "size_bytes": backup.size_bytes,
                 "metadata": backup.metadata,
             }
-            metadata_file.write_text(json.dumps(metadata, indent=2), encoding='utf-8')
-            
+            metadata_file.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+
             logger.debug("Stored backup '%s' to %s", backup.backup_id, backup_file)
-            
+
         except Exception as e:
             logger.warning("Failed to store backup '%s': %s", backup.backup_id, e)
-            
-    def _find_backup(self, backup_id: str) -> Optional[SchemaBackup]:
+
+    def _find_backup(self, backup_id: str) -> SchemaBackup | None:
         """Find backup by ID.
-        
+
         Args:
             backup_id: Backup identifier
-            
+
         Returns:
             Backup object or None
         """
@@ -1054,18 +1120,18 @@ class SchemaManager:
         for backup in self._backups:
             if backup.backup_id == backup_id:
                 return backup
-                
+
         # Try to load from disk
         try:
             backup_dir = Path("backups/schemas")
             metadata_file = backup_dir / f"{backup_id}.json"
             backup_file = backup_dir / f"{backup_id}.ldif"
-            
+
             if metadata_file.exists() and backup_file.exists():
-                metadata = json.loads(metadata_file.read_text(encoding='utf-8'))
-                ldif_content = backup_file.read_text(encoding='utf-8')
-                
-                backup = SchemaBackup(
+                metadata = json.loads(metadata_file.read_text(encoding="utf-8"))
+                ldif_content = backup_file.read_text(encoding="utf-8")
+
+                return SchemaBackup(
                     backup_id=metadata["backup_id"],
                     schema_name=metadata["schema_name"],
                     backup_ldif=ldif_content,
@@ -1074,46 +1140,51 @@ class SchemaManager:
                     checksum=metadata["checksum"],
                     size_bytes=metadata["size_bytes"],
                 )
-                
-                return backup
-                
+
         except Exception as e:
             logger.warning("Failed to load backup '%s' from disk: %s", backup_id, e)
-            
+
         return None
-        
+
     def _verify_backup_integrity(self, backup: SchemaBackup) -> bool:
         """Verify backup integrity.
-        
+
         Args:
             backup: Backup to verify
-            
+
         Returns:
             True if backup is valid
         """
         try:
             if not backup.checksum:
-                logger.warning("Backup '%s' has no checksum - cannot verify integrity", backup.backup_id)
+                logger.warning(
+                    "Backup '%s' has no checksum - cannot verify integrity",
+                    backup.backup_id,
+                )
                 return True  # Allow backups without checksums
-                
-            calculated_checksum = hashlib.sha256(backup.backup_ldif.encode('utf-8')).hexdigest()
-            
+
+            calculated_checksum = hashlib.sha256(
+                backup.backup_ldif.encode("utf-8"),
+            ).hexdigest()
+
             if calculated_checksum != backup.checksum:
                 logger.error("Backup '%s' failed integrity check", backup.backup_id)
                 return False
-                
+
             return True
-            
+
         except Exception as e:
-            logger.error("Error verifying backup '%s' integrity: %s", backup.backup_id, e)
+            logger.exception(
+                "Error verifying backup '%s' integrity: %s", backup.backup_id, e,
+            )
             return False
-            
+
     def _restore_from_ldif(self, ldif_content: str) -> bool:
         """Restore schema from LDIF content.
-        
+
         Args:
             ldif_content: LDIF content to restore
-            
+
         Returns:
             True if restore successful
         """
@@ -1121,105 +1192,114 @@ class SchemaManager:
             if not self._connection:
                 logger.error("No LDAP connection available for restore")
                 return False
-                
+
             # Parse LDIF content
             ldif_entries = []
             current_entry = {}
-            
-            for line in ldif_content.split('\n'):
-                line = line.strip()
+
+            for raw_line in ldif_content.split("\n"):
+                line = raw_line.strip()
                 if not line:
                     if current_entry:
                         ldif_entries.append(current_entry)
                         current_entry = {}
                     continue
-                    
-                if line.startswith('#'):
+
+                if line.startswith("#"):
                     continue
-                    
-                if ':' in line:
-                    key, value = line.split(':', 1)
+
+                if ":" in line:
+                    key, value = line.split(":", 1)
                     key = key.strip()
                     value = value.strip()
-                    
-                    if key == 'dn':
-                        current_entry['dn'] = value
+
+                    if key == "dn":
+                        current_entry["dn"] = value
                     else:
-                        if 'attributes' not in current_entry:
-                            current_entry['attributes'] = {}
-                        if key not in current_entry['attributes']:
-                            current_entry['attributes'][key] = []
-                        current_entry['attributes'][key].append(value)
-                        
+                        if "attributes" not in current_entry:
+                            current_entry["attributes"] = {}
+                        if key not in current_entry["attributes"]:
+                            current_entry["attributes"][key] = []
+                        current_entry["attributes"][key].append(value)
+
             # Add last entry if exists
             if current_entry:
                 ldif_entries.append(current_entry)
-                
+
             # Apply entries to LDAP server
             for entry in ldif_entries:
                 try:
-                    dn = entry.get('dn')
-                    attributes = entry.get('attributes', {})
-                    
+                    dn = entry.get("dn")
+                    attributes = entry.get("attributes", {})
+
                     if not dn:
                         continue
-                        
+
                     # Try to modify existing entry or add new one
                     try:
                         # Try modify first
                         changes = {}
                         for attr_name, attr_values in attributes.items():
                             changes[attr_name] = [(ldap3.MODIFY_REPLACE, attr_values)]
-                            
+
                         self._connection.modify(dn, changes)
-                        
+
                     except ldap3.LDAPException:
                         # If modify fails, try add
                         self._connection.add(dn, attributes=attributes)
-                        
+
                 except Exception as e:
-                    logger.warning("Failed to restore entry '%s': %s", entry.get('dn', 'unknown'), e)
-                    
+                    logger.warning(
+                        "Failed to restore entry '%s': %s",
+                        entry.get("dn", "unknown"),
+                        e,
+                    )
+
             return True
-            
+
         except Exception as e:
-            logger.error("Failed to restore from LDIF: %s", e)
+            logger.exception("Failed to restore from LDIF: %s", e)
             return False
-            
+
     def _validate_schema_entries(self, entries: list[Any]) -> list[str]:
         """Validate schema entries.
-        
+
         Args:
             entries: LDIF entries to validate
-            
+
         Returns:
             List of validation errors
         """
         errors = []
-        
+
         try:
             for entry in entries:
                 # Basic DN validation
-                if not hasattr(entry, 'dn') or not entry.dn:
+                if not hasattr(entry, "dn") or not entry.dn:
                     errors.append("Entry missing DN")
                     continue
-                    
+
                 # Check for required schema attributes
-                if 'olcAttributeTypes' in entry.attributes or 'olcObjectClasses' in entry.attributes:
+                if (
+                    "olcAttributeTypes" in entry.attributes
+                    or "olcObjectClasses" in entry.attributes
+                ):
                     # This looks like a schema entry
-                    if 'objectClass' not in entry.attributes:
+                    if "objectClass" not in entry.attributes:
                         errors.append(f"Schema entry '{entry.dn}' missing objectClass")
-                        
+
                     # Check for proper schema object classes
-                    obj_classes = entry.attributes.get('objectClass', [])
-                    schema_classes = {'olcSchemaConfig', 'olcConfig'}
-                    
+                    obj_classes = entry.attributes.get("objectClass", [])
+                    schema_classes = {"olcSchemaConfig", "olcConfig"}
+
                     if not any(oc in schema_classes for oc in obj_classes):
-                        errors.append(f"Entry '{entry.dn}' doesn't appear to be a schema entry")
-                        
+                        errors.append(
+                            f"Entry '{entry.dn}' doesn't appear to be a schema entry",
+                        )
+
         except Exception as e:
-            errors.append(f"Error validating schema entries: {str(e)}")
-            
+            errors.append(f"Error validating schema entries: {e!s}")
+
         return errors
 
     def get_statistics(self) -> dict[str, Any]:
@@ -1230,8 +1310,20 @@ class SchemaManager:
         """
         stats = {
             "total_operations": len(self._operations),
-            "successful_operations": len([op for op in self._operations if op.status == SchemaOperationStatus.SUCCESS]),
-            "failed_operations": len([op for op in self._operations if op.status == SchemaOperationStatus.FAILED]),
+            "successful_operations": len(
+                [
+                    op
+                    for op in self._operations
+                    if op.status == SchemaOperationStatus.SUCCESS
+                ],
+            ),
+            "failed_operations": len(
+                [
+                    op
+                    for op in self._operations
+                    if op.status == SchemaOperationStatus.FAILED
+                ],
+            ),
             "backups_created": len(self._backups),
             "safety_checks_enabled": self._safety_checks_enabled,
             "backup_enabled": self._backup_enabled,
@@ -1249,7 +1341,7 @@ class SchemaManager:
 def install_schema_from_file(
     connection: Any,
     ldif_file_path: str,
-    schema_name: Optional[str] = None,
+    schema_name: str | None = None,
 ) -> SchemaOperation:
     """Install schema from file (convenience function).
 
