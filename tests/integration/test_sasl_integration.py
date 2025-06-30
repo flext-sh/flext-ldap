@@ -96,8 +96,9 @@ class TestSASLClientIntegration:
     def test_sasl_authentication_workflow_integration(self) -> None:
         """Test SASL authentication workflow simulation."""
         try:
-            from ldap_core_shared.protocols.sasl.client import SASLClient
             from ldap_core_shared.protocols.sasl.models import SASLResponse
+
+            from ldap_core_shared.protocols.sasl.client import SASLClient
 
             # Create and configure client
             client = SASLClient()
@@ -134,8 +135,9 @@ class TestSASLClientIntegration:
     def test_sasl_plain_mechanism_integration(self) -> None:
         """Test SASL PLAIN mechanism specifically."""
         try:
-            from ldap_core_shared.protocols.sasl.mechanisms.plain import PlainMechanism
             from ldap_core_shared.protocols.sasl.models import SASLCredentials
+
+            from ldap_core_shared.protocols.sasl.mechanisms.plain import PlainMechanism
 
             # Create credentials
             credentials = SASLCredentials(
@@ -383,17 +385,18 @@ def test_sasl_integration_summary() -> None:
     """Summary test to verify all SASL components work together."""
     try:
         # Import all SASL modules
-        from ldap_core_shared.cli.sasl import run_sasl_test
-        from ldap_core_shared.protocols.sasl import new
-        from ldap_core_shared.protocols.sasl.client import SASLClient
-        from ldap_core_shared.protocols.sasl.mechanisms import get_available_mechanisms
-        from ldap_core_shared.protocols.sasl.mechanisms.plain import PlainMechanism
         from ldap_core_shared.protocols.sasl.models import (
             SASLCredentials,
             SASLResponse,
             SASLSecurityCapabilities,
         )
         from ldap_core_shared.protocols.sasl.security import SecurityLayer
+
+        from ldap_core_shared.cli.sasl import run_sasl_test
+        from ldap_core_shared.protocols.sasl import new
+        from ldap_core_shared.protocols.sasl.client import SASLClient
+        from ldap_core_shared.protocols.sasl.mechanisms import get_available_mechanisms
+        from ldap_core_shared.protocols.sasl.mechanisms.plain import PlainMechanism
         from ldap_core_shared.protocols.sasl.server import SASLServer
 
         # Verify all components are available
