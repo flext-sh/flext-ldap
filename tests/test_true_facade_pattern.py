@@ -61,15 +61,11 @@ class TestImportsAndExports:
 
     def test_critical_imports_success(self) -> None:
         """Test that all critical imports work from main package."""
-        assert IMPORTS_SUCCESS, (
-            f"Critical imports failed: {IMPORT_ERROR if not IMPORTS_SUCCESS else 'Unknown error'}"
-        )
+        assert IMPORTS_SUCCESS, f"Critical imports failed: {IMPORT_ERROR if not IMPORTS_SUCCESS else 'Unknown error'}"
 
     def test_api_modules_imports_success(self) -> None:
         """Test that API modules can be imported individually."""
-        assert API_MODULES_SUCCESS, (
-            f"API modules import failed: {API_IMPORT_ERROR if not API_MODULES_SUCCESS else 'Unknown error'}"
-        )
+        assert API_MODULES_SUCCESS, f"API modules import failed: {API_IMPORT_ERROR if not API_MODULES_SUCCESS else 'Unknown error'}"
 
     def test_version_information_available(self) -> None:
         """Test that version information is properly exported."""
@@ -146,22 +142,22 @@ class TestLDAPConfigValueObject:
         try:
             result = await validate_ldap_config(config)
             # validate_ldap_config returns a Result object
-            assert hasattr(result, "success"), (
-                "validate_ldap_config should return Result object"
-            )
-            assert result.success is True, (
-                f"Config validation failed: {result.error if hasattr(result, 'error') else 'Unknown error'}"
-            )
+            assert hasattr(
+                result, "success"
+            ), "validate_ldap_config should return Result object"
+            assert (
+                result.success is True
+            ), f"Config validation failed: {result.error if hasattr(result, 'error') else 'Unknown error'}"
         except TypeError:
             # Not async, try sync
             result = validate_ldap_config(config)
             # validate_ldap_config returns a Result object
-            assert hasattr(result, "success"), (
-                "validate_ldap_config should return Result object"
-            )
-            assert result.success is True, (
-                f"Config validation failed: {result.error if hasattr(result, 'error') else 'Unknown error'}"
-            )
+            assert hasattr(
+                result, "success"
+            ), "validate_ldap_config should return Result object"
+            assert (
+                result.success is True
+            ), f"Config validation failed: {result.error if hasattr(result, 'error') else 'Unknown error'}"
 
 
 class TestResultPattern:
@@ -269,9 +265,9 @@ class TestTrueFacadePattern:
 
         for method_name in expected_methods:
             assert hasattr(ldap, method_name), f"Method {method_name} not found"
-            assert callable(getattr(ldap, method_name)), (
-                f"Method {method_name} not callable"
-            )
+            assert callable(
+                getattr(ldap, method_name)
+            ), f"Method {method_name} not callable"
 
     def test_ldap_facade_context_manager(self, mock_config) -> None:
         """Test LDAP facade works as context manager."""
@@ -469,9 +465,9 @@ class TestPerformanceCharacteristics:
 
         import_time = time.time() - start_time
         # Import should be very fast (under 100ms for lazy loading)
-        assert import_time < 0.1, (
-            f"Import took {import_time:.3f}s, too slow for lazy loading"
-        )
+        assert (
+            import_time < 0.1
+        ), f"Import took {import_time:.3f}s, too slow for lazy loading"
 
     def test_module_metadata(self) -> None:
         """Test that module metadata indicates refactoring."""

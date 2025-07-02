@@ -68,9 +68,9 @@ class TestConnectionPoolsWorkspaceCompliance:
         # Fixture automatically validates workspace venv usage
         expected_venv = "/home/marlonsc/pyauto/.venv"
         current_venv = os.environ.get("VIRTUAL_ENV")
-        assert current_venv == expected_venv, (
-            f"Pool tests must use workspace venv: {expected_venv}"
-        )
+        assert (
+            current_venv == expected_venv
+        ), f"Pool tests must use workspace venv: {expected_venv}"
 
     @pytest.mark.env_security
     def test_pool_env_security_enforcement(self, validate_env_security) -> None:
@@ -89,9 +89,9 @@ class TestConnectionPoolsWorkspaceCompliance:
                 if "pool" in key.lower() and (
                     "password" in key.lower() or "secret" in key.lower()
                 ):
-                    assert value.startswith("${") or len(value) == 0, (
-                        f"Hardcoded secret in pool config: {key}"
-                    )
+                    assert (
+                        value.startswith("${") or len(value) == 0
+                    ), f"Hardcoded secret in pool config: {key}"
 
     @pytest.mark.cli_debug
     def test_pool_cli_debug_patterns(self, cli_debug_patterns) -> None:

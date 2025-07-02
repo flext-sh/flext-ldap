@@ -556,9 +556,9 @@ class TestSOLIDPerformance:
             )
 
             # Should maintain high performance (>1000 entries/second even with SOLID overhead)
-            assert throughput > 1000, (
-                f"SOLID throughput {throughput:.0f} entries/s too low"
-            )
+            assert (
+                throughput > 1000
+            ), f"SOLID throughput {throughput:.0f} entries/s too low"
             assert total_entries == 100, "Should process all entries"
 
     @pytest.mark.asyncio
@@ -590,9 +590,9 @@ class TestSOLIDPerformance:
                 avg_acquisition_time = elapsed_time / 10
 
                 # Should be fast (<50ms per acquisition including SOLID overhead)
-                assert avg_acquisition_time < 0.05, (
-                    f"Acquisition time {avg_acquisition_time:.3f}s too slow"
-                )
+                assert (
+                    avg_acquisition_time < 0.05
+                ), f"Acquisition time {avg_acquisition_time:.3f}s too slow"
 
 
 # ============================================================================

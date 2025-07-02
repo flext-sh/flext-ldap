@@ -44,7 +44,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from flext_ldapsn1.constants import (
     ASN1_CONSTRUCTED,
@@ -64,7 +64,7 @@ if TYPE_CHECKING:
 DEFAULT_ENCODING = "BER"
 
 # ASN.1 value types - common data types that can be stored in ASN.1 elements
-ASN1Value = Union[str, int, bool, bytes, list[Any], dict[str, Any], datetime, None]
+ASN1Value = str, int, bool, bytes, list[Any, dict[str, Any], datetime, None]
 
 
 class ASN1ElementType(Enum):

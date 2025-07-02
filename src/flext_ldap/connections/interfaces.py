@@ -21,6 +21,12 @@ if TYPE_CHECKING:
     import ldap3
     from flext_ldapes import DN, Attributes
 
+    from flext_ldap.connections.base import (
+        LDAPConnectionInfo,
+        LDAPConnectionResult,
+        LDAPSearchConfig,
+    )
+
 
 # ============================================================================
 # 🔥 SINGLE RESPONSIBILITY PRINCIPLE - ONE PURPOSE PER INTERFACE

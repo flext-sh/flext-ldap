@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 from flext_ldapants import DEFAULT_MAX_ITEMS, DEFAULT_TIMEOUT_SECONDS
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldap.domain.results import LDAPOperationResult
+
 # Constants for magic values
 HTTP_OK = 200
 MIN_GOOD_DN_LENGTH = 20  # Minimum DN length for good structure

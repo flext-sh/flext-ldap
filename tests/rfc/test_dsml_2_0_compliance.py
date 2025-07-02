@@ -710,9 +710,9 @@ class TestDSML20ComprehensiveCompliance:
         }
 
         # All checks must pass for DSML 2.0 compliance
-        assert all(compliance_checks.values()), (
-            f"DSML 2.0 compliance failed: {compliance_checks}"
-        )
+        assert all(
+            compliance_checks.values()
+        ), f"DSML 2.0 compliance failed: {compliance_checks}"
 
     def test_interoperability_requirements(self) -> None:
         """DSML 2.0 - Interoperability requirements verification."""
@@ -802,6 +802,6 @@ class TestDSML20ComprehensiveCompliance:
         }
 
         # All security features must be supported
-        assert all(security_features.values()), (
-            f"DSML 2.0 security compliance failed: {security_features}"
-        )
+        assert all(
+            security_features.values()
+        ), f"DSML 2.0 security compliance failed: {security_features}"

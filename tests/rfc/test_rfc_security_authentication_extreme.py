@@ -647,12 +647,12 @@ class TestRFC4513AuthenticationExtreme:
 
             # Should have throttled some requests under DoS conditions
             if total_requests > 1000:  # Only check throttling for high volume
-                assert total_throttled > 0, (
-                    "DoS protection should have throttled some requests"
-                )
-                assert total_throttled / total_requests < 0.8, (
-                    "Too many requests throttled"
-                )
+                assert (
+                    total_throttled > 0
+                ), "DoS protection should have throttled some requests"
+                assert (
+                    total_throttled / total_requests < 0.8
+                ), "Too many requests throttled"
 
     @pytest.mark.asyncio
     async def test_certificate_validation_extreme(self) -> None:

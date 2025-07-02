@@ -530,9 +530,9 @@ class TestRFC5805ComprehensiveCompliance:
         }
 
         # All checks must pass for RFC compliance
-        assert all(compliance_checks.values()), (
-            f"RFC 5805 compliance failed: {compliance_checks}"
-        )
+        assert all(
+            compliance_checks.values()
+        ), f"RFC 5805 compliance failed: {compliance_checks}"
 
     def test_interoperability_requirements(self) -> None:
         """RFC 5805 - Interoperability requirements verification."""

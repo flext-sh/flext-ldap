@@ -57,6 +57,8 @@ import yaml  # type: ignore[import-untyped]
 # Removed circular import - Config is defined in this module
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
 
+from flext_ldap.core.exceptions import ConfigurationValidationError
+
 
 class Environment(Enum):
     """Environment types for configuration."""

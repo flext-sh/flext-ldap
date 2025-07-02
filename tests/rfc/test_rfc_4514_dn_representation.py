@@ -268,15 +268,15 @@ class TestRFC4514SpecialCharacterEscaping:
 
         for test in space_tests:
             escaped_result = DNParser.escape_attribute_value(test["value"])
-            assert escaped_result == test["escaped"], (
-                f"Failed for {test['description']}"
-            )
+            assert (
+                escaped_result == test["escaped"]
+            ), f"Failed for {test['description']}"
 
             # Test round-trip
             unescaped_result = DNParser.unescape_attribute_value(escaped_result)
-            assert unescaped_result == test["value"], (
-                f"Round-trip failed for {test['description']}"
-            )
+            assert (
+                unescaped_result == test["value"]
+            ), f"Round-trip failed for {test['description']}"
 
     def test_hex_escaping_mechanism(self) -> None:
         """RFC 4514 Section 3 - Hexadecimal escaping mechanism."""
@@ -308,15 +308,15 @@ class TestRFC4514SpecialCharacterEscaping:
         for test in hex_escape_tests:
             # Test hex escaping
             hex_escaped = DNParser.hex_escape_attribute_value(test["value"])
-            assert hex_escaped == test["hex_escaped"], (
-                f"Hex escaping failed for {test['description']}"
-            )
+            assert (
+                hex_escaped == test["hex_escaped"]
+            ), f"Hex escaping failed for {test['description']}"
 
             # Test hex unescaping
             unescaped = DNParser.hex_unescape_attribute_value(hex_escaped)
-            assert unescaped == test["value"], (
-                f"Hex unescaping failed for {test['description']}"
-            )
+            assert (
+                unescaped == test["value"]
+            ), f"Hex unescaping failed for {test['description']}"
 
     def test_hash_escaping_for_leading_hash(self) -> None:
         """RFC 4514 Section 3 - Leading hash character escaping."""
@@ -342,15 +342,15 @@ class TestRFC4514SpecialCharacterEscaping:
 
         for test in hash_tests:
             escaped_result = DNParser.escape_attribute_value(test["value"])
-            assert escaped_result == test["escaped"], (
-                f"Failed for {test['description']}"
-            )
+            assert (
+                escaped_result == test["escaped"]
+            ), f"Failed for {test['description']}"
 
             # Test round-trip
             unescaped_result = DNParser.unescape_attribute_value(escaped_result)
-            assert unescaped_result == test["value"], (
-                f"Round-trip failed for {test['description']}"
-            )
+            assert (
+                unescaped_result == test["value"]
+            ), f"Round-trip failed for {test['description']}"
 
 
 class TestRFC4514DNConstruction:
@@ -483,9 +483,9 @@ class TestRFC4514DNNormalization:
             parsed_dn = DNParser.parse(test["input"])
             canonical_dn = parsed_dn.canonical
 
-            assert canonical_dn == test["canonical"], (
-                f"Failed for {test['description']}"
-            )
+            assert (
+                canonical_dn == test["canonical"]
+            ), f"Failed for {test['description']}"
 
     def test_dn_comparison_equivalence(self) -> None:
         """RFC 4514 Section 4 - DN comparison equivalence."""
@@ -523,9 +523,9 @@ class TestRFC4514DNNormalization:
             dn2_parsed = DNParser.parse(test["dn2"])
 
             are_equivalent = dn1_parsed.is_equivalent(dn2_parsed)
-            assert are_equivalent == test["equivalent"], (
-                f"Failed for {test['description']}"
-            )
+            assert (
+                are_equivalent == test["equivalent"]
+            ), f"Failed for {test['description']}"
 
     def test_rdn_ordering_normalization(self) -> None:
         """RFC 4514 Section 4 - RDN ordering normalization."""
@@ -548,9 +548,9 @@ class TestRFC4514DNNormalization:
             parsed_rdn = DNParser.parse_rdn(test["input_rdn"])
             normalized = parsed_rdn.normalize()
 
-            assert normalized == test["normalized_rdn"], (
-                f"Failed for {test['description']}"
-            )
+            assert (
+                normalized == test["normalized_rdn"]
+            ), f"Failed for {test['description']}"
 
 
 class TestRFC4514DNValidation:
@@ -607,9 +607,9 @@ class TestRFC4514DNValidation:
 
         for test in validation_tests:
             is_valid = validator.validate_dn_syntax(test["dn"])
-            assert is_valid == test["valid"], (
-                f"Failed for {test['description']}: {test['dn']}"
-            )
+            assert (
+                is_valid == test["valid"]
+            ), f"Failed for {test['description']}: {test['dn']}"
 
     def test_attribute_type_validation(self) -> None:
         """RFC 4514 Section 5 - Attribute type validation."""
@@ -657,9 +657,9 @@ class TestRFC4514DNValidation:
 
         for test in attribute_type_tests:
             is_valid = validator.is_valid_attribute_type(test["attr_type"])
-            assert is_valid == test["valid"], (
-                f"Failed for {test['description']}: {test['attr_type']}"
-            )
+            assert (
+                is_valid == test["valid"]
+            ), f"Failed for {test['description']}: {test['attr_type']}"
 
     def test_escape_sequence_validation(self) -> None:
         """RFC 4514 Section 5 - Escape sequence validation."""
@@ -707,9 +707,9 @@ class TestRFC4514DNValidation:
 
         for test in escape_tests:
             is_valid = validator.validate_escape_sequences(test["value"])
-            assert is_valid == test["valid"], (
-                f"Failed for {test['description']}: {test['value']}"
-            )
+            assert (
+                is_valid == test["valid"]
+            ), f"Failed for {test['description']}: {test['value']}"
 
 
 class TestRFC4514ComprehensiveCompliance:
@@ -771,9 +771,9 @@ class TestRFC4514ComprehensiveCompliance:
         }
 
         # All checks must pass for RFC compliance
-        assert all(compliance_checks.values()), (
-            f"RFC 4514 compliance failed: {compliance_checks}"
-        )
+        assert all(
+            compliance_checks.values()
+        ), f"RFC 4514 compliance failed: {compliance_checks}"
 
     def test_dn_interoperability_scenarios(self) -> None:
         """RFC 4514 - DN interoperability with different systems."""

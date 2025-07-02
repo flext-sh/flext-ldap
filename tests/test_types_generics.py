@@ -1115,9 +1115,9 @@ class TestSpecification:
 
         for user, expected in test_cases:
             result = complex_spec.is_satisfied_by(user)
-            assert result == expected, (
-                f"Failed for user: {user.username}, age: {user.age}, active: {user.is_active}"
-            )
+            assert (
+                result == expected
+            ), f"Failed for user: {user.username}, age: {user.age}, active: {user.is_active}"
 
 
 if __name__ == "__main__":

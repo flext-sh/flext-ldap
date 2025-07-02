@@ -98,21 +98,21 @@ class TestWorkspaceVenvCompliance:
         expected_venv = "/home/marlonsc/pyauto/.venv"
         venv_path = Path(expected_venv)
 
-        assert venv_path.exists(), (
-            f"Workspace venv directory not found: {expected_venv}"
-        )
-        assert venv_path.is_dir(), (
-            f"Workspace venv path is not a directory: {expected_venv}"
-        )
+        assert (
+            venv_path.exists()
+        ), f"Workspace venv directory not found: {expected_venv}"
+        assert (
+            venv_path.is_dir()
+        ), f"Workspace venv path is not a directory: {expected_venv}"
 
         # Validate key venv components exist
         bin_dir = venv_path / "bin"
         assert bin_dir.exists(), f"Workspace venv bin directory not found: {bin_dir}"
 
         python_exe = bin_dir / "python"
-        assert python_exe.exists(), (
-            f"Python executable not found in workspace venv: {python_exe}"
-        )
+        assert (
+            python_exe.exists()
+        ), f"Python executable not found in workspace venv: {python_exe}"
 
     @pytest.mark.workspace_integration
     def test_python_executable_workspace_venv_validation(self) -> None:
@@ -216,9 +216,9 @@ class TestEnvSecurityCompliance:
             for key, value in os.environ.items():
                 if "ldap_core" in key.lower():
                     for pattern in insecure_patterns:
-                        assert pattern not in value.lower(), (
-                            f"Insecure pattern detected in {key}: {pattern}"
-                        )
+                        assert (
+                            pattern not in value.lower()
+                        ), f"Insecure pattern detected in {key}: {pattern}"
 
 
 class TestCLIDebugPatternsCompliance:
@@ -325,9 +325,9 @@ class TestSOLIDPrinciplesCompliance:
             for m in connection_info_methods
             if "config" in m.lower() or "validate" in m.lower()
         ]
-        assert len(config_methods) > 0, (
-            "LDAPConnectionInfo should have configuration methods"
-        )
+        assert (
+            len(config_methods) > 0
+        ), "LDAPConnectionInfo should have configuration methods"
 
     @pytest.mark.solid_compliance
     def test_open_closed_principle_validation(
@@ -448,9 +448,9 @@ class TestWorkspaceCoordinationCompliance:
         expected_projects = ["algar-oud-mig", "flx-ldap", "tap-ldap", "target-ldap"]
 
         for project in expected_projects:
-            assert project in dependent_projects, (
-                f"Missing dependent project: {project}"
-            )
+            assert (
+                project in dependent_projects
+            ), f"Missing dependent project: {project}"
 
     @pytest.mark.workspace_integration
     def test_shared_library_integration_patterns(self) -> None:
@@ -587,12 +587,12 @@ class TestLDAPSpecificCompliancePatterns:
 
         # Validate performance targets are realistic
         for operation, target_ms in performance_targets.items():
-            assert target_ms > 0, (
-                f"Invalid performance target for {operation}: {target_ms}ms"
-            )
-            assert target_ms < 10000, (
-                f"Performance target too high for {operation}: {target_ms}ms"
-            )
+            assert (
+                target_ms > 0
+            ), f"Invalid performance target for {operation}: {target_ms}ms"
+            assert (
+                target_ms < 10000
+            ), f"Performance target too high for {operation}: {target_ms}ms"
 
     @pytest.mark.workspace_integration
     def test_ldap_integration_requirements_validation(self) -> None:

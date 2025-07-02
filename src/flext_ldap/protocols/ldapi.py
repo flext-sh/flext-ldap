@@ -52,6 +52,8 @@ from urllib.parse import unquote, urlparse
 
 from pydantic import BaseModel, Field, validator
 
+from flext_ldap.exceptions.connection import LDAPConnectionError
+
 
 class LDAPIAuthMethod(Enum):
     """Authentication methods for LDAPI connections."""

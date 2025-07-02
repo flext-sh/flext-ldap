@@ -57,6 +57,8 @@ from flext_ldapase import (
 )
 from pydantic import BaseModel, Field, validator
 
+from flext_ldap.exceptions.connection import LDAPConnectionError
+
 
 class SSLVersion(Enum):
     """SSL/TLS protocol versions."""

@@ -12,6 +12,9 @@ from typing import TYPE_CHECKING
 from flext_ldapsor import LDIFEntry
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldap.domain.results import LDAPOperationResult
+from flext_ldap.ldif.writer import LDIFHeaderConfig, LDIFWriter
+
 if TYPE_CHECKING:
     from pathlib import Path
 

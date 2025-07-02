@@ -84,9 +84,9 @@ class TestRFC4515FilterStringRepresentation:
         for test in component_tests:
             parsed = parser.parse(test["filter"])
             assert parsed is not None, f"Failed to parse {test['description']}"
-            assert parsed.filter_type == test["type"], (
-                f"Wrong type for {test['description']}"
-            )
+            assert (
+                parsed.filter_type == test["type"]
+            ), f"Wrong type for {test['description']}"
 
     def test_attribute_description_format(self) -> None:
         """RFC 4515 Section 3 - Attribute description format."""
@@ -220,9 +220,9 @@ class TestRFC4515EqualityFilters:
 
             # Verify unescaped value
             unescaped = parser.unescape_filter_value(parsed.value)
-            assert unescaped == test["unescaped_value"], (
-                f"Unescaping failed for {test['description']}"
-            )
+            assert (
+                unescaped == test["unescaped_value"]
+            ), f"Unescaping failed for {test['description']}"
 
     def test_equality_filter_builder(self) -> None:
         """RFC 4515 Section 3 - Equality filter construction."""
@@ -301,9 +301,9 @@ class TestRFC4515SubstringFilters:
         for test in substring_tests:
             parsed = parser.parse(test["filter"])
             assert parsed is not None, f"Failed to parse {test['description']}"
-            assert parsed.filter_type == "substring", (
-                f"Wrong type for {test['description']}"
-            )
+            assert (
+                parsed.filter_type == "substring"
+            ), f"Wrong type for {test['description']}"
 
             # Verify substring components
             if test["initial"]:
@@ -407,12 +407,12 @@ class TestRFC4515PresenceFilters:
         for test in presence_tests:
             parsed = parser.parse(test["filter"])
             assert parsed is not None, f"Failed for {test['description']}"
-            assert parsed.filter_type == "presence", (
-                f"Wrong type for {test['description']}"
-            )
-            assert parsed.attribute == test["attribute"], (
-                f"Wrong attribute for {test['description']}"
-            )
+            assert (
+                parsed.filter_type == "presence"
+            ), f"Wrong type for {test['description']}"
+            assert (
+                parsed.attribute == test["attribute"]
+            ), f"Wrong attribute for {test['description']}"
 
     def test_presence_filter_builder(self) -> None:
         """RFC 4515 Section 3 - Presence filter construction."""
@@ -467,9 +467,9 @@ class TestRFC4515ComparisonFilters:
         for test in gte_tests:
             parsed = parser.parse(test["filter"])
             assert parsed is not None, f"Failed for {test['description']}"
-            assert parsed.filter_type == "greaterOrEqual", (
-                f"Wrong type for {test['description']}"
-            )
+            assert (
+                parsed.filter_type == "greaterOrEqual"
+            ), f"Wrong type for {test['description']}"
             assert parsed.attribute == test["attribute"]
             assert parsed.value == test["value"]
 
@@ -503,9 +503,9 @@ class TestRFC4515ComparisonFilters:
         for test in lte_tests:
             parsed = parser.parse(test["filter"])
             assert parsed is not None, f"Failed for {test['description']}"
-            assert parsed.filter_type == "lessOrEqual", (
-                f"Wrong type for {test['description']}"
-            )
+            assert (
+                parsed.filter_type == "lessOrEqual"
+            ), f"Wrong type for {test['description']}"
             assert parsed.attribute == test["attribute"]
             assert parsed.value == test["value"]
 
@@ -533,9 +533,9 @@ class TestRFC4515ComparisonFilters:
         for test in approx_tests:
             parsed = parser.parse(test["filter"])
             assert parsed is not None, f"Failed for {test['description']}"
-            assert parsed.filter_type == "approxMatch", (
-                f"Wrong type for {test['description']}"
-            )
+            assert (
+                parsed.filter_type == "approxMatch"
+            ), f"Wrong type for {test['description']}"
             assert parsed.attribute == test["attribute"]
             assert parsed.value == test["value"]
 
@@ -715,9 +715,9 @@ class TestRFC4515ExtensibleMatching:
         for test in extensible_tests:
             parsed = parser.parse(test["filter"])
             assert parsed is not None, f"Failed for {test['description']}"
-            assert parsed.filter_type == "extensibleMatch", (
-                f"Wrong type for {test['description']}"
-            )
+            assert (
+                parsed.filter_type == "extensibleMatch"
+            ), f"Wrong type for {test['description']}"
 
             if test["attribute"]:
                 assert parsed.attribute == test["attribute"]
@@ -820,9 +820,9 @@ class TestRFC4515FilterValidation:
 
         for test in validation_tests:
             is_valid = validator.validate_filter_syntax(test["filter"])
-            assert is_valid == test["valid"], (
-                f"Validation failed for {test['description']}: {test['filter']}"
-            )
+            assert (
+                is_valid == test["valid"]
+            ), f"Validation failed for {test['description']}: {test['filter']}"
 
     def test_filter_escape_validation(self) -> None:
         """RFC 4515 Section 4 - Filter escape sequence validation."""
@@ -860,9 +860,9 @@ class TestRFC4515FilterValidation:
 
         for test in escape_tests:
             is_valid = validator.validate_filter_syntax(test["filter"])
-            assert is_valid == test["valid"], (
-                f"Escape validation failed for {test['description']}: {test['filter']}"
-            )
+            assert (
+                is_valid == test["valid"]
+            ), f"Escape validation failed for {test['description']}: {test['filter']}"
 
     def test_filter_nesting_validation(self) -> None:
         """RFC 4515 Section 4 - Filter nesting validation."""
@@ -894,9 +894,9 @@ class TestRFC4515FilterValidation:
 
         for test in nesting_tests:
             is_valid = validator.validate_filter_syntax(test["filter"])
-            assert is_valid == test["valid"], (
-                f"Nesting validation failed for {test['description']}"
-            )
+            assert (
+                is_valid == test["valid"]
+            ), f"Nesting validation failed for {test['description']}"
 
             if test["valid"]:
                 parsed = parser.parse(test["filter"])
@@ -967,9 +967,9 @@ class TestRFC4515ComprehensiveCompliance:
         }
 
         # All checks must pass for RFC compliance
-        assert all(compliance_checks.values()), (
-            f"RFC 4515 compliance failed: {compliance_checks}"
-        )
+        assert all(
+            compliance_checks.values()
+        ), f"RFC 4515 compliance failed: {compliance_checks}"
 
     def test_filter_interoperability_scenarios(self) -> None:
         """RFC 4515 - Filter interoperability with different systems."""
@@ -1003,9 +1003,9 @@ class TestRFC4515ComprehensiveCompliance:
 
             # Parse filter successfully
             parsed = parser.parse(scenario["filter"])
-            assert parsed is not None, (
-                f"Failed to parse filter for {scenario['system']}"
-            )
+            assert (
+                parsed is not None
+            ), f"Failed to parse filter for {scenario['system']}"
 
             # Verify filter can be reconstructed
             builder = FilterBuilder()
@@ -1047,9 +1047,9 @@ class TestRFC4515ComprehensiveCompliance:
 
             # Verify filter can be analyzed for optimization
             complexity = parser.analyze_filter_complexity(parsed)
-            assert complexity.is_optimizable is True, (
-                f"Should be optimizable: {pattern['description']}"
-            )
+            assert (
+                complexity.is_optimizable is True
+            ), f"Should be optimizable: {pattern['description']}"
 
 
 if __name__ == "__main__":

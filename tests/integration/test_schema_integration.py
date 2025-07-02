@@ -108,9 +108,9 @@ class TestSchemaConversionIntegration:
                 parser = SchemaParser()
                 parse_result = parser.parse_schema_file(schema_path)
 
-                assert parse_result.success, (
-                    f"Schema parsing failed: {parse_result.errors}"
-                )
+                assert (
+                    parse_result.success
+                ), f"Schema parsing failed: {parse_result.errors}"
                 assert len(parse_result.attribute_types) == 2
                 assert len(parse_result.object_classes) == 1
 
@@ -121,9 +121,9 @@ class TestSchemaConversionIntegration:
                     parse_result.object_classes,
                 )
 
-                assert ldif_result.success, (
-                    f"LDIF generation failed: {ldif_result.errors}"
-                )
+                assert (
+                    ldif_result.success
+                ), f"LDIF generation failed: {ldif_result.errors}"
                 assert ldif_result.content is not None
 
                 # Write and verify output
@@ -174,9 +174,9 @@ class TestSchemaConversionIntegration:
                     parse_result.object_classes,
                 )
 
-                assert validation_result.is_valid, (
-                    f"Validation failed: {validation_result.errors}"
-                )
+                assert (
+                    validation_result.is_valid
+                ), f"Validation failed: {validation_result.errors}"
 
             finally:
                 Path(schema_path).unlink(missing_ok=True)
@@ -288,9 +288,9 @@ class TestSchemaManagerIntegration:
                 )
 
                 # Should succeed in dry run mode
-                assert operation.success, (
-                    f"Schema installation dry run failed: {operation.error}"
-                )
+                assert (
+                    operation.success
+                ), f"Schema installation dry run failed: {operation.error}"
 
             finally:
                 Path(ldif_path).unlink(missing_ok=True)

@@ -72,9 +72,9 @@ class TestWorkspaceStandardsCompliance:
         # This test verifies the validation is working
         expected_venv = "/home/marlonsc/pyauto/.venv"
         current_venv = os.environ.get("VIRTUAL_ENV")
-        assert current_venv == expected_venv, (
-            f"Must use workspace venv: {expected_venv}"
-        )
+        assert (
+            current_venv == expected_venv
+        ), f"Must use workspace venv: {expected_venv}"
 
     @pytest.mark.env_security
     def test_env_security_enforcement_patterns(self, validate_env_security) -> None:
@@ -91,9 +91,9 @@ class TestWorkspaceStandardsCompliance:
             # Validate no hardcoded secrets in environment
             for key, value in os.environ.items():
                 if "password" in key.lower() or "secret" in key.lower():
-                    assert value.startswith("${") or len(value) == 0, (
-                        f"Hardcoded secret detected: {key}"
-                    )
+                    assert (
+                        value.startswith("${") or len(value) == 0
+                    ), f"Hardcoded secret detected: {key}"
 
     @pytest.mark.cli_debug
     def test_cli_debug_patterns_enforcement(self, cli_debug_patterns) -> None:

@@ -809,9 +809,9 @@ class TestRFC4512ComprehensiveCompliance:
         }
 
         # All checks must pass for RFC compliance
-        assert all(compliance_checks.values()), (
-            f"RFC 4512 compliance failed: {compliance_checks}"
-        )
+        assert all(
+            compliance_checks.values()
+        ), f"RFC 4512 compliance failed: {compliance_checks}"
 
     def test_directory_information_model_interoperability(self) -> None:
         """RFC 4512 - Directory information model interoperability."""

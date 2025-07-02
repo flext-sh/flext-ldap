@@ -51,22 +51,11 @@ from enum import Enum
 from typing import Any
 
 try:
-    try:
     from typing import TypeAlias
 except ImportError:
-    from typing_extensions import TypeAlias
-
-from typing import 
-except ImportError:
-    # Fallback for Python < 3.10
-    try:
     from typing import TypeAlias
-except ImportError:
-    from typing_extensions import TypeAlias
 
-from typing import 
-except ImportError:
-    # Fallback for Pythontic import BaseModel, Field
+from pydantic import BaseModel, Field
 
 from ldap_core_shared.utils.constants import DEFAULT_MAX_ITEMS, DEFAULT_TIMEOUT_SECONDS
 

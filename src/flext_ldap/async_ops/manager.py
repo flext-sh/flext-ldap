@@ -64,14 +64,7 @@ from flext_ldap.utils.constants import DEFAULT_MAX_ITEMS
 try:
     from typing import TypeAlias
 except ImportError:
-    from typing_extensions import TypeAlias
-    try:
     from typing import TypeAlias
-except ImportError:
-    from typing_extensions import TypeAlias
-
-from typing import 
-except ImportError:
     # Fallback for Pythone  # type: ignore[assignment]
 
 

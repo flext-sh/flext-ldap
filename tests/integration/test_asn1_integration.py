@@ -214,12 +214,12 @@ class TestASN1ElementIntegration:
             explicit_errors = explicit_tagged.validate()
             implicit_errors = implicit_tagged.validate()
 
-            assert len(explicit_errors) == 0, (
-                f"Explicit tagged validation failed: {explicit_errors}"
-            )
-            assert len(implicit_errors) == 0, (
-                f"Implicit tagged validation failed: {implicit_errors}"
-            )
+            assert (
+                len(explicit_errors) == 0
+            ), f"Explicit tagged validation failed: {explicit_errors}"
+            assert (
+                len(implicit_errors) == 0
+            ), f"Implicit tagged validation failed: {implicit_errors}"
 
         except ImportError:
             pytest.skip("ASN.1 tagged element modules not available")

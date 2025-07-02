@@ -33,6 +33,10 @@ from flext_ldapants import (
 from ldap3 import SUBTREE
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldap.connections.interfaces import (
+    ILDAPConnectionManager as LDAPConnectionManager,
+)
+from flext_ldap.domain.results import LDAPMetrics, LDAPSearchResult
 from flext_ldap.utils.performance import PerformanceMonitor
 
 # Vectorized search engine import (lazy import to avoid circular dependency)

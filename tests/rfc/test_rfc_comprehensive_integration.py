@@ -611,13 +611,13 @@ member: cn=admin,dc=example,dc=com
                     value,
                 )
                 if test["valid"]:
-                    assert is_valid is True, (
-                        f"Should be valid: {test['description']} - {value}"
-                    )
+                    assert (
+                        is_valid is True
+                    ), f"Should be valid: {test['description']} - {value}"
                 else:
-                    assert is_valid is False, (
-                        f"Should be invalid: {test['description']} - {value}"
-                    )
+                    assert (
+                        is_valid is False
+                    ), f"Should be invalid: {test['description']} - {value}"
 
     def test_rfc_compliance_comprehensive_summary(self) -> None:
         """🔥🔥🔥 Comprehensive RFC compliance verification summary."""
@@ -694,9 +694,9 @@ member: cn=admin,dc=example,dc=com
 
         # Verify comprehensive coverage
         total_checks = len(comprehensive_compliance)
-        assert total_checks >= 50, (
-            f"Comprehensive test coverage insufficient: {total_checks} checks"
-        )
+        assert (
+            total_checks >= 50
+        ), f"Comprehensive test coverage insufficient: {total_checks} checks"
 
 
 class TestRFCInteroperabilityScenarios:
@@ -816,9 +816,9 @@ class TestRFCInteroperabilityScenarios:
             # Test feature availability
             for feature, supported in test["features"].items():
                 feature_available = config.supports_feature(feature)
-                assert feature_available == supported, (
-                    f"Feature {feature} support mismatch for LDAPv{test['version']}"
-                )
+                assert (
+                    feature_available == supported
+                ), f"Feature {feature} support mismatch for LDAPv{test['version']}"
 
     @pytest.mark.asyncio
     async def test_character_encoding_compliance(self) -> None:
@@ -875,9 +875,9 @@ class TestRFCInteroperabilityScenarios:
             for attr, values in test["attributes"].items():
                 for value in values:
                     filter_str = FilterBuilder().equals(attr, value).build()
-                    assert value in filter_str, (
-                        f"International character handling failed for {test['description']}"
-                    )
+                    assert (
+                        value in filter_str
+                    ), f"International character handling failed for {test['description']}"
 
 
 if __name__ == "__main__":

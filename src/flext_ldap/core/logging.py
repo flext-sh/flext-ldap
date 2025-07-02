@@ -61,8 +61,10 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar
 from uuid import uuid4
 
-from flext_ldapions import LDAPCoreError
 from pydantic import BaseModel, ConfigDict, Field
+
+from flext_ldap.core.config import LoggingConfig
+from flext_ldap.exceptions import LDAPCoreError
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -190,10 +192,7 @@ class SensitiveDataFilter:
         filtered = message
         for pattern in cls.SENSITIVE_PATTERNS:
             filtered = re.sub(
-                pattern,
-                r"\1***REDACTED***",
-                filtered,
-                flags=re.IGNORECASE,
+                pattern, r"\1***REDACTED***", filtered, flags=re.IGNORECASE
             )
 
         return filtered
@@ -329,9 +328,7 @@ class PerformanceMonitor:
 
     @contextmanager
     def time_operation(
-        self,
-        operation_name: str,
-        logger: StructuredLogger | None = None,
+        self, operation_name: str, logger: StructuredLogger | None = None
     ) -> Generator[str, None, None]:
         """Context manager for timing operations.
 
@@ -487,10 +484,7 @@ class StructuredLogger:
         self._log(LogLevel.CRITICAL.value, message, **kwargs)
 
     def security(
-        self,
-        message: str,
-        security_event: SecurityEventType,
-        **kwargs,
+        self, message: str, security_event: SecurityEventType, **kwargs
     ) -> None:
         """Log security event.
 
@@ -501,10 +495,7 @@ class StructuredLogger:
         """
         kwargs["security_event_type"] = security_event.value
         self._log(
-            LogLevel.SECURITY.value,
-            message,
-            event_type=EventType.SECURITY,
-            **kwargs,
+            LogLevel.SECURITY.value, message, event_type=EventType.SECURITY, **kwargs
         )
 
     def audit(self, message: str, **kwargs) -> None:
@@ -583,15 +574,13 @@ class LoggerManager:
             if cls._config.structured_logging:
                 file_handler.setFormatter(StructuredFormatter(include_trace=True))
             else:
-                file_handler.setFormatter(
-                    logging.Formatter(cls._config.format),
-                )
+                file_handler.setFormatter(logging.Formatter(cls._config.format))
             root_logger.addHandler(file_handler)
 
         # Initialize performance monitor
         if cls._config.performance_logging:
             cls._performance_monitor = PerformanceMonitor(
-                slow_threshold=cls._config.slow_query_threshold,
+                slow_threshold=cls._config.slow_query_threshold
             )
 
         cls._initialized = True

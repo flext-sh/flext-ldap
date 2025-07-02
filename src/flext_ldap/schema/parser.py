@@ -11,6 +11,8 @@ import re
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldap.domain.results import LDAPOperationResult
+
 logger = logging.getLogger(__name__)
 
 

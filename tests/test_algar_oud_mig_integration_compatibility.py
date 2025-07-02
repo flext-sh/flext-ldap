@@ -149,9 +149,9 @@ class TestAlgarOudMigWorkspaceCompliance:
         # Fixture automatically validates workspace venv usage
         expected_venv = "/home/marlonsc/pyauto/.venv"
         current_venv = os.environ.get("VIRTUAL_ENV")
-        assert current_venv == expected_venv, (
-            f"Algar integration tests must use workspace venv: {expected_venv}"
-        )
+        assert (
+            current_venv == expected_venv
+        ), f"Algar integration tests must use workspace venv: {expected_venv}"
 
     @pytest.mark.env_security
     def test_algar_integration_env_security_enforcement(
@@ -173,9 +173,9 @@ class TestAlgarOudMigWorkspaceCompliance:
                 if "algar" in key.lower() and (
                     "password" in key.lower() or "secret" in key.lower()
                 ):
-                    assert value.startswith("${") or len(value) == 0, (
-                        f"Hardcoded secret in ALGAR config: {key}"
-                    )
+                    assert (
+                        value.startswith("${") or len(value) == 0
+                    ), f"Hardcoded secret in ALGAR config: {key}"
 
     @pytest.mark.workspace_integration
     def test_algar_integration_workspace_coordination(
@@ -245,9 +245,9 @@ class TestAlgarOudMigLDIFProcessorCompatibility:
         processor = LDIFProcessor(config)
 
         # Validate interface expected by algar-oud-mig
-        assert hasattr(processor, "parse_file"), (
-            "algar-oud-mig expects parse_file method"
-        )
+        assert hasattr(
+            processor, "parse_file"
+        ), "algar-oud-mig expects parse_file method"
         assert hasattr(processor, "config"), "algar-oud-mig expects config property"
 
         # Test configuration matches ALGAR requirements
@@ -326,18 +326,18 @@ member: cn=algar-user1,ou=people,dc=algar,dc=com
                 result = processor.parse_file(temp_file)
 
                 # Validate ALGAR performance requirements
-                assert result.success is True, (
-                    "ALGAR migration requires successful parsing"
-                )
-                assert result.error_message is None, (
-                    "ALGAR migration requires clean processing"
-                )
-                assert result.entries_per_second >= 50, (
-                    "Must meet ALGAR minimum performance"
-                )
-                assert result.entries_per_second <= 500, (
-                    "Should stay within reasonable ALGAR range"
-                )
+                assert (
+                    result.success is True
+                ), "ALGAR migration requires successful parsing"
+                assert (
+                    result.error_message is None
+                ), "ALGAR migration requires clean processing"
+                assert (
+                    result.entries_per_second >= 50
+                ), "Must meet ALGAR minimum performance"
+                assert (
+                    result.entries_per_second <= 500
+                ), "Should stay within reasonable ALGAR range"
 
                 # Validate ALGAR data structure
                 assert len(result.data) == 4
@@ -406,12 +406,12 @@ class TestAlgarOudMigPerformanceMonitorCompatibility:
         monitor = PerformanceMonitor("algar_migration")
 
         # Validate interface expected by algar-oud-mig
-        assert hasattr(monitor, "measure_operation"), (
-            "algar-oud-mig expects measure_operation method"
-        )
-        assert hasattr(monitor, "get_metrics"), (
-            "algar-oud-mig expects get_metrics method"
-        )
+        assert hasattr(
+            monitor, "measure_operation"
+        ), "algar-oud-mig expects measure_operation method"
+        assert hasattr(
+            monitor, "get_metrics"
+        ), "algar-oud-mig expects get_metrics method"
 
         # Test measure_operation context manager (expected by algar-oud-mig)
         with monitor.measure_operation("ldif_parsing") as ctx:
@@ -422,16 +422,16 @@ class TestAlgarOudMigPerformanceMonitorCompatibility:
 
         # Test get_metrics returns expected structure
         metrics = monitor.get_metrics()
-        assert hasattr(metrics, "operation_count"), (
-            "algar-oud-mig expects operation_count"
-        )
+        assert hasattr(
+            metrics, "operation_count"
+        ), "algar-oud-mig expects operation_count"
         assert hasattr(metrics, "success_rate"), "algar-oud-mig expects success_rate"
-        assert hasattr(metrics, "total_duration"), (
-            "algar-oud-mig expects total_duration"
-        )
-        assert hasattr(metrics, "operations_per_second"), (
-            "algar-oud-mig expects operations_per_second"
-        )
+        assert hasattr(
+            metrics, "total_duration"
+        ), "algar-oud-mig expects total_duration"
+        assert hasattr(
+            metrics, "operations_per_second"
+        ), "algar-oud-mig expects operations_per_second"
 
         # Validate workspace coordination
         assert workspace_coordination["PROJECT_CONTEXT"] == "ldap-core-shared"
@@ -460,9 +460,9 @@ class TestAlgarOudMigPerformanceMonitorCompatibility:
 
         # ALGAR expects these specific metrics
         assert metrics.operation_count >= 4, "ALGAR migration has multiple operations"
-        assert metrics.success_rate == 100.0, (
-            "ALGAR migration expects high success rate"
-        )
+        assert (
+            metrics.success_rate == 100.0
+        ), "ALGAR migration expects high success rate"
         assert metrics.total_duration > 0, "ALGAR migration tracks total duration"
         assert metrics.operations_per_second >= 0, "ALGAR migration tracks throughput"
 
@@ -485,9 +485,9 @@ class TestAlgarOudMigExceptionHandlingCompatibility:
             ConnectionTimeoutError,
         ]
         for exc_class in connection_exceptions:
-            assert issubclass(exc_class, Exception), (
-                f"{exc_class.__name__} should be an Exception subclass"
-            )
+            assert issubclass(
+                exc_class, Exception
+            ), f"{exc_class.__name__} should be an Exception subclass"
 
         # Test migration exceptions expected by algar-oud-mig
         migration_exceptions = [
@@ -497,9 +497,9 @@ class TestAlgarOudMigExceptionHandlingCompatibility:
             SchemaValidationError,
         ]
         for exc_class in migration_exceptions:
-            assert issubclass(exc_class, Exception), (
-                f"{exc_class.__name__} should be an Exception subclass"
-            )
+            assert issubclass(
+                exc_class, Exception
+            ), f"{exc_class.__name__} should be an Exception subclass"
 
         # Test schema exceptions expected by algar-oud-mig
         schema_exceptions = [
@@ -508,9 +508,9 @@ class TestAlgarOudMigExceptionHandlingCompatibility:
             SchemaMappingError,
         ]
         for exc_class in schema_exceptions:
-            assert issubclass(exc_class, Exception), (
-                f"{exc_class.__name__} should be an Exception subclass"
-            )
+            assert issubclass(
+                exc_class, Exception
+            ), f"{exc_class.__name__} should be an Exception subclass"
 
         # Test validation exceptions expected by algar-oud-mig
         validation_exceptions = [
@@ -519,9 +519,9 @@ class TestAlgarOudMigExceptionHandlingCompatibility:
             FilterValidationError,
         ]
         for exc_class in validation_exceptions:
-            assert issubclass(exc_class, Exception), (
-                f"{exc_class.__name__} should be an Exception subclass"
-            )
+            assert issubclass(
+                exc_class, Exception
+            ), f"{exc_class.__name__} should be an Exception subclass"
 
         # Validate security enforcement during exception handling
         assert security_enforcement["protect_logs"] is True
@@ -595,9 +595,9 @@ class TestAlgarOudMigSchemaCompatibility:
         discovery = SchemaDiscovery(config)
 
         # Validate interface expected by algar-oud-mig
-        assert hasattr(discovery, "discover_from_server"), (
-            "algar-oud-mig expects discover_from_server method"
-        )
+        assert hasattr(
+            discovery, "discover_from_server"
+        ), "algar-oud-mig expects discover_from_server method"
         assert hasattr(discovery, "config"), "algar-oud-mig expects config property"
 
         # Test with mock connection info
@@ -822,9 +822,9 @@ class TestAlgarOudMigComprehensiveIntegration:
         total_deps = len(all_deps)
         available_percentage = (len(available_deps) / total_deps) * 100
 
-        assert available_percentage >= 50, (
-            "At least 50% of dependencies should be available for algar-oud-mig integration"
-        )
+        assert (
+            available_percentage >= 50
+        ), "At least 50% of dependencies should be available for algar-oud-mig integration"
 
 
 if __name__ == "__main__":

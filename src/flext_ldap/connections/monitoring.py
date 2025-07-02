@@ -9,6 +9,7 @@ from typing import Any
 
 from flext_ldapants import DEFAULT_MAX_ITEMS
 
+from flext_ldap.connections.base import LDAPConnectionInfo
 from flext_ldap.connections.interfaces import (
     BaseConnectionComponent,
 )

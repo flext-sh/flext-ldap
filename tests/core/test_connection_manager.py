@@ -1280,11 +1280,13 @@ class TestConnectionManagerPerformance:
 
 # Test fixtures for reusable test data
 @pytest.fixture
-def sample_connection_configs() -> Generator[
-    list[dict[str, str | int | bool]],
-    None,
-    None,
-]:
+def sample_connection_configs() -> (
+    Generator[
+        list[dict[str, str | int | bool]],
+        None,
+        None,
+    ]
+):
     """Provide sample connection configurations for testing."""
     return [
         {

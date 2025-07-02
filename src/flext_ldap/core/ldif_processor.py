@@ -33,6 +33,8 @@ from flext_ldapsor import (
     LDIFProcessor as ProductionLDIFProcessor,
 )
 
+from flext_ldap.domain.results import LDAPOperationResult
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
 

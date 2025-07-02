@@ -41,7 +41,7 @@ References:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from flext_ldapants import LDAP_MESSAGE_ID_MAX
 from flext_ldapbase import (

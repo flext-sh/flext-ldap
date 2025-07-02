@@ -7,6 +7,8 @@ import contextlib
 import logging
 from typing import TYPE_CHECKING
 
+from flext_ldap.connections.base import LDAPConnectionInfo
+from flext_ldap.exceptions.connection import LDAPConnectionError
 from flext_ldap.interfaces import (
     BaseConnectionComponent,
     IConnectionFactory,

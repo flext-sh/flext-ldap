@@ -74,9 +74,9 @@ class TestConnectionFactoriesWorkspaceCompliance:
         # Fixture automatically validates workspace venv usage
         expected_venv = "/home/marlonsc/pyauto/.venv"
         current_venv = os.environ.get("VIRTUAL_ENV")
-        assert current_venv == expected_venv, (
-            f"Factory tests must use workspace venv: {expected_venv}"
-        )
+        assert (
+            current_venv == expected_venv
+        ), f"Factory tests must use workspace venv: {expected_venv}"
 
     @pytest.mark.env_security
     def test_factory_env_security_enforcement(
@@ -97,9 +97,9 @@ class TestConnectionFactoriesWorkspaceCompliance:
                 if "factory" in key.lower() and (
                     "password" in key.lower() or "secret" in key.lower()
                 ):
-                    assert value.startswith("${") or len(value) == 0, (
-                        f"Hardcoded secret in factory config: {key}"
-                    )
+                    assert (
+                        value.startswith("${") or len(value) == 0
+                    ), f"Hardcoded secret in factory config: {key}"
 
     @pytest.mark.cli_debug
     def test_factory_cli_debug_patterns(
