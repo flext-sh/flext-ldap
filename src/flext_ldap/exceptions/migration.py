@@ -5,10 +5,10 @@ Exception classes for LDAP migration and data transfer errors.
 
 from __future__ import annotations
 
-from typing import Any, Union, cast
+from typing import Any, cast
 
 # Type for error context data passed to exception constructors
-ErrorContext = Union[str, int, float, bool, list[str], dict[str, Any], None]
+ErrorContext = str, int, float, bool, list[str, dict[str, Any], None]
 
 from flext_ldap.exceptions.base import LDAPError
 

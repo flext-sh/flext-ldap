@@ -10,6 +10,8 @@ import logging
 import ldap3
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldap.connections.base import LDAPConnectionInfo as ConnectionInfo
+from flext_ldap.domain.results import LDAPOperationResult
 from flext_ldap.utils.performance import PerformanceMonitor
 
 # Constants for magic values

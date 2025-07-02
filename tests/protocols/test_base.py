@@ -886,9 +886,9 @@ class TestUtilityFunctions:
 
         for url in valid_urls:
             errors = validate_ldap_url(url)
-            assert len(errors) == 0, (
-                f"URL {url} should be valid but got errors: {errors}"
-            )
+            assert (
+                len(errors) == 0
+            ), f"URL {url} should be valid but got errors: {errors}"
 
     def test_validate_ldap_url_invalid_scheme(self) -> None:
         """Test validation of URLs with invalid scheme."""
@@ -1191,9 +1191,9 @@ class TestErrorHandling:
 
         for url, description in edge_cases:
             errors = validate_ldap_url(url)
-            assert len(errors) > 0, (
-                f"URL '{url}' ({description}) should have validation errors"
-            )
+            assert (
+                len(errors) > 0
+            ), f"URL '{url}' ({description}) should have validation errors"
 
 
 if __name__ == "__main__":

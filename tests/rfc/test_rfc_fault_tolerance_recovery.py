@@ -167,9 +167,9 @@ class TestConnectionFailureRecovery:
                         min(2.0**i, scenario["max_backoff_time"])
                         for i in range(expected_failures)
                     )
-                    assert total_time >= min_expected_time * 0.8, (
-                        f"Backoff too fast: {total_time}s < {min_expected_time}s"
-                    )
+                    assert (
+                        total_time >= min_expected_time * 0.8
+                    ), f"Backoff too fast: {total_time}s < {min_expected_time}s"
 
     @pytest.mark.asyncio
     async def test_connection_pool_resilience_extreme(self) -> None:
@@ -308,14 +308,14 @@ class TestConnectionFailureRecovery:
                 # Resilience assertions
                 if scenario["name"] == "partial_pool_failure":
                     # Should achieve high success rate with partial failures
-                    assert success_rate >= 0.8, (
-                        f"Low success rate with partial failure: {success_rate}"
-                    )
+                    assert (
+                        success_rate >= 0.8
+                    ), f"Low success rate with partial failure: {success_rate}"
                 elif scenario["name"] == "gradual_degradation":
                     # Should achieve reasonable success rate despite degradation
-                    assert success_rate >= 0.3, (
-                        f"Too low success rate with degradation: {success_rate}"
-                    )
+                    assert (
+                        success_rate >= 0.3
+                    ), f"Too low success rate with degradation: {success_rate}"
                 # cascading_failure may have lower success rate initially
 
     @pytest.mark.asyncio
@@ -476,20 +476,20 @@ class TestConnectionFailureRecovery:
             # Analyze continuity results
 
             # Continuity assertions
-            assert continuity_result["operations_attempted"] == 100, (
-                "Not all operations attempted"
-            )
-            assert continuity_result["success_rate"] >= 0.4, (
-                f"Success rate too low: {continuity_result['success_rate']}"
-            )
+            assert (
+                continuity_result["operations_attempted"] == 100
+            ), "Not all operations attempted"
+            assert (
+                continuity_result["success_rate"] >= 0.4
+            ), f"Success rate too low: {continuity_result['success_rate']}"
 
             # Should maintain reasonable success rate despite instability
             expected_min_success = (
                 network_stability * 0.7
             )  # Account for retries and recovery
-            assert continuity_result["success_rate"] >= expected_min_success, (
-                f"Success rate {continuity_result['success_rate']} below expected {expected_min_success}"
-            )
+            assert (
+                continuity_result["success_rate"] >= expected_min_success
+            ), f"Success rate {continuity_result['success_rate']} below expected {expected_min_success}"
 
 
 class TestPaginatedOperationRecovery:
@@ -610,17 +610,17 @@ class TestPaginatedOperationRecovery:
 
             # Recovery assertions
             # Should have processed most pages despite failures
-            assert pages_processed >= total_pages - 2, (
-                f"Too few pages processed: {pages_processed}/{total_pages}"
-            )
+            assert (
+                pages_processed >= total_pages - 2
+            ), f"Too few pages processed: {pages_processed}/{total_pages}"
 
             # Should have recovered most entries
             expected_min_entries = (
                 total_entries * 0.8
             )  # Allow for some loss during failures
-            assert len(recovered_entries) >= expected_min_entries, (
-                f"Too few entries recovered: {len(recovered_entries)}/{total_entries}"
-            )
+            assert (
+                len(recovered_entries) >= expected_min_entries
+            ), f"Too few entries recovered: {len(recovered_entries)}/{total_entries}"
 
     @pytest.mark.asyncio
     async def test_batch_operation_partial_failure_recovery(self) -> None:
@@ -745,19 +745,19 @@ class TestPaginatedOperationRecovery:
                                 await asyncio.sleep(0.01)  # Brief retry delay
 
                 # Batch recovery assertions
-                assert len(batch_results) == len(batch_operations), (
-                    "Not all operations completed"
-                )
-                assert successful_operations >= 35, (
-                    f"Too many failed operations: {failed_operations}"
-                )
+                assert len(batch_results) == len(
+                    batch_operations
+                ), "Not all operations completed"
+                assert (
+                    successful_operations >= 35
+                ), f"Too many failed operations: {failed_operations}"
                 assert recovered_operations > 0, "No operations recovered through retry"
 
                 # Should have high success rate with recovery
                 success_rate = successful_operations / len(batch_operations)
-                assert success_rate >= 0.9, (
-                    f"Batch success rate too low: {success_rate}"
-                )
+                assert (
+                    success_rate >= 0.9
+                ), f"Batch success rate too low: {success_rate}"
 
 
 class TestCircuitBreakerProtection:
@@ -852,15 +852,15 @@ class TestCircuitBreakerProtection:
                 await asyncio.sleep(0.01)
 
             # Circuit breaker assertions
-            assert circuit_breaker_results["requests_attempted"] == 25, (
-                "Not all requests attempted"
-            )
-            assert circuit_breaker_results["requests_succeeded"] >= 10, (
-                "Too few successful requests"
-            )
-            assert circuit_breaker_results["requests_failed"] >= 3, (
-                "Should have some failures to trigger circuit breaker"
-            )
+            assert (
+                circuit_breaker_results["requests_attempted"] == 25
+            ), "Not all requests attempted"
+            assert (
+                circuit_breaker_results["requests_succeeded"] >= 10
+            ), "Too few successful requests"
+            assert (
+                circuit_breaker_results["requests_failed"] >= 3
+            ), "Should have some failures to trigger circuit breaker"
 
             # Should have blocked some requests once circuit opened
             total_blocks_and_fails = (

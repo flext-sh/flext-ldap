@@ -175,9 +175,9 @@ class TestExtremePerformanceStress:
             successful_tasks = [r for r in task_results if isinstance(r, dict)]
             failed_tasks = [r for r in task_results if isinstance(r, Exception)]
 
-            assert len(successful_tasks) >= 180, (
-                f"Too many failed tasks: {len(failed_tasks)}"
-            )
+            assert (
+                len(successful_tasks) >= 180
+            ), f"Too many failed tasks: {len(failed_tasks)}"
 
             # Performance analysis
             total_operations = sum(
@@ -195,15 +195,15 @@ class TestExtremePerformanceStress:
             )
 
             # Performance assertions
-            assert overall_throughput > 1000, (
-                f"Overall throughput too low: {overall_throughput}"
-            )
-            assert (total_errors / total_operations) < 0.05, (
-                f"Error rate too high: {total_errors}/{total_operations}"
-            )
-            assert (final_memory - initial_memory) < 500, (
-                f"Memory leak detected: {final_memory - initial_memory}MB"
-            )
+            assert (
+                overall_throughput > 1000
+            ), f"Overall throughput too low: {overall_throughput}"
+            assert (
+                total_errors / total_operations
+            ) < 0.05, f"Error rate too high: {total_errors}/{total_operations}"
+            assert (
+                final_memory - initial_memory
+            ) < 500, f"Memory leak detected: {final_memory - initial_memory}MB"
 
     @pytest.mark.asyncio
     async def test_extreme_search_performance_stress(self) -> None:
@@ -315,12 +315,12 @@ class TestExtremePerformanceStress:
                 throughput = searches_completed / duration if duration > 0 else 0
 
                 # Performance assertions based on complexity
-                assert throughput >= scenario["expected_min_throughput"], (
-                    f"Throughput too low for {scenario['name']}: {throughput} < {scenario['expected_min_throughput']}"
-                )
-                assert searches_completed >= 95, (
-                    f"Too many failed searches: {searches_completed}/100"
-                )
+                assert (
+                    throughput >= scenario["expected_min_throughput"]
+                ), f"Throughput too low for {scenario['name']}: {throughput} < {scenario['expected_min_throughput']}"
+                assert (
+                    searches_completed >= 95
+                ), f"Too many failed searches: {searches_completed}/100"
 
     @pytest.mark.asyncio
     async def test_memory_leak_detection_extreme(self) -> None:
@@ -405,9 +405,9 @@ class TestExtremePerformanceStress:
                 cycle_memory_increase = cycle_end_memory - cycle_start_memory
 
                 # Check for excessive memory growth within cycle
-                assert cycle_memory_increase < 100, (
-                    f"Excessive memory growth in cycle {cycle}: {cycle_memory_increase}MB"
-                )
+                assert (
+                    cycle_memory_increase < 100
+                ), f"Excessive memory growth in cycle {cycle}: {cycle_memory_increase}MB"
 
             final_memory = take_memory_snapshot("final")
             total_memory_increase = final_memory - initial_memory
@@ -434,15 +434,15 @@ class TestExtremePerformanceStress:
                 growth_acceleration = recent_avg - early_avg
 
                 # Assertions for memory leak detection
-                assert total_memory_increase < 500, (
-                    f"Potential memory leak: {total_memory_increase}MB total increase"
-                )
-                assert recent_avg < 50, (
-                    f"Excessive recent memory growth: {recent_avg}MB/cycle"
-                )
-                assert growth_acceleration < 20, (
-                    f"Memory growth acceleration detected: {growth_acceleration}MB/cycle"
-                )
+                assert (
+                    total_memory_increase < 500
+                ), f"Potential memory leak: {total_memory_increase}MB total increase"
+                assert (
+                    recent_avg < 50
+                ), f"Excessive recent memory growth: {recent_avg}MB/cycle"
+                assert (
+                    growth_acceleration < 20
+                ), f"Memory growth acceleration detected: {growth_acceleration}MB/cycle"
 
     def test_cpu_intensive_operations_stress(self) -> None:
         """CPU-intensive operations stress testing."""
@@ -553,18 +553,18 @@ class TestExtremePerformanceStress:
             )
 
             # Performance assertions
-            assert total_operations == 8 * 500, (
-                f"Not all operations completed: {total_operations}/4000"
-            )
-            assert overall_throughput > 100, (
-                f"CPU throughput too low: {overall_throughput}"
-            )
-            assert avg_cpu_efficiency > 0.5, (
-                f"CPU efficiency too low: {avg_cpu_efficiency}"
-            )
-            assert total_cpu_time < total_wall_time * 10, (
-                f"Excessive CPU time: {total_cpu_time}s vs {total_wall_time}s wall time"
-            )
+            assert (
+                total_operations == 8 * 500
+            ), f"Not all operations completed: {total_operations}/4000"
+            assert (
+                overall_throughput > 100
+            ), f"CPU throughput too low: {overall_throughput}"
+            assert (
+                avg_cpu_efficiency > 0.5
+            ), f"CPU efficiency too low: {avg_cpu_efficiency}"
+            assert (
+                total_cpu_time < total_wall_time * 10
+            ), f"Excessive CPU time: {total_cpu_time}s vs {total_wall_time}s wall time"
 
     @pytest.mark.asyncio
     async def test_extreme_error_recovery_stress(self) -> None:
@@ -749,15 +749,15 @@ class TestExtremePerformanceStress:
             )
 
             # Resilience assertions
-            assert overall_success_rate > 0.85, (
-                f"Success rate too low: {overall_success_rate}"
-            )
-            assert overall_recovery_rate > 0.80, (
-                f"Recovery rate too low: {overall_recovery_rate}"
-            )
-            assert total_fatal < total_attempted * 0.1, (
-                f"Too many fatal errors: {total_fatal}/{total_attempted}"
-            )
+            assert (
+                overall_success_rate > 0.85
+            ), f"Success rate too low: {overall_success_rate}"
+            assert (
+                overall_recovery_rate > 0.80
+            ), f"Recovery rate too low: {overall_recovery_rate}"
+            assert (
+                total_fatal < total_attempted * 0.1
+            ), f"Too many fatal errors: {total_fatal}/{total_attempted}"
 
 
 if __name__ == "__main__":

@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING, Any
 from flext_ldapsor import LDIFEntry
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldap.domain.results import LDAPOperationResult
+
 # Constants for magic values
 
 if TYPE_CHECKING:

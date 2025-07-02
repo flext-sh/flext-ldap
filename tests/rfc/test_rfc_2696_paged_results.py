@@ -403,6 +403,6 @@ class TestRFC2696IntegrationWorkflow:
         }
 
         # All checks must pass for RFC compliance
-        assert all(compliance_checks.values()), (
-            f"RFC 2696 compliance failed: {compliance_checks}"
-        )
+        assert all(
+            compliance_checks.values()
+        ), f"RFC 2696 compliance failed: {compliance_checks}"

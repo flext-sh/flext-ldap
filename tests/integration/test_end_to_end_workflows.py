@@ -102,15 +102,15 @@ class TestCompleteSchemaWorkflow:
             # Step 2: Validate parsed schema
             for attr_type in parse_result.attribute_types:
                 errors = attr_type.validate()
-                assert len(errors) == 0, (
-                    f"Attribute type {attr_type.names[0]} has validation errors: {errors}"
-                )
+                assert (
+                    len(errors) == 0
+                ), f"Attribute type {attr_type.names[0]} has validation errors: {errors}"
 
             for obj_class in parse_result.object_classes:
                 errors = obj_class.validate()
-                assert len(errors) == 0, (
-                    f"Object class {obj_class.names[0]} has validation errors: {errors}"
-                )
+                assert (
+                    len(errors) == 0
+                ), f"Object class {obj_class.names[0]} has validation errors: {errors}"
 
             # Step 3: Generate LDIF
             from ldap_core_shared.schema.generator import LDIFGenerator
@@ -790,9 +790,9 @@ class TestWorkflowPerformance:
             parse_time = time.time() - start_time
 
             # Should parse reasonably quickly (less than 5 seconds)
-            assert parse_time < 5.0, (
-                f"Schema parsing took {parse_time:.2f} seconds (too slow)"
-            )
+            assert (
+                parse_time < 5.0
+            ), f"Schema parsing took {parse_time:.2f} seconds (too slow)"
 
             if parse_result.success:
                 assert len(parse_result.attribute_types) >= 500
@@ -811,9 +811,9 @@ class TestWorkflowPerformance:
                 generation_time = time.time() - start_time
 
                 # Should generate reasonably quickly (less than 3 seconds)
-                assert generation_time < 3.0, (
-                    f"LDIF generation took {generation_time:.2f} seconds (too slow)"
-                )
+                assert (
+                    generation_time < 3.0
+                ), f"LDIF generation took {generation_time:.2f} seconds (too slow)"
 
                 if ldif_result.success:
                     assert len(ldif_result.content) > 0
@@ -902,9 +902,9 @@ class TestWorkflowPerformance:
             total_time = time.time() - start_time
 
             # Should complete reasonably quickly (less than 10 seconds)
-            assert total_time < 10.0, (
-                f"Concurrent authentications took {total_time:.2f} seconds (too slow)"
-            )
+            assert (
+                total_time < 10.0
+            ), f"Concurrent authentications took {total_time:.2f} seconds (too slow)"
 
             # Should have high success rate
             success_rate = completed / 50
@@ -915,9 +915,9 @@ class TestWorkflowPerformance:
                 avg_auth_time = sum(r["time"] for r in results if r["success"]) / len(
                     [r for r in results if r["success"]]
                 )
-                assert avg_auth_time < 0.5, (
-                    f"Average authentication time {avg_auth_time:.3f}s too slow"
-                )
+                assert (
+                    avg_auth_time < 0.5
+                ), f"Average authentication time {avg_auth_time:.3f}s too slow"
 
         except ImportError:
             pytest.skip("Concurrent SASL authentication modules not available")

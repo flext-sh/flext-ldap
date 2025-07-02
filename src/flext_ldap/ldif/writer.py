@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, TextIO
 from flext_ldapants import DEFAULT_LARGE_LIMIT
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldap.domain.results import LDAPOperationResult
 from flext_ldap.utils.performance import PerformanceMonitor
 
 # Constants for magic values

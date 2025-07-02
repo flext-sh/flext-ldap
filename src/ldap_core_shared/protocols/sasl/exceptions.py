@@ -37,10 +37,10 @@ References:
 
 from __future__ import annotations
 
-from typing import Any, Union, cast
+from typing import Any, cast
 
 # Type for SASL error context data
-SASLErrorContext = Union[str, int, bool, list[str], dict[str, Any], None]
+SASLErrorContext = str, int, bool, list[str, dict[str, Any], None]
 
 from ldap_core_shared.exceptions.auth import AuthenticationError
 

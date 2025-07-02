@@ -636,9 +636,9 @@ class TestPerformanceBenchmarks:
         acquisition_time = time.time() - start_time
 
         # Verify performance target (<10ms)
-        assert acquisition_time < 0.01, (
-            f"Connection acquisition took {acquisition_time:.3f}s, target <0.01s"
-        )
+        assert (
+            acquisition_time < 0.01
+        ), f"Connection acquisition took {acquisition_time:.3f}s, target <0.01s"
 
     @pytest.mark.benchmark
     @pytest.mark.asyncio
@@ -673,9 +673,9 @@ class TestPerformanceBenchmarks:
         throughput = total_entries / elapsed_time
 
         # Verify performance target (12K+ entries/second)
-        assert throughput > 12000, (
-            f"Search throughput {throughput:.0f} entries/s, target >12K/s"
-        )
+        assert (
+            throughput > 12000
+        ), f"Search throughput {throughput:.0f} entries/s, target >12K/s"
 
 
 class TestIntegrationScenarios:

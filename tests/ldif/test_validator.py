@@ -670,9 +670,9 @@ description: This string contains unsafe character: \x00
         ]
 
         for string in safe_strings:
-            assert validator._is_safe_string(string) is True, (
-                f"String should be safe: {string!r}"
-            )
+            assert (
+                validator._is_safe_string(string) is True
+            ), f"String should be safe: {string!r}"
 
     def test_is_safe_string_invalid_first_char(self) -> None:
         """Test safe string validation with invalid first character."""

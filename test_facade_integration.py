@@ -171,16 +171,16 @@ async def test_facade_delegation() -> bool | None:
 
         # Access operations - should trigger initialization
         ldap._get_operations()
-        assert ldap._operations is not None, (
-            "Operations deve ser inicializado após acesso"
-        )
+        assert (
+            ldap._operations is not None
+        ), "Operations deve ser inicializado após acesso"
 
         # Validation module should be None initially
         assert ldap._validation is None, "Validation deve ser inicializado lazily"
         ldap._get_validation()
-        assert ldap._validation is not None, (
-            "Validation deve ser inicializado após acesso"
-        )
+        assert (
+            ldap._validation is not None
+        ), "Validation deve ser inicializado após acesso"
 
         # Test delegation methods exist and delegate correctly
         query = ldap.query()  # Should delegate to Query creation

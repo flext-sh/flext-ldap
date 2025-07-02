@@ -52,6 +52,10 @@ from typing import Any
 from flext_ldaper import SchemaParser
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldap.domain.results import LDAPOperationResult
+from flext_ldap.schema.generator import LDIFGenerator, SchemaEntryConfig
+from flext_ldap.schema.validator import SchemaValidationConfig, SchemaValidator
+
 logger = logging.getLogger(__name__)
 
 

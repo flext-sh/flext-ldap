@@ -66,9 +66,9 @@ class TestLDIFProcessorWorkspaceCompliance:
         # Fixture automatically validates workspace venv usage
         expected_venv = "/home/marlonsc/pyauto/.venv"
         current_venv = os.environ.get("VIRTUAL_ENV")
-        assert current_venv == expected_venv, (
-            f"LDIF processor tests must use workspace venv: {expected_venv}"
-        )
+        assert (
+            current_venv == expected_venv
+        ), f"LDIF processor tests must use workspace venv: {expected_venv}"
 
     @pytest.mark.env_security
     def test_ldif_processor_env_security_enforcement(
@@ -90,9 +90,9 @@ class TestLDIFProcessorWorkspaceCompliance:
                 if "ldif" in key.lower() and (
                     "password" in key.lower() or "secret" in key.lower()
                 ):
-                    assert value.startswith("${") or len(value) == 0, (
-                        f"Hardcoded secret in LDIF config: {key}"
-                    )
+                    assert (
+                        value.startswith("${") or len(value) == 0
+                    ), f"Hardcoded secret in LDIF config: {key}"
 
     @pytest.mark.solid_compliance
     def test_ldif_processor_solid_principles_compliance(

@@ -367,9 +367,9 @@ class TestAttributeSyntaxValidationExtreme:
         for test in valid_tests:
             for value in test["values"]:
                 is_valid = validator.validate_attribute_syntax(test["attribute"], value)
-                assert is_valid is True, (
-                    f"Valid value failed: {test['attribute']}={value}"
-                )
+                assert (
+                    is_valid is True
+                ), f"Valid value failed: {test['attribute']}={value}"
 
         # Test invalid attribute values
         invalid_tests = [
@@ -382,9 +382,9 @@ class TestAttributeSyntaxValidationExtreme:
         for test in invalid_tests:
             for value in test["values"]:
                 is_valid = validator.validate_attribute_syntax(test["attribute"], value)
-                assert is_valid is False, (
-                    f"Invalid value passed: {test['attribute']}={value}"
-                )
+                assert (
+                    is_valid is False
+                ), f"Invalid value passed: {test['attribute']}={value}"
 
     def test_attribute_value_length_constraints(self) -> None:
         """Test attribute value length constraints."""
@@ -436,9 +436,9 @@ class TestAttributeSyntaxValidationExtreme:
                 test["attribute"],
                 test["value"],
             )
-            assert is_valid == test["valid"], (
-                f"Length validation failed: {test['attribute']}='{test['value'][:20]}...'"
-            )
+            assert (
+                is_valid == test["valid"]
+            ), f"Length validation failed: {test['attribute']}='{test['value'][:20]}...'"
 
     def test_attribute_cardinality_validation(self) -> None:
         """Test attribute cardinality validation."""
@@ -555,9 +555,9 @@ class TestSchemaMatchingRulesExtreme:
                 test["value2"],
                 "caseIgnoreMatch",
             )
-            assert matches == test["should_match"], (
-                f"Case ignore match failed: '{test['value1']}' vs '{test['value2']}'"
-            )
+            assert (
+                matches == test["should_match"]
+            ), f"Case ignore match failed: '{test['value1']}' vs '{test['value2']}'"
 
         # Test telephone number matching (ignoring formatting)
         phone_tests = [
@@ -572,9 +572,9 @@ class TestSchemaMatchingRulesExtreme:
                 test["value2"],
                 "telephoneNumberMatch",
             )
-            assert matches == test["should_match"], (
-                f"Phone match failed: '{test['value1']}' vs '{test['value2']}'"
-            )
+            assert (
+                matches == test["should_match"]
+            ), f"Phone match failed: '{test['value1']}' vs '{test['value2']}'"
 
         # Test DN matching (case-insensitive, space-insensitive)
         dn_tests = [
@@ -596,9 +596,9 @@ class TestSchemaMatchingRulesExtreme:
                 test["value2"],
                 "distinguishedNameMatch",
             )
-            assert matches == test["should_match"], (
-                f"DN match failed: '{test['value1']}' vs '{test['value2']}'"
-            )
+            assert (
+                matches == test["should_match"]
+            ), f"DN match failed: '{test['value1']}' vs '{test['value2']}'"
 
     def test_substring_matching_rules(self) -> None:
         """Test substring matching rules."""
@@ -656,9 +656,9 @@ class TestSchemaMatchingRulesExtreme:
                 test["filter"],
                 "caseIgnoreSubstringsMatch",
             )
-            assert matches == test["should_match"], (
-                f"Substring match failed: '{test['value']}' with filter {test['filter']}"
-            )
+            assert (
+                matches == test["should_match"]
+            ), f"Substring match failed: '{test['value']}' with filter {test['filter']}"
 
 
 class TestSchemaPerformanceExtreme:

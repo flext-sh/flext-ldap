@@ -45,17 +45,13 @@ References:
 import asyncio
 import time
 from enum import Enum
-from typing import Any, ClassVar, Union
+from typing import Any, ClassVar
 
 # Type aliases for LDAP operations
 LDAPConnection = Any  # Could be ldap3.Connection, python-ldap connection, etc.
-LDAPAttributeValue = Union[
-    str,
-    bytes,
-    list[str],
-    list[bytes],
-    int,
-]  # LDAP attribute values
+LDAPAttributeValue = (
+    str | bytes | list[str] | list[bytes] | int
+)  # LDAP attribute values
 
 from pydantic import BaseModel, Field
 

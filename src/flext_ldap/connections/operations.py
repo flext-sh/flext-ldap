@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterable, Callable
     from typing import AsyncContextManager
 
+    from flext_ldap.connections.base import LDAPSearchConfig
     from flext_ldap.connections.state import LDAPSearchParams
 
 logger = logging.getLogger(__name__)

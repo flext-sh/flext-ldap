@@ -13,6 +13,8 @@ from flext_ldaparator import (
 )
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldap.domain.results import LDAPOperationResult
+
 # Constants for magic values
 SMALL_CHANGE_THRESHOLD = 10  # Changes requiring < 1 hour
 MEDIUM_CHANGE_THRESHOLD = 50  # Changes requiring 1-4 hours

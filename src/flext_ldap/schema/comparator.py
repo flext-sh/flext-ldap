@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldap.domain.results import LDAPOperationResult
+
 if TYPE_CHECKING:
     from flext_ldaper import AttributeType, ObjectClass, ParsedSchema
 

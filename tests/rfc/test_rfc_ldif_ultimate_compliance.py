@@ -763,9 +763,9 @@ member: cn=Valid Person,ou=People,dc=example,dc=com
             else:
                 needs_base64 = True  # Binary always needs base64
 
-            assert needs_base64 == scenario["should_base64"], (
-                f"Encoding detection failed for {scenario['name']}"
-            )
+            assert (
+                needs_base64 == scenario["should_base64"]
+            ), f"Encoding detection failed for {scenario['name']}"
 
             # Test actual encoding/decoding
             if needs_base64:

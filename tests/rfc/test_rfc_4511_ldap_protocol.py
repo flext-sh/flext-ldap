@@ -767,9 +767,9 @@ class TestRFC4511ComprehensiveCompliance:
         }
 
         # All checks must pass for RFC compliance
-        assert all(compliance_checks.values()), (
-            f"RFC 4511 compliance failed: {compliance_checks}"
-        )
+        assert all(
+            compliance_checks.values()
+        ), f"RFC 4511 compliance failed: {compliance_checks}"
 
     def test_protocol_interoperability_requirements(self) -> None:
         """RFC 4511 - Protocol interoperability requirements."""

@@ -843,9 +843,9 @@ class TestRFC4513ComprehensiveCompliance:
         }
 
         # All checks must pass for RFC compliance
-        assert all(compliance_checks.values()), (
-            f"RFC 4513 compliance failed: {compliance_checks}"
-        )
+        assert all(
+            compliance_checks.values()
+        ), f"RFC 4513 compliance failed: {compliance_checks}"
 
     def test_authentication_interoperability(self) -> None:
         """RFC 4513 - Authentication mechanism interoperability."""

@@ -13,9 +13,11 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 import ldap3
-from flext_ldapions import OperationError
-from flext_ldapls import LDAPEntry
 from ldap3 import BASE, LEVEL, SUBTREE, Connection, Server
+
+from flext_ldap.core.config import LDAPServerConfig
+from flext_ldap.exceptions import OperationError
+from flext_ldap.models import LDAPEntry
 
 # Import unified Result for consistent return values
 try:
@@ -23,12 +25,11 @@ try:
 except ImportError:
     # Fallback for import order issues
     Result = None
-from flext_ldapin_events import (
-    # Constants for magic values
+from flext_ldap.domain_events import (
     LDAPConnectionEvent,
     LDAPOperationEvent,
 )
-from flext_ldapt_handler import dispatch_event
+from flext_ldap.event_handler import dispatch_event
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -91,9 +92,7 @@ class LDAPConnectionPool:
                     self.logger.debug("Created connection %s/%s", i + 1, self.pool_size)
                 except Exception as e:
                     self.logger.exception(
-                        "Failed to create connection %s: %s",
-                        i + 1,
-                        e,
+                        "Failed to create connection %s: %s", i + 1, e
                     )
                     self._stats.failed_connections += 1
 
@@ -235,7 +234,7 @@ class LDAPOperationHelper:
                             attributes_dict[attr_name] = [str(attr_values)]
 
                     entries.append(
-                        LDAPEntry(dn=str(entry.entry_dn), attributes=attributes_dict),
+                        LDAPEntry(dn=str(entry.entry_dn), attributes=attributes_dict)
                     )
 
                 duration = asyncio.get_event_loop().time() - start_time
@@ -463,14 +462,10 @@ async def validate_connection(config: LDAPServerConfig) -> dict[str, Any]:
                 server_info["server_info"] = {
                     "vendor": getattr(connection.server.info, "vendor_name", "Unknown"),
                     "version": getattr(
-                        connection.server.info,
-                        "vendor_version",
-                        "Unknown",
+                        connection.server.info, "vendor_version", "Unknown"
                     ),
                     "naming_contexts": getattr(
-                        connection.server.info,
-                        "naming_contexts",
-                        [],
+                        connection.server.info, "naming_contexts", []
                     ),
                 }
 

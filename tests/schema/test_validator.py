@@ -606,9 +606,9 @@ class TestSchemaValidatorHelperMethods:
         ]
 
         for oid in invalid_oids:
-            assert validator._is_valid_oid(oid) is False, (
-                f"OID should be invalid: {oid}"
-            )
+            assert (
+                validator._is_valid_oid(oid) is False
+            ), f"OID should be invalid: {oid}"
 
     def test_is_valid_attribute_name_valid(self) -> None:
         """Test attribute name validation with valid names."""
@@ -627,9 +627,9 @@ class TestSchemaValidatorHelperMethods:
         ]
 
         for name in valid_names:
-            assert validator._is_valid_attribute_name(name) is True, (
-                f"Name should be valid: {name}"
-            )
+            assert (
+                validator._is_valid_attribute_name(name) is True
+            ), f"Name should be valid: {name}"
 
     def test_is_valid_attribute_name_invalid(self) -> None:
         """Test attribute name validation with invalid names."""
@@ -647,9 +647,9 @@ class TestSchemaValidatorHelperMethods:
         ]
 
         for name in invalid_names:
-            assert validator._is_valid_attribute_name(name) is False, (
-                f"Name should be invalid: {name}"
-            )
+            assert (
+                validator._is_valid_attribute_name(name) is False
+            ), f"Name should be invalid: {name}"
 
     def test_is_valid_object_class_name_valid(self) -> None:
         """Test object class name validation with valid names."""
@@ -667,9 +667,9 @@ class TestSchemaValidatorHelperMethods:
         ]
 
         for name in valid_names:
-            assert validator._is_valid_object_class_name(name) is True, (
-                f"Name should be valid: {name}"
-            )
+            assert (
+                validator._is_valid_object_class_name(name) is True
+            ), f"Name should be valid: {name}"
 
     def test_is_valid_object_class_name_invalid(self) -> None:
         """Test object class name validation with invalid names."""
@@ -686,9 +686,9 @@ class TestSchemaValidatorHelperMethods:
         ]
 
         for name in invalid_names:
-            assert validator._is_valid_object_class_name(name) is False, (
-                f"Name should be invalid: {name}"
-            )
+            assert (
+                validator._is_valid_object_class_name(name) is False
+            ), f"Name should be invalid: {name}"
 
     def test_find_attribute_by_name_found(self) -> None:
         """Test finding attribute by name when it exists."""

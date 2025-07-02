@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING, Any, Self
 
 from flext_ldapants import DEFAULT_LARGE_LIMIT, DEFAULT_MAX_ITEMS
 
+from flext_ldap.core.config import LoggingConfig
+
 if TYPE_CHECKING:
     from types import TracebackType
 

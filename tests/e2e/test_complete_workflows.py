@@ -291,9 +291,9 @@ userPassword: {SSHA}monitoring_password_hash
 
             # Parse using processor since LDIFParser doesn't exist
             parse_result = processor.parse_file(ldif_path)
-            assert parse_result.success, (
-                f"Failed to parse LDIF: {parse_result.error_message}"
-            )
+            assert (
+                parse_result.success
+            ), f"Failed to parse LDIF: {parse_result.error_message}"
             parsed_entries = parse_result.data or []
 
             monitor.stop_measurement("ldif_parsing")

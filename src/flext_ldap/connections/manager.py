@@ -60,11 +60,11 @@ from urllib.parse import urlparse
 from flext_ldapants import CONNECTION_SIMULATION_DELAY_SECONDS
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_ldap.domain.results import Result
+from flext_ldap.domain.results import LDAPOperationResult, Result
 
 # Import unified config for standardization
 try:
-    from flext_ldap.domain.results import Result
+    from flext_ldap.domain.results import LDAPOperationResult, Result
 except ImportError:
     # Handle import order issues
     LDAPConfig = None

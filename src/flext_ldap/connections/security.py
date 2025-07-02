@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+from flext_ldap.connections.base import LDAPConnectionInfo
 from flext_ldap.connections.interfaces import (
     BaseConnectionComponent,
 )

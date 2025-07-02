@@ -42,20 +42,20 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Union
+from typing import Any
 
 from ldap_core_shared.api.exceptions import LDAPConnectionError
 
 # Type for protocol connection parameters
-ProtocolParams = Union[str, int, bool, float, list[str], None]
+ProtocolParams = str, int, bool, float, list[str, None]
 
 # Type for authentication methods and address info
-AuthMethod = Union[Callable[..., bool], str]
+AuthMethod = Callable[..., bool, str]
 
 # Network protocol constants
 MIN_PORT_NUMBER = 1  # Minimum valid TCP/UDP port number
 MAX_PORT_NUMBER = 65535  # Maximum valid TCP/UDP port number
-AddressInfo = Union[str, tuple[str, int]]
+AddressInfo = str, tuple[str, int]
 
 from pydantic import BaseModel, Field
 

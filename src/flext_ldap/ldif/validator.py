@@ -21,6 +21,9 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldap.core.ldif_processor import LDIFProcessor
+from flext_ldap.domain.results import LDAPValidationResult
+
 # Constants for magic values
 LARGE_BUFFER_SIZE = 8192
 RDN_SPLIT_PARTS = 2  # Expected parts when splitting RDN by '='
@@ -145,7 +148,7 @@ class RFC2849LDIFValidator:
 
             # Parse with RFC 2849 processor
 
-            processor = RFC2849LDIFProcessor()
+            processor = LDIFProcessor()
             result = processor.parse_file(file_path)
 
             if not result.success:

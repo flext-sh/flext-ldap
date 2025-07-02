@@ -60,22 +60,9 @@ from enum import Enum
 from typing import Any, TypeVar
 
 try:
-    try:
     from typing import TypeAlias
 except ImportError:
-    from typing_extensions import TypeAlias
-
-from typing import 
-except ImportError:
-    # Fallback for Python < 3.10
-    try:
     from typing import TypeAlias
-except ImportError:
-    from typing_extensions import TypeAlias
-
-from typing import 
-except ImportError:
-    # Fallback for Pythone  # type: ignore[assignment]
 
 
 # Type aliases for better readability

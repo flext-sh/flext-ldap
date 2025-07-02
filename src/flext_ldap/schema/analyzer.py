@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING, Any
 from flext_ldapants import DEFAULT_MAX_ITEMS, DEFAULT_TIMEOUT_SECONDS
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_ldap.domain.results import LDAPOperationResult
+
 # Constants for magic values
 MIN_NAME_LENGTH = 3  # Minimum length for well-named identifiers
 

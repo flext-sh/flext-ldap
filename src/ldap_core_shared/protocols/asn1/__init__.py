@@ -53,6 +53,7 @@ References:
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 # Import all ASN.1 components
 try:
