@@ -47,6 +47,7 @@ def run_schema2ldif(
 
     Returns:
         True if conversion successful
+
     """
     try:
         if verbose:
@@ -191,6 +192,7 @@ def run_schema_manager(
 
     Returns:
         True if operation successful
+
     """
     try:
         # Create schema manager
@@ -231,6 +233,7 @@ def _handle_validate_action(file: str | None, verbose: bool) -> bool:
 
     Returns:
         True if validation successful
+
     """
     if not file:
         return False
@@ -265,6 +268,7 @@ def _handle_install_action(
 
     Returns:
         True if installation successful
+
     """
     if not file:
         return False
@@ -304,6 +308,7 @@ def _handle_remove_action(
 
     Returns:
         True if removal successful
+
     """
     if not name:
         return False
@@ -340,6 +345,7 @@ def _handle_list_action(manager: SchemaManager, verbose: bool) -> bool:
 
     Returns:
         True (listing always succeeds)
+
     """
     schemas = manager.list_installed_schemas()
 
@@ -361,6 +367,7 @@ def _handle_backup_action(manager: SchemaManager, verbose: bool) -> bool:
 
     Returns:
         True if backup successful
+
     """
     backup_result = manager.backup_schemas()
 
@@ -384,6 +391,7 @@ def _detect_input_format(input_file: str, input_format: str) -> str | None:
 
     Returns:
         Detected format or None if detection failed
+
     """
     if input_format != "auto":
         return input_format
@@ -420,6 +428,7 @@ def _parse_input_file(
 
     Returns:
         Parse result or None if parsing failed
+
     """
     if input_format == "schema":
         return parser.parse_schema_file(input_file)
@@ -437,6 +446,7 @@ def _validate_schema_elements(result: Any, verbose: bool) -> bool:
 
     Returns:
         True if validation successful
+
     """
     validator = SchemaValidator()
     validation_result = validator.validate_schema_elements(
@@ -468,6 +478,7 @@ def _generate_output(
 
     Returns:
         True if generation successful
+
     """
     if output_file.endswith(".ldif"):
         return _generate_ldif_output(
@@ -498,6 +509,7 @@ def _generate_ldif_output(
 
     Returns:
         True if generation successful
+
     """
     generator = LDIFGenerator()
 

@@ -7,6 +7,7 @@ functionality implementation.
 References:
     - Novell eDirectory documentation
     - Novell-specific LDAP extensions
+
 """
 
 

@@ -10,6 +10,7 @@ from typing import Any
 from flext_ldapants import DEFAULT_MAX_ITEMS
 
 from flext_ldap.connections.base import LDAPConnectionInfo
+from flext_ldap.connections.factories import StandardConnectionFactory
 from flext_ldap.connections.interfaces import (
     BaseConnectionComponent,
 )
@@ -33,6 +34,7 @@ class PerformanceTracker(BaseConnectionComponent):
 
         Args:
             connection_info: Connection configuration
+
         """
         super().__init__(connection_info)
         self._operations: deque[dict[str, Any]] = deque(maxlen=DEFAULT_MAX_ITEMS)
@@ -61,6 +63,7 @@ class PerformanceTracker(BaseConnectionComponent):
             duration: Operation duration in seconds
             success: Whether operation was successful
             details: Additional operation details
+
         """
         self._total_operations += 1
         self._total_time += duration
@@ -86,6 +89,7 @@ class PerformanceTracker(BaseConnectionComponent):
 
         Returns:
             Performance statistics dictionary
+
         """
         if not self._operations:
             return {
@@ -160,6 +164,7 @@ class StandardHealthMonitor(BaseConnectionComponent):
 
         Args:
             connection_info: Connection configuration
+
         """
         super().__init__(connection_info)
         self._last_check = 0.0
@@ -179,6 +184,7 @@ class StandardHealthMonitor(BaseConnectionComponent):
 
         Returns:
             True if connection is healthy, False otherwise
+
         """
         current_time = time.time()
 
@@ -225,6 +231,7 @@ class StandardHealthMonitor(BaseConnectionComponent):
 
         Returns:
             Health status dictionary
+
         """
         is_healthy = self._consecutive_failures < self._max_failures
 

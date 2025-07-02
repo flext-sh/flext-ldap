@@ -37,6 +37,7 @@ References:
     - ITU-T X.680: ASN.1 specification
     - ITU-T X.690: ASN.1 encoding rules
     - RFC 5280: ASN.1 usage in PKI certificates
+
 """
 
 from __future__ import annotations
@@ -93,6 +94,7 @@ class ASN1Tag(BaseModel):
 
         Returns:
             Tag byte combining class, form, and number
+
         """
         if self.tag_number < ASN1_LONG_TAG_FORM:
             return int(self.tag_class | self.tag_form | self.tag_number)
@@ -135,6 +137,7 @@ class ASN1Element(ABC):
         >>> tag = element.get_tag()
         >>> encoded = element.encode()
         >>> value = element.get_value()
+
     """
 
     def __init__(
@@ -151,6 +154,7 @@ class ASN1Element(ABC):
             tag: Custom tag (overrides default)
             optional: Whether element is optional
             default: Default value if optional
+
         """
         self._value = value
         self._tag = tag
@@ -164,6 +168,7 @@ class ASN1Element(ABC):
 
         Returns:
             Default ASN.1 tag
+
         """
 
     def get_tag(self) -> ASN1Tag:
@@ -171,6 +176,7 @@ class ASN1Element(ABC):
 
         Returns:
             Custom tag if set, otherwise default tag
+
         """
         return self._tag if self._tag is not None else self.get_default_tag()
 
@@ -179,6 +185,7 @@ class ASN1Element(ABC):
 
         Args:
             tag: Custom ASN.1 tag
+
         """
         self._tag = tag
 
@@ -187,6 +194,7 @@ class ASN1Element(ABC):
 
         Returns:
             Element value
+
         """
         return self._value
 
@@ -195,6 +203,7 @@ class ASN1Element(ABC):
 
         Args:
             value: New element value
+
         """
         self._value = value
         self._encoded_data = None  # Clear cached encoding
@@ -204,6 +213,7 @@ class ASN1Element(ABC):
 
         Returns:
             True if element is optional
+
         """
         return self._optional
 
@@ -212,6 +222,7 @@ class ASN1Element(ABC):
 
         Returns:
             Default value for optional element
+
         """
         return self._default
 
@@ -220,6 +231,7 @@ class ASN1Element(ABC):
 
         Returns:
             True if element has a non-None value
+
         """
         return self._value is not None
 
@@ -231,6 +243,7 @@ class ASN1Element(ABC):
 
         Returns:
             True if elements are equal
+
         """
         if not isinstance(other, ASN1Element):
             return False
@@ -247,6 +260,7 @@ class ASN1Element(ABC):
 
         Returns:
             Hash value for the element
+
         """
         # Hash based on value and tag
         tag = self.get_tag()
@@ -263,6 +277,7 @@ class ASN1Element(ABC):
 
         Returns:
             Encoded element as bytes
+
         """
 
     @classmethod
@@ -276,6 +291,7 @@ class ASN1Element(ABC):
 
         Returns:
             Tuple of (decoded element, next offset)
+
         """
 
     @abstractmethod
@@ -284,6 +300,7 @@ class ASN1Element(ABC):
 
         Returns:
             List of validation errors (empty if valid)
+
         """
 
     def get_element_type(self) -> ASN1ElementType:
@@ -291,6 +308,7 @@ class ASN1Element(ABC):
 
         Returns:
             Element type category
+
         """
         tag = self.get_tag()
         if tag.is_constructed():
@@ -302,6 +320,7 @@ class ASN1Element(ABC):
 
         Returns:
             Dictionary representation of element
+
         """
         return {
             "type": self.__class__.__name__,
@@ -332,6 +351,7 @@ class ASN1Element(ABC):
 
         Returns:
             Encoded length bytes
+
         """
         if length < 0x80:
             # Short form - length fits in 7 bits
@@ -353,6 +373,7 @@ class ASN1Element(ABC):
 
         Returns:
             Tuple of (length, next_offset)
+
         """
         if offset >= len(data):
             return 0, offset
@@ -397,6 +418,7 @@ class ASN1Sequence(ASN1Element):
         >>> first_element = sequence[0]
         >>> sequence.append(ASN1Null())
         >>> length = len(sequence)
+
     """
 
     def __init__(
@@ -413,6 +435,7 @@ class ASN1Sequence(ASN1Element):
             tag: Custom tag
             optional: Whether sequence is optional
             default: Default value
+
         """
         super().__init__(elements or [], tag, optional, default)
         self._elements: list[ASN1Element] = elements or []
@@ -430,6 +453,7 @@ class ASN1Sequence(ASN1Element):
 
         Args:
             element: Element to add
+
         """
         self._elements.append(element)
         self._value = self._elements
@@ -441,6 +465,7 @@ class ASN1Sequence(ASN1Element):
         Args:
             index: Position to insert
             element: Element to insert
+
         """
         self._elements.insert(index, element)
         self._value = self._elements
@@ -451,6 +476,7 @@ class ASN1Sequence(ASN1Element):
 
         Args:
             element: Element to remove
+
         """
         self._elements.remove(element)
         self._value = self._elements
@@ -488,6 +514,7 @@ class ASN1Sequence(ASN1Element):
 
         Returns:
             Encoded sequence as bytes
+
         """
         # Basic SEQUENCE encoding
         # In production, this would use proper ASN.1 BER/DER encoding
@@ -513,6 +540,7 @@ class ASN1Sequence(ASN1Element):
 
         Returns:
             Tuple of (decoded sequence, next offset)
+
         """
         # Basic SEQUENCE decoding
         if offset >= len(data):
@@ -544,6 +572,7 @@ class ASN1Sequence(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors: list[str] = []
 
@@ -571,6 +600,7 @@ class ASN1Set(ASN1Element):
         >>>
         >>> # Elements are stored in canonical order for DER
         >>> ordered_elements = asn1_set.get_canonical_order()
+
     """
 
     def __init__(
@@ -587,6 +617,7 @@ class ASN1Set(ASN1Element):
             tag: Custom tag
             optional: Whether set is optional
             default: Default value
+
         """
         super().__init__(elements or [], tag, optional, default)
         self._elements: list[ASN1Element] = elements or []
@@ -604,6 +635,7 @@ class ASN1Set(ASN1Element):
 
         Args:
             element: Element to add
+
         """
         self._elements.append(element)
         self._value = self._elements
@@ -614,6 +646,7 @@ class ASN1Set(ASN1Element):
 
         Args:
             element: Element to remove
+
         """
         self._elements.remove(element)
         self._value = self._elements
@@ -624,6 +657,7 @@ class ASN1Set(ASN1Element):
 
         Returns:
             Elements sorted in canonical order
+
         """
 
         # Basic canonical ordering by encoded form
@@ -653,6 +687,7 @@ class ASN1Set(ASN1Element):
 
         Returns:
             Encoded set as bytes
+
         """
         # Basic SET encoding
         # In production, this would use proper ASN.1 BER/DER encoding
@@ -684,6 +719,7 @@ class ASN1Set(ASN1Element):
 
         Returns:
             Tuple of (decoded set, next offset)
+
         """
         # Basic SET decoding
         if offset >= len(data):
@@ -715,6 +751,7 @@ class ASN1Set(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors: list[str] = []
 
@@ -743,6 +780,7 @@ class ASN1Choice(ASN1Element):
         >>> # Set chosen alternative
         >>> choice.set_choice("string", "Hello World")
         >>> chosen_type, value = choice.get_choice()
+
     """
 
     def __init__(
@@ -759,6 +797,7 @@ class ASN1Choice(ASN1Element):
             tag: Custom tag
             optional: Whether choice is optional
             default: Default value
+
         """
         super().__init__(None, tag, optional, default)
         self._alternatives = alternatives or {}
@@ -785,6 +824,7 @@ class ASN1Choice(ASN1Element):
 
         Raises:
             ValueError: If alternative name not found
+
         """
         if name not in self._alternatives:
             msg = f"Unknown choice alternative: {name}"
@@ -801,6 +841,7 @@ class ASN1Choice(ASN1Element):
 
         Returns:
             Tuple of (alternative name, value) or None if no choice made
+
         """
         if self._chosen_name and self._chosen_element:
             return (self._chosen_name, self._chosen_element.get_value())
@@ -811,6 +852,7 @@ class ASN1Choice(ASN1Element):
 
         Returns:
             Chosen ASN.1 element or None
+
         """
         return self._chosen_element
 
@@ -819,6 +861,7 @@ class ASN1Choice(ASN1Element):
 
         Returns:
             Dictionary of alternatives
+
         """
         return self._alternatives.copy()
 
@@ -834,6 +877,7 @@ class ASN1Choice(ASN1Element):
 
         Returns:
             Encoded choice as bytes
+
         """
         if self._chosen_element is None:
             msg = "No choice alternative selected"
@@ -851,6 +895,7 @@ class ASN1Choice(ASN1Element):
 
         Returns:
             Tuple of (decoded choice, next offset)
+
         """
         # Basic CHOICE decoding - try to decode as generic element
         # In production, this would try each alternative until one succeeds
@@ -879,6 +924,7 @@ class ASN1Choice(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -913,6 +959,7 @@ class ASN1Tagged(ASN1Element):
         ...     tag_number=2,
         ...     implicit=True
         ... )
+
     """
 
     def __init__(
@@ -935,6 +982,7 @@ class ASN1Tagged(ASN1Element):
             implicit: Use implicit tagging
             optional: Whether element is optional
             default: Default value
+
         """
         tag = ASN1Tag(
             tag_class=tag_class,
@@ -961,6 +1009,7 @@ class ASN1Tagged(ASN1Element):
 
         Returns:
             Inner ASN.1 element
+
         """
         return self._inner_element
 
@@ -969,6 +1018,7 @@ class ASN1Tagged(ASN1Element):
 
         Returns:
             True if explicit tagging
+
         """
         return self._explicit
 
@@ -977,6 +1027,7 @@ class ASN1Tagged(ASN1Element):
 
         Returns:
             True if implicit tagging
+
         """
         return self._implicit
 
@@ -988,6 +1039,7 @@ class ASN1Tagged(ASN1Element):
 
         Returns:
             Encoded tagged element as bytes
+
         """
         # Basic tagged element encoding
         inner_encoded = self._inner_element.encode(encoding)
@@ -1016,6 +1068,7 @@ class ASN1Tagged(ASN1Element):
 
         Returns:
             Tuple of (decoded tagged element, next offset)
+
         """
         # Basic tagged element decoding
         if offset >= len(data):
@@ -1060,6 +1113,7 @@ class ASN1Tagged(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -1090,6 +1144,7 @@ class ASN1Any(ASN1Element):
         >>> # Create ANY element from another element
         >>> integer = ASN1Integer(42)
         >>> any_from_element = ASN1Any.from_element(integer)
+
     """
 
     def __init__(
@@ -1106,6 +1161,7 @@ class ASN1Any(ASN1Element):
             tag: Custom tag
             optional: Whether element is optional
             default: Default value
+
         """
         super().__init__(value, tag, optional, default)
         self._raw_data: bytes | None = None
@@ -1146,6 +1202,7 @@ class ASN1Any(ASN1Element):
 
         Returns:
             Raw bytes if available
+
         """
         return self._raw_data
 
@@ -1154,6 +1211,7 @@ class ASN1Any(ASN1Element):
 
         Returns:
             Decoded ASN.1 element if available
+
         """
         return self._decoded_element
 
@@ -1166,6 +1224,7 @@ class ASN1Any(ASN1Element):
 
         Returns:
             ANY element containing the source element
+
         """
         return cls(value=cast("ASN1Value", element))
 
@@ -1177,6 +1236,7 @@ class ASN1Any(ASN1Element):
 
         Returns:
             Encoded ANY element as bytes
+
         """
         if self._raw_data:
             return self._raw_data
@@ -1194,6 +1254,7 @@ class ASN1Any(ASN1Element):
 
         Returns:
             Tuple of (decoded ANY element, next offset)
+
         """
         # Basic ANY element decoding - store raw data
         if offset >= len(data):
@@ -1224,6 +1285,7 @@ class ASN1Any(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 

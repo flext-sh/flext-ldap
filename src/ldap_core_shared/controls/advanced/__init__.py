@@ -32,6 +32,7 @@ References:
     - RFC 4528: LDAP Assertion Control
     - RFC 4533: LDAP Content Synchronization Operation
     - RFC 3672: Subentries in LDAP
+
 """
 
 from typing import TYPE_CHECKING

@@ -44,6 +44,7 @@ References:
     - perl-ldap: lib/Net/LDAP.pod (async mode, lines 123-125, 891-895)
     - asyncio: Python asynchronous I/O framework
     - concurrent.futures: Python futures and threading
+
 """
 
 from __future__ import annotations
@@ -266,6 +267,7 @@ class AsyncResult(BaseModel):
 
         Raises:
             RuntimeError: If operation is not completed
+
         """
         if not self.is_completed():
             msg = f"Operation {self.operation_id} not completed (status: {self.status})"
@@ -281,6 +283,7 @@ class AsyncResult(BaseModel):
 
         Raises:
             RuntimeError: If operation is not completed or not a search
+
         """
         if not self.is_completed():
             msg = f"Operation {self.operation_id} not completed"
@@ -304,6 +307,7 @@ class AsyncResult(BaseModel):
         Args:
             percentage: Progress percentage (0.0-DEFAULT_MAX_ITEMS)
             message: Optional progress message
+
         """
         self.progress_percentage = max(0.0, min(DEFAULT_MAX_ITEMS, percentage))
         if message:
@@ -319,6 +323,7 @@ class OperationFuture:
         Args:
             operation_id: Operation identifier
             result: Async result object
+
         """
         self._operation_id = operation_id
         self._result = result
@@ -351,6 +356,7 @@ class OperationFuture:
         Raises:
             asyncio.TimeoutError: If timeout expires
             RuntimeError: If operation failed or was cancelled
+
         """
         if not self.done():
             msg = "Operation not completed"
@@ -371,6 +377,7 @@ class OperationFuture:
 
         Args:
             callback: Callback function
+
         """
         self._callbacks.append(callback)
 
@@ -389,6 +396,7 @@ class OperationFuture:
 
         Args:
             callback: Progress callback function
+
         """
         self._progress_callbacks.append(callback)
 
@@ -397,6 +405,7 @@ class OperationFuture:
 
         Returns:
             True if operation was cancelled
+
         """
         if self.done():
             return False
@@ -511,6 +520,7 @@ class AsyncLDAPOperations:
         >>>
         >>> # Wait for completion
         >>> entries = await search_future
+
     """
 
     def __init__(
@@ -525,6 +535,7 @@ class AsyncLDAPOperations:
             connection: LDAP connection
             max_concurrent_operations: Maximum concurrent operations
             default_timeout: Default operation timeout in seconds
+
         """
         self._connection = connection
         self._max_concurrent = max_concurrent_operations
@@ -556,6 +567,7 @@ class AsyncLDAPOperations:
 
         Returns:
             Tuple of (operation_id, future)
+
         """
         operation_id = str(uuid.uuid4())
         self._total_operations += 1
@@ -592,6 +604,7 @@ class AsyncLDAPOperations:
 
         Raises:
             NotImplementedError: Async search not yet implemented
+
         """
         if config is None:
             config = SearchConfig()
@@ -692,6 +705,7 @@ class AsyncLDAPOperations:
 
         Raises:
             NotImplementedError: Async add not yet implemented
+
         """
         _operation_id, future = self._create_operation_future(
             OperationType.ADD,
@@ -748,6 +762,7 @@ class AsyncLDAPOperations:
 
         Raises:
             NotImplementedError: Async modify not yet implemented
+
         """
         _operation_id, future = self._create_operation_future(
             OperationType.MODIFY,
@@ -817,6 +832,7 @@ class AsyncLDAPOperations:
 
         Raises:
             NotImplementedError: Async delete not yet implemented
+
         """
         operation_id = str(uuid.uuid4())
         self._total_operations += 1
@@ -875,6 +891,7 @@ class AsyncLDAPOperations:
 
         Returns:
             List of all operation results
+
         """
         if not self._active_operations:
             return []
@@ -899,6 +916,7 @@ class AsyncLDAPOperations:
 
         Returns:
             Number of operations cancelled
+
         """
         cancelled_count = 0
 
@@ -916,6 +934,7 @@ class AsyncLDAPOperations:
 
         Returns:
             Operation future or None if not found
+
         """
         return self._active_operations.get(operation_id)
 
@@ -924,6 +943,7 @@ class AsyncLDAPOperations:
 
         Returns:
             List of active operation IDs
+
         """
         return [
             op_id
@@ -936,6 +956,7 @@ class AsyncLDAPOperations:
 
         Returns:
             Dictionary with operation statistics
+
         """
         active_count = len(self.get_active_operations())
 
@@ -967,6 +988,7 @@ class AsyncLDAPOperations:
             operation_func: Function to execute
             *args: Function arguments
             **kwargs: Function keyword arguments
+
         """
         async with self._operation_semaphore:
             future.result_object.status = OperationStatus.RUNNING
@@ -1001,6 +1023,7 @@ async def search_async(
 
     Returns:
         Async result object
+
     """
     async_ops = AsyncLDAPOperations(connection)
     # Create search config with filter and attributes
@@ -1027,6 +1050,7 @@ async def concurrent_operations(
 
     Returns:
         List of async results
+
     """
     async_ops = AsyncLDAPOperations(
         connection,

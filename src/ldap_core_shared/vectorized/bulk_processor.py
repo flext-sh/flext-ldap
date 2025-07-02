@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import time
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Constants for magic values
 BYTES_PER_KB = 1024
@@ -78,6 +80,7 @@ def _validate_dns_vectorized(dns: np.ndarray) -> np.ndarray:
 
     Returns:
         Boolean array indicating valid DNs
+
     """
     valid = np.zeros(len(dns), dtype=np.bool_)
 
@@ -110,6 +113,7 @@ def _calculate_batch_sizes(total_entries: int, max_memory_mb: float) -> np.ndarr
 
     Returns:
         Array of optimal batch sizes
+
     """
     # Estimate 1KB per entry average
     entry_size_kb = 1.0
@@ -154,6 +158,7 @@ class VectorizedBulkProcessor:
             max_memory_mb: Maximum memory to use for batch processing
             max_parallel_tasks: Maximum number of parallel tasks
             adaptive_batching: Enable adaptive batch sizing
+
         """
         self.transaction = transaction
         self.max_memory_mb = max_memory_mb
@@ -188,6 +193,7 @@ class VectorizedBulkProcessor:
         Raises:
             LDAPBulkOperationError: If bulk operation fails
             ValueError: If entries format is invalid
+
         """
         if not entries:
             msg = "Entries list cannot be empty"
@@ -238,6 +244,7 @@ class VectorizedBulkProcessor:
 
         Returns:
             DataFrame with optimized dtypes
+
         """
         # Run CPU-intensive DataFrame creation in thread pool
         loop = asyncio.get_event_loop()
@@ -266,6 +273,7 @@ class VectorizedBulkProcessor:
 
         Raises:
             ValueError: If validation fails
+
         """
         # Vectorized DN validation using JIT-compiled function
         dns_array = df["dn"].to_numpy()
@@ -317,6 +325,7 @@ class VectorizedBulkProcessor:
         Args:
             df: DataFrame containing entries to process
             progress_callback: Optional progress callback
+
         """
         # Calculate optimal batch sizes
         batch_sizes = _calculate_batch_sizes(len(df), self.max_memory_mb)
@@ -386,6 +395,7 @@ class VectorizedBulkProcessor:
 
         Returns:
             Updated DataFrame with processing results
+
         """
         logger.debug(
             "Processing batch",
@@ -455,6 +465,7 @@ class VectorizedBulkProcessor:
 
         Raises:
             LDAPBulkOperationError: If failure rate exceeds threshold
+
         """
         processed_entries = batch_df.iloc[: current_idx + 1]
         failed_count = int((~processed_entries["_success"]).sum())
@@ -473,6 +484,7 @@ class VectorizedBulkProcessor:
 
         Returns:
             Bulk operation result with performance statistics
+
         """
         total_duration = time.time() - self._start_time
         self.stats.entries_per_second = (
@@ -541,6 +553,7 @@ async def create_vectorized_processor(
             max_parallel_tasks=4
         )
         ```
+
     """
     return VectorizedBulkProcessor(transaction, **kwargs)
 

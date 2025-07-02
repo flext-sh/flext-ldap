@@ -86,6 +86,7 @@ class LDAP:
 
         Args:
             config: LDAP configuration object
+
         """
         self._config = config
         self._is_connected = False

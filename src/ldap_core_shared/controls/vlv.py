@@ -41,17 +41,20 @@ References:
     - RFC 2696: LDAP Control Extension for Simple Paged Results Manipulation
     - Internet Draft: LDAP Extensions for Scrolling View Browsing of Search Results
     - Netscape VLV Control Specification
+
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
 from ldap_core_shared.controls.base import LDAPControl
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class VLVTargetType(Enum):
@@ -112,6 +115,7 @@ class VLVRequest(BaseModel):
 
         Raises:
             ValueError: If request configuration is invalid
+
         """
         if self.target_type == VLVTargetType.BY_OFFSET:
             if self.target_position is None or self.target_position < 1:
@@ -187,6 +191,7 @@ class VLVResponse(BaseModel):
 
         Returns:
             Current page number (1-based)
+
         """
         if page_size <= 0:
             return 1
@@ -200,6 +205,7 @@ class VLVResponse(BaseModel):
 
         Returns:
             True if more pages are available
+
         """
         return self.target_position + page_size <= self.content_count
 
@@ -225,6 +231,7 @@ class VLVControl(LDAPControl):
         >>> # Navigate to specific page
         >>> vlv_control.goto_page(3, page_size=20)
         >>> next_results = connection.search(...)
+
     """
 
     control_type = "2.16.840.1.113730.3.4.9"  # VLV control OID
@@ -249,6 +256,7 @@ class VLVControl(LDAPControl):
             content_count: Estimated total content count
             context_id: Context ID from previous VLV response
             criticality: Whether control is critical for operation
+
         """
         # Determine target type
         if target_position is not None:
@@ -295,6 +303,7 @@ class VLVControl(LDAPControl):
 
         Raises:
             NotImplementedError: BER encoding not yet implemented
+
         """
         # TODO: Implement BER encoding of VLV request
         # This should encode the VLV request according to the VLV specification
@@ -315,6 +324,7 @@ class VLVControl(LDAPControl):
 
         Raises:
             NotImplementedError: Response processing not yet implemented
+
         """
         # TODO: Implement BER decoding of VLV response
         # This should decode the VLV response according to the VLV specification
@@ -332,6 +342,7 @@ class VLVControl(LDAPControl):
         Args:
             page_number: Page number (1-based)
             page_size: Optional page size (uses current if not specified)
+
         """
         if page_number < 1:
             msg = "Page number must be >= 1"
@@ -357,6 +368,7 @@ class VLVControl(LDAPControl):
 
         Returns:
             True if there is a next page, False if at end
+
         """
         if not self._response:
             return False
@@ -373,6 +385,7 @@ class VLVControl(LDAPControl):
 
         Returns:
             True if there is a previous page, False if at beginning
+
         """
         if not self._response:
             return False
@@ -401,6 +414,7 @@ class VLVControl(LDAPControl):
 
         Args:
             target_value: Value to search for
+
         """
         self._request.target_type = VLVTargetType.BY_VALUE
         self._request.target_value = target_value
@@ -415,6 +429,7 @@ class VLVControl(LDAPControl):
         Args:
             before_count: Number of entries before target
             after_count: Number of entries after target
+
         """
         if before_count < 0 or after_count < 0:
             msg = "Window counts must be >= 0"
@@ -452,6 +467,7 @@ class VLVControl(LDAPControl):
 
         Returns:
             Dictionary with pagination metadata
+
         """
         info = {
             "window_size": self.window_size,
@@ -475,6 +491,7 @@ class VLVControl(LDAPControl):
 
         Returns:
             Encoded control value or None if no value
+
         """
         return self.control_value
 
@@ -487,6 +504,7 @@ class VLVControl(LDAPControl):
 
         Returns:
             VLVControl instance with decoded values
+
         """
         if not control_value:
             # Default VLV control for first page
@@ -506,6 +524,7 @@ class VLVBrowsingHelper:
 
         Args:
             connection: LDAP connection
+
         """
         self._connection = connection
 
@@ -529,6 +548,7 @@ class VLVBrowsingHelper:
 
         Raises:
             NotImplementedError: Paginated search not yet implemented
+
         """
         # TODO: Implement actual VLV paginated search
         msg = (
@@ -555,6 +575,7 @@ class VLVBrowsingHelper:
 
         Raises:
             NotImplementedError: Directory browsing not yet implemented
+
         """
         # TODO: Implement VLV directory browsing
         msg = (
@@ -584,6 +605,7 @@ class VLVPaginatedSearch:
             search_filter: LDAP filter
             sort_control: Server-side sort control
             page_size: Number of entries per page
+
         """
         self._connection = connection
         self._search_base = search_base
@@ -614,6 +636,7 @@ class VLVPaginatedSearch:
 
         Raises:
             NotImplementedError: Page navigation not yet implemented
+
         """
         # TODO: Implement actual page navigation
         msg = (
@@ -628,6 +651,7 @@ class VLVPaginatedSearch:
 
         Returns:
             List of entries or None if no more pages
+
         """
         if self._vlv_control.goto_next_page():
             return await self.goto_page(self._current_page + 1)
@@ -638,6 +662,7 @@ class VLVPaginatedSearch:
 
         Returns:
             List of entries or None if no previous pages
+
         """
         if self._vlv_control.goto_previous_page():
             return await self.goto_page(self._current_page - 1)
@@ -648,6 +673,7 @@ class VLVPaginatedSearch:
 
         Returns:
             Dictionary with pagination information
+
         """
         return {
             "current_page": self._current_page,
@@ -675,6 +701,7 @@ def create_vlv_control(
 
     Returns:
         Configured VLV control
+
     """
     if target_value:
         return VLVControl(
@@ -702,6 +729,7 @@ def create_vlv_with_window(
 
     Returns:
         Configured VLV control
+
     """
     return VLVControl(
         target_position=target_position,
@@ -726,6 +754,7 @@ async def browse_large_directory(
 
     Returns:
         VLV browsing helper configured for the directory
+
     """
     return VLVBrowsingHelper(connection)
 

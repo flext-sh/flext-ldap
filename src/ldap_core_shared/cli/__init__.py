@@ -26,6 +26,7 @@ References:
     - schema2ldif-perl-converter: Schema conversion tool equivalent
     - ldap-schema-manager: Schema management utilities
     - ASN.1 and SASL testing tools
+
 """
 
 from __future__ import annotations
@@ -61,6 +62,7 @@ def get_version() -> str:
 
     Returns:
         Version string
+
     """
     try:
         from ldap_core_shared import __version__

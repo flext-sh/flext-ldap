@@ -194,6 +194,7 @@ class AtomicOperations:
         ... )
         >>> if result.success:
         ...     print(f"Allocated UID: {result.new_value}")
+
     """
 
     # Well-known increment-capable attributes
@@ -214,6 +215,7 @@ class AtomicOperations:
 
         Args:
             connection: Active LDAP connection
+
         """
         self._connection = connection
 
@@ -237,6 +239,7 @@ class AtomicOperations:
 
         Raises:
             NotImplementedError: Increment operation not yet implemented
+
         """
         time.time()
 
@@ -266,6 +269,7 @@ class AtomicOperations:
 
         Returns:
             Result of decrement operation
+
         """
         # Decrement is just increment with negative value
         return await self.increment_attribute(
@@ -297,6 +301,7 @@ class AtomicOperations:
 
         Raises:
             NotImplementedError: Compare-and-swap not yet implemented
+
         """
         time.time()
 
@@ -329,6 +334,7 @@ class AtomicOperations:
 
         Raises:
             NotImplementedError: Conditional add not yet implemented
+
         """
         # TODO: Implement conditional add operation
         # This is a stub implementation
@@ -359,6 +365,7 @@ class AtomicOperations:
 
         Raises:
             NotImplementedError: Conditional remove not yet implemented
+
         """
         # TODO: Implement conditional remove operation
         # This is a stub implementation
@@ -377,6 +384,7 @@ class AtomicOperations:
 
         Returns:
             True if attribute supports increment operations
+
         """
         # Check against known numeric attributes
         if attribute in self.NUMERIC_ATTRIBUTES:
@@ -392,6 +400,7 @@ class AtomicOperations:
 
         Returns:
             True if server supports increment operations
+
         """
         # TODO: Implement server capability detection
         # Check for LDAP_FEATURE_MODIFY_INCREMENT support
@@ -418,6 +427,7 @@ class AtomicOperations:
 
         Returns:
             Result of increment operation
+
         """
         for attempt in range(retry_attempts):
             try:
@@ -526,6 +536,7 @@ class AtomicOperations:
 
         Raises:
             ValueError: If request is invalid
+
         """
         if not dn or not dn.strip():
             msg = "DN cannot be empty"
@@ -562,6 +573,7 @@ async def increment_attribute(
 
     Returns:
         Increment operation result
+
     """
     atomic = AtomicOperations(connection)
     return await atomic.increment_attribute(dn, attribute, increment_value)
@@ -579,6 +591,7 @@ async def allocate_uid_number(
 
     Returns:
         Allocated UID number or None if allocation failed
+
     """
     result = await increment_attribute(connection, counter_dn, "uidNumber", 1)
     return result.new_value if result.success else None
@@ -596,6 +609,7 @@ async def allocate_gid_number(
 
     Returns:
         Allocated GID number or None if allocation failed
+
     """
     result = await increment_attribute(connection, counter_dn, "gidNumber", 1)
     return result.new_value if result.success else None

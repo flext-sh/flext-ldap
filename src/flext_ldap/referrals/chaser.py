@@ -161,6 +161,7 @@ class ReferralCredentials(BaseModel):
 
         Returns:
             True if credentials are valid
+
         """
         if self.credential_type == CredentialType.SIMPLE:
             return bool(self.bind_dn and self.password)
@@ -176,6 +177,7 @@ class ReferralCredentials(BaseModel):
 
         Returns:
             Authentication summary string
+
         """
         if self.credential_type == CredentialType.SIMPLE:
             return f"Simple bind as {self.bind_dn}"
@@ -235,6 +237,7 @@ class ReferralConnectionInfo(BaseModel):
 
         Args:
             success: Whether operation succeeded
+
         """
         self.operations_executed += 1
         self.last_operation_at = datetime.now(UTC)
@@ -317,6 +320,7 @@ class ReferralChasingResult(BaseModel):
 
         Returns:
             List of entries or empty list
+
         """
         return self.entries or []
 
@@ -325,6 +329,7 @@ class ReferralChasingResult(BaseModel):
 
         Returns:
             Combined error message
+
         """
         errors = []
 
@@ -365,6 +370,7 @@ class ReferralChaser:
         >>>
         >>> if result.success:
         ...     entries = result.get_entries()
+
     """
 
     def __init__(
@@ -381,6 +387,7 @@ class ReferralChaser:
             max_depth: Maximum referral depth to follow
             connection_timeout: Connection timeout in seconds
             operation_timeout: Operation timeout in seconds
+
         """
         self._default_credentials = default_credentials
         self._max_depth = max_depth
@@ -420,6 +427,7 @@ class ReferralChaser:
 
         Raises:
             NotImplementedError: Referral chasing not yet implemented
+
         """
         start_time = time.time()
         self._total_referrals_chased += 1
@@ -499,6 +507,7 @@ class ReferralChaser:
 
         Raises:
             NotImplementedError: Connection establishment not yet implemented
+
         """
         # TODO: Implement actual connection establishment
         # This would use an LDAP client library to connect to the server
@@ -525,6 +534,7 @@ class ReferralChaser:
 
         Raises:
             NotImplementedError: Authentication not yet implemented
+
         """
         # TODO: Implement actual authentication
         # This would handle different authentication types (simple, SASL, etc.)
@@ -553,6 +563,7 @@ class ReferralChaser:
 
         Raises:
             NotImplementedError: Operation execution not yet implemented
+
         """
         # TODO: Implement actual operation execution
         # This would handle different LDAP operations on the referral server
@@ -568,6 +579,7 @@ class ReferralChaser:
 
         Args:
             credentials: Default credentials to use
+
         """
         self._default_credentials = credentials
 
@@ -592,6 +604,7 @@ class ReferralChaser:
 
         Returns:
             Dictionary with statistics
+
         """
         return {
             "total_referrals_chased": self._total_referrals_chased,
@@ -620,6 +633,7 @@ def create_simple_credentials(bind_dn: str, password: str) -> ReferralCredential
 
     Returns:
         Simple bind credentials
+
     """
     return ReferralCredentials(
         credential_type=CredentialType.SIMPLE,
@@ -644,6 +658,7 @@ def create_sasl_credentials(
 
     Returns:
         SASL credentials
+
     """
     return ReferralCredentials(
         credential_type=CredentialType.SASL,
@@ -659,6 +674,7 @@ def create_anonymous_credentials() -> ReferralCredentials:
 
     Returns:
         Anonymous credentials
+
     """
     return ReferralCredentials(credential_type=CredentialType.ANONYMOUS)
 
@@ -681,6 +697,7 @@ async def quick_chase(
 
     Returns:
         Chasing result
+
     """
     credentials = None
     if bind_dn and password:

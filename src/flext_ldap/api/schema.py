@@ -33,6 +33,7 @@ class SchemaProcessorBase(ABC):
 
         Args:
             config: Application configuration containing schema processing settings
+
         """
         self.config = config
         self.performance_metrics: dict[str, Any] = {}
@@ -47,6 +48,7 @@ class SchemaProcessorBase(ABC):
 
         Returns:
             Dict containing processed entries and schema statistics
+
         """
 
     def validate_schema(self, entry: dict[str, Any]) -> dict[str, Any]:
@@ -57,6 +59,7 @@ class SchemaProcessorBase(ABC):
 
         Returns:
             Dict containing validation results and any schema issues
+
         """
         validation_result = {
             "entry_dn": entry.get("dn", ""),
@@ -81,6 +84,7 @@ class SchemaProcessorBase(ABC):
 
         Returns:
             Entry with transformed schema attributes
+
         """
         # Default implementation: return entry unchanged
         return entry.copy()
@@ -92,6 +96,7 @@ class SchemaProcessorBase(ABC):
             operation: Name of the schema operation
             duration: Time taken in seconds
             count: Number of items processed
+
         """
         self.performance_metrics[operation] = {
             "duration": duration,
@@ -112,6 +117,7 @@ class SchemaProcessorBase(ABC):
 
         Returns:
             Dict containing performance statistics
+
         """
         return self.performance_metrics.copy()
 
@@ -120,6 +126,7 @@ class SchemaProcessorBase(ABC):
 
         Returns:
             Dict containing schema mapping rules
+
         """
         return self.schema_mappings.copy()
 
@@ -128,6 +135,7 @@ class SchemaProcessorBase(ABC):
 
         Args:
             output_path: Path where output files will be created
+
         """
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -147,6 +155,7 @@ class DefaultSchemaProcessor(SchemaProcessorBase):
 
         Returns:
             Dict with processed entries and schema validation results
+
         """
         start_time = time.time()
 

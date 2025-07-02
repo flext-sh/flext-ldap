@@ -39,6 +39,7 @@ References:
     - perl-Convert-ASN1: Encoding algorithm compatibility
     - RFC 5280: ASN.1 usage in PKI certificates
     - OpenSSL ASN.1 implementation patterns
+
 """
 
 from __future__ import annotations
@@ -99,6 +100,7 @@ class EncodingError(Exception):
         Args:
             message: Error message
             element: Element that caused the error
+
         """
         super().__init__(message)
         self.element = element
@@ -142,6 +144,7 @@ class TLVEncoder:
 
         Raises:
             EncodingError: If tag encoding fails
+
         """
         try:
             # Short form tag (tag number < 31)
@@ -189,6 +192,7 @@ class TLVEncoder:
 
         Raises:
             EncodingError: If length encoding fails
+
         """
         try:
             if not definite:
@@ -234,6 +238,7 @@ class TLVEncoder:
 
         Returns:
             Complete TLV encoded bytes
+
         """
         tag_bytes = TLVEncoder.encode_tag(tag)
         length_bytes = TLVEncoder.encode_length(len(content), definite)
@@ -255,6 +260,7 @@ class ASN1EncoderBase(ABC):
 
         Args:
             context: Encoding context
+
         """
         self.context = context or EncodingContext(rules=EncodingRules.BER)
 
@@ -267,6 +273,7 @@ class ASN1EncoderBase(ABC):
 
         Returns:
             Encoded bytes
+
         """
 
     def _validate_element(self, element: ASN1Element) -> None:
@@ -277,6 +284,7 @@ class ASN1EncoderBase(ABC):
 
         Raises:
             EncodingError: If validation fails
+
         """
         if not self.context.validate_elements:
             return
@@ -291,6 +299,7 @@ class ASN1EncoderBase(ABC):
 
         Raises:
             EncodingError: If maximum depth exceeded
+
         """
         if self.context.current_depth > self.context.max_depth:
             msg = f"Maximum encoding depth exceeded: {self.context.max_depth}"
@@ -311,6 +320,7 @@ class BEREncoder(ASN1EncoderBase):
 
         Returns:
             BER encoded bytes
+
         """
         self._validate_element(element)
         self._check_depth()
@@ -711,6 +721,7 @@ class ASN1Encoder:
             encoding_rules: Encoding rules to use
             definite_length: Use definite length encoding
             validate_elements: Validate elements before encoding
+
         """
         if isinstance(encoding_rules, str):
             encoding_rules = EncodingRules(encoding_rules)
@@ -740,6 +751,7 @@ class ASN1Encoder:
 
         Raises:
             EncodingError: If encoding fails
+
         """
         try:
             return self._encoder.encode_element(element)
@@ -757,6 +769,7 @@ class ASN1Encoder:
 
         Returns:
             List of encoded byte strings
+
         """
         return [self.encode(element) for element in elements]
 
@@ -765,6 +778,7 @@ class ASN1Encoder:
 
         Returns:
             Current encoding context
+
         """
         return self.context
 
@@ -773,6 +787,7 @@ class ASN1Encoder:
 
         Args:
             validate: Whether to validate elements before encoding
+
         """
         self.context.validate_elements = validate
 
@@ -781,6 +796,7 @@ class ASN1Encoder:
 
         Args:
             max_depth: Maximum nesting depth allowed
+
         """
         self.context.max_depth = max_depth
 

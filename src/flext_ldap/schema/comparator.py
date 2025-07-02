@@ -85,6 +85,7 @@ class SchemaComparator:
 
         Returns:
             Operation result with comparison results
+
         """
         try:
             differences = []

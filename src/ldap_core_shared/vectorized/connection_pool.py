@@ -57,6 +57,7 @@ class PredictiveConnectionPool:
             max_pool_size: Maximum number of connections allowed
             prediction_window: Time window for demand prediction (seconds)
             enable_ml_prediction: Enable ML-based demand prediction
+
         """
         self.connection_factory = connection_factory
         self.min_pool_size = min_pool_size
@@ -84,6 +85,7 @@ class PredictiveConnectionPool:
 
         Yields:
             Connection from the pool
+
         """
         start_time = time.perf_counter()
 
@@ -212,6 +214,7 @@ async def create_predictive_pool(
 
     Returns:
         Configured predictive connection pool
+
     """
     pool = PredictiveConnectionPool(connection_factory, **kwargs)
     await pool.warmup_pool()

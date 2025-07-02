@@ -9,7 +9,6 @@ import asyncio
 import gc
 import statistics
 import time
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -47,7 +46,7 @@ import contextlib
 from ldap_core_shared.utils.logging import get_logger
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable
+    from collections.abc import Awaitable, Callable
 
 logger = get_logger(__name__)
 
@@ -165,6 +164,7 @@ class PerformanceBenchmarker:
             enable_memory_profiling: Enable detailed memory profiling
             enable_gc_tracking: Enable garbage collection tracking
             confidence_level: Statistical confidence level for results
+
         """
         self.warmup_runs = warmup_runs
         self.benchmark_runs = benchmark_runs
@@ -202,6 +202,7 @@ class PerformanceBenchmarker:
 
         Returns:
             Benchmark suite with statistical analysis
+
         """
         logger.info("Starting benchmark: %s", name)
 
@@ -352,6 +353,7 @@ class PerformanceBenchmarker:
 
         Returns:
             Comparison report with performance improvements
+
         """
         baseline_suite = self._suites.get(baseline_name)
         optimized_suite = self._suites.get(optimized_name)
@@ -447,6 +449,7 @@ class PerformanceBenchmarker:
 
         Returns:
             Load test results with performance metrics
+
         """
         logger.info(
             "Starting load test: %s",
@@ -493,6 +496,7 @@ class PerformanceBenchmarker:
 
         Returns:
             Formatted performance report
+
         """
         if output_format == "markdown":
             return self._generate_markdown_report()
@@ -669,6 +673,7 @@ class PerformanceBenchmarker:
 
         Returns:
             Tuple of (results, errors, memory_samples, cpu_samples)
+
         """
         # Initialize collections
         results = []
@@ -706,6 +711,7 @@ class PerformanceBenchmarker:
             end_time: Test end time
             memory_samples: List to append memory samples to
             cpu_samples: List to append CPU samples to
+
         """
         while time.time() < end_time:
             memory_samples.append(self._get_memory_usage_mb())
@@ -731,6 +737,7 @@ class PerformanceBenchmarker:
             end_time: Test end time
             results: List to append results to
             errors: List to append errors to
+
         """
         semaphore = asyncio.Semaphore(context.concurrent_requests)
         tasks: list[asyncio.Task[Any]] = []
@@ -780,6 +787,7 @@ class PerformanceBenchmarker:
 
         Returns:
             Current concurrency level
+
         """
         elapsed = current_time - start_time
         if elapsed < ramp_up_seconds:
@@ -802,6 +810,7 @@ class PerformanceBenchmarker:
             tasks: Current tasks list
             current_concurrency: Target concurrency level
             end_time: Test end time
+
         """
         while len(tasks) < current_concurrency and time.time() < end_time:
             task = asyncio.create_task(
@@ -822,6 +831,7 @@ class PerformanceBenchmarker:
 
         Returns:
             Tuple of (duration, success, error_message)
+
         """
         async with semaphore:
             request_start = time.perf_counter()
@@ -851,6 +861,7 @@ class PerformanceBenchmarker:
             tasks: List of current tasks
             results: List to append results to
             errors: List to append errors to
+
         """
         done_tasks = [task for task in tasks if task.done()]
         for task in done_tasks:
@@ -876,6 +887,7 @@ class PerformanceBenchmarker:
             tasks: List of remaining tasks
             results: List to append results to
             errors: List to append errors to
+
         """
         if tasks:
             remaining_results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -907,6 +919,7 @@ class PerformanceBenchmarker:
 
         Returns:
             Load test results dictionary
+
         """
         durations = [r[0] for r in results]
         successes = [r[1] for r in results]
@@ -962,6 +975,7 @@ class PerformanceBenchmarker:
 
         Returns:
             Response time statistics dictionary
+
         """
         if not durations:
             return {}
@@ -1005,6 +1019,7 @@ class PerformanceBenchmarker:
 
         Returns:
             System metrics dictionary
+
         """
         return {
             "peak_memory_mb": max(memory_samples) if memory_samples else 0,
@@ -1019,6 +1034,7 @@ class PerformanceBenchmarker:
         Args:
             name: Test name
             result: Test results dictionary
+
         """
         logger.info(
             "Load test completed: %s",
@@ -1055,5 +1071,6 @@ def create_performance_benchmarker(**kwargs) -> PerformanceBenchmarker:
 
     Returns:
         Configured performance benchmarker
+
     """
     return PerformanceBenchmarker(**kwargs)

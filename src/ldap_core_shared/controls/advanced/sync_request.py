@@ -39,6 +39,7 @@ References:
     - RFC 4533: LDAP Content Synchronization Operation
     - RFC 4511: LDAP Protocol Specification
     - Directory synchronization patterns
+
 """
 
 from __future__ import annotations
@@ -103,6 +104,7 @@ class SyncCookie(BaseModel):
 
         Returns:
             True if cookie has valid value
+
         """
         return bool(self.cookie_value and len(self.cookie_value) > 0)
 
@@ -111,6 +113,7 @@ class SyncCookie(BaseModel):
 
         Returns:
             Cookie value as hex string
+
         """
         return self.cookie_value.hex() if self.cookie_value else ""
 
@@ -123,6 +126,7 @@ class SyncCookie(BaseModel):
 
         Returns:
             Cookie age in seconds
+
         """
         return (datetime.now(UTC) - self.created_at).total_seconds()
 
@@ -185,6 +189,7 @@ class SyncRequestConfig(BaseModel):
 
         Returns:
             True if no previous cookie exists
+
         """
         return self.cookie is None or not self.cookie.is_valid()
 
@@ -193,6 +198,7 @@ class SyncRequestConfig(BaseModel):
 
         Returns:
             True if persistent sync is enabled
+
         """
         return self.mode in {
             SyncRequestMode.REFRESH_AND_PERSIST,
@@ -204,6 +210,7 @@ class SyncRequestConfig(BaseModel):
 
         Returns:
             Dictionary with sync configuration
+
         """
         return {
             "mode": self.mode.value,
@@ -308,6 +315,7 @@ class SyncRequestResponse(BaseModel):
 
         Returns:
             Dictionary with sync statistics
+
         """
         total_changes = (
             self.entries_added + self.entries_modified + self.entries_deleted
@@ -358,6 +366,7 @@ class SyncRequestControl(LDAPControl):
         ...     mode=SyncRequestMode.REFRESH_ONLY,
         ...     cookie=cookie
         ... )
+
     """
 
     control_type = "1.3.6.1.4.1.4203.1.9.1.1"  # RFC 4533 Sync Request Control OID
@@ -378,6 +387,7 @@ class SyncRequestControl(LDAPControl):
             reload_hint: Hint for reload behavior
             size_limit: Maximum number of entries to return
             criticality: Whether control is critical for operation
+
         """
         # Create configuration
         self._config = SyncRequestConfig(
@@ -406,6 +416,7 @@ class SyncRequestControl(LDAPControl):
 
         Returns:
             BER-encoded control value for sync request
+
         """
         # Simple BER encoding for sync request
         # In production, this would use proper ASN.1 encoding
@@ -434,6 +445,7 @@ class SyncRequestControl(LDAPControl):
 
         Args:
             response_value: BER-encoded response from server
+
         """
         # Simple response processing for sync request
         if not response_value:
@@ -498,6 +510,7 @@ class SyncRequestControl(LDAPControl):
 
         Args:
             new_cookie: New synchronization state cookie
+
         """
         self._config.cookie = new_cookie
         new_cookie.update_last_used()
@@ -509,6 +522,7 @@ class SyncRequestControl(LDAPControl):
 
         Args:
             mode: New synchronization mode
+
         """
         self._config.mode = mode
         # Update control value
@@ -519,6 +533,7 @@ class SyncRequestControl(LDAPControl):
 
         Args:
             hint: New reload hint
+
         """
         self._config.reload_hint = hint
         # Update control value
@@ -530,6 +545,7 @@ class SyncRequestControl(LDAPControl):
         Args:
             size_limit: Maximum number of entries
             time_limit: Time limit in seconds
+
         """
         self._config.size_limit = size_limit
         self._config.time_limit = time_limit
@@ -539,6 +555,7 @@ class SyncRequestControl(LDAPControl):
 
         Returns:
             True if no previous state exists
+
         """
         return self._config.is_initial_sync()
 
@@ -547,6 +564,7 @@ class SyncRequestControl(LDAPControl):
 
         Returns:
             True if persistent sync is requested
+
         """
         return self._config.is_persistent_mode()
 
@@ -555,6 +573,7 @@ class SyncRequestControl(LDAPControl):
 
         Returns:
             Current sync cookie or None if not available
+
         """
         return self._config.cookie
 
@@ -563,6 +582,7 @@ class SyncRequestControl(LDAPControl):
 
         Returns:
             Dictionary with sync configuration and state
+
         """
         summary = self._config.get_sync_summary()
         summary.update(
@@ -605,6 +625,7 @@ class SyncRequestControl(LDAPControl):
 
         Returns:
             Encoded control value or None if no value
+
         """
         return self.control_value
 
@@ -617,6 +638,7 @@ class SyncRequestControl(LDAPControl):
 
         Returns:
             SyncRequestControl instance with decoded values
+
         """
         if not control_value:
             # Default sync request control for refresh only
@@ -646,6 +668,7 @@ def create_initial_sync_control(
 
     Returns:
         Configured Sync Request control for initial sync
+
     """
     return SyncRequestControl(
         mode=mode,
@@ -667,6 +690,7 @@ def create_incremental_sync_control(
 
     Returns:
         Configured Sync Request control for incremental sync
+
     """
     return SyncRequestControl(
         mode=mode,
@@ -686,6 +710,7 @@ def create_persistent_sync_control(
 
     Returns:
         Configured Sync Request control for persistent sync
+
     """
     return SyncRequestControl(
         mode=SyncRequestMode.REFRESH_AND_PERSIST,
@@ -711,6 +736,7 @@ async def perform_directory_sync(
 
     Returns:
         Tuple of (synchronized_entries, new_cookie)
+
     """
     # Create sync request control
     mode = SyncRequestMode.REFRESH_ONLY

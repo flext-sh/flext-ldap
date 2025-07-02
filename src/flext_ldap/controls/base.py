@@ -16,6 +16,7 @@ Architecture:
 References:
     - perl-ldap: lib/Net/LDAP/Control.pm
     - RFC 4511: Section 4.1.11 - Controls
+
 """
 
 from __future__ import annotations
@@ -69,6 +70,7 @@ class LDAPControl(BaseModel, ABC):
     Note:
         The control_value is typically ASN.1 encoded binary data, but some
         controls may use simple string or integer values.
+
     """
 
     # Control type OID - must be overridden in subclasses
@@ -110,6 +112,7 @@ class LDAPControl(BaseModel, ABC):
         Note:
             This method must be implemented by all control subclasses.
             The returned bytes should be valid ASN.1 encoding.
+
         """
         raise NotImplementedError
 
@@ -130,6 +133,7 @@ class LDAPControl(BaseModel, ABC):
         Note:
             This method must be implemented by all control subclasses.
             It should handle None values gracefully for controls without values.
+
         """
         raise NotImplementedError
 
@@ -141,6 +145,7 @@ class LDAPControl(BaseModel, ABC):
 
         Note:
             This format is used by underlying LDAP libraries for transmission.
+
         """
         result = {
             "controlType": self.control_type,
@@ -162,6 +167,7 @@ class LDAPControl(BaseModel, ABC):
         Note:
             This method provides compatibility with ldap3 library control format.
             Returns the same dictionary as to_ldap_control for ldap3 compatibility.
+
         """
         try:
             import ldap3
@@ -190,6 +196,7 @@ class LDAPControl(BaseModel, ABC):
         Raises:
             UnknownControlError: If control type is not registered
             ControlDecodingError: If decoding fails
+
         """
         control_type = control_dict.get("controlType")
         if not control_type:
@@ -237,6 +244,7 @@ class ControlRegistry:
         Args:
             control_type: Control OID
             control_class: Control implementation class
+
         """
         cls._registry[control_type] = control_class
 
@@ -249,6 +257,7 @@ class ControlRegistry:
 
         Returns:
             Control class or None if not found
+
         """
         return cls._registry.get(control_type)
 
@@ -258,6 +267,7 @@ class ControlRegistry:
 
         Returns:
             Dictionary mapping OIDs to control classes
+
         """
         return cls._registry.copy()
 
@@ -270,6 +280,7 @@ class ControlRegistry:
 
         Returns:
             True if registered, False otherwise
+
         """
         return control_type in cls._registry
 

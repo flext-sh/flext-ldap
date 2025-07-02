@@ -211,6 +211,7 @@ class DSMLConfiguration(BaseModel):
 
         Returns:
             Dictionary with default headers
+
         """
         headers = {
             "Content-Type": self.content_type,
@@ -287,6 +288,7 @@ class DSMLMessage(BaseModel):
 
         Raises:
             NotImplementedError: DSML XML generation not yet implemented
+
         """
         # TODO: Implement DSML XML generation
         # This would convert the message to proper DSML XML format
@@ -310,6 +312,7 @@ class DSMLMessage(BaseModel):
 
         Raises:
             NotImplementedError: DSML XML parsing not yet implemented
+
         """
         # TODO: Implement DSML XML parsing
         # This would parse DSML XML responses into message objects
@@ -326,6 +329,7 @@ class DSMLMessage(BaseModel):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -357,6 +361,7 @@ class DSMLMessage(BaseModel):
 
         Returns:
             True if message has errors
+
         """
         # For now, basic validation - would check DSML error elements
         validation_errors = self.validate_message()
@@ -367,6 +372,7 @@ class DSMLMessage(BaseModel):
 
         Returns:
             Error details string
+
         """
         validation_errors = self.validate_message()
         if validation_errors:
@@ -378,6 +384,7 @@ class DSMLMessage(BaseModel):
 
         Returns:
             True if operation was successful
+
         """
         return not self.has_errors()
 
@@ -386,6 +393,7 @@ class DSMLMessage(BaseModel):
 
         Returns:
             List of search result entries
+
         """
         # TODO: Implement DSML response parsing
         # For now return empty list - would parse from xml_content
@@ -411,6 +419,7 @@ class DSMLMessage(BaseModel):
 
         Returns:
             DSMLMessage for search operation
+
         """
         return cls(
             operation_type=DSMLOperationType.SEARCH_REQUEST,
@@ -437,6 +446,7 @@ class DSMLMessage(BaseModel):
 
         Returns:
             DSMLMessage for add operation
+
         """
         return cls(
             operation_type=DSMLOperationType.ADD_REQUEST,
@@ -461,6 +471,7 @@ class DSMLMessage(BaseModel):
 
         Returns:
             DSMLMessage for modify operation
+
         """
         return cls(
             operation_type=DSMLOperationType.MODIFY_REQUEST,
@@ -483,6 +494,7 @@ class DSMLMessage(BaseModel):
 
         Returns:
             DSMLMessage for delete operation
+
         """
         return cls(
             operation_type=DSMLOperationType.DELETE_REQUEST,
@@ -499,6 +511,7 @@ class DSMLTransport:
 
         Args:
             config: DSML configuration
+
         """
         self._config = config
         self._session: aiohttp.ClientSession | None = None
@@ -554,6 +567,7 @@ class DSMLTransport:
         Raises:
             ConnectionError: If not connected or request fails
             NotImplementedError: DSML request sending not yet implemented
+
         """
         if not self._session:
             msg = "Not connected - call connect() first"
@@ -585,6 +599,7 @@ class DSMLProtocol(LDAPProtocol):
 
         Args:
             config: DSML configuration
+
         """
         self._config = config or DSMLConfiguration(service_url="http://localhost/dsml")
         self._transport: DSMLTransport | None = None
@@ -596,6 +611,7 @@ class DSMLProtocol(LDAPProtocol):
         Args:
             url: DSML service URL
             **kwargs: Additional connection parameters
+
         """
         # Update configuration with URL
         self._config.service_url = url
@@ -625,6 +641,7 @@ class DSMLProtocol(LDAPProtocol):
 
         Raises:
             NotImplementedError: DSML operations not yet implemented
+
         """
         if not self._transport:
             msg = "Not connected"
@@ -690,6 +707,7 @@ class DSMLConnection(ProtocolConnection):
             http_auth_username: HTTP authentication username
             http_auth_password: HTTP authentication password
             **kwargs: Additional connection parameters
+
         """
         # Create DSML configuration
         config = DSMLConfiguration(
@@ -738,6 +756,7 @@ class DSMLConnection(ProtocolConnection):
 
         Raises:
             NotImplementedError: DSML search not yet implemented
+
         """
         try:
             # Create DSML search request message
@@ -774,6 +793,7 @@ class DSMLConnection(ProtocolConnection):
 
         Raises:
             NotImplementedError: DSML add not yet implemented
+
         """
         try:
             # Create DSML add request message
@@ -808,6 +828,7 @@ class DSMLConnection(ProtocolConnection):
 
         Raises:
             NotImplementedError: DSML modify not yet implemented
+
         """
         try:
             # Create DSML modify request message
@@ -837,6 +858,7 @@ class DSMLConnection(ProtocolConnection):
 
         Raises:
             NotImplementedError: DSML delete not yet implemented
+
         """
         try:
             # Create DSML delete request message
@@ -857,6 +879,7 @@ class DSMLConnection(ProtocolConnection):
 
         Returns:
             Dictionary with connection details
+
         """
         info = super().get_connection_info()
         info.update(
@@ -900,6 +923,7 @@ def create_dsml_connection(
 
     Returns:
         Configured DSML connection
+
     """
     return DSMLConnection(
         service_url=service_url,
@@ -923,6 +947,7 @@ def create_soap_dsml_message(
 
     Raises:
         NotImplementedError: SOAP message creation not yet implemented
+
     """
     # Create SOAP envelope with DSML payload
     soap_template = """<?xml version="1.0" encoding="UTF-8"?>
@@ -986,6 +1011,7 @@ def parse_dsml_response(xml_content: str) -> dict[str, Any]:
 
     Raises:
         NotImplementedError: DSML response parsing not yet implemented
+
     """
     import xml.etree.ElementTree as ET
 
@@ -1088,6 +1114,7 @@ async def test_dsml_service(
 
     Returns:
         Dictionary with test results
+
     """
     if timeout is None:
         timeout = 30.0

@@ -31,6 +31,7 @@ References:
     - RFC 5805: LDAP Transactions
     - RFC 4511: LDAP Protocol Specification
     - X/Open XA Transaction Processing
+
 """
 
 from __future__ import annotations
@@ -146,6 +147,7 @@ class TransactionSpecificationControl(LDAPControl):
         >>> # Execute operations within transaction
         >>> connection.modify(dn, changes, controls=[tx_control])
         >>> connection.add(dn2, attributes, controls=[tx_control])
+
     """
 
     control_type = "1.3.6.1.1.21.2"  # RFC 5805 Transaction Specification control OID
@@ -167,6 +169,7 @@ class TransactionSpecificationControl(LDAPControl):
         Args:
             transaction_identifier: Transaction identifier from server
             criticality: Whether control is critical (recommended True for transactions)
+
         """
         # Initialize base control first with Pydantic fields
         super().__init__(
@@ -194,6 +197,7 @@ class TransactionSpecificationControl(LDAPControl):
 
         Raises:
             ControlEncodingError: If encoding fails
+
         """
         try:
             # RFC 5805: Transaction identifier is an OCTET STRING
@@ -221,6 +225,7 @@ class TransactionSpecificationControl(LDAPControl):
 
         Raises:
             ControlDecodingError: If decoding fails
+
         """
         try:
             # RFC 5805: Transaction identifier is an OCTET STRING
@@ -235,6 +240,7 @@ class TransactionSpecificationControl(LDAPControl):
 
         Returns:
             BER-encoded control value
+
         """
         return self.encode_value()
 
@@ -246,6 +252,7 @@ class TransactionSpecificationControl(LDAPControl):
 
         Raises:
             NotImplementedError: Response processing not yet implemented
+
         """
         # TODO: Implement BER decoding of transaction response
         # This should decode the transaction identifier from the server response
@@ -261,6 +268,7 @@ class TransactionSpecificationControl(LDAPControl):
 
         Args:
             transaction_id: Transaction identifier from server
+
         """
         self.transaction_identifier = transaction_id
         if hasattr(self, "_request") and self._request is not None:
@@ -273,6 +281,7 @@ class TransactionSpecificationControl(LDAPControl):
 
         Returns:
             Transaction identifier or None if not set
+
         """
         return self.transaction_identifier
 
@@ -281,6 +290,7 @@ class TransactionSpecificationControl(LDAPControl):
 
         Returns:
             Transaction ID as hex string or None if not set
+
         """
         if self.transaction_identifier:
             return self.transaction_identifier.hex()
@@ -291,6 +301,7 @@ class TransactionSpecificationControl(LDAPControl):
 
         Returns:
             True if transaction identifier is present
+
         """
         return self.transaction_identifier is not None
 
@@ -327,6 +338,7 @@ class TransactionEndingControl(LDAPControl):
         ...     request_value=transaction_id,
         ...     controls=[abort_control]
         ... )
+
     """
 
     control_type = "1.3.6.1.1.21.4"  # RFC 5805 Transaction Ending control OID
@@ -348,6 +360,7 @@ class TransactionEndingControl(LDAPControl):
         Args:
             ending_type: Whether to commit or abort the transaction
             criticality: Whether control is critical
+
         """
         # Initialize base control first with Pydantic fields
         super().__init__(
@@ -370,6 +383,7 @@ class TransactionEndingControl(LDAPControl):
 
         Raises:
             ControlEncodingError: If encoding fails
+
         """
         try:
             # RFC 5805: Transaction ending control value is a BOOLEAN
@@ -395,6 +409,7 @@ class TransactionEndingControl(LDAPControl):
 
         Raises:
             ControlDecodingError: If decoding fails
+
         """
         try:
             if not control_value or len(control_value) < MINIMUM_CONTROL_VALUE_LENGTH:
@@ -417,6 +432,7 @@ class TransactionEndingControl(LDAPControl):
 
         Returns:
             BER-encoded control value
+
         """
         return self.encode_value()
 
@@ -428,6 +444,7 @@ class TransactionEndingControl(LDAPControl):
 
         Raises:
             NotImplementedError: Response processing not yet implemented
+
         """
         # TODO: Implement BER decoding of transaction ending response
         msg = (
@@ -477,6 +494,7 @@ def create_transaction_spec_control(
 
     Returns:
         Configured Transaction Specification control
+
     """
     return TransactionSpecificationControl(
         transaction_identifier=transaction_id,
@@ -489,6 +507,7 @@ def create_commit_control() -> TransactionEndingControl:
 
     Returns:
         Transaction Ending control configured for commit
+
     """
     return TransactionEndingControl(
         ending_type=TransactionEndType.COMMIT,
@@ -501,6 +520,7 @@ def create_abort_control() -> TransactionEndingControl:
 
     Returns:
         Transaction Ending control configured for abort
+
     """
     return TransactionEndingControl(
         ending_type=TransactionEndType.ABORT,
@@ -519,6 +539,7 @@ async def start_transaction(connection: Any) -> bytes:
 
     Raises:
         NotImplementedError: Transaction start not yet implemented
+
     """
     # TODO: Implement actual transaction start
     # This would use the Start Transaction Extended Operation
@@ -547,6 +568,7 @@ async def end_transaction(
 
     Raises:
         NotImplementedError: Transaction end not yet implemented
+
     """
     # TODO: Implement actual transaction end
     # This would use the End Transaction Extended Operation

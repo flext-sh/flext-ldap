@@ -33,6 +33,7 @@ References:
     - ITU-T X.690: ASN.1 encoding rules specification
     - RFC 5280: ASN.1 usage in PKI certificates
     - LDAP Protocol: ASN.1 constants for LDAP operations
+
 """
 
 from __future__ import annotations
@@ -283,6 +284,7 @@ def get_tag_class(tag: int) -> int:
 
     Returns:
         Tag class (UNIVERSAL, APPLICATION, CONTEXT, PRIVATE)
+
     """
     return tag & ASN1_CLASS_MASK
 
@@ -295,6 +297,7 @@ def get_tag_form(tag: int) -> int:
 
     Returns:
         Tag form (PRIMITIVE, CONSTRUCTED)
+
     """
     return tag & ASN1_FORM_MASK
 
@@ -307,6 +310,7 @@ def get_tag_number(tag: int) -> int:
 
     Returns:
         Tag number (for short form only)
+
     """
     return tag & ASN1_TAG_NUMBER_MASK
 
@@ -319,6 +323,7 @@ def is_constructed(tag: int) -> bool:
 
     Returns:
         True if tag is constructed
+
     """
     return bool(tag & ASN1_CONSTRUCTED)
 
@@ -331,6 +336,7 @@ def is_primitive(tag: int) -> bool:
 
     Returns:
         True if tag is primitive
+
     """
     return not is_constructed(tag)
 
@@ -343,6 +349,7 @@ def is_universal(tag: int) -> bool:
 
     Returns:
         True if tag is universal class
+
     """
     return get_tag_class(tag) == ASN1_UNIVERSAL
 
@@ -355,6 +362,7 @@ def is_application(tag: int) -> bool:
 
     Returns:
         True if tag is application class
+
     """
     return get_tag_class(tag) == ASN1_APPLICATION
 
@@ -367,6 +375,7 @@ def is_context(tag: int) -> bool:
 
     Returns:
         True if tag is context-specific class
+
     """
     return get_tag_class(tag) == ASN1_CONTEXT
 
@@ -379,6 +388,7 @@ def is_private(tag: int) -> bool:
 
     Returns:
         True if tag is private class
+
     """
     return get_tag_class(tag) == ASN1_PRIVATE
 
@@ -396,6 +406,7 @@ def make_tag(tag_class: int, form: int, number: int) -> int:
 
     Raises:
         ValueError: If tag number too large for short form
+
     """
     if number >= ASN1_LONG_TAG_FORM:
         msg = f"Tag number {number} requires long form encoding"

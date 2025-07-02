@@ -8,11 +8,12 @@ from typing import TYPE_CHECKING, Any
 import ldap3
 from ldap3.core.exceptions import LDAPException
 
+from flext_ldap.connections.base import LDAPSearchConfig
+
 if TYPE_CHECKING:
     from collections.abc import AsyncIterable, Callable
     from typing import AsyncContextManager
 
-    from flext_ldap.connections.base import LDAPSearchConfig
     from flext_ldap.connections.state import LDAPSearchParams
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ class LDAPOperations:
 
         Args:
             get_connection_func: Function that provides LDAP connections
+
         """
         self._get_connection = get_connection_func
 
@@ -48,6 +50,7 @@ class LDAPOperations:
 
         Yields:
             Search results as dictionaries
+
         """
         search_config = LDAPSearchConfig(
             search_base=params.search_base,
@@ -72,6 +75,7 @@ class LDAPOperations:
 
         Yields:
             Search results as dictionaries
+
         """
         async with self._get_connection() as connection:
             try:
@@ -103,6 +107,7 @@ class LDAPOperations:
 
         Returns:
             True if modification succeeded
+
         """
         async with self._get_connection() as connection:
             try:
@@ -135,6 +140,7 @@ class LDAPOperations:
 
         Returns:
             True if addition succeeded
+
         """
         async with self._get_connection() as connection:
             try:
@@ -158,6 +164,7 @@ class LDAPOperations:
 
         Returns:
             True if deletion succeeded
+
         """
         async with self._get_connection() as connection:
             try:
@@ -186,6 +193,7 @@ class LDAPOperations:
 
         Returns:
             Entry data or None if not found
+
         """
         async with self._get_connection() as connection:
             try:
@@ -219,6 +227,7 @@ class LDAPOperations:
 
         Returns:
             True if attribute matches value
+
         """
         async with self._get_connection() as connection:
             try:
@@ -233,6 +242,7 @@ class LDAPOperations:
 
         Returns:
             Schema information dictionary
+
         """
         async with self._get_connection() as connection:
             try:
@@ -271,6 +281,7 @@ class LDAPOperations:
 
         Returns:
             List of search results, one per configuration
+
         """
         import asyncio
 
@@ -286,6 +297,7 @@ class LDAPOperations:
 
         Returns:
             True if connection is healthy
+
         """
         try:
             async with self._get_connection() as connection:

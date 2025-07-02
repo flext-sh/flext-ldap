@@ -6,10 +6,12 @@ import asyncio
 import mmap
 import multiprocessing as mp
 import time
-from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Constants for magic values
 BYTES_PER_KB = 1024
@@ -89,6 +91,7 @@ def _parse_ldif_attributes_vectorized(attr_lines: list[str]) -> dict[str, list[s
 
     Returns:
         Dictionary of attribute name to values
+
     """
     attributes: dict[str, list[str]] = {}
 
@@ -119,6 +122,7 @@ def _validate_ldif_entries_vectorized(dns: np.ndarray) -> np.ndarray:
 
     Returns:
         Boolean array indicating valid entries
+
     """
     valid = np.zeros(len(dns), dtype=np.bool_)
 
@@ -144,6 +148,7 @@ def _process_ldif_chunk(chunk_data: tuple[bytes, int, int]) -> dict[str, Any]:
 
     Returns:
         Processed chunk results
+
     """
     chunk_bytes, start_offset, chunk_size = chunk_data
 
@@ -242,6 +247,7 @@ class VectorizedLDIFProcessor:
             max_workers: Maximum number of parallel workers (auto-detect if None)
             memory_limit_mb: Maximum memory usage limit
             enable_streaming: Enable streaming processing for large files
+
         """
         self.chunk_size_bytes = int(chunk_size_mb * BYTES_PER_KB * BYTES_PER_KB)
         self.max_workers = max_workers or min(mp.cpu_count(), 8)
@@ -272,6 +278,7 @@ class VectorizedLDIFProcessor:
         Raises:
             FileNotFoundError: If file doesn't exist
             PermissionError: If file can't be read
+
         """
         if not file_path.exists():
             msg = f"LDIF file not found: {file_path}"
@@ -325,6 +332,7 @@ class VectorizedLDIFProcessor:
 
         Returns:
             List of processed LDAP entries
+
         """
         logger.info("Using streaming processing for large file")
 
@@ -344,6 +352,7 @@ class VectorizedLDIFProcessor:
 
         Returns:
             List of processed LDAP entries
+
         """
         logger.info("Using in-memory processing for small file")
 
@@ -368,6 +377,7 @@ class VectorizedLDIFProcessor:
 
         Yields:
             Lists of LDAP entries from each chunk
+
         """
         with open(file_path, "rb") as f:
             with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file:
@@ -408,6 +418,7 @@ class VectorizedLDIFProcessor:
 
         Returns:
             List of chunk tuples (data, offset, size)
+
         """
         chunks = []
         offset = 0
@@ -444,6 +455,7 @@ class VectorizedLDIFProcessor:
 
         Returns:
             List of processed LDAP entries
+
         """
         logger.info(
             "Processing chunks in parallel",
@@ -501,6 +513,7 @@ class VectorizedLDIFProcessor:
 
         Returns:
             List of LDAP entries from chunk
+
         """
         loop = asyncio.get_event_loop()
 
@@ -528,6 +541,7 @@ class VectorizedLDIFProcessor:
 
         Returns:
             Processed DataFrame with validation results
+
         """
         validation_start = time.time()
 
@@ -573,6 +587,7 @@ class VectorizedLDIFProcessor:
 
         Returns:
             LDIF processing result with statistics
+
         """
         return LDIFProcessingResult(
             entries=entries,
@@ -605,5 +620,6 @@ async def create_vectorized_ldif_processor(**kwargs) -> VectorizedLDIFProcessor:
 
     Returns:
         Configured vectorized LDIF processor
+
     """
     return VectorizedLDIFProcessor(**kwargs)

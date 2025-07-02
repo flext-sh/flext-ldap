@@ -31,6 +31,7 @@ Example:
     writer = LDIFWriter()
     writer.write_entries(entries, "output.ldif", title="Processed Entries")
     ```
+
 """
 
 # Import classes that are actually implemented

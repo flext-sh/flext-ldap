@@ -46,6 +46,7 @@ References:
     - RFC 4511: LDAP Protocol specification
     - RFC 3673: Lightweight Directory Access Protocol version 3 (LDAPv3): All Operational Attributes
     - OID: 1.3.6.1.1.13.2 (Post-Read Control)
+
 """
 
 from __future__ import annotations
@@ -110,6 +111,7 @@ class AttributeSelection(BaseModel):
 
         Returns:
             BER-encoded SEQUENCE OF OCTET STRING
+
         """
         # Encode each attribute as OCTET STRING
         encoded_attrs = []
@@ -162,6 +164,7 @@ class AttributeSelection(BaseModel):
 
         Raises:
             ValueError: If BER decoding fails
+
         """
         if not data or data[0] != BER_SEQUENCE_TAG:
             msg = "Invalid AttributeSelection: expected SEQUENCE"
@@ -288,6 +291,7 @@ class SearchResultEntry(BaseModel):
 
         Returns:
             BER-encoded SearchResultEntry
+
         """
         # Encode object name (LDAPDN as OCTET STRING)
         dn_bytes = self.object_name.encode("utf-8")
@@ -440,6 +444,7 @@ class SearchResultEntry(BaseModel):
 
         Raises:
             ValueError: If BER decoding fails
+
         """
         if not data or data[0] != BER_APPLICATION_TAG_4:
             msg = "Invalid SearchResultEntry: expected [APPLICATION 4]"
@@ -522,6 +527,7 @@ class PostReadControl(LDAPControl):
         - "+" requests all operational attributes
         - "*" "+" requests all attributes
         - Empty list requests all user attributes
+
     """
 
     control_type = RFC4527_POST_READ_OID
@@ -561,6 +567,7 @@ class PostReadControl(LDAPControl):
 
         Raises:
             ControlEncodingError: If BER encoding fails
+
         """
         try:
             attr_selection = AttributeSelection(attributes=self.attributes)
@@ -581,6 +588,7 @@ class PostReadControl(LDAPControl):
 
         Raises:
             ControlDecodingError: If BER decoding fails
+
         """
         if not control_value:
             # Empty control value means all user attributes per RFC
@@ -599,6 +607,7 @@ class PostReadControl(LDAPControl):
 
         Returns:
             PostReadControl with "*" attribute selection
+
         """
         return cls(attributes=["*"])
 
@@ -608,6 +617,7 @@ class PostReadControl(LDAPControl):
 
         Returns:
             PostReadControl with "+" attribute selection
+
         """
         return cls(attributes=["+"])
 
@@ -617,6 +627,7 @@ class PostReadControl(LDAPControl):
 
         Returns:
             PostReadControl with "*" and "+" attribute selection
+
         """
         return cls(attributes=["*", "+"])
 
@@ -629,6 +640,7 @@ class PostReadControl(LDAPControl):
 
         Returns:
             PostReadControl for specified attributes
+
         """
         return cls(attributes=list(attributes))
 
@@ -640,6 +652,7 @@ class PostReadControl(LDAPControl):
 
         Returns:
             True if attribute is included per RFC 3673 rules
+
         """
         attr_lower = attribute.lower()
 
@@ -691,6 +704,7 @@ class PostReadControl(LDAPControl):
 
         Returns:
             List of attribute names including RFC 3673 patterns
+
         """
         return self.attributes.copy()
 
@@ -717,6 +731,7 @@ class PostReadResponse(LDAPControl):
     Note:
         For Delete operations, no post-read response is typically returned
         since the entry no longer exists after the operation.
+
     """
 
     control_type = RFC4527_POST_READ_OID
@@ -737,6 +752,7 @@ class PostReadResponse(LDAPControl):
 
         Raises:
             ControlEncodingError: If BER encoding fails
+
         """
         try:
             if not self.entry:
@@ -762,6 +778,7 @@ class PostReadResponse(LDAPControl):
 
         Raises:
             ControlDecodingError: If BER decoding fails
+
         """
         if not control_value:
             return cls(entry=None)
@@ -778,6 +795,7 @@ class PostReadResponse(LDAPControl):
 
         Returns:
             True if entry exists in response
+
         """
         return self.entry is not None and bool(self.entry.object_name)
 
@@ -789,6 +807,7 @@ class PostReadResponse(LDAPControl):
 
         Returns:
             List of attribute values or None if not present
+
         """
         if not self.entry:
             return None
@@ -800,6 +819,7 @@ class PostReadResponse(LDAPControl):
 
         Returns:
             Entry DN or None if no entry
+
         """
         if not self.entry:
             return None
@@ -815,6 +835,7 @@ class PostReadResponse(LDAPControl):
 
         Returns:
             True if expected value is present in post-operation state
+
         """
         if not self.entry:
             return False
@@ -833,6 +854,7 @@ class PostReadResponse(LDAPControl):
 
         Returns:
             Dictionary with entry state summary
+
         """
         if not self.has_entry():
             return {"status": "no_entry", "reason": "entry_not_available"}
@@ -859,6 +881,7 @@ def postread_all_user_attributes() -> PostReadControl:
 
     Returns:
         PostReadControl with "*" attribute selection per RFC 3673
+
     """
     return PostReadControl.all_user_attributes()
 
@@ -868,6 +891,7 @@ def postread_all_operational_attributes() -> PostReadControl:
 
     Returns:
         PostReadControl with "+" attribute selection per RFC 3673
+
     """
     return PostReadControl.all_operational_attributes()
 
@@ -877,6 +901,7 @@ def postread_all_attributes() -> PostReadControl:
 
     Returns:
         PostReadControl with "*" and "+" attribute selection per RFC 3673
+
     """
     return PostReadControl.all_attributes()
 
@@ -889,6 +914,7 @@ def postread_specific_attributes(*attributes: str) -> PostReadControl:
 
     Returns:
         PostReadControl for specified attributes
+
     """
     return PostReadControl.specific_attributes(*attributes)
 
@@ -904,6 +930,7 @@ def postread_for_change_verification(*changed_attributes: str) -> PostReadContro
 
     Returns:
         PostReadControl with verification-optimized attribute selection
+
     """
     verification_attrs = [
         *list(changed_attributes),
@@ -922,6 +949,7 @@ def postread_for_audit_trail() -> PostReadControl:
 
     Returns:
         PostReadControl with all attributes for comprehensive audit
+
     """
     return PostReadControl.all_attributes()
 
@@ -931,6 +959,7 @@ def postread_user_profile_attributes() -> PostReadControl:
 
     Returns:
         PostReadControl for typical user profile attributes
+
     """
     return PostReadControl.specific_attributes(
         "cn",
@@ -967,6 +996,7 @@ class ChangeVerificationHelper:
 
         Returns:
             Dictionary mapping attributes to verification results
+
         """
         if not response.has_entry():
             return dict.fromkeys(expected_attributes, False)
@@ -990,6 +1020,7 @@ class ChangeVerificationHelper:
 
         Returns:
             Dictionary mapping attributes to verification results
+
         """
         if not response.has_entry():
             return dict.fromkeys(modifications, False)
@@ -1013,6 +1044,7 @@ class ChangeVerificationHelper:
 
         Returns:
             True if entry has expected new DN
+
         """
         if not response.has_entry():
             return False
@@ -1034,6 +1066,7 @@ class ChangeVerificationHelper:
 
         Returns:
             Detailed verification report
+
         """
         report = {
             "operation_type": operation_type,

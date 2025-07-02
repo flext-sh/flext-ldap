@@ -34,7 +34,7 @@ async def basic_connection_example() -> None:
     config = LDAPConfig(
         server="ldaps://ldap.company.com:636",
         auth_dn="cn=admin,dc=company,dc=com",
-        auth_password="secret123",
+        auth_password="YOUR_PASSWORD_HERE",  # Replace with actual password
         base_dn="dc=company,dc=com",
     )
 
@@ -196,7 +196,7 @@ async def performance_examples() -> None:
     config = LDAPConfig(
         server="ldaps://ldap.company.com:636",
         auth_dn="cn=admin,dc=company,dc=com",
-        auth_password="secret123",
+        auth_password="YOUR_PASSWORD_HERE",  # Replace with actual password
         base_dn="dc=company,dc=com",
         pool_size=10,  # Optimize connection pooling
     )

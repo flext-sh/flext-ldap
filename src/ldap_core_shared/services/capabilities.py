@@ -458,6 +458,7 @@ class CapabilityDetection:
         >>> # Check specific capability
         >>> if capabilities.supports_paging:
         ...     print(f"Max page size: {capabilities.max_page_size}")
+
     """
 
     def __init__(self, connection: Any) -> None:
@@ -465,6 +466,7 @@ class CapabilityDetection:
 
         Args:
             connection: Active LDAP connection
+
         """
         self._connection = connection
         self._cached_capabilities: ServerCapabilities | None = None
@@ -483,6 +485,7 @@ class CapabilityDetection:
 
         Raises:
             NotImplementedError: Capability detection not yet implemented
+
         """
         if self._cached_capabilities and not force_refresh:
             return self._cached_capabilities
@@ -503,6 +506,7 @@ class CapabilityDetection:
 
         Returns:
             True if feature is supported
+
         """
         if not self._cached_capabilities:
             return False
@@ -517,6 +521,7 @@ class CapabilityDetection:
 
         Returns:
             Compatibility check result
+
         """
         result = CompatibilityResult(
             is_compatible=True,
@@ -550,6 +555,7 @@ class CapabilityDetection:
 
         Returns:
             Server information dictionary
+
         """
         if not self._cached_capabilities:
             return {"error": "Capabilities not detected"}
@@ -566,6 +572,7 @@ class CapabilityDetection:
 
         Returns:
             Authentication information dictionary
+
         """
         if not self._cached_capabilities:
             return {"error": "Capabilities not detected"}
@@ -584,6 +591,7 @@ class CapabilityDetection:
 
         Returns:
             Search capabilities dictionary
+
         """
         if not self._cached_capabilities:
             return {"error": "Capabilities not detected"}
@@ -682,6 +690,7 @@ async def detect_server_capabilities(connection: Any) -> ServerCapabilities:
 
     Returns:
         Server capabilities
+
     """
     detector = CapabilityDetection(connection)
     return await detector.detect_capabilities()
@@ -699,6 +708,7 @@ def check_feature_compatibility(
 
     Returns:
         Compatibility result
+
     """
     # Create temporary detector with pre-loaded capabilities
     detector = CapabilityDetection(None)
@@ -714,6 +724,7 @@ def get_feature_matrix_info(server_type: ServerType) -> dict[str, str]:
 
     Returns:
         Feature support matrix
+
     """
     features = FeatureMatrix.FEATURE_MATRIX.get(server_type, {})
     return {feature: support.value for feature, support in features.items()}

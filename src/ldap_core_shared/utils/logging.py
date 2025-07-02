@@ -304,6 +304,7 @@ def get_logger(name: str, config: LoggingConfig | None = None) -> LDAPLogger:
 
     Returns:
         LDAPLogger instance
+
     """
     if name not in _loggers:
         _loggers[name] = LDAPLogger(name, config)
@@ -320,6 +321,7 @@ def setup_logging(config: LoggingConfig, root_logger_name: str = "ldap") -> LDAP
 
     Returns:
         Configured root logger
+
     """
     # Clear existing loggers
     _loggers.clear()

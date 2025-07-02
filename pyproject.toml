@@ -1,21 +1,25 @@
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.9.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.poetry]
-name = "ldap-core-shared"
-version = "1.0.0"
-description = "Enterprise-grade Python LDAP library with advanced features, async-first design, and zero-complexity APIs"
-authors = ["LDAP Core Team <team@ldap-core.com>"]
-maintainers = ["LDAP Core Team <team@ldap-core.com>"]
+[project]
+name = "flext-ldap"
+version = "0.2.0"
+description = "FLEXT LDAP - Enterprise LDAP Operations with Migration & Schema Management"
+authors = [{ name = "FLEXT Team", email = "team@flext.sh" }]
+license = { text = "MIT" }
 readme = "README.md"
-license = "MIT"
-homepage = "https://github.com/ldap-core/ldap-core-shared"
-repository = "https://github.com/ldap-core/ldap-core-shared"
-documentation = "https://ldap-core-shared.readthedocs.io"
+requires-python = ">=3.12,<4.0"
 keywords = [
-    "ldap", "directory", "enterprise", "async", "migration",
-    "schema", "ldif", "oracle", "active-directory", "authentication"
+    "flext",
+    "ldap",
+    "directory",
+    "enterprise",
+    "migration",
+    "schema",
+    "ldif",
+    "oracle",
+    "active-directory",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -23,302 +27,246 @@ classifiers = [
     "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Internet",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: System :: Systems Administration :: Authentication/Directory",
-    "Topic :: System :: Systems Administration :: LDAP",
+    "Topic :: System :: Systems Administration",
     "Typing :: Typed",
     "Framework :: AsyncIO",
     "Framework :: Pydantic",
 ]
-packages = [
-    {include = "ldap_core_shared", from = "src"}
+dependencies = [
+    "pydantic>=2.11.0",
+    "pydantic-settings>=2.5.0",
+    "ldap3>=2.9.1",
+    "python-ldap>=3.4.4",
+    "aiofiles>=24.1.0",
+    "httpx>=0.28.0",
+    "orjson>=3.10.0",
+    "python-dateutil>=2.9.0",
+    "numpy>=1.26.0",
+    "pandas>=2.2.0",
+    "pyarrow>=17.0.0",
+    "dependency-injector>=4.42.0",
+    "lato>=0.12.0",
+    "opentelemetry-api>=1.27.0",
+    "opentelemetry-sdk>=1.27.0",
+    "prometheus_client>=0.21.0",
+    "structlog>=24.0.0",
+    "click>=8.1.7",
+    "rich>=13.9.0",
+    "typer>=0.12.0",
+    "cryptography>=44.0.1",
+    "pyjwt[crypto]>=2.9.0",
+    "passlib[bcrypt]>=1.7.4",
+    "bcrypt>=4.2.0",
 ]
-include = [
-    "README.md",
-    "LICENSE",
-    "CHANGELOG.md",
-]
-exclude = [
-    "tests",
-    "docs",
-    ".github",
-    "htmlcov",
-    ".coverage",
-    ".pytest_cache",
-    ".mypy_cache",
-    ".ruff_cache",
-]
 
-[tool.poetry.dependencies]
-python = "^3.9,<4.0"
+[project.scripts]
+flext-ldap = "flext_ldap.cli:main"
+flext-ldap-migrate = "flext_ldap.migration:main"
+flext-ldap-schema = "flext_ldap.schema:main"
 
-# Core dependencies with strict versions for stability
-pydantic = "^2.8.0,<3.0.0"
-pydantic-settings = "^2.4.0,<3.0.0"
+[project.urls]
+Homepage = "https://github.com/flext-sh/flext-ldap"
+Repository = "https://github.com/flext-sh/flext-ldap"
+Documentation = "https://github.com/flext-sh/flext-ldap/blob/main/README.md"
+"Bug Tracker" = "https://github.com/flext-sh/flext-ldap/issues"
+Changelog = "https://github.com/flext-sh/flext-ldap/blob/main/CHANGELOG.md"
 
-# Async and networking
-aiofiles = "^24.1.0,<25.0.0"
-httpx = "^0.27.0,<1.0.0"
-
-# LDAP protocol support
-ldap3 = "^2.9.1,<3.0.0"
-python-ldap = "^3.4.4,<4.0.0"
-
-# High-performance data processing
-orjson = "^3.10.0,<4.0.0"
-python-dateutil = "^2.9.0,<3.0.0"
-
-# Vectorization and high-performance computing (Python 3.9+ compatible)
-numpy = "^1.21.0,<2.0.0"
-pandas = "^1.5.0,<3.0.0"
-numba = "^0.56.0,<1.0.0"
-pyarrow = "^10.0.0,<16.0.0"
-
-# Enterprise dependency injection patterns
-dependency-injector = "^4.42.0,<5.0.0"
-lato = "^0.12.0"
-
-# Observability and monitoring
-opentelemetry-api = "^1.25.0,<2.0.0"
-opentelemetry-sdk = "^1.25.0,<2.0.0"
-prometheus-client = "^0.20.0,<1.0.0"
-structlog = "^24.4.0,<25.0.0"
-
-# CLI and user interface
-click = "^8.1.7,<9.0.0"
-rich = "^13.8.0,<14.0.0"
-typer = "^0.12.0,<1.0.0"
-exceptiongroup = "^1.3.0"
-tomli = "^2.2.1"
+[tool.poetry]
+packages = [{ include = "flext_ldap", from = "src" }]
 
 [tool.poetry.group.dev.dependencies]
-# Testing framework with comprehensive plugins
 pytest = "^8.3.0"
-pytest-asyncio = "^0.23.6"
-pytest-cov = "^5.0.0"
-pytest-mock = "^3.14.0"
-pytest-benchmark = "^4.0.0"
+pytest-asyncio = "^0.23.5"
+pytest-cov = "^6.0.0"
 pytest-xdist = "^3.6.0"
-hypothesis = "^6.112.0"
+pytest-mock = "^3.14.0"
+pytest-timeout = "^2.3.0"
+hypothesis = "^6.115.0"
 factory-boy = "^3.3.0"
 testcontainers = "^4.8.0"
-
-# Code quality and linting (ZERO TOLERANCE)
-ruff = "^0.6.0"
-mypy = "^1.11.0"
-bandit = "^1.7.9"
-safety = "^3.2.0"
-pre-commit = "^3.8.0"
-
-# Type stubs for better type checking
+ruff = "^0.8.4"
+mypy = "^1.13.0"
+black = "^24.10.0"
+isort = "^5.13.0"
+types-requests = "^2.32.0"
+types-setuptools = "^75.6.0"
 types-python-dateutil = "^2.9.0"
-types-orjson = "^3.6.2"
+pre-commit = "^4.0.0"
+mkdocs = "^1.6.0"
+mkdocs-material = "^9.5.0"
+ipython = "^8.29.0"
 
-# Documentation tools (Python 3.9+ compatible)
-sphinx = "^5.0.0"
-sphinx-rtd-theme = "^1.3.0"
+[tool.poetry.group.security.dependencies]
+bandit = { extras = ["toml"], version = "^1.7.0" }
+safety = "^3.2.0"
 
-# Development utilities (Python 3.9+ compatible)
-ipython = "^8.0.0"
-ipdb = "^0.13.13"
-black = "^23.0.0"
-isort = "^5.12.0"
-coverage-tools = "^0.0.4"
-coverage = "^7.9.1"
+[tool.poetry.group.build.dependencies]
+build = "^1.2.0"
+twine = "^6.0.0"
 
-[tool.poetry.group.perf.dependencies]
-# Performance testing and profiling
+[tool.poetry.group.test.dependencies]
 pytest-benchmark = "^4.0.0"
+faker = "^30.8.0"
 memory-profiler = "^0.61.0"
 psutil = "^6.0.0"
 
 [tool.poetry.group.enterprise.dependencies]
-# Enterprise security features
-cryptography = "^43.0.0"
+cryptography = "^44.0.1"
 pyotp = "^2.9.0"
-pyjwt = {extras = ["crypto"], version = "^2.9.0"}
 
-[tool.poetry.scripts]
-ldap-core = "ldap_core_shared.cli:main"
-
-# ============================================================================
-# 🔥 ZERO TOLERANCE RUFF CONFIGURATION - MAXIMUM STRICTNESS
-# ============================================================================
 [tool.ruff]
-target-version = "py39"
-line-length = 88  # Standard Python community recommendation
-extend-exclude = [
-    "__pycache__",
-    ".venv",
-    "build",
-    "dist",
-    ".git",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    "htmlcov",
-    "coverage.xml",
-    "docs/reference",
-]
+line-length = 88
+target-version = "py313"
+fix = true
 
 [tool.ruff.lint]
-# 🔥 ZERO TOLERANCE: Enable ALL rules - no exceptions for enterprise
 select = ["ALL"]
-
-# PRAGMATIC: Focus on critical issues, ignore style/documentation for now
 ignore = [
-    # Formatter conflicts only
-    "COM812",  # Trailing comma missing (handled by ruff formatter)
-    "ISC001",  # Single line implicit string concatenation (handled by formatter)
-    
-    # Temporary - focus on critical issues first
-    "E501", # Line too long     
-    "D205", "S314", "D210", "PLW0602", "TRY004", "RUF002", "A002", "N811",
-    "S110", "DTZ001", "RUF001", "EXE001", "PTH118", "PTH120", "PERF402", "RUF005", "TD003",
-    "ARG002", # unused argument
-    "PLC0415", "PERF203", "TRY401", "UP035", "PD008", "PTH108", "SIM113", "TD002",
-    "ANN401", "PLR0911", "SIM117", "INP001", "TRY002", "B023", "E722",
-    "FBT001", "C901", "PGH003", "FBT003", "DTZ005", "DTZ006", "FIX002", "A004", "B018",
-    "TRY300", "PLR0913", "S112", "DTZ007", "SIM102", "PLR0912",
-    "FBT002", "SIM117", "TRY301", "E721", "PT017", "S108", "PT012",
-    "G201", "B904", "PLR0915", "E741", "SIM105", "D417", "D105",
-    "E402", "S603", "ERA001", "PYI056", "B017", "PLR0124", "ARG005", 
-    "ARG001", "F403", "N806", "D107", "S105", "S106", "S311", "PT011",
-    "PTH123", "B007", "D107", "ARG003", "PLW0603", "D102", "D107", "D101",
-    "D100", "S101", "PTH116", "PTH110", "PTH117", "F401", "PLE0605",
-    "RUF005", "BLE001", "SLF001", "PLR2004", "FBT003", "SIM102", "UP015",
-    "PD901", "EXE001", "ANN101", "ANN102", "ANN001", "ANN003", "ANN202", "ANN204", "ANN205",
-    "ANN", "PLR0124", "TRY400", "TRY301", "PLR0917", "PLR0916",
-    "C901", "F401",  # Complexity and unused imports - not critical
+    # MANDATORY: Only formatter conflicts that cannot be auto-fixed
+    "COM812", # trailing-comma-missing (handled by formatter)
+    "ISC001", # implicit-str-concat (conflicts with formatter)
+    "D203",   # one-blank-line-before-class (conflicts with D211)
+    "D213",   # multi-line-docstring-summary-second-line (conflicts with D212)
+
+    # FOCUS: Only critical errors for now - ignore non-critical temporarily
+    "E501",    # line-too-long (formatting)
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D105",
+    "D107",
+    "D205",
+    "D401",
+    "D417",    # docstring issues
+    "ANN001",
+    "ANN101",
+    "ANN102",
+    "ANN201",
+    "ANN202",
+    "ANN204",
+    "ANN401",
+    "ANN003",
+    "ANN002",  # type annotations
+    "PLR0911",
+    "PLR0912",
+    "PLR0913",
+    "PLR0915",
+    "C901",    # complexity
+    "E402",    # import-not-at-top (legacy)
+    "S110",
+    "S112",
+    "S105",
+    "S106",
+    "S108",
+    "S314",
+    "S603",
+    "S607",
+    "S101",
+    "S102",    # security (non-critical)
+    "ARG001",
+    "ARG002",
+    "ARG003",
+    "ARG005",  # unused arguments
+    "PTH108",
+    "PTH110",
+    "PTH116",
+    "PTH117",
+    "PTH118",
+    "PTH120",
+    "PTH123",  # pathlib
+    "TRY002",
+    "TRY003",
+    "TRY004",
+    "TRY300",
+    "TRY301",
+    "TRY401",  # try/except patterns
+    "FBT001",
+    "FBT002",
+    "FBT003",  # boolean traps
+    "DTZ001",
+    "DTZ005",
+    "DTZ006",
+    "DTZ007",  # datetime
+    "G004",
+    "G201",    # logging
+    "N806",
+    "N811",    # naming
+    "B007",
+    "B018",
+    "B019",
+    "B023",
+    "B904",    # bugbear non-critical
+    "SIM102",
+    "SIM105",
+    "SIM113",
+    "SIM117",  # simplify
+    "RUF001",
+    "RUF002",
+    "RUF005",  # ruff specific
+    "UP035",   # typing upgrades
+    "ERA001",  # commented code
+    "TD002",
+    "TD003",   # todos
+    "FIX002",  # fixme
+    "PLW0602",
+    "PLW0603",
+    "PLW2901", # pylint warnings
+    "PLC0415", # pylint conventions
+    "PLE0605", # pylint errors non-critical
+    "PERF102",
+    "PERF203",
+    "PERF402", # performance
+    "A002",
+    "A004",    # builtins
+    "PT011",
+    "PT012",
+    "PT017",   # pytest
+    "PD008",   # pandas
+    "INP001",  # namespace packages
+    "PLR0124",
+    "PLR2004", # magic values
+    "PYI056",  # pyi
+    "EXE001",  # executable
+    "BLE001",  # blind except (temporarily)
+    "SLF001",  # private access (temporarily)
+    "E722",
+    "E741",    # bare except and ambiguous names
+    "T201",    # print statements (temporarily)
+    "PLW2901", # redefined loop variable (temporarily)
+    "D401",    # docstring imperative mood (temporarily)
 ]
 
-# File-specific rule exceptions - MINIMAL ONLY
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = [
-    "S101",     # Use of assert (required for pytest)
-    "PLR2004",  # Magic value used in comparison (test data)
-    "D103",     # Missing docstring in public function (test methods)
-    "SLF001",   # Private member accessed (testing private methods)
-    "ARG001",   # Unused function argument (pytest fixtures)
-]
-
-"**/__init__.py" = [
-    "F401",     # Module imported but unused (re-exports)
-    "D104",     # Missing docstring in public package
-]
-
-"src/ldap_core_shared/cli.py" = [
-    "T201",     # Use of print (CLI output is intentional)
-]
-
-# Quality thresholds and specific rule configurations
-[tool.ruff.lint.flake8-annotations]
-allow-star-arg-any = false
-ignore-fully-untyped = false
-
-[tool.ruff.lint.flake8-bandit]
-check-typed-exception = true
-
-[tool.ruff.lint.flake8-bugbear]
-extend-immutable-calls = ["pydantic.Field", "dependency_injector.providers"]
-
-[tool.ruff.lint.flake8-quotes]
-inline-quotes = "double"
-multiline-quotes = "double"
-
-[tool.ruff.lint.flake8-tidy-imports]
-ban-relative-imports = "all"
-
-[tool.ruff.lint.isort]
-force-single-line = false
-known-first-party = ["ldap_core_shared"]
-
-[tool.ruff.lint.mccabe]
-max-complexity = 8  # Stricter than default 10
-
-[tool.ruff.lint.pep8-naming]
-classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
-
-[tool.ruff.lint.pylint]
-max-args = 6       # Stricter: encourage composition over many parameters
-max-branches = 10  # Stricter: encourage smaller functions
-max-returns = 4    # Stricter: encourage single responsibility
-max-statements = 30 # Stricter: encourage smaller functions
-
-[tool.ruff.lint.pyupgrade]
-keep-runtime-typing = true
+"tests/*" = ["S101", "PLR2004", "D", "ANN"]
+"examples/*" = ["T201", "D", "ERA001"]
+"__init__.py" = ["D104"]
+"conftest.py" = ["D"]
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "auto"
-docstring-code-format = true
+line-ending = "lf"
 
-# ============================================================================
-# 🔥 ZERO TOLERANCE MYPY CONFIGURATION - MAXIMUM STRICTNESS
-# ============================================================================
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.13"
 strict = true
-
-# Strictness settings
 warn_return_any = true
 warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
-show_error_codes = true
-show_column_numbers = true
-show_error_context = true
-pretty = true
-
-# Disallow untyped definitions
-disallow_any_generics = true
-disallow_any_unimported = true
-disallow_any_expr = false      # Too strict for enterprise patterns
-disallow_any_decorated = false # Too strict for dependency injection
-disallow_any_explicit = false  # Allow explicit Any when truly needed
-disallow_subclassing_any = true
-disallow_untyped_calls = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-disallow_untyped_decorators = true
-
-# Optional and strict settings
-no_implicit_optional = true
-strict_optional = true
 strict_equality = true
 
-# Import discovery
-ignore_missing_imports = false
-follow_imports = "normal"
-follow_imports_for_stubs = true
-
-# Platform configuration
-platform = "linux"
-
-# Plugin configuration
-plugins = ["pydantic.mypy"]
-
-# Per-module configuration for tests
-[[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-
-# Third-party libraries without type stubs
 [[tool.mypy.overrides]]
 module = [
     "ldap3.*",
@@ -327,59 +275,73 @@ module = [
     "testcontainers.*",
     "prometheus_client.*",
     "factory_boy.*",
+    "passlib.*",
+    "bcrypt.*",
 ]
 ignore_missing_imports = true
 
-# COMPREHENSIVE PYTEST CONFIGURATION
 [tool.pytest.ini_options]
 minversion = "8.0"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--tb=short",
+    "--cov=src",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=html:reports/coverage",
+    "--cov-report=xml:reports/coverage.xml",
+    "--cov-fail-under=85",
+    "--junitxml=reports/pytest.xml",
+    "--maxfail=10",
+    "--timeout=30",
+]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = [
-    "--strict-markers",
-    "--strict-config",
-    "-ra",                  # Show all test results
-    "--tb=short",           # Shorter traceback format
-]
 markers = [
-    "unit: Unit tests",
-    "integration: Integration tests",
-    "e2e: End-to-end tests",
-    "benchmark: Performance benchmark tests",
-    "performance: Performance tests",
-    "slow: Slow running tests",
-    "requires_ldap_server: Tests that need real LDAP server",
-    "enterprise: Enterprise feature tests",
-    "migration: Migration-related tests",
-    "security: Security tests",
-    "property: Property-based tests",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "e2e: marks tests as end-to-end tests",
+    "ldap: marks tests as LDAP tests",
+    "migration: marks tests as migration tests",
+    "schema: marks tests as schema tests",
+    "security: marks tests as security tests",
+    "performance: marks tests as performance tests",
+    "requires_ldap_server: tests that need real LDAP server",
+]
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
 ]
 asyncio_mode = "auto"
-filterwarnings = [
-    "error",                           # Treat warnings as errors
-    "ignore::UserWarning",             # Allow user warnings
-    "ignore::DeprecationWarning",      # Allow deprecation warnings
-    "ignore::pytest.PytestUnraisableExceptionWarning",  # Ignore unraisable exceptions
-]
 
-# COMPREHENSIVE COVERAGE CONFIGURATION
 [tool.coverage.run]
-source = ["src/ldap_core_shared"]
 branch = true
-parallel = true
+source = ["src"]
 omit = [
-    "tests/*",
-    "src/ldap_core_shared/__main__.py",
-    "src/ldap_core_shared/cli.py",
-    "docs/reference/*",
+    "*/tests/*",
+    "*/test_*",
+    "*/*_test.py",
+    "*/conftest.py",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+    "*/.venv/*",
+    "*/venv/*",
+    "*/build/*",
+    "*/dist/*",
+    "*/.eggs/*",
 ]
 
 [tool.coverage.report]
-precision = 2
-show_missing = true
+skip_empty = true
 skip_covered = false
+show_missing = true
+sort = "Cover"
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
@@ -394,56 +356,18 @@ exclude_lines = [
     "TYPE_CHECKING",
 ]
 
-[tool.coverage.html]
-directory = "htmlcov"
-
-[tool.coverage.xml]
-output = "coverage.xml"
-
-# SECURITY SCANNING WITH BANDIT
 [tool.bandit]
-targets = ["src/ldap_core_shared"]
-exclude_dirs = ["tests", "docs/reference"]
-skips = ["B101"]  # Skip assert_used test
+targets = ["src"]
+exclude_dirs = ["tests", "build", "dist"]
+skips = ["B101", "B601"]
 
 [tool.bandit.assert_used]
-skips = ["*_test.py", "test_*.py"]
+skips = ["*/tests/*", "*/test_*.py"]
 
-# BLACK FORMATTING (BACKUP - RUFF HANDLES MOST)
 [tool.black]
-line-length = 100
-target-version = ["py39", "py310", "py311", "py312", "py313"]
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  \.eggs
-  | \.git
-  | \.mypy_cache
-  | \.pytest_cache
-  | \.ruff_cache
-  | \.venv
-  | build
-  | dist
-  | docs/reference
-)/
-'''
+line-length = 88
+target-version = ["py313"]
 
-# ISORT IMPORT SORTING (BACKUP - RUFF HANDLES MOST)
 [tool.isort]
 profile = "black"
-line_length = 100
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true
-known_first_party = ["ldap_core_shared"]
-known_third_party = [
-    "pydantic",
-    "ldap3",
-    "dependency_injector",
-    "lato",
-    "structlog",
-    "opentelemetry",
-    "prometheus_client",
-]
+line_length = 88

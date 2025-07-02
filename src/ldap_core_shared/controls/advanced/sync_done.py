@@ -30,6 +30,7 @@ References:
     - RFC 4533: LDAP Content Synchronization Operation
     - RFC 4511: LDAP Protocol Specification
     - Synchronization completion patterns
+
 """
 
 from __future__ import annotations
@@ -151,6 +152,7 @@ class SyncDoneInfo(BaseModel):
 
         Returns:
             True if synchronization was successful
+
         """
         return self.completion_status == SyncCompletionStatus.SUCCESS
 
@@ -159,6 +161,7 @@ class SyncDoneInfo(BaseModel):
 
         Returns:
             True if continuation is needed
+
         """
         return (
             self.server_continuation_required
@@ -171,6 +174,7 @@ class SyncDoneInfo(BaseModel):
 
         Returns:
             Cookie as hex string or None
+
         """
         return self.cookie.hex() if self.cookie else None
 
@@ -179,6 +183,7 @@ class SyncDoneInfo(BaseModel):
 
         Returns:
             Dictionary with sync summary
+
         """
         total_changes = (
             self.entries_added + self.entries_modified + self.entries_deleted
@@ -224,6 +229,7 @@ class SyncDoneControl(LDAPControl):
         ...
         ...         if sync_info.refresh_deletes:
         ...             print("Refresh delete phase required")
+
     """
 
     control_type = "1.3.6.1.4.1.4203.1.9.1.3"  # RFC 4533 Sync Done Control OID
@@ -243,6 +249,7 @@ class SyncDoneControl(LDAPControl):
             cookie: Updated synchronization state cookie
             refresh_deletes: Whether refresh delete phase is needed
             criticality: Whether control is critical for operation
+
         """
         # Create sync done information
         self._sync_done_info = SyncDoneInfo(
@@ -268,6 +275,7 @@ class SyncDoneControl(LDAPControl):
 
         Raises:
             NotImplementedError: BER encoding not yet implemented
+
         """
         # TODO: Implement BER encoding of Sync Done control
         # This should encode the sync done information according to RFC 4533
@@ -288,6 +296,7 @@ class SyncDoneControl(LDAPControl):
 
         Raises:
             NotImplementedError: Response processing not yet implemented
+
         """
         start_time = time.time()
 
@@ -320,6 +329,7 @@ class SyncDoneControl(LDAPControl):
             entries_added: Number of entries added
             entries_modified: Number of entries modified
             entries_deleted: Number of entries deleted
+
         """
         self._sync_done_info.entries_processed = entries_processed
         self._sync_done_info.entries_added = entries_added
@@ -336,6 +346,7 @@ class SyncDoneControl(LDAPControl):
         Args:
             status: Completion status
             error_message: Optional error message
+
         """
         self._sync_done_info.completion_status = status
         if error_message:
@@ -346,6 +357,7 @@ class SyncDoneControl(LDAPControl):
 
         Args:
             warning_message: Warning message to add
+
         """
         self._sync_done_info.warning_messages.append(warning_message)
 
@@ -359,6 +371,7 @@ class SyncDoneControl(LDAPControl):
         Args:
             sync_duration: Synchronization duration in seconds
             bandwidth_used: Bandwidth used in bytes
+
         """
         self._sync_done_info.sync_duration = sync_duration
         self._sync_done_info.bandwidth_used = bandwidth_used
@@ -368,6 +381,7 @@ class SyncDoneControl(LDAPControl):
 
         Returns:
             True if continuation is needed
+
         """
         return self._sync_done_info.requires_continuation()
 
@@ -376,6 +390,7 @@ class SyncDoneControl(LDAPControl):
 
         Returns:
             True if synchronization was successful
+
         """
         return self._sync_done_info.is_successful()
 
@@ -384,6 +399,7 @@ class SyncDoneControl(LDAPControl):
 
         Returns:
             Updated cookie or None if not available
+
         """
         return self._sync_done_info.cookie
 
@@ -392,6 +408,7 @@ class SyncDoneControl(LDAPControl):
 
         Returns:
             Dictionary with sync summary and metadata
+
         """
         summary = self._sync_done_info.get_sync_summary()
         summary.update(
@@ -430,6 +447,7 @@ class SyncDoneControl(LDAPControl):
 
         Returns:
             Encoded control value or None if no value
+
         """
         return self.control_value
 
@@ -442,6 +460,7 @@ class SyncDoneControl(LDAPControl):
 
         Returns:
             SyncDoneControl instance with decoded values
+
         """
         if not control_value:
             # Default sync done control for successful completion
@@ -473,6 +492,7 @@ def create_sync_done_control(
 
     Returns:
         Configured Sync Done control
+
     """
     return SyncDoneControl(
         cookie=cookie,
@@ -489,6 +509,7 @@ def process_sync_done_controls(controls: list[LDAPControl]) -> SyncDoneInfo | No
 
     Returns:
         Sync done information or None if not found
+
     """
     for control in controls:
         if isinstance(control, SyncDoneControl):
@@ -505,6 +526,7 @@ def extract_sync_cookie(controls: list[LDAPControl]) -> bytes | None:
 
     Returns:
         Updated sync cookie or None if not found
+
     """
     sync_info = process_sync_done_controls(controls)
     return sync_info.cookie if sync_info else None
@@ -518,6 +540,7 @@ def check_refresh_deletes_required(controls: list[LDAPControl]) -> bool:
 
     Returns:
         True if refresh deletes phase is required
+
     """
     sync_info = process_sync_done_controls(controls)
     return sync_info.refresh_deletes if sync_info else False
@@ -538,6 +561,7 @@ async def handle_sync_completion(
 
     Raises:
         NotImplementedError: Completion handling not yet implemented
+
     """
     # TODO: Implement sync completion handling
     # This would process sync done controls and update state

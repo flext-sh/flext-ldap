@@ -32,6 +32,7 @@ References:
     - RFC 4533: LDAP Content Synchronization Operation
     - RFC 4511: LDAP Protocol Specification
     - Entry state tracking patterns
+
 """
 
 from __future__ import annotations
@@ -93,6 +94,7 @@ class EntryUUID(BaseModel):
 
         Returns:
             UUID as string (e.g., '550e8400-e29b-41d4-a716-446655440000')
+
         """
         try:
             return str(uuid.UUID(bytes=self.uuid_bytes))
@@ -104,6 +106,7 @@ class EntryUUID(BaseModel):
 
         Returns:
             UUID as hex string
+
         """
         return self.uuid_bytes.hex()
 
@@ -112,6 +115,7 @@ class EntryUUID(BaseModel):
 
         Returns:
             True if UUID is valid
+
         """
         try:
             uuid.UUID(bytes=self.uuid_bytes)
@@ -128,6 +132,7 @@ class EntryUUID(BaseModel):
 
         Returns:
             EntryUUID instance
+
         """
         uuid_obj = uuid.UUID(uuid_string)
         return cls(uuid_bytes=uuid_obj.bytes)
@@ -207,6 +212,7 @@ class SyncStateInfo(BaseModel):
 
         Returns:
             True if state indicates entry change
+
         """
         return self.state in {
             SyncStateValue.ADD,
@@ -219,6 +225,7 @@ class SyncStateInfo(BaseModel):
 
         Returns:
             True if change affects entry structure
+
         """
         return self.change_type == EntryChangeType.STRUCTURAL_CHANGE or self.state in {
             SyncStateValue.ADD,
@@ -230,6 +237,7 @@ class SyncStateInfo(BaseModel):
 
         Returns:
             Dictionary with state summary
+
         """
         return {
             "state": self.state.value,
@@ -272,6 +280,7 @@ class SyncStateControl(LDAPControl):
         ...
         ...             if sync_info.entry_uuid:
         ...                 track_entry_uuid(sync_info.entry_uuid)
+
     """
 
     control_type = "1.3.6.1.4.1.4203.1.9.1.2"  # RFC 4533 Sync State Control OID
@@ -293,6 +302,7 @@ class SyncStateControl(LDAPControl):
             entry_uuid: UUID of synchronized entry
             cookie: Synchronization state cookie
             criticality: Whether control is critical for operation
+
         """
         # Create sync state information
         self._sync_state_info = SyncStateInfo(
@@ -319,6 +329,7 @@ class SyncStateControl(LDAPControl):
 
         Raises:
             NotImplementedError: BER encoding not yet implemented
+
         """
         # TODO: Implement BER encoding of Sync State control
         # This should encode the sync state information according to RFC 4533
@@ -339,6 +350,7 @@ class SyncStateControl(LDAPControl):
 
         Raises:
             NotImplementedError: Response processing not yet implemented
+
         """
         self._processing_start = datetime.now(UTC)
 
@@ -374,6 +386,7 @@ class SyncStateControl(LDAPControl):
             change_type: Type of change
             change_timestamp: Timestamp of change
             change_number: Change sequence number
+
         """
         self._sync_state_info.change_type = change_type
         self._sync_state_info.change_timestamp = change_timestamp or datetime.now(
@@ -391,6 +404,7 @@ class SyncStateControl(LDAPControl):
         Args:
             sync_context: Type of synchronization context
             context_id: Context identifier
+
         """
         self._sync_state_info.sync_context = sync_context
         self._sync_state_info.context_id = context_id
@@ -400,6 +414,7 @@ class SyncStateControl(LDAPControl):
 
         Args:
             server: Server that has replicated this change
+
         """
         if server not in self._sync_state_info.replicated_servers:
             self._sync_state_info.replicated_servers.append(server)
@@ -409,6 +424,7 @@ class SyncStateControl(LDAPControl):
 
         Args:
             resolution_info: Information about conflict resolution
+
         """
         self._sync_state_info.conflict_resolution = resolution_info
 
@@ -417,6 +433,7 @@ class SyncStateControl(LDAPControl):
 
         Returns:
             True if state indicates entry change
+
         """
         return self._sync_state_info.is_change_state()
 
@@ -425,6 +442,7 @@ class SyncStateControl(LDAPControl):
 
         Returns:
             True if change affects entry structure
+
         """
         return self._sync_state_info.is_structural_change()
 
@@ -433,6 +451,7 @@ class SyncStateControl(LDAPControl):
 
         Returns:
             Entry UUID as string or None if not available
+
         """
         return (
             self._sync_state_info.entry_uuid.get_uuid_string()
@@ -445,6 +464,7 @@ class SyncStateControl(LDAPControl):
 
         Returns:
             Dictionary with state summary and metadata
+
         """
         summary = self._sync_state_info.get_state_summary()
         summary.update(
@@ -489,6 +509,7 @@ class SyncStateControl(LDAPControl):
 
         Returns:
             Encoded control value or None if no value
+
         """
         return self.control_value
 
@@ -501,6 +522,7 @@ class SyncStateControl(LDAPControl):
 
         Returns:
             SyncStateControl instance with decoded values
+
         """
         if not control_value:
             # Default sync state control for present entries
@@ -536,6 +558,7 @@ def create_sync_state_control(
 
     Returns:
         Configured Sync State control
+
     """
     uuid_obj = EntryUUID(uuid_bytes=entry_uuid) if entry_uuid else None
 
@@ -555,6 +578,7 @@ def process_sync_state_controls(controls: list[LDAPControl]) -> list[SyncStateIn
 
     Returns:
         List of sync state information objects
+
     """
     return [
         control.sync_state_info
@@ -573,6 +597,7 @@ def extract_entry_changes(
 
     Returns:
         List of (state, uuid) tuples for changed entries
+
     """
     changes = []
 
@@ -593,6 +618,7 @@ def filter_changed_entries(controls: list[LDAPControl]) -> list[SyncStateControl
 
     Returns:
         List of sync state controls for changed entries
+
     """
     return [
         control
@@ -618,6 +644,7 @@ async def track_entry_synchronization(
 
     Raises:
         NotImplementedError: Sync tracking not yet implemented
+
     """
     # TODO: Implement synchronization tracking
     # This would track entry state changes and maintain sync metadata

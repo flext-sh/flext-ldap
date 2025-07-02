@@ -36,6 +36,7 @@ References:
     - perl-ldap: lib/Net/LDAP/RootDSE.pm
     - RFC 4512: LDAP Directory Information Models
     - RFC 4513: LDAP Authentication Methods and Security Mechanisms
+
 """
 
 from __future__ import annotations
@@ -268,6 +269,7 @@ class RootDSEService:
         >>>
         >>> if service.supports_extension("1.3.6.1.4.1.4203.1.11.3"):
         ...     print("WhoAmI extension available")
+
     """
 
     # Well-known extension OIDs and their names
@@ -328,6 +330,7 @@ class RootDSEService:
 
         Args:
             connection: Active LDAP connection
+
         """
         self._connection = connection
         self._cached_info: ServerInfo | None = None
@@ -343,6 +346,7 @@ class RootDSEService:
 
         Raises:
             NotImplementedError: Connection integration not yet implemented
+
         """
         if self._cached_info and not force_refresh:
             return self._cached_info
@@ -363,6 +367,7 @@ class RootDSEService:
 
         Returns:
             True if extension is supported
+
         """
         if self._cached_info:
             return self._cached_info.supports_extension(oid)
@@ -376,6 +381,7 @@ class RootDSEService:
 
         Returns:
             True if control is supported
+
         """
         if self._cached_info:
             return self._cached_info.supports_control(oid)
@@ -386,6 +392,7 @@ class RootDSEService:
 
         Returns:
             List of naming context DNs
+
         """
         if self._cached_info:
             return self._cached_info.naming_contexts
@@ -396,6 +403,7 @@ class RootDSEService:
 
         Returns:
             Schema DN or None if not available
+
         """
         if self._cached_info:
             return self._cached_info.schema_naming_context
@@ -409,6 +417,7 @@ class RootDSEService:
 
         Returns:
             Parsed server information
+
         """
         # Extract basic information
         naming_contexts = self._extract_list_attribute(attributes, "namingContexts")
@@ -573,6 +582,7 @@ async def discover_server_info(connection: Any) -> ServerInfo:
 
     Returns:
         Server information
+
     """
     service = RootDSEService(connection)
     return await service.discover_capabilities()
@@ -592,6 +602,7 @@ def create_extension_info(
 
     Returns:
         ExtensionInfo object
+
     """
     return ExtensionInfo(oid=oid, name=name, description=description)
 
@@ -610,6 +621,7 @@ def create_control_info(
 
     Returns:
         ControlInfo object
+
     """
     return ControlInfo(oid=oid, name=name, description=description)
 

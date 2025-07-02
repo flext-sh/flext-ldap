@@ -29,6 +29,7 @@ References:
     - perl-Authen-SASL: Client interface compatibility
     - RFC 4422: SASL client implementation requirements
     - LDAP Protocol: SASL bind operation integration
+
 """
 
 from __future__ import annotations
@@ -69,6 +70,7 @@ class SASLClient(BaseModel):
         >>> # perl-Authen-SASL compatible usage
         >>> client.client_start()
         >>> response = client.client_step(challenge)
+
     """
 
     # Configuration
@@ -129,6 +131,7 @@ class SASLClient(BaseModel):
 
         Raises:
             SASLInvalidMechanismError: If mechanism not available
+
         """
         if self._started:
             msg = "SASL client already started"
@@ -189,6 +192,7 @@ class SASLClient(BaseModel):
 
         Raises:
             SASLAuthenticationError: If authentication fails
+
         """
         if not self._started or not self._mechanism:
             msg = "SASL client not started"
@@ -232,6 +236,7 @@ class SASLClient(BaseModel):
 
         Returns:
             Initial response data or None if not supported
+
         """
         if not self._mechanism:
             return None
@@ -246,6 +251,7 @@ class SASLClient(BaseModel):
 
         Returns:
             True if mechanism supports initial response
+
         """
         if not self._mechanism:
             return False
@@ -257,6 +263,7 @@ class SASLClient(BaseModel):
 
         Returns:
             True if authentication completed successfully
+
         """
         if not self._mechanism:
             return False
@@ -268,6 +275,7 @@ class SASLClient(BaseModel):
 
         Returns:
             Selected mechanism name or None if not started
+
         """
         return self._selected_mechanism
 
@@ -276,6 +284,7 @@ class SASLClient(BaseModel):
 
         Returns:
             SASL authentication context
+
         """
         return self._context
 
@@ -287,6 +296,7 @@ class SASLClient(BaseModel):
 
         Returns:
             Property value or None if not available
+
         """
         if not self._mechanism:
             return None
@@ -298,6 +308,7 @@ class SASLClient(BaseModel):
 
         Returns:
             Error message or None if no error
+
         """
         if self._context and self._context.state == SASLState.FAILED:
             return "Authentication failed"
@@ -308,6 +319,7 @@ class SASLClient(BaseModel):
 
         Returns:
             Selected mechanism name or None if none available
+
         """
         available = SASLMechanismRegistry.get_available_mechanisms()
 
@@ -390,6 +402,7 @@ class SASLClientFactory:
         ...     username="user",
         ...     password="<secure_password>"
         ... )
+
     """
 
     @staticmethod
@@ -417,6 +430,7 @@ class SASLClientFactory:
 
         Returns:
             Configured SASLClient instance
+
         """
         # Create callback handler if not provided
         if callback is None:
@@ -456,6 +470,7 @@ class SASLClientFactory:
 
         Returns:
             SASLClient configured for PLAIN mechanism
+
         """
         return SASLClientFactory.create_client(
             mechanisms=["PLAIN"],
@@ -484,6 +499,7 @@ class SASLClientFactory:
 
         Returns:
             SASLClient configured for DIGEST-MD5 mechanism
+
         """
         return SASLClientFactory.create_client(
             mechanisms=["DIGEST-MD5"],
@@ -509,6 +525,7 @@ class SASLClientFactory:
 
         Returns:
             SASLClient configured for EXTERNAL mechanism
+
         """
         from ldap_core_shared.protocols.sasl.callback import SASLCallbackHandler
 
@@ -540,6 +557,7 @@ class SASLClientFactory:
 
         Returns:
             SASLClient configured for ANONYMOUS mechanism
+
         """
         from ldap_core_shared.protocols.sasl.callback import SASLCallbackHandler
 

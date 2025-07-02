@@ -80,6 +80,7 @@ class LDAPOperations:
         Args:
             config: LDAP configuration for connections
             connection_manager: ConnectionManager instance for LDAP operations
+
         """
         self._config = config
         self._connection_manager = (
@@ -108,7 +109,7 @@ class LDAPOperations:
     # PURE DELEGATION METHODS - All operations delegate to core infrastructure
     # ===========================================================================
 
-    def bulk_add_entries(self, entries: list[dict[str, Any]], **kwargs) -> Any:
+    def bulk_add_entries(self, entries: list[dict[str, Any]], **kwargs: Any) -> Any:
         """Bulk add entries - delegates to core operations.
 
         Pure delegation to core.operations.LDAPOperations.bulk_add_entries
@@ -117,7 +118,7 @@ class LDAPOperations:
         core_ops = self._get_core_operations()
         return core_ops.bulk_add_entries(entries, **kwargs)
 
-    def transaction(self, **kwargs):
+    def transaction(self, **kwargs: Any) -> Any:
         """Create transaction context - delegates to core operations.
 
         Pure delegation to core.operations.LDAPOperations.transaction
@@ -126,7 +127,7 @@ class LDAPOperations:
         core_ops = self._get_core_operations()
         return core_ops.transaction(**kwargs)
 
-    def execute_request(self, request, **kwargs):
+    def execute_request(self, request, **kwargs: Any) -> Any:
         """Execute LDAP request - delegates to core operations.
 
         Pure delegation to core.operations.LDAPOperations.execute_request

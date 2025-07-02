@@ -37,6 +37,7 @@ References:
     - perl-ldap: lib/Net/LDAP/Extension/Cancel.pm
     - RFC 3909: Lightweight Directory Access Protocol (LDAP) Cancel Operation
     - OID: 1.3.6.1.1.8
+
 """
 
 from __future__ import annotations
@@ -76,6 +77,7 @@ class CancelResult(ExtensionResult):
     Note:
         A successful cancel result doesn't guarantee the operation was cancelled.
         The operation may have completed normally before the cancel took effect.
+
     """
 
     operation_cancelled: bool = Field(
@@ -152,6 +154,7 @@ class CancelExtension(LDAPExtension):
         The message ID must correspond to an outstanding operation on
         the same connection. The server may or may not be able to
         cancel the operation depending on its current state.
+
     """
 
     request_name = ExtensionOIDs.CANCEL
@@ -196,6 +199,7 @@ class CancelExtension(LDAPExtension):
 
         Raises:
             ExtensionEncodingError: If encoding fails
+
         """
         try:
             # Encode message ID as INTEGER
@@ -222,6 +226,7 @@ class CancelExtension(LDAPExtension):
 
         Raises:
             ExtensionDecodingError: If decoding fails
+
         """
         try:
             # Cancel response has no value - result is in the result code
@@ -249,6 +254,7 @@ class CancelExtension(LDAPExtension):
 
         Returns:
             CancelExtension configured for the target operation
+
         """
         return cls(message_id=message_id, timeout_seconds=timeout_seconds)
 
@@ -261,6 +267,7 @@ class CancelExtension(LDAPExtension):
 
         Returns:
             CancelExtension for immediate cancellation
+
         """
         return cls(message_id=message_id, timeout_seconds=None)
 
@@ -274,6 +281,7 @@ class CancelExtension(LDAPExtension):
 
         Returns:
             CancelExtension with timeout configured
+
         """
         return cls(message_id=message_id, timeout_seconds=timeout_seconds)
 
@@ -325,6 +333,7 @@ def cancel_operation(message_id: int) -> CancelExtension:
 
     Returns:
         CancelExtension for the specified operation
+
     """
     return CancelExtension.for_operation(message_id)
 
@@ -338,6 +347,7 @@ def cancel_with_timeout(message_id: int, timeout_seconds: int) -> CancelExtensio
 
     Returns:
         CancelExtension with timeout configured
+
     """
     return CancelExtension.with_timeout(message_id, timeout_seconds)
 
@@ -355,6 +365,7 @@ class OperationTracker:
         >>> # ... later ...
         >>> cancel_ext = tracker.cancel_operation(msg_id)
         >>> tracker.complete_operation(msg_id)
+
     """
 
     def __init__(self) -> None:
@@ -371,6 +382,7 @@ class OperationTracker:
 
         Returns:
             Message ID assigned to the operation
+
         """
         message_id = self._next_message_id
         self._next_message_id += 1
@@ -393,6 +405,7 @@ class OperationTracker:
 
         Returns:
             True if operation was tracked and marked completed
+
         """
         if message_id in self._operations:
             self._operations[message_id]["completed"] = True
@@ -407,6 +420,7 @@ class OperationTracker:
 
         Returns:
             CancelExtension or None if operation not tracked
+
         """
         if message_id not in self._operations:
             return None
@@ -426,6 +440,7 @@ class OperationTracker:
 
         Returns:
             True if operation is active
+
         """
         if message_id not in self._operations:
             return False
@@ -442,6 +457,7 @@ class OperationTracker:
 
         Returns:
             List of message IDs for active operations
+
         """
         return [
             msg_id
@@ -454,6 +470,7 @@ class OperationTracker:
 
         Returns:
             Number of operations removed
+
         """
         completed_ids = [
             msg_id
@@ -474,6 +491,7 @@ class OperationTracker:
 
         Returns:
             Operation information dictionary or None
+
         """
         return self._operations.get(message_id)
 

@@ -79,6 +79,7 @@ class SOLIDConnectionManager:
         Args:
             connection_info: Connection configuration
             components: Optional container for SOLID components
+
         """
         if components is None:
             components = ConnectionComponents()
@@ -143,6 +144,7 @@ class SOLIDConnectionManager:
 
         Yields:
             LDAP connection
+
         """
         start_time = time.time()
 
@@ -187,6 +189,7 @@ class SOLIDConnectionManager:
 
         Yields:
             Search results
+
         """
         start_time = time.time()
 
@@ -224,6 +227,7 @@ class SOLIDConnectionManager:
 
         Returns:
             True if successful
+
         """
         start_time = time.time()
 
@@ -258,6 +262,7 @@ class SOLIDConnectionManager:
 
         Returns:
             True if successful
+
         """
         start_time = time.time()
 
@@ -299,6 +304,7 @@ class SOLIDConnectionManager:
 
         Returns:
             True if successful
+
         """
         start_time = time.time()
 
@@ -329,6 +335,7 @@ class SOLIDConnectionManager:
 
         Returns:
             Performance metrics
+
         """
         return self._performance_tracker.get_metrics()
 
@@ -337,6 +344,7 @@ class SOLIDConnectionManager:
 
         Returns:
             True if healthy
+
         """
         try:
             async with self.get_connection() as connection:
@@ -383,6 +391,7 @@ class ConnectionManagerFactory:
 
         Returns:
             Configured connection manager
+
         """
         return SOLIDConnectionManager(connection_info)
 
@@ -397,6 +406,7 @@ class ConnectionManagerFactory:
 
         Returns:
             High-performance configured connection manager
+
         """
         # Custom components for high performance
         factory = StandardConnectionFactory(connection_info)

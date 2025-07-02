@@ -126,7 +126,7 @@ class LDAPServerConfig:
         use_tls: bool = False,
         timeout: int = DEFAULT_TIMEOUT_SECONDS,
         pool_size: int = 10,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """Initialize LDAP server config facade.
 
@@ -141,6 +141,7 @@ class LDAPServerConfig:
             timeout: Connection timeout in seconds
             pool_size: Connection pool size
             **kwargs: Additional arguments passed to enterprise config
+
         """
         # Store base_dn for legacy compatibility (not used by enterprise config)
         self._base_dn = base_dn
@@ -283,7 +284,7 @@ class LoggingConfig:
         backup_count: int = 5,
         enable_console: bool = True,
         mask_sensitive_data: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """Initialize logging config facade."""
         from flext_ldap import LogLevel
@@ -352,7 +353,7 @@ class SecurityConfig:
         client_key_file: Path | None = None,
         encryption_key: str | None = None,
         mask_sensitive_data: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """Initialize security config facade."""
         from pydantic import SecretStr
@@ -433,6 +434,7 @@ class ConfigurationManager:
 
         Returns:
             Configured instance of config_class
+
         """
         # Load from file if specified
         file_data: dict[str, Any] = {}
@@ -574,6 +576,7 @@ def migrate_ldap_server_config_to_unified(legacy_config: LDAPServerConfig):
 
     Returns:
         Unified LDAPConfig instance
+
     """
     warnings.warn(
         "LDAPServerConfig is deprecated. Use api.LDAPConfig directly instead.",
@@ -610,6 +613,7 @@ def create_unified_config_from_legacy_manager(
 
     Returns:
         Unified LDAPConfig instance or None if not found
+
     """
     warnings.warn(
         "Legacy configuration manager is deprecated. Use api.LDAPConfig directly instead.",
@@ -631,6 +635,7 @@ def auto_detect_and_migrate_config() -> Any:
 
     Returns:
         Unified LDAPConfig if legacy config found, None otherwise
+
     """
     warnings.warn(
         "Auto-detection of legacy config is deprecated. Use explicit api.LDAPConfig construction instead.",
@@ -661,6 +666,7 @@ def load_ldap_config_unified(
 
     Returns:
         Unified LDAPConfig instance
+
     """
     warnings.warn(
         "load_ldap_config_unified is deprecated. Use api.LDAPConfig constructor directly instead.",

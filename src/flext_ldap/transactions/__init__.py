@@ -29,6 +29,7 @@ References:
     - RFC 5805: LDAP Transactions
     - perl-ldap: Transaction patterns and error handling
     - Enterprise transaction processing patterns
+
 """
 
 from typing import TYPE_CHECKING

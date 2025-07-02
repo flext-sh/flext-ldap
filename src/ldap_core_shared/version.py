@@ -52,6 +52,7 @@ def get_version() -> str:
 
     Returns:
         Semantic version string (e.g., "1.0.0", "1.0.0-alpha.1", "1.0.0+build.123")
+
     """
     version = f"{MAJOR}.{MINOR}.{PATCH}"
 
@@ -73,6 +74,7 @@ def get_version_tuple() -> tuple[int, int, int]:
 
     Returns:
         Version tuple (major, minor, patch)
+
     """
     return VERSION_TUPLE
 
@@ -82,6 +84,7 @@ def is_stable_release() -> bool:
 
     Returns:
         True if stable (no pre-release identifier)
+
     """
     return not PRE_RELEASE
 
@@ -94,6 +97,7 @@ def is_compatible_python_version(python_version: tuple[int, int]) -> bool:
 
     Returns:
         True if compatible with this library
+
     """
     min_python = (3, 9)
     max_python = (4, 0)  # Exclusive upper bound
@@ -197,6 +201,7 @@ def get_package_info() -> dict[str, str | list[str] | bool]:
 
     Returns:
         Package metadata dictionary
+
     """
     return {
         "name": PACKAGE_NAME,

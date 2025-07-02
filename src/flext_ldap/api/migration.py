@@ -32,7 +32,7 @@ class TransactionState(Enum):
 class MigrationConfig:
     """Enterprise migration configuration."""
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         self.source_ldif_path = kwargs.get("source_ldif_path", "data")
         self.output_path = kwargs.get("output_path", "output")
         self.base_dn = kwargs.get("base_dn", "dc=example,dc=com")

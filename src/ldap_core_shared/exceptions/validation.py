@@ -33,6 +33,7 @@ class ValidationError(LDAPError):
             field_value: Value that failed validation
             validation_rule: Rule that was violated
             **kwargs: Additional arguments for LDAPError
+
         """
         context = kwargs.get("context", {})
         if field_name:
@@ -66,6 +67,7 @@ class SchemaValidationError(ValidationError):
             attribute_name: Attribute that failed validation
             schema_rule: Schema rule that was violated
             **kwargs: Additional arguments for ValidationError
+
         """
         context = kwargs.get("context", {})
         if object_class:
@@ -97,6 +99,7 @@ class DNValidationError(ValidationError):
             dn: DN that failed validation
             component: Specific DN component that failed
             **kwargs: Additional arguments for ValidationError
+
         """
         context = kwargs.get("context", {})
         if dn:
@@ -128,6 +131,7 @@ class FilterValidationError(ValidationError):
             filter_component: Specific filter component that failed
             syntax_error: Syntax error details
             **kwargs: Additional arguments for ValidationError
+
         """
         context = kwargs.get("context", {})
         if filter_string:
@@ -163,6 +167,7 @@ class AttributeValidationError(ValidationError):
             attribute_syntax: Expected attribute syntax
             validation_type: Type of validation that failed
             **kwargs: Additional arguments for ValidationError
+
         """
         context = kwargs.get("context", {})
         if attribute_name:
@@ -198,6 +203,7 @@ class LDIFValidationError(ValidationError):
             ldif_line: Content of problematic line
             entry_dn: DN of entry being processed
             **kwargs: Additional arguments for ValidationError
+
         """
         context = kwargs.get("context", {})
         if line_number:

@@ -25,6 +25,7 @@ References:
     - OpenLDAP Technical Documentation
     - perl-ldap OpenLDAP-specific controls
     - RFC drafts for OpenLDAP extensions
+
 """
 
 from __future__ import annotations
@@ -54,6 +55,7 @@ class OpenLDAPProxyAuthControl(LDAPControl):
         Args:
             authorization_id: Authorization identity
             criticality: Whether control is critical
+
         """
         self._authorization_id = authorization_id
 
@@ -87,6 +89,7 @@ class OpenLDAPPersistentSearchControl(LDAPControl):
             changes_only: Return only changes, not existing entries
             return_controls: Return entry change notification controls
             criticality: Whether control is critical
+
         """
         self._change_types = change_types
         self._changes_only = changes_only
@@ -106,6 +109,7 @@ class OpenLDAPPersistentSearchControl(LDAPControl):
         Note:
             This implements basic BER encoding for OpenLDAP persistent search control.
             The format is: SEQUENCE { changeTypes INTEGER, changesOnly BOOLEAN, returnECs BOOLEAN }
+
         """
         try:
             # Use the ASN.1 encoder from our protocols module
@@ -184,6 +188,7 @@ class OpenLDAPExtensions:
 
         Returns:
             Proxy authorization control
+
         """
         return self._controls.proxy_authorization(authorization_id)
 
@@ -204,6 +209,7 @@ class OpenLDAPExtensions:
 
         Returns:
             Persistent search control
+
         """
         change_types = 0
         if monitor_add:

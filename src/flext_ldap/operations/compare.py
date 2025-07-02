@@ -179,6 +179,7 @@ class CompareOperations:
         ...     "uid=user1,ou=users,dc=example,dc=com", "userPassword", "plaintext_password"
         ... )
         >>> print(f"Authentication: {'SUCCESS' if is_valid else 'FAILED'}")
+
     """
 
     def __init__(self, connection: Any) -> None:
@@ -186,6 +187,7 @@ class CompareOperations:
 
         Args:
             connection: Active LDAP connection
+
         """
         self._connection = connection
 
@@ -209,6 +211,7 @@ class CompareOperations:
 
         Raises:
             NotImplementedError: Compare operation not yet implemented
+
         """
         time.time()
 
@@ -241,6 +244,7 @@ class CompareOperations:
 
         Raises:
             NotImplementedError: Password compare not yet implemented
+
         """
         # TODO: Implement password comparison
         # This is a stub implementation
@@ -268,6 +272,7 @@ class CompareOperations:
 
         Returns:
             True if user is member of group, False otherwise
+
         """
         result = await self.compare_attribute(
             group_dn,
@@ -294,6 +299,7 @@ class CompareOperations:
 
         Returns:
             Dictionary mapping values to compare results
+
         """
         results = {}
 
@@ -326,6 +332,7 @@ class CompareOperations:
 
         Returns:
             Detected hash type
+
         """
         if not password_value:
             return PasswordHashType.PLAINTEXT
@@ -363,6 +370,7 @@ class CompareOperations:
 
         Returns:
             Hashed password string
+
         """
         if hash_type == PasswordHashType.PLAINTEXT:
             return plaintext
@@ -402,6 +410,7 @@ class CompareOperations:
 
         Returns:
             Compare result
+
         """
         start_time = time.time()
 
@@ -456,6 +465,7 @@ class CompareOperations:
 
         Raises:
             ValueError: If request is invalid
+
         """
         if not dn or not dn.strip():
             msg = "DN cannot be empty"
@@ -481,6 +491,7 @@ class PasswordCompare:
 
         Args:
             compare_ops: Compare operations service
+
         """
         self._compare_ops = compare_ops
 
@@ -499,6 +510,7 @@ class PasswordCompare:
 
         Returns:
             True if authentication successful
+
         """
         return await self._compare_ops.compare_password(
             user_dn,
@@ -523,6 +535,7 @@ class PasswordCompare:
 
         Returns:
             Dictionary of policy validation results
+
         """
         results = {
             "current_password_valid": False,
@@ -569,6 +582,7 @@ async def compare_attribute(
 
     Returns:
         True if values match, False otherwise
+
     """
     compare_ops = CompareOperations(connection)
     result = await compare_ops.compare_attribute(dn, attribute, value)
@@ -585,6 +599,7 @@ async def authenticate_user(connection: Any, user_dn: str, password: str) -> boo
 
     Returns:
         True if authentication successful
+
     """
     compare_ops = CompareOperations(connection)
     return await compare_ops.compare_password(user_dn, "userPassword", password)
@@ -604,6 +619,7 @@ async def check_group_membership(
 
     Returns:
         True if user is member of group
+
     """
     compare_ops = CompareOperations(connection)
     return await compare_ops.compare_group_membership(group_dn, member_dn)

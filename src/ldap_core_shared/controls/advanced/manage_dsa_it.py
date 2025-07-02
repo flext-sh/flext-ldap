@@ -39,6 +39,7 @@ References:
     - RFC 3296: Named Subordinate References in LDAP
     - RFC 4511: LDAP Protocol Specification
     - Directory structure management patterns
+
 """
 
 from __future__ import annotations
@@ -129,6 +130,7 @@ class ManageDsaITRequest(BaseModel):
 
         Returns:
             True if operation is read-only
+
         """
         return self.operation_type in {
             DsaITOperationType.SEARCH,
@@ -140,6 +142,7 @@ class ManageDsaITRequest(BaseModel):
 
         Returns:
             True if special handling is required
+
         """
         return (
             self.allow_structural_changes
@@ -227,6 +230,7 @@ class ManageDsaITResponse(BaseModel):
 
         Returns:
             Dictionary with performance metrics
+
         """
         return {
             "total_processing_time": self.processing_time,
@@ -262,6 +266,7 @@ class ManageDsaITControl(LDAPControl):
         ...     changes={"ref": "ldap://sales-server.example.com/ou=sales,dc=company,dc=com"},
         ...     controls=[manage_control]
         ... )
+
     """
 
     control_type = "2.16.840.1.113730.3.4.2"  # ManageDsaIT control OID
@@ -280,6 +285,7 @@ class ManageDsaITControl(LDAPControl):
             referral_handling: Mode for referral handling
             require_special_privileges: Whether to require special privileges
             criticality: Whether control is critical for operation
+
         """
         # Initialize base control first (without value)
         super().__init__(
@@ -307,6 +313,7 @@ class ManageDsaITControl(LDAPControl):
 
         Returns:
             BER-encoded control value (empty for ManageDsaIT per RFC 3296)
+
         """
         # According to RFC 3296, the ManageDsaIT control has no control value
         # The control value should be absent (NULL) or empty
@@ -319,6 +326,7 @@ class ManageDsaITControl(LDAPControl):
 
         Args:
             response_value: BER-encoded response from server
+
         """
         import time
 
@@ -390,6 +398,7 @@ class ManageDsaITControl(LDAPControl):
 
         Args:
             operation_type: New operation type
+
         """
         self._request.operation_type = operation_type
         # ManageDsaIT control value doesn't change per RFC 3296
@@ -399,6 +408,7 @@ class ManageDsaITControl(LDAPControl):
 
         Args:
             handling_mode: New referral handling mode
+
         """
         self._request.referral_handling = handling_mode
         # ManageDsaIT control value doesn't change per RFC 3296
@@ -408,6 +418,7 @@ class ManageDsaITControl(LDAPControl):
 
         Args:
             validate_references: Whether to validate referral targets
+
         """
         self._request.validate_references = validate_references
 
@@ -416,6 +427,7 @@ class ManageDsaITControl(LDAPControl):
 
         Args:
             allow: Whether to allow structural changes
+
         """
         self._request.allow_structural_changes = allow
 
@@ -424,6 +436,7 @@ class ManageDsaITControl(LDAPControl):
 
         Returns:
             Dictionary with operation configuration
+
         """
         return {
             "operation_type": self._request.operation_type.value,
@@ -459,6 +472,7 @@ class ManageDsaITControl(LDAPControl):
 
         Returns:
             Encoded control value or None (ManageDsaIT has no value)
+
         """
         return None
 
@@ -471,6 +485,7 @@ class ManageDsaITControl(LDAPControl):
 
         Returns:
             ManageDsaITControl instance
+
         """
         # ManageDsaIT control has no value, return default instance
         return cls()
@@ -482,6 +497,7 @@ def create_manage_dsa_it_control() -> ManageDsaITControl:
 
     Returns:
         Configured ManageDsaIT control
+
     """
     return ManageDsaITControl(
         operation_type=DsaITOperationType.SEARCH,
@@ -495,6 +511,7 @@ def create_referral_search_control() -> ManageDsaITControl:
 
     Returns:
         ManageDsaIT control configured for referral searches
+
     """
     return ManageDsaITControl(
         operation_type=DsaITOperationType.SEARCH,
@@ -509,6 +526,7 @@ def create_referral_modify_control() -> ManageDsaITControl:
 
     Returns:
         ManageDsaIT control configured for referral modifications
+
     """
     control = ManageDsaITControl(
         operation_type=DsaITOperationType.MODIFY,
@@ -541,6 +559,7 @@ async def search_referral_objects(
 
     Raises:
         Exception: If search operation fails
+
     """
     from ldap_core_shared.utils.logging import get_logger
 
@@ -622,6 +641,7 @@ async def modify_referral_target(
 
     Raises:
         Exception: If modification operation fails
+
     """
     from urllib.parse import urlparse
 

@@ -29,6 +29,7 @@ References:
     - RFC 4616: The PLAIN Simple Authentication and Security Layer (SASL) Mechanism
     - RFC 4422: Simple Authentication and Security Layer (SASL)
     - LDAP Protocol: SASL PLAIN usage in LDAP authentication
+
 """
 
 from __future__ import annotations
@@ -76,6 +77,7 @@ class PlainMechanism(SASLMechanism):
         >>> mechanism = PlainMechanism(callback_handler)
         >>> response = mechanism.get_initial_response()
         >>> # Response contains: b'\\x00username\\x00password'
+
     """
 
     MECHANISM_NAME: ClassVar[str] = "PLAIN"
@@ -104,6 +106,7 @@ class PlainMechanism(SASLMechanism):
         Args:
             callback_handler: Callback handler for credentials
             context: SASL context (created if not provided)
+
         """
         super().__init__(callback_handler, context)
 
@@ -128,6 +131,7 @@ class PlainMechanism(SASLMechanism):
 
         Raises:
             SASLAuthenticationError: If authentication fails
+
         """
         self._record_challenge(challenge)
 
@@ -191,6 +195,7 @@ class PlainMechanism(SASLMechanism):
 
         Raises:
             SASLCallbackError: If callbacks fail
+
         """
         # Create callbacks for required information
         callbacks = []
@@ -243,6 +248,7 @@ class PlainMechanism(SASLMechanism):
 
         Returns:
             Encoded PLAIN response
+
         """
         # Authorization identity (optional)
         authzid = self._authorization_id or ""

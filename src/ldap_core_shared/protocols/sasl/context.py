@@ -39,6 +39,7 @@ References:
     - RFC 4422: SASL framework and security layer specification
     - RFC 2831: DIGEST-MD5 security layer implementation
     - perl-Authen-SASL: Context management compatibility
+
 """
 
 from __future__ import annotations
@@ -98,6 +99,7 @@ class SASLProperties(BaseModel):
         ...     max_buffer_size=65536,
         ...     mutual_authentication=True
         ... )
+
     """
 
     # Quality of Protection options
@@ -153,6 +155,7 @@ class SASLProperties(BaseModel):
 
         Returns:
             List of QOP enums in preference order
+
         """
         result = []
         for qop_str in self.qop:
@@ -170,6 +173,7 @@ class SASLProperties(BaseModel):
 
         Returns:
             True if QOP is supported
+
         """
         qop_str = qop.value if isinstance(qop, QualityOfProtection) else qop
         return qop_str in self.qop
@@ -179,6 +183,7 @@ class SASLProperties(BaseModel):
 
         Returns:
             Maximum cipher strength (0 if no confidentiality)
+
         """
         if QualityOfProtection.AUTH_CONF in self.get_qop_preference():
             # Default to 128-bit for confidentiality
@@ -200,6 +205,7 @@ class SASLContext(BaseModel):
         ...     hostname="server.example.com"
         ... )
         >>> context.set_authentication_id("john.doe")
+
     """
 
     # Basic context information
@@ -298,6 +304,7 @@ class SASLContext(BaseModel):
 
         Args:
             mechanism: SASL mechanism name
+
         """
         self.mechanism = mechanism
         if self.state == SASLState.INITIAL:
@@ -308,6 +315,7 @@ class SASLContext(BaseModel):
 
         Args:
             authcid: Authentication identity
+
         """
         self.authentication_id = authcid
 
@@ -316,6 +324,7 @@ class SASLContext(BaseModel):
 
         Args:
             authzid: Authorization identity (None to use authcid)
+
         """
         self.authorization_id = authzid
 
@@ -324,6 +333,7 @@ class SASLContext(BaseModel):
 
         Returns:
             Authorization ID or authentication ID if not set
+
         """
         return self.authorization_id or self.authentication_id
 
@@ -332,6 +342,7 @@ class SASLContext(BaseModel):
 
         Args:
             realm: Authentication realm
+
         """
         self.realm = realm
 
@@ -340,6 +351,7 @@ class SASLContext(BaseModel):
 
         Args:
             state: New authentication state
+
         """
         if isinstance(state, str):
             state = SASLState(state)
@@ -350,6 +362,7 @@ class SASLContext(BaseModel):
 
         Returns:
             True if authentication completed successfully
+
         """
         return self.state == SASLState.COMPLETE
 
@@ -358,6 +371,7 @@ class SASLContext(BaseModel):
 
         Returns:
             True if authentication failed
+
         """
         return self.state == SASLState.FAILED
 
@@ -366,6 +380,7 @@ class SASLContext(BaseModel):
 
         Returns:
             True if authentication is active
+
         """
         return self.state in {SASLState.IN_PROGRESS, SASLState.NEEDS_RESPONSE}
 
@@ -374,6 +389,7 @@ class SASLContext(BaseModel):
 
         Args:
             challenge: Challenge data
+
         """
         self.last_challenge = challenge
         self.challenge_count += 1
@@ -385,6 +401,7 @@ class SASLContext(BaseModel):
 
         Args:
             response: Response data
+
         """
         self.last_response = response
         self.state = SASLState.NEEDS_RESPONSE
@@ -404,6 +421,7 @@ class SASLContext(BaseModel):
 
         Raises:
             SASLSecurityError: If negotiation fails
+
         """
         # Validate QOP is supported
         if not self.properties.supports_qop(qop):
@@ -441,6 +459,7 @@ class SASLContext(BaseModel):
 
         Raises:
             SASLSecurityError: If security layer activation fails
+
         """
         if not self.is_complete():
             msg = "Cannot activate security layer before authentication completion"
@@ -490,6 +509,7 @@ class SASLContext(BaseModel):
 
         Returns:
             True if security layer is active
+
         """
         return self.security_layer_active
 
@@ -498,6 +518,7 @@ class SASLContext(BaseModel):
 
         Returns:
             True if integrity protection is active
+
         """
         return self.security_layer_active and self.negotiated_qop in {
             QualityOfProtection.AUTH_INT,
@@ -509,6 +530,7 @@ class SASLContext(BaseModel):
 
         Returns:
             True if confidentiality protection is active
+
         """
         return (
             self.security_layer_active
@@ -544,6 +566,7 @@ class SASLContext(BaseModel):
 
         Returns:
             Dictionary representation without sensitive data
+
         """
         result: dict[str, Any] = {
             "mechanism": self.mechanism,
@@ -588,6 +611,7 @@ class SASLSecurityLayer:
         >>> security_layer = SASLSecurityLayer(context)
         >>> protected_data = security_layer.wrap(b"Hello World")
         >>> original_data = security_layer.unwrap(protected_data)
+
     """
 
     def __init__(self, context: SASLContext) -> None:
@@ -598,6 +622,7 @@ class SASLSecurityLayer:
 
         Raises:
             SASLSecurityError: If context not ready for security layer
+
         """
         if not context.has_security_layer():
             msg = "Security layer not active in context"
@@ -634,6 +659,7 @@ class SASLSecurityLayer:
 
         Raises:
             SASLSecurityError: If wrapping fails
+
         """
         if not self.context.has_security_layer():
             msg = "Security layer not active"
@@ -720,6 +746,7 @@ class SASLSecurityLayer:
 
         Raises:
             SASLSecurityError: If unwrapping fails or data corrupted
+
         """
         if not self.context.has_security_layer():
             msg = "Security layer not active"
@@ -820,6 +847,7 @@ class SASLSecurityLayer:
 
         Returns:
             Maximum size in bytes
+
         """
         if self.context.negotiated_buffer_size:
             # Account for security layer overhead

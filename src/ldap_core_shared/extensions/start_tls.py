@@ -44,6 +44,7 @@ References:
     - RFC 2830: Lightweight Directory Access Protocol (v3): Extension for
       Transport Layer Security
     - OID: 1.3.6.1.4.1.1466.20037
+
 """
 
 from __future__ import annotations
@@ -101,6 +102,7 @@ class TLSConfiguration(BaseModel):
     Note:
         File paths should be absolute paths to PEM-formatted certificates.
         The key file should not be password-protected for automatic use.
+
     """
 
     ca_cert_file: str | None = Field(
@@ -184,6 +186,7 @@ class TLSConfiguration(BaseModel):
         Note:
             This method provides a bridge to underlying SSL libraries
             like Python's ssl module or OpenSSL.
+
         """
         params = {
             "verify_mode": self.verify_mode.value,
@@ -223,6 +226,7 @@ class StartTLSResult(ExtensionResult):
     Note:
         A successful Start TLS operation changes the connection state
         to encrypted. All subsequent operations use TLS encryption.
+
     """
 
     tls_established: bool = Field(
@@ -259,6 +263,7 @@ class StartTLSResult(ExtensionResult):
 
         Returns:
             Dictionary with TLS security details
+
         """
         return {
             "tls_active": self.is_tls_active(),
@@ -295,6 +300,7 @@ class StartTLSExtension(LDAPExtension):
         The Start TLS operation itself has no request value. The TLS
         configuration is used by the client library for the actual
         TLS handshake after the LDAP operation succeeds.
+
     """
 
     request_name = ExtensionOIDs.START_TLS
@@ -314,6 +320,7 @@ class StartTLSExtension(LDAPExtension):
         Note:
             The Start TLS operation has no request value. The tls_config
             is used by the client for the actual TLS handshake.
+
         """
         super().__init__(request_value=None, **kwargs)
         self.tls_config = tls_config or TLSConfiguration()
@@ -323,6 +330,7 @@ class StartTLSExtension(LDAPExtension):
 
         Returns:
             None - Start TLS extension has no request value
+
         """
         return None  # Start TLS has no request value
 
@@ -343,6 +351,7 @@ class StartTLSExtension(LDAPExtension):
 
         Raises:
             ExtensionDecodingError: If decoding fails
+
         """
         try:
             # Start TLS response has no value - success is indicated by result code
@@ -365,6 +374,7 @@ class StartTLSExtension(LDAPExtension):
 
         Returns:
             StartTLSExtension ready for execution
+
         """
         return cls(tls_config=tls_config)
 
@@ -374,6 +384,7 @@ class StartTLSExtension(LDAPExtension):
 
         Returns:
             StartTLSExtension with default TLS settings
+
         """
         return cls(tls_config=TLSConfiguration())
 
@@ -393,6 +404,7 @@ class StartTLSExtension(LDAPExtension):
 
         Returns:
             StartTLSExtension configured for client certificate auth
+
         """
         config = TLSConfiguration(
             cert_file=cert_file,
@@ -416,6 +428,7 @@ class StartTLSExtension(LDAPExtension):
 
         Returns:
             StartTLSExtension configured for CA verification
+
         """
         config = TLSConfiguration(
             ca_cert_file=ca_cert_file,
@@ -434,6 +447,7 @@ class StartTLSExtension(LDAPExtension):
         Warning:
             This configuration disables certificate verification and should
             only be used in testing environments. Not recommended for production.
+
         """
         config = TLSConfiguration(verify_mode=TLSVerifyMode.NONE, check_hostname=False)
         return cls(tls_config=config)
@@ -475,6 +489,7 @@ def start_tls() -> StartTLSExtension:
 
     Returns:
         StartTLSExtension ready for execution
+
     """
     return StartTLSExtension.with_default_config()
 
@@ -487,6 +502,7 @@ def start_tls_with_ca(ca_cert_file: str) -> StartTLSExtension:
 
     Returns:
         StartTLSExtension configured for CA verification
+
     """
     return StartTLSExtension.with_ca_verification(ca_cert_file)
 
@@ -505,6 +521,7 @@ def start_tls_with_client_cert(
 
     Returns:
         StartTLSExtension configured for client certificate auth
+
     """
     return StartTLSExtension.with_client_cert(cert_file, key_file, ca_cert_file)
 
@@ -517,6 +534,7 @@ def start_tls_insecure() -> StartTLSExtension:
 
     Warning:
         This disables certificate verification. Use only for testing.
+
     """
     return StartTLSExtension.insecure()
 
@@ -534,6 +552,7 @@ class TLSUpgradeManager:
         ...     ca_cert_file="/path/to/ca.pem",
         ...     retry_on_failure=True
         ... )
+
     """
 
     def __init__(self) -> None:
@@ -565,6 +584,7 @@ class TLSUpgradeManager:
 
         Raises:
             ExtensionError: If the TLS upgrade fails
+
         """
         try:
             # Use provided config or default

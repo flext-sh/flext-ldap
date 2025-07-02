@@ -45,7 +45,7 @@ logger = get_logger(__name__)
 class LDIFProcessingConfig:
     """LDIF processing config - delegates to production configuration."""
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize config - creates production config internally."""
         self._production_config = ProductionLDIFProcessingConfig(**kwargs)
 
@@ -89,6 +89,7 @@ class LDIFProcessor:
 
         Args:
             config: LDIF processing configuration (converted to production format)
+
         """
         if config is None:
             config = {}
@@ -105,12 +106,12 @@ class LDIFProcessor:
     def process_file(
         self,
         file_path: Path | str,
-        **kwargs,
+        **kwargs: Any,
     ) -> LDAPOperationResult[list[LDIFEntry]]:
         """Process LDIF file - delegates to production processor."""
         return self._production_processor.parse_file(file_path, **kwargs)
 
-    def process_stream(self, stream, **kwargs) -> LDAPOperationResult[list[LDIFEntry]]:
+    def process_stream(self, stream, **kwargs: Any) -> LDAPOperationResult[list[LDIFEntry]]:
         """Process LDIF stream - delegates to production processor."""
         # Handle stream by reading content first
         if hasattr(stream, "read"):
@@ -121,7 +122,7 @@ class LDIFProcessor:
             content = str(stream)
         return self._production_processor.parse_string(content, **kwargs)
 
-    def validate_ldif(self, content: str | Path, **kwargs) -> bool:
+    def validate_ldif(self, content: str | Path, **kwargs: Any) -> bool:
         """Validate LDIF content - delegates to production processor."""
         # Production processor validates during parsing
         try:
@@ -138,7 +139,7 @@ class LDIFProcessor:
     def parse_ldif_entries(
         self,
         content: str | Path,
-        **kwargs,
+        **kwargs: Any,
     ) -> Iterator[dict[str, Any]]:
         """Parse LDIF entries - delegates to production processor."""
         if isinstance(content, str):
@@ -186,7 +187,7 @@ def create_ldif_processor(config: dict[str, Any] | None = None) -> LDIFProcessor
 
 def process_ldif_file(
     file_path: Path | str,
-    **kwargs,
+    **kwargs: Any,
 ) -> LDAPOperationResult[list[LDIFEntry]]:
     """Process LDIF file - convenience function with pure delegation."""
     processor = LDIFProcessor()

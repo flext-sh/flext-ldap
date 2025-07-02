@@ -166,6 +166,7 @@ class PerformanceMonitor:
 
         Args:
             name: Monitor name for identification and logging
+
         """
         self.name = name
         self.reset()
@@ -187,6 +188,7 @@ class PerformanceMonitor:
 
         Args:
             measurement_name: Name of the measurement to start
+
         """
         self._measurements[measurement_name] = {
             "start_time": time.time(),
@@ -199,6 +201,7 @@ class PerformanceMonitor:
 
         Args:
             measurement_name: Name of the measurement to stop
+
         """
         if measurement_name in self._measurements:
             end_time = time.time()
@@ -215,6 +218,7 @@ class PerformanceMonitor:
         Args:
             duration: Operation duration in seconds
             success: Whether operation was successful
+
         """
         self._operation_count += 1
         self._total_duration += duration
@@ -288,6 +292,7 @@ class PerformanceMonitor:
                 results = ldap_connection.search(...)
                 ctx["success"] = len(results) > 0
             ```
+
         """
         start_time = time.time()
         operation_ctx = {
@@ -323,6 +328,7 @@ class PerformanceMonitor:
 
         Yields:
             dict: Operation context with timing information
+
         """
         return self.measure_operation(operation_name)
 
@@ -331,6 +337,7 @@ class PerformanceMonitor:
 
         Returns:
             Current time as float timestamp
+
         """
         return time.time()
 
@@ -343,6 +350,7 @@ class PerformanceAnalyzer:
 
         Args:
             window_size: Number of recent operations to analyze
+
         """
         self.window_size = window_size
         self._metrics_history: list[LDAPMetrics] = []
@@ -363,6 +371,7 @@ class PerformanceAnalyzer:
 
         Returns:
             Analysis results with degradation indicators
+
         """
         if len(self._metrics_history) < 10:  # Need minimum data points
             return {

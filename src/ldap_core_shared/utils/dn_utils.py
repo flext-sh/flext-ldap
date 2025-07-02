@@ -48,6 +48,7 @@ def parse_dn(dn_string: str) -> LdapDn:
 
     Raises:
         ValueError: If DN format is invalid
+
     """
     # Delegate to enterprise DN parser and convert to domain object
     enterprise_dn = EnterpriseDistinguishedName(dn_string)
@@ -72,6 +73,7 @@ def normalize_dn(dn_string: str) -> str:
 
     Returns:
         Normalized DN string
+
     """
     # Delegate directly to enterprise normalization
     return enterprise_normalize_dn(dn_string)
@@ -86,6 +88,7 @@ def is_child_dn(child_dn: str, parent_dn: str) -> bool:
 
     Returns:
         True if child_dn is a child of parent_dn
+
     """
     # Delegate directly to enterprise DN system
     enterprise_child = EnterpriseDistinguishedName(child_dn)
@@ -100,6 +103,7 @@ def get_parent_dn(dn_string: str) -> str | None:
 
     Returns:
         Parent DN string or None if no parent
+
     """
     # Delegate directly to enterprise DN system
     return get_dn_parent(dn_string)
@@ -113,6 +117,7 @@ def get_rdn(dn_string: str) -> str:
 
     Returns:
         RDN string
+
     """
     # Delegate directly to enterprise DN system
     rdn = get_dn_rdn(dn_string)
@@ -132,6 +137,7 @@ def replace_base_dn(dn_string: str, old_base: str, new_base: str) -> str:
 
     Raises:
         ValueError: If DN is not a child of old_base
+
     """
     dn = parse_dn(dn_string)
     old_base_dn = parse_dn(old_base)
@@ -155,6 +161,7 @@ def extract_attribute_value(dn_string: str, attribute: str) -> str | None:
 
     Returns:
         Attribute value or None if not found
+
     """
     try:
         dn = parse_dn(dn_string)
@@ -174,6 +181,7 @@ def build_dn(components: list[tuple[str, str]]) -> str:
 
     Returns:
         DN string
+
     """
     dn_components: list[str] = []
     for attr, value in components:
@@ -191,6 +199,7 @@ def split_dn_components(dn_string: str) -> list[tuple[str, str]]:
 
     Returns:
         List of (attribute, value) tuples
+
     """
     try:
         dn = parse_dn(dn_string)
@@ -207,6 +216,7 @@ def validate_dn_format(dn_string: str) -> tuple[bool, str | None]:
 
     Returns:
         Tuple of (is_valid, error_message)
+
     """
     if not dn_string or not dn_string.strip():
         return False, "DN cannot be empty"
@@ -228,6 +238,7 @@ def get_dn_depth(dn_string: str) -> int:
 
     Returns:
         Number of DN components
+
     """
     try:
         dn = parse_dn(dn_string)
@@ -244,6 +255,7 @@ def find_common_base_dn(dn_list: list[str]) -> str | None:
 
     Returns:
         Common base DN or None if no common base
+
     """
     if not dn_list:
         return None
@@ -298,6 +310,7 @@ def rewrite_dn_base(dn_string: str, base_mappings: dict[str, str]) -> str:
 
     Returns:
         DN with rewritten base or original DN if no mapping found
+
     """
     for old_base, new_base in base_mappings.items():
         try:

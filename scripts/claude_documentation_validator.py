@@ -18,6 +18,7 @@ References:
 - /home/marlonsc/CLAUDE.md → Universal principles
 - ../CLAUDE.md → PyAuto workspace patterns
 - ./CLAUDE.local.md → Project-specific issues
+
 """
 
 import json

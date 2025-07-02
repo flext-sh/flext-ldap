@@ -30,6 +30,7 @@ References:
     - RFC 4422: SASL server implementation requirements
     - LDAP Protocol: SASL bind operation server-side processing
     - Authentication backend integration patterns
+
 """
 
 from __future__ import annotations
@@ -66,6 +67,7 @@ class SASLAuthenticationBackend(ABC):
         ...     def authenticate_user(self, username, password, realm=None):
         ...         # Authenticate against LDAP directory
         ...         return AuthenticationResult(success=True, user_dn=dn)
+
     """
 
     @abstractmethod
@@ -88,6 +90,7 @@ class SASLAuthenticationBackend(ABC):
 
         Returns:
             Authentication result with user information
+
         """
 
     @abstractmethod
@@ -108,6 +111,7 @@ class SASLAuthenticationBackend(ABC):
 
         Returns:
             True if authorization is permitted
+
         """
 
     def get_user_realm(self, username: str) -> str | None:
@@ -118,6 +122,7 @@ class SASLAuthenticationBackend(ABC):
 
         Returns:
             User's realm or None if not applicable
+
         """
         return None
 
@@ -126,6 +131,7 @@ class SASLAuthenticationBackend(ABC):
 
         Returns:
             List of available realm names
+
         """
         return []
 
@@ -177,6 +183,7 @@ class SASLServer(BaseModel):
         >>> # Process authentication
         >>> challenge = server.get_initial_challenge("DIGEST-MD5")
         >>> result = server.validate_response(client_response)
+
     """
 
     # Configuration
@@ -214,6 +221,7 @@ class SASLServer(BaseModel):
 
         Returns:
             List of mechanism names supported by this server
+
         """
         available = SASLMechanismRegistry.get_available_mechanisms()
 
@@ -235,6 +243,7 @@ class SASLServer(BaseModel):
 
         Returns:
             True if mechanism is supported
+
         """
         return mechanism.upper() in [m.upper() for m in self.get_supported_mechanisms()]
 
@@ -250,6 +259,7 @@ class SASLServer(BaseModel):
 
         Raises:
             SASLInvalidMechanismError: If mechanism not supported
+
         """
         if not self.supports_mechanism(mechanism):
             msg = f"Mechanism '{mechanism}' not supported"
@@ -284,6 +294,7 @@ class SASLServer(BaseModel):
 
         Returns:
             Session context or None if not found
+
         """
         return self.active_sessions.get(session_id)
 
@@ -292,6 +303,7 @@ class SASLServer(BaseModel):
 
         Args:
             session_id: Session identifier to remove
+
         """
         context = self.active_sessions.pop(session_id, None)
         if context:
@@ -316,6 +328,7 @@ class SASLServer(BaseModel):
 
         Raises:
             SASLInvalidMechanismError: If mechanism not supported
+
         """
         # Create session if needed
         if session_id is None:
@@ -358,6 +371,7 @@ class SASLServer(BaseModel):
 
         Raises:
             SASLAuthenticationError: If validation fails
+
         """
         context = self.get_session(session_id)
         if not context:
@@ -407,6 +421,7 @@ class SASLServer(BaseModel):
 
         Returns:
             DIGEST-MD5 challenge
+
         """
         # TODO: Implement proper DIGEST-MD5 challenge generation
         import secrets
@@ -443,6 +458,7 @@ class SASLServer(BaseModel):
 
         Returns:
             Authentication result
+
         """
         try:
             # Parse PLAIN response: [authzid] NUL authcid NUL passwd
@@ -527,6 +543,7 @@ class SASLServer(BaseModel):
 
         Returns:
             Authentication result
+
         """
         # TODO: Implement proper DIGEST-MD5 response validation
         context.set_state(SASLState.COMPLETE)
@@ -549,6 +566,7 @@ class SASLServer(BaseModel):
 
         Returns:
             Authentication result
+
         """
         try:
             # EXTERNAL response is optional authorization identity
@@ -601,6 +619,7 @@ class SASLServer(BaseModel):
 
         Returns:
             Authentication result
+
         """
         try:
             # ANONYMOUS response is optional trace information
@@ -651,6 +670,7 @@ class SASLServerFactory:
 
         Returns:
             Configured SASLServer instance
+
         """
         return SASLServer(
             mechanisms=mechanisms or [],

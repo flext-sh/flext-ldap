@@ -53,6 +53,7 @@ class BaseModel(PydanticBaseModel):
         >>> user = UserModel(name="John Doe", email="john@example.com")
         >>> assert user.name == "John Doe"
         >>> user.name = "Jane"  # Raises ValidationError - model is frozen
+
     """
 
     # Enterprise-grade configuration
@@ -92,6 +93,7 @@ class BaseModel(PydanticBaseModel):
 
         Returns:
             Preprocessed data ready for validation
+
         """
         if not isinstance(data, dict):
             return data
@@ -108,6 +110,7 @@ class BaseModel(PydanticBaseModel):
 
         Returns:
             Dictionary with JSON-safe values
+
         """
         return self.model_dump(mode="json", exclude_none=True)
 
@@ -123,6 +126,7 @@ class BaseModel(PydanticBaseModel):
 
         Raises:
             KeyError: If field doesn't exist
+
         """
         if field_name not in self.model_fields:
             msg = f"Field '{field_name}' not found in {self.__class__.__name__}"
@@ -153,6 +157,7 @@ class BaseEntity(BaseModel, ABC):
         >>> user1 = User(name="John", email="john@test.com")
         >>> user2 = User(name="Jane", email="jane@test.com")
         >>> assert user1.id != user2.id  # Different entities
+
     """
 
     # Unique identifier for entity
@@ -209,6 +214,7 @@ class BaseEntity(BaseModel, ABC):
 
         Returns:
             True if entity can be deleted, False otherwise
+
         """
 
     @final
@@ -220,6 +226,7 @@ class BaseEntity(BaseModel, ABC):
 
         Returns:
             New entity instance with updated metadata
+
         """
         return self.model_copy(
             update={
@@ -252,6 +259,7 @@ class BaseValueObject(BaseModel, ABC):
         >>> email1 = Email(value="test@example.com")
         >>> email2 = Email(value="test@example.com")
         >>> assert email1 == email2  # Same value = equal objects
+
     """
 
     @final
@@ -275,6 +283,7 @@ class BaseValueObject(BaseModel, ABC):
 
         Returns:
             True if value object is valid according to business rules
+
         """
 
 
@@ -299,6 +308,7 @@ class BaseRepository(ABC, Generic[TEntity]):
         ...     async def save(self, entity: User) -> User:
         ...         # Implementation specific to User storage
         ...         pass
+
     """
 
     # Type information for runtime introspection
@@ -313,6 +323,7 @@ class BaseRepository(ABC, Generic[TEntity]):
 
         Returns:
             Entity if found, None otherwise
+
         """
 
     @abstractmethod
@@ -324,6 +335,7 @@ class BaseRepository(ABC, Generic[TEntity]):
 
         Returns:
             Saved entity with updated metadata
+
         """
 
     @abstractmethod
@@ -335,6 +347,7 @@ class BaseRepository(ABC, Generic[TEntity]):
 
         Returns:
             True if entity was deleted, False if not found
+
         """
 
     @abstractmethod
@@ -343,6 +356,7 @@ class BaseRepository(ABC, Generic[TEntity]):
 
         Returns:
             List of all entities (use with caution for large datasets)
+
         """
 
     @abstractmethod
@@ -351,6 +365,7 @@ class BaseRepository(ABC, Generic[TEntity]):
 
         Returns:
             Total count of entities in storage
+
         """
 
 
@@ -376,6 +391,7 @@ class BaseService(ABC):
         ...         # Business logic for user creation
         ...         user = User(name=name, email=email)
         ...         return await self._user_repo.save(user)
+
     """
 
     @abstractmethod
@@ -384,4 +400,5 @@ class BaseService(ABC):
 
         Returns:
             True if service is healthy, False otherwise
+
         """

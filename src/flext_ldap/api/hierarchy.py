@@ -29,6 +29,7 @@ def normalize_dn(dn: str) -> str:
 
     Returns:
         Normalized DN string
+
     """
     if not dn:
         return ""
@@ -46,6 +47,7 @@ def parse_dn(dn: str) -> list[tuple[str, str]]:
 
     Returns:
         List of (attribute, value) tuples
+
     """
     if not dn:
         return []
@@ -70,6 +72,7 @@ def get_parent_dn(dn: str) -> str:
 
     Returns:
         Parent DN string, or empty string if no parent
+
     """
     if not dn:
         return ""
@@ -92,6 +95,7 @@ def get_dn_depth(dn: str) -> int:
 
     Returns:
         Number of DN components
+
     """
     components = parse_dn(dn)
     return len(components)
@@ -109,6 +113,7 @@ class HierarchyProcessorBase(ABC):
 
         Args:
             config: Application configuration containing hierarchy processing settings
+
         """
         self.config = config
         self.performance_metrics: dict[str, Any] = {}
@@ -122,6 +127,7 @@ class HierarchyProcessorBase(ABC):
 
         Returns:
             Dict containing sorted entries and processing statistics
+
         """
 
     def sort_by_hierarchy(self, entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -132,6 +138,7 @@ class HierarchyProcessorBase(ABC):
 
         Returns:
             List of entries sorted by hierarchy
+
         """
 
         def get_entry_dn(entry: dict[str, Any]) -> str:
@@ -173,6 +180,7 @@ class HierarchyProcessorBase(ABC):
 
         Returns:
             Dict containing validation results
+
         """
         all_dns = set()
         missing_parents = []
@@ -207,6 +215,7 @@ class HierarchyProcessorBase(ABC):
             operation: Name of the hierarchy operation
             duration: Time taken in seconds
             count: Number of items processed
+
         """
         self.performance_metrics[operation] = {
             "duration": duration,
@@ -227,6 +236,7 @@ class HierarchyProcessorBase(ABC):
 
         Returns:
             Dict containing performance statistics
+
         """
         return self.performance_metrics.copy()
 
@@ -235,6 +245,7 @@ class HierarchyProcessorBase(ABC):
 
         Args:
             output_path: Path where output files will be created
+
         """
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -254,6 +265,7 @@ class DefaultHierarchyProcessor(HierarchyProcessorBase):
 
         Returns:
             Dict with sorted entries and processing statistics
+
         """
         start_time = time.time()
 

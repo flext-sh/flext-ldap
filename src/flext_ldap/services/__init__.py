@@ -31,6 +31,7 @@ References:
     - perl-ldap: lib/Net/LDAP/Schema.pm
     - RFC 4512: Lightweight Directory Access Protocol (LDAP): Directory Information Models
     - RFC 4513: LDAP Authentication Methods and Security Mechanisms
+
 """
 
 from typing import TYPE_CHECKING

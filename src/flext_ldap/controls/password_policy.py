@@ -1,5 +1,16 @@
 from __future__ import annotations
 
+from enum import IntEnum
+from typing import Any
+
+from flext_ldapse import (
+    ControlDecodingError,
+    ControlEncodingError,
+    ControlOIDs,
+    LDAPControl,
+)
+from pydantic import Field, validator
+
 # Constants for magic values
 SECONDS_PER_DAY = 86400
 
@@ -52,17 +63,6 @@ References:
     - OID: 1.3.6.1.4.1.42.2.27.8.5.1 (Sun/Oracle)
 """
 
-from enum import IntEnum
-from typing import Any
-
-from flext_ldapse import (
-    ControlDecodingError,
-    ControlEncodingError,
-    ControlOIDs,
-    LDAPControl,
-)
-from pydantic import Field, validator
-
 
 class PasswordPolicyError(IntEnum):
     """Password Policy Error Codes.
@@ -114,6 +114,7 @@ class PasswordPolicyControl(LDAPControl):
     Note:
         Client requests typically send this control with no value.
         Server responses contain the policy information in the control value.
+
     """
 
     control_type = ControlOIDs.PASSWORD_POLICY
@@ -195,6 +196,7 @@ class PasswordPolicyControl(LDAPControl):
 
         Raises:
             ControlEncodingError: If encoding fails
+
         """
         # Client requests typically have no value
         if self.warning_type is None and self.error is None:
@@ -242,6 +244,7 @@ class PasswordPolicyControl(LDAPControl):
 
         Raises:
             ControlDecodingError: If decoding fails
+
         """
         # Client requests have no value
         if not control_value:
@@ -302,6 +305,7 @@ class PasswordPolicyControl(LDAPControl):
 
         Returns:
             Control for requesting password policy information
+
         """
         return cls()
 
@@ -332,6 +336,7 @@ class PasswordPolicyControl(LDAPControl):
 
         Returns:
             True if password expires within threshold
+
         """
         if self.time_before_expiration is not None:
             return self.time_before_expiration <= threshold_seconds
@@ -342,6 +347,7 @@ class PasswordPolicyControl(LDAPControl):
 
         Returns:
             Error description or None if no error
+
         """
         if not self.error:
             return None
@@ -369,6 +375,7 @@ class PasswordPolicyControl(LDAPControl):
 
         Returns:
             Warning description or None if no warning
+
         """
         if not self.has_warning():
             return None

@@ -152,6 +152,7 @@ class SchemaParser:
 
         Returns:
             Operation result with parsed schema
+
         """
         try:
             schema = ParsedSchema()
@@ -209,6 +210,7 @@ class SchemaParser:
 
         Returns:
             Operation result with parsed attribute type
+
         """
         try:
             # Extract OID
@@ -278,6 +280,7 @@ class SchemaParser:
 
         Returns:
             Operation result with parsed object class
+
         """
         try:
             # Extract OID

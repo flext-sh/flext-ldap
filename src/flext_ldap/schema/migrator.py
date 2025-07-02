@@ -64,6 +64,7 @@ class SchemaMigrator:
 
         Returns:
             Operation result with migration plan
+
         """
         try:
             output_dir = Path(output_dir)
@@ -104,6 +105,7 @@ class SchemaMigrator:
 
         Returns:
             Operation result with number of additions
+
         """
         try:
             additions = [

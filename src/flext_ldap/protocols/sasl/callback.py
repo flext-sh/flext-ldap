@@ -36,6 +36,7 @@ References:
     - perl-Authen-SASL: Callback interface compatibility
     - RFC 4422: SASL callback framework requirements
     - Java SASL: Callback handler design patterns
+
 """
 
 from __future__ import annotations
@@ -59,6 +60,7 @@ class SASLCallback(ABC):
         ...     def handle(self, callback_handler):
         ...         # Custom callback implementation
         ...         pass
+
     """
 
     def __init__(self, prompt: str | None = None) -> None:
@@ -66,6 +68,7 @@ class SASLCallback(ABC):
 
         Args:
             prompt: Prompt text for interactive callbacks
+
         """
         self.prompt = prompt
         self._value: Any = None
@@ -80,6 +83,7 @@ class SASLCallback(ABC):
 
         Raises:
             SASLCallbackError: If callback handling fails
+
         """
 
     def get_value(self) -> Any:
@@ -90,6 +94,7 @@ class SASLCallback(ABC):
 
         Raises:
             SASLCallbackError: If callback not handled yet
+
         """
         if not self._handled:
             msg = "Callback not handled yet"
@@ -104,6 +109,7 @@ class SASLCallback(ABC):
 
         Args:
             value: Value to set
+
         """
         self._value = value
         self._handled = True
@@ -113,6 +119,7 @@ class SASLCallback(ABC):
 
         Returns:
             True if callback has been handled
+
         """
         return self._handled
 
@@ -127,6 +134,7 @@ class NameCallback(SASLCallback):
         >>> callback = NameCallback("Username: ")
         >>> callback.handle(handler)
         >>> username = callback.get_value()
+
     """
 
     def __init__(
@@ -139,6 +147,7 @@ class NameCallback(SASLCallback):
         Args:
             prompt: Prompt text for interactive input
             default_name: Default username if available
+
         """
         super().__init__(prompt)
         self.default_name = default_name
@@ -148,6 +157,7 @@ class NameCallback(SASLCallback):
 
         Args:
             callback_handler: Handler to get username from
+
         """
         try:
             username = callback_handler.get_username(self.prompt, self.default_name)
@@ -177,6 +187,7 @@ class PasswordCallback(SASLCallback):
         >>> callback = PasswordCallback("Password: ")
         >>> callback.handle(handler)
         >>> password = callback.get_value()
+
     """
 
     def __init__(self, prompt: str = "Password: ", echo_on: bool = False) -> None:
@@ -185,6 +196,7 @@ class PasswordCallback(SASLCallback):
         Args:
             prompt: Prompt text for interactive input
             echo_on: Whether to echo password input (security risk)
+
         """
         super().__init__(prompt)
         self.echo_on = echo_on
@@ -194,6 +206,7 @@ class PasswordCallback(SASLCallback):
 
         Args:
             callback_handler: Handler to get password from
+
         """
         try:
             password = callback_handler.get_password(self.prompt, self.echo_on)
@@ -222,6 +235,7 @@ class RealmCallback(SASLCallback):
         >>> callback = RealmCallback("Realm: ", "example.com")
         >>> callback.handle(handler)
         >>> realm = callback.get_value()
+
     """
 
     def __init__(
@@ -234,6 +248,7 @@ class RealmCallback(SASLCallback):
         Args:
             prompt: Prompt text for interactive input
             default_realm: Default realm if available
+
         """
         super().__init__(prompt)
         self.default_realm = default_realm
@@ -243,6 +258,7 @@ class RealmCallback(SASLCallback):
 
         Args:
             callback_handler: Handler to get realm from
+
         """
         try:
             realm = callback_handler.get_realm(self.prompt, self.default_realm)
@@ -266,6 +282,7 @@ class AuthorizeCallback(SASLCallback):
         >>> callback = AuthorizeCallback("Authorize as: ")
         >>> callback.handle(handler)
         >>> authzid = callback.get_value()
+
     """
 
     def __init__(
@@ -280,6 +297,7 @@ class AuthorizeCallback(SASLCallback):
             prompt: Prompt text for interactive input
             authentication_id: Authentication identity (for reference)
             default_authorization_id: Default authorization identity
+
         """
         super().__init__(prompt)
         self.authentication_id = authentication_id
@@ -290,6 +308,7 @@ class AuthorizeCallback(SASLCallback):
 
         Args:
             callback_handler: Handler to get authorization ID from
+
         """
         try:
             authzid = callback_handler.get_authorization_id(
@@ -324,6 +343,7 @@ class SASLCallbackHandler(BaseModel):
         >>>
         >>> # Interactive handler
         >>> interactive = SASLCallbackHandler(interactive=True)
+
     """
 
     # Stored credentials (optional)
@@ -365,6 +385,7 @@ class SASLCallbackHandler(BaseModel):
 
         Raises:
             SASLCallbackError: If any callback handling fails
+
         """
         for callback in callbacks:
             callback.handle(self)
@@ -382,6 +403,7 @@ class SASLCallbackHandler(BaseModel):
 
         Returns:
             Username string or None
+
         """
         # Return stored username if available
         if self.username is not None:
@@ -413,6 +435,7 @@ class SASLCallbackHandler(BaseModel):
 
         Returns:
             Password string or None
+
         """
         # Return stored password if available
         if self.password is not None:
@@ -442,6 +465,7 @@ class SASLCallbackHandler(BaseModel):
 
         Returns:
             Realm string or None
+
         """
         # Return stored realm if available
         if self.realm is not None:
@@ -476,6 +500,7 @@ class SASLCallbackHandler(BaseModel):
 
         Returns:
             Authorization identity or None
+
         """
         # Return stored authorization ID if available
         if self.authorization_id is not None:
@@ -507,6 +532,7 @@ class SASLCallbackHandler(BaseModel):
 
         Returns:
             Property value or default
+
         """
         return self.properties.get(name, default)
 
@@ -516,6 +542,7 @@ class SASLCallbackHandler(BaseModel):
         Args:
             name: Property name
             value: Property value
+
         """
         self.properties[name] = value
 
@@ -567,6 +594,7 @@ def create_simple_callback(
 
     Returns:
         SASLCallbackHandler instance
+
     """
     return SASLCallbackHandler(
         username=username,
@@ -584,6 +612,7 @@ def create_interactive_callback(**kwargs: Any) -> SASLCallbackHandler:
 
     Returns:
         SASLCallbackHandler instance with interactive=True
+
     """
     return SASLCallbackHandler(interactive=True, **kwargs)
 

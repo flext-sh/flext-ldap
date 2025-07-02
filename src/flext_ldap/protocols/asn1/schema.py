@@ -41,6 +41,7 @@ References:
     - ITU-T X.681: ASN.1 information object specification
     - ITU-T X.682: ASN.1 constraint specification
     - ITU-T X.683: ASN.1 parameterization
+
 """
 
 from __future__ import annotations
@@ -98,6 +99,7 @@ class ASN1Constraint(BaseModel):
 
         Returns:
             True if value satisfies constraint
+
         """
         if self.constraint_type == "SIZE":
             if isinstance(value, str | bytes | list):
@@ -169,6 +171,7 @@ class ASN1TypeDefinition(BaseModel):
 
         Returns:
             List of constraint violation errors
+
         """
         return [
             f"Value {value} violates constraint {constraint}"
@@ -181,6 +184,7 @@ class ASN1TypeDefinition(BaseModel):
 
         Returns:
             Set of referenced type names
+
         """
         referenced = set(self.references)
 
@@ -199,6 +203,7 @@ class ASN1TypeDefinition(BaseModel):
 
         Returns:
             True if type is constructed (SEQUENCE, SET, CHOICE)
+
         """
         return self.base_type in {"SEQUENCE", "SET", "CHOICE", "SEQUENCE OF", "SET OF"}
 
@@ -207,6 +212,7 @@ class ASN1TypeDefinition(BaseModel):
 
         Returns:
             ASN.1 notation string
+
         """
         result = f"{self.name} ::= "
 
@@ -263,6 +269,7 @@ class ASN1ValueAssignment(BaseModel):
 
         Returns:
             ASN.1 notation string
+
         """
         return f"{self.name} {self.type_name} ::= {self.value}"
 
@@ -288,6 +295,7 @@ class ASN1ImportExport(BaseModel):
 
         Returns:
             ASN.1 notation string
+
         """
         symbols_str = ", ".join(self.symbols)
         if import_export == "IMPORTS":
@@ -353,6 +361,7 @@ class ASN1Module(BaseModel):
 
         Returns:
             Type definition or None if not found
+
         """
         return self.type_definitions.get(name)
 
@@ -364,6 +373,7 @@ class ASN1Module(BaseModel):
 
         Returns:
             Value assignment or None if not found
+
         """
         return self.value_assignments.get(name)
 
@@ -372,6 +382,7 @@ class ASN1Module(BaseModel):
 
         Args:
             type_def: Type definition to add
+
         """
         self.type_definitions[type_def.name] = type_def
 
@@ -380,6 +391,7 @@ class ASN1Module(BaseModel):
 
         Args:
             value_assign: Value assignment to add
+
         """
         self.value_assignments[value_assign.name] = value_assign
 
@@ -388,6 +400,7 @@ class ASN1Module(BaseModel):
 
         Returns:
             List of validation errors
+
         """
         errors = []
         all_types = set(self.type_definitions.keys())
@@ -415,6 +428,7 @@ class ASN1Module(BaseModel):
 
         Returns:
             True if builtin type
+
         """
         builtin_types = {
             "BOOLEAN",
@@ -457,6 +471,7 @@ class ASN1Module(BaseModel):
 
         Returns:
             Complete ASN.1 module notation
+
         """
         result = f"{self.name} "
 
@@ -513,6 +528,7 @@ class ASN1SchemaParseResult(BaseModel):
 
         Args:
             error: Error message
+
         """
         self.errors.append(error)
         self.success = False
@@ -522,6 +538,7 @@ class ASN1SchemaParseResult(BaseModel):
 
         Args:
             warning: Warning message
+
         """
         self.warnings.append(warning)
 
@@ -539,6 +556,7 @@ class ASN1SchemaParser:
         >>> if result.success:
         ...     module = result.module
         ...     person_type = module.get_type_definition("PersonInfo")
+
     """
 
     def __init__(self) -> None:
@@ -575,6 +593,7 @@ class ASN1SchemaParser:
 
         Returns:
             Parse result with module or errors
+
         """
         import time
 
@@ -616,6 +635,7 @@ class ASN1SchemaParser:
 
         Returns:
             Parsed type definition
+
         """
         # TODO: Implement detailed type parsing
         # This is a simplified implementation
@@ -645,6 +665,7 @@ class ASN1SchemaParser:
 
         Returns:
             Cleaned schema text
+
         """
         # Remove comments
         cleaned = re.sub(r"--.*?$", "", schema_text, flags=re.MULTILINE)
@@ -672,6 +693,7 @@ class ASN1SchemaParser:
 
         Returns:
             Module with header information
+
         """
         match = self._module_header_re.search(schema_text)
         if not match:
@@ -700,6 +722,7 @@ class ASN1SchemaParser:
             schema_text: Schema text
             module: Module to populate
             result: Parse result to update
+
         """
         # Extract body between BEGIN and END
         begin_pos = schema_text.find("BEGIN")
@@ -732,6 +755,7 @@ class ASN1SchemaParser:
             body: Module body text
             module: Module to update
             result: Parse result to update
+
         """
         match = self._import_re.search(body)
         if match:
@@ -757,6 +781,7 @@ class ASN1SchemaParser:
             body: Module body text
             module: Module to update
             result: Parse result to update
+
         """
         match = self._export_re.search(body)
         if match:
@@ -779,6 +804,7 @@ class ASN1SchemaParser:
             body: Module body text
             module: Module to update
             result: Parse result to update
+
         """
         matches = self._type_assignment_re.finditer(body)
 
@@ -814,6 +840,7 @@ class ASN1SchemaCompiler:
 
         Returns:
             Generated Python code
+
         """
         code_lines = [
             f'"""Generated ASN.1 classes for module {module.name}."""',
@@ -841,6 +868,7 @@ class ASN1SchemaCompiler:
 
         Returns:
             Lines of Python code
+
         """
         lines = [
             f"class {type_def.name}(ASN1Element):",

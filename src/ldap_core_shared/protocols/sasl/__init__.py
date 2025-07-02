@@ -48,6 +48,7 @@ References:
     - RFC 2831: Using Digest Authentication as a SASL Mechanism
     - RFC 4616: The PLAIN Simple Authentication and Security Layer (SASL) Mechanism
     - RFC 4752: The Kerberos V5 ("GSSAPI") Simple Authentication and Security Layer (SASL) Mechanism
+
 """
 
 from __future__ import annotations
@@ -163,6 +164,7 @@ def new(mechanism: str | list[str] | None = None, **options):
         >>> client = sasl.new("DIGEST-MD5")
         >>> client.client_start()
         >>> response = client.client_step(challenge)
+
     """
     try:
         from ldap_core_shared.protocols.sasl.callback import SASLCallbackHandler
@@ -215,6 +217,7 @@ def get_mechanisms() -> list[str]:
 
     Returns:
         List of available mechanism names
+
     """
     try:
         from ldap_core_shared.protocols.sasl.mechanism import SASLMechanismRegistry
@@ -232,6 +235,7 @@ def mechanism_available(mechanism: str) -> bool:
 
     Returns:
         True if mechanism is available
+
     """
     return mechanism.upper() in [m.upper() for m in get_mechanisms()]
 

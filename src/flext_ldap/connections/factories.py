@@ -37,6 +37,7 @@ class StandardConnectionFactory(BaseConnectionComponent):
         Args:
             connection_info: Connection configuration
             security_manager: Optional security manager for TLS
+
         """
         super().__init__(connection_info)
         from flext_ldap.security import StandardSecurityManager
@@ -65,6 +66,7 @@ class StandardConnectionFactory(BaseConnectionComponent):
 
         Returns:
             Configured LDAP connection
+
         """
         # Create TLS configuration
         tls_config = None

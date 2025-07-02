@@ -63,6 +63,7 @@ class ConnectionState:
 
         Args:
             duration: Operation duration in seconds
+
         """
         self.operation_times.append(duration)
 
@@ -75,6 +76,7 @@ class ConnectionState:
 
         Returns:
             Average operation time in seconds
+
         """
         if not self.operation_times:
             return 0.0
@@ -91,6 +93,7 @@ class ConnectionState:
 
         Returns:
             True if health check is due
+
         """
         current_time = time.time()
         return (current_time - self.last_health_check) >= interval
@@ -104,6 +107,7 @@ class ConnectionState:
 
         Returns:
             Number of connections in pool
+
         """
         return len(self.connection_pool)
 
@@ -112,6 +116,7 @@ class ConnectionState:
 
         Returns:
             Number of active connections
+
         """
         return len(self.active_connections)
 
@@ -120,6 +125,7 @@ class ConnectionState:
 
         Returns:
             True if connections are available
+
         """
         return len(self.connection_pool) > 0
 
@@ -138,6 +144,7 @@ class ConnectionState:
 
         Returns:
             Updated connection statistics
+
         """
         current_stats = self.stats.model_dump()
 

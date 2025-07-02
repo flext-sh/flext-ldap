@@ -34,6 +34,7 @@ References:
     - OpenLDAP Schema Management Guide
     - RFC 4512: LDAP Directory Information Models
     - Enterprise schema governance best practices
+
 """
 
 from __future__ import annotations
@@ -203,6 +204,7 @@ class SchemaOperation(BaseModel):
         Args:
             success: Whether operation was successful
             error: Error message if operation failed
+
         """
         self.status = (
             SchemaOperationStatus.SUCCESS if success else SchemaOperationStatus.FAILED
@@ -216,6 +218,7 @@ class SchemaOperation(BaseModel):
 
         Returns:
             Operation duration or None if not completed
+
         """
         if not self.started_at or not self.completed_at:
             return None
@@ -274,6 +277,7 @@ class SchemaManager:
         >>>
         >>> # Remove schema (with safety checks)
         >>> operation = manager.remove_schema("myapp", force=False)
+
     """
 
     def __init__(self, connection: Any) -> None:
@@ -281,6 +285,7 @@ class SchemaManager:
 
         Args:
             connection: LDAP connection for schema operations
+
         """
         self._connection = connection
         self._operations: list[SchemaOperation] = []
@@ -299,6 +304,7 @@ class SchemaManager:
 
         Returns:
             List of schema information
+
         """
         schemas = []
         performance_monitor = PerformanceMonitor()
@@ -364,6 +370,7 @@ class SchemaManager:
 
         Returns:
             Schema information or None if not found
+
         """
         performance_monitor = PerformanceMonitor()
 
@@ -431,6 +438,7 @@ class SchemaManager:
 
         Returns:
             Schema operation result
+
         """
         operation = SchemaOperation(
             operation_id=self._generate_operation_id(),
@@ -480,6 +488,7 @@ class SchemaManager:
 
         Returns:
             Schema operation result
+
         """
         operation = SchemaOperation(
             operation_id=self._generate_operation_id(),
@@ -526,6 +535,7 @@ class SchemaManager:
 
         Returns:
             Schema operation result
+
         """
         operation = SchemaOperation(
             operation_id=self._generate_operation_id(),
@@ -579,6 +589,7 @@ class SchemaManager:
 
         Returns:
             Schema operation result
+
         """
         operation = SchemaOperation(
             operation_id=self._generate_operation_id(),
@@ -615,6 +626,7 @@ class SchemaManager:
 
         Returns:
             Schema backup information
+
         """
         performance_monitor = PerformanceMonitor()
 
@@ -687,6 +699,7 @@ class SchemaManager:
 
         Returns:
             Schema operation result
+
         """
         operation = SchemaOperation(
             operation_id=self._generate_operation_id(),
@@ -777,6 +790,7 @@ class SchemaManager:
 
         Returns:
             List of validation errors (empty if valid)
+
         """
         errors = []
         performance_monitor = PerformanceMonitor()
@@ -860,6 +874,7 @@ class SchemaManager:
 
         Returns:
             List of recent operations
+
         """
         return self._operations[-limit:]
 
@@ -871,6 +886,7 @@ class SchemaManager:
 
         Returns:
             Operation or None if not found
+
         """
         for operation in self._operations:
             if operation.operation_id == operation_id:
@@ -882,6 +898,7 @@ class SchemaManager:
 
         Returns:
             Unique operation identifier
+
         """
         import uuid
 
@@ -895,6 +912,7 @@ class SchemaManager:
 
         Returns:
             Unique backup identifier
+
         """
         timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         return f"{schema_name}_backup_{timestamp}"
@@ -907,6 +925,7 @@ class SchemaManager:
 
         Returns:
             True if system schema
+
         """
         system_schemas = {
             "core",
@@ -931,6 +950,7 @@ class SchemaManager:
 
         Returns:
             List of basic schema info
+
         """
         fallback_schemas = []
 
@@ -967,6 +987,7 @@ class SchemaManager:
 
         Returns:
             Basic schema info or None
+
         """
         return SchemaInfo(
             name=schema_name,
@@ -992,6 +1013,7 @@ class SchemaManager:
 
         Returns:
             Schema information
+
         """
         # Extract timestamps
         installed_at = None
@@ -1032,6 +1054,7 @@ class SchemaManager:
 
         Returns:
             Detailed schema information
+
         """
         # Start with basic info
         schema_info = self._extract_schema_info(entry, schema_name, schema_dn)
@@ -1054,6 +1077,7 @@ class SchemaManager:
 
         Returns:
             Schema LDIF content
+
         """
         try:
             if not self._connection:
@@ -1097,6 +1121,7 @@ class SchemaManager:
 
         Returns:
             Server information string
+
         """
         try:
             if self._connection and hasattr(self._connection, "server"):
@@ -1111,6 +1136,7 @@ class SchemaManager:
 
         Args:
             backup: Backup to store
+
         """
         try:
             # Create backups directory if it doesn't exist
@@ -1146,6 +1172,7 @@ class SchemaManager:
 
         Returns:
             Backup object or None
+
         """
         # Search in memory first
         for backup in self._backups:
@@ -1185,6 +1212,7 @@ class SchemaManager:
 
         Returns:
             True if backup is valid
+
         """
         try:
             if not backup.checksum:
@@ -1220,6 +1248,7 @@ class SchemaManager:
 
         Returns:
             True if restore successful
+
         """
         try:
             if not self._connection:
@@ -1302,6 +1331,7 @@ class SchemaManager:
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -1340,6 +1370,7 @@ class SchemaManager:
 
         Returns:
             Dictionary with statistics
+
         """
         stats = {
             "total_operations": len(self._operations),
@@ -1385,6 +1416,7 @@ def install_schema_from_file(
 
     Returns:
         Schema operation result
+
     """
     manager = SchemaManager(connection)
     return manager.install_schema_from_file(ldif_file_path, schema_name)
@@ -1398,6 +1430,7 @@ def list_installed_schemas(connection: Any) -> list[SchemaInfo]:
 
     Returns:
         List of schema information
+
     """
     manager = SchemaManager(connection)
     return manager.list_schemas()
@@ -1411,6 +1444,7 @@ def validate_schema_ldif(ldif_file_path: str) -> list[str]:
 
     Returns:
         List of validation errors
+
     """
     # Create temporary manager for validation
     manager = SchemaManager(None)  # No connection needed for validation

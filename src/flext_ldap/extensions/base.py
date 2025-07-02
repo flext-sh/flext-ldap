@@ -49,6 +49,7 @@ class ExtensionResult(BaseModel):
         referrals: List of referral URLs if applicable
         response_name: OID of the extension response
         response_value: Raw response value from server
+
     """
 
     result_code: int = Field(description="LDAP result code (0 = success)")
@@ -149,6 +150,7 @@ class LDAPExtension(BaseModel, ABC):
     Note:
         The request_value is typically ASN.1 encoded binary data, but some
         extensions may use simple string values or no value at all.
+
     """
 
     # Extension request OID - must be overridden in subclasses
@@ -186,6 +188,7 @@ class LDAPExtension(BaseModel, ABC):
         Note:
             This method must be implemented by all extension subclasses.
             The returned bytes should be valid ASN.1 encoding or None.
+
         """
         raise NotImplementedError
 
@@ -211,6 +214,7 @@ class LDAPExtension(BaseModel, ABC):
         Note:
             This method must be implemented by all extension subclasses.
             It should handle None values gracefully for extensions without responses.
+
         """
         raise NotImplementedError
 
@@ -222,6 +226,7 @@ class LDAPExtension(BaseModel, ABC):
 
         Note:
             This format is used by underlying LDAP libraries for transmission.
+
         """
         result: dict[str, str | bytes] = {
             "requestName": self.request_name,
@@ -249,6 +254,7 @@ class LDAPExtension(BaseModel, ABC):
         Raises:
             UnknownExtensionError: If extension type is not registered
             ExtensionDecodingError: If decoding fails
+
         """
         response_name = response_dict.get("responseName")
         response_value = response_dict.get("responseValue")
@@ -311,6 +317,7 @@ class ExtensionRegistry:
         Args:
             request_name: Extension request OID
             extension_class: Extension implementation class
+
         """
         cls._registry[request_name] = extension_class
 
@@ -323,6 +330,7 @@ class ExtensionRegistry:
 
         Returns:
             Extension class or None if not found
+
         """
         return cls._registry.get(request_name)
 
@@ -332,6 +340,7 @@ class ExtensionRegistry:
 
         Returns:
             Dictionary mapping OIDs to extension classes
+
         """
         return cls._registry.copy()
 
@@ -344,6 +353,7 @@ class ExtensionRegistry:
 
         Returns:
             True if registered, False otherwise
+
         """
         return request_name in cls._registry
 

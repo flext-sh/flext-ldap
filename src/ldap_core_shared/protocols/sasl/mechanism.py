@@ -31,6 +31,7 @@ References:
     - RFC 4422: SASL mechanism framework requirements
     - perl-Authen-SASL: Mechanism architecture compatibility
     - Java SASL: Mechanism interface design patterns
+
 """
 
 from __future__ import annotations
@@ -86,6 +87,7 @@ class SASLMechanismCapabilities(BaseModel):
         ...     security_flags=[SASLSecurityFlag.NO_PLAIN_TEXT],
         ...     qop_supported=["auth", "auth-int"]
         ... )
+
     """
 
     # Basic mechanism properties
@@ -149,6 +151,7 @@ class SASLMechanismCapabilities(BaseModel):
 
         Returns:
             True if mechanism has the flag
+
         """
         return flag in self.security_flags
 
@@ -160,6 +163,7 @@ class SASLMechanismCapabilities(BaseModel):
 
         Returns:
             True if QOP is supported
+
         """
         return qop in self.qop_supported
 
@@ -168,6 +172,7 @@ class SASLMechanismCapabilities(BaseModel):
 
         Returns:
             True if secure against passive eavesdropping
+
         """
         return self.has_security_flag(SASLSecurityFlag.NO_PLAIN_TEXT)
 
@@ -176,6 +181,7 @@ class SASLMechanismCapabilities(BaseModel):
 
         Returns:
             True if secure against active attacks
+
         """
         return self.has_security_flag(SASLSecurityFlag.NO_ACTIVE)
 
@@ -194,6 +200,7 @@ class SASLMechanism(ABC):
         ...     def evaluate_challenge(self, challenge):
         ...         # Custom challenge processing
         ...         return response
+
     """
 
     # Class-level mechanism information
@@ -210,6 +217,7 @@ class SASLMechanism(ABC):
         Args:
             callback_handler: Callback handler for credentials
             context: SASL context (created if not provided)
+
         """
         self.callback_handler = callback_handler
         self.context = context or SASLContext(
@@ -233,6 +241,7 @@ class SASLMechanism(ABC):
 
         Returns:
             SASL mechanism name
+
         """
         return cls.MECHANISM_NAME
 
@@ -242,6 +251,7 @@ class SASLMechanism(ABC):
 
         Returns:
             Mechanism capabilities
+
         """
         return cls.MECHANISM_CAPABILITIES
 
@@ -250,6 +260,7 @@ class SASLMechanism(ABC):
 
         Returns:
             True if authentication completed successfully
+
         """
         return self._complete
 
@@ -258,6 +269,7 @@ class SASLMechanism(ABC):
 
         Returns:
             Challenge count
+
         """
         return self._challenge_count
 
@@ -266,6 +278,7 @@ class SASLMechanism(ABC):
 
         Returns:
             True if mechanism can provide initial response
+
         """
         return self.get_capabilities().supports_initial_response
 
@@ -274,6 +287,7 @@ class SASLMechanism(ABC):
 
         Returns:
             SASL authentication context
+
         """
         return self.context
 
@@ -292,6 +306,7 @@ class SASLMechanism(ABC):
 
         Raises:
             SASLError: If challenge evaluation fails
+
         """
 
     def get_initial_response(self) -> bytes | None:
@@ -302,6 +317,7 @@ class SASLMechanism(ABC):
 
         Raises:
             SASLError: If initial response generation fails
+
         """
         if not self.supports_initial_response():
             return None
@@ -330,6 +346,7 @@ class SASLMechanism(ABC):
 
         Returns:
             Property value or None if not negotiated
+
         """
         if property_name == "qop":
             return (
@@ -353,6 +370,7 @@ class SASLMechanism(ABC):
 
         Args:
             challenge: Challenge data
+
         """
         self._last_challenge = challenge
         self._challenge_count += 1
@@ -363,6 +381,7 @@ class SASLMechanism(ABC):
 
         Args:
             response: Response data
+
         """
         if response is not None:
             self._last_response = response
@@ -386,6 +405,7 @@ class SASLMechanism(ABC):
 
         Returns:
             SASLMechanismError instance
+
         """
         return SASLMechanismError(
             message,
@@ -410,6 +430,7 @@ class SASLMechanismRegistry:
         >>>
         >>> # Create mechanism instance
         >>> mechanism = SASLMechanismRegistry.create_mechanism("CUSTOM", callback)
+
     """
 
     _mechanisms: ClassVar[dict[str, type[SASLMechanism]]] = {}
@@ -424,6 +445,7 @@ class SASLMechanismRegistry:
 
         Raises:
             SASLInvalidMechanismError: If mechanism invalid
+
         """
         if not issubclass(mechanism_class, SASLMechanism):
             msg = f"Class {mechanism_class.__name__} is not a SASLMechanism subclass"
@@ -446,6 +468,7 @@ class SASLMechanismRegistry:
 
         Args:
             mechanism_name: Name of mechanism to unregister
+
         """
         cls._mechanisms.pop(mechanism_name.upper(), None)
 
@@ -455,6 +478,7 @@ class SASLMechanismRegistry:
 
         Returns:
             List of registered mechanism names
+
         """
         cls._ensure_initialized()
         return list(cls._mechanisms.keys())
@@ -468,6 +492,7 @@ class SASLMechanismRegistry:
 
         Returns:
             True if mechanism is registered
+
         """
         cls._ensure_initialized()
         return mechanism_name.upper() in cls._mechanisms
@@ -484,6 +509,7 @@ class SASLMechanismRegistry:
 
         Raises:
             SASLInvalidMechanismError: If mechanism not found
+
         """
         cls._ensure_initialized()
         mechanism_class = cls._mechanisms.get(mechanism_name.upper())
@@ -515,6 +541,7 @@ class SASLMechanismRegistry:
 
         Raises:
             SASLInvalidMechanismError: If mechanism not available
+
         """
         mechanism_class = cls.get_mechanism_class(mechanism_name)
         return mechanism_class(callback_handler, context)
@@ -534,6 +561,7 @@ class SASLMechanismRegistry:
 
         Raises:
             SASLInvalidMechanismError: If mechanism not found
+
         """
         mechanism_class = cls.get_mechanism_class(mechanism_name)
         return mechanism_class.get_capabilities()
@@ -552,6 +580,7 @@ class SASLMechanismRegistry:
 
         Returns:
             Selected mechanism name or None if none suitable
+
         """
         cls._ensure_initialized()
 
@@ -600,6 +629,7 @@ class SASLMechanismRegistry:
 
         Returns:
             Filtered list of mechanism names
+
         """
         filtered = []
 

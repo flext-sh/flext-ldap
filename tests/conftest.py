@@ -64,6 +64,7 @@ def validate_workspace_venv() -> None:
     Raises:
         AssertionError: If not using the correct workspace venv
         EnvironmentError: If workspace venv is not properly configured
+
     """
     current_venv = os.environ.get("VIRTUAL_ENV")
 
@@ -110,6 +111,7 @@ def validate_env_security() -> Generator[None, None, None]:
     Raises:
         SecurityError: If .env security violations are detected
         PermissionError: If .env file has incorrect permissions
+
     """
     # Check for .env file if it exists
     env_file = Path(LDAP_CORE_SHARED_ROOT) / ".env"
@@ -163,6 +165,7 @@ def cli_debug_patterns() -> Generator[dict[str, bool], None, None]:
 
     Raises:
         ValueError: If CLI debug patterns are not properly configured
+
     """
     debug_config = {
         "debug_enabled": True,
@@ -195,6 +198,7 @@ def solid_principles_validation() -> dict[str, object]:
 
     Raises:
         ArchitectureError: If SOLID principles violations are detected
+
     """
     return {
         "srp_validator": _create_srp_validator(),
@@ -217,6 +221,7 @@ def workspace_coordination() -> dict[str, str]:
 
     Raises:
         WorkspaceError: If workspace coordination patterns are violated
+
     """
     # Read workspace coordination context
     coordination_context = {}
@@ -259,6 +264,7 @@ def security_enforcement() -> dict[str, object]:
 
     Raises:
         SecurityError: If security violations are detected during testing
+
     """
     security_config = {
         "mask_sensitive_data": True,
@@ -327,6 +333,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
     Args:
         config: pytest configuration object
+
     """
     # Register custom markers for PyAuto workspace standards
     config.addinivalue_line(
@@ -374,6 +381,7 @@ def pytest_collection_modifyitems(
     Args:
         config: pytest configuration object
         items: List of collected test items
+
     """
     # Add workspace standards validation to all tests
     for item in items:

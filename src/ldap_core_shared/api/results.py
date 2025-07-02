@@ -99,6 +99,7 @@ class Result(BaseModel, Generic[T]):
         Example:
             >>> result = Result.ok(user_data, execution_time_ms=150.5,
             ...                    cache_hit=True, source="ldap_primary")
+
         """
         return cls(
             success=True,
@@ -131,6 +132,7 @@ class Result(BaseModel, Generic[T]):
         Example:
             >>> result = Result.fail("User not found", code="USER_NOT_FOUND",
             ...                      execution_time_ms=75.2)
+
         """
         return cls(
             success=False,
@@ -166,6 +168,7 @@ class Result(BaseModel, Generic[T]):
             ...     pass
             >>> except LDAPException as e:
             ...     return Result.from_exception(e)
+
         """
         error_code = getattr(exc, "error_code", None)
         return cls.fail(

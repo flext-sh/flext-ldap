@@ -64,6 +64,7 @@ References:
     - RFC 4516: LDAP Uniform Resource Locator
     - RFC 4517: LDAP Syntaxes and Matching Rules
     - perl-ldap: lib/Net/LDAP/Util.pm (reference implementation)
+
 """
 
 from typing import TYPE_CHECKING

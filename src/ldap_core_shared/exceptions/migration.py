@@ -40,6 +40,7 @@ class MigrationError(LDAPError):
             error_code: Optional LDAP error code
             context: Additional context information
             original_error: Original exception that caused this error
+
         """
         final_context = context or {}
         if migration_phase:
@@ -75,6 +76,7 @@ class SchemaValidationError(MigrationError):
             schema_element: Schema element that failed validation
             validation_type: Type of validation that failed
             **kwargs: Additional arguments for MigrationError
+
         """
         context: dict[str, Any] = cast("dict[str, Any]", kwargs.get("context", {}))
         if schema_element:
@@ -110,6 +112,7 @@ class DataIntegrityError(MigrationError):
             expected_value: Expected value
             actual_value: Actual value found
             **kwargs: Additional arguments for MigrationError
+
         """
         context: dict[str, Any] = cast("dict[str, Any]", kwargs.get("context", {}))
         if integrity_check:
@@ -147,6 +150,7 @@ class PerformanceThresholdError(MigrationError):
             threshold_value: Performance threshold that was exceeded
             actual_value: Actual performance value
             **kwargs: Additional arguments for MigrationError
+
         """
         context: dict[str, Any] = cast("dict[str, Any]", kwargs.get("context", {}))
         if metric_name:
@@ -182,6 +186,7 @@ class MigrationValidationError(MigrationError):
             validation_rule: Validation rule that failed
             entry_count: Number of entries processed when error occurred
             **kwargs: Additional arguments for MigrationError
+
         """
         context: dict[str, Any] = cast("dict[str, Any]", kwargs.get("context", {}))
         if validation_rule:
@@ -217,6 +222,7 @@ class MigrationPerformanceError(MigrationError):
             expected_value: Expected performance value
             actual_value: Actual performance value
             **kwargs: Additional arguments for MigrationError
+
         """
         context: dict[str, Any] = cast("dict[str, Any]", kwargs.get("context", {}))
         if performance_metric:
@@ -252,6 +258,7 @@ class MigrationDataError(MigrationError):
             data_issue: Type of data issue (encoding, format, corruption, etc.)
             affected_attributes: Attributes affected by the data issue
             **kwargs: Additional arguments for MigrationError
+
         """
         context: dict[str, Any] = cast("dict[str, Any]", kwargs.get("context", {}))
         if data_issue:
@@ -285,6 +292,7 @@ class MigrationConfigurationError(MigrationError):
             config_parameter: Configuration parameter that is invalid
             config_value: Invalid configuration value
             **kwargs: Additional arguments for MigrationError
+
         """
         context: dict[str, Any] = cast("dict[str, Any]", kwargs.get("context", {}))
         if config_parameter:

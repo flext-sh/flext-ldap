@@ -189,6 +189,7 @@ def create_detailed_error(
 
     Returns:
         LDAPMigrationError with detailed information
+
     """
     message = str(base_exception)
     details = context or {}
@@ -207,6 +208,7 @@ def log_migration_error(error: LDAPMigrationError, level: str = "error") -> None
     Args:
         error: The migration error to log
         level: Log level (debug, info, warning, error, critical)
+
     """
     log_func = getattr(logger, level.lower(), logger.error)
 
@@ -258,6 +260,7 @@ def handle_migration_exception(
 
     Raises:
         LDAPMigrationError: If reraise is True
+
     """
     if isinstance(exception, LDAPMigrationError):
         migration_error = exception

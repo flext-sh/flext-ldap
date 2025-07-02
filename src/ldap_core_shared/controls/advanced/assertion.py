@@ -35,6 +35,7 @@ References:
     - RFC 4528: LDAP Assertion Control
     - RFC 4511: LDAP Protocol Specification
     - Enterprise concurrent operation patterns
+
 """
 
 from __future__ import annotations
@@ -119,6 +120,7 @@ class AssertionRequest(BaseModel):
 
         Returns:
             List of attribute names used in filter
+
         """
         # TODO: Implement proper filter parsing
         # This would parse the filter and extract attribute names
@@ -139,6 +141,7 @@ class AssertionRequest(BaseModel):
 
         Returns:
             True if filter is simple equality assertion
+
         """
         import re
 
@@ -230,6 +233,7 @@ class AssertionControl(LDAPControl):
         ...     print("Configuration updated successfully")
         >>> elif assertion_control.response and assertion_control.response.is_assertion_failed():
         ...     print("Configuration was modified by another process")
+
     """
 
     control_type = "1.3.6.1.1.12"  # RFC 4528 Assertion Control OID
@@ -250,6 +254,7 @@ class AssertionControl(LDAPControl):
             case_sensitive: Whether assertion is case-sensitive
             criticality: Whether control is critical for operation
             timeout_seconds: Optional assertion timeout
+
         """
         # Create request configuration
         self._request = AssertionRequest(
@@ -277,6 +282,7 @@ class AssertionControl(LDAPControl):
 
         Note:
             Encodes assertion filter as UTF-8 LDAPString per RFC 4528
+
         """
         # Implement BER encoding of assertion filter according to RFC 4528
         try:
@@ -301,6 +307,7 @@ class AssertionControl(LDAPControl):
 
         Note:
             Processes assertion response and stores result metadata
+
         """
         # Implement assertion response processing according to RFC 4528
         try:
@@ -352,6 +359,7 @@ class AssertionControl(LDAPControl):
 
         Args:
             new_filter: New assertion filter
+
         """
         self._request.assertion_filter = new_filter
         # Re-validate the request
@@ -364,6 +372,7 @@ class AssertionControl(LDAPControl):
 
         Returns:
             Current assertion filter
+
         """
         return self._request.assertion_filter
 
@@ -372,6 +381,7 @@ class AssertionControl(LDAPControl):
 
         Returns:
             List of attribute names
+
         """
         return self._request.get_filter_attributes()
 
@@ -380,6 +390,7 @@ class AssertionControl(LDAPControl):
 
         Returns:
             True if filter is simple equality
+
         """
         return self._request.is_simple_equality()
 
@@ -403,6 +414,7 @@ class AssertionControl(LDAPControl):
 
         Returns:
             Encoded control value or None if no value
+
         """
         return self.control_value
 
@@ -415,6 +427,7 @@ class AssertionControl(LDAPControl):
 
         Returns:
             AssertionControl instance with decoded values
+
         """
         if not control_value:
             # Default assertion control with simple filter
@@ -434,6 +447,7 @@ def create_assertion_control(assertion_filter: str) -> AssertionControl:
 
     Returns:
         Configured Assertion control
+
     """
     return AssertionControl(
         assertion_filter=assertion_filter,
@@ -450,6 +464,7 @@ def create_equality_assertion(attribute: str, value: str) -> AssertionControl:
 
     Returns:
         Assertion control for equality check
+
     """
     assertion_filter = f"({attribute}={value})"
     return AssertionControl(
@@ -467,6 +482,7 @@ def create_presence_assertion(attribute: str) -> AssertionControl:
 
     Returns:
         Assertion control for presence check
+
     """
     assertion_filter = f"({attribute}=*)"
     return AssertionControl(
@@ -493,6 +509,7 @@ async def test_assertion(
 
     Note:
         Uses base-scope search with assertion control to test filter validity
+
     """
     # Implement assertion testing using search with assertion control
     try:

@@ -145,6 +145,7 @@ class ErrorContext(BaseModel):
 
         Raises:
             AttributeError: If attribute not found
+
         """
         if hasattr(self, "__pydantic_extra__") and name in self.__pydantic_extra__:
             return self.__pydantic_extra__[name]
@@ -181,6 +182,7 @@ class LDAPCoreError(Exception):
             context: Additional context information
             cause: Original exception that caused this error
             user_message: User-friendly error message
+
         """
         super().__init__(message)
 
@@ -218,6 +220,7 @@ class LDAPCoreError(Exception):
 
         Returns:
             Dictionary representation of error
+
         """
         return {
             "error_id": self.error_id,
@@ -269,6 +272,7 @@ class ValidationError(LDAPCoreError):
             context: Error context
             cause: Original exception
             validation_failures: List of specific validation failures
+
         """
         super().__init__(
             message=message,
@@ -298,6 +302,7 @@ class SchemaValidationError(ValidationError):
             schema_file: Schema file where error occurred
             line_number: Line number in schema file
             **kwargs: Additional arguments for parent class
+
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
@@ -328,6 +333,7 @@ class ConfigurationValidationError(ValidationError):
             config_section: Configuration section with error
             config_key: Configuration key with error
             **kwargs: Additional arguments for parent class
+
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
@@ -356,6 +362,7 @@ class LDAPConnectionError(LDAPCoreError):
             message: Error message
             server_uri: LDAP server URI
             **kwargs: Additional arguments for parent class
+
         """
         context = kwargs.pop("context", {})
         if isinstance(context, dict):
@@ -386,6 +393,7 @@ class ServerLDAPConnectionError(LDAPConnectionError):
             server_uri: LDAP server URI
             timeout: Connection timeout value
             **kwargs: Additional arguments for parent class
+
         """
         context = kwargs.pop("context", {})
         if isinstance(context, dict):
@@ -411,6 +419,7 @@ class AuthenticationError(LDAPConnectionError):
             mechanism: SASL mechanism used
             username: Username for authentication
             **kwargs: Additional arguments for parent class
+
         """
         context = kwargs.pop("context", {})
         if isinstance(context, dict):
@@ -451,6 +460,7 @@ class PoolExhaustedError(LDAPConnectionError):
             pool_size: Maximum pool size
             active_connections: Current active connections
             **kwargs: Additional arguments for parent class
+
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
@@ -484,6 +494,7 @@ class OperationError(LDAPCoreError):
             message: Error message
             operation_type: Type of LDAP operation
             **kwargs: Additional arguments for parent class
+
         """
         context = kwargs.pop("context", {})
         if isinstance(context, dict):
@@ -514,6 +525,7 @@ class OperationTimeoutError(OperationError):
             timeout_seconds: Timeout duration that was exceeded
             operation_type: Type of operation that timed out
             **kwargs: Additional arguments for parent class
+
         """
         # Create context with timeout-specific information
         context = kwargs.pop("context", {})
@@ -552,6 +564,7 @@ class SchemaOperationError(OperationError):
             schema_name: Name of schema being operated on
             operation_id: Unique operation identifier
             **kwargs: Additional arguments for parent class
+
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
@@ -580,6 +593,7 @@ class EncodingError(LDAPCoreError):
             message: Error message
             encoding_type: Type of encoding (BER, DER, etc.)
             **kwargs: Additional arguments for parent class
+
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
@@ -610,6 +624,7 @@ class ASN1EncodingError(EncodingError):
             element_type: ASN.1 element type
             tag_number: ASN.1 tag number
             **kwargs: Additional arguments for parent class
+
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
@@ -640,6 +655,7 @@ class ASN1DecodingError(EncodingError):
             data_offset: Offset in data where error occurred
             data_length: Total data length
             **kwargs: Additional arguments for parent class
+
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
@@ -668,6 +684,7 @@ class SAMLError(LDAPCoreError):
             message: Error message
             mechanism: SASL mechanism name
             **kwargs: Additional arguments for parent class
+
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
@@ -698,6 +715,7 @@ class MechanismError(SAMLError):
             mechanism: SASL mechanism name
             step: Authentication step where error occurred
             **kwargs: Additional arguments for parent class
+
         """
         context = kwargs.get("context", {})
         if isinstance(context, dict):
@@ -723,6 +741,7 @@ def handle_exception(
 
     Returns:
         Standardized LDAP Core error
+
     """
     error_context = ErrorContext(operation=operation)
     if context:
@@ -747,6 +766,7 @@ def log_exception(
         logger: Logger instance
         exception: LDAP Core error to log
         include_stack_trace: Whether to include stack trace
+
     """
     log_data = exception.to_dict()
 

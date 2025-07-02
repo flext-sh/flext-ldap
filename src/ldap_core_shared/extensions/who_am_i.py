@@ -30,6 +30,7 @@ References:
     - perl-ldap: lib/Net/LDAP/Extension/WhoAmI.pm
     - RFC 4532: Lightweight Directory Access Protocol (LDAP) "Who am I?" Operation
     - OID: 1.3.6.1.4.1.4203.1.11.3
+
 """
 
 from __future__ import annotations
@@ -84,6 +85,7 @@ class AuthorizationIdentityParser:
 
         Returns:
             Tuple of (identity_type, parsed_value)
+
         """
         if not identity_string:
             return IdentityType.ANONYMOUS, None
@@ -152,6 +154,7 @@ class WhoAmIResult(ExtensionResult):
     Note:
         The authorization_identity is the raw string returned by the server.
         The parsed fields provide convenient access to the structured information.
+
     """
 
     authorization_identity: str = Field(
@@ -191,6 +194,7 @@ class WhoAmIResult(ExtensionResult):
 
         Returns:
             DN string or None if not DN-based identity
+
         """
         return self.identity_value if self.identity_type == IdentityType.DN else None
 
@@ -199,6 +203,7 @@ class WhoAmIResult(ExtensionResult):
 
         Returns:
             User ID string or None if not User ID-based identity
+
         """
         return (
             self.identity_value if self.identity_type == IdentityType.USER_ID else None
@@ -209,6 +214,7 @@ class WhoAmIResult(ExtensionResult):
 
         Returns:
             Formatted display name
+
         """
         if self.is_anonymous:
             return "Anonymous"
@@ -243,6 +249,7 @@ class WhoAmIExtension(LDAPExtension):
     Note:
         This operation has no request value. The entire request is just
         the extension OID with no additional data.
+
     """
 
     request_name = ExtensionOIDs.WHO_AM_I
@@ -258,6 +265,7 @@ class WhoAmIExtension(LDAPExtension):
         Note:
             This extension requires no request value, so request_value
             is always None.
+
         """
         super().__init__(request_value=None, **kwargs)
 
@@ -266,6 +274,7 @@ class WhoAmIExtension(LDAPExtension):
 
         Returns:
             None - WhoAmI extension has no request value
+
         """
         return None  # WhoAmI has no request value
 
@@ -286,6 +295,7 @@ class WhoAmIExtension(LDAPExtension):
 
         Raises:
             ExtensionDecodingError: If decoding fails
+
         """
         try:
             # WhoAmI response is just the authorization identity as UTF-8 string
@@ -312,6 +322,7 @@ class WhoAmIExtension(LDAPExtension):
 
         Note:
             This is a convenience method since WhoAmI has no parameters.
+
         """
         return cls()
 
@@ -330,6 +341,7 @@ def who_am_i() -> WhoAmIExtension:
     Example:
         >>> extension = who_am_i()
         >>> result = connection.extended_operation(extension)
+
     """
     return WhoAmIExtension.create()
 
@@ -349,6 +361,7 @@ def check_identity(connection: Any) -> WhoAmIResult:
     Note:
         This is a convenience function that combines extension creation
         and execution.
+
     """
     try:
         # Create WHO_AM_I extension request

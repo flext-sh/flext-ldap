@@ -25,6 +25,7 @@ def validate_and_normalize_file_path(file_path: str | Path) -> str:
 
     Raises:
         ValueError: If path is invalid or unsafe
+
     """
     try:
         path = Path(file_path) if isinstance(file_path, str) else file_path
@@ -62,6 +63,7 @@ def validate_configuration_value(value: Any, config_type: str = "generic") -> bo
 
     Returns:
         True if value is valid, False otherwise
+
     """
     if value is None:
         return False
@@ -89,6 +91,7 @@ def normalize_dn(dn: str) -> str:
 
     Returns:
         Normalized DN string
+
     """
     if not dn:
         return ""
@@ -108,6 +111,7 @@ def validate_dn(dn: str) -> str:
 
     Raises:
         ValueError: If DN is invalid
+
     """
     if not isinstance(dn, str):
         msg = f"DN must be a string, got {type(dn)}"

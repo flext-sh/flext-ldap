@@ -37,6 +37,7 @@ References:
     - ITU-T X.680: ASN.1 specification
     - ITU-T X.690: ASN.1 encoding rules
     - RFC 5280: ASN.1 usage in PKI certificates
+
 """
 
 from __future__ import annotations
@@ -83,6 +84,7 @@ class ASN1Boolean(ASN1Element):
         >>> bool_false = ASN1Boolean(False)
         >>> encoded = bool_true.encode()
         >>> value = bool_true.get_value()  # True
+
     """
 
     def __init__(
@@ -99,6 +101,7 @@ class ASN1Boolean(ASN1Element):
             tag: Custom tag
             optional: Whether element is optional
             default: Default boolean value
+
         """
         super().__init__(value, tag, optional, default)
 
@@ -118,6 +121,7 @@ class ASN1Boolean(ASN1Element):
 
         Returns:
             Encoded boolean as bytes
+
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
 
@@ -135,6 +139,7 @@ class ASN1Boolean(ASN1Element):
 
         Returns:
             Tuple of (decoded boolean, next offset)
+
         """
         if offset >= len(data):
             msg = "Insufficient data for BOOLEAN decoding"
@@ -175,6 +180,7 @@ class ASN1Boolean(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -194,6 +200,7 @@ class ASN1Integer(ASN1Element):
         >>> large_int = ASN1Integer(123456789012345678901234567890)
         >>> negative = ASN1Integer(-42)
         >>> encoded = small_int.encode()
+
     """
 
     def __init__(
@@ -210,6 +217,7 @@ class ASN1Integer(ASN1Element):
             tag: Custom tag
             optional: Whether element is optional
             default: Default integer value
+
         """
         super().__init__(value, tag, optional, default)
 
@@ -229,6 +237,7 @@ class ASN1Integer(ASN1Element):
 
         Returns:
             Encoded integer as bytes
+
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
 
@@ -267,6 +276,7 @@ class ASN1Integer(ASN1Element):
 
         Returns:
             Tuple of (decoded integer, next offset)
+
         """
         if offset >= len(data):
             msg = "Insufficient data for INTEGER decoding"
@@ -309,6 +319,7 @@ class ASN1Integer(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -333,6 +344,7 @@ class ASN1BitString(ASN1Element):
         >>> # Get bit values
         >>> bit_string = bits.get_bit_string()
         >>> byte_data = bits.get_bytes()
+
     """
 
     def __init__(
@@ -351,6 +363,7 @@ class ASN1BitString(ASN1Element):
             tag: Custom tag
             optional: Whether element is optional
             default: Default value
+
         """
         super().__init__(value, tag, optional, default)
         self._unused_bits = unused_bits
@@ -379,6 +392,7 @@ class ASN1BitString(ASN1Element):
 
         Returns:
             String of '0' and '1' characters
+
         """
         return self._bit_string
 
@@ -387,6 +401,7 @@ class ASN1BitString(ASN1Element):
 
         Returns:
             Raw bytes
+
         """
         return self._bytes_data
 
@@ -395,6 +410,7 @@ class ASN1BitString(ASN1Element):
 
         Returns:
             Number of unused bits in last byte
+
         """
         return self._unused_bits
 
@@ -406,6 +422,7 @@ class ASN1BitString(ASN1Element):
 
         Returns:
             Byte representation
+
         """
         # Pad to multiple of 8 bits
         padded = bit_string.ljust((len(bit_string) + 7) // 8 * 8, "0")
@@ -429,6 +446,7 @@ class ASN1BitString(ASN1Element):
 
         Returns:
             String of '0' and '1' characters
+
         """
         bit_string = ""
         for byte in bytes_data:
@@ -448,6 +466,7 @@ class ASN1BitString(ASN1Element):
 
         Returns:
             Encoded bit string as bytes
+
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
 
@@ -465,6 +484,7 @@ class ASN1BitString(ASN1Element):
 
         Returns:
             Tuple of (decoded bit string, next offset)
+
         """
         if offset >= len(data):
             msg = "Insufficient data for BIT STRING decoding"
@@ -511,6 +531,7 @@ class ASN1BitString(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -542,6 +563,7 @@ class ASN1OctetString(ASN1Element):
         >>> # Get byte data
         >>> byte_data = octets.get_bytes()
         >>> string_data = octets.get_string()
+
     """
 
     def __init__(
@@ -560,6 +582,7 @@ class ASN1OctetString(ASN1Element):
             tag: Custom tag
             optional: Whether element is optional
             default: Default value
+
         """
         super().__init__(value, tag, optional, default)
         self._encoding = encoding
@@ -588,6 +611,7 @@ class ASN1OctetString(ASN1Element):
 
         Returns:
             Raw bytes
+
         """
         return self._bytes_data
 
@@ -599,6 +623,7 @@ class ASN1OctetString(ASN1Element):
 
         Returns:
             String representation or None if not decodable
+
         """
         if encoding is None:
             encoding = self._encoding
@@ -616,6 +641,7 @@ class ASN1OctetString(ASN1Element):
 
         Returns:
             Encoded octet string as bytes
+
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
 
@@ -633,6 +659,7 @@ class ASN1OctetString(ASN1Element):
 
         Returns:
             Tuple of (decoded octet string, next offset)
+
         """
         if offset >= len(data):
             msg = "Insufficient data for OCTET STRING decoding"
@@ -669,6 +696,7 @@ class ASN1OctetString(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         # OCTET STRING can contain any bytes, so no specific validation needed
         return []
@@ -683,6 +711,7 @@ class ASN1Null(ASN1Element):
         >>> null_value = ASN1Null()
         >>> encoded = null_value.encode()
         >>> is_null = null_value.get_value() is None
+
     """
 
     def __init__(
@@ -695,6 +724,7 @@ class ASN1Null(ASN1Element):
         Args:
             tag: Custom tag
             optional: Whether element is optional
+
         """
         super().__init__(None, tag, optional, None)
 
@@ -714,6 +744,7 @@ class ASN1Null(ASN1Element):
 
         Returns:
             Encoded null as bytes
+
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
 
@@ -731,6 +762,7 @@ class ASN1Null(ASN1Element):
 
         Returns:
             Tuple of (decoded null, next offset)
+
         """
         if offset >= len(data):
             msg = "Insufficient data for NULL decoding"
@@ -762,6 +794,7 @@ class ASN1Null(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -786,6 +819,7 @@ class ASN1ObjectIdentifier(ASN1Element):
         >>> # Get components
         >>> components = oid.get_components()
         >>> dot_notation = oid.get_dot_notation()
+
     """
 
     def __init__(
@@ -802,6 +836,7 @@ class ASN1ObjectIdentifier(ASN1Element):
             tag: Custom tag
             optional: Whether element is optional
             default: Default value
+
         """
         super().__init__(value, tag, optional, default)
 
@@ -831,6 +866,7 @@ class ASN1ObjectIdentifier(ASN1Element):
 
         Returns:
             List of integer components
+
         """
         return self._components.copy()
 
@@ -839,6 +875,7 @@ class ASN1ObjectIdentifier(ASN1Element):
 
         Returns:
             OID as dot-separated string
+
         """
         return self._dot_notation
 
@@ -850,6 +887,7 @@ class ASN1ObjectIdentifier(ASN1Element):
 
         Returns:
             Encoded component bytes
+
         """
         if component == 0:
             return b"\x00"
@@ -876,6 +914,7 @@ class ASN1ObjectIdentifier(ASN1Element):
 
         Returns:
             Tuple of (component value, bytes consumed)
+
         """
         if offset >= len(data):
             msg = "Insufficient data for OID component"
@@ -907,6 +946,7 @@ class ASN1ObjectIdentifier(ASN1Element):
 
         Returns:
             Encoded OID as bytes
+
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
 
@@ -934,6 +974,7 @@ class ASN1ObjectIdentifier(ASN1Element):
 
         Returns:
             Tuple of (decoded OID, next offset)
+
         """
         if offset >= len(data):
             msg = "Insufficient data for OBJECT IDENTIFIER decoding"
@@ -994,6 +1035,7 @@ class ASN1ObjectIdentifier(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -1030,6 +1072,7 @@ class ASN1UTF8String(ASN1Element):
         >>> utf8_str = ASN1UTF8String("Hello 世界")
         >>> encoded = utf8_str.encode()
         >>> text = utf8_str.get_value()
+
     """
 
     def __init__(
@@ -1046,6 +1089,7 @@ class ASN1UTF8String(ASN1Element):
             tag: Custom tag
             optional: Whether element is optional
             default: Default string value
+
         """
         super().__init__(value, tag, optional, default)
 
@@ -1065,6 +1109,7 @@ class ASN1UTF8String(ASN1Element):
 
         Returns:
             Encoded UTF8 string as bytes
+
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
 
@@ -1089,6 +1134,7 @@ class ASN1UTF8String(ASN1Element):
 
         Returns:
             Tuple of (decoded UTF8 string, next offset)
+
         """
         if offset >= len(data):
             msg = "Insufficient data for UTF8String decoding"
@@ -1131,6 +1177,7 @@ class ASN1UTF8String(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -1155,6 +1202,7 @@ class ASN1PrintableString(ASN1Element):
         >>> printable = ASN1PrintableString("Hello World 123")
         >>> encoded = printable.encode()
         >>> text = printable.get_value()
+
     """
 
     # Allowed characters in PrintableString
@@ -1176,6 +1224,7 @@ class ASN1PrintableString(ASN1Element):
             tag: Custom tag
             optional: Whether element is optional
             default: Default string value
+
         """
         super().__init__(value, tag, optional, default)
 
@@ -1195,6 +1244,7 @@ class ASN1PrintableString(ASN1Element):
 
         Returns:
             Encoded printable string as bytes
+
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
 
@@ -1224,6 +1274,7 @@ class ASN1PrintableString(ASN1Element):
 
         Returns:
             Tuple of (decoded printable string, next offset)
+
         """
         if offset >= len(data):
             msg = "Insufficient data for PrintableString decoding"
@@ -1272,6 +1323,7 @@ class ASN1PrintableString(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -1297,6 +1349,7 @@ class ASN1IA5String(ASN1Element):
         >>> ia5_str = ASN1IA5String("user@example.com")
         >>> encoded = ia5_str.encode()
         >>> text = ia5_str.get_value()
+
     """
 
     def __init__(
@@ -1313,6 +1366,7 @@ class ASN1IA5String(ASN1Element):
             tag: Custom tag
             optional: Whether element is optional
             default: Default string value
+
         """
         super().__init__(value, tag, optional, default)
 
@@ -1332,6 +1386,7 @@ class ASN1IA5String(ASN1Element):
 
         Returns:
             Encoded IA5 string as bytes
+
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
 
@@ -1366,6 +1421,7 @@ class ASN1IA5String(ASN1Element):
 
         Returns:
             Tuple of (decoded IA5 string, next offset)
+
         """
         if offset >= len(data):
             msg = "Insufficient data for IA5String decoding"
@@ -1414,6 +1470,7 @@ class ASN1IA5String(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -1450,6 +1507,7 @@ class ASN1UTCTime(ASN1Element):
         >>>
         >>> # Get datetime
         >>> dt = utc_time.get_datetime()
+
     """
 
     def __init__(
@@ -1466,6 +1524,7 @@ class ASN1UTCTime(ASN1Element):
             tag: Custom tag
             optional: Whether element is optional
             default: Default value
+
         """
         super().__init__(value, tag, optional, default)
         self._datetime: datetime | None = None
@@ -1494,6 +1553,7 @@ class ASN1UTCTime(ASN1Element):
 
         Returns:
             Datetime object or None
+
         """
         return self._datetime
 
@@ -1502,6 +1562,7 @@ class ASN1UTCTime(ASN1Element):
 
         Returns:
             UTC time string
+
         """
         return self._time_string
 
@@ -1513,6 +1574,7 @@ class ASN1UTCTime(ASN1Element):
 
         Returns:
             UTC time string
+
         """
         # Convert to UTC if needed
         if dt.tzinfo is not None:
@@ -1529,6 +1591,7 @@ class ASN1UTCTime(ASN1Element):
 
         Returns:
             Datetime object or None if invalid
+
         """
         import re
 
@@ -1574,6 +1637,7 @@ class ASN1UTCTime(ASN1Element):
 
         Returns:
             Encoded UTC time as bytes
+
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
 
@@ -1595,6 +1659,7 @@ class ASN1UTCTime(ASN1Element):
 
         Returns:
             Tuple of (decoded UTC time, next offset)
+
         """
         if offset >= len(data):
             msg = "Insufficient data for UTCTime decoding"
@@ -1637,6 +1702,7 @@ class ASN1UTCTime(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -1674,6 +1740,7 @@ class ASN1GeneralizedTime(ASN1Element):
         >>>
         >>> # Get datetime
         >>> dt = gen_time.get_datetime()
+
     """
 
     def __init__(
@@ -1690,6 +1757,7 @@ class ASN1GeneralizedTime(ASN1Element):
             tag: Custom tag
             optional: Whether element is optional
             default: Default value
+
         """
         super().__init__(value, tag, optional, default)
         self._datetime: datetime | None = None
@@ -1718,6 +1786,7 @@ class ASN1GeneralizedTime(ASN1Element):
 
         Returns:
             Datetime object or None
+
         """
         return self._datetime
 
@@ -1726,6 +1795,7 @@ class ASN1GeneralizedTime(ASN1Element):
 
         Returns:
             Generalized time string
+
         """
         return self._time_string
 
@@ -1737,6 +1807,7 @@ class ASN1GeneralizedTime(ASN1Element):
 
         Returns:
             Generalized time string
+
         """
         # Convert to UTC if needed
         if dt.tzinfo is not None:
@@ -1753,6 +1824,7 @@ class ASN1GeneralizedTime(ASN1Element):
 
         Returns:
             Datetime object or None if invalid
+
         """
         import re
 
@@ -1791,6 +1863,7 @@ class ASN1GeneralizedTime(ASN1Element):
 
         Returns:
             Encoded generalized time as bytes
+
         """
         from ldap_core_shared.protocols.asn1.encoder import TLVEncoder
 
@@ -1812,6 +1885,7 @@ class ASN1GeneralizedTime(ASN1Element):
 
         Returns:
             Tuple of (decoded generalized time, next offset)
+
         """
         if offset >= len(data):
             msg = "Insufficient data for GeneralizedTime decoding"
@@ -1854,6 +1928,7 @@ class ASN1GeneralizedTime(ASN1Element):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 

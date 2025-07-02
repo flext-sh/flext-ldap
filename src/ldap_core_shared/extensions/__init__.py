@@ -33,6 +33,7 @@ References:
     - RFC 4532: LDAP "Who am I?" Operation
     - RFC 3062: LDAP Password Modify Extended Operation
     - Vendor-specific LDAP documentation
+
 """
 
 from typing import TYPE_CHECKING

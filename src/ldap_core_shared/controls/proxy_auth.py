@@ -35,6 +35,7 @@ References:
     - perl-ldap: lib/Net/LDAP/Control/ProxyAuth.pm
     - RFC 4370: Lightweight Directory Access Protocol (LDAP) Proxied Authorization Control
     - OID: 2.16.840.1.113730.3.4.18
+
 """
 
 from __future__ import annotations
@@ -74,6 +75,7 @@ class AuthorizationIdentity:
 
         Raises:
             ProxyAuthError: If identity format is invalid
+
         """
         self.identity = self._normalize_identity(identity)
 
@@ -88,6 +90,7 @@ class AuthorizationIdentity:
 
         Raises:
             ProxyAuthError: If identity format is invalid
+
         """
         if not identity:
             msg = "Authorization identity cannot be empty"
@@ -126,6 +129,7 @@ class AuthorizationIdentity:
 
         Returns:
             DN string or None if not DN form
+
         """
         if self.is_dn_form():
             return self.identity[3:]  # Remove "dn:" prefix
@@ -136,6 +140,7 @@ class AuthorizationIdentity:
 
         Returns:
             User ID string or None if not user ID form
+
         """
         if self.is_user_id_form():
             return self.identity[2:]  # Remove "u:" prefix
@@ -166,6 +171,7 @@ class ProxyAuthorizationControl(LDAPControl):
     Note:
         The proxy authorization control is always critical - if the server
         doesn't support it or denies the proxy request, the operation fails.
+
     """
 
     control_type = ControlOIDs.PROXY_AUTHORIZATION
@@ -186,6 +192,7 @@ class ProxyAuthorizationControl(LDAPControl):
             authorization_identity: Identity to proxy as
             criticality: Whether control is critical (default True)
             **kwargs: Additional arguments
+
         """
         if isinstance(authorization_identity, str):
             authorization_identity = AuthorizationIdentity(authorization_identity)
@@ -219,6 +226,7 @@ class ProxyAuthorizationControl(LDAPControl):
 
         Raises:
             ControlEncodingError: If encoding fails
+
         """
         try:
             return str(self.authorization_identity).encode("utf-8")
@@ -238,6 +246,7 @@ class ProxyAuthorizationControl(LDAPControl):
 
         Raises:
             ControlDecodingError: If decoding fails
+
         """
         if not control_value:
             msg = "Proxy authorization control requires a value"
@@ -260,6 +269,7 @@ class ProxyAuthorizationControl(LDAPControl):
 
         Returns:
             ProxyAuthorizationControl for the DN
+
         """
         return cls(authorization_identity=f"dn:{dn}", criticality=criticality)
 
@@ -277,6 +287,7 @@ class ProxyAuthorizationControl(LDAPControl):
 
         Returns:
             ProxyAuthorizationControl for the user ID
+
         """
         return cls(authorization_identity=f"u:{user_id}", criticality=criticality)
 
@@ -294,6 +305,7 @@ class ProxyAuthorizationControl(LDAPControl):
 
         Returns:
             ProxyAuthorizationControl for the authorization ID
+
         """
         return cls(authorization_identity=auth_id, criticality=criticality)
 
@@ -302,6 +314,7 @@ class ProxyAuthorizationControl(LDAPControl):
 
         Returns:
             DN string or None if not a DN-based proxy
+
         """
         return self.authorization_identity.get_dn()
 
@@ -310,6 +323,7 @@ class ProxyAuthorizationControl(LDAPControl):
 
         Returns:
             User ID string or None if not a user ID-based proxy
+
         """
         return self.authorization_identity.get_user_id()
 
@@ -339,6 +353,7 @@ class ProxyAuthorizationBuilder:
     Example:
         >>> builder = ProxyAuthorizationBuilder()
         >>> control = builder.proxy_as_user("jdoe").critical().build()
+
     """
 
     def __init__(self) -> None:
@@ -354,6 +369,7 @@ class ProxyAuthorizationBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         self._authorization_identity = f"dn:{dn}"
         return self
@@ -366,6 +382,7 @@ class ProxyAuthorizationBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         self._authorization_identity = f"u:{user_id}"
         return self
@@ -378,6 +395,7 @@ class ProxyAuthorizationBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         self._authorization_identity = identity
         return self
@@ -390,6 +408,7 @@ class ProxyAuthorizationBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         self._criticality = is_critical
         return self
@@ -399,6 +418,7 @@ class ProxyAuthorizationBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         return self.critical(False)
 
@@ -410,6 +430,7 @@ class ProxyAuthorizationBuilder:
 
         Raises:
             ProxyAuthError: If required fields are missing
+
         """
         if not self._authorization_identity:
             msg = "Authorization identity is required"
@@ -431,6 +452,7 @@ def proxy_as_dn(dn: str, critical: bool = True) -> ProxyAuthorizationControl:
 
     Returns:
         ProxyAuthorizationControl for the DN
+
     """
     return ProxyAuthorizationControl.for_dn(dn, critical)
 
@@ -444,6 +466,7 @@ def proxy_as_user(user_id: str, critical: bool = True) -> ProxyAuthorizationCont
 
     Returns:
         ProxyAuthorizationControl for the user ID
+
     """
     return ProxyAuthorizationControl.for_user_id(user_id, critical)
 
@@ -456,6 +479,7 @@ def proxy_as_admin() -> ProxyAuthorizationControl:
 
     Note:
         This assumes an "admin" user ID. Adjust based on your directory schema.
+
     """
     return ProxyAuthorizationControl.for_user_id("admin", criticality=True)
 

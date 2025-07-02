@@ -143,6 +143,7 @@ class SubentryRequest(BaseModel):
 
         Returns:
             Subentry visibility mode
+
         """
         if self.visibility:
             return SubentryVisibility.SUBENTRIES_ONLY
@@ -156,6 +157,7 @@ class SubentryRequest(BaseModel):
 
         Returns:
             True if type should be included
+
         """
         if self.subentry_types is None:
             return True
@@ -167,6 +169,7 @@ class SubentryRequest(BaseModel):
 
         Returns:
             Dictionary with processing options
+
         """
         return {
             "expand_inheritance": self.expand_inheritance,
@@ -237,6 +240,7 @@ class SubentryMetadata(BaseModel):
 
         Returns:
             Dictionary with influence information
+
         """
         return {
             "scope": self.scope.value,
@@ -341,6 +345,7 @@ class SubentriesResponse(BaseModel):
 
         Returns:
             List of subentries of specified type
+
         """
         return [
             metadata
@@ -353,6 +358,7 @@ class SubentriesResponse(BaseModel):
 
         Returns:
             Dictionary with administrative information
+
         """
         return {
             "total_subentries": self.total_subentries,
@@ -393,6 +399,7 @@ class SubentriesControl(LDAPControl):
         >>> # Process administrative policies
         >>> for entry in results:
         ...     process_access_control_policy(entry)
+
     """
 
     control_type = "1.3.6.1.4.1.4203.1.10.1"  # RFC 3672 Subentries Control OID
@@ -413,6 +420,7 @@ class SubentriesControl(LDAPControl):
             include_operational: Whether to include operational attributes
             expand_inheritance: Whether to expand inheritance relationships
             criticality: Whether control is critical for operation
+
         """
         # Create request configuration
         self._request = SubentryRequest(
@@ -444,6 +452,7 @@ class SubentriesControl(LDAPControl):
 
         Raises:
             NotImplementedError: BER encoding not yet implemented
+
         """
         # TODO: Implement BER encoding of Subentries request
         # According to RFC 3672, the control value is a BOOLEAN
@@ -464,6 +473,7 @@ class SubentriesControl(LDAPControl):
 
         Raises:
             NotImplementedError: Response processing not yet implemented
+
         """
         # TODO: Implement BER decoding of Subentries response
         # The Subentries control typically doesn't have a response value
@@ -481,6 +491,7 @@ class SubentriesControl(LDAPControl):
 
         Args:
             show_subentries: True to show subentries, False for normal entries
+
         """
         self._request.visibility = show_subentries
         # Update control value
@@ -491,6 +502,7 @@ class SubentriesControl(LDAPControl):
 
         Args:
             subentry_type: Type of subentry to include
+
         """
         if self._request.subentry_types is None:
             self._request.subentry_types = []
@@ -503,6 +515,7 @@ class SubentriesControl(LDAPControl):
 
         Args:
             subentry_type: Type of subentry to remove
+
         """
         if (
             self._request.subentry_types
@@ -515,6 +528,7 @@ class SubentriesControl(LDAPControl):
 
         Args:
             expand: Whether to expand inheritance relationships
+
         """
         self._request.expand_inheritance = expand
 
@@ -523,6 +537,7 @@ class SubentriesControl(LDAPControl):
 
         Args:
             resolve: Whether to resolve subentry references
+
         """
         self._request.resolve_references = resolve
 
@@ -531,6 +546,7 @@ class SubentriesControl(LDAPControl):
 
         Args:
             validate: Whether to validate policy subentries
+
         """
         self._request.validate_policies = validate
 
@@ -539,6 +555,7 @@ class SubentriesControl(LDAPControl):
 
         Returns:
             Current subentry visibility mode
+
         """
         return self._request.get_visibility_mode()
 
@@ -547,6 +564,7 @@ class SubentriesControl(LDAPControl):
 
         Returns:
             Dictionary with control configuration
+
         """
         return {
             "visibility": self._request.visibility,
@@ -585,6 +603,7 @@ class SubentriesControl(LDAPControl):
 
         Returns:
             Encoded control value or None if no value
+
         """
         return self.control_value
 
@@ -597,6 +616,7 @@ class SubentriesControl(LDAPControl):
 
         Returns:
             SubentriesControl instance with decoded values
+
         """
         if not control_value:
             # Default subentries control showing subentries
@@ -616,6 +636,7 @@ def create_subentries_control(show_subentries: bool = True) -> SubentriesControl
 
     Returns:
         Configured Subentries control
+
     """
     return SubentriesControl(
         visibility=show_subentries,
@@ -628,6 +649,7 @@ def create_access_control_search() -> SubentriesControl:
 
     Returns:
         Subentries control configured for access control policies
+
     """
     return SubentriesControl(
         visibility=True,
@@ -643,6 +665,7 @@ def create_collective_attribute_search() -> SubentriesControl:
 
     Returns:
         Subentries control configured for collective attributes
+
     """
     return SubentriesControl(
         visibility=True,
@@ -657,6 +680,7 @@ def create_configuration_search() -> SubentriesControl:
 
     Returns:
         Subentries control configured for configuration entries
+
     """
     return SubentriesControl(
         visibility=True,
@@ -684,6 +708,7 @@ async def search_administrative_policies(
 
     Raises:
         NotImplementedError: Policy search not yet implemented
+
     """
     # TODO: Implement policy subentry search
     # This would use Subentries control to find administrative policies
@@ -710,6 +735,7 @@ async def get_administrative_areas(
 
     Raises:
         NotImplementedError: Administrative area discovery not yet implemented
+
     """
     # TODO: Implement administrative area discovery
     # This would search for administrative entries and extract areas

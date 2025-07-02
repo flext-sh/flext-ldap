@@ -78,6 +78,7 @@ class LDAPValidation:
 
         Args:
             config: Optional LDAP configuration for context-specific validation
+
         """
         self._config = config
 
