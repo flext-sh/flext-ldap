@@ -9,11 +9,12 @@ from typing import Any
 @dataclass
 class LDIFHeaderConfig:
     """Configuration for LDIF headers."""
+
     version: str = "1"
     comments: list[str] = None
     custom_headers: dict[str, str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.comments is None:
             self.comments = []
         if self.custom_headers is None:
@@ -23,6 +24,7 @@ class LDIFHeaderConfig:
 @dataclass
 class LDIFProcessingConfig:
     """Configuration for LDIF processing."""
+
     max_line_length: int = 76
     encoding: str = "utf-8"
     validate_entries: bool = True
@@ -33,10 +35,11 @@ class LDIFProcessingConfig:
 @dataclass
 class LDIFWriterConfig:
     """Configuration for LDIF writer."""
+
     header: LDIFHeaderConfig = None
     processing: LDIFProcessingConfig = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.header is None:
             self.header = LDIFHeaderConfig()
         if self.processing is None:
@@ -64,7 +67,7 @@ class LDIFWriter:
     def __init__(self, config: LDIFWriterConfig = None) -> None:
         self.config = config or LDIFWriterConfig()
 
-    def write_header(self, output_file) -> None:
+    def write_header(self, output_file: Any) -> None:
         """Write LDIF header."""
         output_file.write(f"version: {self.config.header.version}\n")
         for comment in self.config.header.comments:
@@ -73,7 +76,7 @@ class LDIFWriter:
             output_file.write(f"# {key}: {value}\n")
         output_file.write("\n")
 
-    def write_entry(self, entry: dict[str, Any], output_file) -> None:
+    def write_entry(self, entry: dict[str, Any], output_file: Any) -> None:
         """Write a single LDIF entry."""
         if "dn" in entry:
             output_file.write(f"dn: {entry['dn']}\n")
@@ -110,7 +113,7 @@ class DefaultLDIFProcessor(LDIFProcessorBase):
         entries = []
         # Basic LDIF parsing (simplified)
         with open(input_path, encoding=self.config.encoding) as f:
-            current_entry = {}
+            current_entry: dict[str, Any] = {}
             for line in f:
                 line = line.strip()
                 if not line or line.startswith("#"):
@@ -123,7 +126,9 @@ class DefaultLDIFProcessor(LDIFProcessorBase):
                     if attr in current_entry:
                         if not isinstance(current_entry[attr], list):
                             current_entry[attr] = [current_entry[attr]]
-                        current_entry[attr].append(value)
+                        attr_list = current_entry[attr]
+                        if isinstance(attr_list, list):
+                            attr_list.append(value)
                     else:
                         current_entry[attr] = value
                 elif not line and current_entry:

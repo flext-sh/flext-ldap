@@ -952,13 +952,17 @@ def create_soap_dsml_message(
             if isinstance(values, list):
                 for value in values:
                     attributes_xml += (
-                        f'<dsml:attr name="{attr}">' f"<dsml:value>{value}</dsml:value></dsml:attr>"
+                        f'<dsml:attr name="{attr}">'
+                        f"<dsml:value>{value}</dsml:value></dsml:attr>"
                     )
             else:
                 attributes_xml += (
-                    f'<dsml:attr name="{attr}">' f"<dsml:value>{values}</dsml:value></dsml:attr>"
+                    f'<dsml:attr name="{attr}">'
+                    f"<dsml:value>{values}</dsml:value></dsml:attr>"
                 )
-        operation_content = f"<dsml:dn>{operation_params.get('dn', '')}</dsml:dn>{attributes_xml}"
+        operation_content = (
+            f"<dsml:dn>{operation_params.get('dn', '')}</dsml:dn>{attributes_xml}"
+        )
     else:
         operation_content = ""
 
@@ -1036,7 +1040,9 @@ def parse_dsml_response(xml_content: str) -> dict[str, Any]:
                 # Extract attributes
                 for attr in entry.findall("dsml:attr", namespaces):
                     attr_name = attr.get("name", "")
-                    attr_values = [value.text for value in attr.findall("dsml:value", namespaces)]
+                    attr_values = [
+                        value.text for value in attr.findall("dsml:value", namespaces)
+                    ]
                     entry_data["attributes"][attr_name] = (
                         attr_values
                         if len(attr_values) > 1

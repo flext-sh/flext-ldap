@@ -323,7 +323,9 @@ class SearchResultEntry(BaseModel):
                     length_octets_list,
                 )
 
-            encoded_type = bytes([BER_OCTET_STRING_TAG]) + type_length_bytes + type_bytes
+            encoded_type = (
+                bytes([BER_OCTET_STRING_TAG]) + type_length_bytes + type_bytes
+            )
 
             # Encode attribute values as SET OF
             encoded_values = []
@@ -343,7 +345,9 @@ class SearchResultEntry(BaseModel):
                         [0x80 | len(value_length_octets)],
                     ) + bytes(value_length_octets)
 
-                encoded_value = bytes([BER_OCTET_STRING_TAG]) + value_length_bytes + value_bytes
+                encoded_value = (
+                    bytes([BER_OCTET_STRING_TAG]) + value_length_bytes + value_bytes
+                )
                 encoded_values.append(encoded_value)
 
             # Encode SET OF values
@@ -362,7 +366,9 @@ class SearchResultEntry(BaseModel):
                     [0x80 | len(values_length_octets_list)],
                 ) + bytes(values_length_octets_list)
 
-            encoded_values_set = bytes([BER_SET_TAG]) + values_length_bytes + values_content
+            encoded_values_set = (
+                bytes([BER_SET_TAG]) + values_length_bytes + values_content
+            )
 
             # Encode PartialAttribute as SEQUENCE
             attr_content = encoded_type + encoded_values_set
@@ -399,7 +405,9 @@ class SearchResultEntry(BaseModel):
                 attrs_length_octets_list,
             )
 
-        encoded_attrs_list = bytes([BER_SEQUENCE_TAG]) + attrs_length_bytes + attrs_content
+        encoded_attrs_list = (
+            bytes([BER_SEQUENCE_TAG]) + attrs_length_bytes + attrs_content
+        )
 
         # Encode SearchResultEntry as [APPLICATION 4] SEQUENCE
         entry_content = encoded_dn + encoded_attrs_list

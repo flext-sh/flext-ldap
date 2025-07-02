@@ -331,7 +331,11 @@ class SASLMechanism(ABC):
             Property value or None if not negotiated
         """
         if property_name == "qop":
-            return self.context.negotiated_qop.value if self.context.negotiated_qop else None
+            return (
+                self.context.negotiated_qop.value
+                if self.context.negotiated_qop
+                else None
+            )
         if property_name == "cipher":
             return self.context.negotiated_cipher
         if property_name == "maxbuf":
@@ -551,7 +555,9 @@ class SASLMechanismRegistry:
         cls._ensure_initialized()
 
         # Filter to registered mechanisms only
-        candidates = [name for name in available_mechanisms if cls.is_mechanism_available(name)]
+        candidates = [
+            name for name in available_mechanisms if cls.is_mechanism_available(name)
+        ]
 
         if not candidates:
             return None
@@ -607,12 +613,16 @@ class SASLMechanismRegistry:
 
                 # Check required security flags
                 required_flags = requirements.get("required_security_flags", [])
-                if not all(capabilities.has_security_flag(flag) for flag in required_flags):
+                if not all(
+                    capabilities.has_security_flag(flag) for flag in required_flags
+                ):
                     continue
 
                 # Check forbidden security flags
                 forbidden_flags = requirements.get("forbidden_security_flags", [])
-                if any(capabilities.has_security_flag(flag) for flag in forbidden_flags):
+                if any(
+                    capabilities.has_security_flag(flag) for flag in forbidden_flags
+                ):
                     continue
 
                 # Check QOP requirements

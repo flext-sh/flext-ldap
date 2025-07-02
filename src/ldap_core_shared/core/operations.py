@@ -661,7 +661,9 @@ class EnterpriseTransaction:
             )
 
             logger.error(
-                "Add operation failed", exc_info=True, extra={"dn": dn, "error": str(e)},
+                "Add operation failed",
+                exc_info=True,
+                extra={"dn": dn, "error": str(e)},
             )
 
             if isinstance(e, LDAPOperationError):
@@ -1450,7 +1452,8 @@ class AsyncLDAPOperations:
 
     @asynccontextmanager
     async def transaction(
-        self, timeout_seconds: int | None = None,
+        self,
+        timeout_seconds: int | None = None,
     ) -> AsyncIterator[TransactionContext]:
         """Async transaction context manager."""
         import asyncio
@@ -1460,17 +1463,26 @@ class AsyncLDAPOperations:
         # Run sync transaction in executor
         sync_transaction = self._sync_operations.transaction(timeout_seconds)
         transaction_context = await loop.run_in_executor(
-            None, sync_transaction.__enter__,
+            None,
+            sync_transaction.__enter__,
         )
 
         try:
             yield transaction_context
             await loop.run_in_executor(
-                None, sync_transaction.__exit__, None, None, None,
+                None,
+                sync_transaction.__exit__,
+                None,
+                None,
+                None,
             )
         except Exception as e:
             await loop.run_in_executor(
-                None, sync_transaction.__exit__, type(e), e, e.__traceback__,
+                None,
+                sync_transaction.__exit__,
+                type(e),
+                e,
+                e.__traceback__,
             )
             raise
 

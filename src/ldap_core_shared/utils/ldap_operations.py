@@ -224,10 +224,10 @@ class LDAPOperationHelper:
                     msg = f"Search failed: {conn.result}"
                     raise OperationError(msg, operation_type="search")
 
-                entries: list = []
+                entries: list[Any] = []
                 for entry in conn.entries:
                     # Convert ldap3 entry to our LDAPEntry model
-                    attributes_dict: dict = {}
+                    attributes_dict: dict[str, Any] = {}
                     for attr_name in entry.entry_attributes:
                         attr_values = getattr(entry, attr_name)
                         if hasattr(attr_values, "values"):
@@ -288,7 +288,9 @@ class LDAPOperationHelper:
             # Return unified Result error if available, otherwise raise
             if Result is not None:
                 return Result.from_exception(
-                    e, default_data=[], execution_time_ms=execution_time_ms,
+                    e,
+                    default_data=[],
+                    execution_time_ms=execution_time_ms,
                 )
             raise
 

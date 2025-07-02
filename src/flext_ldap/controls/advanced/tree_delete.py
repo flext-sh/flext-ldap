@@ -242,7 +242,11 @@ class TreeDeleteRequest(BaseModel):
         if self.expected_entry_count is not None and self.expected_entry_count < 0:
             errors.append("Expected entry count cannot be negative")
 
-        if not (MIN_PROCESSING_PRIORITY <= self.processing_priority <= MAX_PROCESSING_PRIORITY):
+        if not (
+            MIN_PROCESSING_PRIORITY
+            <= self.processing_priority
+            <= MAX_PROCESSING_PRIORITY
+        ):
             errors.append(
                 f"Processing priority must be between {MIN_PROCESSING_PRIORITY} and {MAX_PROCESSING_PRIORITY}",
             )
@@ -266,7 +270,10 @@ class TreeDeleteRequest(BaseModel):
         if self.deletion_policy.max_deletion_depth is None:
             complexity_factors += 1
 
-        if self.expected_entry_count and self.expected_entry_count > LARGE_OPERATION_THRESHOLD:
+        if (
+            self.expected_entry_count
+            and self.expected_entry_count > LARGE_OPERATION_THRESHOLD
+        ):
             complexity_factors += DEFAULT_RETRY_MULTIPLIER
 
         if len(self.deletion_policy.deletion_constraints) > DEFAULT_RETRY_MULTIPLIER:
@@ -344,7 +351,11 @@ class TreeDeleteResponse(BaseModel):
 
     def is_success(self) -> bool:
         """Check if tree deletion was completely successful."""
-        return self.deletion_successful and self.result_code == 0 and not self.failed_deletions
+        return (
+            self.deletion_successful
+            and self.result_code == 0
+            and not self.failed_deletions
+        )
 
     def get_success_rate(self) -> float:
         """Get deletion success rate as percentage.
@@ -533,7 +544,9 @@ class TreeDeleteControl(LDAPControl):
                 levels_processed=levels_processed,
                 result_code=result_code,
                 result_message=(
-                    "Tree deletion processed" if result_code == 0 else "Tree deletion failed"
+                    "Tree deletion processed"
+                    if result_code == 0
+                    else "Tree deletion failed"
                 ),
             )
             self._response_available = True
@@ -604,7 +617,9 @@ class TreeDeleteControl(LDAPControl):
         return {
             "target_dn": self._request.target_dn,
             "deletion_mode": self._request.deletion_policy.deletion_mode.value,
-            "constraints": [c.value for c in self._request.deletion_policy.deletion_constraints],
+            "constraints": [
+                c.value for c in self._request.deletion_policy.deletion_constraints
+            ],
             "max_depth": self._request.deletion_policy.max_deletion_depth,
             "max_entries": self._request.deletion_policy.max_entries_deleted,
             "dry_run": self._request.dry_run,

@@ -296,7 +296,8 @@ class TreeDeleteResponse(BaseModel):
     entries_deleted: int = Field(default=0, description="Number of entries deleted")
 
     levels_processed: int = Field(
-        default=0, description="Number of hierarchy levels processed",
+        default=0,
+        description="Number of hierarchy levels processed",
     )
 
     deletion_order: list[str] = Field(
@@ -577,7 +578,9 @@ class TreeDeleteControl(LDAPControl):
         self._request.confirmation_token = token
 
     def set_requester_info(
-        self, requester_dn: str, reason: str | None = None,
+        self,
+        requester_dn: str,
+        reason: str | None = None,
     ) -> None:
         """Set requester information for audit trail.
 

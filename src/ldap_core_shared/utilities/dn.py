@@ -396,7 +396,8 @@ class DistinguishedName:
         return len(self._components)
 
     def get_component_by_type(
-        self, attribute_type: str | AttributeType,
+        self,
+        attribute_type: str | AttributeType,
     ) -> DNComponent | None:
         """Get first component with specified attribute type.
 
@@ -412,7 +413,8 @@ class DistinguishedName:
         return None
 
     def get_components_by_type(
-        self, attribute_type: str | AttributeType,
+        self,
+        attribute_type: str | AttributeType,
     ) -> list[DNComponent]:
         """Get all components with specified attribute type.
 
@@ -492,7 +494,8 @@ class DistinguishedName:
         return child_dn.is_child_of(self)
 
     def get_common_ancestor(
-        self, other_dn: str | DistinguishedName,
+        self,
+        other_dn: str | DistinguishedName,
     ) -> DistinguishedName | None:
         """Get common ancestor DN with another DN.
 
@@ -527,7 +530,8 @@ class DistinguishedName:
         return ancestor_dn
 
     def get_relative_name(
-        self, base_dn: str | DistinguishedName,
+        self,
+        base_dn: str | DistinguishedName,
     ) -> DistinguishedName | None:
         """Get relative name from base DN.
 
@@ -883,7 +887,8 @@ class DNValidator:
 
 # Utility functions
 def escape_dn_value(
-    value: str, escape_mode: DNEscapeMode = DNEscapeMode.RFC4514,
+    value: str,
+    escape_mode: DNEscapeMode = DNEscapeMode.RFC4514,
 ) -> str:
     """Escape DN attribute value.
 

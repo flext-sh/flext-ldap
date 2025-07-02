@@ -301,7 +301,9 @@ class SecurityManager:
 
     @contextmanager
     def secure_tunnel(
-        self, config: SSHTunnelConfig, tunnel_id: str | None = None,
+        self,
+        config: SSHTunnelConfig,
+        tunnel_id: str | None = None,
     ) -> Generator[SSHTunnel, None, None]:
         """Create secure SSH tunnel context.
 
@@ -463,7 +465,8 @@ class SecurityManager:
             }
 
     def get_security_events(
-        self, limit: int = DEFAULT_MAX_ITEMS,
+        self,
+        limit: int = DEFAULT_MAX_ITEMS,
     ) -> list[dict[str, Any]]:
         """Get recent security events.
 

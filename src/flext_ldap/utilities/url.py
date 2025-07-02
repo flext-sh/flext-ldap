@@ -279,7 +279,9 @@ class LDAPUrl:
 
         # Attributes
         if self._components.attributes:
-            attrs = ",".join(quote(attr, safe="") for attr in self._components.attributes)
+            attrs = ",".join(
+                quote(attr, safe="") for attr in self._components.attributes
+            )
             path_parts.append(attrs)
         else:
             path_parts.append("")

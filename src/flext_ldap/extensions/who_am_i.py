@@ -199,7 +199,9 @@ class WhoAmIResult(ExtensionResult):
         Returns:
             User ID string or None if not User ID-based identity
         """
-        return self.identity_value if self.identity_type == IdentityType.USER_ID else None
+        return (
+            self.identity_value if self.identity_type == IdentityType.USER_ID else None
+        )
 
     def get_display_name(self) -> str:
         """Get human-readable display name for the identity.

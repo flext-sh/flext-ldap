@@ -81,11 +81,13 @@ class ReferralCredentials(BaseModel):
 
     # Simple bind credentials
     bind_dn: str | None = Field(
-        default=None, description="Bind DN for authentication",
+        default=None,
+        description="Bind DN for authentication",
     )
 
     password: str | None = Field(
-        default=None, description="Password for authentication",
+        default=None,
+        description="Password for authentication",
     )
 
     # SASL credentials
@@ -111,7 +113,8 @@ class ReferralCredentials(BaseModel):
 
     # Additional authentication options
     use_tls: bool = Field(
-        default=False, description="Whether to use TLS for connection",
+        default=False,
+        description="Whether to use TLS for connection",
     )
 
     validate_certificate: bool = Field(
@@ -131,7 +134,9 @@ class ReferralCredentials(BaseModel):
 
     @validator("bind_dn")
     def validate_simple_credentials(
-        self, v: str | None, values: dict[str, Any],
+        self,
+        v: str | None,
+        values: dict[str, Any],
     ) -> str | None:
         """Validate simple bind credentials."""
         if values.get("credential_type") == CredentialType.SIMPLE and not v:
@@ -141,7 +146,9 @@ class ReferralCredentials(BaseModel):
 
     @validator("sasl_mechanism")
     def validate_sasl_credentials(
-        self, v: str | None, values: dict[str, Any],
+        self,
+        v: str | None,
+        values: dict[str, Any],
     ) -> str | None:
         """Validate SASL credentials."""
         if values.get("credential_type") == CredentialType.SASL and not v:

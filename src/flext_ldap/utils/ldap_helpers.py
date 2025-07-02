@@ -541,7 +541,9 @@ class ValidationHelper:
 
         try:
             rdns = DNHelper.parse_dn(dn)
-            return len(rdns) > 0 and all(rdn.get("attribute") and rdn.get("value") for rdn in rdns)
+            return len(rdns) > 0 and all(
+                rdn.get("attribute") and rdn.get("value") for rdn in rdns
+            )
         except Exception:
             return False
 

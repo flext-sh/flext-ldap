@@ -189,7 +189,9 @@ class SortKey(BaseModel):
         """Get the effective sort order considering reverse flag."""
         if self.reverse_order:
             return (
-                SortOrder.DESCENDING if self.order == SortOrder.ASCENDING else SortOrder.ASCENDING
+                SortOrder.DESCENDING
+                if self.order == SortOrder.ASCENDING
+                else SortOrder.ASCENDING
             )
         return self.order
 
@@ -272,7 +274,9 @@ class ServerSideSortControl(LDAPControl):
                     key_content += rule_tagged
 
                 # Add reverse order if True (context tag [1])
-                reverse_needed = sort_key.reverse_order or sort_key.order == SortOrder.DESCENDING
+                reverse_needed = (
+                    sort_key.reverse_order or sort_key.order == SortOrder.DESCENDING
+                )
                 if reverse_needed:
                     reverse_encoded = ASN1Encoder.encode_boolean(True)
                     reverse_tagged = ASN1Encoder.encode_context_tag(1, reverse_encoded)

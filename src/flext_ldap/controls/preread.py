@@ -319,7 +319,9 @@ class SearchResultEntry(BaseModel):
                     length_octets,
                 )
 
-            encoded_type = bytes([BER_OCTET_STRING_TAG]) + type_length_bytes + type_bytes
+            encoded_type = (
+                bytes([BER_OCTET_STRING_TAG]) + type_length_bytes + type_bytes
+            )
 
             # Encode attribute values as SET OF
             encoded_values = []
@@ -339,7 +341,9 @@ class SearchResultEntry(BaseModel):
                         length_octets,
                     )
 
-                encoded_value = bytes([BER_OCTET_STRING_TAG]) + value_length_bytes + value_bytes
+                encoded_value = (
+                    bytes([BER_OCTET_STRING_TAG]) + value_length_bytes + value_bytes
+                )
                 encoded_values.append(encoded_value)
 
             # Encode SET OF values
@@ -397,7 +401,9 @@ class SearchResultEntry(BaseModel):
                 length_octets,
             )
 
-        encoded_attrs_list = bytes([BER_SEQUENCE_TAG]) + attrs_length_bytes + attrs_content
+        encoded_attrs_list = (
+            bytes([BER_SEQUENCE_TAG]) + attrs_length_bytes + attrs_content
+        )
 
         # Encode SearchResultEntry as [APPLICATION 4] SEQUENCE
         entry_content = encoded_dn + encoded_attrs_list

@@ -203,7 +203,9 @@ class SchemaOperation(BaseModel):
             success: Whether operation was successful
             error: Error message if operation failed
         """
-        self.status = SchemaOperationStatus.SUCCESS if success else SchemaOperationStatus.FAILED
+        self.status = (
+            SchemaOperationStatus.SUCCESS if success else SchemaOperationStatus.FAILED
+        )
         self.completed_at = datetime.now(UTC)
         if error:
             self.error_message = error
@@ -321,7 +323,9 @@ class SchemaManager:
                     )
 
                     for entry in self._connection.entries:
-                        schema_name = str(entry.cn.value) if hasattr(entry, "cn") else "unknown"
+                        schema_name = (
+                            str(entry.cn.value) if hasattr(entry, "cn") else "unknown"
+                        )
                         schema_dn = entry.entry_dn
 
                         # Skip system schemas if not requested
@@ -406,7 +410,9 @@ class SchemaManager:
                     return self._get_fallback_schema_info(schema_name)
 
             except Exception as e:
-                logger.exception("Error getting schema info for '%s': %s", schema_name, e)
+                logger.exception(
+                    "Error getting schema info for '%s': %s", schema_name, e
+                )
                 return self._get_fallback_schema_info(schema_name)
 
     def install_schema_from_file(
@@ -443,7 +449,9 @@ class SchemaManager:
             # create backup if needed, and install schema
 
             if dry_run:
-                operation.result_data["validation_results"] = "Schema validation passed (dry run)"
+                operation.result_data["validation_results"] = (
+                    "Schema validation passed (dry run)"
+                )
                 operation.complete_operation(success=True)
             else:
                 # Actual installation would go here
@@ -1078,7 +1086,9 @@ class SchemaManager:
             return "\n".join(ldif_lines)
 
         except Exception as e:
-            logger.exception("Failed to extract LDIF for schema '%s': %s", schema_name, e)
+            logger.exception(
+                "Failed to extract LDIF for schema '%s': %s", schema_name, e
+            )
             return f"# Error extracting schema '{schema_name}': {e!s}\n"
 
     def _get_server_info(self) -> str:
@@ -1333,10 +1343,18 @@ class SchemaManager:
         stats = {
             "total_operations": len(self._operations),
             "successful_operations": len(
-                [op for op in self._operations if op.status == SchemaOperationStatus.SUCCESS],
+                [
+                    op
+                    for op in self._operations
+                    if op.status == SchemaOperationStatus.SUCCESS
+                ],
             ),
             "failed_operations": len(
-                [op for op in self._operations if op.status == SchemaOperationStatus.FAILED],
+                [
+                    op
+                    for op in self._operations
+                    if op.status == SchemaOperationStatus.FAILED
+                ],
             ),
             "backups_created": len(self._backups),
             "safety_checks_enabled": self._safety_checks_enabled,

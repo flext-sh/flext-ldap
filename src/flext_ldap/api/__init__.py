@@ -16,6 +16,7 @@ def get_validation_components():
             validate_filter,
             validate_schema,
         )
+
         return {
             "ValidationConfig": ValidationConfig,
             "ValidationError": ValidationError,
@@ -44,6 +45,7 @@ def get_utils_components():
         from flext_ldap.api.utils import (
             validate_dn as utils_validate_dn,
         )
+
         return {
             "validate_and_normalize_file_path": validate_and_normalize_file_path,
             "validate_configuration_value": utils_validate_configuration_value,
@@ -64,6 +66,7 @@ def get_migration_components():
             handle_migration_exception,
             log_migration_error,
         )
+
         return {
             "MigrationConfig": MigrationConfig,
             "MigrationError": MigrationError,
@@ -86,6 +89,7 @@ def get_ldif_components():
             LDIFWriter,
             LDIFWriterConfig,
         )
+
         return {
             "DefaultLDIFProcessor": DefaultLDIFProcessor,
             "LDIFHeaderConfig": LDIFHeaderConfig,
@@ -105,6 +109,7 @@ def get_acl_components():
             ACLProcessorBase,
             DefaultACLProcessor,
         )
+
         return {
             "ACLProcessorBase": ACLProcessorBase,
             "DefaultACLProcessor": DefaultACLProcessor,
@@ -120,6 +125,7 @@ def get_base_components():
             BaseProcessor,
             DefaultProcessor,
         )
+
         return {
             "BaseProcessor": BaseProcessor,
             "DefaultProcessor": DefaultProcessor,
@@ -139,6 +145,7 @@ def get_hierarchy_components():
             normalize_dn,
             parse_dn,
         )
+
         return {
             "DefaultHierarchyProcessor": DefaultHierarchyProcessor,
             "HierarchyProcessorBase": HierarchyProcessorBase,
@@ -158,6 +165,7 @@ def get_schema_components():
             DefaultSchemaProcessor,
             SchemaProcessorBase,
         )
+
         return {
             "DefaultSchemaProcessor": DefaultSchemaProcessor,
             "SchemaProcessorBase": SchemaProcessorBase,
@@ -204,6 +212,7 @@ def __getattr__(name: str):
     # Try to get from main module
     try:
         from flext_ldap import __getattr__ as main_getattr
+
         return main_getattr(name)
     except:
         msg = f"module '{__name__}' has no attribute '{name}'"

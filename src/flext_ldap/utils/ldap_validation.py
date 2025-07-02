@@ -61,8 +61,8 @@ def validate_and_normalize_ldap_entry(entry: dict[str, Any]) -> dict[str, Any]:
             ]
             normalized_entry[normalized_attr_name] = normalized_values
         else:
-            normalized_entry[normalized_attr_name] = validate_and_normalize_attribute_value(
-                attr_value
+            normalized_entry[normalized_attr_name] = (
+                validate_and_normalize_attribute_value(attr_value)
             )
 
     return normalized_entry

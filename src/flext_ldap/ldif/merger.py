@@ -180,7 +180,11 @@ class LDIFMerger:
                 stats.duplicates_removed += len(entry_group) - 1
                 stats.conflicts_resolved += 1
 
-        return self._sort_entries(merged_entries) if self.config.sort_output else merged_entries
+        return (
+            self._sort_entries(merged_entries)
+            if self.config.sort_output
+            else merged_entries
+        )
 
     def _resolve_conflict(self, entries: list[LDIFEntry]) -> LDIFEntry:
         """Resolve conflict between entries with same DN."""

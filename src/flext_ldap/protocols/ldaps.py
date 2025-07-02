@@ -622,7 +622,9 @@ class LDAPSConnection(ProtocolConnection):
             client_cert_file=client_cert_file,
             client_key_file=client_key_file,
             cert_verification=(
-                CertificateVerification.REQUIRED if verify_ssl else CertificateVerification.DISABLED
+                CertificateVerification.REQUIRED
+                if verify_ssl
+                else CertificateVerification.DISABLED
             ),
         )
 

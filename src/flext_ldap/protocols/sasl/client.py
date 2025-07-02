@@ -357,7 +357,9 @@ class SASLClient(BaseModel):
         """String representation."""
         mechanism = self._selected_mechanism or "none"
         state = (
-            "complete" if self.is_complete() else ("started" if self._started else "not-started")
+            "complete"
+            if self.is_complete()
+            else ("started" if self._started else "not-started")
         )
         return f"SASLClient(mechanism={mechanism}, state={state})"
 

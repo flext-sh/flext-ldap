@@ -308,7 +308,9 @@ class SyncRequestResponse(BaseModel):
         Returns:
             Dictionary with sync statistics
         """
-        total_changes = self.entries_added + self.entries_modified + self.entries_deleted
+        total_changes = (
+            self.entries_added + self.entries_modified + self.entries_deleted
+        )
 
         return {
             "total_entries": self.entries_returned,

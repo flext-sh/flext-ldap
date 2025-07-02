@@ -333,7 +333,11 @@ class LDAPEntry:
             else:
                 # Determine value type
                 is_binary = isinstance(value, bytes)
-                value_type = AttributeValueType.BINARY if is_binary else AttributeValueType.STRING
+                value_type = (
+                    AttributeValueType.BINARY
+                    if is_binary
+                    else AttributeValueType.STRING
+                )
 
                 attribute_values.append(
                     AttributeValue(
@@ -367,7 +371,11 @@ class LDAPEntry:
             else:
                 # Determine value type
                 is_binary = isinstance(value, bytes)
-                value_type = AttributeValueType.BINARY if is_binary else AttributeValueType.STRING
+                value_type = (
+                    AttributeValueType.BINARY
+                    if is_binary
+                    else AttributeValueType.STRING
+                )
 
                 existing_values.append(
                     AttributeValue(
@@ -563,7 +571,9 @@ class LDAPEntry:
 
         new_entry._attributes = {}
         for attr_name, values in self._attributes.items():
-            new_entry._attributes[attr_name] = [AttributeValue(**value.dict()) for value in values]
+            new_entry._attributes[attr_name] = [
+                AttributeValue(**value.dict()) for value in values
+            ]
 
         return new_entry
 

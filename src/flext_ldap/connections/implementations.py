@@ -13,6 +13,9 @@ if TYPE_CHECKING:
 
 import ldap3
 
+from flext_ldap.connections.base import LDAPConnectionInfo
+from flext_ldap.connections.factories import StandardConnectionFactory
+from flext_ldap.connections.pools import AsyncConnectionPool
 from flext_ldap.monitoring import (
     PerformanceTracker,
     StandardHealthMonitor,
@@ -86,8 +89,11 @@ class SOLIDConnectionManager:
         self._security_manager = components.security_manager or StandardSecurityManager(
             connection_info,
         )
-        self._performance_tracker = components.performance_tracker or PerformanceTracker(
-            connection_info,
+        self._performance_tracker = (
+            components.performance_tracker
+            or PerformanceTracker(
+                connection_info,
+            )
         )
         self._health_monitor = components.health_monitor or StandardHealthMonitor(
             connection_info,

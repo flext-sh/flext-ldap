@@ -279,7 +279,10 @@ class LDAPConnectionInfo(BaseModel):
         )
 
         if not has_valid_component:
-            msg = f"DN should contain recognized components like: " f"{', '.join(valid_prefixes)}"
+            msg = (
+                f"DN should contain recognized components like: "
+                f"{', '.join(valid_prefixes)}"
+            )
             raise ValueError(
                 msg,
             )

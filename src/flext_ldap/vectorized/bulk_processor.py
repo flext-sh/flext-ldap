@@ -289,7 +289,9 @@ class VectorizedBulkProcessor:
             logger.warning(
                 "Invalid DNs detected",
                 invalid_count=invalid_count,
-                first_invalid_index=int(invalid_indices[0]) if len(invalid_indices) > 0 else None,
+                first_invalid_index=int(invalid_indices[0])
+                if len(invalid_indices) > 0
+                else None,
             )
 
         # Check for missing attributes
@@ -356,7 +358,10 @@ class VectorizedBulkProcessor:
         # Execute batches in parallel
         batch_start = time.time()
         processed_batches = await asyncio.gather(
-            *[process_batch_with_semaphore(batch_df, i) for i, batch_df in enumerate(batches)],
+            *[
+                process_batch_with_semaphore(batch_df, i)
+                for i, batch_df in enumerate(batches)
+            ],
         )
         self.stats.batch_processing_time = time.time() - batch_start
 

@@ -97,7 +97,8 @@ class TransactionOperation(BaseModel):
     )
 
     success: bool | None = Field(
-        default=None, description="Whether operation succeeded",
+        default=None,
+        description="Whether operation succeeded",
     )
 
     error_message: str | None = Field(
@@ -239,7 +240,9 @@ class TransactionContext(BaseModel):
         }
 
     def mark_operation_successful(
-        self, operation_id: str, result: dict[str, Any],
+        self,
+        operation_id: str,
+        result: dict[str, Any],
     ) -> None:
         """Mark operation as successful with result.
 

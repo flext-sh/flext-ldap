@@ -164,6 +164,7 @@ class LDAPControl(BaseModel, ABC):
         """
         try:
             import ldap3
+
             # Create ldap3.Control object if available
             encoded_value = self.encode_value()
             return ldap3.Control(  # type: ignore[attr-defined]

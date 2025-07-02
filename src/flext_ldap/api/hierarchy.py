@@ -81,7 +81,7 @@ def get_parent_dn(dn: str) -> str:
     if comma_index == -1:
         return ""  # No parent (root DN)
 
-    return normalized[comma_index + 1:].strip()
+    return normalized[comma_index + 1 :].strip()
 
 
 def get_dn_depth(dn: str) -> int:
@@ -133,6 +133,7 @@ class HierarchyProcessorBase(ABC):
         Returns:
             List of entries sorted by hierarchy
         """
+
         def get_entry_dn(entry: dict[str, Any]) -> str:
             """Extract DN from entry."""
             return entry.get("dn", "") or entry.get("distinguishedName", "")
@@ -157,12 +158,14 @@ class HierarchyProcessorBase(ABC):
             "🔄 Hierarchy analysis complete",
             total_entries=len(entries),
             depth_distribution=dn_depths,
-            max_depth=max(dn_depths.keys()) if dn_depths else 0
+            max_depth=max(dn_depths.keys()) if dn_depths else 0,
         )
 
         return sorted(entries, key=dn_sort_key)
 
-    def validate_hierarchy_dependencies(self, entries: list[dict[str, Any]]) -> dict[str, Any]:
+    def validate_hierarchy_dependencies(
+        self, entries: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Validate that parent entries exist for all child entries.
 
         Args:
@@ -186,16 +189,15 @@ class HierarchyProcessorBase(ABC):
             if dn:
                 parent_dn = get_parent_dn(dn)
                 if parent_dn and normalize_dn(parent_dn) not in all_dns:
-                    missing_parents.append({
-                        "child_dn": dn,
-                        "missing_parent": parent_dn
-                    })
+                    missing_parents.append(
+                        {"child_dn": dn, "missing_parent": parent_dn}
+                    )
 
         return {
             "total_entries": len(entries),
             "valid_dns": len(all_dns),
             "missing_parents": missing_parents,
-            "hierarchy_complete": len(missing_parents) == 0
+            "hierarchy_complete": len(missing_parents) == 0,
         }
 
     def _log_performance(self, operation: str, duration: float, count: int) -> None:
@@ -210,14 +212,14 @@ class HierarchyProcessorBase(ABC):
             "duration": duration,
             "count": count,
             "rate": count / duration if duration > 0 else 0,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         logger.info(
             f"🔄 Hierarchy {operation} completed",
             duration=f"{duration:.2f}s",
             count=count,
-            rate=f"{count / duration:.1f}/s" if duration > 0 else "instant"
+            rate=f"{count / duration:.1f}/s" if duration > 0 else "instant",
         )
 
     def get_performance_metrics(self) -> dict[str, Any]:
@@ -268,5 +270,5 @@ class DefaultHierarchyProcessor(HierarchyProcessorBase):
             "total_entries": len(entries),
             "hierarchy_sorts": 1,
             "processing_time": duration,
-            "processor_type": "default_hierarchy"
+            "processor_type": "default_hierarchy",
         }

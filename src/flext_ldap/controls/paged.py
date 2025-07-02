@@ -363,10 +363,15 @@ class PagedSearchIterator:
                         and "controls" in self._connection.result
                     ):
                         for response_control in self._connection.result["controls"]:
-                            if response_control.get("type") == PagedResultsControl.control_type:
+                            if (
+                                response_control.get("type")
+                                == PagedResultsControl.control_type
+                            ):
                                 self._cookie = PagedSearchCookie(
                                     cookie_value=response_control.get("value", b""),
-                                    page_number=self._cookie.page_number + 1 if self._cookie else 1,
+                                    page_number=self._cookie.page_number + 1
+                                    if self._cookie
+                                    else 1,
                                 )
                                 break
 
@@ -388,7 +393,9 @@ class PagedSearchIterator:
 
     def _has_more_pages(self) -> bool:
         """Check if more pages are available."""
-        return self._current_control is not None and self._current_control.has_more_pages()
+        return (
+            self._current_control is not None and self._current_control.has_more_pages()
+        )
 
     def _update_control_from_response(
         self,

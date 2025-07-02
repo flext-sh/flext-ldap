@@ -56,7 +56,8 @@ def parse_dn(dn_string: str) -> LdapDn:
     components = []
     for comp in enterprise_dn.components:
         domain_component = DNComponent(
-            attribute=comp.attribute_type, value=comp.attribute_value,
+            attribute=comp.attribute_type,
+            value=comp.attribute_value,
         )
         components.append(domain_component)
 

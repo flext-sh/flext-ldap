@@ -140,17 +140,21 @@ class AuthenticationResult(BaseModel):
 
     success: bool = Field(description="Whether authentication succeeded")
     user_id: str | None = Field(
-        default=None, description="Authenticated user identifier",
+        default=None,
+        description="Authenticated user identifier",
     )
     user_dn: str | None = Field(
-        default=None, description="User distinguished name (LDAP)",
+        default=None,
+        description="User distinguished name (LDAP)",
     )
     realm: str | None = Field(default=None, description="Authentication realm")
     attributes: dict[str, Any] = Field(
-        default_factory=dict, description="Additional user attributes",
+        default_factory=dict,
+        description="Additional user attributes",
     )
     error_message: str | None = Field(
-        default=None, description="Error message if failed",
+        default=None,
+        description="Error message if failed",
     )
     error_code: str | None = Field(default=None, description="Error code if failed")
 
@@ -294,7 +298,9 @@ class SASLServer(BaseModel):
             context.dispose()
 
     def get_initial_challenge(
-        self, mechanism: str, session_id: str | None = None,
+        self,
+        mechanism: str,
+        session_id: str | None = None,
     ) -> bytes | None:
         """Get initial challenge for mechanism.
 
@@ -425,7 +431,9 @@ class SASLServer(BaseModel):
         return challenge.encode("utf-8")
 
     def _validate_plain_response(
-        self, response: bytes, context: SASLContext,
+        self,
+        response: bytes,
+        context: SASLContext,
     ) -> AuthenticationResult:
         """Validate PLAIN mechanism response.
 
@@ -507,7 +515,9 @@ class SASLServer(BaseModel):
             )
 
     def _validate_digest_md5_response(
-        self, response: bytes, context: SASLContext,
+        self,
+        response: bytes,
+        context: SASLContext,
     ) -> AuthenticationResult:
         """Validate DIGEST-MD5 mechanism response.
 
@@ -527,7 +537,9 @@ class SASLServer(BaseModel):
         )
 
     def _validate_external_response(
-        self, response: bytes, context: SASLContext,
+        self,
+        response: bytes,
+        context: SASLContext,
     ) -> AuthenticationResult:
         """Validate EXTERNAL mechanism response.
 
@@ -577,7 +589,9 @@ class SASLServer(BaseModel):
             )
 
     def _validate_anonymous_response(
-        self, response: bytes, context: SASLContext,
+        self,
+        response: bytes,
+        context: SASLContext,
     ) -> AuthenticationResult:
         """Validate ANONYMOUS mechanism response.
 

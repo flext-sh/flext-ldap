@@ -219,7 +219,8 @@ class RFC2849LDIFValidator:
             entry_result = self.validate_entry(entry)
             if not entry_result.valid:
                 errors.extend(
-                    f"Entry {i} ({entry.dn}): {error}" for error in entry_result.schema_errors
+                    f"Entry {i} ({entry.dn}): {error}"
+                    for error in entry_result.schema_errors
                 )
             warnings.extend(
                 [f"Entry {i} ({entry.dn}): {w}" for w in entry_result.syntax_errors],

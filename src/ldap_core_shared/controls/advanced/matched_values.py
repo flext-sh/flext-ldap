@@ -475,7 +475,9 @@ class MatchedValuesControl(LDAPControl):
         raise NotImplementedError(msg)
 
     def add_value_filter(
-        self, filter_expression: str, attribute_type: str | None = None,
+        self,
+        filter_expression: str,
+        attribute_type: str | None = None,
     ) -> None:
         """Add value filter to the control.
 

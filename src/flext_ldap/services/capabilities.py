@@ -299,7 +299,9 @@ class ServerCapabilities(BaseModel):
             "features_supported": supported_count,
             "features_total": total_count,
             "support_percentage": (
-                (supported_count / total_count * DEFAULT_MAX_ITEMS) if total_count > 0 else 0
+                (supported_count / total_count * DEFAULT_MAX_ITEMS)
+                if total_count > 0
+                else 0
             ),
             "authentication_methods": len(self.supported_sasl_mechanisms)
             + (1 if self.supports_simple_auth else 0),

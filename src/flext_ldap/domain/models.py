@@ -168,7 +168,9 @@ class MigrationStats(BaseModel):
         """Calculate success rate percentage."""
         if self.total_processed == 0:
             return 0.0
-        return ((self.successful + self.skipped) / self.total_processed) * DEFAULT_MAX_ITEMS
+        return (
+            (self.successful + self.skipped) / self.total_processed
+        ) * DEFAULT_MAX_ITEMS
 
 
 class MigrationStage(BaseModel):

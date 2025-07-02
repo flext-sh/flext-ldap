@@ -110,7 +110,9 @@ class BaseRulesManager(ABC):
         return result
 
     def evaluate_category_filters(
-        self, entry: dict[str, Any], filters: list[dict[str, Any]],
+        self,
+        entry: dict[str, Any],
+        filters: list[dict[str, Any]],
     ) -> bool:
         """Evaluate if entry matches category filters."""
         for filter_rule in filters:
@@ -119,7 +121,9 @@ class BaseRulesManager(ABC):
         return False
 
     def _evaluate_single_filter(
-        self, entry: dict[str, Any], filter_rule: dict[str, Any],
+        self,
+        entry: dict[str, Any],
+        filter_rule: dict[str, Any],
     ) -> bool:
         """Evaluate a single filter rule."""
         filter_type = filter_rule.get("type", "")
@@ -136,7 +140,9 @@ class BaseRulesManager(ABC):
         return False
 
     def _check_objectclass_filter(
-        self, entry: dict[str, Any], filter_values: list[str],
+        self,
+        entry: dict[str, Any],
+        filter_values: list[str],
     ) -> bool:
         """Check objectClass filter."""
         object_classes = entry.get("objectClass", [])
@@ -147,7 +153,9 @@ class BaseRulesManager(ABC):
         return any(value.lower() in object_classes_lower for value in filter_values)
 
     def _check_dn_pattern_filter(
-        self, entry: dict[str, Any], filter_values: list[str],
+        self,
+        entry: dict[str, Any],
+        filter_values: list[str],
     ) -> bool:
         """Check DN pattern filter."""
         dn = entry.get("dn", "").lower()
@@ -228,7 +236,8 @@ class GenericRulesManager(BaseRulesManager):
 
 
 def create_rules_manager(
-    rules_path: Path | None = None, manager_class: type = GenericRulesManager,
+    rules_path: Path | None = None,
+    manager_class: type = GenericRulesManager,
 ) -> BaseRulesManager:
     """Create a rules manager instance.
 

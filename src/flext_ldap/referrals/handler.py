@@ -363,7 +363,9 @@ class ReferralHandler:
         # Create policy configuration
         self._policy = ReferralPolicy(
             handling_mode=(
-                ReferralHandlingMode.AUTOMATIC if follow_referrals else ReferralHandlingMode.MANUAL
+                ReferralHandlingMode.AUTOMATIC
+                if follow_referrals
+                else ReferralHandlingMode.MANUAL
             ),
             security_mode=security_mode,
             max_referral_depth=max_referral_depth,
@@ -576,7 +578,9 @@ class ReferralHandler:
             "successful_referrals": self._successful_referrals,
             "failed_referrals": self._failed_referrals,
             "success_rate": (
-                self._successful_referrals / self._total_referrals_processed * DEFAULT_MAX_ITEMS
+                self._successful_referrals
+                / self._total_referrals_processed
+                * DEFAULT_MAX_ITEMS
                 if self._total_referrals_processed > 0
                 else 0
             ),
@@ -636,7 +640,9 @@ def parse_referral_urls(referral_response: str) -> list[str]:
         # Split on whitespace and filter valid URLs
         potential_urls = referral_response.split()
         urls.extend(
-            url.strip() for url in potential_urls if url.startswith(("ldap://", "ldaps://"))
+            url.strip()
+            for url in potential_urls
+            if url.startswith(("ldap://", "ldaps://"))
         )
 
     return urls

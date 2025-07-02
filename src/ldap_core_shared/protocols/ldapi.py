@@ -96,7 +96,8 @@ class LDAPIConfiguration(BaseModel):
 
     # Connection settings
     connect_timeout: float = Field(
-        default=DEFAULT_TIMEOUT_SECONDS, description="Connection timeout in seconds",
+        default=DEFAULT_TIMEOUT_SECONDS,
+        description="Connection timeout in seconds",
     )
 
     socket_permissions: int | None = Field(
@@ -106,7 +107,8 @@ class LDAPIConfiguration(BaseModel):
 
     # Security settings
     verify_socket_owner: bool = Field(
-        default=True, description="Whether to verify socket owner",
+        default=True,
+        description="Whether to verify socket owner",
     )
 
     allowed_socket_owners: list[int] = Field(
@@ -121,11 +123,13 @@ class LDAPIConfiguration(BaseModel):
 
     # Performance settings
     send_buffer_size: int | None = Field(
-        default=None, description="Socket send buffer size",
+        default=None,
+        description="Socket send buffer size",
     )
 
     recv_buffer_size: int | None = Field(
-        default=None, description="Socket receive buffer size",
+        default=None,
+        description="Socket receive buffer size",
     )
 
     @validator("socket_path")
@@ -211,7 +215,8 @@ class LDAPICredentials(BaseModel):
     # Additional credentials
     username: str | None = Field(default=None, description="Unix username")
     groups: list[int] = Field(
-        default_factory=list, description="Supplementary group IDs",
+        default_factory=list,
+        description="Supplementary group IDs",
     )
 
     # Authentication data
@@ -360,7 +365,9 @@ class LDAPITransport:
             # Try to get peer credentials (Linux-specific)
             if hasattr(socket, "SO_PEERCRED"):
                 creds = self._socket.getsockopt(
-                    socket.SOL_SOCKET, socket.SO_PEERCRED, 12,
+                    socket.SOL_SOCKET,
+                    socket.SO_PEERCRED,
+                    12,
                 )
                 import struct
 

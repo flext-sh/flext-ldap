@@ -82,7 +82,9 @@ class LDIFProcessor:
     - Consistent behavior across all LDIF usage
     """
 
-    def __init__(self, config: LDIFProcessingConfig | dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, config: LDIFProcessingConfig | dict[str, Any] | None = None
+    ) -> None:
         """Initialize LDIF processor facade.
 
         Args:
@@ -101,7 +103,9 @@ class LDIFProcessor:
         )
 
     def process_file(
-        self, file_path: Path | str, **kwargs,
+        self,
+        file_path: Path | str,
+        **kwargs,
     ) -> LDAPOperationResult[list[LDIFEntry]]:
         """Process LDIF file - delegates to production processor."""
         return self._production_processor.parse_file(file_path, **kwargs)
@@ -132,7 +136,9 @@ class LDIFProcessor:
             return False
 
     def parse_ldif_entries(
-        self, content: str | Path, **kwargs,
+        self,
+        content: str | Path,
+        **kwargs,
     ) -> Iterator[dict[str, Any]]:
         """Parse LDIF entries - delegates to production processor."""
         if isinstance(content, str):
@@ -179,7 +185,8 @@ def create_ldif_processor(config: dict[str, Any] | None = None) -> LDIFProcessor
 
 
 def process_ldif_file(
-    file_path: Path | str, **kwargs,
+    file_path: Path | str,
+    **kwargs,
 ) -> LDAPOperationResult[list[LDIFEntry]]:
     """Process LDIF file - convenience function with pure delegation."""
     processor = LDIFProcessor()

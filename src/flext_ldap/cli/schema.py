@@ -62,7 +62,10 @@ def run_schema2ldif(
                 # Try to detect from content
                 with open(input_file, encoding="utf-8") as f:
                     content = f.read(1000)  # Read first 1KB
-                    if "attributetype" in content.lower() or "objectclass" in content.lower():
+                    if (
+                        "attributetype" in content.lower()
+                        or "objectclass" in content.lower()
+                    ):
                         if content.strip().startswith("dn:"):
                             input_format = "ldif"
                         else:

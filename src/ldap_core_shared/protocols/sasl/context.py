@@ -704,7 +704,8 @@ class SASLSecurityLayer:
 
         else:
             logging.getLogger(__name__).warning(
-                "Unknown QOP level: %s, using authentication only", self.qop,
+                "Unknown QOP level: %s, using authentication only",
+                self.qop,
             )
             return data
 
@@ -758,7 +759,9 @@ class SASLSecurityLayer:
                     ).digest()
 
                 expected_mac = hmac.new(
-                    self._integrity_key, data, hashlib.sha256,
+                    self._integrity_key,
+                    data,
+                    hashlib.sha256,
                 ).digest()
 
                 if not hmac.compare_digest(received_mac, expected_mac):
@@ -807,7 +810,8 @@ class SASLSecurityLayer:
 
         else:
             logging.getLogger(__name__).warning(
-                "Unknown QOP level: %s, returning data as-is", self.qop,
+                "Unknown QOP level: %s, returning data as-is",
+                self.qop,
             )
             return protected_data
 

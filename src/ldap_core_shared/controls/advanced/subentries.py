@@ -331,7 +331,8 @@ class SubentriesResponse(BaseModel):
         return self.result_code == 0
 
     def get_subentries_by_type(
-        self, subentry_type: SubentryType,
+        self,
+        subentry_type: SubentryType,
     ) -> list[SubentryMetadata]:
         """Get subentries of specific type.
 

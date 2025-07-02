@@ -77,7 +77,9 @@ class RuleProcessor(Protocol):
         ...
 
     def process_rule(
-        self, rule: GenericRule, context: RuleExecutionContext,
+        self,
+        rule: GenericRule,
+        context: RuleExecutionContext,
     ) -> Result[dict[str, Any]]:
         """Process rule against context and return result."""
         ...
@@ -163,7 +165,9 @@ class GenericRulesEngine:
             return Result.fail(f"Failed to parse rules data: {e}")
 
     def _create_rule_from_data(
-        self, rule_data: dict[str, Any], section_name: str,
+        self,
+        rule_data: dict[str, Any],
+        section_name: str,
     ) -> GenericRule | None:
         """Create a generic rule from data.
 
@@ -196,7 +200,8 @@ class GenericRulesEngine:
             return None
 
     def execute_rules(
-        self, entries: list[dict[str, Any]],
+        self,
+        entries: list[dict[str, Any]],
     ) -> Result[list[dict[str, Any]]]:
         """Execute rules against entries.
 
@@ -231,7 +236,8 @@ class GenericRulesEngine:
                 )
 
                 processed_entry = self._execute_rules_for_entry(
-                    context, execution_stats,
+                    context,
+                    execution_stats,
                 )
                 processed_entries.append(processed_entry)
 
@@ -244,7 +250,9 @@ class GenericRulesEngine:
             return Result.fail(f"Rule execution failed: {e}")
 
     def _execute_rules_for_entry(
-        self, context: RuleExecutionContext, execution_stats: dict[str, Any],
+        self,
+        context: RuleExecutionContext,
+        execution_stats: dict[str, Any],
     ) -> dict[str, Any]:
         """Execute rules for a single entry.
 
@@ -414,7 +422,9 @@ class GenericRuleProcessor(ABC):
 
     @abstractmethod
     def process_rule(
-        self, rule: GenericRule, context: RuleExecutionContext,
+        self,
+        rule: GenericRule,
+        context: RuleExecutionContext,
     ) -> Result[dict[str, Any]]:
         """Process rule against context - MUST be implemented by subclasses.
 

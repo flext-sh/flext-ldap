@@ -36,7 +36,12 @@ class ACLProcessorBase(ABC):
         self.config = config
         self.performance_metrics: dict[str, Any] = {}
         self.acl_conversions: dict[str, str] = {}
-        self.supported_acl_types = ["aci", "aclEntry", "entryLevelRights", "attributeLevelRights"]
+        self.supported_acl_types = [
+            "aci",
+            "aclEntry",
+            "entryLevelRights",
+            "attributeLevelRights",
+        ]
 
     @abstractmethod
     def process(self, entries: list[dict[str, Any]]) -> dict[str, Any]:
@@ -61,14 +66,14 @@ class ACLProcessorBase(ABC):
             "duration": duration,
             "count": count,
             "rate": count / duration if duration > 0 else 0,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         logger.info(
             f"🔐 ACL {operation} completed",
             duration=f"{duration:.2f}s",
             count=count,
-            rate=f"{count / duration:.1f}/s" if duration > 0 else "instant"
+            rate=f"{count / duration:.1f}/s" if duration > 0 else "instant",
         )
 
     def get_performance_metrics(self) -> dict[str, Any]:
@@ -174,17 +179,21 @@ class DefaultACLProcessor(ACLProcessorBase):
 
                     for value in attr_values:
                         if not self.validate_acl_format(value, attr_name):
-                            validation_issues.append({
-                                "entry_index": i,
-                                "entry_dn": entry.get("dn", f"entry_{i}"),
-                                "attribute": attr_name,
-                                "issue": "Invalid ACL format",
-                                "value": value[:100] + "..." if len(value) > 100 else value
-                            })
+                            validation_issues.append(
+                                {
+                                    "entry_index": i,
+                                    "entry_dn": entry.get("dn", f"entry_{i}"),
+                                    "attribute": attr_name,
+                                    "issue": "Invalid ACL format",
+                                    "value": value[:100] + "..."
+                                    if len(value) > 100
+                                    else value,
+                                }
+                            )
                             logger.warning(
                                 f"⚠️ Invalid ACL format in entry {i}",
                                 attribute=attr_name,
-                                dn=entry.get("dn", "unknown")
+                                dn=entry.get("dn", "unknown"),
                             )
 
             processed_entries.append(processed_entry)
@@ -197,7 +206,7 @@ class DefaultACLProcessor(ACLProcessorBase):
             total_entries=len(entries),
             acl_entries=acl_entries_found,
             validation_issues=len(validation_issues),
-            duration=f"{duration:.2f}s"
+            duration=f"{duration:.2f}s",
         )
 
         return {
@@ -207,5 +216,5 @@ class DefaultACLProcessor(ACLProcessorBase):
             "acl_conversions": 0,  # Default processor doesn't convert
             "validation_issues": validation_issues,
             "processing_time": duration,
-            "processor_type": "default_acl"
+            "processor_type": "default_acl",
         }

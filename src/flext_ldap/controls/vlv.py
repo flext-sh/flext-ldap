@@ -392,7 +392,9 @@ class VLVControl(LDAPControl):
     def goto_last_page(self) -> None:
         """Navigate to last page."""
         if self._response and self._response.content_count > 0:
-            last_page = ((self._response.content_count - 1) // self._current_page_size) + 1
+            last_page = (
+                (self._response.content_count - 1) // self._current_page_size
+            ) + 1
             self.goto_page(last_page)
 
     def goto_value(self, target_value: str) -> None:

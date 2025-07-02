@@ -105,7 +105,9 @@ class Result(Generic[T, TError]):
         Raises:
             ValueError: If both value and error are provided or both are None
         """
-        if (value is None and error is None) or (value is not None and error is not None):
+        if (value is None and error is None) or (
+            value is not None and error is not None
+        ):
             msg = "Result must have exactly one of value or error"
             raise ValueError(msg)
 

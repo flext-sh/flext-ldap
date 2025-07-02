@@ -130,7 +130,9 @@ class PooledConnection:
     """Pooled connection - delegates to enterprise connection manager."""
 
     def __init__(
-        self, enterprise_manager: EnterpriseConnectionManager, connection_id: str,
+        self,
+        enterprise_manager: EnterpriseConnectionManager,
+        connection_id: str,
     ) -> None:
         """Initialize pooled connection."""
         self._enterprise_manager = enterprise_manager
@@ -215,7 +217,9 @@ class LDAPConnectionManager:
         self._pool: ConnectionPool | None = None
 
     async def initialize_pool(
-        self, pool_size: int = 10, max_pool_size: int = 50,
+        self,
+        pool_size: int = 10,
+        max_pool_size: int = 50,
     ) -> None:
         """Initialize connection pool - delegates to enterprise manager."""
         # Enterprise manager handles actual pool initialization
@@ -255,7 +259,9 @@ class LDAPConnectionManager:
     def execute_with_retry(self, operation_func, *args, **kwargs):
         """Execute operation with retry - delegates to enterprise manager."""
         return self._enterprise_manager.execute_with_retry(
-            operation_func, *args, **kwargs,
+            operation_func,
+            *args,
+            **kwargs,
         )
 
     def close(self) -> None:
@@ -272,7 +278,9 @@ class LDAPConnectionManager:
 
 
 def create_connection_manager(
-    server: str, port: int = 389, **kwargs,
+    server: str,
+    port: int = 389,
+    **kwargs,
 ) -> LDAPConnectionManager:
     """Create connection manager - convenience function with pure delegation."""
     connection_info = ConnectionInfo(server=server, port=port, **kwargs)

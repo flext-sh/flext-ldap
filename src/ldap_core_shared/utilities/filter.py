@@ -230,7 +230,9 @@ class LDAPFilter:
         return self._parse_simple_filter(inner_filter)
 
     def _parse_logical_filter(
-        self, filter_str: str, op_type: FilterType,
+        self,
+        filter_str: str,
+        op_type: FilterType,
     ) -> FilterComponent:
         """Parse logical filter (AND/OR).
 

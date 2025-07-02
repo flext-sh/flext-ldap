@@ -509,7 +509,10 @@ class SASLContext(BaseModel):
         Returns:
             True if confidentiality protection is active
         """
-        return self.security_layer_active and self.negotiated_qop == QualityOfProtection.AUTH_CONF
+        return (
+            self.security_layer_active
+            and self.negotiated_qop == QualityOfProtection.AUTH_CONF
+        )
 
     def dispose(self) -> None:
         """Dispose context and clear sensitive data.
@@ -549,7 +552,9 @@ class SASLContext(BaseModel):
             "authentication_id": self.authentication_id,
             "authorization_id": self.authorization_id,
             "realm": self.realm,
-            "negotiated_qop": (self.negotiated_qop.value if self.negotiated_qop else None),
+            "negotiated_qop": (
+                self.negotiated_qop.value if self.negotiated_qop else None
+            ),
             "negotiated_cipher": self.negotiated_cipher,
             "negotiated_buffer_size": self.negotiated_buffer_size,
             "security_layer_active": self.security_layer_active,
@@ -604,7 +609,11 @@ class SASLSecurityLayer:
         self.context = context
         self._sequence_number = 0
         # Extract QOP from context properties
-        if context.properties and hasattr(context.properties, "qop") and context.properties.qop:
+        if (
+            context.properties
+            and hasattr(context.properties, "qop")
+            and context.properties.qop
+        ):
             self.qop = (
                 context.properties.qop[0]
                 if isinstance(context.properties.qop, list)

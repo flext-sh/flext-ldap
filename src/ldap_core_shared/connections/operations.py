@@ -32,7 +32,8 @@ class LDAPOperations:
     """
 
     def __init__(
-        self, get_connection_func: Callable[[], AsyncContextManager[Any]],
+        self,
+        get_connection_func: Callable[[], AsyncContextManager[Any]],
     ) -> None:
         """Initialize LDAP operations with connection provider.
 

@@ -118,7 +118,9 @@ class SSHTunnel:
             elif self.config.ssh_key_file:
                 tunnel_kwargs["ssh_pkey"] = self.config.ssh_key_file
                 if self.config.ssh_key_password:
-                    tunnel_kwargs["ssh_private_key_password"] = self.config.ssh_key_password
+                    tunnel_kwargs["ssh_private_key_password"] = (
+                        self.config.ssh_key_password
+                    )
 
             self._tunnel = SSHTunnelForwarder(**tunnel_kwargs)
 
@@ -273,7 +275,9 @@ class AuthenticationManager:
         metrics = self._performance_monitor.get_metrics()
 
         locked_accounts = sum(
-            1 for attempts in self._auth_attempts.values() if len(attempts) >= self._max_attempts
+            1
+            for attempts in self._auth_attempts.values()
+            if len(attempts) >= self._max_attempts
         )
 
         return {

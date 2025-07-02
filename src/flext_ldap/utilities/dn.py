@@ -425,7 +425,9 @@ class DistinguishedName:
             List of matching components
         """
         return [
-            component for component in self._components if component.matches_type(attribute_type)
+            component
+            for component in self._components
+            if component.matches_type(attribute_type)
         ]
 
     def add_child(self, child_rdn: str) -> DistinguishedName:
@@ -566,7 +568,9 @@ class DistinguishedName:
             Copy of DN
         """
         new_dn = DistinguishedName()
-        new_dn._components = [DNComponent(**component.dict()) for component in self._components]
+        new_dn._components = [
+            DNComponent(**component.dict()) for component in self._components
+        ]
         return new_dn
 
     def __str__(self) -> str:
@@ -823,7 +827,9 @@ class DNBuilder:
         Returns:
             Self for method chaining
         """
-        self._components = [DNComponent(**component.dict()) for component in parsed_dn._components]
+        self._components = [
+            DNComponent(**component.dict()) for component in parsed_dn._components
+        ]
         return self
 
 

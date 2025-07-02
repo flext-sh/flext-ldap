@@ -503,7 +503,10 @@ class SubentriesControl(LDAPControl):
         Args:
             subentry_type: Type of subentry to remove
         """
-        if self._request.subentry_types and subentry_type in self._request.subentry_types:
+        if (
+            self._request.subentry_types
+            and subentry_type in self._request.subentry_types
+        ):
             self._request.subentry_types.remove(subentry_type)
 
     def enable_inheritance_expansion(self, expand: bool = True) -> None:

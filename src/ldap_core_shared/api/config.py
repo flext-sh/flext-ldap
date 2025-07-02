@@ -117,7 +117,9 @@ class LDAPConfig:
 
         # Auto-configure settings from server URL
         parsed_server, parsed_port, parsed_use_tls = self._parse_server_url(
-            server, port, use_tls,
+            server,
+            port,
+            use_tls,
         )
 
         # Build server list for enterprise config
@@ -137,7 +139,10 @@ class LDAPConfig:
         )
 
     def _parse_server_url(
-        self, server: str, port: int | None, use_tls: bool,
+        self,
+        server: str,
+        port: int | None,
+        use_tls: bool,
     ) -> tuple[str, int, bool]:
         """Parse server URL for auto-configuration.
 

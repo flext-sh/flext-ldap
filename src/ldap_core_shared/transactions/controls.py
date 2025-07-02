@@ -152,7 +152,8 @@ class TransactionSpecificationControl(LDAPControl):
 
     # Add the transaction identifier as a model field
     transaction_identifier: bytes | None = Field(
-        default=None, description="Transaction identifier",
+        default=None,
+        description="Transaction identifier",
     )
 
     def __init__(
@@ -207,7 +208,8 @@ class TransactionSpecificationControl(LDAPControl):
 
     @classmethod
     def decode_value(
-        cls, control_value: bytes | None,
+        cls,
+        control_value: bytes | None,
     ) -> TransactionSpecificationControl:
         """Decode Transaction Specification control value.
 
@@ -331,7 +333,8 @@ class TransactionEndingControl(LDAPControl):
 
     # Add the ending type as a model field
     ending_type: TransactionEndType = Field(
-        default=TransactionEndType.COMMIT, description="Transaction ending type",
+        default=TransactionEndType.COMMIT,
+        description="Transaction ending type",
     )
 
     def __init__(

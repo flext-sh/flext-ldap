@@ -80,7 +80,11 @@ class ConnectionInfo:
     @property
     def server(self) -> str:
         """Get server from enterprise config."""
-        return self._enterprise_config.servers[0] if self._enterprise_config.servers else ""
+        return (
+            self._enterprise_config.servers[0]
+            if self._enterprise_config.servers
+            else ""
+        )
 
     @property
     def port(self) -> int:

@@ -111,11 +111,13 @@ class EncodingContext(BaseModel):
 
     rules: EncodingRules = Field(description="Encoding rules to use")
     definite_length: bool = Field(
-        default=True, description="Use definite length encoding",
+        default=True,
+        description="Use definite length encoding",
     )
     canonical_order: bool = Field(default=False, description="Use canonical ordering")
     validate_elements: bool = Field(
-        default=True, description="Validate elements before encoding",
+        default=True,
+        description="Validate elements before encoding",
     )
     max_depth: int = Field(default=100, description="Maximum nesting depth")
     current_depth: int = Field(default=0, description="Current nesting depth")
@@ -350,7 +352,9 @@ class BEREncoder(ASN1EncoderBase):
         value = element.get_value()
         content = b"\xff" if value else b"\x00"
         return TLVEncoder.encode_tlv(
-            element.get_tag(), content, self.context.definite_length,
+            element.get_tag(),
+            content,
+            self.context.definite_length,
         )
 
     def _encode_integer(self, element: ASN1Element) -> bytes:
@@ -377,7 +381,9 @@ class BEREncoder(ASN1EncoderBase):
             content = value.to_bytes(byte_length, byteorder="big", signed=True)
 
         return TLVEncoder.encode_tlv(
-            element.get_tag(), content, self.context.definite_length,
+            element.get_tag(),
+            content,
+            self.context.definite_length,
         )
 
     def _encode_bit_string(self, element: ASN1Element) -> bytes:
@@ -393,7 +399,9 @@ class BEREncoder(ASN1EncoderBase):
         # Content: unused_bits_byte + bit_data
         content = bytes([unused_bits]) + bit_data
         return TLVEncoder.encode_tlv(
-            element.get_tag(), content, self.context.definite_length,
+            element.get_tag(),
+            content,
+            self.context.definite_length,
         )
 
     def _encode_octet_string(self, element: ASN1Element) -> bytes:
@@ -412,14 +420,18 @@ class BEREncoder(ASN1EncoderBase):
                 raise EncodingError(msg, element)
 
         return TLVEncoder.encode_tlv(
-            element.get_tag(), content, self.context.definite_length,
+            element.get_tag(),
+            content,
+            self.context.definite_length,
         )
 
     def _encode_null(self, element: ASN1Element) -> bytes:
         """Encode NULL element."""
         content = b""  # NULL has no content
         return TLVEncoder.encode_tlv(
-            element.get_tag(), content, self.context.definite_length,
+            element.get_tag(),
+            content,
+            self.context.definite_length,
         )
 
     def _encode_object_identifier(self, element: ASN1Element) -> bytes:
@@ -443,7 +455,9 @@ class BEREncoder(ASN1EncoderBase):
             content += self._encode_oid_component(component)
 
         return TLVEncoder.encode_tlv(
-            element.get_tag(), content, self.context.definite_length,
+            element.get_tag(),
+            content,
+            self.context.definite_length,
         )
 
     def _encode_oid_component(self, component: int) -> bytes:
@@ -472,7 +486,9 @@ class BEREncoder(ASN1EncoderBase):
 
         content = value.encode("utf-8")
         return TLVEncoder.encode_tlv(
-            element.get_tag(), content, self.context.definite_length,
+            element.get_tag(),
+            content,
+            self.context.definite_length,
         )
 
     def _encode_printable_string(self, element: ASN1Element) -> bytes:
@@ -484,7 +500,9 @@ class BEREncoder(ASN1EncoderBase):
 
         content = value.encode("ascii")
         return TLVEncoder.encode_tlv(
-            element.get_tag(), content, self.context.definite_length,
+            element.get_tag(),
+            content,
+            self.context.definite_length,
         )
 
     def _encode_ia5_string(self, element: ASN1Element) -> bytes:
@@ -496,7 +514,9 @@ class BEREncoder(ASN1EncoderBase):
 
         content = value.encode("ascii")
         return TLVEncoder.encode_tlv(
-            element.get_tag(), content, self.context.definite_length,
+            element.get_tag(),
+            content,
+            self.context.definite_length,
         )
 
     def _encode_utc_time(self, element: ASN1Element) -> bytes:
@@ -517,7 +537,9 @@ class BEREncoder(ASN1EncoderBase):
 
         content = time_string.encode("ascii")
         return TLVEncoder.encode_tlv(
-            element.get_tag(), content, self.context.definite_length,
+            element.get_tag(),
+            content,
+            self.context.definite_length,
         )
 
     def _encode_generalized_time(self, element: ASN1Element) -> bytes:
@@ -538,7 +560,9 @@ class BEREncoder(ASN1EncoderBase):
 
         content = time_string.encode("ascii")
         return TLVEncoder.encode_tlv(
-            element.get_tag(), content, self.context.definite_length,
+            element.get_tag(),
+            content,
+            self.context.definite_length,
         )
 
     def _encode_sequence(self, element: ASN1Element) -> bytes:
@@ -557,7 +581,9 @@ class BEREncoder(ASN1EncoderBase):
                 raise EncodingError(msg, element)
 
             return TLVEncoder.encode_tlv(
-                element.get_tag(), content, self.context.definite_length,
+                element.get_tag(),
+                content,
+                self.context.definite_length,
             )
         finally:
             self.context.current_depth -= 1
@@ -584,7 +610,9 @@ class BEREncoder(ASN1EncoderBase):
 
             content = b"".join(encoded_elements)
             return TLVEncoder.encode_tlv(
-                element.get_tag(), content, self.context.definite_length,
+                element.get_tag(),
+                content,
+                self.context.definite_length,
             )
         finally:
             self.context.current_depth -= 1
@@ -604,7 +632,9 @@ class BEREncoder(ASN1EncoderBase):
             content = str(value).encode("utf-8")
 
         return TLVEncoder.encode_tlv(
-            element.get_tag(), content, self.context.definite_length,
+            element.get_tag(),
+            content,
+            self.context.definite_length,
         )
 
 
@@ -652,7 +682,9 @@ class DEREncoder(BEREncoder):
 
             content = b"".join(encoded_elements)
             return TLVEncoder.encode_tlv(
-                element.get_tag(), content, True,
+                element.get_tag(),
+                content,
+                True,
             )  # Always definite length
         finally:
             self.context.current_depth -= 1

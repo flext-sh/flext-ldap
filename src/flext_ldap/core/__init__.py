@@ -97,10 +97,13 @@ except ImportError:
     PerformanceMonitor = None
     SecurityEventType = None
     StructuredLogger = None
+
     def get_logger(x) -> None:
         return None
+
     def get_performance_monitor() -> None:
         return None
+
 
 if TYPE_CHECKING:
     from pathlib import Path

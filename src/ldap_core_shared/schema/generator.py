@@ -646,7 +646,9 @@ class LDIFGenerator:
         return f"( {' '.join(parts)} )"
 
     def _convert_syntax(
-        self, syntax: Any, config: SchemaEntryConfig,
+        self,
+        syntax: Any,
+        config: SchemaEntryConfig,
     ) -> SchemaLDIFEntry:
         """Convert syntax to LDIF entry.
 
@@ -667,7 +669,9 @@ class LDIFGenerator:
         )
 
     def _convert_matching_rule(
-        self, rule: Any, config: SchemaEntryConfig,
+        self,
+        rule: Any,
+        config: SchemaEntryConfig,
     ) -> SchemaLDIFEntry:
         """Convert matching rule to LDIF entry.
 

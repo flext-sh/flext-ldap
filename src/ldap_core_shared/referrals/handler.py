@@ -501,7 +501,8 @@ class ReferralHandler:
         return not operation.get_duration() > self._policy.max_referral_time
 
     def set_rebind_credentials(
-        self, credentials: ReferralCredentials | dict[str, str],
+        self,
+        credentials: ReferralCredentials | dict[str, str],
     ) -> None:
         """Set credentials for rebinding to referral servers.
 

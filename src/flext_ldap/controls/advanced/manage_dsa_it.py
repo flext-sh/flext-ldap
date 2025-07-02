@@ -671,11 +671,15 @@ async def modify_referral_target(
         # Verify it's a referral object
         object_classes = [str(oc).lower() for oc in entry.objectClass.values]
         if "referral" not in object_classes:
-            msg = f"Object is not a referral: {referral_dn}, objectClass={object_classes}"
+            msg = (
+                f"Object is not a referral: {referral_dn}, objectClass={object_classes}"
+            )
             raise Exception(msg)
 
         # Get current referral targets
-        current_refs = entry.ref.values if hasattr(entry, "ref") and entry.ref.values else []
+        current_refs = (
+            entry.ref.values if hasattr(entry, "ref") and entry.ref.values else []
+        )
 
         logger.debug("Current referral targets for %s: %s", referral_dn, current_refs)
 

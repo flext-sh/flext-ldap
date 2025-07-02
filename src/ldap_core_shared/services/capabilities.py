@@ -519,7 +519,8 @@ class CapabilityDetection:
             Compatibility check result
         """
         result = CompatibilityResult(
-            is_compatible=True, required_features=required_features,
+            is_compatible=True,
+            required_features=required_features,
         )
 
         if not self._cached_capabilities:

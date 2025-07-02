@@ -325,7 +325,8 @@ class LDIFAnalyzer:
         attr_diversity = len(unique_attrs) / len(entries) if entries else 0
         if attr_diversity > GOOD_ATTRIBUTE_DIVERSITY:  # Good attribute diversity
             score += min(
-                GOOD_ATTRIBUTE_DIVERSITY, attr_diversity - GOOD_ATTRIBUTE_DIVERSITY,
+                GOOD_ATTRIBUTE_DIVERSITY,
+                attr_diversity - GOOD_ATTRIBUTE_DIVERSITY,
             )
         elif attr_diversity < MIN_ATTRIBUTE_DIVERSITY:  # Poor attribute diversity
             score -= 10

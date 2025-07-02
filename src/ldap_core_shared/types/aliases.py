@@ -16,7 +16,12 @@ from __future__ import annotations
 import uuid
 
 # Use typing_extensions for TypeAlias compatibility across Python versions
-from typing import Any, Literal, TypeAlias
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing import TypeAlias
+
+from typing import Any, Literal
 
 # ===== BASIC LDAP TYPES =====
 

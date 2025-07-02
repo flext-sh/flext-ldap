@@ -926,12 +926,14 @@ class ActiveDirectoryExtensions:
                 domain_obj = domain_result.entries[0]
                 netbios_name = (
                     str(domain_obj.netBIOSName.value)
-                    if hasattr(domain_obj, "netBIOSName") and domain_obj.netBIOSName.value
+                    if hasattr(domain_obj, "netBIOSName")
+                    and domain_obj.netBIOSName.value
                     else None
                 )
                 min_password_length = (
                     int(domain_obj.minPwdLength.value or 0)
-                    if hasattr(domain_obj, "minPwdLength") and domain_obj.minPwdLength.value
+                    if hasattr(domain_obj, "minPwdLength")
+                    and domain_obj.minPwdLength.value
                     else None
                 )
                 max_password_age = (
@@ -953,7 +955,8 @@ class ActiveDirectoryExtensions:
                 domain_controllers.extend(
                     str(dc_entry.serverReference.value)
                     for dc_entry in dc_result.entries[:10]  # Limit to 10 DCs
-                    if hasattr(dc_entry, "serverReference") and dc_entry.serverReference.value
+                    if hasattr(dc_entry, "serverReference")
+                    and dc_entry.serverReference.value
                 )
 
             return ADDomainInfo(
@@ -1034,7 +1037,9 @@ class ActiveDirectoryExtensions:
 
             # Check for domain controller object classes or attributes
             # This is a heuristic approach since we can't query the server directly here
-            if "dc=" in server_dn_lower and ("cn=" in server_dn_lower or "ou=" in server_dn_lower):
+            if "dc=" in server_dn_lower and (
+                "cn=" in server_dn_lower or "ou=" in server_dn_lower
+            ):
                 # If it's in a domain context and has computer/server indicators
                 return "computer" in server_dn_lower or "server" in server_dn_lower
 

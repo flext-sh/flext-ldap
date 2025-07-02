@@ -52,11 +52,11 @@ from typing import TYPE_CHECKING, Any
 try:
     from typing import TypeAlias
 except ImportError:
-    # Fallback for Python < 3.10
     from typing import TypeAlias
 
-from flext_ldapants import DEFAULT_MAX_ITEMS, DEFAULT_TIMEOUT_SECONDS
 from pydantic import BaseModel, Field
+
+from ldap_core_shared.constants import DEFAULT_MAX_ITEMS, DEFAULT_TIMEOUT_SECONDS
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -389,7 +389,9 @@ class CallbackRegistry:
         }
 
         total_calls = sum(callback.call_count for callback in self._callbacks.values())
-        total_errors = sum(callback.error_count for callback in self._callbacks.values())
+        total_errors = sum(
+            callback.error_count for callback in self._callbacks.values()
+        )
 
         return {
             "total_callbacks": total_callbacks,

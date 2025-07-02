@@ -1018,7 +1018,8 @@ def parse_dsml_response(xml_content: str) -> dict[str, Any]:
 
         # Process search responses
         for search_response in batch_response.findall(
-            ".//dsml:searchResponse", namespaces,
+            ".//dsml:searchResponse",
+            namespaces,
         ):
             # Check for errors
             search_result = search_response.find("dsml:searchResultDone", namespaces)
@@ -1056,7 +1057,8 @@ def parse_dsml_response(xml_content: str) -> dict[str, Any]:
 
         # Process other operation responses (add, modify, delete)
         for operation_response in batch_response.findall(
-            ".//dsml:addResponse", namespaces,
+            ".//dsml:addResponse",
+            namespaces,
         ):
             result_code = operation_response.get("resultCode", "0")
             response_data["result_code"] = int(result_code)
@@ -1075,7 +1077,8 @@ def parse_dsml_response(xml_content: str) -> dict[str, Any]:
 
 
 async def test_dsml_service(
-    service_url: str, timeout: float | None = None,
+    service_url: str,
+    timeout: float | None = None,
 ) -> dict[str, Any]:
     """Test DSML service availability.
 
@@ -1100,9 +1103,12 @@ async def test_dsml_service(
 
     try:
         # Test basic HTTP connectivity
-        async with aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=timeout),
-        ) as session, session.get(service_url) as response:
+        async with (
+            aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=timeout),
+            ) as session,
+            session.get(service_url) as response,
+        ):
             results["reachable"] = True
             results["http_status"] = response.status
 

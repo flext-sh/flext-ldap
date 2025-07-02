@@ -145,7 +145,8 @@ class LDAPValidation:
                 validate_dn(config.auth_dn)
 
             return Result.ok(
-                True, message="Config validation delegated to utils.ldap_validation",
+                True,
+                message="Config validation delegated to utils.ldap_validation",
             )
         except Exception as e:
             return Result.from_exception(e, default_data=False)

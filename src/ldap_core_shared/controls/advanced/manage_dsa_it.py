@@ -340,7 +340,8 @@ class ManageDsaITControl(LDAPControl):
                 # Some servers may provide operational metadata
                 # For now, we'll log it and treat as successful
                 logger.debug(
-                    "ManageDsaIT response received: %s bytes", len(response_value),
+                    "ManageDsaIT response received: %s bytes",
+                    len(response_value),
                 )
                 result_message = "Server provided response metadata"
             else:
@@ -707,7 +708,9 @@ async def modify_referral_target(
             return True
         error_msg = getattr(connection, "last_error", "Unknown error")
         logger.error(
-            "Failed to modify referral target: %s, error: %s", referral_dn, error_msg,
+            "Failed to modify referral target: %s, error: %s",
+            referral_dn,
+            error_msg,
         )
         msg = f"LDAP modify failed: {error_msg}"
         raise Exception(msg)

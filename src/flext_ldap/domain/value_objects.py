@@ -176,7 +176,9 @@ class LdapDn(BaseModel):
             raise ValueError(msg)
 
         # Keep the relative components and add new base
-        relative_components = self.components[: len(self.components) - len(old_base.components)]
+        relative_components = self.components[
+            : len(self.components) - len(old_base.components)
+        ]
         return LdapDn(components=relative_components + new_base.components)
 
 

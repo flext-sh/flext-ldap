@@ -62,7 +62,7 @@ class SchemaProcessorBase(ABC):
             "entry_dn": entry.get("dn", ""),
             "is_valid": True,
             "issues": [],
-            "warnings": []
+            "warnings": [],
         }
 
         # Basic validation - check for required attributes
@@ -97,14 +97,14 @@ class SchemaProcessorBase(ABC):
             "duration": duration,
             "count": count,
             "rate": count / duration if duration > 0 else 0,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         logger.info(
             f"📋 Schema {operation} completed",
             duration=f"{duration:.2f}s",
             count=count,
-            rate=f"{count / duration:.1f}/s" if duration > 0 else "instant"
+            rate=f"{count / duration:.1f}/s" if duration > 0 else "instant",
         )
 
     def get_performance_metrics(self) -> dict[str, Any]:
@@ -185,5 +185,5 @@ class DefaultSchemaProcessor(SchemaProcessorBase):
             "schema_transformations": schema_transformations,
             "validation_results": validation_results,
             "processing_time": duration,
-            "processor_type": "default_schema"
+            "processor_type": "default_schema",
         }

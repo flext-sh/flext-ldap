@@ -134,7 +134,8 @@ class SchemaOperation(BaseModel):
     # Operation details
     source_file: str | None = Field(default=None, description="Source schema file")
     generated_ldif: str | None = Field(
-        default=None, description="Generated LDIF file",
+        default=None,
+        description="Generated LDIF file",
     )
     backup_file: str | None = Field(default=None, description="Backup file created")
 
@@ -551,7 +552,9 @@ class SchemaManager:
         raise NotImplementedError(msg)
 
     def _prepare_ldif_file(
-        self, schema_file: str, operation: SchemaOperation,
+        self,
+        schema_file: str,
+        operation: SchemaOperation,
     ) -> str | None:
         """Prepare LDIF file from schema file.
 

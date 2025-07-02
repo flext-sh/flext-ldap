@@ -47,7 +47,8 @@ def simple_parse_dn(dn_string: str) -> list[tuple[str, str]]:
 
     # Convert to simple tuple format with lowercase attributes for backward compatibility
     return [
-        (comp.attribute_type.lower(), comp.attribute_value) for comp in enterprise_dn.components
+        (comp.attribute_type.lower(), comp.attribute_value)
+        for comp in enterprise_dn.components
     ]
 
 

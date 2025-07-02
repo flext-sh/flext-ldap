@@ -192,7 +192,10 @@ class SensitiveDataFilter:
         filtered = message
         for pattern in cls.SENSITIVE_PATTERNS:
             filtered = re.sub(
-                pattern, r"\1***REDACTED***", filtered, flags=re.IGNORECASE,
+                pattern,
+                r"\1***REDACTED***",
+                filtered,
+                flags=re.IGNORECASE,
             )
 
         return filtered
@@ -328,7 +331,9 @@ class PerformanceMonitor:
 
     @contextmanager
     def time_operation(
-        self, operation_name: str, logger: StructuredLogger | None = None,
+        self,
+        operation_name: str,
+        logger: StructuredLogger | None = None,
     ) -> Generator[str, None, None]:
         """Context manager for timing operations.
 
@@ -484,7 +489,10 @@ class StructuredLogger:
         self._log(LogLevel.CRITICAL.value, message, **kwargs)
 
     def security(
-        self, message: str, security_event: SecurityEventType, **kwargs,
+        self,
+        message: str,
+        security_event: SecurityEventType,
+        **kwargs,
     ) -> None:
         """Log security event.
 
@@ -495,7 +503,10 @@ class StructuredLogger:
         """
         kwargs["security_event_type"] = security_event.value
         self._log(
-            LogLevel.SECURITY.value, message, event_type=EventType.SECURITY, **kwargs,
+            LogLevel.SECURITY.value,
+            message,
+            event_type=EventType.SECURITY,
+            **kwargs,
         )
 
     def audit(self, message: str, **kwargs) -> None:

@@ -521,7 +521,8 @@ class SASLMechanismRegistry:
 
     @classmethod
     def get_mechanism_capabilities(
-        cls, mechanism_name: str,
+        cls,
+        mechanism_name: str,
     ) -> SASLMechanismCapabilities:
         """Get mechanism capabilities.
 

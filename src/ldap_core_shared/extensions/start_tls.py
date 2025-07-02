@@ -622,7 +622,10 @@ class TLSUpgradeManager:
                 logger.warning("TLS upgrade failed, retrying: %s", e)
                 # Simple retry logic (in production, use exponential backoff)
                 return self.upgrade_connection(
-                    connection, config, False, fallback_to_insecure,
+                    connection,
+                    config,
+                    False,
+                    fallback_to_insecure,
                 )
 
             if fallback_to_insecure:

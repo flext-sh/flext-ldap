@@ -332,7 +332,9 @@ class MatchedValuesResponse(BaseModel):
         if self.total_values_examined == 0:
             return 0.0
 
-        return (self.total_values_matched / self.total_values_examined) * DEFAULT_MAX_ITEMS
+        return (
+            self.total_values_matched / self.total_values_examined
+        ) * DEFAULT_MAX_ITEMS
 
     def get_attribute_summary(self, attribute: str) -> dict[str, Any] | None:
         """Get summary for specific attribute.
@@ -503,7 +505,9 @@ class MatchedValuesControl(LDAPControl):
         original_count = len(self._request.value_filters)
 
         self._request.value_filters = [
-            vf for vf in self._request.value_filters if vf.filter_expression != filter_expression
+            vf
+            for vf in self._request.value_filters
+            if vf.filter_expression != filter_expression
         ]
 
         if len(self._request.value_filters) < original_count:

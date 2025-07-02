@@ -532,12 +532,16 @@ class Query:
                 except (AttributeError, TypeError, ValueError) as e:
                     # Sorting failed - log warning but don't fail the whole query
                     logger.warning(
-                        "Result sorting failed for attribute '%s': %s", self._sort_by, e,
+                        "Result sorting failed for attribute '%s': %s",
+                        self._sort_by,
+                        e,
                     )
                 except Exception as e:
                     # Unexpected sorting error - log with more detail
                     logger.error(
-                        "Unexpected error during result sorting: %s", e, exc_info=True,
+                        "Unexpected error during result sorting: %s",
+                        e,
+                        exc_info=True,
                     )
 
             execution_time = (time.time() - start_time) * 1000
@@ -550,7 +554,9 @@ class Query:
 
             execution_time = (time.time() - start_time) * 1000
             return Result.from_exception(
-                e, default_data=[], execution_time_ms=execution_time,
+                e,
+                default_data=[],
+                execution_time_ms=execution_time,
             )
 
     async def first(self) -> Result[LDAPEntry]:
@@ -580,7 +586,10 @@ class Query:
             first_item = result.data[0] if result.data else None
             return Result.ok(first_item, result.execution_time_ms)
         return Result.fail(
-            result.error, result.error_code, result.execution_time_ms, None,
+            result.error,
+            result.error_code,
+            result.execution_time_ms,
+            None,
         )
 
     async def count(self) -> Result[int]:

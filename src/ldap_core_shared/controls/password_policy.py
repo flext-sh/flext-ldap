@@ -159,7 +159,9 @@ class PasswordPolicyControl(LDAPControl):
 
     @validator("warning_value")
     def validate_warning_value(
-        self, v: int | None, values: dict[str, Any],
+        self,
+        v: int | None,
+        values: dict[str, Any],
     ) -> int | None:
         """Validate warning value is consistent with warning type."""
         if v is not None and v < 0:
@@ -321,7 +323,8 @@ class PasswordPolicyControl(LDAPControl):
         return self.error == PasswordPolicyError.ACCOUNT_LOCKED
 
     def is_password_expiring_soon(
-        self, threshold_seconds: int = 86400,
+        self,
+        threshold_seconds: int = 86400,
     ) -> bool:  # 24 hours
         """Check if password is expiring soon.
 

@@ -110,7 +110,8 @@ config = EnterpriseConfig()
 
 
 def output_result(
-    result: dict[str, Any] | list[Any] | str | float | bool | None, success: bool = True,
+    result: dict[str, Any] | list[Any] | str | float | bool | None,
+    success: bool = True,
 ) -> None:
     """Output result in configured format.
 
@@ -143,10 +144,15 @@ def output_result(
     help="Output format",
 )
 @click.option(
-    "--config-file", type=click.Path(exists=True), help="Configuration file path",
+    "--config-file",
+    type=click.Path(exists=True),
+    help="Configuration file path",
 )
 def cli(
-    debug: bool, verbose: bool, output_format: str, config_file: str | None,
+    debug: bool,
+    verbose: bool,
+    output_format: str,
+    config_file: str | None,
 ) -> None:
     """Enterprise LDAP Tools - Comprehensive LDAP management suite.
 
@@ -172,13 +178,22 @@ def schema() -> None:
 @click.argument("schema_file", type=click.Path(exists=True))
 @click.option("--strict", is_flag=True, help="Enable strict validation")
 @click.option(
-    "--check-dependencies", is_flag=True, default=True, help="Check schema dependencies",
+    "--check-dependencies",
+    is_flag=True,
+    default=True,
+    help="Check schema dependencies",
 )
 @click.option(
-    "--check-conflicts", is_flag=True, default=True, help="Check name conflicts",
+    "--check-conflicts",
+    is_flag=True,
+    default=True,
+    help="Check name conflicts",
 )
 def validate(
-    schema_file: str, strict: bool, check_dependencies: bool, check_conflicts: bool,
+    schema_file: str,
+    strict: bool,
+    check_dependencies: bool,
+    check_conflicts: bool,
 ) -> None:
     """Validate LDAP schema file.
 
@@ -228,10 +243,17 @@ def validate(
 @click.option("--environment", default="development", help="Target environment")
 @click.option("--dry-run", is_flag=True, help="Perform dry run without changes")
 @click.option(
-    "--validate-first", is_flag=True, default=True, help="Validate before deployment",
+    "--validate-first",
+    is_flag=True,
+    default=True,
+    help="Validate before deployment",
 )
 def deploy(
-    schema_file: str, server: str, environment: str, dry_run: bool, validate_first: bool,
+    schema_file: str,
+    server: str,
+    environment: str,
+    dry_run: bool,
+    validate_first: bool,
 ) -> None:
     """Deploy schema to LDAP server.
 
@@ -440,7 +462,10 @@ def asn1() -> None:
 )
 @click.option("--output-file", type=click.Path(), help="Output file for encoded data")
 def encode(
-    asn1_type: str, value: str, encoding: str, output_file: str | None,
+    asn1_type: str,
+    value: str,
+    encoding: str,
+    output_file: str | None,
 ) -> None:
     """Encode value to ASN.1 format.
 

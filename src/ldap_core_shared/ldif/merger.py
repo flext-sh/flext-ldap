@@ -94,7 +94,9 @@ class LDIFMerger:
                     stats.total_input_entries += len(result.data)
                 else:
                     logger.warning(
-                        "Failed to parse %s: %s", file_path, result.error_message,
+                        "Failed to parse %s: %s",
+                        file_path,
+                        result.error_message,
                     )
 
             # Merge and deduplicate

@@ -181,7 +181,8 @@ class ConnectionConfig(BaseModel):
     # Monitoring
     enable_metrics: bool = Field(default=True, description="Enable metrics collection")
     metrics_retention: int = Field(
-        default=3600, description="Metrics retention seconds",
+        default=3600,
+        description="Metrics retention seconds",
     )
 
 
@@ -314,9 +315,10 @@ class ConnectionPool:
         try:
             conn = LDAPConnection(self.server_info.uri, self.config.bind_dn)
 
-            if conn.connect() and ((
-                self.config.bind_dn and conn.bind(self.config.bind_password)
-            ) or not self.config.bind_dn):
+            if conn.connect() and (
+                (self.config.bind_dn and conn.bind(self.config.bind_password))
+                or not self.config.bind_dn
+            ):
                 return conn
 
             return None
