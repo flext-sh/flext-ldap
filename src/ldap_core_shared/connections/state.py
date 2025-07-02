@@ -81,7 +81,8 @@ class ConnectionState:
         return sum(self.operation_times) / len(self.operation_times)
 
     def should_perform_health_check(
-        self, interval: float = DEFAULT_TIMEOUT_SECONDS,
+        self,
+        interval: float = DEFAULT_TIMEOUT_SECONDS,
     ) -> bool:
         """Check if health check should be performed.
 

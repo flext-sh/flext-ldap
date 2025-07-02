@@ -321,13 +321,16 @@ class LDAPSearchEngine:
                         entry_dict = {
                             "dn": entry.entry_dn,
                             "attributes": {
-                                attr: entry[attr].values for attr in entry.entry_attributes
+                                attr: entry[attr].values
+                                for attr in entry.entry_attributes
                             },
                         }
                         entries.append(entry_dict)
 
                     # Calculate performance metrics
-                    entries_per_second = len(entries) / duration if duration > 0 else 0.0
+                    entries_per_second = (
+                        len(entries) / duration if duration > 0 else 0.0
+                    )
 
                     # Handle pagination
                     has_more_pages = False

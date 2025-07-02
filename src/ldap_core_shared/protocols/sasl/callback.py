@@ -131,7 +131,9 @@ class NameCallback(SASLCallback):
     """
 
     def __init__(
-        self, prompt: str = "Username: ", default_name: str | None = None,
+        self,
+        prompt: str = "Username: ",
+        default_name: str | None = None,
     ) -> None:
         """Initialize name callback.
 
@@ -224,7 +226,9 @@ class RealmCallback(SASLCallback):
     """
 
     def __init__(
-        self, prompt: str = "Realm: ", default_realm: str | None = None,
+        self,
+        prompt: str = "Realm: ",
+        default_realm: str | None = None,
     ) -> None:
         """Initialize realm callback.
 
@@ -325,14 +329,17 @@ class SASLCallbackHandler(BaseModel):
 
     # Stored credentials (optional)
     username: str | None = Field(
-        default=None, description="Username for authentication",
+        default=None,
+        description="Username for authentication",
     )
     password: SecretStr | None = Field(
-        default=None, description="Password for authentication",
+        default=None,
+        description="Password for authentication",
     )
     realm: str | None = Field(default=None, description="Authentication realm")
     authorization_id: str | None = Field(
-        default=None, description="Authorization identity",
+        default=None,
+        description="Authorization identity",
     )
 
     # Configuration
@@ -342,7 +349,8 @@ class SASLCallbackHandler(BaseModel):
 
     # Additional properties
     properties: dict[str, Any] = Field(
-        default_factory=dict, description="Additional SASL properties",
+        default_factory=dict,
+        description="Additional SASL properties",
     )
 
     class Config:
@@ -363,7 +371,9 @@ class SASLCallbackHandler(BaseModel):
             callback.handle(self)
 
     def get_username(
-        self, prompt: str | None = None, default: str | None = None,
+        self,
+        prompt: str | None = None,
+        default: str | None = None,
     ) -> str | None:
         """Get username for authentication.
 
@@ -392,7 +402,9 @@ class SASLCallbackHandler(BaseModel):
         return None
 
     def get_password(
-        self, prompt: str | None = None, echo_on: bool = False,
+        self,
+        prompt: str | None = None,
+        echo_on: bool = False,
     ) -> str | None:
         """Get password for authentication.
 
@@ -419,7 +431,9 @@ class SASLCallbackHandler(BaseModel):
         return None
 
     def get_realm(
-        self, prompt: str | None = None, default: str | None = None,
+        self,
+        prompt: str | None = None,
+        default: str | None = None,
     ) -> str | None:
         """Get authentication realm.
 

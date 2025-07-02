@@ -756,7 +756,10 @@ class TransactionManager:
                     controls=[tx_control.to_ldap3_control()],
                 )
 
-                if not result and "transaction" not in str(self._connection.result).lower():
+                if (
+                    not result
+                    and "transaction" not in str(self._connection.result).lower()
+                ):
                     # Some servers don't explicitly acknowledge transaction start
                     pass  # Continue anyway - transaction semantics handled by controls
 
@@ -854,7 +857,9 @@ class TransactionManager:
         }
 
         if active_count > 0:
-            transaction_stats = [tx.get_statistics() for tx in self._active_transactions.values()]
+            transaction_stats = [
+                tx.get_statistics() for tx in self._active_transactions.values()
+            ]
             stats["transactions"] = transaction_stats
 
         return stats

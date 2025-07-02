@@ -291,7 +291,10 @@ class VectorizedLDIFProcessor:
         )
 
         try:
-            if self.enable_streaming and self.stats.file_size_bytes > self.chunk_size_bytes:
+            if (
+                self.enable_streaming
+                and self.stats.file_size_bytes > self.chunk_size_bytes
+            ):
                 # Use streaming processing for large files
                 entries = await self._process_large_file_streaming(file_path)
             else:
@@ -419,7 +422,10 @@ class VectorizedLDIFProcessor:
 
             # Find chunk boundary
             if end_offset < file_size:
-                while end_offset < file_size and file_data[end_offset : end_offset + 1] != b"\n":
+                while (
+                    end_offset < file_size
+                    and file_data[end_offset : end_offset + 1] != b"\n"
+                ):
                     end_offset += 1
                 end_offset += 1
 
@@ -454,7 +460,8 @@ class VectorizedLDIFProcessor:
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit all chunk processing tasks
             futures = [
-                loop.run_in_executor(executor, _process_ldif_chunk, chunk) for chunk in chunks
+                loop.run_in_executor(executor, _process_ldif_chunk, chunk)
+                for chunk in chunks
             ]
 
             # Wait for all chunks to complete

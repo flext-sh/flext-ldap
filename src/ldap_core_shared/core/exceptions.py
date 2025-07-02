@@ -119,16 +119,19 @@ class ErrorContext(BaseModel):
 
     operation: str | None = Field(default=None, description="Operation being performed")
     component: str | None = Field(
-        default=None, description="Component where error occurred",
+        default=None,
+        description="Component where error occurred",
     )
     resource: str | None = Field(default=None, description="Resource being accessed")
     user: str | None = Field(default=None, description="User performing operation")
     session_id: str | None = Field(default=None, description="Session identifier")
     timestamp: datetime = Field(
-        default_factory=datetime.now, description="Error occurrence time",
+        default_factory=datetime.now,
+        description="Error occurrence time",
     )
     additional_data: dict[str, Any] = Field(
-        default_factory=dict, description="Additional context data",
+        default_factory=dict,
+        description="Additional context data",
     )
 
     def __getattr__(self, name: str) -> Any:
@@ -459,7 +462,10 @@ class PoolExhaustedError(LDAPConnectionError):
             )
 
         super().__init__(
-            message, context=context, severity=ErrorSeverity.HIGH, **kwargs,
+            message,
+            context=context,
+            severity=ErrorSeverity.HIGH,
+            **kwargs,
         )
 
 

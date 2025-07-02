@@ -305,7 +305,9 @@ class LDIFAnalyzer:
         score = DEFAULT_MAX_ITEMS
 
         # Penalize for missing object classes
-        entries_without_oc = sum(1 for entry in entries if not entry.get_object_classes())
+        entries_without_oc = sum(
+            1 for entry in entries if not entry.get_object_classes()
+        )
         if entries_without_oc > 0:
             score -= entries_without_oc / len(entries) * DEFAULT_TIMEOUT_SECONDS
 

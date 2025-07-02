@@ -235,7 +235,9 @@ class SyncStateInfo(BaseModel):
             "is_change": self.is_change_state(),
             "change_type": self.change_type.value if self.change_type else None,
             "has_uuid": self.entry_uuid is not None,
-            "uuid_string": self.entry_uuid.get_uuid_string() if self.entry_uuid else None,
+            "uuid_string": self.entry_uuid.get_uuid_string()
+            if self.entry_uuid
+            else None,
             "has_cookie": self.cookie is not None,
             "sync_context": self.sync_context.value,
             "change_timestamp": (
@@ -352,7 +354,9 @@ class SyncStateControl(LDAPControl):
 
         finally:
             if self._processing_start:
-                processing_time = (datetime.now(UTC) - self._processing_start).total_seconds()
+                processing_time = (
+                    datetime.now(UTC) - self._processing_start
+                ).total_seconds()
                 self._sync_state_info.processing_time = processing_time
 
             self._processed = True
@@ -446,7 +450,9 @@ class SyncStateControl(LDAPControl):
             {
                 "control_processed": self._processed,
                 "processing_start": (
-                    self._processing_start.isoformat() if self._processing_start else None
+                    self._processing_start.isoformat()
+                    if self._processing_start
+                    else None
                 ),
                 "replication_servers": len(self._sync_state_info.replicated_servers),
                 "has_conflict_resolution": bool(
@@ -550,7 +556,9 @@ def process_sync_state_controls(controls: list[LDAPControl]) -> list[SyncStateIn
         List of sync state information objects
     """
     return [
-        control.sync_state_info for control in controls if isinstance(control, SyncStateControl)
+        control.sync_state_info
+        for control in controls
+        if isinstance(control, SyncStateControl)
     ]
 
 

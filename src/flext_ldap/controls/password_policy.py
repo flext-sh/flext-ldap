@@ -269,7 +269,9 @@ class PasswordPolicyControl(LDAPControl):
                     ):  # Context tag [0] - timeBeforeExpiration
                         warning_type = PasswordPolicyWarning.TIME_BEFORE_EXPIRATION
                         warning_value = cls._decode_integer(warning_content[2:])[0]
-                    elif warning_tag == BER_CONTEXT_TAG_1:  # Context tag [1] - graceLoginsRemaining
+                    elif (
+                        warning_tag == BER_CONTEXT_TAG_1
+                    ):  # Context tag [1] - graceLoginsRemaining
                         warning_type = PasswordPolicyWarning.GRACE_LOGINS_REMAINING
                         warning_value = cls._decode_integer(warning_content[2:])[0]
 
@@ -347,8 +349,12 @@ class PasswordPolicyControl(LDAPControl):
         error_messages = {
             PasswordPolicyError.PASSWORD_EXPIRED: "Password has expired",
             PasswordPolicyError.ACCOUNT_LOCKED: "Account is locked",
-            PasswordPolicyError.CHANGE_AFTER_RESET: ("Must change password after reset"),
-            PasswordPolicyError.PASSWORD_MOD_NOT_ALLOWED: ("Password modification not allowed"),
+            PasswordPolicyError.CHANGE_AFTER_RESET: (
+                "Must change password after reset"
+            ),
+            PasswordPolicyError.PASSWORD_MOD_NOT_ALLOWED: (
+                "Password modification not allowed"
+            ),
             PasswordPolicyError.MUST_SUPPLY_OLD_PASSWORD: "Must supply old password",
             PasswordPolicyError.INSUFFICIENT_PASSWORD_QUALITY: "Password quality insufficient",
             PasswordPolicyError.PASSWORD_TOO_SHORT: "Password is too short",

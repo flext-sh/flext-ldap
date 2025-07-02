@@ -85,7 +85,8 @@ class GenericMigrationOrchestrator(ABC):
 
     @abstractmethod
     def categorize_entries(
-        self, entries: list[dict[str, Any]],
+        self,
+        entries: list[dict[str, Any]],
     ) -> dict[str, list[dict[str, Any]]]:
         """Categorize entries - MUST be implemented by subclasses.
 
@@ -99,7 +100,9 @@ class GenericMigrationOrchestrator(ABC):
 
     @abstractmethod
     def write_output(
-        self, categories: dict[str, list[dict[str, Any]]], output_dir: Path,
+        self,
+        categories: dict[str, list[dict[str, Any]]],
+        output_dir: Path,
     ) -> Result[dict[str, Any]]:
         """Write categorized entries to output - MUST be implemented by subclasses.
 
@@ -113,7 +116,8 @@ class GenericMigrationOrchestrator(ABC):
         ...
 
     def execute_migration(
-        self, output_dir: Path | None = None,
+        self,
+        output_dir: Path | None = None,
     ) -> Result[dict[str, Any]]:
         """Execute generic migration pipeline - NO business logic.
 
@@ -149,7 +153,8 @@ class GenericMigrationOrchestrator(ABC):
                 processed_entries = result.data or []
 
             logger.info(
-                "✅ Processed %s entries through pipeline", len(processed_entries),
+                "✅ Processed %s entries through pipeline",
+                len(processed_entries),
             )
 
             # Step 3: Categorize entries (delegate to subclass)

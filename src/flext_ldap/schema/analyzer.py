@@ -118,7 +118,9 @@ class SchemaAnalyzer:
         score = DEFAULT_MAX_ITEMS
 
         # Penalize obsolete elements
-        obsolete_attrs = sum(1 for attr in schema.attribute_types.values() if attr.obsolete)
+        obsolete_attrs = sum(
+            1 for attr in schema.attribute_types.values() if attr.obsolete
+        )
         obsolete_ocs = sum(1 for oc in schema.object_classes.values() if oc.obsolete)
         total_obsolete = obsolete_attrs + obsolete_ocs
         total_elements = len(schema.attribute_types) + len(schema.object_classes)
@@ -131,14 +133,20 @@ class SchemaAnalyzer:
         attrs_without_desc = sum(
             1 for attr in schema.attribute_types.values() if not attr.description
         )
-        ocs_without_desc = sum(1 for oc in schema.object_classes.values() if not oc.description)
+        ocs_without_desc = sum(
+            1 for oc in schema.object_classes.values() if not oc.description
+        )
 
         if total_elements > 0:
-            missing_desc_ratio = (attrs_without_desc + ocs_without_desc) / total_elements
+            missing_desc_ratio = (
+                attrs_without_desc + ocs_without_desc
+            ) / total_elements
             score -= missing_desc_ratio * 20
 
         # Penalize attributes without syntax
-        attrs_without_syntax = sum(1 for attr in schema.attribute_types.values() if not attr.syntax)
+        attrs_without_syntax = sum(
+            1 for attr in schema.attribute_types.values() if not attr.syntax
+        )
 
         if len(schema.attribute_types) > 0:
             no_syntax_ratio = attrs_without_syntax / len(schema.attribute_types)
@@ -167,7 +175,9 @@ class SchemaAnalyzer:
         recommendations = []
 
         # Check for obsolete elements
-        obsolete_attrs = [attr for attr in schema.attribute_types.values() if attr.obsolete]
+        obsolete_attrs = [
+            attr for attr in schema.attribute_types.values() if attr.obsolete
+        ]
         obsolete_ocs = [oc for oc in schema.object_classes.values() if oc.obsolete]
 
         if obsolete_attrs or obsolete_ocs:
@@ -179,7 +189,9 @@ class SchemaAnalyzer:
         attrs_without_desc = [
             attr for attr in schema.attribute_types.values() if not attr.description
         ]
-        ocs_without_desc = [oc for oc in schema.object_classes.values() if not oc.description]
+        ocs_without_desc = [
+            oc for oc in schema.object_classes.values() if not oc.description
+        ]
 
         if attrs_without_desc:
             recommendations.append(
@@ -192,7 +204,9 @@ class SchemaAnalyzer:
             )
 
         # Check for attributes without syntax
-        attrs_without_syntax = [attr for attr in schema.attribute_types.values() if not attr.syntax]
+        attrs_without_syntax = [
+            attr for attr in schema.attribute_types.values() if not attr.syntax
+        ]
 
         if attrs_without_syntax:
             recommendations.append(
@@ -277,8 +291,12 @@ class SchemaAnalyzer:
             default=0,
         )
 
-        total_must_attrs = sum(len(oc.must_attributes) for oc in schema.object_classes.values())
-        total_may_attrs = sum(len(oc.may_attributes) for oc in schema.object_classes.values())
+        total_must_attrs = sum(
+            len(oc.must_attributes) for oc in schema.object_classes.values()
+        )
+        total_may_attrs = sum(
+            len(oc.may_attributes) for oc in schema.object_classes.values()
+        )
 
         statistics.update(
             {

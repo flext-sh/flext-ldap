@@ -239,12 +239,18 @@ class LDAPOperations:
                     schema = connection.server.schema
                     return {
                         "object_classes": (
-                            list(schema.object_classes.keys()) if schema.object_classes else []
+                            list(schema.object_classes.keys())
+                            if schema.object_classes
+                            else []
                         ),
                         "attributes": (
-                            list(schema.attribute_types.keys()) if schema.attribute_types else []
+                            list(schema.attribute_types.keys())
+                            if schema.attribute_types
+                            else []
                         ),
-                        "syntaxes": (list(schema.syntaxes.keys()) if schema.syntaxes else []),
+                        "syntaxes": (
+                            list(schema.syntaxes.keys()) if schema.syntaxes else []
+                        ),
                     }
                 logger.warning("Schema information not available")
                 return {"object_classes": [], "attributes": [], "syntaxes": []}

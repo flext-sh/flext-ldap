@@ -356,11 +356,15 @@ class LDAPFilter:
             String representation of component
         """
         if component.filter_type == FilterType.AND:
-            subfilter_strings = [self._component_to_string(sf) for sf in component.subfilters]
+            subfilter_strings = [
+                self._component_to_string(sf) for sf in component.subfilters
+            ]
             return f"(&{''.join(subfilter_strings)})"
 
         if component.filter_type == FilterType.OR:
-            subfilter_strings = [self._component_to_string(sf) for sf in component.subfilters]
+            subfilter_strings = [
+                self._component_to_string(sf) for sf in component.subfilters
+            ]
             return f"(|{''.join(subfilter_strings)})"
 
         if component.filter_type == FilterType.NOT:
@@ -463,7 +467,9 @@ class LDAPFilter:
         """
         # Recursively optimize subfilters
         if component.subfilters:
-            optimized_subfilters = [self._optimize_component(sf) for sf in component.subfilters]
+            optimized_subfilters = [
+                self._optimize_component(sf) for sf in component.subfilters
+            ]
         else:
             optimized_subfilters = []
 

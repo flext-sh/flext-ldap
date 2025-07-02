@@ -64,17 +64,21 @@ from flext_ldap.utils.constants import DEFAULT_MAX_ITEMS
 try:
     from typing import TypeAlias
 except ImportError:
-    # Fallback for Python < 3.10
+    from typing_extensions import TypeAlias
+    try:
     from typing import TypeAlias
-
-try:
-    import ldap3
 except ImportError:
-    ldap3 = None  # type: ignore[assignment]
+    from typing_extensions import TypeAlias
+
+from typing import 
+except ImportError:
+    # Fallback for Pythone  # type: ignore[assignment]
 
 
 # Type aliases for better readability
-OperationResult: TypeAlias = dict[str, Any] | list[Any] | str | int | float | bool | None
+OperationResult: TypeAlias = (
+    dict[str, Any] | list[Any] | str | int | float | bool | None
+)
 
 
 if TYPE_CHECKING:
@@ -781,7 +785,9 @@ class AsyncLDAPOperations:
                 success = self._connection.modify(dn, modifications)
 
                 if not success:
-                    error_msg = f"Modify operation failed: {self._connection.last_error}"
+                    error_msg = (
+                        f"Modify operation failed: {self._connection.last_error}"
+                    )
                     raise RuntimeError(error_msg)
 
                 return {
@@ -847,7 +853,9 @@ class AsyncLDAPOperations:
                 success = self._connection.delete(dn)
 
                 if not success:
-                    error_msg = f"Delete operation failed: {self._connection.last_error}"
+                    error_msg = (
+                        f"Delete operation failed: {self._connection.last_error}"
+                    )
                     raise RuntimeError(error_msg)
 
                 return {
@@ -924,7 +932,11 @@ class AsyncLDAPOperations:
         Returns:
             List of active operation IDs
         """
-        return [op_id for op_id, future in self._active_operations.items() if not future.done()]
+        return [
+            op_id
+            for op_id, future in self._active_operations.items()
+            if not future.done()
+        ]
 
     def get_statistics(self) -> dict[str, Any]:
         """Get async operations statistics.

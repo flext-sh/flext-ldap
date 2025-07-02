@@ -237,7 +237,8 @@ def initialize_core(
 
 
 def _validate_core_dependencies(
-    config: ApplicationConfig, logger: StructuredLogger,
+    config: ApplicationConfig,
+    logger: StructuredLogger,
 ) -> None:
     """Validate core dependencies and environment requirements.
 

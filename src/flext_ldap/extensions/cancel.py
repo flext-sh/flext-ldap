@@ -431,7 +431,11 @@ class OperationTracker:
             return False
 
         operation = self._operations[message_id]
-        return operation["started"] and not operation["completed"] and not operation["cancelled"]
+        return (
+            operation["started"]
+            and not operation["completed"]
+            and not operation["cancelled"]
+        )
 
     def get_active_operations(self) -> list[int]:
         """Get list of active operation message IDs.
@@ -440,7 +444,9 @@ class OperationTracker:
             List of message IDs for active operations
         """
         return [
-            msg_id for msg_id, op in self._operations.items() if self.is_operation_active(msg_id)
+            msg_id
+            for msg_id, op in self._operations.items()
+            if self.is_operation_active(msg_id)
         ]
 
     def cleanup_completed(self) -> int:
@@ -450,7 +456,9 @@ class OperationTracker:
             Number of operations removed
         """
         completed_ids = [
-            msg_id for msg_id, op in self._operations.items() if op["completed"] or op["cancelled"]
+            msg_id
+            for msg_id, op in self._operations.items()
+            if op["completed"] or op["cancelled"]
         ]
 
         for msg_id in completed_ids:

@@ -101,9 +101,7 @@ class TestDataGenerator:
         return {
             "description": {
                 "action": "MODIFY_REPLACE",
-                "values": [
-                    f"Updated description {datetime.now(UTC).isoformat()}"
-                ],
+                "values": [f"Updated description {datetime.now(UTC).isoformat()}"],
             },
             "telephoneNumber": ["+1-555-0123"],
             "title": "Senior Developer",

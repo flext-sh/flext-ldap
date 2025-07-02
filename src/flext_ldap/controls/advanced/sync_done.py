@@ -179,7 +179,9 @@ class SyncDoneInfo(BaseModel):
         Returns:
             Dictionary with sync summary
         """
-        total_changes = self.entries_added + self.entries_modified + self.entries_deleted
+        total_changes = (
+            self.entries_added + self.entries_modified + self.entries_deleted
+        )
 
         return {
             "completion_status": self.completion_status.value,

@@ -174,7 +174,8 @@ class OpenLDAPExtensions:
         self._controls = OpenLDAPControls()
 
     def create_proxy_authorization_control(
-        self, authorization_id: str,
+        self,
+        authorization_id: str,
     ) -> OpenLDAPProxyAuthControl:
         """Create proxy authorization control.
 

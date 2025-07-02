@@ -368,10 +368,16 @@ class CompareOperations:
             return plaintext
 
         if hash_type == PasswordHashType.SHA:
-            return "{SHA}" + hashlib.sha1(plaintext.encode(), usedforsecurity=False).hexdigest()
+            return (
+                "{SHA}"
+                + hashlib.sha1(plaintext.encode(), usedforsecurity=False).hexdigest()
+            )
 
         if hash_type == PasswordHashType.MD5:
-            return "{MD5}" + hashlib.md5(plaintext.encode(), usedforsecurity=False).hexdigest()
+            return (
+                "{MD5}"
+                + hashlib.md5(plaintext.encode(), usedforsecurity=False).hexdigest()
+            )
 
         # TODO: Implement other hash types (SSHA, SMD5, CRYPT, BCRYPT, PBKDF2)
         # This requires proper salt handling and specialized libraries

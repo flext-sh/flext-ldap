@@ -476,7 +476,11 @@ class PerformanceBenchmarker:
         # Generate final results
         if results:
             return self._build_load_test_results(
-                context, results, errors, memory_samples, cpu_samples,
+                context,
+                results,
+                errors,
+                memory_samples,
+                cpu_samples,
             )
         logger.error("Load test failed: %s - No results collected", name)
         return {"error": "No results collected"}
@@ -655,7 +659,8 @@ class PerformanceBenchmarker:
         }
 
     async def _execute_load_test(
-        self, context: _LoadTestContext,
+        self,
+        context: _LoadTestContext,
     ) -> tuple[list, list, list, list]:
         """Execute the load test with monitoring.
 
@@ -742,7 +747,11 @@ class PerformanceBenchmarker:
 
             # Launch new tasks up to concurrency limit
             await self._launch_new_tasks(
-                context, semaphore, tasks, current_concurrency, end_time,
+                context,
+                semaphore,
+                tasks,
+                current_concurrency,
+                end_time,
             )
 
             # Process completed tasks
@@ -831,7 +840,10 @@ class PerformanceBenchmarker:
             return request_duration, success, error_msg
 
     async def _process_completed_tasks(
-        self, tasks: list, results: list, errors: list,
+        self,
+        tasks: list,
+        results: list,
+        errors: list,
     ) -> None:
         """Process completed tasks and collect results.
 
@@ -853,7 +865,10 @@ class PerformanceBenchmarker:
             tasks.remove(task)
 
     async def _process_remaining_tasks(
-        self, tasks: list, results: list, errors: list,
+        self,
+        tasks: list,
+        results: list,
+        errors: list,
     ) -> None:
         """Process any remaining tasks at test end.
 
@@ -937,7 +952,8 @@ class PerformanceBenchmarker:
         return load_test_result
 
     def _calculate_response_time_stats(
-        self, durations: list[float],
+        self,
+        durations: list[float],
     ) -> dict[str, float]:
         """Calculate response time statistics.
 
@@ -977,7 +993,9 @@ class PerformanceBenchmarker:
         }
 
     def _calculate_system_metrics(
-        self, memory_samples: list, cpu_samples: list,
+        self,
+        memory_samples: list,
+        cpu_samples: list,
     ) -> dict[str, float]:
         """Calculate system metrics.
 

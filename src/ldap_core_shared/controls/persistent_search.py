@@ -241,9 +241,7 @@ class PersistentSearchControl(LDAPControl):
 
         # Initialize notification storage
         self._notifications: list[ChangeNotification] = []
-        self._notification_callback: Callable[[ChangeNotification], None] | None = (
-            None
-        )
+        self._notification_callback: Callable[[ChangeNotification], None] | None = None
         self._is_active = False
         self._total_notifications = 0
 

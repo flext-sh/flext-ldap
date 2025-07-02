@@ -46,7 +46,9 @@ from pydantic import BaseModel, Field, validator
 # Constants for filter validation
 MIN_COMPOUND_FILTER_CHILDREN = 2  # Minimum children for AND/OR filters
 EXACT_NOT_FILTER_CHILDREN = 1  # Exact children for NOT filters
-COMPLEXITY_PERFORMANCE_THRESHOLD = 10  # Complexity score threshold for performance warnings
+COMPLEXITY_PERFORMANCE_THRESHOLD = (
+    10  # Complexity score threshold for performance warnings
+)
 
 
 class FilterType(Enum):
@@ -472,7 +474,9 @@ class FilterParser:
         self._advance()
 
         # Subsequent characters can be alphanumeric or hyphen
-        while self._has_more() and (self._current_char().isalnum() or self._current_char() == "-"):
+        while self._has_more() and (
+            self._current_char().isalnum() or self._current_char() == "-"
+        ):
             self._advance()
 
         attribute = self._filter_string[start_pos : self._position]
@@ -532,7 +536,9 @@ class FilterParser:
             if char == "\\":
                 # Handle escaped characters
                 if self._position + 2 < len(self._filter_string):
-                    escape_seq = self._filter_string[self._position : self._position + 3]
+                    escape_seq = self._filter_string[
+                        self._position : self._position + 3
+                    ]
                     if self._ESCAPED_CHAR_PATTERN.match(escape_seq):
                         # Valid escape sequence
                         value_chars.append(escape_seq)
@@ -790,7 +796,9 @@ class FilterAnalyzer:
     def _has_injection_patterns(self, parsed: ParsedFilter) -> bool:
         """Check for potential injection patterns."""
         # This is a simplified check - real implementation would be more sophisticated
-        if parsed.value and any(char in parsed.value for char in ["(", ")", "&", "|", "!"]):
+        if parsed.value and any(
+            char in parsed.value for char in ["(", ")", "&", "|", "!"]
+        ):
             return True
 
         return any(self._has_injection_patterns(child) for child in parsed.children)

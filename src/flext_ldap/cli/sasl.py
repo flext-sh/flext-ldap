@@ -322,9 +322,7 @@ def _handle_digest_md5_mechanism(client: Any, verbose: bool) -> bool:
     """
     try:
         # Simulate server challenge
-        test_challenge = (
-            b'nonce="1234567890abcdef",realm="example.com",qop="auth",algorithm=md5-sess'
-        )
+        test_challenge = b'nonce="1234567890abcdef",realm="example.com",qop="auth",algorithm=md5-sess'
 
         response = client.client_step(test_challenge)
         if not response:

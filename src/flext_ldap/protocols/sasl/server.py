@@ -48,7 +48,9 @@ from pydantic import BaseModel, Field
 # SASL PLAIN mechanism constants
 PLAIN_MIN_COMPONENTS = 2  # Minimum components for PLAIN response (authcid, passwd)
 PLAIN_STANDARD_COMPONENTS = 2  # Standard two-component PLAIN response
-PLAIN_EXTENDED_COMPONENTS = 3  # Extended three-component PLAIN response (authzid, authcid, passwd)
+PLAIN_EXTENDED_COMPONENTS = (
+    3  # Extended three-component PLAIN response (authzid, authcid, passwd)
+)
 
 
 class SASLAuthenticationBackend(ABC):
@@ -216,7 +218,11 @@ class SASLServer(BaseModel):
 
         if self.mechanisms:
             # Filter to configured mechanisms
-            return [m for m in self.mechanisms if m.upper() in [a.upper() for a in available]]
+            return [
+                m
+                for m in self.mechanisms
+                if m.upper() in [a.upper() for a in available]
+            ]
         # Return all available mechanisms
         return available
 

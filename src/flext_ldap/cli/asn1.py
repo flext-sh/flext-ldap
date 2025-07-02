@@ -141,7 +141,8 @@ def _decode_asn1(
             chunk = asn1_data[i : i + HEX_DUMP_WIDTH]
             hex_part = " ".join(f"{b:02x}" for b in chunk)
             ascii_part = "".join(
-                chr(b) if ASCII_PRINTABLE_START <= b <= ASCII_PRINTABLE_END else "." for b in chunk
+                chr(b) if ASCII_PRINTABLE_START <= b <= ASCII_PRINTABLE_END else "."
+                for b in chunk
             )
             output_lines.append(f"{i:08x}: {hex_part:<48} |{ascii_part}|")
 
@@ -188,7 +189,9 @@ def _encode_asn1(
         if format == "hex":
             output_data = binascii.hexlify(asn1_data).decode("ascii")
             # Format as readable hex
-            formatted_hex = " ".join(output_data[i : i + 2] for i in range(0, len(output_data), 2))
+            formatted_hex = " ".join(
+                output_data[i : i + 2] for i in range(0, len(output_data), 2)
+            )
             output_bytes = formatted_hex.encode("ascii")
         elif format == "base64":
             output_data = base64.b64encode(asn1_data).decode("ascii")
@@ -472,7 +475,9 @@ def _add_warnings_output(output_lines: list[str], warnings: list[str]) -> None:
     output_lines.extend(f"  - {warning}" for warning in warnings)
 
 
-def _add_type_definitions(output_lines: list[str], type_definitions: dict[str, Any]) -> None:
+def _add_type_definitions(
+    output_lines: list[str], type_definitions: dict[str, Any]
+) -> None:
     """Add type definitions to output.
 
     Args:
@@ -492,7 +497,9 @@ def _add_type_definitions(output_lines: list[str], type_definitions: dict[str, A
     output_lines.append("")
 
 
-def _add_value_assignments(output_lines: list[str], value_assignments: dict[str, Any]) -> None:
+def _add_value_assignments(
+    output_lines: list[str], value_assignments: dict[str, Any]
+) -> None:
     """Add value assignments to output.
 
     Args:
@@ -661,7 +668,9 @@ def _parse_asn1_element(asn1_data: bytes, offset: int) -> dict[str, Any] | None:
         content_length,
         HEX_DUMP_WIDTH,
     ) <= len(asn1_data):
-        content = asn1_data[content_offset : content_offset + min(content_length, HEX_DUMP_WIDTH)]
+        content = asn1_data[
+            content_offset : content_offset + min(content_length, HEX_DUMP_WIDTH)
+        ]
         hex_content = " ".join(f"{b:02x}" for b in content)
         if content_length > HEX_DUMP_WIDTH:
             hex_content += "..."

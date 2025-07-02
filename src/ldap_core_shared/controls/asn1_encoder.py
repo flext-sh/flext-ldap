@@ -252,7 +252,9 @@ class ASN1Encoder:
 
     @staticmethod
     def encode_context_tag(
-        tag_number: int, content: bytes, constructed: bool = False,
+        tag_number: int,
+        content: bytes,
+        constructed: bool = False,
     ) -> bytes:
         """Encode content with context-specific tag.
 
@@ -524,7 +526,9 @@ class ASN1Decoder:
 
     @staticmethod
     def decode_context_tag(
-        data: bytes, offset: int, expected_tag: int,
+        data: bytes,
+        offset: int,
+        expected_tag: int,
     ) -> tuple[bytes, int]:
         """Decode context-specific tag.
 
@@ -718,7 +722,8 @@ def decode_attribute_list(data: bytes, offset: int = 0) -> tuple[list[str], int]
 
     while ASN1Decoder.has_more_data(sequence_content, seq_offset):
         attr_name, seq_offset = ASN1Decoder.decode_utf8_string(
-            sequence_content, seq_offset,
+            sequence_content,
+            seq_offset,
         )
         attributes.append(attr_name)
 

@@ -74,14 +74,14 @@ class BaseProcessor(ABC):
             "duration": duration,
             "count": count,
             "rate": count / duration if duration > 0 else 0,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         logger.info(
             f"✅ {operation_name} completed",
             duration=f"{duration:.2f}s",
             count=count,
-            rate=f"{count / duration:.1f}/s" if duration > 0 else "instant"
+            rate=f"{count / duration:.1f}/s" if duration > 0 else "instant",
         )
 
         return duration
@@ -122,7 +122,9 @@ class BaseProcessor(ABC):
 
         return True
 
-    def _log_processing_start(self, entries: list[dict[str, Any]], operation: str) -> None:
+    def _log_processing_start(
+        self, entries: list[dict[str, Any]], operation: str
+    ) -> None:
         """Log the start of processing operation.
 
         Args:
@@ -132,14 +134,10 @@ class BaseProcessor(ABC):
         logger.info(
             f"🔄 Starting {operation}",
             entry_count=len(entries),
-            processor_type=self.__class__.__name__
+            processor_type=self.__class__.__name__,
         )
 
-    def _log_processing_complete(
-        self,
-        result: dict[str, Any],
-        operation: str
-    ) -> None:
+    def _log_processing_complete(self, result: dict[str, Any], operation: str) -> None:
         """Log the completion of processing operation.
 
         Args:
@@ -150,7 +148,7 @@ class BaseProcessor(ABC):
             f"✅ {operation} completed",
             processed_entries=result.get("total_entries", 0),
             processing_time=f"{result.get('processing_time', 0):.2f}s",
-            processor_type=self.__class__.__name__
+            processor_type=self.__class__.__name__,
         )
 
 
@@ -177,7 +175,7 @@ class DefaultProcessor(BaseProcessor):
                 "entries": [],
                 "total_entries": 0,
                 "processing_time": 0,
-                "error": "Invalid entries format"
+                "error": "Invalid entries format",
             }
 
         self._log_processing_start(entries, "default processing")
@@ -192,7 +190,7 @@ class DefaultProcessor(BaseProcessor):
             "total_entries": len(entries),
             "processing_time": duration,
             "processor_type": "default",
-            "modifications": 0
+            "modifications": 0,
         }
 
         self._log_processing_complete(result, "default processing")

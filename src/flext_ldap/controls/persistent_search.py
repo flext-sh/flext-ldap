@@ -147,7 +147,9 @@ class ChangeNotification(BaseModel):
         if not self.entry_data:
             return False
 
-        return any(attr_name.lower() == attribute.lower() for attr_name in self.entry_data)
+        return any(
+            attr_name.lower() == attribute.lower() for attr_name in self.entry_data
+        )
 
 
 class PersistentSearchRequest(BaseModel):
@@ -232,7 +234,8 @@ class PersistentSearchControl(LDAPControl):
         """
         # Create request configuration
         self._request = PersistentSearchRequest(
-            change_types=change_types or [ChangeType.ADD, ChangeType.MODIFY, ChangeType.DELETE],
+            change_types=change_types
+            or [ChangeType.ADD, ChangeType.MODIFY, ChangeType.DELETE],
             changes_only=changes_only,
             return_entry_change_notification=return_entry_change_notification,
         )
@@ -366,7 +369,9 @@ class PersistentSearchControl(LDAPControl):
         }
 
         if self._start_time:
-            stats["monitoring_duration"] = (datetime.now() - self._start_time).total_seconds()
+            stats["monitoring_duration"] = (
+                datetime.now() - self._start_time
+            ).total_seconds()
 
         if self._last_notification_time:
             stats["last_notification"] = self._last_notification_time.isoformat()

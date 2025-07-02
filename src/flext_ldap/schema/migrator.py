@@ -104,7 +104,9 @@ class SchemaMigrator:
             Operation result with number of additions
         """
         try:
-            additions = [d for d in differences if d.difference_type == DifferenceType.ADDED]
+            additions = [
+                d for d in differences if d.difference_type == DifferenceType.ADDED
+            ]
 
             if not additions:
                 return LDAPOperationResult[int](
@@ -156,16 +158,24 @@ class SchemaMigrator:
 
         # Analyze differences and create steps
         additions = [
-            d for d in comparison_result.differences if d.difference_type == DifferenceType.ADDED
+            d
+            for d in comparison_result.differences
+            if d.difference_type == DifferenceType.ADDED
         ]
         removals = [
-            d for d in comparison_result.differences if d.difference_type == DifferenceType.REMOVED
+            d
+            for d in comparison_result.differences
+            if d.difference_type == DifferenceType.REMOVED
         ]
         modifications = [
-            d for d in comparison_result.differences if d.difference_type == DifferenceType.MODIFIED
+            d
+            for d in comparison_result.differences
+            if d.difference_type == DifferenceType.MODIFIED
         ]
         conflicts = [
-            d for d in comparison_result.differences if d.difference_type == DifferenceType.CONFLICT
+            d
+            for d in comparison_result.differences
+            if d.difference_type == DifferenceType.CONFLICT
         ]
 
         # Create migration steps
@@ -211,7 +221,9 @@ class SchemaMigrator:
 
         # Generate additions LDIF
         additions = [
-            d for d in comparison_result.differences if d.difference_type == DifferenceType.ADDED
+            d
+            for d in comparison_result.differences
+            if d.difference_type == DifferenceType.ADDED
         ]
         if additions:
             additions_file = output_dir / "01_schema_additions.ldif"
@@ -225,7 +237,9 @@ class SchemaMigrator:
 
         # Generate modifications LDIF
         modifications = [
-            d for d in comparison_result.differences if d.difference_type == DifferenceType.MODIFIED
+            d
+            for d in comparison_result.differences
+            if d.difference_type == DifferenceType.MODIFIED
         ]
         if modifications:
             modifications_file = output_dir / "02_schema_modifications.ldif"
@@ -236,7 +250,9 @@ class SchemaMigrator:
 
         # Generate removals LDIF
         removals = [
-            d for d in comparison_result.differences if d.difference_type == DifferenceType.REMOVED
+            d
+            for d in comparison_result.differences
+            if d.difference_type == DifferenceType.REMOVED
         ]
         if removals:
             removals_file = output_dir / "03_schema_removals.ldif"

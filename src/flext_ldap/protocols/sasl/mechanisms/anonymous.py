@@ -83,17 +83,19 @@ class AnonymousMechanism(SASLMechanism):
     """
 
     MECHANISM_NAME: ClassVar[str] = "ANONYMOUS"
-    MECHANISM_CAPABILITIES: ClassVar[SASLMechanismCapabilities] = SASLMechanismCapabilities(
-        mechanism_type=SASLMechanismType.ANONYMOUS,
-        supports_initial_response=True,
-        supports_server_challenges=False,  # ANONYMOUS is single-message
-        requires_server_name=False,
-        requires_realm=False,
-        security_flags=[],  # No security flags - anonymous mechanism
-        qop_supported=["auth"],  # Only authentication (anonymous)
-        max_security_strength=0,  # No encryption
-        computational_cost=1,  # Minimal computational cost
-        network_round_trips=0,  # Initial response only
+    MECHANISM_CAPABILITIES: ClassVar[SASLMechanismCapabilities] = (
+        SASLMechanismCapabilities(
+            mechanism_type=SASLMechanismType.ANONYMOUS,
+            supports_initial_response=True,
+            supports_server_challenges=False,  # ANONYMOUS is single-message
+            requires_server_name=False,
+            requires_realm=False,
+            security_flags=[],  # No security flags - anonymous mechanism
+            qop_supported=["auth"],  # Only authentication (anonymous)
+            max_security_strength=0,  # No encryption
+            computational_cost=1,  # Minimal computational cost
+            network_round_trips=0,  # Initial response only
+        )
     )
 
     def __init__(
@@ -225,7 +227,8 @@ class AnonymousMechanism(SASLMechanism):
 
         # Character check (printable ASCII + common Unicode)
         if not all(
-            (ord(c) >= ASCII_PRINTABLE_START and ord(c) < ASCII_PRINTABLE_END) or c == "\t"
+            (ord(c) >= ASCII_PRINTABLE_START and ord(c) < ASCII_PRINTABLE_END)
+            or c == "\t"
             for c in trace_info
         ):
             # Allow basic Unicode but be restrictive

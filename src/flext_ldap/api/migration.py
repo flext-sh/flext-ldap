@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 class TransactionIsolation(Enum):
     """Transaction isolation levels."""
+
     READ_UNCOMMITTED = "READ_UNCOMMITTED"
     READ_COMMITTED = "READ_COMMITTED"
     REPEATABLE_READ = "REPEATABLE_READ"
@@ -20,6 +21,7 @@ class TransactionIsolation(Enum):
 
 class TransactionState(Enum):
     """Transaction states."""
+
     INIT = "INIT"
     ACTIVE = "ACTIVE"
     COMMITTED = "COMMITTED"
@@ -29,6 +31,7 @@ class TransactionState(Enum):
 
 class MigrationConfig:
     """Enterprise migration configuration."""
+
     def __init__(self, **kwargs) -> None:
         self.source_ldif_path = kwargs.get("source_ldif_path", "data")
         self.output_path = kwargs.get("output_path", "output")
@@ -76,7 +79,10 @@ class AuthenticationError(MigrationError):
 
 class MigrationResult:
     """Enhanced migration result with enterprise features."""
-    def __init__(self, success: bool = True, data: Any = None, error_message: str | None = None) -> None:
+
+    def __init__(
+        self, success: bool = True, data: Any = None, error_message: str | None = None
+    ) -> None:
         self.success = success
         self.data = data
         self.error_message = error_message
@@ -96,7 +102,11 @@ class TransactionManager:
         self.state = TransactionState.INIT
         self.operations = []
 
-    async def begin_transaction(self, isolation_level: TransactionIsolation = TransactionIsolation.READ_COMMITTED, timeout_seconds: int = 300):
+    async def begin_transaction(
+        self,
+        isolation_level: TransactionIsolation = TransactionIsolation.READ_COMMITTED,
+        timeout_seconds: int = 300,
+    ):
         """Begin enterprise transaction."""
         self.state = TransactionState.ACTIVE
         self.isolation_level = isolation_level
@@ -118,7 +128,7 @@ class TransactionManager:
             "type": "add",
             "dn": dn,
             "attributes": attributes,
-            "timestamp": datetime.now()
+            "timestamp": datetime.now(),
         }
         self.operations.append(operation)
         return MigrationResult(success=True, data=operation)
@@ -158,11 +168,13 @@ class PerformanceMonitor:
     def end_operation(self, operation_name: str, entries_count: int = 0) -> None:
         """End timing an operation."""
         if operation_name in self.start_times:
-            duration = (datetime.now() - self.start_times[operation_name]).total_seconds()
+            duration = (
+                datetime.now() - self.start_times[operation_name]
+            ).total_seconds()
             self.metrics[operation_name] = {
                 "duration": duration,
                 "entries_count": entries_count,
-                "entries_per_second": entries_count / duration if duration > 0 else 0
+                "entries_per_second": entries_count / duration if duration > 0 else 0,
             }
             del self.start_times[operation_name]
 
@@ -175,14 +187,20 @@ class PerformanceMonitor:
             "operations": self.metrics,
             "total_duration": total_duration,
             "total_entries": total_entries,
-            "overall_rate": total_entries / total_duration if total_duration > 0 else 0
+            "overall_rate": total_entries / total_duration if total_duration > 0 else 0,
         }
 
 
 class VectorizedLDIFProcessor:
     """Vectorized LDIF processor for high-performance processing."""
 
-    def __init__(self, chunk_size_mb: float = 32.0, max_workers: int = 4, memory_limit_mb: float = 512.0, enable_streaming: bool = True) -> None:
+    def __init__(
+        self,
+        chunk_size_mb: float = 32.0,
+        max_workers: int = 4,
+        memory_limit_mb: float = 512.0,
+        enable_streaming: bool = True,
+    ) -> None:
         self.chunk_size_mb = chunk_size_mb
         self.max_workers = max_workers
         self.memory_limit_mb = memory_limit_mb
@@ -200,12 +218,14 @@ class VectorizedLDIFProcessor:
                     content = f.read()
                     entries = self._parse_ldif_content(content)
 
-            self.performance_monitor.end_operation("vectorized_processing", len(entries))
+            self.performance_monitor.end_operation(
+                "vectorized_processing", len(entries)
+            )
 
             return MigrationResult(
                 success=True,
                 data={"entries": entries, "vectorized": True},
-                error_message=None
+                error_message=None,
             )
 
         except Exception as e:
@@ -250,13 +270,12 @@ def handle_migration_exception(e: Exception) -> MigrationResult:
 
     # Log error with context
     from loguru import logger
+
     logger.error(f"Migration exception [{error_type}]: {error_message}")
 
     # Create failure result
     return MigrationResult(
-        success=False,
-        data=None,
-        error_message=f"{error_type}: {error_message}"
+        success=False, data=None, error_message=f"{error_type}: {error_message}"
     )
 
 

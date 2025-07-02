@@ -235,11 +235,15 @@ class PerformanceMonitor:
         """
         # Calculate operations per second
         elapsed_time = time.time() - self._start_time
-        ops_per_second = self._operation_count / elapsed_time if elapsed_time > 0 else 0.0
+        ops_per_second = (
+            self._operation_count / elapsed_time if elapsed_time > 0 else 0.0
+        )
 
         # Calculate average duration
         avg_duration = (
-            self._total_duration / self._operation_count if self._operation_count > 0 else 0.0
+            self._total_duration / self._operation_count
+            if self._operation_count > 0
+            else 0.0
         )
 
         # Handle case where no operations recorded yet
@@ -372,12 +376,12 @@ class PerformanceAnalyzer:
         baseline_metrics = self._metrics_history[:10]  # First 10 measurements
 
         # Calculate averages
-        recent_avg_ops_per_sec = sum(m.operations_per_second for m in recent_metrics) / len(
-            recent_metrics
-        )
-        baseline_avg_ops_per_sec = sum(m.operations_per_second for m in baseline_metrics) / len(
-            baseline_metrics
-        )
+        recent_avg_ops_per_sec = sum(
+            m.operations_per_second for m in recent_metrics
+        ) / len(recent_metrics)
+        baseline_avg_ops_per_sec = sum(
+            m.operations_per_second for m in baseline_metrics
+        ) / len(baseline_metrics)
 
         recent_avg_duration = sum(m.average_duration for m in recent_metrics) / len(
             recent_metrics,
@@ -397,7 +401,9 @@ class PerformanceAnalyzer:
             ops_degradation = ops_change > threshold
 
         if baseline_avg_duration > 0:
-            duration_change = (recent_avg_duration - baseline_avg_duration) / baseline_avg_duration
+            duration_change = (
+                recent_avg_duration - baseline_avg_duration
+            ) / baseline_avg_duration
             duration_degradation = duration_change > threshold
 
         degradation_detected = ops_degradation or duration_degradation
@@ -431,9 +437,9 @@ class PerformanceAnalyzer:
         total_successes = sum(m.success_count for m in self._metrics_history)
         total_errors = sum(m.error_count for m in self._metrics_history)
 
-        avg_ops_per_second = sum(m.operations_per_second for m in self._metrics_history) / len(
-            self._metrics_history
-        )
+        avg_ops_per_second = sum(
+            m.operations_per_second for m in self._metrics_history
+        ) / len(self._metrics_history)
         avg_duration = sum(m.average_duration for m in self._metrics_history) / len(
             self._metrics_history,
         )
@@ -456,7 +462,8 @@ class PerformanceAnalyzer:
             "total_operations": total_operations,
             "overall_success_rate": overall_success_rate,
             "average_operations_per_second": avg_ops_per_second,
-            "average_duration_ms": avg_duration * DEFAULT_LARGE_LIMIT,  # Convert to milliseconds
+            "average_duration_ms": avg_duration
+            * DEFAULT_LARGE_LIMIT,  # Convert to milliseconds
             "total_errors": total_errors,
             "measurement_period": {
                 "start": self._metrics_history[0].timestamp.isoformat(),

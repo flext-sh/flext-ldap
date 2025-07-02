@@ -543,7 +543,8 @@ def sasl_callback_failed(
     )
     original_error = (
         cast("Exception | None", kwargs.get("original_error"))
-        if "original_error" in kwargs and isinstance(kwargs["original_error"], Exception)
+        if "original_error" in kwargs
+        and isinstance(kwargs["original_error"], Exception)
         else None
     )
 

@@ -80,7 +80,9 @@ class LDIFProcessor:
     - Consistent behavior across all LDIF usage
     """
 
-    def __init__(self, config: LDIFProcessingConfig | dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, config: LDIFProcessingConfig | dict[str, Any] | None = None
+    ) -> None:
         """Initialize LDIF processor facade.
 
         Args:
@@ -93,7 +95,9 @@ class LDIFProcessor:
 
         # Delegate to existing production LDIF processor
         self._production_processor = ProductionLDIFProcessor(
-            config._production_config if hasattr(config, "_production_config") else config,
+            config._production_config
+            if hasattr(config, "_production_config")
+            else config,
         )
 
     def process_file(

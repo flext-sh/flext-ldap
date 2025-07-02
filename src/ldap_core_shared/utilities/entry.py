@@ -81,7 +81,8 @@ class AttributeValue(BaseModel):
     is_binary: bool = Field(default=False, description="Whether value is binary")
 
     encoding: str = Field(
-        default="utf-8", description="Text encoding for string values",
+        default="utf-8",
+        description="Text encoding for string values",
     )
 
     def get_string_value(self) -> str:
@@ -313,7 +314,9 @@ class LDAPEntry:
         return []
 
     def set_attribute(
-        self, attribute_name: str, values: str | list[str] | list[bytes] | list[Any],
+        self,
+        attribute_name: str,
+        values: str | list[str] | list[bytes] | list[Any],
     ) -> None:
         """Set attribute values (replace existing).
 
@@ -348,7 +351,9 @@ class LDAPEntry:
         self._attributes[attribute_name] = attribute_values
 
     def add_attribute(
-        self, attribute_name: str, values: str | list[str] | list[bytes] | list[Any],
+        self,
+        attribute_name: str,
+        values: str | list[str] | list[bytes] | list[Any],
     ) -> None:
         """Add values to attribute (append to existing).
 
@@ -401,7 +406,9 @@ class LDAPEntry:
         return False
 
     def remove_attribute_value(
-        self, attribute_name: str, value: str | bytes,
+        self,
+        attribute_name: str,
+        value: str | bytes,
     ) -> bool:
         """Remove specific value from attribute.
 
@@ -432,7 +439,9 @@ class LDAPEntry:
         return False
 
     def replace_attribute(
-        self, attribute_name: str, values: str | list[str] | list[bytes] | list[Any],
+        self,
+        attribute_name: str,
+        values: str | list[str] | list[bytes] | list[Any],
     ) -> None:
         """Replace attribute values (alias for set_attribute).
 
@@ -711,7 +720,8 @@ class EntryProcessor:
 
     @staticmethod
     def filter_entry_attributes(
-        entry: LDAPEntry, allowed_attributes: set[str],
+        entry: LDAPEntry,
+        allowed_attributes: set[str],
     ) -> LDAPEntry:
         """Filter entry to include only allowed attributes.
 

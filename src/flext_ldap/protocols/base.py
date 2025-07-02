@@ -170,7 +170,8 @@ class ConnectionMetrics(BaseModel):
             else:
                 # Simple moving average
                 self.average_response_time = (
-                    self.average_response_time * (self.operations_performed - 1) + response_time
+                    self.average_response_time * (self.operations_performed - 1)
+                    + response_time
                 ) / self.operations_performed
 
 
@@ -495,7 +496,9 @@ class ProtocolConnection:
             "authenticated": self._protocol.authenticated,
             "capabilities": [cap.value for cap in self._protocol.capabilities],
             "last_operation": (
-                self._last_operation_time.isoformat() if self._last_operation_time else None
+                self._last_operation_time.isoformat()
+                if self._last_operation_time
+                else None
             ),
             "metrics": self._protocol.metrics.dict(),
         }

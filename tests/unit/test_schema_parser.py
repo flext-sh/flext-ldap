@@ -8,6 +8,7 @@ and error handling.
 from __future__ import annotations
 
 import pytest
+
 from ldap_core_shared.schema.models import AttributeType, ObjectClass, SchemaParseResult
 
 

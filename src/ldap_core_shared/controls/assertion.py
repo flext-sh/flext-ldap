@@ -225,7 +225,10 @@ class AssertionControl(LDAPControl):
 
     @classmethod
     def simple_equality(
-        cls, attribute: str, value: str, critical: bool = True,
+        cls,
+        attribute: str,
+        value: str,
+        critical: bool = True,
     ) -> AssertionControl:
         """Create assertion control for simple equality test.
 
@@ -246,7 +249,9 @@ class AssertionControl(LDAPControl):
 
     @classmethod
     def attribute_exists(
-        cls, attribute: str, critical: bool = True,
+        cls,
+        attribute: str,
+        critical: bool = True,
     ) -> AssertionControl:
         """Create assertion control to test if attribute exists.
 
@@ -266,7 +271,9 @@ class AssertionControl(LDAPControl):
 
     @classmethod
     def attribute_not_exists(
-        cls, attribute: str, critical: bool = True,
+        cls,
+        attribute: str,
+        critical: bool = True,
     ) -> AssertionControl:
         """Create assertion control to test if attribute does not exist.
 
@@ -338,7 +345,9 @@ class AssertionControl(LDAPControl):
 
 # Convenience functions for common assertion patterns
 def assert_equals(
-    attribute: str, value: str, critical: bool = True,
+    attribute: str,
+    value: str,
+    critical: bool = True,
 ) -> AssertionControl:
     """Create assertion that attribute equals value.
 

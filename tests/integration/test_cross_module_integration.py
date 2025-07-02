@@ -166,11 +166,10 @@ class TestLDAPProtocolIntegration:
     def test_sasl_asn1_authentication_data_integration(self) -> None:
         """Test SASL authentication with ASN.1 encoded data."""
         try:
-            from ldap_core_shared.protocols.sasl.models import SASLCredentials
-
             from ldap_core_shared.protocols.asn1.elements import ASN1Sequence
             from ldap_core_shared.protocols.asn1.types import ASN1OctetString
             from ldap_core_shared.protocols.sasl.mechanisms.plain import PlainMechanism
+            from ldap_core_shared.protocols.sasl.models import SASLCredentials
 
             # Create SASL credentials
             credentials = SASLCredentials(

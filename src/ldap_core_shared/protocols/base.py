@@ -152,7 +152,9 @@ class ConnectionMetrics(BaseModel):
         return (self.successful_operations / self.operations_performed) * 100.0
 
     def record_operation(
-        self, success: bool, response_time: float | None = None,
+        self,
+        success: bool,
+        response_time: float | None = None,
     ) -> None:
         """Record operation metrics."""
         self.operations_performed += 1
@@ -468,7 +470,9 @@ class ProtocolConnection:
         await self._protocol.authenticate(method, **kwargs)
 
     def record_operation(
-        self, success: bool, response_time: float | None = None,
+        self,
+        success: bool,
+        response_time: float | None = None,
     ) -> None:
         """Record operation metrics.
 

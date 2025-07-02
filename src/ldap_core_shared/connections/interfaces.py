@@ -308,13 +308,17 @@ class BaseOperationHandler(ABC):
 
     @abstractmethod
     async def execute(
-        self, *args: str | int | bool, **kwargs: str | int | bool | list[str] | None,
+        self,
+        *args: str | int | bool,
+        **kwargs: str | int | bool | list[str] | None,
     ) -> bool | list[Attributes] | None:
         """Execute operation."""
 
     @abstractmethod
     def validate_parameters(
-        self, *args: str | int | bool, **kwargs: str | int | bool | list[str] | None,
+        self,
+        *args: str | int | bool,
+        **kwargs: str | int | bool | list[str] | None,
     ) -> bool:
         """Validate operation parameters."""
 

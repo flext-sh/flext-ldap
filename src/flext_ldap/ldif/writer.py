@@ -306,7 +306,9 @@ class LDIFWriter:
         f.write(f"# Entries: {entry_count}\n")
 
         # Add custom headers
-        f.writelines(f"# {key}: {value}\n" for key, value in config.custom_headers.items())
+        f.writelines(
+            f"# {key}: {value}\n" for key, value in config.custom_headers.items()
+        )
 
         f.write("#\n")
         f.write(f"version: {config.version}\n\n")
@@ -375,7 +377,9 @@ class LDIFWriter:
             f.write(f"{indent}{chunk}\n")
             remaining = remaining[continuation_length:]
             self._stats.lines_written += 1
-            self._stats.bytes_written += len(f"{indent}{chunk}".encode(self.config.encoding)) + 1
+            self._stats.bytes_written += (
+                len(f"{indent}{chunk}".encode(self.config.encoding)) + 1
+            )
 
     def _sort_entries(self, entries: list[LDIFEntry]) -> list[LDIFEntry]:
         """Sort entries by DN hierarchy (parents before children)."""

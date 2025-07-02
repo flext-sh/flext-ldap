@@ -224,7 +224,12 @@ class LDAP:
         await self._connect()
         return self
 
-    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: Any,
+    ) -> None:
         """Exit async context."""
         await self._disconnect()
 
@@ -251,7 +256,9 @@ class SearchOps:
         self.ldap = ldap
 
     async def users(
-        self, pattern: str = "*", attributes: list[str] | None = None,
+        self,
+        pattern: str = "*",
+        attributes: list[str] | None = None,
     ) -> Result[list[dict[str, Any]]]:
         """🔍 Buscar usuários por padrão."""
         try:
@@ -278,7 +285,9 @@ class SearchOps:
             return Result.fail(f"Search users failed: {e}")
 
     async def groups(
-        self, pattern: str = "*", attributes: list[str] | None = None,
+        self,
+        pattern: str = "*",
+        attributes: list[str] | None = None,
     ) -> Result[list[dict[str, Any]]]:
         """🔍 Buscar grupos por padrão."""
         try:
@@ -466,7 +475,9 @@ class SchemaOps:
             return Result.fail(f"Schema discovery failed: {e}")
 
     async def validate_entry(
-        self, entry: dict, object_class: str | None = None,
+        self,
+        entry: dict,
+        object_class: str | None = None,
     ) -> Result[dict]:
         """✅ Validar entrada contra schema."""
         try:
@@ -638,7 +649,9 @@ class SASLOps:
             return Result.fail(f"SASL PLAIN bind failed: {e}")
 
     async def bind_gssapi(
-        self, principal: str | None = None, service: str = "ldap",
+        self,
+        principal: str | None = None,
+        service: str = "ldap",
     ) -> Result[bool]:
         """🔐 Autenticação SASL GSSAPI."""
         try:
@@ -675,7 +688,9 @@ class ControlsOps:
         self.ldap = ldap
 
     def create_paged_results(
-        self, page_size: int, cookie: bytes | None = None,
+        self,
+        page_size: int,
+        cookie: bytes | None = None,
     ) -> Result[Any]:
         """📄 Criar controle de resultados paginados."""
         try:
@@ -1096,7 +1111,11 @@ class AdminOps:
 
 
 def connect(
-    server: str, auth_dn: str, auth_password: str, base_dn: str, **kwargs: Any,
+    server: str,
+    auth_dn: str,
+    auth_password: str,
+    base_dn: str,
+    **kwargs: Any,
 ) -> LDAP:
     """🔗 Criar conexão LDAP simples."""
     config = LDAPConfig(
@@ -1111,7 +1130,11 @@ def connect(
 
 @asynccontextmanager
 async def ldap_session(
-    server: str, auth_dn: str, auth_password: str, base_dn: str, **kwargs: Any,
+    server: str,
+    auth_dn: str,
+    auth_password: str,
+    base_dn: str,
+    **kwargs: Any,
 ) -> AsyncGenerator[LDAP, None]:
     """📋 Criar sessão LDAP com context manager."""
     config = LDAPConfig(

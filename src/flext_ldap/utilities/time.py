@@ -279,7 +279,9 @@ class GeneralizedTime:
             GeneralizedTime object
         """
         dt = datetime.fromisoformat(iso_string.replace("Z", "+00:00"))
-        precision = TimePrecision.FRACTIONAL if "." in iso_string else TimePrecision.SECONDS
+        precision = (
+            TimePrecision.FRACTIONAL if "." in iso_string else TimePrecision.SECONDS
+        )
         return cls(dt, precision, TimeZoneType.UTC)
 
     def to_ldap_string(self, force_utc: bool = True) -> str:

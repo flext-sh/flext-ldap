@@ -1000,11 +1000,15 @@ class ASN1ObjectIdentifier(ASN1Element):
         if len(self._components) < OID_MIN_COMPONENTS:
             errors.append("OID must have at least 2 components")
 
-        if len(self._components) >= 1 and self._components[0] not in OID_VALID_FIRST_COMPONENTS:
+        if (
+            len(self._components) >= 1
+            and self._components[0] not in OID_VALID_FIRST_COMPONENTS
+        ):
             errors.append("First OID component must be 0, 1, or 2")
 
         if len(self._components) >= OID_MIN_COMPONENTS and (
-            self._components[0] in {0, 1} and self._components[1] > OID_MAX_SECOND_COMPONENT_01
+            self._components[0] in {0, 1}
+            and self._components[1] > OID_MAX_SECOND_COMPONENT_01
         ):
             errors.append("Second OID component must be <= 39 when first is 0 or 1")
 

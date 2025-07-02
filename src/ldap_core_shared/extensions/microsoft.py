@@ -273,7 +273,8 @@ class MSADControls:
 
     @staticmethod
     def paged_search(
-        page_size: int = 1000, cookie: bytes | None = None,
+        page_size: int = 1000,
+        cookie: bytes | None = None,
     ) -> ADPagedSearchControl:
         """Create paged search control."""
         return ADPagedSearchControl(page_size, cookie)
@@ -321,7 +322,8 @@ class ADSecurityDescriptor(BaseModel):
 
     # Security descriptor flags
     control_flags: int = Field(
-        default=0, description="Security descriptor control flags",
+        default=0,
+        description="Security descriptor control flags",
     )
 
     def parse_sd_binary(self, sd_binary: bytes) -> None:
@@ -1087,7 +1089,8 @@ class ActiveDirectoryExtensions:
             try:
                 nested_result = connection.search(
                     search_base=connection.server.info.other.get(
-                        "defaultNamingContext", ["dc=domain,dc=com"],
+                        "defaultNamingContext",
+                        ["dc=domain,dc=com"],
                     )[0],
                     search_filter=f"(&(objectClass=group)(member:1.2.840.113556.1.4.1941:={user_dn}))",
                     search_scope="SUBTREE",
@@ -1114,7 +1117,9 @@ class ActiveDirectoryExtensions:
             return []
 
     def _get_nested_groups_manual(
-        self, connection: Any, direct_groups: list[str],
+        self,
+        connection: Any,
+        direct_groups: list[str],
     ) -> set[str]:
         """Manually traverse nested group memberships.
 

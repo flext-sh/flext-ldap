@@ -256,13 +256,15 @@ def new(**options: Any) -> Any:
                         for i, (_key, value) in enumerate(data.items()):
                             if isinstance(value, str):
                                 sequence.setComponentByPosition(
-                                    i, univ.OctetString(value.encode()),
+                                    i,
+                                    univ.OctetString(value.encode()),
                                 )
                             elif isinstance(value, int):
                                 sequence.setComponentByPosition(i, univ.Integer(value))
                             else:
                                 sequence.setComponentByPosition(
-                                    i, univ.OctetString(str(value).encode()),
+                                    i,
+                                    univ.OctetString(str(value).encode()),
                                 )
                         return self._encoder.encode(sequence)
                     if isinstance(data, str):
@@ -278,7 +280,8 @@ def new(**options: Any) -> Any:
                         return decoded
                     except Exception as e:
                         logging.getLogger(__name__).warning(
-                            "ASN.1 decode failed: %s", e,
+                            "ASN.1 decode failed: %s",
+                            e,
                         )
                         return None
 
@@ -426,13 +429,15 @@ class BasicASN1Codec:
                 for i, (_key, value) in enumerate(data.items()):
                     if isinstance(value, str):
                         sequence.setComponentByPosition(
-                            i, univ.OctetString(value.encode()),
+                            i,
+                            univ.OctetString(value.encode()),
                         )
                     elif isinstance(value, int):
                         sequence.setComponentByPosition(i, univ.Integer(value))
                     else:
                         sequence.setComponentByPosition(
-                            i, univ.OctetString(str(value).encode()),
+                            i,
+                            univ.OctetString(str(value).encode()),
                         )
                 return self._encoder.encode(sequence)
             if isinstance(data, str):

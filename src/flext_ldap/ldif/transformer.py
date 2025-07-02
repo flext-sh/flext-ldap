@@ -206,7 +206,9 @@ class LDIFTransformer:
             for attr_key in list(new_attributes.keys()):
                 if attr_key.lower() == attribute_name.lower():
                     try:
-                        new_values = [transformer(value) for value in new_attributes[attr_key]]
+                        new_values = [
+                            transformer(value) for value in new_attributes[attr_key]
+                        ]
                         new_attributes[attr_key] = new_values
                     except Exception as e:
                         logger.warning(
@@ -435,7 +437,9 @@ class LDIFTransformer:
         elif rule.transformation_type == "regex_replace":
             pattern = rule.transformation_params.get("pattern", "")
             replacement = rule.transformation_params.get("replacement", "")
-            new_values = [re.sub(pattern, replacement, value) for value in source_values]
+            new_values = [
+                re.sub(pattern, replacement, value) for value in source_values
+            ]
         elif rule.transformation_type == "prefix":
             prefix = rule.transformation_params.get("prefix", "")
             new_values = [f"{prefix}{value}" for value in source_values]

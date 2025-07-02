@@ -268,7 +268,8 @@ class PerformanceMonitor:
 
     @contextmanager
     def measure_operation(
-        self, operation_name: str = "ldap_operation",
+        self,
+        operation_name: str = "ldap_operation",
     ) -> _GeneratorContextManager[dict[str, Any]]:
         """Context manager to measure operation performance.
 
@@ -312,7 +313,8 @@ class PerformanceMonitor:
             self.record_operation(duration, success)
 
     def track_operation(
-        self, operation_name: str = "ldap_operation",
+        self,
+        operation_name: str = "ldap_operation",
     ) -> _GeneratorContextManager[dict[str, Any]]:
         """Alias for measure_operation for backward compatibility.
 

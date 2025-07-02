@@ -124,7 +124,9 @@ class PerformanceTracker(BaseConnectionComponent):
 
         # Calculate averages by type
         for type_stats in ops_by_type.values():
-            type_stats["average_duration"] = type_stats["total_duration"] / type_stats["count"]
+            type_stats["average_duration"] = (
+                type_stats["total_duration"] / type_stats["count"]
+            )
             type_stats["success_rate"] = (
                 type_stats["successful"] / type_stats["count"] * DEFAULT_MAX_ITEMS
             )

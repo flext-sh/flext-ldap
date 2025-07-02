@@ -443,7 +443,11 @@ class ReferralChaser:
                 server_url=referral_url,
                 hostname=parsed_url.hostname,
                 port=parsed_url.port
-                or (LDAPS_DEFAULT_PORT if parsed_url.scheme == "ldaps" else LDAP_DEFAULT_PORT),
+                or (
+                    LDAPS_DEFAULT_PORT
+                    if parsed_url.scheme == "ldaps"
+                    else LDAP_DEFAULT_PORT
+                ),
                 use_ssl=parsed_url.scheme == "ldaps",
             )
             result.connection_info = connection_info
@@ -597,7 +601,9 @@ class ReferralChaser:
             "authentication_failures": self._authentication_failures,
             "active_connections": len(self._active_connections),
             "success_rate": (
-                self._successful_chases / self._total_referrals_chased * DEFAULT_MAX_ITEMS
+                self._successful_chases
+                / self._total_referrals_chased
+                * DEFAULT_MAX_ITEMS
                 if self._total_referrals_chased > 0
                 else 0
             ),

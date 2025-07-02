@@ -68,7 +68,9 @@ class LDAPOperations:
     """
 
     def __init__(
-        self, config: LDAPConfig, connection_manager: ConnectionManager | None = None,
+        self,
+        config: LDAPConfig,
+        connection_manager: ConnectionManager | None = None,
     ) -> None:
         """Initialize LDAP operations facade.
 
@@ -156,13 +158,15 @@ class LDAPOperations:
 
             # Placeholder return - would contain actual delegation to core operations
             return Result.ok(
-                None, message=f"User search for {email} delegated to core operations",
+                None,
+                message=f"User search for {email} delegated to core operations",
             )
         except Exception as e:
             return Result.from_exception(e, default_data=None)
 
     async def find_users_in_department(
-        self, department: str,
+        self,
+        department: str,
     ) -> Result[list[LDAPEntry]]:
         """Find users in department - delegates to core operations."""
         from ldap_core_shared.api.results import Result
@@ -186,7 +190,8 @@ class LDAPOperations:
                 status = self._connection_manager.health_check()
                 return Result.ok(status)
             return Result.ok(
-                True, message="Connection test delegated to connection manager",
+                True,
+                message="Connection test delegated to connection manager",
             )
         except Exception as e:
             return Result.from_exception(e, default_data=False)

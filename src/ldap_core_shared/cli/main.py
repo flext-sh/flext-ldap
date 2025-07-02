@@ -59,7 +59,10 @@ if CLICK_AVAILABLE:
     )
     @click.pass_context
     def main(
-        ctx: click.Context, verbose: int, quiet: bool, config: str | None,
+        ctx: click.Context,
+        verbose: int,
+        quiet: bool,
+        config: str | None,
     ) -> None:
         """LDAP Core Shared - Schema, ASN.1, and SASL Tools.
 
@@ -169,7 +172,8 @@ if CLICK_AVAILABLE:
 
     @main.command("ldap-schema-manager")
     @click.argument(
-        "action", type=click.Choice(["install", "remove", "list", "validate", "backup"]),
+        "action",
+        type=click.Choice(["install", "remove", "list", "validate", "backup"]),
     )
     @click.option(
         "--file",
@@ -275,7 +279,8 @@ if CLICK_AVAILABLE:
 
     @main.command("asn1-tool")
     @click.argument(
-        "action", type=click.Choice(["encode", "decode", "dump", "validate"]),
+        "action",
+        type=click.Choice(["encode", "decode", "dump", "validate"]),
     )
     @click.option(
         "--input",

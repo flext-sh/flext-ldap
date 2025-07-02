@@ -6,7 +6,9 @@ from flext_ldap.utils.constants import (
 )
 
 # Constants for filter performance and security validation
-SUBSTRING_WILDCARD_LIMIT = 2  # Maximum wildcards in substring filters for good performance
+SUBSTRING_WILDCARD_LIMIT = (
+    2  # Maximum wildcards in substring filters for good performance
+)
 EXCELLENT_COMPLEXITY_THRESHOLD = 5  # Complexity threshold for excellent rating
 GOOD_COMPLEXITY_THRESHOLD = 15  # Complexity threshold for good rating
 MAX_PERFORMANCE_ISSUES_GOOD = 1  # Maximum performance issues for good rating
@@ -155,22 +157,32 @@ class FilterValidationResult(BaseModel):
     @property
     def errors(self) -> list[ValidationIssue]:
         """Get all error-level issues."""
-        return [issue for issue in self.issues if issue.severity == ValidationSeverity.ERROR]
+        return [
+            issue for issue in self.issues if issue.severity == ValidationSeverity.ERROR
+        ]
 
     @property
     def warnings(self) -> list[ValidationIssue]:
         """Get all warning-level issues."""
-        return [issue for issue in self.issues if issue.severity == ValidationSeverity.WARNING]
+        return [
+            issue
+            for issue in self.issues
+            if issue.severity == ValidationSeverity.WARNING
+        ]
 
     @property
     def infos(self) -> list[ValidationIssue]:
         """Get all info-level issues."""
-        return [issue for issue in self.issues if issue.severity == ValidationSeverity.INFO]
+        return [
+            issue for issue in self.issues if issue.severity == ValidationSeverity.INFO
+        ]
 
     @property
     def hints(self) -> list[ValidationIssue]:
         """Get all hint-level issues."""
-        return [issue for issue in self.issues if issue.severity == ValidationSeverity.HINT]
+        return [
+            issue for issue in self.issues if issue.severity == ValidationSeverity.HINT
+        ]
 
     def has_errors(self) -> bool:
         """Check if validation found any errors."""
@@ -289,7 +301,10 @@ class AttributeNameRule(ValidationRule):
                         ValidationIssue(
                             severity=self.severity,
                             code="INVALID_ATTRIBUTE_NAME",
-                            message=(f"Invalid attribute name format: " f"{filter_node.attribute}"),
+                            message=(
+                                f"Invalid attribute name format: "
+                                f"{filter_node.attribute}"
+                            ),
                             attribute=filter_node.attribute,
                             suggestion=(
                                 "Attribute names must start with a letter and "
@@ -336,7 +351,8 @@ class ComplexityRule(ValidationRule):
                         f"recommended maximum ({self.max_complexity})"
                     ),
                     suggestion=(
-                        "Consider simplifying the filter or breaking it " "into multiple operations"
+                        "Consider simplifying the filter or breaking it "
+                        "into multiple operations"
                     ),
                 ),
             )
@@ -382,7 +398,9 @@ class SecurityRule(ValidationRule):
                             f"{filter_node.value}"
                         ),
                         attribute=filter_node.attribute,
-                        suggestion=("Ensure filter values are properly escaped and validated"),
+                        suggestion=(
+                            "Ensure filter values are properly escaped and validated"
+                        ),
                     )
                     for pattern in self._suspicious_patterns
                     if re.search(pattern, filter_node.value)
@@ -468,7 +486,8 @@ class PerformanceRule(ValidationRule):
                             ),
                             attribute=filter_node.attribute,
                             suggestion=(
-                                "Consider using indexed attributes or " "avoiding leading wildcards"
+                                "Consider using indexed attributes or "
+                                "avoiding leading wildcards"
                             ),
                         ),
                     )

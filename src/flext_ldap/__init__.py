@@ -21,6 +21,7 @@ def get_config():
     """Get Config class."""
     try:
         from flext_ldap.config.application_config import ApplicationConfig as Config
+
         return Config
     except ImportError:
         return None
@@ -30,6 +31,7 @@ def get_ldap():
     """Get LDAP client class."""
     try:
         from flext_ldap.connections.base import LDAP
+
         return LDAP
     except ImportError:
         return None
@@ -39,6 +41,7 @@ def connect(*args, **kwargs):
     """Connect to LDAP server."""
     try:
         from flext_ldap.connections.base import connect
+
         return connect(*args, **kwargs)
     except ImportError:
         msg = "LDAP connection module not available"
@@ -50,18 +53,22 @@ def __getattr__(name: str):
     """Lazy loading of modules to avoid circular imports."""
     if name == "Config":
         from flext_ldap.config.application_config import ApplicationConfig as Config
+
         return Config
     if name == "LDAP":
         from flext_ldap.connections.base import LDAP
+
         return LDAP
     if name == "Query":
         try:
             from flext_ldap.queries import Query
+
             return Query
         except ImportError:
             return None
     elif name == "Result":
         from flext_ldap.domain.results import Result
+
         return Result
     else:
         msg = f"module '{__name__}' has no attribute '{name}'"

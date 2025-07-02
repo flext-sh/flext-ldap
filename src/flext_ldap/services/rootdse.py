@@ -527,7 +527,9 @@ class RootDSEService:
     ) -> tuple[ServerVendor, str | None]:
         """Detect server vendor and version from attributes."""
         vendor_string = self._extract_single_attribute(attributes, "vendorName") or ""
-        version_string = self._extract_single_attribute(attributes, "vendorVersion") or ""
+        version_string = (
+            self._extract_single_attribute(attributes, "vendorVersion") or ""
+        )
 
         # Microsoft Active Directory
         if "Microsoft" in vendor_string or "Windows" in vendor_string:

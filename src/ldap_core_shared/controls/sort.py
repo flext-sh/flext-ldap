@@ -325,7 +325,8 @@ class ServerSideSortControl(LDAPControl):
             while ASN1Decoder.has_more_data(sequence_content, offset):
                 # Decode individual SortKey SEQUENCE
                 key_content, next_offset = ASN1Decoder.decode_sequence(
-                    sequence_content, offset,
+                    sequence_content,
+                    offset,
                 )
 
                 # Decode attribute type (UTF8String)
@@ -347,7 +348,8 @@ class ServerSideSortControl(LDAPControl):
                         )
                         # Decode the UTF8String inside the context tag
                         matching_rule, _ = ASN1Decoder.decode_utf8_string(
-                            rule_content, 0,
+                            rule_content,
+                            0,
                         )
 
                     elif tag == ASN1Tags.CONTEXT_1:  # Context tag [1] - reverse order
@@ -557,7 +559,8 @@ class ServerSideSortResponse(LDAPControl):
             attribute_error = None
             if ASN1Decoder.has_more_data(sequence_content, offset):
                 attribute_error, _ = ASN1Decoder.decode_utf8_string(
-                    sequence_content, offset,
+                    sequence_content,
+                    offset,
                 )
 
             return cls(sort_result=sort_result, attribute_type_error=attribute_error)

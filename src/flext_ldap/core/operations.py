@@ -427,7 +427,9 @@ class BulkOperationProcessor:
                 "completed_entries": index + 1,
                 "successful_entries": self.successful_entries,
                 "failed_entries": self.failed_entries,
-                "progress_percentage": (index + 1) / total_entries * PERCENTAGE_CALCULATION_BASE,
+                "progress_percentage": (index + 1)
+                / total_entries
+                * PERCENTAGE_CALCULATION_BASE,
                 "last_dn": last_dn,
             }
 
@@ -964,7 +966,9 @@ class EnterpriseTransaction:
                 ldap_changes[attr] = [(action, values)]
             else:
                 # Simple replace
-                values = [change_spec] if not isinstance(change_spec, list) else change_spec
+                values = (
+                    [change_spec] if not isinstance(change_spec, list) else change_spec
+                )
                 ldap_changes[attr] = [(ldap3.MODIFY_REPLACE, values)]
 
         return ldap_changes
@@ -1258,7 +1262,9 @@ class LDAPOperations:
             "successful_entries": processor.successful_entries,
             "failed_entries": processor.failed_entries,
             "success_rate": (
-                processor.successful_entries / total_entries * PERCENTAGE_CALCULATION_BASE
+                processor.successful_entries
+                / total_entries
+                * PERCENTAGE_CALCULATION_BASE
                 if total_entries > 0
                 else DEFAULT_MAX_ITEMS
             ),

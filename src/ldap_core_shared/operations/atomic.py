@@ -50,7 +50,11 @@ from typing import Any, ClassVar, Union
 # Type aliases for LDAP operations
 LDAPConnection = Any  # Could be ldap3.Connection, python-ldap connection, etc.
 LDAPAttributeValue = Union[
-    str, bytes, list[str], list[bytes], int,
+    str,
+    bytes,
+    list[str],
+    list[bytes],
+    int,
 ]  # LDAP attribute values
 
 from pydantic import BaseModel, Field
@@ -174,7 +178,8 @@ class AtomicModifyRequest(BaseModel):
     )
 
     timeout_seconds: int = Field(
-        default=DEFAULT_TIMEOUT_SECONDS, description="Operation timeout in seconds",
+        default=DEFAULT_TIMEOUT_SECONDS,
+        description="Operation timeout in seconds",
     )
 
 
@@ -567,7 +572,8 @@ async def increment_attribute(
 
 
 async def allocate_uid_number(
-    connection: LDAPConnection, counter_dn: str,
+    connection: LDAPConnection,
+    counter_dn: str,
 ) -> int | None:
     """Convenience function for UID number allocation.
 
@@ -583,7 +589,8 @@ async def allocate_uid_number(
 
 
 async def allocate_gid_number(
-    connection: LDAPConnection, counter_dn: str,
+    connection: LDAPConnection,
+    counter_dn: str,
 ) -> int | None:
     """Convenience function for GID number allocation.
 

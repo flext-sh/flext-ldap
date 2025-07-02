@@ -475,7 +475,9 @@ def _add_warnings_output(output_lines: list[str], warnings: list[str]) -> None:
     output_lines.extend(f"  - {warning}" for warning in warnings)
 
 
-def _add_type_definitions(output_lines: list[str], type_definitions: dict[str, Any]) -> None:
+def _add_type_definitions(
+    output_lines: list[str], type_definitions: dict[str, Any]
+) -> None:
     """Add type definitions to output.
 
     Args:
@@ -495,7 +497,9 @@ def _add_type_definitions(output_lines: list[str], type_definitions: dict[str, A
     output_lines.append("")
 
 
-def _add_value_assignments(output_lines: list[str], value_assignments: dict[str, Any]) -> None:
+def _add_value_assignments(
+    output_lines: list[str], value_assignments: dict[str, Any]
+) -> None:
     """Add value assignments to output.
 
     Args:
@@ -514,7 +518,9 @@ def _add_value_assignments(output_lines: list[str], value_assignments: dict[str,
 
 
 def _add_imports_exports(
-    output_lines: list[str], imports: list[Any], exports: Any | None,
+    output_lines: list[str],
+    imports: list[Any],
+    exports: Any | None,
 ) -> None:
     """Add imports and exports to output.
 
@@ -536,7 +542,9 @@ def _add_imports_exports(
 
 
 def _write_schema_output(
-    output_text: str, output_file: str | None, verbose: bool,
+    output_text: str,
+    output_file: str | None,
+    verbose: bool,
 ) -> None:
     """Write schema output to file or stdout.
 
@@ -657,7 +665,8 @@ def _parse_asn1_element(asn1_data: bytes, offset: int) -> dict[str, Any] | None:
     content_preview = None
 
     if content_length > 0 and content_offset + min(
-        content_length, HEX_DUMP_WIDTH,
+        content_length,
+        HEX_DUMP_WIDTH,
     ) <= len(asn1_data):
         content = asn1_data[
             content_offset : content_offset + min(content_length, HEX_DUMP_WIDTH)
@@ -716,7 +725,10 @@ def _parse_asn1_length(asn1_data: bytes, offset: int) -> dict[str, Any] | None:
 
 
 def _add_element_info(
-    output_lines: list[str], element_num: int, offset: int, element_info: dict[str, Any],
+    output_lines: list[str],
+    element_num: int,
+    offset: int,
+    element_info: dict[str, Any],
 ) -> None:
     """Add element information to output.
 
@@ -767,7 +779,9 @@ def _add_element_info(
 
 
 def _write_asn1_output(
-    output_text: str, output_file: str | None, verbose: bool,
+    output_text: str,
+    output_file: str | None,
+    verbose: bool,
 ) -> None:
     """Write ASN.1 output to file or stdout.
 
@@ -832,7 +846,9 @@ def _execute_asn1_action(
         "validate": lambda: _validate_asn1(input_data, schema_file, format, verbose),
         "parse-schema": lambda: _parse_asn1_schema(input_data, output_file, verbose),
         "compile-schema": lambda: _compile_asn1_schema(
-            input_data, output_file, verbose,
+            input_data,
+            output_file,
+            verbose,
         ),
     }
 

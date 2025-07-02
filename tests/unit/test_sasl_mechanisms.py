@@ -93,9 +93,7 @@ class TestPlainMechanism:
 
     @pytest.mark.unit
     @pytest.mark.sasl
-    def test_plain_mechanism_capabilities(
-        self, plain_mechanism: Any | Mock
-    ) -> None:
+    def test_plain_mechanism_capabilities(self, plain_mechanism: Any | Mock) -> None:
         """Test PLAIN mechanism capabilities."""
         try:
             if hasattr(plain_mechanism, "get_capabilities"):

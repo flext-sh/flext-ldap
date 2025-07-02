@@ -151,7 +151,9 @@ class ConnectionState:
         current_stats["total_operation_time"] += operation_time
 
         # Calculate average
-        total_ops = current_stats["successful_operations"] + current_stats["failed_operations"]
+        total_ops = (
+            current_stats["successful_operations"] + current_stats["failed_operations"]
+        )
         if total_ops > 0:
             current_stats["average_operation_time"] = (
                 current_stats["total_operation_time"] / total_ops

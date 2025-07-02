@@ -292,7 +292,8 @@ class LDIFProcessor:
             successful_operations=int(self._stats.get("successful_entries", 0)),
             failed_operations=int(self._stats.get("failed_entries", 0)),
             total_duration=metrics.total_duration,
-            average_duration=metrics.total_duration / max(self._stats["entries_processed"], 1),
+            average_duration=metrics.total_duration
+            / max(self._stats["entries_processed"], 1),
             operations_per_second=(
                 self._stats["entries_processed"] / metrics.total_duration
                 if metrics.total_duration > 0
@@ -390,7 +391,11 @@ class LDIFProcessor:
 
             for attr_name, attr_values in attrs.items():
                 # Normalize attribute name case
-                norm_name = attr_name if not self.config.normalize_attributes else attr_name.lower()
+                norm_name = (
+                    attr_name
+                    if not self.config.normalize_attributes
+                    else attr_name.lower()
+                )
 
                 # Convert values to strings
                 str_values = []
@@ -767,7 +772,9 @@ class LDIFProcessor:
         self._stats["validation_errors"] += 1
 
         if self._stats["validation_errors"] > self.config.error_tolerance:
-            too_many_errors_msg = f"Too many validation errors: {self._stats['validation_errors']}"
+            too_many_errors_msg = (
+                f"Too many validation errors: {self._stats['validation_errors']}"
+            )
             raise ValueError(too_many_errors_msg) from validation_error
 
     def _handle_parse_validation_error(

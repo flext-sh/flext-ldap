@@ -407,7 +407,9 @@ def _detect_input_format(input_file: str, input_format: str) -> str | None:
 
 
 def _parse_input_file(
-    parser: SchemaParser, input_file: str, input_format: str,
+    parser: SchemaParser,
+    input_file: str,
+    input_format: str,
 ) -> Any | None:
     """Parse input file based on format.
 
@@ -469,7 +471,10 @@ def _generate_output(
     """
     if output_file.endswith(".ldif"):
         return _generate_ldif_output(
-            result, output_file, pretty_print, include_comments,
+            result,
+            output_file,
+            pretty_print,
+            include_comments,
         )
     if output_file.endswith(".schema"):
         # TODO: Implement .schema format generation

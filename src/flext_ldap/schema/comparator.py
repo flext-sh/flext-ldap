@@ -186,7 +186,9 @@ class SchemaComparator:
                     differences.append(
                         SchemaDifference(
                             element_type="attributeType",
-                            element_name=source_attr.names[0] if source_attr.names else oid,
+                            element_name=source_attr.names[0]
+                            if source_attr.names
+                            else oid,
                             difference_type=DifferenceType.MODIFIED,
                             source_definition=self._format_attribute_summary(
                                 source_attr,
@@ -285,7 +287,10 @@ class SchemaComparator:
     ) -> AttributeType | None:
         """Find attribute type by name in schema."""
         for attr in schema.attribute_types.values():
-            if any(name.lower() in [n.lower() for n in attr_type.names] for name in attr.names):
+            if any(
+                name.lower() in [n.lower() for n in attr_type.names]
+                for name in attr.names
+            ):
                 return attr
         return None
 
@@ -296,7 +301,10 @@ class SchemaComparator:
     ) -> ObjectClass | None:
         """Find object class by name in schema."""
         for oc in schema.object_classes.values():
-            if any(name.lower() in [n.lower() for n in obj_class.names] for name in oc.names):
+            if any(
+                name.lower() in [n.lower() for n in obj_class.names]
+                for name in oc.names
+            ):
                 return oc
         return None
 

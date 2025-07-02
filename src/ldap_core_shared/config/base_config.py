@@ -114,10 +114,19 @@ class LDAPServerConfig:
     - Consistent behavior across all LDAP configuration usage
     """
 
-    def __init__(self, host: str, port: int = LDAP_DEFAULT_PORT, bind_dn: str = "",
-                 password: str = "", base_dn: str = "", use_ssl: bool = False,
-                 use_tls: bool = False, timeout: int = DEFAULT_TIMEOUT_SECONDS,
-                 pool_size: int = 10, **kwargs) -> None:
+    def __init__(
+        self,
+        host: str,
+        port: int = LDAP_DEFAULT_PORT,
+        bind_dn: str = "",
+        password: str = "",
+        base_dn: str = "",
+        use_ssl: bool = False,
+        use_tls: bool = False,
+        timeout: int = DEFAULT_TIMEOUT_SECONDS,
+        pool_size: int = 10,
+        **kwargs,
+    ) -> None:
         """Initialize LDAP server config facade.
 
         Args:
@@ -219,9 +228,13 @@ class LDAPServerConfig:
 class ProcessingConfig(BaseConfig):
     """Processing and performance configuration."""
 
-    batch_size: int = Field(default=DEFAULT_LARGE_LIMIT, description="Batch processing size")
+    batch_size: int = Field(
+        default=DEFAULT_LARGE_LIMIT, description="Batch processing size"
+    )
     max_workers: int = Field(default=4, description="Maximum worker threads")
-    chunk_size: int = Field(default=DEFAULT_MAX_ITEMS, description="Chunk size for processing")
+    chunk_size: int = Field(
+        default=DEFAULT_MAX_ITEMS, description="Chunk size for processing"
+    )
     memory_limit_mb: int = Field(default=512, description="Memory limit in MB")
     retry_attempts: int = Field(default=3, description="Number of retry attempts")
     retry_delay: float = Field(default=1.0, description="Retry delay in seconds")
@@ -260,9 +273,17 @@ class LoggingConfig:
     Delegates entirely to enterprise logging configuration system.
     """
 
-    def __init__(self, level: str = "INFO", format: str | None = None, file_path: Path | None = None,
-                 max_file_size_mb: int = DEFAULT_MAX_ITEMS, backup_count: int = 5,
-                 enable_console: bool = True, mask_sensitive_data: bool = True, **kwargs) -> None:
+    def __init__(
+        self,
+        level: str = "INFO",
+        format: str | None = None,
+        file_path: Path | None = None,
+        max_file_size_mb: int = DEFAULT_MAX_ITEMS,
+        backup_count: int = 5,
+        enable_console: bool = True,
+        mask_sensitive_data: bool = True,
+        **kwargs,
+    ) -> None:
         """Initialize logging config facade."""
         from ldap_core_shared.core.config import LogLevel
 
@@ -322,9 +343,16 @@ class SecurityConfig:
     Delegates entirely to enterprise security configuration system.
     """
 
-    def __init__(self, verify_ssl: bool = True, ca_cert_file: Path | None = None,
-                 client_cert_file: Path | None = None, client_key_file: Path | None = None,
-                 encryption_key: str | None = None, mask_sensitive_data: bool = True, **kwargs) -> None:
+    def __init__(
+        self,
+        verify_ssl: bool = True,
+        ca_cert_file: Path | None = None,
+        client_cert_file: Path | None = None,
+        client_key_file: Path | None = None,
+        encryption_key: str | None = None,
+        mask_sensitive_data: bool = True,
+        **kwargs,
+    ) -> None:
         """Initialize security config facade."""
         from pydantic import SecretStr
 
@@ -533,6 +561,7 @@ def load_security_config(
 # ============================================================================
 # 🔄 MIGRATION UTILITIES - Convert legacy configs to unified api.LDAPConfig
 # ============================================================================
+
 
 def migrate_ldap_server_config_to_unified(legacy_config: LDAPServerConfig):
     """Convert LDAPServerConfig to unified api.LDAPConfig.

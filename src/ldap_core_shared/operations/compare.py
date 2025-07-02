@@ -144,7 +144,8 @@ class CompareRequest(BaseModel):
 
     # Operation settings
     timeout_seconds: int = Field(
-        default=DEFAULT_TIMEOUT_SECONDS, description="Operation timeout in seconds",
+        default=DEFAULT_TIMEOUT_SECONDS,
+        description="Operation timeout in seconds",
     )
 
     # Security settings for password comparisons

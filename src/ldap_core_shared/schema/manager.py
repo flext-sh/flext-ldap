@@ -87,10 +87,12 @@ class SchemaDependency(BaseModel):
     schema_name: str = Field(description="Dependent schema name")
     dependency_type: str = Field(description="Type of dependency")
     required_version: str | None = Field(
-        default=None, description="Required version",
+        default=None,
+        description="Required version",
     )
     is_optional: bool = Field(
-        default=False, description="Whether dependency is optional",
+        default=False,
+        description="Whether dependency is optional",
     )
 
 
@@ -102,14 +104,16 @@ class SchemaInfo(BaseModel):
 
     # Metadata
     installed_at: datetime | None = Field(
-        default=None, description="Installation timestamp",
+        default=None,
+        description="Installation timestamp",
     )
     version: str | None = Field(default=None, description="Schema version")
     description: str | None = Field(default=None, description="Schema description")
 
     # Components
     attribute_types_count: int = Field(
-        default=0, description="Number of attribute types",
+        default=0,
+        description="Number of attribute types",
     )
     object_classes_count: int = Field(default=0, description="Number of object classes")
     syntaxes_count: int = Field(default=0, description="Number of syntaxes")
@@ -128,7 +132,8 @@ class SchemaInfo(BaseModel):
 
     # Status
     is_system_schema: bool = Field(
-        default=False, description="Whether this is a system schema",
+        default=False,
+        description="Whether this is a system schema",
     )
     is_readonly: bool = Field(default=False, description="Whether schema is read-only")
 
@@ -156,15 +161,18 @@ class SchemaOperation(BaseModel):
     )
 
     error_message: str | None = Field(
-        default=None, description="Error message if failed",
+        default=None,
+        description="Error message if failed",
     )
 
     # Timing
     started_at: datetime | None = Field(
-        default=None, description="Operation start time",
+        default=None,
+        description="Operation start time",
     )
     completed_at: datetime | None = Field(
-        default=None, description="Operation completion time",
+        default=None,
+        description="Operation completion time",
     )
 
     # Results
@@ -327,7 +335,9 @@ class SchemaManager:
 
                         # Get additional schema information
                         schema_info = self._extract_schema_info(
-                            entry, schema_name, schema_dn,
+                            entry,
+                            schema_name,
+                            schema_dn,
                         )
                         schemas.append(schema_info)
 
@@ -340,7 +350,9 @@ class SchemaManager:
                 return self._get_fallback_schema_list(include_system)
 
         logger.info(
-            "Listed %d schemas (include_system=%s)", len(schemas), include_system,
+            "Listed %d schemas (include_system=%s)",
+            len(schemas),
+            include_system,
         )
         return schemas
 
@@ -386,7 +398,9 @@ class SchemaManager:
 
                     entry = self._connection.entries[0]
                     schema_info = self._extract_detailed_schema_info(
-                        entry, schema_name, schema_dn,
+                        entry,
+                        schema_name,
+                        schema_dn,
                     )
 
                     logger.info("Retrieved detailed info for schema '%s'", schema_name)
@@ -397,7 +411,9 @@ class SchemaManager:
                     return self._get_fallback_schema_info(schema_name)
 
             except Exception as e:
-                logger.exception("Error getting schema info for '%s': %s", schema_name, e)
+                logger.exception(
+                    "Error getting schema info for '%s': %s", schema_name, e
+                )
                 return self._get_fallback_schema_info(schema_name)
 
     def install_schema_from_file(
@@ -649,7 +665,9 @@ class SchemaManager:
 
             except Exception as e:
                 logger.exception(
-                    "Failed to create backup for schema '%s': %s", schema_name, e,
+                    "Failed to create backup for schema '%s': %s",
+                    schema_name,
+                    e,
                 )
                 # Return minimal backup with error information
                 return SchemaBackup(
@@ -683,7 +701,8 @@ class SchemaManager:
             backup = self._find_backup(backup_id)
             if not backup:
                 operation.complete_operation(
-                    success=False, error=f"Backup '{backup_id}' not found",
+                    success=False,
+                    error=f"Backup '{backup_id}' not found",
                 )
                 self._operations.append(operation)
                 return operation
@@ -693,7 +712,8 @@ class SchemaManager:
             # Verify backup integrity
             if not self._verify_backup_integrity(backup):
                 operation.complete_operation(
-                    success=False, error=f"Backup '{backup_id}' failed integrity check",
+                    success=False,
+                    error=f"Backup '{backup_id}' failed integrity check",
                 )
                 self._operations.append(operation)
                 return operation
@@ -733,12 +753,14 @@ class SchemaManager:
                     )
                 else:
                     operation.complete_operation(
-                        success=False, error="Schema restore operation failed",
+                        success=False,
+                        error="Schema restore operation failed",
                     )
 
             except Exception as e:
                 operation.complete_operation(
-                    success=False, error=f"Schema restore failed: {e!s}",
+                    success=False,
+                    error=f"Schema restore failed: {e!s}",
                 )
 
         except Exception as e:
@@ -899,7 +921,8 @@ class SchemaManager:
         return schema_name.lower() in system_schemas
 
     def _get_fallback_schema_list(
-        self, include_system: bool = False,
+        self,
+        include_system: bool = False,
     ) -> list[SchemaInfo]:
         """Get fallback schema list when LDAP query fails.
 
@@ -955,7 +978,10 @@ class SchemaManager:
         )
 
     def _extract_schema_info(
-        self, entry: Any, schema_name: str, schema_dn: str,
+        self,
+        entry: Any,
+        schema_name: str,
+        schema_dn: str,
     ) -> SchemaInfo:
         """Extract schema information from LDAP entry.
 
@@ -992,7 +1018,10 @@ class SchemaManager:
         )
 
     def _extract_detailed_schema_info(
-        self, entry: Any, schema_name: str, schema_dn: str,
+        self,
+        entry: Any,
+        schema_name: str,
+        schema_dn: str,
     ) -> SchemaInfo:
         """Extract detailed schema information from LDAP entry.
 
@@ -1058,7 +1087,9 @@ class SchemaManager:
             return "\n".join(ldif_lines)
 
         except Exception as e:
-            logger.exception("Failed to extract LDIF for schema '%s': %s", schema_name, e)
+            logger.exception(
+                "Failed to extract LDIF for schema '%s': %s", schema_name, e
+            )
             return f"# Error extracting schema '{schema_name}': {e!s}\n"
 
     def _get_server_info(self) -> str:
@@ -1175,7 +1206,9 @@ class SchemaManager:
 
         except Exception as e:
             logger.exception(
-                "Error verifying backup '%s' integrity: %s", backup.backup_id, e,
+                "Error verifying backup '%s' integrity: %s",
+                backup.backup_id,
+                e,
             )
             return False
 

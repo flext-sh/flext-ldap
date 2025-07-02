@@ -596,7 +596,9 @@ class BEREncoder(ASN1EncoderBase):
         try:
             # Encode all elements in set
             if hasattr(element, "__iter__"):
-                encoded_elements.extend(self.encode_element(sub_element) for sub_element in element)
+                encoded_elements.extend(
+                    self.encode_element(sub_element) for sub_element in element
+                )
             else:
                 msg = "SET element is not iterable"
                 raise EncodingError(msg, element)
@@ -666,7 +668,9 @@ class DEREncoder(BEREncoder):
         try:
             # Encode all elements in set
             if hasattr(element, "__iter__"):
-                encoded_elements.extend(self.encode_element(sub_element) for sub_element in element)
+                encoded_elements.extend(
+                    self.encode_element(sub_element) for sub_element in element
+                )
             else:
                 msg = "SET element is not iterable"
                 raise EncodingError(msg, element)

@@ -277,9 +277,7 @@ Usage Example:
             )
         return current_docstring or f'"""{node_name} following CLAUDE.md patterns."""'
 
-    def _generate_module_docstring(
-        self, module_name: str, current: str | None
-    ) -> str:
+    def _generate_module_docstring(self, module_name: str, current: str | None) -> str:
         """Generate module docstring following CLAUDE.md patterns."""
         # Determine module purpose based on name patterns
         if "facade" in module_name.lower():

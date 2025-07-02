@@ -60,15 +60,22 @@ from enum import Enum
 from typing import Any, TypeVar
 
 try:
+    try:
     from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
+
+from typing import 
 except ImportError:
     # Fallback for Python < 3.10
+    try:
     from typing import TypeAlias
-
-try:
-    import ldap3
 except ImportError:
-    ldap3 = None  # type: ignore[assignment]
+    from typing_extensions import TypeAlias
+
+from typing import 
+except ImportError:
+    # Fallback for Pythone  # type: ignore[assignment]
 
 
 # Type aliases for better readability
@@ -1009,6 +1016,7 @@ async def search_async(
     async_ops = AsyncLDAPOperations(connection)
     # Create search config with filter and attributes
     from ldap_core_shared.config.search import SearchConfig
+
     search_config = SearchConfig(
         search_filter=search_filter,
         attributes=attributes or [],

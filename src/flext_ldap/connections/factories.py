@@ -7,6 +7,7 @@ import ssl
 
 import ldap3
 
+from flext_ldap.connections.base import LDAPConnectionInfo
 from flext_ldap.connections.interfaces import (
     BaseConnectionComponent,
     ISecurityManager,

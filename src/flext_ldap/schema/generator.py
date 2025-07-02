@@ -731,7 +731,8 @@ def generate_ldif_from_schema_file(
 
         # Add object classes
         ldif_lines.extend(
-            f"objectClasses: {obj_class}" for obj_class in schema_elements.get("objectClasses", [])
+            f"objectClasses: {obj_class}"
+            for obj_class in schema_elements.get("objectClasses", [])
         )
 
         # Add attribute types
@@ -742,12 +743,14 @@ def generate_ldif_from_schema_file(
 
         # Add LDAP syntaxes
         ldif_lines.extend(
-            f"ldapSyntaxes: {syntax}" for syntax in schema_elements.get("ldapSyntaxes", [])
+            f"ldapSyntaxes: {syntax}"
+            for syntax in schema_elements.get("ldapSyntaxes", [])
         )
 
         # Add matching rules
         ldif_lines.extend(
-            f"matchingRules: {rule}" for rule in schema_elements.get("matchingRules", [])
+            f"matchingRules: {rule}"
+            for rule in schema_elements.get("matchingRules", [])
         )
 
         return "\n".join(ldif_lines) + "\n"
@@ -843,7 +846,9 @@ def validate_ldif_schema(ldif_content: str) -> list[str]:
             errors.append("Missing subschema objectClass")
 
         # Check for empty content
-        content_lines = [line for line in lines if line.strip() and not line.startswith("#")]
+        content_lines = [
+            line for line in lines if line.strip() and not line.startswith("#")
+        ]
         if len(content_lines) < 3:  # version + dn + objectClass minimum
             errors.append("LDIF content appears to be empty or incomplete")
 

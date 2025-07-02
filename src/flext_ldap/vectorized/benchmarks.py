@@ -77,13 +77,17 @@ class BenchmarkSuite:
     @property
     def average_duration(self) -> float:
         """Calculate average duration."""
-        return statistics.mean([r.duration for r in self.results]) if self.results else 0.0
+        return (
+            statistics.mean([r.duration for r in self.results]) if self.results else 0.0
+        )
 
     @property
     def duration_std_dev(self) -> float:
         """Calculate duration standard deviation."""
         return (
-            statistics.stdev([r.duration for r in self.results]) if len(self.results) > 1 else 0.0
+            statistics.stdev([r.duration for r in self.results])
+            if len(self.results) > 1
+            else 0.0
         )
 
     @property
@@ -109,7 +113,9 @@ class BenchmarkSuite:
         durations = [r.duration for r in self.results]
         mean = statistics.mean(durations)
         std_dev = statistics.stdev(durations)
-        margin = 1.96 * (std_dev / (len(durations) ** 0.5))  # DEFAULT_CONFIDENCE_PERCENT% CI
+        margin = 1.96 * (
+            std_dev / (len(durations) ** 0.5)
+        )  # DEFAULT_CONFIDENCE_PERCENT% CI
 
         return (mean - margin, mean + margin)
 
@@ -324,8 +330,10 @@ class PerformanceBenchmarker:
                 "memory_before_mb": memory_before,
                 "memory_after_mb": memory_after,
                 "gc_collections": gc_collections,
-                "io_read_delta": io_after.get("read_bytes", 0) - io_before.get("read_bytes", 0),
-                "io_write_delta": io_after.get("write_bytes", 0) - io_before.get("write_bytes", 0),
+                "io_read_delta": io_after.get("read_bytes", 0)
+                - io_before.get("read_bytes", 0),
+                "io_write_delta": io_after.get("write_bytes", 0)
+                - io_before.get("write_bytes", 0),
                 "result_type": type(result).__name__ if result else None,
             },
         )
@@ -359,7 +367,10 @@ class PerformanceBenchmarker:
         )
 
         ops_improvement = (
-            (optimized_suite.average_ops_per_second - baseline_suite.average_ops_per_second)
+            (
+                optimized_suite.average_ops_per_second
+                - baseline_suite.average_ops_per_second
+            )
             / baseline_suite.average_ops_per_second
             * DEFAULT_MAX_ITEMS
         )
@@ -629,7 +640,8 @@ class PerformanceBenchmarker:
 
         pooled_std = ((baseline_std**2 + optimized_std**2) / 2) ** 0.5
         t_stat = abs(baseline_mean - optimized_mean) / (
-            pooled_std * ((1 / len(baseline_durations) + 1 / len(optimized_durations)) ** 0.5)
+            pooled_std
+            * ((1 / len(baseline_durations) + 1 / len(optimized_durations)) ** 0.5)
         )
 
         # Rough significance check (t > 2.0 for DEFAULT_CONFIDENCE_PERCENT% confidence)
@@ -638,7 +650,9 @@ class PerformanceBenchmarker:
         return {
             "significant": significant,
             "t_statistic": t_stat,
-            "confidence_level": DEFAULT_CONFIDENCE_PERCENT / 100.0 if significant else None,
+            "confidence_level": DEFAULT_CONFIDENCE_PERCENT / 100.0
+            if significant
+            else None,
             "baseline_mean": baseline_mean,
             "optimized_mean": optimized_mean,
         }
@@ -962,8 +976,12 @@ class PerformanceBenchmarker:
             sorted_durations = sorted(durations)
             p95_index = int(len(sorted_durations) * 0.95)
             p99_index = int(len(sorted_durations) * 0.99)
-            p95_response_time = sorted_durations[min(p95_index, len(sorted_durations) - 1)]
-            p99_response_time = sorted_durations[min(p99_index, len(sorted_durations) - 1)]
+            p95_response_time = sorted_durations[
+                min(p95_index, len(sorted_durations) - 1)
+            ]
+            p99_response_time = sorted_durations[
+                min(p99_index, len(sorted_durations) - 1)
+            ]
 
         return {
             "average_ms": avg_response_time * DEFAULT_LARGE_LIMIT,
