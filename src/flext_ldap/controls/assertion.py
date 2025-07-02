@@ -40,6 +40,7 @@ References:
     - RFC 4528: Lightweight Directory Access Protocol (LDAP) Assertion Control
     - OID: 1.3.6.1.1.12
     - RFC 4511: LDAP Filter encoding
+
 """
 
 from __future__ import annotations
@@ -74,6 +75,7 @@ class AssertionControl(LDAPControl):
 
         This control is typically marked as critical since the application
         depends on the conditional behavior.
+
     """
 
     control_type = ControlOIDs.ASSERTION
@@ -138,6 +140,7 @@ class AssertionControl(LDAPControl):
 
         Raises:
             ControlEncodingError: If encoding fails
+
         """
         try:
             # For now, encode the filter as a UTF8String
@@ -164,6 +167,7 @@ class AssertionControl(LDAPControl):
 
         Raises:
             ControlDecodingError: If decoding fails
+
         """
         if not control_value:
             msg = "Assertion control requires a value"
@@ -185,6 +189,7 @@ class AssertionControl(LDAPControl):
 
         Returns:
             True if filter is a simple equality like (attr=value)
+
         """
         if not self.filter_expr.startswith("(") or not self.filter_expr.endswith(")"):
             return False
@@ -199,6 +204,7 @@ class AssertionControl(LDAPControl):
 
         Returns:
             Attribute name if this is a simple equality assertion, None otherwise
+
         """
         if not self.is_simple_equality():
             return None
@@ -213,6 +219,7 @@ class AssertionControl(LDAPControl):
 
         Returns:
             Assertion value if this is a simple equality assertion, None otherwise
+
         """
         if not self.is_simple_equality():
             return None
@@ -242,6 +249,7 @@ class AssertionControl(LDAPControl):
         Example:
             >>> ctrl = AssertionControl.simple_equality("employeeType", "contractor")
             >>> # Creates filter: (employeeType=contractor)
+
         """
         filter_expr = f"({attribute}={value})"
         return cls(filter_expr=filter_expr, criticality=critical)
@@ -264,6 +272,7 @@ class AssertionControl(LDAPControl):
         Example:
             >>> ctrl = AssertionControl.attribute_exists("employeeNumber")
             >>> # Creates filter: (employeeNumber=*)
+
         """
         filter_expr = f"({attribute}=*)"
         return cls(filter_expr=filter_expr, criticality=critical)
@@ -286,6 +295,7 @@ class AssertionControl(LDAPControl):
         Example:
             >>> ctrl = AssertionControl.attribute_not_exists("accountLocked")
             >>> # Creates filter: (!(accountLocked=*))
+
         """
         filter_expr = f"(!({attribute}=*))"
         return cls(filter_expr=filter_expr, criticality=critical)
@@ -311,6 +321,7 @@ class AssertionControl(LDAPControl):
             >>> conditions = ["department=IT", "!(accountLocked=TRUE)"]
             >>> ctrl = AssertionControl.multiple_conditions(conditions, "AND")
             >>> # Creates filter: (&(department=IT)(!(accountLocked=TRUE)))
+
         """
         if not conditions:
             msg = "At least one condition is required"
@@ -357,6 +368,7 @@ def assert_equals(
 
     Returns:
         AssertionControl for equality test
+
     """
     return AssertionControl.simple_equality(attribute, value, critical)
 
@@ -370,6 +382,7 @@ def assert_exists(attribute: str, critical: bool = True) -> AssertionControl:
 
     Returns:
         AssertionControl for existence test
+
     """
     return AssertionControl.attribute_exists(attribute, critical)
 
@@ -383,6 +396,7 @@ def assert_not_exists(attribute: str, critical: bool = True) -> AssertionControl
 
     Returns:
         AssertionControl for non-existence test
+
     """
     return AssertionControl.attribute_not_exists(attribute, critical)
 
@@ -396,6 +410,7 @@ def assert_and(*conditions: str, critical: bool = True) -> AssertionControl:
 
     Returns:
         AssertionControl with AND logic
+
     """
     return AssertionControl.multiple_conditions(list(conditions), "AND", critical)
 
@@ -409,6 +424,7 @@ def assert_or(*conditions: str, critical: bool = True) -> AssertionControl:
 
     Returns:
         AssertionControl with OR logic
+
     """
     return AssertionControl.multiple_conditions(list(conditions), "OR", critical)
 

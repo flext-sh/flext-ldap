@@ -34,6 +34,7 @@ References:
     - X.680: Information Technology - Abstract Syntax Notation One (ASN.1)
     - RFC 4517: LDAP Syntaxes and Matching Rules
     - ISO 8601: Date and time representation standards
+
 """
 
 from __future__ import annotations
@@ -94,6 +95,7 @@ class GeneralizedTime:
         >>> # Time arithmetic
         >>> future = gt.add_days(30)
         >>> past = gt.subtract_hours(24)
+
     """
 
     # Regex patterns for LDAP time formats
@@ -117,6 +119,7 @@ class GeneralizedTime:
             dt: Python datetime object (defaults to current UTC time)
             precision: Time precision level
             timezone_type: Timezone representation type
+
         """
         self._datetime = dt or datetime.now(UTC)
         self._precision = precision
@@ -135,6 +138,7 @@ class GeneralizedTime:
 
         Returns:
             GeneralizedTime for current time
+
         """
         return cls(datetime.now(UTC), precision, TimeZoneType.UTC)
 
@@ -154,6 +158,7 @@ class GeneralizedTime:
 
         Returns:
             GeneralizedTime object
+
         """
         return cls(dt, precision, timezone_type)
 
@@ -169,6 +174,7 @@ class GeneralizedTime:
 
         Raises:
             ValueError: If time string format is invalid
+
         """
         # Try GeneralizedTime format first
         match = cls.GENERALIZED_TIME_PATTERN.match(ldap_time.strip())
@@ -264,6 +270,7 @@ class GeneralizedTime:
 
         Returns:
             GeneralizedTime object
+
         """
         dt = datetime.fromtimestamp(timestamp, tz=UTC)
         return cls(dt, TimePrecision.SECONDS, TimeZoneType.UTC)
@@ -277,6 +284,7 @@ class GeneralizedTime:
 
         Returns:
             GeneralizedTime object
+
         """
         dt = datetime.fromisoformat(iso_string.replace("Z", "+00:00"))
         precision = (
@@ -292,6 +300,7 @@ class GeneralizedTime:
 
         Returns:
             LDAP GeneralizedTime string (e.g., "20231225120000Z")
+
         """
         dt = self._datetime
 
@@ -336,6 +345,7 @@ class GeneralizedTime:
 
         Returns:
             Python datetime object
+
         """
         return self._datetime
 
@@ -344,6 +354,7 @@ class GeneralizedTime:
 
         Returns:
             Unix timestamp (seconds since epoch)
+
         """
         return self._datetime.timestamp()
 
@@ -352,6 +363,7 @@ class GeneralizedTime:
 
         Returns:
             ISO 8601 time string
+
         """
         return self._datetime.isoformat()
 
@@ -360,6 +372,7 @@ class GeneralizedTime:
 
         Returns:
             GeneralizedTime in UTC
+
         """
         if self._datetime.tzinfo is None:
             # Assume local time, convert to UTC
@@ -374,6 +387,7 @@ class GeneralizedTime:
 
         Returns:
             GeneralizedTime in local timezone
+
         """
         local_dt = self._datetime.astimezone()
         return GeneralizedTime(local_dt, self._precision, internal.invalid)
@@ -387,6 +401,7 @@ class GeneralizedTime:
 
         Returns:
             New GeneralizedTime object
+
         """
         new_year = self._datetime.year + years
         new_dt = self._datetime.replace(year=new_year)
@@ -400,6 +415,7 @@ class GeneralizedTime:
 
         Returns:
             New GeneralizedTime object
+
         """
         year = self._datetime.year
         month = self._datetime.month + months
@@ -426,6 +442,7 @@ class GeneralizedTime:
 
         Returns:
             New GeneralizedTime object
+
         """
         new_dt = self._datetime + timedelta(days=days)
         return GeneralizedTime(new_dt, self._precision, self._timezone_type)
@@ -438,6 +455,7 @@ class GeneralizedTime:
 
         Returns:
             New GeneralizedTime object
+
         """
         new_dt = self._datetime + timedelta(hours=hours)
         return GeneralizedTime(new_dt, self._precision, self._timezone_type)
@@ -450,6 +468,7 @@ class GeneralizedTime:
 
         Returns:
             New GeneralizedTime object
+
         """
         new_dt = self._datetime + timedelta(minutes=minutes)
         return GeneralizedTime(new_dt, self._precision, self._timezone_type)
@@ -462,6 +481,7 @@ class GeneralizedTime:
 
         Returns:
             New GeneralizedTime object
+
         """
         new_dt = self._datetime + timedelta(seconds=seconds)
         return GeneralizedTime(new_dt, self._precision, self._timezone_type)
@@ -499,6 +519,7 @@ class GeneralizedTime:
 
         Returns:
             True if time is expired
+
         """
         ref = reference_time or GeneralizedTime.now()
         return self._datetime < ref._datetime
@@ -511,6 +532,7 @@ class GeneralizedTime:
 
         Returns:
             True if time is in the future
+
         """
         ref = reference_time or GeneralizedTime.now()
         return self._datetime > ref._datetime
@@ -523,6 +545,7 @@ class GeneralizedTime:
 
         Returns:
             Time difference as timedelta
+
         """
         return target_time._datetime - self._datetime
 
@@ -534,6 +557,7 @@ class GeneralizedTime:
 
         Returns:
             Time difference as timedelta
+
         """
         return self._datetime - reference_time._datetime
 
@@ -545,6 +569,7 @@ class GeneralizedTime:
 
         Returns:
             Human-readable age string
+
         """
         ref = reference_time or GeneralizedTime.now()
         delta = ref._datetime - self._datetime
@@ -647,6 +672,7 @@ class LDAPTimeUtils:
 
         Raises:
             ValueError: If no format matches
+
         """
         # Try LDAP GeneralizedTime format
         try:
@@ -679,6 +705,7 @@ class LDAPTimeUtils:
 
         Returns:
             True if format is valid
+
         """
         try:
             GeneralizedTime.from_ldap_string(time_str)
@@ -699,6 +726,7 @@ class LDAPTimeUtils:
 
         Returns:
             Converted time string
+
         """
         gt = LDAPTimeUtils.parse_any_time_format(time_str)
 
@@ -724,6 +752,7 @@ class LDAPTimeUtils:
 
         Returns:
             Expiry time
+
         """
         base = base_time or GeneralizedTime.now()
         return base.add_days(duration_days)
@@ -737,6 +766,7 @@ class LDAPTimeUtils:
 
         Returns:
             Formatted duration string
+
         """
         total_seconds = int(delta.total_seconds())
 
@@ -758,6 +788,7 @@ def current_ldap_time() -> str:
 
     Returns:
         Current time in LDAP format
+
     """
     return GeneralizedTime.now().to_ldap_string()
 
@@ -770,6 +801,7 @@ def ldap_time_to_datetime(ldap_time: str) -> datetime:
 
     Returns:
         Python datetime object
+
     """
     return GeneralizedTime.from_ldap_string(ldap_time).to_datetime()
 
@@ -782,6 +814,7 @@ def datetime_to_ldap_time(dt: datetime) -> str:
 
     Returns:
         LDAP GeneralizedTime string
+
     """
     return GeneralizedTime.from_datetime(dt).to_ldap_string()
 
@@ -795,6 +828,7 @@ def is_time_expired(ldap_time: str, reference_time: str | None = None) -> bool:
 
     Returns:
         True if time is expired
+
     """
     gt = GeneralizedTime.from_ldap_string(ldap_time)
     ref = GeneralizedTime.from_ldap_string(reference_time) if reference_time else None

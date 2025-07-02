@@ -78,6 +78,7 @@ class LDIFMerger:
 
         Returns:
             Operation result with merge statistics
+
         """
         try:
             from ldap_core_shared.ldif.processor import LDIFProcessor
@@ -146,6 +147,7 @@ class LDIFMerger:
 
         Returns:
             Merged and deduplicated list of entries
+
         """
         all_entries = []
         for entries in entry_lists:

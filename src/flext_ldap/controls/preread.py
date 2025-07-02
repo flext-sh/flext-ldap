@@ -45,6 +45,7 @@ References:
     - RFC 4511: LDAP Protocol specification
     - RFC 3673: Lightweight Directory Access Protocol version 3 (LDAPv3): All Operational Attributes
     - OID: 1.3.6.1.1.13.1 (Pre-Read Control)
+
 """
 
 from __future__ import annotations
@@ -105,6 +106,7 @@ class AttributeSelection(BaseModel):
 
         Returns:
             BER-encoded SEQUENCE OF OCTET STRING
+
         """
         # Encode each attribute as OCTET STRING
         encoded_attrs = []
@@ -157,6 +159,7 @@ class AttributeSelection(BaseModel):
 
         Raises:
             ValueError: If BER decoding fails
+
         """
         if not data or data[0] != BER_SEQUENCE_TAG:
             msg = "Invalid AttributeSelection: expected SEQUENCE"
@@ -283,6 +286,7 @@ class SearchResultEntry(BaseModel):
 
         Returns:
             BER-encoded SearchResultEntry
+
         """
         # Encode object name (LDAPDN as OCTET STRING)
         dn_bytes = self.object_name.encode("utf-8")
@@ -435,6 +439,7 @@ class SearchResultEntry(BaseModel):
 
         Raises:
             ValueError: If BER decoding fails
+
         """
         if not data or data[0] != BER_APPLICATION_TAG_4:
             msg = "Invalid SearchResultEntry: expected [APPLICATION 4]"
@@ -517,6 +522,7 @@ class PreReadControl(LDAPControl):
         - "+" requests all operational attributes
         - "*" "+" requests all attributes
         - Empty list requests all user attributes
+
     """
 
     control_type = RFC4527_PRE_READ_OID
@@ -556,6 +562,7 @@ class PreReadControl(LDAPControl):
 
         Raises:
             ControlEncodingError: If BER encoding fails
+
         """
         try:
             attr_selection = AttributeSelection(attributes=self.attributes)
@@ -576,6 +583,7 @@ class PreReadControl(LDAPControl):
 
         Raises:
             ControlDecodingError: If BER decoding fails
+
         """
         if not control_value:
             # Empty control value means all user attributes per RFC
@@ -594,6 +602,7 @@ class PreReadControl(LDAPControl):
 
         Returns:
             PreReadControl with "*" attribute selection
+
         """
         return cls(attributes=["*"])
 
@@ -603,6 +612,7 @@ class PreReadControl(LDAPControl):
 
         Returns:
             PreReadControl with "+" attribute selection
+
         """
         return cls(attributes=["+"])
 
@@ -612,6 +622,7 @@ class PreReadControl(LDAPControl):
 
         Returns:
             PreReadControl with "*" and "+" attribute selection
+
         """
         return cls(attributes=["*", "+"])
 
@@ -624,6 +635,7 @@ class PreReadControl(LDAPControl):
 
         Returns:
             PreReadControl for specified attributes
+
         """
         return cls(attributes=list(attributes))
 
@@ -635,6 +647,7 @@ class PreReadControl(LDAPControl):
 
         Returns:
             True if attribute is included per RFC 3673 rules
+
         """
         attr_lower = attribute.lower()
 
@@ -686,6 +699,7 @@ class PreReadControl(LDAPControl):
 
         Returns:
             List of attribute names including RFC 3673 patterns
+
         """
         return self.attributes.copy()
 
@@ -712,6 +726,7 @@ class PreReadResponse(LDAPControl):
     Note:
         For Add operations, no pre-read response is typically returned
         since the entry didn't exist before the operation.
+
     """
 
     control_type = RFC4527_PRE_READ_OID
@@ -732,6 +747,7 @@ class PreReadResponse(LDAPControl):
 
         Raises:
             ControlEncodingError: If BER encoding fails
+
         """
         try:
             if not self.entry:
@@ -757,6 +773,7 @@ class PreReadResponse(LDAPControl):
 
         Raises:
             ControlDecodingError: If BER decoding fails
+
         """
         if not control_value:
             return cls(entry=None)
@@ -773,6 +790,7 @@ class PreReadResponse(LDAPControl):
 
         Returns:
             True if entry exists in response
+
         """
         return self.entry is not None and bool(self.entry.object_name)
 
@@ -784,6 +802,7 @@ class PreReadResponse(LDAPControl):
 
         Returns:
             List of attribute values or None if not present
+
         """
         if not self.entry:
             return None
@@ -795,6 +814,7 @@ class PreReadResponse(LDAPControl):
 
         Returns:
             Entry DN or None if no entry
+
         """
         if not self.entry:
             return None
@@ -816,6 +836,7 @@ def preread_all_user_attributes() -> PreReadControl:
 
     Returns:
         PreReadControl with "*" attribute selection per RFC 3673
+
     """
     return PreReadControl.all_user_attributes()
 
@@ -825,6 +846,7 @@ def preread_all_operational_attributes() -> PreReadControl:
 
     Returns:
         PreReadControl with "+" attribute selection per RFC 3673
+
     """
     return PreReadControl.all_operational_attributes()
 
@@ -834,6 +856,7 @@ def preread_all_attributes() -> PreReadControl:
 
     Returns:
         PreReadControl with "*" and "+" attribute selection per RFC 3673
+
     """
     return PreReadControl.all_attributes()
 
@@ -846,6 +869,7 @@ def preread_specific_attributes(*attributes: str) -> PreReadControl:
 
     Returns:
         PreReadControl for specified attributes
+
     """
     return PreReadControl.specific_attributes(*attributes)
 
@@ -858,6 +882,7 @@ def preread_for_audit_trail() -> PreReadControl:
 
     Returns:
         PreReadControl with all attributes for comprehensive audit
+
     """
     return PreReadControl.all_attributes()
 
@@ -867,6 +892,7 @@ def preread_user_profile_attributes() -> PreReadControl:
 
     Returns:
         PreReadControl for typical user profile attributes
+
     """
     return PreReadControl.specific_attributes(
         "cn",

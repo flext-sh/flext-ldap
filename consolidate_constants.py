@@ -107,7 +107,10 @@ def consolidate_constants() -> None:
                         all_constants.add(const_name)
 
                 if all_constants:
-                    new_import = f"from ldap_core_shared.utils.constants import {', '.join(sorted(all_constants))}"
+                    const_list = ", ".join(sorted(all_constants))
+                    new_import = (
+                        f"from ldap_core_shared.utils.constants import {const_list}"
+                    )
                     lines.insert(import_section_end, new_import)
                     content = "\n".join(lines)
 

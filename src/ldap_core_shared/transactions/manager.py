@@ -33,6 +33,7 @@ References:
     - RFC 5805: LDAP Transactions
     - X/Open XA Transaction Processing
     - Enterprise transaction processing patterns
+
 """
 
 from __future__ import annotations
@@ -175,6 +176,7 @@ class TransactionContext(BaseModel):
 
         Returns:
             Operation ID
+
         """
         operation_id = str(uuid.uuid4())
         operation = TransactionOperation(
@@ -194,6 +196,7 @@ class TransactionContext(BaseModel):
 
         Returns:
             Operation or None if not found
+
         """
         for op in self.operations:
             if op.operation_id == operation_id:
@@ -205,6 +208,7 @@ class TransactionContext(BaseModel):
 
         Returns:
             True if transaction has exceeded timeout
+
         """
         elapsed = (datetime.now(UTC) - self.started_at).total_seconds()
         return elapsed > self.timeout_seconds
@@ -214,6 +218,7 @@ class TransactionContext(BaseModel):
 
         Returns:
             Duration since transaction start
+
         """
         return (datetime.now(UTC) - self.started_at).total_seconds()
 
@@ -222,6 +227,7 @@ class TransactionContext(BaseModel):
 
         Returns:
             Dictionary with transaction statistics
+
         """
         successful_ops = sum(1 for op in self.operations if op.success is True)
         failed_ops = sum(1 for op in self.operations if op.success is False)
@@ -249,6 +255,7 @@ class TransactionContext(BaseModel):
         Args:
             operation_id: Operation identifier
             result: Operation result data
+
         """
         operation = self.get_operation(operation_id)
         if operation:
@@ -262,6 +269,7 @@ class TransactionContext(BaseModel):
         Args:
             operation_id: Operation identifier
             error_message: Error message
+
         """
         operation = self.get_operation(operation_id)
         if operation:
@@ -282,6 +290,7 @@ class LDAPTransaction:
         ...     await tx.add_entry(user_dn, user_attrs)
         ...     await tx.modify_entry(group_dn, group_changes)
         ...     # Commits automatically on success
+
     """
 
     def __init__(
@@ -296,6 +305,7 @@ class LDAPTransaction:
             connection: LDAP connection
             context: Transaction context
             tx_control: Transaction specification control
+
         """
         self._connection = connection
         self._context = context
@@ -318,6 +328,7 @@ class LDAPTransaction:
 
         Raises:
             NotImplementedError: Transaction operations not yet implemented
+
         """
         self._context.add_operation("add", dn, {"attributes": attributes})
 
@@ -377,6 +388,7 @@ class LDAPTransaction:
 
         Raises:
             NotImplementedError: Transaction operations not yet implemented
+
         """
         self._context.add_operation("modify", dn, {"changes": changes})
 
@@ -444,6 +456,7 @@ class LDAPTransaction:
 
         Raises:
             NotImplementedError: Transaction operations not yet implemented
+
         """
         self._context.add_operation("delete", dn, {})
 
@@ -504,6 +517,7 @@ class LDAPTransaction:
 
         Raises:
             NotImplementedError: Transaction search not yet implemented
+
         """
         try:
             # Validate transaction state
@@ -550,6 +564,7 @@ class LDAPTransaction:
 
         Raises:
             NotImplementedError: Transaction commit not yet implemented
+
         """
         self._context.state = TransactionState.COMMITTING
 
@@ -613,6 +628,7 @@ class LDAPTransaction:
 
         Raises:
             NotImplementedError: Transaction rollback not yet implemented
+
         """
         self._context.state = TransactionState.ABORTING
 
@@ -702,6 +718,7 @@ class TransactionManager:
         ...     await tx.add_entry(user_dn, user_attrs)
         ...     await tx.modify_entry(group_dn, group_changes)
         ...     # Transaction commits automatically
+
     """
 
     def __init__(self, connection: Any) -> None:
@@ -709,6 +726,7 @@ class TransactionManager:
 
         Args:
             connection: LDAP connection
+
         """
         self._connection = connection
         self._active_transactions: dict[str, LDAPTransaction] = {}
@@ -730,6 +748,7 @@ class TransactionManager:
 
         Raises:
             NotImplementedError: Transaction management not yet implemented
+
         """
         transaction_id = str(uuid.uuid4())
 
@@ -799,6 +818,7 @@ class TransactionManager:
 
         Returns:
             Transaction or None if not found
+
         """
         return self._active_transactions.get(transaction_id)
 
@@ -807,6 +827,7 @@ class TransactionManager:
 
         Returns:
             List of active transaction IDs
+
         """
         return list(self._active_transactions.keys())
 
@@ -818,6 +839,7 @@ class TransactionManager:
 
         Returns:
             True if transaction was aborted
+
         """
         transaction = self._active_transactions.get(transaction_id)
         if transaction:
@@ -834,6 +856,7 @@ class TransactionManager:
 
         Returns:
             Number of transactions aborted
+
         """
         aborted_count = 0
         transaction_ids = list(self._active_transactions.keys())
@@ -849,6 +872,7 @@ class TransactionManager:
 
         Returns:
             Dictionary with manager statistics
+
         """
         active_count = len(self._active_transactions)
 
@@ -870,6 +894,7 @@ class TransactionManager:
 
         Returns:
             Number of transactions cleaned up
+
         """
         expired_count = 0
         expired_ids = []
@@ -903,6 +928,7 @@ async def execute_transaction(
 
     Raises:
         NotImplementedError: Transaction execution not yet implemented
+
     """
     tx_manager = TransactionManager(connection)
 
@@ -929,6 +955,7 @@ async def create_transaction_manager(connection: Any) -> TransactionManager:
 
     Returns:
         Configured transaction manager
+
     """
     return TransactionManager(connection)
 

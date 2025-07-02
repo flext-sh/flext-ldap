@@ -58,6 +58,7 @@ class SchemaValidator:
 
         Returns:
             Validation result with errors and warnings
+
         """
         errors = []
         warnings = []

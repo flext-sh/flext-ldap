@@ -35,6 +35,7 @@ References:
     - RFC 4511: LDAP Protocol Specification
     - RFC 4517: LDAP Syntaxes and Matching Rules
     - LDAP data processing and manipulation patterns
+
 """
 
 from __future__ import annotations
@@ -89,6 +90,7 @@ class AttributeValue(BaseModel):
 
         Returns:
             String representation of value
+
         """
         if isinstance(self.value, str):
             return self.value
@@ -107,6 +109,7 @@ class AttributeValue(BaseModel):
 
         Returns:
             Binary representation of value
+
         """
         if isinstance(self.value, bytes):
             return self.value
@@ -128,6 +131,7 @@ class AttributeValue(BaseModel):
 
         Returns:
             Value in appropriate Python type
+
         """
         if self.value_type == AttributeValueType.STRING:
             return self.get_string_value()
@@ -156,6 +160,7 @@ class AttributeValue(BaseModel):
 
         Returns:
             True if values are equal
+
         """
         if isinstance(other_value, AttributeValue):
             return self.get_typed_value() == other_value.get_typed_value()
@@ -209,6 +214,7 @@ class LDAPEntry:
         >>> # Entry operations
         >>> print(f"Object classes: {entry.get_object_classes()}")
         >>> print(f"Has attribute: {entry.has_attribute('mail')}")
+
     """
 
     def __init__(
@@ -221,6 +227,7 @@ class LDAPEntry:
         Args:
             dn: Distinguished name of entry
             attributes: Dictionary of attribute name to values
+
         """
         self._dn = DistinguishedName(dn) if dn else None
         self._attributes: dict[str, list[AttributeValue]] = {}
@@ -235,6 +242,7 @@ class LDAPEntry:
 
         Returns:
             Entry distinguished name
+
         """
         return self._dn
 
@@ -243,6 +251,7 @@ class LDAPEntry:
 
         Args:
             dn: Distinguished name to set
+
         """
         if isinstance(dn, str):
             self._dn = DistinguishedName(dn)
@@ -254,6 +263,7 @@ class LDAPEntry:
 
         Returns:
             Set of attribute names
+
         """
         return set(self._attributes.keys())
 
@@ -265,6 +275,7 @@ class LDAPEntry:
 
         Returns:
             True if entry has attribute
+
         """
         return attribute_name.lower() in {name.lower() for name in self._attributes}
 
@@ -276,6 +287,7 @@ class LDAPEntry:
 
         Returns:
             First attribute value or None
+
         """
         values = self.get_attribute_values(attribute_name)
         return values[0] if values else None
@@ -288,6 +300,7 @@ class LDAPEntry:
 
         Returns:
             List of attribute values
+
         """
         # Case-insensitive attribute lookup
         for attr_name, values in self._attributes.items():
@@ -304,6 +317,7 @@ class LDAPEntry:
 
         Returns:
             List of AttributeValue objects
+
         """
         # Case-insensitive attribute lookup
         for attr_name, values in self._attributes.items():
@@ -322,6 +336,7 @@ class LDAPEntry:
         Args:
             attribute_name: Attribute name
             values: Attribute values
+
         """
         if isinstance(values, str):
             values = [values]
@@ -359,6 +374,7 @@ class LDAPEntry:
         Args:
             attribute_name: Attribute name
             values: Attribute values to add
+
         """
         if isinstance(values, str):
             values = [values]
@@ -395,6 +411,7 @@ class LDAPEntry:
 
         Returns:
             True if attribute was removed
+
         """
         # Case-insensitive removal
         for attr_name in list(self._attributes.keys()):
@@ -417,6 +434,7 @@ class LDAPEntry:
 
         Returns:
             True if value was removed
+
         """
         # Case-insensitive attribute lookup
         for attr_name, values in self._attributes.items():
@@ -447,6 +465,7 @@ class LDAPEntry:
         Args:
             attribute_name: Attribute name
             values: New attribute values
+
         """
         self.set_attribute(attribute_name, values)
 
@@ -455,6 +474,7 @@ class LDAPEntry:
 
         Returns:
             List of object classes
+
         """
         return self.get_attribute_values("objectClass")
 
@@ -466,6 +486,7 @@ class LDAPEntry:
 
         Returns:
             True if entry has object class
+
         """
         object_classes = self.get_object_classes()
         return object_class.lower() in {oc.lower() for oc in object_classes}
@@ -475,6 +496,7 @@ class LDAPEntry:
 
         Args:
             object_class: Object class to add
+
         """
         if not self.has_object_class(object_class):
             self.add_attribute("objectClass", object_class)
@@ -487,6 +509,7 @@ class LDAPEntry:
 
         Returns:
             True if object class was removed
+
         """
         return self.remove_attribute_value("objectClass", object_class)
 
@@ -495,6 +518,7 @@ class LDAPEntry:
 
         Returns:
             Approximate entry size
+
         """
         size = 0
 
@@ -521,6 +545,7 @@ class LDAPEntry:
 
         Returns:
             Dictionary representation of entry
+
         """
         result: dict[str, Any] = {}
 
@@ -537,6 +562,7 @@ class LDAPEntry:
 
         Returns:
             LDIF representation of entry
+
         """
         lines = []
 
@@ -563,6 +589,7 @@ class LDAPEntry:
 
         Returns:
             Copy of entry
+
         """
         new_entry = LDAPEntry()
 
@@ -582,6 +609,7 @@ class LDAPEntry:
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -607,6 +635,7 @@ class LDAPEntry:
 
         Returns:
             True if entry is valid
+
         """
         return len(self.validate()) == 0
 
@@ -658,6 +687,7 @@ class EntryProcessor:
 
         Returns:
             Merged entry
+
         """
         merged = base_entry.copy()
 
@@ -677,6 +707,7 @@ class EntryProcessor:
 
         Returns:
             List of modification operations
+
         """
         modifications = []
 
@@ -730,6 +761,7 @@ class EntryProcessor:
 
         Returns:
             Filtered entry
+
         """
         filtered = LDAPEntry()
 
@@ -752,6 +784,7 @@ class EntryProcessor:
 
         Returns:
             Normalized entry
+
         """
         normalized = LDAPEntry()
 
@@ -778,6 +811,7 @@ def create_entry(dn: str, attributes: dict[str, str | list[str]]) -> LDAPEntry:
 
     Returns:
         LDAP entry object
+
     """
     # Convert single strings to lists for LDAPEntry constructor
     normalized_attrs: dict[str, list[str]] = {}
@@ -807,6 +841,7 @@ def parse_ldif_entry(ldif_text: str) -> LDAPEntry | None:
 
     Raises:
         NotImplementedError: LDIF parsing not yet implemented
+
     """
     # TODO: Implement LDIF parsing
     # This would parse LDIF format into LDAPEntry objects
@@ -826,6 +861,7 @@ def entry_to_json(entry: LDAPEntry) -> str:
 
     Returns:
         JSON representation of entry
+
     """
     import json
 
@@ -844,6 +880,7 @@ def validate_entry_schema(entry: LDAPEntry, schema: dict[str, Any]) -> list[str]
 
     Raises:
         NotImplementedError: Schema validation not yet implemented
+
     """
     # TODO: Implement schema validation
     # This would validate entry against LDAP schema definitions

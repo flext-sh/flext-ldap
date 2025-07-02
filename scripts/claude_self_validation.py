@@ -19,6 +19,7 @@ References:
 - /home/marlonsc/CLAUDE.md → Universal principles (ENHANCED SELF-VALIDATION SYSTEM)
 - ../CLAUDE.md → PyAuto workspace patterns
 - ./internal.invalid.md → Project-specific issues
+
 """
 
 import json
@@ -26,6 +27,9 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+
+# Import our documentation validator
+from claude_documentation_validator import CLAUDEDocumentationValidator
 
 # Constants for pattern analysis effectiveness thresholds
 PATTERN_EFFECTIVENESS_HIGH_THRESHOLD = 5  # Unique patterns for HIGH effectiveness
@@ -43,9 +47,6 @@ FAILURE_EFFECTIVENESS_MEDIUM_THRESHOLD = 1  # Failures for MEDIUM effectiveness 
 
 # Constants for overall health assessment
 CRITICAL_SYSTEMS_GOOD_THRESHOLD = 2  # Minimum critical systems for GOOD health
-
-# Import our documentation validator
-from claude_documentation_validator import CLAUDEDocumentationValidator
 
 
 @dataclass

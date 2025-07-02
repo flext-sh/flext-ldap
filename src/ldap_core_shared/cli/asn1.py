@@ -51,6 +51,7 @@ def run_asn1_tool(
 
     Returns:
         True if operation successful
+
     """
     try:
         from ldap_core_shared.protocols.asn1 import (
@@ -410,6 +411,7 @@ def _build_schema_parse_output(result: Any) -> list[str]:
 
     Returns:
         List of output lines
+
     """
     output_lines = []
     output_lines.extend(("ASN.1 Schema Parse Results:", "=" * 50, ""))
@@ -434,6 +436,7 @@ def _add_success_output(output_lines: list[str], module: Any) -> None:
     Args:
         output_lines: Output lines list to append to
         module: Parsed ASN.1 module
+
     """
     # Module basic info
     output_lines.append(f"✓ Module parsed successfully: {module.name}")
@@ -459,6 +462,7 @@ def _add_failure_output(output_lines: list[str], errors: list[str]) -> None:
     Args:
         output_lines: Output lines list to append to
         errors: List of parse errors
+
     """
     output_lines.extend(("✗ Schema parsing failed", "", "Errors:"))
     output_lines.extend(f"  - {error}" for error in errors)
@@ -470,6 +474,7 @@ def _add_warnings_output(output_lines: list[str], warnings: list[str]) -> None:
     Args:
         output_lines: Output lines list to append to
         warnings: List of warnings
+
     """
     output_lines.extend(("", "Warnings:"))
     output_lines.extend(f"  - {warning}" for warning in warnings)
@@ -483,6 +488,7 @@ def _add_type_definitions(
     Args:
         output_lines: Output lines list to append to
         type_definitions: Dictionary of type definitions
+
     """
     if not type_definitions:
         return
@@ -505,6 +511,7 @@ def _add_value_assignments(
     Args:
         output_lines: Output lines list to append to
         value_assignments: Dictionary of value assignments
+
     """
     if not value_assignments:
         return
@@ -528,6 +535,7 @@ def _add_imports_exports(
         output_lines: Output lines list to append to
         imports: List of import specifications
         exports: Export specification or None
+
     """
     if imports:
         output_lines.append(f"Imports ({len(imports)}):")
@@ -552,6 +560,7 @@ def _write_schema_output(
         output_text: Generated output text
         output_file: Output file path or None for stdout
         verbose: Verbose output flag
+
     """
     if output_file:
         with open(output_file, "w", encoding="utf-8") as f:
@@ -571,6 +580,7 @@ def _convert_input_format(input_data: bytes, format: str) -> bytes:
 
     Returns:
         Converted ASN.1 data
+
     """
     if format == "hex":
         hex_str = input_data.decode("ascii").replace(" ", "").replace("\n", "")
@@ -588,6 +598,7 @@ def _build_asn1_dump_output(asn1_data: bytes) -> list[str]:
 
     Returns:
         List of output lines
+
     """
     output_lines = []
     output_lines.extend(("ASN.1 Structure Analysis:", "=" * 50, ""))
@@ -617,6 +628,7 @@ def _analyze_asn1_elements(asn1_data: bytes, output_lines: list[str]) -> None:
     Args:
         asn1_data: ASN.1 data to analyze
         output_lines: Output lines list to append to
+
     """
     offset = 0
     element_count = 0
@@ -644,6 +656,7 @@ def _parse_asn1_element(asn1_data: bytes, offset: int) -> dict[str, Any] | None:
 
     Returns:
         Element info dictionary or None if parsing failed
+
     """
     if offset >= len(asn1_data):
         return None
@@ -696,6 +709,7 @@ def _parse_asn1_length(asn1_data: bytes, offset: int) -> dict[str, Any] | None:
 
     Returns:
         Length info dictionary or None if parsing failed
+
     """
     if offset >= len(asn1_data):
         return None
@@ -737,6 +751,7 @@ def _add_element_info(
         element_num: Element number
         offset: Element offset
         element_info: Element information dictionary
+
     """
     class_names = ["Universal", "Application", "Context", "Private"]
     tag_names = {
@@ -789,6 +804,7 @@ def _write_asn1_output(
         output_text: Generated output text
         output_file: Output file path or None for stdout
         verbose: Verbose output flag
+
     """
     if output_file:
         with open(output_file, "w", encoding="utf-8") as f:
@@ -808,6 +824,7 @@ def _read_input_data(input_file: str | None, verbose: bool) -> bytes:
 
     Returns:
         Input data bytes
+
     """
     if input_file:
         with open(input_file, "rb") as f:
@@ -838,6 +855,7 @@ def _execute_asn1_action(
 
     Returns:
         True if action successful
+
     """
     action_handlers = {
         "decode": lambda: _decode_asn1(input_data, output_file, format, verbose),

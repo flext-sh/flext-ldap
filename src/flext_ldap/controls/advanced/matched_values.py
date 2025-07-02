@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from datetime import UTC, datetime
+from enum import Enum
+from typing import TYPE_CHECKING, Any, cast
+
+from flext_ldapse import LDAPControl
+from pydantic import BaseModel, Field, validator
 
 from flext_ldap.utils.constants import DEFAULT_MAX_ITEMS
 
@@ -49,14 +54,6 @@ References:
     - RFC 4511: LDAP Protocol Specification
     - Efficient multi-valued attribute processing patterns
 """
-
-
-from datetime import UTC, datetime
-from enum import Enum
-from typing import Any, cast
-
-from flext_ldapse import LDAPControl
-from pydantic import BaseModel, Field, validator
 
 
 class ValueMatchingMode(Enum):
@@ -141,6 +138,7 @@ class ValueFilter(BaseModel):
 
         Returns:
             True if filter applies to attribute
+
         """
         if self.attribute_type is None:
             return True
@@ -154,6 +152,7 @@ class ValueFilter(BaseModel):
 
         Returns:
             Attribute name from filter or None if not found
+
         """
         import re
 
@@ -212,6 +211,7 @@ class MatchedValuesRequest(BaseModel):
 
         Returns:
             Set of attribute names targeted by filters
+
         """
         attributes = set()
 
@@ -234,6 +234,7 @@ class MatchedValuesRequest(BaseModel):
 
         Returns:
             List of applicable value filters
+
         """
         return [vf for vf in self.value_filters if vf.matches_attribute(attribute)]
 
@@ -242,6 +243,7 @@ class MatchedValuesRequest(BaseModel):
 
         Returns:
             List of validation error messages
+
         """
         errors = []
 
@@ -328,6 +330,7 @@ class MatchedValuesResponse(BaseModel):
 
         Returns:
             Match rate as percentage (0.0-DEFAULT_MAX_ITEMS)
+
         """
         if self.total_values_examined == 0:
             return 0.0
@@ -344,6 +347,7 @@ class MatchedValuesResponse(BaseModel):
 
         Returns:
             Attribute result summary or None if not found
+
         """
         return self.attribute_results.get(attribute)
 
@@ -352,6 +356,7 @@ class MatchedValuesResponse(BaseModel):
 
         Returns:
             Dictionary with performance metrics
+
         """
         return {
             "total_processing_time": self.total_processing_time,
@@ -386,6 +391,7 @@ class MatchedValuesControl(LDAPControl):
         ... )
         >>>
         >>> # Only members from engineering and marketing are returned
+
     """
 
     control_type = "1.2.826.0.1.3344810.2.3"  # RFC 3876 Matched Values Control OID
@@ -404,6 +410,7 @@ class MatchedValuesControl(LDAPControl):
             matching_strategy: Strategy for combining multiple filters
             return_all_attributes: Whether to return all attributes
             criticality: Whether control is critical for operation
+
         """
         # Convert string filters to ValueFilter objects
         if value_filters and isinstance(value_filters[0], str):
@@ -442,6 +449,7 @@ class MatchedValuesControl(LDAPControl):
 
         Raises:
             NotImplementedError: BER encoding not yet implemented
+
         """
         # TODO: Implement BER encoding of Matched Values filters
         # This should encode the sequence of value filters according to RFC 3876
@@ -462,6 +470,7 @@ class MatchedValuesControl(LDAPControl):
 
         Raises:
             NotImplementedError: Response processing not yet implemented
+
         """
         # TODO: Implement BER decoding of Matched Values response
         # This should process the response and extract matching metadata
@@ -483,6 +492,7 @@ class MatchedValuesControl(LDAPControl):
         Args:
             filter_expression: LDAP filter expression
             attribute_type: Optional specific attribute type
+
         """
         value_filter = ValueFilter(
             filter_expression=filter_expression,
@@ -501,6 +511,7 @@ class MatchedValuesControl(LDAPControl):
 
         Returns:
             True if filter was removed
+
         """
         original_count = len(self._request.value_filters)
 
@@ -521,6 +532,7 @@ class MatchedValuesControl(LDAPControl):
 
         Args:
             strategy: New matching strategy
+
         """
         self._request.matching_strategy = strategy
 
@@ -529,6 +541,7 @@ class MatchedValuesControl(LDAPControl):
 
         Returns:
             Set of attribute names
+
         """
         return self._request.get_target_attributes()
 
@@ -537,6 +550,7 @@ class MatchedValuesControl(LDAPControl):
 
         Returns:
             Dictionary with filter configuration
+
         """
         return {
             "filter_count": len(self._request.value_filters),
@@ -571,6 +585,7 @@ class MatchedValuesControl(LDAPControl):
 
         Returns:
             Encoded control value or None if no value
+
         """
         return self.control_value
 
@@ -583,6 +598,7 @@ class MatchedValuesControl(LDAPControl):
 
         Returns:
             MatchedValuesControl instance with decoded values
+
         """
         if not control_value:
             # Default matched values control with wildcard filter
@@ -602,6 +618,7 @@ def create_matched_values_control(filters: list[str]) -> MatchedValuesControl:
 
     Returns:
         Configured Matched Values control
+
     """
     return MatchedValuesControl(
         value_filters=filters,
@@ -622,6 +639,7 @@ def create_attribute_filter_control(
 
     Returns:
         Matched Values control for attribute filtering
+
     """
     filters = [f"({attribute}={pattern})" for pattern in value_patterns]
 
@@ -641,6 +659,7 @@ def create_member_filter_control(member_patterns: list[str]) -> MatchedValuesCon
 
     Returns:
         Matched Values control for member filtering
+
     """
     return create_attribute_filter_control("member", member_patterns)
 
@@ -664,6 +683,7 @@ async def filter_attribute_values(
 
     Note:
         Uses base-scope search with Matched Values control to filter attribute values
+
     """
     # Implement attribute value filtering using Matched Values control
     try:

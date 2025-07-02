@@ -145,6 +145,7 @@ if CLICK_AVAILABLE:
 
           Pretty-print output:
           $ ldap-core-shared schema2ldif -p input.schema output.ldif
+
         """
         try:
             success = run_schema2ldif(
@@ -247,6 +248,7 @@ if CLICK_AVAILABLE:
 
           Validate schema file:
           $ ldap-core-shared ldap-schema-manager validate -f schema.ldif
+
         """
         try:
             # Handle password prompt
@@ -329,6 +331,7 @@ if CLICK_AVAILABLE:
 
           Dump ASN.1 structure:
           $ ldap-core-shared asn1-tool dump -i data.der
+
         """
         try:
             success = run_asn1_tool(
@@ -424,6 +427,7 @@ if CLICK_AVAILABLE:
 
           Interactive testing:
           $ ldap-core-shared sasl-test -m DIGEST-MD5 -I
+
         """
         try:
             # Handle password prompt

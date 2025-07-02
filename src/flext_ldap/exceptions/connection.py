@@ -35,6 +35,7 @@ class LDAPConnectionError(LDAPError):
             error_code: LDAP error code
             context: Additional context
             original_error: Underlying network/connection exception
+
         """
         connection_context = context or {}
         if host:
@@ -70,6 +71,7 @@ class ConnectionPoolError(ConnectionError):
             active_connections: Number of active connections
             pool_status: Current pool status
             **kwargs: Additional arguments for ConnectionError
+
         """
         context = kwargs.get("context", {})
         if pool_size is not None:
@@ -103,6 +105,7 @@ class ConnectionTimeoutError(ConnectionError):
             operation: Operation that timed out
             connection_attempts: Number of connection attempts made
             **kwargs: Additional arguments for ConnectionError
+
         """
         context = kwargs.get("context", {})
         if timeout_seconds is not None:
@@ -136,6 +139,7 @@ class AuthenticationError(ConnectionError):
             auth_method: Authentication method used
             failure_reason: Specific reason for authentication failure
             **kwargs: Additional arguments for ConnectionError
+
         """
         context = kwargs.get("context", {})
         if bind_dn:
@@ -167,6 +171,7 @@ class LDAPTimeoutError(LDAPConnectionError):
             timeout_seconds: Timeout value that was exceeded
             operation: Operation that timed out
             **kwargs: Additional arguments for ConnectionError
+
         """
         context = kwargs.get("context", {})
         if timeout_seconds:
@@ -194,6 +199,7 @@ class SSLError(ConnectionError):
             message: Error description
             certificate_error: Certificate validation error details
             **kwargs: Additional arguments for ConnectionError
+
         """
         context = kwargs.get("context", {})
         if certificate_error:

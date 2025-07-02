@@ -230,6 +230,7 @@ class ValidationRule:
             name: Rule name/identifier
             description: Rule description
             severity: Default severity for rule violations
+
         """
         self.name = name
         self.description = description
@@ -248,6 +249,7 @@ class ValidationRule:
 
         Returns:
             List of validation issues found
+
         """
         msg = "Subclasses must implement validate method"
         raise NotImplementedError(msg)
@@ -587,6 +589,7 @@ class FilterValidator:
         >>> print(result.is_valid)
         >>> for issue in result.warnings:
         ...     print(issue)
+
     """
 
     def __init__(
@@ -603,6 +606,7 @@ class FilterValidator:
             schema: Optional LDAP schema for validation
             custom_rules: Additional custom validation rules
             schema_aware: Enable schema-aware validation
+
         """
         self.level = level
         self.schema = schema
@@ -620,6 +624,7 @@ class FilterValidator:
 
         Returns:
             Comprehensive validation result
+
         """
         issues = []
         parsed_filter = None
@@ -778,6 +783,7 @@ def validate_filter(
 
     Returns:
         Validation result
+
     """
     validator = FilterValidator(level=level)
     return validator.validate(filter_string)
@@ -791,6 +797,7 @@ def is_filter_secure(filter_string: str) -> bool:
 
     Returns:
         True if filter appears secure, False otherwise
+
     """
     result = validate_filter(filter_string, ValidationLevel.STRICT)
     security_issues = [
@@ -810,6 +817,7 @@ def get_filter_performance_rating(filter_string: str) -> str:
 
     Returns:
         Performance rating (excellent, good, fair, poor)
+
     """
     result = validate_filter(filter_string, ValidationLevel.ENTERPRISE)
     return result.performance_rating

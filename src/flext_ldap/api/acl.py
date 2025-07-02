@@ -32,6 +32,7 @@ class ACLProcessorBase(ABC):
 
         Args:
             config: Application configuration containing ACL processing settings
+
         """
         self.config = config
         self.performance_metrics: dict[str, Any] = {}
@@ -52,6 +53,7 @@ class ACLProcessorBase(ABC):
 
         Returns:
             Dict containing processed entries and conversion statistics
+
         """
 
     def _log_performance(self, operation: str, duration: float, count: int) -> None:
@@ -61,6 +63,7 @@ class ACLProcessorBase(ABC):
             operation: Name of the ACL operation
             duration: Time taken in seconds
             count: Number of items processed
+
         """
         self.performance_metrics[operation] = {
             "duration": duration,
@@ -70,10 +73,13 @@ class ACLProcessorBase(ABC):
         }
 
         logger.info(
-            f"🔐 ACL {operation} completed",
-            duration=f"{duration:.2f}s",
-            count=count,
-            rate=f"{count / duration:.1f}/s" if duration > 0 else "instant",
+            "🔐 ACL %s completed",
+            operation,
+            extra={
+                "duration": f"{duration:.2f}s",
+                "count": count,
+                "rate": f"{count / duration:.1f}/s" if duration > 0 else "instant",
+            }
         )
 
     def get_performance_metrics(self) -> dict[str, Any]:
@@ -81,6 +87,7 @@ class ACLProcessorBase(ABC):
 
         Returns:
             Dict containing performance statistics
+
         """
         return self.performance_metrics.copy()
 
@@ -89,6 +96,7 @@ class ACLProcessorBase(ABC):
 
         Args:
             output_path: Path where output files will be created
+
         """
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -100,6 +108,7 @@ class ACLProcessorBase(ABC):
 
         Returns:
             True if entry has ACL attributes, False otherwise
+
         """
         return any(attr in entry for attr in self.supported_acl_types)
 
@@ -111,6 +120,7 @@ class ACLProcessorBase(ABC):
 
         Returns:
             Dict containing only ACL attributes
+
         """
         acl_attrs = {}
         for attr in self.supported_acl_types:
@@ -127,6 +137,7 @@ class ACLProcessorBase(ABC):
 
         Returns:
             True if format is valid, False otherwise
+
         """
         if not acl_value or not isinstance(acl_value, str):
             return False
@@ -156,10 +167,11 @@ class DefaultACLProcessor(ACLProcessorBase):
 
         Returns:
             Dict with processed entries and ACL validation results
+
         """
         start_time = time.time()
 
-        logger.info(f"🔐 Processing {len(entries)} entries for ACL validation")
+        logger.info("🔐 Processing %d entries for ACL validation", len(entries))
 
         processed_entries = []
         acl_entries_found = 0
@@ -191,9 +203,12 @@ class DefaultACLProcessor(ACLProcessorBase):
                                 }
                             )
                             logger.warning(
-                                f"⚠️ Invalid ACL format in entry {i}",
-                                attribute=attr_name,
-                                dn=entry.get("dn", "unknown"),
+                                "⚠️ Invalid ACL format in entry %d",
+                                i,
+                                extra={
+                                    "attribute": attr_name,
+                                    "dn": entry.get("dn", "unknown"),
+                                }
                             )
 
             processed_entries.append(processed_entry)

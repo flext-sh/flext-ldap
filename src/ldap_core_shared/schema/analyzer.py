@@ -54,6 +54,7 @@ class SchemaAnalyzer:
 
         Returns:
             Operation result with analysis results
+
         """
         try:
             # Calculate metrics

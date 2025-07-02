@@ -18,6 +18,7 @@ References:
 - /home/marlonsc/CLAUDE.md → Universal principles (DOCUMENTATION STANDARDS)
 - ../CLAUDE.md → PyAuto workspace patterns
 - ./internal.invalid.md → Project-specific documentation
+
 """
 
 import ast

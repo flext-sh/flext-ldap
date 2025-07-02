@@ -33,6 +33,7 @@ class BaseProcessor(ABC):
 
         Args:
             config: Application configuration for processor settings
+
         """
         self.config = config
         self.performance_metrics: dict[str, Any] = {}
@@ -47,6 +48,7 @@ class BaseProcessor(ABC):
 
         Returns:
             Dict containing processed entries and operation results
+
         """
 
     def _start_operation(self, operation_name: str) -> None:
@@ -54,9 +56,10 @@ class BaseProcessor(ABC):
 
         Args:
             operation_name: Name of the operation being timed
+
         """
         self._operation_start_time = time.time()
-        logger.debug(f"🚀 Starting {operation_name}")
+        logger.debug("🚀 Starting %s", operation_name)
 
     def _end_operation(self, operation_name: str, count: int = 0) -> float:
         """End timing an operation and log results.
@@ -67,6 +70,7 @@ class BaseProcessor(ABC):
 
         Returns:
             Duration of the operation in seconds
+
         """
         duration = time.time() - self._operation_start_time
 
@@ -91,6 +95,7 @@ class BaseProcessor(ABC):
 
         Returns:
             Dict containing performance statistics
+
         """
         return self.performance_metrics.copy()
 
@@ -99,6 +104,7 @@ class BaseProcessor(ABC):
 
         Args:
             output_path: Path where output files will be created
+
         """
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -110,6 +116,7 @@ class BaseProcessor(ABC):
 
         Returns:
             True if entries are valid, False otherwise
+
         """
         if not isinstance(entries, list):
             logger.error("❌ Entries must be a list")
@@ -130,6 +137,7 @@ class BaseProcessor(ABC):
         Args:
             entries: List of entries being processed
             operation: Name of the processing operation
+
         """
         logger.info(
             f"🔄 Starting {operation}",
@@ -143,6 +151,7 @@ class BaseProcessor(ABC):
         Args:
             result: Processing result dictionary
             operation: Name of the processing operation
+
         """
         logger.info(
             f"✅ {operation} completed",
@@ -167,6 +176,7 @@ class DefaultProcessor(BaseProcessor):
 
         Returns:
             Dict with processed entries (unchanged from input)
+
         """
         self._start_operation("default_processing")
 

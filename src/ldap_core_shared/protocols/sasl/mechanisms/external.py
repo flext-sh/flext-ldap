@@ -33,6 +33,7 @@ References:
     - RFC 4422: Simple Authentication and Security Layer (SASL)
     - RFC 4513: LDAP Authentication Methods and Security Mechanisms
     - RFC 5246: The Transport Layer Security (TLS) Protocol
+
 """
 
 from __future__ import annotations
@@ -83,6 +84,7 @@ class ExternalMechanism(SASLMechanism):
         >>> # Authorize as specific identity
         >>> callback.authorization_id = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
         >>> response = mechanism.get_initial_response()  # b'cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com'
+
     """
 
     MECHANISM_NAME: ClassVar[str] = "EXTERNAL"
@@ -115,6 +117,7 @@ class ExternalMechanism(SASLMechanism):
         Args:
             callback_handler: Callback handler for authorization identity
             context: SASL context (created if not provided)
+
         """
         super().__init__(callback_handler, context)
 
@@ -137,6 +140,7 @@ class ExternalMechanism(SASLMechanism):
 
         Raises:
             SASLAuthenticationError: If authentication fails
+
         """
         self._record_challenge(challenge)
 
@@ -204,6 +208,7 @@ class ExternalMechanism(SASLMechanism):
 
         Raises:
             SASLCallbackError: If callback handling fails
+
         """
         # Authorization ID callback (optional for EXTERNAL)
         authz_callback = AuthorizeCallback(
@@ -232,6 +237,7 @@ class ExternalMechanism(SASLMechanism):
 
         Returns:
             Encoded EXTERNAL response
+
         """
         if self._authorization_id:
             # Specific authorization identity requested
@@ -247,6 +253,7 @@ class ExternalMechanism(SASLMechanism):
 
         Returns:
             Dictionary with external identity information
+
         """
         info = {
             "mechanism": "EXTERNAL",
@@ -270,6 +277,7 @@ class ExternalMechanism(SASLMechanism):
 
         Returns:
             True (EXTERNAL always requires external authentication)
+
         """
         return True
 
@@ -278,6 +286,7 @@ class ExternalMechanism(SASLMechanism):
 
         Returns:
             True (EXTERNAL supports optional authorization identity)
+
         """
         return True
 

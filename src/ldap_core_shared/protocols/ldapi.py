@@ -168,6 +168,7 @@ class LDAPIConfiguration(BaseModel):
 
         Returns:
             List of security validation errors
+
         """
         errors = []
 
@@ -235,6 +236,7 @@ class LDAPICredentials(BaseModel):
 
         Returns:
             LDAPICredentials for current process
+
         """
         import pwd
 
@@ -261,6 +263,7 @@ class LDAPICredentials(BaseModel):
 
         Returns:
             SASL EXTERNAL authz-id string
+
         """
         if self.username:
             return f"dn:uid={self.username},cn=external,cn=auth"
@@ -277,6 +280,7 @@ class LDAPITransport:
 
         Args:
             config: LDAPI configuration
+
         """
         self._config = config
         self._socket: socket.socket | None = None
@@ -289,6 +293,7 @@ class LDAPITransport:
         Raises:
             ConnectionError: If connection fails
             PermissionError: If socket access denied
+
         """
         # Validate socket security
         security_errors = self._config.validate_socket_security()
@@ -357,6 +362,7 @@ class LDAPITransport:
 
         Returns:
             Peer credentials or None if not available
+
         """
         if not self._socket:
             return None
@@ -406,6 +412,7 @@ class LDAPIProtocol(LDAPProtocol):
 
         Args:
             config: LDAPI configuration
+
         """
         self._config = config or LDAPIConfiguration(socket_path="/var/run/ldapi")
         self._transport: LDAPITransport | None = None
@@ -417,6 +424,7 @@ class LDAPIProtocol(LDAPProtocol):
         Args:
             url: LDAPI URL (ldapi:///path/to/socket)
             **kwargs: Additional connection parameters
+
         """
         # Parse LDAPI URL
         parsed = urlparse(url)
@@ -451,6 +459,7 @@ class LDAPIProtocol(LDAPProtocol):
 
         Raises:
             NotImplementedError: EXTERNAL authentication not yet implemented
+
         """
         # TODO: Implement EXTERNAL SASL authentication
         # This would use Unix credentials for authentication
@@ -466,6 +475,7 @@ class LDAPIProtocol(LDAPProtocol):
 
         Returns:
             Peer credentials or None if not available
+
         """
         return self._transport.peer_credentials if self._transport else None
 
@@ -502,6 +512,7 @@ class LDAPIConnection(ProtocolConnection):
             auth_method: Authentication method
             socket_type: Type of Unix socket
             **kwargs: Additional connection parameters
+
         """
         # Create LDAPI configuration
         config = LDAPIConfiguration(
@@ -532,6 +543,7 @@ class LDAPIConnection(ProtocolConnection):
 
         Raises:
             NotImplementedError: EXTERNAL bind not yet implemented
+
         """
         # TODO: Implement EXTERNAL SASL bind
         # This would use Unix credentials for authentication
@@ -547,6 +559,7 @@ class LDAPIConnection(ProtocolConnection):
 
         Returns:
             Dictionary with connection details
+
         """
         info = super().get_connection_info()
         info.update(
@@ -587,6 +600,7 @@ def create_ldapi_connection(
 
     Returns:
         Configured LDAPI connection
+
     """
     return LDAPIConnection(
         socket_path=socket_path,
@@ -602,6 +616,7 @@ def parse_ldapi_url(url: str) -> tuple[str, dict[str, Any]]:
 
     Returns:
         Tuple of (socket_path, parameters)
+
     """
     parsed = urlparse(url)
     if parsed.scheme != "ldapi":
@@ -630,6 +645,7 @@ async def test_ldapi_socket(socket_path: str) -> dict[str, Any]:
 
     Returns:
         Dictionary with test results
+
     """
     config = LDAPIConfiguration(socket_path=socket_path)
 

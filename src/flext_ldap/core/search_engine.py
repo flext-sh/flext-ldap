@@ -194,6 +194,7 @@ class PaginatedSearch:
         Args:
             search_engine: LDAP search engine instance
             config: Search configuration
+
         """
         self.search_engine = search_engine
         self.config = config
@@ -268,6 +269,7 @@ class LDAPSearchEngine:
         Args:
             connection_manager: LDAP connection manager
             use_vectorized: Use vectorized processing (default: True)
+
         """
         self.connection_manager = connection_manager
         self.use_vectorized = use_vectorized
@@ -297,6 +299,7 @@ class LDAPSearchEngine:
 
         Returns:
             LDAPSearchResult: Search results
+
         """
         start_time = time.time()
 
@@ -419,6 +422,7 @@ class LDAPSearchEngine:
 
         Returns:
             PaginatedSearch: Paginated search iterator
+
         """
         # Ensure page_size is set
         if not config.page_size:
@@ -444,6 +448,7 @@ class LDAPSearchEngine:
 
         Returns:
             int: Number of matching entries
+
         """
         # Create count-optimized config
         count_config = SearchConfig(
@@ -468,6 +473,7 @@ class LDAPSearchEngine:
 
         Returns:
             dict or None: Single entry or None if not found
+
         """
         # Limit search to single result
         single_config = SearchConfig(
@@ -496,6 +502,7 @@ class LDAPSearchEngine:
 
         Returns:
             bool: True if entry exists
+
         """
         config = SearchConfig(
             search_base=dn,

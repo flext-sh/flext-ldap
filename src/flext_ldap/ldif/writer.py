@@ -87,6 +87,7 @@ class LDIFWriter:
 
         Args:
             config: Writer configuration (uses defaults if None)
+
         """
         self.config = config or LDIFWriterConfig()
         self.performance_monitor = PerformanceMonitor()
@@ -107,6 +108,7 @@ class LDIFWriter:
 
         Returns:
             Operation result with writing statistics
+
         """
         output_path = Path(output_path)
 
@@ -178,6 +180,7 @@ class LDIFWriter:
 
         Returns:
             Operation result with LDIF string content
+
         """
         with self.performance_monitor.track_operation("ldif_write_string"):
             try:
@@ -233,6 +236,7 @@ class LDIFWriter:
 
         Returns:
             Operation result
+
         """
         mode = "a" if append else "w"
         output_path = Path(output_path)

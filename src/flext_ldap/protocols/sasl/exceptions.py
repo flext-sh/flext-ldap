@@ -33,6 +33,7 @@ References:
     - RFC 4422: SASL error conditions and reporting
     - perl-Authen-SASL: Error handling compatibility
     - LDAP Protocol: SASL authentication error mapping
+
 """
 
 from __future__ import annotations
@@ -58,6 +59,7 @@ class SASLError(AuthenticationError):
         ...     mechanism="DIGEST-MD5",
         ...     error_code="invalid-response"
         ... )
+
     """
 
     def __init__(
@@ -81,6 +83,7 @@ class SASLError(AuthenticationError):
             error_code: SASL error code
             context: Additional error context
             original_error: Underlying exception
+
         """
         sasl_context = context or {}
 
@@ -114,6 +117,7 @@ class SASLError(AuthenticationError):
 
         Returns:
             True if message might contain sensitive data
+
         """
         sensitive_keywords = [
             "password",
@@ -142,6 +146,7 @@ class SASLAuthenticationError(SASLError):
         ...     mechanism="PLAIN",
         ...     error_code="invalid-credentials"
         ... )
+
     """
 
     def __init__(
@@ -157,6 +162,7 @@ class SASLAuthenticationError(SASLError):
             message: Error description
             auth_failure_reason: Specific reason for authentication failure
             **kwargs: Additional arguments for SASLError
+
         """
         context_dict = kwargs.get("context")
         if not isinstance(context_dict, dict):
@@ -190,6 +196,7 @@ class SASLInvalidMechanismError(SASLError):
         ...     mechanism="GSSAPI",
         ...     available_mechanisms=["PLAIN", "DIGEST-MD5"]
         ... )
+
     """
 
     def __init__(
@@ -207,6 +214,7 @@ class SASLInvalidMechanismError(SASLError):
             requested_mechanism: Mechanism that was requested
             available_mechanisms: List of available mechanisms
             **kwargs: Additional arguments for SASLError
+
         """
         context_dict = kwargs.get("context")
         if not isinstance(context_dict, dict):
@@ -244,6 +252,7 @@ class SASLSecurityError(SASLError):
         ...     security_layer="auth-conf",
         ...     error_code="qop-not-supported"
         ... )
+
     """
 
     def __init__(
@@ -263,6 +272,7 @@ class SASLSecurityError(SASLError):
             qop_requested: Quality of Protection requested
             qop_available: Available QOP options
             **kwargs: Additional arguments for SASLError
+
         """
         context_dict = kwargs.get("context")
         if not isinstance(context_dict, dict):
@@ -302,6 +312,7 @@ class SASLCallbackError(SASLError):
         ...     callback_type="NameCallback",
         ...     error_code="callback-failed"
         ... )
+
     """
 
     def __init__(
@@ -319,6 +330,7 @@ class SASLCallbackError(SASLError):
             callback_type: Type of callback that failed
             callback_prompt: Prompt text (if not sensitive)
             **kwargs: Additional arguments for SASLError
+
         """
         context_dict = kwargs.get("context")
         if not isinstance(context_dict, dict):
@@ -356,6 +368,7 @@ class SASLChallengeError(SASLError):
         ...     challenge_step=2,
         ...     error_code="malformed-challenge"
         ... )
+
     """
 
     def __init__(
@@ -373,6 +386,7 @@ class SASLChallengeError(SASLError):
             challenge_malformed: Whether challenge was malformed
             response_invalid: Whether response was invalid
             **kwargs: Additional arguments for SASLError
+
         """
         context_dict = kwargs.get("context")
         if not isinstance(context_dict, dict):
@@ -409,6 +423,7 @@ class SASLMechanismError(SASLError):
         ...     mechanism="GSSAPI",
         ...     mechanism_error="ticket-expired"
         ... )
+
     """
 
     def __init__(
@@ -426,6 +441,7 @@ class SASLMechanismError(SASLError):
             mechanism_error: Mechanism-specific error code
             mechanism_detail: Mechanism-specific error details
             **kwargs: Additional arguments for SASLError
+
         """
         context_dict = kwargs.get("context")
         if not isinstance(context_dict, dict):
@@ -467,6 +483,7 @@ def sasl_authentication_failed(
 
     Returns:
         SASLAuthenticationError instance
+
     """
     sasl_kwargs = dict(**kwargs)
     sasl_kwargs["mechanism"] = mechanism
@@ -491,6 +508,7 @@ def sasl_mechanism_not_available(
 
     Returns:
         SASLInvalidMechanismError instance
+
     """
     return SASLInvalidMechanismError(
         f"SASL mechanism '{mechanism}' not available",
@@ -514,6 +532,7 @@ def sasl_callback_failed(
 
     Returns:
         SASLCallbackError instance
+
     """
     # Extract known kwargs for SASLCallbackError constructor
     mechanism = (

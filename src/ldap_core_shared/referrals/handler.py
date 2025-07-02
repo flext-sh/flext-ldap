@@ -183,6 +183,7 @@ class ReferralResult(BaseModel):
 
         Returns:
             List of entries or empty list if no entries
+
         """
         return self.entries or []
 
@@ -191,6 +192,7 @@ class ReferralResult(BaseModel):
 
         Returns:
             Combined error message
+
         """
         errors = []
         if self.error_message:
@@ -207,6 +209,7 @@ class ReferralResult(BaseModel):
         Args:
             url: Referral URL that failed
             error: Error message
+
         """
         self.referral_errors.append(f"{url}: {error}")
 
@@ -274,6 +277,7 @@ class ReferralPolicy(BaseModel):
 
         Returns:
             Tuple of (should_follow, reason)
+
         """
         if self.handling_mode == ReferralHandlingMode.DISABLED:
             return False, "Referral handling is disabled"
@@ -338,6 +342,7 @@ class ReferralHandler:
         ...     operation_type="search",
         ...     operation_args={"base_dn": "ou=users,dc=example,dc=com", "filter": "(uid=john)"}
         ... )
+
     """
 
     def __init__(
@@ -360,6 +365,7 @@ class ReferralHandler:
             security_mode: Security requirements for referral connections
             allowed_servers: List of allowed servers (None = allow all)
             blocked_servers: List of blocked servers
+
         """
         # Create policy configuration
         self._policy = ReferralPolicy(
@@ -412,6 +418,7 @@ class ReferralHandler:
 
         Raises:
             NotImplementedError: Referral processing not yet implemented
+
         """
         start_time = time.time()
         self._total_referrals_processed += 1
@@ -485,6 +492,7 @@ class ReferralHandler:
 
         Returns:
             True if referrals should be processed
+
         """
         # Check handling mode
         if self._policy.handling_mode == ReferralHandlingMode.DISABLED:
@@ -508,6 +516,7 @@ class ReferralHandler:
 
         Args:
             credentials: Rebind credentials
+
         """
         if isinstance(credentials, dict):
             self._rebind_credentials = ReferralCredentials(**credentials)
@@ -521,6 +530,7 @@ class ReferralHandler:
 
         Args:
             policy_updates: Dictionary of policy fields to update
+
         """
         for field, value in policy_updates.items():
             if hasattr(self._policy, field):
@@ -531,6 +541,7 @@ class ReferralHandler:
 
         Args:
             server: Server hostname to allow
+
         """
         if self._policy.allowed_servers is None:
             self._policy.allowed_servers = []
@@ -543,6 +554,7 @@ class ReferralHandler:
 
         Args:
             server: Server hostname to block
+
         """
         if server not in self._policy.blocked_servers:
             self._policy.blocked_servers.append(server)
@@ -552,6 +564,7 @@ class ReferralHandler:
 
         Args:
             server: Server hostname to unblock
+
         """
         if server in self._policy.blocked_servers:
             self._policy.blocked_servers.remove(server)
@@ -571,6 +584,7 @@ class ReferralHandler:
 
         Returns:
             Dictionary with statistics
+
         """
         return {
             "total_referrals_processed": self._total_referrals_processed,
@@ -609,6 +623,7 @@ def create_referral_handler(
 
     Returns:
         Configured referral handler
+
     """
     credentials = None
     if bind_dn and password:
@@ -629,6 +644,7 @@ def parse_referral_urls(referral_response: str) -> list[str]:
 
     Returns:
         List of parsed referral URLs
+
     """
     # TODO: Implement proper referral URL parsing
     # This should parse referral URLs according to RFC 4511
@@ -663,6 +679,7 @@ async def follow_referral_url(
 
     Returns:
         Referral result
+
     """
     handler = ReferralHandler(rebind_credentials=credentials)
 

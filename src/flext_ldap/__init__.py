@@ -5,6 +5,8 @@ Interface unificada e LIMPA seguindo rigorosamente KISS/SOLID/DRY
 
 from __future__ import annotations
 
+from typing import Any
+
 # Version information
 try:
     from flext_ldap.__version__ import __version__
@@ -37,7 +39,7 @@ def get_ldap():
         return None
 
 
-def connect(*args, **kwargs):
+def connect(*args, **kwargs: Any):
     """Connect to LDAP server."""
     try:
         from flext_ldap.connections.base import connect

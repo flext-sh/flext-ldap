@@ -112,6 +112,7 @@ class LDAPConfig:
             timeout: Connection timeout in seconds
             pool_size: Connection pool size for enterprise mode
             **kwargs: Additional arguments passed to enterprise config
+
         """
         # Store base_dn for API compatibility (not used by enterprise config)
         self._base_dn = base_dn
@@ -300,6 +301,7 @@ def validate_configuration_value(name: str, value: any) -> None:
 
     Raises:
         ValueError: If value is None or empty
+
     """
     if value is None:
         msg = f"Configuration parameter '{name}' cannot be None"
@@ -321,6 +323,7 @@ def load_migration_config_from_env(env_prefix: str = "") -> MigrationConfig:
 
     Raises:
         ValueError: If required environment variables are missing
+
     """
     import os
 

@@ -38,6 +38,7 @@ References:
     - ldap-schema-manager: Schema management patterns
     - ldap3: Modern Python LDAP patterns
     - OpenLDAP cn=config: Configuration backend operations
+
 """
 
 from __future__ import annotations
@@ -197,6 +198,7 @@ class SchemaManager:
             parser: Schema parser instance
             validator: Schema validator instance
             generator: LDIF generator instance
+
         """
         self.config = config
         self.parser = parser or SchemaParser()
@@ -242,6 +244,7 @@ class SchemaManager:
 
         Returns:
             Operation result with installed schema information
+
         """
         try:
             # Build search command
@@ -306,6 +309,7 @@ class SchemaManager:
 
         Returns:
             Validation result
+
         """
         try:
             schema_path = Path(schema_file)
@@ -377,6 +381,7 @@ class SchemaManager:
 
         Returns:
             Operation result
+
         """
         operation_id = self._generate_operation_id()
         schema_name = Path(schema_file).stem
@@ -509,6 +514,7 @@ class SchemaManager:
 
         Returns:
             Operation result
+
         """
         # TODO: Implement schema modification logic
         # This would involve:
@@ -536,6 +542,7 @@ class SchemaManager:
 
         Returns:
             Deployment plan with ordered operations
+
         """
         # TODO: Implement deployment planning
         # This would involve:
@@ -564,6 +571,7 @@ class SchemaManager:
 
         Returns:
             Path to generated LDIF file or None if failed
+
         """
         try:
             schema_path = Path(schema_file)
@@ -608,6 +616,7 @@ class SchemaManager:
 
         Returns:
             True if schema exists
+
         """
         try:
             search_cmd = [
@@ -640,6 +649,7 @@ class SchemaManager:
 
         Returns:
             Subprocess result
+
         """
         add_cmd = [
             "ldapadd",
@@ -663,6 +673,7 @@ class SchemaManager:
 
         Returns:
             Operation status or None if not found
+
         """
         if operation_id in self._active_operations:
             return self._active_operations[operation_id]
@@ -678,6 +689,7 @@ class SchemaManager:
 
         Returns:
             List of all operations
+
         """
         return self._operation_history.copy()
 

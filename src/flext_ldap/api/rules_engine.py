@@ -105,6 +105,7 @@ class GenericRulesEngine:
 
         Args:
             processor: Rule processor implementing the protocol
+
         """
         self.processors.append(processor)
         logger.debug("➕ Registered rule processor: %s", type(processor).__name__)
@@ -117,6 +118,7 @@ class GenericRulesEngine:
 
         Returns:
             Result containing number of rules loaded or error
+
         """
         try:
             if not rules_file.exists():
@@ -140,6 +142,7 @@ class GenericRulesEngine:
 
         Returns:
             Result containing number of rules parsed or error
+
         """
         try:
             rules_list = []
@@ -177,6 +180,7 @@ class GenericRulesEngine:
 
         Returns:
             GenericRule instance or None if invalid
+
         """
         try:
             rule_id = rule_data.get("id", f"{section_name}_{len(self.rules)}")
@@ -210,6 +214,7 @@ class GenericRulesEngine:
 
         Returns:
             Result containing processed entries or error
+
         """
         if not self.rules:
             logger.warning("⚠️ No rules loaded, returning entries unchanged")
@@ -262,6 +267,7 @@ class GenericRulesEngine:
 
         Returns:
             Processed entry
+
         """
         entry = context.entry.copy()
 
@@ -301,6 +307,7 @@ class GenericRulesEngine:
 
         Returns:
             Compatible processor or None
+
         """
         for processor in self.processors:
             if processor.can_process(rule):
@@ -312,6 +319,7 @@ class GenericRulesEngine:
 
         Returns:
             Result containing list of validation issues (empty if valid)
+
         """
         issues = []
 
@@ -344,6 +352,7 @@ class GenericRulesEngine:
 
         Returns:
             List of validation issues for this rule
+
         """
         issues = []
 
@@ -371,6 +380,7 @@ class GenericRulesEngine:
 
         Returns:
             Dictionary with execution statistics
+
         """
         return self.execution_stats.copy()
 
@@ -379,6 +389,7 @@ class GenericRulesEngine:
 
         Returns:
             Dictionary with rules summary
+
         """
         rule_types = {}
         for rule in self.rules:
@@ -405,6 +416,7 @@ class GenericRuleProcessor(ABC):
 
         Args:
             supported_types: List of rule types this processor can handle
+
         """
         self.supported_types = supported_types
         self.processing_stats: dict[str, Any] = {}
@@ -417,6 +429,7 @@ class GenericRuleProcessor(ABC):
 
         Returns:
             True if processor can handle this rule type
+
         """
         return rule.rule_type in self.supported_types
 
@@ -434,6 +447,7 @@ class GenericRuleProcessor(ABC):
 
         Returns:
             Result with processed data or error
+
         """
         ...
 
@@ -442,6 +456,7 @@ class GenericRuleProcessor(ABC):
 
         Returns:
             Dictionary with processing statistics
+
         """
         return self.processing_stats.copy()
 
@@ -451,6 +466,7 @@ def create_rules_engine() -> GenericRulesEngine:
 
     Returns:
         New GenericRulesEngine instance
+
     """
     return GenericRulesEngine()
 
@@ -463,6 +479,7 @@ def validate_rules_file(rules_file: Path) -> Result[dict[str, Any]]:
 
     Returns:
         Result containing validation summary or error
+
     """
     try:
         if not rules_file.exists():

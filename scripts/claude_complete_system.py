@@ -20,6 +20,7 @@ References:
 - /home/marlonsc/CLAUDE.md → Universal principles (ALL SYSTEMS)
 - ../CLAUDE.md → PyAuto workspace patterns
 - ./internal.invalid.md → Project-specific issues
+
 """
 
 import argparse
@@ -267,6 +268,7 @@ class CLAUDECompleteSystem:
 
         Args:
             systems_to_run: List of specific systems to run, or None for all
+
         """
         if systems_to_run is None:
             systems_to_run = [

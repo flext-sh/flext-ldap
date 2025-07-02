@@ -49,6 +49,7 @@ class IConnectionFactory(Protocol):
 
         Returns:
             Configured LDAP connection
+
         """
 
 
@@ -62,6 +63,7 @@ class IConnectionPool(Protocol):
 
         Yields:
             LDAP connection from pool
+
         """
 
     @abstractmethod
@@ -70,6 +72,7 @@ class IConnectionPool(Protocol):
 
         Args:
             connection: Connection to return
+
         """
 
     @abstractmethod
@@ -78,6 +81,7 @@ class IConnectionPool(Protocol):
 
         Args:
             size: Pool size
+
         """
 
     @abstractmethod
@@ -98,6 +102,7 @@ class IHealthMonitor(Protocol):
 
         Returns:
             True if healthy
+
         """
 
     @abstractmethod
@@ -126,6 +131,7 @@ class IPerformanceTracker(Protocol):
             operation_type: Type of operation
             duration: Operation duration
             success: Whether operation succeeded
+
         """
 
     @abstractmethod
@@ -134,6 +140,7 @@ class IPerformanceTracker(Protocol):
 
         Returns:
             Performance metrics dictionary
+
         """
 
 
@@ -150,6 +157,7 @@ class ISecurityManager(Protocol):
 
         Returns:
             TLS configuration object
+
         """
 
     @abstractmethod
@@ -161,6 +169,7 @@ class ISecurityManager(Protocol):
 
         Returns:
             True if credentials are valid
+
         """
 
 
@@ -292,6 +301,7 @@ class BaseConnectionComponent(ABC):
 
         Args:
             connection_info: LDAP connection configuration
+
         """
         self.connection_info = connection_info
 
@@ -392,6 +402,7 @@ class IConnectionManagerFactory(Protocol):
 
         Returns:
             Connection manager instance
+
         """
 
 
@@ -479,7 +490,7 @@ class ILogger(Protocol):
     """🎯 Dependency Injection: Logger interface."""
 
     @abstractmethod
-    def log_info(self, message: str, **kwargs) -> None:
+    def log_info(self, message: str, **kwargs: Any) -> None:
         """Log info message."""
 
     @abstractmethod
@@ -492,7 +503,7 @@ class ILogger(Protocol):
         """Log error message."""
 
     @abstractmethod
-    def log_debug(self, message: str, **kwargs) -> None:
+    def log_debug(self, message: str, **kwargs: Any) -> None:
         """Log debug message."""
 
 
@@ -509,6 +520,7 @@ def validate_solid_compliance(implementation: type) -> dict[str, bool]:
 
     Returns:
         Dictionary with compliance results for each principle
+
     """
     return {
         "single_responsibility": _check_single_responsibility(implementation),

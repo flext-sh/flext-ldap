@@ -87,6 +87,7 @@ def _filter_dns_vectorized(dns: np.ndarray, filter_pattern: str) -> np.ndarray:
 
     Returns:
         Boolean array indicating matching DNs
+
     """
     matches = np.zeros(len(dns), dtype=np.bool_)
 
@@ -110,6 +111,7 @@ def _score_results_vectorized(dns: np.ndarray, query_terms: list[str]) -> np.nda
 
     Returns:
         Array of relevance scores
+
     """
     scores = np.zeros(len(dns), dtype=np.float64)
 
@@ -158,6 +160,7 @@ class VectorizedSearchEngine:
             enable_caching: Enable result caching
             cache_ttl_seconds: Cache TTL in seconds
             enable_query_optimization: Enable query optimization
+
         """
         self.connection_pool = connection_pool
         self.max_parallel_searches = max_parallel_searches
@@ -200,6 +203,7 @@ class VectorizedSearchEngine:
 
         Returns:
             Search result with comprehensive statistics
+
         """
         self._start_time = time.time()
         self.stats.total_queries += 1
@@ -282,6 +286,7 @@ class VectorizedSearchEngine:
 
         Returns:
             List of search results
+
         """
         max_concurrent = max_concurrent or self.max_parallel_searches
         semaphore = asyncio.Semaphore(max_concurrent)
@@ -543,5 +548,6 @@ async def create_vectorized_search_engine(
 
     Returns:
         Configured vectorized search engine
+
     """
     return VectorizedSearchEngine(connection_pool, **kwargs)

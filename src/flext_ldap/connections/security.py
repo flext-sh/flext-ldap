@@ -28,6 +28,7 @@ class StandardSecurityManager(BaseConnectionComponent):
 
         Args:
             connection_info: Connection configuration
+
         """
         super().__init__(connection_info)
 
@@ -48,6 +49,7 @@ class StandardSecurityManager(BaseConnectionComponent):
 
         Returns:
             True if credentials are valid, False otherwise
+
         """
         logger.debug("Validating LDAP credentials")
 
@@ -75,6 +77,7 @@ class StandardSecurityManager(BaseConnectionComponent):
 
         Returns:
             True if DN is valid, False otherwise
+
         """
         if not dn or not isinstance(dn, str):
             return False
@@ -104,6 +107,7 @@ class StandardSecurityManager(BaseConnectionComponent):
 
         Returns:
             Sanitized LDAP filter
+
         """
         if not ldap_filter:
             return "(objectClass=*)"
@@ -135,6 +139,7 @@ class StandardSecurityManager(BaseConnectionComponent):
 
         Returns:
             Validated attribute list or None
+
         """
         if not attributes:
             return None
@@ -154,6 +159,7 @@ class StandardSecurityManager(BaseConnectionComponent):
 
         Returns:
             Security status dictionary
+
         """
         return {
             "ssl_enabled": self.connection_info.use_ssl,

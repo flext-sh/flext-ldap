@@ -33,6 +33,7 @@ References:
     - RFC 2849: LDAP Data Interchange Format (LDIF)
     - RFC 4512: LDAP Directory Information Models
     - OpenLDAP Schema Integration Guide
+
 """
 
 from __future__ import annotations
@@ -134,6 +135,7 @@ class SchemaLDIFEntry(BaseModel):
         Args:
             name: Attribute name
             value: Attribute value
+
         """
         if name not in self.attributes:
             self.attributes[name] = []
@@ -145,6 +147,7 @@ class SchemaLDIFEntry(BaseModel):
         Args:
             name: Attribute name
             values: List of attribute values
+
         """
         self.attributes[name] = values.copy()
 
@@ -156,6 +159,7 @@ class SchemaLDIFEntry(BaseModel):
 
         Returns:
             List of attribute values
+
         """
         return self.attributes.get(name, [])
 
@@ -167,6 +171,7 @@ class SchemaLDIFEntry(BaseModel):
 
         Returns:
             List of LDIF lines
+
         """
         lines = []
 
@@ -203,6 +208,7 @@ class SchemaLDIFEntry(BaseModel):
 
         Returns:
             True if value should be base64 encoded
+
         """
         if not config.base64_encode_non_ascii:
             return False
@@ -223,6 +229,7 @@ class SchemaLDIFEntry(BaseModel):
 
         Returns:
             List of wrapped lines
+
         """
         if len(line) <= max_length:
             return [line]
@@ -276,6 +283,7 @@ class SchemaLDIF(BaseModel):
 
         Args:
             entry: Schema LDIF entry to add
+
         """
         self.entries.append(entry)
 
@@ -287,6 +295,7 @@ class SchemaLDIF(BaseModel):
 
         Returns:
             List of matching entries
+
         """
         return [entry for entry in self.entries if entry.entry_type == entry_type]
 
@@ -295,6 +304,7 @@ class SchemaLDIF(BaseModel):
 
         Returns:
             Complete LDIF content as string
+
         """
         lines = []
 
@@ -321,6 +331,7 @@ class SchemaLDIF(BaseModel):
 
         Args:
             file_path: Path to save LDIF file
+
         """
         ldif_content = self.to_ldif_string()
         with open(file_path, "w", encoding="utf-8") as f:
@@ -331,6 +342,7 @@ class SchemaLDIF(BaseModel):
 
         Returns:
             Dictionary with statistics
+
         """
         return {
             "total_entries": len(self.entries),
@@ -366,6 +378,7 @@ class LDIFGenerator:
         >>>
         >>> # Save to file
         >>> ldif.save_to_file("myapp.ldif")
+
     """
 
     def __init__(self) -> None:
@@ -391,6 +404,7 @@ class LDIFGenerator:
 
         Returns:
             Complete schema LDIF
+
         """
         if config is None:
             config = self._default_config
@@ -433,6 +447,7 @@ class LDIFGenerator:
 
         Returns:
             Schema root LDIF entry
+
         """
         schema_dn = f"cn={{{0}}}{config.schema_name},{config.schema_dn}"
 
@@ -464,6 +479,7 @@ class LDIFGenerator:
 
         Returns:
             Attribute type LDIF entry
+
         """
         schema_dn = f"cn={{{0}}}{config.schema_name},{config.schema_dn}"
 
@@ -492,6 +508,7 @@ class LDIFGenerator:
 
         Returns:
             Object class LDIF entry
+
         """
         schema_dn = f"cn={{{0}}}{config.schema_name},{config.schema_dn}"
 
@@ -520,6 +537,7 @@ class LDIFGenerator:
 
         Returns:
             Attribute type definition string
+
         """
         parts = []
 
@@ -593,6 +611,7 @@ class LDIFGenerator:
 
         Returns:
             Object class definition string
+
         """
         parts = []
 
@@ -658,6 +677,7 @@ class LDIFGenerator:
 
         Returns:
             Syntax LDIF entry
+
         """
         # TODO: Implement syntax conversion
         # This would handle LDAP syntax definitions
@@ -681,6 +701,7 @@ class LDIFGenerator:
 
         Returns:
             Matching rule LDIF entry
+
         """
         # TODO: Implement matching rule conversion
         # This would handle LDAP matching rule definitions
@@ -710,6 +731,7 @@ def generate_ldif_from_schema_file(
 
     Note:
         Uses SchemaParser for advanced parsing with fallback to basic conversion
+
     """
     # Basic schema to LDIF conversion implementation
     try:
@@ -808,6 +830,7 @@ def validate_ldif_schema(ldif_content: str) -> list[str]:
 
     Note:
         Validates LDIF format, schema DN, and basic schema element structure
+
     """
     # Basic LDIF schema validation implementation
     errors = []

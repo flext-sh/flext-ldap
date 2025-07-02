@@ -37,6 +37,7 @@ References:
     - RFC 4515: LDAP String Representation of Search Filters
     - RFC 4511: LDAP Protocol Specification
     - LDAP filter syntax and matching rules
+
 """
 
 from __future__ import annotations
@@ -176,6 +177,7 @@ class LDAPFilter:
         ...         builder.starts_with("cn", "jane")
         ...     ])
         ... ])
+
     """
 
     # Regex patterns for filter parsing
@@ -188,6 +190,7 @@ class LDAPFilter:
 
         Args:
             filter_string: LDAP filter string to parse (optional)
+
         """
         self._root_component: FilterComponent | None = None
         self._original_string = filter_string
@@ -207,6 +210,7 @@ class LDAPFilter:
 
         Returns:
             Parsed filter component
+
         """
         # Remove outer parentheses
         match = self.FILTER_PATTERN.match(filter_str)
@@ -242,6 +246,7 @@ class LDAPFilter:
 
         Returns:
             Parsed logical filter component
+
         """
         subfilters = []
         i = 0
@@ -289,6 +294,7 @@ class LDAPFilter:
 
         Returns:
             Parsed simple filter component
+
         """
         # Check for extensible matching
         if ":" in filter_str and "=" in filter_str:
@@ -340,6 +346,7 @@ class LDAPFilter:
 
         Returns:
             LDAP filter string
+
         """
         if not self._root_component:
             return "(objectClass=*)"  # Default filter
@@ -354,6 +361,7 @@ class LDAPFilter:
 
         Returns:
             String representation of component
+
         """
         if component.filter_type == FilterType.AND:
             subfilter_strings = [
@@ -408,6 +416,7 @@ class LDAPFilter:
 
         Returns:
             True if filter is valid
+
         """
         return len(self._validation_errors) == 0 and self._root_component is not None
 
@@ -416,6 +425,7 @@ class LDAPFilter:
 
         Returns:
             List of validation error messages
+
         """
         return self._validation_errors.copy()
 
@@ -424,6 +434,7 @@ class LDAPFilter:
 
         Returns:
             Set of attribute names
+
         """
         if not self._root_component:
             return set()
@@ -435,6 +446,7 @@ class LDAPFilter:
 
         Returns:
             Number of filter conditions
+
         """
         if not self._root_component:
             return 0
@@ -446,6 +458,7 @@ class LDAPFilter:
 
         Returns:
             Optimized filter
+
         """
         if not self._root_component:
             return LDAPFilter()
@@ -464,6 +477,7 @@ class LDAPFilter:
 
         Returns:
             Optimized component
+
         """
         # Recursively optimize subfilters
         if component.subfilters:
@@ -538,6 +552,7 @@ class LDAPFilter:
 
         Returns:
             Negated filter
+
         """
         if not self._root_component:
             return LDAPFilter()
@@ -558,6 +573,7 @@ class LDAPFilter:
 
         Returns:
             Combined filter
+
         """
         if not self._root_component or not other._root_component:
             return LDAPFilter()
@@ -578,6 +594,7 @@ class LDAPFilter:
 
         Returns:
             Combined filter
+
         """
         if not self._root_component or not other._root_component:
             return LDAPFilter()
@@ -596,6 +613,7 @@ class LDAPFilter:
 
         Returns:
             FilterBuilder instance
+
         """
         return FilterBuilder()
 
@@ -785,6 +803,7 @@ def parse_ldap_filter(filter_str: str) -> LDAPFilter:
 
     Returns:
         Parsed LDAPFilter object
+
     """
     return LDAPFilter(filter_str)
 
@@ -797,6 +816,7 @@ def validate_filter(filter_str: str) -> bool:
 
     Returns:
         True if filter is valid
+
     """
     try:
         filter_obj = LDAPFilter(filter_str)
@@ -813,6 +833,7 @@ def optimize_filter(filter_str: str) -> str:
 
     Returns:
         Optimized filter string
+
     """
     try:
         filter_obj = LDAPFilter(filter_str)
@@ -832,6 +853,7 @@ def combine_filters_and(filters: list[str]) -> str:
 
     Returns:
         Combined filter string
+
     """
     if not filters:
         return "(objectClass=*)"
@@ -853,6 +875,7 @@ def combine_filters_or(filters: list[str]) -> str:
 
     Returns:
         Combined filter string
+
     """
     if not filters:
         return "(objectClass=*)"

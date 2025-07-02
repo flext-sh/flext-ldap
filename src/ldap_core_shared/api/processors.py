@@ -34,6 +34,7 @@ class BaseProcessor(ABC):
 
         Returns:
             Processing results dictionary
+
         """
 
     def _log_performance(self, operation: str, duration: float, count: int = 0) -> None:

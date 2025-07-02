@@ -42,6 +42,7 @@ References:
     - perl-ldap: lib/Net/LDAP/Extension/SetPassword.pm
     - RFC 3062: LDAP Password Modify Extended Operation
     - OID: 1.3.6.1.4.1.4203.1.11.1
+
 """
 
 from __future__ import annotations
@@ -81,6 +82,7 @@ class ModifyPasswordResult(ExtensionResult):
     Note:
         If new_password was not provided in the request, the server may
         generate a new password and return it in generated_password.
+
     """
 
     generated_password: str | None = Field(
@@ -149,6 +151,7 @@ class ModifyPasswordExtension(LDAPExtension):
     Note:
         If user_identity is None, the operation applies to the current user.
         If new_password is None, the server may generate a password.
+
     """
 
     request_name = ExtensionOIDs.MODIFY_PASSWORD
@@ -213,6 +216,7 @@ class ModifyPasswordExtension(LDAPExtension):
 
         Raises:
             ExtensionEncodingError: If encoding fails
+
         """
         try:
             content = b""
@@ -265,6 +269,7 @@ class ModifyPasswordExtension(LDAPExtension):
 
         Raises:
             ExtensionDecodingError: If decoding fails
+
         """
         try:
             generated_password = None
@@ -303,6 +308,7 @@ class ModifyPasswordExtension(LDAPExtension):
 
         Returns:
             ModifyPasswordExtension for self-service change
+
         """
         return cls(
             user_identity=None,  # Current user
@@ -324,6 +330,7 @@ class ModifyPasswordExtension(LDAPExtension):
 
         Returns:
             ModifyPasswordExtension for REDACTED_LDAP_BIND_PASSWORD reset
+
         """
         return cls(
             user_identity=user_identity,
@@ -340,6 +347,7 @@ class ModifyPasswordExtension(LDAPExtension):
 
         Returns:
             ModifyPasswordExtension for password generation
+
         """
         return cls(
             user_identity=user_identity,
@@ -357,6 +365,7 @@ class ModifyPasswordExtension(LDAPExtension):
         Note:
             This requests the server to generate a new password for
             the current user. Old password may still be required.
+
         """
         return cls(
             user_identity=None,  # Current user
@@ -438,6 +447,7 @@ def change_password(old_password: str, new_password: str) -> ModifyPasswordExten
 
     Returns:
         ModifyPasswordExtension for password change
+
     """
     return ModifyPasswordExtension.self_service_change(old_password, new_password)
 
@@ -451,6 +461,7 @@ def reset_password(user_dn: str, new_password: str) -> ModifyPasswordExtension:
 
     Returns:
         ModifyPasswordExtension for password reset
+
     """
     return ModifyPasswordExtension.REDACTED_LDAP_BIND_PASSWORD_reset(user_dn, new_password)
 
@@ -463,6 +474,7 @@ def generate_password(user_dn: str) -> ModifyPasswordExtension:
 
     Returns:
         ModifyPasswordExtension for password generation
+
     """
     return ModifyPasswordExtension.generate_password(user_dn)
 
@@ -481,6 +493,7 @@ class PasswordChangeBuilder:
         ...     .with_new_password("new_secure_password")
         ...     .build()
         ... )
+
     """
 
     def __init__(self) -> None:
@@ -497,6 +510,7 @@ class PasswordChangeBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         self._user_identity = user_dn
         return self
@@ -506,6 +520,7 @@ class PasswordChangeBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         self._user_identity = None
         return self
@@ -518,6 +533,7 @@ class PasswordChangeBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         self._old_password = password
         return self
@@ -530,6 +546,7 @@ class PasswordChangeBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         self._new_password = password
         return self
@@ -539,6 +556,7 @@ class PasswordChangeBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         self._new_password = None
         return self
@@ -551,6 +569,7 @@ class PasswordChangeBuilder:
 
         Raises:
             PasswordValidationError: If configuration is invalid
+
         """
         return ModifyPasswordExtension(
             user_identity=self._user_identity,

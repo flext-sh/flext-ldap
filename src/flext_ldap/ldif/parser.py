@@ -44,6 +44,7 @@ class LDIFParser:
         >>> parser = LDIFParser()
         >>> result = await parser.parse_file("data.ldif")
         >>> print(f"Parsed {result.entries_per_second:.0f} entries/second")
+
     """
 
     def __init__(
@@ -57,6 +58,7 @@ class LDIFParser:
         Args:
             enable_validation: Enable schema validation
             enable_metrics: Enable performance metrics
+
         """
         self.enable_validation = enable_validation
         self.enable_metrics = enable_metrics
@@ -78,6 +80,7 @@ class LDIFParser:
 
         Returns:
             Parsing result with metrics
+
         """
         if file_path is None:
             logger.warning("LDIF parsing called with None file_path")

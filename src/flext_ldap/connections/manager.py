@@ -42,6 +42,7 @@ References:
     - ldap3: Modern Python LDAP patterns and strategies
     - Enterprise connection pooling patterns
     - Microservice resilience patterns
+
 """
 
 from __future__ import annotations
@@ -548,6 +549,7 @@ class ConnectionManager:
 
         Args:
             config: Connection configuration
+
         """
         self.config = config
         self.failover_manager = FailoverManager(config)
@@ -560,6 +562,7 @@ class ConnectionManager:
 
         Yields:
             LDAP connection with automatic failover
+
         """
         max_retries = self.config.max_retries
         retry_delay = self.config.retry_delay
@@ -600,6 +603,7 @@ class ConnectionManager:
 
         Returns:
             Operation result
+
         """
         max_retries = max_retries or self.config.max_retries
         retry_delay = self.config.retry_delay
@@ -646,6 +650,7 @@ class ConnectionManager:
 
         Returns:
             Search operation result
+
         """
 
         def search_operation(conn: LDAPConnection) -> LDAPOperationResult[Any]:
@@ -658,6 +663,7 @@ class ConnectionManager:
 
         Returns:
             Connection status information
+
         """
         server_status = self.failover_manager.get_server_status()
 
@@ -679,6 +685,7 @@ class ConnectionManager:
 
         Returns:
             Connection performance metrics
+
         """
         return self._metrics
 
@@ -785,6 +792,7 @@ def create_connection_config_from_unified(
         >>>
         >>> # Use with ConnectionManager
         >>> manager = ConnectionManager(conn_config)
+
     """
     if LDAPConfig is None:
         msg = "Unified LDAPConfig not available. Import order issue."
@@ -850,6 +858,7 @@ def create_unified_connection_manager(
         >>> # Use with context manager
         >>> with manager.get_connection() as conn:
         ...     result = conn.search("dc=company,dc=com", "(objectClass=*)")
+
     """
     connection_config = create_connection_config_from_unified(
         unified_config,
@@ -895,6 +904,7 @@ def migrate_legacy_connection_setup(
         >>> # Now use unified config and manager
         >>> with manager.get_connection() as conn:
         ...     result = conn.search(config.base_dn, "(objectClass=*)")
+
     """
     import warnings
 

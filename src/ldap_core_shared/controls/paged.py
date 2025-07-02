@@ -89,6 +89,7 @@ class PagedResultsControl(LDAPControl):
         The cookie should be None for the first request and set to the value
         returned by the server in subsequent requests. An empty cookie indicates
         that there are no more results.
+
     """
 
     control_type = ControlOIDs.PAGED_RESULTS
@@ -132,6 +133,7 @@ class PagedResultsControl(LDAPControl):
 
         Raises:
             ControlEncodingError: If encoding fails
+
         """
         try:
             # Encode page size as INTEGER
@@ -161,6 +163,7 @@ class PagedResultsControl(LDAPControl):
 
         Raises:
             ControlDecodingError: If decoding fails
+
         """
         if not control_value:
             msg = "Paged results control requires a value"
@@ -202,6 +205,7 @@ class PagedResultsControl(LDAPControl):
 
         Returns:
             Control for first page with no cookie
+
         """
         return cls(page_size=page_size, cookie=None)
 
@@ -216,6 +220,7 @@ class PagedResultsControl(LDAPControl):
 
         Returns:
             Control for next page or None if no more pages
+
         """
         if not server_cookie:
             return None  # No more pages
@@ -241,6 +246,7 @@ class PagedSearchIterator:
         >>> for page in iterator:
         ...     for entry in page:
         ...         print(f"Found: {entry.dn}")
+
     """
 
     def __init__(
@@ -265,6 +271,7 @@ class PagedSearchIterator:
             scope: Search scope (base, one, subtree)
             timeout: Search timeout in seconds
             search_params: Alternative dict-based initialization (for test compatibility)
+
         """
         self.connection = connection
 
@@ -313,6 +320,7 @@ class PagedSearchIterator:
         Warning:
             This method loads all results into memory. Use with caution
             for large result sets.
+
         """
         all_entries: list[LDAPEntry] = []
 
@@ -329,6 +337,7 @@ class PagedSearchIterator:
 
         Note:
             Integrates with LDAP connection's search functionality with paging controls
+
         """
         # Implement basic paged search functionality
         try:
@@ -407,6 +416,7 @@ class PagedSearchIterator:
 
         Args:
             response_control: Paged results control from server response
+
         """
         if response_control.cookie:
             if self._current_control is not None:

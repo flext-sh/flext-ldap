@@ -38,19 +38,22 @@ References:
     - perl-ldap: lib/Net/LDAP/Control/PersistentSearch.pm
     - RFC 3673: Persistent Search: A Simple LDAP Change Notification Mechanism
     - Internet Draft: Persistent Search LDAP Extension
+
 """
 
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
 from ldap_core_shared.controls.base import LDAPControl
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class ChangeType(Enum):
@@ -124,6 +127,7 @@ class ChangeNotification(BaseModel):
 
         Returns:
             First value for attribute or None
+
         """
         if not self.entry_data:
             return None
@@ -142,6 +146,7 @@ class ChangeNotification(BaseModel):
 
         Returns:
             True if attribute is present
+
         """
         if not self.entry_data:
             return False
@@ -174,6 +179,7 @@ class PersistentSearchRequest(BaseModel):
 
         Returns:
             Bitmask representing selected change types
+
         """
         mask = 0
         if ChangeType.ADD in self.change_types:
@@ -212,6 +218,7 @@ class PersistentSearchControl(LDAPControl):
         ...     for notification in notifications:
         ...         handle_directory_change(notification)
         ...     time.sleep(1)
+
     """
 
     control_type = "2.16.840.1.113730.3.4.3"  # Persistent Search control OID
@@ -230,6 +237,7 @@ class PersistentSearchControl(LDAPControl):
             changes_only: Return only changes, not initial search results
             return_entry_change_notification: Return entry change notification control
             criticality: Whether control is critical (recommended True for persistent search)
+
         """
         # Create request configuration
         self._request = PersistentSearchRequest(
@@ -263,6 +271,7 @@ class PersistentSearchControl(LDAPControl):
 
         Raises:
             NotImplementedError: BER encoding not yet implemented
+
         """
         # TODO: Implement BER encoding of persistent search request
         # This should encode the change types bitmask, changesOnly, and returnECs
@@ -292,6 +301,7 @@ class PersistentSearchControl(LDAPControl):
 
         Args:
             callback: Function to call when changes are detected
+
         """
         self._notification_callback = callback
 
@@ -307,6 +317,7 @@ class PersistentSearchControl(LDAPControl):
             entry_dn: Distinguished name of changed entry
             change_type: Type of change
             entry_data: Optional entry data
+
         """
         notification = ChangeNotification(
             change_type=change_type,
@@ -332,6 +343,7 @@ class PersistentSearchControl(LDAPControl):
 
         Returns:
             List of change notifications
+
         """
         notifications = self._notifications.copy()
         self._notifications.clear()  # Clear after retrieving
@@ -342,6 +354,7 @@ class PersistentSearchControl(LDAPControl):
 
         Returns:
             List of all change notifications
+
         """
         return self._notifications.copy()
 
@@ -350,6 +363,7 @@ class PersistentSearchControl(LDAPControl):
 
         Returns:
             Total notification count
+
         """
         return self._total_notifications
 
@@ -358,6 +372,7 @@ class PersistentSearchControl(LDAPControl):
 
         Returns:
             Dictionary with monitoring statistics
+
         """
         stats = {
             "is_active": self._is_active,
@@ -399,6 +414,7 @@ class PersistentSearchControl(LDAPControl):
 
         Returns:
             Encoded control value or None if no value
+
         """
         return self.control_value
 
@@ -411,6 +427,7 @@ class PersistentSearchControl(LDAPControl):
 
         Returns:
             PersistentSearchControl instance with decoded values
+
         """
         if not control_value:
             # Default persistent search control for all changes
@@ -438,6 +455,7 @@ class PersistentSearchMonitor:
 
         Args:
             connection: LDAP connection
+
         """
         self._connection = connection
         self._active_searches: dict[str, PersistentSearchControl] = {}
@@ -463,6 +481,7 @@ class PersistentSearchMonitor:
 
         Raises:
             NotImplementedError: Persistent search not yet implemented
+
         """
         monitor_id = monitor_id or f"monitor_{len(self._active_searches)}"
 
@@ -483,6 +502,7 @@ class PersistentSearchMonitor:
 
         Returns:
             True if monitor was stopped successfully
+
         """
         if monitor_id in self._active_searches:
             control = self._active_searches[monitor_id]
@@ -501,6 +521,7 @@ class PersistentSearchMonitor:
         Args:
             event_type: Type of event (add, modify, delete, moddn, or 'all')
             handler: Handler function
+
         """
         if event_type not in self._event_handlers:
             self._event_handlers[event_type] = []
@@ -519,6 +540,7 @@ class PersistentSearchMonitor:
 
         Returns:
             True if handler was removed
+
         """
         if event_type in self._event_handlers:
             try:
@@ -533,6 +555,7 @@ class PersistentSearchMonitor:
 
         Returns:
             Dictionary of active monitors and their statistics
+
         """
         return {
             monitor_id: control.get_monitoring_statistics()
@@ -557,6 +580,7 @@ class PersistentSearchMonitor:
         Args:
             handler: Event handler function
             notification: Change notification to pass to handler
+
         """
         try:
             if asyncio.iscoroutinefunction(handler):
@@ -572,6 +596,7 @@ class PersistentSearchMonitor:
 
         Args:
             notification: Change notification to dispatch
+
         """
         # Call handlers for specific change type
         change_type = notification.change_type.value
@@ -598,6 +623,7 @@ def create_persistent_search(
 
     Returns:
         Configured persistent search control
+
     """
     return PersistentSearchControl(
         change_types=change_types,
@@ -612,6 +638,7 @@ def create_user_monitor() -> PersistentSearchControl:
 
     Returns:
         Persistent search control for user entry changes
+
     """
     return PersistentSearchControl(
         change_types=[ChangeType.ADD, ChangeType.MODIFY, ChangeType.DELETE],
@@ -626,6 +653,7 @@ def create_group_monitor() -> PersistentSearchControl:
 
     Returns:
         Persistent search control for group entry changes
+
     """
     return PersistentSearchControl(
         change_types=[
@@ -656,6 +684,7 @@ async def monitor_directory_changes(
 
     Returns:
         Active persistent search monitor
+
     """
     monitor = PersistentSearchMonitor(connection)
     monitor.add_event_handler("all", change_handler)

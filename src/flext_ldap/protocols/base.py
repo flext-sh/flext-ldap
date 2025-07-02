@@ -33,6 +33,7 @@ References:
     - perl-ldap: lib/Net/LDAP.pm (protocol abstraction)
     - RFC 4511: LDAP Protocol Specification
     - Enterprise protocol design patterns
+
 """
 
 from __future__ import annotations
@@ -198,6 +199,7 @@ class LDAPProtocol(ABC):
         Args:
             url: Server URL
             **kwargs: Protocol-specific connection parameters
+
         """
 
     @abstractmethod
@@ -213,6 +215,7 @@ class LDAPProtocol(ABC):
 
         Raises:
             NotImplementedError: Authentication not implemented in base class
+
         """
         # TODO: Implement base authentication framework
         # This would provide common authentication patterns
@@ -300,6 +303,7 @@ class ProtocolAuthentication(ABC):
 
         Args:
             protocol: Associated LDAP protocol
+
         """
         self._protocol = protocol
         self._auth_methods: dict[str, Any] = {}
@@ -314,6 +318,7 @@ class ProtocolAuthentication(ABC):
 
         Returns:
             True if authentication successful
+
         """
 
     def register_auth_method(self, name: str, method: AuthMethod) -> None:
@@ -322,6 +327,7 @@ class ProtocolAuthentication(ABC):
         Args:
             name: Method name
             method: Method implementation
+
         """
         self._auth_methods[name] = method
 
@@ -350,6 +356,7 @@ class ProtocolTransport(ABC):
         Args:
             address: Target address
             **kwargs: Transport-specific parameters
+
         """
 
     @abstractmethod
@@ -365,6 +372,7 @@ class ProtocolTransport(ABC):
 
         Returns:
             Number of bytes sent
+
         """
 
     @abstractmethod
@@ -376,6 +384,7 @@ class ProtocolTransport(ABC):
 
         Returns:
             Received data
+
         """
 
     @property
@@ -411,6 +420,7 @@ class ProtocolConnection:
             timeout: Connection timeout
             retry_attempts: Number of retry attempts
             **kwargs: Additional connection parameters
+
         """
         self._protocol = protocol
         self._timeout = timeout
@@ -428,6 +438,7 @@ class ProtocolConnection:
         Args:
             url: Server URL
             **kwargs: Connection parameters
+
         """
         self._url = url
         connection_params = {**self._connection_params, **kwargs}
@@ -462,6 +473,7 @@ class ProtocolConnection:
         Args:
             method: Authentication method
             **kwargs: Authentication parameters
+
         """
         if not self._connected:
             msg = "Not connected to LDAP server"
@@ -479,6 +491,7 @@ class ProtocolConnection:
         Args:
             success: Whether operation was successful
             response_time: Operation response time
+
         """
         self._last_operation_time = datetime.now(UTC)
         self._protocol.metrics.record_operation(success, response_time)
@@ -488,6 +501,7 @@ class ProtocolConnection:
 
         Returns:
             Dictionary with connection details
+
         """
         return {
             "url": self._url,
@@ -535,6 +549,7 @@ def parse_ldap_url(url: str) -> dict[str, Any]:
 
     Returns:
         Dictionary with URL components
+
     """
     from urllib.parse import parse_qs, urlparse
 
@@ -568,6 +583,7 @@ def validate_ldap_url(url: str) -> list[str]:
 
     Returns:
         List of validation errors
+
     """
     errors = []
 

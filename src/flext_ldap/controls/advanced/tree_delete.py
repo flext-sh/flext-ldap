@@ -34,6 +34,7 @@ References:
     - RFC 3707: LDAP Hierarchy Manipulation Controls
     - X.500 Directory Services tree operations
     - Atomic deletion patterns for directory hierarchies
+
 """
 
 from __future__ import annotations
@@ -131,6 +132,7 @@ class TreeDeletionPolicy(BaseModel):
 
         Returns:
             List of validation error messages
+
         """
         errors = []
 
@@ -156,6 +158,7 @@ class TreeDeletionPolicy(BaseModel):
 
         Returns:
             True if deletion policy includes safety measures
+
         """
         safety_indicators = [
             self.deletion_mode == DeletionMode.SAFE,
@@ -226,6 +229,7 @@ class TreeDeleteRequest(BaseModel):
 
         Returns:
             List of validation error messages
+
         """
         errors = []
 
@@ -258,6 +262,7 @@ class TreeDeleteRequest(BaseModel):
 
         Returns:
             Complexity level as string
+
         """
         if self.dry_run:
             return "low"  # Dry run is always low complexity
@@ -362,6 +367,7 @@ class TreeDeleteResponse(BaseModel):
 
         Returns:
             Success rate as percentage (0.0-100.0)
+
         """
         if self.entries_deleted == 0 and not self.failed_deletions:
             return 100.0  # No entries to delete
@@ -377,6 +383,7 @@ class TreeDeleteResponse(BaseModel):
 
         Returns:
             Dictionary with performance metrics
+
         """
         return {
             "entries_deleted": self.entries_deleted,
@@ -396,6 +403,7 @@ class TreeDeleteResponse(BaseModel):
             entry_dn: DN of entry that was processed
             action: Action taken (delete, skip, fail)
             result: Result of action
+
         """
         self.audit_trail.append(
             {
@@ -428,6 +436,7 @@ class TreeDeleteControl(LDAPControl):
         ...     print(f"Deleted {tree_delete.response.entries_deleted} entries")
         ... else:
         ...     print("Tree deletion failed")
+
     """
 
     control_type = "1.2.840.113556.1.4.805"  # Microsoft Tree Delete Control OID
@@ -444,6 +453,7 @@ class TreeDeleteControl(LDAPControl):
             deletion_policy: Policy for tree deletion operation
             dry_run: Whether to perform dry run without actual deletion
             criticality: Whether control is critical for operation
+
         """
         # Create default policy if not provided
         if deletion_policy is None:
@@ -477,6 +487,7 @@ class TreeDeleteControl(LDAPControl):
 
         Returns:
             BER-encoded control value (typically empty for standard tree delete)
+
         """
         # Standard Tree Delete control has no control value
         # The control presence itself indicates tree deletion request
@@ -502,6 +513,7 @@ class TreeDeleteControl(LDAPControl):
 
         Args:
             response_value: BER-encoded response from server
+
         """
         # Process tree delete response
         if not response_value:
@@ -567,6 +579,7 @@ class TreeDeleteControl(LDAPControl):
 
         Args:
             target_dn: DN of subtree root to delete
+
         """
         self._request.target_dn = target_dn
 
@@ -575,6 +588,7 @@ class TreeDeleteControl(LDAPControl):
 
         Args:
             token: Confirmation token
+
         """
         self._request.confirmation_token = token
 
@@ -588,6 +602,7 @@ class TreeDeleteControl(LDAPControl):
         Args:
             requester_dn: DN of user requesting deletion
             reason: Optional reason for deletion
+
         """
         self._request.requester_dn = requester_dn
         self._request.deletion_reason = reason
@@ -597,6 +612,7 @@ class TreeDeleteControl(LDAPControl):
 
         Returns:
             Complexity level (low, medium, high)
+
         """
         return self._request.estimate_operation_complexity()
 
@@ -605,6 +621,7 @@ class TreeDeleteControl(LDAPControl):
 
         Returns:
             True if deletion includes safety measures
+
         """
         return self._request.deletion_policy.is_safe_deletion()
 
@@ -613,6 +630,7 @@ class TreeDeleteControl(LDAPControl):
 
         Returns:
             Dictionary with deletion configuration
+
         """
         return {
             "target_dn": self._request.target_dn,
@@ -658,6 +676,7 @@ class TreeDeleteControl(LDAPControl):
 
         Returns:
             Encoded control value or None if no value
+
         """
         return self.control_value
 
@@ -670,6 +689,7 @@ class TreeDeleteControl(LDAPControl):
 
         Returns:
             TreeDeleteControl instance with decoded values
+
         """
         if not control_value:
             # Default tree delete control with safe deletion policy
@@ -705,6 +725,7 @@ def create_tree_delete_control(
 
     Returns:
         Configured Tree Delete control
+
     """
     policy = TreeDeletionPolicy(
         deletion_mode=DeletionMode.SAFE if safe_mode else DeletionMode.RECURSIVE,
@@ -733,6 +754,7 @@ def create_forced_tree_delete_control() -> TreeDeleteControl:
 
     Returns:
         Tree Delete control configured for forced deletion
+
     """
     policy = TreeDeletionPolicy(
         deletion_mode=DeletionMode.FORCED,
@@ -761,6 +783,7 @@ async def delete_subtree(
 
     Returns:
         Tree deletion response
+
     """
     # Create tree delete control with appropriate policy
     tree_delete_control = create_tree_delete_control(

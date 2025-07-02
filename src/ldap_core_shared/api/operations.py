@@ -79,6 +79,7 @@ class LDAPOperations:
         Args:
             config: LDAP configuration for connections
             connection_manager: ConnectionManager instance for LDAP operations
+
         """
         self._config = config
         self._connection_manager = (

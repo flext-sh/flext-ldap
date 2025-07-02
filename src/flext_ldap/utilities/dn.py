@@ -34,6 +34,7 @@ References:
     - RFC 4514: LDAP String Representation of Distinguished Names
     - RFC 4511: LDAP Protocol Specification
     - X.500 Distinguished Name standards
+
 """
 
 from __future__ import annotations
@@ -90,6 +91,7 @@ class DNComponent(BaseModel):
 
         Returns:
             Escaped attribute value
+
         """
         return escape_dn_value(self.attribute_value, self.escape_mode)
 
@@ -98,6 +100,7 @@ class DNComponent(BaseModel):
 
         Returns:
             Normalized attribute type (lowercase)
+
         """
         return self.attribute_type.lower().strip()
 
@@ -109,6 +112,7 @@ class DNComponent(BaseModel):
 
         Returns:
             String representation of component
+
         """
         attr_type = self.get_normalized_type()
         attr_value = self.get_escaped_value() if escape_value else self.attribute_value
@@ -122,6 +126,7 @@ class DNComponent(BaseModel):
 
         Returns:
             True if component matches type
+
         """
         if isinstance(attribute_type, AttributeType):
             target_type = attribute_type.value
@@ -173,6 +178,7 @@ class DistinguishedName:
         >>> # Component access
         >>> for component in dn.components:
         ...     print(f"{component.attribute_type}={component.attribute_value}")
+
     """
 
     # Regex patterns for DN parsing
@@ -189,6 +195,7 @@ class DistinguishedName:
 
         Args:
             dn_string: DN string to parse (optional)
+
         """
         self._components: list[DNComponent] = []
         self._original_string = dn_string
@@ -205,6 +212,7 @@ class DistinguishedName:
 
         Args:
             dn_string: DN string to parse
+
         """
         if not dn_string:
             return  # Empty DN is valid
@@ -243,6 +251,7 @@ class DistinguishedName:
 
         Returns:
             List of component strings
+
         """
         components = []
         current_component = ""
@@ -282,6 +291,7 @@ class DistinguishedName:
 
         Returns:
             Unescaped attribute value
+
         """
 
         # Handle hex escapes first
@@ -308,6 +318,7 @@ class DistinguishedName:
 
         Returns:
             DN string representation
+
         """
         if not self._components:
             return ""
@@ -324,6 +335,7 @@ class DistinguishedName:
 
         Returns:
             Normalized DN
+
         """
         normalized_components = []
 
@@ -343,6 +355,7 @@ class DistinguishedName:
 
         Returns:
             True if DN is valid
+
         """
         return len(self._validation_errors) == 0
 
@@ -351,6 +364,7 @@ class DistinguishedName:
 
         Returns:
             List of validation error messages
+
         """
         return self._validation_errors.copy()
 
@@ -360,6 +374,7 @@ class DistinguishedName:
 
         Returns:
             First DN component or None if empty
+
         """
         return self._components[0] if self._components else None
 
@@ -369,6 +384,7 @@ class DistinguishedName:
 
         Returns:
             Parent DN or None if no parent
+
         """
         if len(self._components) <= 1:
             return None
@@ -383,6 +399,7 @@ class DistinguishedName:
 
         Yields:
             DN components from left to right
+
         """
         yield from self._components
 
@@ -392,6 +409,7 @@ class DistinguishedName:
 
         Returns:
             Number of DN components
+
         """
         return len(self._components)
 
@@ -406,6 +424,7 @@ class DistinguishedName:
 
         Returns:
             First matching component or None
+
         """
         for component in self._components:
             if component.matches_type(attribute_type):
@@ -423,6 +442,7 @@ class DistinguishedName:
 
         Returns:
             List of matching components
+
         """
         return [
             component
@@ -438,6 +458,7 @@ class DistinguishedName:
 
         Returns:
             New DN with child added
+
         """
         # Parse child RDN
         child_dn = DistinguishedName(child_rdn)
@@ -462,6 +483,7 @@ class DistinguishedName:
 
         Returns:
             True if this DN is a child of parent DN
+
         """
         if isinstance(parent_dn, str):
             parent_dn = DistinguishedName(parent_dn)
@@ -487,6 +509,7 @@ class DistinguishedName:
 
         Returns:
             True if this DN is an ancestor of child DN
+
         """
         if isinstance(child_dn, str):
             child_dn = DistinguishedName(child_dn)
@@ -504,6 +527,7 @@ class DistinguishedName:
 
         Returns:
             Common ancestor DN or None if no common ancestor
+
         """
         if isinstance(other_dn, str):
             other_dn = DistinguishedName(other_dn)
@@ -540,6 +564,7 @@ class DistinguishedName:
 
         Returns:
             Relative DN or None if not a child of base DN
+
         """
         if isinstance(base_dn, str):
             base_dn = DistinguishedName(base_dn)
@@ -558,6 +583,7 @@ class DistinguishedName:
 
         Returns:
             Set of attribute type names
+
         """
         return {component.get_normalized_type() for component in self._components}
 
@@ -566,6 +592,7 @@ class DistinguishedName:
 
         Returns:
             Copy of DN
+
         """
         new_dn = DistinguishedName()
         new_dn._components = [
@@ -623,6 +650,7 @@ class DNParser:
 
         Returns:
             DistinguishedName object
+
         """
         return DistinguishedName(dn_string)
 
@@ -644,6 +672,7 @@ class DNParser:
 
         Returns:
             DNComponent representing the parsed RDN
+
         """
         # Parse as minimal DN with one component
         dn = DistinguishedName(rdn_string.strip())
@@ -661,6 +690,7 @@ class DNParser:
 
         Returns:
             Escaped value suitable for DN string
+
         """
         # Escape special DN characters according to RFC 4514
         escaped = value
@@ -685,6 +715,7 @@ class DNParser:
 
         Returns:
             Unescaped attribute value
+
         """
         unescaped = value
         # Unescape special characters
@@ -701,6 +732,7 @@ class DNParser:
 
         Returns:
             True if value needs escaping
+
         """
         if not value:
             return False
@@ -722,6 +754,7 @@ class DNParser:
 
         Returns:
             Hex escaped value
+
         """
         result = ""
         for char in value:
@@ -740,6 +773,7 @@ class DNParser:
 
         Returns:
             Unescaped attribute value
+
         """
         result = ""
         i = 0
@@ -769,6 +803,7 @@ class DNParser:
 
         Returns:
             List of DN strings from most specific to least specific
+
         """
         try:
             dn = DistinguishedName(dn_string)
@@ -800,6 +835,7 @@ class DNBuilder:
 
         Returns:
             Self for method chaining
+
         """
         component = DNComponent(
             attribute_type=attribute_type,
@@ -813,6 +849,7 @@ class DNBuilder:
 
         Returns:
             DN string representation
+
         """
         dn = DistinguishedName()
         dn._components = self._components
@@ -826,6 +863,7 @@ class DNBuilder:
 
         Returns:
             Self for method chaining
+
         """
         self._components = [
             DNComponent(**component.dict()) for component in parsed_dn._components
@@ -845,6 +883,7 @@ class DNValidator:
 
         Returns:
             True if attribute type is valid
+
         """
         if not attr_type:
             return False
@@ -867,6 +906,7 @@ class DNValidator:
 
         Returns:
             Format specification string
+
         """
         # Return basic format info - in real implementation this would
         # consult LDAP schema
@@ -898,6 +938,7 @@ def escape_dn_value(
 
     Returns:
         Escaped attribute value
+
     """
     if not value:
         return value
@@ -958,6 +999,7 @@ def unescape_dn_value(escaped_value: str) -> str:
 
     Returns:
         Unescaped attribute value
+
     """
     dn = DistinguishedName(f"dummy={escaped_value}")
     if dn._components:
@@ -973,6 +1015,7 @@ def normalize_dn(dn_string: str) -> str:
 
     Returns:
         Normalized DN string
+
     """
     try:
         dn = DistinguishedName(dn_string)
@@ -990,6 +1033,7 @@ def is_valid_dn(dn_string: str) -> bool:
 
     Returns:
         True if DN is valid
+
     """
     try:
         dn = DistinguishedName(dn_string)
@@ -1006,6 +1050,7 @@ def get_dn_parent(dn_string: str) -> str | None:
 
     Returns:
         Parent DN string or None
+
     """
     try:
         dn = DistinguishedName(dn_string)
@@ -1023,6 +1068,7 @@ def get_dn_rdn(dn_string: str) -> str | None:
 
     Returns:
         RDN string or None
+
     """
     try:
         dn = DistinguishedName(dn_string)
@@ -1041,6 +1087,7 @@ def compare_dns(dn1: str, dn2: str) -> bool:
 
     Returns:
         True if DNs are equal
+
     """
     try:
         dn_obj1 = DistinguishedName(dn1)

@@ -79,6 +79,7 @@ class FilterExpression(BaseModel):
     Note:
         Filter expressions are immutable once created. Use FilterBuilder
         to construct new expressions.
+
     """
 
     filter_string: str = Field(description="Complete LDAP filter string")
@@ -150,6 +151,7 @@ class FilterEscaping:
 
         Returns:
             Escaped value safe for use in LDAP filters
+
         """
         if not isinstance(value, str):
             value = str(value)
@@ -169,6 +171,7 @@ class FilterEscaping:
 
         Returns:
             Unescaped original value
+
         """
         for char, escaped in cls.ESCAPE_CHARS.items():
             value = value.replace(escaped, char)
@@ -187,6 +190,7 @@ class FilterEscaping:
 
         Note:
             Attribute names have different escaping rules than values.
+
         """
         if not isinstance(attribute, str):
             attribute = str(attribute)
@@ -216,6 +220,7 @@ class FilterBuilder:
         ...     .end()
         ...     .build()
         ... )
+
     """
 
     def __init__(self) -> None:
@@ -233,6 +238,7 @@ class FilterBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         escaped_attr = FilterEscaping.escape_attribute(attribute)
         escaped_value = FilterEscaping.escape_value(str(value))
@@ -249,6 +255,7 @@ class FilterBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         escaped_attr = FilterEscaping.escape_attribute(attribute)
         escaped_value = FilterEscaping.escape_value(str(value))
@@ -265,6 +272,7 @@ class FilterBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         escaped_attr = FilterEscaping.escape_attribute(attribute)
         escaped_value = FilterEscaping.escape_value(value)
@@ -281,6 +289,7 @@ class FilterBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         escaped_attr = FilterEscaping.escape_attribute(attribute)
         escaped_value = FilterEscaping.escape_value(value)
@@ -297,6 +306,7 @@ class FilterBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         escaped_attr = FilterEscaping.escape_attribute(attribute)
         escaped_value = FilterEscaping.escape_value(value)
@@ -312,6 +322,7 @@ class FilterBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         escaped_attr = FilterEscaping.escape_attribute(attribute)
         filter_part = f"({escaped_attr}=*)"
@@ -326,6 +337,7 @@ class FilterBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         escaped_attr = FilterEscaping.escape_attribute(attribute)
         filter_part = f"(!({escaped_attr}=*))"
@@ -341,6 +353,7 @@ class FilterBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         escaped_attr = FilterEscaping.escape_attribute(attribute)
         escaped_value = FilterEscaping.escape_value(str(value))
@@ -357,6 +370,7 @@ class FilterBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         escaped_attr = FilterEscaping.escape_attribute(attribute)
         escaped_value = FilterEscaping.escape_value(str(value))
@@ -373,6 +387,7 @@ class FilterBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         escaped_attr = FilterEscaping.escape_attribute(attribute)
         escaped_value = FilterEscaping.escape_value(str(value))
@@ -397,6 +412,7 @@ class FilterBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         escaped_attr = FilterEscaping.escape_attribute(attribute)
 
@@ -431,6 +447,7 @@ class FilterBuilder:
 
         Note:
             Must be closed with end() call.
+
         """
         self._start_compound(FilterOperator.AND)
         return self
@@ -443,6 +460,7 @@ class FilterBuilder:
 
         Note:
             Must be closed with end() call.
+
         """
         self._start_compound(FilterOperator.OR)
         return self
@@ -455,6 +473,7 @@ class FilterBuilder:
 
         Note:
             Must be closed with end() call.
+
         """
         self._start_compound(FilterOperator.NOT)
         return self
@@ -467,6 +486,7 @@ class FilterBuilder:
 
         Raises:
             ValueError: If no compound filter to close
+
         """
         if not self._operator_stack:
             msg = "No compound filter to close"
@@ -518,6 +538,7 @@ class FilterBuilder:
 
         Raises:
             ValueError: If builder state is invalid
+
         """
         if self._operator_stack:
             msg = "Unclosed compound filters. Call end() to close them."
@@ -543,6 +564,7 @@ class FilterBuilder:
 
         Returns:
             Builder instance for chaining
+
         """
         self._filter_stack.clear()
         self._operator_stack.clear()
@@ -571,6 +593,7 @@ def equals(attribute: str, value: Any) -> FilterExpression:
 
     Returns:
         FilterExpression for equality condition
+
     """
     return FilterBuilder().equal(attribute, value).build()
 
@@ -584,6 +607,7 @@ def contains(attribute: str, value: str) -> FilterExpression:
 
     Returns:
         FilterExpression for contains condition
+
     """
     return FilterBuilder().contains(attribute, value).build()
 
@@ -596,6 +620,7 @@ def present(attribute: str) -> FilterExpression:
 
     Returns:
         FilterExpression for presence condition
+
     """
     return FilterBuilder().present(attribute).build()
 
@@ -608,6 +633,7 @@ def and_filters(*filters: FilterExpression | str) -> FilterExpression:
 
     Returns:
         FilterExpression combining all filters with AND
+
     """
     if len(filters) < MIN_LOGICAL_OPERATORS:
         msg = f"AND requires at least {MIN_LOGICAL_OPERATORS} filters"
@@ -635,6 +661,7 @@ def or_filters(*filters: FilterExpression | str) -> FilterExpression:
 
     Returns:
         FilterExpression combining all filters with OR
+
     """
     if len(filters) < MIN_LOGICAL_OPERATORS:
         msg = f"OR requires at least {MIN_LOGICAL_OPERATORS} filters"
@@ -662,6 +689,7 @@ def not_filter(filter_expr: FilterExpression | str) -> FilterExpression:
 
     Returns:
         FilterExpression negating the input filter
+
     """
     builder = FilterBuilder().not_()
 

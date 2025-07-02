@@ -43,6 +43,7 @@ def run_sasl_test(
 
     Returns:
         True if test successful
+
     """
     try:
         from ldap_core_shared.protocols.sasl.callback import SASLCallbackHandler
@@ -171,6 +172,7 @@ def _is_mechanism_available(mechanism: str, registry_class: type[Any]) -> bool:
 
     Returns:
         True if mechanism is available
+
     """
     available = registry_class.get_available_mechanisms()
     return mechanism.upper() in [m.upper() for m in available]
@@ -202,6 +204,7 @@ def _create_sasl_client(
 
     Returns:
         Configured SASL client
+
     """
     # Create callback handler
     if interactive:
@@ -236,6 +239,7 @@ def _start_authentication(client: Any) -> bool:
 
     Returns:
         True if authentication started successfully
+
     """
     try:
         return client.client_start()
@@ -253,6 +257,7 @@ def _handle_initial_response(client: Any, mechanism: str, verbose: bool) -> bool
 
     Returns:
         True if initial response handled successfully
+
     """
     try:
         if client.has_initial_response():
@@ -275,6 +280,7 @@ def _execute_mechanism_flow(client: Any, mechanism: str, verbose: bool) -> bool:
 
     Returns:
         True if mechanism flow completed successfully
+
     """
     mechanism_upper = mechanism.upper()
 
@@ -295,6 +301,7 @@ def _handle_single_step_mechanism(client: Any, mechanism: str, verbose: bool) ->
 
     Returns:
         True if mechanism completed successfully
+
     """
     try:
         response = client.client_step()
@@ -319,6 +326,7 @@ def _handle_digest_md5_mechanism(client: Any, verbose: bool) -> bool:
 
     Returns:
         True if DIGEST-MD5 flow completed successfully
+
     """
     try:
         # Simulate server challenge
@@ -341,6 +349,7 @@ def _parse_digest_response(response: bytes) -> None:
 
     Args:
         response: DIGEST-MD5 response bytes
+
     """
     try:
         response_str = response.decode("utf-8")
@@ -357,6 +366,7 @@ def _display_client_info(client: Any) -> None:
 
     Args:
         client: SASL client instance
+
     """
     try:
         # Display mechanism properties

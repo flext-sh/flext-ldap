@@ -93,6 +93,7 @@ class Result(Generic[T, TError]):
         ...     print(f"Result: {result.unwrap()}")
         >>> else:
         ...     print(f"Error: {result.unwrap_error()}")
+
     """
 
     def __init__(self, value: T | None = None, error: TError | None = None) -> None:
@@ -104,6 +105,7 @@ class Result(Generic[T, TError]):
 
         Raises:
             ValueError: If both value and error are provided or both are None
+
         """
         if (value is None and error is None) or (
             value is not None and error is not None
@@ -123,6 +125,7 @@ class Result(Generic[T, TError]):
 
         Returns:
             Result containing the success value
+
         """
         return cls(value=value)
 
@@ -135,6 +138,7 @@ class Result(Generic[T, TError]):
 
         Returns:
             Result containing the error
+
         """
         return cls(error=error)
 
@@ -143,6 +147,7 @@ class Result(Generic[T, TError]):
 
         Returns:
             True if Result contains a success value
+
         """
         return self._value is not None
 
@@ -151,6 +156,7 @@ class Result(Generic[T, TError]):
 
         Returns:
             True if Result contains an error value
+
         """
         return self._error is not None
 
@@ -162,6 +168,7 @@ class Result(Generic[T, TError]):
 
         Raises:
             ValueError: If Result contains an error
+
         """
         if self._value is None:
             msg = "Called unwrap() on error Result"
@@ -176,6 +183,7 @@ class Result(Generic[T, TError]):
 
         Raises:
             ValueError: If Result contains a success value
+
         """
         if self._error is None:
             msg = "Called unwrap_error() on success Result"
@@ -190,6 +198,7 @@ class Result(Generic[T, TError]):
 
         Returns:
             Success value if available, otherwise default
+
         """
         return self._value if self._value is not None else default
 
@@ -201,6 +210,7 @@ class Result(Generic[T, TError]):
 
         Returns:
             New Result with transformed value or original error
+
         """
         if self.is_success():
             try:
@@ -220,6 +230,7 @@ class Result(Generic[T, TError]):
 
         Returns:
             Result returned by func or original error
+
         """
         if self.is_success():
             return func(self.unwrap())
@@ -253,6 +264,7 @@ class Option(Generic[T]):
         ...     print(f"Found: {user.unwrap()}")
         >>> else:
         ...     print("User not found")
+
     """
 
     def __init__(self, value: T | None = None) -> None:
@@ -260,6 +272,7 @@ class Option(Generic[T]):
 
         Args:
             value: The value to wrap, or None for empty Option
+
         """
         self._value = value
 
@@ -272,6 +285,7 @@ class Option(Generic[T]):
 
         Returns:
             Option containing the value
+
         """
         return cls(value)
 
@@ -281,6 +295,7 @@ class Option(Generic[T]):
 
         Returns:
             Empty Option
+
         """
         return cls()
 
@@ -289,6 +304,7 @@ class Option(Generic[T]):
 
         Returns:
             True if Option contains a value
+
         """
         return self._value is not None
 
@@ -297,6 +313,7 @@ class Option(Generic[T]):
 
         Returns:
             True if Option is empty
+
         """
         return self._value is None
 
@@ -308,6 +325,7 @@ class Option(Generic[T]):
 
         Raises:
             ValueError: If Option is empty
+
         """
         if self._value is None:
             msg = "Called unwrap() on None Option"
@@ -322,6 +340,7 @@ class Option(Generic[T]):
 
         Returns:
             Contained value if present, otherwise default
+
         """
         return self._value if self._value is not None else default
 
@@ -333,6 +352,7 @@ class Option(Generic[T]):
 
         Returns:
             New Option with transformed value or empty Option
+
         """
         if self.is_some():
             return Option.some(func(self.unwrap()))
@@ -346,6 +366,7 @@ class Option(Generic[T]):
 
         Returns:
             Option returned by func or empty Option
+
         """
         if self.is_some():
             return func(self.unwrap())
@@ -380,6 +401,7 @@ class Repository(BaseRepository[TEntity], Generic[TEntity]):
 
         Returns:
             Entity if found, None otherwise
+
         """
         return self._entities.get(entity_id)
 
@@ -391,6 +413,7 @@ class Repository(BaseRepository[TEntity], Generic[TEntity]):
 
         Returns:
             Saved entity
+
         """
         self._entities[entity.id] = entity
         return entity
@@ -403,6 +426,7 @@ class Repository(BaseRepository[TEntity], Generic[TEntity]):
 
         Returns:
             True if entity was deleted
+
         """
         if entity.id in self._entities:
             del self._entities[entity.id]
@@ -414,6 +438,7 @@ class Repository(BaseRepository[TEntity], Generic[TEntity]):
 
         Returns:
             List of all entities
+
         """
         return list(self._entities.values())
 
@@ -422,6 +447,7 @@ class Repository(BaseRepository[TEntity], Generic[TEntity]):
 
         Returns:
             Total number of entities
+
         """
         return len(self._entities)
 
@@ -441,6 +467,7 @@ class Service(BaseService, Generic[TEntity]):
 
         Args:
             repository: Repository for entity persistence
+
         """
         self._repository = repository
 
@@ -449,6 +476,7 @@ class Service(BaseService, Generic[TEntity]):
 
         Returns:
             True if service is healthy
+
         """
         try:
             await self._repository.count()
@@ -464,6 +492,7 @@ class Service(BaseService, Generic[TEntity]):
 
         Returns:
             Option containing entity if found
+
         """
         entity = await self._repository.find_by_id(entity_id)
         return Option.some(entity) if entity else Option.none()
@@ -476,6 +505,7 @@ class Service(BaseService, Generic[TEntity]):
 
         Returns:
             Result containing created entity or error message
+
         """
         try:
             if not entity.can_be_deleted():  # Basic validation
@@ -494,6 +524,7 @@ class Service(BaseService, Generic[TEntity]):
 
         Returns:
             Result containing updated entity or error message
+
         """
         try:
             existing = await self._repository.find_by_id(entity.id)
@@ -514,6 +545,7 @@ class Service(BaseService, Generic[TEntity]):
 
         Returns:
             Result containing success status or error message
+
         """
         try:
             entity = await self._repository.find_by_id(entity_id)
@@ -548,6 +580,7 @@ class Specification(Protocol[T]):
 
         Returns:
             True if candidate satisfies specification
+
         """
 
     def and_(self, other: Specification[T]) -> Specification[T]:
@@ -558,6 +591,7 @@ class Specification(Protocol[T]):
 
         Returns:
             Combined specification
+
         """
 
     def or_(self, other: Specification[T]) -> Specification[T]:
@@ -568,6 +602,7 @@ class Specification(Protocol[T]):
 
         Returns:
             Combined specification
+
         """
 
     def not_(self) -> Specification[T]:
@@ -575,6 +610,7 @@ class Specification(Protocol[T]):
 
         Returns:
             Negated specification
+
         """
 
 
@@ -594,6 +630,7 @@ class AsyncIteratorWrapper(Generic[T]):
 
         Args:
             iterator: Async iterator to wrap
+
         """
         self._iterator = iterator
 
@@ -605,6 +642,7 @@ class AsyncIteratorWrapper(Generic[T]):
 
         Yields:
             Items that satisfy the predicate
+
         """
         async for item in self._iterator:
             if predicate(item):
@@ -618,6 +656,7 @@ class AsyncIteratorWrapper(Generic[T]):
 
         Yields:
             Transformed items
+
         """
         async for item in self._iterator:
             yield func(item)
@@ -630,6 +669,7 @@ class AsyncIteratorWrapper(Generic[T]):
 
         Yields:
             First N items from iterator
+
         """
         taken = 0
         async for item in self._iterator:
@@ -643,6 +683,7 @@ class AsyncIteratorWrapper(Generic[T]):
 
         Returns:
             List containing all items from iterator
+
         """
         return [item async for item in self._iterator]
 
@@ -654,6 +695,7 @@ class AsyncIteratorWrapper(Generic[T]):
 
         Yields:
             Lists of items, each with at most 'size' items
+
         """
         batch: list[T] = []
         async for item in self._iterator:

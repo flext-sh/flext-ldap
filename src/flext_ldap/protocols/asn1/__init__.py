@@ -48,6 +48,7 @@ References:
     - ITU-T X.690: ASN.1 encoding rules specification
     - RFC 3641: Generic String Encoding Rules (GSER)
     - LDAP Protocol: ASN.1 usage in LDAP operations
+
 """
 
 from __future__ import annotations
@@ -223,6 +224,7 @@ def new(**options: Any) -> Any:
         >>> asn.prepare(schema_definition)
         >>> encoded = asn.encode(data)
         >>> decoded = asn.decode(encoded)
+
     """
     try:
         from flext_ldapsn1.codec import ASN1Codec

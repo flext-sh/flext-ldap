@@ -131,6 +131,7 @@ class MockLDAPConnection:
             simulate_failures: Whether to simulate operation failures
             failure_rate: Percentage of operations that should fail (0.0-1.0)
             response_delay: Artificial delay in seconds for each operation
+
         """
         self._simulate_failures = simulate_failures
         self._failure_rate = failure_rate

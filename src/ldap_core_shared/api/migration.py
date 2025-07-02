@@ -58,6 +58,7 @@ class GenericMigrationOrchestrator(ABC):
 
         Args:
             config: Generic migration configuration from ldap-core-shared
+
         """
         self.config = config
         self.performance_monitor = PerformanceMonitor("generic_migration")
@@ -70,6 +71,7 @@ class GenericMigrationOrchestrator(ABC):
 
         Args:
             processor: Migration processor implementing the protocol
+
         """
         self.processors.append(processor)
         logger.debug("➕ Added processor: %s", type(processor).__name__)
@@ -80,6 +82,7 @@ class GenericMigrationOrchestrator(ABC):
 
         Returns:
             Result containing loaded entries or error information
+
         """
         ...
 
@@ -95,6 +98,7 @@ class GenericMigrationOrchestrator(ABC):
 
         Returns:
             Dict mapping category names to entry lists
+
         """
         ...
 
@@ -112,6 +116,7 @@ class GenericMigrationOrchestrator(ABC):
 
         Returns:
             Result with output information or error
+
         """
         ...
 
@@ -126,6 +131,7 @@ class GenericMigrationOrchestrator(ABC):
 
         Returns:
             Result with migration summary or error information
+
         """
         start_time = time.time()
         self.performance_monitor.reset()
@@ -201,6 +207,7 @@ class GenericMigrationOrchestrator(ABC):
 
         Returns:
             Result indicating validation success or failure
+
         """
         try:
             # Generic validation - business-specific validation in subclasses
@@ -231,6 +238,7 @@ class GenericMigrationOrchestrator(ABC):
 
         Returns:
             Dictionary with generic migration plan information
+
         """
         return {
             "migration_type": "Generic LDAP Migration",
@@ -258,6 +266,7 @@ class GenericEntryProcessor(ABC):
 
         Args:
             config: Generic migration configuration
+
         """
         self.config = config
         self.performance_metrics: dict[str, Any] = {}
@@ -269,6 +278,7 @@ class GenericEntryProcessor(ABC):
             operation: Operation name
             duration: Duration in seconds
             count: Number of items processed
+
         """
         self.performance_metrics[operation] = {
             "duration": duration,
@@ -285,6 +295,7 @@ class GenericEntryProcessor(ABC):
 
         Returns:
             Dictionary with performance metrics
+
         """
         return self.performance_metrics.copy()
 
@@ -297,6 +308,7 @@ class GenericEntryProcessor(ABC):
 
         Returns:
             Result with processed entries or error
+
         """
         ...
 
@@ -306,6 +318,7 @@ def create_migration_config_from_env() -> Result[MigrationConfig]:
 
     Returns:
         Result containing MigrationConfig or error
+
     """
     try:
         from ldap_core_shared.api.config import load_migration_config_from_env
@@ -325,6 +338,7 @@ def validate_migration_setup(config: MigrationConfig) -> Result[list[str]]:
 
     Returns:
         Result containing list of validation issues (empty if valid)
+
     """
     issues = []
 

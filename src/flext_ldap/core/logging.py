@@ -186,6 +186,7 @@ class SensitiveDataFilter:
 
         Returns:
             Filtered message with sensitive data redacted
+
         """
         import re
 
@@ -206,6 +207,7 @@ class SensitiveDataFilter:
 
         Returns:
             Filtered dictionary with sensitive values redacted
+
         """
         sensitive_keys = {
             "password",
@@ -242,6 +244,7 @@ class StructuredFormatter(logging.Formatter):
 
         Args:
             include_trace: Whether to include stack traces
+
         """
         super().__init__()
         self.include_trace = include_trace
@@ -254,6 +257,7 @@ class StructuredFormatter(logging.Formatter):
 
         Returns:
             Formatted JSON string
+
         """
         # Get context from record
         context = getattr(record, "context", LogContext())
@@ -296,6 +300,7 @@ class PerformanceMonitor:
 
         Args:
             slow_threshold: Threshold for slow operations in seconds
+
         """
         self.slow_threshold = slow_threshold
         self._active_operations: dict[str, float] = {}
@@ -306,6 +311,7 @@ class PerformanceMonitor:
 
         Args:
             operation_id: Unique operation identifier
+
         """
         with self._lock:
             self._active_operations[operation_id] = time.time()
@@ -318,6 +324,7 @@ class PerformanceMonitor:
 
         Returns:
             Operation duration in seconds
+
         """
         with self._lock:
             start_time = self._active_operations.pop(operation_id, None)
@@ -335,6 +342,7 @@ class PerformanceMonitor:
         Args:
             operation_name: Name of operation being timed
             logger: Logger to use for slow operation warnings
+
         """
         operation_id = f"{operation_name}_{uuid4().hex[:8]}"
 
@@ -371,6 +379,7 @@ class StructuredLogger:
         Args:
             name: Logger name
             logger: Underlying logger instance
+
         """
         self.name = name
         self.logger = logger
@@ -396,6 +405,7 @@ class StructuredLogger:
 
         Args:
             **context_data: Additional context data
+
         """
         old_context = getattr(self._local, "context", LogContext())
         new_context = self._merge_context(**context_data)
@@ -426,6 +436,7 @@ class StructuredLogger:
             metrics: Performance metrics
             tags: Log tags for categorization
             **context_data: Additional context data
+
         """
         if not self.logger.isEnabledFor(level):
             return
@@ -484,7 +495,7 @@ class StructuredLogger:
         self._log(LogLevel.CRITICAL.value, message, **kwargs)
 
     def security(
-        self, message: str, security_event: SecurityEventType, **kwargs
+        self, message: str, security_event: SecurityEventType, **kwargs: Any
     ) -> None:
         """Log security event.
 
@@ -492,28 +503,31 @@ class StructuredLogger:
             message: Security event message
             security_event: Type of security event
             **kwargs: Additional context
+
         """
         kwargs["security_event_type"] = security_event.value
         self._log(
             LogLevel.SECURITY.value, message, event_type=EventType.SECURITY, **kwargs
         )
 
-    def audit(self, message: str, **kwargs) -> None:
+    def audit(self, message: str, **kwargs: Any) -> None:
         """Log audit event.
 
         Args:
             message: Audit message
             **kwargs: Additional context
+
         """
         self._log(LogLevel.AUDIT.value, message, event_type=EventType.AUDIT, **kwargs)
 
-    def performance(self, message: str, metrics: dict[str, Any], **kwargs) -> None:
+    def performance(self, message: str, metrics: dict[str, Any], **kwargs: Any) -> None:
         """Log performance metrics.
 
         Args:
             message: Performance message
             metrics: Performance metrics
             **kwargs: Additional context
+
         """
         self._log(
             LogLevel.INFO.value,
@@ -538,6 +552,7 @@ class LoggerManager:
 
         Args:
             config: Logging configuration
+
         """
         if cls._initialized:
             return
@@ -594,6 +609,7 @@ class LoggerManager:
 
         Returns:
             Structured logger instance
+
         """
         if not cls._initialized:
             cls.initialize()
@@ -610,6 +626,7 @@ class LoggerManager:
 
         Returns:
             Performance monitor or None if not enabled
+
         """
         return cls._performance_monitor
 
@@ -631,6 +648,7 @@ def get_logger(name: str) -> StructuredLogger:
 
     Returns:
         Structured logger
+
     """
     return LoggerManager.get_logger(name)
 
@@ -640,6 +658,7 @@ def get_performance_monitor() -> PerformanceMonitor | None:
 
     Returns:
         Performance monitor or None
+
     """
     return LoggerManager.get_performance_monitor()
 

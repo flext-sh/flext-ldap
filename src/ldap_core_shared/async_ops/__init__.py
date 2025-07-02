@@ -40,6 +40,7 @@ References:
     - perl-ldap: lib/Net/LDAP.pod (async mode, lines 123-125, 891-895)
     - asyncio: Python asynchronous I/O framework
     - Enterprise async processing patterns
+
 """
 
 from typing import TYPE_CHECKING

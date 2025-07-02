@@ -115,6 +115,7 @@ class PasswordPolicyControl(LDAPControl):
     Note:
         Client requests typically send this control with no value.
         Server responses contain the policy information in the control value.
+
     """
 
     control_type = ControlOIDs.PASSWORD_POLICY
@@ -196,6 +197,7 @@ class PasswordPolicyControl(LDAPControl):
 
         Raises:
             ControlEncodingError: If encoding fails
+
         """
         # Client requests typically have no value
         if self.warning_type is None and self.error is None:
@@ -243,6 +245,7 @@ class PasswordPolicyControl(LDAPControl):
 
         Raises:
             ControlDecodingError: If decoding fails
+
         """
         # Client requests have no value
         if not control_value:
@@ -303,6 +306,7 @@ class PasswordPolicyControl(LDAPControl):
 
         Returns:
             Control for requesting password policy information
+
         """
         return cls()
 
@@ -333,6 +337,7 @@ class PasswordPolicyControl(LDAPControl):
 
         Returns:
             True if password expires within threshold
+
         """
         if self.time_before_expiration is not None:
             return self.time_before_expiration <= threshold_seconds
@@ -343,6 +348,7 @@ class PasswordPolicyControl(LDAPControl):
 
         Returns:
             Error description or None if no error
+
         """
         if not self.error:
             return None
@@ -370,6 +376,7 @@ class PasswordPolicyControl(LDAPControl):
 
         Returns:
             Warning description or None if no warning
+
         """
         if not self.has_warning():
             return None

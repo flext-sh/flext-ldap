@@ -32,6 +32,7 @@ References:
     - RFC 4616: The PLAIN Simple Authentication and Security Layer (SASL) Mechanism
     - RFC 2831: Using Digest Authentication as a SASL Mechanism
     - RFC 4505: Anonymous Simple Authentication and Security Layer (SASL) Mechanism
+
 """
 
 from __future__ import annotations
@@ -91,6 +92,7 @@ def get_available_mechanisms() -> list[str]:
 
     Returns:
         List of mechanism names that are implemented
+
     """
     mechanisms = []
 
@@ -114,6 +116,7 @@ def get_mechanism_class(mechanism_name: str) -> type[BaseSASLMechanism] | None:
 
     Returns:
         Mechanism class or None if not available
+
     """
     mechanism_map = {
         "PLAIN": PlainMechanism,

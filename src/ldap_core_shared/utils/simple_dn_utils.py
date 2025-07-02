@@ -36,6 +36,7 @@ def simple_parse_dn(dn_string: str) -> list[tuple[str, str]]:
 
     Raises:
         ValueError: If DN format is invalid
+
     """
     if not dn_string or not dn_string.strip():
         msg = "DN cannot be empty"
@@ -59,6 +60,7 @@ def simple_normalize_dn(dn_string: str) -> str:
 
     Returns:
         Normalized DN string
+
     """
     # Delegate directly to enterprise normalization
     return enterprise_normalize_dn(dn_string)
@@ -73,6 +75,7 @@ def simple_is_child_dn(child_dn: str, parent_dn: str) -> bool:
 
     Returns:
         True if child_dn is a child of parent_dn
+
     """
     try:
         # Delegate to enterprise DN system

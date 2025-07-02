@@ -33,6 +33,7 @@ References:
     - perl-ldap: lib/Net/LDAP/Filter.pm
     - RFC 4515: LDAP String Representation of Search Filters
     - RFC 4511: LDAP Protocol Specification
+
 """
 
 from __future__ import annotations
@@ -81,6 +82,7 @@ class FilterSyntaxError(Exception):
             message: Error description
             position: Character position where error occurred
             filter_string: Original filter string that failed parsing
+
         """
         self.position = position
         self.filter_string = filter_string
@@ -124,6 +126,7 @@ class ParsedFilter(BaseModel):
     Note:
         For compound filters (and, or, not), the children attribute
         contains the nested filter components.
+
     """
 
     filter_type: FilterType = Field(description="Type of LDAP filter")
@@ -195,6 +198,7 @@ class ParsedFilter(BaseModel):
 
         Returns:
             Set of attribute names used in the filter
+
         """
         attributes = set()
 
@@ -211,6 +215,7 @@ class ParsedFilter(BaseModel):
 
         Returns:
             Complexity score (1 for simple filters, higher for compound)
+
         """
         if self.is_simple():
             return 1
@@ -223,6 +228,7 @@ class ParsedFilter(BaseModel):
 
         Returns:
             LDAP filter string
+
         """
         if self.filter_type == FilterType.EQUALITY:
             return f"({self.attribute}={self.value})"
@@ -274,6 +280,7 @@ class FilterParser:
         >>> parsed = parser.parse("(&(cn=john)(mail=*@example.com)")
         >>> print(parsed.filter_type)  # FilterType.AND
         >>> print(len(parsed.children)  # 2
+
     """
 
     # Regular expressions for filter components
@@ -296,6 +303,7 @@ class FilterParser:
 
         Raises:
             FilterSyntaxError: If filter syntax is invalid
+
         """
         if not filter_string or not filter_string.strip():
             msg = "Empty filter string"
@@ -608,6 +616,7 @@ def parse_filter(filter_string: str) -> ParsedFilter:
 
     Returns:
         ParsedFilter with structured representation
+
     """
     parser = FilterParser()
     return parser.parse(filter_string)
@@ -621,6 +630,7 @@ def is_valid_filter(filter_string: str) -> bool:
 
     Returns:
         True if filter is valid, False otherwise
+
     """
     try:
         parse_filter(filter_string)
@@ -640,6 +650,7 @@ def get_filter_attributes(filter_string: str) -> set[str]:
 
     Raises:
         FilterSyntaxError: If filter syntax is invalid
+
     """
     parsed = parse_filter(filter_string)
     return parsed.get_attributes()
@@ -656,6 +667,7 @@ def get_filter_complexity(filter_string: str) -> int:
 
     Raises:
         FilterSyntaxError: If filter syntax is invalid
+
     """
     parsed = parse_filter(filter_string)
     return parsed.get_complexity_score()
@@ -673,6 +685,7 @@ class FilterAnalyzer:
         >>> analysis = analyzer.analyze("(&(objectClass=person)(cn=*REDACTED_LDAP_BIND_PASSWORD*)")
         >>> print(analysis.performance_hints)
         >>> print(analysis.security_warnings)
+
     """
 
     def __init__(self) -> None:
@@ -687,6 +700,7 @@ class FilterAnalyzer:
 
         Returns:
             Analysis results with performance and security insights
+
         """
         try:
             parsed = self._parser.parse(filter_string)

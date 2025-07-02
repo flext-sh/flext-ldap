@@ -59,6 +59,7 @@ class ConnectionInfo:
             use_tls: Whether to use TLS/SSL
             base_dn: Base DN (stored but not used by enterprise config)
             **kwargs: Additional arguments passed to ConnectionConfig
+
         """
         # Handle backward compatibility: host parameter is alias for server
         actual_server = server or host
@@ -206,6 +207,7 @@ class LDAPConnectionManager:
 
         Args:
             connection_info: Connection configuration (converted to enterprise format)
+
         """
         self.connection_info = connection_info
 

@@ -40,6 +40,7 @@ References:
     - RFC 6331: Moving DIGEST-MD5 to Historic
     - RFC 2617: HTTP Authentication: Basic and Digest Access Authentication
     - RFC 4422: Simple Authentication and Security Layer (SASL)
+
 """
 
 from __future__ import annotations
@@ -88,6 +89,7 @@ class DigestMD5Mechanism(SASLMechanism):
         >>> mechanism = DigestMD5Mechanism(callback_handler)
         >>> response1 = mechanism.evaluate_challenge(server_challenge1)
         >>> response2 = mechanism.evaluate_challenge(server_challenge2)
+
     """
 
     MECHANISM_NAME: ClassVar[str] = "DIGEST-MD5"
@@ -120,6 +122,7 @@ class DigestMD5Mechanism(SASLMechanism):
         Args:
             callback_handler: Callback handler for credentials
             context: SASL context (created if not provided)
+
         """
         super().__init__(callback_handler, context)
 
@@ -156,6 +159,7 @@ class DigestMD5Mechanism(SASLMechanism):
         Raises:
             SASLAuthenticationError: If authentication fails
             SASLChallengeError: If challenge is malformed
+
         """
         self._record_challenge(challenge)
 
@@ -200,6 +204,7 @@ class DigestMD5Mechanism(SASLMechanism):
 
         Returns:
             Client response with authentication digest
+
         """
         # Parse challenge parameters
         self._server_challenge = self._parse_challenge(challenge)
@@ -247,6 +252,7 @@ class DigestMD5Mechanism(SASLMechanism):
 
         Returns:
             None (authentication complete)
+
         """
         if len(challenge) == 0:
             # No response-auth, authentication complete
@@ -282,6 +288,7 @@ class DigestMD5Mechanism(SASLMechanism):
 
         Returns:
             Dictionary of challenge parameters
+
         """
         # TODO: Implement proper DIGEST-MD5 challenge parsing
         # This should parse the challenge string into key-value pairs

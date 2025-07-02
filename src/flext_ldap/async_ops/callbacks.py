@@ -36,6 +36,7 @@ References:
     - perl-ldap: lib/Net/LDAP.pod (callback patterns, lines 891-895)
     - asyncio: Python event loop and callback patterns
     - Enterprise callback and event handling patterns
+
 """
 
 from __future__ import annotations
@@ -265,6 +266,7 @@ class CallbackRegistry:
 
         Returns:
             Callback ID for future reference
+
         """
         if config is None:
             config = CallbackConfig()
@@ -307,6 +309,7 @@ class CallbackRegistry:
 
         Returns:
             Callback ID for future reference
+
         """
         config = CallbackConfig(
             operation_filter=operation_filter,
@@ -324,6 +327,7 @@ class CallbackRegistry:
 
         Returns:
             True if callback was removed
+
         """
         if callback_id not in self._callbacks:
             return False
@@ -351,6 +355,7 @@ class CallbackRegistry:
 
         Returns:
             List of callback registrations
+
         """
         callback_ids = self._callbacks_by_type[callback_type]
         return [self._callbacks[callback_id] for callback_id in callback_ids]
@@ -368,6 +373,7 @@ class CallbackRegistry:
 
         Returns:
             List of matching callback registrations
+
         """
         callbacks = self.get_callbacks_for_type(callback_type)
         return [
@@ -381,6 +387,7 @@ class CallbackRegistry:
 
         Returns:
             Dictionary with registry statistics
+
         """
         total_callbacks = len(self._callbacks)
         callbacks_by_type = {
@@ -417,6 +424,7 @@ class CallbackManager:
         Args:
             max_concurrent_callbacks: Maximum concurrent callback executions
             default_timeout: Default callback timeout in seconds
+
         """
         self._registry = CallbackRegistry()
         self._max_concurrent = max_concurrent_callbacks
@@ -479,6 +487,7 @@ class CallbackManager:
 
         Returns:
             Callback ID
+
         """
         return self._registry.register_callback_with_params(
             callback_function=callback_function,
@@ -502,6 +511,7 @@ class CallbackManager:
 
         Returns:
             Callback ID
+
         """
         return self._registry.register_callback_with_params(
             callback_function=callback_function,
@@ -525,6 +535,7 @@ class CallbackManager:
 
         Returns:
             Callback ID
+
         """
         return self._registry.register_callback_with_params(
             callback_function=callback_function,
@@ -541,6 +552,7 @@ class CallbackManager:
 
         Returns:
             True if callback was removed
+
         """
         return self._registry.unregister_callback(callback_id)
 
@@ -556,6 +568,7 @@ class CallbackManager:
             operation_id: Operation that completed
             result_data: Result data from operation
             priority: Event priority
+
         """
         event = CallbackEvent(
             event_id=str(uuid.uuid4()),
@@ -581,6 +594,7 @@ class CallbackManager:
             progress_percentage: Progress percentage (0.0-DEFAULT_MAX_ITEMS)
             progress_message: Progress message
             priority: Event priority
+
         """
         event = CallbackEvent(
             event_id=str(uuid.uuid4()),
@@ -607,6 +621,7 @@ class CallbackManager:
             error_message: Error message
             exception: Optional exception object
             priority: Event priority
+
         """
         event = CallbackEvent(
             event_id=str(uuid.uuid4()),
@@ -643,6 +658,7 @@ class CallbackManager:
 
         Args:
             event: Callback event to process
+
         """
         start_time = time.time()
 
@@ -675,6 +691,7 @@ class CallbackManager:
         Args:
             callback_reg: Callback registration
             event: Event data
+
         """
         callback_task_id = f"{callback_reg.callback_id}_{event.event_id}"
 
@@ -725,6 +742,7 @@ class CallbackManager:
         Args:
             callback_reg: Callback registration
             event: Event data
+
         """
         if event.event_type == CallbackType.COMPLETION:
             await callback_reg.callback_function(event.result_data)
@@ -749,6 +767,7 @@ class CallbackManager:
         Args:
             callback_reg: Callback registration
             event: Event data
+
         """
         loop = asyncio.get_event_loop()
 
@@ -787,6 +806,7 @@ class CallbackManager:
 
         Returns:
             Dictionary with callback statistics
+
         """
         registry_stats = self._registry.get_callback_statistics()
 
@@ -821,6 +841,7 @@ def create_completion_callback(
 
     Returns:
         Configured callback manager
+
     """
     manager = CallbackManager()
     manager.register_completion_callback(callback_function)
@@ -837,6 +858,7 @@ def create_progress_callback(
 
     Returns:
         Configured callback manager
+
     """
     manager = CallbackManager()
     manager.register_progress_callback(callback_function)
@@ -862,6 +884,7 @@ async def execute_with_callbacks(
 
     Raises:
         NotImplementedError: Callback execution not yet implemented
+
     """
     # TODO: Implement callback-aware operation execution
     # This would set up callbacks and execute the operation

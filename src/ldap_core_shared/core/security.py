@@ -65,6 +65,7 @@ class SSHTunnel:
 
         Args:
             config: SSH tunnel configuration
+
         """
         self.config = config
         self._tunnel = None
@@ -77,6 +78,7 @@ class SSHTunnel:
 
         Returns:
             int: Local port number
+
         """
         try:
             # Import here to avoid dependency issues if paramiko not installed
@@ -217,6 +219,7 @@ class AuthenticationManager:
 
         Returns:
             tuple: (success, message)
+
         """
         start_time = time.time()
 
@@ -313,6 +316,7 @@ class SecurityManager:
 
         Yields:
             SSHTunnel: Active SSH tunnel
+
         """
         if tunnel_id is None:
             tunnel_id = f"tunnel_{int(time.time() * DEFAULT_LARGE_LIMIT)}"
@@ -355,6 +359,7 @@ class SecurityManager:
 
         Returns:
             SSHTunnel: Active tunnel
+
         """
         tunnel = SSHTunnel(config)
         tunnel.start()
@@ -378,6 +383,7 @@ class SecurityManager:
 
         Args:
             tunnel: Tunnel to close
+
         """
         tunnel.stop()
 
@@ -432,6 +438,7 @@ class SecurityManager:
 
         Returns:
             dict: Certificate validation results
+
         """
         try:
             import ssl
@@ -475,6 +482,7 @@ class SecurityManager:
 
         Returns:
             list: Security events
+
         """
         return self._security_events[-limit:]
 
@@ -483,6 +491,7 @@ class SecurityManager:
 
         Returns:
             dict: Security summary
+
         """
         auth_stats = self.auth_manager.get_auth_stats()
 
@@ -499,6 +508,7 @@ class SecurityManager:
         Args:
             event_type: Type of security event
             details: Event details
+
         """
         event = {
             "event_type": event_type,
@@ -533,6 +543,7 @@ def create_ssh_tunnel(config: SSHTunnelConfig) -> SSHTunnel:
 
     Returns:
         SSHTunnel: Active tunnel
+
     """
     return get_security_manager().create_tunnel(config)
 
@@ -542,5 +553,6 @@ def close_ssh_tunnel(tunnel: SSHTunnel) -> None:
 
     Args:
         tunnel: Tunnel to close
+
     """
     get_security_manager().close_tunnel(tunnel)

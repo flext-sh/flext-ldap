@@ -84,6 +84,7 @@ class Query:
 
         Args:
             ldap_facade: LDAP facade instance for query execution
+
         """
         self._ldap = ldap_facade
 
@@ -106,6 +107,7 @@ class Query:
 
         Example:
             >>> users = await ldap.query().users().execute()
+
         """
         self._object_class = "person"
         return self
@@ -120,6 +122,7 @@ class Query:
 
         Example:
             >>> groups = await ldap.query().groups().execute()
+
         """
         self._object_class = "group"
         return self
@@ -134,6 +137,7 @@ class Query:
 
         Example:
             >>> computers = await ldap.query().computers().execute()
+
         """
         self._object_class = "computer"
         return self
@@ -151,6 +155,7 @@ class Query:
 
         Example:
             >>> printers = await ldap.query().objects("printQueue").execute()
+
         """
         self._object_class = object_class
         return self
@@ -172,6 +177,7 @@ class Query:
             ...     .users()
             ...     .in_location("ou=Engineering,dc=company,dc=com")
             ...     .execute())
+
         """
         self._base_dn = dn
         return self
@@ -192,6 +198,7 @@ class Query:
             ...     .users()
             ...     .in_ou("Engineering")
             ...     .execute())
+
         """
         self._base_dn = f"ou={ou_name},{self._ldap._config.base_dn}"
         return self
@@ -214,6 +221,7 @@ class Query:
             ...     .users()
             ...     .where("(lastLogon>=131234567890000000)")
             ...     .execute())
+
         """
         self._filters.append(filter_expr)
         return self
@@ -234,6 +242,7 @@ class Query:
             ...     .users()
             ...     .with_name("John*")
             ...     .execute())
+
         """
         self._filters.append(f"(cn={name})")
         return self
@@ -255,6 +264,7 @@ class Query:
             ...     .users()
             ...     .with_email("john.doe@company.com")
             ...     .first())
+
         """
         self._filters.append(f"(|(mail={email})(proxyAddresses=smtp:{email}))")
         return self
@@ -275,6 +285,7 @@ class Query:
             ...     .users()
             ...     .in_department("Engineering")
             ...     .execute())
+
         """
         self._filters.append(f"(department={department})")
         return self
@@ -296,6 +307,7 @@ class Query:
             ...     .users()
             ...     .with_title("*Manager*")
             ...     .execute())
+
         """
         self._filters.append(f"(title={title})")
         return self
@@ -314,6 +326,7 @@ class Query:
             ...     .users()
             ...     .enabled_only()
             ...     .execute())
+
         """
         self._filters.append("(!(userAccountControl:1.2.840.113556.1.4.803:=2))")
         return self
@@ -332,6 +345,7 @@ class Query:
             ...     .users()
             ...     .disabled_only()
             ...     .execute())
+
         """
         self._filters.append("(userAccountControl:1.2.840.113556.1.4.803:=2)")
         return self
@@ -352,6 +366,7 @@ class Query:
             ...     .users()
             ...     .member_of("Domain Admins")
             ...     .execute())
+
         """
         self._filters.append(f"(memberOf=cn={group},*)")
         return self
@@ -374,6 +389,7 @@ class Query:
             ...     .users()
             ...     .select("cn", "mail", "department")
             ...     .execute())
+
         """
         self._attributes.extend(attributes)
         return self
@@ -393,6 +409,7 @@ class Query:
             ...     .select_all()
             ...     .limit(10)
             ...     .execute())
+
         """
         self._attributes = ["*"]
         return self
@@ -416,6 +433,7 @@ class Query:
             ...     .users()
             ...     .select_basic()  # Gets cn, mail, displayName, department, title
             ...     .execute())
+
         """
         if self._object_class == "person":
             self._attributes = ["cn", "mail", "displayName", "department", "title"]
@@ -443,6 +461,7 @@ class Query:
             ...     .users()
             ...     .limit(50)
             ...     .execute())
+
         """
         self._limit = count
         return self
@@ -464,6 +483,7 @@ class Query:
             ...     .users()
             ...     .sort_by("displayName")
             ...     .execute())
+
         """
         self._sort_by = attribute
         return self
@@ -495,6 +515,7 @@ class Query:
             ...     .users()
             ...     .in_department("IT")
             ...     .execute())
+
         """
         start_time = time.time()
 
@@ -578,6 +599,7 @@ class Query:
             ...     .first())
             >>> if user.success and user.data:
             ...     print(f"Found: {user.data.get_attribute('cn')}")
+
         """
         from ldap_core_shared.api.results import Result
 
@@ -611,6 +633,7 @@ class Query:
             ...     .count())
             >>> if user_count.success:
             ...     print(f"Found {user_count.data} engineers")
+
         """
         from ldap_core_shared.api.results import Result
 

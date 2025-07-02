@@ -89,6 +89,7 @@ class LDIFAnalyzer:
 
         Returns:
             Operation result with analysis statistics
+
         """
         try:
             from flext_ldap.ldif.processor import LDIFProcessor
@@ -129,6 +130,7 @@ class LDIFAnalyzer:
 
         Returns:
             Analysis results with comprehensive statistics
+
         """
         if not entries:
             return LDIFAnalysisResult()
@@ -207,6 +209,7 @@ class LDIFAnalyzer:
 
         Returns:
             Formatted analysis report
+
         """
         report = []
         report.append("LDIF Analysis Report")
@@ -300,6 +303,7 @@ class LDIFAnalyzer:
 
         Returns:
             Quality score from 0.0 to DEFAULT_MAX_ITEMS
+
         """
         if not entries:
             return 0.0

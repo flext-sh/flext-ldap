@@ -37,6 +37,7 @@ References:
     - RFC 4516: LDAP Uniform Resource Locator
     - RFC 3986: URI Generic Syntax
     - URL encoding and component handling standards
+
 """
 
 from __future__ import annotations
@@ -144,6 +145,7 @@ class LDAPUrl:
         >>>
         >>> # Generate URL string
         >>> new_url = str(url)
+
     """
 
     def __init__(self, url: str | None = None) -> None:
@@ -151,6 +153,7 @@ class LDAPUrl:
 
         Args:
             url: LDAP URL string to parse (optional)
+
         """
         self._components = URLComponents(scheme=LDAPUrlScheme.LDAP)
 
@@ -162,6 +165,7 @@ class LDAPUrl:
 
         Args:
             url: LDAP URL string to parse
+
         """
         # Basic URL parsing
         parsed = urlparse(url)
@@ -198,6 +202,7 @@ class LDAPUrl:
 
         Args:
             path: URL path containing LDAP components
+
         """
         # Remove leading slash
         path = path.removeprefix("/")
@@ -243,6 +248,7 @@ class LDAPUrl:
 
         Args:
             query: URL query string
+
         """
         # Simple query parameter parsing
         for param in query.split("&"):
@@ -257,6 +263,7 @@ class LDAPUrl:
 
         Returns:
             LDAP URL string
+
         """
         # Build basic URL components
         scheme = self._components.scheme.value
@@ -329,6 +336,7 @@ class LDAPUrl:
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -361,6 +369,7 @@ class LDAPUrl:
 
         Returns:
             True if DN format appears valid
+
         """
         # Very basic DN validation - just check for typical patterns
         if not dn:
@@ -377,6 +386,7 @@ class LDAPUrl:
 
         Returns:
             True if filter format appears valid
+
         """
         if not filter_str:
             return True  # Empty filter is valid
@@ -444,6 +454,7 @@ class LDAPUrl:
 
         Returns:
             True if attribute was removed
+
         """
         try:
             self._components.attributes.remove(attribute)
@@ -485,6 +496,7 @@ class LDAPUrl:
 
         Returns:
             True if extension was removed
+
         """
         return self._components.extensions.pop(name, None) is not None
 
@@ -498,6 +510,7 @@ class LDAPUrl:
 
         Returns:
             Dictionary with connection parameters
+
         """
         params = {
             "scheme": self._components.scheme.value,
@@ -520,6 +533,7 @@ class LDAPUrl:
 
         Returns:
             Dictionary with search parameters
+
         """
         params: dict[str, Any] = {}
 
@@ -582,6 +596,7 @@ def parse_ldap_url(url: str) -> LDAPUrl:
 
     Returns:
         Parsed LDAPUrl object
+
     """
     return LDAPUrl(url)
 
@@ -610,6 +625,7 @@ def build_ldap_url(
 
     Returns:
         Constructed LDAPUrl object
+
     """
     url = LDAPUrl()
 
@@ -647,6 +663,7 @@ def validate_ldap_url(url: str) -> list[str]:
 
     Returns:
         List of validation errors
+
     """
     try:
         ldap_url = LDAPUrl(url)
@@ -663,6 +680,7 @@ def normalize_ldap_url(url: str) -> str:
 
     Returns:
         Normalized LDAP URL string
+
     """
     try:
         ldap_url = LDAPUrl(url)
@@ -679,6 +697,7 @@ def extract_connection_info(url: str) -> dict[str, Any]:
 
     Returns:
         Dictionary with connection information
+
     """
     try:
         ldap_url = LDAPUrl(url)
@@ -695,6 +714,7 @@ def extract_search_info(url: str) -> dict[str, Any]:
 
     Returns:
         Dictionary with search information
+
     """
     try:
         ldap_url = LDAPUrl(url)

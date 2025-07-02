@@ -39,6 +39,7 @@ class DNHelper:
 
         Returns:
             List of RDN dictionaries with 'attribute' and 'value' keys
+
         """
         if not dn:
             return []
@@ -67,6 +68,7 @@ class DNHelper:
 
         Returns:
             Formatted Distinguished Name
+
         """
         dn_parts = [
             f"{rdn['attribute']}={rdn['value']}"
@@ -85,6 +87,7 @@ class DNHelper:
 
         Returns:
             Parent DN or empty string if no parent
+
         """
         if not dn:
             return ""
@@ -104,6 +107,7 @@ class DNHelper:
 
         Returns:
             RDN component
+
         """
         if not dn:
             return ""
@@ -123,6 +127,7 @@ class DNHelper:
 
         Returns:
             Escaped value
+
         """
         # Delegate to enterprise DN escaping
         from flext_ldapn import escape_dn_value
@@ -138,6 +143,7 @@ class DNHelper:
 
         Returns:
             Normalized DN
+
         """
         if not dn:
             return ""
@@ -160,6 +166,7 @@ class FilterHelper:
 
         Returns:
             AND filter string
+
         """
         if not filters:
             return ""
@@ -177,6 +184,7 @@ class FilterHelper:
 
         Returns:
             OR filter string
+
         """
         if not filters:
             return ""
@@ -194,6 +202,7 @@ class FilterHelper:
 
         Returns:
             NOT filter string
+
         """
         return f"(!{filter_expr})"
 
@@ -206,6 +215,7 @@ class FilterHelper:
 
         Returns:
             Presence filter string
+
         """
         return f"({attribute}=*)"
 
@@ -219,6 +229,7 @@ class FilterHelper:
 
         Returns:
             Equality filter string
+
         """
         escaped_value = FilterHelper.escape_filter_value(value)
         return f"({attribute}={escaped_value})"
@@ -240,6 +251,7 @@ class FilterHelper:
 
         Returns:
             Substring filter string
+
         """
         any_parts = any_parts or []
 
@@ -270,6 +282,7 @@ class FilterHelper:
 
         Returns:
             Greater-than-or-equal filter string
+
         """
         escaped_value = FilterHelper.escape_filter_value(value)
         return f"({attribute}>={escaped_value})"
@@ -284,6 +297,7 @@ class FilterHelper:
 
         Returns:
             Less-than-or-equal filter string
+
         """
         escaped_value = FilterHelper.escape_filter_value(value)
         return f"({attribute}<={escaped_value})"
@@ -297,6 +311,7 @@ class FilterHelper:
 
         Returns:
             Escaped value
+
         """
         # Characters that need escaping: ( ) \ * and NUL
         escape_map = {
@@ -325,6 +340,7 @@ class AttributeHelper:
 
         Returns:
             True if attribute is typically binary
+
         """
         binary_attributes = {
             "userCertificate",
@@ -356,6 +372,7 @@ class AttributeHelper:
 
         Returns:
             Base64 encoded string
+
         """
         return base64.b64encode(value).decode("ascii")
 
@@ -368,6 +385,7 @@ class AttributeHelper:
 
         Returns:
             Decoded binary value
+
         """
         return base64.b64decode(encoded_value)
 
@@ -380,6 +398,7 @@ class AttributeHelper:
 
         Returns:
             LDAP timestamp string (YYYYMMDDHHMMSSZ)
+
         """
         return timestamp.strftime("%Y%m%d%H%M%SZ")
 
@@ -392,6 +411,7 @@ class AttributeHelper:
 
         Returns:
             Datetime object
+
         """
         # Handle various LDAP timestamp formats
         formats = [
@@ -418,6 +438,7 @@ class AttributeHelper:
 
         Returns:
             Normalized attribute name (lowercase)
+
         """
         return attribute_name.lower().strip()
 
@@ -448,6 +469,7 @@ class LDAPUrlHelper:
 
         Returns:
             LDAP URL string
+
         """
         scheme = "ldaps" if use_ssl else "ldap"
 
@@ -489,6 +511,7 @@ class LDAPUrlHelper:
 
         Returns:
             Dictionary with URL components
+
         """
         from urllib.parse import unquote, urlparse
 
@@ -535,6 +558,7 @@ class ValidationHelper:
 
         Returns:
             True if DN format is valid
+
         """
         if not dn:
             return False
@@ -556,6 +580,7 @@ class ValidationHelper:
 
         Returns:
             True if attribute name is valid
+
         """
         if not name:
             return False
@@ -572,6 +597,7 @@ class ValidationHelper:
 
         Returns:
             True if object class name is valid
+
         """
         return ValidationHelper.is_valid_attribute_name(name)
 
@@ -584,6 +610,7 @@ class ValidationHelper:
 
         Returns:
             True if OID format is valid
+
         """
         if not oid:
             return False
@@ -603,6 +630,7 @@ class ConversionHelper:
 
         Returns:
             Boolean value
+
         """
         true_values = {"true", "yes", "1", "on", "enabled"}
         return value.lower().strip() in true_values
@@ -616,6 +644,7 @@ class ConversionHelper:
 
         Returns:
             String representation
+
         """
         return "TRUE" if value else "FALSE"
 
@@ -628,6 +657,7 @@ class ConversionHelper:
 
         Returns:
             String SID (S-1-5-...)
+
         """
         import struct
 
@@ -659,6 +689,7 @@ class ConversionHelper:
 
         Returns:
             String GUID ({xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx})
+
         """
         import struct
 

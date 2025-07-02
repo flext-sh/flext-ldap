@@ -34,6 +34,7 @@ References:
     - perl-ldap: lib/Net/LDAP.pod (referral handling, lines 456-478)
     - RFC 4511: LDAP Protocol Specification (referral processing)
     - Enterprise referral handling patterns
+
 """
 
 from typing import TYPE_CHECKING

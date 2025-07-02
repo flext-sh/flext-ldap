@@ -18,6 +18,7 @@ References:
 - /home/marlonsc/CLAUDE.md → Universal principles (AUTOMATED DOCUMENTATION UPDATE PROTOCOL)
 - ../CLAUDE.md → PyAuto workspace patterns
 - ./internal.invalid.md → Project-specific issues
+
 """
 
 import json

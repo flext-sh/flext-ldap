@@ -425,6 +425,7 @@ def migrate_connection_result_to_unified(
 
     Returns:
         Unified Result[bool] with connection status
+
     """
     warnings.warn(
         "LDAPConnectionResult is deprecated. Use api.Result[bool] with LDAP.test_connection() instead.",
@@ -466,6 +467,7 @@ def migrate_search_result_to_unified(
 
     Returns:
         Unified Result with search entries
+
     """
     warnings.warn(
         "LDAPSearchResult is deprecated. Use api.Result[list[LDAPEntry]] with LDAP.query().execute() instead.",
@@ -506,6 +508,7 @@ def migrate_operation_result_to_unified(
 
     Returns:
         Unified Result with operation data
+
     """
     warnings.warn(
         "LDAPOperationResult is deprecated. Use api.Result[T] with unified LDAP operations instead.",
@@ -549,6 +552,7 @@ def migrate_bulk_result_to_unified(
 
     Returns:
         Unified Result with bulk operation summary
+
     """
     warnings.warn(
         "LDAPBulkResult is deprecated. Use api.Result[dict] for bulk operation reporting instead.",
@@ -599,6 +603,7 @@ def auto_migrate_to_unified(legacy_result: Any) -> Result[Any]:
 
     Raises:
         ValueError: If result type is not recognized
+
     """
     if isinstance(legacy_result, LDAPConnectionResult):
         return migrate_connection_result_to_unified(legacy_result)

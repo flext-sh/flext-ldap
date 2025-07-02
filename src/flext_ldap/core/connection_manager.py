@@ -47,7 +47,7 @@ class ConnectionInfo:
         bind_password: str = "",
         use_tls: bool = False,
         base_dn: str = "",
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """Initialize connection info - creates ConnectionConfig internally.
 
@@ -60,6 +60,7 @@ class ConnectionInfo:
             use_tls: Whether to use TLS/SSL
             base_dn: Base DN (stored but not used by enterprise config)
             **kwargs: Additional arguments passed to ConnectionConfig
+
         """
         # Handle backward compatibility: host parameter is alias for server
         actual_server = server or host
@@ -207,6 +208,7 @@ class LDAPConnectionManager:
 
         Args:
             connection_info: Connection configuration (converted to enterprise format)
+
         """
         self.connection_info = connection_info
 
@@ -257,7 +259,7 @@ class LDAPConnectionManager:
         """Get connection status - delegates to enterprise manager."""
         return self._enterprise_manager.get_connection_status()
 
-    def execute_with_retry(self, operation_func, *args, **kwargs):
+    def execute_with_retry(self, operation_func, *args, **kwargs: Any) -> Any:
         """Execute operation with retry - delegates to enterprise manager."""
         return self._enterprise_manager.execute_with_retry(
             operation_func,
@@ -281,7 +283,7 @@ class LDAPConnectionManager:
 def create_connection_manager(
     server: str,
     port: int = 389,
-    **kwargs,
+    **kwargs: Any,
 ) -> LDAPConnectionManager:
     """Create connection manager - convenience function with pure delegation."""
     connection_info = ConnectionInfo(server=server, port=port, **kwargs)

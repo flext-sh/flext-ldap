@@ -7,13 +7,30 @@ from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Protocol
+from uuid import uuid4
+
+import ldap3
+from flext_ldapants import (
+    DEFAULT_LDAP_TIMEOUT,
+    DEFAULT_MAX_ITEMS,
+    DEFAULT_TIMEOUT_SECONDS,
+    LDAP_FAILURE_RATE_THRESHOLD,
+    PERCENTAGE_CALCULATION_BASE,
+)
+from loguru import logger
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 try:
     from typing import Never
 except ImportError:
     # Fallback for older Python versions
     Never = type("Never", (), {})
-from uuid import uuid4
+
+from flext_ldap.domain.results import (
+    BulkOperationResult,
+    LDAPOperationResult,
+    OperationSummary,
+)
 
 # Constants for magic values
 
@@ -33,23 +50,6 @@ class LDAPSearchParams:
     size_limit: int = 0
     time_limit: int = 0
 
-
-import ldap3
-from flext_ldapants import (
-    DEFAULT_LDAP_TIMEOUT,
-    DEFAULT_MAX_ITEMS,
-    DEFAULT_TIMEOUT_SECONDS,
-    LDAP_FAILURE_RATE_THRESHOLD,
-    PERCENTAGE_CALCULATION_BASE,
-)
-from loguru import logger
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
-from flext_ldap.domain.results import (
-    BulkOperationResult,
-    LDAPOperationResult,
-    OperationSummary,
-)
 
 if TYPE_CHECKING:
     import asyncio
@@ -477,6 +477,7 @@ class EnterpriseTransaction:
 
         Raises:
             LDAPTransactionError: If transaction setup fails
+
         """
         self._connection = connection
         self._context = context
@@ -506,6 +507,7 @@ class EnterpriseTransaction:
 
         Raises:
             LDAPOperationError: If backup creation fails
+
         """
         try:
             # Search for existing entry
@@ -583,6 +585,7 @@ class EnterpriseTransaction:
         Raises:
             LDAPOperationError: If add operation fails
             LDAPTransactionError: If transaction is invalid
+
         """
         self._validate_transaction_state()
 
@@ -694,6 +697,7 @@ class EnterpriseTransaction:
         Raises:
             LDAPOperationError: If modify operation fails
             LDAPTransactionError: If transaction is invalid
+
         """
         self._validate_transaction_state()
 
@@ -801,6 +805,7 @@ class EnterpriseTransaction:
         Raises:
             LDAPOperationError: If delete operation fails
             LDAPTransactionError: If transaction is invalid
+
         """
         self._validate_transaction_state()
 
@@ -884,6 +889,7 @@ class EnterpriseTransaction:
 
         Returns:
             Complete summary with statistics and performance metrics
+
         """
         total_ops = len(self._context.operations_log)
         successful_ops = sum(1 for op in self._context.operations_log if op["success"])
@@ -1063,6 +1069,7 @@ class LDAPOperations:
 
         Raises:
             ValueError: If connection is invalid
+
         """
         if not connection:
             msg = "Connection is required"
@@ -1090,6 +1097,7 @@ class LDAPOperations:
 
         Raises:
             LDAPTransactionError: If transaction creation fails
+
         """
         if self._current_transaction:
             msg = "Nested transactions not supported"
@@ -1145,6 +1153,7 @@ class LDAPOperations:
         Raises:
             LDAPBulkOperationError: If bulk operation fails
             ValueError: If entries format is invalid
+
         """
         if not entries:
             msg = "Entries list cannot be empty"
@@ -1313,6 +1322,7 @@ class LDAPOperations:
         Raises:
             LDAPOperationError: If operation fails
             ValueError: If request is invalid
+
         """
         with self.transaction(f"{request.operation_type}_{int(time.time())}") as tx:
             if request.operation_type == "add":
@@ -1357,6 +1367,7 @@ def create_ldap_operations(
 
     Raises:
         ValueError: If connection is invalid
+
     """
     return LDAPOperations(connection)
 
@@ -1373,6 +1384,7 @@ def create_transaction_context(
 
     Returns:
         Configured transaction context
+
     """
     return TransactionContext(
         transaction_id=transaction_id or str(uuid4()),

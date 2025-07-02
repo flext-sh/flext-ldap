@@ -15,16 +15,6 @@ from pydantic import (
     field_validator,
 )
 
-# Constants for magic values
-BYTES_PER_KB = 1024
-DEFAULT_BUFFER_SIZE = 4096
-
-LDAPS_GC_PORT = 3269
-
-LDAP_GC_PORT = 3268
-SECONDS_PER_HOUR = 3600
-SECONDS_PER_MINUTE = 60
-
 from flext_ldap.utils.constants import (
     DEFAULT_LDAP_PORT,
     DEFAULT_LDAP_SIZE_LIMIT,
@@ -35,6 +25,14 @@ from flext_ldap.utils.constants import (
     LDAPS_DEFAULT_PORT,
     SENSITIVE_DATA_MASK,
 )
+
+# Constants for magic values
+BYTES_PER_KB = 1024
+DEFAULT_BUFFER_SIZE = 4096
+LDAPS_GC_PORT = 3269
+LDAP_GC_PORT = 3268
+SECONDS_PER_HOUR = 3600
+SECONDS_PER_MINUTE = 60
 
 
 class LDAPSearchScope(StrEnum):
@@ -93,6 +91,7 @@ class LDAPConnectionInfo(BaseModel):
         ...     base_dn="dc=example,dc=com",
         ...     timeout=SECONDS_PER_MINUTE,
         ... )
+
     """
 
     model_config = ConfigDict(
@@ -182,6 +181,7 @@ class LDAPConnectionInfo(BaseModel):
 
         Raises:
             ValueError: If hostname is invalid or contains forbidden characters
+
         """
         if not value or value.isspace():
             msg = "Host cannot be empty or whitespace"
@@ -214,6 +214,7 @@ class LDAPConnectionInfo(BaseModel):
 
         Raises:
             ValueError: If port configuration is inconsistent with SSL settings
+
         """
         # Check if this is a known secure port
         if value in cls._SECURE_PORTS:
@@ -242,6 +243,7 @@ class LDAPConnectionInfo(BaseModel):
 
         Raises:
             ValueError: If DN format is invalid
+
         """
         if not value or value.isspace():
             msg = "DN cannot be empty or whitespace"
@@ -294,6 +296,7 @@ class LDAPConnectionInfo(BaseModel):
 
         Returns:
             ldap3 authentication constant for the configured method
+
         """
         mapping = {
             LDAPAuthenticationMethod.SIMPLE: ldap3.SIMPLE,
@@ -307,6 +310,7 @@ class LDAPConnectionInfo(BaseModel):
 
         Returns:
             True if connection uses SSL/TLS or secure port
+
         """
         return self.use_ssl or self.port in self._SECURE_PORTS
 
@@ -318,6 +322,7 @@ class LDAPConnectionInfo(BaseModel):
 
         Returns:
             LDAP URL string
+
         """
         protocol = "ldaps" if self.use_ssl else "ldap"
         url = f"{protocol}://{self.host}:{self.port}"
@@ -332,6 +337,7 @@ class LDAPConnectionInfo(BaseModel):
 
         Returns:
             Configuration dictionary with password masked
+
         """
         data = self.model_dump()
         data["bind_password"] = SENSITIVE_DATA_MASK
@@ -359,6 +365,7 @@ class LDAPSearchConfig(BaseModel):
         ...     size_limit=DEFAULT_MAX_ITEMS,
         ...     time_limit=DEFAULT_TIMEOUT_SECONDS,
         ... )
+
     """
 
     model_config = ConfigDict(
@@ -419,6 +426,7 @@ class LDAPSearchConfig(BaseModel):
 
         Raises:
             ValueError: If filter format is invalid
+
         """
         value = value.strip()
 
@@ -453,6 +461,7 @@ class LDAPSearchConfig(BaseModel):
 
         Returns:
             ldap3 scope constant for the configured search scope
+
         """
         mapping = {
             "BASE": ldap3.BASE,
@@ -533,6 +542,7 @@ class LDAPConnectionOptions(BaseModel):
 
         Raises:
             ValueError: If SSH configuration is inconsistent
+
         """
         enable_ssh = info.data.get("enable_ssh_tunnel", False) if info.data else False
 

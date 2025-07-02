@@ -1,5 +1,16 @@
 from __future__ import annotations
 
+from enum import Enum
+
+from flext_ldapn1_encoder import ASN1Decoder, ASN1Encoder, ASN1Tags
+from flext_ldapse import (
+    ControlDecodingError,
+    ControlEncodingError,
+    ControlOIDs,
+    LDAPControl,
+)
+from pydantic import BaseModel, Field, validator
+
 # Constants for magic values
 MIN_TUPLE_SIZE = 2
 MAX_TUPLE_SIZE = 3
@@ -51,17 +62,6 @@ References:
 
 # Constants for magic values
 SECONDS_PER_MINUTE = 60
-
-from enum import Enum
-
-from flext_ldapn1_encoder import ASN1Decoder, ASN1Encoder, ASN1Tags
-from flext_ldapse import (
-    ControlDecodingError,
-    ControlEncodingError,
-    ControlOIDs,
-    LDAPControl,
-)
-from pydantic import BaseModel, Field, validator
 
 
 class SortOrder(Enum):
@@ -130,6 +130,7 @@ class SortKey(BaseModel):
         The matching_rule specifies how attribute values should be compared.
         Common matching rules include caseIgnoreOrderingMatch for strings
         and integerOrderingMatch for integers.
+
     """
 
     attribute: str = Field(description="LDAP attribute name to sort by", min_length=1)
@@ -218,6 +219,7 @@ class ServerSideSortControl(LDAPControl):
     Note:
         The sort keys are applied in order - the first key is the primary sort,
         the second key breaks ties in the first, etc.
+
     """
 
     control_type = ControlOIDs.SERVER_SIDE_SORT
@@ -256,6 +258,7 @@ class ServerSideSortControl(LDAPControl):
 
         Raises:
             ControlEncodingError: If encoding fails
+
         """
         try:
             sort_key_sequences = []
@@ -308,6 +311,7 @@ class ServerSideSortControl(LDAPControl):
 
         Raises:
             ControlDecodingError: If decoding fails
+
         """
         if not control_value:
             msg = "Server side sort control requires a value"
@@ -398,6 +402,7 @@ class ServerSideSortControl(LDAPControl):
 
         Returns:
             ServerSideSortControl for single attribute
+
         """
         sort_key = SortKey(
             attribute=attribute,
@@ -428,6 +433,7 @@ class ServerSideSortControl(LDAPControl):
             ...     ("salary", "descending"),  # descending
             ...     SortKey(attribute="cn", order="ascending"),
             ... )
+
         """
         sort_keys = []
 
@@ -493,6 +499,7 @@ class ServerSideSortResponse(LDAPControl):
     Note:
         A successful sort has sort_result = SortResult.SUCCESS.
         Any other value indicates an error in processing the sort request.
+
     """
 
     control_type = ControlOIDs.SERVER_SIDE_SORT_RESPONSE
@@ -512,6 +519,7 @@ class ServerSideSortResponse(LDAPControl):
 
         Raises:
             ControlEncodingError: If encoding fails
+
         """
         try:
             # Encode result as ENUMERATED
@@ -541,6 +549,7 @@ class ServerSideSortResponse(LDAPControl):
 
         Raises:
             ControlDecodingError: If decoding fails
+
         """
         if not control_value:
             msg = "Sort response control requires a value"
@@ -594,6 +603,7 @@ def sort_by(attribute: str, order: str = "ascending") -> ServerSideSortControl:
 
     Returns:
         ServerSideSortControl for single attribute
+
     """
     return ServerSideSortControl.single_sort(attribute, order)
 
@@ -606,6 +616,7 @@ def sort_ascending(*attributes: str) -> ServerSideSortControl:
 
     Returns:
         ServerSideSortControl for ascending multi-attribute sort
+
     """
     return ServerSideSortControl.multi_sort(*attributes)
 
@@ -618,6 +629,7 @@ def sort_descending(*attributes: str) -> ServerSideSortControl:
 
     Returns:
         ServerSideSortControl for descending multi-attribute sort
+
     """
     specs = [(attr, "descending") for attr in attributes]
     return ServerSideSortControl.multi_sort(*specs)

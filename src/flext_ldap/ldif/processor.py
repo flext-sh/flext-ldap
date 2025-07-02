@@ -139,6 +139,7 @@ class LDIFProcessor:
 
         Args:
             config: Processing configuration (uses defaults if None)
+
         """
         self.config = config or LDIFProcessingConfig()
         self.performance_monitor = PerformanceMonitor("ldif_processor")
@@ -164,6 +165,7 @@ class LDIFProcessor:
 
         Returns:
             Operation result with parsed entries or error details
+
         """
         file_path = Path(file_path)
 
@@ -190,6 +192,7 @@ class LDIFProcessor:
 
         Returns:
             Operation result with parsed entries
+
         """
         with self.performance_monitor.measure_operation("ldif_parse_string") as ctx:
             try:
@@ -231,6 +234,7 @@ class LDIFProcessor:
 
         Yields:
             Individual LDIF entries
+
         """
         file_path = Path(file_path)
 
@@ -264,6 +268,7 @@ class LDIFProcessor:
 
         Yields:
             Chunks of LDIF entries
+
         """
         chunk = []
 
@@ -283,6 +288,7 @@ class LDIFProcessor:
 
         Returns:
             Performance statistics and metrics
+
         """
         metrics = self.performance_monitor.get_metrics()
 
@@ -379,6 +385,7 @@ class LDIFProcessor:
 
         Returns:
             Validated LDIF entry or None if invalid
+
         """
         try:
             # Validate DN format if configured
@@ -441,6 +448,7 @@ class LDIFProcessor:
 
         Returns:
             True if DN format is valid
+
         """
         if not dn or not isinstance(dn, str):
             return False
@@ -456,6 +464,7 @@ class LDIFProcessor:
 
         Returns:
             Performance grade (A+, A, B, C)
+
         """
         if entries_per_second >= TARGET_OPERATIONS_PER_SECOND:
             return "A+"
@@ -486,6 +495,7 @@ class LDIFProcessor:
         Raises:
             FileNotFoundError: If file does not exist
             PermissionError: If file is not readable
+
         """
         if not file_path.exists():
             file_not_found_msg = f"File not found: {file_path}"
@@ -516,6 +526,7 @@ class LDIFProcessor:
 
         Args:
             dn: Invalid DN
+
         """
         invalid_dn_msg = f"Invalid DN format: {dn}"
         raise ValidationError(invalid_dn_msg)
@@ -535,6 +546,7 @@ class LDIFProcessor:
 
         Returns:
             Success operation result
+
         """
         metadata = {"stats": self._stats.copy()}
         metadata.update(additional_metadata)
@@ -559,6 +571,7 @@ class LDIFProcessor:
 
         Returns:
             Error operation result
+
         """
         file_not_found_msg = f"File not found: {file_path}"
         logger.error("LDIF file not found", extra={"file_path": str(file_path)})
@@ -585,6 +598,7 @@ class LDIFProcessor:
 
         Returns:
             Error operation result
+
         """
         permission_error_msg = f"Permission denied: {file_path}"
         logger.error(
@@ -616,6 +630,7 @@ class LDIFProcessor:
 
         Returns:
             Error operation result
+
         """
         validation_error_msg = f"Validation failed: {validation_error!s}"
         logger.error(
@@ -647,6 +662,7 @@ class LDIFProcessor:
 
         Returns:
             Error operation result
+
         """
         parse_error_msg = f"Parse failed: {parse_error!s}"
         logger.error("LDIF parse error", extra={"file_path": str(file_path)})
@@ -673,6 +689,7 @@ class LDIFProcessor:
 
         Returns:
             Error operation result
+
         """
         empty_content_msg = "LDIF content is empty"
         ctx["success"] = False
@@ -703,6 +720,7 @@ class LDIFProcessor:
 
         Returns:
             Error operation result
+
         """
         validation_error_msg = f"Validation failed: {validation_error!s}"
         logger.error(
@@ -737,6 +755,7 @@ class LDIFProcessor:
 
         Returns:
             Error operation result
+
         """
         parse_error_msg = f"Parse failed: {parse_error!s}"
         logger.error("LDIF string parse error")
@@ -763,6 +782,7 @@ class LDIFProcessor:
         Args:
             dn: Distinguished Name of invalid entry
             validation_error: Validation error
+
         """
         logger.warning(
             "Skipping invalid entry due to validation error",
@@ -787,6 +807,7 @@ class LDIFProcessor:
         Args:
             dn: Distinguished Name of invalid entry
             validation_error: Validation error
+
         """
         logger.warning(
             "Skipping invalid entry due to validation error",
@@ -811,6 +832,7 @@ class LDIFProcessor:
 
         Returns:
             Success operation result
+
         """
         # Validate file existence and accessibility
         self._validate_file_access(file_path)

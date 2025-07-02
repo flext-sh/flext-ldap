@@ -57,7 +57,7 @@ import yaml  # type: ignore[import-untyped]
 # Removed circular import - Config is defined in this module
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
 
-from flext_ldap.core.exceptions import ConfigurationValidationError
+from flext_ldap.core.exceptions import ConfigurationValidationError, ErrorSeverity
 
 
 class Environment(Enum):
@@ -186,6 +186,7 @@ class DatabaseConfig(BaseConfig):
 
         Returns:
             Database connection URL
+
         """
         password_part = ""
         if include_password and self.password.get_secret_value():
@@ -651,6 +652,7 @@ class ApplicationConfig(BaseConfig):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -710,6 +712,7 @@ class ConfigManager:
 
         Raises:
             ConfigurationValidationError: If configuration is invalid
+
         """
         try:
             # Determine environment
@@ -776,6 +779,7 @@ class ConfigManager:
 
         Raises:
             ConfigurationValidationError: If no configuration loaded
+
         """
         if cls._instance is None:
             raise ConfigurationValidationError(
@@ -793,6 +797,7 @@ class ConfigManager:
 
         Returns:
             Configuration data
+
         """
         try:
             with config_file.open("r", encoding="utf-8") as f:
@@ -814,6 +819,7 @@ class ConfigManager:
 
         Returns:
             Configuration data from environment
+
         """
         config: dict[str, Any] = {}
         prefix = "LDAP_CORE_"
@@ -845,6 +851,7 @@ class ConfigManager:
 
         Returns:
             Converted value
+
         """
         # Boolean conversion
         if value.lower() in {"true", "yes", "1"}:
@@ -873,6 +880,7 @@ class ConfigManager:
 
         Args:
             output_file: Output file path
+
         """
         template_config = ApplicationConfig()
 

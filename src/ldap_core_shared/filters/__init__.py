@@ -33,6 +33,7 @@ References:
     - perl-ldap: lib/Net/LDAP/Filter.pm
     - RFC 4515: Lightweight Directory Access Protocol (LDAP): String Representation of Search Filters
     - RFC 4511: Lightweight Directory Access Protocol (LDAP): The Protocol
+
 """
 
 from typing import TYPE_CHECKING

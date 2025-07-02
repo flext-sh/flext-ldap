@@ -30,6 +30,7 @@ References:
     - perl-ldap: lib/Net/LDAP/Schema.pm
     - RFC 4512: LDAP Directory Information Models
     - RFC 4517: LDAP Syntaxes and Matching Rules
+
 """
 
 from __future__ import annotations
@@ -420,6 +421,7 @@ class SchemaService:
         >>> validation = service.validate_entry("person", {"cn": "John", "sn": "Doe"})
         >>> if validation.is_valid:
         ...     print("Entry is valid")
+
     """
 
     def __init__(self, connection: Any) -> None:
@@ -427,6 +429,7 @@ class SchemaService:
 
         Args:
             connection: Active LDAP connection
+
         """
         self._connection = connection
         self._cached_schema: LDAPSchema | None = None
@@ -443,6 +446,7 @@ class SchemaService:
 
         Raises:
             NotImplementedError: Schema loading not yet implemented
+
         """
         if self._cached_schema and not force_refresh:
             return self._cached_schema
@@ -468,6 +472,7 @@ class SchemaService:
 
         Returns:
             Validation result with errors and warnings
+
         """
         result = SchemaValidationResult(is_valid=True)
 
@@ -512,6 +517,7 @@ class SchemaService:
 
         Returns:
             Validation result
+
         """
         result = SchemaValidationResult(is_valid=True)
 
@@ -547,6 +553,7 @@ class SchemaService:
 
         Returns:
             List of required attribute names
+
         """
         if not self._cached_schema:
             return []
@@ -562,6 +569,7 @@ class SchemaService:
 
         Returns:
             List of allowed attribute names (must + may)
+
         """
         if not self._cached_schema:
             return []
@@ -578,6 +586,7 @@ class SchemaService:
 
         Returns:
             True if attribute is required
+
         """
         if not self._cached_schema:
             return False
@@ -594,6 +603,7 @@ class SchemaService:
 
         Returns:
             True if attribute is allowed
+
         """
         if not self._cached_schema:
             return False
@@ -609,6 +619,7 @@ class SchemaService:
 
         Returns:
             Syntax OID or None if attribute not found
+
         """
         if not self._cached_schema:
             return None
@@ -624,6 +635,7 @@ class SchemaService:
 
         Returns:
             True if attribute is binary
+
         """
         if not self._cached_schema:
             return False
@@ -639,6 +651,7 @@ class SchemaService:
 
         Returns:
             True if attribute is single-valued
+
         """
         if not self._cached_schema:
             return False
@@ -654,6 +667,7 @@ class SchemaService:
 
         Returns:
             List of object classes in inheritance order
+
         """
         if not self._cached_schema:
             return []
@@ -689,6 +703,7 @@ class SchemaService:
 
         Returns:
             Parsed LDAP schema
+
         """
         schema = LDAPSchema()
 
@@ -768,6 +783,7 @@ async def load_schema(connection: Any) -> LDAPSchema:
 
     Returns:
         Complete LDAP schema
+
     """
     service = SchemaService(connection)
     return await service.load_schema()
@@ -787,6 +803,7 @@ def validate_entry_schema(
 
     Returns:
         Validation result
+
     """
     # Create temporary service with pre-loaded schema
     service = SchemaService(None)
@@ -803,6 +820,7 @@ def get_object_class_info(schema: LDAPSchema, name: str) -> ObjectClassInfo | No
 
     Returns:
         Object class information or None
+
     """
     return schema.get_object_class(name)
 
@@ -816,6 +834,7 @@ def get_attribute_info(schema: LDAPSchema, name: str) -> AttributeInfo | None:
 
     Returns:
         Attribute information or None
+
     """
     return schema.get_attribute(name)
 

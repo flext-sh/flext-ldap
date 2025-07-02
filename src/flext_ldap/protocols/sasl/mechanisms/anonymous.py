@@ -31,6 +31,7 @@ References:
     - RFC 4505: Anonymous Simple Authentication and Security Layer (SASL) Mechanism
     - RFC 4422: Simple Authentication and Security Layer (SASL)
     - LDAP Protocol: Anonymous bind operations
+
 """
 
 from __future__ import annotations
@@ -80,6 +81,7 @@ class AnonymousMechanism(SASLMechanism):
         >>> # With trace information
         >>> mechanism = AnonymousMechanism(callback_handler, trace_info="app@host")
         >>> response = mechanism.get_initial_response()  # b'app@host'
+
     """
 
     MECHANISM_NAME: ClassVar[str] = "ANONYMOUS"
@@ -110,6 +112,7 @@ class AnonymousMechanism(SASLMechanism):
             callback_handler: Callback handler (not used for credentials)
             context: SASL context (created if not provided)
             trace_info: Optional trace information for auditing
+
         """
         super().__init__(callback_handler, context)
 
@@ -135,6 +138,7 @@ class AnonymousMechanism(SASLMechanism):
 
         Raises:
             SASLAuthenticationError: If authentication fails
+
         """
         self._record_challenge(challenge)
 
@@ -190,6 +194,7 @@ class AnonymousMechanism(SASLMechanism):
 
         Returns:
             Encoded ANONYMOUS response
+
         """
         if self._trace_info:
             # Validate trace information (basic security check)
@@ -216,6 +221,7 @@ class AnonymousMechanism(SASLMechanism):
 
         Returns:
             True if trace information is valid
+
         """
         # Basic validation rules
         if not trace_info:
@@ -264,6 +270,7 @@ class AnonymousMechanism(SASLMechanism):
         Raises:
             ValueError: If trace information is invalid
             RuntimeError: If response already sent
+
         """
         if self._response_sent:
             msg = "Cannot modify trace info after response sent"
@@ -280,6 +287,7 @@ class AnonymousMechanism(SASLMechanism):
 
         Returns:
             Current trace information or None
+
         """
         return self._trace_info
 
@@ -288,6 +296,7 @@ class AnonymousMechanism(SASLMechanism):
 
         Returns:
             True if no trace information provided
+
         """
         return self._trace_info is None
 
@@ -296,6 +305,7 @@ class AnonymousMechanism(SASLMechanism):
 
         Returns:
             String representation of anonymous identity
+
         """
         if self._trace_info:
             return f"anonymous({self._trace_info})"

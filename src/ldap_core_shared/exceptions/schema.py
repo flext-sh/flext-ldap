@@ -31,6 +31,7 @@ class SchemaError(LDAPError):
             schema_element: Name of schema element (attribute, object class, etc.)
             element_type: Type of schema element (attributeType, objectClass, etc.)
             **kwargs: Additional arguments for LDAPError
+
         """
         context = kwargs.get("context", {})
         if schema_element:
@@ -60,6 +61,7 @@ class SchemaDiscoveryError(SchemaError):
             server_type: Type of LDAP server (OID, OUD, AD, etc.)
             discovery_method: Method used for discovery
             **kwargs: Additional arguments for SchemaError
+
         """
         context = kwargs.get("context", {})
         if server_type:
@@ -91,6 +93,7 @@ class SchemaComparisonError(SchemaError):
             target_schema: Target schema identifier
             comparison_type: Type of comparison being performed
             **kwargs: Additional arguments for SchemaError
+
         """
         context = kwargs.get("context", {})
         if source_schema:
@@ -124,6 +127,7 @@ class SchemaMappingError(SchemaError):
             target_element: Target schema element
             mapping_rule: Mapping rule that failed
             **kwargs: Additional arguments for SchemaError
+
         """
         context = kwargs.get("context", {})
         if source_element:
@@ -159,6 +163,7 @@ class SchemaCompatibilityError(SchemaError):
             compatibility_issue: Specific compatibility issue
             resolution_suggestion: Suggested resolution
             **kwargs: Additional arguments for SchemaError
+
         """
         context = kwargs.get("context", {})
         if source_schema:
@@ -194,6 +199,7 @@ class SchemaConflictError(SchemaError):
             conflict_type: Type of conflict (name, OID, syntax, etc.)
             resolution_suggestion: Suggested resolution
             **kwargs: Additional arguments for SchemaError
+
         """
         context = kwargs.get("context", {})
         if conflicting_elements:

@@ -1,8 +1,4 @@
-from flext_ldap.utils.constants import DEFAULT_LARGE_LIMIT
-
 """LDAP Controls Module.
-
-# Constants for magic values
 
 This module provides comprehensive LDAP control implementations following RFC standards.
 Based on perl-ldap Net::LDAP::Control functionality, providing enterprise-grade
@@ -39,6 +35,7 @@ from flext_ldapssword_policy import PasswordPolicyControl
 from flext_ldapstread import PostReadControl
 
 from flext_ldap.domain.results import Result
+from flext_ldap.utils.constants import DEFAULT_LARGE_LIMIT
 
 __all__ = [
     "LDAPControl",

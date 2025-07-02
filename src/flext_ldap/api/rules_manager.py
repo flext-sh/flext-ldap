@@ -247,6 +247,7 @@ def create_rules_manager(
 
     Returns:
         Rules manager instance
+
     """
     instance: BaseRulesManager = manager_class(rules_path)
     return instance
@@ -264,6 +265,7 @@ def validate_rules_file(rules_path: Path) -> dict[str, Any]:
     Raises:
         FileNotFoundError: If rules file doesn't exist
         ValueError: If rules file is invalid
+
     """
     if not rules_path.exists():
         msg = f"Rules file not found: {rules_path}"

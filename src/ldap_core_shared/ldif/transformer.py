@@ -94,6 +94,7 @@ class LDIFTransformer:
 
         Returns:
             Operation result with transformed entries
+
         """
         try:
             transformed_entries = []
@@ -139,6 +140,7 @@ class LDIFTransformer:
 
         Returns:
             Filtered list of entries
+
         """
         try:
             compiled_pattern = re.compile(pattern, re.IGNORECASE)
@@ -170,6 +172,7 @@ class LDIFTransformer:
 
         Returns:
             Filtered list of entries
+
         """
         oc_set = {oc.lower() for oc in object_classes}
         filtered = []
@@ -198,6 +201,7 @@ class LDIFTransformer:
 
         Returns:
             List of entries with transformed attributes
+
         """
         transformed = []
 
@@ -246,6 +250,7 @@ class LDIFTransformer:
 
         Returns:
             List of entries with renamed attributes
+
         """
         transformed = []
 
@@ -282,6 +287,7 @@ class LDIFTransformer:
 
         Returns:
             List of entries with attributes removed
+
         """
         remove_set = {name.lower() for name in attribute_names}
         transformed = []
@@ -317,6 +323,7 @@ class LDIFTransformer:
 
         Returns:
             List of entries with normalized DNs
+
         """
         transformed = []
 

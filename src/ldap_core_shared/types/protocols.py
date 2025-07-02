@@ -53,6 +53,7 @@ class Connectable(Protocol):
         ...     # Type-safe usage of any Connectable implementation
         ...     if conn.is_connected():
         ...         print("Already connected")
+
     """
 
     @abstractmethod
@@ -65,6 +66,7 @@ class Connectable(Protocol):
 
         Returns:
             True if connection successful, False otherwise
+
         """
 
     @abstractmethod
@@ -73,6 +75,7 @@ class Connectable(Protocol):
 
         Returns:
             True if disconnection successful, False otherwise
+
         """
 
     @abstractmethod
@@ -81,6 +84,7 @@ class Connectable(Protocol):
 
         Returns:
             True if connected, False otherwise
+
         """
 
 
@@ -102,6 +106,7 @@ class Bindable(Protocol):
 
         Returns:
             True if bind successful, False otherwise
+
         """
 
     @abstractmethod
@@ -114,6 +119,7 @@ class Bindable(Protocol):
 
         Returns:
             True if bind successful, False otherwise
+
         """
 
     @abstractmethod
@@ -122,6 +128,7 @@ class Bindable(Protocol):
 
         Returns:
             True if unbind successful, False otherwise
+
         """
 
 
@@ -153,6 +160,7 @@ class Searchable(Protocol):
 
         Yields:
             Dictionary representing each found entry
+
         """
 
     @abstractmethod
@@ -173,6 +181,7 @@ class Searchable(Protocol):
 
         Returns:
             Dictionary representing the found entry, or None if not found
+
         """
 
 
@@ -193,6 +202,7 @@ class Modifiable(Protocol):
 
         Returns:
             Result of the add operation
+
         """
 
     @abstractmethod
@@ -205,6 +215,7 @@ class Modifiable(Protocol):
 
         Returns:
             Result of the modify operation
+
         """
 
     @abstractmethod
@@ -216,6 +227,7 @@ class Modifiable(Protocol):
 
         Returns:
             Result of the delete operation
+
         """
 
 
@@ -233,6 +245,7 @@ class Validatable(Protocol):
 
         Returns:
             True if object is in a valid state, False otherwise
+
         """
 
     @abstractmethod
@@ -241,6 +254,7 @@ class Validatable(Protocol):
 
         Returns:
             List of validation error messages, empty if valid
+
         """
 
 
@@ -258,6 +272,7 @@ class Serializable(Protocol):
 
         Returns:
             Dictionary representation of the object
+
         """
 
     @abstractmethod
@@ -266,6 +281,7 @@ class Serializable(Protocol):
 
         Returns:
             JSON string representation of the object
+
         """
 
     @classmethod
@@ -278,6 +294,7 @@ class Serializable(Protocol):
 
         Returns:
             New object instance
+
         """
 
     @classmethod
@@ -290,6 +307,7 @@ class Serializable(Protocol):
 
         Returns:
             New object instance
+
         """
 
 
@@ -307,6 +325,7 @@ class Cacheable(Protocol):
 
         Returns:
             String key that uniquely identifies this object
+
         """
 
     @abstractmethod
@@ -315,6 +334,7 @@ class Cacheable(Protocol):
 
         Returns:
             Number of seconds this object should remain cached
+
         """
 
     @abstractmethod
@@ -323,6 +343,7 @@ class Cacheable(Protocol):
 
         Returns:
             True if object should be cached, False otherwise
+
         """
 
 
@@ -341,6 +362,7 @@ class Observable(Protocol):
         Args:
             event_type: Type/name of the event
             data: Event data payload
+
         """
 
     @abstractmethod
@@ -349,6 +371,7 @@ class Observable(Protocol):
 
         Args:
             observer: Observer object to add
+
         """
 
     @abstractmethod
@@ -357,6 +380,7 @@ class Observable(Protocol):
 
         Args:
             observer: Observer object to remove
+
         """
 
 
@@ -375,6 +399,7 @@ class Observer(Protocol):
         Args:
             event_type: Type/name of the event
             data: Event data payload
+
         """
 
 
@@ -392,6 +417,7 @@ class Identifiable(Protocol):
 
         Returns:
             UUID that uniquely identifies this object
+
         """
 
     @abstractmethod
@@ -400,6 +426,7 @@ class Identifiable(Protocol):
 
         Returns:
             String representation of the unique identifier
+
         """
 
 
@@ -416,6 +443,7 @@ class Trackable(Protocol):
 
         Returns:
             ISO formatted creation timestamp
+
         """
 
     @abstractmethod
@@ -424,6 +452,7 @@ class Trackable(Protocol):
 
         Returns:
             ISO formatted update timestamp
+
         """
 
     @abstractmethod
@@ -432,6 +461,7 @@ class Trackable(Protocol):
 
         Returns:
             Current version number
+
         """
 
 
@@ -452,6 +482,7 @@ class Comparable(Protocol):
 
         Returns:
             True if this object is less than other
+
         """
 
     @abstractmethod
@@ -463,6 +494,7 @@ class Comparable(Protocol):
 
         Returns:
             True if this object is less than or equal to other
+
         """
 
     @abstractmethod
@@ -474,6 +506,7 @@ class Comparable(Protocol):
 
         Returns:
             True if this object is greater than other
+
         """
 
     @abstractmethod
@@ -485,4 +518,5 @@ class Comparable(Protocol):
 
         Returns:
             True if this object is greater than or equal to other
+
         """

@@ -48,6 +48,7 @@ class AsyncConnectionPool(BaseConnectionComponent):
             factory: Connection factory for creating connections
             pool_size: Initial pool size
             max_pool_size: Maximum pool size
+
         """
         super().__init__(connection_info)
         self._factory = factory
@@ -78,6 +79,7 @@ class AsyncConnectionPool(BaseConnectionComponent):
 
         Args:
             size: Number of connections to create
+
         """
         async with self._lock:
             logger.info("Initializing connection pool with %s connections", size)
@@ -121,6 +123,7 @@ class AsyncConnectionPool(BaseConnectionComponent):
 
         Yields:
             LDAP connection from pool
+
         """
         connection = None
 
@@ -160,6 +163,7 @@ class AsyncConnectionPool(BaseConnectionComponent):
 
         Returns:
             Pool statistics dictionary
+
         """
         async with self._lock:
             return {

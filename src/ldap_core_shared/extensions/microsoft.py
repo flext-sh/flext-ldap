@@ -36,6 +36,7 @@ References:
     - Microsoft Active Directory Technical Specification
     - MS-ADTS: Active Directory Technical Specification
     - Windows LDAP Controls and Extensions documentation
+
 """
 
 from __future__ import annotations
@@ -93,6 +94,7 @@ class ADPagedSearchControl(LDAPControl):
             page_size: Number of entries per page
             cookie: Paging cookie from previous search
             criticality: Whether control is critical
+
         """
         self._page_size = page_size
         self._cookie = cookie or b""
@@ -111,6 +113,7 @@ class ADPagedSearchControl(LDAPControl):
         Note:
             Implements BER encoding for Microsoft Active Directory paged search control.
             Format: SEQUENCE { pageSize INTEGER, cookie OCTET STRING }
+
         """
         try:
             # Use the ASN.1 encoder from our protocols module
@@ -166,6 +169,7 @@ class ADSecurityDescriptorControl(LDAPControl):
         Args:
             security_flags: Security information flags
             criticality: Whether control is critical
+
         """
         self._security_flags = security_flags
 
@@ -183,6 +187,7 @@ class ADSecurityDescriptorControl(LDAPControl):
         Note:
             Implements BER encoding for Microsoft Active Directory security descriptor control.
             Format: INTEGER (security flags)
+
         """
         try:
             # Use the ASN.1 encoder from our protocols module
@@ -219,6 +224,7 @@ class ADDomainScopeControl(LDAPControl):
 
         Args:
             criticality: Whether control is critical
+
         """
         super().__init__(
             criticality=criticality,
@@ -240,6 +246,7 @@ class ADLazyCommitControl(LDAPControl):
 
         Args:
             criticality: Whether control is critical
+
         """
         super().__init__(
             criticality=criticality,
@@ -261,6 +268,7 @@ class ADNotificationControl(LDAPControl):
 
         Args:
             criticality: Whether control is critical
+
         """
         super().__init__(
             criticality=criticality,
@@ -336,6 +344,7 @@ class ADSecurityDescriptor(BaseModel):
             Parses Windows NT Security Descriptor binary format according to
             Microsoft specifications. Handles Revision, Control, Owner/Group SIDs,
             and DACL/SACL structures.
+
         """
         if not sd_binary or len(sd_binary) < 20:
             return  # Invalid or empty security descriptor
@@ -413,6 +422,7 @@ class ADSecurityDescriptor(BaseModel):
 
         Returns:
             String representation of SID
+
         """
         if len(sid_data) < 8:
             return "S-0-0"  # Invalid SID
@@ -457,6 +467,7 @@ class ADSecurityDescriptor(BaseModel):
 
         Returns:
             List of ACE dictionaries
+
         """
         if len(acl_data) < 8:
             return []  # Invalid ACL
@@ -522,6 +533,7 @@ class ADSecurityDescriptor(BaseModel):
         Note:
             Converts the security descriptor to SDDL format according to
             Microsoft specifications. Format: O:owner G:group D:dacl S:sacl
+
         """
         sddl_parts = []
 
@@ -555,6 +567,7 @@ class ADSecurityDescriptor(BaseModel):
 
         Returns:
             SDDL ACL string
+
         """
         if not acl:
             return ""
@@ -608,6 +621,7 @@ class ADSecurityDescriptor(BaseModel):
 
         Returns:
             SDDL rights string
+
         """
         rights = []
 
@@ -694,6 +708,7 @@ class ActiveDirectoryExtensions:
         >>>
         >>> # Domain-scoped search
         >>> domain_control = ad_ext.create_domain_scope_control()
+
     """
 
     def __init__(self) -> None:
@@ -713,6 +728,7 @@ class ActiveDirectoryExtensions:
 
         Returns:
             Configured paged search control
+
         """
         return self._controls.paged_search(page_size, cookie)
 
@@ -733,6 +749,7 @@ class ActiveDirectoryExtensions:
 
         Returns:
             Configured security descriptor control
+
         """
         flags = 0
         if include_owner:
@@ -751,6 +768,7 @@ class ActiveDirectoryExtensions:
 
         Returns:
             Domain scope control
+
         """
         return self._controls.domain_scope()
 
@@ -759,6 +777,7 @@ class ActiveDirectoryExtensions:
 
         Returns:
             Lazy commit control
+
         """
         return self._controls.lazy_commit()
 
@@ -767,6 +786,7 @@ class ActiveDirectoryExtensions:
 
         Returns:
             Notification control
+
         """
         return self._controls.notification()
 
@@ -778,6 +798,7 @@ class ActiveDirectoryExtensions:
 
         Returns:
             String representation of GUID
+
         """
         if len(guid_bytes) != GUID_BYTE_LENGTH:
             msg = f"GUID must be {GUID_BYTE_LENGTH} bytes"
@@ -805,6 +826,7 @@ class ActiveDirectoryExtensions:
         Note:
             Parses Windows Security Identifier binary format according to
             Microsoft specifications. Format: S-Revision-IdentifierAuthority-SubAuthority1-...
+
         """
         if not sid_bytes or len(sid_bytes) < 8:
             return "S-0-0"  # Invalid SID
@@ -866,6 +888,7 @@ class ActiveDirectoryExtensions:
         Note:
             Retrieves domain information from Active Directory by querying
             the rootDSE and domain objects. Handles connection errors gracefully.
+
         """
         try:
             # Query rootDSE for basic domain information
@@ -986,6 +1009,7 @@ class ActiveDirectoryExtensions:
 
         Returns:
             DNS domain name
+
         """
         try:
             # Parse DC components from DN: dc=example,dc=com -> example.com
@@ -1013,6 +1037,7 @@ class ActiveDirectoryExtensions:
         Note:
             Determines if the server is an Active Directory domain controller
             by checking for domain controller-specific attributes and objects.
+
         """
         if not server_dn:
             return False
@@ -1063,6 +1088,7 @@ class ActiveDirectoryExtensions:
         Note:
             Retrieves all group memberships for a user including nested groups
             using Active Directory-specific LDAP_MATCHING_RULE_IN_CHAIN OID.
+
         """
         if not user_dn or not connection:
             return []
@@ -1129,6 +1155,7 @@ class ActiveDirectoryExtensions:
 
         Returns:
             Set of nested group DNs
+
         """
         nested_groups = set()
         processed_groups = set()
@@ -1180,6 +1207,7 @@ def create_ad_paged_search(page_size: int = 1000) -> ADPagedSearchControl:
 
     Returns:
         Paged search control
+
     """
     return ADPagedSearchControl(page_size)
 
@@ -1189,6 +1217,7 @@ def create_ad_security_control() -> ADSecurityDescriptorControl:
 
     Returns:
         Security descriptor control
+
     """
     return ADSecurityDescriptorControl()
 
@@ -1201,6 +1230,7 @@ def parse_ad_timestamp(timestamp_str: str) -> datetime:
 
     Returns:
         Python datetime object
+
     """
     # AD timestamps are Windows FILETIME (100-nanosecond intervals since 1601)
     timestamp_int = int(timestamp_str)
@@ -1221,6 +1251,7 @@ def format_ad_timestamp(dt: datetime) -> str:
 
     Returns:
         AD timestamp string
+
     """
     # Convert to Windows FILETIME
     unix_timestamp = dt.timestamp()

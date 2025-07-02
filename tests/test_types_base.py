@@ -32,6 +32,7 @@ class TestUser(BaseModel):
     age: int = Field(description="User age")
 
     class Config:
+        """Pydantic configuration."""
         frozen = True  # Make immutable
         extra = "forbid"  # Forbid extra fields
 

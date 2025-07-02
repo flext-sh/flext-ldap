@@ -99,6 +99,7 @@ class SchemaDiscovery:
 
         Returns:
             Operation result with discovered schema
+
         """
         with self.performance_monitor.track_operation("schema_discovery"):
             try:

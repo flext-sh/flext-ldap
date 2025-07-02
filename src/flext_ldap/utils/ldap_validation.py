@@ -32,6 +32,7 @@ def validate_and_normalize_ldap_entry(entry: dict[str, Any]) -> dict[str, Any]:
 
     Raises:
         ValueError: If entry is invalid
+
     """
     if not isinstance(entry, dict):
         msg = "Entry must be a dictionary"
@@ -79,6 +80,7 @@ def validate_and_normalize_attribute_name(attr_name: str) -> str:
 
     Raises:
         ValueError: If attribute name is invalid
+
     """
     if not isinstance(attr_name, str):
         msg = "Attribute name must be a string"
@@ -113,6 +115,7 @@ def validate_and_normalize_attribute_value(attr_value: Any) -> str:
 
     Raises:
         ValueError: If attribute value is invalid
+
     """
     if attr_value is None:
         return ""
@@ -150,6 +153,7 @@ def validate_dn(dn: str) -> str:
 
     Raises:
         ValueError: If DN is invalid
+
     """
     is_valid, error_message = validate_dn_format(dn)
     if not is_valid:
@@ -171,6 +175,7 @@ def validate_and_normalize_file_path(file_path: Path, base_path: Path) -> Path:
 
     Raises:
         PathValidationError: If path is invalid or outside base
+
     """
     if not isinstance(file_path, Path):
         try:
@@ -222,6 +227,7 @@ def validate_configuration_value(
 
     Raises:
         ConfigValidationError: If configuration value is invalid
+
     """
     if config_value is None:
         msg = f"Configuration value for '{config_key}' cannot be None"

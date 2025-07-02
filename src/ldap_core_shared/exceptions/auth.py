@@ -35,6 +35,7 @@ class AuthenticationError(LDAPError):
             error_code: LDAP error code
             context: Additional context
             original_error: Underlying LDAP exception
+
         """
         auth_context = context or {}
         if bind_dn:
@@ -74,6 +75,7 @@ class AuthorizationError(LDAPError):
             target_dn: DN of target object
             required_permission: Permission that was required
             **kwargs: Additional arguments for LDAPError
+
         """
         context = kwargs.get("context", {})
         if operation:
@@ -100,6 +102,7 @@ class InvalidCredentialsError(AuthenticationError):
         Args:
             message: Error description
             **kwargs: Additional arguments for AuthenticationError
+
         """
         super().__init__(message, error_code="49", **kwargs)  # LDAP_INVALID_CREDENTIALS
 
@@ -117,5 +120,6 @@ class AccountLockedError(AuthenticationError):
         Args:
             message: Error description
             **kwargs: Additional arguments for AuthenticationError
+
         """
         super().__init__(message, error_code="775", **kwargs)  # LDAP_ACCOUNT_LOCKED

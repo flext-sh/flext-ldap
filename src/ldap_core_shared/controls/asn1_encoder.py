@@ -91,6 +91,7 @@ class ASN1Encoder:
 
         Raises:
             ASN1EncodingError: If encoding fails
+
         """
         try:
             content = b"\xff" if value else b"\x00"
@@ -111,6 +112,7 @@ class ASN1Encoder:
 
         Raises:
             ASN1EncodingError: If encoding fails
+
         """
         try:
             if value == 0:
@@ -144,6 +146,7 @@ class ASN1Encoder:
 
         Raises:
             ASN1EncodingError: If encoding fails
+
         """
         try:
             if value < 0:
@@ -176,6 +179,7 @@ class ASN1Encoder:
 
         Raises:
             ASN1EncodingError: If encoding fails
+
         """
         try:
             return ASN1Encoder._encode_tlv(ASN1Tags.OCTET_STRING, value)
@@ -195,6 +199,7 @@ class ASN1Encoder:
 
         Raises:
             ASN1EncodingError: If encoding fails
+
         """
         try:
             content = value.encode("utf-8")
@@ -209,6 +214,7 @@ class ASN1Encoder:
 
         Returns:
             BER-encoded NULL
+
         """
         return ASN1Encoder._encode_tlv(ASN1Tags.NULL, b"")
 
@@ -224,6 +230,7 @@ class ASN1Encoder:
 
         Raises:
             ASN1EncodingError: If encoding fails
+
         """
         try:
             return ASN1Encoder._encode_tlv(ASN1Tags.SEQUENCE, content)
@@ -243,6 +250,7 @@ class ASN1Encoder:
 
         Raises:
             ASN1EncodingError: If encoding fails
+
         """
         try:
             return ASN1Encoder._encode_tlv(ASN1Tags.SET, content)
@@ -268,6 +276,7 @@ class ASN1Encoder:
 
         Raises:
             ASN1EncodingError: If encoding fails
+
         """
         try:
             if not 0 <= tag_number <= MAX_CONTEXT_TAG_NUMBER:
@@ -296,6 +305,7 @@ class ASN1Encoder:
 
         Raises:
             ASN1EncodingError: If encoding fails
+
         """
         try:
             tag_bytes = bytes([tag])
@@ -317,6 +327,7 @@ class ASN1Encoder:
 
         Raises:
             ASN1EncodingError: If encoding fails
+
         """
         try:
             if length < 0:
@@ -359,6 +370,7 @@ class ASN1Decoder:
 
         Raises:
             ASN1DecodingError: If decoding fails
+
         """
         try:
             tag, length, content, new_offset = ASN1Decoder._decode_tlv(data, offset)
@@ -389,6 +401,7 @@ class ASN1Decoder:
 
         Raises:
             ASN1DecodingError: If decoding fails
+
         """
         try:
             tag, length, content, new_offset = ASN1Decoder._decode_tlv(data, offset)
@@ -421,6 +434,7 @@ class ASN1Decoder:
 
         Raises:
             ASN1DecodingError: If decoding fails
+
         """
         try:
             tag, length, content, new_offset = ASN1Decoder._decode_tlv(data, offset)
@@ -453,6 +467,7 @@ class ASN1Decoder:
 
         Raises:
             ASN1DecodingError: If decoding fails
+
         """
         try:
             tag, _length, content, new_offset = ASN1Decoder._decode_tlv(data, offset)
@@ -479,6 +494,7 @@ class ASN1Decoder:
 
         Raises:
             ASN1DecodingError: If decoding fails
+
         """
         try:
             tag, _length, content, new_offset = ASN1Decoder._decode_tlv(data, offset)
@@ -511,6 +527,7 @@ class ASN1Decoder:
 
         Raises:
             ASN1DecodingError: If decoding fails
+
         """
         try:
             tag, _length, content, new_offset = ASN1Decoder._decode_tlv(data, offset)
@@ -542,6 +559,7 @@ class ASN1Decoder:
 
         Raises:
             ASN1DecodingError: If decoding fails
+
         """
         try:
             tag, _length, content, new_offset = ASN1Decoder._decode_tlv(data, offset)
@@ -569,6 +587,7 @@ class ASN1Decoder:
 
         Raises:
             ASN1DecodingError: If decoding fails
+
         """
         try:
             if offset >= len(data):
@@ -608,6 +627,7 @@ class ASN1Decoder:
 
         Raises:
             ASN1DecodingError: If decoding fails
+
         """
         try:
             if offset >= len(data):
@@ -658,6 +678,7 @@ class ASN1Decoder:
 
         Raises:
             ASN1DecodingError: If no tag available
+
         """
         if offset >= len(data):
             msg = "No tag available at offset"
@@ -674,6 +695,7 @@ class ASN1Decoder:
 
         Returns:
             True if more data is available
+
         """
         return offset < len(data)
 
@@ -687,6 +709,7 @@ def encode_sequence_of(*elements: bytes) -> bytes:
 
     Returns:
         BER-encoded SEQUENCE containing all elements
+
     """
     content = b"".join(elements)
     return ASN1Encoder.encode_sequence(content)
@@ -700,6 +723,7 @@ def encode_attribute_list(attributes: list[str]) -> bytes:
 
     Returns:
         BER-encoded SEQUENCE OF UTF8String
+
     """
     elements = [ASN1Encoder.encode_utf8_string(attr) for attr in attributes]
     return encode_sequence_of(*elements)
@@ -714,6 +738,7 @@ def decode_attribute_list(data: bytes, offset: int = 0) -> tuple[list[str], int]
 
     Returns:
         Tuple of (attribute_list, new_offset)
+
     """
     sequence_content, new_offset = ASN1Decoder.decode_sequence(data, offset)
 

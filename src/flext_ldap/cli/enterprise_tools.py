@@ -43,6 +43,7 @@ References:
     - ldap3: Modern LDAP client patterns
     - Enterprise CLI design patterns
     - Click framework best practices
+
 """
 
 from __future__ import annotations
@@ -118,6 +119,7 @@ def output_result(
     Args:
         result: Result data to output
         success: Whether operation was successful
+
     """
     if config.output_format == "json":
         output = {

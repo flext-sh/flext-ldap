@@ -226,6 +226,7 @@ class LDAPSConfiguration(BaseModel):
 
         Returns:
             Configured SSL context
+
         """
         # Create SSL context with secure defaults
         context = ssl.create_default_context()
@@ -308,6 +309,7 @@ class LDAPSConfiguration(BaseModel):
 
         Returns:
             List of validation errors
+
         """
         errors = []
 
@@ -346,6 +348,7 @@ class LDAPSTransport:
 
         Args:
             config: LDAPS configuration
+
         """
         self._config = config
         self._ssl_context = config.create_ssl_context()
@@ -363,6 +366,7 @@ class LDAPSTransport:
 
         Raises:
             ConnectionError: If SSL connection fails
+
         """
         try:
             # Establish SSL connection
@@ -411,6 +415,7 @@ class LDAPSTransport:
 
         Returns:
             Number of bytes sent
+
         """
         if not self._writer:
             msg = "Not connected"
@@ -428,6 +433,7 @@ class LDAPSTransport:
 
         Returns:
             Received data
+
         """
         if not self._reader:
             msg = "Not connected"
@@ -440,6 +446,7 @@ class LDAPSTransport:
 
         Returns:
             Dictionary with SSL details
+
         """
         if not self._ssl_object:
             return {}
@@ -481,6 +488,7 @@ class LDAPSProtocol(LDAPProtocol):
 
         Args:
             config: LDAPS configuration
+
         """
         self._config = config or LDAPSConfiguration()
         self._transport: LDAPSTransport | None = None
@@ -494,6 +502,7 @@ class LDAPSProtocol(LDAPProtocol):
         Args:
             url: LDAPS URL (ldaps://hostname:port)
             **kwargs: Additional connection parameters
+
         """
         # Parse LDAPS URL
         parsed = urlparse(url)
@@ -533,6 +542,7 @@ class LDAPSProtocol(LDAPProtocol):
 
         Returns:
             Dictionary with SSL details
+
         """
         return self._transport.get_ssl_info() if self._transport else {}
 
@@ -541,6 +551,7 @@ class LDAPSProtocol(LDAPProtocol):
 
         Returns:
             Dictionary with verification results
+
         """
         ssl_info = self.get_ssl_info()
         peer_cert = ssl_info.get("peer_certificate")
@@ -617,6 +628,7 @@ class LDAPSConnection(ProtocolConnection):
             client_key_file: Client key file path
             verify_ssl: Whether to verify SSL certificates
             **kwargs: Additional connection parameters
+
         """
         # Create LDAPS configuration
         config = LDAPSConfiguration(
@@ -653,6 +665,7 @@ class LDAPSConnection(ProtocolConnection):
 
         Raises:
             RuntimeError: LDAPS connections are already encrypted
+
         """
         msg = "LDAPS connections are already encrypted - StartTLS not applicable"
         raise RuntimeError(msg)
@@ -662,6 +675,7 @@ class LDAPSConnection(ProtocolConnection):
 
         Returns:
             Dictionary with SSL details
+
         """
         if hasattr(self._protocol, "get_ssl_info"):
             return dict(self._protocol.get_ssl_info())
@@ -672,6 +686,7 @@ class LDAPSConnection(ProtocolConnection):
 
         Returns:
             Dictionary with verification results
+
         """
         if hasattr(self._protocol, "verify_peer_certificate"):
             return dict(self._protocol.verify_peer_certificate())
@@ -682,6 +697,7 @@ class LDAPSConnection(ProtocolConnection):
 
         Returns:
             Dictionary with connection details
+
         """
         info = super().get_connection_info()
         info.update(
@@ -722,6 +738,7 @@ def create_ldaps_connection(
 
     Returns:
         Configured LDAPS connection
+
     """
     url = f"ldaps://{hostname}:{port}"
 
@@ -746,6 +763,7 @@ def create_secure_ssl_context(
 
     Returns:
         Configured SSL context
+
     """
     config = LDAPSConfiguration(
         ca_cert_file=ca_cert_file,
@@ -772,6 +790,7 @@ async def test_ldaps_connection(
 
     Returns:
         Dictionary with test results
+
     """
     if port is None:
         port = 636

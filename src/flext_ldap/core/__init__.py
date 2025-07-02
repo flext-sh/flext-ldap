@@ -123,6 +123,7 @@ class CoreInitializationError(LDAPCoreError):
         Args:
             message: Error message
             cause: Underlying cause
+
         """
         super().__init__(
             message=message,
@@ -172,6 +173,7 @@ def initialize_core(
         ...     environment="development",
         ...     override_values={"debug": True, "logging": {"level": "DEBUG"}}
         ... )
+
     """
     global _core_initialized, _application_config
 
@@ -276,6 +278,7 @@ def _validate_core_dependencies(
 
     Raises:
         CoreInitializationError: If dependencies are not satisfied
+
     """
     logger.debug("Validating core dependencies")
 
@@ -332,6 +335,7 @@ def _setup_shutdown_handlers(logger: StructuredLogger) -> None:
 
     Args:
         logger: Logger for shutdown setup
+
     """
     logger.debug("Setting up shutdown handlers")
 
@@ -360,6 +364,7 @@ def shutdown_core() -> None:
         >>> shutdown_core()
         >>>
         >>> # Or let atexit handler do it automatically
+
     """
     global _core_initialized, _application_config
 
@@ -397,6 +402,7 @@ def is_initialized() -> bool:
     Example:
         >>> if not is_initialized():
         ...     initialize_core()
+
     """
     return _core_initialized
 
@@ -413,6 +419,7 @@ def get_config() -> ApplicationConfig:
     Example:
         >>> config = get_config()
         >>> ldap_servers = config.connection.servers
+
     """
     global _application_config
 
@@ -447,6 +454,7 @@ def reconfigure(
         >>>
         >>> # Reconfigure with new config file
         >>> config = reconfigure(config_file="/etc/ldap-core/new-config.yaml")
+
     """
     if not _core_initialized:
         msg = "Cannot reconfigure: core not initialized"
