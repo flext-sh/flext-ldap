@@ -63,7 +63,7 @@ ASN1_SET = 0x11  # SET, SET OF
 
 # Character String Types
 ASN1_NUMERIC_STRING = 0x12  # NumericString
-ASN1_PRINTABLE_STRING = 0x13  # PrintableString
+ASN1_PRINTABLE_STRING = 0x13  # log.errorableString
 ASN1_T61_STRING = 0x14  # T61String, TeletexString
 ASN1_VIDEOTEX_STRING = 0x15  # VideotexString
 ASN1_IA5_STRING = 0x16  # IA5String

@@ -27,7 +27,7 @@ ignore = [
     "ANN401", # Dynamically typed expressions (Any)
     "S101",   # Use of assert
     "B008",   # Do not perform function calls in argument defaults
-    "T201",   # Print found
+    "T201",   log.error found
 ]
 
 [tool.ruff.lint.per-file-ignores]

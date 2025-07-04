@@ -13,7 +13,6 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
-
 from ldap_core_shared.domain.models import (
     EntryProcessingResult,
     LDAPConnectionConfig,

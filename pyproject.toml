@@ -9,7 +9,7 @@ description = "FLEXT LDAP - Enterprise LDAP Operations with Migration & Schema M
 authors = [{ name = "FLEXT Team", email = "team@flext.sh" }]
 license = { text = "MIT" }
 readme = "README.md"
-requires-python = ">=3.12,<4.0"
+requires-python = ">=3.13"
 keywords = [
     "flext",
     "ldap",
@@ -19,8 +19,7 @@ keywords = [
     "schema",
     "ldif",
     "oracle",
-    "active-directory",
-]
+    "active-directory"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -28,14 +27,14 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
     "Topic :: Internet",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: System :: Systems Administration :: Authentication/Directory",
     "Topic :: System :: Systems Administration",
     "Typing :: Typed",
     "Framework :: AsyncIO",
-    "Framework :: Pydantic",
-]
+    "Framework :: Pydantic"]
 dependencies = [
     "pydantic>=2.11.0",
     "pydantic-settings>=2.5.0",
@@ -60,8 +59,7 @@ dependencies = [
     "cryptography>=44.0.1",
     "pyjwt[crypto]>=2.9.0",
     "passlib[bcrypt]>=1.7.4",
-    "bcrypt>=4.2.0",
-]
+    "bcrypt>=4.2.0"]
 
 [project.scripts]
 flext-ldap = "flext_ldap.cli:main"
@@ -124,7 +122,6 @@ target-version = "py313"
 fix = true
 
 [tool.ruff.lint]
-select = ["ALL"]
 ignore = [
     # MANDATORY: Only formatter conflicts that cannot be auto-fixed
     "COM812", # trailing-comma-missing (handled by formatter)
@@ -236,10 +233,11 @@ ignore = [
     "SLF001",  # private access (temporarily)
     "E722",
     "E741",    # bare except and ambiguous names
-    "T201",    # print statements (temporarily)
+    "T201",    # log.error statements (temporarily)
     "PLW2901", # redefined loop variable (temporarily)
     "D401",    # docstring imperative mood (temporarily)
 ]
+select = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "PLR2004", "D", "ANN"]
@@ -276,8 +274,7 @@ module = [
     "prometheus_client.*",
     "factory_boy.*",
     "passlib.*",
-    "bcrypt.*",
-]
+    "bcrypt.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
@@ -291,11 +288,10 @@ addopts = [
     "--cov-report=term-missing:skip-covered",
     "--cov-report=html:reports/coverage",
     "--cov-report=xml:reports/coverage.xml",
-    "--cov-fail-under=85",
+    "--cov-fail-under=95",
     "--junitxml=reports/pytest.xml",
     "--maxfail=10",
-    "--timeout=30",
-]
+    "--timeout=30"]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
@@ -310,14 +306,12 @@ markers = [
     "schema: marks tests as schema tests",
     "security: marks tests as security tests",
     "performance: marks tests as performance tests",
-    "requires_ldap_server: tests that need real LDAP server",
-]
+    "requires_ldap_server: tests that need real LDAP server"]
 filterwarnings = [
     "error",
     "ignore::UserWarning",
     "ignore::DeprecationWarning",
-    "ignore::PendingDeprecationWarning",
-]
+    "ignore::PendingDeprecationWarning"]
 asyncio_mode = "auto"
 
 [tool.coverage.run]
@@ -334,8 +328,7 @@ omit = [
     "*/venv/*",
     "*/build/*",
     "*/dist/*",
-    "*/.eggs/*",
-]
+    "*/.eggs/*"]
 
 [tool.coverage.report]
 skip_empty = true
@@ -353,8 +346,7 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
-    "TYPE_CHECKING",
-]
+    "TYPE_CHECKING"]
 
 [tool.bandit]
 targets = ["src"]
@@ -371,3 +363,38 @@ target-version = ["py313"]
 [tool.isort]
 profile = "black"
 line_length = 88
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.flake8-type-checking]
+strict = true
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 88
+
+[tool.ruff.lint.pylint]
+max-args = 10
+max-branches = 15
+max-returns = 8
+max-statements = 60
+
+[tool.vulture]
+min_confidence = 100
+paths = ["src"]
+exclude = ["tests/"]
+ignore_decorators = ["@app.route", "@router.get", "@router.post"]
+ignore_names = ["_*"]
+make_whitelist = true
+sort_by_size = true
+
+[tool.radon]
+exclude = ["tests/*", "*/tests/*"]
+ignore = ["F401"]  # Unused imports
+total_average = true
+show_complexity = true
+average = true
+order = "SCORE"

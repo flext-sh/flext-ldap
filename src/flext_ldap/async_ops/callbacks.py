@@ -55,9 +55,8 @@ try:
 except ImportError:
     from typing import TypeAlias
 
-from pydantic import BaseModel, Field
-
 from ldap_core_shared.constants import DEFAULT_MAX_ITEMS, DEFAULT_TIMEOUT_SECONDS
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from collections.abc import Callable

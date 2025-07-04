@@ -29,7 +29,6 @@ from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
-
 from ldap_core_shared.core.operations import (
     EnterpriseTransaction,
     LDAPOperationRequest,
