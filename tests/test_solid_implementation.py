@@ -23,7 +23,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import ldap3
 import pytest
-
 from ldap_core_shared.connections.base import LDAPConnectionInfo
 from ldap_core_shared.connections.implementations import (
     AsyncConnectionPool,

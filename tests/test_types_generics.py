@@ -29,7 +29,6 @@ from typing import Any
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-
 from ldap_core_shared.types.base import BaseEntity, BaseValueObject
 from ldap_core_shared.types.generics import (
     AsyncIteratorWrapper,

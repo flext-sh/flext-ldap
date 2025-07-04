@@ -30,7 +30,6 @@ from datetime import UTC
 from typing import TYPE_CHECKING, Any
 
 import pytest
-
 from ldap_core_shared.types.protocols import (
     Bindable,
     Cacheable,

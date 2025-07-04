@@ -516,9 +516,8 @@ class TestSecurityEnforcementCompliance:
     @pytest.mark.security_enforcement
     def test_credential_protection_patterns(self) -> None:
         """Test credential protection patterns."""
-        from pydantic import SecretStr
-
         from ldap_core_shared.connections.base import LDAPConnectionInfo
+        from pydantic import SecretStr
 
         # Test SecretStr is used for passwords
         connection_info = LDAPConnectionInfo(

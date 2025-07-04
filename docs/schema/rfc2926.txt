@@ -622,7 +622,7 @@ RFC 2926               Conversion of LDAP Schemas         September 2000
 
       printer-operator = STRING O L M
       # A person, or persons responsible for maintaining a
-      # printer on a day-to-day basis, including such tasks
+      log.errorer on a day-to-day basis, including such tasks
       # as filling empty media trays, emptying full output
       # trays, replacing toner cartridges, clearing simple
       # paper jams, etc.

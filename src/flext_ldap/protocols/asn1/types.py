@@ -46,7 +46,7 @@ import re
 from datetime import UTC, datetime
 from typing import Any, ClassVar
 
-from flext_ldapsn1.constants import (
+from .constants import (
     ASN1_BIT_STRING,
     ASN1_BOOLEAN,
     ASN1_GENERALIZED_TIME,
@@ -63,7 +63,7 @@ from flext_ldapsn1.constants import (
     DEFAULT_ENCODING,
     DEFAULT_STRING_ENCODING,
 )
-from flext_ldapsn1.elements import ASN1Element, ASN1Tag
+from .elements import ASN1Element, ASN1Tag
 
 # Validation constants for ASN.1 types
 BIT_STRING_MAX_UNUSED_BITS = 7  # Maximum unused bits in BIT STRING (0-7)
@@ -123,7 +123,7 @@ class ASN1Boolean(ASN1Element):
             Encoded boolean as bytes
 
         """
-        from flext_ldapsn1.encoder import TLVEncoder
+        from .encoder import TLVEncoder
 
         # BOOLEAN content: 0xFF for True, 0x00 for False
         content = b"\xff" if self._value else b"\x00"
@@ -1260,7 +1260,6 @@ class ASN1PrintableString(ASN1Element):
             msg = f"PrintableString contains invalid characters: {invalid_chars}"
             raise ValueError(msg)
 
-        # PrintableString content is ASCII encoded
         content = value.encode("ascii")
         return TLVEncoder.encode_tlv(self.get_tag(), content, definite=True)
 
