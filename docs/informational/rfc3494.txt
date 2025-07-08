@@ -56,7 +56,7 @@ Lightweight Directory Access Protocol, version 2
 
 
 Zeilenga                     Informational                      [Page 1]
-
+
 RFC 3494               LDAPv2 to Historic Status              March 2003
 
 
@@ -112,7 +112,7 @@ Dependent Specifications
 
 
 Zeilenga                     Informational                      [Page 2]
-
+
 RFC 3494               LDAPv2 to Historic Status              March 2003
 
 
@@ -168,7 +168,7 @@ Normative References
 
 
 Zeilenga                     Informational                      [Page 3]
-
+
 RFC 3494               LDAPv2 to Historic Status              March 2003
 
 
@@ -224,7 +224,7 @@ Author's Address
 
 
 Zeilenga                     Informational                      [Page 4]
-
+
 RFC 3494               LDAPv2 to Historic Status              March 2003
 
 
@@ -280,4 +280,3 @@ Acknowledgement
 
 
 Zeilenga                     Informational                      [Page 5]
-

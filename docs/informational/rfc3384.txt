@@ -56,7 +56,7 @@ Table of Contents
 
 
 Stokes, et. al.              Informational                      [Page 1]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -112,7 +112,7 @@ RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
 Stokes, et. al.              Informational                      [Page 2]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -168,7 +168,7 @@ RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
 Stokes, et. al.              Informational                      [Page 3]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -224,7 +224,7 @@ RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
 Stokes, et. al.              Informational                      [Page 4]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -280,7 +280,7 @@ RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
 Stokes, et. al.              Informational                      [Page 5]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -336,7 +336,7 @@ RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
 Stokes, et. al.              Informational                      [Page 6]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -392,7 +392,7 @@ RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
 Stokes, et. al.              Informational                      [Page 7]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -448,7 +448,7 @@ RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
 Stokes, et. al.              Informational                      [Page 8]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -504,7 +504,7 @@ RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
 Stokes, et. al.              Informational                      [Page 9]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -560,7 +560,7 @@ RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
 Stokes, et. al.              Informational                     [Page 10]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -616,7 +616,7 @@ RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
 Stokes, et. al.              Informational                     [Page 11]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -672,7 +672,7 @@ RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
 Stokes, et. al.              Informational                     [Page 12]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -728,7 +728,7 @@ RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
 Stokes, et. al.              Informational                     [Page 13]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -784,7 +784,7 @@ RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
 Stokes, et. al.              Informational                     [Page 14]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -840,7 +840,7 @@ A.2. Consolidation Example
 
 
 Stokes, et. al.              Informational                     [Page 15]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -896,7 +896,7 @@ A.5. Supplier Initiated Replication
 
 
 Stokes, et. al.              Informational                     [Page 16]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -952,7 +952,7 @@ A.8. Bandwidth issues
 
 
 Stokes, et. al.              Informational                     [Page 17]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -1008,7 +1008,7 @@ A.10. Enterprise Directory Replication Mesh
 
 
 Stokes, et. al.              Informational                     [Page 18]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -1064,7 +1064,7 @@ A.12. Failure of a Directory Holding Critical Service Information
 
 
 Stokes, et. al.              Informational                     [Page 19]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -1120,7 +1120,7 @@ B.2. Order of Transfer for Replicating Data
 
 
 Stokes, et. al.              Informational                     [Page 20]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -1176,7 +1176,7 @@ B.3. Schema Mismatches and Replication
 
 
 Stokes, et. al.              Informational                     [Page 21]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -1232,7 +1232,7 @@ B.4. Detecting and Repairing Inconsistencies Among Replicas
 
 
 Stokes, et. al.              Informational                     [Page 22]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -1288,7 +1288,7 @@ B.5. Some Test Cases for Conflict Resolution in Multi-Master Replication
 
 
 Stokes, et. al.              Informational                     [Page 23]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -1344,7 +1344,7 @@ B.5.1. Create-Create
 
 
 Stokes, et. al.              Informational                     [Page 24]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -1400,7 +1400,7 @@ B.5.3. Locking Based on Atomicity of ModifyRequest
 
 
 Stokes, et. al.              Informational                     [Page 25]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -1456,7 +1456,7 @@ B.5.5. Avoiding the Problem
 
 
 Stokes, et. al.              Informational                     [Page 26]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -1512,7 +1512,7 @@ B.7. Failover in Single-Master Systems
 
 
 Stokes, et. al.              Informational                     [Page 27]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -1568,7 +1568,7 @@ RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
 Stokes, et. al.              Informational                     [Page 28]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -1624,7 +1624,7 @@ B.8. Including Operational Attributes in Atomic Operations
 
 
 Stokes, et. al.              Informational                     [Page 29]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -1680,7 +1680,7 @@ Authors' Addresses
 
 
 Stokes, et. al.              Informational                     [Page 30]
-
+
 RFC 3384            LDAPv3 Replication Requirements         October 2002
 
 
@@ -1736,4 +1736,3 @@ Acknowledgement
 
 
 Stokes, et. al.              Informational                     [Page 31]
-

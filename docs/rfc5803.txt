@@ -56,7 +56,7 @@ Copyright Notice
 
 
 Melnikov                      Informational                     [Page 1]
-
+
 RFC 5803          LDAP Schema for Storing SCRAM Secrets        July 2010
 
 
@@ -112,7 +112,7 @@ Table of Contents
 
 
 Melnikov                      Informational                     [Page 2]
-
+
 RFC 5803          LDAP Schema for Storing SCRAM Secrets        July 2010
 
 
@@ -168,7 +168,7 @@ RFC 5803          LDAP Schema for Storing SCRAM Secrets        July 2010
 
 
 Melnikov                      Informational                     [Page 3]
-
+
 RFC 5803          LDAP Schema for Storing SCRAM Secrets        July 2010
 
 
@@ -224,4 +224,3 @@ Author's Address
 
 
 Melnikov                      Informational                     [Page 4]
-
