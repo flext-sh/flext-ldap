@@ -1,0 +1,46 @@
+{
+  // Cursor AI Settings - Aligned with FLEXT standards
+  "cursor.aiProvider": "openai",
+  "cursor.cpp.enableIndexing": false,
+  "cursor.python.enableIndexing": true,
+  
+  // AI Assistant Configuration
+  "cursor.chat.defaultSystemPrompt": "You are working on the FLEXT-LDAP project. Follow these standards:\n- Python 3.13+ only\n- Async/await patterns\n- Type hints for everything\n- Google docstring convention\n- PEP 8 compliance\n- All configurations in pyproject.toml\n- Use Makefile commands",
+  
+  // Code generation preferences
+  "cursor.codeGeneration.preferredStyle": {
+    "python": {
+      "quotes": "double",
+      "indentation": "spaces",
+      "indentSize": 4,
+      "lineLength": 88,
+      "trailingComma": true,
+      "asyncAwait": true,
+      "typeHints": "always"
+    }
+  },
+  
+  // Context awareness
+  "cursor.contextFiles": [
+    "pyproject.toml",
+    "Makefile",
+    "README.md",
+    "src/flext_ldap/__init__.py"
+  ],
+  
+  // Exclude from indexing
+  "cursor.exclude": [
+    "**/.venv/**",
+    "**/node_modules/**",
+    "**/__pycache__/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.mypy_cache/**",
+    "**/.ruff_cache/**",
+    "**/.pytest_cache/**",
+    "**/htmlcov/**"
+  ],
+  
+  // Import all VSCode settings
+  "extends": "../.vscode/settings.json"
+}

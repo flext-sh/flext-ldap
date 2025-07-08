@@ -1,10 +1,6 @@
-"""Test package for LDAP Core Shared library.
+# Copyright (c) 2025 FLEXT
+# SPDX-License-Identifier: MIT
 
-This package contains comprehensive test suites validating all functionality
-with enterprise-grade testing standards:
-- 99% code coverage requirement
-- Property-based testing for edge cases
-- Performance benchmarks for critical paths
-- Integration tests with real LDAP scenarios
-- Security testing for authentication flows
-"""
+"""FLEXT LDAP tests."""
+
+from __future__ import annotations

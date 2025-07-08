@@ -56,7 +56,7 @@ Copyright Notice
 
 
 Zeilenga                     Standards Track                    [Page 1]
-
+
 RFC 6171               LDAP Don't Use Copy Control            March 2011
 
 
@@ -112,7 +112,7 @@ RFC 6171               LDAP Don't Use Copy Control            March 2011
 
 
 Zeilenga                     Standards Track                    [Page 2]
-
+
 RFC 6171               LDAP Don't Use Copy Control            March 2011
 
 
@@ -168,7 +168,7 @@ RFC 6171               LDAP Don't Use Copy Control            March 2011
 
 
 Zeilenga                     Standards Track                    [Page 3]
-
+
 RFC 6171               LDAP Don't Use Copy Control            March 2011
 
 
@@ -224,7 +224,7 @@ RFC 6171               LDAP Don't Use Copy Control            March 2011
 
 
 Zeilenga                     Standards Track                    [Page 4]
-
+
 RFC 6171               LDAP Don't Use Copy Control            March 2011
 
 
@@ -280,7 +280,7 @@ RFC 6171               LDAP Don't Use Copy Control            March 2011
 
 
 Zeilenga                     Standards Track                    [Page 5]
-
+
 RFC 6171               LDAP Don't Use Copy Control            March 2011
 
 
@@ -336,4 +336,3 @@ Author's Address
 
 
 Zeilenga                     Standards Track                    [Page 6]
-

@@ -775,6 +775,6 @@ users = await (ldap.query()
 
 **O resultado é uma API moderna, mantendo 100% de compatibilidade com arquitetura enterprise-grade para o futuro.**
 
-_Documentação criada em: 2025-06-26_  
-_Refatoração: God Object → True Facade Pattern_  
+_Documentação criada em: 2025-06-26_
+_Refatoração: God Object → True Facade Pattern_
 _Status: 100% compatível + enhanced capabilities_
