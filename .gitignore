@@ -165,3 +165,88 @@ timeouts_test_ldap3.txt
 scratch/
 temp/
 tmp/
+
+# LDAP specific
+ldap_dump/
+*.ldif.backup
+*.ldif.tmp
+ldap_test_data/
+.ldap_cache/
+
+# Documentation and reports
+*_REPORT.md
+*_REPORT.html
+DEVELOPMENT*.md
+DUPLICATION*.md
+CONFIG_MIGRATION*.md
+FLEXT_*_MIGRATION*.md
+validation_results.json
+*_validation.*
+validate_*.*
+fix_*.py
+*_fix.py
+LOGGING_MIGRATION.md
+PRE_COMMIT_STRICT.md
+
+# Archives and backups
+*.zip
+*.tar.gz
+*.tar
+*.gz
+*.backup
+*_backup*
+.dev_deps_backup_*
+archive/
+backups/
+
+# IDE extensions
+.cursor/
+.claude/
+
+# Generated files
+*.json
+!configs/*.json
+!pyproject.toml
+!poetry.lock
+*.xml
+*.html
+!docs/**/*.html
+
+# Requirements files (use pyproject.toml instead)
+requirements.txt
+requirements-*.txt
+dev-requirements.txt
+test-requirements.txt
+
+# Profiling
+*.prof
+*.lprof
+*.stats
+
+# Type checking
+typings/
+!src/flext_ldap/py.typed
+
+# Reference files
+reference/generated/
+
+# Self validation
+self_validation_report.json
+freshness_report.json
+docstring_standardization_report.json
+claude_complete_report.json
+
+# Testing
+.ruff_cache/
+test-results/
+junit*.xml
+
+# Security
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+secrets/
+credentials/

@@ -298,13 +298,17 @@ class LDAPFilter(DomainValueObject):
         )
 
     def __str__(self) -> str:
+        """Return string representation of the LDAP filter."""
         return str(self.filter_string)
 
     def __and__(self, other: LDAPFilter) -> LDAPFilter:
+        """Combine filters with AND operation."""
         return self.and_filter(self, other)
 
     def __or__(self, other: LDAPFilter) -> LDAPFilter:
+        """Combine filters with OR operation."""
         return self.or_filter(self, other)
 
     def __invert__(self) -> LDAPFilter:
+        """Invert filter with NOT operation."""
         return self.not_filter(self)

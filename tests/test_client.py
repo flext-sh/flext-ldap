@@ -10,14 +10,14 @@ class TestLDAPClient:
     def test_client_import(self):
         """Test that LDAPClient can be imported."""
         from flext_ldap.client import LDAPClient
-        
+
         assert LDAPClient is not None
 
     @pytest.mark.unit
     def test_client_instantiation_with_settings(self, ldap_settings):
         """Test that LDAPClient can be instantiated with settings."""
         from flext_ldap.client import LDAPClient
-        
+
         client = LDAPClient(ldap_settings)
         assert client is not None
         assert not client.is_connected()
@@ -26,7 +26,7 @@ class TestLDAPClient:
     def test_client_instantiation_without_config(self):
         """Test that LDAPClient can be instantiated without config."""
         from flext_ldap.client import LDAPClient
-        
+
         client = LDAPClient()
         assert client is not None
         assert not client.is_connected()
@@ -35,7 +35,7 @@ class TestLDAPClient:
     def test_get_server_info_disconnected(self):
         """Test get_server_info when disconnected."""
         from flext_ldap.client import LDAPClient
-        
+
         client = LDAPClient()
         info = client.get_server_info()
         assert info == {"status": "disconnected"}

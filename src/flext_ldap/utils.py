@@ -43,7 +43,7 @@ def parse_generalized_time(time_str: str) -> datetime:
         tz = UTC
 
     # Parse the time string
-    dt = datetime.strptime(time_str, "%Y%m%d%H%M%S")
+    dt = datetime.strptime(time_str, "%Y%m%d%H%M%S")  # noqa: DTZ007
 
     if tz:
         dt = dt.replace(tzinfo=tz)
@@ -71,8 +71,8 @@ def validate_dn(dn: str) -> bool:
 def normalize_dn(dn: str) -> str:
     """Normalize distinguished name for comparison."""
     parts = []
-    for part in dn.split(","):
-        part = part.strip()
+    for raw_part in dn.split(","):
+        part = raw_part.strip()
         if "=" in part:
             attr, value = part.split("=", 1)
             parts.append(f"{attr.strip().lower()}={value.strip().lower()}")
@@ -118,9 +118,10 @@ def is_valid_ldap_url(url: str) -> bool:
     """Check if URL is valid LDAP URL."""
     try:
         parsed = urlparse(url)
-        return parsed.scheme in {"ldap", "ldaps"}
-    except Exception:
+    except (ValueError, TypeError):
         return False
+    else:
+        return parsed.scheme in {"ldap", "ldaps"}
 
 
 def parse_ldap_url(url: str) -> dict[str, Any]:

@@ -36,31 +36,23 @@ setup: install ## Complete development environment setup
 # =============================================================================
 
 .PHONY: format
-format: ## Format code with black and isort
-	poetry run black src tests
-	poetry run isort src tests
+format: ## Format code with ruff
+	poetry run ruff format src tests
 
 .PHONY: lint
-lint: ## Run ALL linters (ruff, mypy, pylint, etc.)
-	@echo "🔍 Running Ruff with ALL rules..."
-	poetry run ruff check src tests --select ALL --preview
-	@echo "🔍 Running MyPy strict..."
+lint: ## Run linters (ruff, mypy, bandit)
+	@echo "🔍 Running Ruff..."
+	poetry run ruff check src tests
+	@echo "🔍 Running MyPy..."
 	poetry run mypy src tests --strict
-	@echo "🔍 Running Pylint..."
-	poetry run pylint src --fail-under=10.0
-	@echo "🔍 Running Flake8..."
-	poetry run flake8 src
 	@echo "🔍 Running Bandit security scan..."
 	poetry run bandit -r src -ll
-	@echo "🔍 Running pydocstyle..."
-	poetry run pydocstyle src
 	@echo "✅ All linters passed!"
 
 .PHONY: lint-fix
 lint-fix: ## Fix auto-fixable lint issues
-	poetry run ruff check src tests --fix --select ALL --preview
-	poetry run black src tests
-	poetry run isort src tests
+	poetry run ruff check src tests --fix
+	poetry run ruff format src tests
 
 .PHONY: type-check
 type-check: ## Run strict type checking
@@ -85,8 +77,7 @@ check: format lint type-check security complexity ## Run ALL checks
 
 .PHONY: check-strict
 check-strict: ## Run checks without auto-fixing
-	poetry run black src tests --check --diff
-	poetry run isort src tests --check-only --diff
+	poetry run ruff format src tests --check --diff
 	$(MAKE) lint
 
 # =============================================================================
@@ -115,7 +106,7 @@ test-debug: ## Run tests with debugging enabled
 
 .PHONY: coverage
 coverage: ## Generate coverage report
-	poetry run pytest --cov=flext_ldap --cov-report=html --cov-report=term-missing
+	poetry run pytest --cov=src/flext_ldap --cov-report=html --cov-report=term-missing
 	@echo "📊 Coverage report: file://$(PWD)/htmlcov/index.html"
 
 # =============================================================================

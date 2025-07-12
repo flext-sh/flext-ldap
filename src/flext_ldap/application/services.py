@@ -10,28 +10,32 @@ REFACTORED:
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from flext_core.config import injectable
 from flext_core.domain.types import ServiceResult
-from flext_ldap.domain.entities import (
-    LDAPConnection,
-    LDAPGroup,
-    LDAPOperation,
-    LDAPUser,
-)
-from flext_ldap.domain.value_objects import CreateUserRequest
+
+from flext_ldap.domain.entities import (LDAPConnection, LDAPGroup, LDAPOperation,
+                                        LDAPUser)
+from flext_ldap.domain.exceptions import LDAPConnectionError, LDAPUserError
+from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
 
 if TYPE_CHECKING:
     from uuid import UUID
 
+    from flext_ldap.domain.value_objects import CreateUserRequest
 
-@injectable()
+
+@injectable()  # type: ignore[arg-type]
 class LDAPUserService:
     """Service for managing LDAP users."""
 
-    def __init__(self) -> None:
+    def __init__(self, ldap_client: LDAPInfrastructureClient | None = None) -> None:
         """Initialize the LDAP user service."""
+        self._ldap_client = ldap_client or LDAPInfrastructureClient()
+        self._connection_id: str | None = None
+        # Fallback in-memory storage for non-connected operations
         self._users: dict[UUID, LDAPUser] = {}
 
     async def create_user(
@@ -59,14 +63,15 @@ class LDAPUserService:
                 department=request.department,
                 title=request.title,
                 object_classes=request.object_classes or ["inetOrgPerson"],
-                name=request.cn,
-                description=f"LDAP user: {request.uid}",
             )
 
             self._users[user.id] = user
             return ServiceResult.ok(user)
-        except Exception as e:
+        except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Failed to create user: {e}")
+        except Exception as e:
+            msg = f"Unexpected error creating user: {e}"
+            raise LDAPUserError(msg) from e
 
     async def get_user(self, user_id: UUID) -> ServiceResult[LDAPUser | None]:
         """Get an LDAP user by ID.
@@ -81,7 +86,7 @@ class LDAPUserService:
         try:
             user = self._users.get(user_id)
             return ServiceResult.ok(user)
-        except Exception as e:
+        except (KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to get user: {e}")
 
     async def find_user_by_dn(self, dn: str) -> ServiceResult[LDAPUser | None]:
@@ -99,7 +104,7 @@ class LDAPUserService:
                 if user.dn == dn:
                     return ServiceResult.ok(user)
             return ServiceResult.ok(None)
-        except Exception as e:
+        except (KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to find user by DN: {e}")
 
     async def find_user_by_uid(self, uid: str) -> ServiceResult[LDAPUser | None]:
@@ -117,7 +122,7 @@ class LDAPUserService:
                 if user.uid == uid:
                     return ServiceResult.ok(user)
             return ServiceResult.ok(None)
-        except Exception as e:
+        except (KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to find user by UID: {e}")
 
     async def update_user(
@@ -144,9 +149,10 @@ class LDAPUserService:
                 if hasattr(user, key):
                     setattr(user, key, value)
 
-            user.touch()
+            # Update timestamp using pydantic model approach
+            user.updated_at = datetime.now(UTC)
             return ServiceResult.ok(user)
-        except Exception as e:
+        except (KeyError, AttributeError, ValueError) as e:
             return ServiceResult.fail(f"Failed to update user: {e}")
 
     async def lock_user(self, user_id: UUID) -> ServiceResult[LDAPUser]:
@@ -166,7 +172,7 @@ class LDAPUserService:
 
             user.lock_account()
             return ServiceResult.ok(user)
-        except Exception as e:
+        except (KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to lock user: {e}")
 
     async def unlock_user(self, user_id: UUID) -> ServiceResult[LDAPUser]:
@@ -186,7 +192,7 @@ class LDAPUserService:
 
             user.unlock_account()
             return ServiceResult.ok(user)
-        except Exception as e:
+        except (KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to unlock user: {e}")
 
     async def delete_user(self, user_id: UUID) -> ServiceResult[bool]:
@@ -204,7 +210,7 @@ class LDAPUserService:
                 del self._users[user_id]
                 return ServiceResult.ok(True)
             return ServiceResult.fail("User not found")
-        except Exception as e:
+        except (KeyError, ValueError) as e:
             return ServiceResult.fail(f"Failed to delete user: {e}")
 
     async def list_users(
@@ -229,15 +235,45 @@ class LDAPUserService:
                 users = [u for u in users if u.ou == ou]
 
             return ServiceResult.ok(users[:limit])
-        except Exception as e:
+        except (KeyError, ValueError) as e:
             return ServiceResult.fail(f"Failed to list users: {e}")
 
+    async def set_connection(self, connection_id: str) -> ServiceResult[bool]:
+        """Set the LDAP connection ID for directory operations.
 
-@injectable()
+        Args:
+            connection_id: The LDAP connection identifier
+
+        Returns:
+            ServiceResult indicating success or failure
+
+        """
+        try:
+            self._connection_id = connection_id
+            return ServiceResult.ok(True)
+        except (ValueError, TypeError) as e:
+            return ServiceResult.fail(f"Failed to set connection: {e}")
+
+    async def clear_connection(self) -> ServiceResult[bool]:
+        """Clear the LDAP connection (revert to memory-only mode).
+
+        Returns:
+            ServiceResult indicating success or failure
+
+        """
+        try:
+            self._connection_id = None
+            return ServiceResult.ok(True)
+        except (ValueError, TypeError) as e:
+            return ServiceResult.fail(f"Failed to clear connection: {e}")
+
+
+@injectable()  # type: ignore[arg-type]
 class LDAPGroupService:
     """Service for managing LDAP groups."""
 
     def __init__(self) -> None:
+        """Initialize the LDAP group service."""
         self._groups: dict[UUID, LDAPGroup] = {}
 
     async def create_group(
@@ -271,13 +307,11 @@ class LDAPGroupService:
                 members=members or [],
                 owners=owners or [],
                 object_classes=object_classes or ["groupOfNames"],
-                name=cn,
-                description=f"LDAP group: {cn}",
             )
 
             self._groups[group.id] = group
             return ServiceResult.ok(group)
-        except Exception as e:
+        except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Failed to create group: {e}")
 
     async def get_group(self, group_id: UUID) -> ServiceResult[LDAPGroup | None]:
@@ -293,7 +327,7 @@ class LDAPGroupService:
         try:
             group = self._groups.get(group_id)
             return ServiceResult.ok(group)
-        except Exception as e:
+        except (KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to get group: {e}")
 
     async def find_group_by_dn(self, dn: str) -> ServiceResult[LDAPGroup | None]:
@@ -311,7 +345,7 @@ class LDAPGroupService:
                 if group.dn == dn:
                     return ServiceResult.ok(group)
             return ServiceResult.ok(None)
-        except Exception as e:
+        except (KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to find group by DN: {e}")
 
     async def add_member(
@@ -336,7 +370,7 @@ class LDAPGroupService:
 
             group.add_member(member_dn)
             return ServiceResult.ok(group)
-        except Exception as e:
+        except (KeyError, AttributeError, ValueError) as e:
             return ServiceResult.fail(f"Failed to add member: {e}")
 
     async def remove_member(
@@ -361,7 +395,7 @@ class LDAPGroupService:
 
             group.remove_member(member_dn)
             return ServiceResult.ok(group)
-        except Exception as e:
+        except (KeyError, AttributeError, ValueError) as e:
             return ServiceResult.fail(f"Failed to remove member: {e}")
 
     async def list_groups(
@@ -386,7 +420,7 @@ class LDAPGroupService:
                 groups = [g for g in groups if g.ou == ou]
 
             return ServiceResult.ok(groups[:limit])
-        except Exception as e:
+        except (KeyError, ValueError) as e:
             return ServiceResult.fail(f"Failed to list groups: {e}")
 
     async def delete_group(self, group_id: UUID) -> ServiceResult[bool]:
@@ -404,51 +438,71 @@ class LDAPGroupService:
                 del self._groups[group_id]
                 return ServiceResult.ok(True)
             return ServiceResult.fail("Group not found")
-        except Exception as e:
+        except (KeyError, ValueError) as e:
             return ServiceResult.fail(f"Failed to delete group: {e}")
 
 
-@injectable()
+@injectable()  # type: ignore[arg-type]
 class LDAPConnectionService:
-    """Service for managing LDAP connections."""
+    """Service for managing LDAP connections with real LDAP integration."""
 
-    def __init__(self) -> None:
+    def __init__(self, ldap_client: LDAPInfrastructureClient | None = None) -> None:
         """Initialize the LDAP connection service."""
         self._connections: dict[UUID, LDAPConnection] = {}
+        self._ldap_client = ldap_client or LDAPInfrastructureClient()
 
     async def create_connection(
         self,
         server_uri: str,
-        bind_dn: str,
-        pool_name: str | None = None,
-        pool_size: int = 1,
+        bind_dn: str | None = None,
+        password: str | None = None,
+        *,
+        use_ssl: bool = False,
     ) -> ServiceResult[LDAPConnection]:
-        """Create a new LDAP connection.
+        """Create and establish a real LDAP connection.
 
         Args:
             server_uri: LDAP server URI
-            bind_dn: Distinguished name for binding
-            pool_name: Connection pool name (optional)
-            pool_size: Connection pool size (default: 1)
+            bind_dn: Distinguished name for binding (optional for anonymous)
+            password: Password for binding (optional)
+            use_ssl: Use SSL/TLS connection
 
         Returns:
             ServiceResult containing the created LDAPConnection or error
 
         """
         try:
+            # Create domain entity
             connection = LDAPConnection(
-                server_uri=server_uri,
+                server_url=server_uri,
                 bind_dn=bind_dn,
-                pool_name=pool_name,
-                pool_size=pool_size,
-                name=f"Connection to {server_uri}",
-                description=f"LDAP connection for {bind_dn}",
             )
+
+            # Establish real LDAP connection
+            result = await self._ldap_client.connect(
+                server_uri,
+                bind_dn,
+                password,
+                use_ssl=use_ssl,
+            )
+
+            if not result.is_success:
+                return ServiceResult.fail(
+                    f"Failed to connect to LDAP: {result.error_message}"
+                )
+
+            # Mark as connected and bound
+            if bind_dn:
+                connection.bind(bind_dn)
 
             self._connections[connection.id] = connection
             return ServiceResult.ok(connection)
-        except Exception as e:
+
+        except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Failed to create connection: {e}")
+        except Exception as e:
+            msg = f"Unexpected error creating connection: {e}"
+            raise LDAPConnectionError(msg) from e
 
     async def connect(self, connection_id: UUID) -> ServiceResult[LDAPConnection]:
         """Establish a connection to the LDAP server.
@@ -465,9 +519,13 @@ class LDAPConnectionService:
             if not connection:
                 return ServiceResult.fail("Connection not found")
 
-            connection.connect()
+            # Real LDAP connection already established in create_connection
+            # Just mark as connected if not already
+            if not connection.is_connected:
+                connection.connect()
+
             return ServiceResult.ok(connection)
-        except Exception as e:
+        except (KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to connect: {e}")
 
     async def disconnect(self, connection_id: UUID) -> ServiceResult[LDAPConnection]:
@@ -485,9 +543,22 @@ class LDAPConnectionService:
             if not connection:
                 return ServiceResult.fail("Connection not found")
 
+            # Get the real LDAP connection ID
+            ldap_connection_id = (
+                f"{connection.server_url}:{connection.bind_dn or 'anonymous'}"
+            )
+
+            # Disconnect from real LDAP server
+            result = await self._ldap_client.disconnect(ldap_connection_id)
+            if not result.is_success:
+                return ServiceResult.fail(
+                    f"Failed to disconnect from LDAP: {result.error_message}"
+                )
+
+            # Mark domain entity as disconnected
             connection.disconnect()
             return ServiceResult.ok(connection)
-        except Exception as e:
+        except (KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to disconnect: {e}")
 
     async def bind(self, connection_id: UUID) -> ServiceResult[LDAPConnection]:
@@ -508,9 +579,16 @@ class LDAPConnectionService:
             if not connection.is_connected:
                 return ServiceResult.fail("Connection not established")
 
-            connection.bind()
+            # For LDAP3, binding is typically done during connection establishment
+            # If we need to rebind or change credentials, we would reconnect
+            # For now, just mark as bound if we have a bind DN
+            if connection.bind_dn:
+                connection.bind(connection.bind_dn)
+            else:
+                connection.bind("")  # Anonymous bind
+
             return ServiceResult.ok(connection)
-        except Exception as e:
+        except (KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to bind: {e}")
 
     async def get_connection(
@@ -529,7 +607,7 @@ class LDAPConnectionService:
         try:
             connection = self._connections.get(connection_id)
             return ServiceResult.ok(connection)
-        except Exception as e:
+        except (KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to get connection: {e}")
 
     async def list_connections(self) -> ServiceResult[list[LDAPConnection]]:
@@ -542,11 +620,11 @@ class LDAPConnectionService:
         try:
             connections = list(self._connections.values())
             return ServiceResult.ok(connections)
-        except Exception as e:
+        except (KeyError, ValueError) as e:
             return ServiceResult.fail(f"Failed to list connections: {e}")
 
 
-@injectable()
+@injectable()  # type: ignore[arg-type]
 class LDAPOperationService:
     """Service for tracking LDAP operations."""
 
@@ -581,23 +659,22 @@ class LDAPOperationService:
             operation = LDAPOperation(
                 operation_type=operation_type,
                 target_dn=target_dn,
-                connection_id=connection_id,
+                connection_id=str(connection_id),
                 user_dn=user_dn,
                 filter_expression=filter_expression,
                 attributes=attributes or [],
-                name=f"{operation_type} on {target_dn}",
-                description=f"LDAP {operation_type} operation",
             )
 
             operation.start_operation()
             self._operations[operation.id] = operation
             return ServiceResult.ok(operation)
-        except Exception as e:
+        except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Failed to create operation: {e}")
 
     async def complete_operation(
         self,
         operation_id: UUID,
+        *,
         success: bool,
         result_count: int = 0,
         error_message: str | None = None,
@@ -619,9 +696,11 @@ class LDAPOperationService:
             if not operation:
                 return ServiceResult.fail("Operation not found")
 
-            operation.complete_operation(success, result_count, error_message)
+            operation.complete_operation(
+                success=success, result_count=result_count, error_message=error_message
+            )
             return ServiceResult.ok(operation)
-        except Exception as e:
+        except (KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to complete operation: {e}")
 
     async def get_operation(
@@ -640,7 +719,7 @@ class LDAPOperationService:
         try:
             operation = self._operations.get(operation_id)
             return ServiceResult.ok(operation)
-        except Exception as e:
+        except (KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to get operation: {e}")
 
     async def list_operations(
@@ -663,12 +742,15 @@ class LDAPOperationService:
 
             if connection_id:
                 operations = [
-                    op for op in operations if op.connection_id == connection_id
+                    op for op in operations if op.connection_id == str(connection_id)
                 ]
 
-            # Sort by started_at descending
-            operations.sort(key=lambda op: op.started_at, reverse=True)
+            # Sort by started_at descending (handle None values)
+            operations.sort(
+                key=lambda op: op.started_at or "",
+                reverse=True,
+            )
 
             return ServiceResult.ok(operations[:limit])
-        except Exception as e:
+        except (KeyError, ValueError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to list operations: {e}")

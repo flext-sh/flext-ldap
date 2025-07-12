@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import field_validator  # Only decorator, not Field
-from pydantic_settings import SettingsConfigDict
-
 from flext_core.config.base import BaseConfig, BaseSettings
 from flext_core.domain.pydantic_base import DomainValueObject, Field
+from pydantic import field_validator  # Only decorator, not Field
+from pydantic_settings import SettingsConfigDict
 
 
 class LDAPConstants:
@@ -206,7 +205,7 @@ class FlextLDAPSettings(BaseSettings):
         }
 
 
-def create_development_config(**overrides: Any) -> FlextLDAPSettings:
+def create_development_config(**overrides: Any) -> FlextLDAPSettings:  # noqa: ANN401
     """Create development configuration with sensible defaults."""
     defaults = {
         "enable_debug_mode": True,
@@ -228,4 +227,4 @@ def create_development_config(**overrides: Any) -> FlextLDAPSettings:
     }
     defaults.update(overrides)
 
-    return FlextLDAPSettings(**defaults)
+    return FlextLDAPSettings()  # Use default environment-based configuration

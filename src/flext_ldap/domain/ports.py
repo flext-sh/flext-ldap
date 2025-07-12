@@ -6,11 +6,12 @@ Using clean architecture patterns - NO duplication with flext-core.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
 
     from flext_core.domain.types import ServiceResult
+
     from flext_ldap.domain.entities import LDAPConnection, LDAPUser
 
 
@@ -56,7 +57,7 @@ class LDAPConnectionService(ABC):
     async def get_connection_info(
         self,
         connection: LDAPConnection,
-    ) -> ServiceResult[dict]:
+    ) -> ServiceResult[dict[str, Any]]:
         """Get connection information."""
         ...
 
@@ -72,7 +73,7 @@ class LDAPSearchService(ABC):
         filter_string: str,
         attributes: list[str] | None = None,
         scope: str = "sub",
-    ) -> ServiceResult[list[dict]]:
+    ) -> ServiceResult[list[dict[str, Any]]]:
         """Search LDAP entries."""
         ...
 
@@ -146,7 +147,7 @@ class LDAPSchemaService(ABC):
     async def get_schema(
         self,
         connection: LDAPConnection,
-    ) -> ServiceResult[dict]:
+    ) -> ServiceResult[dict[str, Any]]:
         """Get LDAP schema information."""
         ...
 
