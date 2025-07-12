@@ -5,7 +5,6 @@ NO LEGACY CODE - Only clean implementations.
 """
 
 from flext_core import DomainEntity, DomainValueObject, InMemoryRepository
-
 from flext_ldap.domain.entities import (
     LDAPConnection,
     LDAPGroup,

@@ -35,7 +35,7 @@ class TestLDAPService:
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_user_operations_without_connection(
-        self, ldap_service: LDAPService
+        self, ldap_service: LDAPService,
     ) -> None:
         """Test user operations work in memory mode without LDAP connection."""
         # Create user request
@@ -171,7 +171,7 @@ class TestLDAPService:
 
         # Try to find non-existent group
         group_result = await ldap_service.find_group_by_dn(
-            "cn=nonexistent,dc=example,dc=com"
+            "cn=nonexistent,dc=example,dc=com",
         )
         assert group_result.is_success
         assert group_result.value is None
@@ -204,7 +204,7 @@ class TestLDAPService:
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_create_user_with_all_attributes(
-        self, ldap_service: LDAPService
+        self, ldap_service: LDAPService,
     ) -> None:
         """Test creating user with all optional attributes."""
         request = CreateUserRequest(

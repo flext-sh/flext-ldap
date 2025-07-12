@@ -11,9 +11,9 @@ from __future__ import annotations
 from typing import Any
 
 import ldap3
-from flext_core.domain.types import ServiceResult
 from ldap3.core.exceptions import LDAPException
 
+from flext_core.domain.types import ServiceResult
 from flext_ldap.domain.exceptions import LDAPConnectionError, LDAPOperationError
 
 

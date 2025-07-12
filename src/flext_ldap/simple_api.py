@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from flext_core.domain.types import ServiceResult
-
     from flext_ldap.application.services import LDAPConnectionService, LDAPUserService
     from flext_ldap.domain.entities import LDAPConnection, LDAPUser
 
@@ -49,7 +48,7 @@ class LDAPAPI:
         if self._connection_service is None:
             from flext_ldap.application.services import (
                 LDAPConnectionService,
-            )  # noqa: PLC0415
+            )
 
             self._connection_service = self._container.resolve(LDAPConnectionService)
         return self._connection_service

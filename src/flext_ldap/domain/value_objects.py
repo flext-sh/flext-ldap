@@ -5,8 +5,9 @@ Immutable value objects for LDAP domain.
 
 from __future__ import annotations
 
-from flext_core.domain.pydantic_base import DomainValueObject
 from pydantic import field_validator
+
+from flext_core.domain.pydantic_base import DomainValueObject
 
 
 class DistinguishedName(DomainValueObject):

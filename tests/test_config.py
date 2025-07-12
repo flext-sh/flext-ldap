@@ -7,14 +7,14 @@ class TestFlextLDAPSettings:
     """Test FlextLDAPSettings functionality."""
 
     @pytest.mark.unit
-    def test_settings_import(self):
+    def test_settings_import(self) -> None:
         """Test that FlextLDAPSettings can be imported."""
         from flext_ldap.config import FlextLDAPSettings
 
         assert FlextLDAPSettings is not None
 
     @pytest.mark.unit
-    def test_settings_instantiation_defaults(self):
+    def test_settings_instantiation_defaults(self) -> None:
         """Test that FlextLDAPSettings can be instantiated with defaults."""
         from flext_ldap.config import FlextLDAPSettings
 
@@ -24,7 +24,7 @@ class TestFlextLDAPSettings:
         assert settings.connection.port == 389
 
     @pytest.mark.unit
-    def test_connection_config_custom(self):
+    def test_connection_config_custom(self) -> None:
         """Test LDAPConnectionConfig with custom values."""
         from flext_ldap.config import LDAPConnectionConfig
 

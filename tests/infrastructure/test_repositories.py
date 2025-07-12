@@ -1,12 +1,12 @@
 """Tests for LDAP infrastructure repositories."""
 
-from typing import Any
+from typing import Any, Never
 from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
-from flext_core.domain.types import ServiceResult
 
+from flext_core.domain.types import ServiceResult
 from flext_ldap.domain.entities import LDAPConnection, LDAPUser
 from flext_ldap.infrastructure.repositories import (
     LDAPConnectionRepositoryImpl,
@@ -65,7 +65,7 @@ class TestLDAPConnectionRepositoryImpl:
 
     @pytest.mark.asyncio
     async def test_save_connection_success(
-        self, connection_repo, sample_connection
+        self, connection_repo, sample_connection,
     ) -> None:
         """Test saving connection successfully."""
         result = await connection_repo.save(sample_connection)
@@ -75,7 +75,7 @@ class TestLDAPConnectionRepositoryImpl:
         assert sample_connection.id in connection_repo._connections  # noqa: SLF001
         assert (
             connection_repo._connections[sample_connection.id] == sample_connection
-        )  # noqa: SLF001
+        )
 
     @pytest.mark.asyncio
     async def test_save_connection_error(self, connection_repo) -> None:
@@ -83,8 +83,9 @@ class TestLDAPConnectionRepositoryImpl:
         # Create a connection that will cause an error when accessing .id
         bad_connection = Mock()
 
-        def raise_error():
-            raise Exception("Test error")
+        def raise_error() -> Never:
+            msg = "Test error"
+            raise Exception(msg)
 
         type(bad_connection).id = property(lambda self: raise_error())
 
@@ -118,8 +119,8 @@ class TestLDAPConnectionRepositoryImpl:
         # Mock the _connections dict to raise an error
         connection_repo._connections = Mock()  # noqa: SLF001
         connection_repo._connections.get.side_effect = Exception(
-            "Test error"
-        )  # noqa: SLF001
+            "Test error",
+        )
 
         with pytest.raises(Exception):
             await connection_repo.find_by_id(uuid4())
@@ -134,7 +135,7 @@ class TestLDAPConnectionRepositoryImpl:
 
     @pytest.mark.asyncio
     async def test_find_all_with_connections(
-        self, connection_repo, sample_connection
+        self, connection_repo, sample_connection,
     ) -> None:
         """Test finding all connections when some exist."""
         # Save a connection first
@@ -152,15 +153,15 @@ class TestLDAPConnectionRepositoryImpl:
         # Mock the _connections dict to raise an error
         connection_repo._connections = Mock()  # noqa: SLF001
         connection_repo._connections.values.side_effect = Exception(
-            "Test error"
-        )  # noqa: SLF001
+            "Test error",
+        )
 
         with pytest.raises(Exception):
             await connection_repo.find_all()
 
     @pytest.mark.asyncio
     async def test_delete_connection_exists(
-        self, connection_repo, sample_connection
+        self, connection_repo, sample_connection,
     ) -> None:
         """Test deleting connection that exists."""
         # First save the connection
@@ -174,7 +175,7 @@ class TestLDAPConnectionRepositoryImpl:
 
     @pytest.mark.asyncio
     async def test_delete_connection_not_exists(
-        self, connection_repo, sample_connection
+        self, connection_repo, sample_connection,
     ) -> None:
         """Test deleting connection that doesn't exist."""
         result = await connection_repo.delete(sample_connection)
@@ -209,7 +210,7 @@ class TestLDAPUserRepositoryImpl:
         bad_user = Mock()
         # Mock some attribute access that might fail
         type(bad_user).some_attr = property(
-            lambda self: (_ for _ in ()).throw(Exception("Test error"))
+            lambda self: (_ for _ in ()).throw(Exception("Test error")),
         )
 
         # This should still work since it's a foundation implementation

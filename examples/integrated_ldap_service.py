@@ -112,7 +112,7 @@ async def main() -> None:
             if remove_result.is_success:
                 updated_group = remove_result.value
                 print(
-                    f"✅ Removed user from group: {len(updated_group.members)} members"
+                    f"✅ Removed user from group: {len(updated_group.members)} members",
                 )
 
         # List all groups
@@ -160,7 +160,7 @@ async def main() -> None:
             print(f"   Connected: {ldap_service.is_connected()}")
     else:
         print(
-            f"INFO: Demo connection failed (expected): {connection_result.error_message}"
+            f"INFO: Demo connection failed (expected): {connection_result.error_message}",
         )
         print("   This is normal - no real LDAP server is running")
         print("   In production, you would connect to your actual LDAP server")
@@ -184,7 +184,7 @@ async def main() -> None:
     disconnect_result = await ldap_service.disconnect_from_server()
     if disconnect_result.failure:
         print(
-            f"✅ Correctly handled disconnect error: {disconnect_result.error_message}"
+            f"✅ Correctly handled disconnect error: {disconnect_result.error_message}",
         )
     else:
         print("❌ Unexpected successful disconnect")
