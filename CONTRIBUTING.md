@@ -81,6 +81,7 @@ Write tests for all new functionality:
 ```
 
 Run specific test categories:
+
 ```bash
 pytest -m unit
 pytest -m integration
@@ -120,7 +121,7 @@ Feature requests are welcome! Please:
 3. Explain why it benefits the project
 4. Consider submitting a PR
 
-## Questions?
+## Questions
 
 - Open a GitHub Discussion for general questions
 - Check existing documentation first

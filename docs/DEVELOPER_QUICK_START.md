@@ -268,36 +268,36 @@ const ldap = require("ldapjs");
 
 // Connect to server
 const client = ldap.createClient({
-  url: "ldap://ldap.forumsys.com:389",
+    url: "ldap://ldap.forumsys.com:389",
 });
 
 client.bind("cn=read-only-REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "password", (err) => {
-  if (err) {
-    console.error("Bind failed:", err);
-    return;
-  }
-
-  // Search for people
-  const opts = {
-    filter: "(objectclass=person)",
-    scope: "sub",
-    attributes: ["cn", "mail"],
-  };
-
-  client.search("dc=example,dc=com", opts, (err, res) => {
     if (err) {
-      console.error("Search failed:", err);
-      return;
+        console.error("Bind failed:", err);
+        return;
     }
 
-    res.on("searchEntry", (entry) => {
-      console.log("Name:", entry.object.cn, "Email:", entry.object.mail);
-    });
+    // Search for people
+    const opts = {
+        filter: "(objectclass=person)",
+        scope: "sub",
+        attributes: ["cn", "mail"],
+    };
 
-    res.on("end", () => {
-      client.unbind();
+    client.search("dc=example,dc=com", opts, (err, res) => {
+        if (err) {
+            console.error("Search failed:", err);
+            return;
+        }
+
+        res.on("searchEntry", (entry) => {
+            console.log("Name:", entry.object.cn, "Email:", entry.object.mail);
+        });
+
+        res.on("end", () => {
+            client.unbind();
+        });
     });
-  });
 });
 ```
 
@@ -308,40 +308,40 @@ const ldap = require("ldapjs");
 const { promisify } = require("util");
 
 class LdapClient {
-  constructor(url) {
-    this.client = ldap.createClient({ url });
-    this.bind = promisify(this.client.bind.bind(this.client));
-  }
+    constructor(url) {
+        this.client = ldap.createClient({ url });
+        this.bind = promisify(this.client.bind.bind(this.client));
+    }
 
-  async search(base, filter, attributes = []) {
-    return new Promise((resolve, reject) => {
-      const opts = { filter, scope: "sub", attributes };
-      const results = [];
+    async search(base, filter, attributes = []) {
+        return new Promise((resolve, reject) => {
+            const opts = { filter, scope: "sub", attributes };
+            const results = [];
 
-      this.client.search(base, opts, (err, res) => {
-        if (err) return reject(err);
+            this.client.search(base, opts, (err, res) => {
+                if (err) return reject(err);
 
-        res.on("searchEntry", (entry) => results.push(entry.object));
-        res.on("end", () => resolve(results));
-        res.on("error", reject);
-      });
-    });
-  }
+                res.on("searchEntry", (entry) => results.push(entry.object));
+                res.on("end", () => resolve(results));
+                res.on("error", reject);
+            });
+        });
+    }
 }
 
 // Usage
 async function example() {
-  const client = new LdapClient("ldap://ldap.forumsys.com:389");
-  await client.bind("cn=read-only-REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "password");
+    const client = new LdapClient("ldap://ldap.forumsys.com:389");
+    await client.bind("cn=read-only-REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "password");
 
-  const people = await client.search(
-    "dc=example,dc=com",
-    "(objectclass=person)",
-    ["cn", "mail"],
-  );
-  people.forEach((person) =>
-    console.log(`Name: ${person.cn}, Email: ${person.mail}`),
-  );
+    const people = await client.search(
+        "dc=example,dc=com",
+        "(objectclass=person)",
+        ["cn", "mail"],
+    );
+    people.forEach((person) =>
+        console.log(`Name: ${person.cn}, Email: ${person.mail}`),
+    );
 }
 ```
 

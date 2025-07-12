@@ -25,7 +25,7 @@ Based on our comprehensive study of existing implementations:
 #### 🐍 **Current Python Libraries Limitations**
 
 - **ldap3**: Good but lacks enterprise features and advanced schema management
-- **python-ldap**: C bindings, complex setup, limited async support
+- **Python-ldap**: C bindings, complex setup, limited async support
 - **django-auth-ldap**: Django-specific, not general purpose
 - **ldif**: Basic LDIF support only
 
@@ -339,13 +339,13 @@ async def test_user_creation(ldap_server):
 - ✅ **Fluent API** (ldap3 is verbose)
 - ✅ **Built-in testing tools** (ldap3 requires external tools)
 
-### 🆚 **vs. python-ldap**
+### 🆚 **vs. Python-ldap**
 
 - ✅ **Pure Python** (no C compilation issues)
-- ✅ **Modern async support** (python-ldap is sync only)
+- ✅ **Modern async support** (Python-ldap is sync only)
 - ✅ **Better error handling** (clearer exceptions)
-- ✅ **Comprehensive documentation** (python-ldap docs are sparse)
-- ✅ **Active development** (python-ldap updates slowly)
+- ✅ **Comprehensive documentation** (Python-ldap docs are sparse)
+- ✅ **Active development** (Python-ldap updates slowly)
 
 ### 🆚 **vs. Java Apache LDAP API**
 

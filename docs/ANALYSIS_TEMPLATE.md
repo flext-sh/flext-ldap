@@ -74,11 +74,11 @@ Este template garante análise consistente, completa e sem redundâncias para ca
 #### Métodos Públicos
 
 1. **método_name(param1: tipo, param2: tipo) -> tipo_retorno**
-   - **Propósito**: [o que faz]
-   - **Parâmetros**: [descrição detalhada]
-   - **Retorna**: [tipo e descrição]
-   - **Raises**: [exceções possíveis]
-   - **Exemplo de uso**: [código básico]
+    - **Propósito**: [o que faz]
+    - **Parâmetros**: [descrição detalhada]
+    - **Retorna**: [tipo e descrição]
+    - **Raises**: [exceções possíveis]
+    - **Exemplo de uso**: [código básico]
 
 #### Métodos Privados (se relevantes para documentação)
 
@@ -202,19 +202,19 @@ Este template garante análise consistente, completa e sem redundâncias para ca
 #### Classes para Documentar
 
 1. **[ClassName]**
-   - Constructor documentation
-   - Public methods documentation
-   - Properties documentation
-   - Usage examples
-   - Error handling examples
+    - Constructor documentation
+    - Public methods documentation
+    - Properties documentation
+    - Usage examples
+    - Error handling examples
 
 #### Funções para Documentar
 
 1. **[function_name]**
-   - Parameter documentation
-   - Return value documentation
-   - Usage examples
-   - Error scenarios
+    - Parameter documentation
+    - Return value documentation
+    - Usage examples
+    - Error scenarios
 ```
 
 #### **5.2 Usage Guides Necessários**
@@ -225,18 +225,18 @@ Este template garante análise consistente, completa e sem redundâncias para ca
 #### Cenários Principais
 
 1. **[Scenario Name]**: [descrição do cenário]
-   - Setup necessário
-   - Código exemplo completo
-   - Casos de uso comuns
-   - Troubleshooting
+    - Setup necessário
+    - Código exemplo completo
+    - Casos de uso comuns
+    - Troubleshooting
 
 #### Padrões de Uso
 
 1. **[Pattern Name]**: [padrão identificado]
-   - Quando usar
-   - Como implementar
-   - Best practices
-   - Pitfalls to avoid
+    - Quando usar
+    - Como implementar
+    - Best practices
+    - Pitfalls to avoid
 ```
 
 #### **5.3 Exemplos Práticos Identificados**
@@ -245,22 +245,22 @@ Este template garante análise consistente, completa e sem redundâncias para ca
 ### Exemplos de Código Necessários
 
 1. **Basic Usage Example**
-   ```python
-   # Exemplo básico de uso identificado no código
-   ```
+    ```python
+    # Exemplo básico de uso identificado no código
+    ```
 ````
 
 2. **Advanced Usage Example**
 
-   ```python
-   # Exemplo avançado baseado na análise
-   ```
+    ```python
+    # Exemplo avançado baseado na análise
+    ```
 
 3. **Error Handling Example**
 
-   ```python
-   # Exemplo de tratamento de erros
-   ```
+    ```python
+    # Exemplo de tratamento de erros
+    ```
 
 ````
 

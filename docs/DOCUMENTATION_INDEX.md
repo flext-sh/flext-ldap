@@ -27,90 +27,90 @@ The documentation suite includes:
 #### 🏗️ Core Modules
 
 - [🔗 Connection Management](api/core/connection-management.md) - Enterprise connection pooling and management
-  - Connection configuration and security
-  - Connection pooling with health monitoring
-  - SSL/TLS and SSH tunnel support
-  - Performance monitoring and metrics
+    - Connection configuration and security
+    - Connection pooling with health monitoring
+    - SSL/TLS and SSH tunnel support
+    - Performance monitoring and metrics
 
 #### 📊 Domain Models
 
 - [📋 Result Types](api/domain/results.md) - Comprehensive typed result classes
-  - LDAPConnectionResult for connection operations
-  - LDAPSearchResult for search operations
-  - LDAPOperationResult for CRUD operations
-  - LDAPBulkResult for bulk operations
-  - LDAPPerformanceResult for monitoring
-  - LDAPValidationResult for validation
+    - LDAPConnectionResult for connection operations
+    - LDAPSearchResult for search operations
+    - LDAPOperationResult for CRUD operations
+    - LDAPBulkResult for bulk operations
+    - LDAPPerformanceResult for monitoring
+    - LDAPValidationResult for validation
 
 #### 📄 LDIF Processing Suite
 
 - [📝 LDIF Processor](api/ldif/processor.md) - Standards-compliant LDIF processing
-  - RFC 2849 compliant parsing and generation
-  - Streaming support for large files
-  - Schema-aware processing
-  - Advanced filtering and transformation
-  - Multi-file merging with conflict resolution
+    - RFC 2849 compliant parsing and generation
+    - Streaming support for large files
+    - Schema-aware processing
+    - Advanced filtering and transformation
+    - Multi-file merging with conflict resolution
 
 #### 🗂️ Schema Management
 
 - [🔍 Schema Discovery](api/schema/discovery.md) - Comprehensive schema management
-  - Multi-server schema discovery
-  - RFC 2252 compliant parsing
-  - Schema validation and compatibility checking
-  - Migration planning and execution
-  - Performance analysis and optimization
+    - Multi-server schema discovery
+    - RFC 2252 compliant parsing
+    - Schema validation and compatibility checking
+    - Migration planning and execution
+    - Performance analysis and optimization
 
 #### 🛠️ Utilities
 
 - [📋 Constants](api/utils/constants.md) - Enterprise LDAP constants and configurations
-  - Connection and performance constants
-  - LDAP protocol constants (scopes, auth methods, object classes)
-  - Security and monitoring configuration
-  - Environment-based configuration profiles
+    - Connection and performance constants
+    - LDAP protocol constants (scopes, auth methods, object classes)
+    - Security and monitoring configuration
+    - Environment-based configuration profiles
 
 ### 🏗️ Architecture Documentation
 
 - [🏗️ Architecture Guide](architecture/README.md) - Complete architectural overview
-  - Domain-Driven Design principles
-  - Clean Architecture implementation
-  - Core design patterns (Factory, Strategy, Observer, Builder, Adapter)
-  - Performance architecture and optimization
-  - Security architecture and best practices
-  - Testing strategies and patterns
-  - Monitoring and observability
-  - Extension points and plugin architecture
+    - Domain-Driven Design principles
+    - Clean Architecture implementation
+    - Core design patterns (Factory, Strategy, Observer, Builder, Adapter)
+    - Performance architecture and optimization
+    - Security architecture and best practices
+    - Testing strategies and patterns
+    - Monitoring and observability
+    - Extension points and plugin architecture
 
 ### 🎯 Usage Examples and Tutorials
 
 - [🎯 Usage Examples](examples/README.md) - Practical implementation guide
-  - Quick start guide and basic configuration
-  - Core LDAP operations (search, create, update, delete)
-  - Enterprise scenarios (user management, group management)
-  - LDIF operations (import/export, transformation, validation)
-  - Schema management workflows
-  - Performance optimization techniques
-  - Security best practices
-  - Error handling patterns
+    - Quick start guide and basic configuration
+    - Core LDAP operations (search, create, update, delete)
+    - Enterprise scenarios (user management, group management)
+    - LDIF operations (import/export, transformation, validation)
+    - Schema management workflows
+    - Performance optimization techniques
+    - Security best practices
+    - Error handling patterns
 
 ### 📚 Reference Materials
 
 #### 🗺️ RFC Implementation Mapping
 
 - [🗺️ RFC Implementation Mapping](RFC_IMPLEMENTATION_MAPPING.md) - Direct RFC-to-code mapping
-  - Core LDAP specifications (RFC 4510-4519)
-  - Controls and extensions (18 RFCs)
-  - Schema definitions (11 RFCs)
-  - LDIF format specification (RFC 2849)
+    - Core LDAP specifications (RFC 4510-4519)
+    - Controls and extensions (18 RFCs)
+    - Schema definitions (11 RFCs)
+    - LDIF format specification (RFC 2849)
 
 #### 📁 Reference Implementations
 
 - [🔗 Reference Collection](reference/README.md) - 57+ real-world implementations
-  - Python implementations (ldap3, python-ldap)
-  - Java implementations (Apache Directory API, UnboundID SDK)
-  - Complete LDAP servers (OpenLDAP, 389-DS, FreeIPA, LLDAP)
-  - GUI tools (Apache Directory Studio, JXplorer)
-  - 146+ OpenLDAP schema collection
-  - Specialized tools and utilities
+    - Python implementations (ldap3, Python-ldap)
+    - Java implementations (Apache Directory API, UnboundID SDK)
+    - Complete LDAP servers (OpenLDAP, 389-DS, FreeIPA, LLDAP)
+    - GUI tools (Apache Directory Studio, JXplorer)
+    - 146+ OpenLDAP schema collection
+    - Specialized tools and utilities
 
 ## 🎯 Navigation by Use Case
 
@@ -120,19 +120,19 @@ Start here for development workflows:
 
 1. **Getting Started**
 
-   - [📖 Main README](../README.md#quick-start) → Basic setup
-   - [🎯 Usage Examples](examples/README.md#quick-start-guide) → First connection
+    - [📖 Main README](../README.md#quick-start) → Basic setup
+    - [🎯 Usage Examples](examples/README.md#quick-start-guide) → First connection
 
 2. **Core Operations**
 
-   - [🔗 Connection Management](api/core/connection-management.md) → Establish connections
-   - [📋 Result Types](api/domain/results.md) → Handle responses
-   - [📝 LDIF Processor](api/ldif/processor.md) → Process LDIF files
+    - [🔗 Connection Management](api/core/connection-management.md) → Establish connections
+    - [📋 Result Types](api/domain/results.md) → Handle responses
+    - [📝 LDIF Processor](api/ldif/processor.md) → Process LDIF files
 
 3. **Advanced Features**
-   - [🔍 Schema Discovery](api/schema/discovery.md) → Schema management
-   - [📋 Constants](api/utils/constants.md) → Configuration
-   - [🏗️ Architecture Guide](architecture/README.md) → Design patterns
+    - [🔍 Schema Discovery](api/schema/discovery.md) → Schema management
+    - [📋 Constants](api/utils/constants.md) → Configuration
+    - [🏗️ Architecture Guide](architecture/README.md) → Design patterns
 
 ### 🏢 **For System Administrators**
 
@@ -140,17 +140,17 @@ Focus on operational aspects:
 
 1. **Deployment Planning**
 
-   - [✅ Implementation Checklist](IMPLEMENTATION_CHECKLIST.md) → Validation
-   - [📋 Constants](api/utils/constants.md#configuration-profiles) → Environment setup
+    - [✅ Implementation Checklist](IMPLEMENTATION_CHECKLIST.md) → Validation
+    - [📋 Constants](api/utils/constants.md#configuration-profiles) → Environment setup
 
 2. **Schema Management**
 
-   - [🔍 Schema Discovery](api/schema/discovery.md) → Discover schemas
-   - [🎯 Usage Examples](examples/README.md#schema-management) → Schema workflows
+    - [🔍 Schema Discovery](api/schema/discovery.md) → Discover schemas
+    - [🎯 Usage Examples](examples/README.md#schema-management) → Schema workflows
 
 3. **Performance & Monitoring**
-   - [🏗️ Architecture Guide](architecture/README.md#performance-architecture) → Performance patterns
-   - [🔗 Connection Management](api/core/connection-management.md#performance-monitoring) → Monitoring
+    - [🏗️ Architecture Guide](architecture/README.md#performance-architecture) → Performance patterns
+    - [🔗 Connection Management](api/core/connection-management.md#performance-monitoring) → Monitoring
 
 ### 🏛️ **For Enterprise Architects**
 
@@ -158,17 +158,17 @@ Architectural decisions and patterns:
 
 1. **Architecture Overview**
 
-   - [🏗️ Architecture Guide](architecture/README.md) → Complete architectural guide
-   - [🗺️ RFC Implementation Mapping](RFC_IMPLEMENTATION_MAPPING.md) → Standards compliance
+    - [🏗️ Architecture Guide](architecture/README.md) → Complete architectural guide
+    - [🗺️ RFC Implementation Mapping](RFC_IMPLEMENTATION_MAPPING.md) → Standards compliance
 
 2. **Design Patterns**
 
-   - [🏗️ Architecture Guide](architecture/README.md#design-patterns) → Implementation patterns
-   - [🔗 Reference Collection](reference/README.md) → Industry examples
+    - [🏗️ Architecture Guide](architecture/README.md#design-patterns) → Implementation patterns
+    - [🔗 Reference Collection](reference/README.md) → Industry examples
 
 3. **Security & Compliance**
-   - [🏗️ Architecture Guide](architecture/README.md#security-architecture) → Security patterns
-   - [✅ Implementation Checklist](IMPLEMENTATION_CHECKLIST.md) → Compliance validation
+    - [🏗️ Architecture Guide](architecture/README.md#security-architecture) → Security patterns
+    - [✅ Implementation Checklist](IMPLEMENTATION_CHECKLIST.md) → Compliance validation
 
 ## 📊 Documentation Statistics
 

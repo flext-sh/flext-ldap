@@ -13,19 +13,19 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 #### Operações Básicas
 
 - [ ] **BindRequest/BindResponse** - Autenticação de conexão
-  - [ ] Simple bind (nome/senha)
-  - [ ] Anonymous bind
-  - [ ] SASL bind mechanisms
+    - [ ] Simple bind (nome/senha)
+    - [ ] Anonymous bind
+    - [ ] SASL bind mechanisms
 - [ ] **SearchRequest/SearchResult** - Operações de busca
-  - [ ] Base, one level, subtree scope
-  - [ ] Size/time limits
-  - [ ] Attributes selection
-  - [ ] Search filters (RFC 4515)
+    - [ ] Base, one level, subtree scope
+    - [ ] Size/time limits
+    - [ ] Attributes selection
+    - [ ] Search filters (RFC 4515)
 - [ ] **AddRequest/AddResponse** - Adicionar entradas
 - [ ] **ModifyRequest/ModifyResponse** - Modificar entradas
-  - [ ] Add attribute values
-  - [ ] Delete attribute values
-  - [ ] Replace attribute values
+    - [ ] Add attribute values
+    - [ ] Delete attribute values
+    - [ ] Replace attribute values
 - [ ] **DelRequest/DelResponse** - Deletar entradas
 - [ ] **ModifyDNRequest/ModifyDNResponse** - Renomear/mover entradas
 - [ ] **CompareRequest/CompareResponse** - Comparar valores
@@ -92,22 +92,22 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 #### Schema Framework
 
 - [ ] **Attribute Type Definitions**
-  - [ ] NAME
-  - [ ] SUP (superior)
-  - [ ] EQUALITY matching rule
-  - [ ] ORDERING matching rule
-  - [ ] SUBSTR matching rule
-  - [ ] SYNTAX
-  - [ ] SINGLE-VALUE flag
-  - [ ] COLLECTIVE flag
-  - [ ] NO-USER-MODIFICATION flag
-  - [ ] USAGE (userApplications/directoryOperation/distributedOperation/dSAOperation)
+    - [ ] NAME
+    - [ ] SUP (superior)
+    - [ ] EQUALITY matching rule
+    - [ ] ORDERING matching rule
+    - [ ] SUBSTR matching rule
+    - [ ] SYNTAX
+    - [ ] SINGLE-VALUE flag
+    - [ ] COLLECTIVE flag
+    - [ ] NO-USER-MODIFICATION flag
+    - [ ] USAGE (userApplications/directoryOperation/distributedOperation/dSAOperation)
 - [ ] **Object Class Definitions**
-  - [ ] NAME
-  - [ ] SUP (superior classes)
-  - [ ] ABSTRACT/STRUCTURAL/AUXILIARY kind
-  - [ ] MUST attributes
-  - [ ] MAY attributes
+    - [ ] NAME
+    - [ ] SUP (superior classes)
+    - [ ] ABSTRACT/STRUCTURAL/AUXILIARY kind
+    - [ ] MUST attributes
+    - [ ] MAY attributes
 - [ ] **Matching Rule Definitions**
 - [ ] **LDAP Syntax Definitions**
 
@@ -126,10 +126,10 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 #### Distinguished Name Processing
 
 - [ ] **DN Parsing** - Análise sintática de DNs
-  - [ ] Multi-valued RDNs
-  - [ ] Escaped characters
-  - [ ] Quoted attribute values
-  - [ ] Hexadecimal escaping
+    - [ ] Multi-valued RDNs
+    - [ ] Escaped characters
+    - [ ] Quoted attribute values
+    - [ ] Hexadecimal escaping
 - [ ] **DN String Generation** - Geração de strings DN
 - [ ] **DN Normalization** - Normalização de DNs
 - [ ] **DN Comparison** - Comparação de DNs
@@ -142,9 +142,9 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 - [ ] **Present Filter** - `(attribute=*)`
 - [ ] **Equality Filter** - `(attribute=value)`
 - [ ] **Substring Filter** - `(attribute=initial*any*final)`
-  - [ ] Initial substring
-  - [ ] Any substring
-  - [ ] Final substring
+    - [ ] Initial substring
+    - [ ] Any substring
+    - [ ] Final substring
 - [ ] **Greater-or-Equal Filter** - `(attribute>=value)`
 - [ ] **Less-or-Equal Filter** - `(attribute<=value)`
 - [ ] **Approximate Match Filter** - `(attribute~=value)`
@@ -214,13 +214,13 @@ Esta lista de verificação detalha todos os componentes que devem ser implement
 - [ ] **Add Change** - `changetype: add`
 - [ ] **Delete Change** - `changetype: delete`
 - [ ] **Modify Change** - `changetype: modify`
-  - [ ] Add modification - `add: attribute`
-  - [ ] Delete modification - `delete: attribute`
-  - [ ] Replace modification - `replace: attribute`
+    - [ ] Add modification - `add: attribute`
+    - [ ] Delete modification - `delete: attribute`
+    - [ ] Replace modification - `replace: attribute`
 - [ ] **ModDN/ModRDN Change** - `changetype: modrdn`
-  - [ ] New RDN
-  - [ ] Delete old RDN flag
-  - [ ] New superior DN
+    - [ ] New RDN
+    - [ ] Delete old RDN flag
+    - [ ] New superior DN
 
 #### LDIF Writing (`ldif/writer.py`)
 
