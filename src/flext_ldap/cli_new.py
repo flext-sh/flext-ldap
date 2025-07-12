@@ -80,7 +80,7 @@ async def test(
 @click.argument("base_dn")
 @click.option("--port", default=389, help="LDAP server port")
 @click.option(
-    "--filter", "search_filter", default="(objectClass=*)", help="Search filter"
+    "--filter", "search_filter", default="(objectClass=*)", help="Search filter",
 )
 @click.option("--bind-dn", help="Bind DN for authentication")
 @click.option("--bind-password", help="Bind password for authentication")

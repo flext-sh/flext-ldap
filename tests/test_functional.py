@@ -11,14 +11,14 @@ class TestLDAPUserService:
     """Test LDAP user service functionality."""
 
     @pytest.mark.unit
-    def test_user_service_creation(self):
+    def test_user_service_creation(self) -> None:
         """Test that LDAPUserService can be created."""
         service = LDAPUserService()
         assert service is not None
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_create_user_with_request(self):
+    async def test_create_user_with_request(self) -> None:
         """Test creating user with CreateUserRequest."""
         service = LDAPUserService()
 
@@ -39,7 +39,7 @@ class TestLDAPUserService:
         assert result.value.mail == "test@example.com"
 
     @pytest.mark.unit
-    def test_create_user_request_validation(self):
+    def test_create_user_request_validation(self) -> None:
         """Test CreateUserRequest validation."""
         # Valid request
         request = CreateUserRequest(
@@ -65,7 +65,7 @@ class TestFlextLDAPSettings:
     """Test configuration functionality."""
 
     @pytest.mark.unit
-    def test_settings_creation_and_conversion(self):
+    def test_settings_creation_and_conversion(self) -> None:
         """Test settings creation and conversion to client config."""
         settings = FlextLDAPSettings()
 

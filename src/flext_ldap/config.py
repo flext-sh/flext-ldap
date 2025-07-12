@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from flext_core.config.base import BaseConfig, BaseSettings
-from flext_core.domain.pydantic_base import DomainValueObject, Field
 from pydantic import field_validator  # Only decorator, not Field
 from pydantic_settings import SettingsConfigDict
+
+from flext_core.config.base import BaseConfig, BaseSettings
+from flext_core.domain.pydantic_base import DomainValueObject, Field
 
 
 class LDAPConstants:

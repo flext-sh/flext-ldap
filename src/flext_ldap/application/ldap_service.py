@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any
 
 from flext_core.config import injectable
 from flext_core.domain.types import ServiceResult
-
 from flext_ldap.application.services import (
     LDAPConnectionService,
     LDAPGroupService,
@@ -46,7 +45,7 @@ class LDAPService:
         self._user_service = user_service or LDAPUserService(self._ldap_client)
         self._group_service = group_service or LDAPGroupService()
         self._connection_service = connection_service or LDAPConnectionService(
-            self._ldap_client
+            self._ldap_client,
         )
         self._operation_service = operation_service or LDAPOperationService()
         self._active_connection_id: UUID | None = None
@@ -112,11 +111,11 @@ class LDAPService:
 
             # Disconnect from server
             result = await self._connection_service.disconnect(
-                self._active_connection_id
+                self._active_connection_id,
             )
             if not result.is_success:
                 return ServiceResult.fail(
-                    result.error_message or "Failed to disconnect"
+                    result.error_message or "Failed to disconnect",
                 )
 
             # Clear connection from user service
@@ -407,7 +406,7 @@ class LDAPService:
 
             if not info_result.is_success:
                 return ServiceResult.fail(
-                    f"Failed to get connection info: {info_result.error_message or 'Unknown error'}"
+                    f"Failed to get connection info: {info_result.error_message or 'Unknown error'}",
                 )
 
             test_result = {

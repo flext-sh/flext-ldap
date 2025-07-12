@@ -7,7 +7,7 @@ class TestImports:
     """Test import functionality."""
 
     @pytest.mark.unit
-    def test_main_imports(self):
+    def test_main_imports(self) -> None:
         """Test main package imports."""
         from flext_ldap import LDAPClient, LDAPEntry, LDAPFilter, LDAPScope
 
@@ -17,7 +17,7 @@ class TestImports:
         assert LDAPScope is not None
 
     @pytest.mark.unit
-    def test_models_imports(self):
+    def test_models_imports(self) -> None:
         """Test models imports."""
         from flext_ldap.models import LDAPEntry, LDAPFilter, LDAPScope
 

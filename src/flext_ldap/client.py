@@ -14,14 +14,13 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
 from flext_core.domain.types import ServiceResult
-
-# Use centralized logger from flext-observability
-from flext_observability.logging import get_logger
-
 from flext_ldap.config import FlextLDAPSettings, LDAPConnectionConfig
 from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
 from flext_ldap.models import LDAPEntry as LDAPEntryModel
 from flext_ldap.models import LDAPScope
+
+# Use centralized logger from flext-observability
+from flext_observability.logging import get_logger
 
 logger = get_logger(__name__)
 

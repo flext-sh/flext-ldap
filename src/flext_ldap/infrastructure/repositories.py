@@ -11,7 +11,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core.domain.types import ServiceResult
-
 from flext_ldap.domain.exceptions import LDAPUserError
 from flext_ldap.domain.repositories import LDAPConnectionRepository, LDAPUserRepository
 
@@ -40,7 +39,7 @@ class LDAPConnectionRepositoryImpl(LDAPConnectionRepository):
             raise LDAPUserError(msg) from e
 
     async def find_by_id(
-        self, connection_id: UUID
+        self, connection_id: UUID,
     ) -> ServiceResult[LDAPConnection | None]:
         """Find connection by ID."""
         try:
@@ -89,8 +88,8 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             raise LDAPUserError(msg) from e
 
     async def find_by_id(
-        self, user_id: UUID
-    ) -> ServiceResult[LDAPUser | None]:  # noqa: ARG002
+        self, user_id: UUID,
+    ) -> ServiceResult[LDAPUser | None]:
         """Find user by ID."""
         try:
             # Real implementation would search LDAP directory
@@ -100,8 +99,8 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             raise LDAPUserError(msg) from e
 
     async def find_by_dn(
-        self, dn: str
-    ) -> ServiceResult[LDAPUser | None]:  # noqa: ARG002
+        self, dn: str,
+    ) -> ServiceResult[LDAPUser | None]:
         """Find user by distinguished name."""
         try:
             # Real implementation would use ldap_client.search

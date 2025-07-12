@@ -4,8 +4,8 @@ from unittest.mock import ANY, AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
-from flext_core.domain.types import ServiceResult
 
+from flext_core.domain.types import ServiceResult
 from flext_ldap.domain.entities import LDAPConnection, LDAPUser
 from flext_ldap.domain.value_objects import CreateUserRequest
 from flext_ldap.simple_api import LDAPAPI, create_ldap_api
@@ -14,22 +14,19 @@ from flext_ldap.simple_api import LDAPAPI, create_ldap_api
 @pytest.fixture
 def mock_container() -> Mock:
     """Create mock dependency injection container."""
-    container = Mock()
-    return container
+    return Mock()
 
 
 @pytest.fixture
 def mock_user_service() -> AsyncMock:
     """Create mock user service."""
-    service = AsyncMock()
-    return service
+    return AsyncMock()
 
 
 @pytest.fixture
 def mock_connection_service() -> AsyncMock:
     """Create mock connection service."""
-    service = AsyncMock()
-    return service
+    return AsyncMock()
 
 
 @pytest.fixture
@@ -105,7 +102,7 @@ class TestLDAPAPI:
         )
 
         mock_connection_service.create_connection.return_value = ServiceResult.ok(
-            connection
+            connection,
         )
 
         result = await ldap_api.create_connection(
@@ -253,7 +250,7 @@ class TestLDAPAPI:
         assert result.success
         assert result.value == user
         mock_user_service.find_user_by_dn.assert_called_once_with(
-            "cn=john,ou=people,dc=test,dc=com"
+            "cn=john,ou=people,dc=test,dc=com",
         )
 
     @pytest.mark.asyncio

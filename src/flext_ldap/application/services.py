@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING, Any
 
 from flext_core.config import injectable
 from flext_core.domain.types import ServiceResult
-
 from flext_ldap.domain.entities import (
     LDAPConnection,
     LDAPGroup,
@@ -492,7 +491,7 @@ class LDAPConnectionService:
 
             if not result.is_success:
                 return ServiceResult.fail(
-                    f"Failed to connect to LDAP: {result.error_message}"
+                    f"Failed to connect to LDAP: {result.error_message}",
                 )
 
             # Mark as connected and bound
@@ -556,7 +555,7 @@ class LDAPConnectionService:
             result = await self._ldap_client.disconnect(ldap_connection_id)
             if not result.is_success:
                 return ServiceResult.fail(
-                    f"Failed to disconnect from LDAP: {result.error_message}"
+                    f"Failed to disconnect from LDAP: {result.error_message}",
                 )
 
             # Mark domain entity as disconnected
@@ -701,7 +700,7 @@ class LDAPOperationService:
                 return ServiceResult.fail("Operation not found")
 
             operation.complete_operation(
-                success=success, result_count=result_count, error_message=error_message
+                success=success, result_count=result_count, error_message=error_message,
             )
             return ServiceResult.ok(operation)
         except (KeyError, AttributeError) as e:

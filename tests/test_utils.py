@@ -72,7 +72,7 @@ class TestGeneralizedTime:
         result = parse_generalized_time(time_str)
 
         expected = datetime(
-            2023, 12, 15, 14, 30, 22
+            2023, 12, 15, 14, 30, 22,
         )  # No timezone when Z suffix absent
         assert result == expected
 
