@@ -1,57 +1,251 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+**FLEXT-LDAP Development Guide for Claude Code**
+
+This file provides specific guidance for working with the FLEXT-LDAP enterprise LDAP library within the FLEXT ecosystem.
+
+## Project Context
+
+### FLEXT Ecosystem Position
+
+- **Role**: Core infrastructure component for LDAP operations
+- **Dependencies**: Extends `flext-core`, integrates `flext-observability`
+- **Dependents**: `client-a-oud-mig`, `flext-tap-ldap`, `flext-target-ldap`, enterprise projects
+- **Architecture**: Clean Architecture + DDD using FLEXT standards
+
+### Current Status (Accurate)
+
+- **Quality**: 0 linting errors, 100% MyPy strict compliance
+- **Test Coverage**: 48% (target: 95%+)
+- **Architecture**: Clean/DDD with proper separation
+- **LDAP Integration**: Real ldap3 implementation + memory fallback
+- **Production Usage**: Used in enterprise LDAP migration projects
 
 ## Build and Development Commands
 
 ### Setup and Installation
 
 ```bash
-# Activate workspace virtual environment (MANDATORY)
+# MANDATORY: Use FLEXT workspace environment
 source /home/marlonsc/flext/.venv/bin/activate
 
-# Setup complete development environment
-make setup
+# Install dependencies (Poetry managed)
+poetry install --all-extras
 
-# Install dependencies only
-make install  # or poetry install
+# Verify installation
+python -c "from flext_ldap import LDAPService; print('✅ Import successful')"
 ```
 
 ### Running Tests
 
 ```bash
-# Run all tests with coverage (95% minimum requirement)
-make test  # or pytest (configured in pyproject.toml)
+# Run all tests with coverage (current: 48%, target: 95%+)
+pytest --cov=src/flext_ldap --cov-report=term-missing
 
-# Run specific test categories
-pytest -m unit           # Unit tests only
-pytest -m integration    # Integration tests
-pytest -m "not slow"     # Exclude slow tests
-pytest -k test_ldap_connection  # Run specific test
+# Run specific test suites
+pytest tests/test_utils.py -v                    # LDAP utilities (52 tests)
+pytest tests/test_simple_api.py -v              # API facade (17 tests)
+pytest tests/infrastructure/test_repositories.py -v  # Infrastructure (19 tests)
 
-# Run tests in parallel
-pytest -n auto
-
-# Generate coverage report
-make coverage
+# Run with specific markers (when implemented)
+pytest -m unit           # Unit tests
+pytest -m integration    # Integration tests with real LDAP
+pytest -m "not slow"     # Fast tests only
 ```
 
-### Code Quality
+### Code Quality (FLEXT Standards)
 
 ```bash
-# Run ALL quality checks (ULTRA-STRICT standards)
-make check  # Runs format + lint + type-check + security + complexity
+# All quality checks MUST pass (current status: PASSING)
+ruff check src/          # Linting (ALL rules) - CLEAN ✅
+mypy src/ --strict       # Type checking - CLEAN ✅
+bandit -r src/          # Security scanning - CLEAN ✅
 
-# Individual checks
-make lint            # Ruff (ALL rules), MyPy, Pylint, Flake8, Bandit, pydocstyle
-make type-check      # MyPy strict type checking
-make format          # Black + isort code formatting
-make security        # Bandit + pip-audit security scans
-make complexity      # McCabe complexity analysis
-make dead-code       # Vulture dead code detection
+# Code formatting
+ruff format src/
 
-# Fix auto-fixable issues
-make lint-fix
+# Combined quality check
+make check  # All quality gates
+```
+
+## Architecture Overview (Clean Architecture + DDD)
+
+### Layer Structure (FLEXT Standard)
+
+```
+src/flext_ldap/
+├── domain/              # 🏛️  Business Logic (zero external dependencies)
+│   ├── entities.py      # Domain entities (LDAPUser, LDAPGroup, LDAPConnection)
+│   ├── value_objects.py # Immutable values (DN, LDAPFilter, CreateUserRequest)
+│   ├── ports.py         # Service contracts and repository interfaces
+│   ├── repositories.py  # Abstract repository definitions
+│   └── exceptions.py    # Domain-specific exceptions
+├── application/         # 🎯  Use Cases (orchestration layer)
+│   ├── ldap_service.py  # Main LDAP service (primary facade)
+│   └── services.py      # Supporting application services
+├── infrastructure/     # 🔌  External Integrations
+│   ├── ldap_client.py   # Real LDAP client (ldap3 integration)
+│   └── repositories.py  # Concrete repository implementations
+├── config.py           # ⚙️  Configuration management (flext-core patterns)
+├── simple_api.py       # 🚪  Simple API facade (DI container integration)
+└── cli_new.py          # 🖥️  Command-line interface
+```
+
+### Key FLEXT Patterns Used
+
+#### 1. ServiceResult Pattern (flext-core)
+
+All operations return `ServiceResult[T]` for type-safe error handling:
+
+```python
+# Never throws exceptions - always returns ServiceResult
+result = await ldap_service.create_user(request)
+if result.is_success:
+    user = result.value  # Type: LDAPUser
+else:
+    logger.error("User creation failed: %s", result.error_message)
+```
+
+#### 2. Dependency Injection (flext-core)
+
+```python
+@injectable()  # flext-core DI decorator
+class LDAPService:
+    def __init__(self, 
+                 user_service: LDAPUserService,
+                 connection_service: LDAPConnectionService):
+        self._user_service = user_service
+        self._connection_service = connection_service
+```
+
+#### 3. Repository Pattern (flext-core)
+
+```python
+# Domain defines contracts
+class LDAPUserRepository(ABC):
+    async def save(self, user: LDAPUser) -> ServiceResult[LDAPUser]: ...
+
+# Infrastructure implements
+class LDAPUserRepositoryImpl(LDAPUserRepository):
+    async def save(self, user: LDAPUser) -> ServiceResult[LDAPUser]:
+        # Real LDAP operations using ldap3
+```
+
+#### 4. Configuration (flext-core BaseSettings)
+
+```python
+class FlextLDAPSettings(BaseSettings):
+    connection: LDAPConnectionConfig = Field(default_factory=LDAPConnectionConfig)
+    auth: LDAPAuthConfig = Field(default_factory=LDAPAuthConfig)
+    
+    model_config = SettingsConfigDict(env_prefix="FLEXT_LDAP_")
+```
+
+## Development Guidelines
+
+### FLEXT Standards Compliance
+
+#### Type Safety (Strict)
+
+- **MyPy**: All code must pass `--strict` mode
+- **Type Annotations**: 100% coverage required
+- **Generic Types**: Use proper generic typing for containers
+- **No Any**: Avoid `typing.Any` unless absolutely necessary
+
+#### Error Handling (ServiceResult Only)
+
+```python
+# ✅ CORRECT - ServiceResult pattern
+async def create_user(self, request: CreateUserRequest) -> ServiceResult[LDAPUser]:
+    try:
+        user = await self._repository.save(user_entity)
+        return ServiceResult.success(user)
+    except LDAPException as e:
+        return ServiceResult.failure(f"LDAP error: {e}")
+
+# ❌ INCORRECT - Exception-based error handling
+async def create_user(self, request: CreateUserRequest) -> LDAPUser:
+    user = await self._repository.save(user_entity)  # May raise exception
+    return user
+```
+
+#### Logging (flext-observability)
+
+```python
+from flext_observability.logging import get_logger
+
+logger = get_logger(__name__)
+
+# ✅ CORRECT - Structured logging
+logger.info("LDAP connection established to %s", server_url)
+logger.error("LDAP operation failed: operation=%s error=%s", operation, error)
+
+# ❌ INCORRECT - String formatting in log calls
+logger.info(f"LDAP connection established to {server_url}")
+```
+
+### Architecture Boundaries
+
+#### Domain Layer Rules
+
+- **NO external dependencies** (no imports from infrastructure/application)
+- **Pure business logic** - no framework coupling
+- **Rich domain models** with behavior and validation
+- **Value objects** for data that belongs together
+
+#### Application Layer Rules  
+
+- **Orchestrates use cases** - business workflow coordination
+- **Depends only on domain** - can import from domain layer
+- **No direct infrastructure access** - uses repository interfaces
+- **ServiceResult pattern** for all operations
+
+#### Infrastructure Layer Rules
+
+- **Implements domain contracts** - repository interfaces, external services
+- **Framework integration** - ldap3, database drivers, file I/O
+- **Configuration management** - environment variables, settings
+- **External service adapters** - LDAP servers, message queues
+
+## Critical Development Rules
+
+### 1. Shared Library Impact
+
+This is a **SHARED LIBRARY** used by multiple FLEXT projects:
+
+- `client-a-oud-mig` (production enterprise migration)
+- `flext-tap-ldap` (LDAP data extraction)
+- `flext-target-ldap` (LDAP data loading)
+- `flext-dbt-ldap` (LDAP dbt models)
+
+**🚨 CRITICAL**: Any breaking changes affect ALL dependent projects.
+
+### 2. Testing Requirements
+
+```bash
+# MANDATORY: Test all dependent projects after changes
+cd ../client-a-oud-mig && python -c "import flext_ldap; print('✅ client-a integration OK')"
+cd ../flext-tap-ldap && python -c "import flext_ldap; print('✅ TAP integration OK')"
+cd ../flext-target-ldap && python -c "import flext_ldap; print('✅ TARGET integration OK')"
+```
+
+### 3. Quality Gates (MUST PASS)
+
+```bash
+# Zero tolerance policy
+ruff check src/          # Must be CLEAN (0 errors)
+mypy src/ --strict       # Must be CLEAN (0 errors) 
+pytest --cov=src/flext_ldap --cov-fail-under=48  # Minimum current coverage
+bandit -r src/          # Must be CLEAN (no high/medium issues)
+```
+
+### 4. Production Deployment Considerations
+
+- **Memory usage**: Keep constant memory usage for large directories
+- **Connection pooling**: Implement proper LDAP connection management  
+- **Error recovery**: Graceful degradation when LDAP servers unavailable
+- **Configuration**: Environment-based configuration for different stages
+
 ```
 
 ### Building

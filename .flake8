@@ -1,6 +1,0 @@
-[flake8]
-# All settings in pyproject.toml
-# This file exists only for tools that don't read pyproject.toml
-max-line-length = 88
-extend-ignore = E203, W503
-exclude = .git,__pycache__,build,dist,.venv,.eggs,*.egg

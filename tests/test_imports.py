@@ -10,7 +10,7 @@ class TestImports:
     def test_main_imports(self):
         """Test main package imports."""
         from flext_ldap import LDAPClient, LDAPEntry, LDAPFilter, LDAPScope
-        
+
         assert LDAPClient is not None
         assert LDAPEntry is not None
         assert LDAPFilter is not None
@@ -20,7 +20,7 @@ class TestImports:
     def test_models_imports(self):
         """Test models imports."""
         from flext_ldap.models import LDAPEntry, LDAPFilter, LDAPScope
-        
+
         assert LDAPEntry is not None
         assert LDAPFilter is not None
         assert LDAPScope is not None

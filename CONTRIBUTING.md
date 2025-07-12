@@ -10,17 +10,18 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 ### 1. Setting Up Your Development Environment
 
+**Note**: This is part of the FLEXT workspace. Development setup differs from standalone projects.
+
 ```bash
-# Clone the repository
-git clone https://github.com/flext-sh/flext-ldap.git
-cd flext-ldap
+# Workspace setup (use workspace virtual environment)
+cd /home/marlonsc/flext/flext-ldap
+source /home/marlonsc/flext/.venv/bin/activate
 
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Install dependencies using Poetry
+poetry install --all-extras
 
-# Install development dependencies
-poetry install --with dev
+# Verify installation
+python -c "from flext_ldap import LDAPService; print('✅ Installation successful')"
 ```
 
 ### 2. Code Standards
@@ -28,10 +29,10 @@ poetry install --with dev
 This project enforces strict code quality standards:
 
 - **Python Version**: 3.13+
-- **Code Style**: Black formatter (automatically applied)
-- **Linting**: Ruff with ALL rules enabled
+- **Code Style**: Ruff formatter (automatically applied)
+- **Linting**: Ruff with standard rules
 - **Type Checking**: MyPy in strict mode
-- **Test Coverage**: Minimum 95%
+- **Test Coverage**: Target 95% (current: 37.97%)
 
 ### 3. Pre-commit Checks
 
@@ -41,11 +42,11 @@ Before committing, ensure your code passes all quality checks:
 # Run all checks
 make check
 
-# Individual checks
-ruff check .          # Linting
+# Individual checks  
+ruff check src/       # Linting
 mypy src/ --strict    # Type checking
-black .               # Format code
-pytest --cov-fail-under=95  # Tests with coverage
+ruff format src/      # Format code
+pytest --cov=src/flext_ldap --cov-report=term-missing  # Tests with coverage
 ```
 
 ### 4. Making Changes

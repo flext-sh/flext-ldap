@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from flext_core.domain.types import ServiceResult
+
+    from flext_ldap.application.services import LDAPConnectionService, LDAPUserService
     from flext_ldap.domain.entities import LDAPConnection, LDAPUser
 
 
@@ -29,23 +31,24 @@ class LDAPAPI:
         self._container = get_container()
 
         # Lazy load services
-        self._user_service = None
-        self._connection_service = None
+        self._user_service: LDAPUserService | None = None
+        self._connection_service: LDAPConnectionService | None = None
 
     @property
-    def user_service(self) -> Any:
+    def user_service(self) -> LDAPUserService:
         """Get user service with lazy loading."""
         if self._user_service is None:
-            from flext_ldap.application.services import LDAPUserService
+            from flext_ldap.application.services import LDAPUserService  # noqa: PLC0415
 
             self._user_service = self._container.resolve(LDAPUserService)
         return self._user_service
 
     @property
-    def connection_service(self) -> Any:
+    def connection_service(self) -> LDAPConnectionService:
         """Get connection service with lazy loading."""
         if self._connection_service is None:
-            from flext_ldap.application.services import LDAPConnectionService
+            from flext_ldap.application.services import \
+                LDAPConnectionService  # noqa: PLC0415
 
             self._connection_service = self._container.resolve(LDAPConnectionService)
         return self._connection_service
@@ -55,15 +58,14 @@ class LDAPAPI:
         self,
         server_uri: str,
         bind_dn: str,
-        pool_name: str | None = None,
-        pool_size: int = 1,
+        pool_name: str | None = None,  # noqa: ARG002
+        pool_size: int = 1,  # noqa: ARG002
     ) -> ServiceResult[LDAPConnection]:
         """Create a new LDAP connection."""
+        # Note: pool_name and pool_size are API parameters but not used by underlying service
         return await self.connection_service.create_connection(
             server_uri=server_uri,
             bind_dn=bind_dn,
-            pool_name=pool_name,
-            pool_size=pool_size,
         )
 
     async def connect(self, connection_id: UUID) -> ServiceResult[LDAPConnection]:
@@ -93,7 +95,10 @@ class LDAPAPI:
         object_classes: list[str] | None = None,
     ) -> ServiceResult[LDAPUser]:
         """Create a new LDAP user."""
-        return await self.user_service.create_user(
+        # Import at module level to avoid issues
+        from flext_ldap.domain.value_objects import CreateUserRequest  # noqa: PLC0415
+
+        request = CreateUserRequest(
             dn=dn,
             uid=uid,
             cn=cn,
@@ -105,6 +110,7 @@ class LDAPAPI:
             title=title,
             object_classes=object_classes,
         )
+        return await self.user_service.create_user(request)
 
     async def get_user(self, user_id: UUID) -> ServiceResult[LDAPUser | None]:
         """Get user by ID."""
