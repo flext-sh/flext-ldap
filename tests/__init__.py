@@ -1,6 +1,5 @@
-# Copyright (c) 2025 FLEXT
-# SPDX-License-Identifier: MIT
+"""Tests for flext-ldap.
 
-"""FLEXT LDAP tests."""
-
-from __future__ import annotations
+This module contains tests for the flext-ldap library.
+All tests follow pytest conventions and use markers defined in pyproject.toml.
+"""

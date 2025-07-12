@@ -22,13 +22,13 @@ MAX_DISPLAY_ENTRIES = 10
 
 
 async def test_connection(server: str, port: int) -> None:
-    """Test LDAP connection."""
+    """Test LDAP connection to server."""
     config = LDAPConfig(server=server, port=port)
 
     try:
         async with LDAPClient(config):
             pass
-    except (ConnectionError, OSError, ValueError):
+    except (OSError, ValueError):
         sys.exit(1)
 
 
@@ -47,50 +47,56 @@ async def search_entries(
 
             if result.is_success:
                 entries = result.value
-                for entry in entries[:MAX_DISPLAY_ENTRIES]:  # Limit to first 10
-                    for _attr, _values in entry.attributes.items():
-                        pass  # First 3 values
+
+                for _i, entry in enumerate(entries[:MAX_DISPLAY_ENTRIES]):
+                    for attr_values in entry.attributes.values():
+                        # Show first 3 values for each attribute
+                        values_display = attr_values[:3]
+                        if len(attr_values) > 3:
+                            values_display.append("...")
+
                 if len(entries) > MAX_DISPLAY_ENTRIES:
                     pass
             else:
                 sys.exit(1)
-    except (ConnectionError, OSError, ValueError):
+
+    except (OSError, ValueError):
         sys.exit(1)
 
 
-def main() -> None:
-    """Provide CLI entry point."""
-    if len(sys.argv) < MINIMUM_ARGS_FOR_COMMAND:
+def handle_command(args: list[str]) -> None:
+    """Handle CLI commands."""
+    if len(args) < MINIMUM_ARGS_FOR_COMMAND:
         sys.exit(1)
 
-    command = sys.argv[1]
+    command = args[1]
 
-    if command == "test-connection":
-        if len(sys.argv) < MINIMUM_ARGS_FOR_CONNECTION:
+    if command == "test":
+        if len(args) < MINIMUM_ARGS_FOR_CONNECTION:
             sys.exit(1)
 
-        server = sys.argv[2]
+        server = args[2]
         port = (
-            int(sys.argv[PORT_ARG_INDEX])
-            if len(sys.argv) > PORT_ARG_INDEX
+            int(args[PORT_ARG_INDEX])
+            if len(args) > PORT_ARG_INDEX
             else DEFAULT_LDAP_PORT
         )
         asyncio.run(test_connection(server, port))
 
     elif command == "search":
-        if len(sys.argv) < MINIMUM_ARGS_FOR_SEARCH:
+        if len(args) < MINIMUM_ARGS_FOR_SEARCH:
             sys.exit(1)
 
-        server = sys.argv[2]
-        base_dn = sys.argv[3]
+        server = args[2]
+        base_dn = args[3]
         filter_str = (
-            sys.argv[FILTER_ARG_INDEX]
-            if len(sys.argv) > FILTER_ARG_INDEX
+            args[FILTER_ARG_INDEX]
+            if len(args) > FILTER_ARG_INDEX
             else "(objectClass=*)"
         )
         port = (
-            int(sys.argv[SEARCH_PORT_ARG_INDEX])
-            if len(sys.argv) > SEARCH_PORT_ARG_INDEX
+            int(args[SEARCH_PORT_ARG_INDEX])
+            if len(args) > SEARCH_PORT_ARG_INDEX
             else DEFAULT_LDAP_PORT
         )
 
@@ -98,6 +104,11 @@ def main() -> None:
 
     else:
         sys.exit(1)
+
+
+def main() -> None:
+    """Main CLI entry point."""
+    handle_command(sys.argv)
 
 
 if __name__ == "__main__":

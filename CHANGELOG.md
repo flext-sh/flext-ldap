@@ -8,23 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Enterprise-grade project reorganization following PEP standards
 - Comprehensive .gitignore file
 - MIT LICENSE file
 - This CHANGELOG
 
 ### Changed
+
 - Reorganized project structure for better maintainability
 - Moved development documentation to docs/development/
 - Cleaned up root directory from unnecessary files
 
 ### Fixed
+
 - Import errors in configuration modules
 - Module organization following enterprise standards
 
 ## [0.6.0] - 2025-01-07
 
 ### Added
+
 - Initial release of FLEXT LDAP library
 - Comprehensive LDAP operations support
 - High-performance LDIF processing (12K+ entries/sec)
@@ -37,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI tools for administration
 
 ### Security
+
 - TLS/SSL encryption support
 - Comprehensive authentication mechanisms
 - Secure credential management

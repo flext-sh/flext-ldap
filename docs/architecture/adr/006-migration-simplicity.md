@@ -19,7 +19,7 @@ The Algar project revealed significant pain points in enterprise directory migra
 - **Multiple Structural ObjectClasses**: OID allows `organizationalUnit` + `orclContainer` but OUD enforces "ONE STRUCTURAL objectClass per entry"
 - **DN/ObjectClass Mismatches**: Entries with `ou=` DN cannot have `cn` attributes in OUD
 - **Oracle-Specific Extensions**: Legacy OID attributes/objectClasses not supported in OUD
-- **Custom Schema Migration**: 1,128-line rules.json configuration for 14 entry categorization rules
+- **Custom Schema Migration**: 1,128-line rules.JSON configuration for 14 entry categorization rules
 
 #### **Operational Complexity Explosion**
 
@@ -712,7 +712,7 @@ Migration_Success_Targets = {
 
 This ADR specifically addresses the pain points identified in the Algar OUD migration project, providing:
 
-1. **🚀 Zero Configuration**: Replace 1,128-line rules.json with simple APIs
+1. **🚀 Zero Configuration**: Replace 1,128-line rules.JSON with simple APIs
 2. **🧠 Intelligent Automation**: AI-powered entry categorization and conflict resolution
 3. **⚡ Enterprise Performance**: 12,000+ entries/second processing rate
 4. **🛡️ Production Safety**: Built-in rollback, checkpoints, and audit trails

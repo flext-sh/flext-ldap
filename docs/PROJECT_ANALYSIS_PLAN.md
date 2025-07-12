@@ -75,26 +75,26 @@ Para cada arquivo Python, seguir este processo:
 
 1. **Leitura Completa do Código Fonte**
 
-   - Analisar todas as classes e métodos
-   - Identificar padrões de design implementados
-   - Mapear dependências e integrações
+    - Analisar todas as classes e métodos
+    - Identificar padrões de design implementados
+    - Mapear dependências e integrações
 
 2. **Análise de Funcionalidades**
 
-   - Documentar propósito e responsabilidades
-   - Identificar parâmetros e tipos de retorno
-   - Mapear casos de uso e exemplos
+    - Documentar propósito e responsabilidades
+    - Identificar parâmetros e tipos de retorno
+    - Mapear casos de uso e exemplos
 
 3. **Avaliação de Qualidade**
 
-   - Verificar conformidade com Zero Tolerance
-   - Identificar pontos de melhoria
-   - Sugerir otimizações
+    - Verificar conformidade com Zero Tolerance
+    - Identificar pontos de melhoria
+    - Sugerir otimizações
 
 4. **Criação de Documentação**
-   - API Reference detalhada
-   - Guias de uso prático
-   - Exemplos de código
+    - API Reference detalhada
+    - Guias de uso prático
+    - Exemplos de código
 
 ## 🔗 Integração com ADRs (Architecture Decision Records)
 

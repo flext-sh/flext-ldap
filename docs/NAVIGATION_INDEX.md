@@ -91,7 +91,7 @@
 | Project             | Description                      | Best For        | Link                                 |
 | ------------------- | -------------------------------- | --------------- | ------------------------------------ |
 | **ldap3**           | Modern, pure-Python LDAP client  | Production apps | [📁](reference/ldap3-python-client/) |
-| **python-ldap**     | Traditional Python LDAP bindings | Legacy systems  | [📁](reference/python-ldap-source/)  |
+| **Python-ldap**     | Traditional Python LDAP bindings | Legacy systems  | [📁](reference/python-ldap-source/)  |
 | **LDIF Processors** | Multiple parsing implementations | Data processing | [📁](reference/ldif-python-parser/)  |
 
 ### ☕ **Java Implementations** (8+ projects)

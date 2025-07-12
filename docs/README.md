@@ -364,7 +364,7 @@ Controls extend LDAP's basic functionality with advanced features like:
 
 ### 🟢 **Nice to Have** (35+ RFCs)
 
-**For specialized needs and completeness**
+> > **For specialized needs and completeness**
 
 ## 🛠️ **Implementation Resources**
 

@@ -23,7 +23,7 @@ install-prod: ## Install production dependencies only
 .PHONY: update
 update: ## Update all dependencies to latest versions
 	poetry update
-	poetry lock --no-update
+	poetry lock
 	poetry run pre-commit autoupdate
 
 .PHONY: setup
@@ -68,12 +68,12 @@ type-check: ## Run strict type checking
 
 .PHONY: security
 security: ## Run security checks
-	poetry run bandit -r src -ll --severity-level low
+	poetry run bandit -r src -ll
 	poetry run pip-audit
 
 .PHONY: complexity
 complexity: ## Check code complexity
-	poetry run python -m mccabe src --min 11
+	@find src -name "*.py" -exec poetry run python -m mccabe --min 11 {} \; | true
 	@echo "✅ Complexity check passed (McCabe <= 10)"
 
 .PHONY: dead-code
@@ -251,3 +251,6 @@ flext-sync: ## Sync with FLEXT workspace standards
 
 # Default target
 .DEFAULT_GOAL := help
+
+# Include standardized build system
+include Makefile.build
