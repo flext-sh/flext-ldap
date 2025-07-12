@@ -5,12 +5,23 @@ from urllib.parse import urlparse
 
 import pytest
 
-from flext_ldap.utils import (build_dn, build_filter, compare_dns, escape_filter_chars,
-                              escape_filter_value, format_generalized_time,
-                              format_ldap_timestamp, is_valid_ldap_url,
-                              normalize_attribute_name, normalize_dn, parse_dn,
-                              parse_generalized_time, parse_ldap_url, split_dn,
-                              validate_dn)
+from flext_ldap.utils import (
+    build_dn,
+    build_filter,
+    compare_dns,
+    escape_filter_chars,
+    escape_filter_value,
+    format_generalized_time,
+    format_ldap_timestamp,
+    is_valid_ldap_url,
+    normalize_attribute_name,
+    normalize_dn,
+    parse_dn,
+    parse_generalized_time,
+    parse_ldap_url,
+    split_dn,
+    validate_dn,
+)
 
 
 class TestFilterEscaping:
