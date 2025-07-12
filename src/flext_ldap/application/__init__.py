@@ -8,8 +8,12 @@ REFACTORED:
 """
 
 from flext_ldap.application.ldap_service import LDAPService
-from flext_ldap.application.services import (LDAPConnectionService, LDAPGroupService,
-                                             LDAPOperationService, LDAPUserService)
+from flext_ldap.application.services import (
+    LDAPConnectionService,
+    LDAPGroupService,
+    LDAPOperationService,
+    LDAPUserService,
+)
 
 __all__ = [
     "LDAPConnectionService",

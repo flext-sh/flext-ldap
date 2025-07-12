@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
 from flext_core.domain.types import ServiceResult
+
 # Use centralized logger from flext-observability
 from flext_observability.logging import get_logger
 

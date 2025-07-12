@@ -8,8 +8,10 @@ import pytest
 from flext_core.domain.types import ServiceResult
 
 from flext_ldap.domain.entities import LDAPConnection, LDAPUser
-from flext_ldap.infrastructure.repositories import (LDAPConnectionRepositoryImpl,
-                                                    LDAPUserRepositoryImpl)
+from flext_ldap.infrastructure.repositories import (
+    LDAPConnectionRepositoryImpl,
+    LDAPUserRepositoryImpl,
+)
 
 
 @pytest.fixture

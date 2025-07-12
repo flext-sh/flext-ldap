@@ -47,8 +47,9 @@ class LDAPAPI:
     def connection_service(self) -> LDAPConnectionService:
         """Get connection service with lazy loading."""
         if self._connection_service is None:
-            from flext_ldap.application.services import \
-                LDAPConnectionService  # noqa: PLC0415
+            from flext_ldap.application.services import (
+                LDAPConnectionService,
+            )  # noqa: PLC0415
 
             self._connection_service = self._container.resolve(LDAPConnectionService)
         return self._connection_service

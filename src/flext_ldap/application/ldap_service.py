@@ -13,8 +13,12 @@ from typing import TYPE_CHECKING, Any
 from flext_core.config import injectable
 from flext_core.domain.types import ServiceResult
 
-from flext_ldap.application.services import (LDAPConnectionService, LDAPGroupService,
-                                             LDAPOperationService, LDAPUserService)
+from flext_ldap.application.services import (
+    LDAPConnectionService,
+    LDAPGroupService,
+    LDAPOperationService,
+    LDAPUserService,
+)
 from flext_ldap.domain.exceptions import LDAPServiceError
 from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
 
