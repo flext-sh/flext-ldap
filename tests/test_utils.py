@@ -332,7 +332,7 @@ class TestMiscUtilities:
         """Test formatting object with strftime method."""
 
         class MockTimestamp:
-            def strftime(self, fmt: str) -> str:  # noqa: ARG002
+            def strftime(self, fmt: str) -> str:
                 return "20231215143022Z"
 
         mock_ts = MockTimestamp()

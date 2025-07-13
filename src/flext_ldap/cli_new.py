@@ -15,10 +15,10 @@ from flext_ldap.client import LDAPClient
 from flext_ldap.config import FlextLDAPSettings, LDAPAuthConfig, LDAPConnectionConfig
 
 
-def run_async(func: Any) -> Any:  # noqa: ANN401
+def run_async(func: Any) -> Any:
     """Run async functions in click commands."""
 
-    def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         return asyncio.run(func(*args, **kwargs))
 
     return wrapper

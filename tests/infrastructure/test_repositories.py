@@ -61,7 +61,7 @@ class TestLDAPConnectionRepositoryImpl:
         """Test repository initialization."""
         repo = LDAPConnectionRepositoryImpl(mock_ldap_client)
         assert repo.ldap_client == mock_ldap_client
-        assert repo._connections == {}  # noqa: SLF001
+        assert repo._connections == {}
 
     @pytest.mark.asyncio
     async def test_save_connection_success(
@@ -74,7 +74,7 @@ class TestLDAPConnectionRepositoryImpl:
 
         assert result.success
         assert result.value == sample_connection
-        assert sample_connection.id in connection_repo._connections  # noqa: SLF001
+        assert sample_connection.id in connection_repo._connections
         assert connection_repo._connections[sample_connection.id] == sample_connection
 
     @pytest.mark.asyncio
@@ -117,7 +117,7 @@ class TestLDAPConnectionRepositoryImpl:
     async def test_find_by_id_error(self, connection_repo) -> None:
         """Test finding connection by ID with error."""
         # Mock the _connections dict to raise an error
-        connection_repo._connections = Mock()  # noqa: SLF001
+        connection_repo._connections = Mock()
         connection_repo._connections.get.side_effect = Exception(
             "Test error",
         )
@@ -153,7 +153,7 @@ class TestLDAPConnectionRepositoryImpl:
     async def test_find_all_error(self, connection_repo) -> None:
         """Test finding all connections with error."""
         # Mock the _connections dict to raise an error
-        connection_repo._connections = Mock()  # noqa: SLF001
+        connection_repo._connections = Mock()
         connection_repo._connections.values.side_effect = Exception(
             "Test error",
         )
@@ -175,7 +175,7 @@ class TestLDAPConnectionRepositoryImpl:
 
         assert result.success
         assert result.value is True
-        assert sample_connection.id not in connection_repo._connections  # noqa: SLF001
+        assert sample_connection.id not in connection_repo._connections
 
     @pytest.mark.asyncio
     async def test_delete_connection_not_exists(

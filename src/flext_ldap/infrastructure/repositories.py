@@ -121,7 +121,7 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             msg = f"Failed to find users: {e}"
             raise LDAPUserError(msg) from e
 
-    async def delete(self, user: LDAPUser) -> ServiceResult[bool]:  # noqa: ARG002
+    async def delete(self, user: LDAPUser) -> ServiceResult[bool]:
         """Delete user from directory."""
         try:
             # Real implementation would use ldap_client.delete_entry
