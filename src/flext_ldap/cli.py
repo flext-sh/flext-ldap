@@ -45,7 +45,8 @@ async def search_entries(
     try:
         async with LDAPClient(config) as client:
             result = await client.search(
-                "", filter_str,
+                "",
+                filter_str,
             )  # Need base_dn as first parameter
 
             if result.is_success:

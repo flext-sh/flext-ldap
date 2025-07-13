@@ -700,7 +700,9 @@ class LDAPOperationService:
                 return ServiceResult.fail("Operation not found")
 
             operation.complete_operation(
-                success=success, result_count=result_count, error_message=error_message,
+                success=success,
+                result_count=result_count,
+                error_message=error_message,
             )
             return ServiceResult.ok(operation)
         except (KeyError, AttributeError) as e:
