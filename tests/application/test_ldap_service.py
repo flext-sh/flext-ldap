@@ -52,6 +52,7 @@ class TestLDAPService:
         result = await ldap_service.create_user(request)
         assert result.is_success
         user = result.value
+        assert user is not None
         assert user.uid == "testuser"
         assert user.mail == "testuser@example.com"
 
@@ -71,12 +72,14 @@ class TestLDAPService:
             print(f"Update error: {update_result.error_message}")
         assert update_result.is_success
         updated_user = update_result.value
+        assert updated_user is not None
         assert updated_user.title == "Senior Developer"
 
         # List users
         list_result = await ldap_service.list_users()
         assert list_result.is_success
         users = list_result.value
+        assert users is not None
         assert len(users) == 1
         assert users[0].uid == "testuser"
 

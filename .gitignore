@@ -250,3 +250,9 @@ junit*.xml
 *.crt
 secrets/
 credentials/
+
+# AI Assistant Files
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+.cursor/

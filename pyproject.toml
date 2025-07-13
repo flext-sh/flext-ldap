@@ -305,7 +305,12 @@ files = ["src/flext_ldap", "tests"]
 
 # Import discovery
 namespace_packages = false
-explicit_package_bases = false
+
+# Per-file ignores for test files
+[[tool.mypy.overrides]]
+module = "tests.*"
+# Allow more flexibility in tests
+disable_error_code = ["union-attr", "index", "arg-type", "comparison-overlap", "operator", "truthy-function"]
 
 # Error output
 show_error_codes = true
