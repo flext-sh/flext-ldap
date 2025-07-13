@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core.domain.types import ServiceResult
+
 from flext_ldap.domain.exceptions import LDAPUserError
 from flext_ldap.domain.repositories import LDAPConnectionRepository, LDAPUserRepository
 
@@ -18,6 +19,7 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from flext_ldap.domain.entities import LDAPConnection, LDAPUser
+    from flext_ldap.domain.value_objects import DistinguishedName
     from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
 
 
@@ -68,6 +70,36 @@ class LDAPConnectionRepositoryImpl(LDAPConnectionRepository):
             return ServiceResult.ok(False)
         except Exception as e:
             msg = f"Failed to delete connection: {e}"
+            raise LDAPUserError(msg) from e
+
+    async def get_by_server(self, server_url: str) -> list[LDAPConnection]:
+        """Get connections by server URL."""
+        try:
+            return [
+                conn
+                for conn in self._connections.values()
+                if conn.server_url == server_url
+            ]
+        except Exception as e:
+            msg = f"Failed to get connections by server: {e}"
+            raise LDAPUserError(msg) from e
+
+    async def get_active(self) -> list[LDAPConnection]:
+        """Get all active connections."""
+        try:
+            # For now, all stored connections are considered active
+            return list(self._connections.values())
+        except Exception as e:
+            msg = f"Failed to get active connections: {e}"
+            raise LDAPUserError(msg) from e
+
+    async def close_all(self) -> None:
+        """Close all connections."""
+        try:
+            # Clear all connections
+            self._connections.clear()
+        except Exception as e:
+            msg = f"Failed to close all connections: {e}"
             raise LDAPUserError(msg) from e
 
 
@@ -128,4 +160,45 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             return ServiceResult.ok(True)
         except Exception as e:
             msg = f"Failed to delete user: {e}"
+            raise LDAPUserError(msg) from e
+
+    async def get_by_dn(self, dn: DistinguishedName) -> LDAPUser | None:
+        """Get user by distinguished name."""
+        try:
+            # Real implementation would search LDAP directory by DN
+            return None
+        except Exception as e:
+            msg = f"Failed to get user by DN: {e}"
+            raise LDAPUserError(msg) from e
+
+    async def get_by_uid(self, uid: str) -> LDAPUser | None:
+        """Get user by UID."""
+        try:
+            # Real implementation would search LDAP directory by UID
+            return None
+        except Exception as e:
+            msg = f"Failed to get user by UID: {e}"
+            raise LDAPUserError(msg) from e
+
+    async def search(
+        self,
+        base_dn: DistinguishedName,
+        filter_string: str,
+        attributes: list[str] | None = None,
+    ) -> list[LDAPUser]:
+        """Search for users with filter."""
+        try:
+            # Real implementation would use ldap_client.search
+            return []
+        except Exception as e:
+            msg = f"Failed to search users: {e}"
+            raise LDAPUserError(msg) from e
+
+    async def exists(self, dn: DistinguishedName) -> bool:
+        """Check if user exists."""
+        try:
+            # Real implementation would check LDAP directory
+            return False
+        except Exception as e:
+            msg = f"Failed to check user existence: {e}"
             raise LDAPUserError(msg) from e
