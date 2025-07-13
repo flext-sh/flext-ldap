@@ -37,7 +37,7 @@ class LDAPAPI:
     def user_service(self) -> LDAPUserService:
         """Get user service with lazy loading."""
         if self._user_service is None:
-            from flext_ldap.application.services import LDAPUserService  # noqa: PLC0415
+            from flext_ldap.application.services import LDAPUserService
 
             self._user_service = self._container.resolve(LDAPUserService)
         return self._user_service
@@ -58,8 +58,8 @@ class LDAPAPI:
         self,
         server_uri: str,
         bind_dn: str,
-        pool_name: str | None = None,  # noqa: ARG002
-        pool_size: int = 1,  # noqa: ARG002
+        pool_name: str | None = None,
+        pool_size: int = 1,
     ) -> ServiceResult[LDAPConnection]:
         """Create a new LDAP connection."""
         # Note: pool_name and pool_size are API parameters but not used by underlying service
@@ -96,7 +96,7 @@ class LDAPAPI:
     ) -> ServiceResult[LDAPUser]:
         """Create a new LDAP user."""
         # Import at module level to avoid issues
-        from flext_ldap.domain.value_objects import CreateUserRequest  # noqa: PLC0415
+        from flext_ldap.domain.value_objects import CreateUserRequest
 
         request = CreateUserRequest(
             dn=dn,

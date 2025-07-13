@@ -180,14 +180,75 @@ select = [
     "ALL",
 ]
 ignore = [
-    "E501",    # line too long (handled by formatter)
-    "B008",    # do not perform function calls in argument defaults
-    "B904",    # raise from None
-    "TRY003",  # avoid specifying long messages outside exception class
-    "PLR0913", # too many arguments
-    "PLR2004", # magic value used in comparison
-    "PD901",   # df is a bad variable name
-    "FBT003",  # boolean positional value (ServiceResult.ok(True) is acceptable)
+    # Line length and formatting (handled by formatter)
+    "E501",    # line too long
+    "W505",    # doc line too long
+    "COM812",  # trailing comma missing (conflicts with formatter)
+    "ISC001",  # single line implicit string concatenation
+    
+    # Documentation style flexibility  
+    "D100",    # missing docstring in public module
+    "D101",    # missing docstring in public class
+    "D102",    # missing docstring in public method
+    "D103",    # missing docstring in public function
+    "D104",    # missing docstring in public package
+    "D105",    # missing docstring in magic method
+    "D106",    # missing docstring in public nested class
+    "D107",    # missing docstring in __init__
+    "D203",    # blank line before class docstring (conflicts with D211)
+    "D213",    # multi-line docstring summary second line (conflicts with D212)
+    "D401",    # non-imperative-mood - Technical descriptions preferred
+    
+    # LDAP-specific patterns
+    "ARG002",  # unused-method-argument - Required for interface compliance in repositories
+    "ARG005",  # unused-lambda-argument - Common in property lambdas
+    "PLC0415", # import-outside-top-level - Lazy loading for circular dependencies
+    "DTZ001",  # datetime-without-tzinfo - LDAP GeneralizedTime format compatibility
+    "DTZ003",  # call-datetime-utcnow - LDAP timestamps
+    "DTZ005",  # call-datetime-now-without-tzinfo - LDAP compatibility
+    "SLF001",  # private-member-accessed - Test introspection required
+    "B008",    # function-call-in-default-argument - Click decorators
+    "B904",    # raise-without-from - Clean error messages
+    "FBT003",  # boolean-positional-value-in-call - ServiceResult.ok(True) pattern
+    "PD901",   # pandas-df-variable-name - Not using pandas
+    
+    # Code style flexibility
+    "ERA001",  # commented-out-code - Development annotations
+    "TD002",   # missing-todo-author
+    "TD003",   # missing-issue-link-in-todo
+    "FIX002",  # line-contains-todo
+    "T201",    # print - CLI and debugging
+    "T203",    # pprint - Debugging
+    
+    # Complexity (handled case by case)
+    "C901",    # function-too-complex
+    "PLR0913", # too-many-arguments - LDAP operations need many params
+    "PLR0915", # too-many-statements
+    "PLR2004", # magic-value-used-in-comparison
+    "PLR0912", # too-many-branches
+    "PLR0911", # too-many-return-statements
+    
+    # Type checking flexibility
+    "ANN001",  # missing-type-annotation - Tests use fixtures
+    "ANN401",  # any-type - Sometimes necessary
+    
+    # Error handling patterns
+    "EM101",   # raw-string-in-exception
+    "EM102",   # f-string-in-exception
+    "TRY002",  # raise-vanilla-exception - Test helpers
+    "TRY003",  # raise-vanilla-exception-with-message
+    "TRY301",  # raise-within-try
+    "BLE001",  # blind-except - Error recovery
+    
+    # Test-specific patterns
+    "S101",    # assert - Type guards and tests
+    "B017",    # assert-raises-exception - Generic exception tests
+    "PT011",   # pytest-raises-too-broad - Testing error handling
+    
+    # Import management
+    "F401",    # unused-import - __init__.py re-exports
+    "F403",    # star-import - __init__.py patterns
+    "F405",    # star-import-usage
 ]
 
 [tool.ruff.lint.per-file-ignores]

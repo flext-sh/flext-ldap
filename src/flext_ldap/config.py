@@ -206,7 +206,7 @@ class FlextLDAPSettings(BaseSettings):
         }
 
 
-def create_development_config(**overrides: Any) -> FlextLDAPSettings:  # noqa: ANN401
+def create_development_config(**overrides: Any) -> FlextLDAPSettings:
     """Create development configuration with sensible defaults."""
     defaults = {
         "enable_debug_mode": True,
