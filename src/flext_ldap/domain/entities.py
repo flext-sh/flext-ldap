@@ -179,7 +179,11 @@ class LDAPOperation(DomainEntity):
         self.updated_at = datetime.now(UTC)
 
     def complete_operation(
-        self, *, success: bool, result_count: int = 0, error_message: str | None = None,
+        self,
+        *,
+        success: bool,
+        result_count: int = 0,
+        error_message: str | None = None,
     ) -> None:
         """Mark operation as completed."""
         self.completed_at = datetime.now(UTC).isoformat()

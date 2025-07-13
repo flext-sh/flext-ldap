@@ -39,7 +39,8 @@ class LDAPConnectionRepositoryImpl(LDAPConnectionRepository):
             raise LDAPUserError(msg) from e
 
     async def find_by_id(
-        self, connection_id: UUID,
+        self,
+        connection_id: UUID,
     ) -> ServiceResult[LDAPConnection | None]:
         """Find connection by ID."""
         try:
@@ -88,7 +89,8 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             raise LDAPUserError(msg) from e
 
     async def find_by_id(
-        self, user_id: UUID,
+        self,
+        user_id: UUID,
     ) -> ServiceResult[LDAPUser | None]:
         """Find user by ID."""
         try:
@@ -99,7 +101,8 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             raise LDAPUserError(msg) from e
 
     async def find_by_dn(
-        self, dn: str,
+        self,
+        dn: str,
     ) -> ServiceResult[LDAPUser | None]:
         """Find user by distinguished name."""
         try:

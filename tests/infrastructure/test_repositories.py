@@ -65,7 +65,9 @@ class TestLDAPConnectionRepositoryImpl:
 
     @pytest.mark.asyncio
     async def test_save_connection_success(
-        self, connection_repo, sample_connection,
+        self,
+        connection_repo,
+        sample_connection,
     ) -> None:
         """Test saving connection successfully."""
         result = await connection_repo.save(sample_connection)
@@ -73,9 +75,7 @@ class TestLDAPConnectionRepositoryImpl:
         assert result.success
         assert result.value == sample_connection
         assert sample_connection.id in connection_repo._connections  # noqa: SLF001
-        assert (
-            connection_repo._connections[sample_connection.id] == sample_connection
-        )
+        assert connection_repo._connections[sample_connection.id] == sample_connection
 
     @pytest.mark.asyncio
     async def test_save_connection_error(self, connection_repo) -> None:
@@ -135,7 +135,9 @@ class TestLDAPConnectionRepositoryImpl:
 
     @pytest.mark.asyncio
     async def test_find_all_with_connections(
-        self, connection_repo, sample_connection,
+        self,
+        connection_repo,
+        sample_connection,
     ) -> None:
         """Test finding all connections when some exist."""
         # Save a connection first
@@ -161,7 +163,9 @@ class TestLDAPConnectionRepositoryImpl:
 
     @pytest.mark.asyncio
     async def test_delete_connection_exists(
-        self, connection_repo, sample_connection,
+        self,
+        connection_repo,
+        sample_connection,
     ) -> None:
         """Test deleting connection that exists."""
         # First save the connection
@@ -175,7 +179,9 @@ class TestLDAPConnectionRepositoryImpl:
 
     @pytest.mark.asyncio
     async def test_delete_connection_not_exists(
-        self, connection_repo, sample_connection,
+        self,
+        connection_repo,
+        sample_connection,
     ) -> None:
         """Test deleting connection that doesn't exist."""
         result = await connection_repo.delete(sample_connection)
