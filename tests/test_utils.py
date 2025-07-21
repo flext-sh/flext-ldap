@@ -1,9 +1,6 @@
 """Tests for LDAP utilities."""
 
 from datetime import UTC, datetime
-from urllib.parse import urlparse
-
-import pytest
 
 from flext_ldap.utils import (
     build_dn,

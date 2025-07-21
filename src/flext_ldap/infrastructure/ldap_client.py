@@ -11,10 +11,9 @@ from __future__ import annotations
 from typing import Any
 
 import ldap3
-from ldap3.core.exceptions import LDAPException
-
 from flext_core.domain.types import ServiceResult
-from flext_ldap.domain.exceptions import LDAPConnectionError, LDAPOperationError
+from ldap3 import BASE, LEVEL, SUBTREE
+from ldap3.core.exceptions import LDAPException
 
 
 class LDAPInfrastructureClient:
@@ -68,7 +67,7 @@ class LDAPInfrastructureClient:
             return ServiceResult.fail(f"LDAP connection failed: {e}")
         except Exception as e:
             msg = f"Unexpected connection error: {e}"
-            raise LDAPConnectionError(msg) from e
+            return ServiceResult.fail(msg)
 
     async def disconnect(self, connection_id: str) -> ServiceResult[bool]:
         """Disconnect from LDAP server.
@@ -82,7 +81,7 @@ class LDAPInfrastructureClient:
         """
         try:
             if connection_id in self._connections:
-                self._connections[connection_id].unbind()
+                self._connections[connection_id].unbind()  # type: ignore[no-untyped-call]
                 del self._connections[connection_id]
                 return ServiceResult.ok(True)
             return ServiceResult.fail("Connection not found")
@@ -91,7 +90,7 @@ class LDAPInfrastructureClient:
             return ServiceResult.fail(f"LDAP disconnect failed: {e}")
         except Exception as e:
             msg = f"Unexpected disconnect error: {e}"
-            raise LDAPConnectionError(msg) from e
+            return ServiceResult.fail(msg)
 
     async def search(
         self,
@@ -120,12 +119,12 @@ class LDAPInfrastructureClient:
                 return ServiceResult.fail("Connection not found")
 
             scope_map = {
-                "subtree": ldap3.SUBTREE,
-                "onelevel": ldap3.LEVEL,
-                "base": ldap3.BASE,
+                "subtree": SUBTREE,
+                "onelevel": LEVEL,
+                "base": BASE,
             }
 
-            search_scope = scope_map.get(scope, ldap3.SUBTREE)
+            search_scope = scope_map.get(scope, SUBTREE)
 
             success = connection.search(
                 search_base=base_dn,
@@ -151,7 +150,7 @@ class LDAPInfrastructureClient:
             return ServiceResult.fail(f"LDAP search failed: {e}")
         except Exception as e:
             msg = f"Unexpected search error: {e}"
-            raise LDAPOperationError(msg) from e
+            return ServiceResult.fail(msg)
 
     async def add_entry(
         self,
@@ -175,7 +174,7 @@ class LDAPInfrastructureClient:
             if not connection:
                 return ServiceResult.fail("Connection not found")
 
-            success = connection.add(dn, attributes=attributes)
+            success = connection.add(dn, attributes=attributes)  # type: ignore[no-untyped-call]
 
             if not success:
                 return ServiceResult.fail(f"Add failed: {connection.result}")
@@ -186,7 +185,7 @@ class LDAPInfrastructureClient:
             return ServiceResult.fail(f"LDAP add failed: {e}")
         except Exception as e:
             msg = f"Unexpected add error: {e}"
-            raise LDAPOperationError(msg) from e
+            return ServiceResult.fail(msg)
 
     async def modify_entry(
         self,
@@ -210,7 +209,7 @@ class LDAPInfrastructureClient:
             if not connection:
                 return ServiceResult.fail("Connection not found")
 
-            success = connection.modify(dn, changes)
+            success = connection.modify(dn, changes)  # type: ignore[no-untyped-call]
 
             if not success:
                 return ServiceResult.fail(f"Modify failed: {connection.result}")
@@ -221,7 +220,7 @@ class LDAPInfrastructureClient:
             return ServiceResult.fail(f"LDAP modify failed: {e}")
         except Exception as e:
             msg = f"Unexpected modify error: {e}"
-            raise LDAPOperationError(msg) from e
+            return ServiceResult.fail(msg)
 
     async def delete_entry(
         self,
@@ -243,7 +242,7 @@ class LDAPInfrastructureClient:
             if not connection:
                 return ServiceResult.fail("Connection not found")
 
-            success = connection.delete(dn)
+            success = connection.delete(dn)  # type: ignore[no-untyped-call]
 
             if not success:
                 return ServiceResult.fail(f"Delete failed: {connection.result}")
@@ -254,7 +253,7 @@ class LDAPInfrastructureClient:
             return ServiceResult.fail(f"LDAP delete failed: {e}")
         except Exception as e:
             msg = f"Unexpected delete error: {e}"
-            raise LDAPOperationError(msg) from e
+            return ServiceResult.fail(msg)
 
     def get_connection_info(self, connection_id: str) -> ServiceResult[dict[str, Any]]:
         """Get connection information.
@@ -285,4 +284,4 @@ class LDAPInfrastructureClient:
 
         except Exception as e:
             msg = f"Unexpected error getting connection info: {e}"
-            raise LDAPConnectionError(msg) from e
+            return ServiceResult.fail(msg)

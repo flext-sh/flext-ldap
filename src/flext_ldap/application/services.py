@@ -15,31 +15,43 @@ from typing import TYPE_CHECKING, Any
 
 from flext_core.config import injectable
 from flext_core.domain.types import ServiceResult
+
+from flext_ldap.application.base import (
+    ConnectionBaseService,
+    GroupBaseService,
+    OperationBaseService,
+    UserBaseService,
+)
 from flext_ldap.domain.entities import (
     LDAPConnection,
     LDAPGroup,
     LDAPOperation,
     LDAPUser,
 )
-from flext_ldap.domain.exceptions import LDAPConnectionError, LDAPUserError
-from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
 
 if TYPE_CHECKING:
     from uuid import UUID
 
     from flext_ldap.domain.value_objects import CreateUserRequest
+    from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
 
 
-@injectable()  # type: ignore[arg-type]
-class LDAPUserService:
-    """Service for managing LDAP users."""
+@injectable()
+class LDAPUserService(UserBaseService):
+    """Service for managing LDAP users - ELIMINATES MASSIVE DUPLICATION.
+
+    Inherits from UserBaseService which provides:
+    - Dictionary storage pattern (eliminates _users dict duplication)
+    - DN search functionality (eliminates find_by_dn duplication)
+    - UID search functionality (eliminates find_by_uid duplication)
+    - LDAP client integration (eliminates client setup duplication)
+    - Connection awareness (eliminates connection management duplication)
+    - CRUD operations (eliminates get/delete duplication)
+    """
 
     def __init__(self, ldap_client: LDAPInfrastructureClient | None = None) -> None:
-        """Initialize the LDAP user service."""
-        self._ldap_client = ldap_client or LDAPInfrastructureClient()
-        self._connection_id: str | None = None
-        # Fallback in-memory storage for non-connected operations
-        self._users: dict[UUID, LDAPUser] = {}
+        """Initialize the LDAP user service with base capabilities."""
+        super().__init__(ldap_client)
 
     async def create_user(
         self,
@@ -68,16 +80,16 @@ class LDAPUserService:
                 object_classes=request.object_classes or ["inetOrgPerson"],
             )
 
-            self._users[user.id] = user
+            self._store_entity(user)
             return ServiceResult.ok(user)
         except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Failed to create user: {e}")
         except Exception as e:
             msg = f"Unexpected error creating user: {e}"
-            raise LDAPUserError(msg) from e
+            return ServiceResult.fail(msg)
 
     async def get_user(self, user_id: UUID) -> ServiceResult[LDAPUser | None]:
-        """Get an LDAP user by ID.
+        """Get an LDAP user by ID - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             user_id: The unique identifier of the user
@@ -86,14 +98,10 @@ class LDAPUserService:
             ServiceResult containing the LDAPUser if found, None if not found, or error
 
         """
-        try:
-            user = self._users.get(user_id)
-            return ServiceResult.ok(user)
-        except (KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Failed to get user: {e}")
+        return await self.get_entity(user_id)
 
     async def find_user_by_dn(self, dn: str) -> ServiceResult[LDAPUser | None]:
-        """Find an LDAP user by distinguished name.
+        """Find an LDAP user by distinguished name - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             dn: Distinguished name to search for
@@ -102,16 +110,10 @@ class LDAPUserService:
             ServiceResult containing the LDAPUser if found, None if not found, or error
 
         """
-        try:
-            for user in self._users.values():
-                if user.dn == dn:
-                    return ServiceResult.ok(user)
-            return ServiceResult.ok(None)
-        except (KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Failed to find user by DN: {e}")
+        return await self.find_entity_by_dn(dn)
 
     async def find_user_by_uid(self, uid: str) -> ServiceResult[LDAPUser | None]:
-        """Find an LDAP user by user identifier.
+        """Find an LDAP user by user identifier - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             uid: User identifier to search for
@@ -120,13 +122,7 @@ class LDAPUserService:
             ServiceResult containing the LDAPUser if found, None if not found, or error
 
         """
-        try:
-            for user in self._users.values():
-                if user.uid == uid:
-                    return ServiceResult.ok(user)
-            return ServiceResult.ok(None)
-        except (KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Failed to find user by UID: {e}")
+        return await self.find_entity_by_uid(uid)
 
     async def update_user(
         self,
@@ -144,7 +140,7 @@ class LDAPUserService:
 
         """
         try:
-            user = self._users.get(user_id)
+            user = self._entities.get(user_id)
             if not user:
                 return ServiceResult.fail("User not found")
 
@@ -169,7 +165,7 @@ class LDAPUserService:
 
         """
         try:
-            user = self._users.get(user_id)
+            user = self._entities.get(user_id)
             if not user:
                 return ServiceResult.fail("User not found")
 
@@ -189,7 +185,7 @@ class LDAPUserService:
 
         """
         try:
-            user = self._users.get(user_id)
+            user = self._entities.get(user_id)
             if not user:
                 return ServiceResult.fail("User not found")
 
@@ -199,7 +195,7 @@ class LDAPUserService:
             return ServiceResult.fail(f"Failed to unlock user: {e}")
 
     async def delete_user(self, user_id: UUID) -> ServiceResult[bool]:
-        """Delete an LDAP user.
+        """Delete an LDAP user - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             user_id: The unique identifier of the user to delete
@@ -208,20 +204,14 @@ class LDAPUserService:
             ServiceResult containing True if deleted successfully, or error
 
         """
-        try:
-            if user_id in self._users:
-                del self._users[user_id]
-                return ServiceResult.ok(True)
-            return ServiceResult.fail("User not found")
-        except (KeyError, ValueError) as e:
-            return ServiceResult.fail(f"Failed to delete user: {e}")
+        return await self.delete_entity(user_id)
 
     async def list_users(
         self,
         ou: str | None = None,
         limit: int = 100,
     ) -> ServiceResult[list[LDAPUser]]:
-        """List LDAP users with optional filtering.
+        """List LDAP users with optional filtering - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             ou: Organizational unit to filter by (optional)
@@ -231,53 +221,27 @@ class LDAPUserService:
             ServiceResult containing list of LDAPUsers or error
 
         """
-        try:
-            users = list(self._users.values())
+        return await self.list_entities_by_ou(ou, limit)
 
-            if ou:
-                users = [u for u in users if u.ou == ou]
+    # set_connection is inherited from ConnectionAwareService via UserBaseService
 
-            return ServiceResult.ok(users[:limit])
-        except (KeyError, ValueError) as e:
-            return ServiceResult.fail(f"Failed to list users: {e}")
-
-    async def set_connection(self, connection_id: str) -> ServiceResult[bool]:
-        """Set the LDAP connection ID for directory operations.
-
-        Args:
-            connection_id: The LDAP connection identifier
-
-        Returns:
-            ServiceResult indicating success or failure
-
-        """
-        try:
-            self._connection_id = connection_id
-            return ServiceResult.ok(True)
-        except (ValueError, TypeError) as e:
-            return ServiceResult.fail(f"Failed to set connection: {e}")
-
-    async def clear_connection(self) -> ServiceResult[bool]:
-        """Clear the LDAP connection (revert to memory-only mode).
-
-        Returns:
-            ServiceResult indicating success or failure
-
-        """
-        try:
-            self._connection_id = None
-            return ServiceResult.ok(True)
-        except (ValueError, TypeError) as e:
-            return ServiceResult.fail(f"Failed to clear connection: {e}")
+    # clear_connection is inherited from ConnectionAwareService via UserBaseService
 
 
-@injectable()  # type: ignore[arg-type]
-class LDAPGroupService:
-    """Service for managing LDAP groups."""
+@injectable()
+class LDAPGroupService(GroupBaseService):
+    """Service for managing LDAP groups - ELIMINATES MASSIVE DUPLICATION.
+
+    Inherits from GroupBaseService which provides:
+    - Dictionary storage pattern (eliminates _groups dict duplication)
+    - DN search functionality (eliminates find_by_dn duplication)
+    - CRUD operations (eliminates get/delete duplication)
+    - List operations with OU filtering (eliminates list duplication)
+    """
 
     def __init__(self) -> None:
-        """Initialize the LDAP group service."""
-        self._groups: dict[UUID, LDAPGroup] = {}
+        """Initialize the LDAP group service with base capabilities."""
+        super().__init__()
 
     async def create_group(
         self,
@@ -312,13 +276,13 @@ class LDAPGroupService:
                 object_classes=object_classes or ["groupOfNames"],
             )
 
-            self._groups[group.id] = group
+            self._store_entity(group)
             return ServiceResult.ok(group)
         except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Failed to create group: {e}")
 
     async def get_group(self, group_id: UUID) -> ServiceResult[LDAPGroup | None]:
-        """Get an LDAP group by ID.
+        """Get an LDAP group by ID - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             group_id: The unique identifier of the group
@@ -327,14 +291,10 @@ class LDAPGroupService:
             ServiceResult containing the LDAPGroup if found, None if not found, or error
 
         """
-        try:
-            group = self._groups.get(group_id)
-            return ServiceResult.ok(group)
-        except (KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Failed to get group: {e}")
+        return await self.get_entity(group_id)
 
     async def find_group_by_dn(self, dn: str) -> ServiceResult[LDAPGroup | None]:
-        """Find an LDAP group by distinguished name.
+        """Find an LDAP group by distinguished name - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             dn: Distinguished name to search for
@@ -343,13 +303,7 @@ class LDAPGroupService:
             ServiceResult containing the LDAPGroup if found, None if not found, or error
 
         """
-        try:
-            for group in self._groups.values():
-                if group.dn == dn:
-                    return ServiceResult.ok(group)
-            return ServiceResult.ok(None)
-        except (KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Failed to find group by DN: {e}")
+        return await self.find_entity_by_dn(dn)
 
     async def add_member(
         self,
@@ -367,7 +321,7 @@ class LDAPGroupService:
 
         """
         try:
-            group = self._groups.get(group_id)
+            group = self._entities.get(group_id)
             if not group:
                 return ServiceResult.fail("Group not found")
 
@@ -392,7 +346,7 @@ class LDAPGroupService:
 
         """
         try:
-            group = self._groups.get(group_id)
+            group = self._entities.get(group_id)
             if not group:
                 return ServiceResult.fail("Group not found")
 
@@ -406,7 +360,7 @@ class LDAPGroupService:
         ou: str | None = None,
         limit: int = 100,
     ) -> ServiceResult[list[LDAPGroup]]:
-        """List LDAP groups with optional filtering.
+        """List LDAP groups with optional filtering - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             ou: Organizational unit to filter by (optional)
@@ -416,18 +370,10 @@ class LDAPGroupService:
             ServiceResult containing list of LDAPGroups or error
 
         """
-        try:
-            groups = list(self._groups.values())
-
-            if ou:
-                groups = [g for g in groups if g.ou == ou]
-
-            return ServiceResult.ok(groups[:limit])
-        except (KeyError, ValueError) as e:
-            return ServiceResult.fail(f"Failed to list groups: {e}")
+        return await self.list_entities_by_ou(ou, limit)
 
     async def delete_group(self, group_id: UUID) -> ServiceResult[bool]:
-        """Delete an LDAP group.
+        """Delete an LDAP group - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             group_id: The unique identifier of the group to delete
@@ -436,23 +382,22 @@ class LDAPGroupService:
             ServiceResult containing True if deleted successfully, or error
 
         """
-        try:
-            if group_id in self._groups:
-                del self._groups[group_id]
-                return ServiceResult.ok(True)
-            return ServiceResult.fail("Group not found")
-        except (KeyError, ValueError) as e:
-            return ServiceResult.fail(f"Failed to delete group: {e}")
+        return await self.delete_entity(group_id)
 
 
-@injectable()  # type: ignore[arg-type]
-class LDAPConnectionService:
-    """Service for managing LDAP connections with real LDAP integration."""
+@injectable()
+class LDAPConnectionService(ConnectionBaseService):
+    """Service for managing LDAP connections with real LDAP integration - ELIMINATES MASSIVE DUPLICATION.
+
+    Inherits from ConnectionBaseService which provides:
+    - Dictionary storage pattern (eliminates _connections dict duplication)
+    - LDAP client integration (eliminates client setup duplication)
+    - CRUD operations (eliminates get duplication)
+    """
 
     def __init__(self, ldap_client: LDAPInfrastructureClient | None = None) -> None:
-        """Initialize the LDAP connection service."""
-        self._connections: dict[UUID, LDAPConnection] = {}
-        self._ldap_client = ldap_client or LDAPInfrastructureClient()
+        """Initialize the LDAP connection service with base capabilities."""
+        super().__init__(ldap_client)
 
     async def create_connection(
         self,
@@ -490,22 +435,23 @@ class LDAPConnectionService:
             )
 
             if not result.is_success:
+                error_msg = getattr(result, "error_message", "Unknown error")
                 return ServiceResult.fail(
-                    f"Failed to connect to LDAP: {result.error_message}",
+                    f"Failed to connect to LDAP: {error_msg}",
                 )
 
             # Mark as connected and bound
             if bind_dn:
                 connection.bind(bind_dn)
 
-            self._connections[connection.id] = connection
+            self._store_entity(connection)
             return ServiceResult.ok(connection)
 
         except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Failed to create connection: {e}")
         except Exception as e:
             msg = f"Unexpected error creating connection: {e}"
-            raise LDAPConnectionError(msg) from e
+            return ServiceResult.fail(msg)
 
     async def connect(self, connection_id: UUID) -> ServiceResult[LDAPConnection]:
         """Establish a connection to the LDAP server.
@@ -518,7 +464,7 @@ class LDAPConnectionService:
 
         """
         try:
-            connection = self._connections.get(connection_id)
+            connection = self._entities.get(connection_id)
             if not connection:
                 return ServiceResult.fail("Connection not found")
 
@@ -542,7 +488,7 @@ class LDAPConnectionService:
 
         """
         try:
-            connection = self._connections.get(connection_id)
+            connection = self._entities.get(connection_id)
             if not connection:
                 return ServiceResult.fail("Connection not found")
 
@@ -554,8 +500,9 @@ class LDAPConnectionService:
             # Disconnect from real LDAP server
             result = await self._ldap_client.disconnect(ldap_connection_id)
             if not result.is_success:
+                error_msg = getattr(result, "error_message", "Unknown error")
                 return ServiceResult.fail(
-                    f"Failed to disconnect from LDAP: {result.error_message}",
+                    f"Failed to disconnect from LDAP: {error_msg}",
                 )
 
             # Mark domain entity as disconnected
@@ -575,7 +522,7 @@ class LDAPConnectionService:
 
         """
         try:
-            connection = self._connections.get(connection_id)
+            connection = self._entities.get(connection_id)
             if not connection:
                 return ServiceResult.fail("Connection not found")
 
@@ -598,7 +545,7 @@ class LDAPConnectionService:
         self,
         connection_id: UUID,
     ) -> ServiceResult[LDAPConnection | None]:
-        """Get an LDAP connection by ID.
+        """Get an LDAP connection by ID - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             connection_id: The unique identifier of the connection
@@ -607,33 +554,35 @@ class LDAPConnectionService:
             ServiceResult containing the LDAPConnection if found, None if not found, or error
 
         """
-        try:
-            connection = self._connections.get(connection_id)
-            return ServiceResult.ok(connection)
-        except (KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Failed to get connection: {e}")
+        return await self.get_entity(connection_id)
 
     async def list_connections(self) -> ServiceResult[list[LDAPConnection]]:
-        """List all LDAP connections.
+        """List all LDAP connections - USES BASE CLASS IMPLEMENTATION.
 
         Returns:
             ServiceResult containing list of LDAPConnections or error
 
         """
-        try:
-            connections = list(self._connections.values())
-            return ServiceResult.ok(connections)
-        except (KeyError, ValueError) as e:
-            return ServiceResult.fail(f"Failed to list connections: {e}")
+        # Use base class list_entities_by_ou without OU filtering
+        return await self.list_entities_by_ou(
+            None,
+            1000,
+        )  # High limit for all connections
 
 
-@injectable()  # type: ignore[arg-type]
-class LDAPOperationService:
-    """Service for tracking LDAP operations."""
+@injectable()
+class LDAPOperationService(OperationBaseService):
+    """Service for tracking LDAP operations - ELIMINATES MASSIVE DUPLICATION.
+
+    Inherits from OperationBaseService which provides:
+    - Dictionary storage pattern (eliminates _operations dict duplication)
+    - CRUD operations (eliminates get duplication)
+    - List operations with connection filtering (eliminates list duplication)
+    """
 
     def __init__(self) -> None:
-        """Initialize the LDAP operation service."""
-        self._operations: dict[UUID, LDAPOperation] = {}
+        """Initialize the LDAP operation service with base capabilities."""
+        super().__init__()
 
     async def create_operation(
         self,
@@ -669,7 +618,7 @@ class LDAPOperationService:
             )
 
             operation.start_operation()
-            self._operations[operation.id] = operation
+            self._store_entity(operation)
             return ServiceResult.ok(operation)
         except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Failed to create operation: {e}")
@@ -695,7 +644,7 @@ class LDAPOperationService:
 
         """
         try:
-            operation = self._operations.get(operation_id)
+            operation = self._entities.get(operation_id)
             if not operation:
                 return ServiceResult.fail("Operation not found")
 
@@ -712,7 +661,7 @@ class LDAPOperationService:
         self,
         operation_id: UUID,
     ) -> ServiceResult[LDAPOperation | None]:
-        """Get an LDAP operation by ID.
+        """Get an LDAP operation by ID - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             operation_id: The unique identifier of the operation
@@ -721,18 +670,14 @@ class LDAPOperationService:
             ServiceResult containing the LDAPOperation if found, None if not found, or error
 
         """
-        try:
-            operation = self._operations.get(operation_id)
-            return ServiceResult.ok(operation)
-        except (KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Failed to get operation: {e}")
+        return await self.get_entity(operation_id)
 
     async def list_operations(
         self,
         connection_id: UUID | None = None,
         limit: int = 100,
     ) -> ServiceResult[list[LDAPOperation]]:
-        """List LDAP operations with optional filtering.
+        """List LDAP operations with optional filtering - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             connection_id: Filter by connection ID (optional)
@@ -742,20 +687,4 @@ class LDAPOperationService:
             ServiceResult containing list of LDAPOperations sorted by start time (descending) or error
 
         """
-        try:
-            operations = list(self._operations.values())
-
-            if connection_id:
-                operations = [
-                    op for op in operations if op.connection_id == str(connection_id)
-                ]
-
-            # Sort by started_at descending (handle None values)
-            operations.sort(
-                key=lambda op: op.started_at or "",
-                reverse=True,
-            )
-
-            return ServiceResult.ok(operations[:limit])
-        except (KeyError, ValueError, AttributeError) as e:
-            return ServiceResult.fail(f"Failed to list operations: {e}")
+        return await self.list_entities_by_connection(connection_id, limit)

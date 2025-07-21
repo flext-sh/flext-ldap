@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from flext_core.domain.types import ServiceResult
+
     from flext_ldap.domain.entities import LDAPConnection, LDAPUser
 
 

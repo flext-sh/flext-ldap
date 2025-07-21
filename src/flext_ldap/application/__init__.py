@@ -7,6 +7,8 @@ REFACTORED:
             Using flext-core application patterns - NO duplication.
 """
 
+from __future__ import annotations
+
 from flext_ldap.application.ldap_service import LDAPService
 from flext_ldap.application.services import (
     LDAPConnectionService,

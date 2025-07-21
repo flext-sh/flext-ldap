@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 Infrastructure implementations using ldap3.
 """
 
+from __future__ import annotations
+
 from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
 from flext_ldap.infrastructure.repositories import (
     LDAPConnectionRepositoryImpl,

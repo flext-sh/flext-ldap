@@ -4,12 +4,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-import sys
-from pathlib import Path
-
-# Force use of local src instead of installed package
-src_path = Path(__file__).parent.parent.parent / "src"
-sys.path.insert(0, str(src_path))
+from __future__ import annotations
 
 import pytest
 
@@ -51,7 +46,7 @@ class TestLDAPService:
         # Create user (should work in memory mode)
         result = await ldap_service.create_user(request)
         assert result.is_success
-        user = result.value
+        user = result.data
         assert user is not None
         assert user.uid == "testuser"
         assert user.mail == "testuser@example.com"
@@ -59,7 +54,7 @@ class TestLDAPService:
         # Find user by UID
         find_result = await ldap_service.find_user_by_uid("testuser")
         assert find_result.is_success
-        found_user = find_result.value
+        found_user = find_result.data
         assert found_user is not None
         assert found_user.uid == "testuser"
 
@@ -69,16 +64,16 @@ class TestLDAPService:
             {"title": "Senior Developer"},
         )
         if not update_result.is_success:
-            print(f"Update error: {update_result.error_message}")
+            pass
         assert update_result.is_success
-        updated_user = update_result.value
+        updated_user = update_result.data
         assert updated_user is not None
         assert updated_user.title == "Senior Developer"
 
         # List users
         list_result = await ldap_service.list_users()
         assert list_result.is_success
-        users = list_result.value
+        users = list_result.data
         assert users is not None
         assert len(users) == 1
         assert users[0].uid == "testuser"
@@ -86,7 +81,7 @@ class TestLDAPService:
         # Lock user
         lock_result = await ldap_service.lock_user(user.id)
         if not lock_result.is_success:
-            print(f"Lock error: {lock_result.error_message}")
+            pass
         assert lock_result.is_success
 
         # Unlock user
@@ -108,13 +103,14 @@ class TestLDAPService:
             ou="groups",
         )
         assert result.is_success
-        group = result.value
+        group = result.data
+        assert group is not None
         assert group.cn == "developers"
 
         # Find group by DN
         find_result = await ldap_service.find_group_by_dn(group.dn)
         assert find_result.is_success
-        found_group = find_result.value
+        found_group = find_result.data
         assert found_group is not None
         assert found_group.cn == "developers"
 
@@ -122,19 +118,22 @@ class TestLDAPService:
         member_dn = "cn=testuser,ou=people,dc=example,dc=com"
         add_result = await ldap_service.add_user_to_group(group.id, member_dn)
         assert add_result.is_success
-        updated_group = add_result.value
-        assert member_dn in updated_group.members
+        found_add_group = add_result.data
+        assert found_add_group is not None
+        assert member_dn in found_add_group.members
 
         # Remove member from group
         remove_result = await ldap_service.remove_user_from_group(group.id, member_dn)
         assert remove_result.is_success
-        updated_group = remove_result.value
-        assert member_dn not in updated_group.members
+        found_remove_group = remove_result.data
+        assert found_remove_group is not None
+        assert member_dn not in found_remove_group.members
 
         # List groups
         list_result = await ldap_service.list_groups()
         assert list_result.is_success
-        groups = list_result.value
+        groups = list_result.data
+        assert groups is not None
         assert len(groups) == 1
         assert groups[0].cn == "developers"
 
@@ -152,17 +151,19 @@ class TestLDAPService:
         # Get active connection (should be None)
         result = await ldap_service.get_active_connection()
         assert result.is_success
-        assert result.value is None
+        assert result.data is None
 
         # List connections
         list_result = await ldap_service.list_connections()
         assert list_result.is_success
-        assert len(list_result.value) == 0
+        assert list_result.data is not None
+        assert len(list_result.data) == 0
 
         # Test connection without active connection
         test_result = await ldap_service.test_connection()
-        assert test_result.failure
-        assert "No active connection" in test_result.error_message
+        assert test_result.is_failure
+        assert test_result.error is not None
+        assert "No active connection" in test_result.error
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -171,19 +172,20 @@ class TestLDAPService:
         # Try to find non-existent user
         result = await ldap_service.find_user_by_uid("nonexistent")
         assert result.is_success
-        assert result.value is None
+        assert result.data is None
 
         # Try to find non-existent group
         group_result = await ldap_service.find_group_by_dn(
             "cn=nonexistent,dc=example,dc=com",
         )
         assert group_result.is_success
-        assert group_result.value is None
+        assert group_result.data is None
 
         # Try to disconnect without connection
         disconnect_result = await ldap_service.disconnect_from_server()
-        assert disconnect_result.failure
-        assert "No active connection" in disconnect_result.error_message
+        assert disconnect_result.is_failure
+        assert disconnect_result.error is not None
+        assert "No active connection" in disconnect_result.error
 
     @pytest.mark.integration
     @pytest.mark.asyncio
@@ -195,12 +197,13 @@ class TestLDAPService:
         result = await ldap_service.connect_to_server(
             "ldap://nonexistent.example.com:389",
             "cn=admin,dc=example,dc=com",
-            password="admin_password",  # noqa: S106
+            password="admin_password",
         )
 
         # Should fail to connect to non-existent server
-        assert result.failure
-        assert "Failed to connect to LDAP" in result.error_message
+        assert result.is_failure
+        assert result.error is not None
+        assert "Failed to connect to LDAP" in result.error
 
         # Should still not be connected
         assert not ldap_service.is_connected()
@@ -227,8 +230,9 @@ class TestLDAPService:
 
         result = await ldap_service.create_user(request)
         assert result.is_success
-        user = result.value
+        user = result.data
 
+        assert user is not None
         assert user.uid == "john.doe"
         assert user.cn == "John Doe"
         assert user.sn == "Doe"

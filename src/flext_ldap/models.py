@@ -57,7 +57,10 @@ class ExtendedLDAPEntry(DomainValueObject):
         # Create new dict to ensure Pydantic model updates
         new_attrs = dict(self.attributes)
         new_attrs[name] = values
-        self.attributes = new_attrs
+        # Use model_copy to update attributes since they're readonly
+        updated = self.model_copy(update={"attributes": new_attrs})
+        # Copy fields back to self
+        object.__setattr__(self, "attributes", updated.attributes)
 
     def has_attribute(self, name: str) -> bool:
         """Check if LDAP entry has a specific attribute.
