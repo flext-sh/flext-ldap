@@ -4,7 +4,11 @@ Version 0.7.0 - Clean Architecture
 NO LEGACY CODE - Only clean implementations.
 """
 
-from flext_core import DomainEntity, DomainValueObject, InMemoryRepository
+from __future__ import annotations
+
+from flext_core import DomainEntity, DomainValueObject
+from flext_core.infrastructure.memory import InMemoryRepository
+
 from flext_ldap.domain.entities import (
     LDAPConnection,
     LDAPGroup,

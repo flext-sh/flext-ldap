@@ -1,96 +1,234 @@
----
-# FLEXT Pre-commit Configuration
-# All tool configs are in pyproject.toml
+# ============================================================================
+# FLEXT STANDARD PRE-COMMIT CONFIGURATION TEMPLATE
+# Python 3.13 | Poetry-managed | Strict Quality Gates
+# Zero tolerance for quality violations
+# ============================================================================
 
+minimum_pre_commit_version: "3.5.0"
+fail_fast: false
+default_stages: [pre-commit, pre-push]
 default_language_version:
   python: python3.13
 
 repos:
-  # Code formatters
-  - repo: https://github.com/psf/black
-    rev: 25.1.0
+  # ===== SECURITY SCANNING FIRST - FAIL FAST ON VULNERABILITIES =====
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
     hooks:
+      - id: detect-secrets
+        name: "🔒 Detect Secrets"
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: .*\.lock$|.*\.lockb$
+
+  # ===== POETRY-MANAGED TOOLS VIA LOCAL REPO =====
+  - repo: local
+    hooks:
+      # Black formatting (primary formatter)
       - id: black
-        language_version: python3.13
+        name: "⚫ Black Format"
+        entry: poetry run black
+        language: system
+        types: [python]
+        require_serial: true
+        args: [--check, --diff]
 
-  - repo: https://github.com/pycqa/isort
-    rev: 6.0.1
-    hooks:
-      - id: isort
-
-  # Linting
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.4
-    hooks:
-      - id: ruff
-        args: [--no-fix, --exit-non-zero-on-fix]
+      # Ruff linting and formatting
       - id: ruff-format
-        args: [--check]
+        name: "⚡ Ruff Format"
+        entry: poetry run ruff format
+        language: system
+        types: [python]
+        require_serial: true
+        args: [--check, --diff]
 
-  # Type checking
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.14.1
-    hooks:
+      - id: ruff-lint
+        name: "🔥 Ruff Lint"
+        entry: poetry run ruff check
+        language: system
+        types: [python]
+        require_serial: true
+        args: [--fix, --exit-non-zero-on-fix]
+
+      # isort import sorting
+      - id: isort
+        name: "📦 Import Sort"
+        entry: poetry run isort
+        language: system
+        types: [python]
+        require_serial: true
+        args: [--check-only, --diff]
+
+      # MyPy type checking - STRICT MODE
       - id: mypy
-        additional_dependencies:
-          - pydantic>=2.11.0
-          - types-setuptools
-        files: ^src/
+        name: "🛡️ MyPy Strict"
+        entry: poetry run mypy
+        language: system
+        types: [python]
+        require_serial: true
+        pass_filenames: false
+        args: [src/, tests/, --config-file=pyproject.toml]
 
-  # Security
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.8.6
-    hooks:
+      # Bandit security
       - id: bandit
-        files: ^src/
+        name: "🔒 Bandit Security"
+        entry: poetry run bandit
+        language: system
+        types: [python]
+        require_serial: true
+        args: [-r, src/, --severity-level=medium]
+        exclude: tests/
 
-  # Standard hooks
+      # Vulture dead code detection
+      - id: vulture
+        name: "🦅 Dead Code Detection"
+        entry: poetry run vulture
+        language: system
+        types: [python]
+        pass_filenames: false
+        args: [src/, --min-confidence=80]
+
+      # Radon complexity metrics
+      - id: radon-cc
+        name: "📊 Cyclomatic Complexity"
+        entry: poetry run radon cc
+        language: system
+        types: [python]
+        pass_filenames: false
+        args: [src/, -a, -nb, --total-average]
+
+      - id: radon-mi
+        name: "📊 Maintainability Index"
+        entry: poetry run radon mi
+        language: system
+        types: [python]
+        pass_filenames: false
+        args: [src/, -nb]
+
+      # Poetry dependency checks
+      - id: poetry-check
+        name: "📋 Poetry Check"
+        entry: poetry check
+        language: system
+        pass_filenames: false
+
+      - id: poetry-lock
+        name: "🔒 Poetry Lock"
+        entry: poetry lock
+        language: system
+        pass_filenames: false
+        args: [--no-update]
+
+  # ===== FILE VALIDATION AND QUALITY =====
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
       - id: check-yaml
-      - id: check-json
+        name: "📋 YAML Syntax Check"
+        args: [--unsafe]
       - id: check-toml
+        name: "📋 TOML Syntax Check"
+      - id: check-json
+        name: "📋 JSON Syntax Check"
+      - id: end-of-file-fixer
+        name: "📄 EOF Fixer"
+      - id: trailing-whitespace
+        name: "✂️ Trailing Whitespace"
+        args: [--markdown-linebreak-ext=md]
       - id: check-added-large-files
-        args: [--maxkb=100]
+        name: "📦 Large File Check"
+        args: [--maxkb=1000]
       - id: check-case-conflict
+        name: "🔤 Case Conflict Check"
       - id: check-merge-conflict
-      - id: detect-private-key
+        name: "⚔️ Merge Conflict Check"
       - id: mixed-line-ending
+        name: "📏 Line Ending Check"
         args: [--fix=lf]
+      - id: debug-statements
+        name: "🐛 Debug Statement Check"
+      - id: check-ast
+        name: "🐍 Python AST Check"
+      - id: check-docstring-first
+        name: "📝 Docstring First Check"
+      - id: detect-private-key
+        name: "🔑 Private Key Detection"
+      - id: check-executables-have-shebangs
+        name: "📜 Executable Shebang Check"
+      - id: check-shebang-scripts-are-executable
+        name: "⚡ Shebang Executable Check"
 
-  # Python specific
+  # ===== PYTHON-SPECIFIC CHECKS =====
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:
       - id: python-check-blanket-noqa
+        name: "🚫 Blanket noqa Check"
       - id: python-check-blanket-type-ignore
+        name: "🚫 Blanket type: ignore Check"
       - id: python-no-eval
+        name: "🚫 No eval() Check"
       - id: python-no-log-warn
+        name: "⚠️ No log.warn Check"
       - id: python-use-type-annotations
+        name: "📝 Type Annotations Check"
 
-  # Documentation
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.3.0
-    hooks:
-      - id: pydocstyle
-        files: ^src/
-
-  # Python upgrade
+  # ===== PYTHON VERSION UPGRADE =====
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.1
+    rev: v3.20.0
     hooks:
       - id: pyupgrade
+        name: "⬆️ Python Upgrade"
         args: [--py313-plus]
 
-# Strict mode
-fail_fast: true
+  # ===== AUTOFLAKE - REMOVE UNUSED IMPORTS =====
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+      - id: autoflake
+        name: "🧹 Remove Unused Imports"
+        args:
+          [
+            "--remove-all-unused-imports",
+            "--remove-unused-variables",
+            "--in-place",
+            "--recursive",
+          ]
 
+  # ===== CODESPELL - SPELL CHECKING =====
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        name: "📝 Spell Check"
+        args:
+          [
+            "--skip=*.json,*.lock,*.toml,*.yaml,*.yml,poetry.lock",
+            "--ignore-words-list=flext,meltano,dbt,oracle,ldap,ldif,grpc,pydantic,jsonl",
+          ]
+
+  # ===== VALIDATE PYPROJECT.TOML =====
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.16
+    hooks:
+      - id: validate-pyproject
+        name: "📋 Validate pyproject.toml"
+
+# ===== CI CONFIGURATION =====
 ci:
-  autofix_prs: false
-  autofix_commit_msg: |
-    [pre-commit.ci] Manual fix required
+  autofix_prs: false # No automatic fixes - must be intentional
   autoupdate_schedule: weekly
-  skip: []
+  skip: [
+      # Local Poetry hooks don't work in CI
+      black,
+      ruff-format,
+      ruff-lint,
+      isort,
+      mypy,
+      bandit,
+      vulture,
+      radon-cc,
+      radon-mi,
+      poetry-check,
+      poetry-lock,
+    ]
+  submodules: false

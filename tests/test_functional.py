@@ -33,10 +33,10 @@ class TestLDAPUserService:
         result = await service.create_user(request)
 
         assert result.is_success
-        assert result.value is not None
-        assert result.value.uid == "testuser"
-        assert result.value.cn == "Test User"
-        assert result.value.mail == "test@example.com"
+        assert result.data is not None
+        assert result.data.uid == "testuser"
+        assert result.data.cn == "Test User"
+        assert result.data.mail == "test@example.com"
 
     @pytest.mark.unit
     def test_create_user_request_validation(self) -> None:
@@ -52,7 +52,7 @@ class TestLDAPUserService:
         assert request.uid == "test"
 
         # Invalid request - empty DN
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=".*DN.*"):
             CreateUserRequest(
                 dn="",
                 uid="test",

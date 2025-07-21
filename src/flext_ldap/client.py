@@ -13,22 +13,27 @@ from typing import TYPE_CHECKING, Any, Self
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
+# Use standard Python logging
+import logging
+
 from flext_core.domain.types import ServiceResult
+
 from flext_ldap.config import FlextLDAPSettings, LDAPConnectionConfig
 from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
-from flext_ldap.models import LDAPEntry as LDAPEntryModel
-from flext_ldap.models import LDAPScope
+from flext_ldap.models import LDAPEntry as LDAPEntryModel, LDAPScope
 
-# Use centralized logger from flext-observability
-from flext_observability.logging import get_logger
-
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 # Import exceptions conditionally for fallback support
 try:
     from ldap3.core.exceptions import LDAPException
 except ImportError:
-    LDAPException = Exception
+    # Create a fallback exception class that inherits from Exception
+    class LDAPError(Exception):
+        """Fallback LDAP exception when ldap3 is not available."""
+
+    # Type-safe alias for compatibility
+    LDAPException: type[Exception] = LDAPError
 
 
 class LDAPClient:
@@ -68,7 +73,7 @@ class LDAPClient:
         """Enter the context manager."""
         connect_result = await self.connect()
         if not connect_result.is_success:
-            raise LDAPException(connect_result.error_message or "Failed to connect")
+            raise LDAPException(connect_result.error or "Failed to connect")
         return self
 
     async def __aexit__(self, *args: object) -> None:
@@ -91,11 +96,11 @@ class LDAPClient:
 
             if result.is_success:
                 self._connection_id = (
-                    result.value
+                    result.data
                 )  # Connection ID returned by infrastructure
                 self._connected = True
                 return ServiceResult.ok(None)
-            return ServiceResult.fail(result.error_message or "Connection failed")
+            return ServiceResult.fail(result.error or "Connection failed")
 
         except (ConnectionError, ValueError, RuntimeError) as e:
             return ServiceResult.fail(f"Connection error: {e}")
@@ -128,17 +133,17 @@ class LDAPClient:
                 attributes=attributes or [],
             )
 
-            if result.is_success and result.value is not None:
+            if result.is_success and result.data is not None:
                 # Convert to legacy LDAPEntryModel format for compatibility
                 entries = []
-                for entry_data in result.value:
+                for entry_data in result.data:
                     entry_model = LDAPEntryModel(
                         dn=entry_data.get("dn", ""),
                         attributes=entry_data.get("attributes", {}),
                     )
                     entries.append(entry_model)
                 return ServiceResult.ok(entries)
-            return ServiceResult.fail(result.error_message or "Search failed")
+            return ServiceResult.fail(result.error or "Search failed")
 
         except (ValueError, KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Search error: {e}")
@@ -162,7 +167,7 @@ class LDAPClient:
 
             if result.is_success:
                 return result
-            return ServiceResult.fail(result.error_message or "Modify failed")
+            return ServiceResult.fail(result.error or "Modify failed")
 
         except (ValueError, KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Modify error: {e}")
@@ -181,15 +186,15 @@ class LDAPClient:
 
         # Get info from new infrastructure
         result = self._infrastructure_client.get_connection_info(self._connection_id)
-        if result.is_success and result.value is not None:
+        if result.is_success and result.data is not None:
             # Ensure returned dict has correct type signature
-            info_dict = result.value
+            info_dict = result.data
             return {k: str(v) if v is not None else None for k, v in info_dict.items()}
         return {
             "server": getattr(self.config, "server", None),
             "port": str(getattr(self.config, "port", 389)),
             "connected": str(self._connected).lower(),
-            "error": result.error_message,
+            "error": result.error,
         }
 
     @asynccontextmanager

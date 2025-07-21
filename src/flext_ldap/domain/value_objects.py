@@ -5,9 +5,8 @@ Immutable value objects for LDAP domain.
 
 from __future__ import annotations
 
-from pydantic import field_validator
-
 from flext_core.domain.pydantic_base import DomainValueObject
+from pydantic import field_validator
 
 
 class DistinguishedName(DomainValueObject):
@@ -31,11 +30,11 @@ class DistinguishedName(DomainValueObject):
 
         """
         if not v or not v.strip():
-            msg = "DN cannot be empty"
+            msg = "Distinguished name cannot be empty"
             raise ValueError(msg)
         # Basic DN validation - must contain at least one RDN
         if "=" not in v:
-            msg = "Invalid DN format - must contain at least one RDN"
+            msg = "Distinguished name must contain at least one RDN (attribute=value)"
             raise ValueError(msg)
         return v.strip()
 
@@ -76,7 +75,7 @@ class LDAPAttribute(DomainValueObject):
 
         """
         if not v or not v.strip():
-            msg = "Attribute name cannot be empty"
+            msg = "LDAP attribute name cannot be empty"
             raise ValueError(msg)
         return v.strip().lower()
 
@@ -96,7 +95,7 @@ class LDAPAttribute(DomainValueObject):
 
         """
         if not v:
-            msg = "Attribute must have at least one value"
+            msg = "LDAP attribute must have at least one value"
             raise ValueError(msg)
         return [val.strip() for val in v if val.strip()]
 
@@ -138,7 +137,7 @@ class CreateUserRequest(DomainValueObject):
     def validate_dn(cls, v: str) -> str:
         """Validate DN is not empty."""
         if not v or v.isspace():
-            msg = "DN cannot be empty"
+            msg = "DN cannot be empty or whitespace only"
             raise ValueError(msg)
         return v.strip()
 
@@ -147,6 +146,6 @@ class CreateUserRequest(DomainValueObject):
     def validate_required_fields(cls, v: str) -> str:
         """Validate required fields are not empty."""
         if not v or v.isspace():
-            msg = "Required field cannot be empty"
+            msg = "Required field cannot be empty or whitespace only"
             raise ValueError(msg)
         return v.strip()

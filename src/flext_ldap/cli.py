@@ -25,7 +25,6 @@ MAX_DISPLAY_ENTRIES = 10
 async def test_connection(server: str, port: int) -> None:
     """Test LDAP connection to server."""
     config = LDAPConnectionConfig(server=server, port=port)
-
     try:
         async with LDAPClient(config):
             pass
@@ -35,13 +34,12 @@ async def test_connection(server: str, port: int) -> None:
 
 async def search_entries(
     server: str,
-    base_dn: str,  # noqa: ARG001 - Used in future enhancement
+    base_dn: str,
     filter_str: str = "(objectClass=*)",
     port: int = DEFAULT_LDAP_PORT,
 ) -> None:
     """Search LDAP entries."""
     config = LDAPConnectionConfig(server=server, port=port)
-
     try:
         async with LDAPClient(config) as client:
             result = await client.search(
@@ -50,7 +48,7 @@ async def search_entries(
             )  # Need base_dn as first parameter
 
             if result.is_success:
-                entries = result.value or []
+                entries = result.data or []
 
                 for _i, entry in enumerate(entries[:MAX_DISPLAY_ENTRIES]):
                     for attr_values in entry.attributes.values():

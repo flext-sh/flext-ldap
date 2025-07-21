@@ -50,7 +50,7 @@ class LDAPConnectionRepositoryImpl(LDAPConnectionRepository):
             return ServiceResult.ok(connection)
         except Exception as e:
             msg = f"Failed to find connection: {e}"
-            raise LDAPUserError(msg) from e
+            raise ValueError(msg) from e
 
     async def find_all(self) -> ServiceResult[list[LDAPConnection]]:
         """Find all connections."""
@@ -82,7 +82,7 @@ class LDAPConnectionRepositoryImpl(LDAPConnectionRepository):
             ]
         except Exception as e:
             msg = f"Failed to get connections by server: {e}"
-            raise LDAPUserError(msg) from e
+            raise ValueError(msg) from e
 
     async def get_active(self) -> list[LDAPConnection]:
         """Get all active connections."""
@@ -91,7 +91,7 @@ class LDAPConnectionRepositoryImpl(LDAPConnectionRepository):
             return list(self._connections.values())
         except Exception as e:
             msg = f"Failed to get active connections: {e}"
-            raise LDAPUserError(msg) from e
+            raise ValueError(msg) from e
 
     async def close_all(self) -> None:
         """Close all connections."""
@@ -99,8 +99,8 @@ class LDAPConnectionRepositoryImpl(LDAPConnectionRepository):
             # Clear all connections
             self._connections.clear()
         except Exception as e:
-            msg = f"Failed to close all connections: {e}"
-            raise LDAPUserError(msg) from e
+            msg = f"Failed to close connections: {e}"
+            raise ValueError(msg) from e
 
 
 class LDAPUserRepositoryImpl(LDAPUserRepository):
@@ -130,7 +130,7 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             return ServiceResult.ok(None)
         except Exception as e:
             msg = f"Failed to find user: {e}"
-            raise LDAPUserError(msg) from e
+            raise ValueError(msg) from e
 
     async def find_by_dn(
         self,
@@ -142,7 +142,7 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             return ServiceResult.ok(None)
         except Exception as e:
             msg = f"Failed to find user by DN: {e}"
-            raise LDAPUserError(msg) from e
+            raise ValueError(msg) from e
 
     async def find_all(self) -> ServiceResult[list[LDAPUser]]:
         """Find all users."""
@@ -169,7 +169,7 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             return None
         except Exception as e:
             msg = f"Failed to get user by DN: {e}"
-            raise LDAPUserError(msg) from e
+            raise ValueError(msg) from e
 
     async def get_by_uid(self, uid: str) -> LDAPUser | None:
         """Get user by UID."""
@@ -178,7 +178,7 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             return None
         except Exception as e:
             msg = f"Failed to get user by UID: {e}"
-            raise LDAPUserError(msg) from e
+            raise ValueError(msg) from e
 
     async def search(
         self,
@@ -192,7 +192,7 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             return []
         except Exception as e:
             msg = f"Failed to search users: {e}"
-            raise LDAPUserError(msg) from e
+            raise ValueError(msg) from e
 
     async def exists(self, dn: DistinguishedName) -> bool:
         """Check if user exists."""
@@ -201,4 +201,4 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             return False
         except Exception as e:
             msg = f"Failed to check user existence: {e}"
-            raise LDAPUserError(msg) from e
+            raise ValueError(msg) from e

@@ -12,13 +12,13 @@ from typing import TYPE_CHECKING, Any
 
 from flext_core.config import injectable
 from flext_core.domain.types import ServiceResult
+
 from flext_ldap.application.services import (
     LDAPConnectionService,
     LDAPGroupService,
     LDAPOperationService,
     LDAPUserService,
 )
-from flext_ldap.domain.exceptions import LDAPServiceError
 from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from flext_ldap.domain.value_objects import CreateUserRequest
 
 
-@injectable()  # type: ignore[arg-type]
+@injectable()
 class LDAPService:
     """High-level LDAP service integrating all LDAP operations."""
 
@@ -82,7 +82,7 @@ class LDAPService:
             if not result.is_success:
                 return result
 
-            connection = result.value
+            connection = result.data
             if connection is not None:
                 self._active_connection_id = connection.id
 
@@ -96,7 +96,7 @@ class LDAPService:
 
         except Exception as e:
             msg = f"Failed to connect to server: {e}"
-            raise LDAPServiceError(msg) from e
+            return ServiceResult.fail(msg)
 
     async def disconnect_from_server(self) -> ServiceResult[bool]:
         """Disconnect from the currently active LDAP server.
@@ -115,7 +115,7 @@ class LDAPService:
             )
             if not result.is_success:
                 return ServiceResult.fail(
-                    result.error_message or "Failed to disconnect",
+                    result.error or "Failed to disconnect",
                 )
 
             # Clear connection from user service
@@ -126,7 +126,7 @@ class LDAPService:
 
         except Exception as e:
             msg = f"Failed to disconnect from server: {e}"
-            raise LDAPServiceError(msg) from e
+            return ServiceResult.fail(msg)
 
     # User Operations
 
@@ -394,7 +394,7 @@ class LDAPService:
             if not connection_result.is_success:
                 return ServiceResult.fail("Failed to get active connection")
 
-            connection = connection_result.value
+            connection = connection_result.data
             if not connection:
                 return ServiceResult.fail("No active connection found")
 
@@ -406,7 +406,7 @@ class LDAPService:
 
             if not info_result.is_success:
                 return ServiceResult.fail(
-                    f"Failed to get connection info: {info_result.error_message or 'Unknown error'}",
+                    f"Failed to get connection info: {info_result.error or 'Unknown error'}",
                 )
 
             test_result = {
@@ -414,7 +414,7 @@ class LDAPService:
                 "bound": connection.is_bound,
                 "server": connection.server_url,
                 "bind_dn": connection.bind_dn,
-                "connection_info": info_result.value,
+                "connection_info": info_result.data,
             }
 
             return ServiceResult.ok(test_result)

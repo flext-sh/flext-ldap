@@ -115,7 +115,7 @@ def build_filter(operator: str, conditions: dict[str, str]) -> str:
 
 
 def is_valid_ldap_url(url: str) -> bool:
-    """Check if URL is valid LDAP URL."""
+    """Check if URL is a valid LDAP URL."""
     try:
         parsed = urlparse(url)
     except (ValueError, TypeError):

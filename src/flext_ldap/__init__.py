@@ -10,7 +10,16 @@ from __future__ import annotations
 
 from flext_ldap.application.ldap_service import LDAPService
 from flext_ldap.client import LDAPClient
+from flext_ldap.domain.entities import LDAPGroup, LDAPUser
 from flext_ldap.models import LDAPEntry, LDAPFilter, LDAPScope
 
 __version__ = "0.7.0"
-__all__ = ["LDAPClient", "LDAPEntry", "LDAPFilter", "LDAPScope", "LDAPService"]
+__all__ = [
+    "LDAPClient",
+    "LDAPEntry",
+    "LDAPFilter",
+    "LDAPGroup",
+    "LDAPScope",
+    "LDAPService",
+    "LDAPUser",
+]

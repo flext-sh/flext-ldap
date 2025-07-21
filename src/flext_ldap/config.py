@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import field_validator  # Only decorator, not Field
-from pydantic_settings import SettingsConfigDict
-
 from flext_core.config.base import BaseConfig, BaseSettings
 from flext_core.domain.pydantic_base import DomainValueObject, Field
+from pydantic import field_validator  # Only decorator, not Field
+from pydantic_settings import SettingsConfigDict
 
 
 class LDAPConstants:
@@ -67,7 +66,7 @@ class LDAPConnectionConfig(DomainValueObject):
 
         """
         if not v or v.isspace():
-            msg = "Server cannot be empty"
+            msg = "Server cannot be empty or whitespace only"
             raise ValueError(msg)
         return v.strip()
 
@@ -166,7 +165,9 @@ class FlextLDAPSettings(BaseSettings):
     """FLEXT-LDAP comprehensive configuration using flext-core patterns."""
 
     # Project identification
-    project_name: ProjectName = Field(default="flext-ldap")
+    project_name: ProjectName = Field(
+        default="flext-infrastructure.databases.flext-ldap",
+    )
     project_version: Version = Field(default="0.7.0")
 
     # Configuration sections

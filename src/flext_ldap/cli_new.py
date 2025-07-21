@@ -6,7 +6,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 from __future__ import annotations
 
 import asyncio
-import sys
 from typing import Any
 
 import click
@@ -17,14 +16,16 @@ from flext_ldap.config import FlextLDAPSettings, LDAPAuthConfig, LDAPConnectionC
 
 def run_async(func: Any) -> Any:
     """Run async functions in click commands."""
+    import functools
 
+    @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         return asyncio.run(func(*args, **kwargs))
 
     return wrapper
 
 
-@click.group(name="flext-ldap")
+@click.group(name="flext-infrastructure.databases.flext-ldap")
 @click.version_option("0.6.0")
 @click.pass_context
 def cli(ctx: click.Context) -> None:
@@ -38,15 +39,17 @@ def cli(ctx: click.Context) -> None:
 @click.option("--tls", is_flag=True, help="Use StartTLS")
 @click.option("--bind-dn", help="Bind DN for authentication")
 @click.option("--bind-password", help="Bind password for authentication")
+@click.pass_context
 @run_async
 async def test(
+    ctx: click.Context,
     server: str,
     port: int,
     tls: bool,
     bind_dn: str | None,
     bind_password: str | None,
 ) -> None:
-    """Test LDAP server connection."""
+    """Test LDAP connection with authentication."""
     try:
         settings = FlextLDAPSettings(
             connection=LDAPConnectionConfig(
@@ -67,12 +70,12 @@ async def test(
             click.echo(f"✅ Successfully connected to {server}:{port}")
             await client.disconnect()
         else:
-            click.echo(f"❌ Connection failed: {result.error_message}")
-            sys.exit(1)
+            click.echo(f"❌ Connection failed: {result.error}")
+            ctx.exit(1)
 
     except (OSError, ValueError, RuntimeError) as e:
         click.echo(f"❌ Error: {e}")
-        sys.exit(1)
+        ctx.exit(1)
 
 
 @cli.command()
@@ -87,8 +90,10 @@ async def test(
 )
 @click.option("--bind-dn", help="Bind DN for authentication")
 @click.option("--bind-password", help="Bind password for authentication")
+@click.pass_context
 @run_async
 async def search(
+    ctx: click.Context,
     server: str,
     base_dn: str,
     port: int,
@@ -96,7 +101,7 @@ async def search(
     bind_dn: str | None,
     bind_password: str | None,
 ) -> None:
-    """Search LDAP directory."""
+    """Search LDAP entries with filter."""
     try:
         settings = FlextLDAPSettings(
             connection=LDAPConnectionConfig(
@@ -116,19 +121,20 @@ async def search(
             result = await client.search(base_dn, search_filter)
 
             if result.is_success:
-                entries = result.value or []
+                entries = result.data or []
                 click.echo(f"Found {len(entries)} entries:")
                 for entry in entries[:10]:  # Show first 10
                     click.echo(f"  DN: {entry.dn}")
                 if len(entries) > 10:
                     click.echo(f"  ... and {len(entries) - 10} more")
             else:
-                click.echo(f"❌ Search failed: {result.error_message}")
-                sys.exit(1)
+                click.echo(f"❌ Search failed: {result.error}")
+                msg = "Search operation failed"
+                raise click.ClickException(msg)
 
     except (OSError, ValueError, RuntimeError) as e:
         click.echo(f"❌ Error: {e}")
-        sys.exit(1)
+        ctx.exit(1)
 
 
 if __name__ == "__main__":
