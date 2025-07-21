@@ -118,11 +118,11 @@ class CertificateValidationService:
                     return ServiceResult.ok(
                         ValidationResult(
                             result_type=CertificateValidationResult.MALFORMED,
-                            message=f"Failed to extract certificate info: {cert_info_result.error_message}",
+                            message=f"Failed to extract certificate info: {cert_info_result.error}",
                         ),
                     )
 
-                cert_info = cert_info_result.value
+                cert_info = cert_info_result.data
                 if cert_info is None or not cert_info.is_valid_for_hostname(
                     context.hostname,
                 ):
@@ -171,7 +171,7 @@ class CertificateValidationService:
                     result_type=CertificateValidationResult.VALID,
                     message="Certificate validation successful",
                     certificate_info=(
-                        cert_info_result.value if cert_info_result.is_success else None
+                        cert_info_result.data if cert_info_result.is_success else None
                     ),
                     chain_length=len(certificates),
                 ),
@@ -228,7 +228,7 @@ class CertificateValidationService:
                 return ServiceResult.ok(
                     ValidationResult(
                         result_type=CertificateValidationResult.INVALID_SIGNATURE,
-                        message=f"Server certificate validation failed: {cert_result.error_message}",
+                        message=f"Server certificate validation failed: {cert_result.error}",
                     ),
                 )
 

@@ -26,14 +26,14 @@ logger = logging.getLogger(__name__)
 
 # Import exceptions conditionally for fallback support
 try:
-    from ldap3.core.exceptions import LDAPException
+    from ldap3.core.exceptions import LDAPException  # type: ignore[import-untyped]
 except ImportError:
     # Create a fallback exception class that inherits from Exception
     class LDAPError(Exception):
         """Fallback LDAP exception when ldap3 is not available."""
 
     # Type-safe alias for compatibility
-    LDAPException: type[Exception] = LDAPError
+    LDAPException = LDAPError
 
 
 class LDAPClient:

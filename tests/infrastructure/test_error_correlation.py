@@ -174,8 +174,9 @@ class TestErrorCorrelationService:
         )
 
         assert result.is_success
-        assert result.value.error_message == "Connection timeout"
-        assert result.value.error_code == "TIMEOUT"
+        assert result.data is not None
+        assert result.data.error_message == "Connection timeout"
+        assert result.data.error_code == "TIMEOUT"
         assert len(correlation_service._error_events) == 1
 
     @pytest.mark.asyncio
@@ -235,7 +236,8 @@ class TestErrorCorrelationService:
             category=ErrorCategory.AUTHENTICATION,
         )
         assert result.is_success
-        auth_patterns = result.value
+        assert result.data is not None
+        auth_patterns = result.data
         assert len(auth_patterns) == 1
         assert auth_patterns[0].category == ErrorCategory.AUTHENTICATION
 
@@ -244,7 +246,8 @@ class TestErrorCorrelationService:
             severity=ErrorSeverity.HIGH,
         )
         assert result.is_success
-        high_patterns = result.value
+        assert result.data is not None
+        high_patterns = result.data
         assert len(high_patterns) == 1
         assert high_patterns[0].severity == ErrorSeverity.HIGH
 
@@ -289,7 +292,8 @@ class TestErrorCorrelationService:
         )
 
         assert result.is_success
-        correlated = result.value
+        assert result.data is not None
+        correlated = result.data
 
         # Should find at least the correlated event
         assert len(correlated) >= 0  # Depends on correlation threshold
@@ -324,7 +328,8 @@ class TestErrorCorrelationService:
         result = await correlation_service.get_error_statistics(time_window_hours=24)
 
         assert result.is_success
-        stats = result.value
+        assert result.data is not None
+        stats = result.data
 
         assert stats["time_window_hours"] == 24
         assert stats["total_errors"] == 3  # Only recent events
@@ -431,7 +436,8 @@ class TestErrorCorrelationService:
                 category=ErrorCategory.TIMEOUT,
             )
             if i == 0:
-                base_signature = result.value.get_signature()
+                assert result.data is not None
+                base_signature = result.data.get_signature()
 
         # Check that pattern was created and has correlation score
         assert base_signature in correlation_service._error_patterns
@@ -467,7 +473,8 @@ class TestErrorCorrelationService:
         )
 
         assert result.is_success
-        event = result.value
+        assert result.data is not None
+        event = result.data
 
         assert event.error_message == "Search operation failed"
         assert event.error_code == "SEARCH_FAILED"
@@ -503,7 +510,8 @@ class TestErrorCorrelationService:
         # Test filtering by minimum frequency
         result = await correlation_service.get_error_patterns(min_frequency=3)
         assert result.is_success
-        filtered_patterns = result.value
+        assert result.data is not None
+        filtered_patterns = result.data
         # Should not include patterns with frequency < 3
         for pattern in filtered_patterns:
             assert pattern.frequency >= 3

@@ -7,7 +7,6 @@ import pytest
 from flext_core.domain.types import ServiceResult
 
 from flext_ldap.domain.entities import LDAPConnection, LDAPUser
-from flext_ldap.domain.value_objects import CreateUserRequest
 from flext_ldap.simple_api import LDAPAPI, create_ldap_api
 
 
@@ -159,18 +158,14 @@ class TestLDAPAPI:
     ) -> None:
         """Test binding to LDAP server."""
         connection_id = uuid4()
-        username = "testuser"
-        password = "testpass"
         mock_connection_service.bind.return_value = ServiceResult.ok(True)
 
-        result = await ldap_api.bind(connection_id, username, password)
+        result = await ldap_api.bind(connection_id)
 
         assert result.is_success
         assert result.data is not None
         mock_connection_service.bind.assert_called_once_with(
             connection_id,
-            username,
-            password,
         )
 
     @pytest.mark.asyncio
@@ -191,19 +186,18 @@ class TestLDAPAPI:
 
         mock_user_service.create_user.return_value = ServiceResult.ok(user)
 
-        request = CreateUserRequest(
+        result = await ldap_api.create_user(
             dn="cn=john,ou=people,dc=test,dc=com",
             uid="john",
             cn="John Doe",
             sn="Doe",
         )
 
-        result = await ldap_api.create_user(request)
-
         assert result.is_success
         assert result.data is not None
         assert result.data == user
-        mock_user_service.create_user.assert_called_once_with(request)
+        # The service gets called with a CreateUserRequest that's constructed internally
+        mock_user_service.create_user.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_get_user(

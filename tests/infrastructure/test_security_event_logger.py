@@ -355,4 +355,5 @@ class TestSecurityEventLogger:
         metrics = result.data
 
         # Should only count recent event
+        assert metrics is not None
         assert metrics["total_events"] == 1

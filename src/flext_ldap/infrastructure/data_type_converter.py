@@ -506,7 +506,7 @@ class DataTypeConverter:
 
         for fmt in formats:
             try:
-                dt = datetime.strptime(str_value, fmt)  # noqa: DTZ007 - UTC handling done below
+                dt = datetime.strptime(str_value, fmt)  # noqa: DTZ007
                 # Ensure timezone awareness
                 if dt.tzinfo is None:
                     dt = dt.replace(tzinfo=UTC)
