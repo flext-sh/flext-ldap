@@ -116,7 +116,6 @@ repos:
         entry: poetry lock
         language: system
         pass_filenames: false
-        args: [--no-update]
 
   # ===== FILE VALIDATION AND QUALITY =====
   - repo: https://github.com/pre-commit/pre-commit-hooks

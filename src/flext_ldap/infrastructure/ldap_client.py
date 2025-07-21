@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from typing import Any
 
-import ldap3
+import ldap3  # type: ignore[import-untyped]
 from flext_core.domain.types import ServiceResult
 from ldap3 import BASE, LEVEL, SUBTREE
-from ldap3.core.exceptions import LDAPException
+from ldap3.core.exceptions import LDAPException  # type: ignore[import-untyped]
 
 
 class LDAPInfrastructureClient:
@@ -81,7 +81,7 @@ class LDAPInfrastructureClient:
         """
         try:
             if connection_id in self._connections:
-                self._connections[connection_id].unbind()  # type: ignore[no-untyped-call]
+                self._connections[connection_id].unbind()
                 del self._connections[connection_id]
                 return ServiceResult.ok(True)
             return ServiceResult.fail("Connection not found")
@@ -174,7 +174,7 @@ class LDAPInfrastructureClient:
             if not connection:
                 return ServiceResult.fail("Connection not found")
 
-            success = connection.add(dn, attributes=attributes)  # type: ignore[no-untyped-call]
+            success = connection.add(dn, attributes=attributes)
 
             if not success:
                 return ServiceResult.fail(f"Add failed: {connection.result}")
@@ -209,7 +209,7 @@ class LDAPInfrastructureClient:
             if not connection:
                 return ServiceResult.fail("Connection not found")
 
-            success = connection.modify(dn, changes)  # type: ignore[no-untyped-call]
+            success = connection.modify(dn, changes)
 
             if not success:
                 return ServiceResult.fail(f"Modify failed: {connection.result}")
@@ -242,7 +242,7 @@ class LDAPInfrastructureClient:
             if not connection:
                 return ServiceResult.fail("Connection not found")
 
-            success = connection.delete(dn)  # type: ignore[no-untyped-call]
+            success = connection.delete(dn)
 
             if not success:
                 return ServiceResult.fail(f"Delete failed: {connection.result}")

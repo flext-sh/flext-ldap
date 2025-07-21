@@ -10,11 +10,14 @@ This example demonstrates how to use the LDAPService for LDAP operations.
 from __future__ import annotations
 
 import asyncio
+import logging
 import sys
 from pathlib import Path
 
 from flext_ldap import LDAPService
 from flext_ldap.domain.value_objects import CreateUserRequest
+
+logger = logging.getLogger(__name__)
 
 # Force use of local src instead of installed package
 src_path = Path(__file__).parent.parent / "src"
@@ -43,6 +46,10 @@ async def main() -> None:
     result = await ldap_service.create_user(user_request)
     if result.is_success:
         user = result.data
+
+        if user is None:
+            logger.warning("User not found")
+            return
 
         # Update the user
         update_result = await ldap_service.update_user(
@@ -82,9 +89,17 @@ async def main() -> None:
     if group_result.is_success:
         group = group_result.data
 
+        if group is None:
+            logger.warning("Group not found")
+            return
+
         # Add user to group
         if result.is_success:
             user = result.data
+            if user is None:
+                logger.warning("User not found for group operations")
+                return
+
             add_result = await ldap_service.add_user_to_group(group.id, user.dn)
             if add_result.is_success:
                 pass

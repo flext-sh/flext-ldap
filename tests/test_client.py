@@ -1,6 +1,13 @@
 """Test LDAP client functionality."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
+
+if TYPE_CHECKING:
+    from flext_ldap.config import FlextLDAPSettings
 
 
 class TestLDAPClient:
@@ -14,10 +21,11 @@ class TestLDAPClient:
         assert LDAPClient is not None
 
     @pytest.mark.unit
-    def test_client_instantiation_with_settings(self, ldap_settings: dict) -> None:
+    def test_client_instantiation_with_settings(self, ldap_settings: FlextLDAPSettings) -> None:
         """Test that LDAPClient can be instantiated with settings."""
         from flext_ldap.client import LDAPClient
 
+        # ldap_settings fixture returns FlextLDAPSettings instance
         client = LDAPClient(ldap_settings)
         assert client is not None
         assert not client.is_connected()

@@ -750,6 +750,7 @@ msgspec = ">=0.18.0"
 pydantic = ">=2.11.7"
 pydantic-settings = ">=2.10.1"
 pyyaml = ">=6.0.0"
+rfc3987 = ">=1.3.8,<2.0.0"
 rich = ">=14.0.0"
 structlog = ">=25.4.0"
 typing-extensions = ">=4.12.0"
@@ -2057,6 +2058,18 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "rfc3987"
+version = "1.3.8"
+description = "Parsing and validation of URIs (RFC 3986) and IRIs (RFC 3987)"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "rfc3987-1.3.8-py2.py3-none-any.whl", hash = "sha256:10702b1e51e5658843460b189b185c0366d2cf4cff716f13111b0ea9fd2dce53"},
+    {file = "rfc3987-1.3.8.tar.gz", hash = "sha256:d3c4d257a560d544e9826b38bc81db676890c79ab9d7ac92b39c7a253d5ca733"},
+]
+
+[[package]]
 name = "rich"
 version = "14.0.0"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
@@ -2259,7 +2272,7 @@ version = "2.9.13.20250622"
 description = "Typing stubs for ldap3"
 optional = false
 python-versions = ">=3.9"
-groups = ["typings"]
+groups = ["dev", "typings"]
 files = [
     {file = "types_ldap3-2.9.13.20250622-py3-none-any.whl", hash = "sha256:c18d0320327fa0017eb3d95acdf38921542d80939255e4ba130ca2d13ca3375f"},
     {file = "types_ldap3-2.9.13.20250622.tar.gz", hash = "sha256:4770a8701daddf1ee936d46414205a329211b6f6e655c2764f6b70c89b023c47"},
@@ -2286,7 +2299,7 @@ version = "0.6.0.20250516"
 description = "Typing stubs for pyasn1"
 optional = false
 python-versions = ">=3.9"
-groups = ["typings"]
+groups = ["dev", "typings"]
 files = [
     {file = "types_pyasn1-0.6.0.20250516-py3-none-any.whl", hash = "sha256:b9925e4e22e09eed758b93b6f2a7881b89d842c2373dd11c09b173567d170142"},
     {file = "types_pyasn1-0.6.0.20250516.tar.gz", hash = "sha256:1a9b35a4f033cd70c384a5043a3407b2cc07afc95900732b66e0d38426c7541d"},
@@ -2480,4 +2493,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "d6ef581777ca3c5b9d46e8f6be247af1113e74c60b3a859406402db1e7f39b61"
+content-hash = "4ce40417cc3625b038d4e26a7bd5fd36c5f2c4d894fbc4b0ff10694d1c139fe3"

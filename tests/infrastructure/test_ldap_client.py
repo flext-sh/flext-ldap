@@ -197,6 +197,7 @@ class TestLDAPInfrastructureClient:
         result = await adapter.search("test_conn", "dc=test", "(objectClass=person)")
 
         assert result.is_success
+        assert result.data is not None
         assert len(result.data) == 2
         assert result.data[0]["dn"] == "cn=user1,dc=test"
         assert result.data[0]["attributes"]["cn"] == ["user1"]
@@ -272,7 +273,8 @@ class TestLDAPInfrastructureClient:
         result = await adapter.search("test_conn", "dc=test", "(objectClass=person)")
 
         assert not result.is_success
-        assert "Search failed" in result.error_message
+        assert result.error is not None
+        assert "Search failed" in result.error
 
     @pytest.mark.asyncio
     async def test_search_ldap_exception(self) -> None:
@@ -290,7 +292,8 @@ class TestLDAPInfrastructureClient:
         result = await adapter.search("test_conn", "dc=test", "(objectClass=person)")
 
         assert not result.is_success
-        assert "LDAP search failed" in result.error_message
+        assert result.error is not None
+        assert "LDAP search failed" in result.error
 
     @pytest.mark.asyncio
     async def test_search_unexpected_exception(self) -> None:
@@ -354,7 +357,8 @@ class TestLDAPInfrastructureClient:
         result = await adapter.add_entry("test_conn", "cn=test,dc=test", {})
 
         assert not result.is_success
-        assert "Add failed" in result.error_message
+        assert result.error is not None
+        assert "Add failed" in result.error
 
     @pytest.mark.asyncio
     async def test_add_ldap_exception(self) -> None:
@@ -372,7 +376,8 @@ class TestLDAPInfrastructureClient:
         result = await adapter.add_entry("test_conn", "cn=test,dc=test", {})
 
         assert not result.is_success
-        assert "LDAP add failed" in result.error_message
+        assert result.error is not None
+        assert "LDAP add failed" in result.error
 
     @pytest.mark.asyncio
     async def test_add_unexpected_exception(self) -> None:
@@ -429,7 +434,8 @@ class TestLDAPInfrastructureClient:
         result = await adapter.modify_entry("test_conn", "cn=test,dc=test", {})
 
         assert not result.is_success
-        assert "Modify failed" in result.error_message
+        assert result.error is not None
+        assert "Modify failed" in result.error
 
     @pytest.mark.asyncio
     async def test_modify_ldap_exception(self) -> None:
@@ -447,7 +453,8 @@ class TestLDAPInfrastructureClient:
         result = await adapter.modify_entry("test_conn", "cn=test,dc=test", {})
 
         assert not result.is_success
-        assert "LDAP modify failed" in result.error_message
+        assert result.error is not None
+        assert "LDAP modify failed" in result.error
 
     @pytest.mark.asyncio
     async def test_modify_unexpected_exception(self) -> None:
@@ -503,7 +510,8 @@ class TestLDAPInfrastructureClient:
         result = await adapter.delete_entry("test_conn", "cn=test,dc=test")
 
         assert not result.is_success
-        assert "Delete failed" in result.error_message
+        assert result.error is not None
+        assert "Delete failed" in result.error
 
     @pytest.mark.asyncio
     async def test_delete_ldap_exception(self) -> None:
@@ -521,7 +529,8 @@ class TestLDAPInfrastructureClient:
         result = await adapter.delete_entry("test_conn", "cn=test,dc=test")
 
         assert not result.is_success
-        assert "LDAP delete failed" in result.error_message
+        assert result.error is not None
+        assert "LDAP delete failed" in result.error
 
     @pytest.mark.asyncio
     async def test_delete_unexpected_exception(self) -> None:
@@ -559,7 +568,8 @@ class TestLDAPInfrastructureClient:
         result = adapter.get_connection_info("test_conn")
 
         assert result.is_success
-        info = result.value
+        assert result.data is not None
+        info = result.data
         assert info["server"] == "ldap://test.com:389"
         assert info["bound"] is True
         assert info["user"] == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test"
@@ -594,7 +604,8 @@ class TestLDAPInfrastructureClient:
         result = adapter.get_connection_info("test_conn")
 
         assert result.is_success
-        info = result.value
+        assert result.data is not None
+        info = result.data
         assert info["server_info"] is None
 
     def test_get_connection_info_unexpected_exception(self) -> None:
