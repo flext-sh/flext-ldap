@@ -8,9 +8,9 @@ Real LDAP repository implementations.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from flext_core.domain.types import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 
 from flext_ldap.domain.exceptions import LDAPUserError
 from flext_ldap.domain.repositories import LDAPConnectionRepository, LDAPUserRepository
@@ -31,7 +31,7 @@ class LDAPConnectionRepositoryImpl(LDAPConnectionRepository):
         self.ldap_client = ldap_client
         self._connections: dict[UUID, LDAPConnection] = {}
 
-    async def save(self, connection: LDAPConnection) -> ServiceResult[LDAPConnection]:
+    async def save(self, connection: LDAPConnection) -> ServiceResult[Any]:
         """Save LDAP connection."""
         try:
             self._connections[connection.id] = connection
@@ -43,7 +43,7 @@ class LDAPConnectionRepositoryImpl(LDAPConnectionRepository):
     async def find_by_id(
         self,
         connection_id: UUID,
-    ) -> ServiceResult[LDAPConnection | None]:
+    ) -> ServiceResult[Any]:
         """Find connection by ID."""
         try:
             connection = self._connections.get(connection_id)
@@ -52,7 +52,7 @@ class LDAPConnectionRepositoryImpl(LDAPConnectionRepository):
             msg = f"Failed to find connection: {e}"
             raise ValueError(msg) from e
 
-    async def find_all(self) -> ServiceResult[list[LDAPConnection]]:
+    async def find_all(self) -> ServiceResult[Any]:
         """Find all connections."""
         try:
             connections = list(self._connections.values())
@@ -61,7 +61,7 @@ class LDAPConnectionRepositoryImpl(LDAPConnectionRepository):
             msg = f"Failed to find connections: {e}"
             raise LDAPUserError(msg) from e
 
-    async def delete(self, connection: LDAPConnection) -> ServiceResult[bool]:
+    async def delete(self, connection: LDAPConnection) -> ServiceResult[Any]:
         """Delete connection."""
         try:
             if connection.id in self._connections:
@@ -110,7 +110,7 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
         """Initialize repository with LDAP client."""
         self.ldap_client = ldap_client
 
-    async def save(self, user: LDAPUser) -> ServiceResult[LDAPUser]:
+    async def save(self, user: LDAPUser) -> ServiceResult[Any]:
         """Save LDAP user to directory."""
         try:
             # For now, store in memory - real implementation would use ldap_client.add_entry
@@ -123,7 +123,7 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
     async def find_by_id(
         self,
         user_id: UUID,
-    ) -> ServiceResult[LDAPUser | None]:
+    ) -> ServiceResult[Any]:
         """Find user by ID."""
         try:
             # Real implementation would search LDAP directory
@@ -135,7 +135,7 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
     async def find_by_dn(
         self,
         dn: str,
-    ) -> ServiceResult[LDAPUser | None]:
+    ) -> ServiceResult[Any]:
         """Find user by distinguished name."""
         try:
             # Real implementation would use ldap_client.search
@@ -144,7 +144,7 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             msg = f"Failed to find user by DN: {e}"
             raise ValueError(msg) from e
 
-    async def find_all(self) -> ServiceResult[list[LDAPUser]]:
+    async def find_all(self) -> ServiceResult[Any]:
         """Find all users."""
         try:
             # Real implementation would search LDAP directory
@@ -153,7 +153,7 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             msg = f"Failed to find users: {e}"
             raise LDAPUserError(msg) from e
 
-    async def delete(self, user: LDAPUser) -> ServiceResult[bool]:
+    async def delete(self, user: LDAPUser) -> ServiceResult[Any]:
         """Delete user from directory."""
         try:
             # Real implementation would use ldap_client.delete_entry

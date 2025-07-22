@@ -194,6 +194,7 @@ ignore = [
     "TRY300",
     "TRY301",
     "TRY401",
+    "PT022",  # pytest-useless-yield-fixture - conflicts with MyPy AsyncGenerator
 ]
 
 [tool.ruff.format]

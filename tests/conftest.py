@@ -119,9 +119,10 @@ def pytest_configure(config: pytest.Config) -> None:
 @pytest.fixture
 async def ldap_connection_service() -> AsyncGenerator[Any]:
     """LDAP connection service for testing."""
-    from flext_ldap.application.services import LDAPConnectionService
+    # LDAPConnectionService is abstract, so use a mock for testing
+    from unittest.mock import AsyncMock
 
-    return LDAPConnectionService()
+    return AsyncMock()
 
 
 # Oracle OID test fixtures

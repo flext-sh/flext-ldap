@@ -10,17 +10,17 @@ REFACTORED:
 from __future__ import annotations
 
 from flext_ldap.application.ldap_service import LDAPService
-from flext_ldap.application.services import (
+from flext_ldap.domain.ports import (
     LDAPConnectionService,
-    LDAPGroupService,
-    LDAPOperationService,
+    LDAPMigrationService,
+    LDAPSearchService,
     LDAPUserService,
 )
 
 __all__ = [
     "LDAPConnectionService",
-    "LDAPGroupService",
-    "LDAPOperationService",
+    "LDAPMigrationService",
+    "LDAPSearchService",
     "LDAPService",
     "LDAPUserService",
 ]

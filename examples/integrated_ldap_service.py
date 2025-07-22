@@ -44,7 +44,7 @@ async def main() -> None:
     )
 
     result = await ldap_service.create_user(user_request)
-    if result.is_success:
+    if result.success:
         user = result.data
 
         if user is None:
@@ -56,26 +56,26 @@ async def main() -> None:
             user.id,
             {"title": "Principal Software Engineer"},
         )
-        if update_result.is_success:
+        if update_result.success:
             pass
 
         # Find user by UID
         find_result = await ldap_service.find_user_by_uid("john.doe")
-        if find_result.is_success and find_result.data:
+        if find_result.success and find_result.data:
             pass
 
         # Lock and unlock user
         lock_result = await ldap_service.lock_user(user.id)
-        if lock_result.is_success:
+        if lock_result.success:
             pass
 
         unlock_result = await ldap_service.unlock_user(user.id)
-        if unlock_result.is_success:
+        if unlock_result.success:
             pass
 
         # List all users
         list_result = await ldap_service.list_users()
-        if list_result.is_success:
+        if list_result.success:
             pass
 
     # Example 2: Group operations
@@ -86,7 +86,7 @@ async def main() -> None:
         ou="groups",
     )
 
-    if group_result.is_success:
+    if group_result.success:
         group = group_result.data
 
         if group is None:
@@ -94,24 +94,24 @@ async def main() -> None:
             return
 
         # Add user to group
-        if result.is_success:
+        if result.success:
             user = result.data
             if user is None:
                 logger.warning("User not found for group operations")
                 return
 
             add_result = await ldap_service.add_user_to_group(group.id, user.dn)
-            if add_result.is_success:
+            if add_result.success:
                 pass
 
             # Remove user from group
             remove_result = await ldap_service.remove_user_from_group(group.id, user.dn)
-            if remove_result.is_success:
+            if remove_result.success:
                 pass
 
         # List all groups
         groups_result = await ldap_service.list_groups()
-        if groups_result.is_success:
+        if groups_result.success:
             pass
 
     # Example 3: Connection management (will fail without real LDAP server)
@@ -124,10 +124,10 @@ async def main() -> None:
         "REDACTED_LDAP_BIND_PASSWORD_password",
     )
 
-    if connection_result.is_success:
+    if connection_result.success:
         # Test the connection
         test_result = await ldap_service.test_connection()
-        if test_result.is_success:
+        if test_result.success:
             pass
 
         # When connected, operations would use real LDAP directory
@@ -135,14 +135,14 @@ async def main() -> None:
 
         # Disconnect
         disconnect_result = await ldap_service.disconnect_from_server()
-        if disconnect_result.is_success:
+        if disconnect_result.success:
             pass
 
     # Example 4: Error handling demonstration
 
     # Try to find non-existent user
     missing_result = await ldap_service.find_user_by_uid("nonexistent")
-    if missing_result.is_success and missing_result.data is None:
+    if missing_result.success and missing_result.data is None:
         pass
 
     # Try to disconnect when not connected

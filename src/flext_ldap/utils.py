@@ -43,10 +43,12 @@ def parse_generalized_time(time_str: str) -> datetime:
         tz = UTC
 
     # Parse the time string
-    dt = datetime.strptime(time_str, "%Y%m%d%H%M%S")  # noqa: DTZ007
+    # Create timezone-aware datetime directly
+    dt = datetime.strptime(time_str, "%Y%m%d%H%M%S").replace(tzinfo=UTC if tz else None)
 
-    if tz:
-        dt = dt.replace(tzinfo=tz)
+    # If no timezone was specified, make it timezone-naive
+    if not tz and dt.tzinfo:
+        dt = dt.replace(tzinfo=None)
 
     return dt
 

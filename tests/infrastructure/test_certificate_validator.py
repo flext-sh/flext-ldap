@@ -11,7 +11,8 @@ from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-from flext_core.domain.types import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
+from pydantic import ValidationError
 
 from flext_ldap.domain.security import (
     CertificateInfo,
@@ -52,7 +53,7 @@ class TestCertificateValidationService:
         """Test validation with empty certificate chain."""
         result = await cert_validator.validate_certificate_chain([], validation_context)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.result_type == CertificateValidationResult.MALFORMED.value
         assert "Empty certificate chain" in result.data.message
@@ -69,7 +70,7 @@ class TestCertificateValidationService:
             validation_context,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.result_type == CertificateValidationResult.MALFORMED.value
         assert "Failed to parse certificate" in result.data.message
@@ -94,7 +95,7 @@ class TestCertificateValidationService:
             validation_context,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.result_type == CertificateValidationResult.EXPIRED.value
         assert "Certificate expired" in result.data.message
@@ -135,7 +136,7 @@ class TestCertificateValidationService:
                 validation_context,
             )
 
-            assert result.is_success
+            assert result.success
             assert result.data is not None
             assert result.data.result_type == CertificateValidationResult.VALID.value
             assert "Certificate validation successful" in result.data.message
@@ -150,7 +151,7 @@ class TestCertificateValidationService:
 
         result = await cert_validator.create_ssl_context(config)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert isinstance(result.data, ssl.SSLContext)
         assert result.data.verify_mode == ssl.CERT_REQUIRED
@@ -169,7 +170,7 @@ class TestCertificateValidationService:
 
         result = await cert_validator.create_ssl_context(config)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert isinstance(result.data, ssl.SSLContext)
         assert result.data.verify_mode == ssl.CERT_NONE
@@ -314,10 +315,10 @@ class TestCertificateValidationService:
     def test_certificate_validation_context_validation(self) -> None:
         """Test CertificateValidationContext validation."""
         # Test invalid port
-        with pytest.raises(ValueError, match="Invalid port number"):
+        with pytest.raises(ValidationError, match="Port must be between 1 and 65535"):
             CertificateValidationContext(hostname="test.com", port=0)
 
-        with pytest.raises(ValueError, match="Invalid port number"):
+        with pytest.raises(ValidationError, match="Port must be between 1 and 65535"):
             CertificateValidationContext(hostname="test.com", port=65536)
 
         # Test empty hostname

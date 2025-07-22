@@ -48,23 +48,20 @@ class TestCLINew:
     @patch("flext_ldap.cli_new.LDAPClient")
     def test_test_command_success(self, mock_client_class: MagicMock) -> None:
         """Test successful connection test command."""
-        # Mock client instance
+        # Mock client instance with context manager support
         mock_client = mock_client_class.return_value
-        mock_client.connect = AsyncMock()
-        mock_client.disconnect = AsyncMock()
-
-        # Mock successful connection
-        from flext_core.domain.types import ServiceResult
-
-        mock_client.connect.return_value = ServiceResult.ok(True)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock()
+        mock_client.is_connected = MagicMock(return_value=True)
 
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["test", "ldap.example.com"])
 
         assert result.exit_code == 0
         assert "✅ Successfully connected to ldap.example.com:389" in result.output
-        mock_client.connect.assert_called_once()
-        mock_client.disconnect.assert_called_once()
+        # Verify context manager was used
+        mock_client.__aenter__.assert_called_once()
+        mock_client.__aexit__.assert_called_once()
 
     @patch("flext_ldap.cli_new.LDAPClient")
     def test_test_command_connection_failure(
@@ -72,33 +69,31 @@ class TestCLINew:
         mock_client_class: MagicMock,
     ) -> None:
         """Test connection test command failure."""
-        # Mock client instance
+        # Mock client instance with context manager that raises exception
         mock_client = mock_client_class.return_value
-        mock_client.connect = AsyncMock()
 
-        # Mock failed connection
-        from flext_core.domain.types import ServiceResult
+        # Mock context manager that raises LDAPException for connection failure
+        from ldap3.core.exceptions import LDAPException
 
-        mock_client.connect.return_value = ServiceResult.fail("Connection refused")
+        mock_client.__aenter__ = AsyncMock(
+            side_effect=LDAPException("Failed to connect"),
+        )
+        mock_client.__aexit__ = AsyncMock()
 
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["test", "invalid.example.com"])
 
         assert result.exit_code == 1
-        assert "❌ Connection failed: Connection refused" in result.output
+        assert "❌ Error: Failed to connect" in result.output
 
     @patch("flext_ldap.cli_new.LDAPClient")
     def test_test_command_with_options(self, mock_client_class: MagicMock) -> None:
         """Test connection test with various options."""
-        # Mock client instance
+        # Mock client instance with context manager support
         mock_client = mock_client_class.return_value
-        mock_client.connect = AsyncMock()
-        mock_client.disconnect = AsyncMock()
-
-        # Mock successful connection
-        from flext_core.domain.types import ServiceResult
-
-        mock_client.connect.return_value = ServiceResult.ok(True)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock()
+        mock_client.is_connected = MagicMock(return_value=True)
 
         runner = CliRunner()
         result = runner.invoke(
@@ -153,8 +148,7 @@ class TestCLINew:
         mock_client.search = AsyncMock()
 
         # Mock successful search
-        from flext_core.domain.types import ServiceResult
-
+        from flext_core.domain.shared_types import ServiceResult
         mock_client.search.return_value = ServiceResult.ok(mock_entries)
 
         runner = CliRunner()
@@ -187,8 +181,7 @@ class TestCLINew:
         mock_client.search = AsyncMock()
 
         # Mock successful search
-        from flext_core.domain.types import ServiceResult
-
+        from flext_core.domain.shared_types import ServiceResult
         mock_client.search.return_value = ServiceResult.ok(mock_entries)
 
         runner = CliRunner()
@@ -211,8 +204,7 @@ class TestCLINew:
         mock_client.search = AsyncMock()
 
         # Mock successful search with empty results
-        from flext_core.domain.types import ServiceResult
-
+        from flext_core.domain.shared_types import ServiceResult
         mock_client.search.return_value = ServiceResult.ok([])
 
         runner = CliRunner()
@@ -250,8 +242,7 @@ class TestCLINew:
         mock_client.search = AsyncMock()
 
         # Mock failed search
-        from flext_core.domain.types import ServiceResult
-
+        from flext_core.domain.shared_types import ServiceResult
         mock_client.search.return_value = ServiceResult.fail("Invalid filter")
 
         runner = CliRunner()
@@ -326,9 +317,10 @@ class TestCLINew:
     @patch("flext_ldap.cli_new.LDAPClient")
     def test_test_command_runtime_error(self, mock_client_class: MagicMock) -> None:
         """Test test command with runtime error."""
-        # Mock client instance to raise RuntimeError
+        # Mock client instance with context manager that raises RuntimeError
         mock_client = mock_client_class.return_value
-        mock_client.connect = AsyncMock(side_effect=RuntimeError("Unexpected error"))
+        mock_client.__aenter__ = AsyncMock(side_effect=RuntimeError("Unexpected error"))
+        mock_client.__aexit__ = AsyncMock()
 
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["test", "ldap.example.com"])

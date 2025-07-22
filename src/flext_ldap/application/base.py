@@ -12,16 +12,23 @@ ELIMINATES DUPLICATIONS:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar, cast
 
-from flext_core.domain.types import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 
 if TYPE_CHECKING:
     from uuid import UUID
 
 
+# Protocol for entities with ID attribute
+class EntityWithId(Protocol):
+    """Protocol for entities that have an id attribute."""
+
+    id: UUID
+
+
 # Generic types for entity storage patterns
-TEntity = TypeVar("TEntity")
+TEntity = TypeVar("TEntity", bound=EntityWithId)
 
 
 class BaseLDAPService:
@@ -48,7 +55,7 @@ class DictionaryStorageService[TEntity](BaseLDAPService):
         super().__init__()
         self._entities: dict[UUID, TEntity] = {}
 
-    async def get_entity(self, entity_id: UUID) -> ServiceResult[TEntity | None]:
+    async def get_entity(self, entity_id: UUID) -> ServiceResult[Any]:
         """Get an entity by ID - ELIMINATES MASSIVE DUPLICATION.
 
         This method replaces IDENTICAL implementations in:
@@ -70,7 +77,7 @@ class DictionaryStorageService[TEntity](BaseLDAPService):
         except (KeyError, AttributeError) as e:
             return ServiceResult.fail(f"Failed to get entity: {e}")
 
-    async def delete_entity(self, entity_id: UUID) -> ServiceResult[bool]:
+    async def delete_entity(self, entity_id: UUID) -> ServiceResult[Any]:
         """Delete an entity by ID - ELIMINATES MASSIVE DUPLICATION.
 
         This method replaces IDENTICAL implementations in:
@@ -96,7 +103,7 @@ class DictionaryStorageService[TEntity](BaseLDAPService):
         self,
         ou: str | None = None,
         limit: int = 100,
-    ) -> ServiceResult[list[TEntity]]:
+    ) -> ServiceResult[Any]:
         """List entities with organizational unit filtering - ELIMINATES DUPLICATION.
 
         This method replaces SIMILAR implementations in:
@@ -129,7 +136,7 @@ class DictionaryStorageService[TEntity](BaseLDAPService):
             entity: Entity to store (must have 'id' attribute)
 
         """
-        entity_id = entity.id  # type: ignore[attr-defined]
+        entity_id = cast("EntityWithId", entity).id  # Guaranteed by EntityWithId protocol
         self._entities[entity_id] = entity
 
 
@@ -141,7 +148,7 @@ class DNSearchService(DictionaryStorageService[TEntity]):
     - LDAPGroupService.find_group_by_dn()
     """
 
-    async def find_entity_by_dn(self, dn: str) -> ServiceResult[TEntity | None]:
+    async def find_entity_by_dn(self, dn: str) -> ServiceResult[Any]:
         """Find entity by distinguished name - ELIMINATES DUPLICATION.
 
         Args:
@@ -192,7 +199,7 @@ class ConnectionAwareService(LDAPClientService):
         super().__init__(ldap_client)
         self._connection_id: str | None = None
 
-    async def set_connection(self, connection_id: str) -> ServiceResult[bool]:
+    async def set_connection(self, connection_id: str) -> ServiceResult[Any]:
         """Set the LDAP connection ID for directory operations.
 
         Args:
@@ -208,7 +215,7 @@ class ConnectionAwareService(LDAPClientService):
         except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Failed to set connection: {e}")
 
-    async def clear_connection(self) -> ServiceResult[bool]:
+    async def clear_connection(self) -> ServiceResult[Any]:
         """Clear the LDAP connection (revert to memory-only mode).
 
         Returns:
@@ -239,7 +246,7 @@ class UserBaseService(DNSearchService[Any], ConnectionAwareService):
         DNSearchService.__init__(self)
         ConnectionAwareService.__init__(self, ldap_client)
 
-    async def find_entity_by_uid(self, uid: str) -> ServiceResult[Any | None]:
+    async def find_entity_by_uid(self, uid: str) -> ServiceResult[Any]:
         """Find user by UID - specific to user entities.
 
         Args:
@@ -281,7 +288,7 @@ class OperationBaseService(DictionaryStorageService[Any]):
         self,
         connection_id: UUID | None = None,
         limit: int = 100,
-    ) -> ServiceResult[list[Any]]:
+    ) -> ServiceResult[Any]:
         """List operations filtered by connection ID.
 
         Args:

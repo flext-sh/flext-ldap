@@ -173,7 +173,7 @@ class TestErrorCorrelationService:
             category=ErrorCategory.TIMEOUT,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.error_message == "Connection timeout"
         assert result.data.error_code == "TIMEOUT"
@@ -235,7 +235,7 @@ class TestErrorCorrelationService:
         result = await correlation_service.get_error_patterns(
             category=ErrorCategory.AUTHENTICATION,
         )
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         auth_patterns = result.data
         assert len(auth_patterns) == 1
@@ -245,7 +245,7 @@ class TestErrorCorrelationService:
         result = await correlation_service.get_error_patterns(
             severity=ErrorSeverity.HIGH,
         )
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         high_patterns = result.data
         assert len(high_patterns) == 1
@@ -291,7 +291,7 @@ class TestErrorCorrelationService:
             time_window_minutes=60,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         correlated = result.data
 
@@ -327,7 +327,7 @@ class TestErrorCorrelationService:
 
         result = await correlation_service.get_error_statistics(time_window_hours=24)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         stats = result.data
 
@@ -472,7 +472,7 @@ class TestErrorCorrelationService:
             category=ErrorCategory.SEARCH,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         event = result.data
 
@@ -509,7 +509,7 @@ class TestErrorCorrelationService:
 
         # Test filtering by minimum frequency
         result = await correlation_service.get_error_patterns(min_frequency=3)
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         filtered_patterns = result.data
         # Should not include patterns with frequency < 3

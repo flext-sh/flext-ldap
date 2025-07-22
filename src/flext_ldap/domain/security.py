@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
-from flext_core.domain.pydantic_base import DomainEntity
+from flext_core import DomainEntity
 
 
 class CertificateValidationResult(Enum):

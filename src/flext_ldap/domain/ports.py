@@ -9,9 +9,9 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from flext_core.domain.types import ServiceResult
+    from flext_core.domain.shared_types import ServiceResult
 
-    from flext_ldap.domain.entities import LDAPConnection, LDAPUser
+    from flext_ldap.domain.entities import LDAPConnection
 
 
 class LDAPConnectionService(ABC):
@@ -23,12 +23,12 @@ class LDAPConnectionService(ABC):
         server_url: str,
         bind_dn: str | None = None,
         password: str | None = None,
-    ) -> ServiceResult[LDAPConnection]:
+    ) -> ServiceResult[Any]:
         """Connect to LDAP server."""
         ...
 
     @abstractmethod
-    async def disconnect(self, connection: LDAPConnection) -> ServiceResult[bool]:
+    async def disconnect(self, connection: LDAPConnection) -> ServiceResult[Any]:
         """Disconnect from LDAP server."""
         ...
 
@@ -38,17 +38,17 @@ class LDAPConnectionService(ABC):
         connection: LDAPConnection,
         bind_dn: str,
         password: str,
-    ) -> ServiceResult[bool]:
+    ) -> ServiceResult[Any]:
         """Bind to LDAP server with credentials."""
         ...
 
     @abstractmethod
-    async def unbind(self, connection: LDAPConnection) -> ServiceResult[bool]:
+    async def unbind(self, connection: LDAPConnection) -> ServiceResult[Any]:
         """Unbind from LDAP server."""
         ...
 
     @abstractmethod
-    async def test_connection(self, connection: LDAPConnection) -> ServiceResult[bool]:
+    async def test_connection(self, connection: LDAPConnection) -> ServiceResult[Any]:
         """Test LDAP connection health."""
         ...
 
@@ -56,7 +56,7 @@ class LDAPConnectionService(ABC):
     async def get_connection_info(
         self,
         connection: LDAPConnection,
-    ) -> ServiceResult[dict[str, Any]]:
+    ) -> ServiceResult[Any]:
         """Get connection information."""
         ...
 
@@ -72,7 +72,7 @@ class LDAPSearchService(ABC):
         filter_string: str,
         attributes: list[str] | None = None,
         scope: str = "sub",
-    ) -> ServiceResult[list[dict[str, Any]]]:
+    ) -> ServiceResult[Any]:
         """Search LDAP entries."""
         ...
 
@@ -82,7 +82,7 @@ class LDAPSearchService(ABC):
         connection: LDAPConnection,
         base_dn: str,
         filter_string: str | None = None,
-    ) -> ServiceResult[list[LDAPUser]]:
+    ) -> ServiceResult[Any]:
         """Search for LDAP users."""
         ...
 
@@ -96,7 +96,7 @@ class LDAPUserService(ABC):
         connection: LDAPConnection,
         dn: str,
         attributes: dict[str, list[str]],
-    ) -> ServiceResult[LDAPUser]:
+    ) -> ServiceResult[Any]:
         """Create a new LDAP user."""
         ...
 
@@ -105,7 +105,7 @@ class LDAPUserService(ABC):
         self,
         connection: LDAPConnection,
         dn: str,
-    ) -> ServiceResult[LDAPUser | None]:
+    ) -> ServiceResult[Any]:
         """Get user by distinguished name."""
         ...
 
@@ -115,7 +115,7 @@ class LDAPUserService(ABC):
         connection: LDAPConnection,
         dn: str,
         modifications: dict[str, list[str]],
-    ) -> ServiceResult[LDAPUser]:
+    ) -> ServiceResult[Any]:
         """Update user attributes."""
         ...
 
@@ -124,7 +124,7 @@ class LDAPUserService(ABC):
         self,
         connection: LDAPConnection,
         dn: str,
-    ) -> ServiceResult[bool]:
+    ) -> ServiceResult[Any]:
         """Delete user."""
         ...
 
@@ -134,7 +134,7 @@ class LDAPUserService(ABC):
         connection: LDAPConnection,
         base_dn: str,
         limit: int = 100,
-    ) -> ServiceResult[list[LDAPUser]]:
+    ) -> ServiceResult[Any]:
         """List users in organizational unit."""
         ...
 
@@ -146,7 +146,7 @@ class LDAPSchemaService(ABC):
     async def get_schema(
         self,
         connection: LDAPConnection,
-    ) -> ServiceResult[dict[str, Any]]:
+    ) -> ServiceResult[Any]:
         """Get LDAP schema information."""
         ...
 
@@ -156,7 +156,7 @@ class LDAPSchemaService(ABC):
         connection: LDAPConnection,
         dn: str,
         attributes: dict[str, list[str]],
-    ) -> ServiceResult[bool]:
+    ) -> ServiceResult[Any]:
         """Validate entry against schema."""
         ...
 
@@ -170,7 +170,7 @@ class LDAPMigrationService(ABC):
         connection: LDAPConnection,
         base_dn: str,
         output_format: str = "ldif",
-    ) -> ServiceResult[str]:
+    ) -> ServiceResult[Any]:
         """Export LDAP entries."""
         ...
 
@@ -180,7 +180,7 @@ class LDAPMigrationService(ABC):
         connection: LDAPConnection,
         data: str,
         format_type: str = "ldif",
-    ) -> ServiceResult[int]:
+    ) -> ServiceResult[Any]:
         """Import LDAP entries."""
         ...
 
@@ -190,6 +190,6 @@ class LDAPMigrationService(ABC):
         source_connection: LDAPConnection,
         target_connection: LDAPConnection,
         base_dn: str,
-    ) -> ServiceResult[int]:
+    ) -> ServiceResult[Any]:
         """Migrate users between LDAP servers."""
         ...

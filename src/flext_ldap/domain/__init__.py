@@ -1,55 +1,108 @@
-"""LDAP Domain Layer - Business Logic and Entities.
+"""LDAP Domain Layer - Pure Business Logic.
 
-Version 0.7.0 - Clean Architecture
-NO LEGACY CODE - Only clean implementations.
+🏗️ CLEAN ARCHITECTURE: Domain Layer
+Built on flext-core foundation patterns.
+
+🚨 MIGRATION NOTICE:
+Old imports are deprecated. Use new semantic structure:
+- entities.* → domain.aggregates.*
+- value_objects.* → domain.values.*
+- ports.* → domain.interfaces.*
 """
 
 from __future__ import annotations
 
-from flext_core import DomainEntity, DomainValueObject
-from flext_core.infrastructure.memory import InMemoryRepository
+import warnings
 
-from flext_ldap.domain.entities import (
-    LDAPConnection,
-    LDAPGroup,
-    LDAPOperation,
-    LDAPUser,
+# NEW SEMANTIC STRUCTURE - Import all real implementations (NO FALLBACKS)
+from flext_ldap.domain.aggregates import DirectoryAggregate, LDAPDirectory
+from flext_ldap.domain.entities import LDAPEntry, LDAPGroup, LDAPUser
+from flext_ldap.domain.events import (
+    LDAPConnectionEstablished,
+    LDAPEntryCreated,
+    LDAPEntryDeleted,
+    LDAPEntryModified,
 )
-from flext_ldap.domain.exceptions import (
-    LDAPConnectionError,
-    LDAPDomainError,
-    LDAPDuplicateError,
-    LDAPEntityError,
-    LDAPGroupError,
-    LDAPNotFoundError,
-    LDAPOperationError,
-    LDAPServiceError,
-    LDAPUserError,
-    LDAPValidationError,
+from flext_ldap.domain.exceptions import LDAPDomainError
+from flext_ldap.domain.interfaces import (
+    LDAPConnectionManager,
+    LDAPDirectoryRepository,
 )
-from flext_ldap.domain.repositories import LDAPConnectionRepository, LDAPUserRepository
-from flext_ldap.domain.value_objects import DistinguishedName, LDAPAttribute
+from flext_ldap.domain.specifications import (
+    LDAPEntrySpecification,
+    LDAPUserSpecification,
+)
+from flext_ldap.domain.values import (
+    DistinguishedName,
+    LDAPAttributes,
+    LDAPFilter,
+    LDAPObjectClass,
+    LDAPScope,
+    LDAPUri,
+)
+
+
+# DEPRECATED IMPORTS (backward compatibility)
+def _warn_deprecated_import(old_item: str, new_path: str) -> None:
+    """Issue deprecation warning for old imports."""
+    warnings.warn(
+        f"Importing '{old_item}' from flext_ldap.domain is deprecated. "
+        f"Use 'from flext_ldap.{new_path}' instead. "
+        f"This will be removed in version 1.0.0.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+
+
+# Legacy compatibility - use proper modules
+
+# Create simple aliases for backward compatibility
+LDAPError = LDAPDomainError
+
+# Legacy aliases (avoid redefinition)
+LDAPConnection = DirectoryAggregate
+LDAPAttribute = LDAPAttributes
+LDAPConnectionRepository = LDAPConnectionManager
+LDAPUserRepository = LDAPDirectoryRepository
+
+
+# Simple placeholders for backward compatibility
+class LDAPSecurityContext:
+    """LDAP security context placeholder - use security module instead."""
+
+
+class LDAPOperation:
+    """LDAP operation placeholder - use commands in application layer instead."""
+
 
 __all__ = [
+    # Aggregates
+    "DirectoryAggregate",
+    # Values
     "DistinguishedName",
-    "DomainEntity",
-    "DomainValueObject",
-    "InMemoryRepository",
-    "LDAPAttribute",
-    "LDAPConnection",
-    "LDAPConnectionError",
-    "LDAPConnectionRepository",
-    "LDAPDomainError",
-    "LDAPDuplicateError",
-    "LDAPEntityError",
+    # Entities
+    "LDAPAttribute",  # → LDAPAttributes
+    "LDAPAttributes",
+    "LDAPConnection",  # → DirectoryAggregate
+    "LDAPConnectionEstablished",
+    "LDAPConnectionManager",
+    "LDAPConnectionRepository",  # → LDAPConnectionManager
+    "LDAPDirectory",
+    "LDAPDirectoryRepository",
+    "LDAPEntry",
+    "LDAPEntryCreated",
+    "LDAPEntryDeleted",
+    "LDAPEntryModified",
+    "LDAPEntrySpecification",
+    "LDAPError",  # → Domain exceptions
+    "LDAPFilter",
     "LDAPGroup",
-    "LDAPGroupError",
-    "LDAPNotFoundError",
-    "LDAPOperation",
-    "LDAPOperationError",
-    "LDAPServiceError",
+    "LDAPObjectClass",
+    "LDAPOperation",  # → Commands
+    "LDAPScope",
+    "LDAPSecurityContext",  # → Security
+    "LDAPUri",
     "LDAPUser",
-    "LDAPUserError",
-    "LDAPUserRepository",
-    "LDAPValidationError",
+    "LDAPUserRepository",  # → Interfaces
+    "LDAPUserSpecification",
 ]

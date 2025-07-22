@@ -59,8 +59,7 @@ class TestCLI:
             mock_client_instance.__aexit__ = AsyncMock()
 
             # Mock successful search result
-            from flext_core.domain.types import ServiceResult
-
+            from flext_core.domain.shared_types import ServiceResult
             mock_result = ServiceResult.ok([mock_entry])
             mock_client_instance.search = AsyncMock(return_value=mock_result)
 
@@ -91,8 +90,7 @@ class TestCLI:
             mock_client_instance.__aexit__ = AsyncMock()
 
             # Mock failed search result
-            from flext_core.domain.types import ServiceResult
-
+            from flext_core.domain.shared_types import ServiceResult
             mock_result: ServiceResult[list[dict[str, Any]]] = ServiceResult.fail(
                 "Search failed",
             )
@@ -154,8 +152,7 @@ class TestCLI:
             mock_client_instance.__aexit__ = AsyncMock()
 
             # Mock successful search result with many entries
-            from flext_core.domain.types import ServiceResult
-
+            from flext_core.domain.shared_types import ServiceResult
             mock_result = ServiceResult.ok(mock_entries)
             mock_client_instance.search = AsyncMock(return_value=mock_result)
 

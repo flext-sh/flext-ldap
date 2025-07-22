@@ -72,7 +72,7 @@ class TestLDAPConnectionRepositoryImpl:
         """Test saving connection successfully."""
         result = await connection_repo.save(sample_connection)
 
-        assert result.is_success
+        assert result.success
         assert result.data == sample_connection
         assert sample_connection.id in connection_repo._connections
         assert connection_repo._connections[sample_connection.id] == sample_connection
@@ -103,7 +103,7 @@ class TestLDAPConnectionRepositoryImpl:
 
         result = await connection_repo.find_by_id(sample_connection.id)
 
-        assert result.is_success
+        assert result.success
         assert result.data == sample_connection
 
     @pytest.mark.asyncio
@@ -114,7 +114,7 @@ class TestLDAPConnectionRepositoryImpl:
         """Test finding connection by ID when it doesn't exist."""
         result = await connection_repo.find_by_id(uuid4())
 
-        assert result.is_success
+        assert result.success
         assert result.data is None
 
     @pytest.mark.asyncio
@@ -125,9 +125,9 @@ class TestLDAPConnectionRepositoryImpl:
         """Test finding connection by ID with error."""
         # Mock the _connections dict to raise an error
         connection_repo._connections = Mock()
-        connection_repo._connections.__getitem__.side_effect = Exception("Test error")
+        connection_repo._connections.get.side_effect = Exception("Test error")
 
-        with pytest.raises(Exception, match="Test error"):
+        with pytest.raises(ValueError, match="Failed to find connection"):
             await connection_repo.find_by_id(uuid4())
 
     @pytest.mark.asyncio
@@ -138,7 +138,7 @@ class TestLDAPConnectionRepositoryImpl:
         """Test finding all connections when repository is empty."""
         result = await connection_repo.find_all()
 
-        assert result.is_success
+        assert result.success
         assert result.data == []
 
     @pytest.mark.asyncio
@@ -153,7 +153,7 @@ class TestLDAPConnectionRepositoryImpl:
 
         result = await connection_repo.find_all()
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert len(result.data) == 1
         assert result.data[0].id == sample_connection.id
@@ -184,7 +184,7 @@ class TestLDAPConnectionRepositoryImpl:
 
         result = await connection_repo.delete(sample_connection)
 
-        assert result.is_success
+        assert result.success
         assert sample_connection.id not in connection_repo._connections
 
     @pytest.mark.asyncio
@@ -196,7 +196,7 @@ class TestLDAPConnectionRepositoryImpl:
         """Test deleting connection when it doesn't exist."""
         result = await connection_repo.delete(sample_connection)
 
-        assert result.is_success
+        assert result.success
         assert sample_connection.id not in connection_repo._connections
 
     # Note: Error path testing for delete would require complex mocking
@@ -220,7 +220,7 @@ class TestLDAPUserRepositoryImpl:
         """Test saving user successfully (foundation implementation)."""
         result = await user_repo.save(sample_user)
 
-        assert result.is_success
+        assert result.success
         assert result.data == sample_user
 
     @pytest.mark.asyncio
@@ -235,7 +235,7 @@ class TestLDAPUserRepositoryImpl:
 
         # This should still work since it's a foundation implementation
         result = await user_repo.save(bad_user)
-        assert result.is_success
+        assert result.success
 
     @pytest.mark.asyncio
     async def test_find_by_id_foundation(
@@ -247,7 +247,7 @@ class TestLDAPUserRepositoryImpl:
 
         result = await user_repo.find_by_id(user_id)
 
-        assert result.is_success
+        assert result.success
         assert result.data is None  # Foundation implementation returns None
 
     @pytest.mark.asyncio
@@ -260,7 +260,7 @@ class TestLDAPUserRepositoryImpl:
 
         result = await user_repo.find_by_dn(dn)
 
-        assert result.is_success
+        assert result.success
         assert result.data is None  # Foundation implementation returns None
 
     @pytest.mark.asyncio
@@ -268,7 +268,7 @@ class TestLDAPUserRepositoryImpl:
         """Test finding all users (foundation implementation)."""
         result = await user_repo.find_all()
 
-        assert result.is_success
+        assert result.success
         assert result.data == []  # Foundation implementation returns empty list
 
     @pytest.mark.asyncio
@@ -280,5 +280,5 @@ class TestLDAPUserRepositoryImpl:
         """Test deleting user (foundation implementation)."""
         result = await user_repo.delete(sample_user)
 
-        assert result.is_success
+        assert result.success
         assert result.data is True  # Foundation implementation returns True

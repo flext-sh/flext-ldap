@@ -117,7 +117,7 @@ class TestDataTypeConverter:
         """Test email type detection."""
         result = await converter.detect_type("user@example.com")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data == LDAPDataType.EMAIL
 
@@ -126,7 +126,7 @@ class TestDataTypeConverter:
         """Test phone number type detection."""
         result = await converter.detect_type("+1-555-123-4567")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data == LDAPDataType.PHONE
 
@@ -135,7 +135,7 @@ class TestDataTypeConverter:
         """Test URL type detection."""
         result = await converter.detect_type("https://example.com")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data == LDAPDataType.URL
 
@@ -144,7 +144,7 @@ class TestDataTypeConverter:
         """Test IP address type detection."""
         result = await converter.detect_type("192.168.1.1")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data == LDAPDataType.IP_ADDRESS
 
@@ -153,7 +153,7 @@ class TestDataTypeConverter:
         """Test MAC address type detection."""
         result = await converter.detect_type("AA:BB:CC:DD:EE:FF")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data == LDAPDataType.MAC_ADDRESS
 
@@ -163,7 +163,7 @@ class TestDataTypeConverter:
         test_uuid = str(uuid.uuid4())
         result = await converter.detect_type(test_uuid)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data == LDAPDataType.UUID
 
@@ -172,7 +172,7 @@ class TestDataTypeConverter:
         """Test DN type detection."""
         result = await converter.detect_type("cn=user,ou=people,dc=example,dc=com")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data == LDAPDataType.DN
 
@@ -181,7 +181,7 @@ class TestDataTypeConverter:
         """Test datetime type detection."""
         result = await converter.detect_type("2025-01-15T10:30:00Z")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data == LDAPDataType.DATE_TIME
 
@@ -190,7 +190,7 @@ class TestDataTypeConverter:
         """Test boolean type detection."""
         result = await converter.detect_type("true")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data == LDAPDataType.BOOLEAN
 
@@ -199,7 +199,7 @@ class TestDataTypeConverter:
         """Test integer type detection."""
         result = await converter.detect_type("12345")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data == LDAPDataType.INTEGER
 
@@ -211,7 +211,7 @@ class TestDataTypeConverter:
         """Test default string type detection."""
         result = await converter.detect_type("just a regular string")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data == LDAPDataType.STRING
 
@@ -220,7 +220,7 @@ class TestDataTypeConverter:
         """Test None value type detection."""
         result = await converter.detect_type(None)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data == LDAPDataType.UNKNOWN
 
@@ -229,7 +229,7 @@ class TestDataTypeConverter:
         """Test empty string type detection."""
         result = await converter.detect_type("")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data == LDAPDataType.STRING
 
@@ -241,7 +241,7 @@ class TestDataTypeConverter:
         """Test string to string conversion."""
         result = await converter.convert_value("test", str, LDAPDataType.STRING)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.value == "test"
         assert result.data.is_valid is True
@@ -256,7 +256,7 @@ class TestDataTypeConverter:
         """Test integer string to int conversion."""
         result = await converter.convert_value("123", int, LDAPDataType.INTEGER)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.value == 123
         assert result.data.is_valid is True
@@ -270,7 +270,7 @@ class TestDataTypeConverter:
         # Test true values
         for true_val in ["true", "yes", "1", "on"]:
             result = await converter.convert_value(true_val, bool, LDAPDataType.BOOLEAN)
-            assert result.is_success
+            assert result.success
             assert result.data is not None
             assert result.data.value is True
             assert result.data.is_valid is True
@@ -282,7 +282,7 @@ class TestDataTypeConverter:
                 bool,
                 LDAPDataType.BOOLEAN,
             )
-            assert result.is_success
+            assert result.success
             assert result.data is not None
             assert result.data.value is False
             assert result.data.is_valid is True
@@ -299,7 +299,7 @@ class TestDataTypeConverter:
             LDAPDataType.DATE_TIME,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert isinstance(result.data.value, datetime)
         assert result.data.is_valid is True
@@ -313,7 +313,7 @@ class TestDataTypeConverter:
         test_uuid = str(uuid.uuid4())
         result = await converter.convert_value(test_uuid, uuid.UUID, LDAPDataType.UUID)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert isinstance(result.data.value, uuid.UUID)
         assert str(result.data.value) == test_uuid
@@ -331,7 +331,7 @@ class TestDataTypeConverter:
             LDAPDataType.EMAIL,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.value == "user@example.com"
         assert result.data.is_valid is True
@@ -348,7 +348,7 @@ class TestDataTypeConverter:
             LDAPDataType.PHONE,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.value == "+15551234567"
         assert result.data.is_valid is True
@@ -365,7 +365,7 @@ class TestDataTypeConverter:
             LDAPDataType.IP_ADDRESS,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.value == "192.168.1.1"
         assert result.data.is_valid is True
@@ -382,7 +382,7 @@ class TestDataTypeConverter:
             LDAPDataType.MAC_ADDRESS,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.value == "AA:BB:CC:DD:EE:FF"
         assert result.data.is_valid is True
@@ -399,7 +399,7 @@ class TestDataTypeConverter:
             LDAPDataType.INTEGER,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.is_valid is False
         assert len(result.data.warnings) > 0
@@ -412,7 +412,7 @@ class TestDataTypeConverter:
         """Test conversion with auto-detected source type."""
         result = await converter.convert_value("user@example.com", str)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.source_type == LDAPDataType.EMAIL
         assert result.data.value == "user@example.com"
@@ -425,7 +425,7 @@ class TestDataTypeConverter:
         """Test generic conversion fallback."""
         result = await converter.convert_value("123.45", float, LDAPDataType.STRING)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.value == 123.45
         assert result.data.is_valid is True
@@ -437,7 +437,7 @@ class TestDataTypeConverter:
         values = ["123", "456", "789"]
         result = await converter.convert_batch(values, int, LDAPDataType.INTEGER)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert len(result.data) == 3
         assert all(result.data[i].is_valid for i in range(len(result.data)))
@@ -456,15 +456,17 @@ class TestDataTypeConverter:
         values = ["123", "not_a_number", "456"]
         result = await converter.convert_batch(values, int, LDAPDataType.INTEGER)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert len(result.data) == 3
-        assert all(result.data[i].is_valid for i in range(len(result.data)))
-        assert [result.data[i].value for i in range(len(result.data))] == [
-            123,
-            456,
-            789,
-        ]
+
+        # For mixed results, we expect some valid and some invalid
+        # "123" should be valid (123), "not_a_number" should be invalid, "456" should be valid (456)
+        assert result.data[0].is_valid is True
+        assert result.data[0].value == 123
+        assert result.data[1].is_valid is False  # "not_a_number" cannot be converted
+        assert result.data[2].is_valid is True
+        assert result.data[2].value == 456
 
     @pytest.mark.asyncio
     async def test_validate_type_compatibility_direct(
@@ -474,7 +476,7 @@ class TestDataTypeConverter:
         """Test direct type compatibility validation."""
         result = await converter.validate_type_compatibility(LDAPDataType.STRING, str)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data is True
 
@@ -486,7 +488,7 @@ class TestDataTypeConverter:
         """Test compatible type validation."""
         result = await converter.validate_type_compatibility(LDAPDataType.INTEGER, int)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data is True
 
@@ -501,7 +503,7 @@ class TestDataTypeConverter:
             datetime,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data is False
 
