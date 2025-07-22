@@ -47,7 +47,7 @@ async def search_entries(
                 filter_str,
             )  # Need base_dn as first parameter
 
-            if result.is_success:
+            if result.success:
                 entries = result.data or []
 
                 for _i, entry in enumerate(entries[:MAX_DISPLAY_ENTRIES]):

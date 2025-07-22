@@ -16,16 +16,15 @@ from datetime import UTC, datetime
 
 # Ensure ssl module is properly imported
 from ssl import SSLError
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from flext_core.domain.types import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 
 if TYPE_CHECKING:
     from flext_ldap.domain.security import (
         CertificateInfo,
         CertificateValidationContext,
         SSLContextConfig,
-        ValidationResult,
     )
 
 # Import cryptography with proper error handling
@@ -58,7 +57,7 @@ class CertificateValidationService:
         self,
         cert_chain: list[bytes],
         context: CertificateValidationContext,
-    ) -> ServiceResult[ValidationResult]:
+    ) -> ServiceResult[Any]:
         """Validate a certificate chain."""
         try:
             # Import ValidationResult and required types
@@ -114,7 +113,7 @@ class CertificateValidationService:
             if context.verify_hostname:
                 leaf_cert = certificates[0]  # First certificate is the leaf
                 cert_info_result = await self._extract_certificate_info(leaf_cert)
-                if not cert_info_result.is_success:
+                if not cert_info_result.success:
                     return ServiceResult.ok(
                         ValidationResult(
                             result_type=CertificateValidationResult.MALFORMED,
@@ -171,7 +170,7 @@ class CertificateValidationService:
                     result_type=CertificateValidationResult.VALID,
                     message="Certificate validation successful",
                     certificate_info=(
-                        cert_info_result.data if cert_info_result.is_success else None
+                        cert_info_result.data if cert_info_result.success else None
                     ),
                     chain_length=len(certificates),
                 ),
@@ -186,7 +185,7 @@ class CertificateValidationService:
         hostname: str,
         port: int,
         context: CertificateValidationContext,
-    ) -> ServiceResult[ValidationResult]:
+    ) -> ServiceResult[Any]:
         """Validate server certificate by connecting to it."""
         try:
             # Import required types
@@ -223,7 +222,7 @@ class CertificateValidationService:
                 # Validate the certificate
                 cert_result = await self.validate_certificate_chain([cert_der], context)
 
-                if cert_result.is_success:
+                if cert_result.success:
                     return cert_result
                 return ServiceResult.ok(
                     ValidationResult(
@@ -246,7 +245,7 @@ class CertificateValidationService:
     async def get_certificate_info(
         self,
         cert_data: bytes,
-    ) -> ServiceResult[CertificateInfo]:
+    ) -> ServiceResult[Any]:
         """Extract certificate information from certificate data."""
         try:
             # Parse certificate
@@ -259,7 +258,7 @@ class CertificateValidationService:
     async def create_ssl_context(
         self,
         config: SSLContextConfig,
-    ) -> ServiceResult[ssl.SSLContext]:
+    ) -> ServiceResult[Any]:
         """Create SSL context for secure connections."""
         try:
             # Create SSL context
@@ -314,7 +313,7 @@ class CertificateValidationService:
     async def _extract_certificate_info(
         self,
         cert: x509.Certificate,
-    ) -> ServiceResult[CertificateInfo]:
+    ) -> ServiceResult[Any]:
         """Extract certificate information from X.509 certificate."""
         try:
             from flext_ldap.domain.security import CertificateInfo
@@ -388,11 +387,11 @@ class CertificateValidationService:
                 )
                 # Get SubjectAlternativeName extension and extract DNS names
                 san_value = san_ext.value
-                if hasattr(san_value, "get_values_for_type"):
-                    san_names = san_value.get_values_for_type(x509.DNSName)
-                else:
-                    # Fallback for different cryptography versions
-                    san_names = []
+                # Extract DNS names from SAN extension
+                # Cast to make mypy understand that SAN is iterable
+                from typing import cast as type_cast
+                san_iterable = type_cast("list[Any]", san_value)
+                san_names = [name.value for name in san_iterable if isinstance(name, x509.DNSName)]
 
                 # Check if hostname matches any SAN
                 for san_name in san_names:

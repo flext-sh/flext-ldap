@@ -5,7 +5,7 @@ Immutable value objects for LDAP domain.
 
 from __future__ import annotations
 
-from flext_core.domain.pydantic_base import DomainValueObject
+from flext_core import DomainValueObject
 from pydantic import field_validator
 
 
@@ -50,6 +50,27 @@ class DistinguishedName(DomainValueObject):
     def __str__(self) -> str:
         """Return string representation of the distinguished name."""
         return self.value
+
+    def get_components(self) -> list[str]:
+        """Get all DN components.
+
+        Returns:
+            List of DN components.
+
+        """
+        return [component.strip() for component in self.value.split(",")]
+
+    def is_child_of(self, parent_dn: str) -> bool:
+        """Check if this DN is a child of the given parent DN.
+
+        Args:
+            parent_dn: The parent DN to check against.
+
+        Returns:
+            True if this DN is a child of the parent DN.
+
+        """
+        return self.value.lower().endswith(parent_dn.lower())
 
 
 class LDAPAttribute(DomainValueObject):

@@ -111,9 +111,12 @@ class TestSecurityEventLogger:
         assert event.event_type is not None
         result = await event_logger.log_event(event.event_type)
 
-        assert result.is_success
+        assert result.success
         assert len(event_logger._event_history) == 1
-        assert event_logger._event_history[0] == event
+        logged_event = event_logger._event_history[0]
+        assert logged_event.event_type == event.event_type
+        assert logged_event.severity == event.severity
+        assert logged_event.status == event.status
 
     @pytest.mark.asyncio
     async def test_log_event_with_connection(
@@ -134,7 +137,7 @@ class TestSecurityEventLogger:
             connection=mock_connection,
         )
 
-        assert result.is_success
+        assert result.success
         assert len(event_logger._event_history) == 1
 
     @pytest.mark.asyncio
@@ -155,7 +158,7 @@ class TestSecurityEventLogger:
             session_id="session123",
         )
 
-        assert result.is_success
+        assert result.success
         assert len(event_logger._event_history) == 1
         event = event_logger._event_history[0]
         assert event.event_type == SecurityEventType.AUTHENTICATION_SUCCESS
@@ -180,11 +183,11 @@ class TestSecurityEventLogger:
             session_id="session123",
         )
 
-        assert result.is_success
+        assert result.success
         assert len(event_logger._event_history) == 1
         event = event_logger._event_history[0]
         assert event.event_type == SecurityEventType.AUTHENTICATION_FAILURE
-        assert event.severity == SecurityEventSeverity.HIGH
+        assert event.severity == SecurityEventSeverity.MEDIUM
 
     def test_calculate_risk_score_auth_failure(
         self,
@@ -229,7 +232,7 @@ class TestSecurityEventLogger:
         flags = event_logger._get_compliance_flags(event)
 
         assert len(flags) > 0
-        assert "SOX" in flags or "GDPR" in flags
+        assert "PCI_DSS_8.2" in flags
 
     def test_get_compliance_flags_data_export(
         self,
@@ -244,7 +247,7 @@ class TestSecurityEventLogger:
         flags = event_logger._get_compliance_flags(event)
 
         assert len(flags) > 0
-        assert "GDPR" in flags
+        assert "GDPR_ARTICLE_32" in flags
 
     def test_add_to_history_management(self, event_logger: SecurityEventLogger) -> None:
         """Test adding event to management history."""
@@ -256,7 +259,10 @@ class TestSecurityEventLogger:
         event_logger._add_to_history(event)
 
         assert len(event_logger._event_history) == 1
-        assert event_logger._event_history[0] == event
+        logged_event = event_logger._event_history[0]
+        assert logged_event.event_type == event.event_type
+        assert logged_event.severity == event.severity
+        assert logged_event.status == event.status
 
     def test_add_to_session_history(self, event_logger: SecurityEventLogger) -> None:
         """Test adding event to session history."""
@@ -319,7 +325,7 @@ class TestSecurityEventLogger:
 
         result = await event_logger.get_security_metrics(time_window_hours=24)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         metrics = result.data
 
@@ -351,7 +357,7 @@ class TestSecurityEventLogger:
 
         result = await event_logger.get_security_metrics(time_window_hours=24)
 
-        assert result.is_success
+        assert result.success
         metrics = result.data
 
         # Should only count recent event

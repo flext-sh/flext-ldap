@@ -21,7 +21,9 @@ class TestLDAPClient:
         assert LDAPClient is not None
 
     @pytest.mark.unit
-    def test_client_instantiation_with_settings(self, ldap_settings: FlextLDAPSettings) -> None:
+    def test_client_instantiation_with_settings(
+        self, ldap_settings: FlextLDAPSettings,
+    ) -> None:
         """Test that LDAPClient can be instantiated with settings."""
         from flext_ldap.client import LDAPClient
 

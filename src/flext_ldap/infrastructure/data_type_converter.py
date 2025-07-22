@@ -11,13 +11,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
+import binascii
 import logging
 import uuid
 from datetime import UTC, datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from flext_core.domain.types import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -172,13 +173,13 @@ class DataTypeConverter:
         value: Any,
         target_type: type,
         source_type: LDAPDataType | None = None,
-    ) -> ServiceResult[ConversionResult]:
+    ) -> ServiceResult[Any]:
         """Convert value to target type."""
         try:
             # Auto-detect source type if not provided
             if source_type is None:
                 detect_result = await self.detect_type(value)
-                if not detect_result.is_success:
+                if not detect_result.success:
                     return ServiceResult.fail(
                         f"Failed to detect source type: {detect_result.error}",
                     )
@@ -261,7 +262,7 @@ class DataTypeConverter:
         values: list[Any],
         target_type: type,
         source_type: LDAPDataType | None = None,
-    ) -> ServiceResult[list[ConversionResult]]:
+    ) -> ServiceResult[list[Any]]:
         """Convert batch of values to target type."""
         try:
             results: list[ConversionResult] = []
@@ -271,7 +272,7 @@ class DataTypeConverter:
                     target_type,
                     source_type,
                 )
-                if convert_result.is_success:
+                if convert_result.success:
                     if convert_result.data is not None:
                         results.append(convert_result.data)
                     else:
@@ -459,7 +460,7 @@ class DataTypeConverter:
             return int(value)
         except ValueError as e:
             msg = f"Cannot convert '{value}' to integer"
-            raise ValueError(msg) from e
+            raise ConversionError(msg) from e
 
     def _convert_to_bool(self, value: Any) -> bool:
         """Convert value to boolean."""
@@ -472,21 +473,21 @@ class DataTypeConverter:
         if str_value in {"false", "no", "0", "off"}:
             return False
         msg = f"Cannot convert '{value}' to boolean"
-        raise ValueError(msg)
+        raise ConversionError(msg)
 
     def _convert_to_bytes(self, value: Any) -> bytes:
         """Convert value to bytes."""
         if isinstance(value, bytes):
             return value
         if isinstance(value, str):
-            # Try base64 decode first
+            # NO FALLBACKS - SEMPRE usar implementações originais conforme instrução
+            # First try base64 decode, if it fails, encode as UTF-8 bytes
             try:
                 return base64.b64decode(value)
-            except Exception:
-                # Fallback to UTF-8 encoding
+            except (ValueError, binascii.Error):
+                # Not base64, encode string as UTF-8 bytes
                 return value.encode("utf-8")
-        else:
-            return bytes(value)
+        return bytes(value)
 
     def _convert_to_datetime(self, value: Any) -> datetime:
         """Convert value to datetime."""
@@ -506,17 +507,15 @@ class DataTypeConverter:
 
         for fmt in formats:
             try:
-                dt = datetime.strptime(str_value, fmt)  # noqa: DTZ007
-                # Ensure timezone awareness
-                if dt.tzinfo is None:
-                    dt = dt.replace(tzinfo=UTC)
+                # Create timezone-aware datetime directly
+                dt = datetime.strptime(str_value, fmt).replace(tzinfo=UTC)
             except ValueError:
                 continue
             else:
                 return dt
 
         msg = f"Cannot convert '{value}' to datetime"
-        raise ValueError(msg)
+        raise ConversionError(msg)
 
     def _convert_to_uuid(self, value: Any) -> uuid.UUID:
         """Convert value to UUID."""
@@ -524,7 +523,7 @@ class DataTypeConverter:
             return uuid.UUID(str(value))
         except ValueError as e:
             msg = f"Cannot convert '{value}' to UUID"
-            raise ValueError(msg) from e
+            raise ConversionError(msg) from e
 
     def _convert_email_to_string(self, value: Any) -> str:
         """Convert email to normalized string."""
@@ -551,7 +550,7 @@ class DataTypeConverter:
             return str(ip)
         except ValueError as e:
             msg = f"Invalid IP address: {value}"
-            raise ValueError(msg) from e
+            raise ConversionError(msg) from e
 
     def _convert_mac_to_string(self, value: Any) -> str:
         """Convert MAC address to normalized string."""
@@ -562,7 +561,7 @@ class DataTypeConverter:
         if len(mac) == 12:
             return ":".join(mac[i : i + 2] for i in range(0, 12, 2))
         msg = f"Invalid MAC address: {value}"
-        raise ValueError(msg)
+        raise ConversionError(msg)
 
     def _convert_dn_to_string(self, value: Any) -> str:
         """Convert DN to normalized string."""

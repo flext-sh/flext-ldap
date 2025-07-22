@@ -9,6 +9,10 @@ import asyncio
 from typing import Any
 
 import click
+from flext_core import (
+    DomainError as FlextConnectionError,  # Use simplified flext-core imports
+)
+from ldap3.core.exceptions import LDAPException
 
 from flext_ldap.client import LDAPClient
 from flext_ldap.config import FlextLDAPSettings, LDAPAuthConfig, LDAPConnectionConfig
@@ -63,17 +67,22 @@ async def test(
             ),
         )
 
-        client = LDAPClient(settings)
-        result = await client.connect()
+        # Use ConnectionProtocol pattern with context manager
+        async with LDAPClient(settings) as client:
+            # Connection is automatically managed by context manager
+            if client.is_connected():
+                click.echo(f"✅ Successfully connected to {server}:{port}")
+            else:
+                click.echo("❌ Connection failed")
+                ctx.exit(1)
 
-        if result.is_success:
-            click.echo(f"✅ Successfully connected to {server}:{port}")
-            await client.disconnect()
-        else:
-            click.echo(f"❌ Connection failed: {result.error}")
-            ctx.exit(1)
-
-    except (OSError, ValueError, RuntimeError) as e:
+    except (
+        OSError,
+        ValueError,
+        RuntimeError,
+        FlextConnectionError,
+        LDAPException,
+    ) as e:
         click.echo(f"❌ Error: {e}")
         ctx.exit(1)
 
@@ -120,7 +129,7 @@ async def search(
             # Use string filter directly as adapter expects
             result = await client.search(base_dn, search_filter)
 
-            if result.is_success:
+            if result.success:
                 entries = result.data or []
                 click.echo(f"Found {len(entries)} entries:")
                 for entry in entries[:10]:  # Show first 10
@@ -132,7 +141,13 @@ async def search(
                 msg = "Search operation failed"
                 raise click.ClickException(msg)
 
-    except (OSError, ValueError, RuntimeError) as e:
+    except (
+        OSError,
+        ValueError,
+        RuntimeError,
+        FlextConnectionError,
+        LDAPException,
+    ) as e:
         click.echo(f"❌ Error: {e}")
         ctx.exit(1)
 

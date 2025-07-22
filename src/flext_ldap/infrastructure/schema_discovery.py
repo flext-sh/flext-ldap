@@ -16,7 +16,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from flext_core.domain.types import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -330,7 +330,7 @@ class SchemaDiscoveryService:
         try:
             # Get full schema first
             schema_result = await self.discover_schema(connection)
-            if not schema_result.is_success:
+            if not schema_result.success:
                 return ServiceResult.fail(
                     f"Failed to discover schema: {schema_result.error}",
                 )
@@ -360,7 +360,7 @@ class SchemaDiscoveryService:
         try:
             # Get full schema first
             schema_result = await self.discover_schema(connection)
-            if not schema_result.is_success:
+            if not schema_result.success:
                 return ServiceResult.fail(
                     f"Failed to discover schema: {schema_result.error}",
                 )
@@ -391,7 +391,7 @@ class SchemaDiscoveryService:
         try:
             # Get schema
             schema_result = await self.discover_schema(connection)
-            if not schema_result.is_success:
+            if not schema_result.success:
                 return ServiceResult.fail(
                     f"Failed to discover schema: {schema_result.error}",
                 )

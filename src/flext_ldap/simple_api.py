@@ -1,6 +1,6 @@
 """Simple API interface for FLEXT-LDAP v0.7.0.
 
-REFACTORED: Using flext-core DI patterns and ServiceResult - NO duplication.
+REFACTORED: Direct implementation with ServiceResult - NO dependency injection.
 Provides clean API interface for all LDAP operations.
 """
 
@@ -8,78 +8,148 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from flext_core.config import get_container
-
 if TYPE_CHECKING:
-    from uuid import UUID
+    from flext_core import (
+        ConnectionProtocol,
+        ServiceResult,  # Use simplified flext-core imports
+    )
 
-    from flext_core.domain.types import ServiceResult
-
-    from flext_ldap.application.services import LDAPConnectionService, LDAPUserService
-    from flext_ldap.domain.entities import LDAPConnection, LDAPUser
+    from flext_ldap.domain.entities import LDAPConnection
 
 
 class LDAPAPI:
     """Simple API interface for LDAP operations.
 
-    Uses dependency injection to resolve services from flext-core container.
+    Direct implementation using LDAP infrastructure client.
     All operations return ServiceResult for type-safe error handling.
     """
 
-    def __init__(self) -> None:
-        """Initialize API with dependency injection container."""
-        self._container = get_container()
+    def __init__(self, connection_provider: ConnectionProtocol | None = None) -> None:
+        """Initialize API with connection provider.
 
-        # Lazy load services
-        self._user_service: LDAPUserService | None = None
-        self._connection_service: LDAPConnectionService | None = None
+        Args:
+            connection_provider: ConnectionProtocol implementation for LDAP connections
 
-    @property
-    def user_service(self) -> LDAPUserService:
-        """Get user service with lazy loading."""
-        if self._user_service is None:
-            from flext_ldap.application.services import LDAPUserService
+        """
+        if connection_provider is None:
+            # Use default LDAP client implementation
+            from flext_ldap.client import LDAPClient
 
-            self._user_service = self._container.resolve(LDAPUserService)
-        return self._user_service
+            self._connection_provider: ConnectionProtocol = LDAPClient()
+        else:
+            self._connection_provider = connection_provider
 
-    @property
-    def connection_service(self) -> LDAPConnectionService:
-        """Get connection service with lazy loading."""
-        if self._connection_service is None:
-            from flext_ldap.application.services import (
-                LDAPConnectionService,
-            )
+        self._connections: dict[str, LDAPConnection] = {}
+        self._active_connection: LDAPConnection | None = None
+        self._active_connection_id: str | None = None
 
-            self._connection_service = self._container.resolve(LDAPConnectionService)
-        return self._connection_service
+        # Initialize infrastructure client for user operations
+        from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
+
+        self._ldap_client = LDAPInfrastructureClient()
 
     # Connection operations
     async def create_connection(
         self,
         server_uri: str,
-        bind_dn: str,
-        pool_name: str | None = None,
-        pool_size: int = 1,
+        bind_dn: str | None = None,
+        password: str | None = None,
+        *,
+        use_ssl: bool = False,
     ) -> ServiceResult[LDAPConnection]:
-        """Create a new LDAP connection."""
-        # Note: pool_name and pool_size are API parameters but not used by underlying service
-        return await self.connection_service.create_connection(
-            server_uri=server_uri,
-            bind_dn=bind_dn,
+        """Create a new LDAP connection using ConnectionProtocol pattern."""
+        from datetime import UTC, datetime
+        from uuid import uuid4
+
+        from flext_core.domain.shared_types import ServiceResult
+
+        from flext_ldap.config import (
+            FlextLDAPSettings,
+            LDAPAuthConfig,
+            LDAPConnectionConfig,
         )
+        from flext_ldap.domain.entities import LDAPConnection
 
-    async def connect(self, connection_id: UUID) -> ServiceResult[LDAPConnection]:
-        """Connect to LDAP server."""
-        return await self.connection_service.connect(connection_id)
+        try:
+            # Configure connection provider with settings
+            if hasattr(self._connection_provider, "config"):
+                # Update provider configuration
+                settings = FlextLDAPSettings(
+                    connection=LDAPConnectionConfig(
+                        server=server_uri.split("://")[1]
+                        if "://" in server_uri
+                        else server_uri,
+                        port=636 if use_ssl else 389,
+                        use_ssl=use_ssl,
+                    ),
+                    auth=LDAPAuthConfig(
+                        bind_dn=bind_dn or "",
+                        bind_password=password or "",
+                    ),
+                )
+                self._connection_provider.config = settings.connection
 
-    async def disconnect(self, connection_id: UUID) -> ServiceResult[LDAPConnection]:
-        """Disconnect from LDAP server."""
-        return await self.connection_service.disconnect(connection_id)
+            # Use ConnectionProtocol interface
+            await self._connection_provider.connect()
 
-    async def bind(self, connection_id: UUID) -> ServiceResult[LDAPConnection]:
-        """Bind to LDAP server."""
-        return await self.connection_service.bind(connection_id)
+            if self._connection_provider.is_connected():
+                # Create domain entity for connection
+                connection = LDAPConnection(
+                    id=uuid4(),
+                    server_url=server_uri,
+                    bind_dn=bind_dn,
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
+                )
+                # Domain entity tracks its own state
+                connection.connect()
+                if bind_dn:
+                    connection.bind(bind_dn)
+
+                # Store connection using infrastructure ID pattern
+                self._active_connection_id = str(connection.id)
+                self._connections[server_uri] = connection
+                self._active_connection = connection
+                return ServiceResult.ok(connection)
+
+            return ServiceResult.fail("Connection failed - not connected")
+
+        except Exception as e:
+            return ServiceResult.fail(f"Failed to create connection: {e}")
+
+    async def connect(self, server_uri: str) -> ServiceResult[LDAPConnection]:
+        """Connect to LDAP server by URI."""
+        from flext_core.domain.shared_types import ServiceResult
+        if server_uri in self._connections:
+            connection = self._connections[server_uri]
+            self._active_connection = connection
+            return ServiceResult.ok(connection)
+
+        return ServiceResult.fail(f"Connection not found for server: {server_uri}")
+
+    async def disconnect(self) -> ServiceResult[bool]:
+        """Disconnect from current LDAP server."""
+        from flext_core.domain.shared_types import ServiceResult
+        try:
+            if self._active_connection and self._connection_provider.is_connected():
+                # Use ConnectionProtocol pattern - disconnect managed by context manager
+                # but we can manually disconnect if needed
+                await self._connection_provider.disconnect()
+                if self._active_connection:
+                    self._active_connection.disconnect()  # Update domain state
+                    self._active_connection = None
+                    self._active_connection_id = None
+                return ServiceResult.ok(True)
+
+            return ServiceResult.ok(True)  # Already disconnected
+
+        except Exception as e:
+            return ServiceResult.fail(f"Failed to disconnect: {e}")
+
+    def get_active_connection(self) -> ServiceResult[LDAPConnection | None]:
+        """Get the currently active connection."""
+        from flext_core.domain.shared_types import ServiceResult
+        return ServiceResult.ok(self._active_connection)
 
     # User operations
     async def create_user(
@@ -94,64 +164,92 @@ class LDAPAPI:
         department: str | None = None,
         title: str | None = None,
         object_classes: list[str] | None = None,
-    ) -> ServiceResult[LDAPUser]:
+    ) -> ServiceResult[Any]:
         """Create a new LDAP user."""
-        # Import at module level to avoid issues
-        from flext_ldap.domain.value_objects import CreateUserRequest
+        from flext_core.domain.shared_types import ServiceResult
+        try:
+            if not self._active_connection:
+                return ServiceResult.fail("No active LDAP connection")
 
-        request = CreateUserRequest(
-            dn=dn,
-            uid=uid,
-            cn=cn,
-            sn=sn,
-            mail=mail,
-            phone=phone,
-            ou=ou,
-            department=department,
-            title=title,
-            object_classes=object_classes,
-        )
-        return await self.user_service.create_user(request)
+            # Create user request object
+            from flext_ldap.domain.value_objects import CreateUserRequest
 
-    async def get_user(self, user_id: UUID) -> ServiceResult[LDAPUser | None]:
-        """Get user by ID."""
-        return await self.user_service.get_user(user_id)
+            request = CreateUserRequest(
+                dn=dn,
+                uid=uid,
+                cn=cn,
+                sn=sn,
+                mail=mail,
+                phone=phone,
+                ou=ou,
+                department=department,
+                title=title,
+                object_classes=object_classes or ["person", "inetOrgPerson"],
+            )
 
-    async def find_user_by_dn(self, dn: str) -> ServiceResult[LDAPUser | None]:
+            return await self._ldap_client.create_user(self._active_connection, request)
+
+        except Exception as e:
+            return ServiceResult.fail(f"Failed to create user: {e}")
+
+    async def find_user_by_dn(self, dn: str) -> ServiceResult[Any]:
         """Find user by distinguished name."""
-        return await self.user_service.find_user_by_dn(dn)
+        from flext_core.domain.shared_types import ServiceResult
+        try:
+            if not self._active_connection:
+                return ServiceResult.fail("No active LDAP connection")
 
-    async def find_user_by_uid(self, uid: str) -> ServiceResult[LDAPUser | None]:
+            return await self._ldap_client.find_user_by_dn(self._active_connection, dn)
+
+        except Exception as e:
+            return ServiceResult.fail(f"Failed to find user by DN: {e}")
+
+    async def find_user_by_uid(self, uid: str) -> ServiceResult[Any]:
         """Find user by UID."""
-        return await self.user_service.find_user_by_uid(uid)
+        from flext_core.domain.shared_types import ServiceResult
+        try:
+            if not self._active_connection:
+                return ServiceResult.fail("No active LDAP connection")
 
-    async def update_user(
-        self,
-        user_id: UUID,
-        updates: dict[str, Any],
-    ) -> ServiceResult[LDAPUser]:
-        """Update user attributes."""
-        return await self.user_service.update_user(user_id, updates)
+            return await self._ldap_client.find_user_by_uid(
+                self._active_connection,
+                uid,
+            )
 
-    async def lock_user(self, user_id: UUID) -> ServiceResult[LDAPUser]:
-        """Lock user account."""
-        return await self.user_service.lock_user(user_id)
-
-    async def unlock_user(self, user_id: UUID) -> ServiceResult[LDAPUser]:
-        """Unlock user account."""
-        return await self.user_service.unlock_user(user_id)
-
-    async def delete_user(self, user_id: UUID) -> ServiceResult[bool]:
-        """Delete user account."""
-        return await self.user_service.delete_user(user_id)
+        except Exception as e:
+            return ServiceResult.fail(f"Failed to find user by UID: {e}")
 
     async def list_users(
         self,
-        ou: str | None = None,
+        base_dn: str,
         limit: int = 100,
-    ) -> ServiceResult[list[LDAPUser]]:
+    ) -> ServiceResult[Any]:
         """List users in organizational unit."""
-        return await self.user_service.list_users(ou=ou, limit=limit)
+        from flext_core.domain.shared_types import ServiceResult
+        try:
+            if not self._active_connection:
+                return ServiceResult.fail("No active LDAP connection")
+
+            return await self._ldap_client.list_users(
+                self._active_connection,
+                base_dn,
+                limit,
+            )
+
+        except Exception as e:
+            return ServiceResult.fail(f"Failed to list users: {e}")
+
+    async def delete_user(self, dn: str) -> ServiceResult[bool]:
+        """Delete user account by DN."""
+        from flext_core.domain.shared_types import ServiceResult
+        try:
+            if not self._active_connection:
+                return ServiceResult.fail("No active LDAP connection")
+
+            return await self._ldap_client.delete_user(self._active_connection, dn)
+
+        except Exception as e:
+            return ServiceResult.fail(f"Failed to delete user: {e}")
 
 
 # Factory function for easy API creation

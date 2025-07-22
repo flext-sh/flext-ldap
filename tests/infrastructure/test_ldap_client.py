@@ -10,7 +10,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from flext_ldap.domain.exceptions import LDAPConnectionError, LDAPOperationError
 from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
 
 
@@ -36,7 +35,7 @@ class TestLDAPInfrastructureClient:
         ):
             result = await adapter.connect("ldap://test.com", "cn=admin", "password")
 
-            assert result.is_success
+            assert result.success
             assert result.data == "ldap://test.com:cn=admin"
             assert "ldap://test.com:cn=admin" in adapter._connections
 
@@ -53,7 +52,7 @@ class TestLDAPInfrastructureClient:
         ):
             result = await adapter.connect("ldap://test.com")
 
-            assert result.is_success
+            assert result.success
             assert result.data == "ldap://test.com:anonymous"
 
     @pytest.mark.asyncio
@@ -74,7 +73,7 @@ class TestLDAPInfrastructureClient:
                 use_ssl=True,
             )
 
-            assert result.is_success
+            assert result.success
             assert result.data == "ldaps://test.com:cn=admin"
 
             # Verify SSL was enabled on server
@@ -96,7 +95,7 @@ class TestLDAPInfrastructureClient:
         ):
             result = await adapter.connect("ldap://test.com", "cn=admin", "password")
 
-            assert not result.is_success
+            assert not result.success
             assert "LDAP connection failed" in (result.error or "")
 
     @pytest.mark.asyncio
@@ -107,9 +106,12 @@ class TestLDAPInfrastructureClient:
         with (
             patch("ldap3.Connection", side_effect=ValueError("Unexpected error")),
             patch("ldap3.Server"),
-            pytest.raises(LDAPConnectionError, match="Unexpected connection error"),
         ):
-            await adapter.connect("ldap://test.com", "cn=admin", "password")
+            result = await adapter.connect("ldap://test.com", "cn=admin", "password")
+
+            assert not result.success
+            assert result.error is not None
+            assert "Unexpected connection error" in result.error
 
     @pytest.mark.asyncio
     async def test_disconnect_success(self) -> None:
@@ -122,7 +124,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.disconnect("test_conn")
 
-        assert result.is_success
+        assert result.success
         assert result.data is True
         assert "test_conn" not in adapter._connections
         mock_connection.unbind.assert_called_once()
@@ -134,7 +136,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.disconnect("nonexistent")
 
-        assert not result.is_success
+        assert not result.success
         assert "Connection not found" in (result.error or "")
 
     @pytest.mark.asyncio
@@ -151,7 +153,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.disconnect("test_conn")
 
-        assert not result.is_success
+        assert not result.success
         assert "LDAP disconnect failed" in (result.error or "")
 
     @pytest.mark.asyncio
@@ -163,8 +165,11 @@ class TestLDAPInfrastructureClient:
         mock_connection.unbind.side_effect = ValueError("Unexpected error")
         adapter._connections["test_conn"] = mock_connection
 
-        with pytest.raises(LDAPConnectionError, match="Unexpected disconnect error"):
-            await adapter.disconnect("test_conn")
+        result = await adapter.disconnect("test_conn")
+
+        assert not result.success
+        assert result.error is not None
+        assert "Unexpected disconnect error" in result.error
 
     @pytest.mark.asyncio
     async def test_search_success(self) -> None:
@@ -196,7 +201,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.search("test_conn", "dc=test", "(objectClass=person)")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert len(result.data) == 2
         assert result.data[0]["dn"] == "cn=user1,dc=test"
@@ -223,7 +228,7 @@ class TestLDAPInfrastructureClient:
             scope="onelevel",
         )
 
-        assert result.is_success
+        assert result.success
         mock_connection.search.assert_called_once()
         call_args = mock_connection.search.call_args
         assert call_args[1]["attributes"] == ["cn", "mail"]
@@ -246,7 +251,7 @@ class TestLDAPInfrastructureClient:
             scope="base",
         )
 
-        assert result.is_success
+        assert result.success
         mock_connection.search.assert_called_once()
 
     @pytest.mark.asyncio
@@ -256,7 +261,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.search("nonexistent", "dc=test", "(objectClass=person)")
 
-        assert not result.is_success
+        assert not result.success
         assert "Connection not found" in (result.error or "")
 
     @pytest.mark.asyncio
@@ -272,7 +277,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.search("test_conn", "dc=test", "(objectClass=person)")
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Search failed" in result.error
 
@@ -291,7 +296,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.search("test_conn", "dc=test", "(objectClass=person)")
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "LDAP search failed" in result.error
 
@@ -305,8 +310,11 @@ class TestLDAPInfrastructureClient:
 
         adapter._connections["test_conn"] = mock_connection
 
-        with pytest.raises(LDAPOperationError, match="Unexpected search error"):
-            await adapter.search("test_conn", "dc=test", "(objectClass=person)")
+        result = await adapter.search("test_conn", "dc=test", "(objectClass=person)")
+
+        assert not result.success
+        assert result.error is not None
+        assert "Unexpected search error" in result.error
 
     @pytest.mark.asyncio
     async def test_add_entry_success(self) -> None:
@@ -325,7 +333,7 @@ class TestLDAPInfrastructureClient:
         }
         result = await adapter.add_entry("test_conn", "cn=testuser,dc=test", attributes)
 
-        assert result.is_success
+        assert result.success
         assert result.data is True
 
         mock_connection.add.assert_called_once_with(
@@ -340,7 +348,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.add_entry("nonexistent", "cn=test,dc=test", {})
 
-        assert not result.is_success
+        assert not result.success
         assert "Connection not found" in (result.error or "")
 
     @pytest.mark.asyncio
@@ -356,7 +364,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.add_entry("test_conn", "cn=test,dc=test", {})
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Add failed" in result.error
 
@@ -375,7 +383,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.add_entry("test_conn", "cn=test,dc=test", {})
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "LDAP add failed" in result.error
 
@@ -389,8 +397,11 @@ class TestLDAPInfrastructureClient:
 
         adapter._connections["test_conn"] = mock_connection
 
-        with pytest.raises(LDAPOperationError, match="Unexpected add error"):
-            await adapter.add_entry("test_conn", "cn=test,dc=test", {})
+        result = await adapter.add_entry("test_conn", "cn=test,dc=test", {})
+
+        assert not result.success
+        assert result.error is not None
+        assert "Unexpected add error" in result.error
 
     @pytest.mark.asyncio
     async def test_modify_success(self) -> None:
@@ -405,7 +416,7 @@ class TestLDAPInfrastructureClient:
         changes = {"mail": [("MODIFY_REPLACE", ["new@example.com"])]}
         result = await adapter.modify_entry("test_conn", "cn=test,dc=test", changes)
 
-        assert result.is_success
+        assert result.success
         assert result.data is True
 
         mock_connection.modify.assert_called_once_with("cn=test,dc=test", changes)
@@ -417,7 +428,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.modify_entry("nonexistent", "cn=test,dc=test", {})
 
-        assert not result.is_success
+        assert not result.success
         assert "Connection not found" in (result.error or "")
 
     @pytest.mark.asyncio
@@ -433,7 +444,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.modify_entry("test_conn", "cn=test,dc=test", {})
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Modify failed" in result.error
 
@@ -452,7 +463,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.modify_entry("test_conn", "cn=test,dc=test", {})
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "LDAP modify failed" in result.error
 
@@ -466,8 +477,11 @@ class TestLDAPInfrastructureClient:
 
         adapter._connections["test_conn"] = mock_connection
 
-        with pytest.raises(LDAPOperationError, match="Unexpected modify error"):
-            await adapter.modify_entry("test_conn", "cn=test,dc=test", {})
+        result = await adapter.modify_entry("test_conn", "cn=test,dc=test", {})
+
+        assert not result.success
+        assert result.error is not None
+        assert "Unexpected modify error" in result.error
 
     @pytest.mark.asyncio
     async def test_delete_success(self) -> None:
@@ -481,7 +495,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.delete_entry("test_conn", "cn=test,dc=test")
 
-        assert result.is_success
+        assert result.success
         assert result.data is True
 
         mock_connection.delete.assert_called_once_with("cn=test,dc=test")
@@ -493,7 +507,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.delete_entry("nonexistent", "cn=test,dc=test")
 
-        assert not result.is_success
+        assert not result.success
         assert "Connection not found" in (result.error or "")
 
     @pytest.mark.asyncio
@@ -509,7 +523,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.delete_entry("test_conn", "cn=test,dc=test")
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Delete failed" in result.error
 
@@ -528,7 +542,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.delete_entry("test_conn", "cn=test,dc=test")
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "LDAP delete failed" in result.error
 
@@ -542,8 +556,11 @@ class TestLDAPInfrastructureClient:
 
         adapter._connections["test_conn"] = mock_connection
 
-        with pytest.raises(LDAPOperationError, match="Unexpected delete error"):
-            await adapter.delete_entry("test_conn", "cn=test,dc=test")
+        result = await adapter.delete_entry("test_conn", "cn=test,dc=test")
+
+        assert not result.success
+        assert result.error is not None
+        assert "Unexpected delete error" in result.error
 
     def test_get_connection_info_success(self) -> None:
         """Test successful connection info retrieval."""
@@ -567,7 +584,7 @@ class TestLDAPInfrastructureClient:
 
         result = adapter.get_connection_info("test_conn")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         info = result.data
         assert info["server"] == "ldap://test.com:389"
@@ -582,7 +599,7 @@ class TestLDAPInfrastructureClient:
 
         result = adapter.get_connection_info("nonexistent")
 
-        assert not result.is_success
+        assert not result.success
         assert "Connection not found" in (result.error or "")
 
     def test_get_connection_info_no_server_info(self) -> None:
@@ -603,7 +620,7 @@ class TestLDAPInfrastructureClient:
 
         result = adapter.get_connection_info("test_conn")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         info = result.data
         assert info["server_info"] is None
@@ -620,11 +637,11 @@ class TestLDAPInfrastructureClient:
 
         adapter._connections["test_conn"] = mock_connection
 
-        with pytest.raises(
-            LDAPConnectionError,
-            match="Unexpected error getting connection info",
-        ):
-            adapter.get_connection_info("test_conn")
+        result = adapter.get_connection_info("test_conn")
+
+        assert not result.success
+        assert result.error is not None
+        assert "Unexpected error getting connection info" in result.error
 
     def test_search_scope_mapping(self) -> None:
         """Test search scope string to ldap3 constant mapping."""
@@ -672,7 +689,7 @@ class TestLDAPInfrastructureClient:
 
         result = await adapter.search("test_conn", "dc=test", "(objectClass=person)")
 
-        assert result.is_success
+        assert result.success
         # Verify default attributes are used
         call_args = mock_connection.search.call_args
         assert call_args[1]["attributes"] == ["*"]
@@ -703,7 +720,7 @@ class TestLDAPInfrastructureClient:
             attributes,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is True
 
         mock_connection.add.assert_called_once_with(
@@ -735,7 +752,7 @@ class TestLDAPInfrastructureClient:
             changes,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is True
 
         mock_connection.modify.assert_called_once_with(

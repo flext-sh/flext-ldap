@@ -26,7 +26,7 @@ class TestLDAPConnectionService:
     def test_cannot_instantiate_directly(self) -> None:
         """Test that LDAPConnectionService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.LDAPConnectionService()  # type: ignore[abstract]
+            ports.LDAPConnectionService()  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""
@@ -99,7 +99,7 @@ class TestLDAPSearchService:
     def test_cannot_instantiate_directly(self) -> None:
         """Test that LDAPSearchService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.LDAPSearchService()  # type: ignore[abstract]
+            ports.LDAPSearchService()  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""
@@ -157,7 +157,7 @@ class TestLDAPUserService:
     def test_cannot_instantiate_directly(self) -> None:
         """Test that LDAPUserService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.LDAPUserService()  # type: ignore[abstract]
+            ports.LDAPUserService()  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""
@@ -231,7 +231,7 @@ class TestLDAPSchemaService:
     def test_cannot_instantiate_directly(self) -> None:
         """Test that LDAPSchemaService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.LDAPSchemaService()  # type: ignore[abstract]
+            ports.LDAPSchemaService()  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""
@@ -271,7 +271,7 @@ class TestLDAPMigrationService:
     def test_cannot_instantiate_directly(self) -> None:
         """Test that LDAPMigrationService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.LDAPMigrationService()  # type: ignore[abstract]
+            ports.LDAPMigrationService()  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""

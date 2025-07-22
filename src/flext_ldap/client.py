@@ -16,7 +16,13 @@ if TYPE_CHECKING:
 # Use standard Python logging
 import logging
 
-from flext_core.domain.types import ServiceResult
+# Use simplified flext-core imports (following new standards)
+from flext_core import (
+    ConnectionProtocol,
+    DomainError as FlextConnectionError,
+    ServiceResult,
+)
+from ldap3.core.exceptions import LDAPException
 
 from flext_ldap.config import FlextLDAPSettings, LDAPConnectionConfig
 from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
@@ -24,19 +30,8 @@ from flext_ldap.models import LDAPEntry as LDAPEntryModel, LDAPScope
 
 logger = logging.getLogger(__name__)
 
-# Import exceptions conditionally for fallback support
-try:
-    from ldap3.core.exceptions import LDAPException  # type: ignore[import-untyped]
-except ImportError:
-    # Create a fallback exception class that inherits from Exception
-    class LDAPError(Exception):
-        """Fallback LDAP exception when ldap3 is not available."""
 
-    # Type-safe alias for compatibility
-    LDAPException = LDAPError
-
-
-class LDAPClient:
+class LDAPClient(ConnectionProtocol):
     """Enterprise LDAP client using FLEXT architecture internally.
 
     This is an adapter that provides backward compatibility with the original
@@ -71,21 +66,22 @@ class LDAPClient:
 
     async def __aenter__(self) -> Self:
         """Enter the context manager."""
-        connect_result = await self.connect()
-        if not connect_result.is_success:
-            raise LDAPException(connect_result.error or "Failed to connect")
+        await self.connect()
+        if not self._connected:
+            msg = "Failed to connect"
+            raise LDAPException(msg)
         return self
 
     async def __aexit__(self, *args: object) -> None:
         """Exit the context manager."""
         await self.disconnect()
 
-    async def connect(self) -> ServiceResult[None]:
+    async def connect(self) -> None:
         """Connect to LDAP server using new infrastructure."""
-        try:
-            if self._connected:
-                return ServiceResult.ok(None)
+        if self._connected:
+            return
 
+        try:
             # Use new infrastructure to connect
             server_url = f"ldap://{self.config.server}:{self.config.port}"
             result = await self._infrastructure_client.connect(
@@ -94,16 +90,19 @@ class LDAPClient:
                 password=getattr(self.config, "password", None),
             )
 
-            if result.is_success:
+            if result.success:
                 self._connection_id = (
                     result.data
                 )  # Connection ID returned by infrastructure
                 self._connected = True
-                return ServiceResult.ok(None)
-            return ServiceResult.fail(result.error or "Connection failed")
+            else:
+                self._connected = False
+                raise FlextConnectionError(result.error or "Connection failed")
 
-        except (ConnectionError, ValueError, RuntimeError) as e:
-            return ServiceResult.fail(f"Connection error: {e}")
+        except (FlextConnectionError, ValueError, RuntimeError) as e:
+            self._connected = False
+            msg = f"Connection error: {e}"
+            raise FlextConnectionError(msg) from e
 
     async def disconnect(self) -> None:
         """Disconnect from LDAP server."""
@@ -112,13 +111,30 @@ class LDAPClient:
             self._connected = False
             self._connection_id = None
 
+    async def ping(self) -> bool:
+        """Test connection health."""
+        if not self._connected or not self._connection_id:
+            return False
+
+        try:
+            # Test connection by performing a simple search
+            result = await self.search(
+                base_dn="",
+                search_filter="(objectClass=*)",
+                scope=LDAPScope.BASE,
+                attributes=[],
+            )
+            return result.success
+        except Exception:
+            return False
+
     async def search(
         self,
         base_dn: str,
         search_filter: str = "(objectClass=*)",
         scope: LDAPScope = LDAPScope.SUBTREE,
         attributes: list[str] | None = None,
-    ) -> ServiceResult[list[LDAPEntryModel]]:
+    ) -> ServiceResult[Any]:
         """Search LDAP directory using new infrastructure."""
         if not self._connected or not self._connection_id:
             return ServiceResult.fail("Not connected to LDAP server")
@@ -133,7 +149,7 @@ class LDAPClient:
                 attributes=attributes or [],
             )
 
-            if result.is_success and result.data is not None:
+            if result.success and result.data is not None:
                 # Convert to legacy LDAPEntryModel format for compatibility
                 entries = []
                 for entry_data in result.data:
@@ -152,7 +168,7 @@ class LDAPClient:
         self,
         dn: str,
         changes: dict[str, Any],
-    ) -> ServiceResult[bool]:
+    ) -> ServiceResult[Any]:
         """Modify LDAP entry using new infrastructure."""
         if not self._connected or not self._connection_id:
             return ServiceResult.fail("Not connected to LDAP server")
@@ -165,7 +181,7 @@ class LDAPClient:
                 changes=changes,
             )
 
-            if result.is_success:
+            if result.success:
                 return result
             return ServiceResult.fail(result.error or "Modify failed")
 
@@ -186,7 +202,7 @@ class LDAPClient:
 
         # Get info from new infrastructure
         result = self._infrastructure_client.get_connection_info(self._connection_id)
-        if result.is_success and result.data is not None:
+        if result.success and result.data is not None:
             # Ensure returned dict has correct type signature
             info_dict = result.data
             return {k: str(v) if v is not None else None for k, v in info_dict.items()}

@@ -8,7 +8,7 @@ from __future__ import annotations
 from enum import StrEnum
 
 # Use centralized models from flext-core - NO DIRECT PYDANTIC IMPORTS
-from flext_core.domain.pydantic_base import DomainValueObject, Field
+from flext_core import DomainValueObject, Field
 
 __all__ = ["ExtendedLDAPEntry", "LDAPEntry", "LDAPFilter", "LDAPScope"]
 
