@@ -10,13 +10,10 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from flext_ldap.infrastructure.error_correlation import (
-    ErrorCategory,
-    ErrorCorrelationService,
-    ErrorEvent,
-    ErrorPattern,
-    ErrorSeverity,
-)
+from flext_ldap.infrastructure.error_correlation import (ErrorCategory,
+                                                         ErrorCorrelationService,
+                                                         ErrorEvent, ErrorPattern,
+                                                         ErrorSeverity)
 
 
 class TestErrorEvent:
@@ -856,10 +853,8 @@ class TestErrorCorrelationService:
             assert UUID is not None
 
         # Also test that our module imports work correctly
-        from flext_ldap.infrastructure.error_correlation import (
-            FlextLdapErrorEvent,
-            FlextLdapErrorPattern,
-        )
+        from flext_ldap.infrastructure.error_correlation import (FlextLdapErrorEvent,
+                                                                 FlextLdapErrorPattern)
 
         # Create instances to ensure UUID typing is working
         event = FlextLdapErrorEvent(error_message="test")
