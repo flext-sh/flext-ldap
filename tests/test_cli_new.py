@@ -148,8 +148,10 @@ class TestCLINew:
         mock_client.search = AsyncMock()
 
         # Mock successful search
-        from flext_core.domain.shared_types import ServiceResult
-        mock_client.search.return_value = ServiceResult.ok(mock_entries)
+        # 🚨 ARCHITECTURAL COMPLIANCE: Using módulo raiz imports
+        from flext_core import FlextResult
+
+        mock_client.search.return_value = FlextResult.ok(mock_entries)
 
         runner = CliRunner()
         result = runner.invoke(
@@ -181,8 +183,9 @@ class TestCLINew:
         mock_client.search = AsyncMock()
 
         # Mock successful search
-        from flext_core.domain.shared_types import ServiceResult
-        mock_client.search.return_value = ServiceResult.ok(mock_entries)
+        from flext_core import FlextResult
+
+        mock_client.search.return_value = FlextResult.ok(mock_entries)
 
         runner = CliRunner()
         result = runner.invoke(
@@ -204,8 +207,9 @@ class TestCLINew:
         mock_client.search = AsyncMock()
 
         # Mock successful search with empty results
-        from flext_core.domain.shared_types import ServiceResult
-        mock_client.search.return_value = ServiceResult.ok([])
+        from flext_core import FlextResult
+
+        mock_client.search.return_value = FlextResult.ok([])
 
         runner = CliRunner()
         result = runner.invoke(
@@ -242,8 +246,9 @@ class TestCLINew:
         mock_client.search = AsyncMock()
 
         # Mock failed search
-        from flext_core.domain.shared_types import ServiceResult
-        mock_client.search.return_value = ServiceResult.fail("Invalid filter")
+        from flext_core import FlextResult
+
+        mock_client.search.return_value = FlextResult.fail("Invalid filter")
 
         runner = CliRunner()
         result = runner.invoke(

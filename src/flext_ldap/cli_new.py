@@ -9,13 +9,27 @@ import asyncio
 from typing import Any
 
 import click
-from flext_core import (
-    DomainError as FlextConnectionError,  # Use simplified flext-core imports
-)
+
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
 from ldap3.core.exceptions import LDAPException
 
-from flext_ldap.client import LDAPClient
-from flext_ldap.config import FlextLDAPSettings, LDAPAuthConfig, LDAPConnectionConfig
+from flext_ldap.client import FlextLdapClient
+from flext_ldap.config import (
+    FlextLdapAuthConfig,
+    FlextLdapConnectionConfig,
+    FlextLdapSettings,
+)
+
+# Backward compatibility aliases
+LDAPClient = FlextLdapClient
+FlextLDAPSettings = FlextLdapSettings
+LDAPAuthConfig = FlextLdapAuthConfig
+LDAPConnectionConfig = FlextLdapConnectionConfig
+
+
+# Use DomainError pattern locally
+class FlextConnectionError(Exception):
+    """Connection error - local exception class."""
 
 
 def run_async(func: Any) -> Any:
@@ -55,16 +69,23 @@ async def test(
 ) -> None:
     """Test LDAP connection with authentication."""
     try:
-        settings = FlextLDAPSettings(
-            connection=LDAPConnectionConfig(
-                server=server,
-                port=port,
-                use_ssl=tls,
-            ),
-            auth=LDAPAuthConfig(
-                bind_dn=bind_dn or "",
-                bind_password=bind_password or "",
-            ),
+        # Create settings and configure connection/auth
+        settings = FlextLDAPSettings()
+        # Use model_copy to update the settings with new connection config
+        connection_config = FlextLdapConnectionConfig(
+            server=server,
+            port=port,
+            use_ssl=tls,
+        )
+        auth_config = FlextLdapAuthConfig(
+            bind_dn=bind_dn or "",
+            bind_password=bind_password or "",
+        )
+        settings = settings.model_copy(
+            update={
+                "connection": connection_config,
+                "auth": auth_config,
+            },
         )
 
         # Use ConnectionProtocol pattern with context manager
@@ -112,15 +133,22 @@ async def search(
 ) -> None:
     """Search LDAP entries with filter."""
     try:
-        settings = FlextLDAPSettings(
-            connection=LDAPConnectionConfig(
-                server=server,
-                port=port,
-            ),
-            auth=LDAPAuthConfig(
-                bind_dn=bind_dn or "",
-                bind_password=bind_password or "",
-            ),
+        # Create settings and configure connection/auth
+        settings = FlextLDAPSettings()
+        # Use model_copy to update the settings with new connection config
+        connection_config = FlextLdapConnectionConfig(
+            server=server,
+            port=port,
+        )
+        auth_config = FlextLdapAuthConfig(
+            bind_dn=bind_dn or "",
+            bind_password=bind_password or "",
+        )
+        settings = settings.model_copy(
+            update={
+                "connection": connection_config,
+                "auth": auth_config,
+            },
         )
 
         client = LDAPClient(settings)

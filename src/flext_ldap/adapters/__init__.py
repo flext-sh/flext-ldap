@@ -9,8 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap.adapters.directory_adapter import FlextLDAPDirectoryAdapter
+from flext_ldap.adapters.directory_adapter import FlextLdapDirectoryAdapter
 
 __all__ = [
-    "FlextLDAPDirectoryAdapter",
+    "FlextLdapDirectoryAdapter",
 ]

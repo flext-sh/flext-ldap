@@ -16,7 +16,8 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from flext_core.domain.shared_types import ServiceResult
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
+from flext_core import FlextResult
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -24,7 +25,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class SchemaElementType(Enum):
+class FlextLdapSchemaElementType(Enum):
     """LDAP schema element types."""
 
     OBJECT_CLASS = "objectClass"
@@ -37,7 +38,7 @@ class SchemaElementType(Enum):
     NAME_FORM = "nameForm"
 
 
-class AttributeUsage(Enum):
+class FlextLdapAttributeUsage(Enum):
     """LDAP attribute usage types."""
 
     USER_APPLICATIONS = "userApplications"
@@ -46,7 +47,7 @@ class AttributeUsage(Enum):
     DSA_OPERATION = "dSAOperation"
 
 
-class ObjectClassType(Enum):
+class FlextLdapObjectClassType(Enum):
     """LDAP object class types."""
 
     STRUCTURAL = "STRUCTURAL"
@@ -54,7 +55,7 @@ class ObjectClassType(Enum):
     AUXILIARY = "AUXILIARY"
 
 
-class SchemaAttribute:
+class FlextLdapSchemaAttribute:
     """LDAP schema attribute definition."""
 
     def __init__(
@@ -66,7 +67,7 @@ class SchemaAttribute:
         equality_matching_rule: str | None = None,
         ordering_matching_rule: str | None = None,
         substring_matching_rule: str | None = None,
-        usage: AttributeUsage = AttributeUsage.USER_APPLICATIONS,
+        usage: FlextLdapAttributeUsage = FlextLdapAttributeUsage.USER_APPLICATIONS,
         *,
         is_single_value: bool = False,
         is_collective: bool = False,
@@ -120,7 +121,7 @@ class SchemaAttribute:
         }
 
 
-class SchemaObjectClass:
+class FlextLdapSchemaObjectClass:
     """LDAP schema object class definition."""
 
     def __init__(
@@ -128,7 +129,9 @@ class SchemaObjectClass:
         oid: str,
         names: list[str] | None = None,
         description: str | None = None,
-        object_class_type: ObjectClassType = ObjectClassType.STRUCTURAL,
+        object_class_type: FlextLdapObjectClassType = (
+            FlextLdapObjectClassType.STRUCTURAL
+        ),
         superior_classes: list[str] | None = None,
         must_attributes: list[str] | None = None,
         may_attributes: list[str] | None = None,
@@ -158,7 +161,7 @@ class SchemaObjectClass:
 
     def get_all_attributes(
         self,
-        schema_cache: dict[str, SchemaObjectClass],
+        schema_cache: dict[str, FlextLdapSchemaObjectClass],
     ) -> tuple[set[str], set[str]]:
         """Get all attributes (must and may) including inherited ones."""
         all_must = set(self.must_attributes)
@@ -191,7 +194,7 @@ class SchemaObjectClass:
         }
 
 
-class SchemaDiscoveryResult:
+class FlextLdapSchemaDiscoveryResult:
     """Schema discovery operation result."""
 
     def __init__(
@@ -199,8 +202,8 @@ class SchemaDiscoveryResult:
         discovery_id: UUID | None = None,
         timestamp: datetime | None = None,
         server_info: dict[str, Any] | None = None,
-        object_classes: dict[str, SchemaObjectClass] | None = None,
-        attributes: dict[str, SchemaAttribute] | None = None,
+        object_classes: dict[str, FlextLdapSchemaObjectClass] | None = None,
+        attributes: dict[str, FlextLdapSchemaAttribute] | None = None,
         syntaxes: dict[str, dict[str, Any]] | None = None,
         matching_rules: dict[str, dict[str, Any]] | None = None,
         discovery_errors: list[str] | None = None,
@@ -255,7 +258,7 @@ class SchemaDiscoveryResult:
         }
 
 
-class SchemaDiscoveryService:
+class FlextLdapSchemaDiscoveryService:
     """LDAP schema discovery service implementation."""
 
     def __init__(
@@ -270,8 +273,11 @@ class SchemaDiscoveryService:
         self.max_cache_size = max_cache_size
         self.enable_caching = enable_caching
 
-        self._schema_cache: dict[str, tuple[SchemaDiscoveryResult, datetime]] = {}
-        self._discovery_history: list[SchemaDiscoveryResult] = []
+        self._schema_cache: dict[
+            str,
+            tuple[FlextLdapSchemaDiscoveryResult, datetime],
+        ] = {}
+        self._discovery_history: list[FlextLdapSchemaDiscoveryResult] = []
 
         logger.info("Schema discovery service initialized")
 
@@ -280,7 +286,7 @@ class SchemaDiscoveryService:
         connection: Any,
         *,
         force_refresh: bool = False,
-    ) -> ServiceResult[SchemaDiscoveryResult]:
+    ) -> FlextResult[FlextLdapSchemaDiscoveryResult]:
         """Discover LDAP schema from server."""
         try:
             start_time = datetime.now(UTC)
@@ -293,7 +299,7 @@ class SchemaDiscoveryService:
                 cached_result = self._get_cached_schema(cache_key)
                 if cached_result:
                     logger.debug("Retrieved schema from cache: %s", cache_key)
-                    return ServiceResult.ok(cached_result)
+                    return FlextResult.ok(cached_result)
 
             # Perform actual schema discovery
             discovery_result = await self._perform_schema_discovery(
@@ -314,91 +320,91 @@ class SchemaDiscoveryService:
                 "Schema discovery completed with %d elements",
                 discovery_result.total_elements,
             )
-            return ServiceResult.ok(discovery_result)
+            return FlextResult.ok(discovery_result)
 
         except Exception as e:
             error_msg = f"Schema discovery failed: {e}"
             logger.exception(error_msg)
-            return ServiceResult.fail(error_msg)
+            return FlextResult.fail(error_msg)
 
     async def get_object_class(
         self,
         connection: Any,
         class_name: str,
-    ) -> ServiceResult[SchemaObjectClass | None]:
+    ) -> FlextResult[FlextLdapSchemaObjectClass | None]:
         """Get specific object class schema."""
         try:
             # Get full schema first
             schema_result = await self.discover_schema(connection)
             if not schema_result.success:
-                return ServiceResult.fail(
+                return FlextResult.fail(
                     f"Failed to discover schema: {schema_result.error}",
                 )
 
             schema = schema_result.data
             if schema is None:
-                return ServiceResult.fail("Schema discovery returned None")
+                return FlextResult.fail("Schema discovery returned None")
 
             # Look for object class by name
             for oc in schema.object_classes.values():
                 if oc.has_name(class_name):
-                    return ServiceResult.ok(oc)
+                    return FlextResult.ok(oc)
 
-            return ServiceResult.ok(None)
+            return FlextResult.ok(None)
 
         except Exception as e:
             error_msg = f"Failed to get object class {class_name}: {e}"
             logger.exception(error_msg)
-            return ServiceResult.fail(error_msg)
+            return FlextResult.fail(error_msg)
 
     async def get_attribute_type(
         self,
         connection: Any,
         attribute_name: str,
-    ) -> ServiceResult[SchemaAttribute | None]:
+    ) -> FlextResult[FlextLdapSchemaAttribute | None]:
         """Get specific attribute type schema."""
         try:
             # Get full schema first
             schema_result = await self.discover_schema(connection)
             if not schema_result.success:
-                return ServiceResult.fail(
+                return FlextResult.fail(
                     f"Failed to discover schema: {schema_result.error}",
                 )
 
             schema = schema_result.data
             if schema is None:
-                return ServiceResult.fail("Schema discovery returned None")
+                return FlextResult.fail("Schema discovery returned None")
 
             # Look for attribute by name
             for attr in schema.attributes.values():
                 if attr.has_name(attribute_name):
-                    return ServiceResult.ok(attr)
+                    return FlextResult.ok(attr)
 
-            return ServiceResult.ok(None)
+            return FlextResult.ok(None)
 
         except Exception as e:
             error_msg = f"Failed to get attribute type {attribute_name}: {e}"
             logger.exception(error_msg)
-            return ServiceResult.fail(error_msg)
+            return FlextResult.fail(error_msg)
 
     async def validate_object_structure(
         self,
         connection: Any,
         object_classes: list[str],
         attributes: dict[str, Any],
-    ) -> ServiceResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, Any]]:
         """Validate object structure against schema."""
         try:
             # Get schema
             schema_result = await self.discover_schema(connection)
             if not schema_result.success:
-                return ServiceResult.fail(
+                return FlextResult.fail(
                     f"Failed to discover schema: {schema_result.error}",
                 )
 
             schema = schema_result.data
             if schema is None:
-                return ServiceResult.fail("Schema discovery returned None")
+                return FlextResult.fail("Schema discovery returned None")
             validation_result: dict[str, Any] = {
                 "is_valid": True,
                 "errors": [],
@@ -413,7 +419,7 @@ class SchemaDiscoveryService:
             all_may_attrs: set[str] = set()
 
             for oc_name in object_classes:
-                oc: SchemaObjectClass | None = None
+                oc: FlextLdapSchemaObjectClass | None = None
                 for obj_class in schema.object_classes.values():
                     if obj_class.has_name(oc_name):
                         oc = obj_class
@@ -461,22 +467,23 @@ class SchemaDiscoveryService:
                     and len(attr_value) > 1
                 ):
                     validation_result["schema_violations"].append(
-                        f"Attribute {attr_name} is single-valued but multiple values provided",
+                        f"Attribute {attr_name} is single-valued but multiple values "
+                        "provided",
                     )
                     validation_result["is_valid"] = False
 
-            return ServiceResult.ok(validation_result)
+            return FlextResult.ok(validation_result)
 
         except Exception as e:
             error_msg = f"Object structure validation failed: {e}"
             logger.exception(error_msg)
-            return ServiceResult.fail(error_msg)
+            return FlextResult.fail(error_msg)
 
     async def _perform_schema_discovery(
         self,
         connection: Any,
         start_time: datetime,
-    ) -> SchemaDiscoveryResult:
+    ) -> FlextLdapSchemaDiscoveryResult:
         """Perform actual schema discovery from LDAP server."""
         # This is a simplified implementation
         # In a real implementation, this would query the LDAP server's schema
@@ -485,8 +492,9 @@ class SchemaDiscoveryService:
             (datetime.now(UTC) - start_time).total_seconds() * 1000,
         )
 
-        # Mock discovery result - in real implementation, this would parse schema from server
-        return SchemaDiscoveryResult(
+        # Mock discovery result - in real implementation, this would parse schema
+        # from server
+        return FlextLdapSchemaDiscoveryResult(
             server_info={
                 "vendor": "Mock LDAP Server",
                 "version": "1.0",
@@ -494,11 +502,11 @@ class SchemaDiscoveryService:
                 "discovery_method": "mock",
             },
             object_classes={
-                "person": SchemaObjectClass(
+                "person": FlextLdapSchemaObjectClass(
                     oid="2.5.6.6",
                     names=["person"],
                     description="RFC2256: a person",
-                    object_class_type=ObjectClassType.STRUCTURAL,
+                    object_class_type=FlextLdapObjectClassType.STRUCTURAL,
                     superior_classes=["top"],
                     must_attributes=["sn", "cn"],
                     may_attributes=[
@@ -508,11 +516,11 @@ class SchemaDiscoveryService:
                         "description",
                     ],
                 ),
-                "organizationalPerson": SchemaObjectClass(
+                "organizationalPerson": FlextLdapSchemaObjectClass(
                     oid="2.5.6.7",
                     names=["organizationalPerson"],
                     description="RFC2256: an organizational person",
-                    object_class_type=ObjectClassType.STRUCTURAL,
+                    object_class_type=FlextLdapObjectClassType.STRUCTURAL,
                     superior_classes=["person"],
                     may_attributes=[
                         "title",
@@ -523,18 +531,23 @@ class SchemaDiscoveryService:
                 ),
             },
             attributes={
-                "cn": SchemaAttribute(
+                "cn": FlextLdapSchemaAttribute(
                     oid="2.5.4.3",
                     names=["cn", "commonName"],
-                    description="RFC2256: common name(s) for which the entity is known by",
+                    description=(
+                        "RFC2256: common name(s) for which the entity is known by"
+                    ),
                     syntax="1.3.6.1.4.1.1466.115.121.1.15",
                     equality_matching_rule="caseIgnoreMatch",
                     substring_matching_rule="caseIgnoreSubstringsMatch",
                 ),
-                "sn": SchemaAttribute(
+                "sn": FlextLdapSchemaAttribute(
                     oid="2.5.4.4",
                     names=["sn", "surname"],
-                    description="RFC2256: last (family) name(s) for which the entity is known by",
+                    description=(
+                        "RFC2256: last (family) name(s) for which the entity "
+                        "is known by"
+                    ),
                     syntax="1.3.6.1.4.1.1466.115.121.1.15",
                     equality_matching_rule="caseIgnoreMatch",
                     substring_matching_rule="caseIgnoreSubstringsMatch",
@@ -551,7 +564,10 @@ class SchemaDiscoveryService:
             return f"schema_{getattr(connection.server, 'host', 'unknown')}"
         return "schema_default"
 
-    def _get_cached_schema(self, cache_key: str) -> SchemaDiscoveryResult | None:
+    def _get_cached_schema(
+        self,
+        cache_key: str,
+    ) -> FlextLdapSchemaDiscoveryResult | None:
         """Get schema from cache if valid."""
         if cache_key in self._schema_cache:
             result, cached_time = self._schema_cache[cache_key]
@@ -568,7 +584,11 @@ class SchemaDiscoveryService:
 
         return None
 
-    def _cache_schema(self, cache_key: str, result: SchemaDiscoveryResult) -> None:
+    def _cache_schema(
+        self,
+        cache_key: str,
+        result: FlextLdapSchemaDiscoveryResult,
+    ) -> None:
         """Cache schema discovery result."""
         # Manage cache size
         if len(self._schema_cache) >= self.max_cache_size:
@@ -595,6 +615,19 @@ class SchemaDiscoveryService:
             "discovery_history_size": len(self._discovery_history),
         }
 
-    def get_discovery_history(self, limit: int = 10) -> list[SchemaDiscoveryResult]:
+    def get_discovery_history(
+        self,
+        limit: int = 10,
+    ) -> list[FlextLdapSchemaDiscoveryResult]:
         """Get recent discovery history."""
         return self._discovery_history[-limit:] if self._discovery_history else []
+
+
+# Backward compatibility aliases
+SchemaElementType = FlextLdapSchemaElementType
+AttributeUsage = FlextLdapAttributeUsage
+ObjectClassType = FlextLdapObjectClassType
+SchemaAttribute = FlextLdapSchemaAttribute
+SchemaObjectClass = FlextLdapSchemaObjectClass
+SchemaDiscoveryResult = FlextLdapSchemaDiscoveryResult
+SchemaDiscoveryService = FlextLdapSchemaDiscoveryService

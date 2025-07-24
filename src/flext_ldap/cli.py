@@ -8,8 +8,8 @@ from __future__ import annotations
 import asyncio
 import sys
 
-from flext_ldap.client import LDAPClient
-from flext_ldap.config import LDAPConnectionConfig
+from flext_ldap.client import FlextLdapClient
+from flext_ldap.config import FlextLdapConnectionConfig
 
 # Constants
 DEFAULT_LDAP_PORT = 389
@@ -24,9 +24,9 @@ MAX_DISPLAY_ENTRIES = 10
 
 async def test_connection(server: str, port: int) -> None:
     """Test LDAP connection to server."""
-    config = LDAPConnectionConfig(server=server, port=port)
+    config = FlextLdapConnectionConfig(server=server, port=port)
     try:
-        async with LDAPClient(config):
+        async with FlextLdapClient(config):
             pass
     except (OSError, ValueError):
         sys.exit(1)
@@ -39,9 +39,9 @@ async def search_entries(
     port: int = DEFAULT_LDAP_PORT,
 ) -> None:
     """Search LDAP entries."""
-    config = LDAPConnectionConfig(server=server, port=port)
+    config = FlextLdapConnectionConfig(server=server, port=port)
     try:
-        async with LDAPClient(config) as client:
+        async with FlextLdapClient(config) as client:
             result = await client.search(
                 "",
                 filter_str,

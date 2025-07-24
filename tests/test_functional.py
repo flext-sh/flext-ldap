@@ -2,24 +2,24 @@
 
 import pytest
 
-from flext_ldap.config import FlextLDAPSettings
-from flext_ldap.domain.ports import LDAPUserService
-from flext_ldap.domain.value_objects import CreateUserRequest
+from flext_ldap.config import FlextLdapSettings
+from flext_ldap.domain.ports import FlextLdapUserService
+from flext_ldap.domain.value_objects import FlextLdapCreateUserRequest
 
 
-class TestLDAPUserService:
+class TestFlextLdapUserService:
     """Test LDAP user service functionality."""
 
     @pytest.mark.unit
     def test_user_service_creation(self) -> None:
-        """Test that LDAPUserService interface exists."""
-        # LDAPUserService is abstract, test the interface exists
-        assert LDAPUserService is not None
+        """Test that FlextLdapUserService interface exists."""
+        # FlextLdapUserService is abstract, test the interface exists
+        assert FlextLdapUserService is not None
 
     @pytest.mark.unit
     def test_create_user_request_basic(self) -> None:
         """Test basic CreateUserRequest validation."""
-        request = CreateUserRequest(
+        request = FlextLdapCreateUserRequest(
             dn="cn=testuser,ou=people,dc=test,dc=com",
             uid="testuser",
             cn="Test User",
@@ -35,7 +35,7 @@ class TestLDAPUserService:
     def test_create_user_request_validation(self) -> None:
         """Test CreateUserRequest validation."""
         # Valid request
-        request = CreateUserRequest(
+        request = FlextLdapCreateUserRequest(
             dn="cn=test,dc=test,dc=com",
             uid="test",
             cn="Test",
@@ -46,7 +46,7 @@ class TestLDAPUserService:
 
         # Invalid request - empty DN
         with pytest.raises(ValueError, match=".*DN.*"):
-            CreateUserRequest(
+            FlextLdapCreateUserRequest(
                 dn="",
                 uid="test",
                 cn="Test",
@@ -54,13 +54,13 @@ class TestLDAPUserService:
             )
 
 
-class TestFlextLDAPSettings:
+class TestFlextLdapSettings:
     """Test configuration functionality."""
 
     @pytest.mark.unit
     def test_settings_creation_and_conversion(self) -> None:
         """Test settings creation and conversion to client config."""
-        settings = FlextLDAPSettings()
+        settings = FlextLdapSettings()
 
         # Test default values
         assert settings.connection.server == "localhost"

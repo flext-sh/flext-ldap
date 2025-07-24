@@ -11,7 +11,9 @@ from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-from flext_core.domain.shared_types import ServiceResult
+
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
+from flext_core import FlextResult
 from pydantic import ValidationError
 
 from flext_ldap.domain.security import (
@@ -55,7 +57,7 @@ class TestCertificateValidationService:
 
         assert result.success
         assert result.data is not None
-        assert result.data.result_type == CertificateValidationResult.MALFORMED.value
+        assert result.data.result_type == CertificateValidationResult.MALFORMED
         assert "Empty certificate chain" in result.data.message
 
     @pytest.mark.asyncio
@@ -72,7 +74,7 @@ class TestCertificateValidationService:
 
         assert result.success
         assert result.data is not None
-        assert result.data.result_type == CertificateValidationResult.MALFORMED.value
+        assert result.data.result_type == CertificateValidationResult.MALFORMED
         assert "Failed to parse certificate" in result.data.message
 
     @pytest.mark.asyncio
@@ -97,7 +99,7 @@ class TestCertificateValidationService:
 
         assert result.success
         assert result.data is not None
-        assert result.data.result_type == CertificateValidationResult.EXPIRED.value
+        assert result.data.result_type == CertificateValidationResult.EXPIRED
         assert "Certificate expired" in result.data.message
 
     @pytest.mark.asyncio
@@ -129,7 +131,7 @@ class TestCertificateValidationService:
         )
 
         with patch.object(cert_validator, "_extract_certificate_info") as mock_extract:
-            mock_extract.return_value = ServiceResult.ok(mock_cert_info)
+            mock_extract.return_value = FlextResult.ok(mock_cert_info)
 
             result = await cert_validator.validate_certificate_chain(
                 [b"cert"],
@@ -138,7 +140,7 @@ class TestCertificateValidationService:
 
             assert result.success
             assert result.data is not None
-            assert result.data.result_type == CertificateValidationResult.VALID.value
+            assert result.data.result_type == CertificateValidationResult.VALID
             assert "Certificate validation successful" in result.data.message
 
     @pytest.mark.asyncio

@@ -11,11 +11,12 @@ from __future__ import annotations
 from enum import StrEnum
 from urllib.parse import urlparse
 
-from flext_core import DomainValueObject
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
+from flext_core import FlextValueObject
 from pydantic import Field, field_validator
 
 
-class LDAPScope(StrEnum):
+class FlextLdapScopeEnum(StrEnum):
     """LDAP search scope enumeration."""
 
     BASE = "base"
@@ -23,13 +24,20 @@ class LDAPScope(StrEnum):
     SUBTREE = "subtree"
 
 
-class DistinguishedName(DomainValueObject):
+class FlextLdapDistinguishedName(FlextValueObject):
     """Distinguished Name value object.
 
     Represents an immutable LDAP distinguished name.
     """
 
     value: str = Field(..., description="DN string value")
+
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for DN."""
+        if not self.value or not self.value.strip():
+            raise ValueError("Distinguished name cannot be empty")
+        if "=" not in self.value:
+            raise ValueError("Distinguished name must contain at least one RDN")
 
     @field_validator("value")
     @classmethod
@@ -82,7 +90,7 @@ class DistinguishedName(DomainValueObject):
         """
         return self.value.split(",")[0].strip()
 
-    def get_parent_dn(self) -> DistinguishedName | None:
+    def get_parent_dn(self) -> FlextLdapDistinguishedName | None:
         """Get parent DN.
 
         Returns:
@@ -94,9 +102,18 @@ class DistinguishedName(DomainValueObject):
             return None
 
         parent_dn = ",".join(components[1:]).strip()
-        return DistinguishedName(value=parent_dn)
+        return FlextLdapDistinguishedName(value=parent_dn)
 
-    def is_child_of(self, parent: DistinguishedName) -> bool:
+    def get_components(self) -> list[str]:
+        """Get all DN components.
+
+        Returns:
+            List of DN components.
+
+        """
+        return [component.strip() for component in self.value.split(",")]
+
+    def is_child_of(self, parent: FlextLdapDistinguishedName) -> bool:
         """Check if this DN is a child of another DN.
 
         Args:
@@ -109,10 +126,22 @@ class DistinguishedName(DomainValueObject):
         return self.value.lower().endswith(parent.value.lower())
 
 
-class LDAPFilter(DomainValueObject):
+class FlextLdapFilterValue(FlextValueObject):
     """LDAP search filter value object."""
 
     value: str = Field(..., description="LDAP filter string")
+
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for LDAP filter."""
+        if not self.value:
+            raise ValueError("LDAP filter cannot be empty")
+        if not (self.value.startswith("(") and self.value.endswith(")")):
+            raise ValueError("LDAP filter must be enclosed in parentheses")
+        # Check for balanced parentheses
+        open_count = self.value.count("(")
+        close_count = self.value.count(")")
+        if open_count != close_count:
+            raise ValueError("LDAP filter has unbalanced parentheses")
 
     @field_validator("value")
     @classmethod
@@ -151,7 +180,7 @@ class LDAPFilter(DomainValueObject):
         return self.value
 
     @classmethod
-    def equals(cls, attribute: str, value: str) -> LDAPFilter:
+    def equals(cls, attribute: str, value: str) -> FlextLdapFilterValue:
         """Create equality filter.
 
         Args:
@@ -165,7 +194,7 @@ class LDAPFilter(DomainValueObject):
         return cls(value=f"({attribute}={value})")
 
     @classmethod
-    def present(cls, attribute: str) -> LDAPFilter:
+    def present(cls, attribute: str) -> FlextLdapFilterValue:
         """Create presence filter.
 
         Args:
@@ -178,7 +207,7 @@ class LDAPFilter(DomainValueObject):
         return cls(value=f"({attribute}=*)")
 
     @classmethod
-    def and_filters(cls, *filters: LDAPFilter) -> LDAPFilter:
+    def and_filters(cls, *filters: FlextLdapFilterValue) -> FlextLdapFilterValue:
         """Combine filters with AND logic.
 
         Args:
@@ -199,7 +228,7 @@ class LDAPFilter(DomainValueObject):
         return cls(value=combined)
 
     @classmethod
-    def or_filters(cls, *filters: LDAPFilter) -> LDAPFilter:
+    def or_filters(cls, *filters: FlextLdapFilterValue) -> FlextLdapFilterValue:
         """Combine filters with OR logic.
 
         Args:
@@ -220,10 +249,20 @@ class LDAPFilter(DomainValueObject):
         return cls(value=combined)
 
 
-class LDAPUri(DomainValueObject):
+class FlextLdapUri(FlextValueObject):
     """LDAP URI value object."""
 
     value: str = Field(..., description="LDAP URI string")
+
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for LDAP URI."""
+        if not self.value:
+            raise ValueError("LDAP URI cannot be empty")
+        parsed = urlparse(self.value)
+        if parsed.scheme not in {"ldap", "ldaps"}:
+            raise ValueError("LDAP URI must use ldap:// or ldaps:// scheme")
+        if not parsed.hostname:
+            raise ValueError("LDAP URI must specify hostname")
 
     @field_validator("value")
     @classmethod
@@ -278,10 +317,18 @@ class LDAPUri(DomainValueObject):
         return urlparse(self.value).scheme == "ldaps"
 
 
-class LDAPObjectClass(DomainValueObject):
+class FlextLdapObjectClass(FlextValueObject):
     """LDAP object class value object."""
 
     name: str = Field(..., description="Object class name")
+
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for LDAP object class."""
+        if not self.name or not self.name.strip():
+            raise ValueError("Object class name cannot be empty")
+        # Basic validation - alphanumeric and common chars
+        if not self.name.replace("-", "").replace("_", "").isalnum():
+            raise ValueError("Object class name contains invalid characters")
 
     @field_validator("name")
     @classmethod
@@ -314,13 +361,21 @@ class LDAPObjectClass(DomainValueObject):
         return self.name
 
 
-class LDAPAttributes(DomainValueObject):
+class FlextLdapAttributesValue(FlextValueObject):
     """LDAP attributes value object."""
 
     attributes: dict[str, list[str]] = Field(
         default_factory=dict,
         description="LDAP attributes as name-value pairs",
     )
+
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for LDAP attributes."""
+        for name, values in self.attributes.items():
+            if not name or not name.strip():
+                raise ValueError("Attribute name cannot be empty")
+            if not values:
+                raise ValueError(f"Attribute '{name}' must have at least one value")
 
     def get_single_value(self, name: str) -> str | None:
         """Get single value for attribute.
@@ -359,7 +414,7 @@ class LDAPAttributes(DomainValueObject):
         """
         return name in self.attributes
 
-    def add_value(self, name: str, value: str) -> LDAPAttributes:
+    def add_value(self, name: str, value: str) -> FlextLdapAttributesValue:
         """Add value to attribute.
 
         Args:
@@ -374,9 +429,9 @@ class LDAPAttributes(DomainValueObject):
         if name not in new_attrs:
             new_attrs[name] = []
         new_attrs[name] += [value]
-        return LDAPAttributes(attributes=new_attrs)
+        return FlextLdapAttributesValue(attributes=new_attrs)
 
-    def remove_value(self, name: str, value: str) -> LDAPAttributes:
+    def remove_value(self, name: str, value: str) -> FlextLdapAttributesValue:
         """Remove value from attribute.
 
         Args:
@@ -394,17 +449,24 @@ class LDAPAttributes(DomainValueObject):
                 new_attrs[name] = new_values
             else:
                 del new_attrs[name]
-        return LDAPAttributes(attributes=new_attrs)
+        return FlextLdapAttributesValue(attributes=new_attrs)
 
 
-class LDAPConnectionInfo(DomainValueObject):
+class FlextLdapConnectionInfo(FlextValueObject):
     """LDAP connection information value object."""
 
-    server_uri: LDAPUri
-    bind_dn: DistinguishedName | None = None
+    server_uri: FlextLdapUri
+    bind_dn: FlextLdapDistinguishedName | None = None
     is_authenticated: bool = False
     is_secure: bool = False
     protocol_version: int = 3
+
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for LDAP connection info."""
+        if not self.server_uri:
+            raise ValueError("Connection info must have server_uri")
+        if self.protocol_version not in (2, 3):
+            raise ValueError("Protocol version must be 2 or 3")
 
     @property
     def connection_string(self) -> str:
@@ -412,3 +474,56 @@ class LDAPConnectionInfo(DomainValueObject):
         auth_status = "authenticated" if self.is_authenticated else "anonymous"
         security = "secure" if self.is_secure else "insecure"
         return f"{self.server_uri} ({auth_status}, {security})"
+
+
+class FlextLdapCreateUserRequest(FlextValueObject):
+    """Value object for creating LDAP users with validation."""
+
+    dn: str = Field(..., description="Distinguished name for the user")
+    uid: str = Field(..., description="User identifier")
+    cn: str = Field(..., description="Common name")
+    sn: str = Field(..., description="Surname")
+    mail: str | None = Field(None, description="Email address")
+    phone: str | None = Field(None, description="Phone number")
+    ou: str | None = Field(None, description="Organizational unit")
+    department: str | None = Field(None, description="Department")
+    title: str | None = Field(None, description="Job title")
+    object_classes: list[str] | None = Field(None, description="LDAP object classes")
+
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for user creation request."""
+        if not self.dn or not self.dn.strip():
+            raise ValueError("DN cannot be empty")
+        if not self.uid or not self.uid.strip():
+            raise ValueError("UID cannot be empty")
+        if self.mail and "@" not in self.mail:
+            raise ValueError("Email must be valid format")
+
+    @field_validator("dn")
+    @classmethod
+    def validate_dn(cls, v: str) -> str:
+        """Validate DN is not empty."""
+        if not v or v.isspace():
+            msg = "DN cannot be empty or whitespace only"
+            raise ValueError(msg)
+        return v.strip()
+
+    @field_validator("uid", "cn", "sn")
+    @classmethod
+    def validate_required_fields(cls, v: str) -> str:
+        """Validate required fields are not empty."""
+        if not v or v.isspace():
+            msg = "Required field cannot be empty or whitespace only"
+            raise ValueError(msg)
+        return v.strip()
+
+
+# Backward compatibility aliases
+LDAPScope = FlextLdapScopeEnum
+DistinguishedName = FlextLdapDistinguishedName
+LDAPFilter = FlextLdapFilterValue
+LDAPUri = FlextLdapUri
+LDAPObjectClass = FlextLdapObjectClass
+LDAPAttributes = FlextLdapAttributesValue
+LDAPConnectionInfo = FlextLdapConnectionInfo
+# FlextLdapCreateUserRequest exported above

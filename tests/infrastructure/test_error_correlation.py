@@ -63,7 +63,9 @@ class TestErrorEvent:
     def test_error_message_normalization(self) -> None:
         """Test error message normalization for pattern matching."""
         event = ErrorEvent(
-            error_message="Connection failed to 192.168.1.100:389 for cn=user,dc=example,dc=com",
+            error_message=(
+                "Connection failed to 192.168.1.100:389 for cn=user,dc=example,dc=com"
+            ),
         )
 
         normalized = event._normalize_error_message(event.error_message)
@@ -502,7 +504,8 @@ class TestErrorCorrelationService:
                 operation_type="test",
             )
 
-        # Should still create pattern (frequency threshold is for analysis, not creation)
+        # Should still create pattern (frequency threshold is for analysis,
+        # not creation)
         patterns = list(correlation_service._error_patterns.values())
         rare_patterns = [p for p in patterns if p.frequency == 2]
         assert len(rare_patterns) == 1

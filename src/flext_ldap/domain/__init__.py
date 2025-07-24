@@ -15,22 +15,39 @@ from __future__ import annotations
 import warnings
 
 # NEW SEMANTIC STRUCTURE - Import all real implementations (NO FALLBACKS)
-from flext_ldap.domain.aggregates import DirectoryAggregate, LDAPDirectory
-from flext_ldap.domain.entities import LDAPEntry, LDAPGroup, LDAPUser
+from flext_ldap.domain.aggregates import (
+    FlextLdapDirectory,
+    FlextLdapDirectoryAggregate,
+)
+from flext_ldap.domain.entities import (
+    FlextLdapEntry,
+    FlextLdapGroup,
+    FlextLdapUser,
+)
 from flext_ldap.domain.events import (
-    LDAPConnectionEstablished,
-    LDAPEntryCreated,
-    LDAPEntryDeleted,
-    LDAPEntryModified,
+    FlextLdapAuthenticationFailed,
+    FlextLdapConnectionEstablished,
+    FlextLdapConnectionLost,
+    FlextLdapEntryCreated,
+    FlextLdapEntryDeleted,
+    FlextLdapEntryModified,
+    FlextLdapGroupMemberAdded,
+    FlextLdapGroupMemberRemoved,
+    FlextLdapUserAuthenticated,
 )
 from flext_ldap.domain.exceptions import LDAPDomainError
 from flext_ldap.domain.interfaces import (
-    LDAPConnectionManager,
-    LDAPDirectoryRepository,
+    FlextLdapConnectionManager,
+    FlextLdapDirectoryRepository,
+    FlextLdapGroupRepository,
+    FlextLdapSchemaValidator,
+)
+from flext_ldap.domain.repositories import (
+    FlextLdapUserRepository,
 )
 from flext_ldap.domain.specifications import (
-    LDAPEntrySpecification,
-    LDAPUserSpecification,
+    FlextLdapEntrySpecification,
+    FlextLdapUserSpecification,
 )
 from flext_ldap.domain.values import (
     DistinguishedName,
@@ -60,10 +77,16 @@ def _warn_deprecated_import(old_item: str, new_path: str) -> None:
 LDAPError = LDAPDomainError
 
 # Legacy aliases (avoid redefinition)
-LDAPConnection = DirectoryAggregate
+LDAPEntry = FlextLdapEntry
+LDAPUser = FlextLdapUser
+LDAPGroup = FlextLdapGroup
+LDAPConnection = FlextLdapDirectoryAggregate
+LDAPDirectory = FlextLdapDirectory
 LDAPAttribute = LDAPAttributes
-LDAPConnectionRepository = LDAPConnectionManager
-LDAPUserRepository = LDAPDirectoryRepository
+LDAPConnectionRepository = FlextLdapConnectionManager
+LDAPUserRepository = FlextLdapDirectoryRepository
+LDAPEntrySpecification = FlextLdapEntrySpecification
+LDAPUserSpecification = FlextLdapUserSpecification
 
 
 # Simple placeholders for backward compatibility
@@ -80,6 +103,8 @@ __all__ = [
     "DirectoryAggregate",
     # Values
     "DistinguishedName",
+    "FlextLdapEntrySpecification",
+    "FlextLdapUserSpecification",
     # Entities
     "LDAPAttribute",  # → LDAPAttributes
     "LDAPAttributes",
@@ -93,7 +118,6 @@ __all__ = [
     "LDAPEntryCreated",
     "LDAPEntryDeleted",
     "LDAPEntryModified",
-    "LDAPEntrySpecification",
     "LDAPError",  # → Domain exceptions
     "LDAPFilter",
     "LDAPGroup",
@@ -104,5 +128,4 @@ __all__ = [
     "LDAPUri",
     "LDAPUser",
     "LDAPUserRepository",  # → Interfaces
-    "LDAPUserSpecification",
 ]

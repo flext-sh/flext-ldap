@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from unittest.mock import Mock, PropertyMock
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
-from flext_ldap.domain.entities import LDAPConnection, LDAPUser
+from flext_ldap.domain.entities import FlextLdapConnection, FlextLdapUser
 from flext_ldap.infrastructure.repositories import (
-    LDAPConnectionRepositoryImpl,
-    LDAPUserRepositoryImpl,
+    FlextLdapConnectionRepositoryImpl,
+    FlextLdapUserRepositoryImpl,
 )
 
 
@@ -21,32 +21,32 @@ def mock_ldap_client() -> Mock:
 
 
 @pytest.fixture
-def connection_repo(mock_ldap_client: Mock) -> LDAPConnectionRepositoryImpl:
+def connection_repo(mock_ldap_client: Mock) -> FlextLdapConnectionRepositoryImpl:
     """Create LDAP connection repository."""
-    return LDAPConnectionRepositoryImpl(mock_ldap_client)
+    return FlextLdapConnectionRepositoryImpl(mock_ldap_client)
 
 
 @pytest.fixture
-def user_repo(mock_ldap_client: Mock) -> LDAPUserRepositoryImpl:
+def user_repo(mock_ldap_client: Mock) -> FlextLdapUserRepositoryImpl:
     """Create LDAP user repository."""
-    return LDAPUserRepositoryImpl(mock_ldap_client)
+    return FlextLdapUserRepositoryImpl(mock_ldap_client)
 
 
 @pytest.fixture
-def sample_connection() -> LDAPConnection:
+def sample_connection() -> FlextLdapConnection:
     """Create sample LDAP connection."""
-    return LDAPConnection(
-        id=uuid4(),
+    return FlextLdapConnection(
+        id=str(uuid4()),
         server_url="ldap://test.com",
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
     )
 
 
 @pytest.fixture
-def sample_user() -> LDAPUser:
+def sample_user() -> FlextLdapUser:
     """Create sample LDAP user."""
-    return LDAPUser(
-        id=uuid4(),
+    return FlextLdapUser(
+        id=str(uuid4()),
         dn="cn=john,ou=people,dc=test,dc=com",
         uid="john",
         cn="John Doe",
@@ -54,20 +54,20 @@ def sample_user() -> LDAPUser:
     )
 
 
-class TestLDAPConnectionRepositoryImpl:
+class TestFlextLdapConnectionRepositoryImpl:
     """Test LDAP connection repository implementation."""
 
     def test_init(self, mock_ldap_client: Mock) -> None:
         """Test repository initialization."""
-        repo = LDAPConnectionRepositoryImpl(mock_ldap_client)
+        repo = FlextLdapConnectionRepositoryImpl(mock_ldap_client)
         assert repo.ldap_client == mock_ldap_client
         assert repo._connections == {}
 
     @pytest.mark.asyncio
     async def test_save_connection_success(
         self,
-        connection_repo: LDAPConnectionRepositoryImpl,
-        sample_connection: LDAPConnection,
+        connection_repo: FlextLdapConnectionRepositoryImpl,
+        sample_connection: FlextLdapConnection,
     ) -> None:
         """Test saving connection successfully."""
         result = await connection_repo.save(sample_connection)
@@ -80,7 +80,7 @@ class TestLDAPConnectionRepositoryImpl:
     @pytest.mark.asyncio
     async def test_save_connection_error(
         self,
-        connection_repo: LDAPConnectionRepositoryImpl,
+        connection_repo: FlextLdapConnectionRepositoryImpl,
     ) -> None:
         """Test saving connection with error."""
         bad_connection = Mock()
@@ -94,14 +94,14 @@ class TestLDAPConnectionRepositoryImpl:
     @pytest.mark.asyncio
     async def test_find_by_id_exists(
         self,
-        connection_repo: LDAPConnectionRepositoryImpl,
-        sample_connection: LDAPConnection,
+        connection_repo: FlextLdapConnectionRepositoryImpl,
+        sample_connection: FlextLdapConnection,
     ) -> None:
         """Test finding connection by ID when it exists."""
         # First save the connection
         await connection_repo.save(sample_connection)
 
-        result = await connection_repo.find_by_id(sample_connection.id)
+        result = await connection_repo.find_by_id(UUID(sample_connection.id))
 
         assert result.success
         assert result.data == sample_connection
@@ -109,7 +109,7 @@ class TestLDAPConnectionRepositoryImpl:
     @pytest.mark.asyncio
     async def test_find_by_id_not_exists(
         self,
-        connection_repo: LDAPConnectionRepositoryImpl,
+        connection_repo: FlextLdapConnectionRepositoryImpl,
     ) -> None:
         """Test finding connection by ID when it doesn't exist."""
         result = await connection_repo.find_by_id(uuid4())
@@ -120,7 +120,7 @@ class TestLDAPConnectionRepositoryImpl:
     @pytest.mark.asyncio
     async def test_find_by_id_error(
         self,
-        connection_repo: LDAPConnectionRepositoryImpl,
+        connection_repo: FlextLdapConnectionRepositoryImpl,
     ) -> None:
         """Test finding connection by ID with error."""
         # Mock the _connections dict to raise an error
@@ -133,7 +133,7 @@ class TestLDAPConnectionRepositoryImpl:
     @pytest.mark.asyncio
     async def test_find_all_empty(
         self,
-        connection_repo: LDAPConnectionRepositoryImpl,
+        connection_repo: FlextLdapConnectionRepositoryImpl,
     ) -> None:
         """Test finding all connections when repository is empty."""
         result = await connection_repo.find_all()
@@ -144,8 +144,8 @@ class TestLDAPConnectionRepositoryImpl:
     @pytest.mark.asyncio
     async def test_find_all_with_connections(
         self,
-        connection_repo: LDAPConnectionRepositoryImpl,
-        sample_connection: LDAPConnection,
+        connection_repo: FlextLdapConnectionRepositoryImpl,
+        sample_connection: FlextLdapConnection,
     ) -> None:
         """Test finding all connections when repository has connections."""
         # First save a connection
@@ -161,7 +161,7 @@ class TestLDAPConnectionRepositoryImpl:
     @pytest.mark.asyncio
     async def test_find_all_error(
         self,
-        connection_repo: LDAPConnectionRepositoryImpl,
+        connection_repo: FlextLdapConnectionRepositoryImpl,
     ) -> None:
         """Test finding all connections with error."""
         # Mock the _connections dict to raise an error
@@ -174,8 +174,8 @@ class TestLDAPConnectionRepositoryImpl:
     @pytest.mark.asyncio
     async def test_delete_connection_exists(
         self,
-        connection_repo: LDAPConnectionRepositoryImpl,
-        sample_connection: LDAPConnection,
+        connection_repo: FlextLdapConnectionRepositoryImpl,
+        sample_connection: FlextLdapConnection,
     ) -> None:
         """Test deleting connection when it exists."""
         # First save the connection
@@ -190,8 +190,8 @@ class TestLDAPConnectionRepositoryImpl:
     @pytest.mark.asyncio
     async def test_delete_connection_not_exists(
         self,
-        connection_repo: LDAPConnectionRepositoryImpl,
-        sample_connection: LDAPConnection,
+        connection_repo: FlextLdapConnectionRepositoryImpl,
+        sample_connection: FlextLdapConnection,
     ) -> None:
         """Test deleting connection when it doesn't exist."""
         result = await connection_repo.delete(sample_connection)
@@ -203,19 +203,19 @@ class TestLDAPConnectionRepositoryImpl:
     # The main functionality is covered by the success cases above
 
 
-class TestLDAPUserRepositoryImpl:
+class TestFlextLdapUserRepositoryImpl:
     """Test LDAP user repository implementation."""
 
     def test_init(self, mock_ldap_client: Mock) -> None:
         """Test repository initialization."""
-        repo = LDAPUserRepositoryImpl(mock_ldap_client)
+        repo = FlextLdapUserRepositoryImpl(mock_ldap_client)
         assert repo.ldap_client == mock_ldap_client
 
     @pytest.mark.asyncio
     async def test_save_user_success(
         self,
-        user_repo: LDAPUserRepositoryImpl,
-        sample_user: LDAPUser,
+        user_repo: FlextLdapUserRepositoryImpl,
+        sample_user: FlextLdapUser,
     ) -> None:
         """Test saving user successfully (foundation implementation)."""
         result = await user_repo.save(sample_user)
@@ -224,7 +224,10 @@ class TestLDAPUserRepositoryImpl:
         assert result.data == sample_user
 
     @pytest.mark.asyncio
-    async def test_save_user_error(self, user_repo: LDAPUserRepositoryImpl) -> None:
+    async def test_save_user_error(
+        self,
+        user_repo: FlextLdapUserRepositoryImpl,
+    ) -> None:
         """Test saving user with error."""
         # Create a user that will cause an error
         bad_user = Mock()
@@ -240,7 +243,7 @@ class TestLDAPUserRepositoryImpl:
     @pytest.mark.asyncio
     async def test_find_by_id_foundation(
         self,
-        user_repo: LDAPUserRepositoryImpl,
+        user_repo: FlextLdapUserRepositoryImpl,
     ) -> None:
         """Test finding user by ID (foundation implementation)."""
         user_id = uuid4()
@@ -253,7 +256,7 @@ class TestLDAPUserRepositoryImpl:
     @pytest.mark.asyncio
     async def test_find_by_dn_foundation(
         self,
-        user_repo: LDAPUserRepositoryImpl,
+        user_repo: FlextLdapUserRepositoryImpl,
     ) -> None:
         """Test finding user by DN (foundation implementation)."""
         dn = "cn=john,ou=people,dc=test,dc=com"
@@ -264,7 +267,10 @@ class TestLDAPUserRepositoryImpl:
         assert result.data is None  # Foundation implementation returns None
 
     @pytest.mark.asyncio
-    async def test_find_all_foundation(self, user_repo: LDAPUserRepositoryImpl) -> None:
+    async def test_find_all_foundation(
+        self,
+        user_repo: FlextLdapUserRepositoryImpl,
+    ) -> None:
         """Test finding all users (foundation implementation)."""
         result = await user_repo.find_all()
 
@@ -274,8 +280,8 @@ class TestLDAPUserRepositoryImpl:
     @pytest.mark.asyncio
     async def test_delete_user_foundation(
         self,
-        user_repo: LDAPUserRepositoryImpl,
-        sample_user: LDAPUser,
+        user_repo: FlextLdapUserRepositoryImpl,
+        sample_user: FlextLdapUser,
     ) -> None:
         """Test deleting user (foundation implementation)."""
         result = await user_repo.delete(sample_user)

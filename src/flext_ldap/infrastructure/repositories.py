@@ -10,69 +10,73 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from flext_core.domain.shared_types import ServiceResult
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
+from flext_core import FlextResult
 
-from flext_ldap.domain.exceptions import LDAPUserError
-from flext_ldap.domain.repositories import LDAPConnectionRepository, LDAPUserRepository
+from flext_ldap.domain.exceptions import FlextLdapUserError
+from flext_ldap.domain.repositories import (
+    FlextLdapConnectionRepository,
+    FlextLdapUserRepository,
+)
 
 if TYPE_CHECKING:
     from uuid import UUID
 
-    from flext_ldap.domain.entities import LDAPConnection, LDAPUser
-    from flext_ldap.domain.value_objects import DistinguishedName
-    from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
+    from flext_ldap.domain.entities import FlextLdapConnection, FlextLdapUser
+    from flext_ldap.domain.value_objects import FlextLdapDistinguishedName
+    from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
 
 
-class LDAPConnectionRepositoryImpl(LDAPConnectionRepository):
+class FlextLdapConnectionRepositoryImpl(FlextLdapConnectionRepository):
     """Real LDAP connection repository implementation."""
 
-    def __init__(self, ldap_client: LDAPInfrastructureClient) -> None:
+    def __init__(self, ldap_client: FlextLdapInfrastructureClient) -> None:
         """Initialize repository with LDAP client."""
         self.ldap_client = ldap_client
-        self._connections: dict[UUID, LDAPConnection] = {}
+        self._connections: dict[str, FlextLdapConnection] = {}
 
-    async def save(self, connection: LDAPConnection) -> ServiceResult[Any]:
+    async def save(self, connection: FlextLdapConnection) -> FlextResult[Any]:
         """Save LDAP connection."""
         try:
             self._connections[connection.id] = connection
-            return ServiceResult.ok(connection)
+            return FlextResult.ok(connection)
         except Exception as e:
             msg = f"Failed to save connection: {e}"
-            raise LDAPUserError(msg) from e
+            raise FlextLdapUserError(msg) from e
 
     async def find_by_id(
         self,
         connection_id: UUID,
-    ) -> ServiceResult[Any]:
+    ) -> FlextResult[Any]:
         """Find connection by ID."""
         try:
-            connection = self._connections.get(connection_id)
-            return ServiceResult.ok(connection)
+            connection = self._connections.get(str(connection_id))
+            return FlextResult.ok(connection)
         except Exception as e:
             msg = f"Failed to find connection: {e}"
             raise ValueError(msg) from e
 
-    async def find_all(self) -> ServiceResult[Any]:
+    async def find_all(self) -> FlextResult[Any]:
         """Find all connections."""
         try:
             connections = list(self._connections.values())
-            return ServiceResult.ok(connections)
+            return FlextResult.ok(connections)
         except Exception as e:
             msg = f"Failed to find connections: {e}"
-            raise LDAPUserError(msg) from e
+            raise FlextLdapUserError(msg) from e
 
-    async def delete(self, connection: LDAPConnection) -> ServiceResult[Any]:
+    async def delete(self, connection: FlextLdapConnection) -> FlextResult[Any]:
         """Delete connection."""
         try:
             if connection.id in self._connections:
                 del self._connections[connection.id]
-                return ServiceResult.ok(True)
-            return ServiceResult.ok(False)
+                return FlextResult.ok(True)
+            return FlextResult.ok(False)
         except Exception as e:
             msg = f"Failed to delete connection: {e}"
-            raise LDAPUserError(msg) from e
+            raise FlextLdapUserError(msg) from e
 
-    async def get_by_server(self, server_url: str) -> list[LDAPConnection]:
+    async def get_by_server(self, server_url: str) -> list[FlextLdapConnection]:
         """Get connections by server URL."""
         try:
             return [
@@ -84,7 +88,7 @@ class LDAPConnectionRepositoryImpl(LDAPConnectionRepository):
             msg = f"Failed to get connections by server: {e}"
             raise ValueError(msg) from e
 
-    async def get_active(self) -> list[LDAPConnection]:
+    async def get_active(self) -> list[FlextLdapConnection]:
         """Get all active connections."""
         try:
             # For now, all stored connections are considered active
@@ -103,31 +107,32 @@ class LDAPConnectionRepositoryImpl(LDAPConnectionRepository):
             raise ValueError(msg) from e
 
 
-class LDAPUserRepositoryImpl(LDAPUserRepository):
+class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
     """Real LDAP user repository implementation."""
 
-    def __init__(self, ldap_client: LDAPInfrastructureClient) -> None:
+    def __init__(self, ldap_client: FlextLdapInfrastructureClient) -> None:
         """Initialize repository with LDAP client."""
         self.ldap_client = ldap_client
 
-    async def save(self, user: LDAPUser) -> ServiceResult[Any]:
+    async def save(self, user: FlextLdapUser) -> FlextResult[Any]:
         """Save LDAP user to directory."""
         try:
-            # For now, store in memory - real implementation would use ldap_client.add_entry
+            # For now, store in memory - real implementation would use
+            # ldap_client.add_entry
             # This is a foundation for LDAP integration
-            return ServiceResult.ok(user)
+            return FlextResult.ok(user)
         except Exception as e:
             msg = f"Failed to save user: {e}"
-            raise LDAPUserError(msg) from e
+            raise FlextLdapUserError(msg) from e
 
     async def find_by_id(
         self,
         user_id: UUID,
-    ) -> ServiceResult[Any]:
+    ) -> FlextResult[Any]:
         """Find user by ID."""
         try:
             # Real implementation would search LDAP directory
-            return ServiceResult.ok(None)
+            return FlextResult.ok(None)
         except Exception as e:
             msg = f"Failed to find user: {e}"
             raise ValueError(msg) from e
@@ -135,34 +140,34 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
     async def find_by_dn(
         self,
         dn: str,
-    ) -> ServiceResult[Any]:
+    ) -> FlextResult[Any]:
         """Find user by distinguished name."""
         try:
             # Real implementation would use ldap_client.search
-            return ServiceResult.ok(None)
+            return FlextResult.ok(None)
         except Exception as e:
             msg = f"Failed to find user by DN: {e}"
             raise ValueError(msg) from e
 
-    async def find_all(self) -> ServiceResult[Any]:
+    async def find_all(self) -> FlextResult[Any]:
         """Find all users."""
         try:
             # Real implementation would search LDAP directory
-            return ServiceResult.ok([])
+            return FlextResult.ok([])
         except Exception as e:
             msg = f"Failed to find users: {e}"
-            raise LDAPUserError(msg) from e
+            raise FlextLdapUserError(msg) from e
 
-    async def delete(self, user: LDAPUser) -> ServiceResult[Any]:
+    async def delete(self, user: FlextLdapUser) -> FlextResult[Any]:
         """Delete user from directory."""
         try:
             # Real implementation would use ldap_client.delete_entry
-            return ServiceResult.ok(True)
+            return FlextResult.ok(True)
         except Exception as e:
             msg = f"Failed to delete user: {e}"
-            raise LDAPUserError(msg) from e
+            raise FlextLdapUserError(msg) from e
 
-    async def get_by_dn(self, dn: DistinguishedName) -> LDAPUser | None:
+    async def get_by_dn(self, dn: FlextLdapDistinguishedName) -> FlextLdapUser | None:
         """Get user by distinguished name."""
         try:
             # Real implementation would search LDAP directory by DN
@@ -171,7 +176,7 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             msg = f"Failed to get user by DN: {e}"
             raise ValueError(msg) from e
 
-    async def get_by_uid(self, uid: str) -> LDAPUser | None:
+    async def get_by_uid(self, uid: str) -> FlextLdapUser | None:
         """Get user by UID."""
         try:
             # Real implementation would search LDAP directory by UID
@@ -182,10 +187,10 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
 
     async def search(
         self,
-        base_dn: DistinguishedName,
+        base_dn: FlextLdapDistinguishedName,
         filter_string: str,
         attributes: list[str] | None = None,
-    ) -> list[LDAPUser]:
+    ) -> list[FlextLdapUser]:
         """Search for users with filter."""
         try:
             # Real implementation would use ldap_client.search
@@ -194,7 +199,7 @@ class LDAPUserRepositoryImpl(LDAPUserRepository):
             msg = f"Failed to search users: {e}"
             raise ValueError(msg) from e
 
-    async def exists(self, dn: DistinguishedName) -> bool:
+    async def exists(self, dn: FlextLdapDistinguishedName) -> bool:
         """Check if user exists."""
         try:
             # Real implementation would check LDAP directory

@@ -8,8 +8,12 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldap.application.ldap_service import LDAPService
-from flext_ldap.domain.value_objects import CreateUserRequest
+from flext_ldap.application.ldap_service import FlextLdapService
+from flext_ldap.domain.value_objects import FlextLdapCreateUserRequest
+
+# Backward compatibility aliases
+LDAPService = FlextLdapService
+CreateUserRequest = FlextLdapCreateUserRequest
 
 
 class TestLDAPService:

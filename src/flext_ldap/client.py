@@ -16,22 +16,28 @@ if TYPE_CHECKING:
 # Use standard Python logging
 import logging
 
-# Use simplified flext-core imports (following new standards)
-from flext_core import (
-    ConnectionProtocol,
-    DomainError as FlextConnectionError,
-    ServiceResult,
-)
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
+from flext_core import FlextResult
 from ldap3.core.exceptions import LDAPException
 
-from flext_ldap.config import FlextLDAPSettings, LDAPConnectionConfig
-from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
+from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
+from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
 from flext_ldap.models import LDAPEntry as LDAPEntryModel, LDAPScope
+
+
+# Define connection error locally to avoid circular import
+class FlextConnectionError(Exception):
+    """Connection error - local exception class."""
+
+
+# Backward compatibility
+FlextLDAPSettings = FlextLdapSettings
+LDAPConnectionConfig = FlextLdapConnectionConfig
 
 logger = logging.getLogger(__name__)
 
 
-class LDAPClient(ConnectionProtocol):
+class FlextLdapClient:
     """Enterprise LDAP client using FLEXT architecture internally.
 
     This is an adapter that provides backward compatibility with the original
@@ -60,7 +66,7 @@ class LDAPClient(ConnectionProtocol):
             self.settings = None
 
         # Use new FLEXT infrastructure internally
-        self._infrastructure_client = LDAPInfrastructureClient()
+        self._infrastructure_client = FlextLdapInfrastructureClient()
         self._connection_id: str | None = None
         self._connected = False
 
@@ -134,10 +140,10 @@ class LDAPClient(ConnectionProtocol):
         search_filter: str = "(objectClass=*)",
         scope: LDAPScope = LDAPScope.SUBTREE,
         attributes: list[str] | None = None,
-    ) -> ServiceResult[Any]:
+    ) -> FlextResult[Any]:
         """Search LDAP directory using new infrastructure."""
         if not self._connected or not self._connection_id:
-            return ServiceResult.fail("Not connected to LDAP server")
+            return FlextResult.fail("Not connected to LDAP server")
 
         try:
             # Use new infrastructure for search
@@ -158,20 +164,20 @@ class LDAPClient(ConnectionProtocol):
                         attributes=entry_data.get("attributes", {}),
                     )
                     entries.append(entry_model)
-                return ServiceResult.ok(entries)
-            return ServiceResult.fail(result.error or "Search failed")
+                return FlextResult.ok(entries)
+            return FlextResult.fail(result.error or "Search failed")
 
         except (ValueError, KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Search error: {e}")
+            return FlextResult.fail(f"Search error: {e}")
 
     async def modify(
         self,
         dn: str,
         changes: dict[str, Any],
-    ) -> ServiceResult[Any]:
+    ) -> FlextResult[Any]:
         """Modify LDAP entry using new infrastructure."""
         if not self._connected or not self._connection_id:
-            return ServiceResult.fail("Not connected to LDAP server")
+            return FlextResult.fail("Not connected to LDAP server")
 
         try:
             # Use new infrastructure for modify
@@ -183,10 +189,10 @@ class LDAPClient(ConnectionProtocol):
 
             if result.success:
                 return result
-            return ServiceResult.fail(result.error or "Modify failed")
+            return FlextResult.fail(result.error or "Modify failed")
 
         except (ValueError, KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Modify error: {e}")
+            return FlextResult.fail(f"Modify error: {e}")
 
     def is_connected(self) -> bool:
         """Check if client is connected to LDAP server."""
@@ -222,4 +228,4 @@ class LDAPClient(ConnectionProtocol):
 
 
 # Maintain backward compatibility
-__all__ = ["LDAPClient"]
+__all__ = ["FlextLdapClient"]

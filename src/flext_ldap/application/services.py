@@ -5,40 +5,39 @@ SPDX-License-Identifier: MIT
 
 REFACTORED:
     Using flext-core service patterns - NO duplication.
-    Clean architecture with dependency injection and ServiceResult pattern.
+    Clean architecture with dependency injection and FlextResult pattern.
 """
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
+from uuid import UUID
 
-from flext_core.config import injectable
-from flext_core.domain.types import ServiceResult
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
+from flext_core import FlextResult
 
 from flext_ldap.application.base import (
-    ConnectionBaseService,
-    GroupBaseService,
-    OperationBaseService,
-    UserBaseService,
+    FlextLdapConnectionBaseService,
+    FlextLdapGroupBaseService,
+    FlextLdapOperationBaseService,
+    FlextLdapUserBaseService,
 )
 from flext_ldap.domain.entities import (
-    LDAPConnection,
-    LDAPGroup,
-    LDAPOperation,
-    LDAPUser,
+    FlextLdapConnection,
+    FlextLdapGroup,
+    FlextLdapOperation,
+    FlextLdapUser,
 )
 
+# Removed port imports to avoid signature conflicts
+
 if TYPE_CHECKING:
-    from uuid import UUID
-
-    from flext_ldap.domain.value_objects import CreateUserRequest
-    from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
+    from flext_ldap.domain.value_objects import FlextLdapCreateUserRequest
+    from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
 
 
-@injectable()
-class LDAPUserService(UserBaseService):
-    """Service for managing LDAP users - ELIMINATES MASSIVE DUPLICATION.
+class FlextLdapUserApplicationService(FlextLdapUserBaseService):
+    """Application service for managing LDAP users - ELIMINATES MASSIVE DUPLICATION.
 
     Inherits from UserBaseService which provides:
     - Dictionary storage pattern (eliminates _users dict duplication)
@@ -47,27 +46,32 @@ class LDAPUserService(UserBaseService):
     - LDAP client integration (eliminates client setup duplication)
     - Connection awareness (eliminates connection management duplication)
     - CRUD operations (eliminates get/delete duplication)
+
+    Note: This is the concrete implementation of the FlextLdapUserService port.
     """
 
-    def __init__(self, ldap_client: LDAPInfrastructureClient | None = None) -> None:
+    def __init__(
+        self,
+        ldap_client: FlextLdapInfrastructureClient | None = None,
+    ) -> None:
         """Initialize the LDAP user service with base capabilities."""
         super().__init__(ldap_client)
 
     async def create_user(
         self,
-        request: CreateUserRequest,
-    ) -> ServiceResult[LDAPUser]:
+        request: FlextLdapCreateUserRequest,
+    ) -> FlextResult[FlextLdapUser]:
         """Create a new LDAP user.
 
         Args:
             request: User creation request with validation
 
         Returns:
-            ServiceResult containing the created LDAPUser or error
+            FlextResult containing the created FlextLdapUser or error
 
         """
         try:
-            user = LDAPUser(
+            user = FlextLdapUser(
                 dn=request.dn,
                 uid=request.uid,
                 cn=request.cn,
@@ -81,45 +85,48 @@ class LDAPUserService(UserBaseService):
             )
 
             self._store_entity(user)
-            return ServiceResult.ok(user)
+            return FlextResult.ok(user)
         except (ValueError, TypeError) as e:
-            return ServiceResult.fail(f"Failed to create user: {e}")
+            return FlextResult.fail(f"Failed to create user: {e}")
         except Exception as e:
             msg = f"Unexpected error creating user: {e}"
-            return ServiceResult.fail(msg)
+            return FlextResult.fail(msg)
 
-    async def get_user(self, user_id: UUID) -> ServiceResult[LDAPUser | None]:
+    async def get_user(self, user_id: UUID) -> FlextResult[FlextLdapUser | None]:
         """Get an LDAP user by ID - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             user_id: The unique identifier of the user
 
         Returns:
-            ServiceResult containing the LDAPUser if found, None if not found, or error
+            FlextResult containing the FlextLdapUser if found, None if not found,
+            or error
 
         """
         return await self.get_entity(user_id)
 
-    async def find_user_by_dn(self, dn: str) -> ServiceResult[LDAPUser | None]:
+    async def find_user_by_dn(self, dn: str) -> FlextResult[FlextLdapUser | None]:
         """Find an LDAP user by distinguished name - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             dn: Distinguished name to search for
 
         Returns:
-            ServiceResult containing the LDAPUser if found, None if not found, or error
+            FlextResult containing the FlextLdapUser if found, None if not found,
+            or error
 
         """
         return await self.find_entity_by_dn(dn)
 
-    async def find_user_by_uid(self, uid: str) -> ServiceResult[LDAPUser | None]:
+    async def find_user_by_uid(self, uid: str) -> FlextResult[FlextLdapUser | None]:
         """Find an LDAP user by user identifier - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             uid: User identifier to search for
 
         Returns:
-            ServiceResult containing the LDAPUser if found, None if not found, or error
+            FlextResult containing the FlextLdapUser if found, None if not found,
+            or error
 
         """
         return await self.find_entity_by_uid(uid)
@@ -128,7 +135,7 @@ class LDAPUserService(UserBaseService):
         self,
         user_id: UUID,
         updates: dict[str, Any],
-    ) -> ServiceResult[LDAPUser]:
+    ) -> FlextResult[FlextLdapUser]:
         """Update an existing LDAP user.
 
         Args:
@@ -136,72 +143,90 @@ class LDAPUserService(UserBaseService):
             updates: Dictionary of attributes to update
 
         Returns:
-            ServiceResult containing the updated LDAPUser or error
+            FlextResult containing the updated FlextLdapUser or error
 
         """
         try:
-            user = self._entities.get(user_id)
+            # Convert UUID to string for entity lookup
+            key = str(user_id) if isinstance(user_id, UUID) else user_id
+            user = self._entities.get(key)
             if not user:
-                return ServiceResult.fail("User not found")
+                return FlextResult.fail("User not found")
 
-            for key, value in updates.items():
-                if hasattr(user, key):
-                    setattr(user, key, value)
+            # Create a new immutable entity with updates
+            entity_data = user.model_dump()
+            entity_data.update(updates)
+            entity_data.update(
+                {
+                    "version": user.version + 1,
+                },
+            )
 
-            # Update timestamp using pydantic model approach
-            user.updated_at = datetime.now(UTC)
-            return ServiceResult.ok(user)
+            updated_user = FlextLdapUser(**entity_data)
+            # Store the updated entity back
+            self._entities[key] = updated_user
+            return FlextResult.ok(updated_user)
         except (KeyError, AttributeError, ValueError) as e:
-            return ServiceResult.fail(f"Failed to update user: {e}")
+            return FlextResult.fail(f"Failed to update user: {e}")
 
-    async def lock_user(self, user_id: UUID) -> ServiceResult[LDAPUser]:
+    async def lock_user(self, user_id: UUID) -> FlextResult[FlextLdapUser]:
         """Lock an LDAP user account.
 
         Args:
             user_id: The unique identifier of the user to lock
 
         Returns:
-            ServiceResult containing the locked LDAPUser or error
+            FlextResult containing the locked FlextLdapUser or error
 
         """
         try:
-            user = self._entities.get(user_id)
+            # Convert UUID to string for entity lookup
+            key = str(user_id) if isinstance(user_id, UUID) else user_id
+            user = self._entities.get(key)
             if not user:
-                return ServiceResult.fail("User not found")
+                return FlextResult.fail("User not found")
 
-            user.lock_account()
-            return ServiceResult.ok(user)
+            # Entity lock_account returns a new immutable entity
+            locked_user = user.lock_account()
+            # Store the updated entity back
+            self._entities[key] = locked_user
+            return FlextResult.ok(locked_user)
         except (KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Failed to lock user: {e}")
+            return FlextResult.fail(f"Failed to lock user: {e}")
 
-    async def unlock_user(self, user_id: UUID) -> ServiceResult[LDAPUser]:
+    async def unlock_user(self, user_id: UUID) -> FlextResult[FlextLdapUser]:
         """Unlock an LDAP user account.
 
         Args:
             user_id: The unique identifier of the user to unlock
 
         Returns:
-            ServiceResult containing the unlocked LDAPUser or error
+            FlextResult containing the unlocked FlextLdapUser or error
 
         """
         try:
-            user = self._entities.get(user_id)
+            # Convert UUID to string for entity lookup
+            key = str(user_id) if isinstance(user_id, UUID) else user_id
+            user = self._entities.get(key)
             if not user:
-                return ServiceResult.fail("User not found")
+                return FlextResult.fail("User not found")
 
-            user.unlock_account()
-            return ServiceResult.ok(user)
+            # Entity unlock_account returns a new immutable entity
+            unlocked_user = user.unlock_account()
+            # Store the updated entity back
+            self._entities[key] = unlocked_user
+            return FlextResult.ok(unlocked_user)
         except (KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Failed to unlock user: {e}")
+            return FlextResult.fail(f"Failed to unlock user: {e}")
 
-    async def delete_user(self, user_id: UUID) -> ServiceResult[bool]:
+    async def delete_user(self, user_id: UUID) -> FlextResult[bool]:
         """Delete an LDAP user - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             user_id: The unique identifier of the user to delete
 
         Returns:
-            ServiceResult containing True if deleted successfully, or error
+            FlextResult containing True if deleted successfully, or error
 
         """
         return await self.delete_entity(user_id)
@@ -210,7 +235,7 @@ class LDAPUserService(UserBaseService):
         self,
         ou: str | None = None,
         limit: int = 100,
-    ) -> ServiceResult[list[LDAPUser]]:
+    ) -> FlextResult[list[FlextLdapUser]]:
         """List LDAP users with optional filtering - USES BASE CLASS IMPLEMENTATION.
 
         Args:
@@ -218,7 +243,7 @@ class LDAPUserService(UserBaseService):
             limit: Maximum number of users to return (default: 100)
 
         Returns:
-            ServiceResult containing list of LDAPUsers or error
+            FlextResult containing list of FlextLdapUsers or error
 
         """
         return await self.list_entities_by_ou(ou, limit)
@@ -228,8 +253,7 @@ class LDAPUserService(UserBaseService):
     # clear_connection is inherited from ConnectionAwareService via UserBaseService
 
 
-@injectable()
-class LDAPGroupService(GroupBaseService):
+class FlextLdapGroupService(FlextLdapGroupBaseService):
     """Service for managing LDAP groups - ELIMINATES MASSIVE DUPLICATION.
 
     Inherits from GroupBaseService which provides:
@@ -239,9 +263,12 @@ class LDAPGroupService(GroupBaseService):
     - List operations with OU filtering (eliminates list duplication)
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        ldap_client: FlextLdapInfrastructureClient | None = None,
+    ) -> None:
         """Initialize the LDAP group service with base capabilities."""
-        super().__init__()
+        super().__init__(ldap_client)
 
     async def create_group(
         self,
@@ -251,7 +278,7 @@ class LDAPGroupService(GroupBaseService):
         members: list[str] | None = None,
         owners: list[str] | None = None,
         object_classes: list[str] | None = None,
-    ) -> ServiceResult[LDAPGroup]:
+    ) -> FlextResult[FlextLdapGroup]:
         """Create a new LDAP group.
 
         Args:
@@ -263,11 +290,11 @@ class LDAPGroupService(GroupBaseService):
             object_classes: LDAP object classes (optional, defaults to ["groupOfNames"])
 
         Returns:
-            ServiceResult containing the created LDAPGroup or error
+            FlextResult containing the created FlextLdapGroup or error
 
         """
         try:
-            group = LDAPGroup(
+            group = FlextLdapGroup(
                 dn=dn,
                 cn=cn,
                 ou=ou,
@@ -277,30 +304,32 @@ class LDAPGroupService(GroupBaseService):
             )
 
             self._store_entity(group)
-            return ServiceResult.ok(group)
+            return FlextResult.ok(group)
         except (ValueError, TypeError) as e:
-            return ServiceResult.fail(f"Failed to create group: {e}")
+            return FlextResult.fail(f"Failed to create group: {e}")
 
-    async def get_group(self, group_id: UUID) -> ServiceResult[LDAPGroup | None]:
+    async def get_group(self, group_id: UUID) -> FlextResult[FlextLdapGroup | None]:
         """Get an LDAP group by ID - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             group_id: The unique identifier of the group
 
         Returns:
-            ServiceResult containing the LDAPGroup if found, None if not found, or error
+            FlextResult containing the FlextLdapGroup if found, None if not found,
+            or error
 
         """
         return await self.get_entity(group_id)
 
-    async def find_group_by_dn(self, dn: str) -> ServiceResult[LDAPGroup | None]:
+    async def find_group_by_dn(self, dn: str) -> FlextResult[FlextLdapGroup | None]:
         """Find an LDAP group by distinguished name - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             dn: Distinguished name to search for
 
         Returns:
-            ServiceResult containing the LDAPGroup if found, None if not found, or error
+            FlextResult containing the FlextLdapGroup if found, None if not found,
+            or error
 
         """
         return await self.find_entity_by_dn(dn)
@@ -309,7 +338,7 @@ class LDAPGroupService(GroupBaseService):
         self,
         group_id: UUID,
         member_dn: str,
-    ) -> ServiceResult[LDAPGroup]:
+    ) -> FlextResult[FlextLdapGroup]:
         """Add a member to an LDAP group.
 
         Args:
@@ -317,24 +346,29 @@ class LDAPGroupService(GroupBaseService):
             member_dn: Distinguished name of the member to add
 
         Returns:
-            ServiceResult containing the updated LDAPGroup or error
+            FlextResult containing the updated FlextLdapGroup or error
 
         """
         try:
-            group = self._entities.get(group_id)
+            # Convert UUID to string for entity lookup
+            key = str(group_id) if isinstance(group_id, UUID) else group_id
+            group = self._entities.get(key)
             if not group:
-                return ServiceResult.fail("Group not found")
+                return FlextResult.fail("Group not found")
 
-            group.add_member(member_dn)
-            return ServiceResult.ok(group)
+            # Entity add_member returns a new immutable entity
+            updated_group = group.add_member(member_dn)
+            # Store the updated entity back
+            self._entities[key] = updated_group
+            return FlextResult.ok(updated_group)
         except (KeyError, AttributeError, ValueError) as e:
-            return ServiceResult.fail(f"Failed to add member: {e}")
+            return FlextResult.fail(f"Failed to add member: {e}")
 
     async def remove_member(
         self,
         group_id: UUID,
         member_dn: str,
-    ) -> ServiceResult[LDAPGroup]:
+    ) -> FlextResult[FlextLdapGroup]:
         """Remove a member from an LDAP group.
 
         Args:
@@ -342,24 +376,29 @@ class LDAPGroupService(GroupBaseService):
             member_dn: Distinguished name of the member to remove
 
         Returns:
-            ServiceResult containing the updated LDAPGroup or error
+            FlextResult containing the updated FlextLdapGroup or error
 
         """
         try:
-            group = self._entities.get(group_id)
+            # Convert UUID to string for entity lookup
+            key = str(group_id) if isinstance(group_id, UUID) else group_id
+            group = self._entities.get(key)
             if not group:
-                return ServiceResult.fail("Group not found")
+                return FlextResult.fail("Group not found")
 
-            group.remove_member(member_dn)
-            return ServiceResult.ok(group)
+            # Entity remove_member returns a new immutable entity
+            updated_group = group.remove_member(member_dn)
+            # Store the updated entity back
+            self._entities[key] = updated_group
+            return FlextResult.ok(updated_group)
         except (KeyError, AttributeError, ValueError) as e:
-            return ServiceResult.fail(f"Failed to remove member: {e}")
+            return FlextResult.fail(f"Failed to remove member: {e}")
 
     async def list_groups(
         self,
         ou: str | None = None,
         limit: int = 100,
-    ) -> ServiceResult[list[LDAPGroup]]:
+    ) -> FlextResult[list[FlextLdapGroup]]:
         """List LDAP groups with optional filtering - USES BASE CLASS IMPLEMENTATION.
 
         Args:
@@ -367,35 +406,39 @@ class LDAPGroupService(GroupBaseService):
             limit: Maximum number of groups to return (default: 100)
 
         Returns:
-            ServiceResult containing list of LDAPGroups or error
+            FlextResult containing list of FlextLdapGroups or error
 
         """
         return await self.list_entities_by_ou(ou, limit)
 
-    async def delete_group(self, group_id: UUID) -> ServiceResult[bool]:
+    async def delete_group(self, group_id: UUID) -> FlextResult[bool]:
         """Delete an LDAP group - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             group_id: The unique identifier of the group to delete
 
         Returns:
-            ServiceResult containing True if deleted successfully, or error
+            FlextResult containing True if deleted successfully, or error
 
         """
         return await self.delete_entity(group_id)
 
 
-@injectable()
-class LDAPConnectionService(ConnectionBaseService):
-    """Service for managing LDAP connections with real LDAP integration - ELIMINATES MASSIVE DUPLICATION.
+class FlextLdapConnectionApplicationService(FlextLdapConnectionBaseService):
+    """Application service for managing LDAP connections with real LDAP integration.
 
     Inherits from ConnectionBaseService which provides:
     - Dictionary storage pattern (eliminates _connections dict duplication)
     - LDAP client integration (eliminates client setup duplication)
     - CRUD operations (eliminates get duplication)
+
+    Note: This is the concrete implementation of the FlextLdapConnectionService port.
     """
 
-    def __init__(self, ldap_client: LDAPInfrastructureClient | None = None) -> None:
+    def __init__(
+        self,
+        ldap_client: FlextLdapInfrastructureClient | None = None,
+    ) -> None:
         """Initialize the LDAP connection service with base capabilities."""
         super().__init__(ldap_client)
 
@@ -406,7 +449,7 @@ class LDAPConnectionService(ConnectionBaseService):
         password: str | None = None,
         *,
         use_ssl: bool = False,
-    ) -> ServiceResult[LDAPConnection]:
+    ) -> FlextResult[FlextLdapConnection]:
         """Create and establish a real LDAP connection.
 
         Args:
@@ -416,12 +459,12 @@ class LDAPConnectionService(ConnectionBaseService):
             use_ssl: Use SSL/TLS connection
 
         Returns:
-            ServiceResult containing the created LDAPConnection or error
+            FlextResult containing the created FlextLdapConnection or error
 
         """
         try:
             # Create domain entity
-            connection = LDAPConnection(
+            connection = FlextLdapConnection(
                 server_url=server_uri,
                 bind_dn=bind_dn,
             )
@@ -436,7 +479,7 @@ class LDAPConnectionService(ConnectionBaseService):
 
             if not result.is_success:
                 error_msg = getattr(result, "error_message", "Unknown error")
-                return ServiceResult.fail(
+                return FlextResult.fail(
                     f"Failed to connect to LDAP: {error_msg}",
                 )
 
@@ -445,52 +488,56 @@ class LDAPConnectionService(ConnectionBaseService):
                 connection.bind(bind_dn)
 
             self._store_entity(connection)
-            return ServiceResult.ok(connection)
+            return FlextResult.ok(connection)
 
         except (ValueError, TypeError) as e:
-            return ServiceResult.fail(f"Failed to create connection: {e}")
+            return FlextResult.fail(f"Failed to create connection: {e}")
         except Exception as e:
             msg = f"Unexpected error creating connection: {e}"
-            return ServiceResult.fail(msg)
+            return FlextResult.fail(msg)
 
-    async def connect(self, connection_id: UUID) -> ServiceResult[LDAPConnection]:
+    async def connect(self, connection_id: UUID) -> FlextResult[FlextLdapConnection]:
         """Establish a connection to the LDAP server.
 
         Args:
             connection_id: The unique identifier of the connection
 
         Returns:
-            ServiceResult containing the connected LDAPConnection or error
+            FlextResult containing the connected FlextLdapConnection or error
 
         """
         try:
-            connection = self._entities.get(connection_id)
+            # Convert UUID to string for entity lookup
+            key = str(connection_id) if isinstance(connection_id, UUID) else connection_id
+            connection = self._entities.get(key)
             if not connection:
-                return ServiceResult.fail("Connection not found")
+                return FlextResult.fail("Connection not found")
 
             # Real LDAP connection already established in create_connection
             # Just mark as connected if not already
             if not connection.is_connected:
                 connection.connect()
 
-            return ServiceResult.ok(connection)
+            return FlextResult.ok(connection)
         except (KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Failed to connect: {e}")
+            return FlextResult.fail(f"Failed to connect: {e}")
 
-    async def disconnect(self, connection_id: UUID) -> ServiceResult[LDAPConnection]:
+    async def disconnect(self, connection_id: UUID) -> FlextResult[FlextLdapConnection]:
         """Disconnect from the LDAP server.
 
         Args:
             connection_id: The unique identifier of the connection
 
         Returns:
-            ServiceResult containing the disconnected LDAPConnection or error
+            FlextResult containing the disconnected FlextLdapConnection or error
 
         """
         try:
-            connection = self._entities.get(connection_id)
+            # Convert UUID to string for entity lookup
+            key = str(connection_id) if isinstance(connection_id, UUID) else connection_id
+            connection = self._entities.get(key)
             if not connection:
-                return ServiceResult.fail("Connection not found")
+                return FlextResult.fail("Connection not found")
 
             # Get the real LDAP connection ID
             ldap_connection_id = (
@@ -501,33 +548,35 @@ class LDAPConnectionService(ConnectionBaseService):
             result = await self._ldap_client.disconnect(ldap_connection_id)
             if not result.is_success:
                 error_msg = getattr(result, "error_message", "Unknown error")
-                return ServiceResult.fail(
+                return FlextResult.fail(
                     f"Failed to disconnect from LDAP: {error_msg}",
                 )
 
             # Mark domain entity as disconnected
             connection.disconnect()
-            return ServiceResult.ok(connection)
+            return FlextResult.ok(connection)
         except (KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Failed to disconnect: {e}")
+            return FlextResult.fail(f"Failed to disconnect: {e}")
 
-    async def bind(self, connection_id: UUID) -> ServiceResult[LDAPConnection]:
+    async def bind(self, connection_id: UUID) -> FlextResult[FlextLdapConnection]:
         """Bind to the LDAP server using the connection's bind DN.
 
         Args:
             connection_id: The unique identifier of the connection
 
         Returns:
-            ServiceResult containing the bound LDAPConnection or error
+            FlextResult containing the bound FlextLdapConnection or error
 
         """
         try:
-            connection = self._entities.get(connection_id)
+            # Convert UUID to string for entity lookup
+            key = str(connection_id) if isinstance(connection_id, UUID) else connection_id
+            connection = self._entities.get(key)
             if not connection:
-                return ServiceResult.fail("Connection not found")
+                return FlextResult.fail("Connection not found")
 
             if not connection.is_connected:
-                return ServiceResult.fail("Connection not established")
+                return FlextResult.fail("Connection not established")
 
             # For LDAP3, binding is typically done during connection establishment
             # If we need to rebind or change credentials, we would reconnect
@@ -537,30 +586,31 @@ class LDAPConnectionService(ConnectionBaseService):
             else:
                 connection.bind("")  # Anonymous bind
 
-            return ServiceResult.ok(connection)
+            return FlextResult.ok(connection)
         except (KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Failed to bind: {e}")
+            return FlextResult.fail(f"Failed to bind: {e}")
 
     async def get_connection(
         self,
         connection_id: UUID,
-    ) -> ServiceResult[LDAPConnection | None]:
+    ) -> FlextResult[FlextLdapConnection | None]:
         """Get an LDAP connection by ID - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             connection_id: The unique identifier of the connection
 
         Returns:
-            ServiceResult containing the LDAPConnection if found, None if not found, or error
+            FlextResult containing the FlextLdapConnection if found, None if not
+            found, or error
 
         """
         return await self.get_entity(connection_id)
 
-    async def list_connections(self) -> ServiceResult[list[LDAPConnection]]:
+    async def list_connections(self) -> FlextResult[list[FlextLdapConnection]]:
         """List all LDAP connections - USES BASE CLASS IMPLEMENTATION.
 
         Returns:
-            ServiceResult containing list of LDAPConnections or error
+            FlextResult containing list of FlextLdapConnections or error
 
         """
         # Use base class list_entities_by_ou without OU filtering
@@ -569,9 +619,70 @@ class LDAPConnectionService(ConnectionBaseService):
             1000,
         )  # High limit for all connections
 
+    # Port interface adapter methods removed to avoid duplication
 
-@injectable()
-class LDAPOperationService(OperationBaseService):
+    async def unbind(self, connection: FlextLdapConnection) -> FlextResult[Any]:
+        """Unbind from LDAP server - Port interface adapter.
+
+        Args:
+            connection: FlextLdapConnection entity to unbind
+
+        Returns:
+            FlextResult containing unbind result or error
+
+        """
+        # For ldap3, unbind is typically handled during disconnect
+        # Mark connection as unbound in domain entity
+        connection.unbind()
+        return FlextResult.ok(True)
+
+    async def test_connection(
+        self,
+        connection: FlextLdapConnection,
+    ) -> FlextResult[Any]:
+        """Test LDAP connection health - Port interface adapter.
+
+        Args:
+            connection: FlextLdapConnection entity to test
+
+        Returns:
+            FlextResult containing connection test results or error
+
+        """
+        test_result = {
+            "connected": connection.is_connected,
+            "bound": connection.is_bound,
+            "server": connection.server_url,
+            "bind_dn": connection.bind_dn,
+        }
+        return FlextResult.ok(test_result)
+
+    async def get_connection_info(
+        self,
+        connection: FlextLdapConnection,
+    ) -> FlextResult[Any]:
+        """Get connection information - Port interface adapter.
+
+        Args:
+            connection: FlextLdapConnection entity to get info for
+
+        Returns:
+            FlextResult containing connection information or error
+
+        """
+        connection_info = {
+            "id": connection.id,
+            "server_url": connection.server_url,
+            "bind_dn": connection.bind_dn,
+            "is_connected": connection.is_connected,
+            "is_bound": connection.is_bound,
+            "created_at": connection.created_at,
+            "version": connection.version,
+        }
+        return FlextResult.ok(connection_info)
+
+
+class FlextLdapOperationService(FlextLdapOperationBaseService):
     """Service for tracking LDAP operations - ELIMINATES MASSIVE DUPLICATION.
 
     Inherits from OperationBaseService which provides:
@@ -592,7 +703,7 @@ class LDAPOperationService(OperationBaseService):
         user_dn: str | None = None,
         filter_expression: str | None = None,
         attributes: list[str] | None = None,
-    ) -> ServiceResult[LDAPOperation]:
+    ) -> FlextResult[FlextLdapOperation]:
         """Create a new LDAP operation.
 
         Args:
@@ -604,11 +715,11 @@ class LDAPOperationService(OperationBaseService):
             attributes: List of attributes to retrieve (optional)
 
         Returns:
-            ServiceResult containing the created LDAPOperation or error
+            FlextResult containing the created FlextLdapOperation or error
 
         """
         try:
-            operation = LDAPOperation(
+            operation = FlextLdapOperation(
                 operation_type=operation_type,
                 target_dn=target_dn,
                 connection_id=str(connection_id),
@@ -619,9 +730,9 @@ class LDAPOperationService(OperationBaseService):
 
             operation.start_operation()
             self._store_entity(operation)
-            return ServiceResult.ok(operation)
+            return FlextResult.ok(operation)
         except (ValueError, TypeError) as e:
-            return ServiceResult.fail(f"Failed to create operation: {e}")
+            return FlextResult.fail(f"Failed to create operation: {e}")
 
     async def complete_operation(
         self,
@@ -630,7 +741,7 @@ class LDAPOperationService(OperationBaseService):
         success: bool,
         result_count: int = 0,
         error_message: str | None = None,
-    ) -> ServiceResult[LDAPOperation]:
+    ) -> FlextResult[FlextLdapOperation]:
         """Mark an LDAP operation as completed.
 
         Args:
@@ -640,34 +751,40 @@ class LDAPOperationService(OperationBaseService):
             error_message: Error message if operation failed (optional)
 
         Returns:
-            ServiceResult containing the completed LDAPOperation or error
+            FlextResult containing the completed FlextLdapOperation or error
 
         """
         try:
-            operation = self._entities.get(operation_id)
+            # Convert UUID to string for entity lookup
+            key = str(operation_id) if isinstance(operation_id, UUID) else operation_id
+            operation = self._entities.get(key)
             if not operation:
-                return ServiceResult.fail("Operation not found")
+                return FlextResult.fail("Operation not found")
 
-            operation.complete_operation(
+            # Entity complete_operation returns a new immutable entity
+            completed_operation = operation.complete_operation(
                 success=success,
                 result_count=result_count,
                 error_message=error_message,
             )
-            return ServiceResult.ok(operation)
+            # Store the updated entity back
+            self._entities[key] = completed_operation
+            return FlextResult.ok(completed_operation)
         except (KeyError, AttributeError) as e:
-            return ServiceResult.fail(f"Failed to complete operation: {e}")
+            return FlextResult.fail(f"Failed to complete operation: {e}")
 
     async def get_operation(
         self,
         operation_id: UUID,
-    ) -> ServiceResult[LDAPOperation | None]:
+    ) -> FlextResult[FlextLdapOperation | None]:
         """Get an LDAP operation by ID - USES BASE CLASS IMPLEMENTATION.
 
         Args:
             operation_id: The unique identifier of the operation
 
         Returns:
-            ServiceResult containing the LDAPOperation if found, None if not found, or error
+            FlextResult containing the FlextLdapOperation if found, None if not
+            found, or error
 
         """
         return await self.get_entity(operation_id)
@@ -676,15 +793,16 @@ class LDAPOperationService(OperationBaseService):
         self,
         connection_id: UUID | None = None,
         limit: int = 100,
-    ) -> ServiceResult[list[LDAPOperation]]:
-        """List LDAP operations with optional filtering - USES BASE CLASS IMPLEMENTATION.
+    ) -> FlextResult[list[FlextLdapOperation]]:
+        r"""List LDAP operations with optional filtering - BASE CLASS IMPLEMENTATION.
 
         Args:
             connection_id: Filter by connection ID (optional)
             limit: Maximum number of operations to return (default: 100)
 
         Returns:
-            ServiceResult containing list of LDAPOperations sorted by start time (descending) or error
+            FlextResult containing list of FlextLdapOperations sorted by start time
+            or error
 
         """
         return await self.list_entities_by_connection(connection_id, limit)

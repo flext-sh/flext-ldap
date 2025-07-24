@@ -10,21 +10,21 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from flext_ldap.infrastructure.ldap_client import LDAPInfrastructureClient
+from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
 
 
-class TestLDAPInfrastructureClient:
+class TestFlextLdapInfrastructureClient:
     """Test suite for LDAP infrastructure client."""
 
     def test_init(self) -> None:
         """Test client initialization."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
         assert adapter._connections == {}
 
     @pytest.mark.asyncio
     async def test_connect_success(self) -> None:
         """Test successful LDAP connection."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         # Mock ldap3 Connection
         mock_connection = MagicMock()
@@ -42,7 +42,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_connect_anonymous(self) -> None:
         """Test anonymous LDAP connection."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
 
@@ -58,7 +58,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_connect_with_ssl(self) -> None:
         """Test LDAP connection with SSL."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
 
@@ -84,7 +84,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_connect_ldap_exception(self) -> None:
         """Test LDAP connection exception."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         # Mock LDAPException
         from ldap3.core.exceptions import LDAPException
@@ -101,7 +101,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_connect_unexpected_exception(self) -> None:
         """Test unexpected connection exception."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         with (
             patch("ldap3.Connection", side_effect=ValueError("Unexpected error")),
@@ -116,7 +116,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_disconnect_success(self) -> None:
         """Test successful disconnection."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         # Setup mock connection
         mock_connection = MagicMock()
@@ -132,7 +132,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_disconnect_not_found(self) -> None:
         """Test disconnection with non-existent connection."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         result = await adapter.disconnect("nonexistent")
 
@@ -142,7 +142,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_disconnect_ldap_exception(self) -> None:
         """Test disconnection with LDAP exception."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         # Mock LDAPException
         from ldap3.core.exceptions import LDAPException
@@ -159,7 +159,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_disconnect_unexpected_exception(self) -> None:
         """Test disconnection with unexpected exception."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.unbind.side_effect = ValueError("Unexpected error")
@@ -174,7 +174,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_search_success(self) -> None:
         """Test successful LDAP search."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         # Mock connection and search results
         mock_connection = MagicMock()
@@ -212,7 +212,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_search_with_attributes(self) -> None:
         """Test LDAP search with specific attributes."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.search.return_value = True
@@ -236,7 +236,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_search_with_base_scope(self) -> None:
         """Test LDAP search with base scope."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.search.return_value = True
@@ -257,7 +257,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_search_connection_not_found(self) -> None:
         """Test search with non-existent connection."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         result = await adapter.search("nonexistent", "dc=test", "(objectClass=person)")
 
@@ -267,7 +267,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_search_failed(self) -> None:
         """Test failed LDAP search."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.search.return_value = False
@@ -284,7 +284,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_search_ldap_exception(self) -> None:
         """Test search with LDAP exception."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         # Mock LDAPException
         from ldap3.core.exceptions import LDAPException
@@ -303,7 +303,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_search_unexpected_exception(self) -> None:
         """Test search with unexpected exception."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.search.side_effect = ValueError("Unexpected error")
@@ -319,7 +319,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_add_entry_success(self) -> None:
         """Test successful LDAP add entry operation."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.add.return_value = True
@@ -344,7 +344,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_add_entry_connection_not_found(self) -> None:
         """Test add entry with non-existent connection."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         result = await adapter.add_entry("nonexistent", "cn=test,dc=test", {})
 
@@ -354,7 +354,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_add_entry_failed(self) -> None:
         """Test failed LDAP add entry operation."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.add.return_value = False
@@ -371,7 +371,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_add_ldap_exception(self) -> None:
         """Test add with LDAP exception."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         # Mock LDAPException
         from ldap3.core.exceptions import LDAPException
@@ -390,7 +390,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_add_unexpected_exception(self) -> None:
         """Test add with unexpected exception."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.add.side_effect = ValueError("Unexpected error")
@@ -406,7 +406,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_modify_success(self) -> None:
         """Test successful LDAP modify operation."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.modify.return_value = True
@@ -424,7 +424,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_modify_connection_not_found(self) -> None:
         """Test modify with non-existent connection."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         result = await adapter.modify_entry("nonexistent", "cn=test,dc=test", {})
 
@@ -434,7 +434,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_modify_failed(self) -> None:
         """Test failed LDAP modify operation."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.modify.return_value = False
@@ -451,7 +451,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_modify_ldap_exception(self) -> None:
         """Test modify with LDAP exception."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         # Mock LDAPException
         from ldap3.core.exceptions import LDAPException
@@ -470,7 +470,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_modify_unexpected_exception(self) -> None:
         """Test modify with unexpected exception."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.modify.side_effect = ValueError("Unexpected error")
@@ -486,7 +486,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_delete_success(self) -> None:
         """Test successful LDAP delete operation."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.delete.return_value = True
@@ -503,7 +503,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_delete_connection_not_found(self) -> None:
         """Test delete with non-existent connection."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         result = await adapter.delete_entry("nonexistent", "cn=test,dc=test")
 
@@ -513,7 +513,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_delete_failed(self) -> None:
         """Test failed LDAP delete operation."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.delete.return_value = False
@@ -530,7 +530,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_delete_ldap_exception(self) -> None:
         """Test delete with LDAP exception."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         # Mock LDAPException
         from ldap3.core.exceptions import LDAPException
@@ -549,7 +549,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_delete_unexpected_exception(self) -> None:
         """Test delete with unexpected exception."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.delete.side_effect = ValueError("Unexpected error")
@@ -564,7 +564,7 @@ class TestLDAPInfrastructureClient:
 
     def test_get_connection_info_success(self) -> None:
         """Test successful connection info retrieval."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         # Setup mock connection with all required attributes
         mock_connection = MagicMock()
@@ -595,7 +595,7 @@ class TestLDAPInfrastructureClient:
 
     def test_get_connection_info_not_found(self) -> None:
         """Test connection info for non-existent connection."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         result = adapter.get_connection_info("nonexistent")
 
@@ -604,7 +604,7 @@ class TestLDAPInfrastructureClient:
 
     def test_get_connection_info_no_server_info(self) -> None:
         """Test connection info when server info is None."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         # Setup mock connection without server info
         mock_connection = MagicMock()
@@ -627,12 +627,13 @@ class TestLDAPInfrastructureClient:
 
     def test_get_connection_info_unexpected_exception(self) -> None:
         """Test connection info with unexpected exception."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         # Setup mock connection that raises exception when accessed
         mock_connection = MagicMock()
-        mock_connection.server = property(
-            lambda x: (_ for _ in ()).throw(ValueError("Server error")),
+        # Configure __str__ to raise an exception when converting server to string
+        mock_connection.server.__str__ = MagicMock(
+            side_effect=ValueError("Server error"),
         )
 
         adapter._connections["test_conn"] = mock_connection
@@ -645,7 +646,7 @@ class TestLDAPInfrastructureClient:
 
     def test_search_scope_mapping(self) -> None:
         """Test search scope string to ldap3 constant mapping."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         # Test through the actual search method
         mock_connection = MagicMock()
@@ -679,7 +680,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_search_with_default_attributes(self) -> None:
         """Test search with default attributes (*)."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.search.return_value = True
@@ -697,7 +698,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_add_entry_with_complex_attributes(self) -> None:
         """Test add entry with complex attribute structure."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.add.return_value = True
@@ -731,7 +732,7 @@ class TestLDAPInfrastructureClient:
     @pytest.mark.asyncio
     async def test_modify_entry_with_complex_changes(self) -> None:
         """Test modify entry with complex change operations."""
-        adapter = LDAPInfrastructureClient()
+        adapter = FlextLdapInfrastructureClient()
 
         mock_connection = MagicMock()
         mock_connection.modify.return_value = True

@@ -8,18 +8,32 @@ Specifications encapsulate business rules that can be combined and reused.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, TypeVar
 
-from flext_core import SpecificationPattern
+# Type variable for specification subjects
+T = TypeVar("T")
 
 if TYPE_CHECKING:
-    from flext_ldap.domain.entities import LDAPEntry, LDAPGroup, LDAPUser
+    from flext_ldap.domain.entities import (
+        FlextLdapEntry,
+        FlextLdapGroup,
+        FlextLdapUser,
+    )
 
 
-class LDAPEntrySpecification(SpecificationPattern["LDAPEntry"]):
+class FlextLdapSpecification[T](ABC):
+    """Base specification pattern for domain objects."""
+
+    @abstractmethod
+    def is_satisfied_by(self, candidate: T) -> bool:
+        """Check if candidate satisfies the specification."""
+
+
+class FlextLdapEntrySpecification(FlextLdapSpecification["FlextLdapEntry"]):
     """Base specification for LDAP entries."""
 
-    def is_satisfied_by(self, entry: LDAPEntry) -> bool:
+    def is_satisfied_by(self, entry: FlextLdapEntry) -> bool:
         """Check if entry satisfies the specification.
 
         Args:
@@ -32,10 +46,10 @@ class LDAPEntrySpecification(SpecificationPattern["LDAPEntry"]):
         return bool(entry.dn and entry.attributes)
 
 
-class ValidLDAPEntrySpecification(LDAPEntrySpecification):
+class FlextLdapValidEntrySpecification(FlextLdapEntrySpecification):
     """Specification for valid LDAP entries."""
 
-    def is_satisfied_by(self, entry: LDAPEntry) -> bool:
+    def is_satisfied_by(self, entry: FlextLdapEntry) -> bool:
         """Check if entry is valid.
 
         Args:
@@ -57,10 +71,10 @@ class ValidLDAPEntrySpecification(LDAPEntrySpecification):
         return bool(entry.dn and "=" in str(entry.dn))
 
 
-class LDAPUserSpecification(SpecificationPattern["LDAPUser"]):
+class FlextLdapUserSpecification(FlextLdapSpecification["FlextLdapUser"]):
     """Base specification for LDAP users."""
 
-    def is_satisfied_by(self, user: LDAPUser) -> bool:
+    def is_satisfied_by(self, user: FlextLdapUser) -> bool:
         """Check if user satisfies the specification.
 
         Args:
@@ -73,10 +87,10 @@ class LDAPUserSpecification(SpecificationPattern["LDAPUser"]):
         return bool(user.dn and user.uid)
 
 
-class ActiveLDAPUserSpecification(LDAPUserSpecification):
+class FlextLdapActiveUserSpecification(FlextLdapUserSpecification):
     """Specification for active LDAP users."""
 
-    def is_satisfied_by(self, user: LDAPUser) -> bool:
+    def is_satisfied_by(self, user: FlextLdapUser) -> bool:
         """Check if user is active.
 
         Args:
@@ -91,7 +105,8 @@ class ActiveLDAPUserSpecification(LDAPUserSpecification):
 
         # Check if account is disabled
         user_account_control: list[str] | str = user.attributes.get(
-            "userAccountControl", [],
+            "userAccountControl",
+            [],
         )
         if isinstance(user_account_control, str):
             user_account_control = [user_account_control]
@@ -111,7 +126,7 @@ class ActiveLDAPUserSpecification(LDAPUserSpecification):
         return not (account_disabled and account_disabled[0].lower() == "true")
 
 
-class ValidPasswordSpecification(SpecificationPattern[str]):
+class FlextLdapValidPasswordSpecification(FlextLdapSpecification[str]):
     """Specification for valid passwords."""
 
     def __init__(self, min_length: int = 8, require_special_chars: bool = True) -> None:
@@ -146,10 +161,10 @@ class ValidPasswordSpecification(SpecificationPattern[str]):
         return True
 
 
-class LDAPGroupSpecification(SpecificationPattern["LDAPGroup"]):
+class FlextLdapGroupSpecification(FlextLdapSpecification["FlextLdapGroup"]):
     """Base specification for LDAP groups."""
 
-    def is_satisfied_by(self, group: LDAPGroup) -> bool:
+    def is_satisfied_by(self, group: FlextLdapGroup) -> bool:
         """Check if group satisfies the specification.
 
         Args:
@@ -162,10 +177,10 @@ class LDAPGroupSpecification(SpecificationPattern["LDAPGroup"]):
         return bool(group.dn and group.cn)
 
 
-class NonEmptyGroupSpecification(LDAPGroupSpecification):
+class FlextLdapNonEmptyGroupSpecification(FlextLdapGroupSpecification):
     """Specification for non-empty groups."""
 
-    def is_satisfied_by(self, group: LDAPGroup) -> bool:
+    def is_satisfied_by(self, group: FlextLdapGroup) -> bool:
         """Check if group has members.
 
         Args:
@@ -182,7 +197,7 @@ class NonEmptyGroupSpecification(LDAPGroupSpecification):
         return len(members) > 0
 
 
-class DistinguishedNameSpecification(SpecificationPattern[str]):
+class FlextLdapDistinguishedNameSpecification(FlextLdapSpecification[str]):
     """Specification for valid distinguished names."""
 
     def is_satisfied_by(self, dn: str) -> bool:
@@ -216,7 +231,7 @@ class DistinguishedNameSpecification(SpecificationPattern[str]):
         return True
 
 
-class LDAPFilterSpecification(SpecificationPattern[str]):
+class FlextLdapFilterSpecification(FlextLdapSpecification[str]):
     """Specification for valid LDAP filters."""
 
     def is_satisfied_by(self, ldap_filter: str) -> bool:

@@ -3,21 +3,21 @@
 from datetime import UTC, datetime
 
 from flext_ldap.utils import (
-    build_dn,
-    build_filter,
-    compare_dns,
-    escape_filter_chars,
-    escape_filter_value,
-    format_generalized_time,
-    format_ldap_timestamp,
-    is_valid_ldap_url,
-    normalize_attribute_name,
-    normalize_dn,
-    parse_dn,
-    parse_generalized_time,
-    parse_ldap_url,
-    split_dn,
-    validate_dn,
+    flext_ldap_build_dn as build_dn,
+    flext_ldap_build_filter as build_filter,
+    flext_ldap_compare_dns as compare_dns,
+    flext_ldap_escape_filter_chars as escape_filter_chars,
+    flext_ldap_escape_filter_value as escape_filter_value,
+    flext_ldap_format_generalized_time as format_generalized_time,
+    flext_ldap_format_timestamp as format_ldap_timestamp,
+    flext_ldap_is_valid_url as is_valid_ldap_url,
+    flext_ldap_normalize_attribute_name as normalize_attribute_name,
+    flext_ldap_normalize_dn as normalize_dn,
+    flext_ldap_parse_dn as parse_dn,
+    flext_ldap_parse_generalized_time as parse_generalized_time,
+    flext_ldap_parse_url as parse_ldap_url,
+    flext_ldap_split_dn as split_dn,
+    flext_ldap_validate_dn as validate_dn,
 )
 
 

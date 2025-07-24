@@ -16,17 +16,18 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from flext_core.domain.shared_types import ServiceResult
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
+from flext_core import FlextResult
 
 if TYPE_CHECKING:
     from uuid import UUID
 
-    from flext_ldap.domain.entities import LDAPConnection
+    from flext_ldap.domain.entities import FlextLdapConnection
 
 logger = logging.getLogger(__name__)
 
 
-class SecurityEventType(Enum):
+class FlextLdapSecurityEventType(Enum):
     """Security event types for LDAP operations."""
 
     AUTHENTICATION_SUCCESS = "auth_success"
@@ -53,7 +54,7 @@ class SecurityEventType(Enum):
     BULK_OPERATION = "bulk_operation"
 
 
-class SecurityEventSeverity(Enum):
+class FlextLdapSecurityEventSeverity(Enum):
     """Security event severity levels."""
 
     CRITICAL = "critical"
@@ -63,7 +64,7 @@ class SecurityEventSeverity(Enum):
     INFO = "info"
 
 
-class SecurityEventStatus(Enum):
+class FlextLdapSecurityEventStatus(Enum):
     """Security event status."""
 
     SUCCESS = "success"
@@ -72,15 +73,15 @@ class SecurityEventStatus(Enum):
     INFO = "info"
 
 
-class SecurityEvent:
+class FlextLdapSecurityEvent:
     """Security event data structure."""
 
     def __init__(
         self,
         event_id: UUID | None = None,
-        event_type: SecurityEventType | None = None,
-        severity: SecurityEventSeverity = SecurityEventSeverity.INFO,
-        status: SecurityEventStatus = SecurityEventStatus.INFO,
+        event_type: FlextLdapSecurityEventType | None = None,
+        severity: FlextLdapSecurityEventSeverity = FlextLdapSecurityEventSeverity.INFO,
+        status: FlextLdapSecurityEventStatus = FlextLdapSecurityEventStatus.INFO,
         timestamp: datetime | None = None,
         user_dn: str | None = None,
         client_ip: str | None = None,
@@ -159,7 +160,7 @@ class SecurityEvent:
         return json.dumps(self.to_dict(), indent=2)
 
 
-class SecurityEventLogger:
+class FlextLdapSecurityEventLogger:
     """Security event logger for LDAP operations."""
 
     def __init__(
@@ -184,19 +185,19 @@ class SecurityEventLogger:
         self.enable_risk_scoring = enable_risk_scoring
         self.max_event_history = max_event_history
 
-        self._event_history: list[SecurityEvent] = []
-        self._session_events: dict[str, list[SecurityEvent]] = {}
-        self._user_events: dict[str, list[SecurityEvent]] = {}
+        self._event_history: list[FlextLdapSecurityEvent] = []
+        self._session_events: dict[str, list[FlextLdapSecurityEvent]] = {}
+        self._user_events: dict[str, list[FlextLdapSecurityEvent]] = {}
         self._risk_patterns: dict[str, float] = {}
 
         logger.info("Security event logger initialized")
 
     async def log_event(
         self,
-        event_type: SecurityEventType,
-        severity: SecurityEventSeverity = SecurityEventSeverity.INFO,
-        status: SecurityEventStatus = SecurityEventStatus.INFO,
-        connection: LDAPConnection | None = None,
+        event_type: FlextLdapSecurityEventType,
+        severity: FlextLdapSecurityEventSeverity = FlextLdapSecurityEventSeverity.INFO,
+        status: FlextLdapSecurityEventStatus = FlextLdapSecurityEventStatus.INFO,
+        connection: FlextLdapConnection | None = None,
         user_dn: str | None = None,
         client_ip: str | None = None,
         operation_id: str | None = None,
@@ -211,7 +212,7 @@ class SecurityEventLogger:
         duration_ms: float | None = None,
         data_size_bytes: int | None = None,
         additional_context: dict[str, Any] | None = None,
-    ) -> ServiceResult[SecurityEvent]:
+    ) -> FlextResult[FlextLdapSecurityEvent]:
         """Log a security event.
 
         Args:
@@ -235,7 +236,7 @@ class SecurityEventLogger:
             additional_context: Additional context information
 
         Returns:
-            ServiceResult containing the logged security event
+            FlextResult containing the logged security event
 
         """
         try:
@@ -265,7 +266,7 @@ class SecurityEventLogger:
                     user_dn = connection.bind_dn
 
             # Create security event
-            event = SecurityEvent(
+            event = FlextLdapSecurityEvent(
                 event_type=event_type,
                 severity=severity,
                 status=status,
@@ -301,23 +302,23 @@ class SecurityEventLogger:
             # Log event based on severity with proper logging
             event_dict = event.to_dict()
             event_msg = f"Security Event: {event_dict}"
-            if severity == SecurityEventSeverity.CRITICAL:
+            if severity == FlextLdapSecurityEventSeverity.CRITICAL:
                 logger.critical(event_msg)
-            elif severity == SecurityEventSeverity.HIGH:
+            elif severity == FlextLdapSecurityEventSeverity.HIGH:
                 logger.error(event_msg)
-            elif severity == SecurityEventSeverity.MEDIUM:
+            elif severity == FlextLdapSecurityEventSeverity.MEDIUM:
                 logger.warning(event_msg)
-            elif severity == SecurityEventSeverity.LOW:
+            elif severity == FlextLdapSecurityEventSeverity.LOW:
                 logger.info(event_msg)
             else:
                 logger.debug(event_msg)
 
-            return ServiceResult.ok(event)
+            return FlextResult.ok(event)
 
         except Exception as e:
             error_msg = f"Failed to log security event: {e}"
             logger.exception(error_msg)
-            return ServiceResult.fail(error_msg)
+            return FlextResult.fail(error_msg)
 
     async def log_authentication_event(
         self,
@@ -325,21 +326,27 @@ class SecurityEventLogger:
         success: bool,
         user_dn: str,
         client_ip: str | None = None,
-        connection: LDAPConnection | None = None,
+        connection: FlextLdapConnection | None = None,
         error_message: str | None = None,
         session_id: str | None = None,
         additional_context: dict[str, Any] | None = None,
-    ) -> ServiceResult[SecurityEvent]:
+    ) -> FlextResult[FlextLdapSecurityEvent]:
         """Log authentication event."""
         event_type = (
-            SecurityEventType.AUTHENTICATION_SUCCESS
+            FlextLdapSecurityEventType.AUTHENTICATION_SUCCESS
             if success
-            else SecurityEventType.AUTHENTICATION_FAILURE
+            else FlextLdapSecurityEventType.AUTHENTICATION_FAILURE
         )
         severity = (
-            SecurityEventSeverity.INFO if success else SecurityEventSeverity.MEDIUM
+            FlextLdapSecurityEventSeverity.INFO
+            if success
+            else FlextLdapSecurityEventSeverity.MEDIUM
         )
-        status = SecurityEventStatus.SUCCESS if success else SecurityEventStatus.FAILURE
+        status = (
+            FlextLdapSecurityEventStatus.SUCCESS
+            if success
+            else FlextLdapSecurityEventStatus.FAILURE
+        )
 
         return await self.log_event(
             event_type=event_type,
@@ -353,20 +360,20 @@ class SecurityEventLogger:
             additional_context=additional_context,
         )
 
-    def _calculate_risk_score(self, event: SecurityEvent) -> float:
+    def _calculate_risk_score(self, event: FlextLdapSecurityEvent) -> float:
         """Calculate risk score for a security event."""
         base_score = 0.0
 
         # Base score by event type
         event_type_scores = {
-            SecurityEventType.AUTHENTICATION_FAILURE: 0.3,
-            SecurityEventType.AUTHORIZATION_FAILURE: 0.4,
-            SecurityEventType.SECURITY_VIOLATION: 0.8,
-            SecurityEventType.SUSPICIOUS_ACTIVITY: 0.7,
-            SecurityEventType.PRIVILEGE_ESCALATION: 0.9,
-            SecurityEventType.ACCOUNT_LOCKOUT: 0.5,
-            SecurityEventType.BULK_OPERATION: 0.3,
-            SecurityEventType.DATA_EXPORT: 0.4,
+            FlextLdapSecurityEventType.AUTHENTICATION_FAILURE: 0.3,
+            FlextLdapSecurityEventType.AUTHORIZATION_FAILURE: 0.4,
+            FlextLdapSecurityEventType.SECURITY_VIOLATION: 0.8,
+            FlextLdapSecurityEventType.SUSPICIOUS_ACTIVITY: 0.7,
+            FlextLdapSecurityEventType.PRIVILEGE_ESCALATION: 0.9,
+            FlextLdapSecurityEventType.ACCOUNT_LOCKOUT: 0.5,
+            FlextLdapSecurityEventType.BULK_OPERATION: 0.3,
+            FlextLdapSecurityEventType.DATA_EXPORT: 0.4,
         }
 
         if event.event_type:
@@ -374,11 +381,11 @@ class SecurityEventLogger:
 
         # Adjust based on severity
         severity_multipliers = {
-            SecurityEventSeverity.CRITICAL: 1.0,
-            SecurityEventSeverity.HIGH: 0.8,
-            SecurityEventSeverity.MEDIUM: 0.6,
-            SecurityEventSeverity.LOW: 0.4,
-            SecurityEventSeverity.INFO: 0.2,
+            FlextLdapSecurityEventSeverity.CRITICAL: 1.0,
+            FlextLdapSecurityEventSeverity.HIGH: 0.8,
+            FlextLdapSecurityEventSeverity.MEDIUM: 0.6,
+            FlextLdapSecurityEventSeverity.LOW: 0.4,
+            FlextLdapSecurityEventSeverity.INFO: 0.2,
         }
 
         severity_multiplier = severity_multipliers.get(event.severity, 0.5)
@@ -386,24 +393,24 @@ class SecurityEventLogger:
 
         return min(base_score, 1.0)
 
-    def _get_compliance_flags(self, event: SecurityEvent) -> list[str]:
+    def _get_compliance_flags(self, event: FlextLdapSecurityEvent) -> list[str]:
         """Get compliance flags for a security event."""
         flags = []
 
         # PCI DSS flags
         if event.event_type in {
-            SecurityEventType.AUTHENTICATION_FAILURE,
-            SecurityEventType.AUTHORIZATION_FAILURE,
+            FlextLdapSecurityEventType.AUTHENTICATION_FAILURE,
+            FlextLdapSecurityEventType.AUTHORIZATION_FAILURE,
         }:
             flags.append("PCI_DSS_8.2")
 
         # GDPR flags
-        if event.event_type == SecurityEventType.DATA_EXPORT:
+        if event.event_type == FlextLdapSecurityEventType.DATA_EXPORT:
             flags.append("GDPR_ARTICLE_32")
 
         return flags
 
-    def _add_to_history(self, event: SecurityEvent) -> None:
+    def _add_to_history(self, event: FlextLdapSecurityEvent) -> None:
         """Add event to history with size management."""
         # Add to general history
         self._event_history.append(event)
@@ -425,7 +432,7 @@ class SecurityEventLogger:
     async def get_security_metrics(
         self,
         time_window_hours: int = 24,
-    ) -> ServiceResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, Any]]:
         """Get security metrics for the specified time window."""
         try:
             cutoff_time = datetime.now(UTC) - timedelta(hours=time_window_hours)
@@ -439,7 +446,7 @@ class SecurityEventLogger:
                 [
                     e
                     for e in recent_events
-                    if e.event_type == SecurityEventType.AUTHENTICATION_FAILURE
+                    if e.event_type == FlextLdapSecurityEventType.AUTHENTICATION_FAILURE
                 ],
             )
 
@@ -455,9 +462,17 @@ class SecurityEventLogger:
                 "unique_sessions": unique_sessions,
             }
 
-            return ServiceResult.ok(metrics)
+            return FlextResult.ok(metrics)
 
         except Exception as e:
             error_msg = f"Failed to get security metrics: {e}"
             logger.exception(error_msg)
-            return ServiceResult.fail(error_msg)
+            return FlextResult.fail(error_msg)
+
+
+# Backward compatibility aliases
+SecurityEventType = FlextLdapSecurityEventType
+SecurityEventSeverity = FlextLdapSecurityEventSeverity
+SecurityEventStatus = FlextLdapSecurityEventStatus
+SecurityEvent = FlextLdapSecurityEvent
+SecurityEventLogger = FlextLdapSecurityEventLogger
