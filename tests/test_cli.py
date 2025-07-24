@@ -21,7 +21,7 @@ class TestCLI:
     @pytest.mark.asyncio
     async def test_test_connection_success(self) -> None:
         """Test successful connection test."""
-        with patch("flext_ldap.cli.LDAPClient") as mock_client:
+        with patch("flext_ldap.cli.FlextLdapClient") as mock_client:
             mock_client.return_value.__aenter__ = AsyncMock()
             mock_client.return_value.__aexit__ = AsyncMock()
 
@@ -33,7 +33,7 @@ class TestCLI:
     @pytest.mark.asyncio
     async def test_test_connection_failure(self) -> None:
         """Test connection test failure."""
-        with patch("flext_ldap.cli.LDAPClient") as mock_client:
+        with patch("flext_ldap.cli.FlextLdapClient") as mock_client:
             mock_client.return_value.__aenter__.side_effect = OSError(
                 "Connection failed",
             )
@@ -51,7 +51,7 @@ class TestCLI:
             attributes={"cn": ["test"], "objectClass": ["person"]},
         )
 
-        with patch("flext_ldap.cli.LDAPClient") as mock_client:
+        with patch("flext_ldap.cli.FlextLdapClient") as mock_client:
             mock_client_instance = mock_client.return_value
             mock_client_instance.__aenter__ = AsyncMock(
                 return_value=mock_client_instance,
@@ -59,8 +59,10 @@ class TestCLI:
             mock_client_instance.__aexit__ = AsyncMock()
 
             # Mock successful search result
-            from flext_core.domain.shared_types import ServiceResult
-            mock_result = ServiceResult.ok([mock_entry])
+            # 🚨 ARCHITECTURAL COMPLIANCE: Using módulo raiz imports
+            from flext_core import FlextResult
+
+            mock_result = FlextResult.ok([mock_entry])
             mock_client_instance.search = AsyncMock(return_value=mock_result)
 
             # Should not raise exception
@@ -80,7 +82,7 @@ class TestCLI:
     async def test_search_entries_failure(self) -> None:
         """Test search entries failure."""
         with (
-            patch("flext_ldap.cli.LDAPClient") as mock_client,
+            patch("flext_ldap.cli.FlextLdapClient") as mock_client,
             patch("flext_ldap.cli.sys.exit") as mock_exit,
         ):
             mock_client_instance = mock_client.return_value
@@ -90,8 +92,9 @@ class TestCLI:
             mock_client_instance.__aexit__ = AsyncMock()
 
             # Mock failed search result
-            from flext_core.domain.shared_types import ServiceResult
-            mock_result: ServiceResult[list[dict[str, Any]]] = ServiceResult.fail(
+            from flext_core import FlextResult
+
+            mock_result: FlextResult[list[dict[str, Any]]] = FlextResult.fail(
                 "Search failed",
             )
             mock_client_instance.search = AsyncMock(return_value=mock_result)
@@ -108,7 +111,7 @@ class TestCLI:
     @pytest.mark.asyncio
     async def test_search_entries_connection_error(self) -> None:
         """Test search entries with connection error."""
-        with patch("flext_ldap.cli.LDAPClient") as mock_client:
+        with patch("flext_ldap.cli.FlextLdapClient") as mock_client:
             mock_client.return_value.__aenter__.side_effect = OSError(
                 "Connection failed",
             )
@@ -144,7 +147,7 @@ class TestCLI:
             )
             mock_entries.append(mock_entry)
 
-        with patch("flext_ldap.cli.LDAPClient") as mock_client:
+        with patch("flext_ldap.cli.FlextLdapClient") as mock_client:
             mock_client_instance = mock_client.return_value
             mock_client_instance.__aenter__ = AsyncMock(
                 return_value=mock_client_instance,
@@ -152,8 +155,9 @@ class TestCLI:
             mock_client_instance.__aexit__ = AsyncMock()
 
             # Mock successful search result with many entries
-            from flext_core.domain.shared_types import ServiceResult
-            mock_result = ServiceResult.ok(mock_entries)
+            from flext_core import FlextResult
+
+            mock_result = FlextResult.ok(mock_entries)
             mock_client_instance.search = AsyncMock(return_value=mock_result)
 
             # Should not raise exception

@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 from flext_ldap import LDAPService
-from flext_ldap.domain.value_objects import CreateUserRequest
+from flext_ldap.domain.value_objects import FlextLdapCreateUserRequest
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ async def main() -> None:
     # Example 1: Work in memory mode (no LDAP server connection)
 
     # Create a user in memory mode
-    user_request = CreateUserRequest(
+    user_request = FlextLdapCreateUserRequest(
         dn="cn=john.doe,ou=people,dc=example,dc=com",
         uid="john.doe",
         cn="John Doe",

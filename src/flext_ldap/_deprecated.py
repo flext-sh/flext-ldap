@@ -53,7 +53,9 @@ def warn_deprecated(
 
 
 def warn_deprecated_path(
-    old_path: str, recommendation: str, version: str = "1.0.0",
+    old_path: str,
+    recommendation: str,
+    version: str = "1.0.0",
 ) -> None:
     """Issue deprecation warning for complex import paths.
 

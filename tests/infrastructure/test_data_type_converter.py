@@ -461,7 +461,8 @@ class TestDataTypeConverter:
         assert len(result.data) == 3
 
         # For mixed results, we expect some valid and some invalid
-        # "123" should be valid (123), "not_a_number" should be invalid, "456" should be valid (456)
+        # "123" should be valid (123), "not_a_number" should be invalid,
+        # "456" should be valid (456)
         assert result.data[0].is_valid is True
         assert result.data[0].value == 123
         assert result.data[1].is_valid is False  # "not_a_number" cannot be converted

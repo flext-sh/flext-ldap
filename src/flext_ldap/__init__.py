@@ -29,64 +29,206 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-# Import FlextDeprecationWarning from flext-core for consistency - NO FALLBACKS
-from flext_core import FlextDeprecationWarning
-
-if TYPE_CHECKING:
-    from flext_core.domain.shared_types import ServiceResult
-# ═══════════════════════════════════════════════════════════════════════════════
-# 🎯 SIMPLIFIED PUBLIC API - Use these imports for ALL new code
-# ═══════════════════════════════════════════════════════════════════════════════
-
-# ┌─────────────────────────────────────────────────────────────────────────────┐
-# │ 🏢 CORE ENTITIES - Simple direct imports                                   │
-# └─────────────────────────────────────────────────────────────────────────────┘
-
-# Import entities directly to root level for simple access
-# Import client implementation
-from flext_ldap.client import LDAPClient
-
-# ┌─────────────────────────────────────────────────────────────────────────────┐
-# │ 🏗️ AGGREGATES & EVENTS - Advanced domain concepts                         │
-# └─────────────────────────────────────────────────────────────────────────────┘
-# Import real domain implementations for aggregates and events
-from flext_ldap.domain.aggregates import DirectoryAggregate, LDAPDirectory
-from flext_ldap.domain.entities import LDAPEntry, LDAPGroup, LDAPUser
-from flext_ldap.domain.events import (
-    LDAPConnectionEstablished,
-    LDAPEntryCreated,
-    LDAPEntryModified,
+# Import base services
+from flext_ldap.application.base import (
+    FlextLdapBaseService,
+    FlextLdapConnectionBaseService,
+    FlextLdapGroupBaseService,
+    FlextLdapOperationBaseService,
+    FlextLdapUserBaseService,
 )
 
-# Import protocols and interfaces from real infrastructure
-from flext_ldap.domain.interfaces import (
-    LDAPConnectionManager,
-    LDAPDirectoryRepository,
-    LDAPGroupRepository,
-    LDAPUserRepository,
+# Import application services
+from flext_ldap.application.services import (
+    FlextLdapGroupService,
+    FlextLdapUserApplicationService as FlextLdapUserService,
 )
 
 # ┌─────────────────────────────────────────────────────────────────────────────┐
 # │ 💎 VALUE OBJECTS & INTERFACES - Direct access                            │
 # └─────────────────────────────────────────────────────────────────────────────┘
 # Import value objects from real domain implementations
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🎯 SIMPLIFIED PUBLIC API - Use these imports for ALL new code
+# ═══════════════════════════════════════════════════════════════════════════════
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │ 🏢 CORE ENTITIES - Simple direct imports                                   │
+# └─────────────────────────────────────────────────────────────────────────────┘
+# Import client implementation with new name
+from flext_ldap.client import FlextLdapClient
+
+# Import configuration classes
+from flext_ldap.config import (
+    FlextLdapAuthConfig,
+    FlextLdapConnectionConfig,
+    FlextLdapSettings,
+)
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │ 🏗️ AGGREGATES & EVENTS - Advanced domain concepts                         │
+# └─────────────────────────────────────────────────────────────────────────────┘
+# Import real domain implementations for aggregates and events with new prefixes
+from flext_ldap.domain.aggregates import (
+    FlextLdapDirectory,
+    FlextLdapDirectoryAggregate,
+)
+from flext_ldap.domain.entities import (
+    FlextLdapConnection,
+    FlextLdapEntry,
+    FlextLdapGroup,
+    FlextLdapOperation,
+    FlextLdapUser,
+)
+from flext_ldap.domain.events import (
+    FlextLdapAuthenticationFailed,
+    FlextLdapConnectionEstablished,
+    FlextLdapConnectionLost,
+    FlextLdapEntryCreated,
+    FlextLdapEntryDeleted,
+    FlextLdapEntryModified,
+    FlextLdapGroupMemberAdded,
+    FlextLdapGroupMemberRemoved,
+    FlextLdapUserAuthenticated,
+)
+
+# Import protocols and interfaces from real infrastructure
+from flext_ldap.domain.interfaces import (
+    FlextLdapConnectionManager,
+    FlextLdapDirectoryRepository,
+    FlextLdapGroupRepository,
+)
+
+# Import domain services and repositories
+from flext_ldap.domain.ports import (
+    FlextLdapMigrationService,
+    FlextLdapSchemaService,
+    FlextLdapSearchService,
+    FlextLdapUserService as FlextLdapUserPortService,
+)
+from flext_ldap.domain.repositories import (
+    FlextLdapConnectionRepository,
+    FlextLdapUserRepository as FlextLdapUserRepositoryImpl,
+)
+
+# Import specifications
+from flext_ldap.domain.specifications import (
+    FlextLdapActiveUserSpecification,
+    FlextLdapDistinguishedNameSpecification,
+    FlextLdapEntrySpecification,
+    FlextLdapFilterSpecification,
+    FlextLdapGroupSpecification,
+    FlextLdapNonEmptyGroupSpecification,
+    FlextLdapUserSpecification,
+    FlextLdapValidEntrySpecification,
+    FlextLdapValidPasswordSpecification,
+)
+
+# Import value objects
+from flext_ldap.domain.value_objects import (
+    FlextLdapAttribute,
+    FlextLdapCreateUserRequest,
+)
 from flext_ldap.domain.values import (
     DistinguishedName,
+    FlextLdapFilterValue,
     LDAPAttributes,
     LDAPFilter,
     LDAPScope,
     LDAPUri,
 )
 
+# Import models classes
+from flext_ldap.models import (
+    FlextLdapFilter,
+    FlextLdapScope,
+)
+
+# Import simple API
+from flext_ldap.simple_api import FlextLdapAPI
+
+# Import API with new name
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │ 🛠️ HELPER FUNCTIONS - LDAP utilities with proper prefixes                │
+# └─────────────────────────────────────────────────────────────────────────────┘
+from flext_ldap.utils import (
+    flext_ldap_build_dn,
+    flext_ldap_build_filter,
+    flext_ldap_compare_dns,
+    flext_ldap_escape_filter_chars,
+    flext_ldap_escape_filter_value,
+    flext_ldap_format_generalized_time,
+    flext_ldap_format_timestamp,
+    flext_ldap_is_valid_url,
+    flext_ldap_normalize_attribute_name,
+    flext_ldap_normalize_dn,
+    flext_ldap_parse_dn,
+    flext_ldap_parse_generalized_time,
+    flext_ldap_parse_url,
+    flext_ldap_split_dn,
+    flext_ldap_validate_dn,
+)
+
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │ 🔄 BACKWARD COMPATIBILITY - Legacy class names                            │
+# └─────────────────────────────────────────────────────────────────────────────┘
+# Maintain backward compatibility with old names
+LDAPClient = FlextLdapClient
+LDAPAPI = FlextLdapAPI
+LDAPEntry = FlextLdapEntry
+LDAPUser = FlextLdapUser
+LDAPGroup = FlextLdapGroup
+LDAPConnection = FlextLdapConnection
+LDAPOperation = FlextLdapOperation
+DirectoryAggregate = FlextLdapDirectoryAggregate
+LDAPDirectory = FlextLdapDirectory
+LDAPConnectionEstablished = FlextLdapConnectionEstablished
+LDAPConnectionLost = FlextLdapConnectionLost
+LDAPEntryCreated = FlextLdapEntryCreated
+LDAPEntryDeleted = FlextLdapEntryDeleted
+LDAPEntryModified = FlextLdapEntryModified
+LDAPUserAuthenticated = FlextLdapUserAuthenticated
+LDAPAuthenticationFailed = FlextLdapAuthenticationFailed
+LDAPGroupMemberAdded = FlextLdapGroupMemberAdded
+LDAPGroupMemberRemoved = FlextLdapGroupMemberRemoved
+
+# Interface compatibility
+LDAPConnectionManager = FlextLdapConnectionManager
+LDAPDirectoryRepository = FlextLdapDirectoryRepository
+LDAPGroupRepository = FlextLdapGroupRepository
+LDAPUserRepository = FlextLdapUserRepositoryImpl
+FlextLdapUserRepositoryAlias = FlextLdapUserRepositoryImpl
+
+# Service compatibility
+LDAPSchemaService = FlextLdapSchemaService
+LDAPMigrationService = FlextLdapMigrationService
+
+# Helper function compatibility
+escape_filter_chars = flext_ldap_escape_filter_chars
+escape_filter_value = flext_ldap_escape_filter_value
+parse_generalized_time = flext_ldap_parse_generalized_time
+format_generalized_time = flext_ldap_format_generalized_time
+validate_dn = flext_ldap_validate_dn
+normalize_dn = flext_ldap_normalize_dn
+split_dn = flext_ldap_split_dn
+compare_dns = flext_ldap_compare_dns
+build_filter = flext_ldap_build_filter
+is_valid_ldap_url = flext_ldap_is_valid_url
+parse_ldap_url = flext_ldap_parse_url
+parse_dn = flext_ldap_parse_dn
+build_dn = flext_ldap_build_dn
+normalize_attribute_name = flext_ldap_normalize_attribute_name
+format_ldap_timestamp = flext_ldap_format_timestamp
+
+
 # ┌─────────────────────────────────────────────────────────────────────────────┐
 # │ 🚨 DEPRECATION WARNINGS - Clear migration guidance                        │
 # └─────────────────────────────────────────────────────────────────────────────┘
-
-
 def _deprecation_warning(
-    old_path: str, new_import: str, removal_version: str = "1.0.0",
+    old_path: str,
+    new_import: str,
+    removal_version: str = "1.0.0",
 ) -> None:
     """Issue comprehensive deprecation warning with clear migration path."""
     warnings.warn(
@@ -98,7 +240,7 @@ def _deprecation_warning(
         f"This import will be removed in version {removal_version}.\\n"
         f"Update your imports to use the simplified root-level imports.\\n\\n"
         f"📚 For details, see: https://docs.flext.dev/migration/ldap\\n",
-        category=FlextDeprecationWarning,
+        category=DeprecationWarning,
         stacklevel=3,
     )
 
@@ -106,10 +248,8 @@ def _deprecation_warning(
 # ┌─────────────────────────────────────────────────────────────────────────────┐
 # │ 📦 DYNAMIC IMPORT HANDLER - Legacy path resolution                        │
 # └─────────────────────────────────────────────────────────────────────────────┘
-
-
 def __getattr__(name: str) -> Any:
-    """Handle legacy imports with automatic deprecation warnings and migration guidance."""
+    """Handle legacy imports with automatic deprecation warnings and guidance."""
     # Legacy import mapping with migration paths
     legacy_mapping = {
         # Application services
@@ -159,15 +299,68 @@ def __getattr__(name: str) -> Any:
 # ┌─────────────────────────────────────────────────────────────────────────────┐
 # │ 📋 SIMPLIFIED PUBLIC API - Direct imports without complex paths           │
 # └─────────────────────────────────────────────────────────────────────────────┘
-
-
 __all__ = [
+    "LDAPAPI",  # from flext_ldap import LDAPAPI (LEGACY)
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # 🚨 LEGACY COMPATIBILITY - Will be deprecated
+    # ═══════════════════════════════════════════════════════════════════════════════
     # Advanced Domain Concepts (aggregates & events)
     "DirectoryAggregate",  # from flext_ldap import DirectoryAggregate
     # Value Objects (domain types)
     "DistinguishedName",  # from flext_ldap import DistinguishedName
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # ✅ NEW FLEXT CLASSES - RECOMMENDED IMPORTS
+    # ═══════════════════════════════════════════════════════════════════════════════
+    "FlextLdapAPI",  # from flext_ldap import FlextLdapAPI
+    "FlextLdapActiveUserSpecification",  # FlextLdapActiveUserSpecification
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # 🆕 NEW VALUE OBJECTS - FLEXT STANDARD
+    # ═══════════════════════════════════════════════════════════════════════════════
+    "FlextLdapAttribute",  # from flext_ldap import FlextLdapAttribute
+    "FlextLdapAuthConfig",  # from flext_ldap import FlextLdapAuthConfig
+    "FlextLdapBaseService",  # from flext_ldap import FlextLdapBaseService
+    "FlextLdapClient",  # from flext_ldap import FlextLdapClient
+    "FlextLdapConnection",  # from flext_ldap import FlextLdapConnection
+    "FlextLdapConnectionBaseService",  # FlextLdapConnectionBaseService
+    "FlextLdapConnectionConfig",  # from flext_ldap import FlextLdapConnectionConfig
+    "FlextLdapConnectionRepository",  # FlextLdapConnectionRepository
+    "FlextLdapCreateUserRequest",  # from flext_ldap import FlextLdapCreateUserRequest
+    "FlextLdapDistinguishedNameSpecification",  # FlextLdapDNSpec
+    "FlextLdapEntry",  # from flext_ldap import FlextLdapEntry
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # 🆕 NEW SPECIFICATIONS - FLEXT STANDARD
+    # ═══════════════════════════════════════════════════════════════════════════════
+    "FlextLdapEntrySpecification",  # from flext_ldap import FlextLdapEntrySpecification
+    "FlextLdapFilter",  # from flext_ldap import FlextLdapFilter
+    "FlextLdapFilterSpecification",  # FlextLdapFilterSpec
+    "FlextLdapFilterValue",  # from flext_ldap import FlextLdapFilterValue
+    "FlextLdapGroup",  # from flext_ldap import FlextLdapGroup
+    "FlextLdapGroupBaseService",  # from flext_ldap import FlextLdapGroupBaseService
+    "FlextLdapGroupService",  # from flext_ldap import FlextLdapGroupService
+    "FlextLdapGroupSpecification",  # from flext_ldap import FlextLdapGroupSpecification
+    "FlextLdapMigrationService",  # from flext_ldap import FlextLdapMigrationService
+    "FlextLdapNonEmptyGroupSpecification",  # FlextLdapNonEmptyGroupSpec
+    "FlextLdapOperationBaseService",  # FlextLdapOperationBaseService
+    "FlextLdapSchemaService",  # from flext_ldap import FlextLdapSchemaService
+    "FlextLdapScope",  # from flext_ldap import FlextLdapScope
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # 🆕 NEW DOMAIN SERVICES - FLEXT STANDARD
+    # ═══════════════════════════════════════════════════════════════════════════════
+    "FlextLdapSearchService",  # from flext_ldap import FlextLdapSearchService
+    "FlextLdapSettings",  # from flext_ldap import FlextLdapSettings
+    "FlextLdapUser",  # from flext_ldap import FlextLdapUser
+    "FlextLdapUserBaseService",  # from flext_ldap import FlextLdapUserBaseService
+    "FlextLdapUserPortService",  # from flext_ldap import FlextLdapUserPortService
+    "FlextLdapUserRepositoryImpl",  # from flext_ldap import FlextLdapUserRepositoryImpl
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # 🆕 NEW APPLICATION SERVICES - FLEXT STANDARD
+    # ═══════════════════════════════════════════════════════════════════════════════
+    "FlextLdapUserService",  # from flext_ldap import FlextLdapUserService
+    "FlextLdapUserSpecification",  # from flext_ldap import FlextLdapUserSpecification
+    "FlextLdapValidEntrySpecification",  # FlextLdapValidEntrySpec
+    "FlextLdapValidPasswordSpecification",  # FlextLdapValidPasswordSpec
     "LDAPAttributes",  # from flext_ldap import LDAPAttributes
-    "LDAPClient",  # from flext_ldap import LDAPClient
+    "LDAPClient",  # from flext_ldap import LDAPClient (LEGACY)
     "LDAPConnectionEstablished",  # from flext_ldap import LDAPConnectionEstablished
     "LDAPConnectionManager",  # from flext_ldap import LDAPConnectionManager
     "LDAPDirectory",  # from flext_ldap import LDAPDirectory
@@ -182,6 +375,8 @@ __all__ = [
     "LDAPFilter",  # from flext_ldap import LDAPFilter
     "LDAPGroup",  # from flext_ldap import LDAPGroup
     "LDAPGroupRepository",  # from flext_ldap import LDAPGroupRepository
+    "LDAPMigrationService",  # from flext_ldap import LDAPMigrationService
+    "LDAPSchemaService",  # from flext_ldap import LDAPSchemaService
     "LDAPScope",  # from flext_ldap import LDAPScope
     "LDAPUri",  # from flext_ldap import LDAPUri
     "LDAPUser",  # from flext_ldap import LDAPUser
@@ -196,24 +391,30 @@ __version__ = "0.7.0"
 __architecture__ = "Clean Architecture + DDD"
 __migration_guide__ = "https://docs.flext.dev/migration/ldap"
 
+
 # ┌─────────────────────────────────────────────────────────────────────────────┐
 # │ 🛠️ MIGRATION UTILITIES                                                    │
 # └─────────────────────────────────────────────────────────────────────────────┘
-
-
 def get_migration_path(deprecated_import: str) -> str:
     """Get the migration path for a deprecated import."""
     migrations = {
         "flext_ldap.domain.entities.LDAPUser": "from flext_ldap import LDAPUser",
         "flext_ldap.domain.entities.LDAPGroup": "from flext_ldap import LDAPGroup",
         "flext_ldap.domain.entities.LDAPEntry": "from flext_ldap import LDAPEntry",
-        "flext_ldap.domain.values.DistinguishedName": "from flext_ldap import DistinguishedName",
+        "flext_ldap.domain.values.DistinguishedName": (
+            "from flext_ldap import DistinguishedName"
+        ),
         "flext_ldap.domain.values.LDAPFilter": "from flext_ldap import LDAPFilter",
-        "flext_ldap.domain.interfaces.LDAPConnectionManager": "from flext_ldap import LDAPConnectionManager",
-        "flext_ldap.domain.interfaces.LDAPDirectoryRepository": "from flext_ldap import LDAPDirectoryRepository",
+        "flext_ldap.domain.interfaces.LDAPConnectionManager": (
+            "from flext_ldap import LDAPConnectionManager"
+        ),
+        "flext_ldap.domain.interfaces.LDAPDirectoryRepository": (
+            "from flext_ldap import LDAPDirectoryRepository"
+        ),
     }
     return migrations.get(
-        deprecated_import, f"from flext_ldap import {deprecated_import.split('.')[-1]}",
+        deprecated_import,
+        f"from flext_ldap import {deprecated_import.split('.')[-1]}",
     )
 
 

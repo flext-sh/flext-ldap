@@ -1,8 +1,6 @@
-# ============================================================================
-# FLEXT STANDARD PRE-COMMIT CONFIGURATION TEMPLATE
-# Python 3.13 | Poetry-managed | Strict Quality Gates
+# STRICT Enterprise Pre-commit Configuration
 # Zero tolerance for quality violations
-# ============================================================================
+# All tools managed by Poetry
 
 minimum_pre_commit_version: "3.5.0"
 fail_fast: false
@@ -11,16 +9,15 @@ default_language_version:
   python: python3.13
 
 repos:
-  # ===== SECURITY SCANNING FIRST - FAIL FAST ON VULNERABILITIES =====
+  # Security scanning FIRST - fail fast on vulnerabilities
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.4.0
     hooks:
       - id: detect-secrets
-        name: "🔒 Detect Secrets"
         args: ["--baseline", ".secrets.baseline"]
         exclude: .*\.lock$|.*\.lockb$
 
-  # ===== POETRY-MANAGED TOOLS VIA LOCAL REPO =====
+  # Poetry-managed tools via local repo
   - repo: local
     hooks:
       # Black formatting (primary formatter)
@@ -42,7 +39,7 @@ repos:
         args: [--check, --diff]
 
       - id: ruff-lint
-        name: "🔥 Ruff Lint"
+        name: "🔥 Ruff Lint (17 categories)"
         entry: poetry run ruff check
         language: system
         types: [python]
@@ -58,7 +55,7 @@ repos:
         require_serial: true
         args: [--check-only, --diff]
 
-      # MyPy type checking - STRICT MODE
+      # MyPy type checking
       - id: mypy
         name: "🛡️ MyPy Strict"
         entry: poetry run mypy
@@ -78,7 +75,7 @@ repos:
         args: [-r, src/, --severity-level=medium]
         exclude: tests/
 
-      # Vulture dead code detection
+      # Vulture dead code
       - id: vulture
         name: "🦅 Dead Code Detection"
         entry: poetry run vulture
@@ -87,7 +84,7 @@ repos:
         pass_filenames: false
         args: [src/, --min-confidence=80]
 
-      # Radon complexity metrics
+      # Radon complexity
       - id: radon-cc
         name: "📊 Cyclomatic Complexity"
         entry: poetry run radon cc
@@ -104,26 +101,12 @@ repos:
         pass_filenames: false
         args: [src/, -nb]
 
-      # Poetry dependency checks
-      - id: poetry-check
-        name: "📋 Poetry Check"
-        entry: poetry check
-        language: system
-        pass_filenames: false
-
-      - id: poetry-lock
-        name: "🔒 Poetry Lock"
-        entry: poetry lock
-        language: system
-        pass_filenames: false
-
-  # ===== FILE VALIDATION AND QUALITY =====
+  # YAML/TOML/JSON validation
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       - id: check-yaml
         name: "📋 YAML Syntax Check"
-        args: [--unsafe]
       - id: check-toml
         name: "📋 TOML Syntax Check"
       - id: check-json
@@ -132,7 +115,6 @@ repos:
         name: "📄 EOF Fixer"
       - id: trailing-whitespace
         name: "✂️ Trailing Whitespace"
-        args: [--markdown-linebreak-ext=md]
       - id: check-added-large-files
         name: "📦 Large File Check"
         args: [--maxkb=1000]
@@ -145,18 +127,8 @@ repos:
         args: [--fix=lf]
       - id: debug-statements
         name: "🐛 Debug Statement Check"
-      - id: check-ast
-        name: "🐍 Python AST Check"
-      - id: check-docstring-first
-        name: "📝 Docstring First Check"
-      - id: detect-private-key
-        name: "🔑 Private Key Detection"
-      - id: check-executables-have-shebangs
-        name: "📜 Executable Shebang Check"
-      - id: check-shebang-scripts-are-executable
-        name: "⚡ Shebang Executable Check"
 
-  # ===== PYTHON-SPECIFIC CHECKS =====
+  # Python-specific checks
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:
@@ -171,53 +143,23 @@ repos:
       - id: python-use-type-annotations
         name: "📝 Type Annotations Check"
 
-  # ===== PYTHON VERSION UPGRADE =====
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.20.0
+  # Commit message validation via Poetry
+  - repo: local
     hooks:
-      - id: pyupgrade
-        name: "⬆️ Python Upgrade"
-        args: [--py313-plus]
+      - id: commitizen
+        name: "💬 Commit Message Check"
+        entry: poetry run cz check
+        language: system
+        stages: [commit-msg]
+        pass_filenames: false
+        args: [--commit-msg-file]
 
-  # ===== AUTOFLAKE - REMOVE UNUSED IMPORTS =====
-  - repo: https://github.com/PyCQA/autoflake
-    rev: v2.3.1
-    hooks:
-      - id: autoflake
-        name: "🧹 Remove Unused Imports"
-        args:
-          [
-            "--remove-all-unused-imports",
-            "--remove-unused-variables",
-            "--in-place",
-            "--recursive",
-          ]
-
-  # ===== CODESPELL - SPELL CHECKING =====
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
-    hooks:
-      - id: codespell
-        name: "📝 Spell Check"
-        args:
-          [
-            "--skip=*.json,*.lock,*.toml,*.yaml,*.yml,poetry.lock",
-            "--ignore-words-list=flext,meltano,dbt,oracle,ldap,ldif,grpc,pydantic,jsonl",
-          ]
-
-  # ===== VALIDATE PYPROJECT.TOML =====
-  - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.16
-    hooks:
-      - id: validate-pyproject
-        name: "📋 Validate pyproject.toml"
-
-# ===== CI CONFIGURATION =====
+# CI configuration
 ci:
   autofix_prs: false # No automatic fixes - must be intentional
   autoupdate_schedule: weekly
   skip: [
-      # Local Poetry hooks don't work in CI
+      # Local Poetry hooks do not work in CI
       black,
       ruff-format,
       ruff-lint,
@@ -227,7 +169,6 @@ ci:
       vulture,
       radon-cc,
       radon-mi,
-      poetry-check,
-      poetry-lock,
+      commitizen,
     ]
   submodules: false

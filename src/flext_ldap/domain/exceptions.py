@@ -8,42 +8,80 @@ Domain-specific exceptions for LDAP operations.
 
 from __future__ import annotations
 
+__all__ = [
+    "FlextLdapConnectionError",
+    # New FlextLdap prefixed exceptions
+    "FlextLdapDomainError",
+    "FlextLdapDuplicateError",
+    "FlextLdapEntityError",
+    "FlextLdapGroupError",
+    "FlextLdapNotFoundError",
+    "FlextLdapOperationError",
+    "FlextLdapServiceError",
+    "FlextLdapUserError",
+    "FlextLdapValidationError",
+    "LDAPConnectionError",
+    # Backward compatibility aliases
+    "LDAPDomainError",
+    "LDAPDuplicateError",
+    "LDAPEntityError",
+    "LDAPGroupError",
+    "LDAPNotFoundError",
+    "LDAPOperationError",
+    "LDAPServiceError",
+    "LDAPUserError",
+    "LDAPValidationError",
+]
 
-class LDAPDomainError(Exception):
+
+class FlextLdapDomainError(Exception):
     """Base exception for LDAP domain errors."""
 
 
-class LDAPEntityError(LDAPDomainError):
+class FlextLdapEntityError(FlextLdapDomainError):
     """Errors related to LDAP entity operations."""
 
 
-class LDAPUserError(LDAPEntityError):
+class FlextLdapUserError(FlextLdapEntityError):
     """Errors specific to LDAP user operations."""
 
 
-class LDAPGroupError(LDAPEntityError):
+class FlextLdapGroupError(FlextLdapEntityError):
     """Errors specific to LDAP group operations."""
 
 
-class LDAPConnectionError(LDAPEntityError):
+class FlextLdapConnectionError(FlextLdapEntityError):
     """Errors specific to LDAP connection operations."""
 
 
-class LDAPOperationError(LDAPEntityError):
+class FlextLdapOperationError(FlextLdapEntityError):
     """Errors specific to LDAP operation tracking."""
 
 
-class LDAPValidationError(LDAPDomainError):
+class FlextLdapValidationError(FlextLdapDomainError):
     """Validation errors for LDAP data."""
 
 
-class LDAPNotFoundError(LDAPDomainError):
+class FlextLdapNotFoundError(FlextLdapDomainError):
     """Error when LDAP entity is not found."""
 
 
-class LDAPDuplicateError(LDAPDomainError):
+class FlextLdapDuplicateError(FlextLdapDomainError):
     """Error when LDAP entity already exists."""
 
 
-class LDAPServiceError(LDAPDomainError):
+class FlextLdapServiceError(FlextLdapDomainError):
     """Errors related to high-level LDAP service operations."""
+
+
+# Backward compatibility aliases
+LDAPDomainError = FlextLdapDomainError
+LDAPEntityError = FlextLdapEntityError
+LDAPUserError = FlextLdapUserError
+LDAPGroupError = FlextLdapGroupError
+LDAPConnectionError = FlextLdapConnectionError
+LDAPOperationError = FlextLdapOperationError
+LDAPValidationError = FlextLdapValidationError
+LDAPNotFoundError = FlextLdapNotFoundError
+LDAPDuplicateError = FlextLdapDuplicateError
+LDAPServiceError = FlextLdapServiceError

@@ -276,6 +276,8 @@ codespell = "^2.3.0"
 pyupgrade = "^3.19.0"
 autoflake = "^2.3.1"
 types-ldap3 = "^2.9.13.20250622"
+detect-secrets = "^1.5.0"
+commitizen = "^4.8.3"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.4.0"
@@ -294,6 +296,7 @@ pytest-httpx = "^0.35.0"
 hypothesis = "^6.125.0"
 factory-boy = "^3.3.1"
 faker = "^37.4.0"
+python-ldap = "^3.4.4"
 
 [tool.poetry.group.typings.dependencies]
 types-ldap3 = "^2.9.13.20250622"

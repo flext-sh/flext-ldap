@@ -10,16 +10,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import AbstractEntity, DomainAggregateRoot
-
-from flext_ldap.domain.events import LDAPConnectionEstablished
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
+from flext_core import FlextAggregateRoot, FlextEntity
 
 if TYPE_CHECKING:
-    from flext_ldap.domain.entities import LDAPEntry
+    from flext_ldap.domain.entities import FlextLdapEntry
     from flext_ldap.domain.values import DistinguishedName
 
 
-class DirectoryAggregate(DomainAggregateRoot):
+class FlextLdapDirectoryAggregate(FlextAggregateRoot):
     """LDAP Directory Aggregate Root.
 
     Manages the consistency boundary for LDAP directory operations.
@@ -30,28 +29,48 @@ class DirectoryAggregate(DomainAggregateRoot):
     connection_id: str | None = None
     is_connected: bool = False
 
-    def establish_connection(self, connection_id: str) -> None:
+    def establish_connection(self, connection_id: str) -> FlextLdapDirectoryAggregate:
         """Establish LDAP connection.
 
         Args:
             connection_id: Unique connection identifier
 
+        Returns:
+            New aggregate instance with connection established
+
         """
-        self.connection_id = connection_id
-        self.is_connected = True
-
-        # Raise domain event
-        event = LDAPConnectionEstablished(
-            aggregate_id=str(self.id),
-            connection_id=connection_id,
-            base_dn=str(self.base_dn),
+        # Create new aggregate state with connection
+        aggregate_data = self.model_dump()
+        aggregate_data.update(
+            {
+                "connection_id": connection_id,
+                "is_connected": True,
+                "version": self.version + 1,
+            },
         )
-        self.add_event(event)
 
-    def disconnect(self) -> None:
-        """Disconnect from LDAP directory."""
-        self.connection_id = None
-        self.is_connected = False
+        return self.__class__(**aggregate_data)
+
+        # Note: Event raising would be handled by domain event system
+        # For now, return the new state
+
+    def disconnect(self) -> FlextLdapDirectoryAggregate:
+        """Disconnect from LDAP directory.
+
+        Returns:
+            New aggregate instance with connection closed
+
+        """
+        aggregate_data = self.model_dump()
+        aggregate_data.update(
+            {
+                "connection_id": None,
+                "is_connected": False,
+                "version": self.version + 1,
+            },
+        )
+
+        return self.__class__(**aggregate_data)
 
     def can_perform_operation(self) -> bool:
         """Check if operations can be performed.
@@ -63,7 +82,7 @@ class DirectoryAggregate(DomainAggregateRoot):
         return self.is_connected and self.connection_id is not None
 
 
-class LDAPDirectory(AbstractEntity[str]):
+class FlextLdapDirectory(FlextEntity):
     """LDAP Directory Entity.
 
     Represents a logical LDAP directory structure with schema validation.
@@ -73,7 +92,7 @@ class LDAPDirectory(AbstractEntity[str]):
     object_classes: list[str]
     attributes: dict[str, str]
 
-    def validate_entry(self, entry: LDAPEntry) -> bool:
+    def validate_entry(self, entry: FlextLdapEntry) -> bool:
         """Validate entry against directory schema.
 
         Args:

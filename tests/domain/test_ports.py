@@ -15,22 +15,22 @@ import pytest
 from flext_ldap.domain import ports
 
 
-class TestLDAPConnectionService:
-    """Test suite for LDAPConnectionService interface."""
+class TestFlextLdapConnectionService:
+    """Test suite for FlextLdapConnectionService interface."""
 
     def test_is_abstract_base_class(self) -> None:
-        """Test that LDAPConnectionService is an abstract base class."""
-        assert issubclass(ports.LDAPConnectionService, ABC)
-        assert inspect.isabstract(ports.LDAPConnectionService)
+        """Test that FlextLdapConnectionService is an abstract base class."""
+        assert issubclass(ports.FlextLdapConnectionService, ABC)
+        assert inspect.isabstract(ports.FlextLdapConnectionService)
 
     def test_cannot_instantiate_directly(self) -> None:
-        """Test that LDAPConnectionService cannot be instantiated directly."""
+        """Test that FlextLdapConnectionService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.LDAPConnectionService()  # Intentionally trying to instantiate abstract class
+            ports.FlextLdapConnectionService()  # type: ignore[abstract]  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""
-        abstract_methods = ports.LDAPConnectionService.__abstractmethods__
+        abstract_methods = ports.FlextLdapConnectionService.__abstractmethods__
         expected_methods = {
             "connect",
             "disconnect",
@@ -45,21 +45,21 @@ class TestLDAPConnectionService:
     def test_method_signatures(self) -> None:
         """Test that abstract method signatures are correct."""
         # Test connect method signature
-        connect_sig = inspect.signature(ports.LDAPConnectionService.connect)
+        connect_sig = inspect.signature(ports.FlextLdapConnectionService.connect)
         assert "self" in connect_sig.parameters
         assert "server_url" in connect_sig.parameters
         assert "bind_dn" in connect_sig.parameters
         assert "password" in connect_sig.parameters
 
         # Test disconnect method signature
-        disconnect_sig = inspect.signature(ports.LDAPConnectionService.disconnect)
+        disconnect_sig = inspect.signature(ports.FlextLdapConnectionService.disconnect)
         assert "self" in disconnect_sig.parameters
         assert "connection" in disconnect_sig.parameters
 
     def test_concrete_implementation_works(self) -> None:
         """Test that concrete implementation can be created."""
 
-        class ConcreteConnectionService(ports.LDAPConnectionService):
+        class ConcreteConnectionService(ports.FlextLdapConnectionService):
             async def connect(
                 self,
                 server_url: str,
@@ -85,25 +85,25 @@ class TestLDAPConnectionService:
 
         # Should not raise any errors
         service = ConcreteConnectionService()
-        assert isinstance(service, ports.LDAPConnectionService)
+        assert isinstance(service, ports.FlextLdapConnectionService)
 
 
-class TestLDAPSearchService:
-    """Test suite for LDAPSearchService interface."""
+class TestFlextLdapSearchService:
+    """Test suite for FlextLdapSearchService interface."""
 
     def test_is_abstract_base_class(self) -> None:
-        """Test that LDAPSearchService is an abstract base class."""
-        assert issubclass(ports.LDAPSearchService, ABC)
-        assert inspect.isabstract(ports.LDAPSearchService)
+        """Test that FlextLdapSearchService is an abstract base class."""
+        assert issubclass(ports.FlextLdapSearchService, ABC)
+        assert inspect.isabstract(ports.FlextLdapSearchService)
 
     def test_cannot_instantiate_directly(self) -> None:
-        """Test that LDAPSearchService cannot be instantiated directly."""
+        """Test that FlextLdapSearchService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.LDAPSearchService()  # Intentionally trying to instantiate abstract class
+            ports.FlextLdapSearchService()  # type: ignore[abstract]  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""
-        abstract_methods = ports.LDAPSearchService.__abstractmethods__
+        abstract_methods = ports.FlextLdapSearchService.__abstractmethods__
         expected_methods = {"search", "search_users"}
 
         assert abstract_methods == expected_methods
@@ -111,7 +111,7 @@ class TestLDAPSearchService:
     def test_method_signatures(self) -> None:
         """Test that abstract method signatures are correct."""
         # Test search method signature
-        search_sig = inspect.signature(ports.LDAPSearchService.search)
+        search_sig = inspect.signature(ports.FlextLdapSearchService.search)
         assert "self" in search_sig.parameters
         assert "connection" in search_sig.parameters
         assert "base_dn" in search_sig.parameters
@@ -122,7 +122,7 @@ class TestLDAPSearchService:
     def test_concrete_implementation_works(self) -> None:
         """Test that concrete implementation can be created."""
 
-        class ConcreteSearchService(ports.LDAPSearchService):
+        class ConcreteSearchService(ports.FlextLdapSearchService):
             async def search(
                 self,
                 connection: Any,
@@ -143,25 +143,25 @@ class TestLDAPSearchService:
 
         # Should not raise any errors
         service = ConcreteSearchService()
-        assert isinstance(service, ports.LDAPSearchService)
+        assert isinstance(service, ports.FlextLdapSearchService)
 
 
-class TestLDAPUserService:
-    """Test suite for LDAPUserService interface."""
+class TestFlextLdapUserService:
+    """Test suite for FlextLdapUserService interface."""
 
     def test_is_abstract_base_class(self) -> None:
-        """Test that LDAPUserService is an abstract base class."""
-        assert issubclass(ports.LDAPUserService, ABC)
-        assert inspect.isabstract(ports.LDAPUserService)
+        """Test that FlextLdapUserService is an abstract base class."""
+        assert issubclass(ports.FlextLdapUserService, ABC)
+        assert inspect.isabstract(ports.FlextLdapUserService)
 
     def test_cannot_instantiate_directly(self) -> None:
-        """Test that LDAPUserService cannot be instantiated directly."""
+        """Test that FlextLdapUserService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.LDAPUserService()  # Intentionally trying to instantiate abstract class
+            ports.FlextLdapUserService()  # type: ignore[abstract]  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""
-        abstract_methods = ports.LDAPUserService.__abstractmethods__
+        abstract_methods = ports.FlextLdapUserService.__abstractmethods__
         expected_methods = {
             "create_user",
             "get_user",
@@ -175,7 +175,7 @@ class TestLDAPUserService:
     def test_method_signatures(self) -> None:
         """Test that abstract method signatures are correct."""
         # Test create_user method signature
-        create_sig = inspect.signature(ports.LDAPUserService.create_user)
+        create_sig = inspect.signature(ports.FlextLdapUserService.create_user)
         assert "self" in create_sig.parameters
         assert "connection" in create_sig.parameters
         assert "dn" in create_sig.parameters
@@ -184,7 +184,7 @@ class TestLDAPUserService:
     def test_concrete_implementation_works(self) -> None:
         """Test that concrete implementation can be created."""
 
-        class ConcreteUserService(ports.LDAPUserService):
+        class ConcreteUserService(ports.FlextLdapUserService):
             async def create_user(
                 self,
                 connection: Any,
@@ -217,25 +217,25 @@ class TestLDAPUserService:
 
         # Should not raise any errors
         service = ConcreteUserService()
-        assert isinstance(service, ports.LDAPUserService)
+        assert isinstance(service, ports.FlextLdapUserService)
 
 
-class TestLDAPSchemaService:
-    """Test suite for LDAPSchemaService interface."""
+class TestFlextLdapSchemaService:
+    """Test suite for FlextLdapSchemaService interface."""
 
     def test_is_abstract_base_class(self) -> None:
-        """Test that LDAPSchemaService is an abstract base class."""
-        assert issubclass(ports.LDAPSchemaService, ABC)
-        assert inspect.isabstract(ports.LDAPSchemaService)
+        """Test that FlextLdapSchemaService is an abstract base class."""
+        assert issubclass(ports.FlextLdapSchemaService, ABC)
+        assert inspect.isabstract(ports.FlextLdapSchemaService)
 
     def test_cannot_instantiate_directly(self) -> None:
-        """Test that LDAPSchemaService cannot be instantiated directly."""
+        """Test that FlextLdapSchemaService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.LDAPSchemaService()  # Intentionally trying to instantiate abstract class
+            ports.FlextLdapSchemaService()  # type: ignore[abstract]  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""
-        abstract_methods = ports.LDAPSchemaService.__abstractmethods__
+        abstract_methods = ports.FlextLdapSchemaService.__abstractmethods__
         expected_methods = {"get_schema", "validate_entry"}
 
         assert abstract_methods == expected_methods
@@ -243,7 +243,7 @@ class TestLDAPSchemaService:
     def test_concrete_implementation_works(self) -> None:
         """Test that concrete implementation can be created."""
 
-        class ConcreteSchemaService(ports.LDAPSchemaService):
+        class ConcreteSchemaService(ports.FlextLdapSchemaService):
             async def get_schema(self, connection: Any) -> Any:
                 return None
 
@@ -257,25 +257,25 @@ class TestLDAPSchemaService:
 
         # Should not raise any errors
         service = ConcreteSchemaService()
-        assert isinstance(service, ports.LDAPSchemaService)
+        assert isinstance(service, ports.FlextLdapSchemaService)
 
 
-class TestLDAPMigrationService:
-    """Test suite for LDAPMigrationService interface."""
+class TestFlextLdapMigrationService:
+    """Test suite for FlextLdapMigrationService interface."""
 
     def test_is_abstract_base_class(self) -> None:
-        """Test that LDAPMigrationService is an abstract base class."""
-        assert issubclass(ports.LDAPMigrationService, ABC)
-        assert inspect.isabstract(ports.LDAPMigrationService)
+        """Test that FlextLdapMigrationService is an abstract base class."""
+        assert issubclass(ports.FlextLdapMigrationService, ABC)
+        assert inspect.isabstract(ports.FlextLdapMigrationService)
 
     def test_cannot_instantiate_directly(self) -> None:
-        """Test that LDAPMigrationService cannot be instantiated directly."""
+        """Test that FlextLdapMigrationService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.LDAPMigrationService()  # Intentionally trying to instantiate abstract class
+            ports.FlextLdapMigrationService()  # type: ignore[abstract]  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""
-        abstract_methods = ports.LDAPMigrationService.__abstractmethods__
+        abstract_methods = ports.FlextLdapMigrationService.__abstractmethods__
         expected_methods = {"export_entries", "import_entries", "migrate_users"}
 
         assert abstract_methods == expected_methods
@@ -283,7 +283,7 @@ class TestLDAPMigrationService:
     def test_method_signatures(self) -> None:
         """Test that abstract method signatures are correct."""
         # Test export_entries method signature
-        export_sig = inspect.signature(ports.LDAPMigrationService.export_entries)
+        export_sig = inspect.signature(ports.FlextLdapMigrationService.export_entries)
         assert "self" in export_sig.parameters
         assert "connection" in export_sig.parameters
         assert "base_dn" in export_sig.parameters
@@ -292,7 +292,7 @@ class TestLDAPMigrationService:
     def test_concrete_implementation_works(self) -> None:
         """Test that concrete implementation can be created."""
 
-        class ConcreteMigrationService(ports.LDAPMigrationService):
+        class ConcreteMigrationService(ports.FlextLdapMigrationService):
             async def export_entries(
                 self,
                 connection: Any,
@@ -319,7 +319,7 @@ class TestLDAPMigrationService:
 
         # Should not raise any errors
         service = ConcreteMigrationService()
-        assert isinstance(service, ports.LDAPMigrationService)
+        assert isinstance(service, ports.FlextLdapMigrationService)
 
 
 class TestPortsModule:
@@ -328,11 +328,11 @@ class TestPortsModule:
     def test_all_services_defined(self) -> None:
         """Test that all expected service interfaces are defined."""
         expected_services = [
-            "LDAPConnectionService",
-            "LDAPSearchService",
-            "LDAPUserService",
-            "LDAPSchemaService",
-            "LDAPMigrationService",
+            "FlextLdapConnectionService",
+            "FlextLdapSearchService",
+            "FlextLdapUserService",
+            "FlextLdapSchemaService",
+            "FlextLdapMigrationService",
         ]
 
         for service_name in expected_services:
@@ -363,8 +363,8 @@ class TestPortsModule:
         import flext_ldap.domain.ports
 
         # Test that the module has the expected structure
-        assert hasattr(flext_ldap.domain.ports, "LDAPConnectionService")
-        assert hasattr(flext_ldap.domain.ports, "LDAPSearchService")
-        assert hasattr(flext_ldap.domain.ports, "LDAPUserService")
-        assert hasattr(flext_ldap.domain.ports, "LDAPSchemaService")
-        assert hasattr(flext_ldap.domain.ports, "LDAPMigrationService")
+        assert hasattr(flext_ldap.domain.ports, "FlextLdapConnectionService")
+        assert hasattr(flext_ldap.domain.ports, "FlextLdapSearchService")
+        assert hasattr(flext_ldap.domain.ports, "FlextLdapUserService")
+        assert hasattr(flext_ldap.domain.ports, "FlextLdapSchemaService")
+        assert hasattr(flext_ldap.domain.ports, "FlextLdapMigrationService")

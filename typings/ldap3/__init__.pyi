@@ -41,6 +41,7 @@ class Connection:
         auto_bind: bool = False,
         authentication: str | None = None,
         client_strategy: str | None = None,
+        raise_exceptions: bool = False,
     ) -> None: ...
     def bind(self) -> bool: ...
     def unbind(self) -> bool: ...
@@ -53,11 +54,18 @@ class Connection:
         size_limit: int = 0,
         time_limit: int = 0,
     ) -> bool: ...
+    def add(
+        self,
+        dn: str,
+        object_class: str | list[str] | None = None,
+        attributes: dict[str, Any] | None = None,
+    ) -> bool: ...
     def modify(
         self,
         dn: str,
         changes: dict[str, list[tuple[int, Any]]],
     ) -> bool: ...
+    def delete(self, dn: str) -> bool: ...
 
 class Entry:
     entry_dn: str

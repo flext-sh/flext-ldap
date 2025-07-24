@@ -7,13 +7,25 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-# Use centralized models from flext-core - NO DIRECT PYDANTIC IMPORTS
-from flext_core import DomainValueObject, Field
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
+from flext_core import FlextValueObject
 
-__all__ = ["ExtendedLDAPEntry", "LDAPEntry", "LDAPFilter", "LDAPScope"]
+# Import Field from pydantic directly for this file
+from pydantic import Field
+
+__all__ = [
+    # Backward compatibility aliases
+    "ExtendedLDAPEntry",
+    # New FlextLdap prefixed classes
+    "FlextLdapExtendedEntry",
+    "FlextLdapFilter",
+    "FlextLdapFilter",
+    "FlextLdapScope",
+    "LDAPScope",
+]
 
 
-class LDAPScope(StrEnum):
+class FlextLdapScope(StrEnum):
     """LDAP search scope using flext-core StrEnum."""
 
     BASE = "BASE"
@@ -25,7 +37,7 @@ class LDAPScope(StrEnum):
     SUBTREE = "SUB"  # Map SUBTREE to SUB
 
 
-class ExtendedLDAPEntry(DomainValueObject):
+class FlextLdapExtendedEntry(FlextValueObject):
     """Extended LDAP entry with additional utility methods using flext-core patterns."""
 
     dn: str = Field(..., description="Distinguished Name")
@@ -142,18 +154,25 @@ class ExtendedLDAPEntry(DomainValueObject):
             ),
         )
 
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for LDAP extended entry."""
+        if not self.dn:
+            raise ValueError("LDAP entry must have a distinguished name")
+        if not isinstance(self.attributes, dict):
+            raise TypeError("LDAP attributes must be a dictionary")
 
-# Use ExtendedLDAPEntry as the default LDAPEntry for backward compatibility
-LDAPEntry = ExtendedLDAPEntry
+
+# Use FlextLdapExtendedEntry as the default LDAPEntry for backward compatibility
+LDAPEntry = FlextLdapExtendedEntry
 
 
-class LDAPFilter(DomainValueObject):
+class FlextLdapFilter(FlextValueObject):
     """LDAP filter with validation using flext-core patterns."""
 
     filter_string: str = Field(..., description="LDAP filter string")
 
     @classmethod
-    def equals(cls, attribute: str, value: str) -> LDAPFilter:
+    def equals(cls, attribute: str, value: str) -> FlextLdapFilter:
         """Create an equals filter.
 
         Args:
@@ -161,13 +180,13 @@ class LDAPFilter(DomainValueObject):
             value: Value to match exactly
 
         Returns:
-            LDAPFilter for exact match
+            FlextLdapFilter for exact match
 
         """
         return cls(filter_string=f"({attribute}={value})")
 
     @classmethod
-    def contains(cls, attribute: str, value: str) -> LDAPFilter:
+    def contains(cls, attribute: str, value: str) -> FlextLdapFilter:
         """Create a contains filter.
 
         Args:
@@ -175,13 +194,13 @@ class LDAPFilter(DomainValueObject):
             value: Value that must be contained
 
         Returns:
-            LDAPFilter for substring match
+            FlextLdapFilter for substring match
 
         """
         return cls(filter_string=f"({attribute}=*{value}*)")
 
     @classmethod
-    def starts_with(cls, attribute: str, value: str) -> LDAPFilter:
+    def starts_with(cls, attribute: str, value: str) -> FlextLdapFilter:
         """Create a starts-with filter.
 
         Args:
@@ -189,13 +208,13 @@ class LDAPFilter(DomainValueObject):
             value: Value that must be at the start
 
         Returns:
-            LDAPFilter for prefix match
+            FlextLdapFilter for prefix match
 
         """
         return cls(filter_string=f"({attribute}={value}*)")
 
     @classmethod
-    def ends_with(cls, attribute: str, value: str) -> LDAPFilter:
+    def ends_with(cls, attribute: str, value: str) -> FlextLdapFilter:
         """Create an ends-with filter.
 
         Args:
@@ -203,26 +222,26 @@ class LDAPFilter(DomainValueObject):
             value: Value that must be at the end
 
         Returns:
-            LDAPFilter for suffix match
+            FlextLdapFilter for suffix match
 
         """
         return cls(filter_string=f"({attribute}=*{value})")
 
     @classmethod
-    def present(cls, attribute: str) -> LDAPFilter:
+    def present(cls, attribute: str) -> FlextLdapFilter:
         """Create a presence filter.
 
         Args:
             attribute: LDAP attribute name
 
         Returns:
-            LDAPFilter that matches if attribute is present
+            FlextLdapFilter that matches if attribute is present
 
         """
         return cls(filter_string=f"({attribute}=*)")
 
     @classmethod
-    def not_equals(cls, attribute: str, value: str) -> LDAPFilter:
+    def not_equals(cls, attribute: str, value: str) -> FlextLdapFilter:
         """Create a not-equals filter.
 
         Args:
@@ -230,68 +249,68 @@ class LDAPFilter(DomainValueObject):
             value: Value that must not match
 
         Returns:
-            LDAPFilter for negated exact match
+            FlextLdapFilter for negated exact match
 
         """
         return cls(filter_string=f"(!({attribute}={value}))")
 
     @classmethod
-    def and_filter(cls, *filters: LDAPFilter) -> LDAPFilter:
+    def and_filter(cls, *filters: FlextLdapFilter) -> FlextLdapFilter:
         """Create an AND filter combining multiple filters.
 
         Args:
-            *filters: Variable number of LDAPFilter objects
+            *filters: Variable number of FlextLdapFilter objects
 
         Returns:
-            LDAPFilter that matches when all filters match
+            FlextLdapFilter that matches when all filters match
 
         """
         filter_list = [f.filter_string for f in filters]
         return cls(filter_string=f"(&{''.join(filter_list)})")
 
     @classmethod
-    def or_filter(cls, *filters: LDAPFilter) -> LDAPFilter:
+    def or_filter(cls, *filters: FlextLdapFilter) -> FlextLdapFilter:
         """Create an OR filter combining multiple filters.
 
         Args:
-            *filters: Variable number of LDAPFilter objects
+            *filters: Variable number of FlextLdapFilter objects
 
         Returns:
-            LDAPFilter that matches when any filter matches
+            FlextLdapFilter that matches when any filter matches
 
         """
         filter_list = [f.filter_string for f in filters]
         return cls(filter_string=f"(|{''.join(filter_list)})")
 
     @classmethod
-    def not_filter(cls, filter_obj: LDAPFilter) -> LDAPFilter:
+    def not_filter(cls, filter_obj: FlextLdapFilter) -> FlextLdapFilter:
         """Create a NOT filter negating another filter.
 
         Args:
-            filter_obj: LDAPFilter to negate
+            filter_obj: FlextLdapFilter to negate
 
         Returns:
-            LDAPFilter that matches when the input filter does not match
+            FlextLdapFilter that matches when the input filter does not match
 
         """
         return cls(filter_string=f"(!{filter_obj.filter_string})")
 
     @classmethod
-    def person_filter(cls) -> LDAPFilter:
+    def person_filter(cls) -> FlextLdapFilter:
         """Create a filter for person objects.
 
         Returns:
-            LDAPFilter that matches person object class
+            FlextLdapFilter that matches person object class
 
         """
         return cls(filter_string="(object_class=person)")
 
     @classmethod
-    def group_filter(cls) -> LDAPFilter:
+    def group_filter(cls) -> FlextLdapFilter:
         """Create a filter for group objects.
 
         Returns:
-            LDAPFilter that matches group object classes
+            FlextLdapFilter that matches group object classes
 
         """
         return cls.or_filter(
@@ -304,14 +323,29 @@ class LDAPFilter(DomainValueObject):
         """Return string representation of the LDAP filter."""
         return str(self.filter_string)
 
-    def __and__(self, other: LDAPFilter) -> LDAPFilter:
+    def __and__(self, other: FlextLdapFilter) -> FlextLdapFilter:
         """Combine filters with AND operation."""
         return self.and_filter(self, other)
 
-    def __or__(self, other: LDAPFilter) -> LDAPFilter:
+    def __or__(self, other: FlextLdapFilter) -> FlextLdapFilter:
         """Combine filters with OR operation."""
         return self.or_filter(self, other)
 
-    def __invert__(self) -> LDAPFilter:
+    def __invert__(self) -> FlextLdapFilter:
         """Invert filter with NOT operation."""
         return self.not_filter(self)
+
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for LDAP filter."""
+        if not self.filter_string:
+            raise ValueError("LDAP filter must have a filter string")
+        if not self.filter_string.startswith("(") or not self.filter_string.endswith(
+            ")",
+        ):
+            raise ValueError("LDAP filter string must be enclosed in parentheses")
+
+
+# Backward compatibility aliases
+LDAPScope = FlextLdapScope
+ExtendedLDAPEntry = FlextLdapExtendedEntry
+LDAPFilter = FlextLdapFilter

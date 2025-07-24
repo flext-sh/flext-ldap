@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from flext_ldap.config import FlextLDAPSettings
+from flext_ldap.config import FlextLdapSettings
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Generator
@@ -30,9 +30,9 @@ def set_test_environment() -> Generator[None]:
 
 
 @pytest.fixture
-def ldap_settings() -> FlextLDAPSettings:
+def ldap_settings() -> FlextLdapSettings:
     """Provide test LDAP settings."""
-    return FlextLDAPSettings()  # Use defaults for testing
+    return FlextLdapSettings()  # Use defaults for testing
 
 
 # LDAP test configuration
@@ -94,11 +94,17 @@ def ldap_test_data() -> dict[str, Any]:
 @pytest.fixture
 async def ldap_client(ldap_test_config: dict[str, Any]) -> AsyncGenerator[Any]:
     """LDAP client for testing."""
-    from flext_ldap.client import LDAPClient
-    from flext_ldap.config import LDAPConnectionConfig
+    from flext_ldap.client import FlextLdapClient
+    from flext_ldap.config import FlextLdapConnectionConfig
 
-    config = LDAPConnectionConfig(**ldap_test_config)
-    return LDAPClient(config)
+    config = FlextLdapConnectionConfig(**ldap_test_config)
+    client = FlextLdapClient(config)
+
+    try:
+        yield client
+    finally:
+        # Cleanup if needed
+        pass
 
     # Note: In real tests, this would connect to a test LDAP server
     # For unit tests, this can be mocked as needed
@@ -119,7 +125,7 @@ def pytest_configure(config: pytest.Config) -> None:
 @pytest.fixture
 async def ldap_connection_service() -> AsyncGenerator[Any]:
     """LDAP connection service for testing."""
-    # LDAPConnectionService is abstract, so use a mock for testing
+    # FlextLdapConnectionService is abstract, so use a mock for testing
     from unittest.mock import AsyncMock
 
     return AsyncMock()

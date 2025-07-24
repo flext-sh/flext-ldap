@@ -8,11 +8,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from flext_core import BaseConfig
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
+from flext_core import FlextValueObject
 from pydantic import Field, field_validator
 
 
-class LDAPConfig(BaseConfig):
+class FlextLdapConfig(FlextValueObject):
     """LDAP authentication configuration - consolidated pattern."""
 
     server_uri: str = Field(..., description="LDAP server URI")
@@ -31,6 +32,17 @@ class LDAPConfig(BaseConfig):
         default="(member={user_dn})",
         description="LDAP group search filter",
     )
+
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for LDAP configuration."""
+        if not self.server_uri:
+            raise ValueError("LDAP config must have server_uri")
+        if not self.bind_dn:
+            raise ValueError("LDAP config must have bind_dn")
+        if not self.base_dn:
+            raise ValueError("LDAP config must have base_dn")
+        if not self.server_uri.startswith(("ldap://", "ldaps://")):
+            raise ValueError("LDAP URI must start with ldap:// or ldaps://")
 
     @field_validator("server_uri")
     @classmethod
@@ -54,6 +66,6 @@ def validate_ldap_uri_field(v: Any) -> str:
 
 
 __all__ = [
-    "LDAPConfig",
+    "FlextLdapConfig",
     "validate_ldap_uri_field",
 ]

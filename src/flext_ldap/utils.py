@@ -10,7 +10,7 @@ from typing import Any, Protocol
 from urllib.parse import parse_qs, urlparse
 
 
-def escape_filter_chars(value: str) -> str:
+def flext_ldap_escape_filter_chars(value: str) -> str:
     """Escape special characters in LDAP filter values."""
     # Escape backslash first to avoid double escaping
     result = value.replace("\\", r"\5c")
@@ -29,12 +29,12 @@ def escape_filter_chars(value: str) -> str:
     return result
 
 
-def escape_filter_value(value: str) -> str:
-    """Escape filter value - alias for escape_filter_chars."""
-    return escape_filter_chars(value)
+def flext_ldap_escape_filter_value(value: str) -> str:
+    """Escape filter value - alias for flext_ldap_escape_filter_chars."""
+    return flext_ldap_escape_filter_chars(value)
 
 
-def parse_generalized_time(time_str: str) -> datetime:
+def flext_ldap_parse_generalized_time(time_str: str) -> datetime:
     """Parse LDAP generalized time format."""
     # Remove Z suffix if present
     tz = None
@@ -53,7 +53,7 @@ def parse_generalized_time(time_str: str) -> datetime:
     return dt
 
 
-def format_generalized_time(dt: datetime) -> str:
+def flext_ldap_format_generalized_time(dt: datetime) -> str:
     """Format datetime to LDAP generalized time format."""
     time_str = dt.strftime("%Y%m%d%H%M%S")
     if dt.tzinfo is not None:
@@ -61,7 +61,7 @@ def format_generalized_time(dt: datetime) -> str:
     return time_str
 
 
-def validate_dn(dn: str) -> bool:
+def flext_ldap_validate_dn(dn: str) -> bool:
     """Validate distinguished name format."""
     if not dn:
         return False
@@ -70,7 +70,7 @@ def validate_dn(dn: str) -> bool:
     return all("=" in part.strip() for part in parts)
 
 
-def normalize_dn(dn: str) -> str:
+def flext_ldap_normalize_dn(dn: str) -> str:
     """Normalize distinguished name for comparison."""
     parts = []
     for raw_part in dn.split(","):
@@ -82,7 +82,7 @@ def normalize_dn(dn: str) -> str:
     return ",".join(parts)
 
 
-def split_dn(dn: str) -> list[str]:
+def flext_ldap_split_dn(dn: str) -> list[str]:
     """Split distinguished name into components."""
     if not dn:
         return []
@@ -90,19 +90,19 @@ def split_dn(dn: str) -> list[str]:
     return [part.strip() for part in dn.split(",") if part.strip()]
 
 
-def compare_dns(dn1: str, dn2: str) -> bool:
+def flext_ldap_compare_dns(dn1: str, dn2: str) -> bool:
     """Compare two distinguished names after normalization."""
-    return normalize_dn(dn1) == normalize_dn(dn2)
+    return flext_ldap_normalize_dn(dn1) == flext_ldap_normalize_dn(dn2)
 
 
-def build_filter(operator: str, conditions: dict[str, str]) -> str:
+def flext_ldap_build_filter(operator: str, conditions: dict[str, str]) -> str:
     """Build LDAP filter from conditions."""
     if not conditions:
         return ""
 
     filters = []
     for attr, value in conditions.items():
-        escaped_value = escape_filter_chars(value)
+        escaped_value = flext_ldap_escape_filter_chars(value)
         filters.append(f"({attr}={escaped_value})")
 
     if len(filters) == 1 and operator == "not":
@@ -116,7 +116,7 @@ def build_filter(operator: str, conditions: dict[str, str]) -> str:
     return ""
 
 
-def is_valid_ldap_url(url: str) -> bool:
+def flext_ldap_is_valid_url(url: str) -> bool:
     """Check if URL is a valid LDAP URL."""
     try:
         parsed = urlparse(url)
@@ -126,7 +126,7 @@ def is_valid_ldap_url(url: str) -> bool:
         return parsed.scheme in {"ldap", "ldaps"}
 
 
-def parse_ldap_url(url: str) -> dict[str, Any]:
+def flext_ldap_parse_url(url: str) -> dict[str, Any]:
     """Parse LDAP URL into components."""
     parsed = urlparse(url)
 
@@ -157,7 +157,7 @@ def parse_ldap_url(url: str) -> dict[str, Any]:
     return result
 
 
-def parse_dn(dn: str) -> list[dict[str, str]]:
+def flext_ldap_parse_dn(dn: str) -> list[dict[str, str]]:
     """Parse distinguished name into components."""
     components = []
     parts = dn.split(",")
@@ -171,7 +171,7 @@ def parse_dn(dn: str) -> list[dict[str, str]]:
     return components
 
 
-def build_dn(components: list[dict[str, str]]) -> str:
+def flext_ldap_build_dn(components: list[dict[str, str]]) -> str:
     """Build distinguished name from components."""
     parts = []
     for component in components:
@@ -182,12 +182,12 @@ def build_dn(components: list[dict[str, str]]) -> str:
     return ",".join(parts)
 
 
-def normalize_attribute_name(name: str) -> str:
+def flext_ldap_normalize_attribute_name(name: str) -> str:
     """Normalize attribute name."""
     return name.lower().strip()
 
 
-class TimestampProtocol(Protocol):
+class FlextLdapTimestampProtocol(Protocol):
     """Protocol for objects with strftime method."""
 
     def strftime(self, fmt: str) -> str:
@@ -195,8 +195,14 @@ class TimestampProtocol(Protocol):
         ...
 
 
-def format_ldap_timestamp(timestamp: datetime | TimestampProtocol | str) -> str:
+def flext_ldap_format_timestamp(
+    timestamp: datetime | FlextLdapTimestampProtocol | str,
+) -> str:
     """Format timestamp for LDAP."""
     if isinstance(timestamp, str):
         return timestamp
     return timestamp.strftime("%Y%m%d%H%M%SZ")
+
+
+# Backward compatibility alias
+TimestampProtocol = FlextLdapTimestampProtocol

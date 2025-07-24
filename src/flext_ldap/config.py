@@ -4,12 +4,17 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from flext_core import BaseConfig, BaseSettings, DomainValueObject, Field
-from pydantic import field_validator  # Only decorator, not Field
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
+from flext_core import FlextCoreSettings, FlextLogLevel, FlextValueObject
+from pydantic import Field, field_validator
 from pydantic_settings import SettingsConfigDict
 
+# Use FlextValueObject as base for all config types
+BaseConfig = FlextCoreSettings
+BaseSettings = FlextCoreSettings
 
-class LDAPConstants:
+
+class FlextLdapConstants:
     """Constants for LDAP configuration."""
 
     DEFAULT_TIMEOUT_SECONDS: int = 30
@@ -29,22 +34,22 @@ type ProjectName = str
 type Version = str
 
 
-class LDAPConnectionConfig(DomainValueObject):
+class FlextLdapConnectionConfig(FlextValueObject):
     """LDAP connection configuration using flext-core patterns."""
 
     server: str = Field(default="localhost")
     port: int = Field(default=389, ge=1, le=65535)
     use_ssl: bool = Field(default=False)
     timeout_seconds: int = Field(
-        default=LDAPConstants.DEFAULT_TIMEOUT_SECONDS,
+        default=FlextLdapConstants.DEFAULT_TIMEOUT_SECONDS,
         ge=1,
-        le=LDAPConstants.MAX_TIMEOUT_SECONDS,
+        le=FlextLdapConstants.MAX_TIMEOUT_SECONDS,
     )
 
     pool_size: int = Field(
-        default=LDAPConstants.DEFAULT_POOL_SIZE,
+        default=FlextLdapConstants.DEFAULT_POOL_SIZE,
         ge=1,
-        le=LDAPConstants.MAX_POOL_SIZE,
+        le=FlextLdapConstants.MAX_POOL_SIZE,
     )
 
     enable_connection_pooling: bool = Field(default=True)
@@ -69,8 +74,19 @@ class LDAPConnectionConfig(DomainValueObject):
             raise ValueError(msg)
         return v.strip()
 
+    def validate_domain_rules(self) -> None:
+        """Validate business rules for LDAP connection configuration."""
+        if not self.server:
+            raise ValueError("LDAP connection must have a server")
+        if self.port <= 0 or self.port > 65535:
+            raise ValueError("Port must be between 1 and 65535")
+        if self.timeout_seconds <= 0:
+            raise ValueError("Timeout must be positive")
+        if self.pool_size <= 0:
+            raise ValueError("Pool size must be positive")
 
-class LDAPAuthConfig(DomainValueObject):
+
+class FlextLdapAuthConfig(FlextValueObject):
     """LDAP authentication configuration using flext-core patterns."""
 
     bind_dn: str = Field(default="")
@@ -93,8 +109,15 @@ class LDAPAuthConfig(DomainValueObject):
         """
         return v.strip() if v else ""
 
+    def validate_domain_rules(self) -> None:
+        """Validate business rules for LDAP authentication configuration."""
+        if not self.use_anonymous_bind and not self.bind_dn:
+            raise ValueError("Bind DN is required when not using anonymous bind")
+        if self.bind_dn and not self.bind_password and not self.use_anonymous_bind:
+            raise ValueError("Bind password is required when bind DN is provided")
 
-class LDAPSearchConfig(DomainValueObject):
+
+class FlextLdapSearchConfig(FlextValueObject):
     """LDAP search configuration using flext-core patterns."""
 
     base_dn: str = Field(default="")
@@ -107,35 +130,53 @@ class LDAPSearchConfig(DomainValueObject):
 
     paged_search: bool = Field(default=True)
     page_size: int = Field(
-        default=LDAPConstants.DEFAULT_PAGE_SIZE,
+        default=FlextLdapConstants.DEFAULT_PAGE_SIZE,
         ge=1,
-        le=LDAPConstants.MAX_PAGE_SIZE,
+        le=FlextLdapConstants.MAX_PAGE_SIZE,
     )
 
     enable_referral_chasing: bool = Field(default=False)
     max_referral_hops: int = Field(default=5, ge=1, le=20)
 
+    def validate_domain_rules(self) -> None:
+        """Validate business rules for LDAP search configuration."""
+        if self.size_limit < 0:
+            raise ValueError("Size limit must be non-negative")
+        if self.time_limit < 0:
+            raise ValueError("Time limit must be non-negative")
+        if self.page_size <= 0:
+            raise ValueError("Page size must be positive")
 
-class LDAPOperationConfig(DomainValueObject):
+
+class FlextLdapOperationConfig(FlextValueObject):
     """LDAP operation configuration using flext-core patterns."""
 
     max_retries: int = Field(
-        default=LDAPConstants.DEFAULT_MAX_RETRIES,
+        default=FlextLdapConstants.DEFAULT_MAX_RETRIES,
         ge=0,
-        le=LDAPConstants.MAX_RETRIES,
+        le=FlextLdapConstants.MAX_RETRIES,
     )
 
     retry_delay: float = Field(
-        default=LDAPConstants.DEFAULT_RETRY_DELAY,
+        default=FlextLdapConstants.DEFAULT_RETRY_DELAY,
         ge=0.1,
-        le=LDAPConstants.MAX_RETRY_DELAY,
+        le=FlextLdapConstants.MAX_RETRY_DELAY,
     )
 
     enable_transactions: bool = Field(default=False)
     batch_size: int = Field(default=100, ge=1, le=10000)
 
+    def validate_domain_rules(self) -> None:
+        """Validate business rules for LDAP operation configuration."""
+        if self.max_retries < 0:
+            raise ValueError("Max retries must be non-negative")
+        if self.retry_delay <= 0:
+            raise ValueError("Retry delay must be positive")
+        if self.batch_size <= 0:
+            raise ValueError("Batch size must be positive")
 
-class LDAPSecurityConfig(DomainValueObject):
+
+class FlextLdapSecurityConfig(FlextValueObject):
     """LDAP security configuration using flext-core patterns."""
 
     tls_validation: Literal["strict", "permissive", "disabled"] = Field(
@@ -148,19 +189,43 @@ class LDAPSecurityConfig(DomainValueObject):
     enable_start_tls: bool = Field(default=False)
     tls_version: str | None = Field(default=None)
 
+    def validate_domain_rules(self) -> None:
+        """Validate business rules for LDAP security configuration."""
+        if self.tls_validation not in ("strict", "permissive", "disabled"):
+            raise ValueError(
+                "TLS validation must be 'strict', 'permissive', or 'disabled'",
+            )
+        if self.client_cert_file and not self.client_key_file:
+            raise ValueError(
+                "Client key file is required when client cert file is provided",
+            )
+        if self.client_key_file and not self.client_cert_file:
+            raise ValueError(
+                "Client cert file is required when client key file is provided",
+            )
 
-class LDAPLoggingConfig(BaseConfig):
+
+class FlextLdapLoggingConfig(BaseConfig):
     """LDAP logging configuration using flext-core patterns."""
 
-    log_level: LogLevelLiteral = Field(default="INFO")
+    log_level: FlextLogLevel = Field(default=FlextLogLevel.INFO)
     enable_connection_logging: bool = Field(default=False)
     enable_operation_logging: bool = Field(default=True)
 
     log_sensitive_data: bool = Field(default=False)
     structured_logging: bool = Field(default=True)
 
+    @field_validator("log_level", mode="before")
+    @classmethod
+    def normalize_log_level(cls, v: Any) -> str:
+        """Normalize log level to uppercase for FlextLogLevel enum."""
+        if isinstance(v, str):
+            return v.upper()
+        # Return as string for enum validation
+        return str(v)
 
-class FlextLDAPSettings(BaseSettings):
+
+class FlextLdapSettings(BaseSettings):
     """FLEXT-LDAP comprehensive configuration using flext-core patterns."""
 
     # Project identification
@@ -170,12 +235,16 @@ class FlextLDAPSettings(BaseSettings):
     project_version: Version = Field(default="0.7.0")
 
     # Configuration sections
-    connection: LDAPConnectionConfig = Field(default_factory=LDAPConnectionConfig)
-    auth: LDAPAuthConfig = Field(default_factory=LDAPAuthConfig)
-    search: LDAPSearchConfig = Field(default_factory=LDAPSearchConfig)
-    operations: LDAPOperationConfig = Field(default_factory=LDAPOperationConfig)
-    security: LDAPSecurityConfig = Field(default_factory=LDAPSecurityConfig)
-    logging: LDAPLoggingConfig = Field(default_factory=LDAPLoggingConfig)
+    connection: FlextLdapConnectionConfig = Field(
+        default_factory=FlextLdapConnectionConfig,
+    )
+    auth: FlextLdapAuthConfig = Field(default_factory=FlextLdapAuthConfig)
+    search: FlextLdapSearchConfig = Field(default_factory=FlextLdapSearchConfig)
+    operations: FlextLdapOperationConfig = Field(
+        default_factory=FlextLdapOperationConfig,
+    )
+    security: FlextLdapSecurityConfig = Field(default_factory=FlextLdapSecurityConfig)
+    logging: FlextLdapLoggingConfig = Field(default_factory=FlextLdapLoggingConfig)
 
     # Global settings
     enable_debug_mode: bool = Field(default=False)
@@ -206,7 +275,7 @@ class FlextLDAPSettings(BaseSettings):
         }
 
 
-def create_development_config(**overrides: Any) -> FlextLDAPSettings:
+def create_development_config(**overrides: Any) -> FlextLdapSettings:
     """Create development configuration with sensible defaults."""
     defaults = {
         "enable_debug_mode": True,
@@ -228,4 +297,4 @@ def create_development_config(**overrides: Any) -> FlextLDAPSettings:
     }
     defaults.update(overrides)
 
-    return FlextLDAPSettings()  # Use default environment-based configuration
+    return FlextLdapSettings()  # Use default environment-based configuration

@@ -15,10 +15,11 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
-from flext_core import DomainEntity
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
+from flext_core import FlextEntity
 
 
-class CertificateValidationResult(Enum):
+class FlextLdapCertificateValidationResult(Enum):
     """Certificate validation result types."""
 
     VALID = "valid"
@@ -30,7 +31,7 @@ class CertificateValidationResult(Enum):
     UNKNOWN_CA = "unknown_ca"
 
 
-class CertificateInfo(DomainEntity):
+class FlextLdapCertificateInfo(FlextEntity):
     """Certificate information domain entity."""
 
     subject: str
@@ -75,8 +76,21 @@ class CertificateInfo(DomainEntity):
 
         return False
 
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for certificate information."""
+        if not self.subject:
+            raise ValueError("Certificate must have a subject")
+        if not self.issuer:
+            raise ValueError("Certificate must have an issuer")
+        if not self.serial_number:
+            raise ValueError("Certificate must have a serial number")
+        if self.not_after <= self.not_before:
+            raise ValueError("Certificate not_after must be after not_before")
+        if self.public_key_size <= 0:
+            raise ValueError("Public key size must be positive")
 
-class CertificateValidationContext(DomainEntity):
+
+class FlextLdapCertificateValidationContext(FlextEntity):
     """Context for certificate validation."""
 
     hostname: str
@@ -99,13 +113,24 @@ class CertificateValidationContext(DomainEntity):
             msg = "Hostname cannot be empty"
             raise ValueError(msg)
 
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for certificate validation context."""
+        if not self.hostname:
+            raise ValueError("Certificate validation context must have a hostname")
+        if self.port <= 0 or self.port > 65535:
+            raise ValueError("Port must be between 1 and 65535")
+        if self.minimum_tls_version not in ("TLSv1.2", "TLSv1.3"):
+            raise ValueError("Minimum TLS version must be TLSv1.2 or TLSv1.3")
+        if self.maximum_tls_version not in ("TLSv1.2", "TLSv1.3"):
+            raise ValueError("Maximum TLS version must be TLSv1.2 or TLSv1.3")
 
-class ValidationResult(DomainEntity):
+
+class FlextLdapValidationResult(FlextEntity):
     """Certificate validation result."""
 
-    result_type: CertificateValidationResult | str
+    result_type: FlextLdapCertificateValidationResult | str
     message: str
-    certificate_info: CertificateInfo | None = None
+    certificate_info: FlextLdapCertificateInfo | None = None
     chain_length: int = 0
     validation_errors: list[str] = field(default_factory=list)
     validation_warnings: list[str] = field(default_factory=list)
@@ -114,7 +139,7 @@ class ValidationResult(DomainEntity):
     @property
     def is_valid(self) -> bool:
         """Check if validation result is valid."""
-        return self.result_type == CertificateValidationResult.VALID.value
+        return self.result_type == FlextLdapCertificateValidationResult.VALID
 
     @property
     def has_errors(self) -> bool:
@@ -126,8 +151,15 @@ class ValidationResult(DomainEntity):
         """Check if validation has warnings."""
         return len(self.validation_warnings) > 0
 
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for certificate validation result."""
+        if not self.message:
+            raise ValueError("ValidationResult must have a message")
+        if self.chain_length < 0:
+            raise ValueError("Chain length cannot be negative")
 
-class SSLContextConfig(DomainEntity):
+
+class FlextLdapSSLContextConfig(FlextEntity):
     """SSL/TLS context configuration."""
 
     verify_mode: str = "CERT_REQUIRED"
@@ -145,14 +177,52 @@ class SSLContextConfig(DomainEntity):
         """Post-initialization validation."""
         valid_verify_modes = ["CERT_NONE", "CERT_OPTIONAL", "CERT_REQUIRED"]
         if self.verify_mode not in valid_verify_modes:
-            msg = f"Invalid verify_mode: {self.verify_mode}. Must be one of {valid_verify_modes}"
+            msg = (
+                f"Invalid verify_mode: {self.verify_mode}. "
+                f"Must be one of {valid_verify_modes}"
+            )
             raise ValueError(msg)
 
         valid_versions = ["TLSv1.2", "TLSv1.3"]
         if self.minimum_version not in valid_versions:
-            msg = f"Invalid minimum_version: {self.minimum_version}. Must be one of {valid_versions}"
+            msg = (
+                f"Invalid minimum_version: {self.minimum_version}. "
+                f"Must be one of {valid_versions}"
+            )
             raise ValueError(msg)
 
         if self.maximum_version not in valid_versions:
-            msg = f"Invalid maximum_version: {self.maximum_version}. Must be one of {valid_versions}"
+            msg = (
+                f"Invalid maximum_version: {self.maximum_version}. "
+                f"Must be one of {valid_versions}"
+            )
             raise ValueError(msg)
+
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for SSL context configuration."""
+        valid_verify_modes = ["CERT_NONE", "CERT_OPTIONAL", "CERT_REQUIRED"]
+        if self.verify_mode not in valid_verify_modes:
+            raise ValueError(f"Invalid verify_mode: {self.verify_mode}")
+
+        valid_versions = ["TLSv1.2", "TLSv1.3"]
+        if self.minimum_version not in valid_versions:
+            raise ValueError(f"Invalid minimum_version: {self.minimum_version}")
+        if self.maximum_version not in valid_versions:
+            raise ValueError(f"Invalid maximum_version: {self.maximum_version}")
+
+        if self.client_cert_file and not self.client_key_file:
+            raise ValueError(
+                "Client key file is required when client cert file is provided",
+            )
+        if self.client_key_file and not self.client_cert_file:
+            raise ValueError(
+                "Client cert file is required when client key file is provided",
+            )
+
+
+# Backward compatibility aliases
+CertificateValidationResult = FlextLdapCertificateValidationResult
+CertificateInfo = FlextLdapCertificateInfo
+CertificateValidationContext = FlextLdapCertificateValidationContext
+ValidationResult = FlextLdapValidationResult
+SSLContextConfig = FlextLdapSSLContextConfig

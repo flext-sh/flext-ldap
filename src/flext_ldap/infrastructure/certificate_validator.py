@@ -18,7 +18,8 @@ from datetime import UTC, datetime
 from ssl import SSLError
 from typing import TYPE_CHECKING, Any
 
-from flext_core.domain.shared_types import ServiceResult
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
+from flext_core import FlextResult
 
 if TYPE_CHECKING:
     from flext_ldap.domain.security import (
@@ -45,7 +46,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class CertificateValidationService:
+class FlextLdapCertificateValidationService:
     """Certificate validation service implementation."""
 
     def __init__(self) -> None:
@@ -57,7 +58,7 @@ class CertificateValidationService:
         self,
         cert_chain: list[bytes],
         context: CertificateValidationContext,
-    ) -> ServiceResult[Any]:
+    ) -> FlextResult[Any]:
         """Validate a certificate chain."""
         try:
             # Import ValidationResult and required types
@@ -68,7 +69,7 @@ class CertificateValidationService:
 
             # Validate input
             if not cert_chain:
-                return ServiceResult.ok(
+                return FlextResult.ok(
                     ValidationResult(
                         result_type=CertificateValidationResult.MALFORMED,
                         message="Empty certificate chain provided",
@@ -82,7 +83,7 @@ class CertificateValidationService:
                     cert = x509.load_der_x509_certificate(cert_data)
                     certificates.append(cert)
                 except Exception as e:
-                    return ServiceResult.ok(
+                    return FlextResult.ok(
                         ValidationResult(
                             result_type=CertificateValidationResult.MALFORMED,
                             message=f"Failed to parse certificate: {e}",
@@ -94,7 +95,7 @@ class CertificateValidationService:
                 # Check expiration
                 now = datetime.now(UTC)
                 if cert.not_valid_after.replace(tzinfo=UTC) < now:
-                    return ServiceResult.ok(
+                    return FlextResult.ok(
                         ValidationResult(
                             result_type=CertificateValidationResult.EXPIRED,
                             message=f"Certificate expired at {cert.not_valid_after}",
@@ -102,10 +103,13 @@ class CertificateValidationService:
                     )
 
                 if cert.not_valid_before.replace(tzinfo=UTC) > now:
-                    return ServiceResult.ok(
+                    return FlextResult.ok(
                         ValidationResult(
                             result_type=CertificateValidationResult.EXPIRED,
-                            message=f"Certificate not yet valid until {cert.not_valid_before}",
+                            message=(
+                                f"Certificate not yet valid until "
+                                f"{cert.not_valid_before}"
+                            ),
                         ),
                     )
 
@@ -114,10 +118,13 @@ class CertificateValidationService:
                 leaf_cert = certificates[0]  # First certificate is the leaf
                 cert_info_result = await self._extract_certificate_info(leaf_cert)
                 if not cert_info_result.success:
-                    return ServiceResult.ok(
+                    return FlextResult.ok(
                         ValidationResult(
                             result_type=CertificateValidationResult.MALFORMED,
-                            message=f"Failed to extract certificate info: {cert_info_result.error}",
+                            message=(
+                                f"Failed to extract certificate info: "
+                                f"{cert_info_result.error}"
+                            ),
                         ),
                     )
 
@@ -125,22 +132,26 @@ class CertificateValidationService:
                 if cert_info is None or not cert_info.is_valid_for_hostname(
                     context.hostname,
                 ):
-                    return ServiceResult.ok(
+                    return FlextResult.ok(
                         ValidationResult(
                             result_type=CertificateValidationResult.INVALID_HOSTNAME,
-                            message=f"Certificate hostname mismatch for {context.hostname}",
+                            message=(
+                                f"Certificate hostname mismatch for {context.hostname}"
+                            ),
                         ),
                     )
 
             # Validate certificate chain if requested
             if context.verify_chain and len(certificates) > 1:
                 try:
-                    # NOTE: Proper certificate chain validation would require CA certificates
+                    # NOTE: Proper certificate chain validation would require CA
+                    # certificates
                     # For now, we'll just do basic certificate checks
                     # This is a simplified validation - full chain validation
                     # would require proper CA certificate setup
                     logger.info(
-                        "Certificate chain validation: basic checks only (no CA validation)",
+                        "Certificate chain validation: basic checks only (no CA "
+                        "validation)",
                     )
 
                     # Check that each certificate in the chain can be parsed
@@ -151,11 +162,12 @@ class CertificateValidationService:
                             cert.subject.rfc4514_string(),
                         )
 
-                    # Basic validation passed - would need proper CA validation for production
+                    # Basic validation passed - would need proper CA validation for
+                    # production
                     # Note: This would need proper CA certificates loaded
 
                 except Exception:
-                    return ServiceResult.ok(
+                    return FlextResult.ok(
                         ValidationResult(
                             result_type=CertificateValidationResult.INVALID_SIGNATURE,
                             message="Certificate chain signature validation failed",
@@ -165,7 +177,7 @@ class CertificateValidationService:
             # Extract certificate info for the result
             cert_info_result = await self._extract_certificate_info(certificates[0])
 
-            return ServiceResult.ok(
+            return FlextResult.ok(
                 ValidationResult(
                     result_type=CertificateValidationResult.VALID,
                     message="Certificate validation successful",
@@ -178,14 +190,14 @@ class CertificateValidationService:
 
         except Exception as e:
             logger.exception("Certificate validation failed")
-            return ServiceResult.fail(f"Certificate validation failed: {e}")
+            return FlextResult.fail(f"Certificate validation failed: {e}")
 
     async def validate_server_certificate(
         self,
         hostname: str,
         port: int,
         context: CertificateValidationContext,
-    ) -> ServiceResult[Any]:
+    ) -> FlextResult[Any]:
         """Validate server certificate by connecting to it."""
         try:
             # Import required types
@@ -212,7 +224,7 @@ class CertificateValidationService:
                 # Get peer certificate
                 cert_der = ssock.getpeercert(binary_form=True)
                 if not cert_der:
-                    return ServiceResult.ok(
+                    return FlextResult.ok(
                         ValidationResult(
                             result_type=CertificateValidationResult.MALFORMED,
                             message="No certificate received from server",
@@ -224,15 +236,17 @@ class CertificateValidationService:
 
                 if cert_result.success:
                     return cert_result
-                return ServiceResult.ok(
+                return FlextResult.ok(
                     ValidationResult(
                         result_type=CertificateValidationResult.INVALID_SIGNATURE,
-                        message=f"Server certificate validation failed: {cert_result.error}",
+                        message=(
+                            f"Server certificate validation failed: {cert_result.error}"
+                        ),
                     ),
                 )
 
         except SSLError as e:
-            return ServiceResult.ok(
+            return FlextResult.ok(
                 ValidationResult(
                     result_type=CertificateValidationResult.INVALID_SIGNATURE,
                     message=f"SSL handshake failed: {e}",
@@ -240,12 +254,12 @@ class CertificateValidationService:
             )
         except Exception as e:
             logger.exception("Server certificate validation failed")
-            return ServiceResult.fail(f"Server certificate validation failed: {e}")
+            return FlextResult.fail(f"Server certificate validation failed: {e}")
 
     async def get_certificate_info(
         self,
         cert_data: bytes,
-    ) -> ServiceResult[Any]:
+    ) -> FlextResult[Any]:
         """Extract certificate information from certificate data."""
         try:
             # Parse certificate
@@ -253,12 +267,12 @@ class CertificateValidationService:
             return await self._extract_certificate_info(cert)
         except Exception as e:
             logger.exception("Failed to extract certificate info")
-            return ServiceResult.fail(f"Failed to extract certificate info: {e}")
+            return FlextResult.fail(f"Failed to extract certificate info: {e}")
 
     async def create_ssl_context(
         self,
         config: SSLContextConfig,
-    ) -> ServiceResult[Any]:
+    ) -> FlextResult[Any]:
         """Create SSL context for secure connections."""
         try:
             # Create SSL context
@@ -304,16 +318,16 @@ class CertificateValidationService:
             if config.ciphers:
                 context.set_ciphers(config.ciphers)
 
-            return ServiceResult.ok(context)
+            return FlextResult.ok(context)
 
         except Exception as e:
             logger.exception("Failed to create SSL context")
-            return ServiceResult.fail(f"Failed to create SSL context: {e}")
+            return FlextResult.fail(f"Failed to create SSL context: {e}")
 
     async def _extract_certificate_info(
         self,
         cert: x509.Certificate,
-    ) -> ServiceResult[Any]:
+    ) -> FlextResult[Any]:
         """Extract certificate information from X.509 certificate."""
         try:
             from flext_ldap.domain.security import CertificateInfo
@@ -367,11 +381,11 @@ class CertificateValidationService:
                 extensions=extensions,
             )
 
-            return ServiceResult.ok(cert_info)
+            return FlextResult.ok(cert_info)
 
         except Exception as e:
             logger.exception("Failed to extract certificate information")
-            return ServiceResult.fail(f"Failed to extract certificate information: {e}")
+            return FlextResult.fail(f"Failed to extract certificate information: {e}")
 
     def _validate_hostname(
         self,
@@ -390,8 +404,13 @@ class CertificateValidationService:
                 # Extract DNS names from SAN extension
                 # Cast to make mypy understand that SAN is iterable
                 from typing import cast as type_cast
+
                 san_iterable = type_cast("list[Any]", san_value)
-                san_names = [name.value for name in san_iterable if isinstance(name, x509.DNSName)]
+                san_names = [
+                    name.value
+                    for name in san_iterable
+                    if isinstance(name, x509.DNSName)
+                ]
 
                 # Check if hostname matches any SAN
                 for san_name in san_names:
@@ -426,3 +445,7 @@ class CertificateValidationService:
             return hostname.endswith(f".{domain}")
 
         return False
+
+
+# Backward compatibility alias
+CertificateValidationService = FlextLdapCertificateValidationService

@@ -18,7 +18,8 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from flext_core.domain.shared_types import ServiceResult
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
+from flext_core import FlextResult
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class ErrorSeverity(Enum):
+class FlextLdapErrorSeverity(Enum):
     """Error severity levels."""
 
     CRITICAL = "critical"
@@ -36,7 +37,7 @@ class ErrorSeverity(Enum):
     INFO = "info"
 
 
-class ErrorCategory(Enum):
+class FlextLdapErrorCategory(Enum):
     """Error categories for classification."""
 
     CONNECTION = "connection"
@@ -52,15 +53,15 @@ class ErrorCategory(Enum):
     UNKNOWN = "unknown"
 
 
-class ErrorPattern:
+class FlextLdapErrorPattern:
     """Error pattern for correlation analysis."""
 
     def __init__(
         self,
         pattern_id: UUID | None = None,
         error_signature: str | None = None,
-        category: ErrorCategory = ErrorCategory.UNKNOWN,
-        severity: ErrorSeverity = ErrorSeverity.MEDIUM,
+        category: FlextLdapErrorCategory = FlextLdapErrorCategory.UNKNOWN,
+        severity: FlextLdapErrorSeverity = FlextLdapErrorSeverity.MEDIUM,
         frequency: int = 1,
         first_occurrence: datetime | None = None,
         last_occurrence: datetime | None = None,
@@ -96,7 +97,7 @@ class ErrorPattern:
         }
 
 
-class ErrorEvent:
+class FlextLdapErrorEvent:
     """Error event for correlation analysis."""
 
     def __init__(
@@ -112,8 +113,8 @@ class ErrorEvent:
         server_host: str | None = None,
         stack_trace: str | None = None,
         context: dict[str, Any] | None = None,
-        severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-        category: ErrorCategory = ErrorCategory.UNKNOWN,
+        severity: FlextLdapErrorSeverity = FlextLdapErrorSeverity.MEDIUM,
+        category: FlextLdapErrorCategory = FlextLdapErrorCategory.UNKNOWN,
     ) -> None:
         """Initialize error event."""
         self.event_id = event_id or uuid4()
@@ -186,7 +187,7 @@ class ErrorEvent:
         }
 
 
-class ErrorCorrelationService:
+class FlextLdapErrorCorrelationService:
     """Error correlation and analysis service."""
 
     def __init__(
@@ -207,9 +208,9 @@ class ErrorCorrelationService:
         self.correlation_window_hours = correlation_window_hours
         self.pattern_threshold = pattern_threshold
 
-        self._error_events: list[ErrorEvent] = []
-        self._error_patterns: dict[str, ErrorPattern] = {}
-        self._correlation_cache: dict[str, list[ErrorEvent]] = {}
+        self._error_events: list[FlextLdapErrorEvent] = []
+        self._error_patterns: dict[str, FlextLdapErrorPattern] = {}
+        self._correlation_cache: dict[str, list[FlextLdapErrorEvent]] = {}
 
         logger.info("Error correlation service initialized")
 
@@ -224,13 +225,13 @@ class ErrorCorrelationService:
         server_host: str | None = None,
         stack_trace: str | None = None,
         context: dict[str, Any] | None = None,
-        severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-        category: ErrorCategory = ErrorCategory.UNKNOWN,
-    ) -> ServiceResult[ErrorEvent]:
+        severity: FlextLdapErrorSeverity = FlextLdapErrorSeverity.MEDIUM,
+        category: FlextLdapErrorCategory = FlextLdapErrorCategory.UNKNOWN,
+    ) -> FlextResult[FlextLdapErrorEvent]:
         """Record an error event for correlation analysis."""
         try:
             # Create error event
-            event = ErrorEvent(
+            event = FlextLdapErrorEvent(
                 error_message=error_message,
                 error_code=error_code,
                 operation_type=operation_type,
@@ -258,19 +259,19 @@ class ErrorCorrelationService:
             await self._analyze_correlations(event)
 
             logger.debug("Recorded error event: %s", str(event.event_id))
-            return ServiceResult.ok(event)
+            return FlextResult.ok(event)
 
         except Exception as e:
             error_msg = f"Failed to record error event: {e}"
             logger.exception(error_msg)
-            return ServiceResult.fail(error_msg)
+            return FlextResult.fail(error_msg)
 
     async def get_error_patterns(
         self,
-        category: ErrorCategory | None = None,
-        severity: ErrorSeverity | None = None,
+        category: FlextLdapErrorCategory | None = None,
+        severity: FlextLdapErrorSeverity | None = None,
         min_frequency: int = 1,
-    ) -> ServiceResult[list[ErrorPattern]]:
+    ) -> FlextResult[list[FlextLdapErrorPattern]]:
         """Get error patterns with optional filtering."""
         try:
             patterns = list(self._error_patterns.values())
@@ -291,18 +292,18 @@ class ErrorCorrelationService:
                 reverse=True,
             )
 
-            return ServiceResult.ok(patterns)
+            return FlextResult.ok(patterns)
 
         except Exception as e:
             error_msg = f"Failed to get error patterns: {e}"
             logger.exception(error_msg)
-            return ServiceResult.fail(error_msg)
+            return FlextResult.fail(error_msg)
 
     async def get_correlated_errors(
         self,
-        event: ErrorEvent,
+        event: FlextLdapErrorEvent,
         time_window_minutes: int = 60,
-    ) -> ServiceResult[list[ErrorEvent]]:
+    ) -> FlextResult[list[FlextLdapErrorEvent]]:
         """Get errors correlated with a given event."""
         try:
             cutoff_time = event.timestamp - timedelta(minutes=time_window_minutes)
@@ -324,17 +325,17 @@ class ErrorCorrelationService:
                 if correlation_score > 0.5:  # Threshold for significant correlation
                     significant_correlations.append(other_event)
 
-            return ServiceResult.ok(significant_correlations)
+            return FlextResult.ok(significant_correlations)
 
         except Exception as e:
             error_msg = f"Failed to get correlated errors: {e}"
             logger.exception(error_msg)
-            return ServiceResult.fail(error_msg)
+            return FlextResult.fail(error_msg)
 
     async def get_error_statistics(
         self,
         time_window_hours: int = 24,
-    ) -> ServiceResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, Any]]:
         """Get error statistics for the specified time window."""
         try:
             cutoff_time = datetime.now(UTC) - timedelta(hours=time_window_hours)
@@ -374,19 +375,19 @@ class ErrorCorrelationService:
                 "severity_distribution": dict(severity_counts),
                 "top_error_patterns": top_patterns,
                 "pattern_count": len(self._error_patterns),
-                "average_errors_per_hour": total_errors / time_window_hours
-                if time_window_hours > 0
-                else 0,
+                "average_errors_per_hour": (
+                    total_errors / time_window_hours if time_window_hours > 0 else 0
+                ),
             }
 
-            return ServiceResult.ok(statistics)
+            return FlextResult.ok(statistics)
 
         except Exception as e:
             error_msg = f"Failed to get error statistics: {e}"
             logger.exception(error_msg)
-            return ServiceResult.fail(error_msg)
+            return FlextResult.fail(error_msg)
 
-    async def _update_patterns(self, event: ErrorEvent) -> None:
+    async def _update_patterns(self, event: FlextLdapErrorEvent) -> None:
         """Update error patterns with new event."""
         signature = event.get_signature()
 
@@ -405,20 +406,20 @@ class ErrorCorrelationService:
 
         else:
             # Create new pattern
-            pattern = ErrorPattern(
+            pattern = FlextLdapErrorPattern(
                 error_signature=signature,
                 category=event.category,
                 severity=event.severity,
                 frequency=1,
                 first_occurrence=event.timestamp,
                 last_occurrence=event.timestamp,
-                affected_operations=[event.operation_type]
-                if event.operation_type
-                else [],
+                affected_operations=(
+                    [event.operation_type] if event.operation_type else []
+                ),
             )
             self._error_patterns[signature] = pattern
 
-    async def _analyze_correlations(self, event: ErrorEvent) -> None:
+    async def _analyze_correlations(self, event: FlextLdapErrorEvent) -> None:
         """Analyze correlations for the new event."""
         # Find recent events for correlation analysis
         cutoff_time = event.timestamp - timedelta(hours=self.correlation_window_hours)
@@ -445,7 +446,11 @@ class ErrorCorrelationService:
             if correlation_count > 0:
                 pattern.correlation_score = total_correlation / correlation_count
 
-    def _calculate_correlation(self, event1: ErrorEvent, event2: ErrorEvent) -> float:
+    def _calculate_correlation(
+        self,
+        event1: FlextLdapErrorEvent,
+        event2: FlextLdapErrorEvent,
+    ) -> float:
         """Calculate correlation score between two events."""
         correlation_score = 0.0
 
@@ -483,3 +488,11 @@ class ErrorCorrelationService:
         self._error_patterns.clear()
         self._correlation_cache.clear()
         logger.info("Error correlation history cleared")
+
+
+# Backward compatibility aliases
+ErrorSeverity = FlextLdapErrorSeverity
+ErrorCategory = FlextLdapErrorCategory
+ErrorPattern = FlextLdapErrorPattern
+ErrorEvent = FlextLdapErrorEvent
+ErrorCorrelationService = FlextLdapErrorCorrelationService
