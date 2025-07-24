@@ -525,7 +525,7 @@ class TestErrorCorrelationService:
         correlation_service: ErrorCorrelationService,
     ) -> None:
         """Test exception handling in record_error method."""
-        import unittest.mock as mock
+        from unittest import mock
 
         # Mock the uuid4 to raise an exception
         with mock.patch("flext_ldap.infrastructure.error_correlation.uuid4") as mock_uuid:
@@ -546,7 +546,7 @@ class TestErrorCorrelationService:
         correlation_service: ErrorCorrelationService,
     ) -> None:
         """Test exception handling in get_error_patterns method."""
-        import unittest.mock as mock
+        from unittest import mock
 
         # Add a pattern first
         await correlation_service.record_error("test error", operation_type="bind")
@@ -567,7 +567,7 @@ class TestErrorCorrelationService:
         correlation_service: ErrorCorrelationService,
     ) -> None:
         """Test exception handling in get_correlated_errors method."""
-        import unittest.mock as mock
+        from unittest import mock
 
         timestamp = datetime.now(UTC)
         base_event = ErrorEvent(
@@ -594,7 +594,7 @@ class TestErrorCorrelationService:
         correlation_service: ErrorCorrelationService,
     ) -> None:
         """Test exception handling in get_error_statistics method."""
-        import unittest.mock as mock
+        from unittest import mock
 
         # Mock datetime.now to raise an exception
         with mock.patch(
