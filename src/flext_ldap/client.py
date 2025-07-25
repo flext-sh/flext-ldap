@@ -10,31 +10,28 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any, Self
 
-if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
-
-# Use standard Python logging
-import logging
-
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
-from flext_core import FlextResult
+from flext_core import (
+    FlextConnectionError,
+    FlextResult,
+    get_logger,
+)
 from ldap3.core.exceptions import LDAPException
 
 from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
-from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
+from flext_ldap.infrastructure.ldap_simple_client import (
+    FlextLdapSimpleClient,
+    LdapConnectionConfig,
+)
 from flext_ldap.models import LDAPEntry as LDAPEntryModel, LDAPScope
 
-
-# Define connection error locally to avoid circular import
-class FlextConnectionError(Exception):
-    """Connection error - local exception class."""
-
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 # Backward compatibility
 FlextLDAPSettings = FlextLdapSettings
 LDAPConnectionConfig = FlextLdapConnectionConfig
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class FlextLdapClient:
@@ -66,56 +63,83 @@ class FlextLdapClient:
             self.settings = None
 
         # Use new FLEXT infrastructure internally
-        self._infrastructure_client = FlextLdapInfrastructureClient()
+        self._infrastructure_client = FlextLdapSimpleClient()
         self._connection_id: str | None = None
         self._connected = False
 
     async def __aenter__(self) -> Self:
-        """Enter the context manager."""
-        await self.connect()
-        if not self._connected:
-            msg = "Failed to connect"
-            raise LDAPException(msg)
-        return self
+        """Enter the context manager using FLEXT connection services."""
+        try:
+            # Convert config to LdapConnectionConfig
+            ldap_config = LdapConnectionConfig(
+                server_url=f"ldap://{self.config.server}:{self.config.port}",
+                bind_dn=self.settings.auth.bind_dn if self.settings else "",
+                password=self.settings.auth.bind_password if self.settings else "",
+                use_ssl=self.config.use_ssl,
+                connection_timeout=self.config.timeout_seconds,
+            )
+
+            result = await self._infrastructure_client.connect(ldap_config)
+            if result.success:
+                self._connection_id = result.data
+                self._connected = True
+                return self
+            msg = result.error or "Failed to create connection context"
+            raise FlextConnectionError(msg)
+        except LDAPException as exc:
+            raise FlextConnectionError(str(exc)) from exc
 
     async def __aexit__(self, *args: object) -> None:
         """Exit the context manager."""
         await self.disconnect()
 
     async def connect(self) -> None:
-        """Connect to LDAP server using new infrastructure."""
+        """Connect to LDAP server using FLEXT connection services."""
         if self._connected:
             return
 
         try:
-            # Use new infrastructure to connect
-            server_url = f"ldap://{self.config.server}:{self.config.port}"
-            result = await self._infrastructure_client.connect(
-                server_url=server_url,
-                bind_dn=getattr(self.config, "bind_dn", None),
-                password=getattr(self.config, "password", None),
+            # Convert config to LdapConnectionConfig
+            ldap_config = LdapConnectionConfig(
+                server_url=f"ldap://{self.config.server}:{self.config.port}",
+                bind_dn=self.settings.auth.bind_dn if self.settings else "",
+                password=self.settings.auth.bind_password if self.settings else "",
+                use_ssl=self.config.use_ssl,
+                connection_timeout=self.config.timeout_seconds,
             )
 
+            result = await self._infrastructure_client.connect(ldap_config)
+
             if result.success:
-                self._connection_id = (
-                    result.data
-                )  # Connection ID returned by infrastructure
+                self._connection_id = result.data
                 self._connected = True
+                server_url = f"ldap://{self.config.server}:{self.config.port}"
+                logger.info(f"FLEXT LDAP connection established: {server_url}")
             else:
                 self._connected = False
-                raise FlextConnectionError(result.error or "Connection failed")
+                error_msg = result.error or "Connection failed"
+                raise FlextConnectionError(
+                    error_msg,
+                    details={"config": self.config.model_dump()},
+                )
 
-        except (FlextConnectionError, ValueError, RuntimeError) as e:
+        except Exception as e:
             self._connected = False
+            logger.exception(f"FLEXT LDAP connection failed: {e}")
             msg = f"Connection error: {e}"
-            raise FlextConnectionError(msg) from e
+            raise FlextConnectionError(
+                msg,
+                details={"config": self.config.model_dump()},
+            ) from e
 
     async def disconnect(self) -> None:
-        """Disconnect from LDAP server."""
+        """Disconnect from LDAP server using FLEXT connection services."""
         if self._connection_id and self._connected:
-            await self._infrastructure_client.disconnect(self._connection_id)
+            result = await self._infrastructure_client.disconnect(self._connection_id)
             self._connected = False
             self._connection_id = None
+            if not result.success:
+                logger.warning(f"FLEXT LDAP disconnect warning: {result.error}")
 
     async def ping(self) -> bool:
         """Test connection health."""
@@ -149,7 +173,7 @@ class FlextLdapClient:
             # Use new infrastructure for search
             result = await self._infrastructure_client.search(
                 connection_id=self._connection_id,
-                base_dn=base_dn,
+                search_base=base_dn,
                 search_filter=search_filter,
                 scope=scope.value,
                 attributes=attributes or [],
@@ -181,7 +205,7 @@ class FlextLdapClient:
 
         try:
             # Use new infrastructure for modify
-            result = await self._infrastructure_client.modify_entry(
+            result = await self._infrastructure_client.modify(
                 connection_id=self._connection_id,
                 dn=dn,
                 changes=changes,
@@ -206,17 +230,12 @@ class FlextLdapClient:
         if not self._connected or not self._connection_id:
             return {"status": "disconnected"}
 
-        # Get info from new infrastructure
-        result = self._infrastructure_client.get_connection_info(self._connection_id)
-        if result.success and result.data is not None:
-            # Ensure returned dict has correct type signature
-            info_dict = result.data
-            return {k: str(v) if v is not None else None for k, v in info_dict.items()}
+        # Return basic connection info since detailed info is not available
         return {
-            "server": getattr(self.config, "server", None),
-            "port": str(getattr(self.config, "port", 389)),
+            "server": self.config.server,
+            "port": str(self.config.port),
             "connected": str(self._connected).lower(),
-            "error": result.error,
+            "connection_id": self._connection_id,
         }
 
     @asynccontextmanager

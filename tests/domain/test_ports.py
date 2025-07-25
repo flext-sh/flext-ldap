@@ -26,7 +26,7 @@ class TestFlextLdapConnectionService:
     def test_cannot_instantiate_directly(self) -> None:
         """Test that FlextLdapConnectionService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.FlextLdapConnectionService()  # type: ignore[abstract]  # Intentionally trying to instantiate abstract class
+            ports.FlextLdapConnectionService()  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""
@@ -99,7 +99,7 @@ class TestFlextLdapSearchService:
     def test_cannot_instantiate_directly(self) -> None:
         """Test that FlextLdapSearchService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.FlextLdapSearchService()  # type: ignore[abstract]  # Intentionally trying to instantiate abstract class
+            ports.FlextLdapSearchService()  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""
@@ -157,7 +157,7 @@ class TestFlextLdapUserService:
     def test_cannot_instantiate_directly(self) -> None:
         """Test that FlextLdapUserService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.FlextLdapUserService()  # type: ignore[abstract]  # Intentionally trying to instantiate abstract class
+            ports.FlextLdapUserService()  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""
@@ -231,7 +231,7 @@ class TestFlextLdapSchemaService:
     def test_cannot_instantiate_directly(self) -> None:
         """Test that FlextLdapSchemaService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.FlextLdapSchemaService()  # type: ignore[abstract]  # Intentionally trying to instantiate abstract class
+            ports.FlextLdapSchemaService()  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""
@@ -271,7 +271,7 @@ class TestFlextLdapMigrationService:
     def test_cannot_instantiate_directly(self) -> None:
         """Test that FlextLdapMigrationService cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            ports.FlextLdapMigrationService()  # type: ignore[abstract]  # Intentionally trying to instantiate abstract class
+            ports.FlextLdapMigrationService()  # Intentionally trying to instantiate abstract class
 
     def test_has_required_abstract_methods(self) -> None:
         """Test that all required abstract methods are defined."""

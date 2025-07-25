@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "flext-ldap"
-version = "0.7.0"
+version = "0.8.0"
 description = "Enterprise LDAP Operations Library for FLEXT Framework"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -66,6 +66,7 @@ extend-exclude = [
     "dist",
     "htmlcov",
 ]
+extend = "../.ruff-shared.toml"
 
 [tool.mypy]
 python_version = "3.13"
@@ -95,7 +96,12 @@ plugins = ["pydantic.mypy"]
 exclude = ["build", "dist", ".venv", ".mypy_cache"]
 
 [[tool.mypy.overrides]]
-module = ["flext_observability.*", "flext_core.*", "flext_auth.*", "flext_plugin.*"]
+module = [
+    "flext_observability.*",
+    "flext_core.*",
+    "flext_auth.*",
+    "flext_plugin.*",
+]
 ignore_missing_imports = true
 
 [tool.bandit]
@@ -144,61 +150,10 @@ filterwarnings = ["error", "ignore::UserWarning", "ignore::DeprecationWarning"]
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "COM812",
-    "D203",
-    "D213",
-    "ISC001",
-    "ANN401",
-    "ARG001",
-    "ARG002",
-    "BLE001",
-    "C901",
-    "D102",
-    "D103",
-    "D105",
-    "D107",
-    "D401",
-    "DTZ001",
-    "DTZ005",
-    "E401",
-    "E501",
-    "EM101",
-    "EM102",
-    "ERA001",
-    "EXE001",
-    "F401",
-    "F823",
-    "FBT001",
-    "FBT002",
-    "FBT003",
-    "FIX002",
-    "G004",
-    "PLC0415",
-    "PLR0911",
-    "PLR0912",
-    "PLR0913",
-    "PLR0915",
-    "PLR2004",
-    "PLW0603",
-    "PTH118",
-    "PTH123",
-    "RUF001",
-    "S103",
-    "S104",
-    "S105",
-    "S106",
-    "S107",
-    "S603",
-    "S607",
-    "SIM102",
-    "TD002",
-    "TD003",
-    "TRY003",
-    "TRY203",
-    "TRY300",
-    "TRY301",
-    "TRY401",
-    "PT022",  # pytest-useless-yield-fixture - conflicts with MyPy AsyncGenerator
+    "D203", # one-blank-line-before-class (conflicts with D211)
+    "D213", # multi-line-summary-second-line (conflicts with D212)
+    "W505", # line break after binary operator
+    "E501", # line too long (handled by line-length)
 ]
 
 [tool.ruff.format]
@@ -243,25 +198,35 @@ split-on-trailing-comma = true
 combine-as-imports = true
 
 [tool.ruff.lint.per-file-ignores]
-"**/tests/**" = [
-    "S101",
-    "S103",
-    "S104",
-    "S105",
-    "S106",
-    "S107",
-    "PLR2004",
-    "ARG",
-    "SLF001",
-    "PLC0415",
+"tests/*" = [
+    "S101",    # Use of assert detected (normal in tests)
+    "PLR2004", # Magic value used in comparison (normal in tests)
+    "ANN",     # Type annotations not required in tests
+    "D",       # Docstrings not required in tests
+    "FBT001",  # Boolean positional args (normal in pytest parametrize)
+    "S603",    # subprocess calls allowed in compliance tests
+    "SLF001",  # Private name usage in tests
+    "PLR0913", # Too many arguments (normal in test fixtures)
+    "PLR0912", # Too many branches (normal in test scenarios)
+    "PLR0915", # Too many statements (normal in test scenarios)
+    "ARG",     # Argument issues (normal in tests)
+    "PLC0415", # Pytest fixture issues
 ]
-"**/scripts/**" = ["T201", "S603", "S607", "ANN"]
-"**/__init__.py" = ["F401"]
-"**/proto/*_pb2.py" = ["ALL"]
-"**/proto/*_pb2_grpc.py" = ["ALL"]
-"**/*_pb2.py" = ["ALL"]
-"**/*_pb2_grpc.py" = ["ALL"]
-"**/generated/**/*.py" = ["ALL"]
+"**/scripts/**" = [
+    "T201",    # Print statements allowed in scripts
+    "S603",    # Subprocess calls allowed in scripts
+    "S607",    # Subprocess calls allowed in scripts
+    "ANN",     # Type annotations not required in scripts
+]
+"**/__init__.py" = ["F401"]  # Unused imports allowed in __init__.py
+"**/proto/*_pb2.py" = ["ALL"]  # Generated protobuf files
+"**/proto/*_pb2_grpc.py" = ["ALL"]  # Generated protobuf files
+"**/*_pb2.py" = ["ALL"]  # Generated protobuf files
+"**/*_pb2_grpc.py" = ["ALL"]  # Generated protobuf files
+"**/generated/**/*.py" = ["ALL"]  # Generated files
+"**/__pycache__/*" = ["ALL"]
+"**/*.pyc" = ["ALL"]
+"**/migrations/*" = ["ALL"]
 
 [tool.poetry.dependencies.flext-core]
 path = "../flext-core"

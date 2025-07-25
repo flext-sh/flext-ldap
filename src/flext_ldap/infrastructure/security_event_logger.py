@@ -10,21 +10,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
-import logging
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
-from flext_core import FlextResult
+from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
     from uuid import UUID
 
     from flext_ldap.domain.entities import FlextLdapConnection
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class FlextLdapSecurityEventType(Enum):
@@ -45,7 +44,7 @@ class FlextLdapSecurityEventType(Enum):
     SCHEMA_ACCESS = "schema_access"
     CERTIFICATE_VALIDATION = "certificate_validation"
     TLS_NEGOTIATION = "tls_negotiation"
-    PASSWORD_CHANGE = "password_change"
+    PASSWORD_CHANGE = "password_change"  # noqa: S105
     ACCOUNT_LOCKOUT = "account_lockout"
     PRIVILEGE_ESCALATION = "privilege_escalation"
     SUSPICIOUS_ACTIVITY = "suspicious_activity"

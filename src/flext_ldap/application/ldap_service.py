@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
 from flext_core import FlextResult
 
 from flext_ldap.application.services import (

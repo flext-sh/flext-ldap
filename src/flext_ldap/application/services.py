@@ -1,11 +1,14 @@
-"""Application services for FLEXT-LDAP v0.7.0.
+"""Flext LDAP Application Services.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-REFACTORED:
-    Using flext-core service patterns - NO duplication.
-    Clean architecture with dependency injection and FlextResult pattern.
+This module provides the application services for the FLEXT LDAP system.
+
+It uses the base services to provide the application services.
+
+It uses the domain entities to provide the application services.
+
 """
 
 from __future__ import annotations
@@ -13,7 +16,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
 from flext_core import FlextResult
 
 from flext_ldap.application.base import (
@@ -28,8 +30,6 @@ from flext_ldap.domain.entities import (
     FlextLdapOperation,
     FlextLdapUser,
 )
-
-# Removed port imports to avoid signature conflicts
 
 if TYPE_CHECKING:
     from flext_ldap.domain.value_objects import FlextLdapCreateUserRequest
@@ -469,18 +469,23 @@ class FlextLdapConnectionApplicationService(FlextLdapConnectionBaseService):
                 bind_dn=bind_dn,
             )
 
-            # Establish real LDAP connection
-            result = await self._ldap_client.connect(
-                server_uri,
-                bind_dn,
-                password,
-                use_ssl=use_ssl,
+            # Use the infrastructure client to establish connection
+            from flext_ldap.infrastructure.ldap_simple_client import (
+                LdapConnectionConfig,
             )
 
-            if not result.is_success:
-                error_msg = getattr(result, "error_message", "Unknown error")
+            ldap_config = LdapConnectionConfig(
+                server_url=server_uri,
+                bind_dn=bind_dn,
+                password=password,
+                use_ssl=use_ssl,
+                connection_timeout=30,
+            )
+
+            result = await self._ldap_client.connect(ldap_config)
+            if not result.success:
                 return FlextResult.fail(
-                    f"Failed to connect to LDAP: {error_msg}",
+                    f"LDAP connection failed: {result.error}",
                 )
 
             # Mark as connected and bound
@@ -508,21 +513,27 @@ class FlextLdapConnectionApplicationService(FlextLdapConnectionBaseService):
         """
         try:
             # Convert UUID to string for entity lookup
-            key = str(connection_id) if isinstance(connection_id, UUID) else connection_id
+            key = (
+                str(connection_id) if isinstance(connection_id, UUID) else connection_id
+            )
             connection = self._entities.get(key)
             if not connection:
                 return FlextResult.fail("Connection not found")
 
-            # Real LDAP connection already established in create_connection
-            # Just mark as connected if not already
+            # Use FLEXT connection manager for connection state
             if not connection.is_connected:
-                connection.connect()
+                # Connection should be managed by FlextLDAPConnectionManager
+                # Mark as connected since connection was established in create_connection
+                connection._is_connected = True
 
             return FlextResult.ok(connection)
         except (KeyError, AttributeError) as e:
             return FlextResult.fail(f"Failed to connect: {e}")
 
-    async def disconnect(self, connection_id: UUID) -> FlextResult[FlextLdapConnection]:
+    async def disconnect(
+        self,
+        connection_id: UUID,
+    ) -> FlextResult[FlextLdapConnection]:
         """Disconnect from the LDAP server.
 
         Args:
@@ -534,7 +545,9 @@ class FlextLdapConnectionApplicationService(FlextLdapConnectionBaseService):
         """
         try:
             # Convert UUID to string for entity lookup
-            key = str(connection_id) if isinstance(connection_id, UUID) else connection_id
+            key = (
+                str(connection_id) if isinstance(connection_id, UUID) else connection_id
+            )
             connection = self._entities.get(key)
             if not connection:
                 return FlextResult.fail("Connection not found")
@@ -570,7 +583,9 @@ class FlextLdapConnectionApplicationService(FlextLdapConnectionBaseService):
         """
         try:
             # Convert UUID to string for entity lookup
-            key = str(connection_id) if isinstance(connection_id, UUID) else connection_id
+            key = (
+                str(connection_id) if isinstance(connection_id, UUID) else connection_id
+            )
             connection = self._entities.get(key)
             if not connection:
                 return FlextResult.fail("Connection not found")

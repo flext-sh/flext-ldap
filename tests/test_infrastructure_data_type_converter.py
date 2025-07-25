@@ -1,11 +1,10 @@
 """Tests for LDAP data type converter infrastructure in FLEXT-LDAP."""
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-from flext_core import FlextResult
 
 from flext_ldap.infrastructure.data_type_converter import (
     FlextLdapConversionError,
@@ -52,7 +51,7 @@ class TestFlextLdapConversionError:
         error = FlextLdapConversionError(
             "Conversion failed",
             source_value="invalid_value",
-            target_type="int"
+            target_type="int",
         )
         assert str(error) == "Conversion failed"
         assert error.source_value == "invalid_value"
@@ -67,7 +66,7 @@ class TestFlextLdapConversionResult:
         result = FlextLdapConversionResult(
             value="test",
             source_type=FlextLdapDataType.STRING,
-            target_type=str
+            target_type=str,
         )
         assert result.value == "test"
         assert result.source_type == FlextLdapDataType.STRING
@@ -87,7 +86,7 @@ class TestFlextLdapConversionResult:
             target_type=int,
             is_valid=False,
             warnings=warnings,
-            metadata=metadata
+            metadata=metadata,
         )
 
         assert result.value == 42
@@ -102,7 +101,7 @@ class TestFlextLdapConversionResult:
             source_type=FlextLdapDataType.EMAIL,
             target_type=str,
             warnings=["validation warning"],
-            metadata={"domain": "example.com"}
+            metadata={"domain": "example.com"},
         )
 
         result_dict = result.to_dict()
@@ -130,28 +129,36 @@ class TestFlextLdapDataTypeConverter:
         assert len(converter._type_detectors) > 0
         assert len(converter._converters) > 0
 
-    async def test_detect_type_none(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_detect_type_none(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test detect type for None value."""
         result = await converter.detect_type(None)
 
         assert result.success is True
         assert result.data == FlextLdapDataType.UNKNOWN
 
-    async def test_detect_type_empty_string(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_detect_type_empty_string(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test detect type for empty string."""
         result = await converter.detect_type("")
 
         assert result.success is True
         assert result.data == FlextLdapDataType.STRING
 
-    async def test_detect_type_email(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_detect_type_email(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test detect type for email."""
         result = await converter.detect_type("test@example.com")
 
         assert result.success is True
         assert result.data == FlextLdapDataType.EMAIL
 
-    async def test_detect_type_phone(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_detect_type_phone(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test detect type for phone number."""
         result = await converter.detect_type("+1-234-567-8900")
 
@@ -165,7 +172,9 @@ class TestFlextLdapDataTypeConverter:
         assert result.success is True
         assert result.data == FlextLdapDataType.URL
 
-    async def test_detect_type_uuid(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_detect_type_uuid(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test detect type for UUID."""
         test_uuid = str(uuid.uuid4())
         result = await converter.detect_type(test_uuid)
@@ -173,21 +182,27 @@ class TestFlextLdapDataTypeConverter:
         assert result.success is True
         assert result.data == FlextLdapDataType.UUID
 
-    async def test_detect_type_boolean(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_detect_type_boolean(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test detect type for boolean values."""
         for bool_value in ["true", "false", "TRUE", "FALSE", "yes", "no"]:
             result = await converter.detect_type(bool_value)
             assert result.success is True
             assert result.data == FlextLdapDataType.BOOLEAN
 
-    async def test_detect_type_integer(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_detect_type_integer(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test detect type for integer."""
         result = await converter.detect_type("12345")
 
         assert result.success is True
         assert result.data == FlextLdapDataType.INTEGER
 
-    async def test_detect_type_exception(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_detect_type_exception(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test detect type with exception."""
         # Mock the type detectors dict items() method to raise exception
         mock_detectors = MagicMock()
@@ -199,12 +214,14 @@ class TestFlextLdapDataTypeConverter:
             assert result.error is not None
             assert "Failed to detect data type" in result.error
 
-    async def test_convert_value_string(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_convert_value_string(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test convert value to string."""
         result = await converter.convert_value(
             "test_value",
             str,
-            FlextLdapDataType.STRING
+            FlextLdapDataType.STRING,
         )
 
         assert result.success is True
@@ -212,12 +229,14 @@ class TestFlextLdapDataTypeConverter:
         assert result.data.value == "test_value"
         assert result.data.target_type is str
 
-    async def test_convert_value_integer(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_convert_value_integer(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test convert value to integer."""
         result = await converter.convert_value(
             "123",
             int,
-            FlextLdapDataType.INTEGER
+            FlextLdapDataType.INTEGER,
         )
 
         assert result.success is True
@@ -225,12 +244,14 @@ class TestFlextLdapDataTypeConverter:
         assert result.data.value == 123
         assert result.data.target_type is int
 
-    async def test_convert_value_boolean(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_convert_value_boolean(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test convert value to boolean."""
         result = await converter.convert_value(
             "true",
             bool,
-            FlextLdapDataType.BOOLEAN
+            FlextLdapDataType.BOOLEAN,
         )
 
         assert result.success is True
@@ -238,13 +259,15 @@ class TestFlextLdapDataTypeConverter:
         assert result.data.value is True
         assert result.data.target_type is bool
 
-    async def test_convert_value_uuid(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_convert_value_uuid(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test convert value to UUID."""
         test_uuid = str(uuid.uuid4())
         result = await converter.convert_value(
             test_uuid,
             uuid.UUID,
-            FlextLdapDataType.UUID
+            FlextLdapDataType.UUID,
         )
 
         assert result.success is True
@@ -252,12 +275,14 @@ class TestFlextLdapDataTypeConverter:
         assert isinstance(result.data.value, uuid.UUID)
         assert str(result.data.value) == test_uuid
 
-    async def test_convert_value_unsupported_conversion(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_convert_value_unsupported_conversion(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test convert value with unsupported conversion."""
         result = await converter.convert_value(
             "test",
             dict,  # Unsupported target type
-            FlextLdapDataType.STRING
+            FlextLdapDataType.STRING,
         )
 
         assert result.success is True
@@ -265,20 +290,26 @@ class TestFlextLdapDataTypeConverter:
         assert result.data.is_valid is False
         assert "Generic conversion failed" in result.data.warnings[0]
 
-    async def test_convert_value_exception(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_convert_value_exception(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test convert value with exception."""
         # Mock detect_type to raise an exception
-        with patch.object(converter, "detect_type", side_effect=Exception("Detection failed")):
+        with patch.object(
+            converter, "detect_type", side_effect=Exception("Detection failed"),
+        ):
             result = await converter.convert_value(
                 "123",
-                int
+                int,
             )
 
             assert result.success is False
             assert result.error is not None
             assert "Value conversion failed" in result.error
 
-    async def test_convert_batch_success(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_convert_batch_success(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test batch conversion success."""
         values = ["test@example.com", "123", "true"]
 
@@ -289,14 +320,18 @@ class TestFlextLdapDataTypeConverter:
         assert len(result.data) == 3
         assert all(isinstance(r, FlextLdapConversionResult) for r in result.data)
 
-    async def test_convert_batch_empty(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_convert_batch_empty(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test batch conversion with empty list."""
         result = await converter.convert_batch([], str)
 
         assert result.success is True
         assert result.data == []
 
-    async def test_convert_batch_exception(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_convert_batch_exception(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test batch conversion with exception."""
         values = ["test"]
 
@@ -308,21 +343,25 @@ class TestFlextLdapDataTypeConverter:
         assert result.data[0].is_valid is False
         assert "Generic conversion failed" in result.data[0].warnings[0]
 
-    async def test_validate_type_compatibility_success(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_validate_type_compatibility_success(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test validate type compatibility success."""
         result = await converter.validate_type_compatibility(
             FlextLdapDataType.STRING,
-            str
+            str,
         )
 
         assert result.success is True
         assert result.data is True
 
-    async def test_validate_type_compatibility_failure(self, converter: FlextLdapDataTypeConverter) -> None:
+    async def test_validate_type_compatibility_failure(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test validate type compatibility failure."""
         result = await converter.validate_type_compatibility(
             FlextLdapDataType.STRING,
-            dict  # Unsupported
+            dict,  # Unsupported
         )
 
         assert result.success is True
@@ -336,7 +375,9 @@ class TestFlextLdapDataTypeConverter:
         assert len(types) > 0
         assert all(isinstance(t, FlextLdapDataType) for t in types)
 
-    def test_get_supported_conversions(self, converter: FlextLdapDataTypeConverter) -> None:
+    def test_get_supported_conversions(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test get supported conversions."""
         conversions = converter.get_supported_conversions()
 
@@ -393,6 +434,7 @@ class TestFlextLdapDataTypeConverter:
     def test_is_binary(self, converter: FlextLdapDataTypeConverter) -> None:
         """Test binary detection."""
         import base64
+
         # Create binary data with actual binary content (non-UTF8)
         binary_content = bytes(range(256))  # All possible byte values
         binary_data = base64.b64encode(binary_content).decode("ascii")
@@ -424,7 +466,9 @@ class TestFlextLdapDataTypeConverter:
         assert converter._convert_to_int("123") == 123
         assert converter._convert_to_int(456) == 456
 
-    def test_convert_to_int_invalid(self, converter: FlextLdapDataTypeConverter) -> None:
+    def test_convert_to_int_invalid(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test convert to int with invalid value."""
         with pytest.raises(FlextLdapConversionError):
             converter._convert_to_int("invalid")
@@ -439,12 +483,15 @@ class TestFlextLdapDataTypeConverter:
     def test_convert_to_bytes(self, converter: FlextLdapDataTypeConverter) -> None:
         """Test convert to bytes."""
         import base64
+
         test_data = b"test data"
         encoded = base64.b64encode(test_data).decode("ascii")
         result = converter._convert_to_bytes(encoded)
         assert result == test_data
 
-    def test_convert_to_bytes_invalid(self, converter: FlextLdapDataTypeConverter) -> None:
+    def test_convert_to_bytes_invalid(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test convert to bytes with invalid value."""
         # Invalid base64 gets encoded as UTF-8 fallback
         result = converter._convert_to_bytes("invalid-base64!")
@@ -462,7 +509,9 @@ class TestFlextLdapDataTypeConverter:
         assert isinstance(result, datetime)
         assert result.year == 2023
 
-    def test_convert_to_datetime_invalid(self, converter: FlextLdapDataTypeConverter) -> None:
+    def test_convert_to_datetime_invalid(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test convert to datetime with invalid value."""
         with pytest.raises(FlextLdapConversionError):
             converter._convert_to_datetime("invalid-datetime")
@@ -474,17 +523,23 @@ class TestFlextLdapDataTypeConverter:
         assert isinstance(result, uuid.UUID)
         assert str(result) == test_uuid
 
-    def test_convert_to_uuid_invalid(self, converter: FlextLdapDataTypeConverter) -> None:
+    def test_convert_to_uuid_invalid(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test convert to UUID with invalid value."""
         with pytest.raises(FlextLdapConversionError):
             converter._convert_to_uuid("invalid-uuid")
 
-    def test_convert_email_to_string(self, converter: FlextLdapDataTypeConverter) -> None:
+    def test_convert_email_to_string(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test convert email to string."""
         result = converter._convert_email_to_string("test@example.com")
         assert result == "test@example.com"
 
-    def test_convert_phone_to_string(self, converter: FlextLdapDataTypeConverter) -> None:
+    def test_convert_phone_to_string(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test convert phone to string."""
         result = converter._convert_phone_to_string("+1-234-567-8900")
         assert result == "+12345678900"
@@ -512,12 +567,15 @@ class TestFlextLdapDataTypeConverter:
     def test_convert_cert_to_bytes(self, converter: FlextLdapDataTypeConverter) -> None:
         """Test convert certificate to bytes."""
         import base64
+
         cert_data = b"certificate data"
         encoded = base64.b64encode(cert_data).decode("ascii")
         result = converter._convert_cert_to_bytes(encoded)
         assert result == cert_data
 
-    def test_convert_cert_to_bytes_invalid(self, converter: FlextLdapDataTypeConverter) -> None:
+    def test_convert_cert_to_bytes_invalid(
+        self, converter: FlextLdapDataTypeConverter,
+    ) -> None:
         """Test convert certificate to bytes with invalid value."""
         # Invalid cert gets encoded as UTF-8 fallback
         result = converter._convert_cert_to_bytes("invalid-cert!")

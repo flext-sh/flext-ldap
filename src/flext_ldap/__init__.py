@@ -12,7 +12,6 @@ from flext_ldap.domain.values import DistinguishedName, LDAPFilter
 🚀 USAGE EXAMPLES:
 ```python
 # Easy imports - everything you need from the root
-from flext_ldap import LDAPUser, LDAPGroup, LDAPEntry, DistinguishedName
 
 # Work with users and groups
 user = LDAPUser(dn="cn=john.doe,ou=users,dc=example,dc=com", uid="john.doe")

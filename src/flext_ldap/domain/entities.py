@@ -14,14 +14,14 @@ import warnings
 from datetime import UTC, datetime
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from flext_core import FlextEntity
 from pydantic import Field
 
 
-class FlextLdapEntityStatus(str, Enum):
+class FlextLdapEntityStatus(StrEnum):
     """Entity status enumeration."""
 
     ACTIVE = "active"
@@ -40,9 +40,11 @@ class FlextLdapEntry(FlextEntity):
     def validate_domain_rules(self) -> None:
         """Validate business rules for LDAP entry."""
         if not self.dn:
-            raise ValueError("LDAP entry must have a distinguished name")
+            msg = "LDAP entry must have a distinguished name"
+            raise ValueError(msg)
         if not self.object_classes:
-            raise ValueError("LDAP entry must have at least one object class")
+            msg = "LDAP entry must have at least one object class"
+            raise ValueError(msg)
 
     def add_object_class(self, object_class: str) -> None:
         """Add an object class to the entry."""
@@ -151,7 +153,8 @@ class FlextLdapConnection(FlextEntity):
     def validate_domain_rules(self) -> None:
         """Validate business rules for LDAP connection."""
         if not self.server_url:
-            raise ValueError("LDAP connection must have a server URL")
+            msg = "LDAP connection must have a server URL"
+            raise ValueError(msg)
 
     def bind(self, bind_dn: str) -> FlextLdapConnection:
         """Bind to LDAP server with given DN."""
@@ -231,9 +234,11 @@ class FlextLdapUser(FlextEntity):
     def validate_domain_rules(self) -> None:
         """Validate business rules for LDAP user."""
         if not self.dn:
-            raise ValueError("LDAP user must have a distinguished name")
+            msg = "LDAP user must have a distinguished name"
+            raise ValueError(msg)
         if self.mail and "@" not in self.mail:
-            raise ValueError("User email must be valid format")
+            msg = "User email must be valid format"
+            raise ValueError(msg)
 
     def add_attribute(self, name: str, value: str) -> FlextLdapUser:
         """Add an attribute to the user."""
@@ -268,7 +273,7 @@ class FlextLdapUser(FlextEntity):
 
     def has_attribute(self, name: str) -> bool:
         """Check if user has a specific attribute."""
-        if name in ["mail", "phone", "ou", "department", "title"]:
+        if name in {"mail", "phone", "ou", "department", "title"}:
             return getattr(self, name) is not None
         return name in self.attributes
 
@@ -328,9 +333,11 @@ class FlextLdapGroup(FlextEntity):
     def validate_domain_rules(self) -> None:
         """Validate business rules for LDAP group."""
         if not self.dn:
-            raise ValueError("LDAP group must have a distinguished name")
+            msg = "LDAP group must have a distinguished name"
+            raise ValueError(msg)
         if not self.cn:
-            raise ValueError("LDAP group must have a common name")
+            msg = "LDAP group must have a common name"
+            raise ValueError(msg)
 
     def add_member(self, member_dn: str) -> FlextLdapGroup:
         """Add a member to the group."""
@@ -427,11 +434,14 @@ class FlextLdapOperation(FlextEntity):
     def validate_domain_rules(self) -> None:
         """Validate business rules for LDAP operation."""
         if not self.operation_type:
-            raise ValueError("LDAP operation must have an operation type")
+            msg = "LDAP operation must have an operation type"
+            raise ValueError(msg)
         if not self.target_dn:
-            raise ValueError("LDAP operation must have a target DN")
+            msg = "LDAP operation must have a target DN"
+            raise ValueError(msg)
         if not self.connection_id:
-            raise ValueError("LDAP operation must have a connection ID")
+            msg = "LDAP operation must have a connection ID"
+            raise ValueError(msg)
 
     def start_operation(self) -> FlextLdapOperation:
         """Mark operation as started."""

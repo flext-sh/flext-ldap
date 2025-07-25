@@ -1,6 +1,5 @@
 """Tests for application services in FLEXT-LDAP."""
 
-from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
@@ -216,7 +215,8 @@ class TestFlextLdapGroupService:
         assert result.data.cn == "test"
 
     async def test_add_remove_member(
-        self, group_service: FlextLdapGroupService
+        self,
+        group_service: FlextLdapGroupService,
     ) -> None:
         """Test adding and removing group members."""
         # Create group first
@@ -235,7 +235,9 @@ class TestFlextLdapGroupService:
         assert member_dn in add_result.data.members
 
         # Remove member
-        remove_result = await group_service.remove_member(UUID(str(group_id)), member_dn)
+        remove_result = await group_service.remove_member(
+            UUID(str(group_id)), member_dn,
+        )
         assert remove_result.success is True
         assert remove_result.data is not None
         assert member_dn not in remove_result.data.members
@@ -264,7 +266,8 @@ class TestFlextLdapConnectionService:
         return FlextLdapConnectionService()
 
     async def test_create_connection_no_ldap_client(
-        self, connection_service: FlextLdapConnectionService
+        self,
+        connection_service: FlextLdapConnectionService,
     ) -> None:
         """Test creating a connection without real LDAP client."""
         # This will fail because no real LDAP client is configured
@@ -278,7 +281,8 @@ class TestFlextLdapConnectionService:
         assert result.success is False
 
     async def test_get_connection(
-        self, connection_service: FlextLdapConnectionService
+        self,
+        connection_service: FlextLdapConnectionService,
     ) -> None:
         """Test getting connection by ID."""
         connection_id = uuid4()
@@ -287,7 +291,8 @@ class TestFlextLdapConnectionService:
         assert result.data is None
 
     async def test_list_connections(
-        self, connection_service: FlextLdapConnectionService
+        self,
+        connection_service: FlextLdapConnectionService,
     ) -> None:
         """Test listing connections."""
         result = await connection_service.list_connections()
@@ -304,7 +309,8 @@ class TestFlextLdapOperationService:
         return FlextLdapOperationService()
 
     async def test_create_operation(
-        self, operation_service: FlextLdapOperationService
+        self,
+        operation_service: FlextLdapOperationService,
     ) -> None:
         """Test creating an operation."""
         connection_id = uuid4()
@@ -322,7 +328,8 @@ class TestFlextLdapOperationService:
         assert operation.target_dn == "ou=users,dc=example,dc=org"
 
     async def test_complete_operation(
-        self, operation_service: FlextLdapOperationService
+        self,
+        operation_service: FlextLdapOperationService,
     ) -> None:
         """Test completing an operation."""
         connection_id = uuid4()
@@ -349,7 +356,8 @@ class TestFlextLdapOperationService:
         assert result.data.result_count == 5
 
     async def test_get_operation(
-        self, operation_service: FlextLdapOperationService
+        self,
+        operation_service: FlextLdapOperationService,
     ) -> None:
         """Test getting operation by ID."""
         connection_id = uuid4()
@@ -370,7 +378,8 @@ class TestFlextLdapOperationService:
         assert result.data.operation_type == "add"
 
     async def test_list_operations(
-        self, operation_service: FlextLdapOperationService
+        self,
+        operation_service: FlextLdapOperationService,
     ) -> None:
         """Test listing operations."""
         connection_id = uuid4()

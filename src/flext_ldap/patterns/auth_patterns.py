@@ -36,13 +36,17 @@ class FlextLdapConfig(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for LDAP configuration."""
         if not self.server_uri:
-            raise ValueError("LDAP config must have server_uri")
+            msg = "LDAP config must have server_uri"
+            raise ValueError(msg)
         if not self.bind_dn:
-            raise ValueError("LDAP config must have bind_dn")
+            msg = "LDAP config must have bind_dn"
+            raise ValueError(msg)
         if not self.base_dn:
-            raise ValueError("LDAP config must have base_dn")
+            msg = "LDAP config must have base_dn"
+            raise ValueError(msg)
         if not self.server_uri.startswith(("ldap://", "ldaps://")):
-            raise ValueError("LDAP URI must start with ldap:// or ldaps://")
+            msg = "LDAP URI must start with ldap:// or ldaps://"
+            raise ValueError(msg)
 
     @field_validator("server_uri")
     @classmethod

@@ -10,14 +10,15 @@ This example demonstrates how to use the LDAPService for LDAP operations.
 from __future__ import annotations
 
 import asyncio
-import logging
 import sys
 from pathlib import Path
+
+from flext_core import get_logger
 
 from flext_ldap import LDAPService
 from flext_ldap.domain.value_objects import FlextLdapCreateUserRequest
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Force use of local src instead of installed package
 src_path = Path(__file__).parent.parent / "src"

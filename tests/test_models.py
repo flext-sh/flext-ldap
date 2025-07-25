@@ -1,7 +1,6 @@
 """Tests for LDAP models."""
 
 import pytest
-from pydantic import ValidationError
 
 from flext_ldap.models import (
     ExtendedLDAPEntry,
@@ -53,11 +52,11 @@ class TestFlextLdapExtendedEntry:
             "cn": ["Test User"],
             "uid": ["testuser"],
             "mail": ["test@example.org", "alt@example.org"],
-            "objectClass": ["inetOrgPerson"]
+            "objectClass": ["inetOrgPerson"],
         }
         entry = FlextLdapExtendedEntry(
             dn="uid=testuser,ou=users,dc=example,dc=org",
-            attributes=attributes
+            attributes=attributes,
         )
         assert entry.dn == "uid=testuser,ou=users,dc=example,dc=org"
         assert entry.attributes == attributes
@@ -65,7 +64,9 @@ class TestFlextLdapExtendedEntry:
     def test_get_attribute_exists(self) -> None:
         """Test getting existing attribute."""
         attributes = {"cn": ["Test User"], "mail": ["test@example.org"]}
-        entry = FlextLdapExtendedEntry(dn="cn=test,dc=example,dc=org", attributes=attributes)
+        entry = FlextLdapExtendedEntry(
+            dn="cn=test,dc=example,dc=org", attributes=attributes,
+        )
 
         assert entry.get_attribute("cn") == ["Test User"]
         assert entry.get_attribute("mail") == ["test@example.org"]
@@ -85,7 +86,7 @@ class TestFlextLdapExtendedEntry:
         """Test setting existing attribute."""
         entry = FlextLdapExtendedEntry(
             dn="cn=test,dc=example,dc=org",
-            attributes={"cn": ["Old Name"]}
+            attributes={"cn": ["Old Name"]},
         )
         entry.set_attribute("cn", ["New Name"])
         assert entry.get_attribute("cn") == ["New Name"]
@@ -101,7 +102,7 @@ class TestFlextLdapExtendedEntry:
         """Test has_attribute returns True for existing attribute."""
         entry = FlextLdapExtendedEntry(
             dn="cn=test,dc=example,dc=org",
-            attributes={"cn": ["Test User"]}
+            attributes={"cn": ["Test User"]},
         )
         assert entry.has_attribute("cn") is True
 
@@ -114,7 +115,7 @@ class TestFlextLdapExtendedEntry:
         """Test getting single value from existing attribute."""
         entry = FlextLdapExtendedEntry(
             dn="cn=test,dc=example,dc=org",
-            attributes={"cn": ["Test User"]}
+            attributes={"cn": ["Test User"]},
         )
         assert entry.get_single_attribute("cn") == "Test User"
 
@@ -122,7 +123,7 @@ class TestFlextLdapExtendedEntry:
         """Test getting single value from attribute with multiple values."""
         entry = FlextLdapExtendedEntry(
             dn="cn=test,dc=example,dc=org",
-            attributes={"mail": ["first@example.org", "second@example.org"]}
+            attributes={"mail": ["first@example.org", "second@example.org"]},
         )
         assert entry.get_single_attribute("mail") == "first@example.org"
 
@@ -135,7 +136,7 @@ class TestFlextLdapExtendedEntry:
         """Test getting common name."""
         entry = FlextLdapExtendedEntry(
             dn="cn=test,dc=example,dc=org",
-            attributes={"cn": ["Test User"]}
+            attributes={"cn": ["Test User"]},
         )
         assert entry.get_cn() == "Test User"
 
@@ -148,7 +149,7 @@ class TestFlextLdapExtendedEntry:
         """Test getting user identifier."""
         entry = FlextLdapExtendedEntry(
             dn="uid=testuser,ou=users,dc=example,dc=org",
-            attributes={"uid": ["testuser"]}
+            attributes={"uid": ["testuser"]},
         )
         assert entry.get_uid() == "testuser"
 
@@ -161,7 +162,7 @@ class TestFlextLdapExtendedEntry:
         """Test getting email address."""
         entry = FlextLdapExtendedEntry(
             dn="cn=test,dc=example,dc=org",
-            attributes={"mail": ["test@example.org"]}
+            attributes={"mail": ["test@example.org"]},
         )
         assert entry.get_mail() == "test@example.org"
 
@@ -174,7 +175,7 @@ class TestFlextLdapExtendedEntry:
         """Test is_person returns True for person object class."""
         entry = FlextLdapExtendedEntry(
             dn="cn=test,dc=example,dc=org",
-            attributes={"objectClass": ["person", "inetOrgPerson"]}
+            attributes={"objectClass": ["person", "inetOrgPerson"]},
         )
         assert entry.is_person() is True
 
@@ -182,7 +183,7 @@ class TestFlextLdapExtendedEntry:
         """Test is_person is case insensitive."""
         entry = FlextLdapExtendedEntry(
             dn="cn=test,dc=example,dc=org",
-            attributes={"objectClass": ["PERSON", "organizationalPerson"]}
+            attributes={"objectClass": ["PERSON", "organizationalPerson"]},
         )
         assert entry.is_person() is True
 
@@ -190,7 +191,7 @@ class TestFlextLdapExtendedEntry:
         """Test is_person returns False for non-person object class."""
         entry = FlextLdapExtendedEntry(
             dn="cn=test,dc=example,dc=org",
-            attributes={"objectClass": ["group", "organizationalUnit"]}
+            attributes={"objectClass": ["group", "organizationalUnit"]},
         )
         assert entry.is_person() is False
 
@@ -203,7 +204,7 @@ class TestFlextLdapExtendedEntry:
         """Test is_group returns True for group object class."""
         entry = FlextLdapExtendedEntry(
             dn="cn=testgroup,ou=groups,dc=example,dc=org",
-            attributes={"objectClass": ["group"]}
+            attributes={"objectClass": ["group"]},
         )
         assert entry.is_group() is True
 
@@ -211,7 +212,7 @@ class TestFlextLdapExtendedEntry:
         """Test is_group returns True for groupOfNames object class."""
         entry = FlextLdapExtendedEntry(
             dn="cn=testgroup,ou=groups,dc=example,dc=org",
-            attributes={"objectClass": ["groupOfNames"]}
+            attributes={"objectClass": ["groupOfNames"]},
         )
         assert entry.is_group() is True
 
@@ -219,7 +220,7 @@ class TestFlextLdapExtendedEntry:
         """Test is_group returns True for groupOfUniqueNames object class."""
         entry = FlextLdapExtendedEntry(
             dn="cn=testgroup,ou=groups,dc=example,dc=org",
-            attributes={"objectClass": ["groupOfUniqueNames"]}
+            attributes={"objectClass": ["groupOfUniqueNames"]},
         )
         assert entry.is_group() is True
 
@@ -227,7 +228,7 @@ class TestFlextLdapExtendedEntry:
         """Test is_group is case insensitive."""
         entry = FlextLdapExtendedEntry(
             dn="cn=testgroup,ou=groups,dc=example,dc=org",
-            attributes={"objectClass": ["GROUP", "organizationalUnit"]}
+            attributes={"objectClass": ["GROUP", "organizationalUnit"]},
         )
         assert entry.is_group() is True
 
@@ -235,7 +236,7 @@ class TestFlextLdapExtendedEntry:
         """Test is_group returns False for non-group object class."""
         entry = FlextLdapExtendedEntry(
             dn="cn=test,dc=example,dc=org",
-            attributes={"objectClass": ["person", "inetOrgPerson"]}
+            attributes={"objectClass": ["person", "inetOrgPerson"]},
         )
         assert entry.is_group() is False
 
@@ -248,7 +249,7 @@ class TestFlextLdapExtendedEntry:
         """Test domain rules validation with valid entry."""
         entry = FlextLdapExtendedEntry(
             dn="cn=test,dc=example,dc=org",
-            attributes={"cn": ["Test User"]}
+            attributes={"cn": ["Test User"]},
         )
         # Should not raise
         entry.validate_domain_rules()
@@ -256,7 +257,9 @@ class TestFlextLdapExtendedEntry:
     def test_validate_domain_rules_empty_dn(self) -> None:
         """Test domain rules validation with empty DN."""
         entry = FlextLdapExtendedEntry(dn="", attributes={})
-        with pytest.raises(ValueError, match="LDAP entry must have a distinguished name"):
+        with pytest.raises(
+            ValueError, match="LDAP entry must have a distinguished name",
+        ):
             entry.validate_domain_rules()
 
     def test_validate_domain_rules_invalid_attributes_type(self) -> None:
@@ -402,19 +405,25 @@ class TestFlextLdapFilter:
     def test_validate_domain_rules_missing_parentheses(self) -> None:
         """Test domain rules validation with missing parentheses."""
         filter_obj = FlextLdapFilter(filter_string="cn=admin")
-        with pytest.raises(ValueError, match="LDAP filter string must be enclosed in parentheses"):
+        with pytest.raises(
+            ValueError, match="LDAP filter string must be enclosed in parentheses",
+        ):
             filter_obj.validate_domain_rules()
 
     def test_validate_domain_rules_missing_opening_parenthesis(self) -> None:
         """Test domain rules validation with missing opening parenthesis."""
         filter_obj = FlextLdapFilter(filter_string="cn=admin)")
-        with pytest.raises(ValueError, match="LDAP filter string must be enclosed in parentheses"):
+        with pytest.raises(
+            ValueError, match="LDAP filter string must be enclosed in parentheses",
+        ):
             filter_obj.validate_domain_rules()
 
     def test_validate_domain_rules_missing_closing_parenthesis(self) -> None:
         """Test domain rules validation with missing closing parenthesis."""
         filter_obj = FlextLdapFilter(filter_string="(cn=admin")
-        with pytest.raises(ValueError, match="LDAP filter string must be enclosed in parentheses"):
+        with pytest.raises(
+            ValueError, match="LDAP filter string must be enclosed in parentheses",
+        ):
             filter_obj.validate_domain_rules()
 
     def test_backward_compatibility_alias(self) -> None:

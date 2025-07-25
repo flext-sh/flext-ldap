@@ -7,7 +7,6 @@ import pytest
 from flext_ldap.domain.entities import (
     FlextLdapConnection,
     FlextLdapEntityStatus,
-    FlextLdapEntry,
     FlextLdapGroup,
     FlextLdapOperation,
     FlextLdapUser,
@@ -73,13 +72,14 @@ class TestFlextLdapUser:
         user = FlextLdapUser(
             dn="uid=test,ou=users,dc=example,dc=org",
             uid="test",
-            mail="test@example.org"
+            mail="test@example.org",
         )
         user.validate_domain_rules()  # Should not raise
 
         # Invalid DN
         with pytest.raises(
-            ValueError, match="LDAP user must have a distinguished name"
+            ValueError,
+            match="LDAP user must have a distinguished name",
         ):
             FlextLdapUser(dn="", uid="test").validate_domain_rules()
 
@@ -88,14 +88,14 @@ class TestFlextLdapUser:
             FlextLdapUser(
                 dn="uid=test,ou=users,dc=example,dc=org",
                 uid="test",
-                mail="invalid-email"
+                mail="invalid-email",
             ).validate_domain_rules()
 
     def test_user_attribute_management(self) -> None:
         """Test user custom attribute management."""
         user = FlextLdapUser(
             dn="uid=test,ou=users,dc=example,dc=org",
-            uid="test"
+            uid="test",
         )
 
         # Add attribute
@@ -113,13 +113,13 @@ class TestFlextLdapUser:
         user_with_mail = FlextLdapUser(
             dn="uid=test,ou=users,dc=example,dc=org",
             uid="test",
-            mail="test@example.org"
+            mail="test@example.org",
         )
         assert user_with_mail.has_mail() is True
 
         user_without_mail = FlextLdapUser(
             dn="uid=test,ou=users,dc=example,dc=org",
-            uid="test"
+            uid="test",
         )
         assert user_without_mail.has_mail() is False
 
@@ -127,7 +127,7 @@ class TestFlextLdapUser:
         """Test user deactivation."""
         user = FlextLdapUser(
             dn="uid=test,ou=users,dc=example,dc=org",
-            uid="test"
+            uid="test",
         )
 
         deactivated = user.deactivate()
@@ -188,13 +188,14 @@ class TestFlextLdapGroup:
         # Valid group
         group = FlextLdapGroup(
             dn="cn=test,ou=groups,dc=example,dc=org",
-            cn="test"
+            cn="test",
         )
         group.validate_domain_rules()  # Should not raise
 
         # Invalid DN
         with pytest.raises(
-            ValueError, match="LDAP group must have a distinguished name"
+            ValueError,
+            match="LDAP group must have a distinguished name",
         ):
             FlextLdapGroup(dn="", cn="test").validate_domain_rules()
 
@@ -202,14 +203,14 @@ class TestFlextLdapGroup:
         with pytest.raises(ValueError, match="LDAP group must have a common name"):
             FlextLdapGroup(
                 dn="cn=test,ou=groups,dc=example,dc=org",
-                cn=""
+                cn="",
             ).validate_domain_rules()
 
     def test_group_owner_management(self) -> None:
         """Test group owner management."""
         group = FlextLdapGroup(
             dn="cn=test,ou=groups,dc=example,dc=org",
-            cn="test"
+            cn="test",
         )
 
         owner_dn = "uid=admin,ou=users,dc=example,dc=org"
@@ -228,7 +229,7 @@ class TestFlextLdapGroup:
         """Test group deactivation."""
         group = FlextLdapGroup(
             dn="cn=test,ou=groups,dc=example,dc=org",
-            cn="test"
+            cn="test",
         )
 
         deactivated = group.deactivate()
@@ -308,7 +309,8 @@ class TestFlextLdapOperation:
 
         # Complete operation successfully - returns new immutable entity
         completed_operation = started_operation.complete_operation(
-            success=True, result_count=5
+            success=True,
+            result_count=5,
         )
         assert completed_operation.completed_at is not None
         assert completed_operation.success is True
@@ -328,7 +330,7 @@ class TestFlextLdapOperation:
         # Complete operation - returns new immutable entity
         completed_operation = started_operation.complete_operation(
             success=False,
-            error_message="Entry already exists"
+            error_message="Entry already exists",
         )
 
         assert completed_operation.success is False
@@ -342,18 +344,19 @@ class TestFlextLdapOperation:
         operation = FlextLdapOperation(
             operation_type="search",
             target_dn="ou=users,dc=example,dc=org",
-            connection_id=connection_id
+            connection_id=connection_id,
         )
         operation.validate_domain_rules()  # Should not raise
 
         # Invalid operation type
         with pytest.raises(
-            ValueError, match="LDAP operation must have an operation type"
+            ValueError,
+            match="LDAP operation must have an operation type",
         ):
             FlextLdapOperation(
                 operation_type="",
                 target_dn="ou=users,dc=example,dc=org",
-                connection_id=connection_id
+                connection_id=connection_id,
             ).validate_domain_rules()
 
         # Invalid target DN
@@ -361,17 +364,18 @@ class TestFlextLdapOperation:
             FlextLdapOperation(
                 operation_type="search",
                 target_dn="",
-                connection_id=connection_id
+                connection_id=connection_id,
             ).validate_domain_rules()
 
         # Invalid connection ID
         with pytest.raises(
-            ValueError, match="LDAP operation must have a connection ID"
+            ValueError,
+            match="LDAP operation must have a connection ID",
         ):
             FlextLdapOperation(
                 operation_type="search",
                 target_dn="ou=users,dc=example,dc=org",
-                connection_id=""
+                connection_id="",
             ).validate_domain_rules()
 
     def test_operation_status_checking(self) -> None:
@@ -380,7 +384,7 @@ class TestFlextLdapOperation:
         operation = FlextLdapOperation(
             operation_type="search",
             target_dn="ou=users,dc=example,dc=org",
-            connection_id=connection_id
+            connection_id=connection_id,
         )
 
         # Initially not completed or successful

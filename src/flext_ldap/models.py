@@ -157,9 +157,9 @@ class FlextLdapExtendedEntry(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for LDAP extended entry."""
         if not self.dn:
-            raise ValueError("LDAP entry must have a distinguished name")
-        if not isinstance(self.attributes, dict):
-            raise TypeError("LDAP attributes must be a dictionary")
+            msg = "LDAP entry must have a distinguished name"
+            raise ValueError(msg)
+        # Note: attributes type is already validated by Pydantic as dict[str, list[str]]
 
 
 # Use FlextLdapExtendedEntry as the default LDAPEntry for backward compatibility
@@ -338,11 +338,13 @@ class FlextLdapFilter(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for LDAP filter."""
         if not self.filter_string:
-            raise ValueError("LDAP filter must have a filter string")
+            msg = "LDAP filter must have a filter string"
+            raise ValueError(msg)
         if not self.filter_string.startswith("(") or not self.filter_string.endswith(
             ")",
         ):
-            raise ValueError("LDAP filter string must be enclosed in parentheses")
+            msg = "LDAP filter string must be enclosed in parentheses"
+            raise ValueError(msg)
 
 
 # Backward compatibility aliases

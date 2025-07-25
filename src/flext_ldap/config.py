@@ -77,13 +77,17 @@ class FlextLdapConnectionConfig(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate business rules for LDAP connection configuration."""
         if not self.server:
-            raise ValueError("LDAP connection must have a server")
+            msg = "LDAP connection must have a server"
+            raise ValueError(msg)
         if self.port <= 0 or self.port > 65535:
-            raise ValueError("Port must be between 1 and 65535")
+            msg = "Port must be between 1 and 65535"
+            raise ValueError(msg)
         if self.timeout_seconds <= 0:
-            raise ValueError("Timeout must be positive")
+            msg = "Timeout must be positive"
+            raise ValueError(msg)
         if self.pool_size <= 0:
-            raise ValueError("Pool size must be positive")
+            msg = "Pool size must be positive"
+            raise ValueError(msg)
 
 
 class FlextLdapAuthConfig(FlextValueObject):
@@ -112,9 +116,11 @@ class FlextLdapAuthConfig(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate business rules for LDAP authentication configuration."""
         if not self.use_anonymous_bind and not self.bind_dn:
-            raise ValueError("Bind DN is required when not using anonymous bind")
+            msg = "Bind DN is required when not using anonymous bind"
+            raise ValueError(msg)
         if self.bind_dn and not self.bind_password and not self.use_anonymous_bind:
-            raise ValueError("Bind password is required when bind DN is provided")
+            msg = "Bind password is required when bind DN is provided"
+            raise ValueError(msg)
 
 
 class FlextLdapSearchConfig(FlextValueObject):
@@ -141,11 +147,14 @@ class FlextLdapSearchConfig(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate business rules for LDAP search configuration."""
         if self.size_limit < 0:
-            raise ValueError("Size limit must be non-negative")
+            msg = "Size limit must be non-negative"
+            raise ValueError(msg)
         if self.time_limit < 0:
-            raise ValueError("Time limit must be non-negative")
+            msg = "Time limit must be non-negative"
+            raise ValueError(msg)
         if self.page_size <= 0:
-            raise ValueError("Page size must be positive")
+            msg = "Page size must be positive"
+            raise ValueError(msg)
 
 
 class FlextLdapOperationConfig(FlextValueObject):
@@ -169,11 +178,14 @@ class FlextLdapOperationConfig(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate business rules for LDAP operation configuration."""
         if self.max_retries < 0:
-            raise ValueError("Max retries must be non-negative")
+            msg = "Max retries must be non-negative"
+            raise ValueError(msg)
         if self.retry_delay <= 0:
-            raise ValueError("Retry delay must be positive")
+            msg = "Retry delay must be positive"
+            raise ValueError(msg)
         if self.batch_size <= 0:
-            raise ValueError("Batch size must be positive")
+            msg = "Batch size must be positive"
+            raise ValueError(msg)
 
 
 class FlextLdapSecurityConfig(FlextValueObject):
@@ -191,17 +203,20 @@ class FlextLdapSecurityConfig(FlextValueObject):
 
     def validate_domain_rules(self) -> None:
         """Validate business rules for LDAP security configuration."""
-        if self.tls_validation not in ("strict", "permissive", "disabled"):
+        if self.tls_validation not in {"strict", "permissive", "disabled"}:
+            msg = "TLS validation must be 'strict', 'permissive', or 'disabled'"
             raise ValueError(
-                "TLS validation must be 'strict', 'permissive', or 'disabled'",
+                msg,
             )
         if self.client_cert_file and not self.client_key_file:
+            msg = "Client key file is required when client cert file is provided"
             raise ValueError(
-                "Client key file is required when client cert file is provided",
+                msg,
             )
         if self.client_key_file and not self.client_cert_file:
+            msg = "Client cert file is required when client key file is provided"
             raise ValueError(
-                "Client cert file is required when client key file is provided",
+                msg,
             )
 
 

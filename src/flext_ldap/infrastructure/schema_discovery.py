@@ -10,19 +10,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
-from flext_core import FlextResult
+from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
     from uuid import UUID
 
-logger = logging.getLogger(__name__)
+    from flext_ldap.domain.entities import FlextLdapConnection
+
+logger = get_logger(__name__)
 
 
 class FlextLdapSchemaElementType(Enum):
@@ -283,7 +283,7 @@ class FlextLdapSchemaDiscoveryService:
 
     async def discover_schema(
         self,
-        connection: Any,
+        connection: FlextLdapConnection,
         *,
         force_refresh: bool = False,
     ) -> FlextResult[FlextLdapSchemaDiscoveryResult]:
@@ -291,27 +291,22 @@ class FlextLdapSchemaDiscoveryService:
         try:
             start_time = datetime.now(UTC)
 
-            # Generate cache key based on connection
             cache_key = self._generate_cache_key(connection)
 
-            # Check cache first (unless forced refresh)
             if not force_refresh and self.enable_caching:
                 cached_result = self._get_cached_schema(cache_key)
                 if cached_result:
                     logger.debug("Retrieved schema from cache: %s", cache_key)
                     return FlextResult.ok(cached_result)
 
-            # Perform actual schema discovery
             discovery_result = await self._perform_schema_discovery(
                 connection,
                 start_time,
             )
 
-            # Cache the result
             if self.enable_caching:
                 self._cache_schema(cache_key, discovery_result)
 
-            # Add to history
             self._discovery_history.append(discovery_result)
             if len(self._discovery_history) > 100:  # Keep last 100 discoveries
                 self._discovery_history.pop(0)
@@ -329,12 +324,11 @@ class FlextLdapSchemaDiscoveryService:
 
     async def get_object_class(
         self,
-        connection: Any,
+        connection: FlextLdapConnection,
         class_name: str,
     ) -> FlextResult[FlextLdapSchemaObjectClass | None]:
         """Get specific object class schema."""
         try:
-            # Get full schema first
             schema_result = await self.discover_schema(connection)
             if not schema_result.success:
                 return FlextResult.fail(
@@ -345,7 +339,6 @@ class FlextLdapSchemaDiscoveryService:
             if schema is None:
                 return FlextResult.fail("Schema discovery returned None")
 
-            # Look for object class by name
             for oc in schema.object_classes.values():
                 if oc.has_name(class_name):
                     return FlextResult.ok(oc)
@@ -359,12 +352,11 @@ class FlextLdapSchemaDiscoveryService:
 
     async def get_attribute_type(
         self,
-        connection: Any,
+        connection: FlextLdapConnection,
         attribute_name: str,
     ) -> FlextResult[FlextLdapSchemaAttribute | None]:
         """Get specific attribute type schema."""
         try:
-            # Get full schema first
             schema_result = await self.discover_schema(connection)
             if not schema_result.success:
                 return FlextResult.fail(
@@ -375,7 +367,6 @@ class FlextLdapSchemaDiscoveryService:
             if schema is None:
                 return FlextResult.fail("Schema discovery returned None")
 
-            # Look for attribute by name
             for attr in schema.attributes.values():
                 if attr.has_name(attribute_name):
                     return FlextResult.ok(attr)
@@ -389,13 +380,12 @@ class FlextLdapSchemaDiscoveryService:
 
     async def validate_object_structure(
         self,
-        connection: Any,
+        connection: FlextLdapConnection,
         object_classes: list[str],
         attributes: dict[str, Any],
     ) -> FlextResult[dict[str, Any]]:
         """Validate object structure against schema."""
         try:
-            # Get schema
             schema_result = await self.discover_schema(connection)
             if not schema_result.success:
                 return FlextResult.fail(
@@ -414,7 +404,6 @@ class FlextLdapSchemaDiscoveryService:
                 "schema_violations": [],
             }
 
-            # Collect all required and optional attributes from object classes
             all_must_attrs: set[str] = set()
             all_may_attrs: set[str] = set()
 
@@ -436,14 +425,12 @@ class FlextLdapSchemaDiscoveryService:
                 all_must_attrs.update(must_attrs)
                 all_may_attrs.update(may_attrs)
 
-            # Check for missing required attributes
             provided_attrs = {attr.lower() for attr in attributes}
             for must_attr in all_must_attrs:
                 if must_attr.lower() not in provided_attrs:
                     validation_result["missing_required"].append(must_attr)
                     validation_result["is_valid"] = False
 
-            # Check for unknown attributes
             all_known_attrs = all_must_attrs.union(all_may_attrs)
             for attr_name in attributes:
                 if attr_name.lower() not in {a.lower() for a in all_known_attrs}:
@@ -452,7 +439,6 @@ class FlextLdapSchemaDiscoveryService:
                         f"Unknown attribute: {attr_name}",
                     )
 
-            # Validate attribute values against schema
             for attr_name, attr_value in attributes.items():
                 attr_schema = None
                 for attr in schema.attributes.values():
@@ -481,19 +467,14 @@ class FlextLdapSchemaDiscoveryService:
 
     async def _perform_schema_discovery(
         self,
-        connection: Any,
+        connection: FlextLdapConnection,
         start_time: datetime,
     ) -> FlextLdapSchemaDiscoveryResult:
         """Perform actual schema discovery from LDAP server."""
-        # This is a simplified implementation
-        # In a real implementation, this would query the LDAP server's schema
-
         discovery_duration = int(
             (datetime.now(UTC) - start_time).total_seconds() * 1000,
         )
 
-        # Mock discovery result - in real implementation, this would parse schema
-        # from server
         return FlextLdapSchemaDiscoveryResult(
             server_info={
                 "vendor": "Mock LDAP Server",
@@ -556,10 +537,8 @@ class FlextLdapSchemaDiscoveryService:
             discovery_duration_ms=discovery_duration,
         )
 
-    def _generate_cache_key(self, connection: Any) -> str:
+    def _generate_cache_key(self, connection: FlextLdapConnection) -> str:
         """Generate cache key for connection."""
-        # In real implementation, this would use connection details
-        # For now, use a simple key
         if hasattr(connection, "server"):
             return f"schema_{getattr(connection.server, 'host', 'unknown')}"
         return "schema_default"
@@ -572,14 +551,11 @@ class FlextLdapSchemaDiscoveryService:
         if cache_key in self._schema_cache:
             result, cached_time = self._schema_cache[cache_key]
 
-            # Check if cache is still valid
             if datetime.now(UTC) - cached_time < timedelta(
                 minutes=self.cache_ttl_minutes,
             ):
-                # Mark as cache hit
                 result.cache_hit = True
                 return result
-            # Remove expired cache entry
             del self._schema_cache[cache_key]
 
         return None
@@ -590,9 +566,7 @@ class FlextLdapSchemaDiscoveryService:
         result: FlextLdapSchemaDiscoveryResult,
     ) -> None:
         """Cache schema discovery result."""
-        # Manage cache size
         if len(self._schema_cache) >= self.max_cache_size:
-            # Remove oldest entry
             oldest_key = min(
                 self._schema_cache.keys(),
                 key=lambda k: self._schema_cache[k][1],

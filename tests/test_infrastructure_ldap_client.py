@@ -1,7 +1,6 @@
 """Tests for LDAP infrastructure client in FLEXT-LDAP."""
 
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -51,7 +50,8 @@ class TestFlextLdapInfrastructureClient:
         assert ldap_client._dn_to_uuid[dn] == entity_uuid
 
     def test_resolve_user_identifier_with_dn(
-        self, ldap_client: FlextLdapInfrastructureClient
+        self,
+        ldap_client: FlextLdapInfrastructureClient,
     ) -> None:
         """Test resolving user identifier when it's already a DN."""
         dn = "uid=test,ou=users,dc=example,dc=org"
@@ -61,7 +61,8 @@ class TestFlextLdapInfrastructureClient:
         assert result.data == dn
 
     def test_resolve_user_identifier_with_uuid(
-        self, ldap_client: FlextLdapInfrastructureClient
+        self,
+        ldap_client: FlextLdapInfrastructureClient,
     ) -> None:
         """Test resolving user identifier from UUID."""
         entity_uuid = str(uuid4())
@@ -76,7 +77,8 @@ class TestFlextLdapInfrastructureClient:
         assert result.data == dn
 
     def test_resolve_user_identifier_not_found(
-        self, ldap_client: FlextLdapInfrastructureClient
+        self,
+        ldap_client: FlextLdapInfrastructureClient,
     ) -> None:
         """Test resolving non-existent UUID."""
         entity_uuid = str(uuid4())
@@ -87,7 +89,8 @@ class TestFlextLdapInfrastructureClient:
         assert "not found" in result.error
 
     def test_resolve_group_identifier(
-        self, ldap_client: FlextLdapInfrastructureClient
+        self,
+        ldap_client: FlextLdapInfrastructureClient,
     ) -> None:
         """Test resolving group identifier."""
         group_uuid = str(uuid4())
@@ -100,7 +103,8 @@ class TestFlextLdapInfrastructureClient:
         assert result == dn
 
     def test_resolve_group_identifier_not_found(
-        self, ldap_client: FlextLdapInfrastructureClient
+        self,
+        ldap_client: FlextLdapInfrastructureClient,
     ) -> None:
         """Test resolving non-existent group UUID."""
         group_uuid = str(uuid4())
@@ -113,7 +117,7 @@ class TestFlextLdapInfrastructureClient:
         self,
         mock_server: MagicMock,
         mock_connection: MagicMock,
-        ldap_client: FlextLdapInfrastructureClient
+        ldap_client: FlextLdapInfrastructureClient,
     ) -> None:
         """Test successful basic connection."""
         # Setup mocks
@@ -126,7 +130,7 @@ class TestFlextLdapInfrastructureClient:
         result = await ldap_client.connect(
             server_url="ldap://localhost:389",
             bind_dn="cn=admin,dc=example,dc=org",
-            password="password"
+            password="password",
         )
 
         assert result.success is True
@@ -136,7 +140,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_connect_failure(
         self,
         mock_connection: MagicMock,
-        ldap_client: FlextLdapInfrastructureClient
+        ldap_client: FlextLdapInfrastructureClient,
     ) -> None:
         """Test connection failure."""
         mock_connection.side_effect = LDAPException("Connection failed")
@@ -144,7 +148,7 @@ class TestFlextLdapInfrastructureClient:
         result = await ldap_client.connect(
             server_url="ldap://invalid:389",
             bind_dn="cn=admin,dc=example,dc=org",
-            password="password"
+            password="password",
         )
 
         assert result.success is False
@@ -157,7 +161,7 @@ class TestFlextLdapInfrastructureClient:
         self,
         mock_server: MagicMock,
         mock_connection: MagicMock,
-        ldap_client: FlextLdapInfrastructureClient
+        ldap_client: FlextLdapInfrastructureClient,
     ) -> None:
         """Test successful connection with pool creation."""
         # Setup mocks
@@ -180,7 +184,7 @@ class TestFlextLdapInfrastructureClient:
                 server_urls=server_urls,
                 bind_dn=bind_dn,
                 password=password,
-                pool_name="test_pool"
+                pool_name="test_pool",
             )
 
         assert result.success is True
@@ -191,7 +195,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_connect_with_pool_failure(
         self,
         mock_connection: MagicMock,
-        ldap_client: FlextLdapInfrastructureClient
+        ldap_client: FlextLdapInfrastructureClient,
     ) -> None:
         """Test connection with pool creation failure."""
         mock_connection.side_effect = LDAPException("Connection failed")
@@ -200,7 +204,7 @@ class TestFlextLdapInfrastructureClient:
             result = await ldap_client.connect_with_pool(
                 server_urls=["ldap://invalid:389"],
                 bind_dn="cn=admin,dc=example,dc=org",
-                password="password"
+                password="password",
             )
 
         assert result.success is False
@@ -210,7 +214,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_disconnect_success(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful disconnection."""
         connection_id = "test_connection"
@@ -223,7 +227,8 @@ class TestFlextLdapInfrastructureClient:
         assert connection_id not in ldap_client._connections
 
     async def test_disconnect_not_found(
-        self, ldap_client: FlextLdapInfrastructureClient
+        self,
+        ldap_client: FlextLdapInfrastructureClient,
     ) -> None:
         """Test disconnecting non-existent connection."""
         result = await ldap_client.disconnect("non_existent")
@@ -235,7 +240,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_search_success(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful LDAP search."""
         connection_id = "test_connection"
@@ -245,14 +250,14 @@ class TestFlextLdapInfrastructureClient:
         mock_connection.search.return_value = True
         mock_connection.entries = [
             MagicMock(entry_dn="uid=user1,ou=users,dc=example,dc=org"),
-            MagicMock(entry_dn="uid=user2,ou=users,dc=example,dc=org")
+            MagicMock(entry_dn="uid=user2,ou=users,dc=example,dc=org"),
         ]
 
         result = await ldap_client.search(
             connection_id=connection_id,
             base_dn="ou=users,dc=example,dc=org",
             search_filter="(objectClass=inetOrgPerson)",
-            attributes=["uid", "cn", "mail"]
+            attributes=["uid", "cn", "mail"],
         )
 
         assert result.success is True
@@ -261,13 +266,14 @@ class TestFlextLdapInfrastructureClient:
         mock_connection.search.assert_called_once()
 
     async def test_search_connection_not_found(
-        self, ldap_client: FlextLdapInfrastructureClient
+        self,
+        ldap_client: FlextLdapInfrastructureClient,
     ) -> None:
         """Test search with non-existent connection."""
         result = await ldap_client.search(
             connection_id="non_existent",
             base_dn="ou=users,dc=example,dc=org",
-            search_filter="(objectClass=inetOrgPerson)"
+            search_filter="(objectClass=inetOrgPerson)",
         )
 
         assert result.success is False
@@ -277,7 +283,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_search_ldap_exception(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test search with LDAP exception."""
         connection_id = "test_connection"
@@ -288,7 +294,7 @@ class TestFlextLdapInfrastructureClient:
         result = await ldap_client.search(
             connection_id=connection_id,
             base_dn="ou=users,dc=example,dc=org",
-            search_filter="(objectClass=inetOrgPerson)"
+            search_filter="(objectClass=inetOrgPerson)",
         )
 
         assert result.success is False
@@ -298,7 +304,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_add_entry_success(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful entry addition."""
         connection_id = "test_connection"
@@ -310,13 +316,13 @@ class TestFlextLdapInfrastructureClient:
             "objectClass": ["inetOrgPerson"],
             "uid": ["testuser"],
             "cn": ["Test User"],
-            "sn": ["User"]
+            "sn": ["User"],
         }
 
         result = await ldap_client.add_entry(
             connection_id=connection_id,
             dn="uid=testuser,ou=users,dc=example,dc=org",
-            attributes=attributes
+            attributes=attributes,
         )
 
         assert result.success is True
@@ -325,7 +331,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_add_entry_failure(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test failed entry addition."""
         connection_id = "test_connection"
@@ -337,7 +343,7 @@ class TestFlextLdapInfrastructureClient:
         result = await ldap_client.add_entry(
             connection_id=connection_id,
             dn="uid=testuser,ou=users,dc=example,dc=org",
-            attributes={"objectClass": ["inetOrgPerson"]}
+            attributes={"objectClass": ["inetOrgPerson"]},
         )
 
         assert result.success is False
@@ -347,7 +353,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_modify_entry_success(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful entry modification."""
         connection_id = "test_connection"
@@ -357,13 +363,13 @@ class TestFlextLdapInfrastructureClient:
 
         modifications = {
             "mail": "newemail@example.org",
-            "telephoneNumber": "+1234567890"
+            "telephoneNumber": "+1234567890",
         }
 
         result = await ldap_client.modify_entry(
             connection_id=connection_id,
             dn="uid=testuser,ou=users,dc=example,dc=org",
-            changes=modifications
+            changes=modifications,
         )
 
         assert result.success is True
@@ -372,7 +378,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_delete_entry_success(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful entry deletion."""
         connection_id = "test_connection"
@@ -382,7 +388,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await ldap_client.delete_entry(
             connection_id=connection_id,
-            dn="uid=testuser,ou=users,dc=example,dc=org"
+            dn="uid=testuser,ou=users,dc=example,dc=org",
         )
 
         assert result.success is True
@@ -391,7 +397,7 @@ class TestFlextLdapInfrastructureClient:
     def test_get_connection_info_success(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test getting connection information."""
         connection_id = "test_connection"
@@ -406,7 +412,8 @@ class TestFlextLdapInfrastructureClient:
         assert "user" in result.data
 
     def test_get_connection_info_not_found(
-        self, ldap_client: FlextLdapInfrastructureClient
+        self,
+        ldap_client: FlextLdapInfrastructureClient,
     ) -> None:
         """Test getting info for non-existent connection."""
         result = ldap_client.get_connection_info("non_existent")
@@ -418,7 +425,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_create_user_success(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful user creation."""
         # Mock connection entity
@@ -438,7 +445,7 @@ class TestFlextLdapInfrastructureClient:
             uid="testuser",
             cn="Test User",
             sn="User",
-            mail="test@example.org"
+            mail="test@example.org",
         )
 
         result = await ldap_client.create_user(mock_conn_entity, request)
@@ -460,24 +467,28 @@ class TestFlextLdapInfrastructureClient:
         mock_conn_entity.bind_dn = "cn=admin,dc=example,dc=org"
 
         # Mock search result data in the correct format
-        search_results = [{
-            "dn": "uid=testuser,ou=users,dc=example,dc=org",
-            "attributes": {
-                "uid": ["testuser"],
-                "cn": ["Test User"],
-                "sn": ["User"],
-                "mail": ["test@example.org"],
-                "objectClass": ["inetOrgPerson"]
-            }
-        }]
+        search_results = [
+            {
+                "dn": "uid=testuser,ou=users,dc=example,dc=org",
+                "attributes": {
+                    "uid": ["testuser"],
+                    "cn": ["Test User"],
+                    "sn": ["User"],
+                    "mail": ["test@example.org"],
+                    "objectClass": ["inetOrgPerson"],
+                },
+            },
+        ]
 
         # Mock the search method to return our test data
         with patch.object(
-            ldap_client, "search", return_value=FlextResult.ok(search_results)
+            ldap_client,
+            "search",
+            return_value=FlextResult.ok(search_results),
         ) as mock_search:
             result = await ldap_client.find_user_by_dn(
                 mock_conn_entity,
-                "uid=testuser,ou=users,dc=example,dc=org"
+                "uid=testuser,ou=users,dc=example,dc=org",
             )
 
             assert result.success is True
@@ -498,24 +509,28 @@ class TestFlextLdapInfrastructureClient:
         mock_conn_entity.bind_dn = "cn=admin,dc=example,dc=org"
 
         # Mock search result data in the correct format
-        search_results = [{
-            "dn": "uid=testuser,ou=users,dc=example,dc=org",
-            "attributes": {
-                "uid": ["testuser"],
-                "cn": ["Test User"],
-                "sn": ["User"],
-                "mail": ["test@example.org"],
-                "objectClass": ["inetOrgPerson"]
-            }
-        }]
+        search_results = [
+            {
+                "dn": "uid=testuser,ou=users,dc=example,dc=org",
+                "attributes": {
+                    "uid": ["testuser"],
+                    "cn": ["Test User"],
+                    "sn": ["User"],
+                    "mail": ["test@example.org"],
+                    "objectClass": ["inetOrgPerson"],
+                },
+            },
+        ]
 
         # Mock the search method to return our test data
         with patch.object(
-            ldap_client, "search", return_value=FlextResult.ok(search_results)
+            ldap_client,
+            "search",
+            return_value=FlextResult.ok(search_results),
         ) as mock_search:
             result = await ldap_client.find_user_by_uid(
                 mock_conn_entity,
-                "testuser"
+                "testuser",
             )
 
             assert result.success is True
@@ -528,7 +543,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_create_group_success(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful group creation."""
         # Mock connection entity
@@ -546,7 +561,7 @@ class TestFlextLdapInfrastructureClient:
             mock_conn_entity,
             dn="cn=testgroup,ou=groups,dc=example,dc=org",
             cn="testgroup",
-            members=["uid=user1,ou=users,dc=example,dc=org"]
+            members=["uid=user1,ou=users,dc=example,dc=org"],
         )
 
         assert result.success is True
@@ -557,7 +572,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_add_member_to_group_success(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successfully adding member to group."""
         # Mock connection entity
@@ -574,7 +589,7 @@ class TestFlextLdapInfrastructureClient:
         result = await ldap_client.add_member_to_group(
             mock_conn_entity,
             group_dn="cn=testgroup,ou=groups,dc=example,dc=org",
-            member_dn="uid=newuser,ou=users,dc=example,dc=org"
+            member_dn="uid=newuser,ou=users,dc=example,dc=org",
         )
 
         assert result.success is True
@@ -583,7 +598,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_delete_group_success(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful group deletion."""
         # Mock connection entity
@@ -599,7 +614,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await ldap_client.delete_group(
             mock_conn_entity,
-            group_dn="cn=testgroup,ou=groups,dc=example,dc=org"
+            group_dn="cn=testgroup,ou=groups,dc=example,dc=org",
         )
 
         assert result.success is True
@@ -608,7 +623,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_update_user_success(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful user update."""
         # Mock connection entity
@@ -630,13 +645,13 @@ class TestFlextLdapInfrastructureClient:
         # Test updates
         updates = {
             "mail": "newemail@example.org",
-            "telephoneNumber": "+1234567890"
+            "telephoneNumber": "+1234567890",
         }
 
         result = await ldap_client.update_user(
             mock_conn_entity,
             user_uuid,
-            updates
+            updates,
         )
 
         assert result.success is True
@@ -644,7 +659,7 @@ class TestFlextLdapInfrastructureClient:
 
     async def test_update_user_uuid_not_found(
         self,
-        ldap_client: FlextLdapInfrastructureClient
+        ldap_client: FlextLdapInfrastructureClient,
     ) -> None:
         """Test updating user with non-existent UUID."""
         mock_conn_entity = MagicMock()
@@ -657,7 +672,7 @@ class TestFlextLdapInfrastructureClient:
         result = await ldap_client.update_user(
             mock_conn_entity,
             user_uuid,
-            updates
+            updates,
         )
 
         assert result.success is False
@@ -667,7 +682,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_delete_user_success(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful user deletion by UUID."""
         # Mock connection entity
@@ -688,7 +703,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await ldap_client.delete_user(
             mock_conn_entity,
-            user_uuid
+            user_uuid,
         )
 
         assert result.success is True
@@ -697,7 +712,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_lock_user_success(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful user account locking."""
         # Mock connection entity
@@ -718,7 +733,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await ldap_client.lock_user(
             mock_conn_entity,
-            user_uuid
+            user_uuid,
         )
 
         assert result.success is True
@@ -727,7 +742,7 @@ class TestFlextLdapInfrastructureClient:
     async def test_unlock_user_success(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful user account unlocking."""
         # Mock connection entity
@@ -748,7 +763,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await ldap_client.unlock_user(
             mock_conn_entity,
-            user_uuid
+            user_uuid,
         )
 
         assert result.success is True
@@ -773,8 +788,8 @@ class TestFlextLdapInfrastructureClient:
                     "cn": ["User One"],
                     "sn": ["One"],
                     "mail": ["user1@example.org"],
-                    "objectClass": ["inetOrgPerson"]
-                }
+                    "objectClass": ["inetOrgPerson"],
+                },
             },
             {
                 "dn": "uid=user2,ou=users,dc=example,dc=org",
@@ -783,19 +798,21 @@ class TestFlextLdapInfrastructureClient:
                     "cn": ["User Two"],
                     "sn": ["Two"],
                     "mail": ["user2@example.org"],
-                    "objectClass": ["inetOrgPerson"]
-                }
-            }
+                    "objectClass": ["inetOrgPerson"],
+                },
+            },
         ]
 
         # Mock the search method
         with patch.object(
-            ldap_client, "search", return_value=FlextResult.ok(search_results)
+            ldap_client,
+            "search",
+            return_value=FlextResult.ok(search_results),
         ) as mock_search:
             result = await ldap_client.list_users(
                 mock_conn_entity,
                 base_dn="ou=users,dc=example,dc=org",
-                limit=10
+                limit=10,
             )
 
             assert result.success is True
@@ -816,22 +833,26 @@ class TestFlextLdapInfrastructureClient:
         mock_conn_entity.bind_dn = "cn=admin,dc=example,dc=org"
 
         # Mock search result data
-        search_results = [{
-            "dn": "cn=testgroup,ou=groups,dc=example,dc=org",
-            "attributes": {
-                "cn": ["testgroup"],
-                "member": ["uid=user1,ou=users,dc=example,dc=org"],
-                "objectClass": ["groupOfNames"]
-            }
-        }]
+        search_results = [
+            {
+                "dn": "cn=testgroup,ou=groups,dc=example,dc=org",
+                "attributes": {
+                    "cn": ["testgroup"],
+                    "member": ["uid=user1,ou=users,dc=example,dc=org"],
+                    "objectClass": ["groupOfNames"],
+                },
+            },
+        ]
 
         # Mock the search method
         with patch.object(
-            ldap_client, "search", return_value=FlextResult.ok(search_results)
+            ldap_client,
+            "search",
+            return_value=FlextResult.ok(search_results),
         ) as mock_search:
             result = await ldap_client.find_group_by_dn(
                 mock_conn_entity,
-                "cn=testgroup,ou=groups,dc=example,dc=org"
+                "cn=testgroup,ou=groups,dc=example,dc=org",
             )
 
             assert result.success is True
