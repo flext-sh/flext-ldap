@@ -105,7 +105,7 @@ class TestFlextLdapConnectionConfig:
             server="localhost",
             port=389,
             timeout_seconds=30,
-            pool_size=10
+            pool_size=10,
         )
         # Should not raise
         config.validate_domain_rules()
@@ -145,7 +145,7 @@ class TestFlextLdapAuthConfig:
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=org",
             bind_password="secret",
             use_anonymous_bind=True,
-            sasl_mechanism="EXTERNAL"
+            sasl_mechanism="EXTERNAL",
         )
         assert config.bind_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=org"
         assert config.bind_password == "secret"
@@ -186,7 +186,7 @@ class TestFlextLdapAuthConfig:
         config = FlextLdapAuthConfig(
             use_anonymous_bind=False,
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=org",
-            bind_password=""
+            bind_password="",
         )
         with pytest.raises(ValueError, match="Bind password is required"):
             config.validate_domain_rules()
@@ -223,7 +223,7 @@ class TestFlextLdapSearchConfig:
             paged_search=False,
             page_size=100,
             enable_referral_chasing=True,
-            max_referral_hops=10
+            max_referral_hops=10,
         )
         assert config.base_dn == "ou=users,dc=example,dc=org"
         assert config.default_search_scope == "onelevel"
@@ -242,7 +242,7 @@ class TestFlextLdapSearchConfig:
         config = FlextLdapSearchConfig(
             size_limit=1000,
             time_limit=30,
-            page_size=100
+            page_size=100,
         )
         # Should not raise
         config.validate_domain_rules()
@@ -284,7 +284,7 @@ class TestFlextLdapOperationConfig:
             max_retries=5,
             retry_delay=2.5,
             enable_transactions=True,
-            batch_size=200
+            batch_size=200,
         )
         assert config.max_retries == 5
         assert config.retry_delay == 2.5
@@ -299,7 +299,7 @@ class TestFlextLdapOperationConfig:
         config = FlextLdapOperationConfig(
             max_retries=3,
             retry_delay=1.0,
-            batch_size=100
+            batch_size=100,
         )
         # Should not raise
         config.validate_domain_rules()
@@ -345,7 +345,7 @@ class TestFlextLdapSecurityConfig:
             client_cert_file="/path/to/client.crt",
             client_key_file="/path/to/client.key",
             enable_start_tls=True,
-            tls_version="TLSv1.2"
+            tls_version="TLSv1.2",
         )
         assert config.tls_validation == "permissive"
         assert config.ca_cert_file == "/path/to/ca.crt"
@@ -362,7 +362,7 @@ class TestFlextLdapSecurityConfig:
         config = FlextLdapSecurityConfig(
             tls_validation="strict",
             client_cert_file="/path/to/client.crt",
-            client_key_file="/path/to/client.key"
+            client_key_file="/path/to/client.key",
         )
         # Should not raise
         config.validate_domain_rules()
@@ -416,7 +416,7 @@ class TestFlextLdapLoggingConfig:
         from flext_ldap.config import FlextLdapLoggingConfig
 
         config = FlextLdapLoggingConfig(
-            log_level=FlextLogLevel.DEBUG
+            log_level=FlextLogLevel.DEBUG,
         )
         # Update attributes after creation since they have defaults
         config = config.model_copy(
@@ -424,8 +424,8 @@ class TestFlextLdapLoggingConfig:
                 "enable_connection_logging": True,
                 "enable_operation_logging": False,
                 "log_sensitive_data": True,
-                "structured_logging": False
-            }
+                "structured_logging": False,
+            },
         )
         assert config.log_level == FlextLogLevel.DEBUG
         assert config.enable_connection_logging is True
@@ -490,7 +490,7 @@ class TestFlextLdapSettings:
         connection_config = FlextLdapConnectionConfig(
             server="custom.ldap.com",
             port=636,
-            use_ssl=True
+            use_ssl=True,
         )
 
         settings = FlextLdapSettings()
@@ -501,8 +501,8 @@ class TestFlextLdapSettings:
                 "project_name": "custom-project",
                 "project_version": "1.0.0",
                 "enable_debug_mode": True,
-                "enable_performance_monitoring": False
-            }
+                "enable_performance_monitoring": False,
+            },
         )
 
         assert settings.project_name == "custom-project"
@@ -527,11 +527,11 @@ class TestFlextLdapSettings:
             server="test.ldap.com",
             port=636,
             use_ssl=True,
-            timeout_seconds=60
+            timeout_seconds=60,
         )
         auth = FlextLdapAuthConfig(
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
-            bind_password="secret"
+            bind_password="secret",
         )
         search = FlextLdapSearchConfig(
             base_dn="ou=users,dc=test,dc=com",
@@ -539,7 +539,7 @@ class TestFlextLdapSettings:
             size_limit=500,
             time_limit=120,
             paged_search=False,
-            page_size=100
+            page_size=100,
         )
 
         settings = FlextLdapSettings()
@@ -548,8 +548,8 @@ class TestFlextLdapSettings:
             update={
                 "connection": connection,
                 "auth": auth,
-                "search": search
-            }
+                "search": search,
+            },
         )
 
         client_config = settings.to_ldap_client_config()

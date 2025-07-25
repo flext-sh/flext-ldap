@@ -37,7 +37,7 @@ def run_async(func: Any) -> Any:
     import functools
 
     @functools.wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
+    def wrapper(*args: Any, **kwargs: object) -> Any:
         return asyncio.run(func(*args, **kwargs))
 
     return wrapper

@@ -79,15 +79,20 @@ class FlextLdapCertificateInfo(FlextEntity):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for certificate information."""
         if not self.subject:
-            raise ValueError("Certificate must have a subject")
+            msg = "Certificate must have a subject"
+            raise ValueError(msg)
         if not self.issuer:
-            raise ValueError("Certificate must have an issuer")
+            msg = "Certificate must have an issuer"
+            raise ValueError(msg)
         if not self.serial_number:
-            raise ValueError("Certificate must have a serial number")
+            msg = "Certificate must have a serial number"
+            raise ValueError(msg)
         if self.not_after <= self.not_before:
-            raise ValueError("Certificate not_after must be after not_before")
+            msg = "Certificate not_after must be after not_before"
+            raise ValueError(msg)
         if self.public_key_size <= 0:
-            raise ValueError("Public key size must be positive")
+            msg = "Public key size must be positive"
+            raise ValueError(msg)
 
 
 class FlextLdapCertificateValidationContext(FlextEntity):
@@ -116,13 +121,17 @@ class FlextLdapCertificateValidationContext(FlextEntity):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for certificate validation context."""
         if not self.hostname:
-            raise ValueError("Certificate validation context must have a hostname")
+            msg = "Certificate validation context must have a hostname"
+            raise ValueError(msg)
         if self.port <= 0 or self.port > 65535:
-            raise ValueError("Port must be between 1 and 65535")
-        if self.minimum_tls_version not in ("TLSv1.2", "TLSv1.3"):
-            raise ValueError("Minimum TLS version must be TLSv1.2 or TLSv1.3")
-        if self.maximum_tls_version not in ("TLSv1.2", "TLSv1.3"):
-            raise ValueError("Maximum TLS version must be TLSv1.2 or TLSv1.3")
+            msg = "Port must be between 1 and 65535"
+            raise ValueError(msg)
+        if self.minimum_tls_version not in {"TLSv1.2", "TLSv1.3"}:
+            msg = "Minimum TLS version must be TLSv1.2 or TLSv1.3"
+            raise ValueError(msg)
+        if self.maximum_tls_version not in {"TLSv1.2", "TLSv1.3"}:
+            msg = "Maximum TLS version must be TLSv1.2 or TLSv1.3"
+            raise ValueError(msg)
 
 
 class FlextLdapValidationResult(FlextEntity):
@@ -154,9 +163,11 @@ class FlextLdapValidationResult(FlextEntity):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for certificate validation result."""
         if not self.message:
-            raise ValueError("ValidationResult must have a message")
+            msg = "ValidationResult must have a message"
+            raise ValueError(msg)
         if self.chain_length < 0:
-            raise ValueError("Chain length cannot be negative")
+            msg = "Chain length cannot be negative"
+            raise ValueError(msg)
 
 
 class FlextLdapSSLContextConfig(FlextEntity):
@@ -202,21 +213,26 @@ class FlextLdapSSLContextConfig(FlextEntity):
         """Validate domain rules for SSL context configuration."""
         valid_verify_modes = ["CERT_NONE", "CERT_OPTIONAL", "CERT_REQUIRED"]
         if self.verify_mode not in valid_verify_modes:
-            raise ValueError(f"Invalid verify_mode: {self.verify_mode}")
+            msg = f"Invalid verify_mode: {self.verify_mode}"
+            raise ValueError(msg)
 
         valid_versions = ["TLSv1.2", "TLSv1.3"]
         if self.minimum_version not in valid_versions:
-            raise ValueError(f"Invalid minimum_version: {self.minimum_version}")
+            msg = f"Invalid minimum_version: {self.minimum_version}"
+            raise ValueError(msg)
         if self.maximum_version not in valid_versions:
-            raise ValueError(f"Invalid maximum_version: {self.maximum_version}")
+            msg = f"Invalid maximum_version: {self.maximum_version}"
+            raise ValueError(msg)
 
         if self.client_cert_file and not self.client_key_file:
+            msg = "Client key file is required when client cert file is provided"
             raise ValueError(
-                "Client key file is required when client cert file is provided",
+                msg,
             )
         if self.client_key_file and not self.client_cert_file:
+            msg = "Client cert file is required when client key file is provided"
             raise ValueError(
-                "Client cert file is required when client key file is provided",
+                msg,
             )
 
 

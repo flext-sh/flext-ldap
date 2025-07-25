@@ -13,37 +13,29 @@ from __future__ import annotations
 import socket
 import ssl
 from datetime import UTC, datetime
-
-# Ensure ssl module is properly imported
 from ssl import SSLError
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast as type_cast
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
-from flext_core import FlextResult
+from flext_core import FlextResult, get_logger
+
+from flext_ldap.domain.security import (
+    CertificateInfo,
+    CertificateValidationResult,
+    ValidationResult,
+)
 
 if TYPE_CHECKING:
     from flext_ldap.domain.security import (
-        CertificateInfo,
         CertificateValidationContext,
         SSLContextConfig,
     )
 
-# Import cryptography with proper error handling
-try:
-    from cryptography import x509
-    from cryptography.hazmat.primitives import hashes
-    from cryptography.hazmat.primitives.asymmetric import rsa
-    from cryptography.x509.oid import ExtensionOID, NameOID
-except ImportError as e:
-    msg = "cryptography library is required for certificate validation"
-    raise RuntimeError(
-        msg,
-    ) from e
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import ExtensionOID, NameOID
 
-# Use standard Python logging
-import logging
-
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class FlextLdapCertificateValidationService:
@@ -61,12 +53,6 @@ class FlextLdapCertificateValidationService:
     ) -> FlextResult[Any]:
         """Validate a certificate chain."""
         try:
-            # Import ValidationResult and required types
-            from flext_ldap.domain.security import (
-                CertificateValidationResult,
-                ValidationResult,
-            )
-
             # Validate input
             if not cert_chain:
                 return FlextResult.ok(
@@ -82,7 +68,7 @@ class FlextLdapCertificateValidationService:
                 try:
                     cert = x509.load_der_x509_certificate(cert_data)
                     certificates.append(cert)
-                except Exception as e:
+                except (ValueError, TypeError, OSError) as e:
                     return FlextResult.ok(
                         ValidationResult(
                             result_type=CertificateValidationResult.MALFORMED,
@@ -164,9 +150,8 @@ class FlextLdapCertificateValidationService:
 
                     # Basic validation passed - would need proper CA validation for
                     # production
-                    # Note: This would need proper CA certificates loaded
 
-                except Exception:
+                except (ValueError, TypeError, OSError):
                     return FlextResult.ok(
                         ValidationResult(
                             result_type=CertificateValidationResult.INVALID_SIGNATURE,
@@ -200,12 +185,6 @@ class FlextLdapCertificateValidationService:
     ) -> FlextResult[Any]:
         """Validate server certificate by connecting to it."""
         try:
-            # Import required types
-            from flext_ldap.domain.security import (
-                CertificateValidationResult,
-                ValidationResult,
-            )
-
             # Create SSL context
             ssl_context = ssl.create_default_context()
 
@@ -307,7 +286,6 @@ class FlextLdapCertificateValidationService:
             if config.ca_cert_data:
                 # Load CA certificate data
                 # Note: Would need to add to context's CA store
-                # ca_cert = x509.load_pem_x509_certificate(config.ca_cert_data)
                 pass
 
             # Load client certificate if provided
@@ -330,8 +308,6 @@ class FlextLdapCertificateValidationService:
     ) -> FlextResult[Any]:
         """Extract certificate information from X.509 certificate."""
         try:
-            from flext_ldap.domain.security import CertificateInfo
-
             # Extract subject and issuer
             subject = cert.subject.rfc4514_string()
             issuer = cert.issuer.rfc4514_string()
@@ -363,7 +339,7 @@ class FlextLdapCertificateValidationService:
             try:
                 for ext in cert.extensions:
                     extensions[str(ext.oid)] = str(ext.value)
-            except Exception:
+            except (ValueError, TypeError, OSError):
                 # Expected error handling
                 # If extension parsing fails, continue without extensions
                 logger.debug("Failed to parse certificate extensions")
@@ -403,7 +379,6 @@ class FlextLdapCertificateValidationService:
                 san_value = san_ext.value
                 # Extract DNS names from SAN extension
                 # Cast to make mypy understand that SAN is iterable
-                from typing import cast as type_cast
 
                 san_iterable = type_cast("list[Any]", san_value)
                 san_names = [
@@ -427,11 +402,12 @@ class FlextLdapCertificateValidationService:
                     # Ensure cn is a string
                     cn_str = str(cn) if not isinstance(cn, str) else cn
                     return self._match_hostname(cn_str, hostname)
-            except Exception:
+            except (ValueError, TypeError, OSError):
                 logger.debug("Failed to parse certificate hostname validation")
                 return False
+        except (ValueError, TypeError, OSError):
             return False
-        except Exception:
+        else:
             return False
 
     def _match_hostname(self, cert_name: str, hostname: str) -> bool:

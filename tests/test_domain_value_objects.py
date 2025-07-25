@@ -15,7 +15,7 @@ class TestFlextLdapCreateUserRequest:
             dn="uid=test,ou=users,dc=example,dc=org",
             uid="test",
             cn="Test User",
-            sn="User"
+            sn="User",
         )
 
         assert request.dn == "uid=test,ou=users,dc=example,dc=org"
@@ -41,7 +41,7 @@ class TestFlextLdapCreateUserRequest:
             ou="Engineering",
             department="IT",
             title="Software Engineer",
-            object_classes=["inetOrgPerson", "organizationalPerson"]
+            object_classes=["inetOrgPerson", "organizationalPerson"],
         )
 
         assert request.dn == "uid=testuser,ou=users,dc=example,dc=org"
@@ -61,13 +61,13 @@ class TestFlextLdapCreateUserRequest:
             dn="uid=test,ou=users,dc=example,dc=org",
             uid="test",
             cn="Test User",
-            sn="User"
+            sn="User",
         )
 
         # Value objects should be immutable - attempting to modify should raise
         # ValidationError
         with pytest.raises(ValidationError):
-            request.uid = "modified"  # type: ignore[misc]
+            request.uid = "modified"
 
     def test_equality(self) -> None:
         """Test value object equality."""
@@ -76,7 +76,7 @@ class TestFlextLdapCreateUserRequest:
             uid="test",
             cn="Test User",
             sn="User",
-            mail="test@example.org"
+            mail="test@example.org",
         )
 
         request2 = FlextLdapCreateUserRequest(
@@ -84,14 +84,14 @@ class TestFlextLdapCreateUserRequest:
             uid="test",
             cn="Test User",
             sn="User",
-            mail="test@example.org"
+            mail="test@example.org",
         )
 
         request3 = FlextLdapCreateUserRequest(
             dn="uid=different,ou=users,dc=example,dc=org",
             uid="different",
             cn="Different User",
-            sn="User"
+            sn="User",
         )
 
         assert request1 == request2
@@ -103,14 +103,14 @@ class TestFlextLdapCreateUserRequest:
             dn="uid=test,ou=users,dc=example,dc=org",
             uid="test",
             cn="Test User",
-            sn="User"
+            sn="User",
         )
 
         request2 = FlextLdapCreateUserRequest(
             dn="uid=test,ou=users,dc=example,dc=org",
             uid="test",
             cn="Test User",
-            sn="User"
+            sn="User",
         )
 
         assert hash(request1) == hash(request2)
@@ -121,7 +121,7 @@ class TestFlextLdapCreateUserRequest:
             dn="uid=test,ou=users,dc=example,dc=org",
             uid="test",
             cn="Test User",
-            sn="User"
+            sn="User",
         )
 
         repr_str = repr(request)
@@ -136,7 +136,7 @@ class TestFlextLdapCreateUserRequest:
             uid="test",
             cn="Test User",
             sn="User",
-            mail="test@example.org"
+            mail="test@example.org",
         )
 
         # Convert to dict for serialization
@@ -157,7 +157,7 @@ class TestFlextLdapCreateUserRequest:
             "uid": "test",
             "cn": "Test User",
             "sn": "User",
-            "mail": "test@example.org"
+            "mail": "test@example.org",
         }
 
         request = FlextLdapCreateUserRequest(**data)
@@ -175,7 +175,7 @@ class TestFlextLdapCreateUserRequest:
             dn="uid=test,ou=users,dc=example,dc=org",
             uid="test",
             cn="Test User",
-            sn="User"
+            sn="User",
         )
         assert request.dn == "uid=test,ou=users,dc=example,dc=org"
 
@@ -187,7 +187,7 @@ class TestFlextLdapCreateUserRequest:
             cn="Test User",
             sn="User",
             mail="",  # Empty string
-            phone=""  # Empty string
+            phone="",  # Empty string
         )
         # Empty strings should be handled gracefully by Pydantic
         assert request_with_empty.mail == ""
@@ -205,7 +205,7 @@ class TestFlextLdapCreateUserRequest:
             ou=None,
             department=None,
             title=None,
-            object_classes=None
+            object_classes=None,
         )
 
         assert request.mail is None
@@ -221,12 +221,12 @@ class TestFlextLdapCreateUserRequest:
             dn="uid=test,ou=users,dc=example,dc=org",
             uid="test",
             cn="Test User",
-            sn="User"
+            sn="User",
         )
 
         # Create modified copy
         modified = original.model_copy(
-            update={"mail": "test@example.org", "phone": "+1234567890"}
+            update={"mail": "test@example.org", "phone": "+1234567890"},
         )
 
         # Original should be unchanged

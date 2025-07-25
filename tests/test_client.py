@@ -60,11 +60,12 @@ class TestLDAPClient:
 
         # Mock the infrastructure client
         with patch(
-            "flext_ldap.client.FlextLdapInfrastructureClient"
+            "flext_ldap.client.FlextLdapInfrastructureClient",
         ) as mock_infra_client:
             mock_instance = AsyncMock()
             mock_instance.connect.return_value = MagicMock(
-                success=True, data="conn_123"
+                success=True,
+                data="conn_123",
             )
             mock_infra_client.return_value = mock_instance
 
@@ -83,11 +84,12 @@ class TestLDAPClient:
 
         # Mock the infrastructure client to return failure
         with patch(
-            "flext_ldap.client.FlextLdapInfrastructureClient"
+            "flext_ldap.client.FlextLdapInfrastructureClient",
         ) as mock_infra_client:
             mock_instance = AsyncMock()
             mock_instance.connect.return_value = MagicMock(
-                success=False, error="Connection failed"
+                success=False,
+                error="Connection failed",
             )
             mock_infra_client.return_value = mock_instance
 
@@ -106,11 +108,12 @@ class TestLDAPClient:
         from flext_ldap.client import FlextLdapClient
 
         with patch(
-            "flext_ldap.client.FlextLdapInfrastructureClient"
+            "flext_ldap.client.FlextLdapInfrastructureClient",
         ) as mock_infra_client:
             mock_instance = AsyncMock()
             mock_instance.connect.return_value = MagicMock(
-                success=True, data="conn_123"
+                success=True,
+                data="conn_123",
             )
             mock_instance.disconnect.return_value = MagicMock(success=True, data=True)
             mock_infra_client.return_value = mock_instance
@@ -130,11 +133,12 @@ class TestLDAPClient:
         from flext_ldap.client import FlextLdapClient
 
         with patch(
-            "flext_ldap.client.FlextLdapInfrastructureClient"
+            "flext_ldap.client.FlextLdapInfrastructureClient",
         ) as mock_infra_client:
             mock_instance = AsyncMock()
             mock_instance.connect.return_value = MagicMock(
-                success=True, data="conn_123"
+                success=True,
+                data="conn_123",
             )
             mock_instance.search.return_value = MagicMock(success=True, data=[])
             mock_infra_client.return_value = mock_instance
@@ -163,24 +167,28 @@ class TestLDAPClient:
         from flext_ldap.client import FlextLdapClient
 
         # Mock search results
-        search_results = [{
-            "dn": "uid=test,ou=users,dc=example,dc=org",
-            "attributes": {
-                "uid": ["test"],
-                "cn": ["Test User"],
-                "objectClass": ["inetOrgPerson"]
-            }
-        }]
+        search_results = [
+            {
+                "dn": "uid=test,ou=users,dc=example,dc=org",
+                "attributes": {
+                    "uid": ["test"],
+                    "cn": ["Test User"],
+                    "objectClass": ["inetOrgPerson"],
+                },
+            },
+        ]
 
         with patch(
-            "flext_ldap.client.FlextLdapInfrastructureClient"
+            "flext_ldap.client.FlextLdapInfrastructureClient",
         ) as mock_infra_client:
             mock_instance = AsyncMock()
             mock_instance.connect.return_value = MagicMock(
-                success=True, data="conn_123"
+                success=True,
+                data="conn_123",
             )
             mock_instance.search.return_value = MagicMock(
-                success=True, data=search_results
+                success=True,
+                data=search_results,
             )
             mock_infra_client.return_value = mock_instance
 
@@ -190,7 +198,7 @@ class TestLDAPClient:
             result = await client.search(
                 base_dn="ou=users,dc=example,dc=org",
                 search_filter="(uid=test)",
-                attributes=["uid", "cn"]
+                attributes=["uid", "cn"],
             )
 
             assert result.success is True
@@ -202,13 +210,13 @@ class TestLDAPClient:
     @pytest.mark.asyncio
     async def test_search_not_connected(self) -> None:
         """Test search when not connected."""
-        from flext_ldap.client import FlextConnectionError, FlextLdapClient
+        from flext_ldap.client import FlextLdapClient
 
         client = FlextLdapClient()
 
         result = await client.search(
             base_dn="ou=users,dc=example,dc=org",
-            search_filter="(uid=test)"
+            search_filter="(uid=test)",
         )
 
         assert result.success is False
@@ -223,11 +231,12 @@ class TestLDAPClient:
         from flext_ldap.client import FlextLdapClient
 
         with patch(
-            "flext_ldap.client.FlextLdapInfrastructureClient"
+            "flext_ldap.client.FlextLdapInfrastructureClient",
         ) as mock_infra_client:
             mock_instance = AsyncMock()
             mock_instance.connect.return_value = MagicMock(
-                success=True, data="conn_123"
+                success=True,
+                data="conn_123",
             )
             mock_instance.modify_entry.return_value = MagicMock(success=True, data=True)
             mock_infra_client.return_value = mock_instance
@@ -237,7 +246,7 @@ class TestLDAPClient:
 
             result = await client.modify(
                 dn="uid=test,ou=users,dc=example,dc=org",
-                changes={"mail": "test@example.org"}
+                changes={"mail": "test@example.org"},
             )
 
             assert result.success is True
@@ -246,13 +255,13 @@ class TestLDAPClient:
     @pytest.mark.asyncio
     async def test_modify_not_connected(self) -> None:
         """Test modify when not connected."""
-        from flext_ldap.client import FlextConnectionError, FlextLdapClient
+        from flext_ldap.client import FlextLdapClient
 
         client = FlextLdapClient()
 
         result = await client.modify(
             dn="uid=test,ou=users,dc=example,dc=org",
-            changes={"mail": "test@example.org"}
+            changes={"mail": "test@example.org"},
         )
 
         assert result.success is False
@@ -267,11 +276,12 @@ class TestLDAPClient:
         from flext_ldap.client import FlextLdapClient
 
         with patch(
-            "flext_ldap.client.FlextLdapInfrastructureClient"
+            "flext_ldap.client.FlextLdapInfrastructureClient",
         ) as mock_infra_client:
             mock_instance = AsyncMock()
             mock_instance.connect.return_value = MagicMock(
-                success=True, data="conn_123"
+                success=True,
+                data="conn_123",
             )
             mock_instance.disconnect.return_value = MagicMock(success=True, data=True)
             mock_infra_client.return_value = mock_instance
@@ -290,11 +300,12 @@ class TestLDAPClient:
         from flext_ldap.client import FlextLdapClient
 
         with patch(
-            "flext_ldap.client.FlextLdapInfrastructureClient"
+            "flext_ldap.client.FlextLdapInfrastructureClient",
         ) as mock_infra_client:
             mock_instance = AsyncMock()
             mock_instance.connect.return_value = MagicMock(
-                success=True, data="conn_123"
+                success=True,
+                data="conn_123",
             )
             mock_infra_client.return_value = mock_instance
 
@@ -312,7 +323,7 @@ class TestLDAPClient:
         from flext_ldap.client import FlextLdapClient
 
         with patch(
-            "flext_ldap.client.FlextLdapInfrastructureClient"
+            "flext_ldap.client.FlextLdapInfrastructureClient",
         ) as mock_infra_client:
             mock_instance = MagicMock()
             mock_instance.get_connection_info.return_value = MagicMock(
@@ -321,7 +332,7 @@ class TestLDAPClient:
                     "server": "ldap://localhost:389",
                     "bound": True,
                     "user": "cn=REDACTED_LDAP_BIND_PASSWORD",
-                }
+                },
             )
             mock_infra_client.return_value = mock_instance
 

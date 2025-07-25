@@ -126,6 +126,12 @@ def flext_ldap_is_valid_url(url: str) -> bool:
         return parsed.scheme in {"ldap", "ldaps"}
 
 
+# Constants for LDAP URL parsing
+LDAP_URL_ATTRIBUTES_INDEX = 1
+LDAP_URL_SCOPE_INDEX = 2
+LDAP_URL_FILTER_INDEX = 3
+
+
 def flext_ldap_parse_url(url: str) -> dict[str, Any]:
     """Parse LDAP URL into components."""
     parsed = urlparse(url)
@@ -147,12 +153,16 @@ def flext_ldap_parse_url(url: str) -> dict[str, Any]:
     # Parse LDAP URL format: ldap://host:port/base_dn?attrs?scope?filter
     if parsed.path and "?" in url:
         parts = url.split("?")
-        if len(parts) > 1 and parts[1]:
-            result["attributes"] = parts[1].split(",") if parts[1] else []
-        if len(parts) > 2 and parts[2]:
-            result["scope"] = parts[2]
-        if len(parts) > 3 and parts[3]:
-            result["filter"] = parts[3]
+        if len(parts) > LDAP_URL_ATTRIBUTES_INDEX and parts[LDAP_URL_ATTRIBUTES_INDEX]:
+            result["attributes"] = (
+                parts[LDAP_URL_ATTRIBUTES_INDEX].split(",")
+                if parts[LDAP_URL_ATTRIBUTES_INDEX]
+                else []
+            )
+        if len(parts) > LDAP_URL_SCOPE_INDEX and parts[LDAP_URL_SCOPE_INDEX]:
+            result["scope"] = parts[LDAP_URL_SCOPE_INDEX]
+        if len(parts) > LDAP_URL_FILTER_INDEX and parts[LDAP_URL_FILTER_INDEX]:
+            result["filter"] = parts[LDAP_URL_FILTER_INDEX]
 
     return result
 

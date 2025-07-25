@@ -10,12 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
 from flext_core import FlextResult
 
-from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
+from flext_ldap.infrastructure.ldap_simple_client import FlextLdapSimpleClient
 
 
 # 🚨 LOCAL PROTOCOLS - Clean Architecture compliance
@@ -67,7 +66,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
     def __init__(self) -> None:
         """Initialize FLEXT LDAP directory service."""
-        self._ldap_client = FlextLdapInfrastructureClient()
+        self._ldap_client = FlextLdapSimpleClient()
 
     async def connect(self) -> FlextResult[bool]:
         """Establish connection to directory server using FLEXT LDAP.
@@ -95,8 +94,6 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 def __init__(self, dn: str, attributes: dict[str, Any]) -> None:
                     self.dn = dn
                     self.attributes = attributes
-
-            from typing import cast
 
             entries = [
                 cast(
@@ -149,7 +146,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         try:
             result = await self._ldap_client.search(
                 connection_id=connection_id,
-                base_dn=base_dn,
+                search_base=base_dn,
                 search_filter=search_filter,
                 attributes=attributes or ["*"],
                 scope=scope,
@@ -180,8 +177,6 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                             [],
                         ),
                     )
-                    from typing import cast
-
                     entries.append(
                         cast("FlextLdapDirectoryEntryProtocol", directory_entry),
                     )
@@ -210,9 +205,10 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
         """
         try:
-            result = await self._ldap_client.add_entry(
+            result = await self._ldap_client.add(
                 connection_id=connection_id,
                 dn=dn,
+                object_class=["top"],  # Default object class
                 attributes=attributes,
             )
 
@@ -241,7 +237,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
         """
         try:
-            result = await self._ldap_client.modify_entry(
+            result = await self._ldap_client.modify(
                 connection_id=connection_id,
                 dn=dn,
                 changes=changes,
@@ -270,7 +266,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
         """
         try:
-            result = await self._ldap_client.delete_entry(
+            result = await self._ldap_client.delete(
                 connection_id=connection_id,
                 dn=dn,
             )

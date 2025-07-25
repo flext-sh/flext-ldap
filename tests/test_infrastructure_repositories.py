@@ -1,11 +1,10 @@
 """Tests for LDAP infrastructure repositories in FLEXT-LDAP."""
 
 from typing import Any, Never
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 from uuid import UUID, uuid4
 
 import pytest
-from flext_core import FlextResult
 
 from flext_ldap.domain.entities import FlextLdapConnection, FlextLdapUser
 from flext_ldap.domain.exceptions import FlextLdapUserError
@@ -26,7 +25,10 @@ class TestFlextLdapConnectionRepositoryImpl:
         return MagicMock(spec=FlextLdapInfrastructureClient)
 
     @pytest.fixture
-    def repository(self, mock_ldap_client: MagicMock) -> FlextLdapConnectionRepositoryImpl:
+    def repository(
+        self,
+        mock_ldap_client: MagicMock,
+    ) -> FlextLdapConnectionRepositoryImpl:
         """Create repository instance."""
         return FlextLdapConnectionRepositoryImpl(mock_ldap_client)
 
@@ -41,7 +43,7 @@ class TestFlextLdapConnectionRepositoryImpl:
     async def test_save_success(
         self,
         repository: FlextLdapConnectionRepositoryImpl,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful connection save."""
         result = await repository.save(mock_connection)
@@ -53,7 +55,7 @@ class TestFlextLdapConnectionRepositoryImpl:
     async def test_save_exception(
         self,
         repository: FlextLdapConnectionRepositoryImpl,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test save with exception."""
         # Make _connections assignment fail
@@ -66,7 +68,7 @@ class TestFlextLdapConnectionRepositoryImpl:
     async def test_find_by_id_success(
         self,
         repository: FlextLdapConnectionRepositoryImpl,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful find by ID."""
         # Store connection first
@@ -79,7 +81,7 @@ class TestFlextLdapConnectionRepositoryImpl:
 
     async def test_find_by_id_not_found(
         self,
-        repository: FlextLdapConnectionRepositoryImpl
+        repository: FlextLdapConnectionRepositoryImpl,
     ) -> None:
         """Test find by ID when not found."""
         result = await repository.find_by_id(uuid4())
@@ -89,11 +91,11 @@ class TestFlextLdapConnectionRepositoryImpl:
 
     async def test_find_by_id_exception(
         self,
-        repository: FlextLdapConnectionRepositoryImpl
+        repository: FlextLdapConnectionRepositoryImpl,
     ) -> None:
         """Test find by ID with exception."""
         # Force exception by corrupting internal dict
-        repository._connections = "invalid"  # type: ignore[assignment]  # type: ignore[assignment]
+        repository._connections = "invalid"
 
         with pytest.raises(ValueError, match="Failed to find connection"):
             await repository.find_by_id(uuid4())
@@ -101,7 +103,7 @@ class TestFlextLdapConnectionRepositoryImpl:
     async def test_find_all_success(
         self,
         repository: FlextLdapConnectionRepositoryImpl,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful find all connections."""
         # Store connection first
@@ -116,7 +118,7 @@ class TestFlextLdapConnectionRepositoryImpl:
 
     async def test_find_all_empty(
         self,
-        repository: FlextLdapConnectionRepositoryImpl
+        repository: FlextLdapConnectionRepositoryImpl,
     ) -> None:
         """Test find all with no connections."""
         result = await repository.find_all()
@@ -126,11 +128,11 @@ class TestFlextLdapConnectionRepositoryImpl:
 
     async def test_find_all_exception(
         self,
-        repository: FlextLdapConnectionRepositoryImpl
+        repository: FlextLdapConnectionRepositoryImpl,
     ) -> None:
         """Test find all with exception."""
         # Force exception by corrupting internal dict
-        repository._connections = "invalid"  # type: ignore[assignment]
+        repository._connections = "invalid"
 
         with pytest.raises(FlextLdapUserError, match="Failed to find connections"):
             await repository.find_all()
@@ -138,7 +140,7 @@ class TestFlextLdapConnectionRepositoryImpl:
     async def test_delete_success(
         self,
         repository: FlextLdapConnectionRepositoryImpl,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful connection deletion."""
         # Store connection first
@@ -153,7 +155,7 @@ class TestFlextLdapConnectionRepositoryImpl:
     async def test_delete_not_found(
         self,
         repository: FlextLdapConnectionRepositoryImpl,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test delete when connection not found."""
         result = await repository.delete(mock_connection)
@@ -164,7 +166,7 @@ class TestFlextLdapConnectionRepositoryImpl:
     async def test_delete_exception(
         self,
         repository: FlextLdapConnectionRepositoryImpl,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test delete with exception."""
         # Force exception by making __contains__ fail on _connections
@@ -177,7 +179,7 @@ class TestFlextLdapConnectionRepositoryImpl:
     async def test_get_by_server_success(
         self,
         repository: FlextLdapConnectionRepositoryImpl,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful get by server URL."""
         # Store connection first
@@ -191,7 +193,7 @@ class TestFlextLdapConnectionRepositoryImpl:
     async def test_get_by_server_not_found(
         self,
         repository: FlextLdapConnectionRepositoryImpl,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test get by server when no matches."""
         # Store connection with different server
@@ -203,11 +205,11 @@ class TestFlextLdapConnectionRepositoryImpl:
 
     async def test_get_by_server_exception(
         self,
-        repository: FlextLdapConnectionRepositoryImpl
+        repository: FlextLdapConnectionRepositoryImpl,
     ) -> None:
         """Test get by server with exception."""
         # Force exception by corrupting internal dict
-        repository._connections = "invalid"  # type: ignore[assignment]
+        repository._connections = "invalid"
 
         with pytest.raises(ValueError, match="Failed to get connections by server"):
             await repository.get_by_server("ldap://example.com:389")
@@ -215,7 +217,7 @@ class TestFlextLdapConnectionRepositoryImpl:
     async def test_get_active_success(
         self,
         repository: FlextLdapConnectionRepositoryImpl,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful get active connections."""
         # Store connection first
@@ -228,7 +230,7 @@ class TestFlextLdapConnectionRepositoryImpl:
 
     async def test_get_active_empty(
         self,
-        repository: FlextLdapConnectionRepositoryImpl
+        repository: FlextLdapConnectionRepositoryImpl,
     ) -> None:
         """Test get active with no connections."""
         result = await repository.get_active()
@@ -237,11 +239,11 @@ class TestFlextLdapConnectionRepositoryImpl:
 
     async def test_get_active_exception(
         self,
-        repository: FlextLdapConnectionRepositoryImpl
+        repository: FlextLdapConnectionRepositoryImpl,
     ) -> None:
         """Test get active with exception."""
         # Force exception by corrupting internal dict
-        repository._connections = "invalid"  # type: ignore[assignment]
+        repository._connections = "invalid"
 
         with pytest.raises(ValueError, match="Failed to get active connections"):
             await repository.get_active()
@@ -249,7 +251,7 @@ class TestFlextLdapConnectionRepositoryImpl:
     async def test_close_all_success(
         self,
         repository: FlextLdapConnectionRepositoryImpl,
-        mock_connection: MagicMock
+        mock_connection: MagicMock,
     ) -> None:
         """Test successful close all connections."""
         # Store connection first
@@ -261,7 +263,7 @@ class TestFlextLdapConnectionRepositoryImpl:
 
     async def test_close_all_exception(
         self,
-        repository: FlextLdapConnectionRepositoryImpl
+        repository: FlextLdapConnectionRepositoryImpl,
     ) -> None:
         """Test close all with exception."""
         # Force exception by making clear raise
@@ -304,7 +306,7 @@ class TestFlextLdapUserRepositoryImpl:
     async def test_save_success(
         self,
         repository: FlextLdapUserRepositoryImpl,
-        mock_user: MagicMock
+        mock_user: MagicMock,
     ) -> None:
         """Test successful user save."""
         result = await repository.save(mock_user)
@@ -315,22 +317,23 @@ class TestFlextLdapUserRepositoryImpl:
     async def test_save_exception(
         self,
         repository: FlextLdapUserRepositoryImpl,
-        mock_user: MagicMock
+        mock_user: MagicMock,
     ) -> None:
         """Test save with exception."""
         # Mock repository to force exception
 
-        async def failing_save(*args: Any, **kwargs: Any) -> Never:
-            raise FlextLdapUserError("Failed to save user: Save failed")
+        async def failing_save(*args: Any, **kwargs: object) -> Never:
+            msg = "Failed to save user: Save failed"
+            raise FlextLdapUserError(msg)
 
-        repository.save = failing_save  # type: ignore[method-assign]
+        repository.save = failing_save
 
         with pytest.raises(FlextLdapUserError, match="Failed to save user"):
             await repository.save(mock_user)
 
     async def test_find_by_id_success(
         self,
-        repository: FlextLdapUserRepositoryImpl
+        repository: FlextLdapUserRepositoryImpl,
     ) -> None:
         """Test successful find by ID."""
         result = await repository.find_by_id(uuid4())
@@ -340,7 +343,7 @@ class TestFlextLdapUserRepositoryImpl:
 
     async def test_find_by_id_exception(
         self,
-        repository: FlextLdapUserRepositoryImpl
+        repository: FlextLdapUserRepositoryImpl,
     ) -> None:
         """Test find by ID with exception."""
         # Mock repository to force exception
@@ -353,7 +356,7 @@ class TestFlextLdapUserRepositoryImpl:
 
     async def test_find_by_dn_success(
         self,
-        repository: FlextLdapUserRepositoryImpl
+        repository: FlextLdapUserRepositoryImpl,
     ) -> None:
         """Test successful find by DN."""
         result = await repository.find_by_dn("uid=test,ou=users,dc=example,dc=org")
@@ -361,19 +364,24 @@ class TestFlextLdapUserRepositoryImpl:
         assert result.success is True
         assert result.data is None
 
-    async def test_find_by_dn_exception(self, repository: FlextLdapUserRepositoryImpl) -> None:
+    async def test_find_by_dn_exception(
+        self,
+        repository: FlextLdapUserRepositoryImpl,
+    ) -> None:
         """Test find by DN with exception."""
         # Mock repository to force exception
         with patch.object(repository, "find_by_dn") as mock_method:
             # Simulate what happens in the real method: exception caught and re-raised as ValueError
-            mock_method.side_effect = ValueError("Failed to find user by DN: Find failed")
+            mock_method.side_effect = ValueError(
+                "Failed to find user by DN: Find failed",
+            )
 
             with pytest.raises(ValueError, match="Failed to find user by DN"):
                 await repository.find_by_dn("uid=test,ou=users,dc=example,dc=org")
 
     async def test_find_all_success(
         self,
-        repository: FlextLdapUserRepositoryImpl
+        repository: FlextLdapUserRepositoryImpl,
     ) -> None:
         """Test successful find all users."""
         result = await repository.find_all()
@@ -381,14 +389,18 @@ class TestFlextLdapUserRepositoryImpl:
         assert result.success is True
         assert result.data == []
 
-    async def test_find_all_exception(self, repository: FlextLdapUserRepositoryImpl) -> None:
+    async def test_find_all_exception(
+        self,
+        repository: FlextLdapUserRepositoryImpl,
+    ) -> None:
         """Test find all with exception."""
         # Mock repository to force exception
 
-        async def failing_find(*args: Any, **kwargs: Any) -> Never:
-            raise FlextLdapUserError("Failed to find users: Find failed")
+        async def failing_find(*args: Any, **kwargs: object) -> Never:
+            msg = "Failed to find users: Find failed"
+            raise FlextLdapUserError(msg)
 
-        repository.find_all = failing_find  # type: ignore[method-assign]
+        repository.find_all = failing_find
 
         with pytest.raises(FlextLdapUserError, match="Failed to find users"):
             await repository.find_all()
@@ -396,7 +408,7 @@ class TestFlextLdapUserRepositoryImpl:
     async def test_delete_success(
         self,
         repository: FlextLdapUserRepositoryImpl,
-        mock_user: MagicMock
+        mock_user: MagicMock,
     ) -> None:
         """Test successful user deletion."""
         result = await repository.delete(mock_user)
@@ -407,7 +419,7 @@ class TestFlextLdapUserRepositoryImpl:
     async def test_delete_exception(
         self,
         repository: FlextLdapUserRepositoryImpl,
-        mock_user: MagicMock
+        mock_user: MagicMock,
     ) -> None:
         """Test delete with exception."""
         # Mock FlextResult.ok to fail
@@ -420,7 +432,7 @@ class TestFlextLdapUserRepositoryImpl:
     async def test_get_by_dn_success(
         self,
         repository: FlextLdapUserRepositoryImpl,
-        mock_dn: MagicMock
+        mock_dn: MagicMock,
     ) -> None:
         """Test successful get by DN."""
         result = await repository.get_by_dn(mock_dn)
@@ -430,7 +442,7 @@ class TestFlextLdapUserRepositoryImpl:
     async def test_get_by_dn_exception(
         self,
         repository: FlextLdapUserRepositoryImpl,
-        mock_dn: MagicMock
+        mock_dn: MagicMock,
     ) -> None:
         """Test get by DN with exception."""
         # Mock repository to force exception
@@ -443,20 +455,25 @@ class TestFlextLdapUserRepositoryImpl:
 
     async def test_get_by_uid_success(
         self,
-        repository: FlextLdapUserRepositoryImpl
+        repository: FlextLdapUserRepositoryImpl,
     ) -> None:
         """Test successful get by UID."""
         result = await repository.get_by_uid("testuser")
 
         assert result is None
 
-    async def test_get_by_uid_exception(self, repository: FlextLdapUserRepositoryImpl) -> None:
+    async def test_get_by_uid_exception(
+        self,
+        repository: FlextLdapUserRepositoryImpl,
+    ) -> None:
         """Test get by UID with exception."""
         # Mock repository to force exception
         # We need to patch the method to simulate an internal exception that gets caught and re-raised
         with patch.object(repository, "get_by_uid") as mock_method:
             # Simulate what happens in the real method: exception caught and re-raised as ValueError
-            mock_method.side_effect = ValueError("Failed to get user by UID: Get failed")
+            mock_method.side_effect = ValueError(
+                "Failed to get user by UID: Get failed",
+            )
 
             with pytest.raises(ValueError, match="Failed to get user by UID"):
                 await repository.get_by_uid("testuser")
@@ -464,13 +481,13 @@ class TestFlextLdapUserRepositoryImpl:
     async def test_search_success(
         self,
         repository: FlextLdapUserRepositoryImpl,
-        mock_dn: MagicMock
+        mock_dn: MagicMock,
     ) -> None:
         """Test successful search."""
         result = await repository.search(
             base_dn=mock_dn,
             filter_string="(objectClass=inetOrgPerson)",
-            attributes=["uid", "cn", "mail"]
+            attributes=["uid", "cn", "mail"],
         )
 
         assert result == []
@@ -478,25 +495,27 @@ class TestFlextLdapUserRepositoryImpl:
     async def test_search_exception(
         self,
         repository: FlextLdapUserRepositoryImpl,
-        mock_dn: MagicMock
+        mock_dn: MagicMock,
     ) -> None:
         """Test search with exception."""
         # Mock repository to force exception
         with patch.object(repository, "search") as mock_method:
             # Simulate what happens in the real method: exception caught and re-raised as ValueError
-            mock_method.side_effect = ValueError("Failed to search users: Search failed")
+            mock_method.side_effect = ValueError(
+                "Failed to search users: Search failed",
+            )
 
             with pytest.raises(ValueError, match="Failed to search users"):
                 await repository.search(
                     base_dn=mock_dn,
                     filter_string="(objectClass=inetOrgPerson)",
-                    attributes=["uid", "cn", "mail"]
+                    attributes=["uid", "cn", "mail"],
                 )
 
     async def test_exists_success(
         self,
         repository: FlextLdapUserRepositoryImpl,
-        mock_dn: MagicMock
+        mock_dn: MagicMock,
     ) -> None:
         """Test successful exists check."""
         result = await repository.exists(mock_dn)
@@ -506,13 +525,15 @@ class TestFlextLdapUserRepositoryImpl:
     async def test_exists_exception(
         self,
         repository: FlextLdapUserRepositoryImpl,
-        mock_dn: MagicMock
+        mock_dn: MagicMock,
     ) -> None:
         """Test exists with exception."""
         # Mock repository to force exception
         with patch.object(repository, "exists") as mock_method:
             # Simulate what happens in the real method: exception caught and re-raised as ValueError
-            mock_method.side_effect = ValueError("Failed to check user existence: Exists check failed")
+            mock_method.side_effect = ValueError(
+                "Failed to check user existence: Exists check failed",
+            )
 
             with pytest.raises(ValueError, match="Failed to check user existence"):
                 await repository.exists(mock_dn)

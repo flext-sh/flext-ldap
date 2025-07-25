@@ -17,8 +17,6 @@ import ldap3
 import pytest
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
-from flext_core import FlextResult
-
 from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
 
 
@@ -148,7 +146,7 @@ class TestRealLdapOperations:
                 # Test modify user
                 modifications = {
                     "description": [
-                        (ldap3.MODIFY_ADD, ["Modified by integration test"])
+                        (ldap3.MODIFY_ADD, ["Modified by integration test"]),
                     ],
                 }
 
@@ -167,7 +165,7 @@ class TestRealLdapOperations:
                 # This is expected in minimal test setups
                 pytest.skip(
                     f"User creation failed (expected in minimal setups): "
-                    f"{create_result.error}"
+                    f"{create_result.error}",
                 )
 
         finally:

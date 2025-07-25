@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import hashlib
-import logging
 import operator
+import re
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from enum import Enum
@@ -19,12 +19,12 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
-from flext_core import FlextResult
+from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
     from uuid import UUID
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class FlextLdapErrorSeverity(Enum):
@@ -147,7 +147,6 @@ class FlextLdapErrorEvent:
     def _normalize_error_message(self, message: str) -> str:
         """Normalize error message for pattern matching."""
         # Remove specific values like IPs, ports, DNs to find patterns
-        import re
 
         # Replace IP addresses
         message = re.sub(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", "[IP]", message)
@@ -261,7 +260,7 @@ class FlextLdapErrorCorrelationService:
             logger.debug("Recorded error event: %s", str(event.event_id))
             return FlextResult.ok(event)
 
-        except Exception as e:
+        except (ValueError, TypeError, OSError) as e:
             error_msg = f"Failed to record error event: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
@@ -294,7 +293,7 @@ class FlextLdapErrorCorrelationService:
 
             return FlextResult.ok(patterns)
 
-        except Exception as e:
+        except (ValueError, TypeError, OSError) as e:
             error_msg = f"Failed to get error patterns: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
@@ -327,7 +326,7 @@ class FlextLdapErrorCorrelationService:
 
             return FlextResult.ok(significant_correlations)
 
-        except Exception as e:
+        except (ValueError, TypeError, OSError) as e:
             error_msg = f"Failed to get correlated errors: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
@@ -382,7 +381,7 @@ class FlextLdapErrorCorrelationService:
 
             return FlextResult.ok(statistics)
 
-        except Exception as e:
+        except (ValueError, TypeError, OSError) as e:
             error_msg = f"Failed to get error statistics: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)

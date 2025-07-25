@@ -7,17 +7,32 @@ Provides clean API interface for all LDAP operations.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
+from uuid import uuid4
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
-from flext_core import FlextResult
+from flext_core import FlextConnectionError, FlextResult
+
+from flext_ldap.client import FlextLdapClient
+from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
+from flext_ldap.domain.entities import FlextLdapConnection
+from flext_ldap.domain.value_objects import FlextLdapCreateUserRequest
+from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
+from flext_ldap.infrastructure.ldap_simple_client import LdapConnectionInfo
 
 if TYPE_CHECKING:
     from typing import Protocol
 
-    from flext_ldap.domain.entities import FlextLdapConnection
-
     class ConnectionProtocol(Protocol):
         """Protocol for LDAP connection providers."""
+
+        async def connect(
+            self,
+            server_url: str,
+            bind_dn: str | None = None,
+            password: str | None = None,
+        ) -> FlextResult[str]:
+            """Connect to LDAP server."""
+            ...
 
 
 class FlextLdapAPI:
@@ -36,9 +51,7 @@ class FlextLdapAPI:
         """
         if connection_provider is None:
             # Use default LDAP client implementation
-            from flext_ldap.client import FlextLdapClient
-
-            self._connection_provider: ConnectionProtocol = FlextLdapClient()
+            self._connection_provider = FlextLdapClient()
         else:
             self._connection_provider = connection_provider
 
@@ -47,8 +60,6 @@ class FlextLdapAPI:
         self._active_connection_id: str | None = None
 
         # Initialize infrastructure client for user operations
-        from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
-
         self._ldap_client = FlextLdapInfrastructureClient()
 
     # Connection operations
@@ -61,15 +72,8 @@ class FlextLdapAPI:
         use_ssl: bool = False,
     ) -> FlextResult[FlextLdapConnection]:
         """Create a new LDAP connection using ConnectionProtocol pattern."""
-        from uuid import uuid4
-
         # 🚨 ARCHITECTURAL COMPLIANCE: Using DI container for flext-core imports
         # Initialize types via DI container
-        from flext_ldap.config import (
-            FlextLdapAuthConfig,
-            FlextLdapConnectionConfig,
-        )
-        from flext_ldap.domain.entities import FlextLdapConnection
 
         try:
             # Configure connection provider with settings
@@ -92,25 +96,31 @@ class FlextLdapAPI:
                 # Don't create settings if not used directly
                 self._connection_provider.config = connection_config
 
-            # Use ConnectionProtocol interface
-            # await self._connection_provider.connect()  # Not supported by protocol
+            # Use FLEXT connection services through infrastructure client
+            try:
+                # Use the FlextLdapClient connect method
+                await self._connection_provider.connect()
 
-            # Create domain entity for connection (assume successful for now)
-            connection = FlextLdapConnection(
-                id=str(uuid4()),
-                server_url=server_uri,
-                bind_dn=bind_dn,
-            )
-            # Domain entity tracks its own state
-            connection.connect()
-            if bind_dn:
-                connection.bind(bind_dn)
+                # Create domain entity for successful connection
+                connection = FlextLdapConnection(
+                    id=str(uuid4()),
+                    server_url=server_uri,
+                    bind_dn=bind_dn,
+                )
+                # Set as connected since we got success from infrastructure
+                connection = connection.connect()
 
-            # Store connection using infrastructure ID pattern
-            self._active_connection_id = str(connection.id)
-            self._connections[server_uri] = connection
-            self._active_connection = connection
-            return FlextResult.ok(connection)
+                # Store connection using infrastructure ID pattern
+                self._active_connection_id = str(connection.id)
+                self._connections[server_uri] = connection
+                self._active_connection = connection
+                return FlextResult.ok(connection)
+
+            except Exception as exc:
+                msg = f"Connection failed: {exc}"
+                raise FlextConnectionError(
+                    msg,
+                ) from exc
 
         except Exception as e:
             return FlextResult.fail(f"Failed to create connection: {e}")
@@ -134,8 +144,6 @@ class FlextLdapAPI:
             if self._active_connection:  # Removed protocol method
                 # Use ConnectionProtocol pattern - disconnect managed by context manager
                 # but we can manually disconnect if needed
-                # await self._connection_provider.disconnect()
-                # Not supported by protocol
                 if self._active_connection:
                     self._active_connection.disconnect()  # Update domain state
                     self._active_connection = None
@@ -175,8 +183,6 @@ class FlextLdapAPI:
                 return FlextResult.fail("No active LDAP connection")
 
             # Create user request object
-            from flext_ldap.domain.value_objects import FlextLdapCreateUserRequest
-
             request = FlextLdapCreateUserRequest(
                 dn=dn,
                 uid=uid,
@@ -236,10 +242,15 @@ class FlextLdapAPI:
             if not self._active_connection:
                 return FlextResult.fail("No active LDAP connection")
 
+            # Convert connection to LdapConnectionInfo
+            connection_info = LdapConnectionInfo(
+                server_url=self._active_connection.server_url,
+                bind_dn=self._active_connection.bind_dn,
+            )
+
             return await self._ldap_client.list_users(
-                self._active_connection,
+                connection_info,
                 base_dn,
-                limit,
             )
 
         except Exception as e:
@@ -253,7 +264,15 @@ class FlextLdapAPI:
             if not self._active_connection:
                 return FlextResult.fail("No active LDAP connection")
 
-            return await self._ldap_client.delete_user(self._active_connection, dn)
+            # Convert connection to LdapConnectionInfo
+            connection_info = LdapConnectionInfo(
+                server_url=self._active_connection.server_url,
+                bind_dn=self._active_connection.bind_dn,
+            )
+
+            result = await self._ldap_client.delete_user(connection_info, dn)
+            # Convert None result to bool for compatibility
+            return FlextResult.ok(result.success)
 
         except Exception as e:
             return FlextResult.fail(f"Failed to delete user: {e}")

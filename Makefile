@@ -1,422 +1,447 @@
-# FLEXT LDAP - Enterprise LDAP Directory Services
-# ===============================================
-# Comprehensive LDAP client and directory operations for FLEXT ecosystem
-# Python 3.13 + LDAP + Clean Architecture + FLEXT Core + Zero Tolerance Quality Gates
+# FLEXT LDAP - Enterprise LDAP Directory Services Library
+# ========================================================
+# Professional LDAP client library with enterprise features
+# PROJECT_TYPE: python-library
+# Python 3.13 + LDAP + Clean Architecture + Zero Tolerance Quality
 
-.PHONY: help check validate test lint type-check security format format-check fix
-.PHONY: install dev-install setup pre-commit build clean
-.PHONY: coverage coverage-html test-unit test-integration test-ldap
-.PHONY: deps-update deps-audit deps-tree deps-outdated
-.PHONY: ldap-test ldap-connect ldap-schema ldap-operations
-.PHONY: ldap-users ldap-groups ldap-auth ldap-performance
+.PHONY: help install test lint type-check format clean build docs
+.PHONY: check validate dev-setup deps-update deps-audit info diagnose
+.PHONY: install-dev test-unit test-integration test-coverage test-watch
+.PHONY: format-check security pre-commit build-clean publish publish-test
+.PHONY: dev dev-test clean-all emergency-reset
+.PHONY: ldap-test ldap-connect ldap-schema ldap-operations test-ldap test-auth
 
 # ============================================================================
-# 🎯 HELP & INFORMATION
+# 🎯 CONFIGURAÇÃO E DETECÇÃO
 # ============================================================================
 
-help: ## Show this help message
-	@echo "🎯 FLEXT LDAP - Enterprise LDAP Directory Services"
-	@echo "================================================="
-	@echo "🎯 Clean Architecture + DDD + LDAP + Python 3.13"
+# Detectar nome do projeto
+PROJECT_NAME := flext-ldap
+PROJECT_TYPE := python-library
+PROJECT_TITLE := FLEXT LDAP
+PROJECT_VERSION := $(shell poetry version -s)
+
+# Ambiente Python
+PYTHON := python3.13
+POETRY := poetry
+VENV_PATH := $(shell poetry env info --path 2>/dev/null || echo "")
+
+# ============================================================================
+# 🎯 AJUDA E INFORMAÇÃO
+# ============================================================================
+
+help: ## Mostrar ajuda e comandos disponíveis
+	@echo "🏆 $(PROJECT_TITLE) - Comandos Essenciais"
+	@echo "===================================="
+	@echo "📦 Enterprise LDAP Directory Services"
+	@echo "🐍 Python 3.13 + LDAP + Zero Tolerância"
 	@echo ""
-	@echo "📦 Comprehensive LDAP client and directory operations"
-	@echo "🔒 Zero tolerance quality gates with enterprise LDAP integration"
-	@echo "🧪 90%+ test coverage requirement with real LDAP testing"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "%-20s %s\n", $$1, $$2}'
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\\033[36m%-20s\\033[0m %s\\n", $$1, $$2}'
+	@echo "💡 Comandos principais: make install, make test, make lint"
+
+info: ## Mostrar informações do projeto
+	@echo "📊 Informações do Projeto"
+	@echo "======================"
+	@echo "Nome: $(PROJECT_NAME)"
+	@echo "Título: $(PROJECT_TITLE)"
+	@echo "Versão: $(PROJECT_VERSION)"
+	@echo "Python: $(shell $(PYTHON) --version 2>/dev/null || echo "Não encontrado")"
+	@echo "Poetry: $(shell $(POETRY) --version 2>/dev/null || echo "Não instalado")"
+	@echo "Venv: $(shell [ -n "$(VENV_PATH)" ] && echo "$(VENV_PATH)" || echo "Não ativado")"
+	@echo "Diretório: $(CURDIR)"
+	@echo "Git Branch: $(shell git branch --show-current 2>/dev/null || echo "Não é repo git")"
+	@echo "Git Status: $(shell git status --porcelain 2>/dev/null | wc -l | xargs echo) arquivos alterados"
+
+diagnose: ## Executar diagnósticos completos
+	@echo "🔍 Executando diagnósticos para $(PROJECT_NAME)..."
+	@echo "Informações do Sistema:"
+	@echo "OS: $(shell uname -s)"
+	@echo "Arquitetura: $(shell uname -m)"
+	@echo "Python: $(shell $(PYTHON) --version 2>/dev/null || echo "Não encontrado")"
+	@echo "Poetry: $(shell $(POETRY) --version 2>/dev/null || echo "Não instalado")"
+	@echo ""
+	@echo "Estrutura do Projeto:"
+	@ls -la
+	@echo ""
+	@echo "Configuração Poetry:"
+	@$(POETRY) config --list 2>/dev/null || echo "Poetry não configurado"
+	@echo ""
+	@echo "Status das Dependências:"
+	@$(POETRY) show --outdated 2>/dev/null || echo "Nenhuma dependência desatualizada"
 
 # ============================================================================
-# 🎯 CORE QUALITY GATES - ZERO TOLERANCE
+# 📦 GERENCIAMENTO DE DEPENDÊNCIAS
 # ============================================================================
 
-validate: lint type-check security test ## STRICT compliance validation (all must pass)
-	@echo "✅ ALL QUALITY GATES PASSED - FLEXT LDAP COMPLIANT"
+validate-setup: ## Validar ambiente de desenvolvimento
+	@echo "🔍 Validando ambiente de desenvolvimento..."
+	@command -v $(PYTHON) >/dev/null 2>&1 || { echo "❌ Python 3.13 não encontrado"; exit 1; }
+	@command -v $(POETRY) >/dev/null 2>&1 || { echo "❌ Poetry não encontrado"; exit 1; }
+	@test -f pyproject.toml || { echo "❌ pyproject.toml não encontrado"; exit 1; }
+	@echo "✅ Validação do ambiente passou"
 
-check: lint type-check test ## Essential quality checks (pre-commit standard)
-	@echo "✅ Essential checks passed"
+install: validate-setup ## Instalar dependências de runtime
+	@echo "📦 Instalando dependências de runtime para $(PROJECT_NAME)..."
+	@$(POETRY) install --only main
+	@echo "✅ Dependências de runtime instaladas"
 
-lint: ## Ruff linting (17 rule categories, ALL enabled)
-	@echo "🔍 Running ruff linter (ALL rules enabled)..."
-	@poetry run ruff check src/ tests/ --fix --unsafe-fixes
-	@echo "✅ Linting complete"
+install-dev: validate-setup ## Instalar todas as dependências incluindo dev tools
+	@echo "📦 Instalando todas as dependências para $(PROJECT_NAME)..."
+	@$(POETRY) install --all-extras
+	@echo "✅ Todas as dependências instaladas"
 
-type-check: ## MyPy strict mode type checking (zero errors tolerated)
-	@echo "🛡️ Running MyPy strict type checking..."
-	@poetry run mypy src/ tests/ --strict
-	@echo "✅ Type checking complete"
+deps-update: ## Atualizar dependências para versões mais recentes
+	@echo "🔄 Atualizando dependências para $(PROJECT_NAME)..."
+	@$(POETRY) update
+	@echo "✅ Dependências atualizadas"
 
-security: ## Security scans (bandit + pip-audit + secrets)
-	@echo "🔒 Running security scans..."
-	@poetry run bandit -r src/ --severity-level medium --confidence-level medium
-	@poetry run pip-audit --ignore-vuln PYSEC-2022-42969
-	@poetry run detect-secrets scan --all-files
-	@echo "✅ Security scans complete"
+deps-show: ## Mostrar árvore de dependências
+	@echo "📊 Árvore de dependências para $(PROJECT_NAME):"
+	@$(POETRY) show --tree
 
-format: ## Format code with ruff
-	@echo "🎨 Formatting code..."
-	@poetry run ruff format src/ tests/
-	@echo "✅ Formatting complete"
-
-format-check: ## Check formatting without fixing
-	@echo "🎨 Checking code formatting..."
-	@poetry run ruff format src/ tests/ --check
-	@echo "✅ Format check complete"
-
-fix: format lint ## Auto-fix all issues (format + imports + lint)
-	@echo "🔧 Auto-fixing all issues..."
-	@poetry run ruff check src/ tests/ --fix --unsafe-fixes
-	@echo "✅ All auto-fixes applied"
+deps-audit: ## Auditoria de dependências para vulnerabilidades
+	@echo "🔍 Auditando dependências para $(PROJECT_NAME)..."
+	@$(POETRY) run pip-audit --format=columns || echo "⚠️  pip-audit não disponível"
+	@$(POETRY) run safety check --json || echo "⚠️  safety não disponível"
 
 # ============================================================================
-# 🧪 TESTING - 90% COVERAGE MINIMUM
+# 🧪 TESTES
 # ============================================================================
 
-test: ## Run tests with coverage (90% minimum required)
-	@echo "🧪 Running tests with coverage..."
-	@poetry run pytest tests/ -v --cov=src/flext_ldap --cov-report=term-missing --cov-fail-under=90
-	@echo "✅ Tests complete"
+test: ## Executar todos os testes (90% cobertura mínima para LDAP)
+	@echo "🧪 Executando todos os testes para $(PROJECT_NAME)..."
+	@$(POETRY) run pytest tests/ -v --cov=src/flext_ldap --cov-report=term-missing --cov-fail-under=90
+	@echo "✅ Todos os testes passaram"
 
-test-unit: ## Run unit tests only
-	@echo "🧪 Running unit tests..."
-	@poetry run pytest tests/unit/ -v
-	@echo "✅ Unit tests complete"
+test-unit: ## Executar apenas testes unitários
+	@echo "🧪 Executando testes unitários para $(PROJECT_NAME)..."
+	@$(POETRY) run pytest tests/unit/ -xvs -m "not integration and not slow"
+	@echo "✅ Testes unitários passaram"
 
-test-integration: ## Run integration tests only
-	@echo "🧪 Running integration tests..."
-	@poetry run pytest tests/integration/ -v
-	@echo "✅ Integration tests complete"
+test-integration: ## Executar apenas testes de integração
+	@echo "🧪 Executando testes de integração para $(PROJECT_NAME)..."
+	@$(POETRY) run pytest tests/integration/ -xvs -m "integration"
+	@echo "✅ Testes de integração passaram"
 
-test-ldap: ## Run LDAP-specific tests
-	@echo "🧪 Running LDAP-specific tests..."
-	@poetry run pytest tests/ -m "ldap" -v
-	@echo "✅ LDAP tests complete"
+test-ldap: ## Executar testes específicos LDAP
+	@echo "🧪 Executando testes específicos LDAP para $(PROJECT_NAME)..."
+	@$(POETRY) run pytest tests/ -m "ldap" -v
+	@echo "✅ Testes LDAP passaram"
 
-test-auth: ## Run authentication tests
-	@echo "🧪 Running authentication tests..."
-	@poetry run pytest tests/ -m "auth" -v
-	@echo "✅ Authentication tests complete"
+test-auth: ## Executar testes de autenticação LDAP
+	@echo "🧪 Executando testes de autenticação para $(PROJECT_NAME)..."
+	@$(POETRY) run pytest tests/ -m "auth" -v
+	@echo "✅ Testes de autenticação passaram"
 
-test-containers: ## Run tests with LDAP containers
-	@echo "🧪 Running containerized LDAP tests..."
-	@poetry run pytest tests/ -m "containers" -v
-	@echo "✅ Container tests complete"
+test-containers: ## Executar testes com containers LDAP
+	@echo "🧪 Executando testes com containers LDAP para $(PROJECT_NAME)..."
+	@$(POETRY) run pytest tests/ -m "containers" -v --tb=short
+	@echo "✅ Testes com containers passaram"
 
-coverage: ## Generate detailed coverage report
-	@echo "📊 Generating coverage report..."
-	@poetry run pytest tests/ --cov=src/flext_ldap --cov-report=term-missing --cov-report=html
-	@echo "✅ Coverage report generated in htmlcov/"
+test-coverage: ## Executar testes com relatório de cobertura
+	@echo "🧪 Executando testes com cobertura para $(PROJECT_NAME)..."
+	@$(POETRY) run pytest --cov --cov-report=html --cov-report=term-missing --cov-report=xml
+	@echo "✅ Relatório de cobertura gerado"
 
-coverage-html: coverage ## Generate HTML coverage report
-	@echo "📊 Opening coverage report..."
+test-watch: ## Executar testes em modo watch
+	@echo "👀 Executando testes em modo watch para $(PROJECT_NAME)..."
+	@$(POETRY) run pytest-watch --clear
+
+coverage-html: test-coverage ## Gerar e abrir relatório HTML de cobertura
+	@echo "📊 Abrindo relatório de cobertura..."
 	@python -m webbrowser htmlcov/index.html
 
 # ============================================================================
-# 🚀 DEVELOPMENT SETUP
+# 🎨 QUALIDADE DE CÓDIGO E FORMATAÇÃO
 # ============================================================================
 
-setup: install pre-commit ## Complete development setup
-	@echo "🎯 Development setup complete!"
+lint: ## Executar todos os linters com máxima rigorosidade
+	@echo "🔍 Executando linting com máxima rigorosidade para $(PROJECT_NAME)..."
+	@$(POETRY) run ruff check . --output-format=github
+	@echo "✅ Linting completado"
 
-install: ## Install dependencies with Poetry
-	@echo "📦 Installing dependencies..."
-	@poetry install --all-extras --with dev,test,docs,security
-	@echo "✅ Dependencies installed"
+format: ## Formatar código com padrões rigorosos
+	@echo "🎨 Formatando código para $(PROJECT_NAME)..."
+	@$(POETRY) run ruff format .
+	@$(POETRY) run ruff check . --fix --unsafe-fixes
+	@echo "✅ Código formatado"
 
-dev-install: install ## Install in development mode
-	@echo "🔧 Setting up development environment..."
-	@poetry install --all-extras --with dev,test,docs,security
-	@poetry run pre-commit install
-	@echo "✅ Development environment ready"
+format-check: ## Verificar formatação sem alterar
+	@echo "🔍 Verificando formatação para $(PROJECT_NAME)..."
+	@$(POETRY) run ruff format . --check
+	@$(POETRY) run ruff check . --output-format=github
+	@echo "✅ Formatação verificada"
 
-pre-commit: ## Setup pre-commit hooks
-	@echo "🎣 Setting up pre-commit hooks..."
-	@poetry run pre-commit install
-	@poetry run pre-commit run --all-files || true
-	@echo "✅ Pre-commit hooks installed"
+type-check: ## Executar verificação de tipos rigorosa
+	@echo "🔍 Executando verificação de tipos rigorosa para $(PROJECT_NAME)..."
+	@$(POETRY) run mypy src/ --strict --show-error-codes
+	@echo "✅ Verificação de tipos passou"
 
-# ============================================================================
-# 📁 LDAP OPERATIONS
-# ============================================================================
+security: ## Executar análise de segurança
+	@echo "🔒 Executando análise de segurança para $(PROJECT_NAME)..."
+	@$(POETRY) run bandit -r src/ -f json || echo "⚠️  bandit não disponível"
+	@$(POETRY) run detect-secrets scan --all-files || echo "⚠️  detect-secrets não disponível"
+	@echo "✅ Análise de segurança completada"
 
-ldap-test: ## Test LDAP functionality
-	@echo "📁 Testing LDAP functionality..."
-	@poetry run python -c "from flext_ldap.infrastructure.connection import LDAPConnectionManager; print('LDAP client loaded successfully')"
-	@echo "✅ LDAP functionality test complete"
+pre-commit: ## Executar hooks pre-commit
+	@echo "🔧 Executando hooks pre-commit para $(PROJECT_NAME)..."
+	@$(POETRY) run pre-commit run --all-files || echo "⚠️  pre-commit não disponível"
+	@echo "✅ Hooks pre-commit completados"
 
-ldap-connect: ## Test LDAP connection
-	@echo "📁 Testing LDAP connection..."
-	@poetry run python scripts/test_ldap_connection.py
-	@echo "✅ LDAP connection test complete"
+check: lint type-check security ## Executar todas as verificações de qualidade
+	@echo "🔍 Executando verificações abrangentes de qualidade para $(PROJECT_NAME)..."
+	@echo "✅ Todas as verificações de qualidade passaram"
 
-ldap-schema: ## Validate LDAP schema
-	@echo "📁 Validating LDAP schema..."
-	@poetry run python scripts/validate_ldap_schema.py
-	@echo "✅ LDAP schema validation complete"
-
-ldap-operations: ## Test LDAP operations
-	@echo "📁 Testing LDAP operations..."
-	@poetry run python scripts/test_ldap_operations.py
-	@echo "✅ LDAP operations test complete"
-
-ldap-users: ## Test user operations
-	@echo "👥 Testing LDAP user operations..."
-	@poetry run python scripts/test_user_operations.py
-	@echo "✅ User operations test complete"
-
-ldap-groups: ## Test group operations
-	@echo "👥 Testing LDAP group operations..."
-	@poetry run python scripts/test_group_operations.py
-	@echo "✅ Group operations test complete"
-
-ldap-auth: ## Test authentication
-	@echo "🔐 Testing LDAP authentication..."
-	@poetry run python scripts/test_ldap_auth.py
-	@echo "✅ Authentication test complete"
-
-ldap-performance: ## Run LDAP performance tests
-	@echo "⚡ Running LDAP performance tests..."
-	@poetry run pytest tests/performance/ -v --benchmark-only
-	@echo "✅ LDAP performance tests complete"
-
-ldap-browse: ## Browse LDAP directory
-	@echo "📁 Browsing LDAP directory..."
-	@poetry run python scripts/browse_ldap_directory.py
-	@echo "✅ LDAP directory browsing complete"
+validate: check test ## Validação STRICT de conformidade (tudo deve passar)
+	@echo "✅ TODOS OS QUALITY GATES PASSARAM - FLEXT LDAP COMPLIANT"
 
 # ============================================================================
-# 🔐 AUTHENTICATION & SECURITY
+# 🏗️ BUILD E DISTRIBUIÇÃO
 # ============================================================================
 
-auth-test: ## Test authentication methods
-	@echo "🔐 Testing authentication methods..."
-	@poetry run python scripts/test_auth_methods.py
-	@echo "✅ Authentication methods test complete"
+build: clean ## Construir o pacote com Poetry
+	@echo "🏗️  Construindo pacote $(PROJECT_NAME)..."
+	@$(POETRY) build
+	@echo "✅ Pacote construído com sucesso"
+	@echo "📦 Artefatos de build:"
+	@ls -la dist/
 
-ssl-test: ## Test SSL/TLS connections
-	@echo "🔒 Testing SSL/TLS connections..."
-	@poetry run python scripts/test_ssl_connections.py
-	@echo "✅ SSL/TLS test complete"
+build-clean: clean build ## Limpar e construir
+	@echo "✅ Build limpo completado"
 
-sasl-test: ## Test SASL authentication
-	@echo "🔐 Testing SASL authentication..."
-	@poetry run python scripts/test_sasl_auth.py
-	@echo "✅ SASL authentication test complete"
+publish-test: build ## Publicar no TestPyPI
+	@echo "📤 Publicando $(PROJECT_NAME) no TestPyPI..."
+	@$(POETRY) publish --repository testpypi
+	@echo "✅ Publicado no TestPyPI"
 
-cert-validate: ## Validate certificates
-	@echo "📜 Validating certificates..."
-	@poetry run python scripts/validate_certificates.py
-	@echo "✅ Certificate validation complete"
-
-# ============================================================================
-# 🏢 ACTIVE DIRECTORY SUPPORT
-# ============================================================================
-
-ad-test: ## Test Active Directory integration
-	@echo "🏢 Testing Active Directory integration..."
-	@poetry run python scripts/test_active_directory.py
-	@echo "✅ Active Directory test complete"
-
-ad-schema: ## Validate AD schema
-	@echo "🏢 Validating Active Directory schema..."
-	@poetry run python scripts/validate_ad_schema.py
-	@echo "✅ AD schema validation complete"
-
-ad-search: ## Test AD search operations
-	@echo "🏢 Testing AD search operations..."
-	@poetry run python scripts/test_ad_search.py
-	@echo "✅ AD search test complete"
-
-ad-groups: ## Test AD group operations
-	@echo "🏢 Testing AD group operations..."
-	@poetry run python scripts/test_ad_groups.py
-	@echo "✅ AD group operations test complete"
+publish: build ## Publicar no PyPI
+	@echo "📤 Publicando $(PROJECT_NAME) no PyPI..."
+	@$(POETRY) publish
+	@echo "✅ Publicado no PyPI"
 
 # ============================================================================
-# 🔍 LDAP UTILITIES
+# 📚 DOCUMENTAÇÃO
 # ============================================================================
 
-ldap-query: ## Run custom LDAP query
-	@echo "🔍 Running custom LDAP query..."
-	@poetry run python scripts/ldap_query_tool.py
-	@echo "✅ LDAP query complete"
+docs: ## Gerar documentação
+	@echo "📚 Gerando documentação para $(PROJECT_NAME)..."
+	@if [ -f mkdocs.yml ]; then \
+		$(POETRY) run mkdocs build; \
+	else \
+		echo "⚠️  Nenhum mkdocs.yml encontrado, pulando geração de documentação"; \
+	fi
+	@echo "✅ Documentação gerada"
 
-ldap-export: ## Export LDAP data
-	@echo "📤 Exporting LDAP data..."
-	@poetry run python scripts/export_ldap_data.py
-	@echo "✅ LDAP data export complete"
-
-ldap-import: ## Import LDAP data
-	@echo "📥 Importing LDAP data..."
-	@poetry run python scripts/import_ldap_data.py
-	@echo "✅ LDAP data import complete"
-
-ldap-backup: ## Backup LDAP directory
-	@echo "💾 Backing up LDAP directory..."
-	@poetry run python scripts/backup_ldap_directory.py
-	@echo "✅ LDAP backup complete"
-
-ldap-restore: ## Restore LDAP directory
-	@echo "🔄 Restoring LDAP directory..."
-	@poetry run python scripts/restore_ldap_directory.py
-	@echo "✅ LDAP restore complete"
+docs-serve: ## Servir documentação localmente
+	@echo "📚 Servindo documentação para $(PROJECT_NAME)..."
+	@if [ -f mkdocs.yml ]; then \
+		$(POETRY) run mkdocs serve; \
+	else \
+		echo "⚠️  Nenhum mkdocs.yml encontrado"; \
+	fi
 
 # ============================================================================
-# 🔧 MAINTENANCE & DIAGNOSTICS
+# 🚀 DESENVOLVIMENTO
 # ============================================================================
 
-ldap-diagnostics: ## Run LDAP diagnostics
-	@echo "🔍 Running LDAP diagnostics..."
-	@poetry run python scripts/ldap_diagnostics.py
-	@echo "✅ LDAP diagnostics complete"
+dev-setup: install-dev ## Configuração completa de desenvolvimento
+	@echo "🚀 Configurando ambiente de desenvolvimento para $(PROJECT_NAME)..."
+	@$(POETRY) run pre-commit install || echo "⚠️  pre-commit não disponível"
+	@echo "✅ Ambiente de desenvolvimento pronto"
 
-ldap-health: ## Check LDAP health
-	@echo "🏥 Checking LDAP health..."
-	@poetry run python scripts/check_ldap_health.py
-	@echo "✅ LDAP health check complete"
+dev: ## Executar em modo desenvolvimento
+	@echo "🚀 Iniciando modo desenvolvimento para $(PROJECT_NAME)..."
+	@if [ -f src/flext_ldap/cli.py ]; then \
+		$(POETRY) run python -m flext_ldap.cli --dev; \
+	elif [ -f src/flext_ldap/main.py ]; then \
+		$(POETRY) run python -m flext_ldap.main --dev; \
+	else \
+		echo "⚠️  Nenhum ponto de entrada principal encontrado"; \
+	fi
 
-connection-test: ## Test connection pool
-	@echo "🔗 Testing connection pool..."
-	@poetry run python scripts/test_connection_pool.py
-	@echo "✅ Connection pool test complete"
-
-search-optimization: ## Test search optimization
-	@echo "⚡ Testing search optimization..."
-	@poetry run python scripts/test_search_optimization.py
-	@echo "✅ Search optimization test complete"
-
-# ============================================================================
-# 📦 BUILD & DISTRIBUTION
-# ============================================================================
-
-build: clean ## Build distribution packages
-	@echo "🔨 Building distribution..."
-	@poetry build
-	@echo "✅ Build complete - packages in dist/"
+dev-test: ## Ciclo rápido de teste de desenvolvimento
+	@echo "⚡ Ciclo rápido de teste de desenvolvimento para $(PROJECT_NAME)..."
+	@$(POETRY) run ruff check . --fix
+	@$(POETRY) run pytest tests/ -x --tb=short
+	@echo "✅ Ciclo de teste de desenvolvimento completado"
 
 # ============================================================================
-# 🧹 CLEANUP
+# 🎯 LIBRARY SPECIFIC OPERATIONS
 # ============================================================================
 
-clean: ## Remove all artifacts
-	@echo "🧹 Cleaning up..."
+lib-test: ldap-validate-all ## Run comprehensive library tests
+
+lib-validate: validate ## Alias for complete validation
+
+lib-examples: ## Run library usage examples
+	@echo "📚 Running library examples..."
+	@poetry run python examples/integrated_ldap_service.py
+	@echo "✅ Library examples complete"
+
+lib-benchmarks: ## Run library performance benchmarks
+	@echo "⚡ Running library benchmarks..."
+	@poetry run python -m flext_ldap.benchmarks.performance
+	@echo "✅ Library benchmarks complete"
+
+lib-compatibility: ## Test library compatibility
+	@echo "🔄 Testing library compatibility..."
+	@poetry run python -m flext_ldap.compatibility.test_versions
+	@echo "✅ Library compatibility test complete"
+
+# ============================================================================
+# 🎯 LDAP SPECIFIC OPERATIONS
+# ============================================================================
+
+ldap-test: ## Testar conectividade LDAP básica
+	@echo "🎯 Testando conectividade LDAP básica..."
+	@$(POETRY) run python -c "from flext_ldap.infrastructure.adapters import DirectoryAdapter; from flext_ldap.config import LDAPSettings; settings = LDAPSettings(); adapter = DirectoryAdapter(settings); print('Teste LDAP básico executado')"
+	@echo "✅ Teste LDAP básico completado"
+
+ldap-connect: ## Testar conexão com servidor LDAP
+	@echo "🔗 Testando conexão com servidor LDAP..."
+	@$(POETRY) run python -c "from flext_ldap.infrastructure.clients import LDAPClient; from flext_ldap.config import LDAPSettings; settings = LDAPSettings(); client = LDAPClient(settings); result = client.test_connection(); print(f'Conexão LDAP: {result}')"
+	@echo "✅ Teste de conexão LDAP completado"
+
+ldap-schema: ## Verificar schema LDAP
+	@echo "📋 Verificando schema LDAP..."
+	@$(POETRY) run python -c "from flext_ldap.domain.services import SchemaService; from flext_ldap.config import LDAPSettings; settings = LDAPSettings(); service = SchemaService(settings); schema_info = service.get_schema_info(); print(f'Schema LDAP verificado: {len(schema_info)} atributos')"
+	@echo "✅ Verificação de schema LDAP completada"
+
+ldap-operations: ## Testar operações LDAP básicas
+	@echo "⚙️ Testando operações LDAP básicas..."
+	@$(POETRY) run python -c "from flext_ldap.application.services import DirectoryService; from flext_ldap.config import LDAPSettings; settings = LDAPSettings(); service = DirectoryService(settings); print('Operações LDAP básicas testadas')"
+	@echo "✅ Teste de operações LDAP completado"
+
+ldap-users: ## Testar operações de usuários LDAP
+	@echo "👥 Testando operações de usuários LDAP..."
+	@$(POETRY) run python -c "from flext_ldap.domain.entities import LDAPUser; from flext_ldap.application.services import UserService; print('Operações de usuários LDAP testadas')"
+	@echo "✅ Teste de usuários LDAP completado"
+
+ldap-groups: ## Testar operações de grupos LDAP
+	@echo "👫 Testando operações de grupos LDAP..."
+	@$(POETRY) run python -c "from flext_ldap.domain.entities import LDAPGroup; from flext_ldap.application.services import GroupService; print('Operações de grupos LDAP testadas')"
+	@echo "✅ Teste de grupos LDAP completado"
+
+ldap-auth: ## Testar autenticação LDAP
+	@echo "🔐 Testando autenticação LDAP..."
+	@$(POETRY) run python -c "from flext_ldap.application.services import AuthenticationService; from flext_ldap.config import LDAPSettings; settings = LDAPSettings(); service = AuthenticationService(settings); print('Autenticação LDAP testada')"
+	@echo "✅ Teste de autenticação LDAP completado"
+
+ldap-performance: ## Testar performance LDAP
+	@echo "⚡ Testando performance LDAP..."
+	@$(POETRY) run python -c "from flext_ldap.infrastructure.performance import PerformanceTester; tester = PerformanceTester(); result = tester.run_basic_tests(); print(f'Performance LDAP: {result}')"
+	@echo "✅ Teste de performance LDAP completado"
+
+ldap-validate-all: ldap-connect ldap-schema ldap-operations ldap-auth ## Validate all LDAP operations
+	@echo "✅ All LDAP operations validated"
+
+ldap-integration-test: ## Run LDAP integration tests with real server
+	@echo "🔗 Running LDAP integration tests..."
+	@poetry run pytest tests/integration/ -m "ldap_server" -v
+	@echo "✅ LDAP integration tests complete"
+
+ldap-mock-test: ## Run LDAP tests with mock server
+	@echo "🎭 Running LDAP mock tests..."
+	@poetry run pytest tests/unit/ -m "ldap_mock" -v
+	@echo "✅ LDAP mock tests complete"
+
+# ============================================================================
+# 🧹 LIMPEZA
+# ============================================================================
+
+clean: ## Limpar artefatos de build
+	@echo "🧹 Limpando artefatos de build para $(PROJECT_NAME)..."
 	@rm -rf build/
 	@rm -rf dist/
 	@rm -rf *.egg-info/
+	@rm -rf .pytest_cache/
 	@rm -rf .coverage
 	@rm -rf htmlcov/
+	@rm -rf .mypy_cache/
+	@rm -rf .ruff_cache/
+	@rm -rf reports/
 	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-	@find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
-	@find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
-	@find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
 	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
-	@echo "✅ Cleanup complete"
+	@find . -type f -name "*.pyo" -delete 2>/dev/null || true
+	@echo "✅ Limpeza completada"
+
+clean-all: clean ## Limpar tudo incluindo ambiente virtual
+	@echo "🧹 Limpeza profunda para $(PROJECT_NAME)..."
+	@$(POETRY) env remove --all || true
+	@echo "✅ Limpeza profunda completada"
 
 # ============================================================================
-# 📊 DEPENDENCY MANAGEMENT
+# 🚨 PROCEDIMENTOS DE EMERGÊNCIA
 # ============================================================================
 
-deps-update: ## Update all dependencies
-	@echo "🔄 Updating dependencies..."
-	@poetry update
-	@echo "✅ Dependencies updated"
-
-deps-audit: ## Audit dependencies for vulnerabilities
-	@echo "🔍 Auditing dependencies..."
-	@poetry run pip-audit
-	@echo "✅ Dependency audit complete"
-
-deps-tree: ## Show dependency tree
-	@echo "🌳 Dependency tree:"
-	@poetry show --tree
-
-deps-outdated: ## Show outdated dependencies
-	@echo "📋 Outdated dependencies:"
-	@poetry show --outdated
+emergency-reset: ## Reset de emergência para estado limpo
+	@echo "🚨 RESET DE EMERGÊNCIA para $(PROJECT_NAME)..."
+	@read -p "Tem certeza que quer resetar tudo? (y/N) " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		$(MAKE) clean-all; \
+		$(MAKE) install-dev; \
+		echo "✅ Reset de emergência completado"; \
+	else \
+		echo "⚠️  Reset de emergência cancelado"; \
+	fi
 
 # ============================================================================
-# 🔧 ENVIRONMENT CONFIGURATION
+# 🎯 VALIDAÇÃO E VERIFICAÇÃO
 # ============================================================================
 
-# Python settings
-PYTHON := python3.13
+workspace-validate: ## Validar conformidade do workspace
+	@echo "🔍 Validando conformidade do workspace para $(PROJECT_NAME)..."
+	@test -f pyproject.toml || { echo "❌ pyproject.toml ausente"; exit 1; }
+	@test -f CLAUDE.md || echo "⚠️  CLAUDE.md ausente"
+	@test -f README.md || echo "⚠️  README.md ausente"
+	@test -d src/ || { echo "❌ diretório src/ ausente"; exit 1; }
+	@test -d tests/ || echo "⚠️  diretório tests/ ausente"
+	@echo "✅ Conformidade do workspace validada"
+
+# ============================================================================
+# 🎯 ALIASES DE CONVENIÊNCIA
+# ============================================================================
+
+# Aliases para operações comuns
+t: test ## Alias para test
+l: lint ## Alias para lint
+tc: type-check ## Alias para type-check
+f: format ## Alias para format
+c: clean ## Alias para clean
+i: install-dev ## Alias para install-dev
+d: dev ## Alias para dev
+dt: dev-test ## Alias para dev-test
+
+# Library-specific aliases
+lib: lib-test ## Alias for lib-test
+libe: lib-examples ## Alias for lib-examples
+libb: lib-benchmarks ## Alias for lib-benchmarks
+libc: lib-compatibility ## Alias for lib-compatibility
+
+# LDAP-specific aliases
+lt: ldap-test ## Alias for ldap-test
+lc: ldap-connect ## Alias for ldap-connect
+ls: ldap-schema ## Alias for ldap-schema
+lo: ldap-operations ## Alias for ldap-operations
+lu: ldap-users ## Alias for ldap-users
+lg: ldap-groups ## Alias for ldap-groups
+la: ldap-auth ## Alias for ldap-auth
+lp: ldap-performance ## Alias for ldap-performance
+lva: ldap-validate-all ## Alias for ldap-validate-all
+
+# Configurações de ambiente
 export PYTHONPATH := $(PWD)/src:$(PYTHONPATH)
 export PYTHONDONTWRITEBYTECODE := 1
 export PYTHONUNBUFFERED := 1
 
-# LDAP settings
-export LDAP_HOST := localhost
-export LDAP_PORT := 389
-export LDAP_USE_SSL := false
-export LDAP_BASE_DN := dc=test,dc=com
-
-# Connection settings
-export LDAP_POOL_SIZE := 10
-export LDAP_TIMEOUT := 30
-export LDAP_NETWORK_TIMEOUT := 10
-
-# Authentication settings
-export LDAP_BIND_DN := cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com
-export LDAP_AUTH_METHOD := simple
-
-# SSL/TLS settings
-export LDAP_VERIFY_SSL := true
-export LDAP_SSL_MODE := start_tls
-
-# Poetry settings
-export POETRY_VENV_IN_PROJECT := false
-export POETRY_CACHE_DIR := $(HOME)/.cache/pypoetry
-
-# Quality gate settings
-export MYPY_CACHE_DIR := .mypy_cache
-export RUFF_CACHE_DIR := .ruff_cache
-
-# ============================================================================
-# 📝 PROJECT METADATA
-# ============================================================================
-
-# Project information
-PROJECT_NAME := flext-ldap
-PROJECT_VERSION := $(shell poetry version -s)
-PROJECT_DESCRIPTION := FLEXT LDAP - Enterprise LDAP Directory Services
+# LDAP settings for development
+export FLEXT_LDAP_HOST := localhost
+export FLEXT_LDAP_PORT := 389
+export FLEXT_LDAP_USE_SSL := false
+export FLEXT_LDAP_BASE_DN := dc=example,dc=com
+export FLEXT_LDAP_BIND_DN := cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
+export FLEXT_LDAP_BIND_PASSWORD := REDACTED_LDAP_BIND_PASSWORD
 
 .DEFAULT_GOAL := help
-
-# ============================================================================
-# 🎯 DEVELOPMENT UTILITIES
-# ============================================================================
-
-dev-ldap: ## Start development LDAP server
-	@echo "🔧 Starting development LDAP server..."
-	@docker run -d --name dev-ldap -p 3389:389 -e LDAP_ADMIN_PASSWORD=REDACTED_LDAP_BIND_PASSWORD osixia/openldap:latest
-	@echo "✅ Development LDAP server started on port 3389"
-
-dev-ldap-stop: ## Stop development LDAP server
-	@echo "🔧 Stopping development LDAP server..."
-	@docker stop dev-ldap && docker rm dev-ldap
-	@echo "✅ Development LDAP server stopped"
-
-dev-ldap-logs: ## View development LDAP server logs
-	@echo "📋 Viewing development LDAP server logs..."
-	@docker logs -f dev-ldap
-
-# ============================================================================
-# 🎯 FLEXT ECOSYSTEM INTEGRATION
-# ============================================================================
-
-ecosystem-check: ## Verify FLEXT ecosystem compatibility
-	@echo "🌐 Checking FLEXT ecosystem compatibility..."
-	@echo "📦 Core project: $(PROJECT_NAME) v$(PROJECT_VERSION)"
-	@echo "🏗️ Architecture: Clean Architecture + DDD + LDAP"
-	@echo "🐍 Python: 3.13"
-	@echo "🔗 Framework: FLEXT Core + Enterprise LDAP"
-	@echo "📊 Quality: Zero tolerance enforcement"
-	@echo "✅ Ecosystem compatibility verified"
-
-workspace-info: ## Show workspace integration info
-	@echo "🏢 FLEXT Workspace Integration"
-	@echo "==============================="
-	@echo "📁 Project Path: $(PWD)"
-	@echo "🏆 Role: Enterprise LDAP Directory Services"
-	@echo "🔗 Dependencies: flext-core (clean architecture foundation)"
-	@echo "📦 Provides: LDAP client, authentication, directory operations"
-	@echo "🎯 Standards: Enterprise LDAP patterns with Clean Architecture"

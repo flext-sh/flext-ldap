@@ -24,7 +24,7 @@ class TestFlextLdapSpecification:
     def test_is_abstract(self) -> None:
         """Test that base specification is abstract."""
         with pytest.raises(TypeError):
-            FlextLdapSpecification()  # type: ignore[abstract]
+            FlextLdapSpecification()
 
 
 class TestFlextLdapEntrySpecification:
@@ -355,7 +355,9 @@ class TestFlextLdapValidPasswordSpecification:
 
     def test_initialization_custom(self) -> None:
         """Test specification initialization with custom values."""
-        spec = FlextLdapValidPasswordSpecification(min_length=10, require_special_chars=False)
+        spec = FlextLdapValidPasswordSpecification(
+            min_length=10, require_special_chars=False,
+        )
         assert spec.min_length == 10
         assert spec.require_special_chars is False
 
@@ -459,7 +461,7 @@ class TestFlextLdapDistinguishedNameSpecification:
             "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=org",
             "uid=user,ou=users,dc=example,dc=org",
             "cn=group,ou=groups,dc=company,dc=com",
-            "o=organization,c=us"
+            "o=organization,c=us",
         ]
 
         for dn in valid_dns:
@@ -475,13 +477,13 @@ class TestFlextLdapDistinguishedNameSpecification:
         """Test specification with None DN."""
         spec = FlextLdapDistinguishedNameSpecification()
 
-        assert spec.is_satisfied_by(None) is False  # type: ignore[arg-type]
+        assert spec.is_satisfied_by(None) is False
 
     def test_is_satisfied_by_non_string_dn(self) -> None:
         """Test specification with non-string DN."""
         spec = FlextLdapDistinguishedNameSpecification()
 
-        assert spec.is_satisfied_by(123) is False  # type: ignore[arg-type]
+        assert spec.is_satisfied_by(123) is False
 
     def test_is_satisfied_by_no_equals(self) -> None:
         """Test specification with DN without equals."""
@@ -495,10 +497,10 @@ class TestFlextLdapDistinguishedNameSpecification:
 
         invalid_dns = [
             "cn=REDACTED_LDAP_BIND_PASSWORD,invalid,dc=org",  # Component without =
-            "cn=REDACTED_LDAP_BIND_PASSWORD,=value,dc=org",   # Empty attribute name
-            "cn=REDACTED_LDAP_BIND_PASSWORD,attr=,dc=org",    # Empty attribute value
-            "cn=,dc=example,dc=org",    # Empty CN value
-            "=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=org", # Empty attribute name
+            "cn=REDACTED_LDAP_BIND_PASSWORD,=value,dc=org",  # Empty attribute name
+            "cn=REDACTED_LDAP_BIND_PASSWORD,attr=,dc=org",  # Empty attribute value
+            "cn=,dc=example,dc=org",  # Empty CN value
+            "=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=org",  # Empty attribute name
         ]
 
         for dn in invalid_dns:
@@ -526,7 +528,7 @@ class TestFlextLdapFilterSpecification:
             "(&(cn=REDACTED_LDAP_BIND_PASSWORD)(objectClass=person))",
             "(|(cn=REDACTED_LDAP_BIND_PASSWORD)(cn=user))",
             "(!(cn=REDACTED_LDAP_BIND_PASSWORD))",
-            "(cn=*)"
+            "(cn=*)",
         ]
 
         for filter_str in valid_filters:
@@ -542,13 +544,13 @@ class TestFlextLdapFilterSpecification:
         """Test specification with None filter."""
         spec = FlextLdapFilterSpecification()
 
-        assert spec.is_satisfied_by(None) is False  # type: ignore[arg-type]
+        assert spec.is_satisfied_by(None) is False
 
     def test_is_satisfied_by_non_string_filter(self) -> None:
         """Test specification with non-string filter."""
         spec = FlextLdapFilterSpecification()
 
-        assert spec.is_satisfied_by(123) is False  # type: ignore[arg-type]
+        assert spec.is_satisfied_by(123) is False
 
     def test_is_satisfied_by_no_parentheses(self) -> None:
         """Test specification with filter without parentheses."""
@@ -573,9 +575,9 @@ class TestFlextLdapFilterSpecification:
         spec = FlextLdapFilterSpecification()
 
         unbalanced_filters = [
-            "((cn=REDACTED_LDAP_BIND_PASSWORD)",      # Extra opening
-            "(cn=REDACTED_LDAP_BIND_PASSWORD))",      # Extra closing
-            "((cn=REDACTED_LDAP_BIND_PASSWORD)(",     # Multiple imbalances
+            "((cn=REDACTED_LDAP_BIND_PASSWORD)",  # Extra opening
+            "(cn=REDACTED_LDAP_BIND_PASSWORD))",  # Extra closing
+            "((cn=REDACTED_LDAP_BIND_PASSWORD)(",  # Multiple imbalances
         ]
 
         for filter_str in unbalanced_filters:
@@ -586,5 +588,7 @@ class TestFlextLdapFilterSpecification:
         spec = FlextLdapFilterSpecification()
 
         # Complex nested filter with balanced parentheses
-        complex_filter = "(&(|(cn=REDACTED_LDAP_BIND_PASSWORD)(cn=user))(objectClass=person)(!(accountDisabled=true)))"
+        complex_filter = (
+            "(&(|(cn=REDACTED_LDAP_BIND_PASSWORD)(cn=user))(objectClass=person)(!(accountDisabled=true)))"
+        )
         assert spec.is_satisfied_by(complex_filter) is True

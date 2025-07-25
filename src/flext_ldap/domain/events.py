@@ -25,11 +25,14 @@ class FlextLdapConnectionEstablished(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for connection established event."""
         if not self.aggregate_id:
-            raise ValueError("Connection established event must have aggregate_id")
+            msg = "Connection established event must have aggregate_id"
+            raise ValueError(msg)
         if not self.connection_id:
-            raise ValueError("Connection established event must have connection_id")
+            msg = "Connection established event must have connection_id"
+            raise ValueError(msg)
         if not self.base_dn:
-            raise ValueError("Connection established event must have base_dn")
+            msg = "Connection established event must have base_dn"
+            raise ValueError(msg)
 
 
 class FlextLdapConnectionLost(FlextValueObject):
@@ -42,9 +45,11 @@ class FlextLdapConnectionLost(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for connection lost event."""
         if not self.aggregate_id:
-            raise ValueError("Connection lost event must have aggregate_id")
+            msg = "Connection lost event must have aggregate_id"
+            raise ValueError(msg)
         if not self.connection_id:
-            raise ValueError("Connection lost event must have connection_id")
+            msg = "Connection lost event must have connection_id"
+            raise ValueError(msg)
 
 
 class FlextLdapEntryCreated(FlextValueObject):
@@ -58,11 +63,14 @@ class FlextLdapEntryCreated(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for entry created event."""
         if not self.aggregate_id:
-            raise ValueError("Entry created event must have aggregate_id")
+            msg = "Entry created event must have aggregate_id"
+            raise ValueError(msg)
         if not self.entry_dn:
-            raise ValueError("Entry created event must have entry_dn")
+            msg = "Entry created event must have entry_dn"
+            raise ValueError(msg)
         if not self.object_classes:
-            raise ValueError("Entry created event must have object_classes")
+            msg = "Entry created event must have object_classes"
+            raise ValueError(msg)
 
 
 class FlextLdapEntryModified(FlextValueObject):
@@ -76,11 +84,14 @@ class FlextLdapEntryModified(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for entry modified event."""
         if not self.aggregate_id:
-            raise ValueError("Entry modified event must have aggregate_id")
+            msg = "Entry modified event must have aggregate_id"
+            raise ValueError(msg)
         if not self.entry_dn:
-            raise ValueError("Entry modified event must have entry_dn")
+            msg = "Entry modified event must have entry_dn"
+            raise ValueError(msg)
         if not self.changes:
-            raise ValueError("Entry modified event must have changes")
+            msg = "Entry modified event must have changes"
+            raise ValueError(msg)
 
 
 class FlextLdapEntryDeleted(FlextValueObject):
@@ -93,11 +104,14 @@ class FlextLdapEntryDeleted(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for entry deleted event."""
         if not self.aggregate_id:
-            raise ValueError("Entry deleted event must have aggregate_id")
+            msg = "Entry deleted event must have aggregate_id"
+            raise ValueError(msg)
         if not self.entry_dn:
-            raise ValueError("Entry deleted event must have entry_dn")
+            msg = "Entry deleted event must have entry_dn"
+            raise ValueError(msg)
         if not self.object_classes:
-            raise ValueError("Entry deleted event must have object_classes")
+            msg = "Entry deleted event must have object_classes"
+            raise ValueError(msg)
 
 
 class FlextLdapUserAuthenticated(FlextValueObject):
@@ -110,11 +124,14 @@ class FlextLdapUserAuthenticated(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for user authenticated event."""
         if not self.aggregate_id:
-            raise ValueError("User authenticated event must have aggregate_id")
+            msg = "User authenticated event must have aggregate_id"
+            raise ValueError(msg)
         if not self.user_dn:
-            raise ValueError("User authenticated event must have user_dn")
+            msg = "User authenticated event must have user_dn"
+            raise ValueError(msg)
         if not self.authentication_method:
-            raise ValueError("User authenticated event must have authentication_method")
+            msg = "User authenticated event must have authentication_method"
+            raise ValueError(msg)
 
 
 class FlextLdapAuthenticationFailed(FlextValueObject):
@@ -128,13 +145,17 @@ class FlextLdapAuthenticationFailed(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for authentication failed event."""
         if not self.aggregate_id:
-            raise ValueError("Authentication failed event must have aggregate_id")
+            msg = "Authentication failed event must have aggregate_id"
+            raise ValueError(msg)
         if not self.user_dn:
-            raise ValueError("Authentication failed event must have user_dn")
+            msg = "Authentication failed event must have user_dn"
+            raise ValueError(msg)
         if not self.reason:
-            raise ValueError("Authentication failed event must have reason")
+            msg = "Authentication failed event must have reason"
+            raise ValueError(msg)
         if self.attempt_count <= 0:
-            raise ValueError("Attempt count must be positive")
+            msg = "Attempt count must be positive"
+            raise ValueError(msg)
 
 
 class FlextLdapGroupMemberAdded(FlextValueObject):
@@ -147,11 +168,14 @@ class FlextLdapGroupMemberAdded(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for group member added event."""
         if not self.aggregate_id:
-            raise ValueError("Group member added event must have aggregate_id")
+            msg = "Group member added event must have aggregate_id"
+            raise ValueError(msg)
         if not self.group_dn:
-            raise ValueError("Group member added event must have group_dn")
+            msg = "Group member added event must have group_dn"
+            raise ValueError(msg)
         if not self.member_dn:
-            raise ValueError("Group member added event must have member_dn")
+            msg = "Group member added event must have member_dn"
+            raise ValueError(msg)
 
 
 class FlextLdapGroupMemberRemoved(FlextValueObject):
@@ -164,8 +188,11 @@ class FlextLdapGroupMemberRemoved(FlextValueObject):
     def validate_domain_rules(self) -> None:
         """Validate domain rules for group member removed event."""
         if not self.aggregate_id:
-            raise ValueError("Group member removed event must have aggregate_id")
+            msg = "Group member removed event must have aggregate_id"
+            raise ValueError(msg)
         if not self.group_dn:
-            raise ValueError("Group member removed event must have group_dn")
+            msg = "Group member removed event must have group_dn"
+            raise ValueError(msg)
         if not self.member_dn:
-            raise ValueError("Group member removed event must have member_dn")
+            msg = "Group member removed event must have member_dn"
+            raise ValueError(msg)

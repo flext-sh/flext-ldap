@@ -1,7 +1,5 @@
 """Tests for LDAP domain value objects."""
 
-from urllib.parse import urlparse
-
 import pytest
 from pydantic import ValidationError
 
@@ -360,7 +358,7 @@ class TestFlextLdapAttributesValue:
         attrs_dict = {
             "cn": ["Test User"],
             "mail": ["test@example.org", "alt@example.org"],
-            "objectClass": ["inetOrgPerson"]
+            "objectClass": ["inetOrgPerson"],
         }
         attrs = FlextLdapAttributesValue(attributes=attrs_dict)
         assert attrs.attributes == attrs_dict
@@ -373,7 +371,7 @@ class TestFlextLdapAttributesValue:
     def test_get_single_value_multiple(self) -> None:
         """Test getting single value for attribute with multiple values."""
         attrs = FlextLdapAttributesValue(
-            attributes={"mail": ["first@example.org", "second@example.org"]}
+            attributes={"mail": ["first@example.org", "second@example.org"]},
         )
         assert attrs.get_single_value("mail") == "first@example.org"
 
@@ -431,7 +429,7 @@ class TestFlextLdapAttributesValue:
     def test_remove_value_exists(self) -> None:
         """Test removing existing value."""
         attrs = FlextLdapAttributesValue(
-            attributes={"mail": ["keep@example.org", "remove@example.org"]}
+            attributes={"mail": ["keep@example.org", "remove@example.org"]},
         )
         new_attrs = attrs.remove_value("mail", "remove@example.org")
         assert new_attrs.get_values("mail") == ["keep@example.org"]
@@ -487,7 +485,7 @@ class TestFlextLdapConnectionInfo:
             bind_dn=dn,
             is_authenticated=True,
             is_secure=False,
-            protocol_version=3
+            protocol_version=3,
         )
 
         assert info.server_uri == uri
@@ -512,7 +510,7 @@ class TestFlextLdapConnectionInfo:
         info = FlextLdapConnectionInfo(
             server_uri=uri,
             is_authenticated=True,
-            is_secure=True
+            is_secure=True,
         )
 
         expected = "ldaps://example.com:636 (authenticated, secure)"
@@ -550,7 +548,7 @@ class TestFlextLdapCreateUserRequest:
             dn="uid=testuser,ou=users,dc=example,dc=org",
             uid="testuser",
             cn="Test User",
-            sn="User"
+            sn="User",
         )
 
         assert request.dn == "uid=testuser,ou=users,dc=example,dc=org"
@@ -571,7 +569,7 @@ class TestFlextLdapCreateUserRequest:
             ou="Engineering",
             department="IT",
             title="Developer",
-            object_classes=["inetOrgPerson", "organizationalPerson"]
+            object_classes=["inetOrgPerson", "organizationalPerson"],
         )
 
         assert request.mail == "test@example.org"
@@ -588,7 +586,7 @@ class TestFlextLdapCreateUserRequest:
                 dn="",
                 uid="testuser",
                 cn="Test User",
-                sn="User"
+                sn="User",
             )
 
     def test_dn_validation_whitespace(self) -> None:
@@ -598,7 +596,7 @@ class TestFlextLdapCreateUserRequest:
                 dn="   ",
                 uid="testuser",
                 cn="Test User",
-                sn="User"
+                sn="User",
             )
 
     def test_dn_strips_whitespace(self) -> None:
@@ -607,7 +605,7 @@ class TestFlextLdapCreateUserRequest:
             dn="  uid=testuser,ou=users,dc=example,dc=org  ",
             uid="testuser",
             cn="Test User",
-            sn="User"
+            sn="User",
         )
         assert request.dn == "uid=testuser,ou=users,dc=example,dc=org"
 
@@ -618,7 +616,7 @@ class TestFlextLdapCreateUserRequest:
                 dn="uid=testuser,ou=users,dc=example,dc=org",
                 uid="",
                 cn="Test User",
-                sn="User"
+                sn="User",
             )
 
     def test_required_field_validation_cn(self) -> None:
@@ -628,7 +626,7 @@ class TestFlextLdapCreateUserRequest:
                 dn="uid=testuser,ou=users,dc=example,dc=org",
                 uid="testuser",
                 cn="   ",
-                sn="User"
+                sn="User",
             )
 
     def test_required_field_validation_sn(self) -> None:
@@ -638,7 +636,7 @@ class TestFlextLdapCreateUserRequest:
                 dn="uid=testuser,ou=users,dc=example,dc=org",
                 uid="testuser",
                 cn="Test User",
-                sn=""
+                sn="",
             )
 
     def test_required_fields_strip_whitespace(self) -> None:
@@ -647,7 +645,7 @@ class TestFlextLdapCreateUserRequest:
             dn="uid=testuser,ou=users,dc=example,dc=org",
             uid="  testuser  ",
             cn="  Test User  ",
-            sn="  User  "
+            sn="  User  ",
         )
 
         assert request.uid == "testuser"
@@ -661,7 +659,7 @@ class TestFlextLdapCreateUserRequest:
             uid="testuser",
             cn="Test User",
             sn="User",
-            mail="test@example.org"
+            mail="test@example.org",
         )
         # Should not raise
         request.validate_domain_rules()
@@ -673,8 +671,7 @@ class TestFlextLdapCreateUserRequest:
             uid="testuser",
             cn="Test User",
             sn="User",
-            mail="invalid-email"
+            mail="invalid-email",
         )
         with pytest.raises(ValueError, match="Email must be valid format"):
             request.validate_domain_rules()
-

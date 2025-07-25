@@ -37,7 +37,21 @@ class FlextLdapAttribute:
     Use FlextLdapAttributesValue from flext_ldap.domain.values instead.
     """
 
-    def __init__(self, name: str, values: list[str], binary: bool = False) -> None:
+    def __init__(
+        self,
+        name: str,
+        values: list[str],
+        *,
+        binary: bool = False,
+    ) -> None:
+        """Initialize LDAP attribute.
+
+        Args:
+            name: Attribute name
+            values: List of attribute values
+            binary: Whether the attribute contains binary data
+
+        """
         warnings.warn(
             "FlextLdapAttribute is deprecated. Use FlextLdapAttributesValue instead.",
             DeprecationWarning,

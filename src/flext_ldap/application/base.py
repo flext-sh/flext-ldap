@@ -13,7 +13,7 @@ ELIMINATES DUPLICATIONS:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Protocol, TypeVar, cast
+from typing import Any, Protocol, TypeVar, cast
 from uuid import UUID
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports

@@ -10,10 +10,13 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from flext_ldap.infrastructure.error_correlation import (ErrorCategory,
-                                                         ErrorCorrelationService,
-                                                         ErrorEvent, ErrorPattern,
-                                                         ErrorSeverity)
+from flext_ldap.infrastructure.error_correlation import (
+    ErrorCategory,
+    ErrorCorrelationService,
+    ErrorEvent,
+    ErrorPattern,
+    ErrorSeverity,
+)
 
 
 class TestErrorEvent:
@@ -526,7 +529,7 @@ class TestErrorCorrelationService:
 
         # Mock the uuid4 to raise an exception
         with mock.patch(
-            "flext_ldap.infrastructure.error_correlation.uuid4"
+            "flext_ldap.infrastructure.error_correlation.uuid4",
         ) as mock_uuid:
             mock_uuid.side_effect = ValueError("UUID generation failed")
 
@@ -579,7 +582,7 @@ class TestErrorCorrelationService:
 
         # Mock timedelta to raise an exception
         with mock.patch(
-            "flext_ldap.infrastructure.error_correlation.timedelta"
+            "flext_ldap.infrastructure.error_correlation.timedelta",
         ) as mock_timedelta:
             mock_timedelta.side_effect = ValueError("Timedelta calculation failed")
 
@@ -600,7 +603,7 @@ class TestErrorCorrelationService:
 
         # Mock datetime.now to raise an exception
         with mock.patch(
-            "flext_ldap.infrastructure.error_correlation.datetime"
+            "flext_ldap.infrastructure.error_correlation.datetime",
         ) as mock_datetime:
             mock_datetime.now.side_effect = RuntimeError("DateTime access failed")
 
@@ -654,7 +657,7 @@ class TestErrorCorrelationService:
                 base_event,
                 correlated_event,
                 weak_correlated_event,
-            ]
+            ],
         )
 
         # Test correlation that meets minimum threshold (>0.3) but not significant (<=0.5)
@@ -708,10 +711,12 @@ class TestErrorCorrelationService:
         )
 
         correlation_same_server = correlation_service._calculate_correlation(
-            event1, event2
+            event1,
+            event2,
         )
         correlation_diff_server = correlation_service._calculate_correlation(
-            event1, event3
+            event1,
+            event3,
         )
 
         # Same server should have higher correlation
@@ -775,7 +780,7 @@ class TestErrorCorrelationService:
 
         # Test the specific update logic by simulating it
         if (
-            new_event.operation_type
+            new_event.operation_type is not None
             and new_event.operation_type not in pattern.affected_operations
         ):
             pattern.affected_operations.append(new_event.operation_type)
@@ -832,7 +837,7 @@ class TestErrorCorrelationService:
         # Simulate the logic from _update_patterns when event.operation_type exists
         test_operation_type = "bind"
         if (
-            test_operation_type
+            test_operation_type is not None
             and test_operation_type not in pattern_with_empty_ops.affected_operations
         ):
             pattern_with_empty_ops.affected_operations.append(test_operation_type)
@@ -853,8 +858,10 @@ class TestErrorCorrelationService:
             assert UUID is not None
 
         # Also test that our module imports work correctly
-        from flext_ldap.infrastructure.error_correlation import (FlextLdapErrorEvent,
-                                                                 FlextLdapErrorPattern)
+        from flext_ldap.infrastructure.error_correlation import (
+            FlextLdapErrorEvent,
+            FlextLdapErrorPattern,
+        )
 
         # Create instances to ensure UUID typing is working
         event = FlextLdapErrorEvent(error_message="test")
