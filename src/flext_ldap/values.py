@@ -23,6 +23,10 @@ class FlextLdapScopeEnum(StrEnum):
     ONE_LEVEL = "onelevel"
     SUBTREE = "subtree"
 
+    # Legacy mappings for backward compatibility (from models.py)
+    ONE = "onelevel"  # Map ONE to ONE_LEVEL
+    SUB = "subtree"   # Map SUB to SUBTREE
+
 
 class FlextLdapDistinguishedName(FlextValueObject):
     """Distinguished Name value object.
@@ -252,6 +256,48 @@ class FlextLdapFilterValue(FlextValueObject):
         filter_strings = [f.value for f in filters]
         combined = f"(|{''.join(filter_strings)})"
         return cls(value=combined)
+
+    @classmethod
+    def contains(cls, attribute: str, value: str) -> FlextLdapFilterValue:
+        """Create a contains filter (consolidated from models.py)."""
+        return cls(value=f"({attribute}=*{value}*)")
+
+    @classmethod
+    def starts_with(cls, attribute: str, value: str) -> FlextLdapFilterValue:
+        """Create a starts-with filter (consolidated from models.py)."""
+        return cls(value=f"({attribute}={value}*)")
+
+    @classmethod
+    def ends_with(cls, attribute: str, value: str) -> FlextLdapFilterValue:
+        """Create an ends-with filter (consolidated from models.py)."""
+        return cls(value=f"({attribute}=*{value})")
+
+    @classmethod
+    def not_equals(cls, attribute: str, value: str) -> FlextLdapFilterValue:
+        """Create a not-equals filter (consolidated from models.py)."""
+        return cls(value=f"(!({attribute}={value}))")
+
+    @classmethod
+    def person_filter(cls) -> FlextLdapFilterValue:
+        """Create a filter for person objects (consolidated from models.py)."""
+        return cls(value="(objectClass=person)")
+
+    @classmethod
+    def group_filter(cls) -> FlextLdapFilterValue:
+        """Create a filter for group objects (consolidated from models.py)."""
+        return cls.or_filters(
+            cls(value="(objectClass=group)"),
+            cls(value="(objectClass=groupOfNames)"),
+            cls(value="(objectClass=groupOfUniqueNames)"),
+        )
+
+    def __and__(self, other: FlextLdapFilterValue) -> FlextLdapFilterValue:
+        """Combine filters with AND operation (consolidated from models.py)."""
+        return self.and_filters(self, other)
+
+    def __or__(self, other: FlextLdapFilterValue) -> FlextLdapFilterValue:
+        """Combine filters with OR operation (consolidated from models.py)."""
+        return self.or_filters(self, other)
 
 
 class FlextLdapUri(FlextValueObject):
@@ -490,6 +536,65 @@ class FlextLdapConnectionInfo(FlextValueObject):
         return f"{self.server_uri} ({auth_status}, {security})"
 
 
+class FlextLdapExtendedEntry(FlextValueObject):
+    """Extended LDAP entry with utility methods (consolidated from models.py)."""
+
+    dn: str = Field(..., description="Distinguished Name")
+    attributes: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="LDAP attributes",
+    )
+
+    def get_attribute(self, name: str) -> list[str] | None:
+        """Get LDAP attribute values by name."""
+        return self.attributes.get(name)
+
+    def has_attribute(self, name: str) -> bool:
+        """Check if LDAP entry has a specific attribute."""
+        return name in self.attributes
+
+    def get_single_attribute(self, name: str) -> str | None:
+        """Get single value from an LDAP attribute."""
+        values = self.get_attribute(name)
+        return values[0] if values else None
+
+    def get_cn(self) -> str | None:
+        """Get the common name (cn) attribute."""
+        return self.get_single_attribute("cn")
+
+    def get_uid(self) -> str | None:
+        """Get the user identifier (uid) attribute."""
+        return self.get_single_attribute("uid")
+
+    def get_mail(self) -> str | None:
+        """Get the email (mail) attribute."""
+        return self.get_single_attribute("mail")
+
+    def is_person(self) -> bool:
+        """Check if this LDAP entry represents a person."""
+        object_classes = self.get_attribute("objectClass")
+        return bool(
+            object_classes and "person" in [oc.lower() for oc in object_classes],
+        )
+
+    def is_group(self) -> bool:
+        """Check if this LDAP entry represents a group."""
+        object_classes = self.get_attribute("objectClass")
+        return bool(
+            object_classes
+            and any(
+                oc.lower() in {"group", "groupofnames", "groupofuniquenames"}
+                for oc in object_classes
+            ),
+        )
+
+    def validate_domain_rules(self) -> None:
+        """Validate domain rules for LDAP extended entry."""
+        if not self.dn:
+            msg = "LDAP entry must have a distinguished name"
+            raise ValueError(msg)
+
+
 class FlextLdapCreateUserRequest(FlextValueObject):
     """Value object for creating LDAP users with validation."""
 
@@ -543,4 +648,8 @@ LDAPUri = FlextLdapUri
 LDAPObjectClass = FlextLdapObjectClass
 LDAPAttributes = FlextLdapAttributesValue
 LDAPConnectionInfo = FlextLdapConnectionInfo
-# FlextLdapCreateUserRequest exported above
+# Consolidated from models.py
+ExtendedLDAPEntry = FlextLdapExtendedEntry
+LDAPEntry = FlextLdapExtendedEntry  # Default entry type
+# Enhanced filter with builder methods from models.py
+FlextLdapFilter = FlextLdapFilterValue  # Use our comprehensive filter implementation

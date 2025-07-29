@@ -49,7 +49,7 @@ class TestLDAPService:
 
         # Create user (should work in memory mode)
         result = await ldap_service.create_user(request)
-        assert result.success
+        assert result.is_success
         user = result.data
         assert user is not None
         assert user.uid == "testuser"
@@ -57,7 +57,7 @@ class TestLDAPService:
 
         # Find user by UID
         find_result = await ldap_service.find_user_by_uid("testuser")
-        assert find_result.success
+        assert find_result.is_success
         found_user = find_result.data
         assert found_user is not None
         assert found_user.uid == "testuser"
@@ -67,16 +67,16 @@ class TestLDAPService:
             user.id,
             {"title": "Senior Developer"},
         )
-        if not update_result.success:
+        if not update_result.is_success:
             pass
-        assert update_result.success
+        assert update_result.is_success
         updated_user = update_result.data
         assert updated_user is not None
         assert updated_user.title == "Senior Developer"
 
         # List users
         list_result = await ldap_service.list_users()
-        assert list_result.success
+        assert list_result.is_success
         users = list_result.data
         assert users is not None
         assert len(users) == 1
@@ -84,17 +84,17 @@ class TestLDAPService:
 
         # Lock user
         lock_result = await ldap_service.lock_user(user.id)
-        if not lock_result.success:
+        if not lock_result.is_success:
             pass
-        assert lock_result.success
+        assert lock_result.is_success
 
         # Unlock user
         unlock_result = await ldap_service.unlock_user(user.id)
-        assert unlock_result.success
+        assert unlock_result.is_success
 
         # Delete user
         delete_result = await ldap_service.delete_user(user.id)
-        assert delete_result.success
+        assert delete_result.is_success
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -106,14 +106,14 @@ class TestLDAPService:
             cn="developers",
             ou="groups",
         )
-        assert result.success
+        assert result.is_success
         group = result.data
         assert group is not None
         assert group.cn == "developers"
 
         # Find group by DN
         find_result = await ldap_service.find_group_by_dn(group.dn)
-        assert find_result.success
+        assert find_result.is_success
         found_group = find_result.data
         assert found_group is not None
         assert found_group.cn == "developers"
@@ -121,21 +121,21 @@ class TestLDAPService:
         # Add member to group
         member_dn = "cn=testuser,ou=people,dc=example,dc=com"
         add_result = await ldap_service.add_user_to_group(group.id, member_dn)
-        assert add_result.success
+        assert add_result.is_success
         found_add_group = add_result.data
         assert found_add_group is not None
         assert member_dn in found_add_group.members
 
         # Remove member from group
         remove_result = await ldap_service.remove_user_from_group(group.id, member_dn)
-        assert remove_result.success
+        assert remove_result.is_success
         found_remove_group = remove_result.data
         assert found_remove_group is not None
         assert member_dn not in found_remove_group.members
 
         # List groups
         list_result = await ldap_service.list_groups()
-        assert list_result.success
+        assert list_result.is_success
         groups = list_result.data
         assert groups is not None
         assert len(groups) == 1
@@ -143,7 +143,7 @@ class TestLDAPService:
 
         # Delete group
         delete_result = await ldap_service.delete_group(group.id)
-        assert delete_result.success
+        assert delete_result.is_success
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -154,12 +154,12 @@ class TestLDAPService:
 
         # Get active connection (should be None)
         result = await ldap_service.get_active_connection()
-        assert result.success
+        assert result.is_success
         assert result.data is None
 
         # List connections
         list_result = await ldap_service.list_connections()
-        assert list_result.success
+        assert list_result.is_success
         assert list_result.data is not None
         assert len(list_result.data) == 0
 
@@ -175,14 +175,14 @@ class TestLDAPService:
         """Test error handling in service operations."""
         # Try to find non-existent user
         result = await ldap_service.find_user_by_uid("nonexistent")
-        assert result.success
+        assert result.is_success
         assert result.data is None
 
         # Try to find non-existent group
         group_result = await ldap_service.find_group_by_dn(
             "cn=nonexistent,dc=example,dc=com",
         )
-        assert group_result.success
+        assert group_result.is_success
         assert group_result.data is None
 
         # Try to disconnect without connection
@@ -233,7 +233,7 @@ class TestLDAPService:
         )
 
         result = await ldap_service.create_user(request)
-        assert result.success
+        assert result.is_success
         user = result.data
 
         assert user is not None

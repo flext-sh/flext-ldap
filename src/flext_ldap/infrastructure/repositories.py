@@ -23,7 +23,9 @@ if TYPE_CHECKING:
 
     from flext_ldap.domain.entities import FlextLdapConnection, FlextLdapUser
     from flext_ldap.domain.value_objects import FlextLdapDistinguishedName
-    from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
+    from flext_ldap.infrastructure.ldap_simple_client import (
+        FlextLdapSimpleClient as FlextLdapInfrastructureClient,
+    )
 
 
 class FlextLdapConnectionRepositoryImpl(FlextLdapConnectionRepository):

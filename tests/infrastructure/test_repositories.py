@@ -72,7 +72,7 @@ class TestFlextLdapConnectionRepositoryImpl:
         """Test saving connection successfully."""
         result = await connection_repo.save(sample_connection)
 
-        assert result.success
+        assert result.is_success
         assert result.data == sample_connection
         assert sample_connection.id in connection_repo._connections
         assert connection_repo._connections[sample_connection.id] == sample_connection
@@ -103,7 +103,7 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         result = await connection_repo.find_by_id(UUID(sample_connection.id))
 
-        assert result.success
+        assert result.is_success
         assert result.data == sample_connection
 
     @pytest.mark.asyncio
@@ -114,7 +114,7 @@ class TestFlextLdapConnectionRepositoryImpl:
         """Test finding connection by ID when it doesn't exist."""
         result = await connection_repo.find_by_id(uuid4())
 
-        assert result.success
+        assert result.is_success
         assert result.data is None
 
     @pytest.mark.asyncio
@@ -138,7 +138,7 @@ class TestFlextLdapConnectionRepositoryImpl:
         """Test finding all connections when repository is empty."""
         result = await connection_repo.find_all()
 
-        assert result.success
+        assert result.is_success
         assert result.data == []
 
     @pytest.mark.asyncio
@@ -153,7 +153,7 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         result = await connection_repo.find_all()
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert len(result.data) == 1
         assert result.data[0].id == sample_connection.id
@@ -184,7 +184,7 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         result = await connection_repo.delete(sample_connection)
 
-        assert result.success
+        assert result.is_success
         assert sample_connection.id not in connection_repo._connections
 
     @pytest.mark.asyncio
@@ -196,7 +196,7 @@ class TestFlextLdapConnectionRepositoryImpl:
         """Test deleting connection when it doesn't exist."""
         result = await connection_repo.delete(sample_connection)
 
-        assert result.success
+        assert result.is_success
         assert sample_connection.id not in connection_repo._connections
 
     # Note: Error path testing for delete would require complex mocking
@@ -220,7 +220,7 @@ class TestFlextLdapUserRepositoryImpl:
         """Test saving user successfully (foundation implementation)."""
         result = await user_repo.save(sample_user)
 
-        assert result.success
+        assert result.is_success
         assert result.data == sample_user
 
     @pytest.mark.asyncio
@@ -238,7 +238,7 @@ class TestFlextLdapUserRepositoryImpl:
 
         # This should still work since it's a foundation implementation
         result = await user_repo.save(bad_user)
-        assert result.success
+        assert result.is_success
 
     @pytest.mark.asyncio
     async def test_find_by_id_foundation(
@@ -250,7 +250,7 @@ class TestFlextLdapUserRepositoryImpl:
 
         result = await user_repo.find_by_id(user_id)
 
-        assert result.success
+        assert result.is_success
         assert result.data is None  # Foundation implementation returns None
 
     @pytest.mark.asyncio
@@ -263,7 +263,7 @@ class TestFlextLdapUserRepositoryImpl:
 
         result = await user_repo.find_by_dn(dn)
 
-        assert result.success
+        assert result.is_success
         assert result.data is None  # Foundation implementation returns None
 
     @pytest.mark.asyncio
@@ -274,7 +274,7 @@ class TestFlextLdapUserRepositoryImpl:
         """Test finding all users (foundation implementation)."""
         result = await user_repo.find_all()
 
-        assert result.success
+        assert result.is_success
         assert result.data == []  # Foundation implementation returns empty list
 
     @pytest.mark.asyncio
@@ -286,5 +286,5 @@ class TestFlextLdapUserRepositoryImpl:
         """Test deleting user (foundation implementation)."""
         result = await user_repo.delete(sample_user)
 
-        assert result.success
+        assert result.is_success
         assert result.data is True  # Foundation implementation returns True

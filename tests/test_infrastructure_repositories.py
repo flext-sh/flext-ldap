@@ -48,7 +48,7 @@ class TestFlextLdapConnectionRepositoryImpl:
         """Test successful connection save."""
         result = await repository.save(mock_connection)
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data == mock_connection
         assert repository._connections[mock_connection.id] == mock_connection
 
@@ -76,7 +76,7 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         result = await repository.find_by_id(UUID(mock_connection.id))
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data == mock_connection
 
     async def test_find_by_id_not_found(
@@ -86,7 +86,7 @@ class TestFlextLdapConnectionRepositoryImpl:
         """Test find by ID when not found."""
         result = await repository.find_by_id(uuid4())
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data is None
 
     async def test_find_by_id_exception(
@@ -111,7 +111,7 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         result = await repository.find_all()
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data is not None
         assert len(result.data) == 1
         assert result.data[0] == mock_connection
@@ -123,7 +123,7 @@ class TestFlextLdapConnectionRepositoryImpl:
         """Test find all with no connections."""
         result = await repository.find_all()
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data == []
 
     async def test_find_all_exception(
@@ -148,7 +148,7 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         result = await repository.delete(mock_connection)
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data is True
         assert mock_connection.id not in repository._connections
 
@@ -160,7 +160,7 @@ class TestFlextLdapConnectionRepositoryImpl:
         """Test delete when connection not found."""
         result = await repository.delete(mock_connection)
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data is False
 
     async def test_delete_exception(
@@ -311,7 +311,7 @@ class TestFlextLdapUserRepositoryImpl:
         """Test successful user save."""
         result = await repository.save(mock_user)
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data == mock_user
 
     async def test_save_exception(
@@ -338,7 +338,7 @@ class TestFlextLdapUserRepositoryImpl:
         """Test successful find by ID."""
         result = await repository.find_by_id(uuid4())
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data is None
 
     async def test_find_by_id_exception(
@@ -361,7 +361,7 @@ class TestFlextLdapUserRepositoryImpl:
         """Test successful find by DN."""
         result = await repository.find_by_dn("uid=test,ou=users,dc=example,dc=org")
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data is None
 
     async def test_find_by_dn_exception(
@@ -386,7 +386,7 @@ class TestFlextLdapUserRepositoryImpl:
         """Test successful find all users."""
         result = await repository.find_all()
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data == []
 
     async def test_find_all_exception(
@@ -413,7 +413,7 @@ class TestFlextLdapUserRepositoryImpl:
         """Test successful user deletion."""
         result = await repository.delete(mock_user)
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data is True
 
     async def test_delete_exception(

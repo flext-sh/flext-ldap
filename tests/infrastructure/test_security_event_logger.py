@@ -111,7 +111,7 @@ class TestSecurityEventLogger:
         assert event.event_type is not None
         result = await event_logger.log_event(event.event_type)
 
-        assert result.success
+        assert result.is_success
         assert len(event_logger._event_history) == 1
         logged_event = event_logger._event_history[0]
         assert logged_event.event_type == event.event_type
@@ -137,7 +137,7 @@ class TestSecurityEventLogger:
             connection=mock_connection,
         )
 
-        assert result.success
+        assert result.is_success
         assert len(event_logger._event_history) == 1
 
     @pytest.mark.asyncio
@@ -158,7 +158,7 @@ class TestSecurityEventLogger:
             session_id="session123",
         )
 
-        assert result.success
+        assert result.is_success
         assert len(event_logger._event_history) == 1
         event = event_logger._event_history[0]
         assert event.event_type == SecurityEventType.AUTHENTICATION_SUCCESS
@@ -183,7 +183,7 @@ class TestSecurityEventLogger:
             session_id="session123",
         )
 
-        assert result.success
+        assert result.is_success
         assert len(event_logger._event_history) == 1
         event = event_logger._event_history[0]
         assert event.event_type == SecurityEventType.AUTHENTICATION_FAILURE
@@ -325,7 +325,7 @@ class TestSecurityEventLogger:
 
         result = await event_logger.get_security_metrics(time_window_hours=24)
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         metrics = result.data
 
@@ -357,7 +357,7 @@ class TestSecurityEventLogger:
 
         result = await event_logger.get_security_metrics(time_window_hours=24)
 
-        assert result.success
+        assert result.is_success
         metrics = result.data
 
         # Should only count recent event
