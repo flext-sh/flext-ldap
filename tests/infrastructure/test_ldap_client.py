@@ -35,7 +35,7 @@ class TestFlextLdapInfrastructureClient:
         ):
             result = await adapter.connect("ldap://test.com", "cn=REDACTED_LDAP_BIND_PASSWORD", "password")
 
-            assert result.success
+            assert result.is_success
             assert result.data == "ldap://test.com:cn=REDACTED_LDAP_BIND_PASSWORD"
             assert "ldap://test.com:cn=REDACTED_LDAP_BIND_PASSWORD" in adapter._connections
 
@@ -52,7 +52,7 @@ class TestFlextLdapInfrastructureClient:
         ):
             result = await adapter.connect("ldap://test.com")
 
-            assert result.success
+            assert result.is_success
             assert result.data == "ldap://test.com:anonymous"
 
     @pytest.mark.asyncio
@@ -73,7 +73,7 @@ class TestFlextLdapInfrastructureClient:
                 use_ssl=True,
             )
 
-            assert result.success
+            assert result.is_success
             assert result.data == "ldaps://test.com:cn=REDACTED_LDAP_BIND_PASSWORD"
 
             # Verify SSL was enabled on server
@@ -95,7 +95,7 @@ class TestFlextLdapInfrastructureClient:
         ):
             result = await adapter.connect("ldap://test.com", "cn=REDACTED_LDAP_BIND_PASSWORD", "password")
 
-            assert not result.success
+            assert not result.is_success
             assert "LDAP connection failed" in (result.error or "")
 
     @pytest.mark.asyncio
@@ -109,7 +109,7 @@ class TestFlextLdapInfrastructureClient:
         ):
             result = await adapter.connect("ldap://test.com", "cn=REDACTED_LDAP_BIND_PASSWORD", "password")
 
-            assert not result.success
+            assert not result.is_success
             assert result.error is not None
             assert "Unexpected connection error" in result.error
 
@@ -124,7 +124,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.disconnect("test_conn")
 
-        assert result.success
+        assert result.is_success
         assert result.data is True
         assert "test_conn" not in adapter._connections
         mock_connection.unbind.assert_called_once()
@@ -136,7 +136,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.disconnect("nonexistent")
 
-        assert not result.success
+        assert not result.is_success
         assert "Connection not found" in (result.error or "")
 
     @pytest.mark.asyncio
@@ -153,7 +153,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.disconnect("test_conn")
 
-        assert not result.success
+        assert not result.is_success
         assert "LDAP disconnect failed" in (result.error or "")
 
     @pytest.mark.asyncio
@@ -167,7 +167,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.disconnect("test_conn")
 
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
         assert "Unexpected disconnect error" in result.error
 
@@ -201,7 +201,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.search("test_conn", "dc=test", "(objectClass=person)")
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert len(result.data) == 2
         assert result.data[0]["dn"] == "cn=user1,dc=test"
@@ -228,7 +228,7 @@ class TestFlextLdapInfrastructureClient:
             scope="onelevel",
         )
 
-        assert result.success
+        assert result.is_success
         mock_connection.search.assert_called_once()
         call_args = mock_connection.search.call_args
         assert call_args[1]["attributes"] == ["cn", "mail"]
@@ -251,7 +251,7 @@ class TestFlextLdapInfrastructureClient:
             scope="base",
         )
 
-        assert result.success
+        assert result.is_success
         mock_connection.search.assert_called_once()
 
     @pytest.mark.asyncio
@@ -261,7 +261,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.search("nonexistent", "dc=test", "(objectClass=person)")
 
-        assert not result.success
+        assert not result.is_success
         assert "Connection not found" in (result.error or "")
 
     @pytest.mark.asyncio
@@ -277,7 +277,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.search("test_conn", "dc=test", "(objectClass=person)")
 
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
         assert "Search failed" in result.error
 
@@ -296,7 +296,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.search("test_conn", "dc=test", "(objectClass=person)")
 
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
         assert "LDAP search failed" in result.error
 
@@ -312,7 +312,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.search("test_conn", "dc=test", "(objectClass=person)")
 
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
         assert "Unexpected search error" in result.error
 
@@ -333,7 +333,7 @@ class TestFlextLdapInfrastructureClient:
         }
         result = await adapter.add_entry("test_conn", "cn=testuser,dc=test", attributes)
 
-        assert result.success
+        assert result.is_success
         assert result.data is True
 
         mock_connection.add.assert_called_once_with(
@@ -348,7 +348,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.add_entry("nonexistent", "cn=test,dc=test", {})
 
-        assert not result.success
+        assert not result.is_success
         assert "Connection not found" in (result.error or "")
 
     @pytest.mark.asyncio
@@ -364,7 +364,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.add_entry("test_conn", "cn=test,dc=test", {})
 
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
         assert "Add failed" in result.error
 
@@ -383,7 +383,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.add_entry("test_conn", "cn=test,dc=test", {})
 
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
         assert "LDAP add failed" in result.error
 
@@ -399,7 +399,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.add_entry("test_conn", "cn=test,dc=test", {})
 
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
         assert "Unexpected add error" in result.error
 
@@ -416,7 +416,7 @@ class TestFlextLdapInfrastructureClient:
         changes = {"mail": [("MODIFY_REPLACE", ["new@example.com"])]}
         result = await adapter.modify_entry("test_conn", "cn=test,dc=test", changes)
 
-        assert result.success
+        assert result.is_success
         assert result.data is True
 
         mock_connection.modify.assert_called_once_with("cn=test,dc=test", changes)
@@ -428,7 +428,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.modify_entry("nonexistent", "cn=test,dc=test", {})
 
-        assert not result.success
+        assert not result.is_success
         assert "Connection not found" in (result.error or "")
 
     @pytest.mark.asyncio
@@ -444,7 +444,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.modify_entry("test_conn", "cn=test,dc=test", {})
 
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
         assert "Modify failed" in result.error
 
@@ -463,7 +463,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.modify_entry("test_conn", "cn=test,dc=test", {})
 
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
         assert "LDAP modify failed" in result.error
 
@@ -479,7 +479,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.modify_entry("test_conn", "cn=test,dc=test", {})
 
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
         assert "Unexpected modify error" in result.error
 
@@ -495,7 +495,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.delete_entry("test_conn", "cn=test,dc=test")
 
-        assert result.success
+        assert result.is_success
         assert result.data is True
 
         mock_connection.delete.assert_called_once_with("cn=test,dc=test")
@@ -507,7 +507,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.delete_entry("nonexistent", "cn=test,dc=test")
 
-        assert not result.success
+        assert not result.is_success
         assert "Connection not found" in (result.error or "")
 
     @pytest.mark.asyncio
@@ -523,7 +523,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.delete_entry("test_conn", "cn=test,dc=test")
 
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
         assert "Delete failed" in result.error
 
@@ -542,7 +542,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.delete_entry("test_conn", "cn=test,dc=test")
 
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
         assert "LDAP delete failed" in result.error
 
@@ -558,7 +558,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.delete_entry("test_conn", "cn=test,dc=test")
 
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
         assert "Unexpected delete error" in result.error
 
@@ -584,7 +584,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = adapter.get_connection_info("test_conn")
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         info = result.data
         assert info["server"] == "ldap://test.com:389"
@@ -599,7 +599,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = adapter.get_connection_info("nonexistent")
 
-        assert not result.success
+        assert not result.is_success
         assert "Connection not found" in (result.error or "")
 
     def test_get_connection_info_no_server_info(self) -> None:
@@ -620,7 +620,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = adapter.get_connection_info("test_conn")
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         info = result.data
         assert info["server_info"] is None
@@ -640,7 +640,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = adapter.get_connection_info("test_conn")
 
-        assert not result.success
+        assert not result.is_success
         assert result.error is not None
         assert "Unexpected error getting connection info" in result.error
 
@@ -690,7 +690,7 @@ class TestFlextLdapInfrastructureClient:
 
         result = await adapter.search("test_conn", "dc=test", "(objectClass=person)")
 
-        assert result.success
+        assert result.is_success
         # Verify default attributes are used
         call_args = mock_connection.search.call_args
         assert call_args[1]["attributes"] == ["*"]
@@ -721,7 +721,7 @@ class TestFlextLdapInfrastructureClient:
             attributes,
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is True
 
         mock_connection.add.assert_called_once_with(
@@ -753,7 +753,7 @@ class TestFlextLdapInfrastructureClient:
             changes,
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is True
 
         mock_connection.modify.assert_called_once_with(

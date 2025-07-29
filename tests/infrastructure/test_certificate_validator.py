@@ -55,7 +55,7 @@ class TestCertificateValidationService:
         """Test validation with empty certificate chain."""
         result = await cert_validator.validate_certificate_chain([], validation_context)
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert result.data.result_type == CertificateValidationResult.MALFORMED
         assert "Empty certificate chain" in result.data.message
@@ -72,7 +72,7 @@ class TestCertificateValidationService:
             validation_context,
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert result.data.result_type == CertificateValidationResult.MALFORMED
         assert "Failed to parse certificate" in result.data.message
@@ -97,7 +97,7 @@ class TestCertificateValidationService:
             validation_context,
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert result.data.result_type == CertificateValidationResult.EXPIRED
         assert "Certificate expired" in result.data.message
@@ -138,7 +138,7 @@ class TestCertificateValidationService:
                 validation_context,
             )
 
-            assert result.success
+            assert result.is_success
             assert result.data is not None
             assert result.data.result_type == CertificateValidationResult.VALID
             assert "Certificate validation successful" in result.data.message
@@ -153,7 +153,7 @@ class TestCertificateValidationService:
 
         result = await cert_validator.create_ssl_context(config)
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert isinstance(result.data, ssl.SSLContext)
         assert result.data.verify_mode == ssl.CERT_REQUIRED
@@ -172,7 +172,7 @@ class TestCertificateValidationService:
 
         result = await cert_validator.create_ssl_context(config)
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert isinstance(result.data, ssl.SSLContext)
         assert result.data.verify_mode == ssl.CERT_NONE

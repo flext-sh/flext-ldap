@@ -29,7 +29,7 @@ async def main() -> None:
     )
 
     result = await client.connect(single_config)
-    if result.success:
+    if result.is_success:
         connection_id = result.data
 
         # Example search
@@ -40,7 +40,7 @@ async def main() -> None:
             attributes=["cn", "mail"],
         )
 
-        if search_result.success:
+        if search_result.is_success:
             for _entry in search_result.data[:3]:  # Show first 3
                 pass
         else:
@@ -61,7 +61,7 @@ async def main() -> None:
     )
 
     pool_result = await client.connect_with_pool(pool_config)
-    if pool_result.success:
+    if pool_result.is_success:
         pool_id = pool_result.data
 
         # Check connection status
@@ -81,7 +81,7 @@ async def main() -> None:
     )
 
     op_result = await client.connect(test_config)
-    if op_result.success:
+    if op_result.is_success:
         connection_id = op_result.data
 
         # Add entry
@@ -96,7 +96,7 @@ async def main() -> None:
             },
         )
 
-        if add_result.success:
+        if add_result.is_success:
             # Modify entry
             modify_result = await client.modify(
                 connection_id=connection_id,
@@ -104,14 +104,14 @@ async def main() -> None:
                 changes={"mail": "updated@example.com"},
             )
 
-            if modify_result.success:
+            if modify_result.is_success:
                 # Delete entry
                 delete_result = await client.delete(
                     connection_id=connection_id,
                     dn="cn=testuser,dc=example,dc=com",
                 )
 
-                if delete_result.success:
+                if delete_result.is_success:
                     pass
                 else:
                     pass

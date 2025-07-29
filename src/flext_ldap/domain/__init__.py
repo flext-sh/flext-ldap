@@ -19,7 +19,7 @@ from flext_ldap.domain.aggregates import (
     FlextLdapDirectory,
     FlextLdapDirectoryAggregate,
 )
-from flext_ldap.domain.entities import (
+from flext_ldap.entities import (
     FlextLdapEntry,
     FlextLdapGroup,
     FlextLdapUser,
@@ -49,13 +49,13 @@ from flext_ldap.domain.specifications import (
     FlextLdapEntrySpecification,
     FlextLdapUserSpecification,
 )
-from flext_ldap.domain.values import (
-    DistinguishedName,
-    LDAPAttributes,
-    LDAPFilter,
-    LDAPObjectClass,
-    LDAPScope,
-    LDAPUri,
+from flext_ldap.values import (
+    FlextLdapDistinguishedName as DistinguishedName,
+    FlextLdapAttributesValue as LDAPAttributes,
+    FlextLdapFilterValue as LDAPFilter, 
+    FlextLdapObjectClass as LDAPObjectClass,
+    FlextLdapScopeEnum as LDAPScope,
+    FlextLdapUri as LDAPUri,
 )
 
 

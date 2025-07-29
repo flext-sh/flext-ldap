@@ -175,7 +175,7 @@ class TestErrorCorrelationService:
             category=ErrorCategory.TIMEOUT,
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert result.data.error_message == "Connection timeout"
         assert result.data.error_code == "TIMEOUT"
@@ -237,7 +237,7 @@ class TestErrorCorrelationService:
         result = await correlation_service.get_error_patterns(
             category=ErrorCategory.AUTHENTICATION,
         )
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         auth_patterns = result.data
         assert len(auth_patterns) == 1
@@ -247,7 +247,7 @@ class TestErrorCorrelationService:
         result = await correlation_service.get_error_patterns(
             severity=ErrorSeverity.HIGH,
         )
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         high_patterns = result.data
         assert len(high_patterns) == 1
@@ -293,7 +293,7 @@ class TestErrorCorrelationService:
             time_window_minutes=60,
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         correlated = result.data
 
@@ -329,7 +329,7 @@ class TestErrorCorrelationService:
 
         result = await correlation_service.get_error_statistics(time_window_hours=24)
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         stats = result.data
 
@@ -474,7 +474,7 @@ class TestErrorCorrelationService:
             category=ErrorCategory.SEARCH,
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         event = result.data
 
@@ -512,7 +512,7 @@ class TestErrorCorrelationService:
 
         # Test filtering by minimum frequency
         result = await correlation_service.get_error_patterns(min_frequency=3)
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         filtered_patterns = result.data
         # Should not include patterns with frequency < 3
@@ -538,7 +538,7 @@ class TestErrorCorrelationService:
                 operation_type="bind",
             )
 
-            assert not result.success
+            assert not result.is_success
             assert result.error is not None
             assert "Failed to record error event" in result.error
             assert "UUID generation failed" in result.error
@@ -560,7 +560,7 @@ class TestErrorCorrelationService:
 
             result = await correlation_service.get_error_patterns()
 
-            assert not result.success
+            assert not result.is_success
             assert result.error is not None
             assert "Failed to get error patterns" in result.error
             assert "List conversion failed" in result.error
@@ -588,7 +588,7 @@ class TestErrorCorrelationService:
 
             result = await correlation_service.get_correlated_errors(base_event)
 
-            assert not result.success
+            assert not result.is_success
             assert result.error is not None
             assert "Failed to get correlated errors" in result.error
             assert "Timedelta calculation failed" in result.error
@@ -609,7 +609,7 @@ class TestErrorCorrelationService:
 
             result = await correlation_service.get_error_statistics()
 
-            assert not result.success
+            assert not result.is_success
             assert result.error is not None
             assert "Failed to get error statistics" in result.error
             assert "DateTime access failed" in result.error
@@ -666,7 +666,7 @@ class TestErrorCorrelationService:
             time_window_minutes=60,
         )
 
-        assert result.success
+        assert result.is_success
         correlated = result.data
         assert isinstance(correlated, list)
         # The specific correlation results depend on exact threshold calculations
@@ -738,7 +738,7 @@ class TestErrorCorrelationService:
             category=ErrorCategory.AUTHENTICATION,
         )
 
-        assert result1.success
+        assert result1.is_success
         assert result1.data is not None
         signature = result1.data.get_signature()
 
@@ -754,7 +754,7 @@ class TestErrorCorrelationService:
             category=ErrorCategory.AUTHENTICATION,
         )
 
-        assert result2.success
+        assert result2.is_success
         # Should be same signature
         assert result2.data is not None
         assert result2.data.get_signature() == signature
@@ -804,7 +804,7 @@ class TestErrorCorrelationService:
             category=ErrorCategory.UNKNOWN,
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         signature = result.data.get_signature()
 
@@ -820,7 +820,7 @@ class TestErrorCorrelationService:
             category=ErrorCategory.UNKNOWN,
         )
 
-        assert result2.success
+        assert result2.is_success
         # Same signature since both have operation_type=None
         assert result2.data is not None
         assert result2.data.get_signature() == signature
@@ -916,7 +916,7 @@ class TestErrorCorrelationService:
             server_host="isolated.example.com",
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         signature = result.data.get_signature()
 
@@ -961,7 +961,7 @@ class TestErrorCorrelationService:
             user_dn="cn=user1,dc=example,dc=com",
         )
 
-        assert result.success
+        assert result.is_success
 
         # Check that pattern was created and correlation score calculated
         assert result.data is not None

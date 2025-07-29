@@ -3,13 +3,11 @@
 These tests verify that LDAP operations work with a real LDAP server.
 Run with: pytest tests/integration/test_real_ldap_operations.py -m integration
 
-Requires:
-- A running LDAP server (e.g., Docker: docker run -p 389:389 osixia/openldap)
-- Environment variables set for connection
+The tests automatically start an OpenLDAP Docker container using fixtures from conftest.py.
+No manual setup required - just run pytest with the integration marker.
 """
 
 import contextlib
-import os
 import uuid
 from typing import Any
 
@@ -21,22 +19,8 @@ from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(
-    os.getenv("LDAP_TEST_SERVER") is None,
-    reason="LDAP_TEST_SERVER environment variable not set",
-)
 class TestRealLdapOperations:
     """Test real LDAP operations against a live server."""
-
-    @pytest.fixture
-    def ldap_config(self) -> dict[str, Any]:
-        """LDAP server configuration for testing."""
-        return {
-            "server_url": os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389"),
-            "bind_dn": os.getenv("LDAP_TEST_BIND_DN", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=org"),
-            "password": os.getenv("LDAP_TEST_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD"),
-            "base_dn": os.getenv("LDAP_TEST_BASE_DN", "dc=example,dc=org"),
-        }
 
     @pytest.fixture
     async def ldap_client(self) -> FlextLdapInfrastructureClient:
@@ -46,37 +30,37 @@ class TestRealLdapOperations:
     async def test_real_ldap_connection(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        ldap_config: dict[str, Any],
+        ldap_test_config: dict[str, Any],
     ) -> None:
         """Test real LDAP connection establishment."""
         # Test connection
         connect_result = await ldap_client.connect(
-            ldap_config["server_url"],
-            ldap_config["bind_dn"],
-            ldap_config["password"],
+            ldap_test_config["server_url"],
+            ldap_test_config["bind_dn"],
+            ldap_test_config["password"],
         )
 
-        assert connect_result.success, f"Connection failed: {connect_result.error}"
+        assert connect_result.is_success, f"Connection failed: {connect_result.error}"
         connection_id = connect_result.data
         assert connection_id is not None
 
         # Test disconnect
         disconnect_result = await ldap_client.disconnect(connection_id)
-        assert disconnect_result.success
+        assert disconnect_result.is_success
 
     async def test_real_ldap_search(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        ldap_config: dict[str, Any],
+        ldap_test_config: dict[str, Any],
     ) -> None:
         """Test real LDAP search operations."""
         # Connect first
         connect_result = await ldap_client.connect(
-            ldap_config["server_url"],
-            ldap_config["bind_dn"],
-            ldap_config["password"],
+            ldap_test_config["server_url"],
+            ldap_test_config["bind_dn"],
+            ldap_test_config["password"],
         )
-        assert connect_result.success
+        assert connect_result.is_success
         connection_id = connect_result.data
         assert connection_id is not None
 
@@ -84,14 +68,14 @@ class TestRealLdapOperations:
             # Search for base DN entry
             search_result = await ldap_client.search(
                 connection_id,
-                ldap_config["base_dn"],
+                ldap_test_config["base_dn"],
                 "(objectClass=*)",
                 attributes=["objectClass"],
                 scope="base",
             )
 
             # Should find at least the base entry
-            assert search_result.success, f"Search failed: {search_result.error}"
+            assert search_result.is_success, f"Search failed: {search_result.error}"
             assert isinstance(search_result.data, list)
 
         finally:
@@ -100,26 +84,26 @@ class TestRealLdapOperations:
     async def test_real_user_operations(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        ldap_config: dict[str, Any],
+        ldap_test_config: dict[str, Any],
     ) -> None:
         """Test real user create/modify/delete operations."""
         # Connect first
         connect_result = await ldap_client.connect(
-            ldap_config["server_url"],
-            ldap_config["bind_dn"],
-            ldap_config["password"],
+            ldap_test_config["server_url"],
+            ldap_test_config["bind_dn"],
+            ldap_test_config["password"],
         )
-        assert connect_result.success
+        assert connect_result.is_success
         connection_id = connect_result.data
         assert connection_id is not None
 
         # Generate unique test user
         test_uid = f"testuser_{uuid.uuid4().hex[:8]}"
-        test_dn = f"uid={test_uid},ou=users,{ldap_config['base_dn']}"
+        test_dn = f"uid={test_uid},ou=users,{ldap_test_config['base_dn']}"
 
         try:
             # First, create the OU if it doesn't exist
-            ou_dn = f"ou=users,{ldap_config['base_dn']}"
+            ou_dn = f"ou=users,{ldap_test_config['base_dn']}"
             ou_attributes = {
                 "objectClass": ["organizationalUnit"],
                 "ou": ["users"],
@@ -142,7 +126,7 @@ class TestRealLdapOperations:
                 user_attributes,
             )
 
-            if create_result.success:
+            if create_result.is_success:
                 # Test modify user
                 modifications = {
                     "description": [
@@ -155,11 +139,11 @@ class TestRealLdapOperations:
                     test_dn,
                     modifications,
                 )
-                assert modify_result.success, f"Modify failed: {modify_result.error}"
+                assert modify_result.is_success, f"Modify failed: {modify_result.error}"
 
                 # Test delete user
                 delete_result = await ldap_client.delete_entry(connection_id, test_dn)
-                assert delete_result.success, f"Delete failed: {delete_result.error}"
+                assert delete_result.is_success, f"Delete failed: {delete_result.error}"
             else:
                 # If create failed, it might be due to missing OU structure
                 # This is expected in minimal test setups
@@ -178,23 +162,23 @@ class TestRealLdapOperations:
     async def test_uuid_dn_mapping_with_real_ldap(
         self,
         ldap_client: FlextLdapInfrastructureClient,
-        ldap_config: dict[str, Any],
+        ldap_test_config: dict[str, Any],
     ) -> None:
         """Test UUID->DN mapping with real LDAP operations."""
         # Connect first
         connect_result = await ldap_client.connect(
-            ldap_config["server_url"],
-            ldap_config["bind_dn"],
-            ldap_config["password"],
+            ldap_test_config["server_url"],
+            ldap_test_config["bind_dn"],
+            ldap_test_config["password"],
         )
-        assert connect_result.success
+        assert connect_result.is_success
         connection_id = connect_result.data
         assert connection_id is not None
 
         try:
             # Test UUID->DN mapping registration
             test_uuid = str(uuid.uuid4())
-            test_dn = f"uid=test,{ldap_config['base_dn']}"
+            test_dn = f"uid=test,{ldap_test_config['base_dn']}"
 
             # Register mapping
             ldap_client._register_uuid_dn_mapping(test_uuid, test_dn)
@@ -205,7 +189,7 @@ class TestRealLdapOperations:
 
             # Test user identifier resolution
             resolve_result = ldap_client._resolve_user_identifier(test_uuid)
-            assert resolve_result.success
+            assert resolve_result.is_success
             assert resolve_result.data == test_dn
 
         finally:
@@ -214,33 +198,21 @@ class TestRealLdapOperations:
 
 # Additional test for connection pooling (if implemented)
 @pytest.mark.integration
-@pytest.mark.skipif(
-    os.getenv("LDAP_TEST_SERVER") is None,
-    reason="LDAP_TEST_SERVER environment variable not set",
-)
-async def test_ldap_connection_pooling() -> None:
+async def test_ldap_connection_pooling(ldap_test_config: dict[str, Any]) -> None:
     """Test LDAP connection pooling functionality."""
     ldap_client = FlextLdapInfrastructureClient()
 
-    # Get config from environment
-    ldap_config = {
-        "server_url": os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389"),
-        "bind_dn": os.getenv("LDAP_TEST_BIND_DN", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"),
-        "password": os.getenv("LDAP_TEST_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD123"),
-        "base_dn": os.getenv("LDAP_TEST_BASE_DN", "dc=flext,dc=local"),
-    }
-
     # Test connection pool
     pool_result = await ldap_client.connect_with_pool(
-        [ldap_config["server_url"]],
-        ldap_config["bind_dn"],
-        ldap_config["password"],
+        [ldap_test_config["server_url"]],
+        ldap_test_config["bind_dn"],
+        ldap_test_config["password"],
         pool_size=2,
     )
 
     # Connection pooling might not be fully implemented yet
     # This test documents the expected functionality
-    if pool_result.success:
+    if pool_result.is_success:
         assert pool_result.data is not None
     else:
         pytest.skip(f"Connection pooling not fully implemented: {pool_result.error}")

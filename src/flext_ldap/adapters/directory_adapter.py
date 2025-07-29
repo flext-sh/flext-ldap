@@ -14,7 +14,7 @@ from typing import Any, Protocol, cast
 
 from flext_core import FlextResult
 
-from flext_ldap.infrastructure.ldap_simple_client import FlextLdapSimpleClient
+from flext_ldap.client import FlextLdapSimpleClient
 
 
 # 🚨 LOCAL PROTOCOLS - Clean Architecture compliance
@@ -152,7 +152,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 scope=scope,
             )
 
-            if result.success and result.data:
+            if result.is_success and result.data:
                 # Convert FLEXT LDAP entries to FlextLdapDirectoryEntryProtocol format
                 entries = []
                 for entry in result.data:
@@ -212,7 +212,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 attributes=attributes,
             )
 
-            if result.success:
+            if result.is_success:
                 return FlextResult.ok(True)
             return FlextResult.fail(f"Add entry failed: {result.error}")
 
@@ -243,7 +243,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 changes=changes,
             )
 
-            if result.success:
+            if result.is_success:
                 return FlextResult.ok(True)
             return FlextResult.fail(f"Modify entry failed: {result.error}")
 
@@ -271,7 +271,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 dn=dn,
             )
 
-            if result.success:
+            if result.is_success:
                 return FlextResult.ok(True)
             return FlextResult.fail(f"Delete entry failed: {result.error}")
 

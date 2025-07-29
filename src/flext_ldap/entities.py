@@ -482,7 +482,7 @@ class FlextLdapOperation(FlextEntity):
 
     def is_successful(self) -> bool:
         """Check if operation was successful."""
-        return self.success is True
+        return self.is_success is True
 
 
 # Backward compatibility aliases

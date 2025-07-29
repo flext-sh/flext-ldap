@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import Any, Literal
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
-from flext_core import FlextCoreSettings, FlextLogLevel, FlextValueObject
+from flext_core import FlextBaseSettings, FlextLogLevel, FlextValueObject
 from pydantic import Field, field_validator
 from pydantic_settings import SettingsConfigDict
 
 # Use FlextValueObject as base for all config types
-BaseConfig = FlextCoreSettings
-BaseSettings = FlextCoreSettings
+BaseConfig = FlextBaseSettings
+BaseSettings = FlextBaseSettings
 
 
 class FlextLdapConstants:

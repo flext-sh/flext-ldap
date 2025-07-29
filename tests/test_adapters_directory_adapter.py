@@ -94,7 +94,7 @@ class TestFlextLdapDirectoryService:
         """Test successful connection."""
         result = await directory_service.connect()
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data is True
 
     async def test_connect_exception(
@@ -108,7 +108,7 @@ class TestFlextLdapDirectoryService:
 
             result = await directory_service.connect()
 
-            assert result.success is False
+            assert result.is_success is False
             assert result.error is not None
             assert "Connection error" in result.error
 
@@ -121,7 +121,7 @@ class TestFlextLdapDirectoryService:
 
         result = await directory_service.search_users(filter_criteria)
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data is not None
         assert len(result.data) == 1
         assert result.data[0].dn == "cn=user,dc=example,dc=com"
@@ -138,7 +138,7 @@ class TestFlextLdapDirectoryService:
 
             result = await directory_service.search_users({"uid": "test"})
 
-            assert result.success is False
+            assert result.is_success is False
             assert result.error is not None
             assert "Search error" in result.error
 
@@ -156,7 +156,7 @@ class TestFlextLdapDirectoryService:
 
         result = await directory_service.disconnect(connection_id)
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data is True
         directory_service._ldap_client.disconnect.assert_called_once_with(connection_id)
 
@@ -174,7 +174,7 @@ class TestFlextLdapDirectoryService:
 
         result = await directory_service.disconnect(connection_id)
 
-        assert result.success is False
+        assert result.is_success is False
         assert result.error is not None
         assert "Disconnect error" in result.error
 
@@ -212,7 +212,7 @@ class TestFlextLdapDirectoryService:
             attributes=attributes,
         )
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data is not None
         assert len(result.data) == 1
         assert result.data[0].dn == "uid=user1,ou=users,dc=example,dc=org"
@@ -253,7 +253,7 @@ class TestFlextLdapDirectoryService:
             search_filter=search_filter,
         )
 
-        assert result.success is True
+        assert result.is_success is True
         directory_service._ldap_client.search.assert_called_once_with(
             connection_id=connection_id,
             base_dn=base_dn,
@@ -282,7 +282,7 @@ class TestFlextLdapDirectoryService:
             search_filter=search_filter,
         )
 
-        assert result.success is False
+        assert result.is_success is False
         assert result.error is not None
         assert "Search failed" in result.error
 
@@ -306,7 +306,7 @@ class TestFlextLdapDirectoryService:
             search_filter=search_filter,
         )
 
-        assert result.success is False
+        assert result.is_success is False
         assert result.error is not None
         assert "Search error" in result.error
 
@@ -335,7 +335,7 @@ class TestFlextLdapDirectoryService:
             attributes=attributes,
         )
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data is True
 
         directory_service._ldap_client.add_entry.assert_called_once_with(
@@ -364,7 +364,7 @@ class TestFlextLdapDirectoryService:
             attributes=attributes,
         )
 
-        assert result.success is False
+        assert result.is_success is False
         assert result.error is not None
         assert "Add entry failed" in result.error
 
@@ -388,7 +388,7 @@ class TestFlextLdapDirectoryService:
             attributes=attributes,
         )
 
-        assert result.success is False
+        assert result.is_success is False
         assert result.error is not None
         assert "Add entry error" in result.error
 
@@ -412,7 +412,7 @@ class TestFlextLdapDirectoryService:
             changes=changes,
         )
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data is True
 
         directory_service._ldap_client.modify_entry.assert_called_once_with(
@@ -441,7 +441,7 @@ class TestFlextLdapDirectoryService:
             changes=changes,
         )
 
-        assert result.success is False
+        assert result.is_success is False
         assert result.error is not None
         assert "Modify entry failed" in result.error
 
@@ -465,7 +465,7 @@ class TestFlextLdapDirectoryService:
             changes=changes,
         )
 
-        assert result.success is False
+        assert result.is_success is False
         assert result.error is not None
         assert "Modify entry error" in result.error
 
@@ -487,7 +487,7 @@ class TestFlextLdapDirectoryService:
             dn=dn,
         )
 
-        assert result.success is True
+        assert result.is_success is True
         assert result.data is True
 
         directory_service._ldap_client.delete_entry.assert_called_once_with(
@@ -513,7 +513,7 @@ class TestFlextLdapDirectoryService:
             dn=dn,
         )
 
-        assert result.success is False
+        assert result.is_success is False
         assert result.error is not None
         assert "Delete entry failed" in result.error
 
@@ -535,7 +535,7 @@ class TestFlextLdapDirectoryService:
             dn=dn,
         )
 
-        assert result.success is False
+        assert result.is_success is False
         assert result.error is not None
         assert "Delete entry error" in result.error
 

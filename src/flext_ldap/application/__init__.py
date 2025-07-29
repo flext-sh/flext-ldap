@@ -9,7 +9,6 @@ REFACTORED:
 
 from __future__ import annotations
 
-from flext_ldap.application.ldap_service import FlextLdapService
 from flext_ldap.domain.ports import (
     FlextLdapMigrationService,
     FlextLdapSchemaService,
@@ -17,15 +16,26 @@ from flext_ldap.domain.ports import (
     FlextLdapUserService,
 )
 
+# Import specialized services from root (services moved to root)
+from flext_ldap.services import (
+    FlextLdapConnectionApplicationService,
+    FlextLdapGroupService,
+    FlextLdapOperationService,
+    FlextLdapUserApplicationService,
+)
+
 __all__ = [
+    # Domain ports
     "FlextLdapMigrationService",
     "FlextLdapSchemaService",
     "FlextLdapSearchService",
-    "FlextLdapService",
     "FlextLdapUserService",
-    # Legacy aliases
-    "LDAPService",
+    # Application services (consolidated - no more wrapper service)
+    "FlextLdapConnectionApplicationService",
+    "FlextLdapGroupService",
+    "FlextLdapOperationService",
+    "FlextLdapUserApplicationService",
 ]
 
-# Backward compatibility
-LDAPService = FlextLdapService
+# Note: FlextLdapService wrapper eliminated per user requirements to reduce modules
+# Use specialized services directly or the unified FlextLdapApi from root

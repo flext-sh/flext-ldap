@@ -280,7 +280,7 @@ class TestSchemaDiscoveryService:
         """Test successful schema discovery."""
         result = await discovery_service.discover_schema(mock_connection)
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert result.data.is_successful is True
         assert result.data.total_elements > 0
@@ -322,7 +322,7 @@ class TestSchemaDiscoveryService:
             mock_connection,
             force_refresh=True,
         )
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert result.data.cache_hit is False
 
@@ -354,7 +354,7 @@ class TestSchemaDiscoveryService:
         """Test getting existing object class."""
         result = await discovery_service.get_object_class(mock_connection, "person")
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert result.data.has_name("person")
 
@@ -370,7 +370,7 @@ class TestSchemaDiscoveryService:
             "nonexistent",
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is None
 
     @pytest.mark.asyncio
@@ -382,7 +382,7 @@ class TestSchemaDiscoveryService:
         """Test getting existing attribute type."""
         result = await discovery_service.get_attribute_type(mock_connection, "cn")
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert result.data.has_name("cn")
 
@@ -398,7 +398,7 @@ class TestSchemaDiscoveryService:
             "nonexistent",
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is None
 
     @pytest.mark.asyncio
@@ -421,7 +421,7 @@ class TestSchemaDiscoveryService:
             attributes,
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert result.data["is_valid"] is True
         assert len(result.data["errors"]) == 0
@@ -446,7 +446,7 @@ class TestSchemaDiscoveryService:
             attributes,
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert result.data["is_valid"] is False
         assert "sn" in result.data["missing_required"]
@@ -471,7 +471,7 @@ class TestSchemaDiscoveryService:
             attributes,
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert "unknownAttr" in result.data["unknown_attributes"]
         assert len(result.data["warnings"]) > 0
@@ -492,7 +492,7 @@ class TestSchemaDiscoveryService:
             attributes,
         )
 
-        assert result.success
+        assert result.is_success
         assert result.data is not None
         assert result.data["is_valid"] is False
         assert len(result.data["errors"]) > 0

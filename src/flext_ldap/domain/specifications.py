@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, TypeVar
 T = TypeVar("T")
 
 if TYPE_CHECKING:
-    from flext_ldap.domain.entities import (
+    from flext_ldap.entities import (
         FlextLdapEntry,
         FlextLdapGroup,
         FlextLdapUser,

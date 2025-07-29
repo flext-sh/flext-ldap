@@ -330,7 +330,7 @@ class FlextLdapSchemaDiscoveryService:
         """Get specific object class schema."""
         try:
             schema_result = await self.discover_schema(connection)
-            if not schema_result.success:
+            if not schema_result.is_success:
                 return FlextResult.fail(
                     f"Failed to discover schema: {schema_result.error}",
                 )
@@ -358,7 +358,7 @@ class FlextLdapSchemaDiscoveryService:
         """Get specific attribute type schema."""
         try:
             schema_result = await self.discover_schema(connection)
-            if not schema_result.success:
+            if not schema_result.is_success:
                 return FlextResult.fail(
                     f"Failed to discover schema: {schema_result.error}",
                 )
@@ -387,7 +387,7 @@ class FlextLdapSchemaDiscoveryService:
         """Validate object structure against schema."""
         try:
             schema_result = await self.discover_schema(connection)
-            if not schema_result.success:
+            if not schema_result.is_success:
                 return FlextResult.fail(
                     f"Failed to discover schema: {schema_result.error}",
                 )

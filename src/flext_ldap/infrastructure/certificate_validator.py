@@ -103,7 +103,7 @@ class FlextLdapCertificateValidationService:
             if context.verify_hostname:
                 leaf_cert = certificates[0]  # First certificate is the leaf
                 cert_info_result = await self._extract_certificate_info(leaf_cert)
-                if not cert_info_result.success:
+                if not cert_info_result.is_success:
                     return FlextResult.ok(
                         ValidationResult(
                             result_type=CertificateValidationResult.MALFORMED,
@@ -167,7 +167,7 @@ class FlextLdapCertificateValidationService:
                     result_type=CertificateValidationResult.VALID,
                     message="Certificate validation successful",
                     certificate_info=(
-                        cert_info_result.data if cert_info_result.success else None
+                        cert_info_result.data if cert_info_result.is_success else None
                     ),
                     chain_length=len(certificates),
                 ),
@@ -213,7 +213,7 @@ class FlextLdapCertificateValidationService:
                 # Validate the certificate
                 cert_result = await self.validate_certificate_chain([cert_der], context)
 
-                if cert_result.success:
+                if cert_result.is_success:
                     return cert_result
                 return FlextResult.ok(
                     ValidationResult(

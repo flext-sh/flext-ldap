@@ -201,7 +201,7 @@ class TestLDAPClient:
                 attributes=["uid", "cn"],
             )
 
-            assert result.success is True
+            assert result.is_success is True
             assert result.data is not None
             assert len(result.data) == 1
             assert result.data[0].dn == "uid=test,ou=users,dc=example,dc=org"
@@ -219,7 +219,7 @@ class TestLDAPClient:
             search_filter="(uid=test)",
         )
 
-        assert result.success is False
+        assert result.is_success is False
         assert result.error is not None
         assert "Not connected" in result.error
 
@@ -249,7 +249,7 @@ class TestLDAPClient:
                 changes={"mail": "test@example.org"},
             )
 
-            assert result.success is True
+            assert result.is_success is True
             mock_instance.modify_entry.assert_called_once()
 
     @pytest.mark.asyncio
@@ -264,7 +264,7 @@ class TestLDAPClient:
             changes={"mail": "test@example.org"},
         )
 
-        assert result.success is False
+        assert result.is_success is False
         assert result.error is not None
         assert "Not connected" in result.error
 

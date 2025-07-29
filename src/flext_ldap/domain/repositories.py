@@ -9,8 +9,8 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_ldap.domain.entities import FlextLdapConnection, FlextLdapUser
-    from flext_ldap.domain.value_objects import FlextLdapDistinguishedName
+    from flext_ldap.entities import FlextLdapConnection, FlextLdapUser
+    from flext_ldap.values import FlextLdapDistinguishedName
 
 
 class FlextLdapConnectionRepository:
