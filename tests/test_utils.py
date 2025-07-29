@@ -28,33 +28,35 @@ class TestFilterEscaping:
         """Test escaping of basic special characters."""
         result = escape_filter_chars("test*value")
         if result != "test\\2avalue":
-            raise AssertionError(f"Expected {"test\\2avalue"}, got {result}")
+            raise AssertionError(f"Expected {'test\\2avalue'}, got {result}")
 
     def test_escape_filter_chars_all_special(self) -> None:
         """Test escaping all special characters."""
         input_str = "test*()\\test"
         result = escape_filter_chars(input_str)
         if result != "test\\2a\\28\\29\\5ctest":
-            raise AssertionError(f"Expected {"test\\2a\\28\\29\\5ctest"}, got {result}")
+            raise AssertionError(f"Expected {'test\\2a\\28\\29\\5ctest'}, got {result}")
 
     def test_escape_filter_chars_null_byte(self) -> None:
         """Test escaping null byte."""
         input_str = "test\x00value"
         result = escape_filter_chars(input_str)
         if result != "test\\00value":
-            raise AssertionError(f"Expected {"test\\00value"}, got {result}")
+            raise AssertionError(f"Expected {'test\\00value'}, got {result}")
 
     def test_escape_filter_chars_empty_string(self) -> None:
         """Test escaping empty string."""
         result = escape_filter_chars("")
         if result != "":
-            raise AssertionError(f"Expected {""}, got {result}")
+            raise AssertionError(f"Expected {''}, got {result}")
 
     def test_escape_filter_value_alias(self) -> None:
         """Test that escape_filter_value is an alias."""
         test_str = "test*value"
         if escape_filter_value(test_str) != escape_filter_chars(test_str):
-            raise AssertionError(f"Expected {escape_filter_chars(test_str)}, got {escape_filter_value(test_str)}")
+            raise AssertionError(
+                f"Expected {escape_filter_chars(test_str)}, got {escape_filter_value(test_str)}"
+            )
 
 
 class TestGeneralizedTime:
@@ -90,14 +92,14 @@ class TestGeneralizedTime:
         dt = datetime(2023, 12, 15, 14, 30, 22, tzinfo=UTC)
         result = format_generalized_time(dt)
         if result != "20231215143022Z":
-            raise AssertionError(f"Expected {"20231215143022Z"}, got {result}")
+            raise AssertionError(f"Expected {'20231215143022Z'}, got {result}")
 
     def test_format_generalized_time_without_timezone(self) -> None:
         """Test formatting datetime without timezone."""
         dt = datetime(2023, 12, 15, 14, 30, 22, tzinfo=UTC)
         result = format_generalized_time(dt)
         if result != "20231215143022Z":
-            raise AssertionError(f"Expected {"20231215143022Z"}, got {result}")
+            raise AssertionError(f"Expected {'20231215143022Z'}, got {result}")
 
 
 class TestDNUtilities:
@@ -112,25 +114,29 @@ class TestDNUtilities:
     def test_validate_dn_invalid_empty(self) -> None:
         """Test validating empty DN."""
         if validate_dn(""):
-            raise AssertionError(f"Expected False, got {validate_dn("")}")\ n
+            raise AssertionError(f"Expected False, got {validate_dn('')}")
+
     def test_validate_dn_invalid_no_equals(self) -> None:
         """Test validating DN without equals sign."""
         dn = "cn user,ou people"
         if validate_dn(dn):
-            raise AssertionError(f"Expected False, got {validate_dn(dn)}")\ n
+            raise AssertionError(f"Expected False, got {validate_dn(dn)}")
+
     def test_normalize_dn(self) -> None:
         """Test DN normalization."""
         dn = "CN=User,OU=People,DC=Example,DC=Com"
         result = normalize_dn(dn)
         if result != "cn=user,ou=people,dc=example,dc=com":
-            raise AssertionError(f"Expected {"cn=user,ou=people,dc=example,dc=com"}, got {result}")
+            raise AssertionError(
+                f"Expected {'cn=user,ou=people,dc=example,dc=com'}, got {result}"
+            )
 
     def test_normalize_dn_with_spaces(self) -> None:
         """Test DN normalization with spaces."""
         dn = " CN = User , OU = People "
         result = normalize_dn(dn)
         if result != "cn=user,ou=people":
-            raise AssertionError(f"Expected {"cn=user,ou=people"}, got {result}")
+            raise AssertionError(f"Expected {'cn=user,ou=people'}, got {result}")
 
     def test_split_dn(self) -> None:
         """Test splitting DN into components."""
@@ -166,7 +172,8 @@ class TestDNUtilities:
         dn1 = "cn=user1,ou=people,dc=example,dc=com"
         dn2 = "cn=user2,ou=people,dc=example,dc=com"
         if compare_dns(dn1, dn2):
-            raise AssertionError(f"Expected False, got {compare_dns(dn1, dn2)}")\ n
+            raise AssertionError(f"Expected False, got {compare_dns(dn1, dn2)}")
+
 
 class TestFilterBuilding:
     """Test LDAP filter building utilities."""
@@ -176,48 +183,48 @@ class TestFilterBuilding:
         conditions = {"cn": "john", "sn": "doe"}
         result = build_filter("and", conditions)
         if result != "(&(cn=john)(sn=doe))":
-            raise AssertionError(f"Expected {"(&(cn=john)(sn=doe))"}, got {result}")
+            raise AssertionError(f"Expected {'(&(cn=john)(sn=doe))'}, got {result}")
 
     def test_build_filter_or(self) -> None:
         """Test building OR filter."""
         conditions = {"cn": "john", "sn": "doe"}
         result = build_filter("or", conditions)
         if result != "(|(cn=john)(sn=doe))":
-            raise AssertionError(f"Expected {"(|(cn=john)(sn=doe))"}, got {result}")
+            raise AssertionError(f"Expected {'(|(cn=john)(sn=doe))'}, got {result}")
 
     def test_build_filter_not_single(self) -> None:
         """Test building NOT filter with single condition."""
         conditions = {"cn": "john"}
         result = build_filter("not", conditions)
         if result != "(!(cn=john))":
-            raise AssertionError(f"Expected {"(!(cn=john))"}, got {result}")
+            raise AssertionError(f"Expected {'(!(cn=john))'}, got {result}")
 
     def test_build_filter_not_multiple(self) -> None:
         """Test building NOT filter with multiple conditions."""
         conditions = {"cn": "john", "sn": "doe"}
         result = build_filter("not", conditions)
         if result != "(!(&(cn=john)(sn=doe)))":
-            raise AssertionError(f"Expected {"(!(&(cn=john)(sn=doe)))"}, got {result}")
+            raise AssertionError(f"Expected {'(!(&(cn=john)(sn=doe)))'}, got {result}")
 
     def test_build_filter_empty_conditions(self) -> None:
         """Test building filter with empty conditions."""
         result = build_filter("and", {})
         if result != "":
-            raise AssertionError(f"Expected {""}, got {result}")
+            raise AssertionError(f"Expected {''}, got {result}")
 
     def test_build_filter_invalid_operator(self) -> None:
         """Test building filter with invalid operator."""
         conditions = {"cn": "john"}
         result = build_filter("invalid", conditions)
         if result != "":
-            raise AssertionError(f"Expected {""}, got {result}")
+            raise AssertionError(f"Expected {''}, got {result}")
 
     def test_build_filter_escapes_values(self) -> None:
         """Test that filter building escapes special characters."""
         conditions = {"cn": "john*"}
         result = build_filter("and", conditions)
         if result != "(&(cn=john\\2a))":
-            raise AssertionError(f"Expected {"(&(cn=john\\2a))"}, got {result}")
+            raise AssertionError(f"Expected {'(&(cn=john\\2a))'}, got {result}")
 
 
 class TestLDAPURLUtilities:
@@ -239,12 +246,14 @@ class TestLDAPURLUtilities:
         """Test validating URL with invalid scheme."""
         url = "http://localhost:389"
         if is_valid_ldap_url(url):
-            raise AssertionError(f"Expected False, got {is_valid_ldap_url(url)}")\ n
+            raise AssertionError(f"Expected False, got {is_valid_ldap_url(url)}")
+
     def test_is_valid_ldap_url_invalid_format(self) -> None:
         """Test validating malformed URL."""
         url = "not-a-url"
         if is_valid_ldap_url(url):
-            raise AssertionError(f"Expected False, got {is_valid_ldap_url(url)}")\ n
+            raise AssertionError(f"Expected False, got {is_valid_ldap_url(url)}")
+
     def test_parse_ldap_url_basic(self) -> None:
         """Test parsing basic LDAP URL."""
         url = "ldap://localhost:389"
@@ -267,7 +276,7 @@ class TestLDAPURLUtilities:
         url = "ldaps://localhost"
         result = parse_ldap_url(url)
         if result["scheme"] != "ldaps":
-            raise AssertionError(f"Expected {"ldaps"}, got {result["scheme"]}")
+            raise AssertionError(f"Expected {'ldaps'}, got {result['scheme']}")
         assert result["port"] == 636
 
     def test_parse_ldap_url_with_base_dn(self) -> None:
@@ -275,7 +284,9 @@ class TestLDAPURLUtilities:
         url = "ldap://localhost:389/dc=example,dc=com"
         result = parse_ldap_url(url)
         if result["base_dn"] != "dc=example,dc=com":
-            raise AssertionError(f"Expected {"dc=example,dc=com"}, got {result["base_dn"]}")
+            raise AssertionError(
+                f"Expected {'dc=example,dc=com'}, got {result['base_dn']}"
+            )
 
     def test_parse_ldap_url_complex(self) -> None:
         """Test parsing complex LDAP URL with all components."""
@@ -283,11 +294,12 @@ class TestLDAPURLUtilities:
         result = parse_ldap_url(url)
 
         if result["base_dn"] != "dc=example,dc=com":
-
-            raise AssertionError(f"Expected {"dc=example,dc=com"}, got {result["base_dn"]}")
+            raise AssertionError(
+                f"Expected {'dc=example,dc=com'}, got {result['base_dn']}"
+            )
         assert result["attributes"] == ["cn", "sn"]
         if result["scope"] != "onelevel":
-            raise AssertionError(f"Expected {"onelevel"}, got {result["scope"]}")
+            raise AssertionError(f"Expected {'onelevel'}, got {result['scope']}")
         assert result["filter"] == "(cn=john)"
 
 
@@ -330,13 +342,15 @@ class TestDNParsing:
         ]
         result = build_dn(components)
         if result != "cn=john,ou=people,dc=example,dc=com":
-            raise AssertionError(f"Expected {"cn=john,ou=people,dc=example,dc=com"}, got {result}")
+            raise AssertionError(
+                f"Expected {'cn=john,ou=people,dc=example,dc=com'}, got {result}"
+            )
 
     def test_build_dn_empty(self) -> None:
         """Test building DN from empty components."""
         result = build_dn([])
         if result != "":
-            raise AssertionError(f"Expected {""}, got {result}")
+            raise AssertionError(f"Expected {''}, got {result}")
 
 
 class TestMiscUtilities:
@@ -345,17 +359,21 @@ class TestMiscUtilities:
     def test_normalize_attribute_name(self) -> None:
         """Test normalizing attribute names."""
         if normalize_attribute_name("CN") != "cn":
-            raise AssertionError(f"Expected {"cn"}, got {normalize_attribute_name("CN")}")
+            raise AssertionError(
+                f"Expected {'cn'}, got {normalize_attribute_name('CN')}"
+            )
         assert normalize_attribute_name(" sn ") == "sn"
         if normalize_attribute_name("ObjectClass") != "objectclass":
-            raise AssertionError(f"Expected {"objectclass"}, got {normalize_attribute_name("ObjectClass")}")
+            raise AssertionError(
+                f"Expected {'objectclass'}, got {normalize_attribute_name('ObjectClass')}"
+            )
 
     def test_format_ldap_timestamp_datetime(self) -> None:
         """Test formatting datetime as LDAP timestamp."""
         dt = datetime(2023, 12, 15, 14, 30, 22, tzinfo=UTC)
         result = format_ldap_timestamp(dt)
         if result != "20231215143022Z":
-            raise AssertionError(f"Expected {"20231215143022Z"}, got {result}")
+            raise AssertionError(f"Expected {'20231215143022Z'}, got {result}")
 
     def test_format_ldap_timestamp_string(self) -> None:
         """Test formatting string timestamp (passthrough)."""
@@ -374,4 +392,4 @@ class TestMiscUtilities:
         mock_ts = MockTimestamp()
         result = format_ldap_timestamp(mock_ts)
         if result != "20231215143022Z":
-            raise AssertionError(f"Expected {"20231215143022Z"}, got {result}")
+            raise AssertionError(f"Expected {'20231215143022Z'}, got {result}")

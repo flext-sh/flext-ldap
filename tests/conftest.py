@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any
 
 import docker
 import pytest
-
 from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
 
 if TYPE_CHECKING:
@@ -285,7 +284,7 @@ async def temporary_ldap_entry(
 
 
 # Mark integration tests
-def pytest_configure(config):
+def pytest_configure(config) -> None:
     """Configure pytest markers."""
     config.addinivalue_line(
         "markers",
@@ -293,7 +292,7 @@ def pytest_configure(config):
     )
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config, items) -> None:
     """Automatically mark integration tests based on file path."""
     for item in items:
         # Mark tests in integration directory

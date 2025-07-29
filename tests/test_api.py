@@ -6,7 +6,6 @@ Tests the main unified API without duplication or mockups.
 from uuid import uuid4
 
 import pytest
-
 from flext_ldap.api import FlextLdapApi, get_ldap_api
 from flext_ldap.config import FlextLdapConnectionConfig
 from flext_ldap.entities import FlextLdapGroup, FlextLdapUser
@@ -16,19 +15,19 @@ from flext_ldap.values import FlextLdapCreateUserRequest
 class TestFlextLdapApi:
     """Test suite for unified FlextLdapApi - NO MOCKUPS."""
 
-    def test_api_instantiation(self):
+    def test_api_instantiation(self) -> None:
         """Test API can be instantiated correctly."""
         api = FlextLdapApi()
         assert api is not None
 
-    def test_get_ldap_api_singleton(self):
+    def test_get_ldap_api_singleton(self) -> None:
         """Test get_ldap_api returns consistent instance."""
         api1 = get_ldap_api()
         api2 = get_ldap_api()
         assert api1 is not None
         assert api2 is not None
 
-    def test_api_with_config(self):
+    def test_api_with_config(self) -> None:
         """Test API initialization with configuration."""
         config = FlextLdapConnectionConfig(
             server="ldap://test.example.com",
@@ -38,7 +37,7 @@ class TestFlextLdapApi:
         assert api is not None
 
     @pytest.mark.asyncio
-    async def test_connection_lifecycle(self):
+    async def test_connection_lifecycle(self) -> None:
         """Test connection creation and management."""
         api = FlextLdapApi()
 
@@ -47,7 +46,7 @@ class TestFlextLdapApi:
         # Note: Will fail on actual connection, but tests the flow
         assert result is not None
 
-    def test_api_flext_core_integration(self):
+    def test_api_flext_core_integration(self) -> None:
         """Test API properly integrates with flext-core patterns."""
         api = FlextLdapApi()
 
@@ -62,7 +61,7 @@ class TestFlextLdapApiEntityOperations:
     """Test entity operations through unified API."""
 
     @pytest.mark.asyncio
-    async def test_user_creation_flow(self):
+    async def test_user_creation_flow(self) -> None:
         """Test complete user creation workflow."""
         FlextLdapApi()
 
@@ -81,7 +80,7 @@ class TestFlextLdapApiEntityOperations:
             msg = f"Expected {"cn=testuser,ou=users,dc=example,dc=com"}, got {user_request.dn}"
             raise AssertionError(msg)
 
-    def test_entity_domain_rules(self):
+    def test_entity_domain_rules(self) -> None:
         """Test domain entities follow business rules."""
         # Test FlextLdapUser
         user = FlextLdapUser(
@@ -112,7 +111,7 @@ class TestFlextLdapApiEntityOperations:
 class TestFlextLdapApiIntegration:
     """Integration tests for API components."""
 
-    def test_api_services_integration(self):
+    def test_api_services_integration(self) -> None:
         """Test API integrates properly with services layer."""
         api = FlextLdapApi()
 
@@ -120,7 +119,7 @@ class TestFlextLdapApiIntegration:
         # Should integrate with flext-core patterns
         assert api is not None
 
-    def test_api_error_handling(self):
+    def test_api_error_handling(self) -> None:
         """Test API uses FlextResult pattern consistently."""
         api = FlextLdapApi()
 
@@ -135,7 +134,7 @@ class TestFlextLdapApiE2E:
     """End-to-end tests for complete workflows."""
 
     @pytest.mark.asyncio
-    async def test_complete_user_lifecycle(self):
+    async def test_complete_user_lifecycle(self) -> None:
         """Test complete user management lifecycle."""
         api = FlextLdapApi()
 
@@ -151,7 +150,7 @@ class TestFlextLdapApiE2E:
         assert api is not None
 
     @pytest.mark.asyncio
-    async def test_group_management_workflow(self):
+    async def test_group_management_workflow(self) -> None:
         """Test complete group management workflow."""
         api = FlextLdapApi()
 

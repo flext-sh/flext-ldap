@@ -79,10 +79,12 @@ class TestFlextLdapTypeConverter:
         if not (converter.to_python("TRUE", target_type=bool)):
             raise AssertionError(f"Expected True, got {converter.to_python("TRUE", target_type=bool)}")
         if converter.to_python("false", target_type=bool):
-            raise AssertionError(f"Expected False, got {converter.to_python("false", target_type=bool)}")\ n        if not (converter.to_python("1", target_type=bool)):
+            raise AssertionError(f"Expected False, got {converter.to_python("false", target_type=bool)}")
+        if not (converter.to_python("1", target_type=bool)):
             raise AssertionError(f"Expected True, got {converter.to_python("1", target_type=bool)}")
         if converter.to_python("0", target_type=bool):
-            raise AssertionError(f"Expected False, got {converter.to_python("0", target_type=bool)}")\ n
+            raise AssertionError(f"Expected False, got {converter.to_python("0", target_type=bool)}")
+
     def test_datetime_conversion(self):
         """Test datetime type conversions."""
         converter = FlextLdapTypeConverter()
@@ -255,16 +257,20 @@ class TestConversionUtilityFunctions:
 
         # Invalid email format
         if validate_ldap_attribute_value("mail", "invalid-email"):
-            raise AssertionError(f"Expected False, got {validate_ldap_attribute_value("mail", "invalid-email")}")\ n
+            raise AssertionError(f"Expected False, got {validate_ldap_attribute_value("mail", "invalid-email")}")
+
         # Invalid DN format
         if validate_ldap_attribute_value("distinguishedName", "invalid-dn"):
-            raise AssertionError(f"Expected False, got {validate_ldap_attribute_value("distinguishedName", "invalid-dn")}")\ n
+            raise AssertionError(f"Expected False, got {validate_ldap_attribute_value("distinguishedName", "invalid-dn")}")
+
         # Empty value
         if validate_ldap_attribute_value("cn", ""):
-            raise AssertionError(f"Expected False, got {validate_ldap_attribute_value("cn", "")}")\ n
+            raise AssertionError(f"Expected False, got {validate_ldap_attribute_value("cn", "")}")
+
         # None value
         if validate_ldap_attribute_value("cn", None):
-            raise AssertionError(f"Expected False, got {validate_ldap_attribute_value("cn", None)}")\ n
+            raise AssertionError(f"Expected False, got {validate_ldap_attribute_value("cn", None)}")
+
     def test_normalize_ldap_dn(self):
         """Test LDAP DN normalization."""
         # Basic normalization

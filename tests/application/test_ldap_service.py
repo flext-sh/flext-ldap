@@ -138,8 +138,8 @@ class TestLDAPService:
         assert remove_result.is_success
         found_remove_group = remove_result.data
         assert found_remove_group is not None
-        if member_dn not not in found_remove_group.members:
-            raise AssertionError(f"Expected {member_dn not} in {found_remove_group.members}")
+        if member_dn not in found_remove_group.members:
+            raise AssertionError(f"Expected {member_dn not in {found_remove_group.members}")
 
         # List groups
         list_result = await ldap_service.list_groups()

@@ -129,7 +129,8 @@ class TestLDAPClient:
 
             if client.is_connected():
 
-                raise AssertionError(f"Expected False, got {client.is_connected()}")\ n
+                raise AssertionError(f"Expected False, got {client.is_connected()}")
+
     @pytest.mark.asyncio
     async def test_disconnect_success(self) -> None:
         """Test successful disconnection."""
@@ -154,7 +155,8 @@ class TestLDAPClient:
 
             if client.is_connected():
 
-                raise AssertionError(f"Expected False, got {client.is_connected()}")\ n            mock_instance.disconnect.assert_called_once_with("conn_123")
+                raise AssertionError(f"Expected False, got {client.is_connected()}")
+            mock_instance.disconnect.assert_called_once_with("conn_123")
 
     @pytest.mark.asyncio
     async def test_ping_connected(self) -> None:
@@ -192,7 +194,8 @@ class TestLDAPClient:
 
         if result:
 
-            raise AssertionError(f"Expected False, got {result}")\ n
+            raise AssertionError(f"Expected False, got {result}")
+
     @pytest.mark.asyncio
     async def test_search_success(self) -> None:
         """Test successful search operation."""
@@ -259,7 +262,8 @@ class TestLDAPClient:
 
         if result.is_success:
 
-            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+            raise AssertionError(f"Expected False, got {result.is_success}")
+        assert result.error is not None
         if "Not connected" not in result.error:
             raise AssertionError(f"Expected {"Not connected"} in {result.error}")
 
@@ -308,7 +312,8 @@ class TestLDAPClient:
 
         if result.is_success:
 
-            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+            raise AssertionError(f"Expected False, got {result.is_success}")
+        assert result.error is not None
         if "Not connected" not in result.error:
             raise AssertionError(f"Expected {"Not connected"} in {result.error}")
 
@@ -336,7 +341,8 @@ class TestLDAPClient:
 
             # After exiting context, should be disconnected
             if client.is_connected():
-                raise AssertionError(f"Expected False, got {client.is_connected()}")\ n
+                raise AssertionError(f"Expected False, got {client.is_connected()}")
+
     @pytest.mark.asyncio
     async def test_transaction_context_manager(self) -> None:
         """Test transaction context manager."""

@@ -14,7 +14,6 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock
 
 import pytest
-
 from flext_ldap.infrastructure.security_event_logger import (
     SecurityEvent,
     SecurityEventLogger,

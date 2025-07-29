@@ -166,8 +166,8 @@ class TestFlextLdapConnectionRepositoryImpl:
 
             raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is True
-        if mock_connection.id not not in repository._connections:
-            raise AssertionError(f"Expected {mock_connection.id not} in {repository._connections}")
+        if mock_connection.id not in repository._connections:
+            raise AssertionError(f"Expected {mock_connection.id not in {repository._connections}")
 
     async def test_delete_not_found(
         self,
@@ -181,7 +181,8 @@ class TestFlextLdapConnectionRepositoryImpl:
 
             raise AssertionError(f"Expected True, got {result.is_success}")
         if result.data:
-            raise AssertionError(f"Expected False, got {result.data}")\ n
+            raise AssertionError(f"Expected False, got {result.data}")
+
     async def test_delete_exception(
         self,
         repository: FlextLdapConnectionRepositoryImpl,
@@ -566,7 +567,8 @@ class TestFlextLdapUserRepositoryImpl:
 
         if result:
 
-            raise AssertionError(f"Expected False, got {result}")\ n
+            raise AssertionError(f"Expected False, got {result}")
+
     async def test_exists_exception(
         self,
         repository: FlextLdapUserRepositoryImpl,

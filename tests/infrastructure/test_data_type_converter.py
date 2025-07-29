@@ -320,7 +320,8 @@ class TestDataTypeConverter:
             assert result.is_success
             assert result.data is not None
             if result.data.value:
-                raise AssertionError(f"Expected False, got {result.data.value}")\ n            if not (result.data.is_valid):
+                raise AssertionError(f"Expected False, got {result.data.value}")
+            if not (result.data.is_valid):
                 raise AssertionError(f"Expected True, got {result.data.is_valid}")
 
     @pytest.mark.asyncio
@@ -449,7 +450,8 @@ class TestDataTypeConverter:
         assert result.is_success
         assert result.data is not None
         if result.data.is_valid:
-            raise AssertionError(f"Expected False, got {result.data.is_valid}")\ n        assert len(result.data.warnings) > 0
+            raise AssertionError(f"Expected False, got {result.data.is_valid}")
+        assert len(result.data.warnings) > 0
 
     @pytest.mark.asyncio
     async def test_convert_value_auto_detect_type(
@@ -568,55 +570,65 @@ class TestDataTypeConverter:
         assert result.is_success
         assert result.data is not None
         if result.data:
-            raise AssertionError(f"Expected False, got {result.data}")\ n
+            raise AssertionError(f"Expected False, got {result.data}")
+
     def test_type_detectors(self, converter: DataTypeConverter) -> None:
         """Test individual type detector methods."""
         # Email
         if not (converter._is_email("user@example.com")):
             raise AssertionError(f"Expected True, got {converter._is_email("user@example.com")}")
         if converter._is_email("invalid-email"):
-            raise AssertionError(f"Expected False, got {converter._is_email("invalid-email")}")\ n
+            raise AssertionError(f"Expected False, got {converter._is_email("invalid-email")}")
+
         # Phone
         if not (converter._is_phone("+1-555-123-4567")):
             raise AssertionError(f"Expected True, got {converter._is_phone("+1-555-123-4567")}")
         if converter._is_phone("not-a-phone"):
-            raise AssertionError(f"Expected False, got {converter._is_phone("not-a-phone")}")\ n
+            raise AssertionError(f"Expected False, got {converter._is_phone("not-a-phone")}")
+
         # URL
         if not (converter._is_url("https://example.com")):
             raise AssertionError(f"Expected True, got {converter._is_url("https://example.com")}")
         if converter._is_url("not-a-url"):
-            raise AssertionError(f"Expected False, got {converter._is_url("not-a-url")}")\ n
+            raise AssertionError(f"Expected False, got {converter._is_url("not-a-url")}")
+
         # IP Address
         if not (converter._is_ip_address("192.168.1.1")):
             raise AssertionError(f"Expected True, got {converter._is_ip_address("192.168.1.1")}")
         if converter._is_ip_address("999.999.999.999"):
-            raise AssertionError(f"Expected False, got {converter._is_ip_address("999.999.999.999")}")\ n
+            raise AssertionError(f"Expected False, got {converter._is_ip_address("999.999.999.999")}")
+
         # MAC Address
         if not (converter._is_mac_address("AA:BB:CC:DD:EE:FF")):
             raise AssertionError(f"Expected True, got {converter._is_mac_address("AA:BB:CC:DD:EE:FF")}")
         if converter._is_mac_address("not-a-mac"):
-            raise AssertionError(f"Expected False, got {converter._is_mac_address("not-a-mac")}")\ n
+            raise AssertionError(f"Expected False, got {converter._is_mac_address("not-a-mac")}")
+
         # UUID
         test_uuid = str(uuid.uuid4())
         if not (converter._is_uuid(test_uuid)):
             raise AssertionError(f"Expected True, got {converter._is_uuid(test_uuid)}")
         if converter._is_uuid("not-a-uuid"):
-            raise AssertionError(f"Expected False, got {converter._is_uuid("not-a-uuid")}")\ n
+            raise AssertionError(f"Expected False, got {converter._is_uuid("not-a-uuid")}")
+
         # DN
         if not (converter._is_dn("cn=user,dc=example,dc=com")):
             raise AssertionError(f"Expected True, got {converter._is_dn("cn=user,dc=example,dc=com")}")
         if converter._is_dn("not-a-dn"):
-            raise AssertionError(f"Expected False, got {converter._is_dn("not-a-dn")}")\ n
+            raise AssertionError(f"Expected False, got {converter._is_dn("not-a-dn")}")
+
         # Boolean
         if not (converter._is_boolean("true")):
             raise AssertionError(f"Expected True, got {converter._is_boolean("true")}")
         if converter._is_boolean("invalid"):
-            raise AssertionError(f"Expected False, got {converter._is_boolean("invalid")}")\ n
+            raise AssertionError(f"Expected False, got {converter._is_boolean("invalid")}")
+
         # Integer
         if not (converter._is_integer("123")):
             raise AssertionError(f"Expected True, got {converter._is_integer("123")}")
         if converter._is_integer("not-a-number"):
-            raise AssertionError(f"Expected False, got {converter._is_integer("not-a-number")}")\ n
+            raise AssertionError(f"Expected False, got {converter._is_integer("not-a-number")}")
+
     def test_type_converters(self, converter: DataTypeConverter) -> None:
         """Test individual type converter methods."""
         # String conversion
@@ -633,7 +645,8 @@ class TestDataTypeConverter:
         if not (converter._convert_to_bool("true")):
             raise AssertionError(f"Expected True, got {converter._convert_to_bool("true")}")
         if converter._convert_to_bool("false"):
-            raise AssertionError(f"Expected False, got {converter._convert_to_bool("false")}")\ n        with pytest.raises(ConversionError):
+            raise AssertionError(f"Expected False, got {converter._convert_to_bool("false")}")
+        with pytest.raises(ConversionError):
             converter._convert_to_bool("invalid")
 
         # UUID conversion

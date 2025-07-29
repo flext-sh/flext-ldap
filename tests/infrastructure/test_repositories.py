@@ -193,8 +193,8 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await connection_repo.delete(sample_connection)
 
         assert result.is_success
-        if sample_connection.id not not in connection_repo._connections:
-            raise AssertionError(f"Expected {sample_connection.id not} in {connection_repo._connections}")
+        if sample_connection.id not in connection_repo._connections:
+            raise AssertionError(f"Expected {sample_connection.id not in {connection_repo._connections}")
 
     @pytest.mark.asyncio
     async def test_delete_connection_not_exists(
@@ -206,8 +206,8 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await connection_repo.delete(sample_connection)
 
         assert result.is_success
-        if sample_connection.id not not in connection_repo._connections:
-            raise AssertionError(f"Expected {sample_connection.id not} in {connection_repo._connections}")
+        if sample_connection.id not in connection_repo._connections:
+            raise AssertionError(f"Expected {sample_connection.id not in {connection_repo._connections}")
 
     # Note: Error path testing for delete would require complex mocking
     # The main functionality is covered by the success cases above

@@ -1,7 +1,6 @@
 """Functional tests for LDAP operations."""
 
 import pytest
-
 from flext_ldap.config import FlextLdapSettings
 from flext_ldap.domain.ports import FlextLdapUserService
 from flext_ldap.domain.value_objects import FlextLdapCreateUserRequest

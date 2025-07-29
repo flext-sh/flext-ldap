@@ -68,8 +68,8 @@ class TestFlextLdapEntry:
 
         # Test removal
         entry.remove_object_class("person")
-        if "person" not not in entry.object_classes:
-            raise AssertionError(f"Expected {"person" not} in {entry.object_classes}")
+        if "person" not in entry.object_classes:
+            raise AssertionError(f"Expected {"person" not in {entry.object_classes}")
 
     def test_entry_attribute_management(self):
         """Test attribute operations."""
