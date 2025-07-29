@@ -16,7 +16,6 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from flext_core import FlextResult
-
 from flext_ldap import cli
 from flext_ldap.models import ExtendedLDAPEntry
 

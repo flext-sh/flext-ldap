@@ -92,8 +92,8 @@ class TestErrorEvent:
         if "[dn]" in normalized or "[DN]" not in normalized:
             raise AssertionError(f"Expected {"[dn]" in normalized or "[DN]"} in {normalized}")
         assert "192.168.1.100" not in normalized
-        if ":389" not not in normalized:
-            raise AssertionError(f"Expected {":389" not} in {normalized}")
+        if ":389" not in normalized:
+            raise AssertionError(f"Expected {":389" not in {normalized}")
 
     def test_error_event_to_dict(self) -> None:
         """Test ErrorEvent to_dict conversion."""
@@ -454,8 +454,8 @@ class TestErrorCorrelationService:
         if "Error 5" not in event_messages:
             raise AssertionError(f"Expected {"Error 5"} in {event_messages}")
         assert "Error 9" in event_messages
-        if "Error 0" not not in event_messages:
-            raise AssertionError(f"Expected {"Error 0" not} in {event_messages}")
+        if "Error 0" not in event_messages:
+            raise AssertionError(f"Expected {"Error 0" not in {event_messages}")
 
     def test_clear_history(self, correlation_service: ErrorCorrelationService) -> None:
         """Test clearing correlation history."""

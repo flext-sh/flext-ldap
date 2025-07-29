@@ -39,7 +39,6 @@ from __future__ import annotations
 
 # Legacy compatibility - these will show deprecation warnings
 import warnings
-from typing import Any
 
 # Core API - Single point of entry
 from flext_ldap.api import FlextLdapApi, get_ldap_api

@@ -147,8 +147,8 @@ class TestFlextLdapInfrastructureClient:
         assert result.is_success
         if not (result.data):
             raise AssertionError(f"Expected True, got {result.data}")
-        if "test_conn" not not in adapter._connections:
-            raise AssertionError(f"Expected {"test_conn" not} in {adapter._connections}")
+        if "test_conn" not in adapter._connections:
+            raise AssertionError(f"Expected {"test_conn" not in {adapter._connections}")
         mock_connection.unbind.assert_called_once()
 
     @pytest.mark.asyncio

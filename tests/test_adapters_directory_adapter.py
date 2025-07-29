@@ -120,7 +120,8 @@ class TestFlextLdapDirectoryService:
 
             if result.is_success:
 
-                raise AssertionError(f"Expected False, got {result.is_success}")\ n            assert result.error is not None
+                raise AssertionError(f"Expected False, got {result.is_success}")
+            assert result.error is not None
             if "Connection error" not in result.error:
                 raise AssertionError(f"Expected {"Connection error"} in {result.error}")
 
@@ -156,7 +157,8 @@ class TestFlextLdapDirectoryService:
 
             if result.is_success:
 
-                raise AssertionError(f"Expected False, got {result.is_success}")\ n            assert result.error is not None
+                raise AssertionError(f"Expected False, got {result.is_success}")
+            assert result.error is not None
             if "Search error" not in result.error:
                 raise AssertionError(f"Expected {"Search error"} in {result.error}")
 
@@ -196,7 +198,8 @@ class TestFlextLdapDirectoryService:
 
         if result.is_success:
 
-            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+            raise AssertionError(f"Expected False, got {result.is_success}")
+        assert result.error is not None
         if "Disconnect error" not in result.error:
             raise AssertionError(f"Expected {"Disconnect error"} in {result.error}")
 
@@ -312,7 +315,8 @@ class TestFlextLdapDirectoryService:
 
         if result.is_success:
 
-            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+            raise AssertionError(f"Expected False, got {result.is_success}")
+        assert result.error is not None
         if "Search failed" not in result.error:
             raise AssertionError(f"Expected {"Search failed"} in {result.error}")
 
@@ -338,7 +342,8 @@ class TestFlextLdapDirectoryService:
 
         if result.is_success:
 
-            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+            raise AssertionError(f"Expected False, got {result.is_success}")
+        assert result.error is not None
         if "Search error" not in result.error:
             raise AssertionError(f"Expected {"Search error"} in {result.error}")
 
@@ -400,7 +405,8 @@ class TestFlextLdapDirectoryService:
 
         if result.is_success:
 
-            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+            raise AssertionError(f"Expected False, got {result.is_success}")
+        assert result.error is not None
         if "Add entry failed" not in result.error:
             raise AssertionError(f"Expected {"Add entry failed"} in {result.error}")
 
@@ -426,7 +432,8 @@ class TestFlextLdapDirectoryService:
 
         if result.is_success:
 
-            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+            raise AssertionError(f"Expected False, got {result.is_success}")
+        assert result.error is not None
         if "Add entry error" not in result.error:
             raise AssertionError(f"Expected {"Add entry error"} in {result.error}")
 
@@ -483,7 +490,8 @@ class TestFlextLdapDirectoryService:
 
         if result.is_success:
 
-            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+            raise AssertionError(f"Expected False, got {result.is_success}")
+        assert result.error is not None
         if "Modify entry failed" not in result.error:
             raise AssertionError(f"Expected {"Modify entry failed"} in {result.error}")
 
@@ -509,7 +517,8 @@ class TestFlextLdapDirectoryService:
 
         if result.is_success:
 
-            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+            raise AssertionError(f"Expected False, got {result.is_success}")
+        assert result.error is not None
         if "Modify entry error" not in result.error:
             raise AssertionError(f"Expected {"Modify entry error"} in {result.error}")
 
@@ -561,7 +570,8 @@ class TestFlextLdapDirectoryService:
 
         if result.is_success:
 
-            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+            raise AssertionError(f"Expected False, got {result.is_success}")
+        assert result.error is not None
         if "Delete entry failed" not in result.error:
             raise AssertionError(f"Expected {"Delete entry failed"} in {result.error}")
 
@@ -585,7 +595,8 @@ class TestFlextLdapDirectoryService:
 
         if result.is_success:
 
-            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+            raise AssertionError(f"Expected False, got {result.is_success}")
+        assert result.error is not None
         if "Delete entry error" not in result.error:
             raise AssertionError(f"Expected {"Delete entry error"} in {result.error}")
 

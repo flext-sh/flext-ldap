@@ -10,11 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Protocol, cast
+from typing import Protocol, cast
 
 from flext_core import FlextResult
 
-from flext_ldap.client import FlextLdapSimpleClient
+from flext_ldap.ldap_infrastructure import FlextLdapClient as FlextLdapSimpleClient
 
 
 # 🚨 LOCAL PROTOCOLS - Clean Architecture compliance
@@ -29,7 +29,7 @@ class FlextLdapDirectoryEntryProtocol(Protocol):
     """Protocol for directory entries."""
 
     dn: str
-    attributes: dict[str, Any]
+    attributes: dict[str, object]
 
 
 class FlextLdapDirectoryServiceInterface(ABC):
@@ -43,7 +43,7 @@ class FlextLdapDirectoryServiceInterface(ABC):
     @abstractmethod
     async def search_users(
         self,
-        filter_criteria: dict[str, Any],
+        filter_criteria: dict[str, object],
     ) -> FlextResult[list[FlextLdapDirectoryEntryProtocol]]:
         """Search for users."""
         ...
@@ -77,7 +77,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         """
         try:
             # Use default connection for simplicity
-            return FlextResult.ok(success=True)
+            return FlextResult.ok(True)
 
         except ConnectionError as e:
             return FlextResult.fail(f"Connection error: {e}")
@@ -86,14 +86,14 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
     async def search_users(
         self,
-        filter_criteria: dict[str, Any],
+        filter_criteria: dict[str, object],
     ) -> FlextResult[list[FlextLdapDirectoryEntryProtocol]]:
         """Search for users in directory."""
         try:
             # Simple mock implementation - in real implementation would search LDAP
             # Create a simple object that implements FlextLdapDirectoryEntryProtocol
             class DirectoryEntry:
-                def __init__(self, dn: str, attributes: dict[str, Any]) -> None:
+                def __init__(self, dn: str, attributes: dict[str, object]) -> None:
                     self.dn = dn
                     self.attributes = attributes
 
@@ -124,7 +124,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         """
         try:
             await self._ldap_client.disconnect(connection_id)
-            return FlextResult.ok(success=True)
+            return FlextResult.ok(True)
         except ConnectionError as e:
             return FlextResult.fail(f"Disconnect connection error: {e}")
         except OSError as e:
@@ -170,7 +170,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                         def __init__(
                             self,
                             dn: str,
-                            attributes: dict[str, Any],
+                            attributes: dict[str, object],
                             object_classes: list[str],
                         ) -> None:
                             self.dn = dn
@@ -225,7 +225,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             )
 
             if result.is_success:
-                return FlextResult.ok(success=True)
+                return FlextResult.ok(True)
             return FlextResult.fail(f"Add entry failed: {result.error}")
 
         except ConnectionError as e:
@@ -235,7 +235,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         self,
         connection_id: str,
         dn: str,
-        changes: dict[str, Any],
+        changes: dict[str, object],
     ) -> FlextResult[bool]:
         """Modify existing directory entry using FLEXT LDAP.
 
@@ -256,7 +256,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             )
 
             if result.is_success:
-                return FlextResult.ok(success=True)
+                return FlextResult.ok(True)
             return FlextResult.fail(f"Modify entry failed: {result.error}")
 
         except ConnectionError as e:
@@ -288,7 +288,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             )
 
             if result.is_success:
-                return FlextResult.ok(success=True)
+                return FlextResult.ok(True)
             return FlextResult.fail(f"Delete entry failed: {result.error}")
 
         except ConnectionError as e:

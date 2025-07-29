@@ -84,7 +84,8 @@ class TestFlextLdapConnectionConfig:
             raise AssertionError(f"Expected {"localhost"}, got {config.server}")
         assert config.port == 389
         if config.use_ssl:
-            raise AssertionError(f"Expected False, got {config.use_ssl}")\ n        assert config.timeout_seconds == 30
+            raise AssertionError(f"Expected False, got {config.use_ssl}")
+        assert config.timeout_seconds == 30
         if config.pool_size != 10:
             raise AssertionError(f"Expected {10}, got {config.pool_size}")
         if not (config.enable_connection_pooling):
@@ -112,7 +113,8 @@ class TestFlextLdapConnectionConfig:
             raise AssertionError(f"Expected {60}, got {config.timeout_seconds}")
         assert config.pool_size == 20
         if config.enable_connection_pooling:
-            raise AssertionError(f"Expected False, got {config.enable_connection_pooling}")\ n
+            raise AssertionError(f"Expected False, got {config.enable_connection_pooling}")
+
     @pytest.mark.unit
     def test_server_validation_valid(self) -> None:
         """Test server validation with valid values."""
@@ -194,7 +196,8 @@ class TestFlextLdapAuthConfig:
             raise AssertionError(f"Expected {""}, got {config.bind_dn}")
         assert config.bind_password == ""
         if config.use_anonymous_bind:
-            raise AssertionError(f"Expected False, got {config.use_anonymous_bind}")\ n        assert config.sasl_mechanism is None
+            raise AssertionError(f"Expected False, got {config.use_anonymous_bind}")
+        assert config.sasl_mechanism is None
 
     @pytest.mark.unit
     def test_auth_config_custom(self) -> None:
@@ -276,7 +279,8 @@ class TestFlextLdapSearchConfig:
         if config.page_size != 1000:
             raise AssertionError(f"Expected {1000}, got {config.page_size}")
         if config.enable_referral_chasing:
-            raise AssertionError(f"Expected False, got {config.enable_referral_chasing}")\ n        assert config.max_referral_hops == 5
+            raise AssertionError(f"Expected False, got {config.enable_referral_chasing}")
+        assert config.max_referral_hops == 5
 
     @pytest.mark.unit
     def test_search_config_custom(self) -> None:
@@ -300,7 +304,8 @@ class TestFlextLdapSearchConfig:
             raise AssertionError(f"Expected {500}, got {config.size_limit}")
         assert config.time_limit == 60
         if config.paged_search:
-            raise AssertionError(f"Expected False, got {config.paged_search}")\ n        assert config.page_size == 100
+            raise AssertionError(f"Expected False, got {config.paged_search}")
+        assert config.page_size == 100
         if not (config.enable_referral_chasing):
             raise AssertionError(f"Expected True, got {config.enable_referral_chasing}")
         if config.max_referral_hops != 10:
@@ -346,7 +351,8 @@ class TestFlextLdapOperationConfig:
             raise AssertionError(f"Expected {3}, got {config.max_retries}")
         assert config.retry_delay == 1.0
         if config.enable_transactions:
-            raise AssertionError(f"Expected False, got {config.enable_transactions}")\ n        assert config.batch_size == 100
+            raise AssertionError(f"Expected False, got {config.enable_transactions}")
+        assert config.batch_size == 100
 
     @pytest.mark.unit
     def test_operation_config_custom(self) -> None:
@@ -409,7 +415,8 @@ class TestFlextLdapSecurityConfig:
         assert config.client_cert_file is None
         assert config.client_key_file is None
         if config.enable_start_tls:
-            raise AssertionError(f"Expected False, got {config.enable_start_tls}")\ n        assert config.tls_version is None
+            raise AssertionError(f"Expected False, got {config.enable_start_tls}")
+        assert config.tls_version is None
 
     @pytest.mark.unit
     def test_security_config_custom(self) -> None:
@@ -488,10 +495,12 @@ class TestFlextLdapLoggingConfig:
             if config.log_level != FlextLogLevel.INFO:
                 raise AssertionError(f"Expected {FlextLogLevel.INFO}, got {config.log_level}")
             if config.enable_connection_logging:
-                raise AssertionError(f"Expected False, got {config.enable_connection_logging}")\ n            if not (config.enable_operation_logging):
+                raise AssertionError(f"Expected False, got {config.enable_connection_logging}")
+            if not (config.enable_operation_logging):
                 raise AssertionError(f"Expected True, got {config.enable_operation_logging}")
             if config.log_sensitive_data:
-                raise AssertionError(f"Expected False, got {config.log_sensitive_data}")\ n            if not (config.structured_logging):
+                raise AssertionError(f"Expected False, got {config.log_sensitive_data}")
+            if not (config.structured_logging):
                 raise AssertionError(f"Expected True, got {config.structured_logging}")
 
     @pytest.mark.unit
@@ -516,10 +525,12 @@ class TestFlextLdapLoggingConfig:
         if not (config.enable_connection_logging):
             raise AssertionError(f"Expected True, got {config.enable_connection_logging}")
         if config.enable_operation_logging:
-            raise AssertionError(f"Expected False, got {config.enable_operation_logging}")\ n        if not (config.log_sensitive_data):
+            raise AssertionError(f"Expected False, got {config.enable_operation_logging}")
+        if not (config.log_sensitive_data):
             raise AssertionError(f"Expected True, got {config.log_sensitive_data}")
         if config.structured_logging:
-            raise AssertionError(f"Expected False, got {config.structured_logging}")\ n
+            raise AssertionError(f"Expected False, got {config.structured_logging}")
+
     @pytest.mark.unit
     def test_log_level_normalization(self) -> None:
         """Test log level normalization."""
@@ -567,7 +578,8 @@ class TestFlextLdapSettings:
                 raise AssertionError(f"Expected {"flext-infrastructure.databases.flext-ldap"}, got {settings.project_name}")
             assert settings.project_version == "0.7.0"
             if settings.enable_debug_mode:
-                raise AssertionError(f"Expected False, got {settings.enable_debug_mode}")\ n            if not (settings.enable_performance_monitoring):
+                raise AssertionError(f"Expected False, got {settings.enable_debug_mode}")
+            if not (settings.enable_performance_monitoring):
                 raise AssertionError(f"Expected True, got {settings.enable_performance_monitoring}")
 
     @pytest.mark.unit
@@ -607,7 +619,8 @@ class TestFlextLdapSettings:
             raise AssertionError(f"Expected True, got {settings.connection.use_ssl}")
         assert settings.enable_debug_mode is True
         if settings.enable_performance_monitoring:
-            raise AssertionError(f"Expected False, got {settings.enable_performance_monitoring}")\ n
+            raise AssertionError(f"Expected False, got {settings.enable_performance_monitoring}")
+
     @pytest.mark.unit
     def test_to_ldap_client_config(self) -> None:
         """Test conversion to LDAP client config format."""

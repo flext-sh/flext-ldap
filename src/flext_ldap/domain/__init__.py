@@ -103,7 +103,19 @@ __all__ = [
     "DirectoryAggregate",
     # Values
     "DistinguishedName",
+    "FlextLdapAuthenticationFailed",
+    "FlextLdapConnectionEstablished",
+    "FlextLdapConnectionLost",
+    "FlextLdapEntryCreated",
+    "FlextLdapEntryDeleted",
+    "FlextLdapEntryModified",
     "FlextLdapEntrySpecification",
+    "FlextLdapGroupMemberAdded",
+    "FlextLdapGroupMemberRemoved",
+    "FlextLdapGroupRepository",
+    "FlextLdapSchemaValidator",
+    "FlextLdapUserAuthenticated",
+    "FlextLdapUserRepository",
     "FlextLdapUserSpecification",
     # Entities
     "LDAPAttribute",  # → LDAPAttributes

@@ -14,7 +14,6 @@ import sys
 from pathlib import Path
 
 from flext_core import get_logger
-
 from flext_ldap import LDAPService
 from flext_ldap.domain.value_objects import FlextLdapCreateUserRequest
 

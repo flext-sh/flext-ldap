@@ -74,7 +74,7 @@ class FlextLdapConverter:
         self._type_cache[value_key] = detected_type
         return detected_type
 
-    def _detect_type_impl(self, value: object) -> FlextLdapDataType:
+    def _detect_type_impl(self, value: object) -> FlextLdapDataType:  # noqa: PLR0911
         """Implementation of type detection."""
         if isinstance(value, bool):
             return FlextLdapDataType.BOOLEAN

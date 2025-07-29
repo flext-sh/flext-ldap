@@ -10,7 +10,6 @@ Tests all application services with flext-core integration.
 from uuid import uuid4
 
 import pytest
-
 from flext_ldap.entities import (
     FlextLdapGroup,
     FlextLdapOperation,
@@ -45,7 +44,7 @@ class TestFlextLdapUserApplicationService:
         )
 
     @pytest.mark.asyncio
-    async def test_create_user(self, user_service, sample_user_request):
+    async def test_create_user(self, user_service, sample_user_request) -> None:
         """Test user creation."""
         result = await user_service.create_user(sample_user_request)
 
@@ -57,7 +56,7 @@ class TestFlextLdapUserApplicationService:
         assert result.data.cn == "John Doe"
 
     @pytest.mark.asyncio
-    async def test_get_user(self, user_service, sample_user_request):
+    async def test_get_user(self, user_service, sample_user_request) -> None:
         """Test user retrieval."""
         # Create user first
         create_result = await user_service.create_user(sample_user_request)
@@ -74,7 +73,7 @@ class TestFlextLdapUserApplicationService:
             raise AssertionError(msg)
 
     @pytest.mark.asyncio
-    async def test_find_user_by_dn(self, user_service, sample_user_request):
+    async def test_find_user_by_dn(self, user_service, sample_user_request) -> None:
         """Test finding user by DN."""
         # Create user first
         create_result = await user_service.create_user(sample_user_request)
@@ -89,7 +88,7 @@ class TestFlextLdapUserApplicationService:
             raise AssertionError(msg)
 
     @pytest.mark.asyncio
-    async def test_find_user_by_uid(self, user_service, sample_user_request):
+    async def test_find_user_by_uid(self, user_service, sample_user_request) -> None:
         """Test finding user by UID."""
         # Create user first
         create_result = await user_service.create_user(sample_user_request)
@@ -104,7 +103,7 @@ class TestFlextLdapUserApplicationService:
             raise AssertionError(msg)
 
     @pytest.mark.asyncio
-    async def test_update_user(self, user_service, sample_user_request):
+    async def test_update_user(self, user_service, sample_user_request) -> None:
         """Test user update."""
         # Create user first
         create_result = await user_service.create_user(sample_user_request)
@@ -123,7 +122,7 @@ class TestFlextLdapUserApplicationService:
         assert update_result.data.title == "Senior Developer"
 
     @pytest.mark.asyncio
-    async def test_lock_unlock_user(self, user_service, sample_user_request):
+    async def test_lock_unlock_user(self, user_service, sample_user_request) -> None:
         """Test user account locking/unlocking."""
         # Create user first
         create_result = await user_service.create_user(sample_user_request)
@@ -142,7 +141,7 @@ class TestFlextLdapUserApplicationService:
         assert unlock_result.data.is_active()
 
     @pytest.mark.asyncio
-    async def test_delete_user(self, user_service, sample_user_request):
+    async def test_delete_user(self, user_service, sample_user_request) -> None:
         """Test user deletion."""
         # Create user first
         create_result = await user_service.create_user(sample_user_request)
@@ -163,7 +162,7 @@ class TestFlextLdapUserApplicationService:
         assert get_result.data is None
 
     @pytest.mark.asyncio
-    async def test_list_users(self, user_service):
+    async def test_list_users(self, user_service) -> None:
         """Test user listing."""
         # Create multiple users
         for i in range(3):
@@ -200,7 +199,7 @@ class TestFlextLdapGroupService:
         return FlextLdapGroupService()
 
     @pytest.mark.asyncio
-    async def test_create_group(self, group_service):
+    async def test_create_group(self, group_service) -> None:
         """Test group creation."""
         result = await group_service.create_group(
             dn="cn=developers,ou=groups,dc=example,dc=com",
@@ -217,7 +216,7 @@ class TestFlextLdapGroupService:
         assert len(result.data.members) == 1
 
     @pytest.mark.asyncio
-    async def test_group_member_management(self, group_service):
+    async def test_group_member_management(self, group_service) -> None:
         """Test group member operations."""
         # Create group
         create_result = await group_service.create_group(
@@ -245,7 +244,7 @@ class TestFlextLdapGroupService:
         assert not remove_result.data.has_member("cn=user1,ou=users,dc=example,dc=com")
 
     @pytest.mark.asyncio
-    async def test_find_group_by_dn(self, group_service):
+    async def test_find_group_by_dn(self, group_service) -> None:
         """Test finding group by DN."""
         dn = "cn=test,ou=groups,dc=example,dc=com"
 
@@ -271,7 +270,7 @@ class TestFlextLdapConnectionApplicationService:
         return FlextLdapConnectionApplicationService()
 
     @pytest.mark.asyncio
-    async def test_create_connection(self, connection_service):
+    async def test_create_connection(self, connection_service) -> None:
         """Test connection creation."""
         result = await connection_service.create_connection(
             server_uri="ldap://test.example.com:389",
@@ -285,7 +284,7 @@ class TestFlextLdapConnectionApplicationService:
         assert result is not None
 
     @pytest.mark.asyncio
-    async def test_connection_operations(self, connection_service):
+    async def test_connection_operations(self, connection_service) -> None:
         """Test connection operations."""
         # Test basic connection service functionality
         # In real scenario, we'd have proper LDAP server setup
@@ -305,7 +304,7 @@ class TestFlextLdapOperationService:
         return FlextLdapOperationService()
 
     @pytest.mark.asyncio
-    async def test_create_operation(self, operation_service):
+    async def test_create_operation(self, operation_service) -> None:
         """Test operation creation."""
         connection_id = str(uuid4())
 
@@ -325,7 +324,7 @@ class TestFlextLdapOperationService:
         assert result.data.target_dn == "ou=users,dc=example,dc=com"
 
     @pytest.mark.asyncio
-    async def test_complete_operation(self, operation_service):
+    async def test_complete_operation(self, operation_service) -> None:
         """Test operation completion."""
         connection_id = str(uuid4())
 
@@ -356,7 +355,7 @@ class TestFlextLdapOperationService:
         assert complete_result.data.is_completed()
 
     @pytest.mark.asyncio
-    async def test_list_operations(self, operation_service):
+    async def test_list_operations(self, operation_service) -> None:
         """Test operation listing."""
         connection_id = str(uuid4())
 
@@ -387,7 +386,7 @@ class TestServiceIntegration:
     """Test service integration patterns."""
 
     @pytest.mark.asyncio
-    async def test_flext_core_integration(self):
+    async def test_flext_core_integration(self) -> None:
         """Test services integrate properly with flext-core patterns."""
         user_service = FlextLdapUserApplicationService()
 
@@ -406,7 +405,7 @@ class TestServiceIntegration:
         assert hasattr(result, "data")
         assert result.is_success
 
-    def test_service_inheritance_hierarchy(self):
+    def test_service_inheritance_hierarchy(self) -> None:
         """Test services properly inherit from base classes."""
         user_service = FlextLdapUserApplicationService()
         group_service = FlextLdapGroupService()
@@ -418,7 +417,7 @@ class TestServiceIntegration:
         assert hasattr(group_service, "_repository") or hasattr(group_service, "_entities")
 
     @pytest.mark.asyncio
-    async def test_error_handling_patterns(self):
+    async def test_error_handling_patterns(self) -> None:
         """Test consistent error handling across services."""
         user_service = FlextLdapUserApplicationService()
 
@@ -436,7 +435,7 @@ class TestServiceIntegration:
         assert result.error is not None
 
     @pytest.mark.asyncio
-    async def test_service_composition(self):
+    async def test_service_composition(self) -> None:
         """Test services can be composed together."""
         user_service = FlextLdapUserApplicationService()
         group_service = FlextLdapGroupService()
@@ -472,7 +471,7 @@ class TestServiceIntegrationComplete:
     """Complete integration tests for service layer."""
 
     @pytest.mark.asyncio
-    async def test_user_group_workflow(self):
+    async def test_user_group_workflow(self) -> None:
         """Test complete user-group workflow."""
         user_service = FlextLdapUserApplicationService()
         group_service = FlextLdapGroupService()
@@ -513,7 +512,7 @@ class TestServiceIntegrationComplete:
             raise AssertionError(msg)
 
     @pytest.mark.asyncio
-    async def test_operation_tracking_workflow(self):
+    async def test_operation_tracking_workflow(self) -> None:
         """Test operation tracking across services."""
         operation_service = FlextLdapOperationService()
         connection_id = str(uuid4())

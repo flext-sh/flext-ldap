@@ -9,7 +9,6 @@ Tests all value objects with comprehensive validation.
 
 
 import pytest
-
 from flext_ldap.values import (
     FlextLdapAttributesValue,
     FlextLdapConnectionInfo,
@@ -26,7 +25,7 @@ from flext_ldap.values import (
 class TestFlextLdapDistinguishedName:
     """Test DN value object."""
 
-    def test_dn_creation_valid(self):
+    def test_dn_creation_valid(self) -> None:
         """Test DN creation with valid format."""
         dn = FlextLdapDistinguishedName(value="cn=john,ou=users,dc=example,dc=com")
 
@@ -36,7 +35,7 @@ class TestFlextLdapDistinguishedName:
             raise AssertionError(msg)
         assert dn.get_rdn() == "cn=john"
 
-    def test_dn_creation_invalid(self):
+    def test_dn_creation_invalid(self) -> None:
         """Test DN creation with invalid format."""
         with pytest.raises(ValueError):
             FlextLdapDistinguishedName(value="invalid-dn")
@@ -44,7 +43,7 @@ class TestFlextLdapDistinguishedName:
         with pytest.raises(ValueError):
             FlextLdapDistinguishedName(value="")
 
-    def test_dn_parent_operations(self):
+    def test_dn_parent_operations(self) -> None:
         """Test DN parent operations."""
         dn = FlextLdapDistinguishedName(value="cn=john,ou=users,dc=example,dc=com")
 
@@ -58,7 +57,7 @@ class TestFlextLdapDistinguishedName:
         root_dn = FlextLdapDistinguishedName(value="dc=com")
         assert root_dn.get_parent_dn() is None
 
-    def test_dn_components(self):
+    def test_dn_components(self) -> None:
         """Test DN component operations."""
         dn = FlextLdapDistinguishedName(value="cn=john,ou=users,dc=example,dc=com")
 
@@ -68,7 +67,7 @@ class TestFlextLdapDistinguishedName:
             msg = f"Expected {expected}, got {components}"
             raise AssertionError(msg)
 
-    def test_dn_hierarchy(self):
+    def test_dn_hierarchy(self) -> None:
         """Test DN hierarchy relationships."""
         child_dn = FlextLdapDistinguishedName(value="cn=john,ou=users,dc=example,dc=com")
         parent_dn = FlextLdapDistinguishedName(value="ou=users,dc=example,dc=com")
@@ -77,7 +76,7 @@ class TestFlextLdapDistinguishedName:
         assert child_dn.is_child_of(parent_dn)
         assert not child_dn.is_child_of(unrelated_dn)
 
-    def test_dn_validation_rules(self):
+    def test_dn_validation_rules(self) -> None:
         """Test DN domain validation."""
         dn = FlextLdapDistinguishedName(value="cn=test,dc=example,dc=com")
 
@@ -95,7 +94,7 @@ class TestFlextLdapDistinguishedName:
 class TestFlextLdapFilterValue:
     """Test LDAP filter value object."""
 
-    def test_filter_creation_valid(self):
+    def test_filter_creation_valid(self) -> None:
         """Test filter creation with valid format."""
         filter_obj = FlextLdapFilterValue(value="(cn=john)")
 
@@ -104,7 +103,7 @@ class TestFlextLdapFilterValue:
             msg = f"Expected {"(cn=john)"}, got {filter_obj!s}"
             raise AssertionError(msg)
 
-    def test_filter_creation_invalid(self):
+    def test_filter_creation_invalid(self) -> None:
         """Test filter creation with invalid format."""
         with pytest.raises(ValueError):
             FlextLdapFilterValue(value="cn=john")  # Missing parentheses
@@ -112,21 +111,21 @@ class TestFlextLdapFilterValue:
         with pytest.raises(ValueError):
             FlextLdapFilterValue(value="(cn=john")  # Unbalanced
 
-    def test_filter_equals(self):
+    def test_filter_equals(self) -> None:
         """Test equals filter creation."""
         filter_obj = FlextLdapFilterValue.equals("cn", "john")
         if filter_obj.value != "(cn=john)":
             msg = f"Expected {"(cn=john)"}, got {filter_obj.value}"
             raise AssertionError(msg)
 
-    def test_filter_present(self):
+    def test_filter_present(self) -> None:
         """Test presence filter creation."""
         filter_obj = FlextLdapFilterValue.present("mail")
         if filter_obj.value != "(mail=*)":
             msg = f"Expected {"(mail=*)"}, got {filter_obj.value}"
             raise AssertionError(msg)
 
-    def test_filter_and_combination(self):
+    def test_filter_and_combination(self) -> None:
         """Test AND filter combination."""
         filter1 = FlextLdapFilterValue.equals("cn", "john")
         filter2 = FlextLdapFilterValue.equals("ou", "users")
@@ -136,7 +135,7 @@ class TestFlextLdapFilterValue:
             msg = f"Expected {"(&(cn=john)(ou=users))"}, got {combined.value}"
             raise AssertionError(msg)
 
-    def test_filter_or_combination(self):
+    def test_filter_or_combination(self) -> None:
         """Test OR filter combination."""
         filter1 = FlextLdapFilterValue.equals("cn", "john")
         filter2 = FlextLdapFilterValue.equals("cn", "jane")
@@ -146,7 +145,7 @@ class TestFlextLdapFilterValue:
             msg = f"Expected {"(|(cn=john)(cn=jane))"}, got {combined.value}"
             raise AssertionError(msg)
 
-    def test_filter_enhanced_methods(self):
+    def test_filter_enhanced_methods(self) -> None:
         """Test enhanced filter methods from models.py consolidation."""
         # Test contains
         contains_filter = FlextLdapFilterValue.contains("mail", "example")
@@ -172,7 +171,7 @@ class TestFlextLdapFilterValue:
             msg = f"Expected {"(!(cn=REDACTED_LDAP_BIND_PASSWORD))"}, got {not_filter.value}"
             raise AssertionError(msg)
 
-    def test_filter_operators(self):
+    def test_filter_operators(self) -> None:
         """Test filter operators from models.py consolidation."""
         filter1 = FlextLdapFilterValue.equals("cn", "john")
         filter2 = FlextLdapFilterValue.equals("ou", "users")
@@ -189,7 +188,7 @@ class TestFlextLdapFilterValue:
             msg = f"Expected {"(|(cn=john)(ou=users))"}, got {or_result.value}"
             raise AssertionError(msg)
 
-    def test_filter_business_filters(self):
+    def test_filter_business_filters(self) -> None:
         """Test business-specific filters."""
         # Test person filter
         person_filter = FlextLdapFilterValue.person_filter()
@@ -208,7 +207,7 @@ class TestFlextLdapFilterValue:
 class TestFlextLdapUri:
     """Test LDAP URI value object."""
 
-    def test_uri_creation_valid(self):
+    def test_uri_creation_valid(self) -> None:
         """Test URI creation with valid format."""
         uri = FlextLdapUri(value="ldap://example.com:389")
 
@@ -222,7 +221,7 @@ class TestFlextLdapUri:
             raise AssertionError(msg)
         assert not uri.is_secure
 
-    def test_uri_creation_secure(self):
+    def test_uri_creation_secure(self) -> None:
         """Test secure URI creation."""
         uri = FlextLdapUri(value="ldaps://example.com:636")
 
@@ -231,7 +230,7 @@ class TestFlextLdapUri:
             msg = f"Expected {636}, got {uri.port}"
             raise AssertionError(msg)
 
-    def test_uri_creation_invalid(self):
+    def test_uri_creation_invalid(self) -> None:
         """Test URI creation with invalid format."""
         with pytest.raises(ValueError):
             FlextLdapUri(value="http://example.com")  # Wrong scheme
@@ -239,7 +238,7 @@ class TestFlextLdapUri:
         with pytest.raises(ValueError):
             FlextLdapUri(value="ldap://")  # No hostname
 
-    def test_uri_port_defaults(self):
+    def test_uri_port_defaults(self) -> None:
         """Test URI port defaults."""
         ldap_uri = FlextLdapUri(value="ldap://example.com")
         if ldap_uri.port != 389:
@@ -255,7 +254,7 @@ class TestFlextLdapUri:
 class TestFlextLdapScopeEnum:
     """Test LDAP scope enumeration."""
 
-    def test_scope_values(self):
+    def test_scope_values(self) -> None:
         """Test scope enumeration values."""
         if FlextLdapScopeEnum.BASE != "base":
             msg = f"Expected {"base"}, got {FlextLdapScopeEnum.BASE}"
@@ -265,7 +264,7 @@ class TestFlextLdapScopeEnum:
             msg = f"Expected {"subtree"}, got {FlextLdapScopeEnum.SUBTREE}"
             raise AssertionError(msg)
 
-    def test_scope_legacy_mappings(self):
+    def test_scope_legacy_mappings(self) -> None:
         """Test legacy scope mappings from models.py consolidation."""
         if FlextLdapScopeEnum.ONE != "onelevel":
             msg = f"Expected {"onelevel"}, got {FlextLdapScopeEnum.ONE}"
@@ -276,7 +275,7 @@ class TestFlextLdapScopeEnum:
 class TestFlextLdapObjectClass:
     """Test LDAP object class value object."""
 
-    def test_object_class_creation(self):
+    def test_object_class_creation(self) -> None:
         """Test object class creation."""
         obj_class = FlextLdapObjectClass(name="inetOrgPerson")
 
@@ -285,7 +284,7 @@ class TestFlextLdapObjectClass:
             msg = f"Expected {"inetOrgPerson"}, got {obj_class!s}"
             raise AssertionError(msg)
 
-    def test_object_class_validation(self):
+    def test_object_class_validation(self) -> None:
         """Test object class name validation."""
         with pytest.raises(ValueError):
             FlextLdapObjectClass(name="")  # Empty name
@@ -297,7 +296,7 @@ class TestFlextLdapObjectClass:
 class TestFlextLdapAttributesValue:
     """Test LDAP attributes value object."""
 
-    def test_attributes_creation(self):
+    def test_attributes_creation(self) -> None:
         """Test attributes creation."""
         attrs = FlextLdapAttributesValue(attributes={
             "cn": ["John Doe"],
@@ -312,7 +311,7 @@ class TestFlextLdapAttributesValue:
         assert len(attrs.get_values("mail")) == EXPECTED_BULK_SIZE
         assert attrs.has_attribute("objectClass")
 
-    def test_attributes_operations(self):
+    def test_attributes_operations(self) -> None:
         """Test attribute operations."""
         attrs = FlextLdapAttributesValue()
 
@@ -327,7 +326,7 @@ class TestFlextLdapAttributesValue:
         removed = updated.remove_value("cn", "John Doe")
         assert not removed.has_attribute("cn")
 
-    def test_attributes_validation(self):
+    def test_attributes_validation(self) -> None:
         """Test attributes domain validation."""
         # Test invalid attributes
         invalid_attrs = FlextLdapAttributesValue.__new__(FlextLdapAttributesValue)
@@ -340,7 +339,7 @@ class TestFlextLdapAttributesValue:
 class TestFlextLdapConnectionInfo:
     """Test LDAP connection info value object."""
 
-    def test_connection_info_creation(self):
+    def test_connection_info_creation(self) -> None:
         """Test connection info creation."""
         uri = FlextLdapUri(value="ldaps://example.com:636")
 
@@ -357,7 +356,7 @@ class TestFlextLdapConnectionInfo:
             raise AssertionError(msg)
         assert "secure" in conn_info.connection_string
 
-    def test_connection_info_validation(self):
+    def test_connection_info_validation(self) -> None:
         """Test connection info validation."""
         uri = FlextLdapUri(value="ldap://example.com")
 
@@ -380,7 +379,7 @@ class TestFlextLdapConnectionInfo:
 class TestFlextLdapCreateUserRequest:
     """Test user creation request value object."""
 
-    def test_user_request_creation(self):
+    def test_user_request_creation(self) -> None:
         """Test user request creation."""
         request = FlextLdapCreateUserRequest(
             dn="cn=john.doe,ou=users,dc=example,dc=com",
@@ -400,7 +399,7 @@ class TestFlextLdapCreateUserRequest:
             msg = f"Expected {"john.doe@example.com"}, got {request.mail}"
             raise AssertionError(msg)
 
-    def test_user_request_validation(self):
+    def test_user_request_validation(self) -> None:
         """Test user request validation."""
         # Test valid request
         request = FlextLdapCreateUserRequest(
@@ -421,7 +420,7 @@ class TestFlextLdapCreateUserRequest:
                 mail="invalid-email",
             )
 
-    def test_user_request_field_validation(self):
+    def test_user_request_field_validation(self) -> None:
         """Test individual field validation."""
         # Test empty required fields
         with pytest.raises(ValueError):
@@ -444,7 +443,7 @@ class TestFlextLdapCreateUserRequest:
 class TestFlextLdapExtendedEntry:
     """Test extended LDAP entry from models.py consolidation."""
 
-    def test_extended_entry_creation(self):
+    def test_extended_entry_creation(self) -> None:
         """Test extended entry creation."""
         entry = FlextLdapExtendedEntry(
             dn="cn=john,ou=users,dc=example,dc=com",
@@ -465,7 +464,7 @@ class TestFlextLdapExtendedEntry:
             msg = f"Expected {"john@example.com"}, got {entry.get_mail()}"
             raise AssertionError(msg)
 
-    def test_extended_entry_type_detection(self):
+    def test_extended_entry_type_detection(self) -> None:
         """Test entry type detection methods."""
         person_entry = FlextLdapExtendedEntry(
             dn="cn=john,dc=example,dc=com",
@@ -483,7 +482,7 @@ class TestFlextLdapExtendedEntry:
         assert group_entry.is_group()
         assert not group_entry.is_person()
 
-    def test_extended_entry_attribute_access(self):
+    def test_extended_entry_attribute_access(self) -> None:
         """Test extended entry attribute access methods."""
         entry = FlextLdapExtendedEntry(
             dn="cn=test,dc=example,dc=com",
@@ -516,7 +515,7 @@ class TestFlextLdapExtendedEntry:
 class TestValueObjectImmutability:
     """Test immutability patterns across value objects."""
 
-    def test_dn_immutability(self):
+    def test_dn_immutability(self) -> None:
         """Test DN immutability."""
         dn = FlextLdapDistinguishedName(value="cn=test,dc=example,dc=com")
 
@@ -530,7 +529,7 @@ class TestValueObjectImmutability:
             raise AssertionError(msg)
         assert parent_dn is not dn
 
-    def test_attributes_immutability(self):
+    def test_attributes_immutability(self) -> None:
         """Test attributes immutability."""
         attrs = FlextLdapAttributesValue(attributes={"cn": ["test"]})
 

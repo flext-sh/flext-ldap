@@ -45,7 +45,8 @@ class TestSchemaAttribute:
             raise AssertionError(f"Expected {"Common name"}, got {attr.description}")
         assert attr.usage == AttributeUsage.USER_APPLICATIONS
         if attr.is_single_value:
-            raise AssertionError(f"Expected False, got {attr.is_single_value}")\ n
+            raise AssertionError(f"Expected False, got {attr.is_single_value}")
+
     def test_schema_attribute_primary_name(self) -> None:
         """Test primary name property."""
         # With names
@@ -69,7 +70,8 @@ class TestSchemaAttribute:
         if not (attr.has_name("commonName")):
             raise AssertionError(f"Expected True, got {attr.has_name("commonName")}")
         if attr.has_name("unknown"):
-            raise AssertionError(f"Expected False, got {attr.has_name("unknown")}")\ n
+            raise AssertionError(f"Expected False, got {attr.has_name("unknown")}")
+
     def test_schema_attribute_to_dict(self) -> None:
         """Test to_dict conversion."""
         attr = SchemaAttribute(
@@ -143,7 +145,8 @@ class TestSchemaObjectClass:
         if not (oc.has_name("individual")):
             raise AssertionError(f"Expected True, got {oc.has_name("individual")}")
         if oc.has_name("unknown"):
-            raise AssertionError(f"Expected False, got {oc.has_name("unknown")}")\ n
+            raise AssertionError(f"Expected False, got {oc.has_name("unknown")}")
+
     def test_schema_object_class_get_all_attributes(self) -> None:
         """Test get_all_attributes method with inheritance."""
         # Create schema cache
@@ -236,7 +239,8 @@ class TestSchemaDiscoveryResult:
             raise AssertionError(f"Expected {{}}, got {result.attributes}")
         assert result.discovery_errors == []
         if result.cache_hit:
-            raise AssertionError(f"Expected False, got {result.cache_hit}")\ n
+            raise AssertionError(f"Expected False, got {result.cache_hit}")
+
     def test_schema_discovery_result_successful(self) -> None:
         """Test is_successful property."""
         # Successful result
@@ -247,7 +251,8 @@ class TestSchemaDiscoveryResult:
         # Failed result
         result2 = SchemaDiscoveryResult(discovery_errors=["Error 1", "Error 2"])
         if result2.is_successful:
-            raise AssertionError(f"Expected False, got {result2.is_successful}")\ n
+            raise AssertionError(f"Expected False, got {result2.is_successful}")
+
     def test_schema_discovery_result_total_elements(self) -> None:
         """Test total_elements property."""
         oc = SchemaObjectClass(oid="2.5.6.6", names=["person"])
@@ -335,7 +340,8 @@ class TestSchemaDiscoveryService:
             raise AssertionError(f"Expected {"person"} in {result.data.object_classes}")
         assert "cn" in result.data.attributes
         if result.data.cache_hit:
-            raise AssertionError(f"Expected False, got {result.data.cache_hit}")\ n
+            raise AssertionError(f"Expected False, got {result.data.cache_hit}")
+
     @pytest.mark.asyncio
     async def test_discover_schema_caching(
         self,
@@ -348,7 +354,8 @@ class TestSchemaDiscoveryService:
         assert result1.is_success
         assert result1.data is not None
         if result1.data.cache_hit:
-            raise AssertionError(f"Expected False, got {result1.data.cache_hit}")\ n
+            raise AssertionError(f"Expected False, got {result1.data.cache_hit}")
+
         # Second discovery - should be from cache
         result2 = await discovery_service.discover_schema(mock_connection)
         assert result2.is_success
@@ -374,7 +381,8 @@ class TestSchemaDiscoveryService:
         assert result.is_success
         assert result.data is not None
         if result.data.cache_hit:
-            raise AssertionError(f"Expected False, got {result.data.cache_hit}")\ n
+            raise AssertionError(f"Expected False, got {result.data.cache_hit}")
+
     @pytest.mark.asyncio
     async def test_discover_schema_caching_disabled(
         self,
@@ -392,7 +400,8 @@ class TestSchemaDiscoveryService:
         assert result1.data is not None
         assert result2.data is not None
         if result1.data.cache_hit:
-            raise AssertionError(f"Expected False, got {result1.data.cache_hit}")\ n        assert result2.data.cache_hit is False
+            raise AssertionError(f"Expected False, got {result1.data.cache_hit}")
+        assert result2.data.cache_hit is False
 
     @pytest.mark.asyncio
     async def test_get_object_class_found(
@@ -500,7 +509,8 @@ class TestSchemaDiscoveryService:
         assert result.is_success
         assert result.data is not None
         if result.data["is_valid"]:
-            raise AssertionError(f"Expected False, got {result.data["is_valid"]}")\ n        assert "sn" in result.data["missing_required"]
+            raise AssertionError(f"Expected False, got {result.data["is_valid"]}")
+        assert "sn" in result.data["missing_required"]
 
     @pytest.mark.asyncio
     async def test_validate_object_structure_unknown_attributes(
@@ -547,7 +557,8 @@ class TestSchemaDiscoveryService:
         assert result.is_success
         assert result.data is not None
         if result.data["is_valid"]:
-            raise AssertionError(f"Expected False, got {result.data["is_valid"]}")\ n        assert len(result.data["errors"]) > 0
+            raise AssertionError(f"Expected False, got {result.data["is_valid"]}")
+        assert len(result.data["errors"]) > 0
         if any("Unknown object class" in error for error not in result.data["errors"]):
             raise AssertionError(f"Expected {any("Unknown object class" in error for error} in {result.data["errors"])}")
 
@@ -595,8 +606,8 @@ class TestSchemaDiscoveryService:
         # Should return None for expired cache
         cached_result = discovery_service._get_cached_schema("test_key")
         assert cached_result is None
-        if "test_key" not not in discovery_service._schema_cache:
-            raise AssertionError(f"Expected {"test_key" not} in {discovery_service._schema_cache}")
+        if "test_key" not in discovery_service._schema_cache:
+            raise AssertionError(f"Expected {"test_key" not in {discovery_service._schema_cache}")
 
     def test_clear_cache(self, discovery_service: SchemaDiscoveryService) -> None:
         """Test cache clearing."""

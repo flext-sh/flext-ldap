@@ -10,9 +10,8 @@ import inspect
 from abc import ABC
 from typing import Any
 
-import pytest
-
 import flext_ldap.domain.ports
+import pytest
 from flext_ldap.domain import ports
 
 
