@@ -347,6 +347,77 @@ class FlextLdapApi:
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Health check failed: {e}")
 
+    async def add_entry(
+        self,
+        session_id: str,
+        dn: str,
+        attributes: dict[str, list[str]],
+    ) -> FlextResult[bool]:
+        """Generic add entry method for LDAP operations.
+
+        Args:
+            session_id: Active session identifier
+            dn: Distinguished name for the new entry
+            attributes: Dictionary of attribute name to values list
+
+        Returns:
+            FlextResult containing success status
+
+        """
+        try:
+            if session_id not in self._connections:
+                return FlextResult.fail(f"Session {session_id} not found")
+
+            # Extract objectClass from attributes
+            object_classes = attributes.get("objectClass", ["top"])
+            if not isinstance(object_classes, list):
+                object_classes = [str(object_classes)]
+
+            # Use the client add method with correct signature
+            self._connections[session_id]
+            result = await self._client.add(dn, object_classes, attributes)
+
+            if result.is_success:
+                logger.debug("Added entry: %s", dn)
+                return FlextResult.ok(data=True)
+            return FlextResult.fail(f"Failed to add entry: {result.error}")
+
+        except (ConnectionError, ValueError, TypeError) as e:
+            return FlextResult.fail(f"Add entry failed: {e}")
+
+    async def modify_entry(
+        self,
+        session_id: str,
+        dn: str,
+        attributes: dict[str, list[str]],
+    ) -> FlextResult[bool]:
+        """Generic modify entry method for LDAP operations.
+
+        Args:
+            session_id: Active session identifier
+            dn: Distinguished name for the entry to modify
+            attributes: Dictionary of attribute name to values list for modification
+
+        Returns:
+            FlextResult containing success status
+
+        """
+        try:
+            if session_id not in self._connections:
+                return FlextResult.fail(f"Session {session_id} not found")
+
+            # Use the client modify method with correct signature
+            self._connections[session_id]
+            result = await self._client.modify(dn, attributes)
+
+            if result.is_success:
+                logger.debug("Modified entry: %s", dn)
+                return FlextResult.ok(data=True)
+            return FlextResult.fail(f"Failed to modify entry: {result.error}")
+
+        except (ConnectionError, ValueError, TypeError) as e:
+            return FlextResult.fail(f"Modify entry failed: {e}")
+
 
 # Factory function for easy instantiation
 def get_ldap_api(config: FlextLdapConnectionConfig | None = None) -> FlextLdapApi:

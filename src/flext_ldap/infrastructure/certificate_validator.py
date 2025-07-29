@@ -14,7 +14,7 @@ import socket
 import ssl
 from datetime import UTC, datetime
 from ssl import SSLError
-from typing import TYPE_CHECKING, Any, cast as type_cast
+from typing import TYPE_CHECKING, cast as type_cast
 
 from flext_core import FlextResult, get_logger
 
@@ -50,7 +50,7 @@ class FlextLdapCertificateValidationService:
         self,
         cert_chain: list[bytes],
         context: CertificateValidationContext,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Validate a certificate chain."""
         try:
             # Validate input
@@ -182,7 +182,7 @@ class FlextLdapCertificateValidationService:
         hostname: str,
         port: int,
         context: CertificateValidationContext,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Validate server certificate by connecting to it."""
         try:
             # Create SSL context
@@ -238,7 +238,7 @@ class FlextLdapCertificateValidationService:
     async def get_certificate_info(
         self,
         cert_data: bytes,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Extract certificate information from certificate data."""
         try:
             # Parse certificate
@@ -251,7 +251,7 @@ class FlextLdapCertificateValidationService:
     async def create_ssl_context(
         self,
         config: SSLContextConfig,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Create SSL context for secure connections."""
         try:
             # Create SSL context
@@ -305,7 +305,7 @@ class FlextLdapCertificateValidationService:
     async def _extract_certificate_info(
         self,
         cert: x509.Certificate,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Extract certificate information from X.509 certificate."""
         try:
             # Extract subject and issuer
@@ -380,7 +380,7 @@ class FlextLdapCertificateValidationService:
                 # Extract DNS names from SAN extension
                 # Cast to make mypy understand that SAN is iterable
 
-                san_iterable = type_cast("list[Any]", san_value)
+                san_iterable = type_cast("list[object]", san_value)
                 san_names = [
                     name.value
                     for name in san_iterable

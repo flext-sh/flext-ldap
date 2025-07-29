@@ -14,9 +14,13 @@ from flext_ldap import get_ldap_api
 api = get_ldap_api()
 
 # Connect with session management
-async with api.connection("ldap://localhost", "cn=admin,dc=example,dc=com", "admin") as session:
+async with api.connection(
+    "ldap://localhost", "cn=admin,dc=example,dc=com", "admin"
+) as session:
     # Search users
-    users = await api.search(session, "ou=users,dc=example,dc=com", "(objectClass=person)")
+    users = await api.search(
+        session, "ou=users,dc=example,dc=com", "(objectClass=person)"
+    )
 
     # Create user
     user_request = FlextLdapCreateUserRequest(

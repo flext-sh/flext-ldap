@@ -6,7 +6,7 @@ Single unified service handles all LDAP entity types through composition.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 from uuid import UUID, uuid4
 
 from flext_core import FlextResult
@@ -43,17 +43,19 @@ class FlextLdapService(FlextLdapDomainService[TLdapEntity]):
     def __init__(self, entity_type: type[TLdapEntity]) -> None:
         """Initialize service for specific entity type."""
         super().__init__()
-        self._entity_type = entity_type
+        self._entity_type: type[TLdapEntity] = entity_type
         self._type_name = entity_type.__name__.lower().replace("flextldap", "")
 
-    async def create(self, **kwargs: str | int | bool | list[str] | dict[str, Any]) -> FlextResult[TLdapEntity]:
+    async def create(self, **kwargs: str | int | bool | list[str] | dict[str, object]) -> FlextResult[TLdapEntity]:
         """Create entity of configured type."""
         try:
             # Ensure ID is set
             if "id" not in kwargs or not kwargs["id"]:
                 kwargs["id"] = str(uuid4())
 
-            entity = self._entity_type(**kwargs)
+            # Type cast kwargs to ensure compatibility with entity constructor
+            entity_kwargs = {str(k): v for k, v in kwargs.items()}
+            entity = self._entity_type(**entity_kwargs)  # type: ignore[misc]
             return await self.create_entity(entity)
         except ValueError as e:
             return FlextResult.fail(f"Failed to create {self._type_name} - invalid data: {e}")

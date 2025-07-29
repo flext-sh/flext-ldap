@@ -13,7 +13,6 @@ from __future__ import annotations
 from dataclasses import field
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
 from flext_core import FlextEntity, FlextResult
@@ -104,7 +103,7 @@ class FlextLdapCertificateValidationContext(FlextEntity):
     minimum_tls_version: str = "TLSv1.2"
     maximum_tls_version: str = "TLSv1.3"
 
-    def model_post_init(self, __context: Any, /) -> None:  # type: ignore[explicit-any]
+    def model_post_init(self, __context: object, /) -> None:  # type: ignore[explicit-any]
         """Post-initialization validation."""
         if self.port <= 0 or self.port > 65535:
             msg = "Port must be between 1 and 65535"
@@ -176,7 +175,7 @@ class FlextLdapSSLContextConfig(FlextEntity):
     ciphers: str | None = None
     options: list[str] = field(default_factory=list)
 
-    def model_post_init(self, __context: Any, /) -> None:  # type: ignore[explicit-any]
+    def model_post_init(self, __context: object, /) -> None:  # type: ignore[explicit-any]
         """Post-initialization validation."""
         valid_verify_modes = ["CERT_NONE", "CERT_OPTIONAL", "CERT_REQUIRED"]
         if self.verify_mode not in valid_verify_modes:
