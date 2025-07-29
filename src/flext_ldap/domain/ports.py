@@ -6,14 +6,14 @@ Using clean architecture patterns - NO duplication with flext-core.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
 
 if TYPE_CHECKING:
     from flext_core import FlextResult
 
-    from flext_ldap.domain.entities import FlextLdapConnection
+    from flext_ldap.entities import FlextLdapConnection
 
 
 class FlextLdapConnectionService(ABC):
@@ -25,12 +25,12 @@ class FlextLdapConnectionService(ABC):
         server_url: str,
         bind_dn: str | None = None,
         password: str | None = None,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Connect to LDAP server."""
         ...
 
     @abstractmethod
-    async def disconnect(self, connection: FlextLdapConnection) -> FlextResult[Any]:
+    async def disconnect(self, connection: FlextLdapConnection) -> FlextResult[object]:
         """Disconnect from LDAP server."""
         ...
 
@@ -40,12 +40,12 @@ class FlextLdapConnectionService(ABC):
         connection: FlextLdapConnection,
         bind_dn: str,
         password: str,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Bind to LDAP server with credentials."""
         ...
 
     @abstractmethod
-    async def unbind(self, connection: FlextLdapConnection) -> FlextResult[Any]:
+    async def unbind(self, connection: FlextLdapConnection) -> FlextResult[object]:
         """Unbind from LDAP server."""
         ...
 
@@ -53,7 +53,7 @@ class FlextLdapConnectionService(ABC):
     async def test_connection(
         self,
         connection: FlextLdapConnection,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Test LDAP connection health."""
         ...
 
@@ -61,7 +61,7 @@ class FlextLdapConnectionService(ABC):
     async def get_connection_info(
         self,
         connection: FlextLdapConnection,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Get connection information."""
         ...
 
@@ -77,7 +77,7 @@ class FlextLdapSearchService(ABC):
         filter_string: str,
         attributes: list[str] | None = None,
         scope: str = "sub",
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Search LDAP entries."""
         ...
 
@@ -87,7 +87,7 @@ class FlextLdapSearchService(ABC):
         connection: FlextLdapConnection,
         base_dn: str,
         filter_string: str | None = None,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Search for LDAP users."""
         ...
 
@@ -101,7 +101,7 @@ class FlextLdapUserService(ABC):
         connection: FlextLdapConnection,
         dn: str,
         attributes: dict[str, list[str]],
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Create a new LDAP user."""
         ...
 
@@ -110,7 +110,7 @@ class FlextLdapUserService(ABC):
         self,
         connection: FlextLdapConnection,
         dn: str,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Get user by distinguished name."""
         ...
 
@@ -120,7 +120,7 @@ class FlextLdapUserService(ABC):
         connection: FlextLdapConnection,
         dn: str,
         modifications: dict[str, list[str]],
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Update user attributes."""
         ...
 
@@ -129,7 +129,7 @@ class FlextLdapUserService(ABC):
         self,
         connection: FlextLdapConnection,
         dn: str,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Delete user."""
         ...
 
@@ -139,7 +139,7 @@ class FlextLdapUserService(ABC):
         connection: FlextLdapConnection,
         base_dn: str,
         limit: int = 100,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """List users in organizational unit."""
         ...
 
@@ -151,7 +151,7 @@ class FlextLdapSchemaService(ABC):
     async def get_schema(
         self,
         connection: FlextLdapConnection,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Get LDAP schema information."""
         ...
 
@@ -161,7 +161,7 @@ class FlextLdapSchemaService(ABC):
         connection: FlextLdapConnection,
         dn: str,
         attributes: dict[str, list[str]],
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Validate entry against schema."""
         ...
 
@@ -175,7 +175,7 @@ class FlextLdapMigrationService(ABC):
         connection: FlextLdapConnection,
         base_dn: str,
         output_format: str = "ldif",
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Export LDAP entries."""
         ...
 
@@ -185,7 +185,7 @@ class FlextLdapMigrationService(ABC):
         connection: FlextLdapConnection,
         data: str,
         format_type: str = "ldif",
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Import LDAP entries."""
         ...
 
@@ -195,6 +195,6 @@ class FlextLdapMigrationService(ABC):
         source_connection: FlextLdapConnection,
         target_connection: FlextLdapConnection,
         base_dn: str,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Migrate users between LDAP servers."""
         ...

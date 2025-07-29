@@ -48,8 +48,11 @@ class TestFlextLdapConnectionRepositoryImpl:
         """Test successful connection save."""
         result = await repository.save(mock_connection)
 
-        assert result.is_success is True
-        assert result.data == mock_connection
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if result.data != mock_connection:
+            raise AssertionError(f"Expected {mock_connection}, got {result.data}")
         assert repository._connections[mock_connection.id] == mock_connection
 
     async def test_save_exception(
@@ -76,8 +79,11 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         result = await repository.find_by_id(UUID(mock_connection.id))
 
-        assert result.is_success is True
-        assert result.data == mock_connection
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if result.data != mock_connection:
+            raise AssertionError(f"Expected {mock_connection}, got {result.data}")
 
     async def test_find_by_id_not_found(
         self,
@@ -86,7 +92,9 @@ class TestFlextLdapConnectionRepositoryImpl:
         """Test find by ID when not found."""
         result = await repository.find_by_id(uuid4())
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is None
 
     async def test_find_by_id_exception(
@@ -111,9 +119,12 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         result = await repository.find_all()
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is not None
-        assert len(result.data) == 1
+        if len(result.data) != 1:
+            raise AssertionError(f"Expected {1}, got {len(result.data)}")
         assert result.data[0] == mock_connection
 
     async def test_find_all_empty(
@@ -123,8 +134,11 @@ class TestFlextLdapConnectionRepositoryImpl:
         """Test find all with no connections."""
         result = await repository.find_all()
 
-        assert result.is_success is True
-        assert result.data == []
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if result.data != []:
+            raise AssertionError(f"Expected {[]}, got {result.data}")
 
     async def test_find_all_exception(
         self,
@@ -148,9 +162,12 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         result = await repository.delete(mock_connection)
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is True
-        assert mock_connection.id not in repository._connections
+        if mock_connection.id not not in repository._connections:
+            raise AssertionError(f"Expected {mock_connection.id not} in {repository._connections}")
 
     async def test_delete_not_found(
         self,
@@ -160,9 +177,11 @@ class TestFlextLdapConnectionRepositoryImpl:
         """Test delete when connection not found."""
         result = await repository.delete(mock_connection)
 
-        assert result.is_success is True
-        assert result.data is False
+        if not (result.is_success):
 
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if result.data:
+            raise AssertionError(f"Expected False, got {result.data}")\ n
     async def test_delete_exception(
         self,
         repository: FlextLdapConnectionRepositoryImpl,
@@ -187,7 +206,9 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         result = await repository.get_by_server(mock_connection.server_url)
 
-        assert len(result) == 1
+        if len(result) != 1:
+
+            raise AssertionError(f"Expected {1}, got {len(result)}")
         assert result[0] == mock_connection
 
     async def test_get_by_server_not_found(
@@ -201,7 +222,9 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         result = await repository.get_by_server("ldap://different.com:389")
 
-        assert result == []
+        if result != []:
+
+            raise AssertionError(f"Expected {[]}, got {result}")
 
     async def test_get_by_server_exception(
         self,
@@ -225,7 +248,9 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         result = await repository.get_active()
 
-        assert len(result) == 1
+        if len(result) != 1:
+
+            raise AssertionError(f"Expected {1}, got {len(result)}")
         assert result[0] == mock_connection
 
     async def test_get_active_empty(
@@ -235,7 +260,9 @@ class TestFlextLdapConnectionRepositoryImpl:
         """Test get active with no connections."""
         result = await repository.get_active()
 
-        assert result == []
+        if result != []:
+
+            raise AssertionError(f"Expected {[]}, got {result}")
 
     async def test_get_active_exception(
         self,
@@ -259,7 +286,9 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         await repository.close_all()
 
-        assert repository._connections == {}
+        if repository._connections != {}:
+
+            raise AssertionError(f"Expected {{}}, got {repository._connections}")
 
     async def test_close_all_exception(
         self,
@@ -311,8 +340,11 @@ class TestFlextLdapUserRepositoryImpl:
         """Test successful user save."""
         result = await repository.save(mock_user)
 
-        assert result.is_success is True
-        assert result.data == mock_user
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if result.data != mock_user:
+            raise AssertionError(f"Expected {mock_user}, got {result.data}")
 
     async def test_save_exception(
         self,
@@ -338,7 +370,9 @@ class TestFlextLdapUserRepositoryImpl:
         """Test successful find by ID."""
         result = await repository.find_by_id(uuid4())
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is None
 
     async def test_find_by_id_exception(
@@ -361,7 +395,9 @@ class TestFlextLdapUserRepositoryImpl:
         """Test successful find by DN."""
         result = await repository.find_by_dn("uid=test,ou=users,dc=example,dc=org")
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is None
 
     async def test_find_by_dn_exception(
@@ -386,8 +422,11 @@ class TestFlextLdapUserRepositoryImpl:
         """Test successful find all users."""
         result = await repository.find_all()
 
-        assert result.is_success is True
-        assert result.data == []
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if result.data != []:
+            raise AssertionError(f"Expected {[]}, got {result.data}")
 
     async def test_find_all_exception(
         self,
@@ -413,7 +452,9 @@ class TestFlextLdapUserRepositoryImpl:
         """Test successful user deletion."""
         result = await repository.delete(mock_user)
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is True
 
     async def test_delete_exception(
@@ -468,7 +509,8 @@ class TestFlextLdapUserRepositoryImpl:
     ) -> None:
         """Test get by UID with exception."""
         # Mock repository to force exception
-        # We need to patch the method to simulate an internal exception that gets caught and re-raised
+        # We need to patch the method to simulate an internal exception that gets caught and (
+            re-raised)
         with patch.object(repository, "get_by_uid") as mock_method:
             # Simulate what happens in the real method: exception caught and re-raised as ValueError
             mock_method.side_effect = ValueError(
@@ -490,7 +532,9 @@ class TestFlextLdapUserRepositoryImpl:
             attributes=["uid", "cn", "mail"],
         )
 
-        assert result == []
+        if result != []:
+
+            raise AssertionError(f"Expected {[]}, got {result}")
 
     async def test_search_exception(
         self,
@@ -520,8 +564,9 @@ class TestFlextLdapUserRepositoryImpl:
         """Test successful exists check."""
         result = await repository.exists(mock_dn)
 
-        assert result is False
+        if result:
 
+            raise AssertionError(f"Expected False, got {result}")\ n
     async def test_exists_exception(
         self,
         repository: FlextLdapUserRepositoryImpl,

@@ -6,10 +6,8 @@ that were extracted from flext-core for better separation of concerns.
 
 from __future__ import annotations
 
-from typing import Any
-
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
-from flext_core import FlextValueObject
+from flext_core import FlextResult, FlextValueObject
 from pydantic import Field, field_validator
 
 
@@ -33,20 +31,17 @@ class FlextLdapConfig(FlextValueObject):
         description="LDAP group search filter",
     )
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for LDAP configuration."""
         if not self.server_uri:
-            msg = "LDAP config must have server_uri"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP config must have server_uri")
         if not self.bind_dn:
-            msg = "LDAP config must have bind_dn"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP config must have bind_dn")
         if not self.base_dn:
-            msg = "LDAP config must have base_dn"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP config must have base_dn")
         if not self.server_uri.startswith(("ldap://", "ldaps://")):
-            msg = "LDAP URI must start with ldap:// or ldaps://"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP URI must start with ldap:// or ldaps://")
+        return FlextResult.ok(None)
 
     @field_validator("server_uri")
     @classmethod
@@ -58,7 +53,7 @@ class FlextLdapConfig(FlextValueObject):
         return v.rstrip("/")
 
 
-def validate_ldap_uri_field(v: Any) -> str:
+def validate_ldap_uri_field(v: object) -> str:
     """Validate LDAP URI - used in LDAP projects."""
     if not isinstance(v, str):
         msg = "LDAP URI must be a string"

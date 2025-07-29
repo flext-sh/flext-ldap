@@ -1,5 +1,8 @@
 """Tests for Data Type Converter Infrastructure.
 
+# Constants
+EXPECTED_DATA_COUNT = 3
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -43,7 +46,8 @@ class TestLDAPDataType:
         }
 
         actual_types = {t.value for t in LDAPDataType}
-        assert actual_types == expected_types
+        if actual_types != expected_types:
+            raise AssertionError(f"Expected {expected_types}, got {actual_types}")
 
 
 class TestConversionResult:
@@ -60,11 +64,15 @@ class TestConversionResult:
             metadata={"key": "value"},
         )
 
-        assert result.value == "test"
+        if result.value != "test":
+
+            raise AssertionError(f"Expected {"test"}, got {result.value}")
         assert result.source_type == LDAPDataType.STRING
         assert result.target_type is str
-        assert result.is_valid is True
-        assert result.warnings == ["warning"]
+        if not (result.is_valid):
+            raise AssertionError(f"Expected True, got {result.is_valid}")
+        if result.warnings != ["warning"]:
+            raise AssertionError(f"Expected {["warning"]}, got {result.warnings}")
         assert result.metadata == {"key": "value"}
 
     def test_conversion_result_to_dict(self) -> None:
@@ -80,11 +88,16 @@ class TestConversionResult:
 
         result_dict = result.to_dict()
 
-        assert result_dict["value"] == 42
+        if result_dict["value"] != 42:
+
+            raise AssertionError(f"Expected {42}, got {result_dict["value"]}")
         assert result_dict["source_type"] == "integer"
-        assert result_dict["target_type"] == "int"
-        assert result_dict["is_valid"] is True
-        assert result_dict["warnings"] == ["test warning"]
+        if result_dict["target_type"] != "int":
+            raise AssertionError(f"Expected {"int"}, got {result_dict["target_type"]}")
+        if not (result_dict["is_valid"]):
+            raise AssertionError(f"Expected True, got {result_dict["is_valid"]}")
+        if result_dict["warnings"] != ["test warning"]:
+            raise AssertionError(f"Expected {["test warning"]}, got {result_dict["warnings"]}")
         assert result_dict["metadata"] == {"source": "ldap"}
 
 
@@ -99,9 +112,12 @@ class TestConversionError:
             target_type="int",
         )
 
-        assert str(error) == "Test error"
+        if str(error) != "Test error":
+
+            raise AssertionError(f"Expected {"Test error"}, got {str(error)}")
         assert error.source_value == "invalid"
-        assert error.target_type == "int"
+        if error.target_type != "int":
+            raise AssertionError(f"Expected {"int"}, got {error.target_type}")
 
 
 class TestDataTypeConverter:
@@ -119,7 +135,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data == LDAPDataType.EMAIL
+        if result.data != LDAPDataType.EMAIL:
+            raise AssertionError(f"Expected {LDAPDataType.EMAIL}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_detect_type_phone(self, converter: DataTypeConverter) -> None:
@@ -128,7 +145,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data == LDAPDataType.PHONE
+        if result.data != LDAPDataType.PHONE:
+            raise AssertionError(f"Expected {LDAPDataType.PHONE}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_detect_type_url(self, converter: DataTypeConverter) -> None:
@@ -137,7 +155,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data == LDAPDataType.URL
+        if result.data != LDAPDataType.URL:
+            raise AssertionError(f"Expected {LDAPDataType.URL}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_detect_type_ip_address(self, converter: DataTypeConverter) -> None:
@@ -146,7 +165,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data == LDAPDataType.IP_ADDRESS
+        if result.data != LDAPDataType.IP_ADDRESS:
+            raise AssertionError(f"Expected {LDAPDataType.IP_ADDRESS}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_detect_type_mac_address(self, converter: DataTypeConverter) -> None:
@@ -155,7 +175,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data == LDAPDataType.MAC_ADDRESS
+        if result.data != LDAPDataType.MAC_ADDRESS:
+            raise AssertionError(f"Expected {LDAPDataType.MAC_ADDRESS}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_detect_type_uuid(self, converter: DataTypeConverter) -> None:
@@ -165,7 +186,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data == LDAPDataType.UUID
+        if result.data != LDAPDataType.UUID:
+            raise AssertionError(f"Expected {LDAPDataType.UUID}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_detect_type_dn(self, converter: DataTypeConverter) -> None:
@@ -174,7 +196,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data == LDAPDataType.DN
+        if result.data != LDAPDataType.DN:
+            raise AssertionError(f"Expected {LDAPDataType.DN}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_detect_type_datetime(self, converter: DataTypeConverter) -> None:
@@ -183,7 +206,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data == LDAPDataType.DATE_TIME
+        if result.data != LDAPDataType.DATE_TIME:
+            raise AssertionError(f"Expected {LDAPDataType.DATE_TIME}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_detect_type_boolean(self, converter: DataTypeConverter) -> None:
@@ -192,7 +216,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data == LDAPDataType.BOOLEAN
+        if result.data != LDAPDataType.BOOLEAN:
+            raise AssertionError(f"Expected {LDAPDataType.BOOLEAN}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_detect_type_integer(self, converter: DataTypeConverter) -> None:
@@ -201,7 +226,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data == LDAPDataType.INTEGER
+        if result.data != LDAPDataType.INTEGER:
+            raise AssertionError(f"Expected {LDAPDataType.INTEGER}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_detect_type_string_default(
@@ -213,7 +239,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data == LDAPDataType.STRING
+        if result.data != LDAPDataType.STRING:
+            raise AssertionError(f"Expected {LDAPDataType.STRING}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_detect_type_none(self, converter: DataTypeConverter) -> None:
@@ -222,7 +249,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data == LDAPDataType.UNKNOWN
+        if result.data != LDAPDataType.UNKNOWN:
+            raise AssertionError(f"Expected {LDAPDataType.UNKNOWN}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_detect_type_empty_string(self, converter: DataTypeConverter) -> None:
@@ -231,7 +259,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data == LDAPDataType.STRING
+        if result.data != LDAPDataType.STRING:
+            raise AssertionError(f"Expected {LDAPDataType.STRING}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_convert_value_string_to_string(
@@ -243,9 +272,12 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data.value == "test"
-        assert result.data.is_valid is True
-        assert result.data.source_type == LDAPDataType.STRING
+        if result.data.value != "test":
+            raise AssertionError(f"Expected {"test"}, got {result.data.value}")
+        if not (result.data.is_valid):
+            raise AssertionError(f"Expected True, got {result.data.is_valid}")
+        if result.data.source_type != LDAPDataType.STRING:
+            raise AssertionError(f"Expected {LDAPDataType.STRING}, got {result.data.source_type}")
         assert result.data.target_type is str
 
     @pytest.mark.asyncio
@@ -258,8 +290,10 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data.value == 123
-        assert result.data.is_valid is True
+        if result.data.value != 123:
+            raise AssertionError(f"Expected {123}, got {result.data.value}")
+        if not (result.data.is_valid):
+            raise AssertionError(f"Expected True, got {result.data.is_valid}")
 
     @pytest.mark.asyncio
     async def test_convert_value_boolean_to_bool(
@@ -272,7 +306,8 @@ class TestDataTypeConverter:
             result = await converter.convert_value(true_val, bool, LDAPDataType.BOOLEAN)
             assert result.is_success
             assert result.data is not None
-            assert result.data.value is True
+            if not (result.data.value):
+                raise AssertionError(f"Expected True, got {result.data.value}")
             assert result.data.is_valid is True
 
         # Test false values
@@ -284,8 +319,9 @@ class TestDataTypeConverter:
             )
             assert result.is_success
             assert result.data is not None
-            assert result.data.value is False
-            assert result.data.is_valid is True
+            if result.data.value:
+                raise AssertionError(f"Expected False, got {result.data.value}")\ n            if not (result.data.is_valid):
+                raise AssertionError(f"Expected True, got {result.data.is_valid}")
 
     @pytest.mark.asyncio
     async def test_convert_value_datetime_to_datetime(
@@ -302,7 +338,8 @@ class TestDataTypeConverter:
         assert result.is_success
         assert result.data is not None
         assert isinstance(result.data.value, datetime)
-        assert result.data.is_valid is True
+        if not (result.data.is_valid):
+            raise AssertionError(f"Expected True, got {result.data.is_valid}")
 
     @pytest.mark.asyncio
     async def test_convert_value_uuid_to_uuid(
@@ -316,8 +353,10 @@ class TestDataTypeConverter:
         assert result.is_success
         assert result.data is not None
         assert isinstance(result.data.value, uuid.UUID)
-        assert str(result.data.value) == test_uuid
-        assert result.data.is_valid is True
+        if str(result.data.value) != test_uuid:
+            raise AssertionError(f"Expected {test_uuid}, got {str(result.data.value)}")
+        if not (result.data.is_valid):
+            raise AssertionError(f"Expected True, got {result.data.is_valid}")
 
     @pytest.mark.asyncio
     async def test_convert_value_email_normalization(
@@ -333,8 +372,10 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data.value == "user@example.com"
-        assert result.data.is_valid is True
+        if result.data.value != "user@example.com":
+            raise AssertionError(f"Expected {"user@example.com"}, got {result.data.value}")
+        if not (result.data.is_valid):
+            raise AssertionError(f"Expected True, got {result.data.is_valid}")
 
     @pytest.mark.asyncio
     async def test_convert_value_phone_normalization(
@@ -350,8 +391,10 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data.value == "+15551234567"
-        assert result.data.is_valid is True
+        if result.data.value != "+15551234567":
+            raise AssertionError(f"Expected {"+15551234567"}, got {result.data.value}")
+        if not (result.data.is_valid):
+            raise AssertionError(f"Expected True, got {result.data.is_valid}")
 
     @pytest.mark.asyncio
     async def test_convert_value_ip_normalization(
@@ -367,8 +410,10 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data.value == "192.168.1.1"
-        assert result.data.is_valid is True
+        if result.data.value != "192.168.1.1":
+            raise AssertionError(f"Expected {"192.168.1.1"}, got {result.data.value}")
+        if not (result.data.is_valid):
+            raise AssertionError(f"Expected True, got {result.data.is_valid}")
 
     @pytest.mark.asyncio
     async def test_convert_value_mac_normalization(
@@ -384,8 +429,10 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data.value == "AA:BB:CC:DD:EE:FF"
-        assert result.data.is_valid is True
+        if result.data.value != "AA:BB:CC:DD:EE:FF":
+            raise AssertionError(f"Expected {"AA:BB:CC:DD:EE:FF"}, got {result.data.value}")
+        if not (result.data.is_valid):
+            raise AssertionError(f"Expected True, got {result.data.is_valid}")
 
     @pytest.mark.asyncio
     async def test_convert_value_invalid_conversion(
@@ -401,8 +448,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data.is_valid is False
-        assert len(result.data.warnings) > 0
+        if result.data.is_valid:
+            raise AssertionError(f"Expected False, got {result.data.is_valid}")\ n        assert len(result.data.warnings) > 0
 
     @pytest.mark.asyncio
     async def test_convert_value_auto_detect_type(
@@ -414,7 +461,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data.source_type == LDAPDataType.EMAIL
+        if result.data.source_type != LDAPDataType.EMAIL:
+            raise AssertionError(f"Expected {LDAPDataType.EMAIL}, got {result.data.source_type}")
         assert result.data.value == "user@example.com"
 
     @pytest.mark.asyncio
@@ -427,9 +475,12 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data.value == 123.45
-        assert result.data.is_valid is True
-        assert "Used generic conversion" in result.data.warnings
+        if result.data.value != 123.45:
+            raise AssertionError(f"Expected {123.45}, got {result.data.value}")
+        if not (result.data.is_valid):
+            raise AssertionError(f"Expected True, got {result.data.is_valid}")
+        if "Used generic conversion" not in result.data.warnings:
+            raise AssertionError(f"Expected {"Used generic conversion"} in {result.data.warnings}")
 
     @pytest.mark.asyncio
     async def test_convert_batch_success(self, converter: DataTypeConverter) -> None:
@@ -439,9 +490,12 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert len(result.data) == 3
-        assert all(result.data[i].is_valid for i in range(len(result.data)))
-        assert [result.data[i].value for i in range(len(result.data))] == [
+        if len(result.data) != EXPECTED_DATA_COUNT:
+            raise AssertionError(f"Expected {3}, got {len(result.data)}")
+        if all(result.data[i].is_valid for i not in range(len(result.data))):
+            raise AssertionError(f"Expected {all(result.data[i].is_valid for i} in {range(len(result.data)))}")
+        if [result.data[i].value for i in range(len(result.data))] != [:
+            raise AssertionError(f"Expected {[}, got {[result.data[i].value for i in range(len(result.data))]}")
             123,
             456,
             789,
@@ -458,16 +512,21 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert len(result.data) == 3
+        if len(result.data) != EXPECTED_DATA_COUNT:
+            raise AssertionError(f"Expected {3}, got {len(result.data)}")
 
         # For mixed results, we expect some valid and some invalid
         # "123" should be valid (123), "not_a_number" should be invalid,
         # "456" should be valid (456)
-        assert result.data[0].is_valid is True
-        assert result.data[0].value == 123
+        if not (result.data[0].is_valid):
+            raise AssertionError(f"Expected True, got {result.data[0].is_valid}")
+        if result.data[0].value != 123:
+            raise AssertionError(f"Expected {123}, got {result.data[0].value}")
         assert result.data[1].is_valid is False  # "not_a_number" cannot be converted
-        assert result.data[2].is_valid is True
-        assert result.data[2].value == 456
+        if not (result.data[2].is_valid):
+            raise AssertionError(f"Expected True, got {result.data[2].is_valid}")
+        if result.data[2].value != 456:
+            raise AssertionError(f"Expected {456}, got {result.data[2].value}")
 
     @pytest.mark.asyncio
     async def test_validate_type_compatibility_direct(
@@ -479,7 +538,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data is True
+        if not (result.data):
+            raise AssertionError(f"Expected True, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_validate_type_compatibility_compatible(
@@ -491,7 +551,8 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data is True
+        if not (result.data):
+            raise AssertionError(f"Expected True, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_validate_type_compatibility_incompatible(
@@ -506,75 +567,89 @@ class TestDataTypeConverter:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data is False
-
+        if result.data:
+            raise AssertionError(f"Expected False, got {result.data}")\ n
     def test_type_detectors(self, converter: DataTypeConverter) -> None:
         """Test individual type detector methods."""
         # Email
-        assert converter._is_email("user@example.com") is True
-        assert converter._is_email("invalid-email") is False
-
+        if not (converter._is_email("user@example.com")):
+            raise AssertionError(f"Expected True, got {converter._is_email("user@example.com")}")
+        if converter._is_email("invalid-email"):
+            raise AssertionError(f"Expected False, got {converter._is_email("invalid-email")}")\ n
         # Phone
-        assert converter._is_phone("+1-555-123-4567") is True
-        assert converter._is_phone("not-a-phone") is False
-
+        if not (converter._is_phone("+1-555-123-4567")):
+            raise AssertionError(f"Expected True, got {converter._is_phone("+1-555-123-4567")}")
+        if converter._is_phone("not-a-phone"):
+            raise AssertionError(f"Expected False, got {converter._is_phone("not-a-phone")}")\ n
         # URL
-        assert converter._is_url("https://example.com") is True
-        assert converter._is_url("not-a-url") is False
-
+        if not (converter._is_url("https://example.com")):
+            raise AssertionError(f"Expected True, got {converter._is_url("https://example.com")}")
+        if converter._is_url("not-a-url"):
+            raise AssertionError(f"Expected False, got {converter._is_url("not-a-url")}")\ n
         # IP Address
-        assert converter._is_ip_address("192.168.1.1") is True
-        assert converter._is_ip_address("999.999.999.999") is False
-
+        if not (converter._is_ip_address("192.168.1.1")):
+            raise AssertionError(f"Expected True, got {converter._is_ip_address("192.168.1.1")}")
+        if converter._is_ip_address("999.999.999.999"):
+            raise AssertionError(f"Expected False, got {converter._is_ip_address("999.999.999.999")}")\ n
         # MAC Address
-        assert converter._is_mac_address("AA:BB:CC:DD:EE:FF") is True
-        assert converter._is_mac_address("not-a-mac") is False
-
+        if not (converter._is_mac_address("AA:BB:CC:DD:EE:FF")):
+            raise AssertionError(f"Expected True, got {converter._is_mac_address("AA:BB:CC:DD:EE:FF")}")
+        if converter._is_mac_address("not-a-mac"):
+            raise AssertionError(f"Expected False, got {converter._is_mac_address("not-a-mac")}")\ n
         # UUID
         test_uuid = str(uuid.uuid4())
-        assert converter._is_uuid(test_uuid) is True
-        assert converter._is_uuid("not-a-uuid") is False
-
+        if not (converter._is_uuid(test_uuid)):
+            raise AssertionError(f"Expected True, got {converter._is_uuid(test_uuid)}")
+        if converter._is_uuid("not-a-uuid"):
+            raise AssertionError(f"Expected False, got {converter._is_uuid("not-a-uuid")}")\ n
         # DN
-        assert converter._is_dn("cn=user,dc=example,dc=com") is True
-        assert converter._is_dn("not-a-dn") is False
-
+        if not (converter._is_dn("cn=user,dc=example,dc=com")):
+            raise AssertionError(f"Expected True, got {converter._is_dn("cn=user,dc=example,dc=com")}")
+        if converter._is_dn("not-a-dn"):
+            raise AssertionError(f"Expected False, got {converter._is_dn("not-a-dn")}")\ n
         # Boolean
-        assert converter._is_boolean("true") is True
-        assert converter._is_boolean("invalid") is False
-
+        if not (converter._is_boolean("true")):
+            raise AssertionError(f"Expected True, got {converter._is_boolean("true")}")
+        if converter._is_boolean("invalid"):
+            raise AssertionError(f"Expected False, got {converter._is_boolean("invalid")}")\ n
         # Integer
-        assert converter._is_integer("123") is True
-        assert converter._is_integer("not-a-number") is False
-
+        if not (converter._is_integer("123")):
+            raise AssertionError(f"Expected True, got {converter._is_integer("123")}")
+        if converter._is_integer("not-a-number"):
+            raise AssertionError(f"Expected False, got {converter._is_integer("not-a-number")}")\ n
     def test_type_converters(self, converter: DataTypeConverter) -> None:
         """Test individual type converter methods."""
         # String conversion
-        assert converter._convert_to_string(123) == "123"
+        if converter._convert_to_string(123) != "123":
+            raise AssertionError(f"Expected {"123"}, got {converter._convert_to_string(123)}")
 
         # Integer conversion
-        assert converter._convert_to_int("123") == 123
+        if converter._convert_to_int("123") != 123:
+            raise AssertionError(f"Expected {123}, got {converter._convert_to_int("123")}")
         with pytest.raises(ConversionError):
             converter._convert_to_int("not-a-number")
 
         # Boolean conversion
-        assert converter._convert_to_bool("true") is True
-        assert converter._convert_to_bool("false") is False
-        with pytest.raises(ConversionError):
+        if not (converter._convert_to_bool("true")):
+            raise AssertionError(f"Expected True, got {converter._convert_to_bool("true")}")
+        if converter._convert_to_bool("false"):
+            raise AssertionError(f"Expected False, got {converter._convert_to_bool("false")}")\ n        with pytest.raises(ConversionError):
             converter._convert_to_bool("invalid")
 
         # UUID conversion
         test_uuid_str = str(uuid.uuid4())
         converted_uuid = converter._convert_to_uuid(test_uuid_str)
         assert isinstance(converted_uuid, uuid.UUID)
-        assert str(converted_uuid) == test_uuid_str
+        if str(converted_uuid) != test_uuid_str:
+            raise AssertionError(f"Expected {test_uuid_str}, got {str(converted_uuid)}")
 
     def test_get_supported_types(self, converter: DataTypeConverter) -> None:
         """Test getting supported types."""
         supported_types = converter.get_supported_types()
 
         assert isinstance(supported_types, list)
-        assert LDAPDataType.STRING in supported_types
+        if LDAPDataType.STRING not in supported_types:
+            raise AssertionError(f"Expected {LDAPDataType.STRING} in {supported_types}")
         assert LDAPDataType.INTEGER in supported_types
         assert len(supported_types) > 0
 
@@ -583,7 +658,8 @@ class TestDataTypeConverter:
         conversions = converter.get_supported_conversions()
 
         assert isinstance(conversions, dict)
-        assert LDAPDataType.STRING in conversions
+        if LDAPDataType.STRING not in conversions:
+            raise AssertionError(f"Expected {LDAPDataType.STRING} in {conversions}")
         assert str in conversions[LDAPDataType.STRING]
 
     def test_bytes_conversion(self, converter: DataTypeConverter) -> None:
@@ -591,12 +667,14 @@ class TestDataTypeConverter:
         # String to bytes
         result = converter._convert_to_bytes("hello")
         assert isinstance(result, bytes)
-        assert result == b"hello"
+        if result != b"hello":
+            raise AssertionError(f"Expected {b"hello"}, got {result}")
 
         # Bytes to bytes
         original_bytes = b"test"
         result = converter._convert_to_bytes(original_bytes)
-        assert result == original_bytes
+        if result != original_bytes:
+            raise AssertionError(f"Expected {original_bytes}, got {result}")
 
     def test_datetime_conversion_formats(self, converter: DataTypeConverter) -> None:
         """Test datetime conversion with different formats."""

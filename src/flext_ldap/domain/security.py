@@ -16,7 +16,7 @@ from enum import Enum
 from typing import Any
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
-from flext_core import FlextEntity
+from flext_core import FlextEntity, FlextResult
 
 
 class FlextLdapCertificateValidationResult(Enum):
@@ -43,7 +43,7 @@ class FlextLdapCertificateInfo(FlextEntity):
     public_key_algorithm: str
     public_key_size: int
     fingerprint_sha256: str
-    extensions: dict[str, Any] = field(default_factory=dict)
+    extensions: dict[str, object] = field(default_factory=dict)
 
     def is_expired(self) -> bool:
         """Check if certificate is expired."""
@@ -76,23 +76,19 @@ class FlextLdapCertificateInfo(FlextEntity):
 
         return False
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for certificate information."""
         if not self.subject:
-            msg = "Certificate must have a subject"
-            raise ValueError(msg)
+            return FlextResult.fail("Certificate must have a subject")
         if not self.issuer:
-            msg = "Certificate must have an issuer"
-            raise ValueError(msg)
+            return FlextResult.fail("Certificate must have an issuer")
         if not self.serial_number:
-            msg = "Certificate must have a serial number"
-            raise ValueError(msg)
+            return FlextResult.fail("Certificate must have a serial number")
         if self.not_after <= self.not_before:
-            msg = "Certificate not_after must be after not_before"
-            raise ValueError(msg)
+            return FlextResult.fail("Certificate not_after must be after not_before")
         if self.public_key_size <= 0:
-            msg = "Public key size must be positive"
-            raise ValueError(msg)
+            return FlextResult.fail("Public key size must be positive")
+        return FlextResult.ok(None)
 
 
 class FlextLdapCertificateValidationContext(FlextEntity):
@@ -108,7 +104,7 @@ class FlextLdapCertificateValidationContext(FlextEntity):
     minimum_tls_version: str = "TLSv1.2"
     maximum_tls_version: str = "TLSv1.3"
 
-    def model_post_init(self, __context: Any, /) -> None:
+    def model_post_init(self, __context: Any, /) -> None:  # type: ignore[explicit-any]
         """Post-initialization validation."""
         if self.port <= 0 or self.port > 65535:
             msg = "Port must be between 1 and 65535"
@@ -118,20 +114,17 @@ class FlextLdapCertificateValidationContext(FlextEntity):
             msg = "Hostname cannot be empty"
             raise ValueError(msg)
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for certificate validation context."""
         if not self.hostname:
-            msg = "Certificate validation context must have a hostname"
-            raise ValueError(msg)
+            return FlextResult.fail("Certificate validation context must have a hostname")
         if self.port <= 0 or self.port > 65535:
-            msg = "Port must be between 1 and 65535"
-            raise ValueError(msg)
+            return FlextResult.fail("Port must be between 1 and 65535")
         if self.minimum_tls_version not in {"TLSv1.2", "TLSv1.3"}:
-            msg = "Minimum TLS version must be TLSv1.2 or TLSv1.3"
-            raise ValueError(msg)
+            return FlextResult.fail("Minimum TLS version must be TLSv1.2 or TLSv1.3")
         if self.maximum_tls_version not in {"TLSv1.2", "TLSv1.3"}:
-            msg = "Maximum TLS version must be TLSv1.2 or TLSv1.3"
-            raise ValueError(msg)
+            return FlextResult.fail("Maximum TLS version must be TLSv1.2 or TLSv1.3")
+        return FlextResult.ok(None)
 
 
 class FlextLdapValidationResult(FlextEntity):
@@ -160,14 +153,13 @@ class FlextLdapValidationResult(FlextEntity):
         """Check if validation has warnings."""
         return len(self.validation_warnings) > 0
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for certificate validation result."""
         if not self.message:
-            msg = "ValidationResult must have a message"
-            raise ValueError(msg)
+            return FlextResult.fail("ValidationResult must have a message")
         if self.chain_length < 0:
-            msg = "Chain length cannot be negative"
-            raise ValueError(msg)
+            return FlextResult.fail("Chain length cannot be negative")
+        return FlextResult.ok(None)
 
 
 class FlextLdapSSLContextConfig(FlextEntity):
@@ -184,7 +176,7 @@ class FlextLdapSSLContextConfig(FlextEntity):
     ciphers: str | None = None
     options: list[str] = field(default_factory=list)
 
-    def model_post_init(self, __context: Any, /) -> None:
+    def model_post_init(self, __context: Any, /) -> None:  # type: ignore[explicit-any]
         """Post-initialization validation."""
         valid_verify_modes = ["CERT_NONE", "CERT_OPTIONAL", "CERT_REQUIRED"]
         if self.verify_mode not in valid_verify_modes:
@@ -209,31 +201,23 @@ class FlextLdapSSLContextConfig(FlextEntity):
             )
             raise ValueError(msg)
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for SSL context configuration."""
         valid_verify_modes = ["CERT_NONE", "CERT_OPTIONAL", "CERT_REQUIRED"]
         if self.verify_mode not in valid_verify_modes:
-            msg = f"Invalid verify_mode: {self.verify_mode}"
-            raise ValueError(msg)
+            return FlextResult.fail(f"Invalid verify_mode: {self.verify_mode}")
 
         valid_versions = ["TLSv1.2", "TLSv1.3"]
         if self.minimum_version not in valid_versions:
-            msg = f"Invalid minimum_version: {self.minimum_version}"
-            raise ValueError(msg)
+            return FlextResult.fail(f"Invalid minimum_version: {self.minimum_version}")
         if self.maximum_version not in valid_versions:
-            msg = f"Invalid maximum_version: {self.maximum_version}"
-            raise ValueError(msg)
+            return FlextResult.fail(f"Invalid maximum_version: {self.maximum_version}")
 
         if self.client_cert_file and not self.client_key_file:
-            msg = "Client key file is required when client cert file is provided"
-            raise ValueError(
-                msg,
-            )
+            return FlextResult.fail("Client key file is required when client cert file is provided")
         if self.client_key_file and not self.client_cert_file:
-            msg = "Client cert file is required when client key file is provided"
-            raise ValueError(
-                msg,
-            )
+            return FlextResult.fail("Client cert file is required when client key file is provided")
+        return FlextResult.ok(None)
 
 
 # Backward compatibility aliases

@@ -1,5 +1,31 @@
 """Test LDAP client functionality."""
 
+from flext_ldap.client import FlextLdapClient
+from flext_ldap.client import FlextLdapClient
+from flext_ldap.client import FlextLdapClient
+from unittest.mock import AsyncMock, MagicMock, patch
+from flext_ldap.client import FlextLdapClient
+from unittest.mock import AsyncMock, MagicMock, patch
+from flext_ldap.client import FlextConnectionError, FlextLdapClient
+from unittest.mock import AsyncMock, MagicMock, patch
+from flext_ldap.client import FlextLdapClient
+from unittest.mock import AsyncMock, MagicMock, patch
+from flext_ldap.client import FlextLdapClient
+from flext_ldap.client import FlextLdapClient
+from unittest.mock import AsyncMock, MagicMock, patch
+from flext_ldap.client import FlextLdapClient
+from flext_ldap.client import FlextLdapClient
+from unittest.mock import AsyncMock, MagicMock, patch
+from flext_ldap.client import FlextLdapClient
+from flext_ldap.client import FlextLdapClient
+from unittest.mock import AsyncMock, MagicMock, patch
+from flext_ldap.client import FlextLdapClient
+from unittest.mock import AsyncMock, MagicMock, patch
+from flext_ldap.client import FlextLdapClient
+from unittest.mock import MagicMock, patch
+from flext_ldap.client import FlextLdapClient
+
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -16,7 +42,7 @@ class TestLDAPClient:
     @pytest.mark.unit
     def test_client_import(self) -> None:
         """Test that LDAPClient can be imported."""
-        from flext_ldap.client import FlextLdapClient
+
 
         assert FlextLdapClient is not None
 
@@ -36,7 +62,7 @@ class TestLDAPClient:
     @pytest.mark.unit
     def test_client_instantiation_without_config(self) -> None:
         """Test that LDAPClient can be instantiated without config."""
-        from flext_ldap.client import FlextLdapClient
+
 
         client = FlextLdapClient()
         assert client is not None
@@ -45,18 +71,19 @@ class TestLDAPClient:
     @pytest.mark.unit
     def test_get_server_info_disconnected(self) -> None:
         """Test get_server_info when disconnected."""
-        from flext_ldap.client import FlextLdapClient
+
 
         client = FlextLdapClient()
         info = client.get_server_info()
-        assert info == {"status": "disconnected"}
+        if info != {"status": "disconnected"}:
+            raise AssertionError(f"Expected {{"status": "disconnected"}}, got {info}")
 
     @pytest.mark.asyncio
     async def test_connect_success(self) -> None:
         """Test successful connection."""
-        from unittest.mock import AsyncMock, MagicMock, patch
 
-        from flext_ldap.client import FlextLdapClient
+
+
 
         # Mock the infrastructure client
         with patch(
@@ -72,15 +99,17 @@ class TestLDAPClient:
             client = FlextLdapClient()
             await client.connect()
 
-            assert client.is_connected() is True
+            if not (client.is_connected()):
+
+                raise AssertionError(f"Expected True, got {client.is_connected()}")
             mock_instance.connect.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_connect_failure(self) -> None:
         """Test connection failure."""
-        from unittest.mock import AsyncMock, MagicMock, patch
 
-        from flext_ldap.client import FlextConnectionError, FlextLdapClient
+
+
 
         # Mock the infrastructure client to return failure
         with patch(
@@ -98,14 +127,15 @@ class TestLDAPClient:
             with pytest.raises(FlextConnectionError, match="Connection failed"):
                 await client.connect()
 
-            assert client.is_connected() is False
+            if client.is_connected():
 
+                raise AssertionError(f"Expected False, got {client.is_connected()}")\ n
     @pytest.mark.asyncio
     async def test_disconnect_success(self) -> None:
         """Test successful disconnection."""
-        from unittest.mock import AsyncMock, MagicMock, patch
 
-        from flext_ldap.client import FlextLdapClient
+
+
 
         with patch(
             "flext_ldap.client.FlextLdapInfrastructureClient",
@@ -122,15 +152,16 @@ class TestLDAPClient:
             await client.connect()
             await client.disconnect()
 
-            assert client.is_connected() is False
-            mock_instance.disconnect.assert_called_once_with("conn_123")
+            if client.is_connected():
+
+                raise AssertionError(f"Expected False, got {client.is_connected()}")\ n            mock_instance.disconnect.assert_called_once_with("conn_123")
 
     @pytest.mark.asyncio
     async def test_ping_connected(self) -> None:
         """Test ping when connected."""
-        from unittest.mock import AsyncMock, MagicMock, patch
 
-        from flext_ldap.client import FlextLdapClient
+
+
 
         with patch(
             "flext_ldap.client.FlextLdapInfrastructureClient",
@@ -147,24 +178,27 @@ class TestLDAPClient:
             await client.connect()
             result = await client.ping()
 
-            assert result is True
+            if not (result):
+
+                raise AssertionError(f"Expected True, got {result}")
 
     @pytest.mark.asyncio
     async def test_ping_disconnected(self) -> None:
         """Test ping when disconnected."""
-        from flext_ldap.client import FlextLdapClient
+
 
         client = FlextLdapClient()
         result = await client.ping()
 
-        assert result is False
+        if result:
 
+            raise AssertionError(f"Expected False, got {result}")\ n
     @pytest.mark.asyncio
     async def test_search_success(self) -> None:
         """Test successful search operation."""
-        from unittest.mock import AsyncMock, MagicMock, patch
 
-        from flext_ldap.client import FlextLdapClient
+
+
 
         # Mock search results
         search_results = [
@@ -201,16 +235,20 @@ class TestLDAPClient:
                 attributes=["uid", "cn"],
             )
 
-            assert result.is_success is True
+            if not (result.is_success):
+
+                raise AssertionError(f"Expected True, got {result.is_success}")
             assert result.data is not None
-            assert len(result.data) == 1
+            if len(result.data) != 1:
+                raise AssertionError(f"Expected {1}, got {len(result.data)}")
             assert result.data[0].dn == "uid=test,ou=users,dc=example,dc=org"
-            assert result.data[0].attributes["uid"] == ["test"]
+            if result.data[0].attributes["uid"] != ["test"]:
+                raise AssertionError(f"Expected {["test"]}, got {result.data[0].attributes["uid"]}")
 
     @pytest.mark.asyncio
     async def test_search_not_connected(self) -> None:
         """Test search when not connected."""
-        from flext_ldap.client import FlextLdapClient
+
 
         client = FlextLdapClient()
 
@@ -219,16 +257,18 @@ class TestLDAPClient:
             search_filter="(uid=test)",
         )
 
-        assert result.is_success is False
-        assert result.error is not None
-        assert "Not connected" in result.error
+        if result.is_success:
+
+            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+        if "Not connected" not in result.error:
+            raise AssertionError(f"Expected {"Not connected"} in {result.error}")
 
     @pytest.mark.asyncio
     async def test_modify_success(self) -> None:
         """Test successful modify operation."""
-        from unittest.mock import AsyncMock, MagicMock, patch
 
-        from flext_ldap.client import FlextLdapClient
+
+
 
         with patch(
             "flext_ldap.client.FlextLdapInfrastructureClient",
@@ -249,13 +289,15 @@ class TestLDAPClient:
                 changes={"mail": "test@example.org"},
             )
 
-            assert result.is_success is True
+            if not (result.is_success):
+
+                raise AssertionError(f"Expected True, got {result.is_success}")
             mock_instance.modify_entry.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_modify_not_connected(self) -> None:
         """Test modify when not connected."""
-        from flext_ldap.client import FlextLdapClient
+
 
         client = FlextLdapClient()
 
@@ -264,16 +306,18 @@ class TestLDAPClient:
             changes={"mail": "test@example.org"},
         )
 
-        assert result.is_success is False
-        assert result.error is not None
-        assert "Not connected" in result.error
+        if result.is_success:
+
+            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+        if "Not connected" not in result.error:
+            raise AssertionError(f"Expected {"Not connected"} in {result.error}")
 
     @pytest.mark.asyncio
     async def test_context_manager(self) -> None:
         """Test async context manager functionality."""
-        from unittest.mock import AsyncMock, MagicMock, patch
 
-        from flext_ldap.client import FlextLdapClient
+
+
 
         with patch(
             "flext_ldap.client.FlextLdapInfrastructureClient",
@@ -287,17 +331,18 @@ class TestLDAPClient:
             mock_infra_client.return_value = mock_instance
 
             async with FlextLdapClient() as client:
-                assert client.is_connected() is True
+                if not (client.is_connected()):
+                    raise AssertionError(f"Expected True, got {client.is_connected()}")
 
             # After exiting context, should be disconnected
-            assert client.is_connected() is False
-
+            if client.is_connected():
+                raise AssertionError(f"Expected False, got {client.is_connected()}")\ n
     @pytest.mark.asyncio
     async def test_transaction_context_manager(self) -> None:
         """Test transaction context manager."""
-        from unittest.mock import AsyncMock, MagicMock, patch
 
-        from flext_ldap.client import FlextLdapClient
+
+
 
         with patch(
             "flext_ldap.client.FlextLdapInfrastructureClient",
@@ -314,13 +359,14 @@ class TestLDAPClient:
 
             async with client.transaction() as tx_client:
                 assert tx_client is client
-                assert client.is_connected() is True
+                if not (client.is_connected()):
+                    raise AssertionError(f"Expected True, got {client.is_connected()}")
 
     def test_get_server_info_connected(self) -> None:
         """Test get_server_info when connected."""
-        from unittest.mock import MagicMock, patch
 
-        from flext_ldap.client import FlextLdapClient
+
+
 
         with patch(
             "flext_ldap.client.FlextLdapInfrastructureClient",
@@ -342,6 +388,9 @@ class TestLDAPClient:
 
             info = client.get_server_info()
 
-            assert info["server"] == "ldap://localhost:389"
+            if info["server"] != "ldap://localhost:389":
+
+                raise AssertionError(f"Expected {"ldap://localhost:389"}, got {info["server"]}")
             assert info["bound"] == "True"  # Note: values are converted to strings
-            assert info["user"] == "cn=admin"
+            if info["user"] != "cn=admin":
+                raise AssertionError(f"Expected {"cn=admin"}, got {info["user"]}")

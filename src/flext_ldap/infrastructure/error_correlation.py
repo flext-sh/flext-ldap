@@ -15,7 +15,7 @@ import re
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
@@ -66,7 +66,7 @@ class FlextLdapErrorPattern:
         first_occurrence: datetime | None = None,
         last_occurrence: datetime | None = None,
         affected_operations: list[str] | None = None,
-        context_patterns: dict[str, Any] | None = None,
+        context_patterns: dict[str, object] | None = None,
         correlation_score: float = 0.0,
     ) -> None:
         """Initialize error pattern."""
@@ -81,7 +81,7 @@ class FlextLdapErrorPattern:
         self.context_patterns = context_patterns or {}
         self.correlation_score = correlation_score
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, object]:
         """Convert error pattern to dictionary."""
         return {
             "pattern_id": str(self.pattern_id),
@@ -112,7 +112,7 @@ class FlextLdapErrorEvent:
         client_ip: str | None = None,
         server_host: str | None = None,
         stack_trace: str | None = None,
-        context: dict[str, Any] | None = None,
+        context: dict[str, object] | None = None,
         severity: FlextLdapErrorSeverity = FlextLdapErrorSeverity.MEDIUM,
         category: FlextLdapErrorCategory = FlextLdapErrorCategory.UNKNOWN,
     ) -> None:
@@ -166,7 +166,7 @@ class FlextLdapErrorEvent:
 
         return message.lower().strip()
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, object]:
         """Convert error event to dictionary."""
         return {
             "event_id": str(self.event_id),
@@ -223,7 +223,7 @@ class FlextLdapErrorCorrelationService:
         client_ip: str | None = None,
         server_host: str | None = None,
         stack_trace: str | None = None,
-        context: dict[str, Any] | None = None,
+        context: dict[str, object] | None = None,
         severity: FlextLdapErrorSeverity = FlextLdapErrorSeverity.MEDIUM,
         category: FlextLdapErrorCategory = FlextLdapErrorCategory.UNKNOWN,
     ) -> FlextResult[FlextLdapErrorEvent]:
@@ -334,7 +334,7 @@ class FlextLdapErrorCorrelationService:
     async def get_error_statistics(
         self,
         time_window_hours: int = 24,
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Get error statistics for the specified time window."""
         try:
             cutoff_time = datetime.now(UTC) - timedelta(hours=time_window_hours)

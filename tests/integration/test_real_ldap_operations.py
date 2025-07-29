@@ -185,12 +185,16 @@ class TestRealLdapOperations:
 
             # Test resolution
             resolved_dn = ldap_client._get_dn_from_uuid(test_uuid)
-            assert resolved_dn == test_dn
+            if resolved_dn != test_dn:
+                msg = f"Expected {test_dn}, got {resolved_dn}"
+                raise AssertionError(msg)
 
             # Test user identifier resolution
             resolve_result = ldap_client._resolve_user_identifier(test_uuid)
             assert resolve_result.is_success
-            assert resolve_result.data == test_dn
+            if resolve_result.data != test_dn:
+                msg = f"Expected {test_dn}, got {resolve_result.data}"
+                raise AssertionError(msg)
 
         finally:
             await ldap_client.disconnect(connection_id)

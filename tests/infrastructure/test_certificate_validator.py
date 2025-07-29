@@ -57,8 +57,10 @@ class TestCertificateValidationService:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data.result_type == CertificateValidationResult.MALFORMED
-        assert "Empty certificate chain" in result.data.message
+        if result.data.result_type != CertificateValidationResult.MALFORMED:
+            raise AssertionError(f"Expected {CertificateValidationResult.MALFORMED}, got {result.data.result_type}")
+        if "Empty certificate chain" not in result.data.message:
+            raise AssertionError(f"Expected {"Empty certificate chain"} in {result.data.message}")
 
     @pytest.mark.asyncio
     async def test_validate_certificate_chain_malformed(
@@ -74,8 +76,10 @@ class TestCertificateValidationService:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data.result_type == CertificateValidationResult.MALFORMED
-        assert "Failed to parse certificate" in result.data.message
+        if result.data.result_type != CertificateValidationResult.MALFORMED:
+            raise AssertionError(f"Expected {CertificateValidationResult.MALFORMED}, got {result.data.result_type}")
+        if "Failed to parse certificate" not in result.data.message:
+            raise AssertionError(f"Expected {"Failed to parse certificate"} in {result.data.message}")
 
     @pytest.mark.asyncio
     @patch("flext_ldap.infrastructure.certificate_validator.x509")
@@ -99,8 +103,10 @@ class TestCertificateValidationService:
 
         assert result.is_success
         assert result.data is not None
-        assert result.data.result_type == CertificateValidationResult.EXPIRED
-        assert "Certificate expired" in result.data.message
+        if result.data.result_type != CertificateValidationResult.EXPIRED:
+            raise AssertionError(f"Expected {CertificateValidationResult.EXPIRED}, got {result.data.result_type}")
+        if "Certificate expired" not in result.data.message:
+            raise AssertionError(f"Expected {"Certificate expired"} in {result.data.message}")
 
     @pytest.mark.asyncio
     @patch("flext_ldap.infrastructure.certificate_validator.x509")
@@ -140,8 +146,10 @@ class TestCertificateValidationService:
 
             assert result.is_success
             assert result.data is not None
-            assert result.data.result_type == CertificateValidationResult.VALID
-            assert "Certificate validation successful" in result.data.message
+            if result.data.result_type != CertificateValidationResult.VALID:
+                raise AssertionError(f"Expected {CertificateValidationResult.VALID}, got {result.data.result_type}")
+            if "Certificate validation successful" not in result.data.message:
+                raise AssertionError(f"Expected {"Certificate validation successful"} in {result.data.message}")
 
     @pytest.mark.asyncio
     async def test_create_ssl_context_default(
@@ -156,8 +164,10 @@ class TestCertificateValidationService:
         assert result.is_success
         assert result.data is not None
         assert isinstance(result.data, ssl.SSLContext)
-        assert result.data.verify_mode == ssl.CERT_REQUIRED
-        assert result.data.check_hostname is True
+        if result.data.verify_mode != ssl.CERT_REQUIRED:
+            raise AssertionError(f"Expected {ssl.CERT_REQUIRED}, got {result.data.verify_mode}")
+        if not (result.data.check_hostname):
+            raise AssertionError(f"Expected True, got {result.data.check_hostname}")
 
     @pytest.mark.asyncio
     async def test_create_ssl_context_no_verification(
@@ -175,9 +185,10 @@ class TestCertificateValidationService:
         assert result.is_success
         assert result.data is not None
         assert isinstance(result.data, ssl.SSLContext)
-        assert result.data.verify_mode == ssl.CERT_NONE
-        assert result.data.check_hostname is False
-
+        if result.data.verify_mode != ssl.CERT_NONE:
+            raise AssertionError(f"Expected {ssl.CERT_NONE}, got {result.data.verify_mode}")
+        if result.data.check_hostname:
+            raise AssertionError(f"Expected False, got {result.data.check_hostname}")\ n
     def test_match_hostname_exact(
         self,
         cert_validator: CertificateValidationService,
@@ -312,7 +323,8 @@ class TestCertificateValidationService:
             minimum_version="TLSv1.2",
             maximum_version="TLSv1.3",
         )
-        assert config.verify_mode == "CERT_REQUIRED"
+        if config.verify_mode != "CERT_REQUIRED":
+            raise AssertionError(f"Expected {"CERT_REQUIRED"}, got {config.verify_mode}")
 
     def test_certificate_validation_context_validation(self) -> None:
         """Test CertificateValidationContext validation."""
@@ -329,5 +341,6 @@ class TestCertificateValidationService:
 
         # Test valid context
         context = CertificateValidationContext(hostname="ldap.example.com", port=636)
-        assert context.hostname == "ldap.example.com"
+        if context.hostname != "ldap.example.com":
+            raise AssertionError(f"Expected {"ldap.example.com"}, got {context.hostname}")
         assert context.port == 636

@@ -9,15 +9,15 @@ Interfaces define contracts for infrastructure implementations.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
 
 if TYPE_CHECKING:
     from flext_core import FlextResult
 
-    from flext_ldap.domain.entities import FlextLdapEntry
     from flext_ldap.domain.values import DistinguishedName, LDAPFilter, LDAPScope
+    from flext_ldap.entities import FlextLdapEntry
 
 
 class FlextLdapConnectionManager(ABC):
@@ -29,7 +29,7 @@ class FlextLdapConnectionManager(ABC):
         server_url: str,
         bind_dn: str | None = None,
         password: str | None = None,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Establish LDAP connection.
 
         Args:
@@ -43,7 +43,7 @@ class FlextLdapConnectionManager(ABC):
         """
 
     @abstractmethod
-    async def disconnect(self, connection_id: str) -> FlextResult[Any]:
+    async def disconnect(self, connection_id: str) -> FlextResult[object]:
         """Disconnect from LDAP server.
 
         Args:
@@ -55,7 +55,7 @@ class FlextLdapConnectionManager(ABC):
         """
 
     @abstractmethod
-    async def ping(self, connection_id: str) -> FlextResult[Any]:
+    async def ping(self, connection_id: str) -> FlextResult[object]:
         """Test connection health.
 
         Args:
@@ -78,7 +78,7 @@ class FlextLdapDirectoryRepository(ABC):
         search_filter: LDAPFilter,
         scope: LDAPScope,
         attributes: list[str] | None = None,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Search LDAP directory.
 
         Args:
@@ -98,7 +98,7 @@ class FlextLdapDirectoryRepository(ABC):
         self,
         connection_id: str,
         entry: FlextLdapEntry,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Create LDAP entry.
 
         Args:
@@ -115,8 +115,8 @@ class FlextLdapDirectoryRepository(ABC):
         self,
         connection_id: str,
         dn: DistinguishedName,
-        changes: dict[str, Any],
-    ) -> FlextResult[Any]:
+        changes: dict[str, object],
+    ) -> FlextResult[object]:
         """Modify LDAP entry.
 
         Args:
@@ -134,7 +134,7 @@ class FlextLdapDirectoryRepository(ABC):
         self,
         connection_id: str,
         dn: DistinguishedName,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Delete LDAP entry.
 
         Args:
@@ -151,7 +151,7 @@ class FlextLdapSchemaValidator(ABC):
     """Abstract interface for LDAP schema validation."""
 
     @abstractmethod
-    def validate_entry(self, entry: FlextLdapEntry) -> FlextResult[Any]:
+    def validate_entry(self, entry: FlextLdapEntry) -> FlextResult[object]:
         """Validate LDAP entry against schema.
 
         Args:
@@ -179,7 +179,7 @@ class FlextLdapSchemaValidator(ABC):
         self,
         attribute_name: str,
         value: str,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Validate attribute value syntax.
 
         Args:
@@ -203,7 +203,7 @@ class FlextLdapGroupRepository(ABC):
         self,
         connection_id: str,
         dn: DistinguishedName,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Find group by distinguished name.
 
         Args:
@@ -220,7 +220,7 @@ class FlextLdapGroupRepository(ABC):
         self,
         connection_id: str,
         group_dn: DistinguishedName,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Get group members.
 
         Args:
@@ -238,7 +238,7 @@ class FlextLdapGroupRepository(ABC):
         connection_id: str,
         group_dn: DistinguishedName,
         member_dn: DistinguishedName,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Add member to group.
 
         Args:

@@ -25,16 +25,16 @@ from flext_ldap.services import (
 )
 
 __all__ = [
-    # Domain ports
-    "FlextLdapMigrationService",
-    "FlextLdapSchemaService",
-    "FlextLdapSearchService",
-    "FlextLdapUserService",
     # Application services (consolidated - no more wrapper service)
     "FlextLdapConnectionApplicationService",
     "FlextLdapGroupService",
+    # Domain ports
+    "FlextLdapMigrationService",
     "FlextLdapOperationService",
+    "FlextLdapSchemaService",
+    "FlextLdapSearchService",
     "FlextLdapUserApplicationService",
+    "FlextLdapUserService",
 ]
 
 # Note: FlextLdapService wrapper eliminated per user requirements to reduce modules

@@ -21,7 +21,7 @@ from flext_core import FlextResult, get_logger
 if TYPE_CHECKING:
     from uuid import UUID
 
-    from flext_ldap.domain.entities import FlextLdapConnection
+    from flext_ldap.entities import FlextLdapConnection
 
 logger = get_logger(__name__)
 
@@ -314,7 +314,7 @@ class FlextLdapSecurityEventLogger:
 
             return FlextResult.ok(event)
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             error_msg = f"Failed to log security event: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
@@ -463,7 +463,7 @@ class FlextLdapSecurityEventLogger:
 
             return FlextResult.ok(metrics)
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             error_msg = f"Failed to get security metrics: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)

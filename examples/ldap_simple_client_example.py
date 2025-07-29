@@ -43,13 +43,9 @@ async def main() -> None:
         if search_result.is_success:
             for _entry in search_result.data[:3]:  # Show first 3
                 pass
-        else:
-            pass
 
         # Disconnect
         await client.disconnect(connection_id)
-    else:
-        pass
 
     # Example 2: Connection pool
     pool_config = LdapPoolConfig(
@@ -69,8 +65,6 @@ async def main() -> None:
 
         # Disconnect
         await client.disconnect(pool_id)
-    else:
-        pass
 
     # Example 3: LDAP operations
     test_config = LdapConnectionConfig(
@@ -113,17 +107,9 @@ async def main() -> None:
 
                 if delete_result.is_success:
                     pass
-                else:
-                    pass
-            else:
-                pass
-        else:
-            pass
 
         # Disconnect
         await client.disconnect(connection_id)
-    else:
-        pass
 
     # Cleanup
     await client.close_all()

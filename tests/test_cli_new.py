@@ -1,8 +1,18 @@
 """Tests for new CLI interface.
 
+# Constants
+EXPECTED_BULK_SIZE = 2
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
+
+from flext_core import FlextResult
+from flext_core import FlextResult
+from flext_core import FlextResult
+from flext_core import FlextResult
+import importlib
+
 
 from __future__ import annotations
 
@@ -25,25 +35,33 @@ class TestCLINew:
             return f"async_{value}"
 
         result = test_func("test")
-        assert result == "async_test"
+        if result != "async_test":
+            raise AssertionError(f"Expected {"async_test"}, got {result}")
 
     def test_cli_group_version(self) -> None:
         """Test CLI group and version option."""
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["--version"])
 
-        assert result.exit_code == 0
-        assert "0.6.0" in result.output
+        if result.exit_code != 0:
+
+            raise AssertionError(f"Expected {0}, got {result.exit_code}")
+        if "0.6.0" not in result.output:
+            raise AssertionError(f"Expected {"0.6.0"} in {result.output}")
 
     def test_cli_group_help(self) -> None:
         """Test CLI group help."""
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["--help"])
 
-        assert result.exit_code == 0
-        assert "FLEXT LDAP - Enterprise LDAP Operations" in result.output
+        if result.exit_code != 0:
+
+            raise AssertionError(f"Expected {0}, got {result.exit_code}")
+        if "FLEXT LDAP - Enterprise LDAP Operations" not in result.output:
+            raise AssertionError(f"Expected {"FLEXT LDAP - Enterprise LDAP Operations"} in {result.output}")
         assert "test" in result.output
-        assert "search" in result.output
+        if "search" not in result.output:
+            raise AssertionError(f"Expected {"search"} in {result.output}")
 
     @patch("flext_ldap.cli_new.LDAPClient")
     def test_test_command_success(self, mock_client_class: MagicMock) -> None:
@@ -57,8 +75,11 @@ class TestCLINew:
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["test", "ldap.example.com"])
 
-        assert result.exit_code == 0
-        assert "✅ Successfully connected to ldap.example.com:389" in result.output
+        if result.exit_code != 0:
+
+            raise AssertionError(f"Expected {0}, got {result.exit_code}")
+        if "✅ Successfully connected to ldap.example.com:389" not in result.output:
+            raise AssertionError(f"Expected {"✅ Successfully connected to ldap.example.com:389"} in {result.output}")
         # Verify context manager was used
         mock_client.__aenter__.assert_called_once()
         mock_client.__aexit__.assert_called_once()
@@ -83,8 +104,11 @@ class TestCLINew:
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["test", "invalid.example.com"])
 
-        assert result.exit_code == 1
-        assert "❌ Error: Failed to connect" in result.output
+        if result.exit_code != 1:
+
+            raise AssertionError(f"Expected {1}, got {result.exit_code}")
+        if "❌ Error: Failed to connect" not in result.output:
+            raise AssertionError(f"Expected {"❌ Error: Failed to connect"} in {result.output}")
 
     @patch("flext_ldap.cli_new.LDAPClient")
     def test_test_command_with_options(self, mock_client_class: MagicMock) -> None:
@@ -111,8 +135,11 @@ class TestCLINew:
             ],
         )
 
-        assert result.exit_code == 0
-        assert "✅ Successfully connected to ldap.example.com:636" in result.output
+        if result.exit_code != 0:
+
+            raise AssertionError(f"Expected {0}, got {result.exit_code}")
+        if "✅ Successfully connected to ldap.example.com:636" not in result.output:
+            raise AssertionError(f"Expected {"✅ Successfully connected to ldap.example.com:636"} in {result.output}")
 
     @patch("flext_ldap.cli_new.LDAPClient")
     def test_test_command_exception(self, mock_client_class: MagicMock) -> None:
@@ -123,8 +150,11 @@ class TestCLINew:
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["test", "unreachable.example.com"])
 
-        assert result.exit_code == 1
-        assert "❌ Error: Network unreachable" in result.output
+        if result.exit_code != 1:
+
+            raise AssertionError(f"Expected {1}, got {result.exit_code}")
+        if "❌ Error: Network unreachable" not in result.output:
+            raise AssertionError(f"Expected {"❌ Error: Network unreachable"} in {result.output}")
 
     @patch("flext_ldap.cli_new.LDAPClient")
     def test_search_command_success(self, mock_client_class: MagicMock) -> None:
@@ -149,7 +179,7 @@ class TestCLINew:
 
         # Mock successful search
         # 🚨 ARCHITECTURAL COMPLIANCE: Using módulo raiz imports
-        from flext_core import FlextResult
+
 
         mock_client.search.return_value = FlextResult.ok(mock_entries)
 
@@ -159,10 +189,14 @@ class TestCLINew:
             ["search", "ldap.example.com", "dc=example,dc=com"],
         )
 
-        assert result.exit_code == 0
-        assert "Found 2 entries:" in result.output
+        if result.exit_code != 0:
+
+            raise AssertionError(f"Expected {0}, got {result.exit_code}")
+        if "Found 2 entries:" not in result.output:
+            raise AssertionError(f"Expected {"Found 2 entries:"} in {result.output}")
         assert "DN: cn=user1,dc=example,dc=com" in result.output
-        assert "DN: cn=user2,dc=example,dc=com" in result.output
+        if "DN: cn=user2,dc=example,dc=com" not in result.output:
+            raise AssertionError(f"Expected {"DN: cn=user2,dc=example,dc=com"} in {result.output}")
 
     @patch("flext_ldap.cli_new.LDAPClient")
     def test_search_command_many_results(self, mock_client_class: MagicMock) -> None:
@@ -183,7 +217,7 @@ class TestCLINew:
         mock_client.search = AsyncMock()
 
         # Mock successful search
-        from flext_core import FlextResult
+
 
         mock_client.search.return_value = FlextResult.ok(mock_entries)
 
@@ -193,8 +227,11 @@ class TestCLINew:
             ["search", "ldap.example.com", "dc=example,dc=com"],
         )
 
-        assert result.exit_code == 0
-        assert "Found 15 entries:" in result.output
+        if result.exit_code != 0:
+
+            raise AssertionError(f"Expected {0}, got {result.exit_code}")
+        if "Found 15 entries:" not in result.output:
+            raise AssertionError(f"Expected {"Found 15 entries:"} in {result.output}")
         assert "... and 5 more" in result.output
 
     @patch("flext_ldap.cli_new.LDAPClient")
@@ -207,7 +244,7 @@ class TestCLINew:
         mock_client.search = AsyncMock()
 
         # Mock successful search with empty results
-        from flext_core import FlextResult
+
 
         mock_client.search.return_value = FlextResult.ok([])
 
@@ -229,8 +266,11 @@ class TestCLINew:
             ],
         )
 
-        assert result.exit_code == 0
-        assert "Found 0 entries:" in result.output
+        if result.exit_code != 0:
+
+            raise AssertionError(f"Expected {0}, got {result.exit_code}")
+        if "Found 0 entries:" not in result.output:
+            raise AssertionError(f"Expected {"Found 0 entries:"} in {result.output}")
         mock_client.search.assert_called_once_with(
             "dc=example,dc=com",
             "(objectClass=user)",
@@ -246,7 +286,7 @@ class TestCLINew:
         mock_client.search = AsyncMock()
 
         # Mock failed search
-        from flext_core import FlextResult
+
 
         mock_client.search.return_value = FlextResult.fail("Invalid filter")
 
@@ -264,7 +304,8 @@ class TestCLINew:
 
         # Note: Due to Click async handling, exit codes may not propagate correctly
         # But the error message should be displayed properly
-        assert "❌ Search failed: Invalid filter" in result.output
+        if "❌ Search failed: Invalid filter" not in result.output:
+            raise AssertionError(f"Expected {"❌ Search failed: Invalid filter"} in {result.output}")
 
     @patch("flext_ldap.cli_new.LDAPClient")
     def test_search_command_exception(self, mock_client_class: MagicMock) -> None:
@@ -278,32 +319,44 @@ class TestCLINew:
             ["search", "invalid-server", "dc=example,dc=com"],
         )
 
-        assert result.exit_code == 1
-        assert "❌ Error: Invalid server format" in result.output
+        if result.exit_code != 1:
+
+            raise AssertionError(f"Expected {1}, got {result.exit_code}")
+        if "❌ Error: Invalid server format" not in result.output:
+            raise AssertionError(f"Expected {"❌ Error: Invalid server format"} in {result.output}")
 
     def test_search_command_missing_args(self) -> None:
         """Test search command with missing arguments."""
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["search"])
 
-        assert result.exit_code == 2  # Click missing argument error
-        assert "Missing argument" in result.output
+        if result.exit_code != EXPECTED_BULK_SIZE  # Click missing argument error:
+
+            raise AssertionError(f"Expected {2  # Click missing argument error}, got {result.exit_code}")
+        if "Missing argument" not in result.output:
+            raise AssertionError(f"Expected {"Missing argument"} in {result.output}")
 
     def test_test_command_missing_args(self) -> None:
         """Test test command with missing arguments."""
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["test"])
 
-        assert result.exit_code == 2  # Click missing argument error
-        assert "Missing argument" in result.output
+        if result.exit_code != EXPECTED_BULK_SIZE  # Click missing argument error:
+
+            raise AssertionError(f"Expected {2  # Click missing argument error}, got {result.exit_code}")
+        if "Missing argument" not in result.output:
+            raise AssertionError(f"Expected {"Missing argument"} in {result.output}")
 
     def test_invalid_command(self) -> None:
         """Test invalid command."""
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["invalid"])
 
-        assert result.exit_code == 2  # Click unknown command error
-        assert "No such command" in result.output
+        if result.exit_code != EXPECTED_BULK_SIZE  # Click unknown command error:
+
+            raise AssertionError(f"Expected {2  # Click unknown command error}, got {result.exit_code}")
+        if "No such command" not in result.output:
+            raise AssertionError(f"Expected {"No such command"} in {result.output}")
 
     def test_module_executable(self) -> None:
         """Test that module can be executed as script."""
@@ -313,7 +366,7 @@ class TestCLINew:
             try:
                 cli_new.__name__ = "__main__"
                 # Import again to trigger the if __name__ == "__main__" block
-                import importlib
+
 
                 importlib.reload(cli_new)
             finally:
@@ -330,8 +383,11 @@ class TestCLINew:
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["test", "ldap.example.com"])
 
-        assert result.exit_code == 1
-        assert "❌ Error: Unexpected error" in result.output
+        if result.exit_code != 1:
+
+            raise AssertionError(f"Expected {1}, got {result.exit_code}")
+        if "❌ Error: Unexpected error" not in result.output:
+            raise AssertionError(f"Expected {"❌ Error: Unexpected error"} in {result.output}")
 
     @patch("flext_ldap.cli_new.LDAPClient")
     def test_search_command_runtime_error(self, mock_client_class: MagicMock) -> None:
@@ -346,5 +402,8 @@ class TestCLINew:
             ["search", "ldap.example.com", "dc=example,dc=com"],
         )
 
-        assert result.exit_code == 1
-        assert "❌ Error: Connection lost" in result.output
+        if result.exit_code != 1:
+
+            raise AssertionError(f"Expected {1}, got {result.exit_code}")
+        if "❌ Error: Connection lost" not in result.output:
+            raise AssertionError(f"Expected {"❌ Error: Connection lost"} in {result.output}")

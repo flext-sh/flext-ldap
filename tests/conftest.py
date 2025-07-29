@@ -7,16 +7,19 @@ from __future__ import annotations
 
 import os
 import time
-from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
 import docker
 import pytest
-from docker.models.containers import Container
+
+from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from docker.client import DockerClient
+    from docker.models.containers import Container
 
 # OpenLDAP Container Configuration
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"
@@ -79,16 +82,16 @@ class OpenLDAPContainerManager:
         try:
             # Try to get existing container by name (handles both running and stopped)
             existing = self.client.containers.get(OPENLDAP_CONTAINER_NAME)
-            if existing.status in ("running", "created", "paused"):
+            if existing.status in {"running", "created", "paused"}:
                 existing.stop(timeout=5)
             existing.remove(force=True)
         except docker.errors.NotFound:
             pass  # Container doesn't exist, nothing to stop
-        except Exception:
+        except (RuntimeError, ValueError, TypeError):
             # Try to force remove by name if getting by ID fails
             try:
                 self.client.api.remove_container(OPENLDAP_CONTAINER_NAME, force=True)
-            except Exception:
+            except (RuntimeError, ValueError, TypeError):
                 pass  # If all else fails, continue
 
         self.container = None
@@ -132,7 +135,7 @@ class OpenLDAPContainerManager:
                     # Success! Container is ready
                     return
 
-            except Exception:
+            except (RuntimeError, ValueError, TypeError):
                 pass  # Continue waiting
 
             time.sleep(1)
@@ -148,7 +151,7 @@ class OpenLDAPContainerManager:
         try:
             self.container.reload()
             return self.container.status == "running"
-        except Exception:
+        except (RuntimeError, ValueError, TypeError):
             return False
 
     def get_logs(self) -> str:
@@ -158,7 +161,7 @@ class OpenLDAPContainerManager:
 
         try:
             return self.container.logs().decode()
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             return f"Failed to get logs: {e}"
 
 
@@ -169,7 +172,7 @@ _container_manager: OpenLDAPContainerManager | None = None
 @pytest.fixture(scope="session")
 def docker_openldap_container() -> Container:
     """Session-scoped fixture that provides OpenLDAP Docker container.
-    
+
     This fixture starts an OpenLDAP container at the beginning of the test session
     and stops it at the end. The container is shared across all tests.
     """
@@ -195,7 +198,7 @@ def docker_openldap_container() -> Container:
         os.environ.pop(key, None)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def ldap_test_config(docker_openldap_container: Container) -> dict[str, Any]:
     """Provides LDAP test configuration for individual tests."""
     return {
@@ -207,14 +210,13 @@ def ldap_test_config(docker_openldap_container: Container) -> dict[str, Any]:
     }
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 async def clean_ldap_container(ldap_test_config: dict[str, Any]) -> dict[str, Any]:
     """Provides a clean LDAP container by removing test entries.
-    
+
     This fixture ensures each test starts with a clean LDAP directory
     by removing any test entries that might have been left behind.
     """
-    from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
 
     client = FlextLdapInfrastructureClient()
 
@@ -269,7 +271,8 @@ async def temporary_ldap_entry(
         # Create entry
         result = await client.add_entry(connection_id, dn, attributes)
         if not result.is_success:
-            raise RuntimeError(f"Failed to create temporary entry {dn}: {result.error}")
+            msg = f"Failed to create temporary entry {dn}: {result.error}"
+            raise RuntimeError(msg)
 
         yield dn
 
@@ -277,7 +280,7 @@ async def temporary_ldap_entry(
         # Auto-cleanup
         try:
             await client.delete_entry(connection_id, dn)
-        except Exception:
+        except (RuntimeError, ValueError, TypeError):
             pass  # Ignore cleanup errors
 
 

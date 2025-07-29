@@ -12,7 +12,7 @@ from enum import StrEnum
 from urllib.parse import urlparse
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
-from flext_core import FlextValueObject
+from flext_core import FlextResult, FlextValueObject
 from pydantic import Field, field_validator
 
 
@@ -36,14 +36,13 @@ class FlextLdapDistinguishedName(FlextValueObject):
 
     value: str = Field(..., description="DN string value")
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for DN."""
         if not self.value or not self.value.strip():
-            msg = "Distinguished name cannot be empty"
-            raise ValueError(msg)
+            return FlextResult.fail("Distinguished name cannot be empty")
         if "=" not in self.value:
-            msg = "Distinguished name must contain at least one RDN"
-            raise ValueError(msg)
+            return FlextResult.fail("Distinguished name must contain at least one RDN")
+        return FlextResult.ok(None)
 
     @field_validator("value")
     @classmethod
@@ -137,20 +136,18 @@ class FlextLdapFilterValue(FlextValueObject):
 
     value: str = Field(..., description="LDAP filter string")
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for LDAP filter."""
         if not self.value:
-            msg = "LDAP filter cannot be empty"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP filter cannot be empty")
         if not (self.value.startswith("(") and self.value.endswith(")")):
-            msg = "LDAP filter must be enclosed in parentheses"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP filter must be enclosed in parentheses")
         # Check for balanced parentheses
         open_count = self.value.count("(")
         close_count = self.value.count(")")
         if open_count != close_count:
-            msg = "LDAP filter has unbalanced parentheses"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP filter has unbalanced parentheses")
+        return FlextResult.ok(None)
 
     @field_validator("value")
     @classmethod
@@ -305,18 +302,16 @@ class FlextLdapUri(FlextValueObject):
 
     value: str = Field(..., description="LDAP URI string")
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for LDAP URI."""
         if not self.value:
-            msg = "LDAP URI cannot be empty"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP URI cannot be empty")
         parsed = urlparse(self.value)
         if parsed.scheme not in {"ldap", "ldaps"}:
-            msg = "LDAP URI must use ldap:// or ldaps:// scheme"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP URI must use ldap:// or ldaps:// scheme")
         if not parsed.hostname:
-            msg = "LDAP URI must specify hostname"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP URI must specify hostname")
+        return FlextResult.ok(None)
 
     @field_validator("value")
     @classmethod
@@ -376,15 +371,14 @@ class FlextLdapObjectClass(FlextValueObject):
 
     name: str = Field(..., description="Object class name")
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for LDAP object class."""
         if not self.name or not self.name.strip():
-            msg = "Object class name cannot be empty"
-            raise ValueError(msg)
+            return FlextResult.fail("Object class name cannot be empty")
         # Basic validation - alphanumeric and common chars
         if not self.name.replace("-", "").replace("_", "").isalnum():
-            msg = "Object class name contains invalid characters"
-            raise ValueError(msg)
+            return FlextResult.fail("Object class name contains invalid characters")
+        return FlextResult.ok(None)
 
     @field_validator("name")
     @classmethod
@@ -425,15 +419,14 @@ class FlextLdapAttributesValue(FlextValueObject):
         description="LDAP attributes as name-value pairs",
     )
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for LDAP attributes."""
         for name, values in self.attributes.items():
             if not name or not name.strip():
-                msg = "Attribute name cannot be empty"
-                raise ValueError(msg)
+                return FlextResult.fail("Attribute name cannot be empty")
             if not values:
-                msg = f"Attribute '{name}' must have at least one value"
-                raise ValueError(msg)
+                return FlextResult.fail(f"Attribute '{name}' must have at least one value")
+        return FlextResult.ok(None)
 
     def get_single_value(self, name: str) -> str | None:
         """Get single value for attribute.
@@ -519,14 +512,13 @@ class FlextLdapConnectionInfo(FlextValueObject):
     is_secure: bool = False
     protocol_version: int = 3
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for LDAP connection info."""
         if not self.server_uri:
-            msg = "Connection info must have server_uri"
-            raise ValueError(msg)
+            return FlextResult.fail("Connection info must have server_uri")
         if self.protocol_version not in {2, 3}:
-            msg = "Protocol version must be 2 or 3"
-            raise ValueError(msg)
+            return FlextResult.fail("Protocol version must be 2 or 3")
+        return FlextResult.ok(None)
 
     @property
     def connection_string(self) -> str:
@@ -588,11 +580,11 @@ class FlextLdapExtendedEntry(FlextValueObject):
             ),
         )
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for LDAP extended entry."""
         if not self.dn:
-            msg = "LDAP entry must have a distinguished name"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP entry must have a distinguished name")
+        return FlextResult.ok(None)
 
 
 class FlextLdapCreateUserRequest(FlextValueObject):
@@ -609,17 +601,15 @@ class FlextLdapCreateUserRequest(FlextValueObject):
     title: str | None = Field(None, description="Job title")
     object_classes: list[str] | None = Field(None, description="LDAP object classes")
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for user creation request."""
         if not self.dn or not self.dn.strip():
-            msg = "DN cannot be empty"
-            raise ValueError(msg)
+            return FlextResult.fail("DN cannot be empty")
         if not self.uid or not self.uid.strip():
-            msg = "UID cannot be empty"
-            raise ValueError(msg)
+            return FlextResult.fail("UID cannot be empty")
         if self.mail and "@" not in self.mail:
-            msg = "Email must be valid format"
-            raise ValueError(msg)
+            return FlextResult.fail("Email must be valid format")
+        return FlextResult.ok(None)
 
     @field_validator("dn")
     @classmethod

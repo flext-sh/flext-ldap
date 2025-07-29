@@ -1,5 +1,9 @@
 """Tests for Security Event Logger Infrastructure.
 
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_DATA_COUNT = 3
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -30,13 +34,22 @@ class TestSecurityEvent:
             user_dn="cn=test,dc=example,dc=com",
         )
 
-        assert event.event_type == SecurityEventType.AUTHENTICATION_SUCCESS
+        if event.event_type != SecurityEventType.AUTHENTICATION_SUCCESS:
+
+            msg = f"Expected {SecurityEventType.AUTHENTICATION_SUCCESS}, got {event.event_type}"
+            raise AssertionError(msg)
         assert event.user_dn == "cn=test,dc=example,dc=com"
-        assert event.severity == SecurityEventSeverity.INFO
+        if event.severity != SecurityEventSeverity.INFO:
+            msg = f"Expected {SecurityEventSeverity.INFO}, got {event.severity}"
+            raise AssertionError(msg)
         assert event.status == SecurityEventStatus.INFO
-        assert event.attributes == []
+        if event.attributes != []:
+            msg = f"Expected {[]}, got {event.attributes}"
+            raise AssertionError(msg)
         assert event.additional_context == {}
-        assert event.compliance_flags == []
+        if event.compliance_flags != []:
+            msg = f"Expected {[]}, got {event.compliance_flags}"
+            raise AssertionError(msg)
         assert event.event_id is not None
         assert event.timestamp is not None
 
@@ -56,13 +69,22 @@ class TestSecurityEvent:
 
         event_dict = event.to_dict()
 
-        assert event_dict["event_type"] == "search_operation"
+        if event_dict["event_type"] != "search_operation":
+
+            msg = f"Expected {"search_operation"}, got {event_dict["event_type"]}"
+            raise AssertionError(msg)
         assert event_dict["severity"] == "high"
-        assert event_dict["status"] == "success"
+        if event_dict["status"] != "success":
+            msg = f"Expected {"success"}, got {event_dict["status"]}"
+            raise AssertionError(msg)
         assert event_dict["timestamp"] == timestamp.isoformat()
-        assert event_dict["user_dn"] == "cn=test,dc=example,dc=com"
+        if event_dict["user_dn"] != "cn=test,dc=example,dc=com":
+            msg = f"Expected {"cn=test,dc=example,dc=com"}, got {event_dict["user_dn"]}"
+            raise AssertionError(msg)
         assert event_dict["target_dn"] == "ou=users,dc=example,dc=com"
-        assert event_dict["attributes"] == ["cn", "mail"]
+        if event_dict["attributes"] != ["cn", "mail"]:
+            msg = f"Expected {["cn", "mail"]}, got {event_dict["attributes"]}"
+            raise AssertionError(msg)
         assert event_dict["filter_expression"] == "(objectClass=person)"
 
     def test_security_event_to_json(self) -> None:
@@ -75,7 +97,9 @@ class TestSecurityEvent:
         json_str = event.to_json()
 
         assert isinstance(json_str, str)
-        assert "auth_failure" in json_str
+        if "auth_failure" not in json_str:
+            msg = f"Expected {"auth_failure"} in {json_str}"
+            raise AssertionError(msg)
         assert "cn=test,dc=example,dc=com" in json_str
 
 
@@ -112,11 +136,17 @@ class TestSecurityEventLogger:
         result = await event_logger.log_event(event.event_type)
 
         assert result.is_success
-        assert len(event_logger._event_history) == 1
+        if len(event_logger._event_history) != 1:
+            msg = f"Expected {1}, got {len(event_logger._event_history)}"
+            raise AssertionError(msg)
         logged_event = event_logger._event_history[0]
-        assert logged_event.event_type == event.event_type
+        if logged_event.event_type != event.event_type:
+            msg = f"Expected {event.event_type}, got {logged_event.event_type}"
+            raise AssertionError(msg)
         assert logged_event.severity == event.severity
-        assert logged_event.status == event.status
+        if logged_event.status != event.status:
+            msg = f"Expected {event.status}, got {logged_event.status}"
+            raise AssertionError(msg)
 
     @pytest.mark.asyncio
     async def test_log_event_with_connection(
@@ -138,7 +168,9 @@ class TestSecurityEventLogger:
         )
 
         assert result.is_success
-        assert len(event_logger._event_history) == 1
+        if len(event_logger._event_history) != 1:
+            msg = f"Expected {1}, got {len(event_logger._event_history)}"
+            raise AssertionError(msg)
 
     @pytest.mark.asyncio
     async def test_log_authentication_event_success(
@@ -159,9 +191,13 @@ class TestSecurityEventLogger:
         )
 
         assert result.is_success
-        assert len(event_logger._event_history) == 1
+        if len(event_logger._event_history) != 1:
+            msg = f"Expected {1}, got {len(event_logger._event_history)}"
+            raise AssertionError(msg)
         event = event_logger._event_history[0]
-        assert event.event_type == SecurityEventType.AUTHENTICATION_SUCCESS
+        if event.event_type != SecurityEventType.AUTHENTICATION_SUCCESS:
+            msg = f"Expected {SecurityEventType.AUTHENTICATION_SUCCESS}, got {event.event_type}"
+            raise AssertionError(msg)
         assert event.user_dn == "cn=test,dc=example,dc=com"
 
     @pytest.mark.asyncio
@@ -184,9 +220,13 @@ class TestSecurityEventLogger:
         )
 
         assert result.is_success
-        assert len(event_logger._event_history) == 1
+        if len(event_logger._event_history) != 1:
+            msg = f"Expected {1}, got {len(event_logger._event_history)}"
+            raise AssertionError(msg)
         event = event_logger._event_history[0]
-        assert event.event_type == SecurityEventType.AUTHENTICATION_FAILURE
+        if event.event_type != SecurityEventType.AUTHENTICATION_FAILURE:
+            msg = f"Expected {SecurityEventType.AUTHENTICATION_FAILURE}, got {event.event_type}"
+            raise AssertionError(msg)
         assert event.severity == SecurityEventSeverity.MEDIUM
 
     def test_calculate_risk_score_auth_failure(
@@ -216,7 +256,10 @@ class TestSecurityEventLogger:
 
         risk_score = event_logger._calculate_risk_score(event)
 
-        assert risk_score >= 0
+        if risk_score < 0:
+
+            msg = f"Expected {risk_score} >= {0}"
+            raise AssertionError(msg)
         assert risk_score <= 100
 
     def test_get_compliance_flags_auth_failure(
@@ -232,7 +275,9 @@ class TestSecurityEventLogger:
         flags = event_logger._get_compliance_flags(event)
 
         assert len(flags) > 0
-        assert "PCI_DSS_8.2" in flags
+        if "PCI_DSS_8.2" not in flags:
+            msg = f"Expected {"PCI_DSS_8.2"} in {flags}"
+            raise AssertionError(msg)
 
     def test_get_compliance_flags_data_export(
         self,
@@ -247,7 +292,9 @@ class TestSecurityEventLogger:
         flags = event_logger._get_compliance_flags(event)
 
         assert len(flags) > 0
-        assert "GDPR_ARTICLE_32" in flags
+        if "GDPR_ARTICLE_32" not in flags:
+            msg = f"Expected {"GDPR_ARTICLE_32"} in {flags}"
+            raise AssertionError(msg)
 
     def test_add_to_history_management(self, event_logger: SecurityEventLogger) -> None:
         """Test adding event to management history."""
@@ -258,11 +305,18 @@ class TestSecurityEventLogger:
 
         event_logger._add_to_history(event)
 
-        assert len(event_logger._event_history) == 1
+        if len(event_logger._event_history) != 1:
+
+            msg = f"Expected {1}, got {len(event_logger._event_history)}"
+            raise AssertionError(msg)
         logged_event = event_logger._event_history[0]
-        assert logged_event.event_type == event.event_type
+        if logged_event.event_type != event.event_type:
+            msg = f"Expected {event.event_type}, got {logged_event.event_type}"
+            raise AssertionError(msg)
         assert logged_event.severity == event.severity
-        assert logged_event.status == event.status
+        if logged_event.status != event.status:
+            msg = f"Expected {event.status}, got {logged_event.status}"
+            raise AssertionError(msg)
 
     def test_add_to_session_history(self, event_logger: SecurityEventLogger) -> None:
         """Test adding event to session history."""
@@ -275,8 +329,12 @@ class TestSecurityEventLogger:
         event_logger._add_to_history(event)
 
         assert event_logger._session_events is not None
-        assert "session123" in event_logger._session_events
-        assert len(event_logger._session_events["session123"]) == 1
+        if "session123" not in event_logger._session_events:
+            msg = f"Expected {"session123"} in {event_logger._session_events}"
+            raise AssertionError(msg)
+        if len(event_logger._session_events["session123"]) != 1:
+            msg = f"Expected {1}, got {len(event_logger._session_events["session123"])}"
+            raise AssertionError(msg)
         assert event_logger._session_events["session123"][0] == event
 
     def test_add_to_user_history(self, event_logger: SecurityEventLogger) -> None:
@@ -289,8 +347,12 @@ class TestSecurityEventLogger:
         event_logger._add_to_history(event)
 
         assert event_logger._user_events is not None
-        assert "cn=test,dc=example,dc=com" in event_logger._user_events
-        assert len(event_logger._user_events["cn=test,dc=example,dc=com"]) == 1
+        if "cn=test,dc=example,dc=com" not in event_logger._user_events:
+            msg = f"Expected {"cn=test,dc=example,dc=com"} in {event_logger._user_events}"
+            raise AssertionError(msg)
+        if len(event_logger._user_events["cn=test,dc=example,dc=com"]) != 1:
+            msg = f"Expected {1}, got {len(event_logger._user_events["cn=test,dc=example,dc=com"])}"
+            raise AssertionError(msg)
 
     @pytest.mark.asyncio
     async def test_get_security_metrics(
@@ -329,11 +391,18 @@ class TestSecurityEventLogger:
         assert result.data is not None
         metrics = result.data
 
-        assert metrics["total_events"] == 3
+        if metrics["total_events"] != EXPECTED_DATA_COUNT:
+
+            msg = f"Expected {3}, got {metrics["total_events"]}"
+            raise AssertionError(msg)
         assert metrics["authentication_failures"] == 1
-        assert metrics["unique_users"] == 2
-        assert metrics["unique_sessions"] == 2
-        assert metrics["time_window_hours"] == 24
+        if metrics["unique_users"] != EXPECTED_BULK_SIZE:
+            msg = f"Expected {2}, got {metrics["unique_users"]}"
+            raise AssertionError(msg)
+        assert metrics["unique_sessions"] == EXPECTED_BULK_SIZE
+        if metrics["time_window_hours"] != 24:
+            msg = f"Expected {24}, got {metrics["time_window_hours"]}"
+            raise AssertionError(msg)
 
     @pytest.mark.asyncio
     async def test_get_security_metrics_time_filter(
@@ -362,4 +431,6 @@ class TestSecurityEventLogger:
 
         # Should only count recent event
         assert metrics is not None
-        assert metrics["total_events"] == 1
+        if metrics["total_events"] != 1:
+            msg = f"Expected {1}, got {metrics["total_events"]}"
+            raise AssertionError(msg)

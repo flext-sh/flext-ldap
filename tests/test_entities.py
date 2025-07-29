@@ -1,5 +1,8 @@
 """Enterprise-grade tests for FlextLdap domain entities.
 
+# Constants
+EXPECTED_BULK_SIZE = 2
+
 Tests all domain entities without mockups or fake data.
 """
 
@@ -28,8 +31,11 @@ class TestFlextLdapEntry:
             object_classes=["inetOrgPerson"],
         )
 
-        assert entry.dn == "cn=test,dc=example,dc=com"
-        assert "inetOrgPerson" in entry.object_classes
+        if entry.dn != "cn=test,dc=example,dc=com":
+
+            raise AssertionError(f"Expected {"cn=test,dc=example,dc=com"}, got {entry.dn}")
+        if "inetOrgPerson" not in entry.object_classes:
+            raise AssertionError(f"Expected {"inetOrgPerson"} in {entry.object_classes}")
         assert entry.is_active()
 
     def test_entry_domain_validation(self):
@@ -52,15 +58,18 @@ class TestFlextLdapEntry:
 
         # Test adding object class
         entry.add_object_class("organizationalPerson")
-        assert "organizationalPerson" in entry.object_classes
+        if "organizationalPerson" not in entry.object_classes:
+            raise AssertionError(f"Expected {"organizationalPerson"} in {entry.object_classes}")
 
         # Test duplicate prevention
         entry.add_object_class("person")  # Already exists
-        assert entry.object_classes.count("person") == 1
+        if entry.object_classes.count("person") != 1:
+            raise AssertionError(f"Expected {1}, got {entry.object_classes.count("person")}")
 
         # Test removal
         entry.remove_object_class("person")
-        assert "person" not in entry.object_classes
+        if "person" not not in entry.object_classes:
+            raise AssertionError(f"Expected {"person" not} in {entry.object_classes}")
 
     def test_entry_attribute_management(self):
         """Test attribute operations."""
@@ -76,7 +85,8 @@ class TestFlextLdapEntry:
 
         # Test multi-value attributes
         entry.add_attribute("mail", "test2@example.com")
-        assert len(entry.get_attribute("mail")) == 2
+        if len(entry.get_attribute("mail")) != EXPECTED_BULK_SIZE:
+            raise AssertionError(f"Expected {2}, got {len(entry.get_attribute("mail"))}")
 
         # Test attribute removal
         entry.remove_attribute("mail", "test@example.com")
@@ -91,7 +101,9 @@ class TestFlextLdapEntry:
             object_classes=["person"],
         )
 
-        assert entry.get_rdn() == "cn=john"
+        if entry.get_rdn() != "cn=john":
+
+            raise AssertionError(f"Expected {"cn=john"}, got {entry.get_rdn()}")
         assert entry.get_parent_dn() == "ou=users,dc=example,dc=com"
 
     def test_entry_status_management(self):
@@ -132,7 +144,9 @@ class TestFlextLdapUser:
             title="Developer",
         )
 
-        assert user.uid == "john.doe"
+        if user.uid != "john.doe":
+
+            raise AssertionError(f"Expected {"john.doe"}, got {user.uid}")
         assert user.cn == "John Doe"
         assert user.has_mail()
         assert user.is_active()
@@ -160,7 +174,8 @@ class TestFlextLdapUser:
 
         # Test custom attribute addition
         updated = user.add_attribute("customField", "customValue")
-        assert updated.get_attribute("customField") == "customValue"
+        if updated.get_attribute("customField") != "customValue":
+            raise AssertionError(f"Expected {"customValue"}, got {updated.get_attribute("customField")}")
         assert user.get_attribute("customField") is None  # Immutable
 
         # Test attribute removal
@@ -201,9 +216,12 @@ class TestFlextLdapGroup:
             ou="Engineering",
         )
 
-        assert group.cn == "Developers"
+        if group.cn != "Developers":
+
+            raise AssertionError(f"Expected {"Developers"}, got {group.cn}")
         assert group.ou == "Engineering"
-        assert len(group.members) == 0
+        if len(group.members) != 0:
+            raise AssertionError(f"Expected {0}, got {len(group.members)}")
 
     def test_group_domain_validation(self):
         """Test group business rules."""
@@ -230,7 +248,8 @@ class TestFlextLdapGroup:
 
         # Test duplicate prevention
         duplicate = updated.add_member("cn=user1,dc=example,dc=com")
-        assert len(duplicate.members) == 1
+        if len(duplicate.members) != 1:
+            raise AssertionError(f"Expected {1}, got {len(duplicate.members)}")
 
         # Test member removal
         removed = updated.remove_member("cn=user1,dc=example,dc=com")
@@ -264,7 +283,9 @@ class TestFlextLdapConnection:
             bind_dn="cn=admin,dc=example,dc=com",
         )
 
-        assert connection.server_url == "ldap://test.example.com:389"
+        if connection.server_url != "ldap://test.example.com:389":
+
+            raise AssertionError(f"Expected {"ldap://test.example.com:389"}, got {connection.server_url}")
         assert connection.bind_dn == "cn=admin,dc=example,dc=com"
         assert not connection.is_connected  # Not connected initially
         assert not connection.is_bound
@@ -284,7 +305,8 @@ class TestFlextLdapConnection:
         # Test binding
         bound = connected.bind("cn=admin,dc=example,dc=com")
         assert bound.is_bound
-        assert bound.bind_dn == "cn=admin,dc=example,dc=com"
+        if bound.bind_dn != "cn=admin,dc=example,dc=com":
+            raise AssertionError(f"Expected {"cn=admin,dc=example,dc=com"}, got {bound.bind_dn}")
         assert bound.can_search()
 
         # Test disconnection
@@ -316,9 +338,12 @@ class TestFlextLdapOperation:
             attributes=["cn", "mail"],
         )
 
-        assert operation.operation_type == "search"
+        if operation.operation_type != "search":
+
+            raise AssertionError(f"Expected {"search"}, got {operation.operation_type}")
         assert operation.target_dn == "ou=users,dc=example,dc=com"
-        assert operation.status == FlextLdapEntityStatus.PENDING
+        if operation.status != FlextLdapEntityStatus.PENDING:
+            raise AssertionError(f"Expected {FlextLdapEntityStatus.PENDING}, got {operation.status}")
 
     def test_operation_lifecycle(self):
         """Test operation execution lifecycle."""
@@ -331,7 +356,8 @@ class TestFlextLdapOperation:
 
         # Test operation start
         started = operation.start_operation()
-        assert started.status == FlextLdapEntityStatus.ACTIVE
+        if started.status != FlextLdapEntityStatus.ACTIVE:
+            raise AssertionError(f"Expected {FlextLdapEntityStatus.ACTIVE}, got {started.status}")
         assert started.started_at is not None
         assert operation.started_at is None  # Immutable
 
@@ -340,8 +366,10 @@ class TestFlextLdapOperation:
             success=True,
             result_count=5,
         )
-        assert completed.success is True
-        assert completed.result_count == 5
+        if not (completed.success):
+            raise AssertionError(f"Expected True, got {completed.success}")
+        if completed.result_count != 5:
+            raise AssertionError(f"Expected {5}, got {completed.result_count}")
         assert completed.is_completed()
         assert completed.is_successful() is not False  # success=True
 
@@ -388,6 +416,8 @@ class TestEntityImmutability:
         # Member operations should return new instances
         with_member = original_group.add_member("cn=user1,dc=example,dc=com")
 
-        assert len(original_group.members) == 0
+        if len(original_group.members) != 0:
+
+            raise AssertionError(f"Expected {0}, got {len(original_group.members)}")
         assert len(with_member.members) == 1
         assert original_group is not with_member

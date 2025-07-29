@@ -173,7 +173,7 @@ class FlextLdapCertificateValidationService:
                 ),
             )
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             logger.exception("Certificate validation failed")
             return FlextResult.fail(f"Certificate validation failed: {e}")
 
@@ -231,7 +231,7 @@ class FlextLdapCertificateValidationService:
                     message=f"SSL handshake failed: {e}",
                 ),
             )
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             logger.exception("Server certificate validation failed")
             return FlextResult.fail(f"Server certificate validation failed: {e}")
 
@@ -244,7 +244,7 @@ class FlextLdapCertificateValidationService:
             # Parse certificate
             cert = x509.load_der_x509_certificate(cert_data)
             return await self._extract_certificate_info(cert)
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             logger.exception("Failed to extract certificate info")
             return FlextResult.fail(f"Failed to extract certificate info: {e}")
 
@@ -298,7 +298,7 @@ class FlextLdapCertificateValidationService:
 
             return FlextResult.ok(context)
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             logger.exception("Failed to create SSL context")
             return FlextResult.fail(f"Failed to create SSL context: {e}")
 
@@ -359,7 +359,7 @@ class FlextLdapCertificateValidationService:
 
             return FlextResult.ok(cert_info)
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             logger.exception("Failed to extract certificate information")
             return FlextResult.fail(f"Failed to extract certificate information: {e}")
 

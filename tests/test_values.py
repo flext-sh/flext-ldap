@@ -1,5 +1,9 @@
 """Enterprise-grade tests for FlextLdap value objects.
 
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_DATA_COUNT = 3
+
 Tests all value objects with comprehensive validation.
 """
 
@@ -26,7 +30,10 @@ class TestFlextLdapDistinguishedName:
         """Test DN creation with valid format."""
         dn = FlextLdapDistinguishedName(value="cn=john,ou=users,dc=example,dc=com")
 
-        assert str(dn) == "cn=john,ou=users,dc=example,dc=com"
+        if str(dn) != "cn=john,ou=users,dc=example,dc=com":
+
+            msg = f"Expected {"cn=john,ou=users,dc=example,dc=com"}, got {dn!s}"
+            raise AssertionError(msg)
         assert dn.get_rdn() == "cn=john"
 
     def test_dn_creation_invalid(self):
@@ -43,7 +50,9 @@ class TestFlextLdapDistinguishedName:
 
         parent = dn.get_parent_dn()
         assert parent is not None
-        assert parent.value == "ou=users,dc=example,dc=com"
+        if parent.value != "ou=users,dc=example,dc=com":
+            msg = f"Expected {"ou=users,dc=example,dc=com"}, got {parent.value}"
+            raise AssertionError(msg)
 
         # Test root DN
         root_dn = FlextLdapDistinguishedName(value="dc=com")
@@ -55,7 +64,9 @@ class TestFlextLdapDistinguishedName:
 
         components = dn.get_components()
         expected = ["cn=john", "ou=users", "dc=example", "dc=com"]
-        assert components == expected
+        if components != expected:
+            msg = f"Expected {expected}, got {components}"
+            raise AssertionError(msg)
 
     def test_dn_hierarchy(self):
         """Test DN hierarchy relationships."""
@@ -88,7 +99,10 @@ class TestFlextLdapFilterValue:
         """Test filter creation with valid format."""
         filter_obj = FlextLdapFilterValue(value="(cn=john)")
 
-        assert str(filter_obj) == "(cn=john)"
+        if str(filter_obj) != "(cn=john)":
+
+            msg = f"Expected {"(cn=john)"}, got {filter_obj!s}"
+            raise AssertionError(msg)
 
     def test_filter_creation_invalid(self):
         """Test filter creation with invalid format."""
@@ -101,12 +115,16 @@ class TestFlextLdapFilterValue:
     def test_filter_equals(self):
         """Test equals filter creation."""
         filter_obj = FlextLdapFilterValue.equals("cn", "john")
-        assert filter_obj.value == "(cn=john)"
+        if filter_obj.value != "(cn=john)":
+            msg = f"Expected {"(cn=john)"}, got {filter_obj.value}"
+            raise AssertionError(msg)
 
     def test_filter_present(self):
         """Test presence filter creation."""
         filter_obj = FlextLdapFilterValue.present("mail")
-        assert filter_obj.value == "(mail=*)"
+        if filter_obj.value != "(mail=*)":
+            msg = f"Expected {"(mail=*)"}, got {filter_obj.value}"
+            raise AssertionError(msg)
 
     def test_filter_and_combination(self):
         """Test AND filter combination."""
@@ -114,7 +132,9 @@ class TestFlextLdapFilterValue:
         filter2 = FlextLdapFilterValue.equals("ou", "users")
 
         combined = FlextLdapFilterValue.and_filters(filter1, filter2)
-        assert combined.value == "(&(cn=john)(ou=users))"
+        if combined.value != "(&(cn=john)(ou=users))":
+            msg = f"Expected {"(&(cn=john)(ou=users))"}, got {combined.value}"
+            raise AssertionError(msg)
 
     def test_filter_or_combination(self):
         """Test OR filter combination."""
@@ -122,25 +142,35 @@ class TestFlextLdapFilterValue:
         filter2 = FlextLdapFilterValue.equals("cn", "jane")
 
         combined = FlextLdapFilterValue.or_filters(filter1, filter2)
-        assert combined.value == "(|(cn=john)(cn=jane))"
+        if combined.value != "(|(cn=john)(cn=jane))":
+            msg = f"Expected {"(|(cn=john)(cn=jane))"}, got {combined.value}"
+            raise AssertionError(msg)
 
     def test_filter_enhanced_methods(self):
         """Test enhanced filter methods from models.py consolidation."""
         # Test contains
         contains_filter = FlextLdapFilterValue.contains("mail", "example")
-        assert contains_filter.value == "(mail=*example*)"
+        if contains_filter.value != "(mail=*example*)":
+            msg = f"Expected {"(mail=*example*)"}, got {contains_filter.value}"
+            raise AssertionError(msg)
 
         # Test starts_with
         starts_filter = FlextLdapFilterValue.starts_with("cn", "john")
-        assert starts_filter.value == "(cn=john*)"
+        if starts_filter.value != "(cn=john*)":
+            msg = f"Expected {"(cn=john*)"}, got {starts_filter.value}"
+            raise AssertionError(msg)
 
         # Test ends_with
         ends_filter = FlextLdapFilterValue.ends_with("mail", "com")
-        assert ends_filter.value == "(mail=*com)"
+        if ends_filter.value != "(mail=*com)":
+            msg = f"Expected {"(mail=*com)"}, got {ends_filter.value}"
+            raise AssertionError(msg)
 
         # Test not_equals
         not_filter = FlextLdapFilterValue.not_equals("cn", "admin")
-        assert not_filter.value == "(!(cn=admin))"
+        if not_filter.value != "(!(cn=admin))":
+            msg = f"Expected {"(!(cn=admin))"}, got {not_filter.value}"
+            raise AssertionError(msg)
 
     def test_filter_operators(self):
         """Test filter operators from models.py consolidation."""
@@ -149,21 +179,29 @@ class TestFlextLdapFilterValue:
 
         # Test __and__ operator
         and_result = filter1 & filter2
-        assert and_result.value == "(&(cn=john)(ou=users))"
+        if and_result.value != "(&(cn=john)(ou=users))":
+            msg = f"Expected {"(&(cn=john)(ou=users))"}, got {and_result.value}"
+            raise AssertionError(msg)
 
         # Test __or__ operator
         or_result = filter1 | filter2
-        assert or_result.value == "(|(cn=john)(ou=users))"
+        if or_result.value != "(|(cn=john)(ou=users))":
+            msg = f"Expected {"(|(cn=john)(ou=users))"}, got {or_result.value}"
+            raise AssertionError(msg)
 
     def test_filter_business_filters(self):
         """Test business-specific filters."""
         # Test person filter
         person_filter = FlextLdapFilterValue.person_filter()
-        assert person_filter.value == "(objectClass=person)"
+        if person_filter.value != "(objectClass=person)":
+            msg = f"Expected {"(objectClass=person)"}, got {person_filter.value}"
+            raise AssertionError(msg)
 
         # Test group filter
         group_filter = FlextLdapFilterValue.group_filter()
-        assert "(objectClass=group)" in group_filter.value
+        if "(objectClass=group)" not in group_filter.value:
+            msg = f"Expected {"(objectClass=group)"} in {group_filter.value}"
+            raise AssertionError(msg)
         assert "(objectClass=groupOfNames)" in group_filter.value
 
 
@@ -174,9 +212,14 @@ class TestFlextLdapUri:
         """Test URI creation with valid format."""
         uri = FlextLdapUri(value="ldap://example.com:389")
 
-        assert str(uri) == "ldap://example.com:389"
+        if str(uri) != "ldap://example.com:389":
+
+            msg = f"Expected {"ldap://example.com:389"}, got {uri!s}"
+            raise AssertionError(msg)
         assert uri.hostname == "example.com"
-        assert uri.port == 389
+        if uri.port != 389:
+            msg = f"Expected {389}, got {uri.port}"
+            raise AssertionError(msg)
         assert not uri.is_secure
 
     def test_uri_creation_secure(self):
@@ -184,7 +227,9 @@ class TestFlextLdapUri:
         uri = FlextLdapUri(value="ldaps://example.com:636")
 
         assert uri.is_secure
-        assert uri.port == 636
+        if uri.port != 636:
+            msg = f"Expected {636}, got {uri.port}"
+            raise AssertionError(msg)
 
     def test_uri_creation_invalid(self):
         """Test URI creation with invalid format."""
@@ -197,10 +242,14 @@ class TestFlextLdapUri:
     def test_uri_port_defaults(self):
         """Test URI port defaults."""
         ldap_uri = FlextLdapUri(value="ldap://example.com")
-        assert ldap_uri.port == 389
+        if ldap_uri.port != 389:
+            msg = f"Expected {389}, got {ldap_uri.port}"
+            raise AssertionError(msg)
 
         ldaps_uri = FlextLdapUri(value="ldaps://example.com")
-        assert ldaps_uri.port == 636
+        if ldaps_uri.port != 636:
+            msg = f"Expected {636}, got {ldaps_uri.port}"
+            raise AssertionError(msg)
 
 
 class TestFlextLdapScopeEnum:
@@ -208,13 +257,19 @@ class TestFlextLdapScopeEnum:
 
     def test_scope_values(self):
         """Test scope enumeration values."""
-        assert FlextLdapScopeEnum.BASE == "base"
+        if FlextLdapScopeEnum.BASE != "base":
+            msg = f"Expected {"base"}, got {FlextLdapScopeEnum.BASE}"
+            raise AssertionError(msg)
         assert FlextLdapScopeEnum.ONE_LEVEL == "onelevel"
-        assert FlextLdapScopeEnum.SUBTREE == "subtree"
+        if FlextLdapScopeEnum.SUBTREE != "subtree":
+            msg = f"Expected {"subtree"}, got {FlextLdapScopeEnum.SUBTREE}"
+            raise AssertionError(msg)
 
     def test_scope_legacy_mappings(self):
         """Test legacy scope mappings from models.py consolidation."""
-        assert FlextLdapScopeEnum.ONE == "onelevel"
+        if FlextLdapScopeEnum.ONE != "onelevel":
+            msg = f"Expected {"onelevel"}, got {FlextLdapScopeEnum.ONE}"
+            raise AssertionError(msg)
         assert FlextLdapScopeEnum.SUB == "subtree"
 
 
@@ -225,7 +280,10 @@ class TestFlextLdapObjectClass:
         """Test object class creation."""
         obj_class = FlextLdapObjectClass(name="inetOrgPerson")
 
-        assert str(obj_class) == "inetOrgPerson"
+        if str(obj_class) != "inetOrgPerson":
+
+            msg = f"Expected {"inetOrgPerson"}, got {obj_class!s}"
+            raise AssertionError(msg)
 
     def test_object_class_validation(self):
         """Test object class name validation."""
@@ -247,8 +305,11 @@ class TestFlextLdapAttributesValue:
             "objectClass": ["inetOrgPerson", "person"],
         })
 
-        assert attrs.get_single_value("cn") == "John Doe"
-        assert len(attrs.get_values("mail")) == 2
+        if attrs.get_single_value("cn") != "John Doe":
+
+            msg = f"Expected {"John Doe"}, got {attrs.get_single_value("cn")}"
+            raise AssertionError(msg)
+        assert len(attrs.get_values("mail")) == EXPECTED_BULK_SIZE
         assert attrs.has_attribute("objectClass")
 
     def test_attributes_operations(self):
@@ -257,7 +318,9 @@ class TestFlextLdapAttributesValue:
 
         # Test adding values
         updated = attrs.add_value("cn", "John Doe")
-        assert updated.get_single_value("cn") == "John Doe"
+        if updated.get_single_value("cn") != "John Doe":
+            msg = f"Expected {"John Doe"}, got {updated.get_single_value("cn")}"
+            raise AssertionError(msg)
         assert not attrs.has_attribute("cn")  # Immutable
 
         # Test removing values
@@ -289,7 +352,9 @@ class TestFlextLdapConnectionInfo:
 
         assert conn_info.is_authenticated
         assert conn_info.is_secure
-        assert "authenticated" in conn_info.connection_string
+        if "authenticated" not in conn_info.connection_string:
+            msg = f"Expected {"authenticated"} in {conn_info.connection_string}"
+            raise AssertionError(msg)
         assert "secure" in conn_info.connection_string
 
     def test_connection_info_validation(self):
@@ -326,9 +391,14 @@ class TestFlextLdapCreateUserRequest:
             phone="+1-555-0123",
         )
 
-        assert request.dn == "cn=john.doe,ou=users,dc=example,dc=com"
+        if request.dn != "cn=john.doe,ou=users,dc=example,dc=com":
+
+            msg = f"Expected {"cn=john.doe,ou=users,dc=example,dc=com"}, got {request.dn}"
+            raise AssertionError(msg)
         assert request.uid == "john.doe"
-        assert request.mail == "john.doe@example.com"
+        if request.mail != "john.doe@example.com":
+            msg = f"Expected {"john.doe@example.com"}, got {request.mail}"
+            raise AssertionError(msg)
 
     def test_user_request_validation(self):
         """Test user request validation."""
@@ -386,9 +456,14 @@ class TestFlextLdapExtendedEntry:
             },
         )
 
-        assert entry.get_cn() == "John Doe"
+        if entry.get_cn() != "John Doe":
+
+            msg = f"Expected {"John Doe"}, got {entry.get_cn()}"
+            raise AssertionError(msg)
         assert entry.get_uid() == "john"
-        assert entry.get_mail() == "john@example.com"
+        if entry.get_mail() != "john@example.com":
+            msg = f"Expected {"john@example.com"}, got {entry.get_mail()}"
+            raise AssertionError(msg)
 
     def test_extended_entry_type_detection(self):
         """Test entry type detection methods."""
@@ -419,13 +494,19 @@ class TestFlextLdapExtendedEntry:
         )
 
         # Test single attribute access
-        assert entry.get_single_attribute("cn") == "Test User"
+        if entry.get_single_attribute("cn") != "Test User":
+            msg = f"Expected {"Test User"}, got {entry.get_single_attribute("cn")}"
+            raise AssertionError(msg)
         assert entry.get_single_attribute("nonexistent") is None
 
         # Test multi-value attribute access
         mail_values = entry.get_attribute("mail")
-        assert len(mail_values) == 2
-        assert "test@example.com" in mail_values
+        if len(mail_values) != EXPECTED_BULK_SIZE:
+            msg = f"Expected {2}, got {len(mail_values)}"
+            raise AssertionError(msg)
+        if "test@example.com" not in mail_values:
+            msg = f"Expected {"test@example.com"} in {mail_values}"
+            raise AssertionError(msg)
 
         # Test attribute existence check
         assert entry.has_attribute("cn")
@@ -444,7 +525,9 @@ class TestValueObjectImmutability:
 
         # Any operations should not modify original
         parent_dn = dn.get_parent_dn()
-        assert dn.value == original_value
+        if dn.value != original_value:
+            msg = f"Expected {original_value}, got {dn.value}"
+            raise AssertionError(msg)
         assert parent_dn is not dn
 
     def test_attributes_immutability(self):

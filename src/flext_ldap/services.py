@@ -6,12 +6,12 @@ Single unified service handles all LDAP entity types through composition.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 from uuid import UUID, uuid4
 
 from flext_core import FlextResult
 
-from flext_ldap.base import FlextLdapDomainService, FlextLdapRepository
+from flext_ldap.base import FlextLdapDomainService
 from flext_ldap.entities import (
     FlextLdapConnection,
     FlextLdapGroup,
@@ -28,13 +28,13 @@ TLdapEntity = TypeVar("TLdapEntity", FlextLdapUser, FlextLdapGroup, FlextLdapCon
 
 class FlextLdapService(FlextLdapDomainService[TLdapEntity]):
     """UNIFIED service for ALL LDAP entities - eliminates 80% code duplication.
-    
+
     Replaces 4 separate services (User, Group, Connection, Operation) with ONE
     intelligent service that handles all entity types through flext-core composition.
-    
+
     BENEFITS:
     - Eliminates 600+ lines of duplicate CRUD code
-    - Type-safe operations for all entity types  
+    - Type-safe operations for all entity types
     - Consistent error handling via FlextResult
     - Automatic validation via flext-core
     - Single point of maintenance
@@ -46,23 +46,25 @@ class FlextLdapService(FlextLdapDomainService[TLdapEntity]):
         self._entity_type = entity_type
         self._type_name = entity_type.__name__.lower().replace("flextldap", "")
 
-    async def create(self, **kwargs: Any) -> FlextResult[TLdapEntity]:
+    async def create(self, **kwargs: str | int | bool | list[str] | dict[str, Any]) -> FlextResult[TLdapEntity]:
         """Create entity of configured type."""
         try:
             # Ensure ID is set
             if "id" not in kwargs or not kwargs["id"]:
                 kwargs["id"] = str(uuid4())
-            
+
             entity = self._entity_type(**kwargs)
             return await self.create_entity(entity)
-        except Exception as e:
-            return FlextResult.fail(f"Failed to create {self._type_name}: {e}")
+        except ValueError as e:
+            return FlextResult.fail(f"Failed to create {self._type_name} - invalid data: {e}")
+        except TypeError as e:
+            return FlextResult.fail(f"Failed to create {self._type_name} - type error: {e}")
 
     async def get(self, entity_id: UUID | str) -> FlextResult[TLdapEntity | None]:
         """Get entity by ID."""
         return await self.get_by_id(entity_id)
 
-    async def update(self, entity_id: UUID | str, updates: dict[str, Any]) -> FlextResult[TLdapEntity]:
+    async def update(self, entity_id: UUID | str, updates: dict[str, str | int | bool | list[str]]) -> FlextResult[TLdapEntity]:
         """Update entity with new values."""
         try:
             entity_result = await self.get(entity_id)
@@ -70,7 +72,7 @@ class FlextLdapService(FlextLdapDomainService[TLdapEntity]):
                 return FlextResult.fail(f"{self._type_name} not found")
 
             entity = entity_result.data
-            
+
             # Apply updates using entity's immutable pattern
             updated_entity = entity
             for key, value in updates.items():
@@ -82,19 +84,25 @@ class FlextLdapService(FlextLdapDomainService[TLdapEntity]):
                     updated_entity = self._entity_type(**new_data)
 
             return await self.create_entity(updated_entity)
-        except Exception as e:
-            return FlextResult.fail(f"Failed to update {self._type_name}: {e}")
+        except ValueError as e:
+            return FlextResult.fail(f"Failed to update {self._type_name} - invalid data: {e}")
+        except TypeError as e:
+            return FlextResult.fail(f"Failed to update {self._type_name} - type error: {e}")
+        except AttributeError as e:
+            return FlextResult.fail(f"Failed to update {self._type_name} - attribute error: {e}")
 
     async def delete(self, entity_id: UUID | str) -> FlextResult[bool]:
         """Delete entity by ID."""
         try:
             key = str(entity_id) if isinstance(entity_id, UUID) else entity_id
             deleted = await self._repository.delete(key)
-            return FlextResult.ok(deleted)
-        except Exception as e:
-            return FlextResult.fail(f"Failed to delete {self._type_name}: {e}")
+            return FlextResult.ok(success=deleted)
+        except KeyError as e:
+            return FlextResult.fail(f"Failed to delete {self._type_name} - not found: {e}")
+        except RuntimeError as e:
+            return FlextResult.fail(f"Failed to delete {self._type_name} - runtime error: {e}")
 
-    async def list(self, limit: int = 100, **filters: Any) -> FlextResult[list[TLdapEntity]]:
+    async def list(self, limit: int = 100, **filters: str | int | bool | list[str]) -> FlextResult[list[TLdapEntity]]:
         """List entities with optional filters."""
         try:
             if filters:
@@ -112,13 +120,14 @@ class FlextLdapService(FlextLdapDomainService[TLdapEntity]):
                         seen.add(item_id)
                         unique_results.append(item)
                 return FlextResult.ok(unique_results[:limit])
-            else:
-                entities = await self._repository.list_all(limit)
-                return FlextResult.ok(entities)
-        except Exception as e:
-            return FlextResult.fail(f"Failed to list {self._type_name}s: {e}")
+            entities = await self._repository.list_all(limit)
+            return FlextResult.ok(entities)
+        except ValueError as e:
+            return FlextResult.fail(f"Failed to list {self._type_name}s - invalid filter: {e}")
+        except RuntimeError as e:
+            return FlextResult.fail(f"Failed to list {self._type_name}s - runtime error: {e}")
 
-    async def find_by(self, **criteria: Any) -> FlextResult[list[TLdapEntity]]:
+    async def find_by(self, **criteria: str | int | bool | list[str]) -> FlextResult[list[TLdapEntity]]:
         """Find entities by criteria."""
         return await self.list(filters=criteria)
 
@@ -128,6 +137,7 @@ class FlextLdapUserService(FlextLdapService[FlextLdapUser]):
     """User service with specialized user operations."""
 
     def __init__(self) -> None:
+        """Initialize user service."""
         super().__init__(FlextLdapUser)
 
     async def create_user(self, request: FlextLdapCreateUserRequest) -> FlextResult[FlextLdapUser]:
@@ -139,7 +149,7 @@ class FlextLdapUserService(FlextLdapService[FlextLdapUser]):
             "cn": request.cn,
             "sn": request.sn,
         }
-        
+
         # Add optional fields if present
         if request.mail:
             user_data["mail"] = request.mail
@@ -147,7 +157,7 @@ class FlextLdapUserService(FlextLdapService[FlextLdapUser]):
             user_data["phone"] = request.phone
         if request.ou:
             user_data["ou"] = request.ou
-            
+
         return await self.create(**user_data)
 
     async def find_by_dn(self, dn: str) -> FlextResult[FlextLdapUser | None]:
@@ -169,7 +179,7 @@ class FlextLdapUserService(FlextLdapService[FlextLdapUser]):
         user_result = await self.get(user_id)
         if not user_result.is_success or not user_result.data:
             return FlextResult.fail("User not found")
-        
+
         locked_user = user_result.data.lock_account()
         return await self.create_entity(locked_user)
 
@@ -178,7 +188,7 @@ class FlextLdapUserService(FlextLdapService[FlextLdapUser]):
         user_result = await self.get(user_id)
         if not user_result.is_success or not user_result.data:
             return FlextResult.fail("User not found")
-        
+
         unlocked_user = user_result.data.unlock_account()
         return await self.create_entity(unlocked_user)
 
@@ -187,15 +197,16 @@ class FlextLdapGroupService(FlextLdapService[FlextLdapGroup]):
     """Group service with specialized group operations."""
 
     def __init__(self) -> None:
+        """Initialize group service."""
         super().__init__(FlextLdapGroup)
 
-    async def create_group(self, dn: str, cn: str, **kwargs: Any) -> FlextResult[FlextLdapGroup]:
+    async def create_group(self, dn: str, cn: str, **kwargs: str | int | bool | list[str]) -> FlextResult[FlextLdapGroup]:
         """Create group with required fields."""
         group_data = {
             "id": str(uuid4()),
             "dn": dn,
             "cn": cn,
-            **kwargs
+            **kwargs,
         }
         return await self.create(**group_data)
 
@@ -204,7 +215,7 @@ class FlextLdapGroupService(FlextLdapService[FlextLdapGroup]):
         group_result = await self.get(group_id)
         if not group_result.is_success or not group_result.data:
             return FlextResult.fail("Group not found")
-        
+
         updated_group = group_result.data.add_member(member_dn)
         return await self.create_entity(updated_group)
 
@@ -213,7 +224,7 @@ class FlextLdapGroupService(FlextLdapService[FlextLdapGroup]):
         group_result = await self.get(group_id)
         if not group_result.is_success or not group_result.data:
             return FlextResult.fail("Group not found")
-        
+
         updated_group = group_result.data.remove_member(member_dn)
         return await self.create_entity(updated_group)
 
@@ -229,15 +240,16 @@ class FlextLdapConnectionService(FlextLdapService[FlextLdapConnection]):
     """Connection service with specialized connection operations."""
 
     def __init__(self) -> None:
+        """Initialize connection service."""
         super().__init__(FlextLdapConnection)
 
-    async def create_connection(self, server_uri: str, bind_dn: str, password: str, **kwargs: Any) -> FlextResult[FlextLdapConnection]:
+    async def create_connection(self, server_uri: str, bind_dn: str, password: str, **kwargs: str | int | bool | list[str]) -> FlextResult[FlextLdapConnection]:  # noqa: ARG002
         """Create connection with required fields."""
         connection_data = {
             "id": str(uuid4()),
             "server_url": server_uri,
             "bind_dn": bind_dn,
-            **kwargs
+            **kwargs,
         }
         return await self.create(**connection_data)
 
@@ -250,25 +262,26 @@ class FlextLdapOperationService(FlextLdapService[FlextLdapOperation]):
     """Operation service with specialized operation tracking."""
 
     def __init__(self) -> None:
+        """Initialize operation service."""
         super().__init__(FlextLdapOperation)
 
-    async def create_operation(self, operation_type: str, target_dn: str, connection_id: str, **kwargs: Any) -> FlextResult[FlextLdapOperation]:
+    async def create_operation(self, operation_type: str, target_dn: str, connection_id: str, **kwargs: str | int | bool | list[str]) -> FlextResult[FlextLdapOperation]:
         """Create operation with required fields."""
         operation_data = {
             "id": str(uuid4()),
             "operation_type": operation_type,
             "target_dn": target_dn,
             "connection_id": connection_id,
-            **kwargs
+            **kwargs,
         }
         return await self.create(**operation_data)
 
-    async def complete_operation(self, operation_id: UUID | str, success: bool, result_count: int = 0) -> FlextResult[FlextLdapOperation]:
+    async def complete_operation(self, operation_id: UUID | str, *, success: bool, result_count: int = 0) -> FlextResult[FlextLdapOperation]:
         """Complete operation with results."""
         operation_result = await self.get(operation_id)
         if not operation_result.is_success or not operation_result.data:
             return FlextResult.fail("Operation not found")
-        
+
         completed_operation = operation_result.data.complete_operation(success, result_count)
         return await self.create_entity(completed_operation)
 
@@ -281,6 +294,6 @@ class FlextLdapOperationService(FlextLdapService[FlextLdapOperation]):
 
 # COMPATIBILITY ALIASES - Keep existing names
 FlextLdapUserApplicationService = FlextLdapUserService
-FlextLdapGroupService = FlextLdapGroupService  
+# FlextLdapGroupService alias removed to avoid self-assignment
 FlextLdapConnectionApplicationService = FlextLdapConnectionService
-FlextLdapOperationService = FlextLdapOperationService
+# FlextLdapOperationService alias removed to avoid self-assignment

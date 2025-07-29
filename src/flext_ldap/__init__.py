@@ -17,7 +17,7 @@ api = get_ldap_api()
 async with api.connection("ldap://localhost", "cn=admin,dc=example,dc=com", "admin") as session:
     # Search users
     users = await api.search(session, "ou=users,dc=example,dc=com", "(objectClass=person)")
-    
+
     # Create user
     user_request = FlextLdapCreateUserRequest(
         dn="cn=john,ou=users,dc=example,dc=com",
@@ -44,14 +44,14 @@ from typing import Any
 # Core API - Single point of entry
 from flext_ldap.api import FlextLdapApi, get_ldap_api
 
-# Infrastructure client (now at root)
-from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
-
 # Configuration
 from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
 
 # Domain entities and value objects (now at root - cleaner imports)
 from flext_ldap.entities import FlextLdapEntry, FlextLdapGroup, FlextLdapUser
+
+# Infrastructure client (now at root)
+from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
 from flext_ldap.values import (
     FlextLdapCreateUserRequest,
     FlextLdapDistinguishedName,
@@ -65,7 +65,7 @@ from flext_ldap.values import (
 )
 
 
-def __getattr__(name: str) -> Any:
+def __getattr__(name: str) -> object:
     """Handle legacy imports with deprecation warnings."""
     # Legacy API mappings with warnings
     legacy_mappings = {
@@ -103,33 +103,31 @@ def __getattr__(name: str) -> Any:
         )
         return entity_mappings[name]
 
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    msg = f"module '{__name__}' has no attribute '{name}'"
+    raise AttributeError(msg)
 
 
 # Clean public API
 __all__ = [
     # Core API
     "FlextLdapApi",
-    "get_ldap_api",
-
     # Configuration
     "FlextLdapConnectionConfig",
-    "FlextLdapSettings",
-
-    # Domain objects
-    "FlextLdapEntry",
-    "FlextLdapGroup",
-    "FlextLdapUser",
     "FlextLdapCreateUserRequest",
     "FlextLdapDistinguishedName",
+    # Domain objects
+    "FlextLdapEntry",
     "FlextLdapExtendedEntry",
     "FlextLdapFilterValue",
+    "FlextLdapGroup",
     "FlextLdapScopeEnum",
+    "FlextLdapSettings",
+    # Infrastructure (for advanced usage)
+    "FlextLdapSimpleClient",
+    "FlextLdapUser",
     # Consolidated backward compatibility
     "LDAPEntry",
     "LDAPFilter",
     "LDAPScope",
-
-    # Infrastructure (for advanced usage)
-    "FlextLdapSimpleClient",
+    "get_ldap_api",
 ]

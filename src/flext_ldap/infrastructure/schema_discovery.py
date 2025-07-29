@@ -20,7 +20,7 @@ from flext_core import FlextResult, get_logger
 if TYPE_CHECKING:
     from uuid import UUID
 
-    from flext_ldap.domain.entities import FlextLdapConnection
+    from flext_ldap.entities import FlextLdapConnection
 
 logger = get_logger(__name__)
 
@@ -317,7 +317,7 @@ class FlextLdapSchemaDiscoveryService:
             )
             return FlextResult.ok(discovery_result)
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             error_msg = f"Schema discovery failed: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
@@ -345,7 +345,7 @@ class FlextLdapSchemaDiscoveryService:
 
             return FlextResult.ok(None)
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             error_msg = f"Failed to get object class {class_name}: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
@@ -373,7 +373,7 @@ class FlextLdapSchemaDiscoveryService:
 
             return FlextResult.ok(None)
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             error_msg = f"Failed to get attribute type {attribute_name}: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
@@ -460,7 +460,7 @@ class FlextLdapSchemaDiscoveryService:
 
             return FlextResult.ok(validation_result)
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             error_msg = f"Object structure validation failed: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
