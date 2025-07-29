@@ -9,6 +9,7 @@ from __future__ import annotations
 from flext_core import FlextResult
 
 from flext_ldap.client import FlextLdapClient
+from flext_ldap.config import FlextLdapConnectionConfig
 
 
 class FlextLDAPConnectionManager:
@@ -36,7 +37,7 @@ class FlextLDAPConnectionManager:
         """
         try:
             # Create configuration for the client
-            from flext_ldap.config import FlextLdapConnectionConfig
+
             config = FlextLdapConnectionConfig(
                 server=self.host,
                 port=self.port,

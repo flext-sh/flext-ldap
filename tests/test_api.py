@@ -64,7 +64,7 @@ class TestFlextLdapApiEntityOperations:
     @pytest.mark.asyncio
     async def test_user_creation_flow(self):
         """Test complete user creation workflow."""
-        api = FlextLdapApi()
+        FlextLdapApi()
 
         # Create user request
         user_request = FlextLdapCreateUserRequest(
@@ -77,7 +77,9 @@ class TestFlextLdapApiEntityOperations:
         # Test user creation through API
         # Note: Tests the flow without actual LDAP connection
         assert user_request is not None
-        assert user_request.dn == "cn=testuser,ou=users,dc=example,dc=com"
+        if user_request.dn != "cn=testuser,ou=users,dc=example,dc=com":
+            msg = f"Expected {"cn=testuser,ou=users,dc=example,dc=com"}, got {user_request.dn}"
+            raise AssertionError(msg)
 
     def test_entity_domain_rules(self):
         """Test domain entities follow business rules."""

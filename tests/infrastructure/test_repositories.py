@@ -60,7 +60,8 @@ class TestFlextLdapConnectionRepositoryImpl:
     def test_init(self, mock_ldap_client: Mock) -> None:
         """Test repository initialization."""
         repo = FlextLdapConnectionRepositoryImpl(mock_ldap_client)
-        assert repo.ldap_client == mock_ldap_client
+        if repo.ldap_client != mock_ldap_client:
+            raise AssertionError(f"Expected {mock_ldap_client}, got {repo.ldap_client}")
         assert repo._connections == {}
 
     @pytest.mark.asyncio
@@ -73,9 +74,12 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await connection_repo.save(sample_connection)
 
         assert result.is_success
-        assert result.data == sample_connection
-        assert sample_connection.id in connection_repo._connections
-        assert connection_repo._connections[sample_connection.id] == sample_connection
+        if result.data != sample_connection:
+            raise AssertionError(f"Expected {sample_connection}, got {result.data}")
+        if sample_connection.id not in connection_repo._connections:
+            raise AssertionError(f"Expected {sample_connection.id} in {connection_repo._connections}")
+        if connection_repo._connections[sample_connection.id] != sample_connection:
+            raise AssertionError(f"Expected {sample_connection}, got {connection_repo._connections[sample_connection.id]}")
 
     @pytest.mark.asyncio
     async def test_save_connection_error(
@@ -104,7 +108,8 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await connection_repo.find_by_id(UUID(sample_connection.id))
 
         assert result.is_success
-        assert result.data == sample_connection
+        if result.data != sample_connection:
+            raise AssertionError(f"Expected {sample_connection}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_find_by_id_not_exists(
@@ -139,7 +144,8 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await connection_repo.find_all()
 
         assert result.is_success
-        assert result.data == []
+        if result.data != []:
+            raise AssertionError(f"Expected {[]}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_find_all_with_connections(
@@ -155,7 +161,8 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         assert result.is_success
         assert result.data is not None
-        assert len(result.data) == 1
+        if len(result.data) != 1:
+            raise AssertionError(f"Expected {1}, got {len(result.data)}")
         assert result.data[0].id == sample_connection.id
 
     @pytest.mark.asyncio
@@ -180,12 +187,14 @@ class TestFlextLdapConnectionRepositoryImpl:
         """Test deleting connection when it exists."""
         # First save the connection
         await connection_repo.save(sample_connection)
-        assert sample_connection.id in connection_repo._connections
+        if sample_connection.id not in connection_repo._connections:
+            raise AssertionError(f"Expected {sample_connection.id} in {connection_repo._connections}")
 
         result = await connection_repo.delete(sample_connection)
 
         assert result.is_success
-        assert sample_connection.id not in connection_repo._connections
+        if sample_connection.id not not in connection_repo._connections:
+            raise AssertionError(f"Expected {sample_connection.id not} in {connection_repo._connections}")
 
     @pytest.mark.asyncio
     async def test_delete_connection_not_exists(
@@ -197,7 +206,8 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await connection_repo.delete(sample_connection)
 
         assert result.is_success
-        assert sample_connection.id not in connection_repo._connections
+        if sample_connection.id not not in connection_repo._connections:
+            raise AssertionError(f"Expected {sample_connection.id not} in {connection_repo._connections}")
 
     # Note: Error path testing for delete would require complex mocking
     # The main functionality is covered by the success cases above
@@ -209,7 +219,8 @@ class TestFlextLdapUserRepositoryImpl:
     def test_init(self, mock_ldap_client: Mock) -> None:
         """Test repository initialization."""
         repo = FlextLdapUserRepositoryImpl(mock_ldap_client)
-        assert repo.ldap_client == mock_ldap_client
+        if repo.ldap_client != mock_ldap_client:
+            raise AssertionError(f"Expected {mock_ldap_client}, got {repo.ldap_client}")
 
     @pytest.mark.asyncio
     async def test_save_user_success(
@@ -221,7 +232,8 @@ class TestFlextLdapUserRepositoryImpl:
         result = await user_repo.save(sample_user)
 
         assert result.is_success
-        assert result.data == sample_user
+        if result.data != sample_user:
+            raise AssertionError(f"Expected {sample_user}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_save_user_error(
@@ -275,7 +287,8 @@ class TestFlextLdapUserRepositoryImpl:
         result = await user_repo.find_all()
 
         assert result.is_success
-        assert result.data == []  # Foundation implementation returns empty list
+        if result.data != []  # Foundation implementation returns empty list:
+            raise AssertionError(f"Expected {[]  # Foundation implementation returns empty list}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_delete_user_foundation(

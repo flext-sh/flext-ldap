@@ -14,8 +14,8 @@ from typing import TYPE_CHECKING
 from flext_core import FlextAggregateRoot, FlextEntity
 
 if TYPE_CHECKING:
-    from flext_ldap.domain.entities import FlextLdapEntry
     from flext_ldap.domain.values import DistinguishedName
+    from flext_ldap.entities import FlextLdapEntry
 
 
 class FlextLdapDirectoryAggregate(FlextAggregateRoot):

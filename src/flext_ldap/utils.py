@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any, Protocol
+from typing import Protocol
 from urllib.parse import parse_qs, urlparse
 
 
@@ -132,7 +132,7 @@ LDAP_URL_SCOPE_INDEX = 2
 LDAP_URL_FILTER_INDEX = 3
 
 
-def flext_ldap_parse_url(url: str) -> dict[str, Any]:
+def flext_ldap_parse_url(url: str) -> dict[str, object]:
     """Parse LDAP URL into components."""
     parsed = urlparse(url)
 

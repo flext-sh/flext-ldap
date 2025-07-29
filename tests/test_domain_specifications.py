@@ -17,6 +17,9 @@ from flext_ldap.domain.specifications import (
     FlextLdapValidPasswordSpecification,
 )
 
+# Constants
+EXPECTED_TOTAL_PAGES = 8
+
 
 class TestFlextLdapSpecification:
     """Test base specification interface."""
@@ -39,7 +42,9 @@ class TestFlextLdapEntrySpecification:
         entry.dn = "cn=test,dc=example,dc=org"
         entry.attributes = {"cn": ["test"]}
 
-        assert spec.is_satisfied_by(entry) is True
+        if not spec.is_satisfied_by(entry):
+            msg = f"Expected True, got {spec.is_satisfied_by(entry)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_no_dn(self) -> None:
         """Test specification with entry without DN."""
@@ -50,7 +55,9 @@ class TestFlextLdapEntrySpecification:
         entry.dn = ""
         entry.attributes = {"cn": ["test"]}
 
-        assert spec.is_satisfied_by(entry) is False
+        if spec.is_satisfied_by(entry):
+            msg = f"Expected False, got {spec.is_satisfied_by(entry)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_no_attributes(self) -> None:
         """Test specification with entry without attributes."""
@@ -61,7 +68,9 @@ class TestFlextLdapEntrySpecification:
         entry.dn = "cn=test,dc=example,dc=org"
         entry.attributes = {}
 
-        assert spec.is_satisfied_by(entry) is False
+        if spec.is_satisfied_by(entry):
+            msg = f"Expected False, got {spec.is_satisfied_by(entry)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_none_dn(self) -> None:
         """Test specification with None DN."""
@@ -72,7 +81,9 @@ class TestFlextLdapEntrySpecification:
         entry.dn = None
         entry.attributes = {"cn": ["test"]}
 
-        assert spec.is_satisfied_by(entry) is False
+        if spec.is_satisfied_by(entry):
+            msg = f"Expected False, got {spec.is_satisfied_by(entry)}"
+            raise AssertionError(msg)
 
 
 class TestFlextLdapValidEntrySpecification:
@@ -87,7 +98,9 @@ class TestFlextLdapValidEntrySpecification:
         entry.dn = "cn=test,dc=example,dc=org"
         entry.attributes = {"objectClass": ["person"], "cn": ["test"]}
 
-        assert spec.is_satisfied_by(entry) is True
+        if not spec.is_satisfied_by(entry):
+            msg = f"Expected True, got {spec.is_satisfied_by(entry)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_no_object_class(self) -> None:
         """Test specification with entry without objectClass."""
@@ -98,7 +111,9 @@ class TestFlextLdapValidEntrySpecification:
         entry.dn = "cn=test,dc=example,dc=org"
         entry.attributes = {"cn": ["test"]}
 
-        assert spec.is_satisfied_by(entry) is False
+        if spec.is_satisfied_by(entry):
+            msg = f"Expected False, got {spec.is_satisfied_by(entry)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_empty_object_class(self) -> None:
         """Test specification with empty objectClass."""
@@ -109,7 +124,9 @@ class TestFlextLdapValidEntrySpecification:
         entry.dn = "cn=test,dc=example,dc=org"
         entry.attributes = {"objectClass": [], "cn": ["test"]}
 
-        assert spec.is_satisfied_by(entry) is False
+        if spec.is_satisfied_by(entry):
+            msg = f"Expected False, got {spec.is_satisfied_by(entry)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_invalid_dn_format(self) -> None:
         """Test specification with invalid DN format."""
@@ -120,7 +137,9 @@ class TestFlextLdapValidEntrySpecification:
         entry.dn = "invalid_dn"
         entry.attributes = {"objectClass": ["person"], "cn": ["test"]}
 
-        assert spec.is_satisfied_by(entry) is False
+        if spec.is_satisfied_by(entry):
+            msg = f"Expected False, got {spec.is_satisfied_by(entry)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_fails_parent_spec(self) -> None:
         """Test specification when parent specification fails."""
@@ -131,7 +150,9 @@ class TestFlextLdapValidEntrySpecification:
         entry.dn = ""
         entry.attributes = {"objectClass": ["person"], "cn": ["test"]}
 
-        assert spec.is_satisfied_by(entry) is False
+        if spec.is_satisfied_by(entry):
+            msg = f"Expected False, got {spec.is_satisfied_by(entry)}"
+            raise AssertionError(msg)
 
 
 class TestFlextLdapUserSpecification:
@@ -146,7 +167,9 @@ class TestFlextLdapUserSpecification:
         user.dn = "uid=testuser,ou=users,dc=example,dc=org"
         user.uid = "testuser"
 
-        assert spec.is_satisfied_by(user) is True
+        if not spec.is_satisfied_by(user):
+            msg = f"Expected True, got {spec.is_satisfied_by(user)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_no_dn(self) -> None:
         """Test specification with user without DN."""
@@ -157,7 +180,9 @@ class TestFlextLdapUserSpecification:
         user.dn = ""
         user.uid = "testuser"
 
-        assert spec.is_satisfied_by(user) is False
+        if spec.is_satisfied_by(user):
+            msg = f"Expected False, got {spec.is_satisfied_by(user)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_no_uid(self) -> None:
         """Test specification with user without UID."""
@@ -168,7 +193,9 @@ class TestFlextLdapUserSpecification:
         user.dn = "uid=testuser,ou=users,dc=example,dc=org"
         user.uid = ""
 
-        assert spec.is_satisfied_by(user) is False
+        if spec.is_satisfied_by(user):
+            msg = f"Expected False, got {spec.is_satisfied_by(user)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_none_values(self) -> None:
         """Test specification with None values."""
@@ -179,7 +206,9 @@ class TestFlextLdapUserSpecification:
         user.dn = None
         user.uid = None
 
-        assert spec.is_satisfied_by(user) is False
+        if spec.is_satisfied_by(user):
+            msg = f"Expected False, got {spec.is_satisfied_by(user)}"
+            raise AssertionError(msg)
 
 
 class TestFlextLdapActiveUserSpecification:
@@ -195,7 +224,9 @@ class TestFlextLdapActiveUserSpecification:
         user.uid = "testuser"
         user.attributes = {}
 
-        assert spec.is_satisfied_by(user) is True
+        if not spec.is_satisfied_by(user):
+            msg = f"Expected True, got {spec.is_satisfied_by(user)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_disabled_account_control(self) -> None:
         """Test specification with disabled userAccountControl."""
@@ -207,7 +238,9 @@ class TestFlextLdapActiveUserSpecification:
         user.uid = "testuser"
         user.attributes = {"userAccountControl": ["514"]}  # 512 + 2 = disabled
 
-        assert spec.is_satisfied_by(user) is False
+        if spec.is_satisfied_by(user):
+            msg = f"Expected False, got {spec.is_satisfied_by(user)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_enabled_account_control(self) -> None:
         """Test specification with enabled userAccountControl."""
@@ -219,7 +252,9 @@ class TestFlextLdapActiveUserSpecification:
         user.uid = "testuser"
         user.attributes = {"userAccountControl": ["512"]}  # Normal account
 
-        assert spec.is_satisfied_by(user) is True
+        if not spec.is_satisfied_by(user):
+            msg = f"Expected True, got {spec.is_satisfied_by(user)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_account_control_string(self) -> None:
         """Test specification with userAccountControl as string."""
@@ -231,7 +266,9 @@ class TestFlextLdapActiveUserSpecification:
         user.uid = "testuser"
         user.attributes = {"userAccountControl": "514"}  # Disabled
 
-        assert spec.is_satisfied_by(user) is False
+        if spec.is_satisfied_by(user):
+            msg = f"Expected False, got {spec.is_satisfied_by(user)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_invalid_account_control(self) -> None:
         """Test specification with invalid userAccountControl."""
@@ -244,7 +281,9 @@ class TestFlextLdapActiveUserSpecification:
         user.attributes = {"userAccountControl": ["invalid"]}
 
         # Should return True when userAccountControl is invalid (default to active)
-        assert spec.is_satisfied_by(user) is True
+        if not spec.is_satisfied_by(user):
+            msg = f"Expected True, got {spec.is_satisfied_by(user)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_account_disabled_true(self) -> None:
         """Test specification with accountDisabled set to true."""
@@ -256,7 +295,9 @@ class TestFlextLdapActiveUserSpecification:
         user.uid = "testuser"
         user.attributes = {"accountDisabled": ["true"]}
 
-        assert spec.is_satisfied_by(user) is False
+        if spec.is_satisfied_by(user):
+            msg = f"Expected False, got {spec.is_satisfied_by(user)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_account_disabled_false(self) -> None:
         """Test specification with accountDisabled set to false."""
@@ -268,7 +309,9 @@ class TestFlextLdapActiveUserSpecification:
         user.uid = "testuser"
         user.attributes = {"accountDisabled": ["false"]}
 
-        assert spec.is_satisfied_by(user) is True
+        if not spec.is_satisfied_by(user):
+            msg = f"Expected True, got {spec.is_satisfied_by(user)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_account_disabled_string(self) -> None:
         """Test specification with accountDisabled as string."""
@@ -280,7 +323,9 @@ class TestFlextLdapActiveUserSpecification:
         user.uid = "testuser"
         user.attributes = {"accountDisabled": "TRUE"}
 
-        assert spec.is_satisfied_by(user) is False
+        if spec.is_satisfied_by(user):
+            msg = f"Expected False, got {spec.is_satisfied_by(user)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_fails_parent_spec(self) -> None:
         """Test specification when parent specification fails."""
@@ -292,7 +337,9 @@ class TestFlextLdapActiveUserSpecification:
         user.uid = "testuser"
         user.attributes = {}
 
-        assert spec.is_satisfied_by(user) is False
+        if spec.is_satisfied_by(user):
+            msg = f"Expected False, got {spec.is_satisfied_by(user)}"
+            raise AssertionError(msg)
 
 
 class TestFlextLdapValidPasswordSpecification:
@@ -304,7 +351,9 @@ class TestFlextLdapValidPasswordSpecification:
 
         # Valid password with minimum length and special chars
         password = "Password123!"
-        assert spec.is_satisfied_by(password) is True
+        if not spec.is_satisfied_by(password):
+            msg = f"Expected True, got {spec.is_satisfied_by(password)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_too_short(self) -> None:
         """Test specification with password too short."""
@@ -312,7 +361,11 @@ class TestFlextLdapValidPasswordSpecification:
 
         # Password too short
         password = "Pass123!"
-        assert spec.is_satisfied_by(password) is False
+        if spec.is_satisfied_by(password):
+            msg = f"Expected False, got {spec.is_satisfied_by(password)}"
+            raise AssertionError(
+                msg,
+            )
 
     def test_is_satisfied_by_no_special_chars(self) -> None:
         """Test specification with password missing special chars."""
@@ -320,7 +373,11 @@ class TestFlextLdapValidPasswordSpecification:
 
         # Password without special characters
         password = "Password123"
-        assert spec.is_satisfied_by(password) is False
+        if spec.is_satisfied_by(password):
+            msg = f"Expected False, got {spec.is_satisfied_by(password)}"
+            raise AssertionError(
+                msg,
+            )
 
     def test_is_satisfied_by_no_special_chars_not_required(self) -> None:
         """Test specification when special chars not required."""
@@ -328,7 +385,9 @@ class TestFlextLdapValidPasswordSpecification:
 
         # Password without special characters, but not required
         password = "Password123"
-        assert spec.is_satisfied_by(password) is True
+        if not spec.is_satisfied_by(password):
+            msg = f"Expected True, got {spec.is_satisfied_by(password)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_custom_min_length(self) -> None:
         """Test specification with custom minimum length."""
@@ -336,7 +395,9 @@ class TestFlextLdapValidPasswordSpecification:
 
         # Password meeting custom length requirement
         password = "LongPassword123!"
-        assert spec.is_satisfied_by(password) is True
+        if not spec.is_satisfied_by(password):
+            msg = f"Expected True, got {spec.is_satisfied_by(password)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_various_special_chars(self) -> None:
         """Test specification with various special characters."""
@@ -345,21 +406,34 @@ class TestFlextLdapValidPasswordSpecification:
         special_chars = "!@#$%^&*()_+-=[]{}|;:,.<>?"
         for char in special_chars:
             password = f"Password123{char}"
-            assert spec.is_satisfied_by(password) is True
+            if not spec.is_satisfied_by(password):
+                msg = f"Expected True, got {spec.is_satisfied_by(password)}"
+                raise AssertionError(
+                    msg,
+                )
 
     def test_initialization_defaults(self) -> None:
         """Test specification initialization with defaults."""
         spec = FlextLdapValidPasswordSpecification()
-        assert spec.min_length == 8
-        assert spec.require_special_chars is True
+        if spec.min_length != EXPECTED_TOTAL_PAGES:
+            msg = f"Expected {8}, got {spec.min_length}"
+            raise AssertionError(msg)
+        if not spec.require_special_chars:
+            msg = f"Expected True, got {spec.require_special_chars}"
+            raise AssertionError(msg)
 
     def test_initialization_custom(self) -> None:
         """Test specification initialization with custom values."""
         spec = FlextLdapValidPasswordSpecification(
-            min_length=10, require_special_chars=False,
+            min_length=10,
+            require_special_chars=False,
         )
-        assert spec.min_length == 10
-        assert spec.require_special_chars is False
+        if spec.min_length != 10:
+            msg = f"Expected {10}, got {spec.min_length}"
+            raise AssertionError(msg)
+        if spec.require_special_chars:
+            msg = f"Expected False, got {spec.require_special_chars}"
+            raise AssertionError(msg)
 
 
 class TestFlextLdapGroupSpecification:
@@ -374,7 +448,9 @@ class TestFlextLdapGroupSpecification:
         group.dn = "cn=testgroup,ou=groups,dc=example,dc=org"
         group.cn = "testgroup"
 
-        assert spec.is_satisfied_by(group) is True
+        if not spec.is_satisfied_by(group):
+            msg = f"Expected True, got {spec.is_satisfied_by(group)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_no_dn(self) -> None:
         """Test specification with group without DN."""
@@ -385,7 +461,9 @@ class TestFlextLdapGroupSpecification:
         group.dn = ""
         group.cn = "testgroup"
 
-        assert spec.is_satisfied_by(group) is False
+        if spec.is_satisfied_by(group):
+            msg = f"Expected False, got {spec.is_satisfied_by(group)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_no_cn(self) -> None:
         """Test specification with group without CN."""
@@ -396,7 +474,9 @@ class TestFlextLdapGroupSpecification:
         group.dn = "cn=testgroup,ou=groups,dc=example,dc=org"
         group.cn = ""
 
-        assert spec.is_satisfied_by(group) is False
+        if spec.is_satisfied_by(group):
+            msg = f"Expected False, got {spec.is_satisfied_by(group)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_none_values(self) -> None:
         """Test specification with None values."""
@@ -407,7 +487,9 @@ class TestFlextLdapGroupSpecification:
         group.dn = None
         group.cn = None
 
-        assert spec.is_satisfied_by(group) is False
+        if spec.is_satisfied_by(group):
+            msg = f"Expected False, got {spec.is_satisfied_by(group)}"
+            raise AssertionError(msg)
 
 
 class TestFlextLdapNonEmptyGroupSpecification:
@@ -423,7 +505,9 @@ class TestFlextLdapNonEmptyGroupSpecification:
         group.cn = "testgroup"
         group.members = ["uid=user1,ou=users,dc=example,dc=org"]
 
-        assert spec.is_satisfied_by(group) is True
+        if not spec.is_satisfied_by(group):
+            msg = f"Expected True, got {spec.is_satisfied_by(group)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_empty_group(self) -> None:
         """Test specification with empty group."""
@@ -435,7 +519,9 @@ class TestFlextLdapNonEmptyGroupSpecification:
         group.cn = "testgroup"
         group.members = []
 
-        assert spec.is_satisfied_by(group) is False
+        if spec.is_satisfied_by(group):
+            msg = f"Expected False, got {spec.is_satisfied_by(group)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_fails_parent_spec(self) -> None:
         """Test specification when parent specification fails."""
@@ -447,7 +533,9 @@ class TestFlextLdapNonEmptyGroupSpecification:
         group.cn = "testgroup"
         group.members = ["uid=user1,ou=users,dc=example,dc=org"]
 
-        assert spec.is_satisfied_by(group) is False
+        if spec.is_satisfied_by(group):
+            msg = f"Expected False, got {spec.is_satisfied_by(group)}"
+            raise AssertionError(msg)
 
 
 class TestFlextLdapDistinguishedNameSpecification:
@@ -465,31 +553,43 @@ class TestFlextLdapDistinguishedNameSpecification:
         ]
 
         for dn in valid_dns:
-            assert spec.is_satisfied_by(dn) is True
+            if not spec.is_satisfied_by(dn):
+                msg = f"Expected True, got {spec.is_satisfied_by(dn)}"
+                raise AssertionError(msg)
 
     def test_is_satisfied_by_empty_dn(self) -> None:
         """Test specification with empty DN."""
         spec = FlextLdapDistinguishedNameSpecification()
 
-        assert spec.is_satisfied_by("") is False
+        if spec.is_satisfied_by(""):
+            msg = f"Expected False, got {spec.is_satisfied_by('')}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_none_dn(self) -> None:
         """Test specification with None DN."""
         spec = FlextLdapDistinguishedNameSpecification()
 
-        assert spec.is_satisfied_by(None) is False
+        if spec.is_satisfied_by(None):
+            msg = f"Expected False, got {spec.is_satisfied_by(None)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_non_string_dn(self) -> None:
         """Test specification with non-string DN."""
         spec = FlextLdapDistinguishedNameSpecification()
 
-        assert spec.is_satisfied_by(123) is False
+        if spec.is_satisfied_by(123):
+            msg = f"Expected False, got {spec.is_satisfied_by(123)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_no_equals(self) -> None:
         """Test specification with DN without equals."""
         spec = FlextLdapDistinguishedNameSpecification()
 
-        assert spec.is_satisfied_by("invalid_dn") is False
+        if spec.is_satisfied_by("invalid_dn"):
+            msg = f"Expected False, got {spec.is_satisfied_by('invalid_dn')}"
+            raise AssertionError(
+                msg,
+            )
 
     def test_is_satisfied_by_invalid_component(self) -> None:
         """Test specification with invalid DN component."""
@@ -504,7 +604,9 @@ class TestFlextLdapDistinguishedNameSpecification:
         ]
 
         for dn in invalid_dns:
-            assert spec.is_satisfied_by(dn) is False
+            if spec.is_satisfied_by(dn):
+                msg = f"Expected False, got {spec.is_satisfied_by(dn)}"
+                raise AssertionError(msg)
 
     def test_is_satisfied_by_dn_with_spaces(self) -> None:
         """Test specification with DN containing spaces."""
@@ -512,7 +614,9 @@ class TestFlextLdapDistinguishedNameSpecification:
 
         # DN with spaces around components (should be valid after strip)
         dn = "cn=REDACTED_LDAP_BIND_PASSWORD , ou=users , dc=example , dc=org"
-        assert spec.is_satisfied_by(dn) is True
+        if not spec.is_satisfied_by(dn):
+            msg = f"Expected True, got {spec.is_satisfied_by(dn)}"
+            raise AssertionError(msg)
 
 
 class TestFlextLdapFilterSpecification:
@@ -532,43 +636,65 @@ class TestFlextLdapFilterSpecification:
         ]
 
         for filter_str in valid_filters:
-            assert spec.is_satisfied_by(filter_str) is True
+            if not spec.is_satisfied_by(filter_str):
+                msg = f"Expected True, got {spec.is_satisfied_by(filter_str)}"
+                raise AssertionError(
+                    msg,
+                )
 
     def test_is_satisfied_by_empty_filter(self) -> None:
         """Test specification with empty filter."""
         spec = FlextLdapFilterSpecification()
 
-        assert spec.is_satisfied_by("") is False
+        if spec.is_satisfied_by(""):
+            msg = f"Expected False, got {spec.is_satisfied_by('')}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_none_filter(self) -> None:
         """Test specification with None filter."""
         spec = FlextLdapFilterSpecification()
 
-        assert spec.is_satisfied_by(None) is False
+        if spec.is_satisfied_by(None):
+            msg = f"Expected False, got {spec.is_satisfied_by(None)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_non_string_filter(self) -> None:
         """Test specification with non-string filter."""
         spec = FlextLdapFilterSpecification()
 
-        assert spec.is_satisfied_by(123) is False
+        if spec.is_satisfied_by(123):
+            msg = f"Expected False, got {spec.is_satisfied_by(123)}"
+            raise AssertionError(msg)
 
     def test_is_satisfied_by_no_parentheses(self) -> None:
         """Test specification with filter without parentheses."""
         spec = FlextLdapFilterSpecification()
 
-        assert spec.is_satisfied_by("cn=REDACTED_LDAP_BIND_PASSWORD") is False
+        if spec.is_satisfied_by("cn=REDACTED_LDAP_BIND_PASSWORD"):
+            msg = f"Expected False, got {spec.is_satisfied_by('cn=REDACTED_LDAP_BIND_PASSWORD')}"
+            raise AssertionError(
+                msg,
+            )
 
     def test_is_satisfied_by_missing_opening_parenthesis(self) -> None:
         """Test specification with missing opening parenthesis."""
         spec = FlextLdapFilterSpecification()
 
-        assert spec.is_satisfied_by("cn=REDACTED_LDAP_BIND_PASSWORD)") is False
+        if spec.is_satisfied_by("cn=REDACTED_LDAP_BIND_PASSWORD)"):
+            msg = f"Expected False, got {spec.is_satisfied_by('cn=REDACTED_LDAP_BIND_PASSWORD)')}"
+            raise AssertionError(
+                msg,
+            )
 
     def test_is_satisfied_by_missing_closing_parenthesis(self) -> None:
         """Test specification with missing closing parenthesis."""
         spec = FlextLdapFilterSpecification()
 
-        assert spec.is_satisfied_by("(cn=REDACTED_LDAP_BIND_PASSWORD") is False
+        if spec.is_satisfied_by("(cn=REDACTED_LDAP_BIND_PASSWORD"):
+            msg = f"Expected False, got {spec.is_satisfied_by('(cn=REDACTED_LDAP_BIND_PASSWORD')}"
+            raise AssertionError(
+                msg,
+            )
 
     def test_is_satisfied_by_unbalanced_parentheses(self) -> None:
         """Test specification with unbalanced parentheses."""
@@ -581,7 +707,11 @@ class TestFlextLdapFilterSpecification:
         ]
 
         for filter_str in unbalanced_filters:
-            assert spec.is_satisfied_by(filter_str) is False
+            if spec.is_satisfied_by(filter_str):
+                msg = f"Expected False, got {spec.is_satisfied_by(filter_str)}"
+                raise AssertionError(
+                    msg,
+                )
 
     def test_is_satisfied_by_complex_balanced_filter(self) -> None:
         """Test specification with complex but balanced filter."""
@@ -591,4 +721,8 @@ class TestFlextLdapFilterSpecification:
         complex_filter = (
             "(&(|(cn=REDACTED_LDAP_BIND_PASSWORD)(cn=user))(objectClass=person)(!(accountDisabled=true)))"
         )
-        assert spec.is_satisfied_by(complex_filter) is True
+        if not spec.is_satisfied_by(complex_filter):
+            msg = f"Expected True, got {spec.is_satisfied_by(complex_filter)}"
+            raise AssertionError(
+                msg,
+            )

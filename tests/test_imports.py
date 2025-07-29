@@ -1,5 +1,10 @@
 """Test that all imports work correctly."""
 
+from flext_ldap import LDAPClient, LDAPEntry, LDAPFilter, LDAPScope
+from flext_ldap import (
+from flext_ldap.models import LDAPEntry, LDAPFilter, LDAPScope
+
+
 import pytest
 
 
@@ -9,7 +14,7 @@ class TestImports:
     @pytest.mark.unit
     def test_main_imports(self) -> None:
         """Test main package imports (backward compatibility)."""
-        from flext_ldap import LDAPClient, LDAPEntry, LDAPFilter, LDAPScope
+
 
         # These should work via backward compatibility aliases
         assert LDAPClient is not None
@@ -20,7 +25,7 @@ class TestImports:
     @pytest.mark.unit
     def test_new_imports(self) -> None:
         """Test new FlextLdap imports."""
-        from flext_ldap import (
+
             FlextLdapClient,
             FlextLdapEntry,
             FlextLdapFilter,
@@ -36,7 +41,7 @@ class TestImports:
     def test_models_imports(self) -> None:
         """Test models imports (backward compatibility)."""
         try:
-            from flext_ldap.models import LDAPEntry, LDAPFilter, LDAPScope
+
 
             assert LDAPEntry is not None
             assert LDAPFilter is not None

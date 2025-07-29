@@ -15,9 +15,8 @@ from datetime import UTC, datetime
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
 from enum import StrEnum
-from typing import Any
 
-from flext_core import FlextEntity
+from flext_core import FlextEntity, FlextResult
 from pydantic import Field
 
 
@@ -37,14 +36,13 @@ class FlextLdapEntry(FlextEntity):
     attributes: dict[str, list[str]] = Field(default_factory=dict)
     status: str = FlextLdapEntityStatus.ACTIVE
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP entry."""
         if not self.dn:
-            msg = "LDAP entry must have a distinguished name"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP entry must have a distinguished name")
         if not self.object_classes:
-            msg = "LDAP entry must have at least one object class"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP entry must have at least one object class")
+        return FlextResult.ok(None)
 
     def add_object_class(self, object_class: str) -> None:
         """Add an object class to the entry."""
@@ -150,11 +148,11 @@ class FlextLdapConnection(FlextEntity):
     status: str = FlextLdapEntityStatus.INACTIVE
     pool_id: str | None = None
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP connection."""
         if not self.server_url:
-            msg = "LDAP connection must have a server URL"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP connection must have a server URL")
+        return FlextResult.ok(None)
 
     def bind(self, bind_dn: str) -> FlextLdapConnection:
         """Bind to LDAP server with given DN."""
@@ -231,14 +229,13 @@ class FlextLdapUser(FlextEntity):
     attributes: dict[str, str] = Field(default_factory=dict)
     status: str = FlextLdapEntityStatus.ACTIVE
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP user."""
         if not self.dn:
-            msg = "LDAP user must have a distinguished name"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP user must have a distinguished name")
         if self.mail and "@" not in self.mail:
-            msg = "User email must be valid format"
-            raise ValueError(msg)
+            return FlextResult.fail("User email must be valid format")
+        return FlextResult.ok(None)
 
     def add_attribute(self, name: str, value: str) -> FlextLdapUser:
         """Add an attribute to the user."""
@@ -330,14 +327,13 @@ class FlextLdapGroup(FlextEntity):
     object_classes: list[str] = Field(default_factory=lambda: ["groupOfNames"])
     status: str = FlextLdapEntityStatus.ACTIVE
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP group."""
         if not self.dn:
-            msg = "LDAP group must have a distinguished name"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP group must have a distinguished name")
         if not self.cn:
-            msg = "LDAP group must have a common name"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP group must have a common name")
+        return FlextResult.ok(None)
 
     def add_member(self, member_dn: str) -> FlextLdapGroup:
         """Add a member to the group."""
@@ -431,17 +427,15 @@ class FlextLdapOperation(FlextEntity):
     error_message: str | None = None
     status: str = FlextLdapEntityStatus.PENDING
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP operation."""
         if not self.operation_type:
-            msg = "LDAP operation must have an operation type"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP operation must have an operation type")
         if not self.target_dn:
-            msg = "LDAP operation must have a target DN"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP operation must have a target DN")
         if not self.connection_id:
-            msg = "LDAP operation must have a connection ID"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP operation must have a connection ID")
+        return FlextResult.ok(None)
 
     def start_operation(self) -> FlextLdapOperation:
         """Mark operation as started."""
@@ -482,7 +476,7 @@ class FlextLdapOperation(FlextEntity):
 
     def is_successful(self) -> bool:
         """Check if operation was successful."""
-        return self.is_success is True
+        return self.success is True
 
 
 # Backward compatibility aliases
@@ -501,7 +495,7 @@ warnings.warn(
 )
 
 
-def __getattr__(name: str) -> Any:
+def __getattr__(name: str) -> object:
     """Handle attribute access with deprecation warnings."""
     entity_classes = {
         "LDAPEntry": FlextLdapEntry,

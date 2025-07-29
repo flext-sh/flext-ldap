@@ -19,11 +19,6 @@ from flext_ldap.domain.aggregates import (
     FlextLdapDirectory,
     FlextLdapDirectoryAggregate,
 )
-from flext_ldap.entities import (
-    FlextLdapEntry,
-    FlextLdapGroup,
-    FlextLdapUser,
-)
 from flext_ldap.domain.events import (
     FlextLdapAuthenticationFailed,
     FlextLdapConnectionEstablished,
@@ -49,10 +44,15 @@ from flext_ldap.domain.specifications import (
     FlextLdapEntrySpecification,
     FlextLdapUserSpecification,
 )
+from flext_ldap.entities import (
+    FlextLdapEntry,
+    FlextLdapGroup,
+    FlextLdapUser,
+)
 from flext_ldap.values import (
-    FlextLdapDistinguishedName as DistinguishedName,
     FlextLdapAttributesValue as LDAPAttributes,
-    FlextLdapFilterValue as LDAPFilter, 
+    FlextLdapDistinguishedName as DistinguishedName,
+    FlextLdapFilterValue as LDAPFilter,
     FlextLdapObjectClass as LDAPObjectClass,
     FlextLdapScopeEnum as LDAPScope,
     FlextLdapUri as LDAPUri,

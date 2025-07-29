@@ -77,10 +77,12 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         """
         try:
             # Use default connection for simplicity
-            return FlextResult.ok(True)
+            return FlextResult.ok(success=True)
 
-        except Exception as e:
+        except ConnectionError as e:
             return FlextResult.fail(f"Connection error: {e}")
+        except OSError as e:
+            return FlextResult.fail(f"Network error: {e}")
 
     async def search_users(
         self,
@@ -103,8 +105,12 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             ]
             return FlextResult.ok(entries)
 
-        except Exception as e:
-            return FlextResult.fail(f"Search error: {e}")
+        except ConnectionError as e:
+            return FlextResult.fail(f"Search connection error: {e}")
+        except ValueError as e:
+            return FlextResult.fail(f"Search parameter error: {e}")
+        except OSError as e:
+            return FlextResult.fail(f"Search network error: {e}")
 
     async def disconnect(self, connection_id: str) -> FlextResult[bool]:
         """Disconnect from directory server.
@@ -118,9 +124,11 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         """
         try:
             await self._ldap_client.disconnect(connection_id)
-            return FlextResult.ok(True)
-        except Exception as e:
-            return FlextResult.fail(f"Disconnect error: {e}")
+            return FlextResult.ok(success=True)
+        except ConnectionError as e:
+            return FlextResult.fail(f"Disconnect connection error: {e}")
+        except OSError as e:
+            return FlextResult.fail(f"Disconnect network error: {e}")
 
     async def search(
         self,
@@ -184,8 +192,12 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 return FlextResult.ok(entries)
             return FlextResult.fail(f"Search failed: {result.error}")
 
-        except Exception as e:
-            return FlextResult.fail(f"Search error: {e}")
+        except ConnectionError as e:
+            return FlextResult.fail(f"Search connection error: {e}")
+        except ValueError as e:
+            return FlextResult.fail(f"Search parameter error: {e}")
+        except OSError as e:
+            return FlextResult.fail(f"Search network error: {e}")
 
     async def add_entry(
         self,
@@ -213,10 +225,10 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             )
 
             if result.is_success:
-                return FlextResult.ok(True)
+                return FlextResult.ok(success=True)
             return FlextResult.fail(f"Add entry failed: {result.error}")
 
-        except Exception as e:
+        except ConnectionError as e:
             return FlextResult.fail(f"Add entry error: {e}")
 
     async def modify_entry(
@@ -244,11 +256,15 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             )
 
             if result.is_success:
-                return FlextResult.ok(True)
+                return FlextResult.ok(success=True)
             return FlextResult.fail(f"Modify entry failed: {result.error}")
 
-        except Exception as e:
-            return FlextResult.fail(f"Modify entry error: {e}")
+        except ConnectionError as e:
+            return FlextResult.fail(f"Modify entry connection error: {e}")
+        except ValueError as e:
+            return FlextResult.fail(f"Modify entry parameter error: {e}")
+        except OSError as e:
+            return FlextResult.fail(f"Modify entry network error: {e}")
 
     async def delete_entry(
         self,
@@ -272,11 +288,15 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             )
 
             if result.is_success:
-                return FlextResult.ok(True)
+                return FlextResult.ok(success=True)
             return FlextResult.fail(f"Delete entry failed: {result.error}")
 
-        except Exception as e:
-            return FlextResult.fail(f"Delete entry error: {e}")
+        except ConnectionError as e:
+            return FlextResult.fail(f"Delete entry connection error: {e}")
+        except ValueError as e:
+            return FlextResult.fail(f"Delete entry parameter error: {e}")
+        except OSError as e:
+            return FlextResult.fail(f"Delete entry network error: {e}")
 
 
 class FlextLdapDirectoryAdapter(FlextLdapDirectoryAdapterInterface):

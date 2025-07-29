@@ -8,11 +8,15 @@ Perfect for testing and demonstration without needing a manual LDAP setup.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 import subprocess
 import sys
 import time
 from pathlib import Path
+
+from integrated_ldap_service import main as integrated_main
+from ldap_simple_client_example import main as simple_main
 
 # Add src to path for local testing
 src_path = Path(__file__).parent.parent / "src"
@@ -34,8 +38,6 @@ def start_openldap_container() -> bool:
             shell=True,
         )
 
-        print("🐳 Starting OpenLDAP container...")
-
         # Start new container
         subprocess.run([
             "docker", "run", "-d",
@@ -54,8 +56,7 @@ def start_openldap_container() -> bool:
         ], check=True)
 
         # Wait for container to be ready
-        print("⏳ Waiting for OpenLDAP to be ready...")
-        for attempt in range(30):
+        for _attempt in range(30):
             try:
                 result = subprocess.run([
                     "docker", "exec", "flext-ldap-example",
@@ -69,29 +70,24 @@ def start_openldap_container() -> bool:
                 ], capture_output=True, check=True)
 
                 if result.returncode == 0:
-                    print("✅ OpenLDAP container is ready!")
                     return True
 
             except subprocess.CalledProcessError:
                 time.sleep(1)
 
-        print("❌ OpenLDAP container failed to start properly")
         return False
 
-    except Exception as e:
-        print(f"❌ Failed to start OpenLDAP container: {e}")
+    except (RuntimeError, ValueError, TypeError):
         return False
 
 
 def stop_openldap_container() -> None:
     """Stop and remove OpenLDAP container."""
     try:
-        print("🛑 Stopping OpenLDAP container...")
         subprocess.run(["docker", "stop", "flext-ldap-example"], check=False)
         subprocess.run(["docker", "rm", "flext-ldap-example"], check=False)
-        print("✅ Container stopped and removed")
-    except Exception as e:
-        print(f"⚠️  Error stopping container: {e}")
+    except (RuntimeError, ValueError, TypeError):
+        pass
 
 
 async def run_examples_with_docker() -> None:
@@ -104,38 +100,25 @@ async def run_examples_with_docker() -> None:
         "LDAP_TEST_BASE_DN": "dc=flext,dc=local",
     })
 
-    print("🚀 Running integrated LDAP service example...")
-
     # Run the integrated example
     try:
         sys.path.insert(0, str(Path(__file__).parent))
-        from integrated_ldap_service import main as integrated_main
+
         await integrated_main()
-        print("✅ Integrated example completed successfully!")
 
-    except Exception as e:
-        print(f"❌ Integrated example failed: {e}")
-
-    print("\n🚀 Running simple client example...")
+    except (RuntimeError, ValueError, TypeError):
+        pass
 
     # Run the simple client example
-    try:
-        from ldap_simple_client_example import main as simple_main
-        await simple_main()
-        print("✅ Simple client example completed successfully!")
+    with contextlib.suppress(RuntimeError, ValueError, TypeError):
 
-    except Exception as e:
-        print(f"❌ Simple client example failed: {e}")
+        await simple_main()
 
 
 async def main() -> None:
     """Main execution function."""
-    print("🌟 FLEXT-LDAP Docker Example Runner")
-    print("=" * 50)
-
     # Start container
     if not start_openldap_container():
-        print("💥 Failed to start OpenLDAP container. Exiting.")
         return
 
     try:
@@ -146,15 +129,12 @@ async def main() -> None:
         # Always cleanup
         stop_openldap_container()
 
-    print("\n🎉 Example run completed!")
-
 
 if __name__ == "__main__":
     # Check if Docker is available
     try:
         subprocess.run(["docker", "--version"], check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print("❌ Docker is not available. Please install Docker to run this example.")
         sys.exit(1)
 
     asyncio.run(main())

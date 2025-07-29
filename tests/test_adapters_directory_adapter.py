@@ -1,5 +1,8 @@
 """Tests for LDAP directory adapter in FLEXT-LDAP."""
 
+from flext_ldap.adapters.directory_adapter import (
+
+
 from typing import cast
 from unittest.mock import AsyncMock, patch
 
@@ -7,6 +10,9 @@ import pytest
 from flext_core import FlextResult
 
 from flext_ldap.adapters.directory_adapter import (
+# Constants
+EXPECTED_DATA_COUNT = 3
+
     FlextLdapDirectoryAdapter,
     FlextLdapDirectoryAdapterInterface,
     FlextLdapDirectoryConnectionProtocol,
@@ -32,7 +38,8 @@ class TestFlextLdapDirectoryConnectionProtocol:
 
         # Test protocol compliance
         protocol_connection = cast("FlextLdapDirectoryConnectionProtocol", connection)
-        assert protocol_connection.host == "localhost"
+        if protocol_connection.host != "localhost":
+            raise AssertionError(f"Expected {"localhost"}, got {protocol_connection.host}")
         assert protocol_connection.port == 389
 
 
@@ -52,7 +59,8 @@ class TestFlextLdapDirectoryEntryProtocol:
 
         # Test protocol compliance
         protocol_entry = cast("FlextLdapDirectoryEntryProtocol", entry)
-        assert protocol_entry.dn == "cn=test,dc=example,dc=org"
+        if protocol_entry.dn != "cn=test,dc=example,dc=org":
+            raise AssertionError(f"Expected {"cn=test,dc=example,dc=org"}, got {protocol_entry.dn}")
         assert protocol_entry.attributes == {"uid": ["test"], "cn": ["Test User"]}
 
 
@@ -94,7 +102,9 @@ class TestFlextLdapDirectoryService:
         """Test successful connection."""
         result = await directory_service.connect()
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is True
 
     async def test_connect_exception(
@@ -108,9 +118,11 @@ class TestFlextLdapDirectoryService:
 
             result = await directory_service.connect()
 
-            assert result.is_success is False
-            assert result.error is not None
-            assert "Connection error" in result.error
+            if result.is_success:
+
+                raise AssertionError(f"Expected False, got {result.is_success}")\ n            assert result.error is not None
+            if "Connection error" not in result.error:
+                raise AssertionError(f"Expected {"Connection error"} in {result.error}")
 
     async def test_search_users_success(
         self,
@@ -121,11 +133,15 @@ class TestFlextLdapDirectoryService:
 
         result = await directory_service.search_users(filter_criteria)
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is not None
-        assert len(result.data) == 1
+        if len(result.data) != 1:
+            raise AssertionError(f"Expected {1}, got {len(result.data)}")
         assert result.data[0].dn == "cn=user,dc=example,dc=com"
-        assert result.data[0].attributes == {"uid": "user"}
+        if result.data[0].attributes != {"uid": "user"}:
+            raise AssertionError(f"Expected {{"uid": "user"}}, got {result.data[0].attributes}")
 
     async def test_search_users_exception(
         self,
@@ -138,9 +154,11 @@ class TestFlextLdapDirectoryService:
 
             result = await directory_service.search_users({"uid": "test"})
 
-            assert result.is_success is False
-            assert result.error is not None
-            assert "Search error" in result.error
+            if result.is_success:
+
+                raise AssertionError(f"Expected False, got {result.is_success}")\ n            assert result.error is not None
+            if "Search error" not in result.error:
+                raise AssertionError(f"Expected {"Search error"} in {result.error}")
 
     async def test_disconnect_success(
         self,
@@ -156,7 +174,9 @@ class TestFlextLdapDirectoryService:
 
         result = await directory_service.disconnect(connection_id)
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is True
         directory_service._ldap_client.disconnect.assert_called_once_with(connection_id)
 
@@ -174,9 +194,11 @@ class TestFlextLdapDirectoryService:
 
         result = await directory_service.disconnect(connection_id)
 
-        assert result.is_success is False
-        assert result.error is not None
-        assert "Disconnect error" in result.error
+        if result.is_success:
+
+            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+        if "Disconnect error" not in result.error:
+            raise AssertionError(f"Expected {"Disconnect error"} in {result.error}")
 
     async def test_search_success(
         self,
@@ -212,11 +234,15 @@ class TestFlextLdapDirectoryService:
             attributes=attributes,
         )
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is not None
-        assert len(result.data) == 1
+        if len(result.data) != 1:
+            raise AssertionError(f"Expected {1}, got {len(result.data)}")
         assert result.data[0].dn == "uid=user1,ou=users,dc=example,dc=org"
-        assert result.data[0].attributes["uid"] == ["user1"]
+        if result.data[0].attributes["uid"] != ["user1"]:
+            raise AssertionError(f"Expected {["user1"]}, got {result.data[0].attributes["uid"]}")
 
         directory_service._ldap_client.search.assert_called_once_with(
             connection_id=connection_id,
@@ -253,7 +279,9 @@ class TestFlextLdapDirectoryService:
             search_filter=search_filter,
         )
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         directory_service._ldap_client.search.assert_called_once_with(
             connection_id=connection_id,
             base_dn=base_dn,
@@ -282,9 +310,11 @@ class TestFlextLdapDirectoryService:
             search_filter=search_filter,
         )
 
-        assert result.is_success is False
-        assert result.error is not None
-        assert "Search failed" in result.error
+        if result.is_success:
+
+            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+        if "Search failed" not in result.error:
+            raise AssertionError(f"Expected {"Search failed"} in {result.error}")
 
     async def test_search_exception(
         self,
@@ -306,9 +336,11 @@ class TestFlextLdapDirectoryService:
             search_filter=search_filter,
         )
 
-        assert result.is_success is False
-        assert result.error is not None
-        assert "Search error" in result.error
+        if result.is_success:
+
+            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+        if "Search error" not in result.error:
+            raise AssertionError(f"Expected {"Search error"} in {result.error}")
 
     async def test_add_entry_success(
         self,
@@ -335,7 +367,9 @@ class TestFlextLdapDirectoryService:
             attributes=attributes,
         )
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is True
 
         directory_service._ldap_client.add_entry.assert_called_once_with(
@@ -364,9 +398,11 @@ class TestFlextLdapDirectoryService:
             attributes=attributes,
         )
 
-        assert result.is_success is False
-        assert result.error is not None
-        assert "Add entry failed" in result.error
+        if result.is_success:
+
+            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+        if "Add entry failed" not in result.error:
+            raise AssertionError(f"Expected {"Add entry failed"} in {result.error}")
 
     async def test_add_entry_exception(
         self,
@@ -388,9 +424,11 @@ class TestFlextLdapDirectoryService:
             attributes=attributes,
         )
 
-        assert result.is_success is False
-        assert result.error is not None
-        assert "Add entry error" in result.error
+        if result.is_success:
+
+            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+        if "Add entry error" not in result.error:
+            raise AssertionError(f"Expected {"Add entry error"} in {result.error}")
 
     async def test_modify_entry_success(
         self,
@@ -412,7 +450,9 @@ class TestFlextLdapDirectoryService:
             changes=changes,
         )
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is True
 
         directory_service._ldap_client.modify_entry.assert_called_once_with(
@@ -441,9 +481,11 @@ class TestFlextLdapDirectoryService:
             changes=changes,
         )
 
-        assert result.is_success is False
-        assert result.error is not None
-        assert "Modify entry failed" in result.error
+        if result.is_success:
+
+            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+        if "Modify entry failed" not in result.error:
+            raise AssertionError(f"Expected {"Modify entry failed"} in {result.error}")
 
     async def test_modify_entry_exception(
         self,
@@ -465,9 +507,11 @@ class TestFlextLdapDirectoryService:
             changes=changes,
         )
 
-        assert result.is_success is False
-        assert result.error is not None
-        assert "Modify entry error" in result.error
+        if result.is_success:
+
+            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+        if "Modify entry error" not in result.error:
+            raise AssertionError(f"Expected {"Modify entry error"} in {result.error}")
 
     async def test_delete_entry_success(
         self,
@@ -487,7 +531,9 @@ class TestFlextLdapDirectoryService:
             dn=dn,
         )
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is True
 
         directory_service._ldap_client.delete_entry.assert_called_once_with(
@@ -513,9 +559,11 @@ class TestFlextLdapDirectoryService:
             dn=dn,
         )
 
-        assert result.is_success is False
-        assert result.error is not None
-        assert "Delete entry failed" in result.error
+        if result.is_success:
+
+            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+        if "Delete entry failed" not in result.error:
+            raise AssertionError(f"Expected {"Delete entry failed"} in {result.error}")
 
     async def test_delete_entry_exception(
         self,
@@ -535,9 +583,11 @@ class TestFlextLdapDirectoryService:
             dn=dn,
         )
 
-        assert result.is_success is False
-        assert result.error is not None
-        assert "Delete entry error" in result.error
+        if result.is_success:
+
+            raise AssertionError(f"Expected False, got {result.is_success}")\ n        assert result.error is not None
+        if "Delete entry error" not in result.error:
+            raise AssertionError(f"Expected {"Delete entry error"} in {result.error}")
 
 
 class TestFlextLdapDirectoryAdapter:
@@ -564,7 +614,7 @@ class TestBackwardCompatibilityAliases:
 
     def test_aliases_exist(self) -> None:
         """Test that backward compatibility aliases exist."""
-        from flext_ldap.adapters.directory_adapter import (
+
             DirectoryAdapterInterface,
             DirectoryConnectionProtocol,
             DirectoryEntryProtocol,

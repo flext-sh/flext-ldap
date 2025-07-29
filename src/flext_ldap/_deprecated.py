@@ -8,12 +8,14 @@ Old complex paths still work but show clear guidance to simple alternatives.
 
 from __future__ import annotations
 
+import warnings
+
 
 class LDAPDeprecationWarning(DeprecationWarning):
     """Custom deprecation warning for LDAP-specific deprecations.
 
     Provides clear guidance to users on how to migrate from complex
-    import paths to simple root-level imports for better developer experience.
+
     """
 
 
@@ -30,8 +32,6 @@ def warn_deprecated(
         version: Version when the deprecated feature will be removed
 
     """
-    import warnings
-
     warnings.warn(
         f"\n\n🚨 DEPRECATED COMPLEX PATH:\n"
         f"Using '{old_path}' is deprecated.\n\n"
@@ -65,8 +65,6 @@ def warn_deprecated_path(
         version: Version when support will be removed
 
     """
-    import warnings
-
     warnings.warn(
         f"\n\n🚨 DEPRECATED COMPLEX PATH:\n"
         f"Using '{old_path}' is deprecated.\n\n"

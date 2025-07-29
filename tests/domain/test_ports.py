@@ -12,6 +12,7 @@ from typing import Any
 
 import pytest
 
+import flext_ldap.domain.ports
 from flext_ldap.domain import ports
 
 
@@ -40,20 +41,29 @@ class TestFlextLdapConnectionService:
             "get_connection_info",
         }
 
-        assert abstract_methods == expected_methods
+        if abstract_methods != expected_methods:
+
+            msg = f"Expected {expected_methods}, got {abstract_methods}"
+            raise AssertionError(msg)
 
     def test_method_signatures(self) -> None:
         """Test that abstract method signatures are correct."""
         # Test connect method signature
         connect_sig = inspect.signature(ports.FlextLdapConnectionService.connect)
-        assert "self" in connect_sig.parameters
+        if "self" not in connect_sig.parameters:
+            msg = f"Expected {"self"} in {connect_sig.parameters}"
+            raise AssertionError(msg)
         assert "server_url" in connect_sig.parameters
-        assert "bind_dn" in connect_sig.parameters
+        if "bind_dn" not in connect_sig.parameters:
+            msg = f"Expected {"bind_dn"} in {connect_sig.parameters}"
+            raise AssertionError(msg)
         assert "password" in connect_sig.parameters
 
         # Test disconnect method signature
         disconnect_sig = inspect.signature(ports.FlextLdapConnectionService.disconnect)
-        assert "self" in disconnect_sig.parameters
+        if "self" not in disconnect_sig.parameters:
+            msg = f"Expected {"self"} in {disconnect_sig.parameters}"
+            raise AssertionError(msg)
         assert "connection" in disconnect_sig.parameters
 
     def test_concrete_implementation_works(self) -> None:
@@ -106,17 +116,26 @@ class TestFlextLdapSearchService:
         abstract_methods = ports.FlextLdapSearchService.__abstractmethods__
         expected_methods = {"search", "search_users"}
 
-        assert abstract_methods == expected_methods
+        if abstract_methods != expected_methods:
+
+            msg = f"Expected {expected_methods}, got {abstract_methods}"
+            raise AssertionError(msg)
 
     def test_method_signatures(self) -> None:
         """Test that abstract method signatures are correct."""
         # Test search method signature
         search_sig = inspect.signature(ports.FlextLdapSearchService.search)
-        assert "self" in search_sig.parameters
+        if "self" not in search_sig.parameters:
+            msg = f"Expected {"self"} in {search_sig.parameters}"
+            raise AssertionError(msg)
         assert "connection" in search_sig.parameters
-        assert "base_dn" in search_sig.parameters
+        if "base_dn" not in search_sig.parameters:
+            msg = f"Expected {"base_dn"} in {search_sig.parameters}"
+            raise AssertionError(msg)
         assert "filter_string" in search_sig.parameters
-        assert "attributes" in search_sig.parameters
+        if "attributes" not in search_sig.parameters:
+            msg = f"Expected {"attributes"} in {search_sig.parameters}"
+            raise AssertionError(msg)
         assert "scope" in search_sig.parameters
 
     def test_concrete_implementation_works(self) -> None:
@@ -170,15 +189,22 @@ class TestFlextLdapUserService:
             "list_users",
         }
 
-        assert abstract_methods == expected_methods
+        if abstract_methods != expected_methods:
+
+            msg = f"Expected {expected_methods}, got {abstract_methods}"
+            raise AssertionError(msg)
 
     def test_method_signatures(self) -> None:
         """Test that abstract method signatures are correct."""
         # Test create_user method signature
         create_sig = inspect.signature(ports.FlextLdapUserService.create_user)
-        assert "self" in create_sig.parameters
+        if "self" not in create_sig.parameters:
+            msg = f"Expected {"self"} in {create_sig.parameters}"
+            raise AssertionError(msg)
         assert "connection" in create_sig.parameters
-        assert "dn" in create_sig.parameters
+        if "dn" not in create_sig.parameters:
+            msg = f"Expected {"dn"} in {create_sig.parameters}"
+            raise AssertionError(msg)
         assert "attributes" in create_sig.parameters
 
     def test_concrete_implementation_works(self) -> None:
@@ -238,7 +264,10 @@ class TestFlextLdapSchemaService:
         abstract_methods = ports.FlextLdapSchemaService.__abstractmethods__
         expected_methods = {"get_schema", "validate_entry"}
 
-        assert abstract_methods == expected_methods
+        if abstract_methods != expected_methods:
+
+            msg = f"Expected {expected_methods}, got {abstract_methods}"
+            raise AssertionError(msg)
 
     def test_concrete_implementation_works(self) -> None:
         """Test that concrete implementation can be created."""
@@ -278,15 +307,22 @@ class TestFlextLdapMigrationService:
         abstract_methods = ports.FlextLdapMigrationService.__abstractmethods__
         expected_methods = {"export_entries", "import_entries", "migrate_users"}
 
-        assert abstract_methods == expected_methods
+        if abstract_methods != expected_methods:
+
+            msg = f"Expected {expected_methods}, got {abstract_methods}"
+            raise AssertionError(msg)
 
     def test_method_signatures(self) -> None:
         """Test that abstract method signatures are correct."""
         # Test export_entries method signature
         export_sig = inspect.signature(ports.FlextLdapMigrationService.export_entries)
-        assert "self" in export_sig.parameters
+        if "self" not in export_sig.parameters:
+            msg = f"Expected {"self"} in {export_sig.parameters}"
+            raise AssertionError(msg)
         assert "connection" in export_sig.parameters
-        assert "base_dn" in export_sig.parameters
+        if "base_dn" not in export_sig.parameters:
+            msg = f"Expected {"base_dn"} in {export_sig.parameters}"
+            raise AssertionError(msg)
         assert "output_format" in export_sig.parameters
 
     def test_concrete_implementation_works(self) -> None:
@@ -354,13 +390,14 @@ class TestPortsModule:
     def test_module_docstring(self) -> None:
         """Test that module has proper docstring."""
         assert ports.__doc__ is not None
-        assert "Domain ports" in ports.__doc__
+        if "Domain ports" not in ports.__doc__:
+            msg = f"Expected {"Domain ports"} in {ports.__doc__}"
+            raise AssertionError(msg)
         assert "service interfaces" in ports.__doc__
 
     def test_type_checking_imports(self) -> None:
         """Test that TYPE_CHECKING imports are properly defined."""
         # This tests that the module can be imported without circular import issues
-        import flext_ldap.domain.ports
 
         # Test that the module has the expected structure
         assert hasattr(flext_ldap.domain.ports, "FlextLdapConnectionService")

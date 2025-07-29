@@ -12,24 +12,25 @@ from uuid import uuid4
 
 from flext_core import FlextResult, get_flext_container, get_logger
 
-from flext_ldap.ldap_infrastructure import FlextLdapClient
-from flext_ldap.config import FlextLdapConnectionConfig
 from flext_ldap.entities import (
     FlextLdapEntry,
     FlextLdapGroup,
     FlextLdapUser,
 )
+from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
 from flext_ldap.values import FlextLdapCreateUserRequest, FlextLdapDistinguishedName
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
+
+    from flext_ldap.config import FlextLdapConnectionConfig
 
 logger = get_logger(__name__)
 
 
 class FlextLdapApi:
     """Unified LDAP API using flext-core patterns.
-    
+
     Single interface that consolidates all LDAP operations with:
     - Type-safe error handling via FlextResult
     - Domain-driven design with rich entities
@@ -57,13 +58,13 @@ class FlextLdapApi:
         session_id: str | None = None,
     ) -> FlextResult[str]:
         """Connect to LDAP server with session management.
-        
+
         Args:
             server_url: LDAP server URL
             bind_dn: Bind DN for authentication
             password: Password for authentication
             session_id: Optional session identifier
-            
+
         Returns:
             FlextResult containing session ID
 
@@ -81,8 +82,12 @@ class FlextLdapApi:
             logger.info("Connected to LDAP server", extra={"session_id": session})
             return FlextResult.ok(session)
 
-        except Exception as e:
+        except ConnectionError as e:
             return FlextResult.fail(f"Connection error: {e}")
+        except OSError as e:
+            return FlextResult.fail(f"Network error: {e}")
+        except ValueError as e:
+            return FlextResult.fail(f"Configuration error: {e}")
 
     async def disconnect(self, session_id: str) -> FlextResult[None]:
         """Disconnect from LDAP server."""
@@ -99,7 +104,7 @@ class FlextLdapApi:
 
             return result
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Disconnect error: {e}")
 
     @asynccontextmanager
@@ -112,7 +117,8 @@ class FlextLdapApi:
         """Async context manager for LDAP connections."""
         connect_result = await self.connect(server_url, bind_dn, password)
         if not connect_result.is_success:
-            raise RuntimeError(f"Failed to connect: {connect_result.error}")
+            msg = f"Failed to connect: {connect_result.error}"
+            raise RuntimeError(msg)
 
         session_id = connect_result.data
         try:
@@ -129,7 +135,7 @@ class FlextLdapApi:
         scope: str = "sub",
     ) -> FlextResult[list[FlextLdapEntry]]:
         """Search LDAP directory with rich domain objects.
-        
+
         Returns FlextLdapEntry entities instead of raw dictionaries.
         """
         try:
@@ -159,7 +165,7 @@ class FlextLdapApi:
 
             return FlextResult.ok(entries)
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Search error: {e}")
 
     async def create_user(
@@ -215,7 +221,7 @@ class FlextLdapApi:
             logger.info("User created", extra={"user_dn": user_request.dn})
             return FlextResult.ok(user)
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"User creation error: {e}")
 
     async def update_user(
@@ -247,7 +253,7 @@ class FlextLdapApi:
 
             return result
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"User update error: {e}")
 
     async def delete_user(
@@ -270,7 +276,7 @@ class FlextLdapApi:
 
             return result
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"User deletion error: {e}")
 
     async def create_group(
@@ -319,7 +325,7 @@ class FlextLdapApi:
             logger.info("Group created", extra={"group_dn": dn_str})
             return FlextResult.ok(group)
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Group creation error: {e}")
 
     def health(self) -> FlextResult[dict[str, Any]]:
@@ -338,7 +344,7 @@ class FlextLdapApi:
                 ],
             }
             return FlextResult.ok(health_data)
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Health check failed: {e}")
 
 
@@ -353,8 +359,7 @@ def get_ldap_api(config: FlextLdapConnectionConfig | None = None) -> FlextLdapAp
         return existing_result.data
 
     # Create new instance
-    api = FlextLdapApi(config)
-    return api
+    return FlextLdapApi(config)
 
 
 __all__ = ["FlextLdapApi", "get_ldap_api"]

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Literal
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
-from flext_core import FlextBaseSettings, FlextLogLevel, FlextValueObject
+from flext_core import FlextBaseSettings, FlextLogLevel, FlextResult, FlextValueObject
 from pydantic import Field, field_validator
 from pydantic_settings import SettingsConfigDict
 
@@ -74,20 +74,17 @@ class FlextLdapConnectionConfig(FlextValueObject):
             raise ValueError(msg)
         return v.strip()
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP connection configuration."""
         if not self.server:
-            msg = "LDAP connection must have a server"
-            raise ValueError(msg)
+            return FlextResult.fail("LDAP connection must have a server")
         if self.port <= 0 or self.port > 65535:
-            msg = "Port must be between 1 and 65535"
-            raise ValueError(msg)
+            return FlextResult.fail("Port must be between 1 and 65535")
         if self.timeout_seconds <= 0:
-            msg = "Timeout must be positive"
-            raise ValueError(msg)
+            return FlextResult.fail("Timeout must be positive")
         if self.pool_size <= 0:
-            msg = "Pool size must be positive"
-            raise ValueError(msg)
+            return FlextResult.fail("Pool size must be positive")
+        return FlextResult.ok(None)
 
 
 class FlextLdapAuthConfig(FlextValueObject):
@@ -113,14 +110,13 @@ class FlextLdapAuthConfig(FlextValueObject):
         """
         return v.strip() if v else ""
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP authentication configuration."""
         if not self.use_anonymous_bind and not self.bind_dn:
-            msg = "Bind DN is required when not using anonymous bind"
-            raise ValueError(msg)
+            return FlextResult.fail("Bind DN is required when not using anonymous bind")
         if self.bind_dn and not self.bind_password and not self.use_anonymous_bind:
-            msg = "Bind password is required when bind DN is provided"
-            raise ValueError(msg)
+            return FlextResult.fail("Bind password is required when bind DN is provided")
+        return FlextResult.ok(None)
 
 
 class FlextLdapSearchConfig(FlextValueObject):
@@ -144,17 +140,15 @@ class FlextLdapSearchConfig(FlextValueObject):
     enable_referral_chasing: bool = Field(default=False)
     max_referral_hops: int = Field(default=5, ge=1, le=20)
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP search configuration."""
         if self.size_limit < 0:
-            msg = "Size limit must be non-negative"
-            raise ValueError(msg)
+            return FlextResult.fail("Size limit must be non-negative")
         if self.time_limit < 0:
-            msg = "Time limit must be non-negative"
-            raise ValueError(msg)
+            return FlextResult.fail("Time limit must be non-negative")
         if self.page_size <= 0:
-            msg = "Page size must be positive"
-            raise ValueError(msg)
+            return FlextResult.fail("Page size must be positive")
+        return FlextResult.ok(None)
 
 
 class FlextLdapOperationConfig(FlextValueObject):
@@ -175,17 +169,15 @@ class FlextLdapOperationConfig(FlextValueObject):
     enable_transactions: bool = Field(default=False)
     batch_size: int = Field(default=100, ge=1, le=10000)
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP operation configuration."""
         if self.max_retries < 0:
-            msg = "Max retries must be non-negative"
-            raise ValueError(msg)
+            return FlextResult.fail("Max retries must be non-negative")
         if self.retry_delay <= 0:
-            msg = "Retry delay must be positive"
-            raise ValueError(msg)
+            return FlextResult.fail("Retry delay must be positive")
         if self.batch_size <= 0:
-            msg = "Batch size must be positive"
-            raise ValueError(msg)
+            return FlextResult.fail("Batch size must be positive")
+        return FlextResult.ok(None)
 
 
 class FlextLdapSecurityConfig(FlextValueObject):
@@ -201,23 +193,15 @@ class FlextLdapSecurityConfig(FlextValueObject):
     enable_start_tls: bool = Field(default=False)
     tls_version: str | None = Field(default=None)
 
-    def validate_domain_rules(self) -> None:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP security configuration."""
         if self.tls_validation not in {"strict", "permissive", "disabled"}:
-            msg = "TLS validation must be 'strict', 'permissive', or 'disabled'"
-            raise ValueError(
-                msg,
-            )
+            return FlextResult.fail("TLS validation must be 'strict', 'permissive', or 'disabled'")
         if self.client_cert_file and not self.client_key_file:
-            msg = "Client key file is required when client cert file is provided"
-            raise ValueError(
-                msg,
-            )
+            return FlextResult.fail("Client key file is required when client cert file is provided")
         if self.client_key_file and not self.client_cert_file:
-            msg = "Client cert file is required when client key file is provided"
-            raise ValueError(
-                msg,
-            )
+            return FlextResult.fail("Client cert file is required when client key file is provided")
+        return FlextResult.ok(None)
 
 
 class FlextLdapLoggingConfig(BaseConfig):
@@ -232,7 +216,7 @@ class FlextLdapLoggingConfig(BaseConfig):
 
     @field_validator("log_level", mode="before")
     @classmethod
-    def normalize_log_level(cls, v: Any) -> str:
+    def normalize_log_level(cls, v: object) -> str:
         """Normalize log level to uppercase for FlextLogLevel enum."""
         if isinstance(v, str):
             return v.upper()
@@ -272,7 +256,7 @@ class FlextLdapSettings(BaseSettings):
         extra="ignore",
     )
 
-    def to_ldap_client_config(self) -> dict[str, Any]:
+    def to_ldap_client_config(self) -> dict[str, object]:
         """Convert to format expected by LDAP client libraries."""
         return {
             "server": self.connection.server,
@@ -290,7 +274,7 @@ class FlextLdapSettings(BaseSettings):
         }
 
 
-def create_development_config(**overrides: Any) -> FlextLdapSettings:
+def create_development_config(**overrides: object) -> FlextLdapSettings:
     """Create development configuration with sensible defaults."""
     defaults = {
         "enable_debug_mode": True,
