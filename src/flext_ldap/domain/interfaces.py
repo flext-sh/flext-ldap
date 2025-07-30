@@ -16,7 +16,11 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from flext_core import FlextResult
 
-    from flext_ldap.domain.values import DistinguishedName, LDAPFilter, LDAPScope
+    from flext_ldap.domain.values import (
+        FlextLdapDistinguishedName,
+        LDAPFilter,
+        LDAPScope,
+    )
     from flext_ldap.entities import FlextLdapEntry
 
 
@@ -74,7 +78,7 @@ class FlextLdapDirectoryRepository(ABC):
     async def search(
         self,
         connection_id: str,
-        base_dn: DistinguishedName,
+        base_dn: FlextLdapDistinguishedName,
         search_filter: LDAPFilter,
         scope: LDAPScope,
         attributes: list[str] | None = None,
@@ -114,7 +118,7 @@ class FlextLdapDirectoryRepository(ABC):
     async def modify_entry(
         self,
         connection_id: str,
-        dn: DistinguishedName,
+        dn: FlextLdapDistinguishedName,
         changes: dict[str, object],
     ) -> FlextResult[object]:
         """Modify LDAP entry.
@@ -133,7 +137,7 @@ class FlextLdapDirectoryRepository(ABC):
     async def delete_entry(
         self,
         connection_id: str,
-        dn: DistinguishedName,
+        dn: FlextLdapDistinguishedName,
     ) -> FlextResult[object]:
         """Delete LDAP entry.
 
@@ -202,7 +206,7 @@ class FlextLdapGroupRepository(ABC):
     async def find_group_by_dn(
         self,
         connection_id: str,
-        dn: DistinguishedName,
+        dn: FlextLdapDistinguishedName,
     ) -> FlextResult[object]:
         """Find group by distinguished name.
 
@@ -219,7 +223,7 @@ class FlextLdapGroupRepository(ABC):
     async def get_group_members(
         self,
         connection_id: str,
-        group_dn: DistinguishedName,
+        group_dn: FlextLdapDistinguishedName,
     ) -> FlextResult[object]:
         """Get group members.
 
@@ -236,8 +240,8 @@ class FlextLdapGroupRepository(ABC):
     async def add_member_to_group(
         self,
         connection_id: str,
-        group_dn: DistinguishedName,
-        member_dn: DistinguishedName,
+        group_dn: FlextLdapDistinguishedName,
+        member_dn: FlextLdapDistinguishedName,
     ) -> FlextResult[object]:
         """Add member to group.
 

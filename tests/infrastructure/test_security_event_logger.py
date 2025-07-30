@@ -34,7 +34,6 @@ class TestSecurityEvent:
         )
 
         if event.event_type != SecurityEventType.AUTHENTICATION_SUCCESS:
-
             msg = f"Expected {SecurityEventType.AUTHENTICATION_SUCCESS}, got {event.event_type}"
             raise AssertionError(msg)
         assert event.user_dn == "cn=test,dc=example,dc=com"
@@ -69,20 +68,19 @@ class TestSecurityEvent:
         event_dict = event.to_dict()
 
         if event_dict["event_type"] != "search_operation":
-
-            msg = f"Expected {"search_operation"}, got {event_dict["event_type"]}"
+            msg = f"Expected {'search_operation'}, got {event_dict['event_type']}"
             raise AssertionError(msg)
         assert event_dict["severity"] == "high"
         if event_dict["status"] != "success":
-            msg = f"Expected {"success"}, got {event_dict["status"]}"
+            msg = f"Expected {'success'}, got {event_dict['status']}"
             raise AssertionError(msg)
         assert event_dict["timestamp"] == timestamp.isoformat()
         if event_dict["user_dn"] != "cn=test,dc=example,dc=com":
-            msg = f"Expected {"cn=test,dc=example,dc=com"}, got {event_dict["user_dn"]}"
+            msg = f"Expected {'cn=test,dc=example,dc=com'}, got {event_dict['user_dn']}"
             raise AssertionError(msg)
         assert event_dict["target_dn"] == "ou=users,dc=example,dc=com"
         if event_dict["attributes"] != ["cn", "mail"]:
-            msg = f"Expected {["cn", "mail"]}, got {event_dict["attributes"]}"
+            msg = f"Expected {['cn', 'mail']}, got {event_dict['attributes']}"
             raise AssertionError(msg)
         assert event_dict["filter_expression"] == "(objectClass=person)"
 
@@ -97,7 +95,7 @@ class TestSecurityEvent:
 
         assert isinstance(json_str, str)
         if "auth_failure" not in json_str:
-            msg = f"Expected {"auth_failure"} in {json_str}"
+            msg = f"Expected {'auth_failure'} in {json_str}"
             raise AssertionError(msg)
         assert "cn=test,dc=example,dc=com" in json_str
 
@@ -256,7 +254,6 @@ class TestSecurityEventLogger:
         risk_score = event_logger._calculate_risk_score(event)
 
         if risk_score < 0:
-
             msg = f"Expected {risk_score} >= {0}"
             raise AssertionError(msg)
         assert risk_score <= 100
@@ -275,7 +272,7 @@ class TestSecurityEventLogger:
 
         assert len(flags) > 0
         if "PCI_DSS_8.2" not in flags:
-            msg = f"Expected {"PCI_DSS_8.2"} in {flags}"
+            msg = f"Expected {'PCI_DSS_8.2'} in {flags}"
             raise AssertionError(msg)
 
     def test_get_compliance_flags_data_export(
@@ -292,7 +289,7 @@ class TestSecurityEventLogger:
 
         assert len(flags) > 0
         if "GDPR_ARTICLE_32" not in flags:
-            msg = f"Expected {"GDPR_ARTICLE_32"} in {flags}"
+            msg = f"Expected {'GDPR_ARTICLE_32'} in {flags}"
             raise AssertionError(msg)
 
     def test_add_to_history_management(self, event_logger: SecurityEventLogger) -> None:
@@ -305,7 +302,6 @@ class TestSecurityEventLogger:
         event_logger._add_to_history(event)
 
         if len(event_logger._event_history) != 1:
-
             msg = f"Expected {1}, got {len(event_logger._event_history)}"
             raise AssertionError(msg)
         logged_event = event_logger._event_history[0]
@@ -329,10 +325,10 @@ class TestSecurityEventLogger:
 
         assert event_logger._session_events is not None
         if "session123" not in event_logger._session_events:
-            msg = f"Expected {"session123"} in {event_logger._session_events}"
+            msg = f"Expected {'session123'} in {event_logger._session_events}"
             raise AssertionError(msg)
         if len(event_logger._session_events["session123"]) != 1:
-            msg = f"Expected {1}, got {len(event_logger._session_events["session123"])}"
+            msg = f"Expected {1}, got {len(event_logger._session_events['session123'])}"
             raise AssertionError(msg)
         assert event_logger._session_events["session123"][0] == event
 
@@ -347,10 +343,12 @@ class TestSecurityEventLogger:
 
         assert event_logger._user_events is not None
         if "cn=test,dc=example,dc=com" not in event_logger._user_events:
-            msg = f"Expected {"cn=test,dc=example,dc=com"} in {event_logger._user_events}"
+            msg = (
+                f"Expected {'cn=test,dc=example,dc=com'} in {event_logger._user_events}"
+            )
             raise AssertionError(msg)
         if len(event_logger._user_events["cn=test,dc=example,dc=com"]) != 1:
-            msg = f"Expected {1}, got {len(event_logger._user_events["cn=test,dc=example,dc=com"])}"
+            msg = f"Expected {1}, got {len(event_logger._user_events['cn=test,dc=example,dc=com'])}"
             raise AssertionError(msg)
 
     @pytest.mark.asyncio
@@ -391,16 +389,15 @@ class TestSecurityEventLogger:
         metrics = result.data
 
         if metrics["total_events"] != EXPECTED_DATA_COUNT:
-
-            msg = f"Expected {3}, got {metrics["total_events"]}"
+            msg = f"Expected {3}, got {metrics['total_events']}"
             raise AssertionError(msg)
         assert metrics["authentication_failures"] == 1
         if metrics["unique_users"] != EXPECTED_BULK_SIZE:
-            msg = f"Expected {2}, got {metrics["unique_users"]}"
+            msg = f"Expected {2}, got {metrics['unique_users']}"
             raise AssertionError(msg)
         assert metrics["unique_sessions"] == EXPECTED_BULK_SIZE
         if metrics["time_window_hours"] != 24:
-            msg = f"Expected {24}, got {metrics["time_window_hours"]}"
+            msg = f"Expected {24}, got {metrics['time_window_hours']}"
             raise AssertionError(msg)
 
     @pytest.mark.asyncio
@@ -431,5 +428,5 @@ class TestSecurityEventLogger:
         # Should only count recent event
         assert metrics is not None
         if metrics["total_events"] != 1:
-            msg = f"Expected {1}, got {metrics["total_events"]}"
+            msg = f"Expected {1}, got {metrics['total_events']}"
             raise AssertionError(msg)

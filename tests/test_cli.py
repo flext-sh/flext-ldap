@@ -47,7 +47,6 @@ class TestCLI:
                 await cli.test_connection("invalid.example.com", 389)
 
             if exc_info.value.code != 1:
-
                 msg = f"Expected {1}, got {exc_info.value.code}"
                 raise AssertionError(msg)
 
@@ -131,7 +130,6 @@ class TestCLI:
                 )
 
             if exc_info.value.code != 1:
-
                 msg = f"Expected {1}, got {exc_info.value.code}"
                 raise AssertionError(msg)
 
@@ -184,7 +182,6 @@ class TestCLI:
             cli.handle_command(["flext-infrastructure.databases.flext-ldap"])
 
         if exc_info.value.code != 1:
-
             msg = f"Expected {1}, got {exc_info.value.code}"
             raise AssertionError(msg)
 
@@ -194,7 +191,6 @@ class TestCLI:
             cli.handle_command(["flext-infrastructure.databases.flext-ldap", "test"])
 
         if exc_info.value.code != 1:
-
             msg = f"Expected {1}, got {exc_info.value.code}"
             raise AssertionError(msg)
 
@@ -251,7 +247,6 @@ class TestCLI:
             )
 
         if exc_info.value.code != 1:
-
             msg = f"Expected {1}, got {exc_info.value.code}"
             raise AssertionError(msg)
 
@@ -329,7 +324,6 @@ class TestCLI:
             )
 
         if exc_info.value.code != 1:
-
             msg = f"Expected {1}, got {exc_info.value.code}"
             raise AssertionError(msg)
 

@@ -30,12 +30,11 @@ class TestFlextLdapUserService:
         )
 
         if request.dn != "cn=testuser,ou=people,dc=test,dc=com":
-
-            msg = f"Expected {"cn=testuser,ou=people,dc=test,dc=com"}, got {request.dn}"
+            msg = f"Expected {'cn=testuser,ou=people,dc=test,dc=com'}, got {request.dn}"
             raise AssertionError(msg)
         assert request.uid == "testuser"
         if request.cn != "Test User":
-            msg = f"Expected {"Test User"}, got {request.cn}"
+            msg = f"Expected {'Test User'}, got {request.cn}"
             raise AssertionError(msg)
 
     @pytest.mark.unit
@@ -49,7 +48,7 @@ class TestFlextLdapUserService:
             sn="User",
         )
         if request.dn != "cn=test,dc=test,dc=com":
-            msg = f"Expected {"cn=test,dc=test,dc=com"}, got {request.dn}"
+            msg = f"Expected {'cn=test,dc=test,dc=com'}, got {request.dn}"
             raise AssertionError(msg)
         assert request.uid == "test"
 
@@ -73,17 +72,17 @@ class TestFlextLdapSettings:
 
         # Test default values
         if settings.connection.server != "localhost":
-            msg = f"Expected {"localhost"}, got {settings.connection.server}"
+            msg = f"Expected {'localhost'}, got {settings.connection.server}"
             raise AssertionError(msg)
         assert settings.connection.port == 389
 
         # Test conversion to client config
         client_config = settings.to_ldap_client_config()
         if client_config["server"] != "localhost":
-            msg = f"Expected {"localhost"}, got {client_config["server"]}"
+            msg = f"Expected {'localhost'}, got {client_config['server']}"
             raise AssertionError(msg)
         assert client_config["port"] == 389
         if "timeout" not in client_config:
-            msg = f"Expected {"timeout"} in {client_config}"
+            msg = f"Expected {'timeout'} in {client_config}"
             raise AssertionError(msg)
         assert "base_dn" in client_config

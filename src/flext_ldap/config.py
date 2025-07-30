@@ -115,7 +115,9 @@ class FlextLdapAuthConfig(FlextValueObject):
         if not self.use_anonymous_bind and not self.bind_dn:
             return FlextResult.fail("Bind DN is required when not using anonymous bind")
         if self.bind_dn and not self.bind_password and not self.use_anonymous_bind:
-            return FlextResult.fail("Bind password is required when bind DN is provided")
+            return FlextResult.fail(
+                "Bind password is required when bind DN is provided",
+            )
         return FlextResult.ok(None)
 
 
@@ -196,11 +198,17 @@ class FlextLdapSecurityConfig(FlextValueObject):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP security configuration."""
         if self.tls_validation not in {"strict", "permissive", "disabled"}:
-            return FlextResult.fail("TLS validation must be 'strict', 'permissive', or 'disabled'")
+            return FlextResult.fail(
+                "TLS validation must be 'strict', 'permissive', or 'disabled'",
+            )
         if self.client_cert_file and not self.client_key_file:
-            return FlextResult.fail("Client key file is required when client cert file is provided")
+            return FlextResult.fail(
+                "Client key file is required when client cert file is provided",
+            )
         if self.client_key_file and not self.client_cert_file:
-            return FlextResult.fail("Client cert file is required when client key file is provided")
+            return FlextResult.fail(
+                "Client cert file is required when client key file is provided",
+            )
         return FlextResult.ok(None)
 
 

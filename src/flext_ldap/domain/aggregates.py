@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 from flext_core import FlextAggregateRoot, FlextEntity
 
 if TYPE_CHECKING:
-    from flext_ldap.domain.values import DistinguishedName
+    from flext_ldap.domain.values import FlextLdapDistinguishedName
     from flext_ldap.entities import FlextLdapEntry
 
 
@@ -25,7 +25,7 @@ class FlextLdapDirectoryAggregate(FlextAggregateRoot):
     Coordinates between entries, users, groups, and connections.
     """
 
-    base_dn: DistinguishedName
+    base_dn: FlextLdapDistinguishedName
     connection_id: str | None = None
     is_connected: bool = False
 

@@ -51,7 +51,7 @@ class TestFlextLdapUserApplicationService:
         assert result.is_success
         assert isinstance(result.data, FlextLdapUser)
         if result.data.uid != "john.doe":
-            msg = f"Expected {"john.doe"}, got {result.data.uid}"
+            msg = f"Expected {'john.doe'}, got {result.data.uid}"
             raise AssertionError(msg)
         assert result.data.cn == "John Doe"
 
@@ -69,7 +69,7 @@ class TestFlextLdapUserApplicationService:
         assert get_result.is_success
         assert get_result.data is not None
         if get_result.data.uid != "john.doe":
-            msg = f"Expected {"john.doe"}, got {get_result.data.uid}"
+            msg = f"Expected {'john.doe'}, got {get_result.data.uid}"
             raise AssertionError(msg)
 
     @pytest.mark.asyncio
@@ -117,7 +117,7 @@ class TestFlextLdapUserApplicationService:
 
         assert update_result.is_success
         if update_result.data.phone != "+1-555-0123":
-            msg = f"Expected {"+1-555-0123"}, got {update_result.data.phone}"
+            msg = f"Expected {'+1-555-0123'}, got {update_result.data.phone}"
             raise AssertionError(msg)
         assert update_result.data.title == "Senior Developer"
 
@@ -211,7 +211,7 @@ class TestFlextLdapGroupService:
         assert result.is_success
         assert isinstance(result.data, FlextLdapGroup)
         if result.data.cn != "Developers":
-            msg = f"Expected {"Developers"}, got {result.data.cn}"
+            msg = f"Expected {'Developers'}, got {result.data.cn}"
             raise AssertionError(msg)
         assert len(result.data.members) == 1
 
@@ -319,7 +319,7 @@ class TestFlextLdapOperationService:
         assert result.is_success
         assert isinstance(result.data, FlextLdapOperation)
         if result.data.operation_type != "search":
-            msg = f"Expected {"search"}, got {result.data.operation_type}"
+            msg = f"Expected {'search'}, got {result.data.operation_type}"
             raise AssertionError(msg)
         assert result.data.target_dn == "ou=users,dc=example,dc=com"
 
@@ -375,7 +375,9 @@ class TestFlextLdapOperationService:
             raise AssertionError(msg)
 
         # List operations by connection
-        conn_result = await operation_service.list_operations(connection_id=connection_id)
+        conn_result = await operation_service.list_operations(
+            connection_id=connection_id
+        )
         assert conn_result.is_success
         if len(conn_result.data) != EXPECTED_DATA_COUNT:
             msg = f"Expected {3}, got {len(conn_result.data)}"
@@ -413,8 +415,12 @@ class TestServiceIntegration:
         # Should inherit from proper base classes
         # Should have repository pattern
         # Should integrate with flext-core
-        assert hasattr(user_service, "_repository") or hasattr(user_service, "_entities")
-        assert hasattr(group_service, "_repository") or hasattr(group_service, "_entities")
+        assert hasattr(user_service, "_repository") or hasattr(
+            user_service, "_entities"
+        )
+        assert hasattr(group_service, "_repository") or hasattr(
+            group_service, "_entities"
+        )
 
     @pytest.mark.asyncio
     async def test_error_handling_patterns(self) -> None:
@@ -538,7 +544,9 @@ class TestServiceIntegrationComplete:
             assert complete_result.is_success
 
         # Verify operation history
-        list_result = await operation_service.list_operations(connection_id=connection_id)
+        list_result = await operation_service.list_operations(
+            connection_id=connection_id
+        )
         assert list_result.is_success
         if len(list_result.data) != EXPECTED_DATA_COUNT:
             msg = f"Expected {3}, got {len(list_result.data)}"

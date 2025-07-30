@@ -45,7 +45,7 @@ def warn_deprecated(
         f"Use simple root-level imports for better developer experience.\n\n"
         f"Examples:\n"
         f"✅ from flext_ldap import LDAPClient, LDAPUser, LDAPGroup\n"
-        f"✅ from flext_ldap import DistinguishedName, LDAPFilter\n"
+        f"✅ from flext_ldap import FlextLdapDistinguishedName, LDAPFilter\n"
         f"✅ from flext_ldap import LDAPService\n",
         LDAPDeprecationWarning,
         stacklevel=3,
@@ -79,7 +79,7 @@ def warn_deprecated_path(
         f"Examples:\n"
         f"✅ from flext_ldap import LDAPClient\n"
         f"✅ from flext_ldap import LDAPUser, LDAPGroup\n"
-        f"✅ from flext_ldap import DistinguishedName\n",
+        f"✅ from flext_ldap import FlextLdapDistinguishedName\n",
         LDAPDeprecationWarning,
         stacklevel=3,
     )

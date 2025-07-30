@@ -116,7 +116,9 @@ class FlextLdapCertificateValidationContext(FlextEntity):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for certificate validation context."""
         if not self.hostname:
-            return FlextResult.fail("Certificate validation context must have a hostname")
+            return FlextResult.fail(
+                "Certificate validation context must have a hostname",
+            )
         if self.port <= 0 or self.port > 65535:
             return FlextResult.fail("Port must be between 1 and 65535")
         if self.minimum_tls_version not in {"TLSv1.2", "TLSv1.3"}:
@@ -213,9 +215,13 @@ class FlextLdapSSLContextConfig(FlextEntity):
             return FlextResult.fail(f"Invalid maximum_version: {self.maximum_version}")
 
         if self.client_cert_file and not self.client_key_file:
-            return FlextResult.fail("Client key file is required when client cert file is provided")
+            return FlextResult.fail(
+                "Client key file is required when client cert file is provided",
+            )
         if self.client_key_file and not self.client_cert_file:
-            return FlextResult.fail("Client cert file is required when client key file is provided")
+            return FlextResult.fail(
+                "Client cert file is required when client key file is provided",
+            )
         return FlextResult.ok(None)
 
 
