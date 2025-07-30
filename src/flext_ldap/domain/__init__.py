@@ -101,11 +101,11 @@ class LDAPOperation:
 __all__ = [
     # Aggregates
     "DirectoryAggregate",
-    # Values
-    "FlextLdapDistinguishedName",
     "FlextLdapAuthenticationFailed",
     "FlextLdapConnectionEstablished",
     "FlextLdapConnectionLost",
+    # Values
+    "FlextLdapDistinguishedName",
     "FlextLdapEntryCreated",
     "FlextLdapEntryDeleted",
     "FlextLdapEntryModified",
