@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from flext_core import FlextResult
+
 from flext_ldap.entities import FlextLdapUser
 from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
 
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
 
 class FlextLdapService:
     """Application service for LDAP operations using Clean Architecture.
-    
+
     Provides high-level LDAP operations with in-memory fallback mode
     for development and testing environments.
     """
@@ -62,7 +63,7 @@ class FlextLdapService:
         request: FlextLdapCreateUserRequest,
     ) -> FlextResult[FlextLdapUser]:
         """Create a new user.
-        
+
         If connected to LDAP server, creates user there.
         Otherwise, creates user in memory for testing.
         """
@@ -96,7 +97,7 @@ class FlextLdapService:
         user = self._in_memory_users.get(uid)
         if user:
             return FlextResult.ok(user)
-        
+
         return FlextResult.fail(f"User with UID {uid} not found")
 
     async def update_user(
@@ -108,7 +109,7 @@ class FlextLdapService:
         find_result = await self.find_user_by_uid(user_id)
         if find_result.is_failure:
             return FlextResult.fail(f"User {user_id} not found for update")
-        
+
         user = find_result.data
         if not user:
             return FlextResult.fail(f"User {user_id} not found")
@@ -124,7 +125,7 @@ class FlextLdapService:
             mail=user.mail,
             **updates,  # Apply updates
         )
-        
+
         # Store updated user
         self._in_memory_users[user_id] = updated_user
         return FlextResult.ok(updated_user)
@@ -140,7 +141,7 @@ class FlextLdapService:
         if uid in self._in_memory_users:
             del self._in_memory_users[uid]
             return FlextResult.ok(True)
-        
+
         return FlextResult.fail(f"User with UID {uid} not found")
 
     async def list_users(

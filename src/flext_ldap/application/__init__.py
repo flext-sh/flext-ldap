@@ -9,15 +9,14 @@ REFACTORED:
 
 from __future__ import annotations
 
+# Import application service
+from flext_ldap.application.ldap_service import FlextLdapService
 from flext_ldap.domain.ports import (
     FlextLdapMigrationService,
     FlextLdapSchemaService,
     FlextLdapSearchService,
     FlextLdapUserService,
 )
-
-# Import application service
-from flext_ldap.application.ldap_service import FlextLdapService
 
 # Import specialized services from root (services moved to root)
 from flext_ldap.services import (
@@ -31,12 +30,12 @@ __all__ = [
     # Application services (consolidated - no more wrapper service)
     "FlextLdapConnectionApplicationService",
     "FlextLdapGroupService",
-    "FlextLdapService",  # Main application service
     # Domain ports
     "FlextLdapMigrationService",
     "FlextLdapOperationService",
     "FlextLdapSchemaService",
     "FlextLdapSearchService",
+    "FlextLdapService",  # Main application service
     "FlextLdapUserApplicationService",
     "FlextLdapUserService",
 ]

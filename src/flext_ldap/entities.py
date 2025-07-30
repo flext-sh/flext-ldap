@@ -1,4 +1,4 @@
-"""LDAP Domain Entities - Version 0.7.0.
+"""LDAP Domain Entities - Version 0.9.0.
 
 🚨 DEPRECATION WARNING: Complex import paths are deprecated.
 
@@ -488,7 +488,7 @@ warnings.warn(
     "'flext_ldap.domain.entities' is deprecated.\n"
     "✅ SIMPLE SOLUTION: from flext_ldap import LDAPUser, LDAPGroup, LDAPEntry\n"
     "💡 ALL entities are now available at root level for better productivity!\n"
-    "📖 Complex paths will be removed in version 0.8.0.\n"
+    "📖 Complex paths will be removed in version 0.9.0.\n"
     "📚 Migration guide: https://docs.flext.dev/ldap/simple-imports",
     DeprecationWarning,
     stacklevel=2,
@@ -511,7 +511,7 @@ def __getattr__(name: str) -> object:
             f"'flext_ldap.domain.entities.{name}' is deprecated.\n"
             f"✅ SIMPLE SOLUTION: from flext_ldap import {name}\n"
             f"💡 Direct root-level imports are much simpler and more productive!\n"
-            f"📖 This access pattern will be removed in version 0.8.0.",
+            f"📖 This access pattern will be removed in version 0.9.0.",
             DeprecationWarning,
             stacklevel=2,
         )

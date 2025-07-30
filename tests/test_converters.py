@@ -36,12 +36,12 @@ class TestFlextLdapTypeConverter:
         # Python to LDAP
         ldap_value = converter.to_ldap("test string")
         if ldap_value != "test string":
-            raise AssertionError(f"Expected {"test string"}, got {ldap_value}")
+            raise AssertionError(f"Expected {'test string'}, got {ldap_value}")
 
         # LDAP to Python
         python_value = converter.to_python(b"test bytes")
         if python_value != "test bytes":
-            raise AssertionError(f"Expected {"test bytes"}, got {python_value}")
+            raise AssertionError(f"Expected {'test bytes'}, got {python_value}")
         assert isinstance(python_value, str)
 
     def test_integer_conversion(self) -> None:
@@ -51,7 +51,7 @@ class TestFlextLdapTypeConverter:
         # Python to LDAP
         ldap_value = converter.to_ldap(123)
         if ldap_value != "123":
-            raise AssertionError(f"Expected {"123"}, got {ldap_value}")
+            raise AssertionError(f"Expected {'123'}, got {ldap_value}")
 
         # LDAP to Python
         python_value = converter.to_python("456", target_type=int)
@@ -68,20 +68,27 @@ class TestFlextLdapTypeConverter:
         false_value = converter.to_ldap(False)  # noqa: FBT003
 
         if true_value not in {"TRUE", "true", "1"}:
-
             expected_values = {"TRUE", "true", "1"}
             raise AssertionError(f"Expected {true_value} in {expected_values}")
         assert false_value in {"FALSE", "false", "0"}
 
         # LDAP to Python
         if not (converter.to_python("TRUE", target_type=bool)):
-            raise AssertionError(f"Expected True, got {converter.to_python("TRUE", target_type=bool)}")
+            raise AssertionError(
+                f"Expected True, got {converter.to_python('TRUE', target_type=bool)}"
+            )
         if converter.to_python("false", target_type=bool):
-            raise AssertionError(f"Expected False, got {converter.to_python("false", target_type=bool)}")
+            raise AssertionError(
+                f"Expected False, got {converter.to_python('false', target_type=bool)}"
+            )
         if not (converter.to_python("1", target_type=bool)):
-            raise AssertionError(f"Expected True, got {converter.to_python("1", target_type=bool)}")
+            raise AssertionError(
+                f"Expected True, got {converter.to_python('1', target_type=bool)}"
+            )
         if converter.to_python("0", target_type=bool):
-            raise AssertionError(f"Expected False, got {converter.to_python("0", target_type=bool)}")
+            raise AssertionError(
+                f"Expected False, got {converter.to_python('0', target_type=bool)}"
+            )
 
     def test_datetime_conversion(self) -> None:
         """Test datetime type conversions."""
@@ -91,7 +98,7 @@ class TestFlextLdapTypeConverter:
         dt = datetime(2024, 1, 15, 10, 30, 45, tzinfo=UTC)
         ldap_value = converter.to_ldap(dt)
         if ldap_value != "20240115103045Z":
-            raise AssertionError(f"Expected {"20240115103045Z"}, got {ldap_value}")
+            raise AssertionError(f"Expected {'20240115103045Z'}, got {ldap_value}")
 
         # LDAP to Python
         python_dt = converter.to_python("20240115103045Z", target_type=datetime)
@@ -110,13 +117,17 @@ class TestFlextLdapTypeConverter:
         python_list = ["value1", "value2", "value3"]
         ldap_values = converter.to_ldap(python_list)
         if ldap_values != ["value1", "value2", "value3"]:
-            raise AssertionError(f"Expected {["value1", "value2", "value3"]}, got {ldap_values}")
+            raise AssertionError(
+                f"Expected {['value1', 'value2', 'value3']}, got {ldap_values}"
+            )
 
         # LDAP list to Python
         ldap_list = [b"value1", b"value2", b"value3"]
         python_values = converter.to_python(ldap_list)
         if python_values != ["value1", "value2", "value3"]:
-            raise AssertionError(f"Expected {["value1", "value2", "value3"]}, got {python_values}")
+            raise AssertionError(
+                f"Expected {['value1', 'value2', 'value3']}, got {python_values}"
+            )
 
     def test_bytes_conversion(self) -> None:
         """Test binary data conversions."""
@@ -152,7 +163,7 @@ class TestFlextLdapTypeConverter:
 
         # Empty string
         if converter.to_ldap("") != "":
-            raise AssertionError(f"Expected {""}, got {converter.to_ldap("")}")
+            raise AssertionError(f"Expected {''}, got {converter.to_ldap('')}")
         assert converter.to_python("") == ""
 
         # Empty list
@@ -181,12 +192,12 @@ class TestConversionUtilityFunctions:
         # String conversion
         result = convert_ldap_to_python(b"test string")
         if result != "test string":
-            raise AssertionError(f"Expected {"test string"}, got {result}")
+            raise AssertionError(f"Expected {'test string'}, got {result}")
 
         # List conversion
         result = convert_ldap_to_python([b"value1", b"value2"])
         if result != ["value1", "value2"]:
-            raise AssertionError(f"Expected {["value1", "value2"]}, got {result}")
+            raise AssertionError(f"Expected {['value1', 'value2']}, got {result}")
 
         # Dict conversion (LDAP entry)
         ldap_entry = {
@@ -199,22 +210,26 @@ class TestConversionUtilityFunctions:
         }
         result = convert_ldap_to_python(ldap_entry)
         if result["dn"] != "cn=test,dc=example,dc=com":
-            raise AssertionError(f"Expected {"cn=test,dc=example,dc=com"}, got {result["dn"]}")
+            raise AssertionError(
+                f"Expected {'cn=test,dc=example,dc=com'}, got {result['dn']}"
+            )
         assert result["attributes"]["cn"] == ["Test User"]
         if result["attributes"]["mail"] != ["test@example.com"]:
-            raise AssertionError(f"Expected {["test@example.com"]}, got {result["attributes"]["mail"]}")
+            raise AssertionError(
+                f"Expected {['test@example.com']}, got {result['attributes']['mail']}"
+            )
 
     def test_convert_python_to_ldap(self) -> None:
         """Test python to ldap conversion function."""
         # String conversion
         result = convert_python_to_ldap("test string")
         if result != "test string":
-            raise AssertionError(f"Expected {"test string"}, got {result}")
+            raise AssertionError(f"Expected {'test string'}, got {result}")
 
         # Integer conversion
         result = convert_python_to_ldap(123)
         if result != "123":
-            raise AssertionError(f"Expected {"123"}, got {result}")
+            raise AssertionError(f"Expected {'123'}, got {result}")
 
         # Boolean conversion
         result = convert_python_to_ldap(True)  # noqa: FBT003
@@ -225,7 +240,7 @@ class TestConversionUtilityFunctions:
         # List conversion
         result = convert_python_to_ldap(["value1", "value2"])
         if result != ["value1", "value2"]:
-            raise AssertionError(f"Expected {["value1", "value2"]}, got {result}")
+            raise AssertionError(f"Expected {['value1', 'value2']}, got {result}")
 
         # Dict conversion
         python_data = {
@@ -235,40 +250,54 @@ class TestConversionUtilityFunctions:
         }
         result = convert_python_to_ldap(python_data)
         if result["cn"] != "Test User":
-            raise AssertionError(f"Expected {"Test User"}, got {result["cn"]}")
+            raise AssertionError(f"Expected {'Test User'}, got {result['cn']}")
         assert result["mail"] == ["test@example.com", "test2@example.com"]
         if result["employeeID"] != "12345":
-            raise AssertionError(f"Expected {"12345"}, got {result["employeeID"]}")
+            raise AssertionError(f"Expected {'12345'}, got {result['employeeID']}")
 
     def test_validate_ldap_attribute_value(self) -> None:
         """Test LDAP attribute value validation."""
         # Valid string
         if not (validate_ldap_attribute_value("cn", "John Doe")):
-            raise AssertionError(f"Expected True, got {validate_ldap_attribute_value("cn", "John Doe")}")
+            raise AssertionError(
+                f"Expected True, got {validate_ldap_attribute_value('cn', 'John Doe')}"
+            )
 
         # Valid email
         if not (validate_ldap_attribute_value("mail", "john@example.com")):
-            raise AssertionError(f"Expected True, got {validate_ldap_attribute_value("mail", "john@example.com")}")
+            raise AssertionError(
+                f"Expected True, got {validate_ldap_attribute_value('mail', 'john@example.com')}"
+            )
 
         # Valid integer as string
         if not (validate_ldap_attribute_value("employeeID", "12345")):
-            raise AssertionError(f"Expected True, got {validate_ldap_attribute_value("employeeID", "12345")}")
+            raise AssertionError(
+                f"Expected True, got {validate_ldap_attribute_value('employeeID', '12345')}"
+            )
 
         # Invalid email format
         if validate_ldap_attribute_value("mail", "invalid-email"):
-            raise AssertionError(f"Expected False, got {validate_ldap_attribute_value("mail", "invalid-email")}")
+            raise AssertionError(
+                f"Expected False, got {validate_ldap_attribute_value('mail', 'invalid-email')}"
+            )
 
         # Invalid DN format
         if validate_ldap_attribute_value("distinguishedName", "invalid-dn"):
-            raise AssertionError(f"Expected False, got {validate_ldap_attribute_value("distinguishedName", "invalid-dn")}")
+            raise AssertionError(
+                f"Expected False, got {validate_ldap_attribute_value('distinguishedName', 'invalid-dn')}"
+            )
 
         # Empty value
         if validate_ldap_attribute_value("cn", ""):
-            raise AssertionError(f"Expected False, got {validate_ldap_attribute_value("cn", "")}")
+            raise AssertionError(
+                f"Expected False, got {validate_ldap_attribute_value('cn', '')}"
+            )
 
         # None value
         if validate_ldap_attribute_value("cn", None):
-            raise AssertionError(f"Expected False, got {validate_ldap_attribute_value("cn", None)}")
+            raise AssertionError(
+                f"Expected False, got {validate_ldap_attribute_value('cn', None)}"
+            )
 
     def test_normalize_ldap_dn(self) -> None:
         """Test LDAP DN normalization."""
@@ -276,23 +305,27 @@ class TestConversionUtilityFunctions:
         dn = "CN=John Doe,OU=Users,DC=Example,DC=Com"
         normalized = normalize_ldap_dn(dn)
         if normalized != "cn=john doe,ou=users,dc=example,dc=com":
-            raise AssertionError(f"Expected {"cn=john doe,ou=users,dc=example,dc=com"}, got {normalized}")
+            raise AssertionError(
+                f"Expected {'cn=john doe,ou=users,dc=example,dc=com'}, got {normalized}"
+            )
 
         # Remove extra spaces
         dn = "cn = john doe , ou = users , dc = example , dc = com"
         normalized = normalize_ldap_dn(dn)
         if normalized != "cn=john doe,ou=users,dc=example,dc=com":
-            raise AssertionError(f"Expected {"cn=john doe,ou=users,dc=example,dc=com"}, got {normalized}")
+            raise AssertionError(
+                f"Expected {'cn=john doe,ou=users,dc=example,dc=com'}, got {normalized}"
+            )
 
         # Handle escaped characters
         dn = "cn=John\\, Doe,ou=users,dc=example,dc=com"
         normalized = normalize_ldap_dn(dn)
         if "john\\, doe" not in normalized.lower():
-            raise AssertionError(f"Expected {"john\\, doe"} in {normalized.lower()}")
+            raise AssertionError(f"Expected {'john\\, doe'} in {normalized.lower()}")
 
         # Empty DN
         if normalize_ldap_dn("") != "":
-            raise AssertionError(f"Expected {""}, got {normalize_ldap_dn("")}")
+            raise AssertionError(f"Expected {''}, got {normalize_ldap_dn('')}")
 
         # None DN
         assert normalize_ldap_dn(None) is None
@@ -302,40 +335,42 @@ class TestConversionUtilityFunctions:
         # Simple equality filter
         filter_dict = parse_ldap_filter("(cn=john)")
         if filter_dict["operator"] != "=":
-            raise AssertionError(f"Expected {"="}, got {filter_dict["operator"]}")
+            raise AssertionError(f"Expected {'='}, got {filter_dict['operator']}")
         assert filter_dict["attribute"] == "cn"
         if filter_dict["value"] != "john":
-            raise AssertionError(f"Expected {"john"}, got {filter_dict["value"]}")
+            raise AssertionError(f"Expected {'john'}, got {filter_dict['value']}")
 
         # Presence filter
         filter_dict = parse_ldap_filter("(mail=*)")
         if filter_dict["operator"] != "present":
-            raise AssertionError(f"Expected {"present"}, got {filter_dict["operator"]}")
+            raise AssertionError(f"Expected {'present'}, got {filter_dict['operator']}")
         assert filter_dict["attribute"] == "mail"
 
         # AND filter
         filter_dict = parse_ldap_filter("(&(cn=john)(ou=users))")
         if filter_dict["operator"] != "&":
-            raise AssertionError(f"Expected {"&"}, got {filter_dict["operator"]}")
+            raise AssertionError(f"Expected {'&'}, got {filter_dict['operator']}")
         assert len(filter_dict["operands"]) == EXPECTED_BULK_SIZE
 
         # OR filter
         filter_dict = parse_ldap_filter("(|(cn=john)(cn=jane))")
         if filter_dict["operator"] != "|":
-            raise AssertionError(f"Expected {"|"}, got {filter_dict["operator"]}")
+            raise AssertionError(f"Expected {'|'}, got {filter_dict['operator']}")
         assert len(filter_dict["operands"]) == EXPECTED_BULK_SIZE
 
         # NOT filter
         filter_dict = parse_ldap_filter("(!(cn=REDACTED_LDAP_BIND_PASSWORD))")
         if filter_dict["operator"] != "!":
-            raise AssertionError(f"Expected {"!"}, got {filter_dict["operator"]}")
+            raise AssertionError(f"Expected {'!'}, got {filter_dict['operator']}")
         assert filter_dict["operand"]["attribute"] == "cn"
 
         # Complex nested filter
-        complex_filter = "(&(objectClass=person)(|(cn=john)(mail=john@*))(!(ou=disabled)))"
+        complex_filter = (
+            "(&(objectClass=person)(|(cn=john)(mail=john@*))(!(ou=disabled)))"
+        )
         filter_dict = parse_ldap_filter(complex_filter)
         if filter_dict["operator"] != "&":
-            raise AssertionError(f"Expected {"&"}, got {filter_dict["operator"]}")
+            raise AssertionError(f"Expected {'&'}, got {filter_dict['operator']}")
         assert len(filter_dict["operands"]) == EXPECTED_DATA_COUNT
 
 
@@ -353,13 +388,17 @@ class TestSpecializedConverters:
 
         # userAccountControl (integer flags)
         uac_value = "512"  # Normal account
-        result = converter.to_python(uac_value, attribute_name="userAccountControl", target_type=int)
+        result = converter.to_python(
+            uac_value, attribute_name="userAccountControl", target_type=int
+        )
         if result != 512:
             raise AssertionError(f"Expected {512}, got {result}")
 
         # pwdLastSet (Windows timestamp)
         pwd_timestamp = "132841234567890123"
-        result = converter.to_python(pwd_timestamp, attribute_name="pwdLastSet", target_type=datetime)
+        result = converter.to_python(
+            pwd_timestamp, attribute_name="pwdLastSet", target_type=datetime
+        )
         assert isinstance(result, datetime)
 
     def test_openldap_attributes(self) -> None:
@@ -368,7 +407,9 @@ class TestSpecializedConverters:
 
         # createTimestamp (GeneralizedTime)
         timestamp = "20240115103045Z"
-        result = converter.to_python(timestamp, attribute_name="createTimestamp", target_type=datetime)
+        result = converter.to_python(
+            timestamp, attribute_name="createTimestamp", target_type=datetime
+        )
         assert isinstance(result, datetime)
         if result.year != 2024:
             raise AssertionError(f"Expected {2024}, got {result.year}")
@@ -406,7 +447,7 @@ class TestSpecializedConverters:
             raise AssertionError(f"Expected {1000}, got {len(result)}")
         assert result[0] == "value0"
         if result[999] != "value999":
-            raise AssertionError(f"Expected {"value999"}, got {result[999]}")
+            raise AssertionError(f"Expected {'value999'}, got {result[999]}")
 
         # Large binary data
         large_binary = b"x" * 10000
@@ -429,7 +470,7 @@ class TestSpecializedConverters:
         special_dn = "cn=John\\, Jr.,ou=users,dc=example,dc=com"
         result = converter.to_python(special_dn.encode())
         if "John\\, Jr." not in result:
-            raise AssertionError(f"Expected {"John\\, Jr."} in {result}")
+            raise AssertionError(f"Expected {'John\\, Jr.'} in {result}")
 
         # Control characters
         control_chars = "test\x00\x01\x02"
@@ -458,7 +499,7 @@ class TestSpecializedConverters:
         # Should remain string
         result = converter.to_python("not-a-number", auto_infer=True)
         if result != "not-a-number":
-            raise AssertionError(f"Expected {"not-a-number"}, got {result}")
+            raise AssertionError(f"Expected {'not-a-number'}, got {result}")
         assert isinstance(result, str)
 
 
@@ -491,7 +532,7 @@ class TestConverterEdgeCases:
         # Should handle reasonable nesting depth
         result = converter.to_ldap(nested)
         if result["level"] != "1":
-            raise AssertionError(f"Expected {"1"}, got {result["level"]}")
+            raise AssertionError(f"Expected {'1'}, got {result['level']}")
 
     def test_memory_efficiency(self) -> None:
         """Test memory efficiency with large conversions."""
@@ -505,11 +546,12 @@ class TestConverterEdgeCases:
 
         # Should not create unnecessary copies
         if result is large_string or result != large_string:
-            raise AssertionError(f"Expected {large_string}, got {result is large_string or result}")
+            raise AssertionError(
+                f"Expected {large_string}, got {result is large_string or result}"
+            )
 
     def test_thread_safety(self) -> None:
         """Test converter thread safety."""
-
 
         converter = FlextLdapTypeConverter()
         results = []
@@ -537,7 +579,7 @@ class TestConverterEdgeCases:
             raise AssertionError(f"Expected {0}, got {len(errors)}")
         assert len(results) == 10
         if "value0" not in results:
-            raise AssertionError(f"Expected {"value0"} in {results}")
+            raise AssertionError(f"Expected {'value0'} in {results}")
         assert "value9" in results
 
 
@@ -565,10 +607,16 @@ class TestConverterIntegration:
 
         # Verify integrity (with expected type changes)
         if python_data["string"] != test_data["string"]:
-            raise AssertionError(f"Expected {test_data["string"]}, got {python_data["string"]}")
-        assert python_data["integer"] == str(test_data["integer"])  # LDAP stores as string
+            raise AssertionError(
+                f"Expected {test_data['string']}, got {python_data['string']}"
+            )
+        assert python_data["integer"] == str(
+            test_data["integer"]
+        )  # LDAP stores as string
         if python_data["list"] != test_data["list"]:
-            raise AssertionError(f"Expected {test_data["list"]}, got {python_data["list"]}")
+            raise AssertionError(
+                f"Expected {test_data['list']}, got {python_data['list']}"
+            )
         assert python_data["binary"] == test_data["binary"]
 
     def test_real_ldap_entry_conversion(self) -> None:
@@ -594,13 +642,22 @@ class TestConverterIntegration:
 
         # Verify conversion
         if python_entry["dn"] != "cn=John Doe,ou=users,dc=example,dc=com":
-            raise AssertionError(f"Expected {"cn=John Doe,ou=users,dc=example,dc=com"}, got {python_entry["dn"]}")
+            raise AssertionError(
+                f"Expected {'cn=John Doe,ou=users,dc=example,dc=com'}, got {python_entry['dn']}"
+            )
         assert python_entry["attributes"]["cn"] == ["John Doe"]
-        if python_entry["attributes"]["mail"] != ["john@example.com", "john.doe@example.com"]:
-            raise AssertionError(f"Expected {["john@example.com", "john.doe@example.com"]}, got {python_entry["attributes"]["mail"]}")
+        if python_entry["attributes"]["mail"] != [
+            "john@example.com",
+            "john.doe@example.com",
+        ]:
+            raise AssertionError(
+                f"Expected {['john@example.com', 'john.doe@example.com']}, got {python_entry['attributes']['mail']}"
+            )
         assert python_entry["attributes"]["employeeID"] == ["12345"]
         if len(python_entry["attributes"]["objectClass"]) != EXPECTED_DATA_COUNT:
-            raise AssertionError(f"Expected {3}, got {len(python_entry["attributes"]["objectClass"])}")
+            raise AssertionError(
+                f"Expected {3}, got {len(python_entry['attributes']['objectClass'])}"
+            )
 
     def test_attribute_schema_aware_conversion(self) -> None:
         """Test schema-aware attribute conversion."""
@@ -616,12 +673,16 @@ class TestConverterIntegration:
 
         # Test conversion with schema
         ldap_value = "12345"
-        result = converter.to_python(ldap_value, attribute_name="employeeID", schema=schema)
+        result = converter.to_python(
+            ldap_value, attribute_name="employeeID", schema=schema
+        )
         if result != 12345:
             raise AssertionError(f"Expected {12345}, got {result}")
         assert isinstance(result, int)
 
         # Test datetime with schema
         timestamp = "20240115103045Z"
-        result = converter.to_python(timestamp, attribute_name="createTimestamp", schema=schema)
+        result = converter.to_python(
+            timestamp, attribute_name="createTimestamp", schema=schema
+        )
         assert isinstance(result, datetime)

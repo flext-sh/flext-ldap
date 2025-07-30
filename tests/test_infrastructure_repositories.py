@@ -48,7 +48,6 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await repository.save(mock_connection)
 
         if not (result.is_success):
-
             raise AssertionError(f"Expected True, got {result.is_success}")
         if result.data != mock_connection:
             raise AssertionError(f"Expected {mock_connection}, got {result.data}")
@@ -79,7 +78,6 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await repository.find_by_id(UUID(mock_connection.id))
 
         if not (result.is_success):
-
             raise AssertionError(f"Expected True, got {result.is_success}")
         if result.data != mock_connection:
             raise AssertionError(f"Expected {mock_connection}, got {result.data}")
@@ -92,7 +90,6 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await repository.find_by_id(uuid4())
 
         if not (result.is_success):
-
             raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is None
 
@@ -119,7 +116,6 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await repository.find_all()
 
         if not (result.is_success):
-
             raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is not None
         if len(result.data) != 1:
@@ -134,7 +130,6 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await repository.find_all()
 
         if not (result.is_success):
-
             raise AssertionError(f"Expected True, got {result.is_success}")
         if result.data != []:
             raise AssertionError(f"Expected {[]}, got {result.data}")
@@ -162,11 +157,12 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await repository.delete(mock_connection)
 
         if not (result.is_success):
-
             raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is True
         if mock_connection.id not in repository._connections:
-            raise AssertionError(f"Expected {mock_connection.id} to be in {repository._connections}")
+            raise AssertionError(
+                f"Expected {mock_connection.id} to be in {repository._connections}"
+            )
 
     async def test_delete_not_found(
         self,
@@ -177,7 +173,6 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await repository.delete(mock_connection)
 
         if not (result.is_success):
-
             raise AssertionError(f"Expected True, got {result.is_success}")
         if result.data:
             raise AssertionError(f"Expected False, got {result.data}")
@@ -207,7 +202,6 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await repository.get_by_server(mock_connection.server_url)
 
         if len(result) != 1:
-
             raise AssertionError(f"Expected {1}, got {len(result)}")
         assert result[0] == mock_connection
 
@@ -223,7 +217,6 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await repository.get_by_server("ldap://different.com:389")
 
         if result != []:
-
             raise AssertionError(f"Expected {[]}, got {result}")
 
     async def test_get_by_server_exception(
@@ -249,7 +242,6 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await repository.get_active()
 
         if len(result) != 1:
-
             raise AssertionError(f"Expected {1}, got {len(result)}")
         assert result[0] == mock_connection
 
@@ -261,7 +253,6 @@ class TestFlextLdapConnectionRepositoryImpl:
         result = await repository.get_active()
 
         if result != []:
-
             raise AssertionError(f"Expected {[]}, got {result}")
 
     async def test_get_active_exception(
@@ -287,7 +278,6 @@ class TestFlextLdapConnectionRepositoryImpl:
         await repository.close_all()
 
         if repository._connections != {}:
-
             raise AssertionError(f"Expected {{}}, got {repository._connections}")
 
     async def test_close_all_exception(
@@ -341,7 +331,6 @@ class TestFlextLdapUserRepositoryImpl:
         result = await repository.save(mock_user)
 
         if not (result.is_success):
-
             raise AssertionError(f"Expected True, got {result.is_success}")
         if result.data != mock_user:
             raise AssertionError(f"Expected {mock_user}, got {result.data}")
@@ -371,7 +360,6 @@ class TestFlextLdapUserRepositoryImpl:
         result = await repository.find_by_id(uuid4())
 
         if not (result.is_success):
-
             raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is None
 
@@ -396,7 +384,6 @@ class TestFlextLdapUserRepositoryImpl:
         result = await repository.find_by_dn("uid=test,ou=users,dc=example,dc=org")
 
         if not (result.is_success):
-
             raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is None
 
@@ -423,7 +410,6 @@ class TestFlextLdapUserRepositoryImpl:
         result = await repository.find_all()
 
         if not (result.is_success):
-
             raise AssertionError(f"Expected True, got {result.is_success}")
         if result.data != []:
             raise AssertionError(f"Expected {[]}, got {result.data}")
@@ -453,7 +439,6 @@ class TestFlextLdapUserRepositoryImpl:
         result = await repository.delete(mock_user)
 
         if not (result.is_success):
-
             raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is True
 
@@ -532,7 +517,6 @@ class TestFlextLdapUserRepositoryImpl:
         )
 
         if result != []:
-
             raise AssertionError(f"Expected {[]}, got {result}")
 
     async def test_search_exception(
@@ -564,7 +548,6 @@ class TestFlextLdapUserRepositoryImpl:
         result = await repository.exists(mock_dn)
 
         if result:
-
             raise AssertionError(f"Expected False, got {result}")
 
     async def test_exists_exception(

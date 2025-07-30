@@ -79,26 +79,42 @@ class TestFlextLdapConnectionService:
                 password: str | None = None,
             ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
-            async def disconnect(self, connection: FlextLdapConnection) -> FlextResult[object]:
+            async def disconnect(
+                self, connection: FlextLdapConnection
+            ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
-            async def bind(self, connection: FlextLdapConnection, bind_dn: str, password: str) -> FlextResult[object]:
+            async def bind(
+                self, connection: FlextLdapConnection, bind_dn: str, password: str
+            ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
-            async def unbind(self, connection: FlextLdapConnection) -> FlextResult[object]:
+            async def unbind(
+                self, connection: FlextLdapConnection
+            ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
-            async def test_connection(self, connection: FlextLdapConnection) -> FlextResult[object]:
+            async def test_connection(
+                self, connection: FlextLdapConnection
+            ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
-            async def get_connection_info(self, connection: FlextLdapConnection) -> FlextResult[object]:
+            async def get_connection_info(
+                self, connection: FlextLdapConnection
+            ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
         # Should not raise any errors
@@ -158,6 +174,7 @@ class TestFlextLdapSearchService:
                 scope: str = "sub",
             ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
             async def search_users(
@@ -167,6 +184,7 @@ class TestFlextLdapSearchService:
                 filter_string: str | None = None,
             ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
         # Should not raise any errors
@@ -226,10 +244,14 @@ class TestFlextLdapUserService:
                 attributes: dict[str, list[str]],
             ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
-            async def get_user(self, connection: FlextLdapConnection, dn: str) -> FlextResult[object]:
+            async def get_user(
+                self, connection: FlextLdapConnection, dn: str
+            ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
             async def update_user(
@@ -239,10 +261,14 @@ class TestFlextLdapUserService:
                 modifications: dict[str, list[str]],
             ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
-            async def delete_user(self, connection: FlextLdapConnection, dn: str) -> FlextResult[object]:
+            async def delete_user(
+                self, connection: FlextLdapConnection, dn: str
+            ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
             async def list_users(
@@ -252,6 +278,7 @@ class TestFlextLdapUserService:
                 limit: int = 100,
             ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
         # Should not raise any errors
@@ -285,8 +312,11 @@ class TestFlextLdapSchemaService:
         """Test that concrete implementation can be created."""
 
         class ConcreteSchemaService(ports.FlextLdapSchemaService):
-            async def get_schema(self, connection: FlextLdapConnection) -> FlextResult[object]:
+            async def get_schema(
+                self, connection: FlextLdapConnection
+            ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
             async def validate_entry(
@@ -296,6 +326,7 @@ class TestFlextLdapSchemaService:
                 attributes: dict[str, list[str]],
             ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
         # Should not raise any errors
@@ -349,6 +380,7 @@ class TestFlextLdapMigrationService:
                 output_format: str = "ldif",
             ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
             async def import_entries(
@@ -358,6 +390,7 @@ class TestFlextLdapMigrationService:
                 format_type: str = "ldif",
             ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
             async def migrate_users(
@@ -367,6 +400,7 @@ class TestFlextLdapMigrationService:
                 base_dn: str,
             ) -> FlextResult[object]:
                 from flext_core import FlextResult
+
                 return FlextResult.success(None)
 
         # Should not raise any errors

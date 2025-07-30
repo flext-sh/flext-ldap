@@ -45,9 +45,13 @@ class TestFlextLdapInfrastructureClient:
 
             assert result.is_success
             if result.data != "ldap://test.com:cn=REDACTED_LDAP_BIND_PASSWORD":
-                raise AssertionError(f"Expected {"ldap://test.com:cn=REDACTED_LDAP_BIND_PASSWORD"}, got {result.data}")
+                raise AssertionError(
+                    f"Expected {'ldap://test.com:cn=REDACTED_LDAP_BIND_PASSWORD'}, got {result.data}"
+                )
             if "ldap://test.com:cn=REDACTED_LDAP_BIND_PASSWORD" not in adapter._connections:
-                raise AssertionError(f"Expected {"ldap://test.com:cn=REDACTED_LDAP_BIND_PASSWORD"} in {adapter._connections}")
+                raise AssertionError(
+                    f"Expected {'ldap://test.com:cn=REDACTED_LDAP_BIND_PASSWORD'} in {adapter._connections}"
+                )
 
     @pytest.mark.asyncio
     async def test_connect_anonymous(self) -> None:
@@ -64,7 +68,9 @@ class TestFlextLdapInfrastructureClient:
 
             assert result.is_success
             if result.data != "ldap://test.com:anonymous":
-                raise AssertionError(f"Expected {"ldap://test.com:anonymous"}, got {result.data}")
+                raise AssertionError(
+                    f"Expected {'ldap://test.com:anonymous'}, got {result.data}"
+                )
 
     @pytest.mark.asyncio
     async def test_connect_with_ssl(self) -> None:
@@ -86,13 +92,17 @@ class TestFlextLdapInfrastructureClient:
 
             assert result.is_success
             if result.data != "ldaps://test.com:cn=REDACTED_LDAP_BIND_PASSWORD":
-                raise AssertionError(f"Expected {"ldaps://test.com:cn=REDACTED_LDAP_BIND_PASSWORD"}, got {result.data}")
+                raise AssertionError(
+                    f"Expected {'ldaps://test.com:cn=REDACTED_LDAP_BIND_PASSWORD'}, got {result.data}"
+                )
 
             # Verify SSL was enabled on server
             mock_server.assert_called_once()
             server_call_args = mock_server.call_args
             if not (server_call_args[1]["use_ssl"]):
-                raise AssertionError(f"Expected True, got {server_call_args[1]["use_ssl"]}")
+                raise AssertionError(
+                    f"Expected True, got {server_call_args[1]['use_ssl']}"
+                )
 
     @pytest.mark.asyncio
     async def test_connect_ldap_exception(self) -> None:
@@ -100,7 +110,6 @@ class TestFlextLdapInfrastructureClient:
         adapter = FlextLdapInfrastructureClient()
 
         # Mock LDAPException
-
 
         with (
             patch("ldap3.Connection", side_effect=LDAPException("LDAP error")),
@@ -110,7 +119,9 @@ class TestFlextLdapInfrastructureClient:
 
             assert not result.is_success
             if "LDAP connection failed" not in (result.error or ""):
-                raise AssertionError(f"Expected {"LDAP connection failed"} in {(result.error or "")}")
+                raise AssertionError(
+                    f"Expected {'LDAP connection failed'} in {(result.error or '')}"
+                )
 
     @pytest.mark.asyncio
     async def test_connect_unexpected_exception(self) -> None:
@@ -126,7 +137,9 @@ class TestFlextLdapInfrastructureClient:
             assert not result.is_success
             assert result.error is not None
             if "Unexpected connection error" not in result.error:
-                raise AssertionError(f"Expected {"Unexpected connection error"} in {result.error}")
+                raise AssertionError(
+                    f"Expected {'Unexpected connection error'} in {result.error}"
+                )
 
     @pytest.mark.asyncio
     async def test_disconnect_success(self) -> None:
@@ -143,7 +156,9 @@ class TestFlextLdapInfrastructureClient:
         if not (result.data):
             raise AssertionError(f"Expected True, got {result.data}")
         if "test_conn" not in adapter._connections:
-            raise AssertionError(f"Expected 'test_conn' not to be in {adapter._connections}")
+            raise AssertionError(
+                f"Expected 'test_conn' not to be in {adapter._connections}"
+            )
         mock_connection.unbind.assert_called_once()
 
     @pytest.mark.asyncio
@@ -155,7 +170,9 @@ class TestFlextLdapInfrastructureClient:
 
         assert not result.is_success
         if "Connection not found" not in (result.error or ""):
-            raise AssertionError(f"Expected {"Connection not found"} in {(result.error or "")}")
+            raise AssertionError(
+                f"Expected {'Connection not found'} in {(result.error or '')}"
+            )
 
     @pytest.mark.asyncio
     async def test_disconnect_ldap_exception(self) -> None:
@@ -163,7 +180,6 @@ class TestFlextLdapInfrastructureClient:
         adapter = FlextLdapInfrastructureClient()
 
         # Mock LDAPException
-
 
         mock_connection = MagicMock()
         mock_connection.unbind.side_effect = LDAPException("Unbind error")
@@ -173,7 +189,9 @@ class TestFlextLdapInfrastructureClient:
 
         assert not result.is_success
         if "LDAP disconnect failed" not in (result.error or ""):
-            raise AssertionError(f"Expected {"LDAP disconnect failed"} in {(result.error or "")}")
+            raise AssertionError(
+                f"Expected {'LDAP disconnect failed'} in {(result.error or '')}"
+            )
 
     @pytest.mark.asyncio
     async def test_disconnect_unexpected_exception(self) -> None:
@@ -189,7 +207,9 @@ class TestFlextLdapInfrastructureClient:
         assert not result.is_success
         assert result.error is not None
         if "Unexpected disconnect error" not in result.error:
-            raise AssertionError(f"Expected {"Unexpected disconnect error"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'Unexpected disconnect error'} in {result.error}"
+            )
 
     @pytest.mark.asyncio
     async def test_search_success(self) -> None:
@@ -227,7 +247,9 @@ class TestFlextLdapInfrastructureClient:
             raise AssertionError(f"Expected {2}, got {len(result.data)}")
         assert result.data[0]["dn"] == "cn=user1,dc=test"
         if result.data[0]["attributes"]["cn"] != ["user1"]:
-            raise AssertionError(f"Expected {["user1"]}, got {result.data[0]["attributes"]["cn"]}")
+            raise AssertionError(
+                f"Expected {['user1']}, got {result.data[0]['attributes']['cn']}"
+            )
 
         mock_connection.search.assert_called_once()
 
@@ -254,7 +276,9 @@ class TestFlextLdapInfrastructureClient:
         mock_connection.search.assert_called_once()
         call_args = mock_connection.search.call_args
         if call_args[1]["attributes"] != ["cn", "mail"]:
-            raise AssertionError(f"Expected {["cn", "mail"]}, got {call_args[1]["attributes"]}")
+            raise AssertionError(
+                f"Expected {['cn', 'mail']}, got {call_args[1]['attributes']}"
+            )
 
     @pytest.mark.asyncio
     async def test_search_with_base_scope(self) -> None:
@@ -286,7 +310,9 @@ class TestFlextLdapInfrastructureClient:
 
         assert not result.is_success
         if "Connection not found" not in (result.error or ""):
-            raise AssertionError(f"Expected {"Connection not found"} in {(result.error or "")}")
+            raise AssertionError(
+                f"Expected {'Connection not found'} in {(result.error or '')}"
+            )
 
     @pytest.mark.asyncio
     async def test_search_failed(self) -> None:
@@ -304,7 +330,7 @@ class TestFlextLdapInfrastructureClient:
         assert not result.is_success
         assert result.error is not None
         if "Search failed" not in result.error:
-            raise AssertionError(f"Expected {"Search failed"} in {result.error}")
+            raise AssertionError(f"Expected {'Search failed'} in {result.error}")
 
     @pytest.mark.asyncio
     async def test_search_ldap_exception(self) -> None:
@@ -312,7 +338,6 @@ class TestFlextLdapInfrastructureClient:
         adapter = FlextLdapInfrastructureClient()
 
         # Mock LDAPException
-
 
         mock_connection = MagicMock()
         mock_connection.search.side_effect = LDAPException("Search error")
@@ -324,7 +349,7 @@ class TestFlextLdapInfrastructureClient:
         assert not result.is_success
         assert result.error is not None
         if "LDAP search failed" not in result.error:
-            raise AssertionError(f"Expected {"LDAP search failed"} in {result.error}")
+            raise AssertionError(f"Expected {'LDAP search failed'} in {result.error}")
 
     @pytest.mark.asyncio
     async def test_search_unexpected_exception(self) -> None:
@@ -341,7 +366,9 @@ class TestFlextLdapInfrastructureClient:
         assert not result.is_success
         assert result.error is not None
         if "Unexpected search error" not in result.error:
-            raise AssertionError(f"Expected {"Unexpected search error"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'Unexpected search error'} in {result.error}"
+            )
 
     @pytest.mark.asyncio
     async def test_add_entry_success(self) -> None:
@@ -378,7 +405,9 @@ class TestFlextLdapInfrastructureClient:
 
         assert not result.is_success
         if "Connection not found" not in (result.error or ""):
-            raise AssertionError(f"Expected {"Connection not found"} in {(result.error or "")}")
+            raise AssertionError(
+                f"Expected {'Connection not found'} in {(result.error or '')}"
+            )
 
     @pytest.mark.asyncio
     async def test_add_entry_failed(self) -> None:
@@ -396,7 +425,7 @@ class TestFlextLdapInfrastructureClient:
         assert not result.is_success
         assert result.error is not None
         if "Add failed" not in result.error:
-            raise AssertionError(f"Expected {"Add failed"} in {result.error}")
+            raise AssertionError(f"Expected {'Add failed'} in {result.error}")
 
     @pytest.mark.asyncio
     async def test_add_ldap_exception(self) -> None:
@@ -404,7 +433,6 @@ class TestFlextLdapInfrastructureClient:
         adapter = FlextLdapInfrastructureClient()
 
         # Mock LDAPException
-
 
         mock_connection = MagicMock()
         mock_connection.add.side_effect = LDAPException("Add error")
@@ -416,7 +444,7 @@ class TestFlextLdapInfrastructureClient:
         assert not result.is_success
         assert result.error is not None
         if "LDAP add failed" not in result.error:
-            raise AssertionError(f"Expected {"LDAP add failed"} in {result.error}")
+            raise AssertionError(f"Expected {'LDAP add failed'} in {result.error}")
 
     @pytest.mark.asyncio
     async def test_add_unexpected_exception(self) -> None:
@@ -433,7 +461,7 @@ class TestFlextLdapInfrastructureClient:
         assert not result.is_success
         assert result.error is not None
         if "Unexpected add error" not in result.error:
-            raise AssertionError(f"Expected {"Unexpected add error"} in {result.error}")
+            raise AssertionError(f"Expected {'Unexpected add error'} in {result.error}")
 
     @pytest.mark.asyncio
     async def test_modify_success(self) -> None:
@@ -463,7 +491,9 @@ class TestFlextLdapInfrastructureClient:
 
         assert not result.is_success
         if "Connection not found" not in (result.error or ""):
-            raise AssertionError(f"Expected {"Connection not found"} in {(result.error or "")}")
+            raise AssertionError(
+                f"Expected {'Connection not found'} in {(result.error or '')}"
+            )
 
     @pytest.mark.asyncio
     async def test_modify_failed(self) -> None:
@@ -481,7 +511,7 @@ class TestFlextLdapInfrastructureClient:
         assert not result.is_success
         assert result.error is not None
         if "Modify failed" not in result.error:
-            raise AssertionError(f"Expected {"Modify failed"} in {result.error}")
+            raise AssertionError(f"Expected {'Modify failed'} in {result.error}")
 
     @pytest.mark.asyncio
     async def test_modify_ldap_exception(self) -> None:
@@ -489,7 +519,6 @@ class TestFlextLdapInfrastructureClient:
         adapter = FlextLdapInfrastructureClient()
 
         # Mock LDAPException
-
 
         mock_connection = MagicMock()
         mock_connection.modify.side_effect = LDAPException("Modify error")
@@ -501,7 +530,7 @@ class TestFlextLdapInfrastructureClient:
         assert not result.is_success
         assert result.error is not None
         if "LDAP modify failed" not in result.error:
-            raise AssertionError(f"Expected {"LDAP modify failed"} in {result.error}")
+            raise AssertionError(f"Expected {'LDAP modify failed'} in {result.error}")
 
     @pytest.mark.asyncio
     async def test_modify_unexpected_exception(self) -> None:
@@ -518,7 +547,9 @@ class TestFlextLdapInfrastructureClient:
         assert not result.is_success
         assert result.error is not None
         if "Unexpected modify error" not in result.error:
-            raise AssertionError(f"Expected {"Unexpected modify error"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'Unexpected modify error'} in {result.error}"
+            )
 
     @pytest.mark.asyncio
     async def test_delete_success(self) -> None:
@@ -547,7 +578,9 @@ class TestFlextLdapInfrastructureClient:
 
         assert not result.is_success
         if "Connection not found" not in (result.error or ""):
-            raise AssertionError(f"Expected {"Connection not found"} in {(result.error or "")}")
+            raise AssertionError(
+                f"Expected {'Connection not found'} in {(result.error or '')}"
+            )
 
     @pytest.mark.asyncio
     async def test_delete_failed(self) -> None:
@@ -565,7 +598,7 @@ class TestFlextLdapInfrastructureClient:
         assert not result.is_success
         assert result.error is not None
         if "Delete failed" not in result.error:
-            raise AssertionError(f"Expected {"Delete failed"} in {result.error}")
+            raise AssertionError(f"Expected {'Delete failed'} in {result.error}")
 
     @pytest.mark.asyncio
     async def test_delete_ldap_exception(self) -> None:
@@ -573,7 +606,6 @@ class TestFlextLdapInfrastructureClient:
         adapter = FlextLdapInfrastructureClient()
 
         # Mock LDAPException
-
 
         mock_connection = MagicMock()
         mock_connection.delete.side_effect = LDAPException("Delete error")
@@ -585,7 +617,7 @@ class TestFlextLdapInfrastructureClient:
         assert not result.is_success
         assert result.error is not None
         if "LDAP delete failed" not in result.error:
-            raise AssertionError(f"Expected {"LDAP delete failed"} in {result.error}")
+            raise AssertionError(f"Expected {'LDAP delete failed'} in {result.error}")
 
     @pytest.mark.asyncio
     async def test_delete_unexpected_exception(self) -> None:
@@ -602,7 +634,9 @@ class TestFlextLdapInfrastructureClient:
         assert not result.is_success
         assert result.error is not None
         if "Unexpected delete error" not in result.error:
-            raise AssertionError(f"Expected {"Unexpected delete error"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'Unexpected delete error'} in {result.error}"
+            )
 
     def test_get_connection_info_success(self) -> None:
         """Test successful connection info retrieval."""
@@ -630,14 +664,18 @@ class TestFlextLdapInfrastructureClient:
         assert result.data is not None
         info = result.data
         if info["server"] != "ldap://test.com:389":
-            raise AssertionError(f"Expected {"ldap://test.com:389"}, got {info["server"]}")
+            raise AssertionError(
+                f"Expected {'ldap://test.com:389'}, got {info['server']}"
+            )
         if not (info["bound"]):
-            raise AssertionError(f"Expected True, got {info["bound"]}")
+            raise AssertionError(f"Expected True, got {info['bound']}")
         if info["user"] != "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test":
-            raise AssertionError(f"Expected {"cn=REDACTED_LDAP_BIND_PASSWORD,dc=test"}, got {info["user"]}")
+            raise AssertionError(f"Expected {'cn=REDACTED_LDAP_BIND_PASSWORD,dc=test'}, got {info['user']}")
         assert info["strategy"] == "SYNC"
         if info["server_info"]["version"] != "3":
-            raise AssertionError(f"Expected {"3"}, got {info["server_info"]["version"]}")
+            raise AssertionError(
+                f"Expected {'3'}, got {info['server_info']['version']}"
+            )
 
     def test_get_connection_info_not_found(self) -> None:
         """Test connection info for non-existent connection."""
@@ -647,7 +685,9 @@ class TestFlextLdapInfrastructureClient:
 
         assert not result.is_success
         if "Connection not found" not in (result.error or ""):
-            raise AssertionError(f"Expected {"Connection not found"} in {(result.error or "")}")
+            raise AssertionError(
+                f"Expected {'Connection not found'} in {(result.error or '')}"
+            )
 
     def test_get_connection_info_no_server_info(self) -> None:
         """Test connection info when server info is None."""
@@ -690,7 +730,9 @@ class TestFlextLdapInfrastructureClient:
         assert not result.is_success
         assert result.error is not None
         if "Unexpected error getting connection info" not in result.error:
-            raise AssertionError(f"Expected {"Unexpected error getting connection info"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'Unexpected error getting connection info'} in {result.error}"
+            )
 
     def test_search_scope_mapping(self) -> None:
         """Test search scope string to ldap3 constant mapping."""
@@ -703,7 +745,6 @@ class TestFlextLdapInfrastructureClient:
         adapter._connections["test_conn"] = mock_connection
 
         # Test each scope mapping
-
 
         # Test subtree scope (default)
         asyncio.run(
@@ -724,7 +765,9 @@ class TestFlextLdapInfrastructureClient:
 
         # All calls should succeed
         if mock_connection.search.call_count != 4:
-            raise AssertionError(f"Expected {4}, got {mock_connection.search.call_count}")
+            raise AssertionError(
+                f"Expected {4}, got {mock_connection.search.call_count}"
+            )
 
     @pytest.mark.asyncio
     async def test_search_with_default_attributes(self) -> None:
@@ -743,7 +786,7 @@ class TestFlextLdapInfrastructureClient:
         # Verify default attributes are used
         call_args = mock_connection.search.call_args
         if call_args[1]["attributes"] != ["*"]:
-            raise AssertionError(f"Expected {["*"]}, got {call_args[1]["attributes"]}")
+            raise AssertionError(f"Expected {['*']}, got {call_args[1]['attributes']}")
 
     @pytest.mark.asyncio
     async def test_add_entry_with_complex_attributes(self) -> None:

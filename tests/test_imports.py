@@ -18,7 +18,6 @@ class TestImports:
     def test_main_imports(self) -> None:
         """Test main package imports (backward compatibility)."""
 
-
         # These should work via backward compatibility aliases
         assert LDAPClient is not None
         assert LDAPEntry is not None
@@ -44,8 +43,6 @@ class TestImports:
     def test_models_imports(self) -> None:
         """Test models imports (backward compatibility)."""
         try:
-
-
             assert LDAPEntry is not None
             assert LDAPFilter is not None
             assert LDAPScope is not None

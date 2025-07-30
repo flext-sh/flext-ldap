@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 import pytest
 
@@ -27,6 +26,9 @@ from flext_ldap.infrastructure.error_correlation import (
     ErrorSeverity,
 )
 
+if TYPE_CHECKING:
+    from uuid import UUID
+
 
 class TestErrorEvent:
     """Test suite for ErrorEvent class."""
@@ -39,11 +41,14 @@ class TestErrorEvent:
         )
 
         if event.error_message != "Connection failed":
-
-            raise AssertionError(f"Expected {"Connection failed"}, got {event.error_message}")
+            raise AssertionError(
+                f"Expected {'Connection failed'}, got {event.error_message}"
+            )
         assert event.operation_type == "bind"
         if event.severity != ErrorSeverity.MEDIUM:
-            raise AssertionError(f"Expected {ErrorSeverity.MEDIUM}, got {event.severity}")
+            raise AssertionError(
+                f"Expected {ErrorSeverity.MEDIUM}, got {event.severity}"
+            )
         assert event.category == ErrorCategory.UNKNOWN
         assert event.event_id is not None
         assert event.timestamp is not None
@@ -73,8 +78,9 @@ class TestErrorEvent:
         )
 
         if event.get_signature() != event2.get_signature():
-
-            raise AssertionError(f"Expected {event2.get_signature()}, got {event.get_signature()}")
+            raise AssertionError(
+                f"Expected {event2.get_signature()}, got {event.get_signature()}"
+            )
 
     def test_error_message_normalization(self) -> None:
         """Test error message normalization for pattern matching."""
@@ -115,20 +121,27 @@ class TestErrorEvent:
         event_dict = event.to_dict()
 
         if event_dict["error_message"] != "Authentication failed":
-
-            raise AssertionError(f"Expected {"Authentication failed"}, got {event_dict["error_message"]}")
+            raise AssertionError(
+                f"Expected {'Authentication failed'}, got {event_dict['error_message']}"
+            )
         assert event_dict["error_code"] == "AUTH_FAILED"
         if event_dict["operation_type"] != "bind":
-            raise AssertionError(f"Expected {"bind"}, got {event_dict["operation_type"]}")
+            raise AssertionError(
+                f"Expected {'bind'}, got {event_dict['operation_type']}"
+            )
         assert event_dict["user_dn"] == "cn=test,dc=example,dc=com"
         if event_dict["client_ip"] != "192.168.1.100":
-            raise AssertionError(f"Expected {"192.168.1.100"}, got {event_dict["client_ip"]}")
+            raise AssertionError(
+                f"Expected {'192.168.1.100'}, got {event_dict['client_ip']}"
+            )
         assert event_dict["severity"] == "high"
         if event_dict["category"] != "authentication":
-            raise AssertionError(f"Expected {"authentication"}, got {event_dict["category"]}")
+            raise AssertionError(
+                f"Expected {'authentication'}, got {event_dict['category']}"
+            )
         assert event_dict["timestamp"] == timestamp.isoformat()
         if "signature" not in event_dict:
-            raise AssertionError(f"Expected {"signature"} in {event_dict}")
+            raise AssertionError(f"Expected {'signature'} in {event_dict}")
 
 
 class TestErrorPattern:
@@ -144,11 +157,14 @@ class TestErrorPattern:
         )
 
         if pattern.error_signature != "test_signature":
-
-            raise AssertionError(f"Expected {"test_signature"}, got {pattern.error_signature}")
+            raise AssertionError(
+                f"Expected {'test_signature'}, got {pattern.error_signature}"
+            )
         assert pattern.category == ErrorCategory.CONNECTION
         if pattern.severity != ErrorSeverity.HIGH:
-            raise AssertionError(f"Expected {ErrorSeverity.HIGH}, got {pattern.severity}")
+            raise AssertionError(
+                f"Expected {ErrorSeverity.HIGH}, got {pattern.severity}"
+            )
         assert pattern.frequency == 5
         assert pattern.pattern_id is not None
         assert pattern.first_occurrence is not None
@@ -171,14 +187,19 @@ class TestErrorPattern:
         pattern_dict = pattern.to_dict()
 
         if pattern_dict["error_signature"] != "test_signature":
-
-            raise AssertionError(f"Expected {"test_signature"}, got {pattern_dict["error_signature"]}")
+            raise AssertionError(
+                f"Expected {'test_signature'}, got {pattern_dict['error_signature']}"
+            )
         assert pattern_dict["category"] == "authentication"
         if pattern_dict["severity"] != "critical":
-            raise AssertionError(f"Expected {"critical"}, got {pattern_dict["severity"]}")
+            raise AssertionError(
+                f"Expected {'critical'}, got {pattern_dict['severity']}"
+            )
         assert pattern_dict["frequency"] == 10
         if pattern_dict["affected_operations"] != ["bind", "search"]:
-            raise AssertionError(f"Expected {["bind", "search"]}, got {pattern_dict["affected_operations"]}")
+            raise AssertionError(
+                f"Expected {['bind', 'search']}, got {pattern_dict['affected_operations']}"
+            )
         assert pattern_dict["correlation_score"] == 0.75
 
 
@@ -212,10 +233,14 @@ class TestErrorCorrelationService:
         assert result.is_success
         assert result.data is not None
         if result.data.error_message != "Connection timeout":
-            raise AssertionError(f"Expected {"Connection timeout"}, got {result.data.error_message}")
+            raise AssertionError(
+                f"Expected {'Connection timeout'}, got {result.data.error_message}"
+            )
         assert result.data.error_code == "TIMEOUT"
         if len(correlation_service._error_events) != 1:
-            raise AssertionError(f"Expected {1}, got {len(correlation_service._error_events)}")
+            raise AssertionError(
+                f"Expected {1}, got {len(correlation_service._error_events)}"
+            )
 
     @pytest.mark.asyncio
     async def test_record_multiple_errors_pattern_creation(
@@ -234,8 +259,9 @@ class TestErrorCorrelationService:
             )
 
         if len(correlation_service._error_events) != 5:
-
-            raise AssertionError(f"Expected {5}, got {len(correlation_service._error_events)}")
+            raise AssertionError(
+                f"Expected {5}, got {len(correlation_service._error_events)}"
+            )
 
         # Should have created a pattern for AUTH_FAILED
         patterns = list(correlation_service._error_patterns.values())
@@ -244,7 +270,9 @@ class TestErrorCorrelationService:
         ]
         expected_patterns = 1  # Should be exactly one pattern
         if len(auth_patterns) != expected_patterns:
-            raise AssertionError(f"Expected {expected_patterns}, got {len(auth_patterns)}")
+            raise AssertionError(
+                f"Expected {expected_patterns}, got {len(auth_patterns)}"
+            )
 
         # The pattern should have frequency of 5
         auth_pattern = auth_patterns[0]
@@ -379,17 +407,24 @@ class TestErrorCorrelationService:
         stats = result.data
 
         if stats["time_window_hours"] != 24:
-
-            raise AssertionError(f"Expected {24}, got {stats["time_window_hours"]}")
+            raise AssertionError(f"Expected {24}, got {stats['time_window_hours']}")
         assert stats["total_errors"] == EXPECTED_DATA_COUNT  # Only recent events
         if "connection" not in stats["category_distribution"]:
-            raise AssertionError(f"Expected {"connection"} in {stats["category_distribution"]}")
+            raise AssertionError(
+                f"Expected {'connection'} in {stats['category_distribution']}"
+            )
         if stats["category_distribution"]["connection"] != EXPECTED_DATA_COUNT:
-            raise AssertionError(f"Expected {3}, got {stats["category_distribution"]["connection"]}")
+            raise AssertionError(
+                f"Expected {3}, got {stats['category_distribution']['connection']}"
+            )
         if "medium" not in stats["severity_distribution"]:
-            raise AssertionError(f"Expected {"medium"} in {stats["severity_distribution"]}")
+            raise AssertionError(
+                f"Expected {'medium'} in {stats['severity_distribution']}"
+            )
         if stats["average_errors_per_hour"] != EXPECTED_DATA_COUNT / 24:
-            raise AssertionError(f"Expected {3 / 24}, got {stats["average_errors_per_hour"]}")
+            raise AssertionError(
+                f"Expected {3 / 24}, got {stats['average_errors_per_hour']}"
+            )
 
     def test_calculate_correlation_scores(
         self,
@@ -452,7 +487,9 @@ class TestErrorCorrelationService:
 
         # Should maintain max size
         if len(correlation_service._error_events) != 5:
-            raise AssertionError(f"Expected {5}, got {len(correlation_service._error_events)}")
+            raise AssertionError(
+                f"Expected {5}, got {len(correlation_service._error_events)}"
+            )
 
         # Should keep the latest events
         event_messages = [e.error_message for e in correlation_service._error_events]
@@ -473,11 +510,14 @@ class TestErrorCorrelationService:
         correlation_service.clear_history()
 
         if len(correlation_service._error_events) != 0:
-
-            raise AssertionError(f"Expected {0}, got {len(correlation_service._error_events)}")
+            raise AssertionError(
+                f"Expected {0}, got {len(correlation_service._error_events)}"
+            )
         assert len(correlation_service._error_patterns) == 0
         if len(correlation_service._correlation_cache) != 0:
-            raise AssertionError(f"Expected {0}, got {len(correlation_service._correlation_cache)}")
+            raise AssertionError(
+                f"Expected {0}, got {len(correlation_service._correlation_cache)}"
+            )
 
     @pytest.mark.asyncio
     async def test_correlation_pattern_updates(
@@ -500,7 +540,9 @@ class TestErrorCorrelationService:
 
         # Check that pattern was created and has correlation score
         if base_signature not in correlation_service._error_patterns:
-            raise AssertionError(f"Expected {base_signature} in {correlation_service._error_patterns}")
+            raise AssertionError(
+                f"Expected {base_signature} in {correlation_service._error_patterns}"
+            )
         pattern = correlation_service._error_patterns[base_signature]
         if pattern.frequency != 5:
             raise AssertionError(f"Expected {5}, got {pattern.frequency}")
@@ -538,23 +580,30 @@ class TestErrorCorrelationService:
         event = result.data
 
         if event.error_message != "Search operation failed":
-
-            raise AssertionError(f"Expected {"Search operation failed"}, got {event.error_message}")
+            raise AssertionError(
+                f"Expected {'Search operation failed'}, got {event.error_message}"
+            )
         assert event.error_code == "SEARCH_FAILED"
         if event.operation_type != "search":
-            raise AssertionError(f"Expected {"search"}, got {event.operation_type}")
+            raise AssertionError(f"Expected {'search'}, got {event.operation_type}")
         assert event.user_dn == "cn=searcher,dc=example,dc=com"
         if event.target_dn != "ou=users,dc=example,dc=com":
-            raise AssertionError(f"Expected {"ou=users,dc=example,dc=com"}, got {event.target_dn}")
+            raise AssertionError(
+                f"Expected {'ou=users,dc=example,dc=com'}, got {event.target_dn}"
+            )
         assert event.client_ip == "192.168.1.50"
         if event.server_host != "ldap.example.com":
-            raise AssertionError(f"Expected {"ldap.example.com"}, got {event.server_host}")
+            raise AssertionError(
+                f"Expected {'ldap.example.com'}, got {event.server_host}"
+            )
         assert event.stack_trace == "Traceback: ..."
         if event.context != context:
             raise AssertionError(f"Expected {context}, got {event.context}")
         assert event.severity == ErrorSeverity.HIGH
         if event.category != ErrorCategory.SEARCH:
-            raise AssertionError(f"Expected {ErrorCategory.SEARCH}, got {event.category}")
+            raise AssertionError(
+                f"Expected {ErrorCategory.SEARCH}, got {event.category}"
+            )
 
     @pytest.mark.asyncio
     async def test_pattern_frequency_threshold(
@@ -609,7 +658,9 @@ class TestErrorCorrelationService:
             assert not result.is_success
             assert result.error is not None
             if "Failed to record error event" not in result.error:
-                raise AssertionError(f"Expected {"Failed to record error event"} in {result.error}")
+                raise AssertionError(
+                    f"Expected {'Failed to record error event'} in {result.error}"
+                )
             assert "UUID generation failed" in result.error
 
     @pytest.mark.asyncio
@@ -632,7 +683,9 @@ class TestErrorCorrelationService:
             assert not result.is_success
             assert result.error is not None
             if "Failed to get error patterns" not in result.error:
-                raise AssertionError(f"Expected {"Failed to get error patterns"} in {result.error}")
+                raise AssertionError(
+                    f"Expected {'Failed to get error patterns'} in {result.error}"
+                )
             assert "List conversion failed" in result.error
 
     @pytest.mark.asyncio
@@ -661,7 +714,9 @@ class TestErrorCorrelationService:
             assert not result.is_success
             assert result.error is not None
             if "Failed to get correlated errors" not in result.error:
-                raise AssertionError(f"Expected {"Failed to get correlated errors"} in {result.error}")
+                raise AssertionError(
+                    f"Expected {'Failed to get correlated errors'} in {result.error}"
+                )
             assert "Timedelta calculation failed" in result.error
 
     @pytest.mark.asyncio
@@ -683,7 +738,9 @@ class TestErrorCorrelationService:
             assert not result.is_success
             assert result.error is not None
             if "Failed to get error statistics" not in result.error:
-                raise AssertionError(f"Expected {"Failed to get error statistics"} in {result.error}")
+                raise AssertionError(
+                    f"Expected {'Failed to get error statistics'} in {result.error}"
+                )
             assert "DateTime access failed" in result.error
 
     @pytest.mark.asyncio
@@ -817,7 +874,9 @@ class TestErrorCorrelationService:
         # Verify initial pattern has only 'bind' operation
         pattern = correlation_service._error_patterns[signature]
         if pattern.affected_operations != ["bind"]:
-            raise AssertionError(f"Expected {["bind"]}, got {pattern.affected_operations}")
+            raise AssertionError(
+                f"Expected {['bind']}, got {pattern.affected_operations}"
+            )
 
         # Record same exact error (same signature) to trigger operation update logic
         result2 = await correlation_service.record_error(
@@ -831,12 +890,16 @@ class TestErrorCorrelationService:
         # Should be same signature
         assert result2.data is not None
         if result2.data.get_signature() != signature:
-            raise AssertionError(f"Expected {signature}, got {result2.data.get_signature()}")
+            raise AssertionError(
+                f"Expected {signature}, got {result2.data.get_signature()}"
+            )
 
         # Pattern should have increased frequency but same operations
         updated_pattern = correlation_service._error_patterns[signature]
         if updated_pattern.affected_operations != ["bind"]:
-            raise AssertionError(f"Expected {["bind"]}, got {updated_pattern.affected_operations}")
+            raise AssertionError(
+                f"Expected {['bind']}, got {updated_pattern.affected_operations}"
+            )
         assert updated_pattern.frequency == EXPECTED_BULK_SIZE
 
         # Now test the different operation path by manually updating the event
@@ -862,10 +925,12 @@ class TestErrorCorrelationService:
 
         # Verify the operation was added
         if "bind" not in pattern.affected_operations:
-            raise AssertionError(f"Expected {"bind"} in {pattern.affected_operations}")
+            raise AssertionError(f"Expected {'bind'} in {pattern.affected_operations}")
         assert "search" in pattern.affected_operations
         if len(pattern.affected_operations) != EXPECTED_BULK_SIZE:
-            raise AssertionError(f"Expected {2}, got {len(pattern.affected_operations)}")
+            raise AssertionError(
+                f"Expected {2}, got {len(pattern.affected_operations)}"
+            )
 
     @pytest.mark.asyncio
     async def test_pattern_operation_type_none_coverage(
@@ -902,12 +967,16 @@ class TestErrorCorrelationService:
         # Same signature since both have operation_type=None
         assert result2.data is not None
         if result2.data.get_signature() != signature:
-            raise AssertionError(f"Expected {signature}, got {result2.data.get_signature()}")
+            raise AssertionError(
+                f"Expected {signature}, got {result2.data.get_signature()}"
+            )
 
         # Should still have empty operations list
         updated_pattern = correlation_service._error_patterns[signature]
         if updated_pattern.affected_operations != []:
-            raise AssertionError(f"Expected {[]}, got {updated_pattern.affected_operations}")
+            raise AssertionError(
+                f"Expected {[]}, got {updated_pattern.affected_operations}"
+            )
         assert updated_pattern.frequency == EXPECTED_BULK_SIZE
 
         # Now test adding operation_type to existing pattern with empty operations
@@ -924,17 +993,17 @@ class TestErrorCorrelationService:
 
         # Should now have the operation in the list
         if pattern_with_empty_ops.affected_operations != ["bind"]:
-            raise AssertionError(f"Expected {["bind"]}, got {pattern_with_empty_ops.affected_operations}")
+            raise AssertionError(
+                f"Expected {['bind']}, got {pattern_with_empty_ops.affected_operations}"
+            )
 
     def test_type_checking_import_coverage(self) -> None:
         """Test to ensure TYPE_CHECKING import is covered."""
         # This test ensures the TYPE_CHECKING import block is executed
 
-
         if TYPE_CHECKING:
             # This will be executed during type checking but should still
             # be covered by the test suite
-
 
             assert UUID is not None
 
