@@ -1,19 +1,12 @@
 """Enterprise-grade tests for FlextLdap converters.
 
-# Constants
-EXPECTED_BULK_SIZE = 2
-EXPECTED_DATA_COUNT = 3
-
 Tests data type conversion utilities with comprehensive validation.
 """
 
 import threading
-
-
 from datetime import UTC, datetime
 
 import pytest
-
 from flext_ldap.converters import (
     FlextLdapTypeConverter,
     convert_ldap_to_python,
@@ -23,16 +16,20 @@ from flext_ldap.converters import (
     validate_ldap_attribute_value,
 )
 
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_DATA_COUNT = 3
+
 
 class TestFlextLdapTypeConverter:
     """Test FlextLdap type converter class."""
 
-    def test_converter_instantiation(self):
+    def test_converter_instantiation(self) -> None:
         """Test converter can be instantiated."""
         converter = FlextLdapTypeConverter()
         assert converter is not None
 
-    def test_string_conversion(self):
+    def test_string_conversion(self) -> None:
         """Test string type conversions."""
         converter = FlextLdapTypeConverter()
 
@@ -47,7 +44,7 @@ class TestFlextLdapTypeConverter:
             raise AssertionError(f"Expected {"test bytes"}, got {python_value}")
         assert isinstance(python_value, str)
 
-    def test_integer_conversion(self):
+    def test_integer_conversion(self) -> None:
         """Test integer type conversions."""
         converter = FlextLdapTypeConverter()
 
@@ -62,17 +59,18 @@ class TestFlextLdapTypeConverter:
             raise AssertionError(f"Expected {456}, got {python_value}")
         assert isinstance(python_value, int)
 
-    def test_boolean_conversion(self):
+    def test_boolean_conversion(self) -> None:
         """Test boolean type conversions."""
         converter = FlextLdapTypeConverter()
 
         # Python to LDAP
-        true_value = converter.to_ldap(True)
-        false_value = converter.to_ldap(False)
+        true_value = converter.to_ldap(True)  # noqa: FBT003
+        false_value = converter.to_ldap(False)  # noqa: FBT003
 
         if true_value not in {"TRUE", "true", "1"}:
 
-            raise AssertionError(f"Expected {true_value} in {{"TRUE", "true", "1"}}")
+            expected_values = {"TRUE", "true", "1"}
+            raise AssertionError(f"Expected {true_value} in {expected_values}")
         assert false_value in {"FALSE", "false", "0"}
 
         # LDAP to Python
@@ -85,7 +83,7 @@ class TestFlextLdapTypeConverter:
         if converter.to_python("0", target_type=bool):
             raise AssertionError(f"Expected False, got {converter.to_python("0", target_type=bool)}")
 
-    def test_datetime_conversion(self):
+    def test_datetime_conversion(self) -> None:
         """Test datetime type conversions."""
         converter = FlextLdapTypeConverter()
 
@@ -104,7 +102,7 @@ class TestFlextLdapTypeConverter:
         if python_dt.day != 15:
             raise AssertionError(f"Expected {15}, got {python_dt.day}")
 
-    def test_list_conversion(self):
+    def test_list_conversion(self) -> None:
         """Test list/multi-value conversions."""
         converter = FlextLdapTypeConverter()
 
@@ -120,7 +118,7 @@ class TestFlextLdapTypeConverter:
         if python_values != ["value1", "value2", "value3"]:
             raise AssertionError(f"Expected {["value1", "value2", "value3"]}, got {python_values}")
 
-    def test_bytes_conversion(self):
+    def test_bytes_conversion(self) -> None:
         """Test binary data conversions."""
         converter = FlextLdapTypeConverter()
 
@@ -136,7 +134,7 @@ class TestFlextLdapTypeConverter:
             raise AssertionError(f"Expected {binary_data}, got {python_value}")
         assert isinstance(python_value, bytes)
 
-    def test_none_value_handling(self):
+    def test_none_value_handling(self) -> None:
         """Test None value handling."""
         converter = FlextLdapTypeConverter()
 
@@ -148,7 +146,7 @@ class TestFlextLdapTypeConverter:
         python_value = converter.to_python(None)
         assert python_value is None
 
-    def test_empty_value_handling(self):
+    def test_empty_value_handling(self) -> None:
         """Test empty value handling."""
         converter = FlextLdapTypeConverter()
 
@@ -162,23 +160,23 @@ class TestFlextLdapTypeConverter:
             raise AssertionError(f"Expected {[]}, got {converter.to_ldap([])}")
         assert converter.to_python([]) == []
 
-    def test_error_handling(self):
+    def test_error_handling(self) -> None:
         """Test conversion error handling."""
         converter = FlextLdapTypeConverter()
 
         # Invalid datetime format
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="invalid.*date|time data"):
             converter.to_python("invalid-date", target_type=datetime)
 
         # Invalid integer format
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="invalid.*int|could not convert"):
             converter.to_python("not-a-number", target_type=int)
 
 
 class TestConversionUtilityFunctions:
     """Test utility conversion functions."""
 
-    def test_convert_ldap_to_python(self):
+    def test_convert_ldap_to_python(self) -> None:
         """Test ldap to python conversion function."""
         # String conversion
         result = convert_ldap_to_python(b"test string")
@@ -206,7 +204,7 @@ class TestConversionUtilityFunctions:
         if result["attributes"]["mail"] != ["test@example.com"]:
             raise AssertionError(f"Expected {["test@example.com"]}, got {result["attributes"]["mail"]}")
 
-    def test_convert_python_to_ldap(self):
+    def test_convert_python_to_ldap(self) -> None:
         """Test python to ldap conversion function."""
         # String conversion
         result = convert_python_to_ldap("test string")
@@ -219,9 +217,10 @@ class TestConversionUtilityFunctions:
             raise AssertionError(f"Expected {"123"}, got {result}")
 
         # Boolean conversion
-        result = convert_python_to_ldap(True)
+        result = convert_python_to_ldap(True)  # noqa: FBT003
         if result not in {"TRUE", "true", "1"}:
-            raise AssertionError(f"Expected {result} in {{"TRUE", "true", "1"}}")
+            expected_values = {"TRUE", "true", "1"}
+            raise AssertionError(f"Expected {result} in {expected_values}")
 
         # List conversion
         result = convert_python_to_ldap(["value1", "value2"])
@@ -241,7 +240,7 @@ class TestConversionUtilityFunctions:
         if result["employeeID"] != "12345":
             raise AssertionError(f"Expected {"12345"}, got {result["employeeID"]}")
 
-    def test_validate_ldap_attribute_value(self):
+    def test_validate_ldap_attribute_value(self) -> None:
         """Test LDAP attribute value validation."""
         # Valid string
         if not (validate_ldap_attribute_value("cn", "John Doe")):
@@ -271,7 +270,7 @@ class TestConversionUtilityFunctions:
         if validate_ldap_attribute_value("cn", None):
             raise AssertionError(f"Expected False, got {validate_ldap_attribute_value("cn", None)}")
 
-    def test_normalize_ldap_dn(self):
+    def test_normalize_ldap_dn(self) -> None:
         """Test LDAP DN normalization."""
         # Basic normalization
         dn = "CN=John Doe,OU=Users,DC=Example,DC=Com"
@@ -298,7 +297,7 @@ class TestConversionUtilityFunctions:
         # None DN
         assert normalize_ldap_dn(None) is None
 
-    def test_parse_ldap_filter(self):
+    def test_parse_ldap_filter(self) -> None:
         """Test LDAP filter parsing."""
         # Simple equality filter
         filter_dict = parse_ldap_filter("(cn=john)")
@@ -343,7 +342,7 @@ class TestConversionUtilityFunctions:
 class TestSpecializedConverters:
     """Test specialized conversion scenarios."""
 
-    def test_active_directory_attributes(self):
+    def test_active_directory_attributes(self) -> None:
         """Test Active Directory specific attribute conversions."""
         converter = FlextLdapTypeConverter()
 
@@ -363,7 +362,7 @@ class TestSpecializedConverters:
         result = converter.to_python(pwd_timestamp, attribute_name="pwdLastSet", target_type=datetime)
         assert isinstance(result, datetime)
 
-    def test_openldap_attributes(self):
+    def test_openldap_attributes(self) -> None:
         """Test OpenLDAP specific attribute conversions."""
         converter = FlextLdapTypeConverter()
 
@@ -380,7 +379,7 @@ class TestSpecializedConverters:
         if result != uuid_str:
             raise AssertionError(f"Expected {uuid_str}, got {result}")
 
-    def test_oracle_directory_attributes(self):
+    def test_oracle_directory_attributes(self) -> None:
         """Test Oracle Unified Directory specific conversions."""
         converter = FlextLdapTypeConverter()
 
@@ -396,7 +395,7 @@ class TestSpecializedConverters:
         if result != custom_value:
             raise AssertionError(f"Expected {custom_value}, got {result}")
 
-    def test_performance_large_datasets(self):
+    def test_performance_large_datasets(self) -> None:
         """Test conversion performance with large datasets."""
         converter = FlextLdapTypeConverter()
 
@@ -416,7 +415,7 @@ class TestSpecializedConverters:
             raise AssertionError(f"Expected {large_binary}, got {result}")
         assert len(result) == 10000
 
-    def test_encoding_edge_cases(self):
+    def test_encoding_edge_cases(self) -> None:
         """Test encoding edge cases."""
         converter = FlextLdapTypeConverter()
 
@@ -437,7 +436,7 @@ class TestSpecializedConverters:
         result = converter.to_python(control_chars.encode(), preserve_binary=True)
         assert isinstance(result, bytes)
 
-    def test_type_inference(self):
+    def test_type_inference(self) -> None:
         """Test automatic type inference."""
         converter = FlextLdapTypeConverter()
 
@@ -466,7 +465,7 @@ class TestSpecializedConverters:
 class TestConverterEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_circular_references(self):
+    def test_circular_references(self) -> None:
         """Test handling of circular references in data structures."""
         converter = FlextLdapTypeConverter()
 
@@ -478,7 +477,7 @@ class TestConverterEdgeCases:
         with pytest.raises((ValueError, RecursionError)):
             converter.to_ldap(data)
 
-    def test_deeply_nested_structures(self):
+    def test_deeply_nested_structures(self) -> None:
         """Test deeply nested data structures."""
         converter = FlextLdapTypeConverter()
 
@@ -494,7 +493,7 @@ class TestConverterEdgeCases:
         if result["level"] != "1":
             raise AssertionError(f"Expected {"1"}, got {result["level"]}")
 
-    def test_memory_efficiency(self):
+    def test_memory_efficiency(self) -> None:
         """Test memory efficiency with large conversions."""
         converter = FlextLdapTypeConverter()
 
@@ -508,7 +507,7 @@ class TestConverterEdgeCases:
         if result is large_string or result != large_string:
             raise AssertionError(f"Expected {large_string}, got {result is large_string or result}")
 
-    def test_thread_safety(self):
+    def test_thread_safety(self) -> None:
         """Test converter thread safety."""
 
 
@@ -516,7 +515,7 @@ class TestConverterEdgeCases:
         results = []
         errors = []
 
-        def convert_data(data, index):
+        def convert_data(data: str, index: int) -> None:
             try:
                 result = converter.to_ldap(f"value{index}")
                 results.append(result)
@@ -546,7 +545,7 @@ class TestConverterEdgeCases:
 class TestConverterIntegration:
     """Integration tests for converter functionality."""
 
-    def test_roundtrip_conversion(self):
+    def test_roundtrip_conversion(self) -> None:
         """Test data integrity through roundtrip conversions."""
         converter = FlextLdapTypeConverter()
 
@@ -572,7 +571,7 @@ class TestConverterIntegration:
             raise AssertionError(f"Expected {test_data["list"]}, got {python_data["list"]}")
         assert python_data["binary"] == test_data["binary"]
 
-    def test_real_ldap_entry_conversion(self):
+    def test_real_ldap_entry_conversion(self) -> None:
         """Test conversion of realistic LDAP entry data."""
         FlextLdapTypeConverter()
 
@@ -603,7 +602,7 @@ class TestConverterIntegration:
         if len(python_entry["attributes"]["objectClass"]) != EXPECTED_DATA_COUNT:
             raise AssertionError(f"Expected {3}, got {len(python_entry["attributes"]["objectClass"])}")
 
-    def test_attribute_schema_aware_conversion(self):
+    def test_attribute_schema_aware_conversion(self) -> None:
         """Test schema-aware attribute conversion."""
         converter = FlextLdapTypeConverter()
 

@@ -7,9 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-
 from flext_ldap.application.ldap_service import FlextLdapService
-from flext_ldap.domain.value_objects import FlextLdapCreateUserRequest
+from flext_ldap.values import FlextLdapCreateUserRequest
 
 # Backward compatibility aliases
 LDAPService = FlextLdapService
@@ -53,7 +52,7 @@ class TestLDAPService:
         user = result.data
         assert user is not None
         if user.uid != "testuser":
-            raise AssertionError(f"Expected {"testuser"}, got {user.uid}")
+            raise AssertionError(f"Expected {'testuser'}, got {user.uid}")
         assert user.mail == "testuser@example.com"
 
         # Find user by UID
@@ -62,7 +61,7 @@ class TestLDAPService:
         found_user = find_result.data
         assert found_user is not None
         if found_user.uid != "testuser":
-            raise AssertionError(f"Expected {"testuser"}, got {found_user.uid}")
+            raise AssertionError(f"Expected {'testuser'}, got {found_user.uid}")
 
         # Update user
         update_result = await ldap_service.update_user(
@@ -75,7 +74,9 @@ class TestLDAPService:
         updated_user = update_result.data
         assert updated_user is not None
         if updated_user.title != "Senior Developer":
-            raise AssertionError(f"Expected {"Senior Developer"}, got {updated_user.title}")
+            raise AssertionError(
+                f"Expected {'Senior Developer'}, got {updated_user.title}"
+            )
 
         # List users
         list_result = await ldap_service.list_users()
@@ -114,7 +115,7 @@ class TestLDAPService:
         group = result.data
         assert group is not None
         if group.cn != "developers":
-            raise AssertionError(f"Expected {"developers"}, got {group.cn}")
+            raise AssertionError(f"Expected {'developers'}, got {group.cn}")
 
         # Find group by DN
         find_result = await ldap_service.find_group_by_dn(group.dn)
@@ -122,7 +123,7 @@ class TestLDAPService:
         found_group = find_result.data
         assert found_group is not None
         if found_group.cn != "developers":
-            raise AssertionError(f"Expected {"developers"}, got {found_group.cn}")
+            raise AssertionError(f"Expected {'developers'}, got {found_group.cn}")
 
         # Add member to group
         member_dn = "cn=testuser,ou=people,dc=example,dc=com"
@@ -139,7 +140,9 @@ class TestLDAPService:
         found_remove_group = remove_result.data
         assert found_remove_group is not None
         if member_dn not in found_remove_group.members:
-            raise AssertionError(f"Expected {member_dn not in {found_remove_group.members}")
+            raise AssertionError(
+                f"Expected {member_dn} not in {found_remove_group.members}"
+            )
 
         # List groups
         list_result = await ldap_service.list_groups()
@@ -178,7 +181,9 @@ class TestLDAPService:
         assert test_result.is_failure
         assert test_result.error is not None
         if "No active connection" not in test_result.error:
-            raise AssertionError(f"Expected {"No active connection"} in {test_result.error}")
+            raise AssertionError(
+                f"Expected 'No active connection' in {test_result.error}"
+            )
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -201,7 +206,9 @@ class TestLDAPService:
         assert disconnect_result.is_failure
         assert disconnect_result.error is not None
         if "No active connection" not in disconnect_result.error:
-            raise AssertionError(f"Expected {"No active connection"} in {disconnect_result.error}")
+            raise AssertionError(
+                f"Expected {'No active connection'} in {disconnect_result.error}"
+            )
 
     @pytest.mark.integration
     @pytest.mark.asyncio
@@ -220,7 +227,9 @@ class TestLDAPService:
         assert result.is_failure
         assert result.error is not None
         if "Failed to connect to LDAP" not in result.error:
-            raise AssertionError(f"Expected {"Failed to connect to LDAP"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'Failed to connect to LDAP'} in {result.error}"
+            )
 
         # Should still not be connected
         assert not ldap_service.is_connected()
@@ -251,19 +260,19 @@ class TestLDAPService:
 
         assert user is not None
         if user.uid != "john.doe":
-            raise AssertionError(f"Expected {"john.doe"}, got {user.uid}")
+            raise AssertionError(f"Expected {'john.doe'}, got {user.uid}")
         assert user.cn == "John Doe"
         if user.sn != "Doe":
-            raise AssertionError(f"Expected {"Doe"}, got {user.sn}")
+            raise AssertionError(f"Expected {'Doe'}, got {user.sn}")
         assert user.mail == "john.doe@example.com"
         if user.phone != "+1-555-0123":
-            raise AssertionError(f"Expected {"+1-555-0123"}, got {user.phone}")
+            raise AssertionError(f"Expected {'+1-555-0123'}, got {user.phone}")
         assert user.ou == "people"
         if user.department != "Engineering":
-            raise AssertionError(f"Expected {"Engineering"}, got {user.department}")
+            raise AssertionError(f"Expected {'Engineering'}, got {user.department}")
         assert user.title == "Senior Software Engineer"
         if "inetOrgPerson" not in user.object_classes:
-            raise AssertionError(f"Expected {"inetOrgPerson"} in {user.object_classes}")
+            raise AssertionError(f"Expected {'inetOrgPerson'} in {user.object_classes}")
         assert "organizationalPerson" in user.object_classes
 
     @pytest.mark.unit

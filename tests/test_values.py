@@ -1,13 +1,13 @@
 """Enterprise-grade tests for FlextLdap value objects.
 
-# Constants
-EXPECTED_BULK_SIZE = 2
-EXPECTED_DATA_COUNT = 3
-
 Tests all value objects with comprehensive validation.
 """
 
 import pytest
+
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_DATA_COUNT = 3
 from flext_ldap.values import (
     FlextLdapAttributesValue,
     FlextLdapConnectionInfo,

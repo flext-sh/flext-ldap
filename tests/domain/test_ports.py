@@ -8,11 +8,15 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC
-from typing import Any
+from typing import TYPE_CHECKING
 
 import flext_ldap.domain.ports
 import pytest
 from flext_ldap.domain import ports
+
+if TYPE_CHECKING:
+    from flext_core import FlextResult
+    from flext_ldap.entities import FlextLdapConnection
 
 
 class TestFlextLdapConnectionService:
@@ -73,23 +77,29 @@ class TestFlextLdapConnectionService:
                 server_url: str,
                 bind_dn: str | None = None,
                 password: str | None = None,
-            ) -> Any:
-                return None
+            ) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
-            async def disconnect(self, connection: Any) -> Any:
-                return None
+            async def disconnect(self, connection: FlextLdapConnection) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
-            async def bind(self, connection: Any, bind_dn: str, password: str) -> Any:
-                return None
+            async def bind(self, connection: FlextLdapConnection, bind_dn: str, password: str) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
-            async def unbind(self, connection: Any) -> Any:
-                return None
+            async def unbind(self, connection: FlextLdapConnection) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
-            async def test_connection(self, connection: Any) -> Any:
-                return None
+            async def test_connection(self, connection: FlextLdapConnection) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
-            async def get_connection_info(self, connection: Any) -> Any:
-                return None
+            async def get_connection_info(self, connection: FlextLdapConnection) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
         # Should not raise any errors
         service = ConcreteConnectionService()
@@ -141,21 +151,23 @@ class TestFlextLdapSearchService:
         class ConcreteSearchService(ports.FlextLdapSearchService):
             async def search(
                 self,
-                connection: Any,
+                connection: FlextLdapConnection,
                 base_dn: str,
                 filter_string: str,
                 attributes: list[str] | None = None,
                 scope: str = "sub",
-            ) -> Any:
-                return None
+            ) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
             async def search_users(
                 self,
-                connection: Any,
+                connection: FlextLdapConnection,
                 base_dn: str,
                 filter_string: str | None = None,
-            ) -> Any:
-                return None
+            ) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
         # Should not raise any errors
         service = ConcreteSearchService()
@@ -209,33 +221,38 @@ class TestFlextLdapUserService:
         class ConcreteUserService(ports.FlextLdapUserService):
             async def create_user(
                 self,
-                connection: Any,
+                connection: FlextLdapConnection,
                 dn: str,
                 attributes: dict[str, list[str]],
-            ) -> Any:
-                return None
+            ) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
-            async def get_user(self, connection: Any, dn: str) -> Any:
-                return None
+            async def get_user(self, connection: FlextLdapConnection, dn: str) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
             async def update_user(
                 self,
-                connection: Any,
+                connection: FlextLdapConnection,
                 dn: str,
                 modifications: dict[str, list[str]],
-            ) -> Any:
-                return None
+            ) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
-            async def delete_user(self, connection: Any, dn: str) -> Any:
-                return None
+            async def delete_user(self, connection: FlextLdapConnection, dn: str) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
             async def list_users(
                 self,
-                connection: Any,
+                connection: FlextLdapConnection,
                 base_dn: str,
                 limit: int = 100,
-            ) -> Any:
-                return None
+            ) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
         # Should not raise any errors
         service = ConcreteUserService()
@@ -268,16 +285,18 @@ class TestFlextLdapSchemaService:
         """Test that concrete implementation can be created."""
 
         class ConcreteSchemaService(ports.FlextLdapSchemaService):
-            async def get_schema(self, connection: Any) -> Any:
-                return None
+            async def get_schema(self, connection: FlextLdapConnection) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
             async def validate_entry(
                 self,
-                connection: Any,
+                connection: FlextLdapConnection,
                 dn: str,
                 attributes: dict[str, list[str]],
-            ) -> Any:
-                return None
+            ) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
         # Should not raise any errors
         service = ConcreteSchemaService()
@@ -325,27 +344,30 @@ class TestFlextLdapMigrationService:
         class ConcreteMigrationService(ports.FlextLdapMigrationService):
             async def export_entries(
                 self,
-                connection: Any,
+                connection: FlextLdapConnection,
                 base_dn: str,
                 output_format: str = "ldif",
-            ) -> Any:
-                return None
+            ) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
             async def import_entries(
                 self,
-                connection: Any,
+                connection: FlextLdapConnection,
                 data: str,
                 format_type: str = "ldif",
-            ) -> Any:
-                return None
+            ) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
             async def migrate_users(
                 self,
-                source_connection: Any,
-                target_connection: Any,
+                source_connection: FlextLdapConnection,
+                target_connection: FlextLdapConnection,
                 base_dn: str,
-            ) -> Any:
-                return None
+            ) -> FlextResult[object]:
+                from flext_core import FlextResult
+                return FlextResult.success(None)
 
         # Should not raise any errors
         service = ConcreteMigrationService()

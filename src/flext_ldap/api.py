@@ -365,7 +365,7 @@ class FlextLdapApi:
                 "status": "healthy",
                 "active_sessions": len(self._connections),
                 "container_registered": self._container.get("ldap_api").is_success,
-                "version": "0.8.0",
+                "version": "0.9.0",
                 "features": [
                     "unified_api",
                     "domain_entities",

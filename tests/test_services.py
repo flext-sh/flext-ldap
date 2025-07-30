@@ -1,13 +1,13 @@
 """Enterprise-grade tests for FlextLdap services.
 
-# Constants
-EXPECTED_BULK_SIZE = 2
-EXPECTED_DATA_COUNT = 3
-
 Tests all application services with flext-core integration.
 """
 
 from uuid import uuid4
+
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_DATA_COUNT = 3
 
 import pytest
 from flext_ldap.entities import (

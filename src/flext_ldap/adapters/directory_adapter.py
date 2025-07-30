@@ -68,7 +68,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         if self._ldap_client is None:
             self._ldap_client = FlextLdapSimpleClient()
 
-    async def connect(
+    async def connect(  # noqa: PLR0913
         self,
         server_url: str,
         *,

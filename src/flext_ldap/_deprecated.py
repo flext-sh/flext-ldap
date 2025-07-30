@@ -22,7 +22,7 @@ class LDAPDeprecationWarning(DeprecationWarning):
 def warn_deprecated(
     old_path: str,
     new_path: str,
-    version: str = "1.0.0",
+    version: str = "0.9.0",
 ) -> None:
     """Issue deprecation warning with migration guidance.
 
@@ -55,7 +55,7 @@ def warn_deprecated(
 def warn_deprecated_path(
     old_path: str,
     recommendation: str,
-    version: str = "1.0.0",
+    version: str = "0.9.0",
 ) -> None:
     """Issue deprecation warning for complex import paths.
 

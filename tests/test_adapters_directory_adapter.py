@@ -1,18 +1,15 @@
 """Tests for LDAP directory adapter in FLEXT-LDAP."""
 
-from flext_ldap.adapters.directory_adapter import (
-
-
 from typing import cast
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from flext_core import FlextResult
 
-from flext_ldap.adapters.directory_adapter import (
 # Constants
 EXPECTED_DATA_COUNT = 3
 
+from flext_ldap.adapters.directory_adapter import (
     FlextLdapDirectoryAdapter,
     FlextLdapDirectoryAdapterInterface,
     FlextLdapDirectoryConnectionProtocol,
@@ -141,8 +138,9 @@ class TestFlextLdapDirectoryService:
         if len(result.data) != 1:
             raise AssertionError(f"Expected {1}, got {len(result.data)}")
         assert result.data[0].dn == "cn=user,dc=example,dc=com"
-        if result.data[0].attributes != {"uid": "user"}:
-            raise AssertionError(f"Expected {{"uid": "user"}}, got {result.data[0].attributes}")
+        expected_attrs = {"uid": "user"}
+        if result.data[0].attributes != expected_attrs:
+            raise AssertionError(f"Expected {expected_attrs}, got {result.data[0].attributes}")
 
     async def test_search_users_exception(
         self,
@@ -625,7 +623,7 @@ class TestBackwardCompatibilityAliases:
 
     def test_aliases_exist(self) -> None:
         """Test that backward compatibility aliases exist."""
-
+        from flext_ldap.adapters.directory_adapter import (
             DirectoryAdapterInterface,
             DirectoryConnectionProtocol,
             DirectoryEntryProtocol,

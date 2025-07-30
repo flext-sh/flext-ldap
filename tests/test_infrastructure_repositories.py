@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 from uuid import UUID, uuid4
 
 import pytest
-
 from flext_ldap.domain.entities import FlextLdapConnection, FlextLdapUser
 from flext_ldap.domain.exceptions import FlextLdapUserError
 from flext_ldap.domain.value_objects import FlextLdapDistinguishedName
@@ -167,7 +166,7 @@ class TestFlextLdapConnectionRepositoryImpl:
             raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is True
         if mock_connection.id not in repository._connections:
-            raise AssertionError(f"Expected {mock_connection.id not in {repository._connections}")
+            raise AssertionError(f"Expected {mock_connection.id} to be in {repository._connections}")
 
     async def test_delete_not_found(
         self,
@@ -510,8 +509,7 @@ class TestFlextLdapUserRepositoryImpl:
     ) -> None:
         """Test get by UID with exception."""
         # Mock repository to force exception
-        # We need to patch the method to simulate an internal exception that gets caught and (
-            re-raised)
+        # We need to patch the method to simulate an internal exception that gets caught and re-raised
         with patch.object(repository, "get_by_uid") as mock_method:
             # Simulate what happens in the real method: exception caught and re-raised as ValueError
             mock_method.side_effect = ValueError(

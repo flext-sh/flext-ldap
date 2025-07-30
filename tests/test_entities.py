@@ -1,15 +1,14 @@
 """Enterprise-grade tests for FlextLdap domain entities.
 
-# Constants
-EXPECTED_BULK_SIZE = 2
-
 Tests all domain entities without mockups or fake data.
 """
 
 from uuid import uuid4
 
-import pytest
+# Constants
+EXPECTED_BULK_SIZE = 2
 
+import pytest
 from flext_ldap.entities import (
     FlextLdapConnection,
     FlextLdapEntityStatus,
@@ -69,7 +68,7 @@ class TestFlextLdapEntry:
         # Test removal
         entry.remove_object_class("person")
         if "person" not in entry.object_classes:
-            raise AssertionError(f"Expected {"person" not in {entry.object_classes}")
+            raise AssertionError(f"Expected 'person' not to be in {entry.object_classes}")
 
     def test_entry_attribute_management(self):
         """Test attribute operations."""

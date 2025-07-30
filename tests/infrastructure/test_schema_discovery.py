@@ -15,6 +15,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_DATA_COUNT = 3
 from flext_ldap.infrastructure.schema_discovery import (
     AttributeUsage,
     ObjectClassType,
@@ -183,17 +186,17 @@ class TestSchemaObjectClass:
         must_attrs, may_attrs = org_person_oc.get_all_attributes(schema_cache)
 
         # Should include attributes from all superior classes
-        if "objectClass" not in must_attrs  # From top:
-            raise AssertionError(f"Expected {"objectClass"} in {must_attrs  # From top}")
+        if "objectClass" not in must_attrs:  # From top
+            raise AssertionError(f"Expected 'objectClass' in {must_attrs}")
         assert "sn" in must_attrs  # From person
-        if "cn" not in must_attrs  # From person:
-            raise AssertionError(f"Expected {"cn"} in {must_attrs  # From person}")
+        if "cn" not in must_attrs:  # From person
+            raise AssertionError(f"Expected 'cn' in {must_attrs}")
         assert "description" in may_attrs  # From person
-        if "telephoneNumber" not in may_attrs  # From person:
-            raise AssertionError(f"Expected {"telephoneNumber"} in {may_attrs  # From person}")
+        if "telephoneNumber" not in may_attrs:  # From person
+            raise AssertionError(f"Expected 'telephoneNumber' in {may_attrs}")
         assert "title" in may_attrs  # From organizationalPerson
-        if "ou" not in may_attrs  # From organizationalPerson:
-            raise AssertionError(f"Expected {"ou"} in {may_attrs  # From organizationalPerson}")
+        if "ou" not in may_attrs:  # From organizationalPerson
+            raise AssertionError(f"Expected 'ou' in {may_attrs}")
 
     def test_schema_object_class_to_dict(self) -> None:
         """Test to_dict conversion."""
@@ -559,8 +562,9 @@ class TestSchemaDiscoveryService:
         if result.data["is_valid"]:
             raise AssertionError(f"Expected False, got {result.data["is_valid"]}")
         assert len(result.data["errors"]) > 0
-        if any("Unknown object class" in error for error not in result.data["errors"]):
-            raise AssertionError(f"Expected {any("Unknown object class" in error for error} in {result.data["errors"])}")
+        has_unknown_error = any("Unknown object class" in error for error in result.data["errors"])
+        if not has_unknown_error:
+            raise AssertionError(f"Expected 'Unknown object class' error in {result.data['errors']}")
 
     def test_generate_cache_key(
         self,
@@ -607,7 +611,7 @@ class TestSchemaDiscoveryService:
         cached_result = discovery_service._get_cached_schema("test_key")
         assert cached_result is None
         if "test_key" not in discovery_service._schema_cache:
-            raise AssertionError(f"Expected {"test_key" not in {discovery_service._schema_cache}")
+            raise AssertionError(f"Expected 'test_key' not to be in {discovery_service._schema_cache}")
 
     def test_clear_cache(self, discovery_service: SchemaDiscoveryService) -> None:
         """Test cache clearing."""

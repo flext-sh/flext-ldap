@@ -1,19 +1,18 @@
 """Tests for Data Type Converter Infrastructure.
 
-# Constants
-EXPECTED_DATA_COUNT = 3
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
+# Constants
+EXPECTED_DATA_COUNT = 3
+
 import uuid
 from datetime import datetime
 
 import pytest
-
 from flext_ldap.infrastructure.data_type_converter import (
     ConversionError,
     ConversionResult,
@@ -114,7 +113,7 @@ class TestConversionError:
 
         if str(error) != "Test error":
 
-            raise AssertionError(f"Expected {"Test error"}, got {str(error)}")
+            raise AssertionError(f"Expected {"Test error"}, got {error!s}")
         assert error.source_value == "invalid"
         if error.target_type != "int":
             raise AssertionError(f"Expected {"int"}, got {error.target_type}")
@@ -355,7 +354,7 @@ class TestDataTypeConverter:
         assert result.data is not None
         assert isinstance(result.data.value, uuid.UUID)
         if str(result.data.value) != test_uuid:
-            raise AssertionError(f"Expected {test_uuid}, got {str(result.data.value)}")
+            raise AssertionError(f"Expected {test_uuid}, got {result.data.value!s}")
         if not (result.data.is_valid):
             raise AssertionError(f"Expected True, got {result.data.is_valid}")
 
@@ -494,14 +493,12 @@ class TestDataTypeConverter:
         assert result.data is not None
         if len(result.data) != EXPECTED_DATA_COUNT:
             raise AssertionError(f"Expected {3}, got {len(result.data)}")
-        if all(result.data[i].is_valid for i not in range(len(result.data))):
-            raise AssertionError(f"Expected {all(result.data[i].is_valid for i} in {range(len(result.data)))}")
-        if [result.data[i].value for i in range(len(result.data))] != [:
-            raise AssertionError(f"Expected {[}, got {[result.data[i].value for i in range(len(result.data))]}")
-            123,
-            456,
-            789,
-        ]
+        if not all(result.data[i].is_valid for i in range(len(result.data))):
+            raise AssertionError("Expected all items to be valid")
+        expected_values = [123, 456, 789]
+        actual_values = [result.data[i].value for i in range(len(result.data))]
+        if actual_values != expected_values:
+            raise AssertionError(f"Expected {expected_values}, got {actual_values}")
 
     @pytest.mark.asyncio
     async def test_convert_batch_mixed_results(
@@ -654,7 +651,7 @@ class TestDataTypeConverter:
         converted_uuid = converter._convert_to_uuid(test_uuid_str)
         assert isinstance(converted_uuid, uuid.UUID)
         if str(converted_uuid) != test_uuid_str:
-            raise AssertionError(f"Expected {test_uuid_str}, got {str(converted_uuid)}")
+            raise AssertionError(f"Expected {test_uuid_str}, got {converted_uuid!s}")
 
     def test_get_supported_types(self, converter: DataTypeConverter) -> None:
         """Test getting supported types."""

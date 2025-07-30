@@ -1,36 +1,12 @@
 """Test LDAP client functionality."""
 
-from flext_ldap.client import FlextLdapClient
-from flext_ldap.client import FlextLdapClient
-from flext_ldap.client import FlextLdapClient
-from unittest.mock import AsyncMock, MagicMock, patch
-from flext_ldap.client import FlextLdapClient
-from unittest.mock import AsyncMock, MagicMock, patch
-from flext_ldap.client import FlextConnectionError, FlextLdapClient
-from unittest.mock import AsyncMock, MagicMock, patch
-from flext_ldap.client import FlextLdapClient
-from unittest.mock import AsyncMock, MagicMock, patch
-from flext_ldap.client import FlextLdapClient
-from flext_ldap.client import FlextLdapClient
-from unittest.mock import AsyncMock, MagicMock, patch
-from flext_ldap.client import FlextLdapClient
-from flext_ldap.client import FlextLdapClient
-from unittest.mock import AsyncMock, MagicMock, patch
-from flext_ldap.client import FlextLdapClient
-from flext_ldap.client import FlextLdapClient
-from unittest.mock import AsyncMock, MagicMock, patch
-from flext_ldap.client import FlextLdapClient
-from unittest.mock import AsyncMock, MagicMock, patch
-from flext_ldap.client import FlextLdapClient
-from unittest.mock import MagicMock, patch
-from flext_ldap.client import FlextLdapClient
-
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from flext_ldap.client import FlextConnectionError, FlextLdapClient
 
 if TYPE_CHECKING:
     from flext_ldap.config import FlextLdapSettings
@@ -75,8 +51,9 @@ class TestLDAPClient:
 
         client = FlextLdapClient()
         info = client.get_server_info()
-        if info != {"status": "disconnected"}:
-            raise AssertionError(f"Expected {{"status": "disconnected"}}, got {info}")
+        expected_info = {"status": "disconnected"}
+        if info != expected_info:
+            raise AssertionError(f"Expected {expected_info}, got {info}")
 
     @pytest.mark.asyncio
     async def test_connect_success(self) -> None:
