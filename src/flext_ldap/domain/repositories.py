@@ -1,4 +1,4 @@
-"""LDAP Domain Repository Interfaces - Version 0.7.0.
+"""LDAP Domain Repository Interfaces - Version 0.9.0.
 
 Abstract repository interfaces - no implementation details.
 """

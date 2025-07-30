@@ -239,7 +239,7 @@ class FlextLdapSettings(BaseSettings):
     project_name: ProjectName = Field(
         default="flext-infrastructure.databases.flext-ldap",
     )
-    project_version: Version = Field(default="0.7.0")
+    project_version: Version = Field(default="0.9.0")
 
     # Configuration sections
     connection: FlextLdapConnectionConfig = Field(

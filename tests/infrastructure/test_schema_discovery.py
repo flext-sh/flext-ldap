@@ -41,11 +41,10 @@ class TestSchemaAttribute:
         )
 
         if attr.oid != "2.5.4.3":
-
-            raise AssertionError(f"Expected {"2.5.4.3"}, got {attr.oid}")
+            raise AssertionError(f"Expected {'2.5.4.3'}, got {attr.oid}")
         assert attr.names == ["cn", "commonName"]
         if attr.description != "Common name":
-            raise AssertionError(f"Expected {"Common name"}, got {attr.description}")
+            raise AssertionError(f"Expected {'Common name'}, got {attr.description}")
         assert attr.usage == AttributeUsage.USER_APPLICATIONS
         if attr.is_single_value:
             raise AssertionError(f"Expected False, got {attr.is_single_value}")
@@ -55,25 +54,24 @@ class TestSchemaAttribute:
         # With names
         attr1 = SchemaAttribute(oid="2.5.4.3", names=["cn", "commonName"])
         if attr1.primary_name != "cn":
-            raise AssertionError(f"Expected {"cn"}, got {attr1.primary_name}")
+            raise AssertionError(f"Expected {'cn'}, got {attr1.primary_name}")
 
         # Without names
         attr2 = SchemaAttribute(oid="2.5.4.3")
         if attr2.primary_name != "2.5.4.3":
-            raise AssertionError(f"Expected {"2.5.4.3"}, got {attr2.primary_name}")
+            raise AssertionError(f"Expected {'2.5.4.3'}, got {attr2.primary_name}")
 
     def test_schema_attribute_has_name(self) -> None:
         """Test has_name method."""
         attr = SchemaAttribute(oid="2.5.4.3", names=["cn", "commonName"])
 
         if not (attr.has_name("cn")):
-
-            raise AssertionError(f"Expected True, got {attr.has_name("cn")}")
+            raise AssertionError(f"Expected True, got {attr.has_name('cn')}")
         assert attr.has_name("CN") is True  # Case insensitive
         if not (attr.has_name("commonName")):
-            raise AssertionError(f"Expected True, got {attr.has_name("commonName")}")
+            raise AssertionError(f"Expected True, got {attr.has_name('commonName')}")
         if attr.has_name("unknown"):
-            raise AssertionError(f"Expected False, got {attr.has_name("unknown")}")
+            raise AssertionError(f"Expected False, got {attr.has_name('unknown')}")
 
     def test_schema_attribute_to_dict(self) -> None:
         """Test to_dict conversion."""
@@ -89,16 +87,19 @@ class TestSchemaAttribute:
         attr_dict = attr.to_dict()
 
         if attr_dict["oid"] != "2.5.4.3":
-
-            raise AssertionError(f"Expected {"2.5.4.3"}, got {attr_dict["oid"]}")
+            raise AssertionError(f"Expected {'2.5.4.3'}, got {attr_dict['oid']}")
         assert attr_dict["names"] == ["cn", "commonName"]
         if attr_dict["description"] != "Common name":
-            raise AssertionError(f"Expected {"Common name"}, got {attr_dict["description"]}")
+            raise AssertionError(
+                f"Expected {'Common name'}, got {attr_dict['description']}"
+            )
         assert attr_dict["syntax"] == "1.3.6.1.4.1.1466.115.121.1.15"
         if not (attr_dict["is_single_value"]):
-            raise AssertionError(f"Expected True, got {attr_dict["is_single_value"]}")
+            raise AssertionError(f"Expected True, got {attr_dict['is_single_value']}")
         if attr_dict["usage"] != "directoryOperation":
-            raise AssertionError(f"Expected {"directoryOperation"}, got {attr_dict["usage"]}")
+            raise AssertionError(
+                f"Expected {'directoryOperation'}, got {attr_dict['usage']}"
+            )
 
 
 class TestSchemaObjectClass:
@@ -113,11 +114,10 @@ class TestSchemaObjectClass:
         )
 
         if oc.oid != "2.5.6.6":
-
-            raise AssertionError(f"Expected {"2.5.6.6"}, got {oc.oid}")
+            raise AssertionError(f"Expected {'2.5.6.6'}, got {oc.oid}")
         assert oc.names == ["person"]
         if oc.description != "A person":
-            raise AssertionError(f"Expected {"A person"}, got {oc.description}")
+            raise AssertionError(f"Expected {'A person'}, got {oc.description}")
         assert oc.object_class_type == ObjectClassType.STRUCTURAL
         if oc.superior_classes != []:
             raise AssertionError(f"Expected {[]}, got {oc.superior_classes}")
@@ -130,25 +130,24 @@ class TestSchemaObjectClass:
         # With names
         oc1 = SchemaObjectClass(oid="2.5.6.6", names=["person", "individual"])
         if oc1.primary_name != "person":
-            raise AssertionError(f"Expected {"person"}, got {oc1.primary_name}")
+            raise AssertionError(f"Expected {'person'}, got {oc1.primary_name}")
 
         # Without names
         oc2 = SchemaObjectClass(oid="2.5.6.6")
         if oc2.primary_name != "2.5.6.6":
-            raise AssertionError(f"Expected {"2.5.6.6"}, got {oc2.primary_name}")
+            raise AssertionError(f"Expected {'2.5.6.6'}, got {oc2.primary_name}")
 
     def test_schema_object_class_has_name(self) -> None:
         """Test has_name method."""
         oc = SchemaObjectClass(oid="2.5.6.6", names=["person", "individual"])
 
         if not (oc.has_name("person")):
-
-            raise AssertionError(f"Expected True, got {oc.has_name("person")}")
+            raise AssertionError(f"Expected True, got {oc.has_name('person')}")
         assert oc.has_name("PERSON") is True  # Case insensitive
         if not (oc.has_name("individual")):
-            raise AssertionError(f"Expected True, got {oc.has_name("individual")}")
+            raise AssertionError(f"Expected True, got {oc.has_name('individual')}")
         if oc.has_name("unknown"):
-            raise AssertionError(f"Expected False, got {oc.has_name("unknown")}")
+            raise AssertionError(f"Expected False, got {oc.has_name('unknown')}")
 
     def test_schema_object_class_get_all_attributes(self) -> None:
         """Test get_all_attributes method with inheritance."""
@@ -213,17 +212,20 @@ class TestSchemaObjectClass:
         oc_dict = oc.to_dict()
 
         if oc_dict["oid"] != "2.5.6.6":
-
-            raise AssertionError(f"Expected {"2.5.6.6"}, got {oc_dict["oid"]}")
+            raise AssertionError(f"Expected {'2.5.6.6'}, got {oc_dict['oid']}")
         assert oc_dict["names"] == ["person"]
         if oc_dict["description"] != "A person":
-            raise AssertionError(f"Expected {"A person"}, got {oc_dict["description"]}")
+            raise AssertionError(f"Expected {'A person'}, got {oc_dict['description']}")
         assert oc_dict["object_class_type"] == "STRUCTURAL"
         if oc_dict["superior_classes"] != ["top"]:
-            raise AssertionError(f"Expected {["top"]}, got {oc_dict["superior_classes"]}")
+            raise AssertionError(
+                f"Expected {['top']}, got {oc_dict['superior_classes']}"
+            )
         assert oc_dict["must_attributes"] == ["sn", "cn"]
         if oc_dict["may_attributes"] != ["description"]:
-            raise AssertionError(f"Expected {["description"]}, got {oc_dict["may_attributes"]}")
+            raise AssertionError(
+                f"Expected {['description']}, got {oc_dict['may_attributes']}"
+            )
 
 
 class TestSchemaDiscoveryResult:
@@ -269,7 +271,6 @@ class TestSchemaDiscoveryResult:
         )
 
         if result.total_elements != 4:
-
             raise AssertionError(f"Expected {4}, got {result.total_elements}")
 
     def test_schema_discovery_result_to_dict(self) -> None:
@@ -291,18 +292,25 @@ class TestSchemaDiscoveryResult:
         result_dict = result.to_dict()
 
         if result_dict["timestamp"] != timestamp.isoformat():
-
-            raise AssertionError(f"Expected {timestamp.isoformat()}, got {result_dict["timestamp"]}")
+            raise AssertionError(
+                f"Expected {timestamp.isoformat()}, got {result_dict['timestamp']}"
+            )
         assert result_dict["server_info"] == {"vendor": "Test"}
         if "person" not in result_dict["object_classes"]:
-            raise AssertionError(f"Expected {"person"} in {result_dict["object_classes"]}")
+            raise AssertionError(
+                f"Expected {'person'} in {result_dict['object_classes']}"
+            )
         assert "cn" in result_dict["attributes"]
         if result_dict["discovery_errors"] != ["error1"]:
-            raise AssertionError(f"Expected {["error1"]}, got {result_dict["discovery_errors"]}")
+            raise AssertionError(
+                f"Expected {['error1']}, got {result_dict['discovery_errors']}"
+            )
         if not (result_dict["cache_hit"]):
-            raise AssertionError(f"Expected True, got {result_dict["cache_hit"]}")
+            raise AssertionError(f"Expected True, got {result_dict['cache_hit']}")
         if result_dict["discovery_duration_ms"] != 100:
-            raise AssertionError(f"Expected {100}, got {result_dict["discovery_duration_ms"]}")
+            raise AssertionError(
+                f"Expected {100}, got {result_dict['discovery_duration_ms']}"
+            )
         assert result_dict["total_elements"] == EXPECTED_BULK_SIZE
 
 
@@ -340,7 +348,7 @@ class TestSchemaDiscoveryService:
             raise AssertionError(f"Expected True, got {result.data.is_successful}")
         assert result.data.total_elements > 0
         if "person" not in result.data.object_classes:
-            raise AssertionError(f"Expected {"person"} in {result.data.object_classes}")
+            raise AssertionError(f"Expected {'person'} in {result.data.object_classes}")
         assert "cn" in result.data.attributes
         if result.data.cache_hit:
             raise AssertionError(f"Expected False, got {result.data.cache_hit}")
@@ -485,9 +493,9 @@ class TestSchemaDiscoveryService:
         assert result.is_success
         assert result.data is not None
         if not (result.data["is_valid"]):
-            raise AssertionError(f"Expected True, got {result.data["is_valid"]}")
+            raise AssertionError(f"Expected True, got {result.data['is_valid']}")
         if len(result.data["errors"]) != 0:
-            raise AssertionError(f"Expected {0}, got {len(result.data["errors"])}")
+            raise AssertionError(f"Expected {0}, got {len(result.data['errors'])}")
         assert len(result.data["missing_required"]) == 0
 
     @pytest.mark.asyncio
@@ -512,7 +520,7 @@ class TestSchemaDiscoveryService:
         assert result.is_success
         assert result.data is not None
         if result.data["is_valid"]:
-            raise AssertionError(f"Expected False, got {result.data["is_valid"]}")
+            raise AssertionError(f"Expected False, got {result.data['is_valid']}")
         assert "sn" in result.data["missing_required"]
 
     @pytest.mark.asyncio
@@ -538,7 +546,9 @@ class TestSchemaDiscoveryService:
         assert result.is_success
         assert result.data is not None
         if "unknownAttr" not in result.data["unknown_attributes"]:
-            raise AssertionError(f"Expected {"unknownAttr"} in {result.data["unknown_attributes"]}")
+            raise AssertionError(
+                f"Expected {'unknownAttr'} in {result.data['unknown_attributes']}"
+            )
         assert len(result.data["warnings"]) > 0
 
     @pytest.mark.asyncio
@@ -560,11 +570,15 @@ class TestSchemaDiscoveryService:
         assert result.is_success
         assert result.data is not None
         if result.data["is_valid"]:
-            raise AssertionError(f"Expected False, got {result.data["is_valid"]}")
+            raise AssertionError(f"Expected False, got {result.data['is_valid']}")
         assert len(result.data["errors"]) > 0
-        has_unknown_error = any("Unknown object class" in error for error in result.data["errors"])
+        has_unknown_error = any(
+            "Unknown object class" in error for error in result.data["errors"]
+        )
         if not has_unknown_error:
-            raise AssertionError(f"Expected 'Unknown object class' error in {result.data['errors']}")
+            raise AssertionError(
+                f"Expected 'Unknown object class' error in {result.data['errors']}"
+            )
 
     def test_generate_cache_key(
         self,
@@ -574,7 +588,9 @@ class TestSchemaDiscoveryService:
         """Test cache key generation."""
         cache_key = discovery_service._generate_cache_key(mock_connection)
         if cache_key != "schema_ldap.example.com":
-            raise AssertionError(f"Expected {"schema_ldap.example.com"}, got {cache_key}")
+            raise AssertionError(
+                f"Expected {'schema_ldap.example.com'}, got {cache_key}"
+            )
 
     def test_cache_management(self, discovery_service: SchemaDiscoveryService) -> None:
         """Test cache management functionality."""
@@ -597,7 +613,7 @@ class TestSchemaDiscoveryService:
         if len(service._schema_cache) != EXPECTED_BULK_SIZE:
             raise AssertionError(f"Expected {2}, got {len(service._schema_cache)}")
         if "key3" not in service._schema_cache:
-            raise AssertionError(f"Expected {"key3"} in {service._schema_cache}")
+            raise AssertionError(f"Expected {'key3'} in {service._schema_cache}")
 
     def test_cache_expiration(self, discovery_service: SchemaDiscoveryService) -> None:
         """Test cache expiration."""
@@ -611,7 +627,9 @@ class TestSchemaDiscoveryService:
         cached_result = discovery_service._get_cached_schema("test_key")
         assert cached_result is None
         if "test_key" not in discovery_service._schema_cache:
-            raise AssertionError(f"Expected 'test_key' not to be in {discovery_service._schema_cache}")
+            raise AssertionError(
+                f"Expected 'test_key' not to be in {discovery_service._schema_cache}"
+            )
 
     def test_clear_cache(self, discovery_service: SchemaDiscoveryService) -> None:
         """Test cache clearing."""
@@ -619,28 +637,29 @@ class TestSchemaDiscoveryService:
         discovery_service._cache_schema("test_key", result)
 
         if len(discovery_service._schema_cache) != 1:
-
-            raise AssertionError(f"Expected {1}, got {len(discovery_service._schema_cache)}")
+            raise AssertionError(
+                f"Expected {1}, got {len(discovery_service._schema_cache)}"
+            )
 
         discovery_service.clear_cache()
 
         if len(discovery_service._schema_cache) != 0:
-
-            raise AssertionError(f"Expected {0}, got {len(discovery_service._schema_cache)}")
+            raise AssertionError(
+                f"Expected {0}, got {len(discovery_service._schema_cache)}"
+            )
 
     def test_get_cache_stats(self, discovery_service: SchemaDiscoveryService) -> None:
         """Test cache statistics."""
         stats = discovery_service.get_cache_stats()
 
         if "cache_size" not in stats:
-
-            raise AssertionError(f"Expected {"cache_size"} in {stats}")
+            raise AssertionError(f"Expected {'cache_size'} in {stats}")
         assert "max_cache_size" in stats
         if "cache_ttl_minutes" not in stats:
-            raise AssertionError(f"Expected {"cache_ttl_minutes"} in {stats}")
+            raise AssertionError(f"Expected {'cache_ttl_minutes'} in {stats}")
         assert "discovery_history_size" in stats
         if stats["max_cache_size"] != 10:
-            raise AssertionError(f"Expected {10}, got {stats["max_cache_size"]}")
+            raise AssertionError(f"Expected {10}, got {stats['max_cache_size']}")
         assert stats["cache_ttl_minutes"] == 60
 
     def test_get_discovery_history(
@@ -672,17 +691,25 @@ class TestSchemaDiscoveryService:
         """Test enum value definitions."""
         # SchemaElementType
         if SchemaElementType.OBJECT_CLASS.value != "objectClass":
-            raise AssertionError(f"Expected {"objectClass"}, got {SchemaElementType.OBJECT_CLASS.value}")
+            raise AssertionError(
+                f"Expected {'objectClass'}, got {SchemaElementType.OBJECT_CLASS.value}"
+            )
         assert SchemaElementType.ATTRIBUTE_TYPE.value == "attributeType"
 
         # AttributeUsage
         if AttributeUsage.USER_APPLICATIONS.value != "userApplications":
-            raise AssertionError(f"Expected {"userApplications"}, got {AttributeUsage.USER_APPLICATIONS.value}")
+            raise AssertionError(
+                f"Expected {'userApplications'}, got {AttributeUsage.USER_APPLICATIONS.value}"
+            )
         assert AttributeUsage.DIRECTORY_OPERATION.value == "directoryOperation"
 
         # ObjectClassType
         if ObjectClassType.STRUCTURAL.value != "STRUCTURAL":
-            raise AssertionError(f"Expected {"STRUCTURAL"}, got {ObjectClassType.STRUCTURAL.value}")
+            raise AssertionError(
+                f"Expected {'STRUCTURAL'}, got {ObjectClassType.STRUCTURAL.value}"
+            )
         assert ObjectClassType.ABSTRACT.value == "ABSTRACT"
         if ObjectClassType.AUXILIARY.value != "AUXILIARY":
-            raise AssertionError(f"Expected {"AUXILIARY"}, got {ObjectClassType.AUXILIARY.value}")
+            raise AssertionError(
+                f"Expected {'AUXILIARY'}, got {ObjectClassType.AUXILIARY.value}"
+            )

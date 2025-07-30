@@ -19,7 +19,6 @@ class TestLDAPClient:
     def test_client_import(self) -> None:
         """Test that LDAPClient can be imported."""
 
-
         assert FlextLdapClient is not None
 
     @pytest.mark.unit
@@ -39,7 +38,6 @@ class TestLDAPClient:
     def test_client_instantiation_without_config(self) -> None:
         """Test that LDAPClient can be instantiated without config."""
 
-
         client = FlextLdapClient()
         assert client is not None
         assert not client.is_connected()
@@ -47,7 +45,6 @@ class TestLDAPClient:
     @pytest.mark.unit
     def test_get_server_info_disconnected(self) -> None:
         """Test get_server_info when disconnected."""
-
 
         client = FlextLdapClient()
         info = client.get_server_info()
@@ -58,9 +55,6 @@ class TestLDAPClient:
     @pytest.mark.asyncio
     async def test_connect_success(self) -> None:
         """Test successful connection."""
-
-
-
 
         # Mock the infrastructure client
         with patch(
@@ -77,16 +71,12 @@ class TestLDAPClient:
             await client.connect()
 
             if not (client.is_connected()):
-
                 raise AssertionError(f"Expected True, got {client.is_connected()}")
             mock_instance.connect.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_connect_failure(self) -> None:
         """Test connection failure."""
-
-
-
 
         # Mock the infrastructure client to return failure
         with patch(
@@ -105,15 +95,11 @@ class TestLDAPClient:
                 await client.connect()
 
             if client.is_connected():
-
                 raise AssertionError(f"Expected False, got {client.is_connected()}")
 
     @pytest.mark.asyncio
     async def test_disconnect_success(self) -> None:
         """Test successful disconnection."""
-
-
-
 
         with patch(
             "flext_ldap.client.FlextLdapInfrastructureClient",
@@ -131,16 +117,12 @@ class TestLDAPClient:
             await client.disconnect()
 
             if client.is_connected():
-
                 raise AssertionError(f"Expected False, got {client.is_connected()}")
             mock_instance.disconnect.assert_called_once_with("conn_123")
 
     @pytest.mark.asyncio
     async def test_ping_connected(self) -> None:
         """Test ping when connected."""
-
-
-
 
         with patch(
             "flext_ldap.client.FlextLdapInfrastructureClient",
@@ -158,27 +140,21 @@ class TestLDAPClient:
             result = await client.ping()
 
             if not (result):
-
                 raise AssertionError(f"Expected True, got {result}")
 
     @pytest.mark.asyncio
     async def test_ping_disconnected(self) -> None:
         """Test ping when disconnected."""
 
-
         client = FlextLdapClient()
         result = await client.ping()
 
         if result:
-
             raise AssertionError(f"Expected False, got {result}")
 
     @pytest.mark.asyncio
     async def test_search_success(self) -> None:
         """Test successful search operation."""
-
-
-
 
         # Mock search results
         search_results = [
@@ -216,19 +192,19 @@ class TestLDAPClient:
             )
 
             if not (result.is_success):
-
                 raise AssertionError(f"Expected True, got {result.is_success}")
             assert result.data is not None
             if len(result.data) != 1:
                 raise AssertionError(f"Expected {1}, got {len(result.data)}")
             assert result.data[0].dn == "uid=test,ou=users,dc=example,dc=org"
             if result.data[0].attributes["uid"] != ["test"]:
-                raise AssertionError(f"Expected {["test"]}, got {result.data[0].attributes["uid"]}")
+                raise AssertionError(
+                    f"Expected {['test']}, got {result.data[0].attributes['uid']}"
+                )
 
     @pytest.mark.asyncio
     async def test_search_not_connected(self) -> None:
         """Test search when not connected."""
-
 
         client = FlextLdapClient()
 
@@ -238,18 +214,14 @@ class TestLDAPClient:
         )
 
         if result.is_success:
-
             raise AssertionError(f"Expected False, got {result.is_success}")
         assert result.error is not None
         if "Not connected" not in result.error:
-            raise AssertionError(f"Expected {"Not connected"} in {result.error}")
+            raise AssertionError(f"Expected {'Not connected'} in {result.error}")
 
     @pytest.mark.asyncio
     async def test_modify_success(self) -> None:
         """Test successful modify operation."""
-
-
-
 
         with patch(
             "flext_ldap.client.FlextLdapInfrastructureClient",
@@ -271,14 +243,12 @@ class TestLDAPClient:
             )
 
             if not (result.is_success):
-
                 raise AssertionError(f"Expected True, got {result.is_success}")
             mock_instance.modify_entry.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_modify_not_connected(self) -> None:
         """Test modify when not connected."""
-
 
         client = FlextLdapClient()
 
@@ -288,18 +258,14 @@ class TestLDAPClient:
         )
 
         if result.is_success:
-
             raise AssertionError(f"Expected False, got {result.is_success}")
         assert result.error is not None
         if "Not connected" not in result.error:
-            raise AssertionError(f"Expected {"Not connected"} in {result.error}")
+            raise AssertionError(f"Expected {'Not connected'} in {result.error}")
 
     @pytest.mark.asyncio
     async def test_context_manager(self) -> None:
         """Test async context manager functionality."""
-
-
-
 
         with patch(
             "flext_ldap.client.FlextLdapInfrastructureClient",
@@ -324,9 +290,6 @@ class TestLDAPClient:
     async def test_transaction_context_manager(self) -> None:
         """Test transaction context manager."""
 
-
-
-
         with patch(
             "flext_ldap.client.FlextLdapInfrastructureClient",
         ) as mock_infra_client:
@@ -347,9 +310,6 @@ class TestLDAPClient:
 
     def test_get_server_info_connected(self) -> None:
         """Test get_server_info when connected."""
-
-
-
 
         with patch(
             "flext_ldap.client.FlextLdapInfrastructureClient",
@@ -372,8 +332,9 @@ class TestLDAPClient:
             info = client.get_server_info()
 
             if info["server"] != "ldap://localhost:389":
-
-                raise AssertionError(f"Expected {"ldap://localhost:389"}, got {info["server"]}")
+                raise AssertionError(
+                    f"Expected {'ldap://localhost:389'}, got {info['server']}"
+                )
             assert info["bound"] == "True"  # Note: values are converted to strings
             if info["user"] != "cn=admin":
-                raise AssertionError(f"Expected {"cn=admin"}, got {info["user"]}")
+                raise AssertionError(f"Expected {'cn=admin'}, got {info['user']}")

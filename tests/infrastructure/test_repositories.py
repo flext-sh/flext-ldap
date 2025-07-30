@@ -76,9 +76,13 @@ class TestFlextLdapConnectionRepositoryImpl:
         if result.data != sample_connection:
             raise AssertionError(f"Expected {sample_connection}, got {result.data}")
         if sample_connection.id not in connection_repo._connections:
-            raise AssertionError(f"Expected {sample_connection.id} in {connection_repo._connections}")
+            raise AssertionError(
+                f"Expected {sample_connection.id} in {connection_repo._connections}"
+            )
         if connection_repo._connections[sample_connection.id] != sample_connection:
-            raise AssertionError(f"Expected {sample_connection}, got {connection_repo._connections[sample_connection.id]}")
+            raise AssertionError(
+                f"Expected {sample_connection}, got {connection_repo._connections[sample_connection.id]}"
+            )
 
     @pytest.mark.asyncio
     async def test_save_connection_error(
@@ -187,13 +191,17 @@ class TestFlextLdapConnectionRepositoryImpl:
         # First save the connection
         await connection_repo.save(sample_connection)
         if sample_connection.id not in connection_repo._connections:
-            raise AssertionError(f"Expected {sample_connection.id} in {connection_repo._connections}")
+            raise AssertionError(
+                f"Expected {sample_connection.id} in {connection_repo._connections}"
+            )
 
         result = await connection_repo.delete(sample_connection)
 
         assert result.is_success
         if sample_connection.id not in connection_repo._connections:
-            raise AssertionError(f"Expected {sample_connection.id} to be in {connection_repo._connections}")
+            raise AssertionError(
+                f"Expected {sample_connection.id} to be in {connection_repo._connections}"
+            )
 
     @pytest.mark.asyncio
     async def test_delete_connection_not_exists(
@@ -206,7 +214,9 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         assert result.is_success
         if sample_connection.id not in connection_repo._connections:
-            raise AssertionError(f"Expected {sample_connection.id} to be in {connection_repo._connections}")
+            raise AssertionError(
+                f"Expected {sample_connection.id} to be in {connection_repo._connections}"
+            )
 
     # Note: Error path testing for delete would require complex mocking
     # The main functionality is covered by the success cases above
