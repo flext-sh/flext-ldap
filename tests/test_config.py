@@ -224,8 +224,9 @@ class TestFlextLdapAuthConfig:
             bind_dn="cn=admin,dc=example,dc=org",
             bind_password="",
         )
-        with pytest.raises(ValueError, match="Bind password is required"):
-            config.validate_domain_rules()
+        result = config.validate_domain_rules()
+        assert not result.is_success
+        assert "Bind password is required" in (result.error or "")
 
 
 class TestFlextLdapSearchConfig:

@@ -89,13 +89,31 @@ LDAPEntrySpecification = FlextLdapEntrySpecification
 LDAPUserSpecification = FlextLdapUserSpecification
 
 
-# Simple placeholders for backward compatibility
+# Backward compatibility classes (deprecated - use proper modules)
 class LDAPSecurityContext:
-    """LDAP security context placeholder - use security module instead."""
+    """Deprecated: Use flext_ldap.domain.security module instead."""
+
+    def __init__(self) -> None:
+        import warnings
+
+        warnings.warn(
+            "LDAPSecurityContext is deprecated. Use flext_ldap.domain.security module.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
 
 class LDAPOperation:
-    """LDAP operation placeholder - use commands in application layer instead."""
+    """Deprecated: Use flext_ldap.application.ldap_service module instead."""
+
+    def __init__(self) -> None:
+        import warnings
+
+        warnings.warn(
+            "LDAPOperation is deprecated. Use flext_ldap.application.ldap_service module.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
 
 __all__ = [

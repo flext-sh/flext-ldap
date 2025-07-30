@@ -8,6 +8,7 @@ Domain-specific exceptions for LDAP operations inheriting from flext-core.
 
 from __future__ import annotations
 
+from flext_core import get_logger
 from flext_core.exceptions import (
     FlextAlreadyExistsError,
     FlextConnectionError,
@@ -16,6 +17,8 @@ from flext_core.exceptions import (
     FlextOperationError,
     FlextValidationError,
 )
+
+logger = get_logger(__name__)
 
 __all__ = [
     "FlextLdapConnectionError",
@@ -79,7 +82,9 @@ class FlextLdapConnectionError(FlextConnectionError):
     """Errors specific to LDAP connection operations."""
 
     def __init__(
-        self, message: str = "LDAP connection failed", **kwargs: object,
+        self,
+        message: str = "LDAP connection failed",
+        **kwargs: object,
     ) -> None:
         """Initialize LDAP connection error with context."""
         super().__init__(f"LDAP connection: {message}", **kwargs)
@@ -115,7 +120,7 @@ class FlextLdapValidationError(FlextValidationError):
         **kwargs: object,
     ) -> None:
         """Initialize LDAP validation error with context."""
-        validation_details = {}
+        validation_details: dict[str, object] = {}
         if field is not None:
             validation_details["field"] = field
         if value is not None:
@@ -132,7 +137,9 @@ class FlextLdapNotFoundError(FlextNotFoundError):
     """Error when LDAP entity is not found."""
 
     def __init__(
-        self, message: str = "LDAP entity not found", **kwargs: object,
+        self,
+        message: str = "LDAP entity not found",
+        **kwargs: object,
     ) -> None:
         """Initialize LDAP not found error with context."""
         super().__init__(f"LDAP not found: {message}", **kwargs)
@@ -142,7 +149,9 @@ class FlextLdapDuplicateError(FlextAlreadyExistsError):
     """Error when LDAP entity already exists."""
 
     def __init__(
-        self, message: str = "LDAP entity already exists", **kwargs: object,
+        self,
+        message: str = "LDAP entity already exists",
+        **kwargs: object,
     ) -> None:
         """Initialize LDAP duplicate error with context."""
         super().__init__(f"LDAP duplicate: {message}", **kwargs)

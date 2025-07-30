@@ -12,8 +12,10 @@ from enum import StrEnum
 from urllib.parse import urlparse
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
-from flext_core import FlextResult, FlextValueObject
+from flext_core import FlextResult, FlextValueObject, get_logger
 from pydantic import Field, field_validator
+
+logger = get_logger(__name__)
 
 
 class FlextLdapScopeEnum(StrEnum):
@@ -634,7 +636,6 @@ class FlextLdapCreateUserRequest(FlextValueObject):
 
 # Backward compatibility aliases
 LDAPScope = FlextLdapScopeEnum
-FlextLdapDistinguishedName = FlextLdapDistinguishedName
 LDAPFilter = FlextLdapFilterValue
 LDAPUri = FlextLdapUri
 LDAPObjectClass = FlextLdapObjectClass

@@ -2,312 +2,322 @@
 
 from __future__ import annotations
 
-from unittest.mock import Mock, PropertyMock
-from uuid import UUID, uuid4
-
 import pytest
-from flext_ldap.domain.entities import FlextLdapConnection, FlextLdapUser
-from flext_ldap.infrastructure.repositories import (
-    FlextLdapConnectionRepositoryImpl,
-    FlextLdapUserRepositoryImpl,
-)
+from flext_ldap.base import FlextLdapRepository
+from flext_ldap.entities import FlextLdapUser
 
 
-@pytest.fixture
-def mock_ldap_client() -> Mock:
-    """Create mock LDAP client."""
-    return Mock()
+class TestFlextLdapRepository:
+    """Test suite for FlextLdapRepository."""
 
+    @pytest.fixture
+    def repository(self) -> FlextLdapRepository[FlextLdapUser]:
+        """Create a repository for testing."""
+        return FlextLdapRepository[FlextLdapUser]()
 
-@pytest.fixture
-def connection_repo(mock_ldap_client: Mock) -> FlextLdapConnectionRepositoryImpl:
-    """Create LDAP connection repository."""
-    return FlextLdapConnectionRepositoryImpl(mock_ldap_client)
+    @pytest.fixture
+    def sample_user(self) -> FlextLdapUser:
+        """Create a sample user for testing."""
+        return FlextLdapUser(
+            id="testuser",
+            dn="cn=testuser,ou=users,dc=example,dc=com",
+            uid="testuser",
+            cn="Test User",
+            sn="User",
+            mail="testuser@example.com"
+        )
 
-
-@pytest.fixture
-def user_repo(mock_ldap_client: Mock) -> FlextLdapUserRepositoryImpl:
-    """Create LDAP user repository."""
-    return FlextLdapUserRepositoryImpl(mock_ldap_client)
-
-
-@pytest.fixture
-def sample_connection() -> FlextLdapConnection:
-    """Create sample LDAP connection."""
-    return FlextLdapConnection(
-        id=str(uuid4()),
-        server_url="ldap://test.com",
-        bind_dn="cn=admin,dc=test,dc=com",
-    )
-
-
-@pytest.fixture
-def sample_user() -> FlextLdapUser:
-    """Create sample LDAP user."""
-    return FlextLdapUser(
-        id=str(uuid4()),
-        dn="cn=john,ou=people,dc=test,dc=com",
-        uid="john",
-        cn="John Doe",
-        sn="Doe",
-    )
-
-
-class TestFlextLdapConnectionRepositoryImpl:
-    """Test LDAP connection repository implementation."""
-
-    def test_init(self, mock_ldap_client: Mock) -> None:
+    def test_init(self, repository: FlextLdapRepository[FlextLdapUser]) -> None:
         """Test repository initialization."""
-        repo = FlextLdapConnectionRepositoryImpl(mock_ldap_client)
-        if repo.ldap_client != mock_ldap_client:
-            raise AssertionError(f"Expected {mock_ldap_client}, got {repo.ldap_client}")
-        assert repo._connections == {}
+        assert repository._storage == {}
 
-    @pytest.mark.asyncio
-    async def test_save_connection_success(
+    def test_save_success(
         self,
-        connection_repo: FlextLdapConnectionRepositoryImpl,
-        sample_connection: FlextLdapConnection,
+        repository: FlextLdapRepository[FlextLdapUser],
+        sample_user: FlextLdapUser
     ) -> None:
-        """Test saving connection successfully."""
-        result = await connection_repo.save(sample_connection)
+        """Test successful save operation."""
+        result = repository.save(sample_user)
 
         assert result.is_success
-        if result.data != sample_connection:
-            raise AssertionError(f"Expected {sample_connection}, got {result.data}")
-        if sample_connection.id not in connection_repo._connections:
-            raise AssertionError(
-                f"Expected {sample_connection.id} in {connection_repo._connections}"
-            )
-        if connection_repo._connections[sample_connection.id] != sample_connection:
-            raise AssertionError(
-                f"Expected {sample_connection}, got {connection_repo._connections[sample_connection.id]}"
-            )
+        assert sample_user.id in repository._storage
+        assert repository._storage[sample_user.id] == sample_user
 
-    @pytest.mark.asyncio
-    async def test_save_connection_error(
+    def test_save_with_validation(
         self,
-        connection_repo: FlextLdapConnectionRepositoryImpl,
+        repository: FlextLdapRepository[FlextLdapUser]
     ) -> None:
-        """Test saving connection with error."""
-        bad_connection = Mock()
+        """Test save with entity validation."""
+        # Create a user with validation method
+        class ValidatingUser:
+            def __init__(self, id: str, should_fail: bool = False) -> None:
+                self.id = id
+                self.should_fail = should_fail
 
-        # Use property side_effect to raise exception when accessing .id
-        type(bad_connection).id = PropertyMock(side_effect=Exception("Test error"))
+            def validate_domain_rules(self) -> None:
+                if self.should_fail:
+                    raise ValueError("Validation failed")
 
-        with pytest.raises(Exception, match="Test error"):
-            await connection_repo.save(bad_connection)
-
-    @pytest.mark.asyncio
-    async def test_find_by_id_exists(
-        self,
-        connection_repo: FlextLdapConnectionRepositoryImpl,
-        sample_connection: FlextLdapConnection,
-    ) -> None:
-        """Test finding connection by ID when it exists."""
-        # First save the connection
-        await connection_repo.save(sample_connection)
-
-        result = await connection_repo.find_by_id(UUID(sample_connection.id))
-
+        # Test successful validation
+        user = ValidatingUser("valid_user")
+        result = repository.save(user)  # type: ignore[arg-type]
         assert result.is_success
-        if result.data != sample_connection:
-            raise AssertionError(f"Expected {sample_connection}, got {result.data}")
 
-    @pytest.mark.asyncio
-    async def test_find_by_id_not_exists(
+        # Test failed validation
+        invalid_user = ValidatingUser("invalid_user", should_fail=True)
+        result = repository.save(invalid_user)  # type: ignore[arg-type]
+        assert result.is_failure
+        assert "Validation failed" in result.error
+
+    def test_find_by_id_exists(
         self,
-        connection_repo: FlextLdapConnectionRepositoryImpl,
+        repository: FlextLdapRepository[FlextLdapUser],
+        sample_user: FlextLdapUser
     ) -> None:
-        """Test finding connection by ID when it doesn't exist."""
-        result = await connection_repo.find_by_id(uuid4())
+        """Test finding existing entity by ID."""
+        repository.save(sample_user)
 
+        result = repository.find_by_id(sample_user.id)
+        assert result.is_success
+        assert result.data == sample_user
+
+    def test_find_by_id_not_exists(
+        self,
+        repository: FlextLdapRepository[FlextLdapUser]
+    ) -> None:
+        """Test finding non-existing entity by ID."""
+        result = repository.find_by_id("nonexistent")
         assert result.is_success
         assert result.data is None
 
-    @pytest.mark.asyncio
-    async def test_find_by_id_error(
+    def test_delete_exists(
         self,
-        connection_repo: FlextLdapConnectionRepositoryImpl,
+        repository: FlextLdapRepository[FlextLdapUser],
+        sample_user: FlextLdapUser
     ) -> None:
-        """Test finding connection by ID with error."""
-        # Mock the _connections dict to raise an error
-        connection_repo._connections = Mock()
-        connection_repo._connections.get.side_effect = Exception("Test error")
+        """Test deleting existing entity."""
+        repository.save(sample_user)
 
-        with pytest.raises(ValueError, match="Failed to find connection"):
-            await connection_repo.find_by_id(uuid4())
-
-    @pytest.mark.asyncio
-    async def test_find_all_empty(
-        self,
-        connection_repo: FlextLdapConnectionRepositoryImpl,
-    ) -> None:
-        """Test finding all connections when repository is empty."""
-        result = await connection_repo.find_all()
-
+        result = repository.delete(sample_user.id)
         assert result.is_success
-        if result.data != []:
-            raise AssertionError(f"Expected {[]}, got {result.data}")
+        assert sample_user.id not in repository._storage
+
+    def test_delete_not_exists(
+        self,
+        repository: FlextLdapRepository[FlextLdapUser]
+    ) -> None:
+        """Test deleting non-existing entity."""
+        result = repository.delete("nonexistent")
+        assert result.is_failure
+        assert "not found" in result.error
 
     @pytest.mark.asyncio
-    async def test_find_all_with_connections(
+    async def test_find_where_match(
         self,
-        connection_repo: FlextLdapConnectionRepositoryImpl,
-        sample_connection: FlextLdapConnection,
+        repository: FlextLdapRepository[FlextLdapUser],
+        sample_user: FlextLdapUser
     ) -> None:
-        """Test finding all connections when repository has connections."""
-        # First save a connection
-        await connection_repo.save(sample_connection)
+        """Test finding entities matching conditions."""
+        repository.save(sample_user)
 
-        result = await connection_repo.find_all()
-
-        assert result.is_success
-        assert result.data is not None
-        if len(result.data) != 1:
-            raise AssertionError(f"Expected {1}, got {len(result.data)}")
-        assert result.data[0].id == sample_connection.id
+        results = await repository.find_where(uid="testuser")
+        assert len(results) == 1
+        assert results[0] == sample_user
 
     @pytest.mark.asyncio
-    async def test_find_all_error(
+    async def test_find_where_no_match(
         self,
-        connection_repo: FlextLdapConnectionRepositoryImpl,
+        repository: FlextLdapRepository[FlextLdapUser],
+        sample_user: FlextLdapUser
     ) -> None:
-        """Test finding all connections with error."""
-        # Mock the _connections dict to raise an error
-        connection_repo._connections = Mock()
-        connection_repo._connections.values.side_effect = Exception("Test error")
+        """Test finding entities with no matches."""
+        repository.save(sample_user)
 
-        with pytest.raises(Exception, match="Test error"):
-            await connection_repo.find_all()
+        results = await repository.find_where(uid="nonexistent")
+        assert len(results) == 0
 
     @pytest.mark.asyncio
-    async def test_delete_connection_exists(
+    async def test_find_where_multiple_conditions(
         self,
-        connection_repo: FlextLdapConnectionRepositoryImpl,
-        sample_connection: FlextLdapConnection,
+        repository: FlextLdapRepository[FlextLdapUser],
+        sample_user: FlextLdapUser
     ) -> None:
-        """Test deleting connection when it exists."""
-        # First save the connection
-        await connection_repo.save(sample_connection)
-        if sample_connection.id not in connection_repo._connections:
-            raise AssertionError(
-                f"Expected {sample_connection.id} in {connection_repo._connections}"
+        """Test finding entities with multiple conditions."""
+        repository.save(sample_user)
+
+        results = await repository.find_where(uid="testuser", cn="Test User")
+        assert len(results) == 1
+        assert results[0] == sample_user
+
+        # Should not match if one condition fails
+        results = await repository.find_where(uid="testuser", cn="Wrong Name")
+        assert len(results) == 0
+
+    @pytest.mark.asyncio
+    async def test_find_by_attribute(
+        self,
+        repository: FlextLdapRepository[FlextLdapUser],
+        sample_user: FlextLdapUser
+    ) -> None:
+        """Test finding entities by single attribute."""
+        repository.save(sample_user)
+
+        results = await repository.find_by_attribute("mail", "testuser@example.com")
+        assert len(results) == 1
+        assert results[0] == sample_user
+
+    @pytest.mark.asyncio
+    async def test_list_all_empty(
+        self,
+        repository: FlextLdapRepository[FlextLdapUser]
+    ) -> None:
+        """Test listing all entities when repository is empty."""
+        results = await repository.list_all()
+        assert len(results) == 0
+
+    @pytest.mark.asyncio
+    async def test_list_all_with_data(
+        self,
+        repository: FlextLdapRepository[FlextLdapUser],
+        sample_user: FlextLdapUser
+    ) -> None:
+        """Test listing all entities with data."""
+        repository.save(sample_user)
+
+        results = await repository.list_all()
+        assert len(results) == 1
+        assert results[0] == sample_user
+
+    @pytest.mark.asyncio
+    async def test_list_all_with_pagination(
+        self,
+        repository: FlextLdapRepository[FlextLdapUser]
+    ) -> None:
+        """Test listing entities with pagination."""
+        # Create multiple users
+        users = []
+        for i in range(5):
+            user = FlextLdapUser(
+                id=f"user{i}",
+                dn=f"cn=user{i},ou=users,dc=example,dc=com",
+                uid=f"user{i}",
+                cn=f"User {i}",
+                sn="User"
             )
+            users.append(user)
+            repository.save(user)
 
-        result = await connection_repo.delete(sample_connection)
+        # Test limit
+        results = await repository.list_all(limit=3)
+        assert len(results) == 3
 
-        assert result.is_success
-        if sample_connection.id not in connection_repo._connections:
-            raise AssertionError(
-                f"Expected {sample_connection.id} to be in {connection_repo._connections}"
+        # Test offset
+        results = await repository.list_all(limit=2, offset=2)
+        assert len(results) == 2
+
+    @pytest.mark.asyncio
+    async def test_count_empty(
+        self,
+        repository: FlextLdapRepository[FlextLdapUser]
+    ) -> None:
+        """Test counting entities in empty repository."""
+        count = await repository.count()
+        assert count == 0
+
+    @pytest.mark.asyncio
+    async def test_count_with_data(
+        self,
+        repository: FlextLdapRepository[FlextLdapUser],
+        sample_user: FlextLdapUser
+    ) -> None:
+        """Test counting entities with data."""
+        repository.save(sample_user)
+
+        count = await repository.count()
+        assert count == 1
+
+    @pytest.mark.asyncio
+    async def test_count_with_conditions(
+        self,
+        repository: FlextLdapRepository[FlextLdapUser]
+    ) -> None:
+        """Test counting entities with filter conditions."""
+        # Create multiple users
+        for i in range(3):
+            user = FlextLdapUser(
+                id=f"user{i}",
+                dn=f"cn=user{i},ou=users,dc=example,dc=com",
+                uid=f"user{i}",
+                cn=f"User {i}",
+                sn="User" if i < 2 else "Admin"  # Different sn for last user
             )
+            repository.save(user)
 
-    @pytest.mark.asyncio
-    async def test_delete_connection_not_exists(
+        # Count all
+        count = await repository.count()
+        assert count == 3
+
+        # Count with filter
+        count = await repository.count(sn="User")
+        assert count == 2
+
+    def test_validate_entity_success(
         self,
-        connection_repo: FlextLdapConnectionRepositoryImpl,
-        sample_connection: FlextLdapConnection,
+        repository: FlextLdapRepository[FlextLdapUser],
+        sample_user: FlextLdapUser
     ) -> None:
-        """Test deleting connection when it doesn't exist."""
-        result = await connection_repo.delete(sample_connection)
-
+        """Test entity validation success."""
+        result = repository._validate_entity(sample_user)
         assert result.is_success
-        if sample_connection.id not in connection_repo._connections:
-            raise AssertionError(
-                f"Expected {sample_connection.id} to be in {connection_repo._connections}"
+
+    def test_validate_entity_with_validation_method(
+        self,
+        repository: FlextLdapRepository[FlextLdapUser]
+    ) -> None:
+        """Test entity validation with validation method."""
+        class ValidatingEntity:
+            def validate_domain_rules(self) -> None:
+                raise ValueError("Test validation error")
+
+        entity = ValidatingEntity()
+        result = repository._validate_entity(entity)  # type: ignore[arg-type]
+        assert result.is_failure
+        assert "Test validation error" in result.error
+
+    def test_multiple_users_operations(
+        self,
+        repository: FlextLdapRepository[FlextLdapUser]
+    ) -> None:
+        """Test operations with multiple users."""
+        # Create and save multiple users
+        users = []
+        for i in range(3):
+            user = FlextLdapUser(
+                id=f"user{i}",
+                dn=f"cn=user{i},ou=users,dc=example,dc=com",
+                uid=f"user{i}",
+                cn=f"User {i}",
+                sn="User"
             )
+            users.append(user)
+            result = repository.save(user)
+            assert result.is_success
 
-    # Note: Error path testing for delete would require complex mocking
-    # The main functionality is covered by the success cases above
+        # Verify all users are saved
+        assert len(repository._storage) == 3
 
+        # Find each user
+        for user in users:
+            result = repository.find_by_id(user.id)
+            assert result.is_success
+            assert result.data == user
 
-class TestFlextLdapUserRepositoryImpl:
-    """Test LDAP user repository implementation."""
-
-    def test_init(self, mock_ldap_client: Mock) -> None:
-        """Test repository initialization."""
-        repo = FlextLdapUserRepositoryImpl(mock_ldap_client)
-        if repo.ldap_client != mock_ldap_client:
-            raise AssertionError(f"Expected {mock_ldap_client}, got {repo.ldap_client}")
-
-    @pytest.mark.asyncio
-    async def test_save_user_success(
-        self,
-        user_repo: FlextLdapUserRepositoryImpl,
-        sample_user: FlextLdapUser,
-    ) -> None:
-        """Test saving user successfully (foundation implementation)."""
-        result = await user_repo.save(sample_user)
-
+        # Delete one user
+        result = repository.delete(users[1].id)
         assert result.is_success
-        if result.data != sample_user:
-            raise AssertionError(f"Expected {sample_user}, got {result.data}")
+        assert len(repository._storage) == 2
 
-    @pytest.mark.asyncio
-    async def test_save_user_error(
-        self,
-        user_repo: FlextLdapUserRepositoryImpl,
-    ) -> None:
-        """Test saving user with error."""
-        # Create a user that will cause an error
-        bad_user = Mock()
-        # Mock some attribute access that might fail
-        type(bad_user).some_attr = property(
-            lambda self: (_ for _ in ()).throw(Exception("Test error")),
-        )
-
-        # This should still work since it's a foundation implementation
-        result = await user_repo.save(bad_user)
+        # Verify deleted user is not found
+        result = repository.find_by_id(users[1].id)
         assert result.is_success
-
-    @pytest.mark.asyncio
-    async def test_find_by_id_foundation(
-        self,
-        user_repo: FlextLdapUserRepositoryImpl,
-    ) -> None:
-        """Test finding user by ID (foundation implementation)."""
-        user_id = uuid4()
-
-        result = await user_repo.find_by_id(user_id)
-
-        assert result.is_success
-        assert result.data is None  # Foundation implementation returns None
-
-    @pytest.mark.asyncio
-    async def test_find_by_dn_foundation(
-        self,
-        user_repo: FlextLdapUserRepositoryImpl,
-    ) -> None:
-        """Test finding user by DN (foundation implementation)."""
-        dn = "cn=john,ou=people,dc=test,dc=com"
-
-        result = await user_repo.find_by_dn(dn)
-
-        assert result.is_success
-        assert result.data is None  # Foundation implementation returns None
-
-    @pytest.mark.asyncio
-    async def test_find_all_foundation(
-        self,
-        user_repo: FlextLdapUserRepositoryImpl,
-    ) -> None:
-        """Test finding all users (foundation implementation)."""
-        result = await user_repo.find_all()
-
-        assert result.is_success
-        expected_empty = []  # Foundation implementation returns empty list
-        if result.data != expected_empty:
-            raise AssertionError(f"Expected {expected_empty}, got {result.data}")
-
-    @pytest.mark.asyncio
-    async def test_delete_user_foundation(
-        self,
-        user_repo: FlextLdapUserRepositoryImpl,
-        sample_user: FlextLdapUser,
-    ) -> None:
-        """Test deleting user (foundation implementation)."""
-        result = await user_repo.delete(sample_user)
-
-        assert result.is_success
-        assert result.data is True  # Foundation implementation returns True
+        assert result.data is None

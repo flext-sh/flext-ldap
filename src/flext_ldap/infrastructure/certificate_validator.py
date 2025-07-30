@@ -130,7 +130,7 @@ class FlextLdapCertificateValidationService:
             # Validate certificate chain if requested
             if context.verify_chain and len(certificates) > 1:
                 try:
-                    # NOTE: Proper certificate chain validation would require CA
+                    # Proper certificate chain validation would require CA
                     # certificates
                     # For now, we'll just do basic certificate checks
                     # This is a simplified validation - full chain validation

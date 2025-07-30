@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from flext_ldap.client import FlextConnectionError, FlextLdapClient
+from flext_core.exceptions import FlextConnectionError
+from flext_ldap.ldap_infrastructure import FlextLdapClient
 
 if TYPE_CHECKING:
     from flext_ldap.config import FlextLdapSettings
