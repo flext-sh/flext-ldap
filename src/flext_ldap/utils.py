@@ -9,9 +9,18 @@ from datetime import UTC, datetime
 from typing import Protocol
 from urllib.parse import parse_qs, urlparse
 
+from flext_core import get_logger
+
+logger = get_logger(__name__)
+
 
 def flext_ldap_escape_filter_chars(value: str) -> str:
     """Escape special characters in LDAP filter values."""
+    logger.trace("Escaping LDAP filter characters", extra={
+        "original_value": value,
+        "original_length": len(value)
+    })
+
     # Escape backslash first to avoid double escaping
     result = value.replace("\\", r"\5c")
 
@@ -26,6 +35,11 @@ def flext_ldap_escape_filter_chars(value: str) -> str:
     for char, replacement in escape_map.items():
         result = result.replace(char, replacement)
 
+    logger.debug("LDAP filter characters escaped", extra={
+        "original": value,
+        "escaped": result,
+        "was_changed": value != result
+    })
     return result
 
 
@@ -36,11 +50,17 @@ def flext_ldap_escape_filter_value(value: str) -> str:
 
 def flext_ldap_parse_generalized_time(time_str: str) -> datetime:
     """Parse LDAP generalized time format."""
+    logger.trace("Parsing LDAP generalized time", extra={
+        "time_string": time_str,
+        "has_z_suffix": time_str.endswith("Z")
+    })
+
     # Remove Z suffix if present
     tz = None
     if time_str.endswith("Z"):
         time_str = time_str[:-1]
         tz = UTC
+        logger.trace("Removed Z suffix, will use UTC timezone")
 
     # Parse the time string
     # Create timezone-aware datetime directly
@@ -50,14 +70,30 @@ def flext_ldap_parse_generalized_time(time_str: str) -> datetime:
     if not tz and dt.tzinfo:
         dt = dt.replace(tzinfo=None)
 
+    logger.debug("LDAP generalized time parsed", extra={
+        "original": time_str + ("Z" if tz else ""),
+        "parsed": dt.isoformat(),
+        "has_timezone": dt.tzinfo is not None
+    })
     return dt
 
 
 def flext_ldap_format_generalized_time(dt: datetime) -> str:
     """Format datetime to LDAP generalized time format."""
+    logger.trace("Formatting datetime to LDAP generalized time", extra={
+        "datetime": dt.isoformat(),
+        "has_timezone": dt.tzinfo is not None
+    })
+
     time_str = dt.strftime("%Y%m%d%H%M%S")
     if dt.tzinfo is not None:
         time_str += "Z"
+        logger.trace("Added Z suffix for timezone-aware datetime")
+
+    logger.debug("Datetime formatted to LDAP generalized time", extra={
+        "original": dt.isoformat(),
+        "formatted": time_str
+    })
     return time_str
 
 

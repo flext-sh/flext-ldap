@@ -16,8 +16,10 @@ from datetime import UTC, datetime
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
 from enum import StrEnum
 
-from flext_core import FlextEntity, FlextResult
+from flext_core import FlextEntity, FlextResult, get_logger
 from pydantic import Field
+
+logger = get_logger(__name__)
 
 
 class FlextLdapEntityStatus(StrEnum):

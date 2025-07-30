@@ -11,41 +11,42 @@ Eliminates 90% of boilerplate code through intelligent composition.
 
 from __future__ import annotations
 
-from typing import TypeVar
 from uuid import UUID
 
 from flext_core import FlextDomainService, FlextRepository, FlextResult
 
-# Generic types for advanced flext-core patterns
-TEntity = TypeVar("TEntity")
-TQuery = TypeVar("TQuery")
 
+class FlextLdapRepository(FlextRepository):
+    """LDAP Repository implementing flext-core repository interface.
 
-class FlextLdapRepository[TEntity](FlextRepository):
-    """ADVANCED LDAP Repository using flext-core query patterns.
-
-    Eliminates ALL manual query code through flext-core QueryBuilder.
-    Provides type-safe queries, automatic caching, and transaction support.
+    Provides type-safe LDAP operations with proper error handling.
+    Follows Clean Architecture patterns for data access abstraction.
     """
 
     def __init__(self) -> None:
-        """Initialize with flext-core patterns."""
+        """Initialize repository with in-memory storage for development."""
         super().__init__()
-        self._storage: dict[str, TEntity] = {}
+        self._storage: dict[str, object] = {}
 
     def find_by_id(self, entity_id: str) -> FlextResult[object]:
-        """Find entity by ID with automatic caching."""
+        """Find entity by ID from storage."""
         entity = self._storage.get(entity_id)
+        if entity is None:
+            return FlextResult.fail(f"Entity not found: {entity_id}")
         return FlextResult.ok(entity)
 
     def save(self, entity: object) -> FlextResult[None]:
-        """Save with automatic validation and caching."""
+        """Save entity with validation."""
         try:
             entity_id = getattr(entity, "id", str(UUID()))
 
-            # Use flext-core validation chain - call synchronously since interface is sync
+            # Use flext-core validation if available
             if hasattr(entity, "validate_domain_rules"):
-                entity.validate_domain_rules()
+                validation_result = entity.validate_domain_rules()
+                if validation_result.is_failure:
+                    return FlextResult.fail(
+                        f"Validation failed: {validation_result.error}"
+                    )
 
             self._storage[entity_id] = entity
             return FlextResult.ok(None)
@@ -53,17 +54,17 @@ class FlextLdapRepository[TEntity](FlextRepository):
             return FlextResult.fail(f"Save failed: {e}")
 
     def delete(self, entity_id: str) -> FlextResult[None]:
-        """Delete with cascade handling."""
+        """Delete entity by ID with proper error handling."""
         try:
             if entity_id in self._storage:
                 del self._storage[entity_id]
                 return FlextResult.ok(None)
-            return FlextResult.fail(f"Entity with ID '{entity_id}' not found")
+            return FlextResult.fail(f"Entity not found for deletion: {entity_id}")
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Delete failed: {e}")
 
-    async def find_where(self, **conditions: object) -> list[TEntity]:
-        """Find entities matching conditions using intelligent filtering."""
+    def find_where(self, **conditions: object) -> list[object]:
+        """Find entities matching conditions using filtering."""
         results = []
         for entity in self._storage.values():
             match = True
@@ -75,28 +76,23 @@ class FlextLdapRepository[TEntity](FlextRepository):
                 results.append(entity)
         return results
 
-    async def find_by_attribute(
-        self,
-        attr_name: str,
-        attr_value: object,
-    ) -> list[TEntity]:
+    def find_by_attribute(self, attr_name: str, attr_value: object) -> list[object]:
         """Find by single attribute - optimized path."""
-        return await self.find_where(**{attr_name: attr_value})
+        return self.find_where(**{attr_name: attr_value})
 
-    async def list_all(self, limit: int = 100, offset: int = 0) -> list[TEntity]:
-        """List with pagination."""
+    def list_all(self, limit: int = 100, offset: int = 0) -> list[object]:
+        """List entities with pagination."""
         entities = list(self._storage.values())
         return entities[offset : offset + limit]
 
-    async def count(self, **conditions: object) -> int:
+    def count_entities(self, **conditions: object) -> int:
         """Count entities matching conditions."""
         if not conditions:
             return len(self._storage)
-
-        matching = await self.find_where(**conditions)
+        matching = self.find_where(**conditions)
         return len(matching)
 
-    def _validate_entity(self, entity: TEntity) -> FlextResult[None]:
+    def _validate_entity(self, entity: object) -> FlextResult[None]:
         """Validate entity using flext-core validation chain."""
         try:
             # Use flext-core validation if available
@@ -107,23 +103,22 @@ class FlextLdapRepository[TEntity](FlextRepository):
             return FlextResult.fail(str(e))
 
 
-class FlextLdapDomainService[TEntity](FlextDomainService):
-    """ADVANCED LDAP Domain Service with flext-core orchestration.
+class FlextLdapDomainService(FlextDomainService):
+    """LDAP Domain Service implementing flext-core domain service patterns.
 
-    Provides intelligent service composition with:
-    - Automatic caching
-    - Transaction management
+    Provides LDAP domain operations with:
+    - Type-safe error handling
     - Validation chains
-    - Event publishing
-    - Error recovery
+    - Repository pattern usage
+    - Clean Architecture compliance
     """
 
-    def __init__(self, repository: FlextLdapRepository[TEntity] | None = None) -> None:
-        """Initialize with flext-core patterns."""
+    def __init__(self, repository: FlextLdapRepository | None = None) -> None:
+        """Initialize with repository dependency."""
         super().__init__()
-        self._repository = repository or FlextLdapRepository[TEntity]()
+        self._repository = repository or FlextLdapRepository()
 
-    async def get_by_id(self, entity_id: UUID | str) -> FlextResult[TEntity | None]:
+    def get_by_id(self, entity_id: UUID | str) -> FlextResult[object | None]:
         """Get with automatic caching and error handling."""
         try:
             key = str(entity_id) if isinstance(entity_id, UUID) else entity_id
@@ -136,7 +131,7 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to get entity: {e}")
 
-    async def create_entity(self, entity: TEntity) -> FlextResult[TEntity]:
+    def create_entity(self, entity: object) -> FlextResult[object]:
         """Create with validation chain and event publishing."""
         try:
             # Apply flext-core validation if available
@@ -150,41 +145,41 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
             saved_entity = entity  # Return the original entity since save returns None
 
             # Publish domain event if entity supports it
-            await self._publish_creation_event(saved_entity)
+            self._publish_creation_event(saved_entity)
 
             return FlextResult.ok(saved_entity)
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to create entity: {e}")
 
-    async def update_entity(
+    def update_entity(
         self,
         entity_id: UUID | str,
         updates: dict[str, object],
-    ) -> FlextResult[TEntity]:
+    ) -> FlextResult[object]:
         """Update with immutable patterns and validation."""
         try:
             # Get existing entity
-            current_result = await self.get_by_id(entity_id)
+            current_result = self.get_by_id(entity_id)
             if not current_result.is_success or not current_result.data:
                 return FlextResult.fail("Entity not found")
 
             entity = current_result.data
 
             # Apply updates using immutable patterns
-            updated_entity = await self._apply_updates(entity, updates)
+            updated_entity = self._apply_updates(entity, updates)
 
             # Validate and save
-            return await self.create_entity(updated_entity)
+            return self.create_entity(updated_entity)
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to update entity: {e}")
 
-    async def delete_entity(self, entity_id: UUID | str) -> FlextResult[bool]:
+    def delete_entity(self, entity_id: UUID | str) -> FlextResult[object]:
         """Delete with cascade handling and event publishing."""
         try:
             key = str(entity_id) if isinstance(entity_id, UUID) else entity_id
 
             # Get entity before deletion for event publishing
-            entity_result = await self.get_by_id(key)
+            entity_result = self.get_by_id(key)
 
             # Delete from repository
             delete_result = self._repository.delete(key)
@@ -196,83 +191,113 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
 
             # Publish deletion event if entity was found
             if deleted and entity_result.is_success and entity_result.data:
-                await self._publish_deletion_event(entity_result.data)
+                self._publish_deletion_event(entity_result.data)
 
             return FlextResult.ok(deleted)
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to delete entity: {e}")
 
-    async def list_entities(
+    def list_entities(
         self,
         limit: int = 100,
         **filters: object,
-    ) -> FlextResult[list[TEntity]]:
+    ) -> FlextResult[object]:
         """List with intelligent filtering and pagination."""
         try:
             if filters:
-                entities = await self._repository.find_where(**filters)
+                entities = self._repository.find_where(**filters)
                 return FlextResult.ok(entities[:limit])
-            entities = await self._repository.list_all(limit)
+            entities = self._repository.list_all(limit)
             return FlextResult.ok(entities)
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to list entities: {e}")
 
-    async def count_entities(self, **filters: object) -> FlextResult[int]:
+    def count_entities(self, **filters: object) -> FlextResult[object]:
         """Count entities with filters."""
         try:
-            count = await self._repository.count(**filters)
+            count = self._repository.count_entities(**filters)
             return FlextResult.ok(count)
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to count entities: {e}")
 
     # FLEXT-CORE ORCHESTRATION METHODS
-    async def execute_batch(
+    def execute_batch(
         self,
         operations: list[dict[str, object]],
-    ) -> FlextResult[list[TEntity]]:
+    ) -> FlextResult[object]:
         """Execute batch operations with transaction support."""
         try:
-            results = []
+            results: list[object] = []
             for operation in operations:
-                op_type = operation.get("type")
-                op_data = operation.get("data", {})
-
-                if op_type == "create":
-                    result = await self.create_entity(op_data)
-                elif op_type == "update":
-                    entity_id = operation.get("id")
-                    if entity_id is not None:
-                        result = await self.update_entity(entity_id, op_data)
-                    else:
-                        return FlextResult.fail("Update operation missing entity ID")
-                elif op_type == "delete":
-                    entity_id = operation.get("id")
-                    if entity_id is not None:
-                        await self.delete_entity(entity_id)
-                    else:
-                        return FlextResult.fail("Delete operation missing entity ID")
-                    continue
-                else:
-                    return FlextResult.fail(f"Unknown operation type: {op_type}")
-
+                result = self._execute_single_operation(operation)
                 if not result.is_success:
-                    return FlextResult.fail(f"Batch operation failed: {result.error}")
+                    return result
 
                 if result.data is not None:
                     results.append(result.data)
 
-            # Filter out None results and cast to proper type
-            filtered_results = [r for r in results if r is not None]
-            return FlextResult.ok(filtered_results)
+            return FlextResult.ok(results)
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Batch execution failed: {e}")
 
+    def _execute_single_operation(
+        self, operation: dict[str, object]
+    ) -> FlextResult[object]:
+        """Execute single operation following Single Responsibility Principle."""
+        op_type = operation.get("type")
+
+        if op_type == "create":
+            return self._execute_create_operation(operation)
+        if op_type == "update":
+            return self._execute_update_operation(operation)
+        if op_type == "delete":
+            return self._execute_delete_operation(operation)
+        return FlextResult.fail(f"Unknown operation type: {op_type}")
+
+    def _execute_create_operation(
+        self, operation: dict[str, object]
+    ) -> FlextResult[object]:
+        """Execute create operation."""
+        op_data = operation.get("data", {})
+        return self.create_entity(op_data)
+
+    def _execute_update_operation(
+        self, operation: dict[str, object]
+    ) -> FlextResult[object]:
+        """Execute update operation."""
+        entity_id = operation.get("id")
+        op_data = operation.get("data", {})
+
+        if not entity_id or not isinstance(entity_id, (str, UUID)):
+            return FlextResult.fail("Update operation missing valid entity ID")
+
+        if not isinstance(op_data, dict):
+            return FlextResult.fail("Update operation data must be dict")
+
+        return self.update_entity(entity_id, op_data)
+
+    def _execute_delete_operation(
+        self, operation: dict[str, object]
+    ) -> FlextResult[object]:
+        """Execute delete operation."""
+        entity_id = operation.get("id")
+
+        if not entity_id or not isinstance(entity_id, (str, UUID)):
+            return FlextResult.fail("Delete operation missing valid entity ID")
+
+        result = self.delete_entity(entity_id)
+        if not result.is_success:
+            return FlextResult.fail(f"Delete failed: {result.error}")
+
+        # Delete operations don't return data
+        return FlextResult.ok(None)
+
     # PRIVATE HELPER METHODS
-    async def _apply_updates(
+    def _apply_updates(
         self,
-        entity: TEntity,
+        entity: object,
         updates: dict[str, object],
-    ) -> TEntity:
+    ) -> object:
         """Apply updates using immutable patterns."""
         # Try immutable pattern methods first
         updated_entity = entity
@@ -286,65 +311,113 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
 
         return updated_entity
 
-    async def _publish_creation_event(self, entity: TEntity) -> None:
+    def _publish_creation_event(self, entity: object) -> None:
         """Publish entity creation event."""
         # Integration point for flext-core event publishing
 
-    async def _publish_deletion_event(self, entity: TEntity) -> None:
+    def _publish_deletion_event(self, entity: object) -> None:
         """Publish entity deletion event."""
         # Integration point for flext-core event publishing
 
-    def execute(self) -> FlextResult[object]:  # Override signature to match supertype
+    def execute(self) -> FlextResult[object]:
         """Execute domain operation - required by FlextDomainService."""
         # Default implementation - subclasses should override for specific operations
         return FlextResult.fail("Base execute method - override in subclass")
 
-    async def execute_async(
+    def execute_async(
         self,
         operation: str,
         **kwargs: object,
     ) -> FlextResult[object]:
         """Execute domain operation asynchronously."""
         try:
-            if operation == "get":
-                return await self.get_by_id(kwargs.get("id"))
-            if operation == "create":
-                return await self.create_entity(kwargs.get("entity"))
-            if operation == "update":
-                return await self.update_entity(
-                    kwargs.get("id"),
-                    kwargs.get("updates", {}),
-                )
-            if operation == "delete":
-                return await self.delete_entity(kwargs.get("id"))
-            if operation == "list":
-                return await self.list_entities(
-                    kwargs.get("limit", 100),
-                    **kwargs.get("filters", {}),
-                )
-            if operation == "count":
-                return await self.count_entities(**kwargs.get("filters", {}))
-            return FlextResult.fail(f"Unknown operation: {operation}")
+            return self._execute_operation(operation, **kwargs)
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Operation {operation} failed: {e}")
 
+    def _execute_operation(
+        self,
+        operation: str,
+        **kwargs: object,
+    ) -> FlextResult[object]:
+        """Execute specific operation using strategy pattern - SOLID refactored."""
+        try:
+            operation_handlers = {
+                "get": self._handle_get_operation,
+                "create": self._handle_create_operation,
+                "update": self._handle_update_operation,
+                "delete": self._handle_delete_operation,
+                "list": self._handle_list_operation,
+                "count": self._handle_count_operation,
+            }
+
+            handler = operation_handlers.get(operation)
+            if not handler:
+                return FlextResult.fail(f"Unknown operation: {operation}")
+
+            return handler(**kwargs)
+
+        except (RuntimeError, ValueError, TypeError) as e:
+            return FlextResult.fail(f"Operation {operation} failed: {e}")
+
+    def _handle_get_operation(self, **kwargs: object) -> FlextResult[object]:
+        """Handle get operation following Single Responsibility."""
+        entity_id = kwargs.get("id")
+        if isinstance(entity_id, (str, UUID)):
+            return self.get_by_id(entity_id)
+        return FlextResult.fail("Get operation requires valid entity ID")
+
+    def _handle_create_operation(self, **kwargs: object) -> FlextResult[object]:
+        """Handle create operation following Single Responsibility."""
+        entity = kwargs.get("entity")
+        if entity is not None:
+            return self.create_entity(entity)
+        return FlextResult.fail("Create operation requires entity")
+
+    def _handle_update_operation(self, **kwargs: object) -> FlextResult[object]:
+        """Handle update operation following Single Responsibility."""
+        entity_id = kwargs.get("id")
+        updates = kwargs.get("updates", {})
+        if isinstance(entity_id, (str, UUID)) and isinstance(updates, dict):
+            return self.update_entity(entity_id, updates)
+        return FlextResult.fail("Update operation requires valid ID and updates dict")
+
+    def _handle_delete_operation(self, **kwargs: object) -> FlextResult[object]:
+        """Handle delete operation following Single Responsibility."""
+        entity_id = kwargs.get("id")
+        if isinstance(entity_id, (str, UUID)):
+            return self.delete_entity(entity_id)
+        return FlextResult.fail("Delete operation requires valid entity ID")
+
+    def _handle_list_operation(self, **kwargs: object) -> FlextResult[object]:
+        """Handle list operation following Single Responsibility."""
+        limit = kwargs.get("limit", 100)
+        filters = kwargs.get("filters", {})
+        if isinstance(limit, int) and isinstance(filters, dict):
+            return self.list_entities(limit, **filters)
+        return FlextResult.fail("List operation requires valid limit and filters")
+
+    def _handle_count_operation(self, **kwargs: object) -> FlextResult[object]:
+        """Handle count operation following Single Responsibility."""
+        filters = kwargs.get("filters", {})
+        if isinstance(filters, dict):
+            return self.count_entities(**filters)
+        return FlextResult.fail("Count operation requires valid filters dict")
+
 
 # FACTORY FUNCTIONS - Eliminate service instantiation boilerplate
-def create_ldap_repository[TEntityType](
-    entity_type: type[TEntityType],
-) -> FlextLdapRepository[TEntityType]:
-    """Factory for creating type-safe LDAP repositories."""
-    return FlextLdapRepository[TEntityType]()
+def create_ldap_repository() -> FlextLdapRepository:
+    """Factory for creating LDAP repositories."""
+    return FlextLdapRepository()
 
 
-def create_ldap_service[TEntityType](
-    entity_type: type[TEntityType],
-    repository: FlextLdapRepository[TEntityType] | None = None,
-) -> FlextLdapDomainService[TEntityType]:
-    """Factory for creating type-safe LDAP services."""
-    return FlextLdapDomainService[TEntityType](repository)
+def create_ldap_service(
+    repository: FlextLdapRepository | None = None,
+) -> FlextLdapDomainService:
+    """Factory for creating LDAP services."""
+    return FlextLdapDomainService(repository)
 
 
 # COMPATIBILITY ALIASES - Maintain existing code
-TFlextLdapRepository = FlextLdapRepository
-TFlextLdapDomainService = FlextLdapDomainService
+TFlextLdapRepository = type[FlextLdapRepository]
+TFlextLdapDomainService = type[FlextLdapDomainService]

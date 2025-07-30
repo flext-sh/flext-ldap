@@ -303,12 +303,11 @@ class TestFlextLdapOperationService:
         """Create operation service for testing."""
         return FlextLdapOperationService()
 
-    @pytest.mark.asyncio
-    async def test_create_operation(self, operation_service) -> None:
+    def test_create_operation(self, operation_service) -> None:
         """Test operation creation."""
         connection_id = str(uuid4())
 
-        result = await operation_service.create_operation(
+        result = operation_service.create_operation(
             operation_type="search",
             target_dn="ou=users,dc=example,dc=com",
             connection_id=connection_id,
