@@ -72,7 +72,9 @@ class FlextLdapConnectionRepositoryImpl(FlextLdapConnectionRepository):
             if connection.id in self._connections:
                 del self._connections[connection.id]
                 return FlextResult.ok(data=True)
-            return FlextResult.ok(data=False)  # Item not found, but operation didn't fail
+            return FlextResult.ok(
+                data=False,
+            )  # Item not found, but operation didn't fail
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to delete connection: {e}"
             raise FlextLdapUserError(msg) from e

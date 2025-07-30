@@ -23,9 +23,13 @@ class FlextLdapConnectionEstablished(FlextValueObject):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for connection established event."""
         if not self.aggregate_id:
-            return FlextResult.fail("Connection established event must have aggregate_id")
+            return FlextResult.fail(
+                "Connection established event must have aggregate_id",
+            )
         if not self.connection_id:
-            return FlextResult.fail("Connection established event must have connection_id")
+            return FlextResult.fail(
+                "Connection established event must have connection_id",
+            )
         if not self.base_dn:
             return FlextResult.fail("Connection established event must have base_dn")
         return FlextResult.ok(None)
@@ -117,7 +121,9 @@ class FlextLdapUserAuthenticated(FlextValueObject):
         if not self.user_dn:
             return FlextResult.fail("User authenticated event must have user_dn")
         if not self.authentication_method:
-            return FlextResult.fail("User authenticated event must have authentication_method")
+            return FlextResult.fail(
+                "User authenticated event must have authentication_method",
+            )
         return FlextResult.ok(None)
 
 
@@ -132,7 +138,9 @@ class FlextLdapAuthenticationFailed(FlextValueObject):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for authentication failed event."""
         if not self.aggregate_id:
-            return FlextResult.fail("Authentication failed event must have aggregate_id")
+            return FlextResult.fail(
+                "Authentication failed event must have aggregate_id",
+            )
         if not self.user_dn:
             return FlextResult.fail("Authentication failed event must have user_dn")
         if not self.reason:

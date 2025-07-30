@@ -59,16 +59,30 @@ class FlextLdapDirectoryAdapterInterface(ABC):
 
 
 class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
-    """Concrete implementation of FlextLdapDirectoryServiceInterface using FLEXT.
+    """Concrete implementation of FlextLdapDirectoryServiceInterface."""
 
-    LDAP.
-    """
+    _ldap_client: FlextLdapSimpleClient | None = None
 
     def __init__(self) -> None:
         """Initialize FLEXT LDAP directory service."""
-        self._ldap_client = FlextLdapSimpleClient()
+        if self._ldap_client is None:
+            self._ldap_client = FlextLdapSimpleClient()
 
-    async def connect(self) -> FlextResult[bool]:
+    async def connect(
+        self,
+        server_url: str,
+        *,
+        bind_dn: str | None = None,
+        password: str | None = None,
+        timeout: int | None = None,  # noqa: ASYNC109
+        verify_ssl: bool | None = None,
+        start_tls: bool | None = None,
+        tls_options: dict[str, object] | None = None,
+        tls_version: str | None = None,
+        tls_ciphers: list[str] | None = None,
+        tls_cert_reqs: int | None = None,
+        tls_ca_certs: str | None = None,
+    ) -> FlextResult[bool]:
         """Establish connection to directory server using FLEXT LDAP.
 
         Returns:
@@ -77,7 +91,20 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         """
         try:
             # Use default connection for simplicity
-            return FlextResult.ok(True)
+            await self._ldap_client.connect(
+                server_url=server_url,
+                bind_dn=bind_dn,
+                password=password,
+                timeout=timeout,
+                verify_ssl=verify_ssl,
+                start_tls=start_tls,
+                tls_options=tls_options,
+                tls_version=tls_version,
+                tls_ciphers=tls_ciphers,
+                tls_cert_reqs=tls_cert_reqs,
+                tls_ca_certs=tls_ca_certs,
+            )
+            return FlextResult.ok(data=True)
 
         except ConnectionError as e:
             return FlextResult.fail(f"Connection error: {e}")
@@ -86,24 +113,31 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
     async def search_users(
         self,
-        filter_criteria: dict[str, object],
+        search_filter: str,
+        base_dn: str = "",
+        scope: str = "sub",
+        attributes: list[str] | None = None,
     ) -> FlextResult[list[FlextLdapDirectoryEntryProtocol]]:
         """Search for users in directory."""
         try:
-            # Simple mock implementation - in real implementation would search LDAP
-            # Create a simple object that implements FlextLdapDirectoryEntryProtocol
-            class DirectoryEntry:
-                def __init__(self, dn: str, attributes: dict[str, object]) -> None:
-                    self.dn = dn
-                    self.attributes = attributes
+            result = await self._ldap_client.search(
+                connection_id=self._ldap_client.connection_id,
+                search_base=base_dn,
+                search_filter=search_filter,
+                attributes=attributes or ["*"],
+                scope=scope,
+            )
 
-            entries = [
-                cast(
-                    "FlextLdapDirectoryEntryProtocol",
-                    DirectoryEntry("cn=user,dc=example,dc=com", {"uid": "user"}),
-                ),
-            ]
-            return FlextResult.ok(entries)
+            if result.is_success and result.data:
+                entries = [
+                    cast(
+                        "FlextLdapDirectoryEntryProtocol",
+                        entry,
+                    )
+                    for entry in result.data
+                ]
+
+            return FlextResult.ok(data=entries)
 
         except ConnectionError as e:
             return FlextResult.fail(f"Search connection error: {e}")
@@ -124,7 +158,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         """
         try:
             await self._ldap_client.disconnect(connection_id)
-            return FlextResult.ok(True)
+            return FlextResult.ok(data=True)
         except ConnectionError as e:
             return FlextResult.fail(f"Disconnect connection error: {e}")
         except OSError as e:
@@ -225,7 +259,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             )
 
             if result.is_success:
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
             return FlextResult.fail(f"Add entry failed: {result.error}")
 
         except ConnectionError as e:
@@ -256,7 +290,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             )
 
             if result.is_success:
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
             return FlextResult.fail(f"Modify entry failed: {result.error}")
 
         except ConnectionError as e:
@@ -288,7 +322,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             )
 
             if result.is_success:
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
             return FlextResult.fail(f"Delete entry failed: {result.error}")
 
         except ConnectionError as e:

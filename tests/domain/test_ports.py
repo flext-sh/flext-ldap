@@ -41,7 +41,6 @@ class TestFlextLdapConnectionService:
         }
 
         if abstract_methods != expected_methods:
-
             msg = f"Expected {expected_methods}, got {abstract_methods}"
             raise AssertionError(msg)
 
@@ -50,18 +49,18 @@ class TestFlextLdapConnectionService:
         # Test connect method signature
         connect_sig = inspect.signature(ports.FlextLdapConnectionService.connect)
         if "self" not in connect_sig.parameters:
-            msg = f"Expected {"self"} in {connect_sig.parameters}"
+            msg = f"Expected {'self'} in {connect_sig.parameters}"
             raise AssertionError(msg)
         assert "server_url" in connect_sig.parameters
         if "bind_dn" not in connect_sig.parameters:
-            msg = f"Expected {"bind_dn"} in {connect_sig.parameters}"
+            msg = f"Expected {'bind_dn'} in {connect_sig.parameters}"
             raise AssertionError(msg)
         assert "password" in connect_sig.parameters
 
         # Test disconnect method signature
         disconnect_sig = inspect.signature(ports.FlextLdapConnectionService.disconnect)
         if "self" not in disconnect_sig.parameters:
-            msg = f"Expected {"self"} in {disconnect_sig.parameters}"
+            msg = f"Expected {'self'} in {disconnect_sig.parameters}"
             raise AssertionError(msg)
         assert "connection" in disconnect_sig.parameters
 
@@ -116,7 +115,6 @@ class TestFlextLdapSearchService:
         expected_methods = {"search", "search_users"}
 
         if abstract_methods != expected_methods:
-
             msg = f"Expected {expected_methods}, got {abstract_methods}"
             raise AssertionError(msg)
 
@@ -125,15 +123,15 @@ class TestFlextLdapSearchService:
         # Test search method signature
         search_sig = inspect.signature(ports.FlextLdapSearchService.search)
         if "self" not in search_sig.parameters:
-            msg = f"Expected {"self"} in {search_sig.parameters}"
+            msg = f"Expected {'self'} in {search_sig.parameters}"
             raise AssertionError(msg)
         assert "connection" in search_sig.parameters
         if "base_dn" not in search_sig.parameters:
-            msg = f"Expected {"base_dn"} in {search_sig.parameters}"
+            msg = f"Expected {'base_dn'} in {search_sig.parameters}"
             raise AssertionError(msg)
         assert "filter_string" in search_sig.parameters
         if "attributes" not in search_sig.parameters:
-            msg = f"Expected {"attributes"} in {search_sig.parameters}"
+            msg = f"Expected {'attributes'} in {search_sig.parameters}"
             raise AssertionError(msg)
         assert "scope" in search_sig.parameters
 
@@ -189,7 +187,6 @@ class TestFlextLdapUserService:
         }
 
         if abstract_methods != expected_methods:
-
             msg = f"Expected {expected_methods}, got {abstract_methods}"
             raise AssertionError(msg)
 
@@ -198,11 +195,11 @@ class TestFlextLdapUserService:
         # Test create_user method signature
         create_sig = inspect.signature(ports.FlextLdapUserService.create_user)
         if "self" not in create_sig.parameters:
-            msg = f"Expected {"self"} in {create_sig.parameters}"
+            msg = f"Expected {'self'} in {create_sig.parameters}"
             raise AssertionError(msg)
         assert "connection" in create_sig.parameters
         if "dn" not in create_sig.parameters:
-            msg = f"Expected {"dn"} in {create_sig.parameters}"
+            msg = f"Expected {'dn'} in {create_sig.parameters}"
             raise AssertionError(msg)
         assert "attributes" in create_sig.parameters
 
@@ -264,7 +261,6 @@ class TestFlextLdapSchemaService:
         expected_methods = {"get_schema", "validate_entry"}
 
         if abstract_methods != expected_methods:
-
             msg = f"Expected {expected_methods}, got {abstract_methods}"
             raise AssertionError(msg)
 
@@ -307,7 +303,6 @@ class TestFlextLdapMigrationService:
         expected_methods = {"export_entries", "import_entries", "migrate_users"}
 
         if abstract_methods != expected_methods:
-
             msg = f"Expected {expected_methods}, got {abstract_methods}"
             raise AssertionError(msg)
 
@@ -316,11 +311,11 @@ class TestFlextLdapMigrationService:
         # Test export_entries method signature
         export_sig = inspect.signature(ports.FlextLdapMigrationService.export_entries)
         if "self" not in export_sig.parameters:
-            msg = f"Expected {"self"} in {export_sig.parameters}"
+            msg = f"Expected {'self'} in {export_sig.parameters}"
             raise AssertionError(msg)
         assert "connection" in export_sig.parameters
         if "base_dn" not in export_sig.parameters:
-            msg = f"Expected {"base_dn"} in {export_sig.parameters}"
+            msg = f"Expected {'base_dn'} in {export_sig.parameters}"
             raise AssertionError(msg)
         assert "output_format" in export_sig.parameters
 
@@ -390,7 +385,7 @@ class TestPortsModule:
         """Test that module has proper docstring."""
         assert ports.__doc__ is not None
         if "Domain ports" not in ports.__doc__:
-            msg = f"Expected {"Domain ports"} in {ports.__doc__}"
+            msg = f"Expected {'Domain ports'} in {ports.__doc__}"
             raise AssertionError(msg)
         assert "service interfaces" in ports.__doc__
 

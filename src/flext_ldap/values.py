@@ -25,7 +25,7 @@ class FlextLdapScopeEnum(StrEnum):
 
     # Legacy mappings for backward compatibility (from models.py)
     ONE = "onelevel"  # Map ONE to ONE_LEVEL
-    SUB = "subtree"   # Map SUB to SUBTREE
+    SUB = "subtree"  # Map SUB to SUBTREE
 
 
 class FlextLdapDistinguishedName(FlextValueObject):
@@ -425,7 +425,9 @@ class FlextLdapAttributesValue(FlextValueObject):
             if not name or not name.strip():
                 return FlextResult.fail("Attribute name cannot be empty")
             if not values:
-                return FlextResult.fail(f"Attribute '{name}' must have at least one value")
+                return FlextResult.fail(
+                    f"Attribute '{name}' must have at least one value",
+                )
         return FlextResult.ok(None)
 
     def get_single_value(self, name: str) -> str | None:
@@ -632,7 +634,7 @@ class FlextLdapCreateUserRequest(FlextValueObject):
 
 # Backward compatibility aliases
 LDAPScope = FlextLdapScopeEnum
-DistinguishedName = FlextLdapDistinguishedName
+FlextLdapDistinguishedName = FlextLdapDistinguishedName
 LDAPFilter = FlextLdapFilterValue
 LDAPUri = FlextLdapUri
 LDAPObjectClass = FlextLdapObjectClass

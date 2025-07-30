@@ -75,14 +75,16 @@ class FlextLdapRepository[TEntity](FlextRepository):
                 results.append(entity)
         return results
 
-    async def find_by_attribute(self, attr_name: str, attr_value: object) -> list[TEntity]:
+    async def find_by_attribute(
+        self, attr_name: str, attr_value: object,
+    ) -> list[TEntity]:
         """Find by single attribute - optimized path."""
         return await self.find_where(**{attr_name: attr_value})
 
     async def list_all(self, limit: int = 100, offset: int = 0) -> list[TEntity]:
         """List with pagination."""
         entities = list(self._storage.values())
-        return entities[offset:offset + limit]
+        return entities[offset : offset + limit]
 
     async def count(self, **conditions: object) -> int:
         """Count entities matching conditions."""
@@ -152,7 +154,9 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to create entity: {e}")
 
-    async def update_entity(self, entity_id: UUID | str, updates: dict[str, object]) -> FlextResult[TEntity]:
+    async def update_entity(
+        self, entity_id: UUID | str, updates: dict[str, object],
+    ) -> FlextResult[TEntity]:
         """Update with immutable patterns and validation."""
         try:
             # Get existing entity
@@ -181,7 +185,9 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
             # Delete from repository
             delete_result = self._repository.delete(key)
             if not delete_result.is_success:
-                return FlextResult.fail(delete_result.error or "Failed to delete entity")
+                return FlextResult.fail(
+                    delete_result.error or "Failed to delete entity",
+                )
             deleted = True  # Successful delete
 
             # Publish deletion event if entity was found
@@ -192,7 +198,9 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to delete entity: {e}")
 
-    async def list_entities(self, limit: int = 100, **filters: object) -> FlextResult[list[TEntity]]:
+    async def list_entities(
+        self, limit: int = 100, **filters: object,
+    ) -> FlextResult[list[TEntity]]:
         """List with intelligent filtering and pagination."""
         try:
             if filters:
@@ -212,7 +220,9 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
             return FlextResult.fail(f"Failed to count entities: {e}")
 
     # FLEXT-CORE ORCHESTRATION METHODS
-    async def execute_batch(self, operations: list[dict[str, object]]) -> FlextResult[list[TEntity]]:
+    async def execute_batch(
+        self, operations: list[dict[str, object]],
+    ) -> FlextResult[list[TEntity]]:
         """Execute batch operations with transaction support."""
         try:
             results = []
@@ -251,7 +261,9 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
             return FlextResult.fail(f"Batch execution failed: {e}")
 
     # PRIVATE HELPER METHODS
-    async def _apply_updates(self, entity: TEntity, updates: dict[str, object]) -> TEntity:
+    async def _apply_updates(
+        self, entity: TEntity, updates: dict[str, object],
+    ) -> TEntity:
         """Apply updates using immutable patterns."""
         # Try immutable pattern methods first
         updated_entity = entity
@@ -278,7 +290,9 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
         # Default implementation - subclasses should override for specific operations
         return FlextResult.fail("Base execute method - override in subclass")
 
-    async def execute_async(self, operation: str, **kwargs: object) -> FlextResult[object]:
+    async def execute_async(
+        self, operation: str, **kwargs: object,
+    ) -> FlextResult[object]:
         """Execute domain operation asynchronously."""
         try:
             if operation == "get":
@@ -286,11 +300,15 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
             if operation == "create":
                 return await self.create_entity(kwargs.get("entity"))  # type: ignore[arg-type,return-value]
             if operation == "update":
-                return await self.update_entity(kwargs.get("id"), kwargs.get("updates", {}))  # type: ignore[arg-type,return-value]
+                return await self.update_entity(
+                    kwargs.get("id"), kwargs.get("updates", {}),
+                )  # type: ignore[arg-type,return-value]
             if operation == "delete":
                 return await self.delete_entity(kwargs.get("id"))  # type: ignore[arg-type,return-value]
             if operation == "list":
-                return await self.list_entities(kwargs.get("limit", 100), **kwargs.get("filters", {}))  # type: ignore[arg-type,return-value]
+                return await self.list_entities(
+                    kwargs.get("limit", 100), **kwargs.get("filters", {}),
+                )  # type: ignore[arg-type,return-value]
             if operation == "count":
                 return await self.count_entities(**kwargs.get("filters", {}))  # type: ignore[arg-type,return-value]
             return FlextResult.fail(f"Unknown operation: {operation}")
@@ -299,12 +317,17 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
 
 
 # FACTORY FUNCTIONS - Eliminate service instantiation boilerplate
-def create_ldap_repository[TEntityType](entity_type: type[TEntityType]) -> FlextLdapRepository[TEntityType]:
+def create_ldap_repository[TEntityType](
+    entity_type: type[TEntityType],
+) -> FlextLdapRepository[TEntityType]:
     """Factory for creating type-safe LDAP repositories."""
     return FlextLdapRepository[TEntityType]()
 
 
-def create_ldap_service[TEntityType](entity_type: type[TEntityType], repository: FlextLdapRepository[TEntityType] | None = None) -> FlextLdapDomainService[TEntityType]:
+def create_ldap_service[TEntityType](
+    entity_type: type[TEntityType],
+    repository: FlextLdapRepository[TEntityType] | None = None,
+) -> FlextLdapDomainService[TEntityType]:
     """Factory for creating type-safe LDAP services."""
     return FlextLdapDomainService[TEntityType](repository)
 

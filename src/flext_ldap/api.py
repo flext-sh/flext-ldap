@@ -100,7 +100,10 @@ class FlextLdapApi:
 
             if result.is_success:
                 del self._connections[session_id]
-                logger.info("Disconnected from LDAP server", extra={"session_id": session_id})
+                logger.info(
+                    "Disconnected from LDAP server",
+                    extra={"session_id": session_id},
+                )
 
             return result
 
@@ -143,10 +146,18 @@ class FlextLdapApi:
                 return FlextResult.fail(f"Session {session_id} not found")
 
             connection_id = self._connections[session_id]
-            base_str = str(base_dn) if isinstance(base_dn, FlextLdapDistinguishedName) else base_dn
+            base_str = (
+                str(base_dn)
+                if isinstance(base_dn, FlextLdapDistinguishedName)
+                else base_dn
+            )
 
             result = await self._client.search(
-                connection_id, base_str, filter_expr, attributes or ["*"], scope,
+                connection_id,
+                base_str,
+                filter_expr,
+                attributes or ["*"],
+                scope,
             )
 
             if not result.is_success:
@@ -157,7 +168,10 @@ class FlextLdapApi:
             for raw_entry in result.data:
                 entry = FlextLdapEntry(
                     dn=raw_entry.get("dn", ""),
-                    object_classes=raw_entry.get("attributes", {}).get("objectClass", []),
+                    object_classes=raw_entry.get("attributes", {}).get(
+                        "objectClass",
+                        [],
+                    ),
                     attributes=raw_entry.get("attributes", {}),
                     id=str(uuid4()),  # FlextEntity requires id
                 )
@@ -198,7 +212,11 @@ class FlextLdapApi:
                 attributes["title"] = [user_request.title]
 
             # Create entry
-            result = await self._client.add_entry(connection_id, user_request.dn, attributes)
+            result = await self._client.add_entry(
+                connection_id,
+                user_request.dn,
+                attributes,
+            )
 
             if not result.is_success:
                 return FlextResult.fail(f"User creation failed: {result.error}")
@@ -236,7 +254,11 @@ class FlextLdapApi:
                 return FlextResult.fail(f"Session {session_id} not found")
 
             connection_id = self._connections[session_id]
-            dn_str = str(user_dn) if isinstance(user_dn, FlextLdapDistinguishedName) else user_dn
+            dn_str = (
+                str(user_dn)
+                if isinstance(user_dn, FlextLdapDistinguishedName)
+                else user_dn
+            )
 
             # Convert updates to LDAP modify format
             modifications = {}
@@ -246,7 +268,11 @@ class FlextLdapApi:
                 else:
                     modifications[attr] = [(3, [str(value)])]  # MODIFY_REPLACE
 
-            result = await self._client.modify_entry(connection_id, dn_str, modifications)
+            result = await self._client.modify_entry(
+                connection_id,
+                dn_str,
+                modifications,
+            )
 
             if result.is_success:
                 logger.info("User updated", extra={"user_dn": dn_str})
@@ -267,7 +293,11 @@ class FlextLdapApi:
                 return FlextResult.fail(f"Session {session_id} not found")
 
             connection_id = self._connections[session_id]
-            dn_str = str(user_dn) if isinstance(user_dn, FlextLdapDistinguishedName) else user_dn
+            dn_str = (
+                str(user_dn)
+                if isinstance(user_dn, FlextLdapDistinguishedName)
+                else user_dn
+            )
 
             result = await self._client.delete_entry(connection_id, dn_str)
 

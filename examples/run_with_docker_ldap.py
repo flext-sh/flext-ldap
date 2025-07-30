@@ -39,35 +39,63 @@ def start_openldap_container() -> bool:
         )
 
         # Start new container
-        subprocess.run([
-            "docker", "run", "-d",
-            "--name", "flext-ldap-example",
-            "-p", "3389:389",
-            "-e", "LDAP_ORGANISATION=FLEXT Example Org",
-            "-e", "LDAP_DOMAIN=flext.local",
-            "-e", "LDAP_ADMIN_PASSWORD=admin123",
-            "-e", "LDAP_CONFIG_PASSWORD=config123",
-            "-e", "LDAP_READONLY_USER=false",
-            "-e", "LDAP_RFC2307BIS_SCHEMA=true",
-            "-e", "LDAP_BACKEND=mdb",
-            "-e", "LDAP_TLS=false",
-            "-e", "LDAP_REMOVE_CONFIG_AFTER_SETUP=true",
-            "osixia/openldap:1.5.0",
-        ], check=True)
+        subprocess.run(
+            [
+                "docker",
+                "run",
+                "-d",
+                "--name",
+                "flext-ldap-example",
+                "-p",
+                "3389:389",
+                "-e",
+                "LDAP_ORGANISATION=FLEXT Example Org",
+                "-e",
+                "LDAP_DOMAIN=flext.local",
+                "-e",
+                "LDAP_ADMIN_PASSWORD=admin123",
+                "-e",
+                "LDAP_CONFIG_PASSWORD=config123",
+                "-e",
+                "LDAP_READONLY_USER=false",
+                "-e",
+                "LDAP_RFC2307BIS_SCHEMA=true",
+                "-e",
+                "LDAP_BACKEND=mdb",
+                "-e",
+                "LDAP_TLS=false",
+                "-e",
+                "LDAP_REMOVE_CONFIG_AFTER_SETUP=true",
+                "osixia/openldap:1.5.0",
+            ],
+            check=True,
+        )
 
         # Wait for container to be ready
         for _attempt in range(30):
             try:
-                result = subprocess.run([
-                    "docker", "exec", "flext-ldap-example",
-                    "ldapsearch", "-x",
-                    "-H", "ldap://localhost:389",
-                    "-D", "cn=admin,dc=flext,dc=local",
-                    "-w", "admin123",
-                    "-b", "dc=flext,dc=local",
-                    "-s", "base",
-                    "(objectClass=*)",
-                ], capture_output=True, check=True)
+                result = subprocess.run(
+                    [
+                        "docker",
+                        "exec",
+                        "flext-ldap-example",
+                        "ldapsearch",
+                        "-x",
+                        "-H",
+                        "ldap://localhost:389",
+                        "-D",
+                        "cn=admin,dc=flext,dc=local",
+                        "-w",
+                        "admin123",
+                        "-b",
+                        "dc=flext,dc=local",
+                        "-s",
+                        "base",
+                        "(objectClass=*)",
+                    ],
+                    capture_output=True,
+                    check=True,
+                )
 
                 if result.returncode == 0:
                     return True
@@ -93,12 +121,14 @@ def stop_openldap_container() -> None:
 async def run_examples_with_docker() -> None:
     """Run FLEXT-LDAP examples against Docker OpenLDAP."""
     # Set environment variables for container
-    os.environ.update({
-        "LDAP_TEST_SERVER": "ldap://localhost:3389",
-        "LDAP_TEST_BIND_DN": "cn=admin,dc=flext,dc=local",
-        "LDAP_TEST_PASSWORD": "admin123",
-        "LDAP_TEST_BASE_DN": "dc=flext,dc=local",
-    })
+    os.environ.update(
+        {
+            "LDAP_TEST_SERVER": "ldap://localhost:3389",
+            "LDAP_TEST_BIND_DN": "cn=admin,dc=flext,dc=local",
+            "LDAP_TEST_PASSWORD": "admin123",
+            "LDAP_TEST_BASE_DN": "dc=flext,dc=local",
+        }
+    )
 
     # Run the integrated example
     try:
@@ -111,7 +141,6 @@ async def run_examples_with_docker() -> None:
 
     # Run the simple client example
     with contextlib.suppress(RuntimeError, ValueError, TypeError):
-
         await simple_main()
 
 

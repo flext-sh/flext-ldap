@@ -69,7 +69,9 @@ class FlextLDAPConnectionManager:
         except (ValueError, TypeError, OSError) as e:
             return FlextResult.fail(f"Failed to close LDAP connection: {e}")
 
-    async def validate_connection(self, connection: FlextLdapClient) -> FlextResult[bool]:
+    async def validate_connection(
+        self, connection: FlextLdapClient,
+    ) -> FlextResult[bool]:
         """Validate LDAP connection is still active.
 
         Args:

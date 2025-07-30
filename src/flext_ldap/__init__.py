@@ -24,10 +24,7 @@ async with api.connection(
 
     # Create user
     user_request = FlextLdapCreateUserRequest(
-        dn="cn=john,ou=users,dc=example,dc=com",
-        uid="john",
-        cn="John Doe",
-        sn="Doe"
+        dn="cn=john,ou=users,dc=example,dc=com", uid="john", cn="John Doe", sn="Doe"
     )
     new_user = await api.create_user(session, user_request)
 ```
@@ -93,7 +90,7 @@ def __getattr__(name: str) -> object:
         "LDAPUser": FlextLdapUser,
         "LDAPGroup": FlextLdapGroup,
         "LDAPEntry": FlextLdapEntry,
-        "DistinguishedName": FlextLdapDistinguishedName,
+        "FlextLdapDistinguishedName": FlextLdapDistinguishedName,
         "CreateUserRequest": FlextLdapCreateUserRequest,
     }
 

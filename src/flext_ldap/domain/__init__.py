@@ -51,7 +51,7 @@ from flext_ldap.entities import (
 )
 from flext_ldap.values import (
     FlextLdapAttributesValue as LDAPAttributes,
-    FlextLdapDistinguishedName as DistinguishedName,
+    FlextLdapDistinguishedName as FlextLdapDistinguishedName,
     FlextLdapFilterValue as LDAPFilter,
     FlextLdapObjectClass as LDAPObjectClass,
     FlextLdapScopeEnum as LDAPScope,
@@ -102,7 +102,7 @@ __all__ = [
     # Aggregates
     "DirectoryAggregate",
     # Values
-    "DistinguishedName",
+    "FlextLdapDistinguishedName",
     "FlextLdapAuthenticationFailed",
     "FlextLdapConnectionEstablished",
     "FlextLdapConnectionLost",
