@@ -47,7 +47,7 @@ class FlextLdapRepository[TEntity](FlextRepository):
             if hasattr(entity, "validate_domain_rules"):
                 entity.validate_domain_rules()
 
-            self._storage[entity_id] = entity  # type: ignore[assignment]
+            self._storage[entity_id] = entity
             return FlextResult.ok(None)
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Save failed: {e}")
@@ -76,7 +76,9 @@ class FlextLdapRepository[TEntity](FlextRepository):
         return results
 
     async def find_by_attribute(
-        self, attr_name: str, attr_value: object,
+        self,
+        attr_name: str,
+        attr_value: object,
     ) -> list[TEntity]:
         """Find by single attribute - optimized path."""
         return await self.find_where(**{attr_name: attr_value})
@@ -130,7 +132,7 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
                 return FlextResult.fail(find_result.error or "Failed to find entity")
             entity = find_result.data
 
-            return FlextResult.ok(entity)  # type: ignore[arg-type]
+            return FlextResult.ok(entity)
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to get entity: {e}")
 
@@ -155,7 +157,9 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
             return FlextResult.fail(f"Failed to create entity: {e}")
 
     async def update_entity(
-        self, entity_id: UUID | str, updates: dict[str, object],
+        self,
+        entity_id: UUID | str,
+        updates: dict[str, object],
     ) -> FlextResult[TEntity]:
         """Update with immutable patterns and validation."""
         try:
@@ -199,7 +203,9 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
             return FlextResult.fail(f"Failed to delete entity: {e}")
 
     async def list_entities(
-        self, limit: int = 100, **filters: object,
+        self,
+        limit: int = 100,
+        **filters: object,
     ) -> FlextResult[list[TEntity]]:
         """List with intelligent filtering and pagination."""
         try:
@@ -221,7 +227,8 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
 
     # FLEXT-CORE ORCHESTRATION METHODS
     async def execute_batch(
-        self, operations: list[dict[str, object]],
+        self,
+        operations: list[dict[str, object]],
     ) -> FlextResult[list[TEntity]]:
         """Execute batch operations with transaction support."""
         try:
@@ -231,17 +238,17 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
                 op_data = operation.get("data", {})
 
                 if op_type == "create":
-                    result = await self.create_entity(op_data)  # type: ignore[arg-type]
+                    result = await self.create_entity(op_data)
                 elif op_type == "update":
                     entity_id = operation.get("id")
                     if entity_id is not None:
-                        result = await self.update_entity(entity_id, op_data)  # type: ignore[arg-type]
+                        result = await self.update_entity(entity_id, op_data)
                     else:
                         return FlextResult.fail("Update operation missing entity ID")
                 elif op_type == "delete":
                     entity_id = operation.get("id")
                     if entity_id is not None:
-                        await self.delete_entity(entity_id)  # type: ignore[arg-type]
+                        await self.delete_entity(entity_id)
                     else:
                         return FlextResult.fail("Delete operation missing entity ID")
                     continue
@@ -262,7 +269,9 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
 
     # PRIVATE HELPER METHODS
     async def _apply_updates(
-        self, entity: TEntity, updates: dict[str, object],
+        self,
+        entity: TEntity,
+        updates: dict[str, object],
     ) -> TEntity:
         """Apply updates using immutable patterns."""
         # Try immutable pattern methods first
@@ -291,26 +300,30 @@ class FlextLdapDomainService[TEntity](FlextDomainService):
         return FlextResult.fail("Base execute method - override in subclass")
 
     async def execute_async(
-        self, operation: str, **kwargs: object,
+        self,
+        operation: str,
+        **kwargs: object,
     ) -> FlextResult[object]:
         """Execute domain operation asynchronously."""
         try:
             if operation == "get":
-                return await self.get_by_id(kwargs.get("id"))  # type: ignore[arg-type,return-value]
+                return await self.get_by_id(kwargs.get("id"))
             if operation == "create":
-                return await self.create_entity(kwargs.get("entity"))  # type: ignore[arg-type,return-value]
+                return await self.create_entity(kwargs.get("entity"))
             if operation == "update":
                 return await self.update_entity(
-                    kwargs.get("id"), kwargs.get("updates", {}),
-                )  # type: ignore[arg-type,return-value]
+                    kwargs.get("id"),
+                    kwargs.get("updates", {}),
+                )
             if operation == "delete":
-                return await self.delete_entity(kwargs.get("id"))  # type: ignore[arg-type,return-value]
+                return await self.delete_entity(kwargs.get("id"))
             if operation == "list":
                 return await self.list_entities(
-                    kwargs.get("limit", 100), **kwargs.get("filters", {}),
-                )  # type: ignore[arg-type,return-value]
+                    kwargs.get("limit", 100),
+                    **kwargs.get("filters", {}),
+                )
             if operation == "count":
-                return await self.count_entities(**kwargs.get("filters", {}))  # type: ignore[arg-type,return-value]
+                return await self.count_entities(**kwargs.get("filters", {}))
             return FlextResult.fail(f"Unknown operation: {operation}")
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Operation {operation} failed: {e}")
