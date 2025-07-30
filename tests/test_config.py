@@ -1,50 +1,22 @@
 """Test configuration functionality."""
 
-from flext_ldap.config import FlextLdapConstants
-from flext_ldap.config import FlextLdapConnectionConfig
-from flext_ldap.config import FlextLdapConnectionConfig
-from flext_ldap.config import FlextLdapConnectionConfig
-from flext_ldap.config import FlextLdapConnectionConfig
-from flext_ldap.config import FlextLdapConnectionConfig
-from pydantic import ValidationError
-from flext_ldap.config import FlextLdapConnectionConfig
-from flext_ldap.config import FlextLdapConnectionConfig
-from flext_ldap.config import FlextLdapConnectionConfig
-from flext_ldap.config import FlextLdapAuthConfig
-from flext_ldap.config import FlextLdapAuthConfig
-from flext_ldap.config import FlextLdapAuthConfig
-from flext_ldap.config import FlextLdapAuthConfig
-from flext_ldap.config import FlextLdapAuthConfig
-from flext_ldap.config import FlextLdapAuthConfig
-from flext_ldap.config import FlextLdapSearchConfig
-from flext_ldap.config import FlextLdapSearchConfig
-from flext_ldap.config import FlextLdapSearchConfig
-from flext_ldap.config import FlextLdapSearchConfig
-from flext_ldap.config import FlextLdapOperationConfig
-from flext_ldap.config import FlextLdapOperationConfig
-from flext_ldap.config import FlextLdapOperationConfig
-from flext_ldap.config import FlextLdapOperationConfig
-from flext_ldap.config import FlextLdapSecurityConfig
-from flext_ldap.config import FlextLdapSecurityConfig
-from flext_ldap.config import FlextLdapSecurityConfig
-from flext_ldap.config import FlextLdapSecurityConfig
 import os
 from unittest.mock import patch
-from flext_ldap.config import FlextLdapLoggingConfig
-from flext_ldap.config import FlextLdapLoggingConfig
-from flext_ldap.config import FlextLdapLoggingConfig
-from flext_ldap.config import FlextLdapSettings
-import os
-from unittest.mock import patch
-from flext_ldap.config import FlextLdapSettings
-from flext_ldap.config import (
-from flext_ldap.config import (
-from flext_ldap.config import create_development_config
-
 
 import pytest
 from flext_core import FlextLogLevel
-
+from flext_ldap.config import (
+    FlextLdapAuthConfig,
+    FlextLdapConnectionConfig,
+    FlextLdapConstants,
+    FlextLdapLoggingConfig,
+    FlextLdapOperationConfig,
+    FlextLdapSearchConfig,
+    FlextLdapSecurityConfig,
+    FlextLdapSettings,
+    create_development_config,
+)
+from pydantic import ValidationError
 
 # Constants
 HTTP_OK = 200
@@ -121,8 +93,9 @@ class TestFlextLdapConnectionConfig:
 
 
         config = FlextLdapConnectionConfig(server="  localhost  ")
-        if config.server != "localhost"  # Should be stripped:
-            raise AssertionError(f"Expected {"localhost"  # Should be stripped}, got {config.server}")
+        if config.server != "localhost":  # Should be stripped
+            expected_server = "localhost"  # Should be stripped
+            raise AssertionError(f"Expected {expected_server}, got {config.server}")
 
     @pytest.mark.unit
     def test_server_validation_invalid(self) -> None:
@@ -224,8 +197,9 @@ class TestFlextLdapAuthConfig:
 
 
         config = FlextLdapAuthConfig(bind_dn="  cn=admin,dc=example,dc=org  ")
-        if config.bind_dn != "cn=admin,dc=example,dc=org"  # Should be stripped:
-            raise AssertionError(f"Expected {"cn=admin,dc=example,dc=org"  # Should be stripped}, got {config.bind_dn}")
+        expected_dn = "cn=admin,dc=example,dc=org"  # Should be stripped
+        if config.bind_dn != expected_dn:
+            raise AssertionError(f"Expected {expected_dn}, got {config.bind_dn}")
 
     @pytest.mark.unit
     def test_domain_rules_validation_anonymous_bind(self) -> None:
@@ -367,7 +341,7 @@ class TestFlextLdapOperationConfig:
         )
         if config.max_retries != 5:
             raise AssertionError(f"Expected {5}, got {config.max_retries}")
-        assert config.retry_delay == EXPECTED_BULK_SIZE.5
+        assert config.retry_delay == 2.5
         if not (config.enable_transactions):
             raise AssertionError(f"Expected True, got {config.enable_transactions}")
         if config.batch_size != HTTP_OK:
@@ -585,7 +559,7 @@ class TestFlextLdapSettings:
     @pytest.mark.unit
     def test_settings_custom_values(self) -> None:
         """Test FlextLdapSettings with custom values."""
-
+        from flext_ldap.config import (
             FlextLdapConnectionConfig,
             FlextLdapSettings,
         )
@@ -602,7 +576,7 @@ class TestFlextLdapSettings:
             update={
                 "connection": connection_config,
                 "project_name": "custom-project",
-                "project_version": "1.0.0",
+                "project_version": "0.9.0",
                 "enable_debug_mode": True,
                 "enable_performance_monitoring": False,
             },
@@ -611,7 +585,7 @@ class TestFlextLdapSettings:
         if settings.project_name != "custom-project":
 
             raise AssertionError(f"Expected {"custom-project"}, got {settings.project_name}")
-        assert settings.project_version == "1.0.0"
+        assert settings.project_version == "0.9.0"
         if settings.connection.server != "custom.ldap.com":
             raise AssertionError(f"Expected {"custom.ldap.com"}, got {settings.connection.server}")
         assert settings.connection.port == 636
@@ -624,7 +598,7 @@ class TestFlextLdapSettings:
     @pytest.mark.unit
     def test_to_ldap_client_config(self) -> None:
         """Test conversion to LDAP client config format."""
-
+        from flext_ldap.config import (
             FlextLdapAuthConfig,
             FlextLdapConnectionConfig,
             FlextLdapSearchConfig,

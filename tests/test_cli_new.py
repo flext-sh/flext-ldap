@@ -1,25 +1,19 @@
 """Tests for new CLI interface.
 
-# Constants
-EXPECTED_BULK_SIZE = 2
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from flext_core import FlextResult
-from flext_core import FlextResult
-from flext_core import FlextResult
-from flext_core import FlextResult
-import importlib
-
-
 from __future__ import annotations
 
+# Constants
+EXPECTED_BULK_SIZE = 2
+
+import importlib
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from click.testing import CliRunner
-
+from flext_core import FlextResult
 from flext_ldap import cli_new
 from flext_ldap.models import ExtendedLDAPEntry
 
@@ -330,33 +324,38 @@ class TestCLINew:
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["search"])
 
-        if result.exit_code != EXPECTED_BULK_SIZE  # Click missing argument error:
+        expected_code = EXPECTED_BULK_SIZE  # Click missing argument error
+        if result.exit_code != expected_code:
 
-            raise AssertionError(f"Expected {2  # Click missing argument error}, got {result.exit_code}")
+            expected_code = 2  # Click missing argument error
+            raise AssertionError(f"Expected {expected_code}, got {result.exit_code}")
         if "Missing argument" not in result.output:
-            raise AssertionError(f"Expected {"Missing argument"} in {result.output}")
+            raise AssertionError(f"Expected 'Missing argument' in {result.output}")
 
     def test_test_command_missing_args(self) -> None:
         """Test test command with missing arguments."""
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["test"])
 
-        if result.exit_code != EXPECTED_BULK_SIZE  # Click missing argument error:
+        expected_code = EXPECTED_BULK_SIZE  # Click missing argument error
+        if result.exit_code != expected_code:
 
-            raise AssertionError(f"Expected {2  # Click missing argument error}, got {result.exit_code}")
+            expected_code = 2  # Click missing argument error
+            raise AssertionError(f"Expected {expected_code}, got {result.exit_code}")
         if "Missing argument" not in result.output:
-            raise AssertionError(f"Expected {"Missing argument"} in {result.output}")
+            raise AssertionError(f"Expected 'Missing argument' in {result.output}")
 
     def test_invalid_command(self) -> None:
         """Test invalid command."""
         runner = CliRunner()
         result = runner.invoke(cli_new.cli, ["invalid"])
 
-        if result.exit_code != EXPECTED_BULK_SIZE  # Click unknown command error:
-
-            raise AssertionError(f"Expected {2  # Click unknown command error}, got {result.exit_code}")
+        expected_code = EXPECTED_BULK_SIZE  # Click unknown command error
+        if result.exit_code != expected_code:
+            expected_code_2 = 2  # Click unknown command error
+            raise AssertionError(f"Expected {expected_code_2}, got {result.exit_code}")
         if "No such command" not in result.output:
-            raise AssertionError(f"Expected {"No such command"} in {result.output}")
+            raise AssertionError(f"Expected 'No such command' in {result.output}")
 
     def test_module_executable(self) -> None:
         """Test that module can be executed as script."""

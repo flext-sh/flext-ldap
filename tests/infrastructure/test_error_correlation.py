@@ -8,17 +8,17 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from typing import TYPE_CHECKING
-from uuid import UUID
-from flext_ldap.infrastructure.error_correlation import (
-
-
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
+from uuid import UUID
 
 import pytest
 
+# Constants
+EXPECTED_DATA_COUNT = 3
+EXPECTED_BULK_SIZE = 2
 from flext_ldap.infrastructure.error_correlation import (
     ErrorCategory,
     ErrorCorrelationService,
@@ -60,8 +60,9 @@ class TestErrorEvent:
         signature = event.get_signature()
 
         assert isinstance(signature, str)
-        if len(signature) != 64  # SHA-256 hash length:
-            raise AssertionError(f"Expected {64  # SHA-256 hash length}, got {len(signature)}")
+        expected_length = 64  # SHA-256 hash length
+        if len(signature) != expected_length:
+            raise AssertionError(f"Expected {expected_length}, got {len(signature)}")
 
         # Same event should generate same signature
         event2 = ErrorEvent(
@@ -86,14 +87,16 @@ class TestErrorEvent:
         normalized = event._normalize_error_message(event.error_message)
 
         # Should replace IP addresses, ports, and DNs (check actual output format)
-        if "[ip]" in normalized or "[IP]" not in normalized:
-            raise AssertionError(f"Expected {"[ip]" in normalized or "[IP]"} in {normalized}")
+        ip_check = "[ip]" not in normalized and "[IP]" in normalized
+        if not ip_check:
+            raise AssertionError(f"Expected [IP] in normalized text, got {normalized}")
         assert "[port]" in normalized or "[PORT]" in normalized
-        if "[dn]" in normalized or "[DN]" not in normalized:
-            raise AssertionError(f"Expected {"[dn]" in normalized or "[DN]"} in {normalized}")
+        dn_check = "[dn]" not in normalized and "[DN]" in normalized
+        if not dn_check:
+            raise AssertionError(f"Expected [DN] in normalized text, got {normalized}")
         assert "192.168.1.100" not in normalized
         if ":389" not in normalized:
-            raise AssertionError(f"Expected {":389" not in {normalized}")
+            raise AssertionError(f"Expected :389 to be present in {normalized}")
 
     def test_error_event_to_dict(self) -> None:
         """Test ErrorEvent to_dict conversion."""
@@ -239,8 +242,9 @@ class TestErrorCorrelationService:
         auth_patterns = [
             p for p in patterns if p.category == ErrorCategory.AUTHENTICATION
         ]
-        if len(auth_patterns) != 1  # Should be exactly one pattern:
-            raise AssertionError(f"Expected {1  # Should be exactly one pattern}, got {len(auth_patterns)}")
+        expected_patterns = 1  # Should be exactly one pattern
+        if len(auth_patterns) != expected_patterns:
+            raise AssertionError(f"Expected {expected_patterns}, got {len(auth_patterns)}")
 
         # The pattern should have frequency of 5
         auth_pattern = auth_patterns[0]
@@ -337,8 +341,9 @@ class TestErrorCorrelationService:
         correlated = result.data
 
         # Should find at least the correlated event
-        if len(correlated) < 0  # Depends on correlation threshold:
-            raise AssertionError(f"Expected {len(correlated)} >= {0  # Depends on correlation threshold}")
+        min_expected = 0  # Depends on correlation threshold
+        if len(correlated) < min_expected:
+            raise AssertionError(f"Expected {len(correlated)} >= {min_expected}")
 
     @pytest.mark.asyncio
     async def test_get_error_statistics(
@@ -452,10 +457,10 @@ class TestErrorCorrelationService:
         # Should keep the latest events
         event_messages = [e.error_message for e in correlation_service._error_events]
         if "Error 5" not in event_messages:
-            raise AssertionError(f"Expected {"Error 5"} in {event_messages}")
+            raise AssertionError(f"Expected 'Error 5' in {event_messages}")
         assert "Error 9" in event_messages
         if "Error 0" not in event_messages:
-            raise AssertionError(f"Expected {"Error 0" not in {event_messages}")
+            raise AssertionError(f"Expected 'Error 0' to be in {event_messages}")
 
     def test_clear_history(self, correlation_service: ErrorCorrelationService) -> None:
         """Test clearing correlation history."""
@@ -934,7 +939,7 @@ class TestErrorCorrelationService:
             assert UUID is not None
 
         # Also test that our module imports work correctly
-
+        from flext_ldap.domain.entities import (
             FlextLdapErrorEvent,
             FlextLdapErrorPattern,
         )

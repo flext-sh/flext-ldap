@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 import docker
 import pytest
-from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
+from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -217,7 +217,7 @@ async def clean_ldap_container(ldap_test_config: dict[str, Any]) -> dict[str, An
     by removing any test entries that might have been left behind.
     """
 
-    client = FlextLdapInfrastructureClient()
+    client = FlextLdapSimpleClient()
 
     # Connect to LDAP
     connect_result = await client.connect(

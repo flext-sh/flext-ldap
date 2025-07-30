@@ -6,7 +6,6 @@ from unittest.mock import Mock, PropertyMock
 from uuid import UUID, uuid4
 
 import pytest
-
 from flext_ldap.domain.entities import FlextLdapConnection, FlextLdapUser
 from flext_ldap.infrastructure.repositories import (
     FlextLdapConnectionRepositoryImpl,
@@ -194,7 +193,7 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         assert result.is_success
         if sample_connection.id not in connection_repo._connections:
-            raise AssertionError(f"Expected {sample_connection.id not in {connection_repo._connections}")
+            raise AssertionError(f"Expected {sample_connection.id} to be in {connection_repo._connections}")
 
     @pytest.mark.asyncio
     async def test_delete_connection_not_exists(
@@ -207,7 +206,7 @@ class TestFlextLdapConnectionRepositoryImpl:
 
         assert result.is_success
         if sample_connection.id not in connection_repo._connections:
-            raise AssertionError(f"Expected {sample_connection.id not in {connection_repo._connections}")
+            raise AssertionError(f"Expected {sample_connection.id} to be in {connection_repo._connections}")
 
     # Note: Error path testing for delete would require complex mocking
     # The main functionality is covered by the success cases above
@@ -287,8 +286,9 @@ class TestFlextLdapUserRepositoryImpl:
         result = await user_repo.find_all()
 
         assert result.is_success
-        if result.data != []  # Foundation implementation returns empty list:
-            raise AssertionError(f"Expected {[]  # Foundation implementation returns empty list}, got {result.data}")
+        expected_empty = []  # Foundation implementation returns empty list
+        if result.data != expected_empty:
+            raise AssertionError(f"Expected {expected_empty}, got {result.data}")
 
     @pytest.mark.asyncio
     async def test_delete_user_foundation(

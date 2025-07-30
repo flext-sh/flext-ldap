@@ -7,22 +7,17 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from ldap3.core.exceptions import LDAPException
-from ldap3.core.exceptions import LDAPException
-from ldap3.core.exceptions import LDAPException
-from ldap3.core.exceptions import LDAPException
-from ldap3.core.exceptions import LDAPException
-from ldap3.core.exceptions import LDAPException
-import asyncio
-
-
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+# Constants
+EXPECTED_BULK_SIZE = 2
 from flext_ldap.infrastructure.ldap_client import FlextLdapInfrastructureClient
+from ldap3.core.exceptions import LDAPException
 
 
 class TestFlextLdapInfrastructureClient:
@@ -148,7 +143,7 @@ class TestFlextLdapInfrastructureClient:
         if not (result.data):
             raise AssertionError(f"Expected True, got {result.data}")
         if "test_conn" not in adapter._connections:
-            raise AssertionError(f"Expected {"test_conn" not in {adapter._connections}")
+            raise AssertionError(f"Expected 'test_conn' not to be in {adapter._connections}")
         mock_connection.unbind.assert_called_once()
 
     @pytest.mark.asyncio
