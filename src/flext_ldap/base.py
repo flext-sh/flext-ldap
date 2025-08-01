@@ -11,7 +11,7 @@ Eliminates 90% of boilerplate code through intelligent composition.
 
 from __future__ import annotations
 
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from flext_core import FlextDomainService, FlextRepository, FlextResult
 
@@ -38,14 +38,14 @@ class FlextLdapRepository(FlextRepository):
     def save(self, entity: object) -> FlextResult[None]:
         """Save entity with validation."""
         try:
-            entity_id = getattr(entity, "id", str(UUID()))
+            entity_id = getattr(entity, "id", str(uuid4()))
 
             # Use flext-core validation if available
             if hasattr(entity, "validate_domain_rules"):
                 validation_result = entity.validate_domain_rules()
                 if validation_result.is_failure:
                     return FlextResult.fail(
-                        f"Validation failed: {validation_result.error}"
+                        f"Validation failed: {validation_result.error}",
                     )
 
             self._storage[entity_id] = entity
@@ -241,7 +241,7 @@ class FlextLdapDomainService(FlextDomainService):
             return FlextResult.fail(f"Batch execution failed: {e}")
 
     def _execute_single_operation(
-        self, operation: dict[str, object]
+        self, operation: dict[str, object],
     ) -> FlextResult[object]:
         """Execute single operation following Single Responsibility Principle."""
         op_type = operation.get("type")
@@ -255,14 +255,14 @@ class FlextLdapDomainService(FlextDomainService):
         return FlextResult.fail(f"Unknown operation type: {op_type}")
 
     def _execute_create_operation(
-        self, operation: dict[str, object]
+        self, operation: dict[str, object],
     ) -> FlextResult[object]:
         """Execute create operation."""
         op_data = operation.get("data", {})
         return self.create_entity(op_data)
 
     def _execute_update_operation(
-        self, operation: dict[str, object]
+        self, operation: dict[str, object],
     ) -> FlextResult[object]:
         """Execute update operation."""
         entity_id = operation.get("id")
@@ -277,7 +277,7 @@ class FlextLdapDomainService(FlextDomainService):
         return self.update_entity(entity_id, op_data)
 
     def _execute_delete_operation(
-        self, operation: dict[str, object]
+        self, operation: dict[str, object],
     ) -> FlextResult[object]:
         """Execute delete operation."""
         entity_id = operation.get("id")

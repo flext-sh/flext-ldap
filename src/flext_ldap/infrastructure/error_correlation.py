@@ -13,6 +13,7 @@ import hashlib
 import operator
 import re
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import TYPE_CHECKING
@@ -25,6 +26,14 @@ if TYPE_CHECKING:
     from uuid import UUID
 
 logger = get_logger(__name__)
+
+
+class FlextLdapErrorCorrelationConstants:
+    """Error correlation constants following DRY principle."""
+
+    # Correlation Threshold Constants
+    SIGNIFICANT_CORRELATION_THRESHOLD: float = 0.5
+    MINIMUM_CORRELATION_THRESHOLD: float = 0.3
 
 
 class FlextLdapErrorSeverity(Enum):
@@ -53,33 +62,50 @@ class FlextLdapErrorCategory(Enum):
     UNKNOWN = "unknown"
 
 
-class FlextLdapErrorPattern:
-    """Error pattern for correlation analysis."""
+@dataclass
+class FlextLdapErrorPatternData:
+    """Parameter Object for FlextLdapErrorPattern - eliminates 10-parameter constructor."""
 
-    def __init__(
-        self,
-        pattern_id: UUID | None = None,
-        error_signature: str | None = None,
+    pattern_id: UUID | None = None
+    error_signature: str | None = None
+    category: FlextLdapErrorCategory = FlextLdapErrorCategory.UNKNOWN
+    severity: FlextLdapErrorSeverity = FlextLdapErrorSeverity.MEDIUM
+    frequency: int = 1
+    first_occurrence: datetime | None = None
+    last_occurrence: datetime | None = None
+    affected_operations: list[str] | None = None
+    context_patterns: dict[str, object] | None = None
+    correlation_score: float = 0.0
+
+
+class FlextLdapErrorPattern:
+    """Error pattern for correlation analysis using Parameter Object pattern."""
+
+    def __init__(self, data: FlextLdapErrorPatternData) -> None:
+        """Initialize error pattern using Parameter Object pattern."""
+        self.pattern_id = data.pattern_id or uuid4()
+        self.error_signature = data.error_signature or ""
+        self.category = data.category
+        self.severity = data.severity
+        self.frequency = data.frequency
+        self.first_occurrence = data.first_occurrence or datetime.now(UTC)
+        self.last_occurrence = data.last_occurrence or datetime.now(UTC)
+        self.affected_operations = data.affected_operations or []
+        self.context_patterns = data.context_patterns or {}
+        self.correlation_score = data.correlation_score
+
+    @classmethod
+    def create(
+        cls,
+        error_signature: str,
         category: FlextLdapErrorCategory = FlextLdapErrorCategory.UNKNOWN,
         severity: FlextLdapErrorSeverity = FlextLdapErrorSeverity.MEDIUM,
-        frequency: int = 1,
-        first_occurrence: datetime | None = None,
-        last_occurrence: datetime | None = None,
-        affected_operations: list[str] | None = None,
-        context_patterns: dict[str, object] | None = None,
-        correlation_score: float = 0.0,
-    ) -> None:
-        """Initialize error pattern."""
-        self.pattern_id = pattern_id or uuid4()
-        self.error_signature = error_signature or ""
-        self.category = category
-        self.severity = severity
-        self.frequency = frequency
-        self.first_occurrence = first_occurrence or datetime.now(UTC)
-        self.last_occurrence = last_occurrence or datetime.now(UTC)
-        self.affected_operations = affected_operations or []
-        self.context_patterns = context_patterns or {}
-        self.correlation_score = correlation_score
+    ) -> FlextLdapErrorPattern:
+        """Factory method for common error pattern creation."""
+        data = FlextLdapErrorPatternData(
+            error_signature=error_signature, category=category, severity=severity,
+        )
+        return cls(data)
 
     def to_dict(self) -> dict[str, object]:
         """Convert error pattern to dictionary."""
@@ -97,39 +123,56 @@ class FlextLdapErrorPattern:
         }
 
 
-class FlextLdapErrorEvent:
-    """Error event for correlation analysis."""
+@dataclass
+class FlextLdapErrorEventData:
+    """Parameter Object for FlextLdapErrorEvent - eliminates 13-parameter constructor."""
 
-    def __init__(
-        self,
-        event_id: UUID | None = None,
-        timestamp: datetime | None = None,
-        error_message: str = "",
-        error_code: str | None = None,
-        operation_type: str | None = None,
-        user_dn: str | None = None,
-        target_dn: str | None = None,
-        client_ip: str | None = None,
-        server_host: str | None = None,
-        stack_trace: str | None = None,
-        context: dict[str, object] | None = None,
-        severity: FlextLdapErrorSeverity = FlextLdapErrorSeverity.MEDIUM,
+    event_id: UUID | None = None
+    timestamp: datetime | None = None
+    error_message: str = ""
+    error_code: str | None = None
+    operation_type: str | None = None
+    user_dn: str | None = None
+    target_dn: str | None = None
+    client_ip: str | None = None
+    server_host: str | None = None
+    stack_trace: str | None = None
+    context: dict[str, object] | None = None
+    severity: FlextLdapErrorSeverity = FlextLdapErrorSeverity.MEDIUM
+    category: FlextLdapErrorCategory = FlextLdapErrorCategory.UNKNOWN
+
+
+class FlextLdapErrorEvent:
+    """Error event for correlation analysis using Parameter Object pattern."""
+
+    def __init__(self, data: FlextLdapErrorEventData) -> None:
+        """Initialize error event using Parameter Object pattern."""
+        self.event_id = data.event_id or uuid4()
+        self.timestamp = data.timestamp or datetime.now(UTC)
+        self.error_message = data.error_message
+        self.error_code = data.error_code
+        self.operation_type = data.operation_type
+        self.user_dn = data.user_dn
+        self.target_dn = data.target_dn
+        self.client_ip = data.client_ip
+        self.server_host = data.server_host
+        self.stack_trace = data.stack_trace
+        self.context = data.context or {}
+        self.severity = data.severity
+        self.category = data.category
+
+    @classmethod
+    def create(
+        cls,
+        error_message: str,
         category: FlextLdapErrorCategory = FlextLdapErrorCategory.UNKNOWN,
-    ) -> None:
-        """Initialize error event."""
-        self.event_id = event_id or uuid4()
-        self.timestamp = timestamp or datetime.now(UTC)
-        self.error_message = error_message
-        self.error_code = error_code
-        self.operation_type = operation_type
-        self.user_dn = user_dn
-        self.target_dn = target_dn
-        self.client_ip = client_ip
-        self.server_host = server_host
-        self.stack_trace = stack_trace
-        self.context = context or {}
-        self.severity = severity
-        self.category = category
+        severity: FlextLdapErrorSeverity = FlextLdapErrorSeverity.MEDIUM,
+    ) -> FlextLdapErrorEvent:
+        """Factory method for common error event creation."""
+        data = FlextLdapErrorEventData(
+            error_message=error_message, category=category, severity=severity,
+        )
+        return cls(data)
 
     def get_signature(self) -> str:
         """Generate error signature for correlation."""
@@ -214,35 +257,12 @@ class FlextLdapErrorCorrelationService:
         logger.info("Error correlation service initialized")
 
     async def record_error(
-        self,
-        error_message: str,
-        error_code: str | None = None,
-        operation_type: str | None = None,
-        user_dn: str | None = None,
-        target_dn: str | None = None,
-        client_ip: str | None = None,
-        server_host: str | None = None,
-        stack_trace: str | None = None,
-        context: dict[str, object] | None = None,
-        severity: FlextLdapErrorSeverity = FlextLdapErrorSeverity.MEDIUM,
-        category: FlextLdapErrorCategory = FlextLdapErrorCategory.UNKNOWN,
+        self, event_data: FlextLdapErrorEventData,
     ) -> FlextResult[FlextLdapErrorEvent]:
-        """Record an error event for correlation analysis."""
+        """Record an error event using Parameter Object pattern."""
         try:
-            # Create error event
-            event = FlextLdapErrorEvent(
-                error_message=error_message,
-                error_code=error_code,
-                operation_type=operation_type,
-                user_dn=user_dn,
-                target_dn=target_dn,
-                client_ip=client_ip,
-                server_host=server_host,
-                stack_trace=stack_trace,
-                context=context,
-                severity=severity,
-                category=category,
-            )
+            # Create error event using Parameter Object pattern
+            event = FlextLdapErrorEvent(event_data)
 
             # Add to event history
             self._error_events.append(event)
@@ -264,6 +284,20 @@ class FlextLdapErrorCorrelationService:
             error_msg = f"Failed to record error event: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
+
+    async def record_error_simple(
+        self,
+        error_message: str,
+        category: FlextLdapErrorCategory | None = None,
+        severity: FlextLdapErrorSeverity | None = None,
+    ) -> FlextResult[FlextLdapErrorEvent]:
+        """Simplified error recording for common cases - backward compatibility."""
+        event_data = FlextLdapErrorEventData(
+            error_message=error_message,
+            category=category or FlextLdapErrorCategory.UNKNOWN,
+            severity=severity or FlextLdapErrorSeverity.MEDIUM,
+        )
+        return await self.record_error(event_data)
 
     async def get_error_patterns(
         self,
@@ -321,7 +355,7 @@ class FlextLdapErrorCorrelationService:
             significant_correlations = []
             for other_event in correlated_events:
                 correlation_score = self._calculate_correlation(event, other_event)
-                if correlation_score > 0.5:  # Threshold for significant correlation
+                if correlation_score > FlextLdapErrorCorrelationConstants.SIGNIFICANT_CORRELATION_THRESHOLD:
                     significant_correlations.append(other_event)
 
             return FlextResult.ok(significant_correlations)
@@ -404,8 +438,8 @@ class FlextLdapErrorCorrelationService:
                 pattern.affected_operations.append(event.operation_type)
 
         else:
-            # Create new pattern
-            pattern = FlextLdapErrorPattern(
+            # Create new pattern using Parameter Object pattern
+            pattern_data = FlextLdapErrorPatternData(
                 error_signature=signature,
                 category=event.category,
                 severity=event.severity,
@@ -416,6 +450,7 @@ class FlextLdapErrorCorrelationService:
                     [event.operation_type] if event.operation_type else []
                 ),
             )
+            pattern = FlextLdapErrorPattern(pattern_data)
             self._error_patterns[signature] = pattern
 
     async def _analyze_correlations(self, event: FlextLdapErrorEvent) -> None:
@@ -434,7 +469,7 @@ class FlextLdapErrorCorrelationService:
 
         for other_event in recent_events:
             correlation = self._calculate_correlation(event, other_event)
-            if correlation > 0.3:  # Minimum correlation threshold
+            if correlation > FlextLdapErrorCorrelationConstants.MINIMUM_CORRELATION_THRESHOLD:
                 total_correlation += correlation
                 correlation_count += 1
 

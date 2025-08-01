@@ -27,17 +27,18 @@ class TestImports:
     @pytest.mark.unit
     def test_new_imports(self) -> None:
         """Test new FlextLdap imports."""
+        # Import correct names from consolidated API
         from flext_ldap import (
-            FlextLdapClient,
+            FlextLdapApi,  # Correct API name
             FlextLdapEntry,
-            FlextLdapFilter,
-            FlextLdapScope,
+            FlextLdapFilterValue,  # Correct filter name
+            FlextLdapScopeEnum,  # Correct scope name
         )
 
-        assert FlextLdapClient is not None
+        assert FlextLdapApi is not None
         assert FlextLdapEntry is not None
-        assert FlextLdapFilter is not None
-        assert FlextLdapScope is not None
+        assert FlextLdapFilterValue is not None
+        assert FlextLdapScopeEnum is not None
 
     @pytest.mark.unit
     def test_models_imports(self) -> None:

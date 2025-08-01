@@ -18,9 +18,21 @@ from ldap3 import ALL, AUTO_BIND_NONE, Connection, Server
 from ldap3.core.exceptions import LDAPException
 
 from flext_ldap.base import FlextLdapRepository
-from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
+from flext_ldap.config import (
+    FlextLdapAuthConfig,
+    FlextLdapConnectionConfig,
+    FlextLdapConstants,
+)
 
 logger = get_logger(__name__)
+
+
+# FBT smell elimination constants - SOLID DRY Principle
+class LDAPOperationResult:
+    """LDAP operation result constants to eliminate FBT003 positional boolean values."""
+
+    SUCCESS = True
+    FAILURE = False
 
 
 class FlextLdapDataType(Enum):
@@ -43,17 +55,28 @@ class FlextLdapDataType(Enum):
 class FlextLdapConverter:
     """INTELLIGENT converter using flext-core patterns and caching."""
 
+    @staticmethod
+    def _is_trace_enabled() -> bool:
+        """Check if TRACE logging is enabled - DRY helper method."""
+        return (
+            hasattr(logger, "_level_value")
+            and logger._level_value <= FlextLdapConstants.TRACE_LEVEL_VALUE
+        )
+
     def __init__(self) -> None:
         """Initialize with flext-core caching."""
         logger.debug("Initializing FlextLdapConverter with caching")
         self._type_cache: dict[str, FlextLdapDataType] = {}
         self._conversion_cache: dict[tuple[object, str], object] = {}
         # Efficient TRACE logging - respects centralized flext-core config
-        if hasattr(logger, "_level_value") and logger._level_value <= 5:
-            logger.trace("FlextLdapConverter initialized", extra={
-                "type_cache_size": len(self._type_cache),
-                "conversion_cache_size": len(self._conversion_cache)
-            })
+        if FlextLdapConverter._is_trace_enabled():
+            logger.trace(
+                "FlextLdapConverter initialized",
+                extra={
+                    "type_cache_size": len(self._type_cache),
+                    "conversion_cache_size": len(self._conversion_cache),
+                },
+            )
 
     def detect_type(self, value: object) -> FlextLdapDataType:
         """Detect data type with intelligent caching."""
@@ -65,25 +88,34 @@ class FlextLdapConverter:
         if value_key in self._type_cache:
             cached_type = self._type_cache[value_key]
             # Performance-optimized TRACE logging
-            if hasattr(logger, "_level_value") and logger._level_value <= 5:
-                logger.trace("Type detection cache hit", extra={
-                    "value_type": type(value).__name__,
-                    "detected_type": cached_type.value
-                })
+            if FlextLdapConverter._is_trace_enabled():
+                logger.trace(
+                    "Type detection cache hit",
+                    extra={
+                        "value_type": type(value).__name__,
+                        "detected_type": cached_type.value,
+                    },
+                )
             return cached_type
 
-        logger.trace("Performing type detection", extra={
-            "value_type": type(value).__name__,
-            "value_preview": str(value)[:100]
-        })
+        logger.trace(
+            "Performing type detection",
+            extra={
+                "value_type": type(value).__name__,
+                "value_preview": str(value)[:100],
+            },
+        )
         detected_type = self._detect_type_impl(value)
         self._type_cache[value_key] = detected_type
 
-        logger.trace("Type detected and cached", extra={
-            "value_type": type(value).__name__,
-            "detected_type": detected_type.value,
-            "cache_size": len(self._type_cache)
-        })
+        logger.trace(
+            "Type detected and cached",
+            extra={
+                "value_type": type(value).__name__,
+                "detected_type": detected_type.value,
+                "cache_size": len(self._type_cache),
+            },
+        )
         return detected_type
 
     def _detect_type_impl(self, value: object) -> FlextLdapDataType:  # noqa: PLR0911
@@ -264,8 +296,10 @@ class FlextLdapConnectionManager:
     def _create_connection(
         self,
         config: FlextLdapConnectionConfig,
+        user: str | None = None,
+        password: str | None = None,
     ) -> FlextResult[Connection]:
-        """Create new LDAP connection."""
+        """Create new LDAP connection with optional authentication."""
         try:
             # Create server with intelligent configuration
             server = Server(
@@ -276,9 +310,11 @@ class FlextLdapConnectionManager:
                 connect_timeout=config.timeout_seconds,
             )
 
-            # Create connection (anonymous for now)
+            # Create connection with or without credentials
             connection = Connection(
                 server,
+                user=user,
+                password=password,
                 auto_bind=AUTO_BIND_NONE,
                 raise_exceptions=True,
             )
@@ -298,13 +334,13 @@ class FlextLdapConnectionManager:
         try:
             if hasattr(connection, "server"):
                 delete_result = self._connections.delete(
-                    getattr(connection, "server", "")
+                    getattr(connection, "server", ""),
                 )
                 if not delete_result.is_success:
                     logger.error(f"Failed to delete connection: {delete_result.error}")
             if hasattr(connection, "unbind"):
                 connection.unbind()  # type: ignore[no-untyped-call]
-            return FlextResult.ok(True)
+            return FlextResult.ok(LDAPOperationResult.SUCCESS)
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to close connection: {e}")
 
@@ -314,110 +350,145 @@ class FlextLdapClient:
 
     def __init__(self, config: FlextLdapConnectionConfig | None = None) -> None:
         """Initialize unified client."""
-        logger.debug("Initializing FlextLdapClient", extra={
-            "has_config": config is not None,
-            "config": config.__dict__ if config else None
-        })
+        logger.debug(
+            "Initializing FlextLdapClient",
+            extra={
+                "has_config": config is not None,
+                "config": config.__dict__ if config else None,
+            },
+        )
         self._config = config
         self._connection_manager = FlextLdapConnectionManager()
         self._converter = FlextLdapConverter()
         self._current_connection: Connection | None = None
         self._auth_config: FlextLdapAuthConfig | None = None
-        logger.trace("FlextLdapClient initialized with components", extra={
-            "connection_manager": type(self._connection_manager).__name__,
-            "converter": type(self._converter).__name__
-        })
+        logger.trace(
+            "FlextLdapClient initialized with components",
+            extra={
+                "connection_manager": type(self._connection_manager).__name__,
+                "converter": type(self._converter).__name__,
+            },
+        )
 
     def connect(
         self,
         config: FlextLdapConnectionConfig | None = None,
     ) -> FlextResult[bool]:
         """Connect with intelligent connection management."""
-        logger.debug("Attempting LDAP connection", extra={
-            "config_provided": config is not None,
-            "has_stored_config": self._config is not None
-        })
+        logger.debug(
+            "Attempting LDAP connection",
+            extra={
+                "config_provided": config is not None,
+                "has_stored_config": self._config is not None,
+            },
+        )
         try:
             use_config = config or self._config
             if not use_config:
                 logger.error("No connection configuration available")
                 return FlextResult.fail("No connection configuration provided")
 
-            logger.trace("Using connection config", extra={
-                "server": use_config.server,
-                "port": use_config.port,
-                "use_ssl": use_config.use_ssl,
-                "timeout": use_config.timeout_seconds
-            })
+            logger.trace(
+                "Using connection config",
+                extra={
+                    "server": use_config.server,
+                    "port": use_config.port,
+                    "use_ssl": use_config.use_ssl,
+                    "timeout": use_config.timeout_seconds,
+                },
+            )
 
             connection_result = self._connection_manager.get_connection(
                 use_config,
             )
             if not connection_result.is_success:
-                logger.error("Connection manager failed", extra={
-                    "error": connection_result.error,
-                    "server": use_config.server
-                })
+                logger.error(
+                    "Connection manager failed",
+                    extra={
+                        "error": connection_result.error,
+                        "server": use_config.server,
+                    },
+                )
                 return FlextResult.fail(connection_result.error or "Connection failed")
 
             self._current_connection = connection_result.data
-            logger.info("LDAP connection established", extra={
-                "server": use_config.server,
-                "port": use_config.port,
-                "ssl": use_config.use_ssl
-            })
-            return FlextResult.ok(True)
+            logger.info(
+                "LDAP connection established",
+                extra={
+                    "server": use_config.server,
+                    "port": use_config.port,
+                    "ssl": use_config.use_ssl,
+                },
+            )
+            return FlextResult.ok(LDAPOperationResult.SUCCESS)
         except (RuntimeError, ValueError, TypeError) as e:
-            logger.error("Connection exception", extra={"error": str(e), "type": type(e).__name__})
+            logger.exception(
+                "Connection exception",
+                extra={"error": str(e), "type": type(e).__name__},
+            )
             return FlextResult.fail(f"Connection failed: {e}")
 
     async def connect_with_auth(
-        self, auth_config: FlextLdapAuthConfig
+        self, auth_config: FlextLdapAuthConfig,
     ) -> FlextResult[bool]:
         """Connect with authentication using provided credentials."""
-        logger.debug("Attempting LDAP authentication", extra={
-            "bind_dn": auth_config.bind_dn,
-            "has_password": bool(auth_config.bind_password)
-        })
+        logger.debug(
+            "Attempting LDAP authentication",
+            extra={
+                "bind_dn": auth_config.bind_dn,
+                "has_password": bool(auth_config.bind_password),
+            },
+        )
         try:
-            if not self._current_connection:
-                logger.error("No active connection for authentication")
-                return FlextResult.fail("Must establish connection first")
+            # Create a new authenticated connection instead of modifying existing one
+            if not self._config:
+                logger.error("No connection configuration available")
+                return FlextResult.fail("Connection configuration required")
 
-            logger.trace("Setting authentication credentials on connection")
-            # Perform LDAP bind with credentials
-            # Set authentication on connection object first
-            self._current_connection.user = auth_config.bind_dn
-            self._current_connection.password = auth_config.bind_password
+            logger.trace("Creating authenticated connection")
+            connection_result = self._connection_manager._create_connection(
+                self._config,
+                user=auth_config.bind_dn,
+                password=auth_config.bind_password,
+            )
 
-            logger.trace("Performing LDAP bind")
-            bind_success = self._current_connection.bind()
-
-            if not bind_success:
-                logger.error("LDAP bind failed", extra={
-                    "bind_dn": auth_config.bind_dn,
-                    "result": str(self._current_connection.result)
-                })
+            if not connection_result.is_success:
+                logger.error(
+                    "Failed to create authenticated connection",
+                    extra={
+                        "bind_dn": auth_config.bind_dn,
+                        "error": connection_result.error,
+                    },
+                )
                 return FlextResult.fail(
-                    f"Authentication failed: {self._current_connection.result}"
+                    f"Authentication failed: {connection_result.error}",
                 )
 
-            logger.info("LDAP authentication successful", extra={
-                "bind_dn": auth_config.bind_dn
-            })
-            return FlextResult.ok(bind_success)
+            # Replace current connection with authenticated one
+            if self._current_connection:
+                self._current_connection.unbind()
+
+            self._current_connection = connection_result.data
+
+            logger.info(
+                "LDAP authentication successful", extra={"bind_dn": auth_config.bind_dn},
+            )
+            return FlextResult.ok(LDAPOperationResult.SUCCESS)
         except LDAPException as e:
-            logger.error("LDAP authentication exception", extra={
-                "error": str(e),
-                "bind_dn": auth_config.bind_dn
-            })
+            logger.exception(
+                "LDAP authentication exception",
+                extra={"error": str(e), "bind_dn": auth_config.bind_dn},
+            )
             return FlextResult.fail(f"LDAP authentication error: {e}")
         except (RuntimeError, ValueError, TypeError) as e:
-            logger.error("Authentication exception", extra={
-                "error": str(e),
-                "type": type(e).__name__,
-                "bind_dn": auth_config.bind_dn
-            })
+            logger.exception(
+                "Authentication exception",
+                extra={
+                    "error": str(e),
+                    "type": type(e).__name__,
+                    "bind_dn": auth_config.bind_dn,
+                },
+            )
             return FlextResult.fail(f"Authentication failed: {e}")
 
     async def search(
@@ -430,15 +501,16 @@ class FlextLdapClient:
         """Search with intelligent result conversion."""
         # Use flext-core context binding for operation tracking
         operation_logger = logger.bind(
-            operation="ldap_search",
-            base_dn=base_dn,
-            filter=search_filter
+            operation="ldap_search", base_dn=base_dn, filter=search_filter,
         )
 
-        operation_logger.debug("Performing LDAP search", extra={
-            "attributes": attributes,
-            "connection_active": self._current_connection is not None
-        })
+        operation_logger.debug(
+            "Performing LDAP search",
+            extra={
+                "attributes": attributes,
+                "connection_active": self._current_connection is not None,
+            },
+        )
 
         if not self._current_connection:
             operation_logger.error("Search attempted without active connection")
@@ -449,6 +521,7 @@ class FlextLdapClient:
 
             # Map scope string to ldap3 constants - REALLY USE scope parameter
             from ldap3 import BASE, LEVEL, SUBTREE
+
             scope_mapping = {
                 "base": BASE,
                 "onelevel": LEVEL,
@@ -458,33 +531,41 @@ class FlextLdapClient:
             }
             ldap_scope = scope_mapping.get(scope.lower(), SUBTREE)
 
-            operation_logger.trace("Executing LDAP search operation", extra={
-                "attrs": search_attributes,
-                "scope": scope,
-                "ldap_scope": ldap_scope
-            })
+            operation_logger.trace(
+                "Executing LDAP search operation",
+                extra={
+                    "attrs": search_attributes,
+                    "scope": scope,
+                    "ldap_scope": ldap_scope,
+                },
+            )
 
+            # Use ldap3 constants - MyPy limitation with literal types
             success = self._current_connection.search(
                 search_base=base_dn,
                 search_filter=search_filter,
-                search_scope=ldap_scope,  # REALLY USE the scope parameter
+                search_scope=ldap_scope,  # type: ignore[arg-type]  # ldap3 limitation
                 attributes=search_attributes,
             )
 
             if not success:
-                operation_logger.error("LDAP search operation failed", extra={
-                    "result": str(self._current_connection.result)
-                })
+                operation_logger.error(
+                    "LDAP search operation failed",
+                    extra={"result": str(self._current_connection.result)},
+                )
                 return FlextResult.fail(
                     f"Search failed: {self._current_connection.result}",
                 )
 
-            operation_logger.debug("LDAP search completed", extra={
-                "entries_found": len(self._current_connection.entries)
-            })
+            operation_logger.debug(
+                "LDAP search completed",
+                extra={"entries_found": len(self._current_connection.entries)},
+            )
 
             # Convert results using intelligent converter
-            operation_logger.trace("Converting search results with intelligent converter")
+            operation_logger.trace(
+                "Converting search results with intelligent converter",
+            )
             results: list[dict[str, object]] = []
             for entry in self._current_connection.entries:
                 converted_entry: dict[str, object] = {
@@ -505,21 +586,26 @@ class FlextLdapClient:
                         attributes_dict[attr_name] = converted_values
 
                 results.append(converted_entry)
-                operation_logger.trace("Converted entry", extra={
-                    "dn": str(entry.entry_dn),
-                    "attribute_count": len(entry.entry_attributes_as_dict)
-                })
+                operation_logger.trace(
+                    "Converted entry",
+                    extra={
+                        "dn": str(entry.entry_dn),
+                        "attribute_count": len(entry.entry_attributes_as_dict),
+                    },
+                )
 
-            operation_logger.info("LDAP search successful", extra={
-                "result_count": len(results),
-                "attributes_requested": search_attributes
-            })
+            operation_logger.info(
+                "LDAP search successful",
+                extra={
+                    "result_count": len(results),
+                    "attributes_requested": search_attributes,
+                },
+            )
             return FlextResult.ok(results)
         except (RuntimeError, ValueError, TypeError) as e:
-            operation_logger.error("Search exception", extra={
-                "error": str(e),
-                "type": type(e).__name__
-            })
+            operation_logger.exception(
+                "Search exception", extra={"error": str(e), "type": type(e).__name__},
+            )
             return FlextResult.fail(f"Search error: {e}")
 
     async def add(
@@ -531,15 +617,16 @@ class FlextLdapClient:
         """Add entry with intelligent attribute conversion."""
         # Use flext-core context binding for operation tracking
         operation_logger = logger.bind(
-            operation="ldap_add",
-            dn=dn,
-            object_classes=object_classes
+            operation="ldap_add", dn=dn, object_classes=object_classes,
         )
 
-        operation_logger.debug("Adding LDAP entry", extra={
-            "attribute_count": len(attributes),
-            "connection_active": self._current_connection is not None
-        })
+        operation_logger.debug(
+            "Adding LDAP entry",
+            extra={
+                "attribute_count": len(attributes),
+                "connection_active": self._current_connection is not None,
+            },
+        )
 
         if not self._current_connection:
             operation_logger.error("Add attempted without active connection")
@@ -552,47 +639,55 @@ class FlextLdapClient:
             for attr_name, attr_value in attributes.items():
                 converted_value = self._converter.to_ldap(attr_value)
                 ldap_attributes[attr_name] = converted_value
-                operation_logger.trace("Converted attribute", extra={
-                    "attr_name": attr_name,
-                    "original_type": type(attr_value).__name__,
-                    "converted_type": type(converted_value).__name__
-                })
+                operation_logger.trace(
+                    "Converted attribute",
+                    extra={
+                        "attr_name": attr_name,
+                        "original_type": type(attr_value).__name__,
+                        "converted_type": type(converted_value).__name__,
+                    },
+                )
 
             # Add objectClass
             ldap_attributes["objectClass"] = object_classes
-            operation_logger.trace("Prepared LDAP attributes", extra={
-                "total_attributes": len(ldap_attributes)
-            })
+            operation_logger.trace(
+                "Prepared LDAP attributes",
+                extra={"total_attributes": len(ldap_attributes)},
+            )
 
             operation_logger.trace("Executing LDAP add operation")
             success = self._current_connection.add(dn, attributes=ldap_attributes)  # type: ignore[no-untyped-call]
 
             if not success:
-                operation_logger.error("LDAP add operation failed", extra={
-                    "result": str(self._current_connection.result)
-                })
+                operation_logger.error(
+                    "LDAP add operation failed",
+                    extra={"result": str(self._current_connection.result)},
+                )
                 return FlextResult.fail(
                     f"Add failed: {self._current_connection.result}",
                 )
 
-            operation_logger.info("LDAP entry added successfully", extra={
-                "attribute_count": len(attributes)
-            })
-            return FlextResult.ok(True)
+            operation_logger.info(
+                "LDAP entry added successfully",
+                extra={"attribute_count": len(attributes)},
+            )
+            return FlextResult.ok(LDAPOperationResult.SUCCESS)
         except (RuntimeError, ValueError, TypeError) as e:
-            operation_logger.error("Add exception", extra={
-                "error": str(e),
-                "type": type(e).__name__
-            })
+            operation_logger.exception(
+                "Add exception", extra={"error": str(e), "type": type(e).__name__},
+            )
             return FlextResult.fail(f"Add error: {e}")
 
     async def modify(self, dn: str, changes: dict[str, object]) -> FlextResult[bool]:
         """Modify entry with intelligent change conversion."""
-        logger.debug("Modifying LDAP entry", extra={
-            "dn": dn,
-            "changes_count": len(changes),
-            "connection_active": self._current_connection is not None
-        })
+        logger.debug(
+            "Modifying LDAP entry",
+            extra={
+                "dn": dn,
+                "changes_count": len(changes),
+                "connection_active": self._current_connection is not None,
+            },
+        )
 
         if not self._current_connection:
             logger.error("Modify attempted without active connection")
@@ -605,46 +700,48 @@ class FlextLdapClient:
             for attr_name, attr_value in changes.items():
                 converted_value = self._converter.to_ldap(attr_value)
                 ldap_changes[attr_name] = [(ldap3.MODIFY_REPLACE, converted_value)]
-                logger.trace("Prepared modification", extra={
-                    "attr_name": attr_name,
-                    "original_type": type(attr_value).__name__,
-                    "converted_type": type(converted_value).__name__
-                })
+                logger.trace(
+                    "Prepared modification",
+                    extra={
+                        "attr_name": attr_name,
+                        "original_type": type(attr_value).__name__,
+                        "converted_type": type(converted_value).__name__,
+                    },
+                )
 
-            logger.trace("Executing LDAP modify operation", extra={
-                "dn": dn,
-                "modifications": list(ldap_changes.keys())
-            })
+            logger.trace(
+                "Executing LDAP modify operation",
+                extra={"dn": dn, "modifications": list(ldap_changes.keys())},
+            )
             success = self._current_connection.modify(dn, ldap_changes)  # type: ignore[no-untyped-call]
 
             if not success:
-                logger.error("LDAP modify operation failed", extra={
-                    "dn": dn,
-                    "result": str(self._current_connection.result)
-                })
+                logger.error(
+                    "LDAP modify operation failed",
+                    extra={"dn": dn, "result": str(self._current_connection.result)},
+                )
                 return FlextResult.fail(
                     f"Modify failed: {self._current_connection.result}",
                 )
 
-            logger.info("LDAP entry modified successfully", extra={
-                "dn": dn,
-                "changes_applied": list(changes.keys())
-            })
-            return FlextResult.ok(True)
+            logger.info(
+                "LDAP entry modified successfully",
+                extra={"dn": dn, "changes_applied": list(changes.keys())},
+            )
+            return FlextResult.ok(LDAPOperationResult.SUCCESS)
         except (RuntimeError, ValueError, TypeError) as e:
-            logger.error("Modify exception", extra={
-                "error": str(e),
-                "type": type(e).__name__,
-                "dn": dn
-            })
+            logger.exception(
+                "Modify exception",
+                extra={"error": str(e), "type": type(e).__name__, "dn": dn},
+            )
             return FlextResult.fail(f"Modify error: {e}")
 
     async def delete(self, dn: str) -> FlextResult[bool]:
         """Delete entry."""
-        logger.debug("Deleting LDAP entry", extra={
-            "dn": dn,
-            "connection_active": self._current_connection is not None
-        })
+        logger.debug(
+            "Deleting LDAP entry",
+            extra={"dn": dn, "connection_active": self._current_connection is not None},
+        )
 
         if not self._current_connection:
             logger.error("Delete attempted without active connection")
@@ -655,29 +752,29 @@ class FlextLdapClient:
             success = self._current_connection.delete(dn)  # type: ignore[no-untyped-call]
 
             if not success:
-                logger.error("LDAP delete operation failed", extra={
-                    "dn": dn,
-                    "result": str(self._current_connection.result)
-                })
+                logger.error(
+                    "LDAP delete operation failed",
+                    extra={"dn": dn, "result": str(self._current_connection.result)},
+                )
                 return FlextResult.fail(
                     f"Delete failed: {self._current_connection.result}",
                 )
 
             logger.info("LDAP entry deleted successfully", extra={"dn": dn})
-            return FlextResult.ok(True)
+            return FlextResult.ok(LDAPOperationResult.SUCCESS)
         except (RuntimeError, ValueError, TypeError) as e:
-            logger.error("Delete exception", extra={
-                "error": str(e),
-                "type": type(e).__name__,
-                "dn": dn
-            })
+            logger.exception(
+                "Delete exception",
+                extra={"error": str(e), "type": type(e).__name__, "dn": dn},
+            )
             return FlextResult.fail(f"Delete error: {e}")
 
     def disconnect(self) -> FlextResult[bool]:
         """Disconnect with proper cleanup."""
-        logger.debug("Disconnecting from LDAP server", extra={
-            "has_active_connection": self._current_connection is not None
-        })
+        logger.debug(
+            "Disconnecting from LDAP server",
+            extra={"has_active_connection": self._current_connection is not None},
+        )
 
         if self._current_connection:
             logger.trace("Closing active LDAP connection")
@@ -693,7 +790,7 @@ class FlextLdapClient:
             return result
 
         logger.debug("No active connection to disconnect")
-        return FlextResult.ok(True)
+        return FlextResult.ok(LDAPOperationResult.SUCCESS)
 
     def is_connected(self) -> bool:
         """Check connection status."""
@@ -723,12 +820,15 @@ def create_ldap_client(
         **kwargs: Additional configuration parameters (REALLY USED)
 
     """
-    logger.debug("Creating LDAP client via factory", extra={
-        "server_url": server_url,
-        "bind_dn": bind_dn,
-        "has_password": bool(password),
-        "kwargs_count": len(kwargs)
-    })
+    logger.debug(
+        "Creating LDAP client via factory",
+        extra={
+            "server_url": server_url,
+            "bind_dn": bind_dn,
+            "has_password": bool(password),
+            "kwargs_count": len(kwargs),
+        },
+    )
 
     # Parse server_url to get host and port
     parsed = urllib.parse.urlparse(server_url)
@@ -736,13 +836,16 @@ def create_ldap_client(
     port = parsed.port or (636 if parsed.scheme == "ldaps" else 389)
     use_ssl = parsed.scheme == "ldaps"
 
-    logger.trace("Parsed server URL", extra={
-        "original_url": server_url,
-        "parsed_host": host,
-        "parsed_port": port,
-        "use_ssl": use_ssl,
-        "scheme": parsed.scheme
-    })
+    logger.trace(
+        "Parsed server URL",
+        extra={
+            "original_url": server_url,
+            "parsed_host": host,
+            "parsed_port": port,
+            "use_ssl": use_ssl,
+            "scheme": parsed.scheme,
+        },
+    )
 
     # Extract timeout from kwargs with default value
     timeout_seconds = 30
@@ -772,17 +875,17 @@ def create_ldap_client(
     )
 
     # Create client with REAL config
-    logger.trace("Creating FlextLdapClient with config", extra={
-        "host": host,
-        "port": port,
-        "ssl": use_ssl,
-        "timeout": timeout_seconds
-    })
+    logger.trace(
+        "Creating FlextLdapClient with config",
+        extra={"host": host, "port": port, "ssl": use_ssl, "timeout": timeout_seconds},
+    )
     client = FlextLdapClient(config)
 
     # If authentication credentials provided, store them for later use
     if bind_dn and password:
-        logger.debug("Configuring authentication for client", extra={"bind_dn": bind_dn})
+        logger.debug(
+            "Configuring authentication for client", extra={"bind_dn": bind_dn},
+        )
         # Store auth config in client for future authentication
         auth_config = FlextLdapAuthConfig(
             bind_dn=bind_dn,
@@ -790,16 +893,21 @@ def create_ldap_client(
         )
         # REALLY use the auth_config by storing it in the client
         client._auth_config = auth_config
-        logger.info("Created LDAP client with authentication credentials for %s", bind_dn)
+        logger.info(
+            "Created LDAP client with authentication credentials for %s", bind_dn,
+        )
     else:
         logger.debug("Created LDAP client without authentication")
 
-    logger.info("LDAP client factory completed", extra={
-        "server": host,
-        "port": port,
-        "ssl": use_ssl,
-        "authenticated": bool(bind_dn and password)
-    })
+    logger.info(
+        "LDAP client factory completed",
+        extra={
+            "server": host,
+            "port": port,
+            "ssl": use_ssl,
+            "authenticated": bool(bind_dn and password),
+        },
+    )
     return client
 
 

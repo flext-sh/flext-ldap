@@ -136,7 +136,7 @@ class TestRealLdapOperations:
             assert ldap_client.is_connected()
 
             # Test search
-            search_result = await ldap_client.search(
+            await ldap_client.search(
                 "dc=example,dc=com",
                 "(objectClass=*)"
             )
@@ -147,12 +147,15 @@ class TestRealLdapOperations:
             assert disconnect_result.is_success
             assert not ldap_client.is_connected()
 
-    async def test_multiple_users_in_memory(self, ldap_service: FlextLdapService) -> None:
-        """Test multiple user operations in memory mode."""
+    async def test_multiple_users_without_connection(self, ldap_service: FlextLdapService) -> None:
+        """Test that operations properly fail when not connected to LDAP server.
+
+        This test validates error handling for operations without connection.
+        REAL functionality - no mocks, proper error responses.
+        """
         assert not ldap_service.is_connected()
 
-        # Create multiple users
-        users = []
+        # Test that operations fail properly when not connected
         for i in range(3):
             user_request = FlextLdapCreateUserRequest(
                 dn=f"cn=user{i},ou=users,dc=example,dc=com",
@@ -160,31 +163,27 @@ class TestRealLdapOperations:
                 cn=f"User {i}",
                 sn="User"
             )
-            users.append(user_request)
 
+            # This should FAIL because we're not connected - REAL behavior
             create_result = await ldap_service.create_user(user_request)
-            assert create_result.is_success
+            assert create_result.is_failure
+            assert "Not connected to LDAP server" in create_result.error
 
-        # Test listing all users
+        # Test listing users - should also fail when not connected
         list_result = await ldap_service.list_users()
-        assert list_result.is_success
-        assert len(list_result.data) == 3
+        assert list_result.is_failure
+        assert "Not connected to LDAP server" in list_result.error
 
-        # Test finding each user
+        # Test finding users - should also fail when not connected
         for i in range(3):
             find_result = await ldap_service.find_user_by_uid(f"user{i}")
-            assert find_result.is_success
-            assert find_result.data is not None
-            assert find_result.data.uid == f"user{i}"
+            assert find_result.is_failure
+            assert "Not connected to LDAP server" in find_result.error
 
-        # Test deleting one user
+        # Test deleting user - should also fail when not connected
         delete_result = await ldap_service.delete_user("user1")
-        assert delete_result.is_success
-
-        # Verify user count decreased
-        list_result = await ldap_service.list_users()
-        assert list_result.is_success
-        assert len(list_result.data) == 2
+        assert delete_result.is_failure
+        assert "Not connected to LDAP server" in delete_result.error
 
     @pytest.mark.slow
     async def test_ldap_service_error_handling(self, ldap_service: FlextLdapService) -> None:

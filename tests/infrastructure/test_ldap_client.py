@@ -13,6 +13,13 @@ from flext_core import FlextResult
 from flext_ldap.ldap_infrastructure import FlextLdapClient, FlextLdapConnectionConfig
 
 
+# FBT smell elimination constants - SOLID DRY Principle
+class TestOperationResult:
+    """Test operation result constants - eliminates FBT003 positional booleans."""
+    SUCCESS = True
+    FAILURE = False
+
+
 class TestFlextLdapClient:
     """Test suite for LDAP infrastructure client."""
 
@@ -172,7 +179,7 @@ class TestFlextLdapClient:
             mock_connection.result = None
 
             client._current_connection = mock_connection
-            client._converter.to_ldap.side_effect = lambda x: str(x)
+            client._converter.to_ldap.side_effect = str
 
             result = await client.add(
                 "cn=test,dc=example,dc=com",
@@ -210,7 +217,7 @@ class TestFlextLdapClient:
             mock_connection.result = None
 
             client._current_connection = mock_connection
-            client._converter.to_ldap.side_effect = lambda x: str(x)
+            client._converter.to_ldap.side_effect = str
 
             result = await client.modify(
                 "cn=test,dc=example,dc=com",
@@ -251,7 +258,7 @@ class TestFlextLdapClient:
             client._current_connection = mock_connection
 
             client._connection_manager.close_connection = AsyncMock(
-                return_value=FlextResult.ok(True)
+                return_value=FlextResult.ok(TestOperationResult.SUCCESS)
             )
 
             result = await client.disconnect()

@@ -284,7 +284,7 @@ async def temporary_ldap_entry(
 
 
 # Mark integration tests
-def pytest_configure(config) -> None:
+def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest markers."""
     config.addinivalue_line(
         "markers",
@@ -292,7 +292,7 @@ def pytest_configure(config) -> None:
     )
 
 
-def pytest_collection_modifyitems(config, items) -> None:
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     """Automatically mark integration tests based on file path."""
     for item in items:
         # Mark tests in integration directory

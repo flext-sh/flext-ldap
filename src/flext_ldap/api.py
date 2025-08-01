@@ -78,7 +78,7 @@ class FlextLdapApi:
 
             # Create connection config
             conn_config = FlextLdapConnectionConfig(
-                server=host, port=port, use_ssl=use_ssl
+                server=host, port=port, use_ssl=use_ssl,
             )
 
             # Create client with config
@@ -92,12 +92,12 @@ class FlextLdapApi:
             # Authenticate if credentials provided
             if bind_dn and password:
                 auth_config = FlextLdapAuthConfig(
-                    bind_dn=bind_dn, bind_password=password
+                    bind_dn=bind_dn, bind_password=password,
                 )
                 auth_result = await self._client.connect_with_auth(auth_config)
                 if not auth_result.is_success:
                     return FlextResult.fail(
-                        f"Authentication failed: {auth_result.error}"
+                        f"Authentication failed: {auth_result.error}",
                     )
 
             # Manage session
@@ -229,6 +229,40 @@ class FlextLdapApi:
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Search error: {e}")
 
+    def _build_user_attributes(
+        self, user_request: FlextLdapCreateUserRequest,
+    ) -> dict[str, object]:
+        """Build LDAP attributes from user request."""
+        attributes: dict[str, object] = {
+            "objectClass": ["inetOrgPerson", "person", "organizationalPerson"],
+            "uid": [user_request.uid],
+            "cn": [user_request.cn],
+            "sn": [user_request.sn],
+        }
+
+        if user_request.mail:
+            attributes["mail"] = [user_request.mail]
+        if user_request.phone:
+            attributes["telephoneNumber"] = [user_request.phone]
+        if user_request.department:
+            attributes["departmentNumber"] = [user_request.department]
+        if user_request.title:
+            attributes["title"] = [user_request.title]
+
+        return attributes
+
+    def _format_attributes_for_entity(
+        self, attributes: dict[str, object],
+    ) -> dict[str, str]:
+        """Format attributes for domain entity creation."""
+        formatted_attrs: dict[str, str] = {}
+        for key, value in attributes.items():
+            if isinstance(value, list) and value:
+                formatted_attrs[key] = str(value[0])
+            else:
+                formatted_attrs[key] = str(value)
+        return formatted_attrs
+
     async def create_user(
         self,
         session_id: str,
@@ -239,29 +273,14 @@ class FlextLdapApi:
             if session_id not in self._connections:
                 return FlextResult.fail(f"Session {session_id} not found")
 
-            # Note: connection_id available for future connection management
+            # Build attributes using helper method
+            attributes = self._build_user_attributes(user_request)
 
-            # Prepare LDAP attributes - cast to dict[str, object] for client
-            attributes: dict[str, object] = {
-                "objectClass": ["inetOrgPerson", "person", "organizationalPerson"],
-                "uid": [user_request.uid],
-                "cn": [user_request.cn],
-                "sn": [user_request.sn],
-            }
-
-            if user_request.mail:
-                attributes["mail"] = [user_request.mail]
-            if user_request.phone:
-                attributes["telephoneNumber"] = [user_request.phone]
-            if user_request.department:
-                attributes["departmentNumber"] = [user_request.department]
-            if user_request.title:
-                attributes["title"] = [user_request.title]
-
-            # FlextLdapClient.add() is async with different signature
+            # Add user to LDAP
             object_classes_list = attributes["objectClass"]
             if not isinstance(object_classes_list, list):
                 object_classes_list = [str(object_classes_list)]
+
             result = await self._client.add(
                 user_request.dn,
                 [str(cls) for cls in object_classes_list],
@@ -271,13 +290,8 @@ class FlextLdapApi:
             if not result.is_success:
                 return FlextResult.fail(f"User creation failed: {result.error}")
 
-            # Create domain entity - convert attributes back to expected format
-            formatted_attrs_for_user: dict[str, str] = {}
-            for key, value in attributes.items():
-                if isinstance(value, list) and value:
-                    formatted_attrs_for_user[key] = str(value[0])
-                else:
-                    formatted_attrs_for_user[key] = str(value)
+            # Create domain entity using helper method
+            formatted_attrs = self._format_attributes_for_entity(attributes)
 
             user = FlextLdapUser(
                 id=str(uuid4()),
@@ -294,7 +308,7 @@ class FlextLdapApi:
                     if isinstance(attributes["objectClass"], list)
                     else []
                 ),
-                attributes=formatted_attrs_for_user,
+                attributes=formatted_attrs,
             )
 
             logger.info("User created", extra={"user_dn": user_request.dn})
@@ -480,12 +494,12 @@ class FlextLdapApi:
 
             # Use the client add method with correct signature - cast attributes
             # Note: connection_id available for future connection management
-            attributes_cast: dict[str, object] = {k: v for k, v in attributes.items()}
+            attributes_cast: dict[str, object] = dict(attributes)
             result = await self._client.add(dn, object_classes, attributes_cast)
 
             if result.is_success:
                 logger.debug("Added entry: %s", dn)
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
             return FlextResult.fail(f"Failed to add entry: {result.error}")
 
         except (ConnectionError, ValueError, TypeError) as e:
@@ -514,12 +528,12 @@ class FlextLdapApi:
 
             # Use the client modify method with correct signature - cast attributes
             # Note: connection_id available for future connection management
-            attributes_cast: dict[str, object] = {k: v for k, v in attributes.items()}
+            attributes_cast: dict[str, object] = dict(attributes)
             result = await self._client.modify(dn, attributes_cast)
 
             if result.is_success:
                 logger.debug("Modified entry: %s", dn)
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
             return FlextResult.fail(f"Failed to modify entry: {result.error}")
 
         except (ConnectionError, ValueError, TypeError) as e:

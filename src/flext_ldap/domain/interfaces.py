@@ -16,12 +16,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from flext_core import FlextResult
 
-    from flext_ldap.domain.values import (
+    from flext_ldap.entities import FlextLdapEntry
+    from flext_ldap.values import (
         FlextLdapDistinguishedName,
         LDAPFilter,
         LDAPScope,
     )
-    from flext_ldap.entities import FlextLdapEntry
 
 
 class FlextLdapConnectionManager(ABC):

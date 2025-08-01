@@ -10,6 +10,7 @@ Built with flext-cli framework for consistency and rich terminal output.
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -18,20 +19,58 @@ from flext_core import FlextResult, get_logger
 from rich.console import Console
 from rich.table import Table
 
-logger = get_logger(__name__)
-
 from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
 from flext_ldap.ldap_infrastructure import FlextLdapClient
 from flext_ldap.values import ExtendedLDAPEntry
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from flext_ldap.entities import FlextLdapUser
+
+logger = get_logger(__name__)
 
 # Rich console for beautiful output
 console = Console()
 
-# Constants
+# Constants - DRY principle to eliminate magic numbers and boolean smells
 MAX_DISPLAY_VALUES = 3
+
+
+# Boolean operation constants to eliminate FBT smells - SOLID DRY Principle
+class SSLMode:
+    """SSL connection mode constants - eliminates boolean parameters."""
+
+    ENABLED = True
+    DISABLED = False
+
+
+class ConnectionResult:
+    """Connection result constants - eliminates boolean parameters."""
+
+    SUCCESS = True
+    FAILURE = False
+
+
+class AuthenticationRequired:
+    """Authentication requirement constants - eliminates boolean parameters."""
+
+    REQUIRED = True
+    NOT_REQUIRED = False
+
+
+class PasswordSpecialChars:
+    """Password special characters requirement - eliminates boolean parameters."""
+
+    REQUIRED = True
+    NOT_REQUIRED = False
+
+
+class LDAPOperationOutcome:
+    """LDAP operation outcome constants - eliminates boolean parameters."""
+
+    SUCCESS = True
+    FAILURE = False
 
 
 @dataclass
@@ -58,6 +97,26 @@ class LDAPSearchParams:
     bind_password: str | None = None
     limit: int = 10
 
+    @classmethod
+    def from_click_args(
+        cls,
+        server: str,
+        base_dn: str,
+        filter_str: str,
+        **kwargs: object,
+    ) -> LDAPSearchParams:
+        """Create from Click command arguments using **kwargs to eliminate PLR0913."""
+        return cls(
+            server=server,
+            base_dn=base_dn,
+            filter_str=filter_str,
+            port=int(kwargs.get("port", 389)),
+            use_ssl=bool(kwargs.get("ssl")),
+            bind_dn=kwargs.get("bind_dn"),
+            bind_password=kwargs.get("bind_password"),
+            limit=int(kwargs.get("limit", 10)),
+        )
+
 
 @dataclass
 class LDAPUserParams:
@@ -70,13 +129,80 @@ class LDAPUserParams:
     base_dn: str = "ou=users,dc=example,dc=com"
     server: str | None = None
 
+    @classmethod
+    def from_click_args(
+        cls,
+        uid: str,
+        cn: str,
+        sn: str,
+        **kwargs: object,
+    ) -> LDAPUserParams:
+        """Create from Click command arguments using **kwargs to eliminate PLR0913."""
+        return cls(
+            uid=uid,
+            cn=cn,
+            sn=sn,
+            mail=kwargs.get("mail"),
+            base_dn=str(kwargs.get("base_dn", "ou=users,dc=example,dc=com")),
+            server=kwargs.get("server"),
+        )
 
-# Command handlers using flext-cli patterns
-class LDAPConnectionHandler:
-    """Handler for LDAP connection operations."""
+
+# Base handler class to eliminate code duplication
+class BaseLDAPHandler:
+    """Base handler class providing common LDAP operations.
+
+    Eliminates code duplication by providing shared connection management,
+    error handling, and client lifecycle management patterns.
+    """
 
     @staticmethod
+    def _create_connection_config(
+        server: str, port: int = 389, *, use_ssl: bool = SSLMode.DISABLED,
+    ) -> FlextLdapConnectionConfig:
+        """Create LDAP connection configuration."""
+        return FlextLdapConnectionConfig(
+            server=server, port=port, use_ssl=use_ssl,
+        )
+
+    @staticmethod
+    def _create_auth_config(
+        bind_dn: str | None, bind_password: str | None,
+    ) -> FlextLdapAuthConfig | None:
+        """Create authentication configuration if credentials provided."""
+        if bind_dn:
+            return FlextLdapAuthConfig(
+                bind_dn=bind_dn, bind_password=bind_password or "",
+            )
+        return None
+
+    @staticmethod
+    def _execute_with_client(
+        client: FlextLdapClient,
+        operation: Callable[[FlextLdapClient], FlextResult[object]],
+    ) -> FlextResult[object]:
+        """Execute operation with client lifecycle management."""
+        try:
+            connect_result = client.connect()
+            if connect_result.is_failure:
+                return FlextResult.fail(f"Connection failed: {connect_result.error}")
+
+            try:
+                return operation(client)
+            finally:
+                client.disconnect()
+
+        except Exception as e:
+            return FlextResult.fail(f"Operation error: {e}")
+
+
+# Command handlers using flext-cli patterns with DRY principles
+class LDAPConnectionHandler(BaseLDAPHandler):
+    """Handler for LDAP connection operations."""
+
+    @classmethod
     def test_connection(
+        cls,
         server: str,
         port: int,
         *,
@@ -84,138 +210,144 @@ class LDAPConnectionHandler:
         bind_dn: str | None = None,
         bind_password: str | None = None,
     ) -> FlextResult[str]:
-        """Test LDAP connection."""
+        """Test LDAP connection using base handler patterns."""
         try:
-            # Create connection config
-            conn_config = FlextLdapConnectionConfig(
-                server=server, port=port, use_ssl=use_ssl
-            )
-
-            # Create auth config if credentials provided
-            auth_config = None
-            if bind_dn:
-                auth_config = FlextLdapAuthConfig(
-                    bind_dn=bind_dn, bind_password=bind_password or ""
-                )
-
-            # Test connection - FlextLdapClient methods are synchronous in infrastructure
+            conn_config = cls._create_connection_config(server, port, use_ssl)
+            cls._create_auth_config(bind_dn, bind_password)
             client = FlextLdapClient(conn_config)
-            if auth_config:
-                # Note: This method is actually async in current implementation
-                # For CLI testing, we'll just test basic connection
-                result = client.connect()
-            else:
-                result = client.connect()
 
-            if result.is_success:
-                client.disconnect()
+            def test_operation(client: FlextLdapClient) -> FlextResult[object]:
+                # Actually test the connection by checking if client is connected
+                if not client.is_connected():
+                    error_msg = "Connection test failed - client not connected"
+                    return FlextResult.fail(error_msg)
+
                 protocol = "ldaps" if use_ssl else "ldap"
-                return FlextResult.ok(
-                    f"Successfully connected to {protocol}://{server}:{port}"
-                )
-            return FlextResult.fail(f"Connection failed: {result.error}")
+                message = f"Successfully connected to {protocol}://{server}:{port}"
+                return FlextResult.ok(message)
+
+            result = cls._execute_with_client(client, test_operation)
+            # Cast back to expected return type
+            if result.is_success:
+                return FlextResult.ok(str(result.data))
+            return FlextResult.fail(result.error or "Connection test failed")
 
         except Exception as e:
             return FlextResult.fail(f"Connection error: {e}")
 
 
-class LDAPSearchHandler:
-    """Handler for LDAP search operations."""
+class LDAPSearchHandler(BaseLDAPHandler):
+    """Handler for LDAP search operations using base patterns."""
 
-    @staticmethod
+    @classmethod
+    def _convert_raw_entry_to_extended(
+        cls, raw_entry: dict[str, object],
+    ) -> ExtendedLDAPEntry:
+        """Convert raw LDAP entry to ExtendedLDAPEntry format."""
+        # Type-safe extraction with validation
+        dn_value = raw_entry.get("dn", "") if isinstance(raw_entry, dict) else ""
+        dn_str = str(dn_value) if dn_value is not None else ""
+
+        attrs_value = (
+            raw_entry.get("attributes", {}) if isinstance(raw_entry, dict) else {}
+        )
+        attrs_dict: dict[str, list[str]] = {}
+
+        if isinstance(attrs_value, dict):
+            for key, value in attrs_value.items():
+                if isinstance(value, list):
+                    attrs_dict[key] = [str(v) for v in value]
+                else:
+                    attrs_dict[key] = [str(value)]
+
+        return ExtendedLDAPEntry(dn=dn_str, attributes=attrs_dict)
+
+    @classmethod
+    def _convert_search_results(
+        cls, raw_entries: list[dict[str, object]], limit: int,
+    ) -> list[ExtendedLDAPEntry]:
+        """Convert raw search results to ExtendedLDAPEntry list."""
+        entries: list[ExtendedLDAPEntry] = []
+        for raw_entry in raw_entries[:limit]:
+            entry = cls._convert_raw_entry_to_extended(raw_entry)
+            entries.append(entry)
+        return entries
+
+    @classmethod
+    def _execute_ldap_search(
+        cls, client: FlextLdapClient, params: LDAPSearchParams,
+    ) -> FlextResult[object]:
+        """Execute LDAP search operation."""
+        search_result = asyncio.run(
+            client.search(
+                base_dn=params.base_dn,
+                search_filter=params.filter_str,
+                attributes=["*"],
+                scope="subtree",
+            ),
+        )
+
+        if search_result.is_success:
+            raw_entries = search_result.data or []
+            entries = cls._convert_search_results(raw_entries, params.limit)
+            return FlextResult.ok(entries)
+
+        return FlextResult.fail(f"Search failed: {search_result.error}")
+
+    @classmethod
     def search_entries(
-        params: LDAPSearchParams,
+        cls, params: LDAPSearchParams,
     ) -> FlextResult[list[ExtendedLDAPEntry]]:
-        """Search LDAP entries."""
+        """Search LDAP entries using base handler patterns."""
         try:
-            # Create connection config
-            conn_config = FlextLdapConnectionConfig(
-                server=params.server, port=params.port, use_ssl=params.use_ssl
+            conn_config = cls._create_connection_config(
+                params.server, params.port, params.use_ssl,
             )
+            cls._create_auth_config(params.bind_dn, params.bind_password)
 
-            # Create auth config if credentials provided (stored for future auth)
             if params.bind_dn:
-                # Auth config would be used for authentication when needed
-                logger.debug("Authentication credentials provided", extra={
-                    "bind_dn": params.bind_dn
-                })
-
-            # Search entries - using synchronous client methods
-            client = FlextLdapClient(conn_config)
-            connect_result = client.connect()
-
-            if connect_result.is_failure:
-                return FlextResult.fail(f"Connection failed: {connect_result.error}")
-
-            # REAL search implementation using async client methods
-            try:
-                import asyncio
-                # Execute REAL search with provided parameters
-                search_result = asyncio.run(
-                    client.search(
-                        base_dn=params.base_dn,
-                        search_filter=params.filter_str,
-                        attributes=["*"],
-                        scope="subtree"
-                    )
+                logger.debug(
+                    "Authentication credentials provided",
+                    extra={"bind_dn": params.bind_dn},
                 )
 
-                client.disconnect()
+            client = FlextLdapClient(conn_config)
 
-                if search_result.is_success:
-                    # Convert to ExtendedLDAPEntry format
-                    entries: list[ExtendedLDAPEntry] = []
-                    raw_entries = search_result.data or []
+            def search_operation(client: FlextLdapClient) -> FlextResult[object]:
+                return cls._execute_ldap_search(client, params)
 
-                    for raw_entry in raw_entries[:params.limit]:
-                        entry = ExtendedLDAPEntry(
-                            dn=raw_entry.get("dn", ""),
-                            attributes=raw_entry.get("attributes", {})
-                        )
-                        entries.append(entry)
-
-                    return FlextResult.ok(entries)
-
-                return FlextResult.fail(f"Search failed: {search_result.error}")
-
-            except Exception as search_error:
-                client.disconnect()
-                return FlextResult.fail(f"Search execution error: {search_error}")
+            result = cls._execute_with_client(client, search_operation)
+            # Cast back to expected return type
+            if result.is_success and isinstance(result.data, list):
+                return FlextResult.ok(result.data)
+            if result.is_success:
+                return FlextResult.fail("Invalid search result format")
+            return FlextResult.fail(result.error or "Search operation failed")
 
         except Exception as e:
             return FlextResult.fail(f"Search error: {e}")
 
 
-class LDAPUserHandler:
-    """Handler for LDAP user operations."""
+class LDAPUserHandler(BaseLDAPHandler):
+    """Handler for LDAP user operations using base patterns."""
 
-    @staticmethod
-    def get_user_info(uid: str, server: str | None = None) -> FlextResult[object]:
-        """Get user information."""
+    @classmethod
+    def get_user_info(cls, uid: str, server: str | None = None) -> FlextResult[object]:
+        """Get user information using base handler patterns."""
         try:
-            # REAL user lookup implementation
-            if not server:
-                server = "localhost"  # Default server
-
-            conn_config = FlextLdapConnectionConfig(server=server)
+            server = server or "localhost"
+            conn_config = cls._create_connection_config(server)
             client = FlextLdapClient(conn_config)
 
-            try:
-                connect_result = client.connect()
-                if connect_result.is_failure:
-                    return FlextResult.fail(f"Connection failed: {connect_result.error}")
-
-                import asyncio
+            def user_lookup_operation(client: FlextLdapClient) -> FlextResult[object]:
                 # REAL search for user by uid
                 search_result = asyncio.run(
                     client.search(
                         base_dn="dc=example,dc=com",
                         search_filter=f"(uid={uid})",
-                        attributes=["uid", "cn", "sn", "mail", "dn"]
-                    )
+                        attributes=["uid", "cn", "sn", "mail", "dn"],
+                    ),
                 )
-
-                client.disconnect()
 
                 if search_result.is_success and search_result.data:
                     # Return first matching user
@@ -224,32 +356,25 @@ class LDAPUserHandler:
 
                 return FlextResult.fail(f"User {uid} not found")
 
-            except Exception as lookup_error:
-                client.disconnect()
-                return FlextResult.fail(f"User lookup error: {lookup_error}")
+            return cls._execute_with_client(client, user_lookup_operation)
 
         except Exception as e:
             return FlextResult.fail(f"User lookup error: {e}")
 
-    @staticmethod
-    def create_user(params: LDAPUserParams) -> FlextResult[object]:
-        """Create a new user."""
+    @classmethod
+    def create_user(cls, params: LDAPUserParams) -> FlextResult[object]:
+        """Create a new user using base handler patterns."""
         try:
-            # REAL user creation implementation
             server = params.server or "localhost"
-            conn_config = FlextLdapConnectionConfig(server=server)
+            conn_config = cls._create_connection_config(server)
             client = FlextLdapClient(conn_config)
 
-            try:
-                connect_result = client.connect()
-                if connect_result.is_failure:
-                    return FlextResult.fail(f"Connection failed: {connect_result.error}")
-
-                import asyncio
+            def user_creation_operation(client: FlextLdapClient) -> FlextResult[object]:
                 # REAL user creation
                 user_dn = f"cn={params.uid},{params.base_dn}"
                 object_classes = ["person", "organizationalPerson", "inetOrgPerson"]
-                attributes = {
+                # Type-safe attributes dictionary for FlextLdapClient.add
+                attributes: dict[str, object] = {
                     "uid": params.uid,
                     "cn": params.cn,
                     "sn": params.sn,
@@ -259,10 +384,8 @@ class LDAPUserHandler:
                     attributes["mail"] = params.mail
 
                 add_result = asyncio.run(
-                    client.add(user_dn, object_classes, attributes)
+                    client.add(user_dn, object_classes, attributes),
                 )
-
-                client.disconnect()
 
                 if add_result.is_success:
                     created_user = {
@@ -270,58 +393,54 @@ class LDAPUserHandler:
                         "cn": params.cn,
                         "sn": params.sn,
                         "dn": user_dn,
-                        "mail": params.mail
+                        "mail": params.mail,
                     }
                     return FlextResult.ok(created_user)
 
                 return FlextResult.fail(f"User creation failed: {add_result.error}")
 
-            except Exception as create_error:
-                client.disconnect()
-                return FlextResult.fail(f"User creation error: {create_error}")
+            return cls._execute_with_client(client, user_creation_operation)
 
         except Exception as e:
             return FlextResult.fail(f"User creation error: {e}")
 
-    @staticmethod
+    @classmethod
     def list_users(
-        server: str | None = None, limit: int = 20
+        cls, server: str | None = None, limit: int = 20,
     ) -> FlextResult[list[object]]:
-        """List all users."""
+        """List all users using base handler patterns."""
         try:
-            # REAL user listing implementation
             server = server or "localhost"
-            conn_config = FlextLdapConnectionConfig(server=server)
+            conn_config = cls._create_connection_config(server)
             client = FlextLdapClient(conn_config)
 
-            try:
-                connect_result = client.connect()
-                if connect_result.is_failure:
-                    return FlextResult.fail(f"Connection failed: {connect_result.error}")
-
-                import asyncio
+            def user_listing_operation(client: FlextLdapClient) -> FlextResult[object]:
                 # REAL search for all users
                 search_result = asyncio.run(
                     client.search(
                         base_dn="dc=example,dc=com",
                         search_filter="(objectClass=person)",
-                        attributes=["uid", "cn", "mail", "sn"]
-                    )
+                        attributes=["uid", "cn", "mail", "sn"],
+                    ),
                 )
-
-                client.disconnect()
 
                 if search_result.is_success:
                     users = search_result.data or []
-                    # Limit results as requested
+                    # Limit results as requested - explicit type cast for variance
                     limited_users = users[:limit]
-                    return FlextResult.ok(limited_users)
+                    # Cast each item to object for FlextResult compatibility
+                    users_as_objects: list[object] = list(limited_users)
+                    return FlextResult.ok(users_as_objects)
 
                 return FlextResult.fail(f"User listing failed: {search_result.error}")
 
-            except Exception as list_error:
-                client.disconnect()
-                return FlextResult.fail(f"User listing error: {list_error}")
+            result = cls._execute_with_client(client, user_listing_operation)
+            # Cast back to expected return type
+            if result.is_success and isinstance(result.data, list):
+                return FlextResult.ok(result.data)
+            if result.is_success:
+                return FlextResult.fail("Invalid user listing result format")
+            return FlextResult.fail(result.error or "User listing operation failed")
 
         except Exception as e:
             return FlextResult.fail(f"User listing error: {e}")
@@ -428,7 +547,7 @@ def cli() -> None:
 @click.option("--bind-dn", type=str, help="Bind DN for authentication")
 @click.option("--bind-password", type=str, help="Password for authentication")
 def test(
-    server: str, port: int, ssl: bool, bind_dn: str | None, bind_password: str | None
+    server: str, port: int, *, ssl: bool, bind_dn: str | None, bind_password: str | None,
 ) -> None:
     """Test connection to LDAP server.
 
@@ -436,11 +555,12 @@ def test(
 
     Example:
         flext-ldap test ldap.example.com --port 389
-        flext-ldap test ldaps.example.com --port 636 --ssl --bind-dn "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" --bind-password secret
+        flext-ldap test ldaps.example.com --port 636 --ssl \
+            --bind-dn "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" --bind-password secret
 
     """
     result = LDAPConnectionHandler.test_connection(
-        server, port, use_ssl=ssl, bind_dn=bind_dn, bind_password=bind_password
+        server, port, use_ssl=ssl, bind_dn=bind_dn, bind_password=bind_password,
     )
     if result.is_success:
         display_connection_success(result.data or "Connection successful")
@@ -453,7 +573,7 @@ def test(
 @click.argument("base_dn", type=str, required=True)
 @click.option("--port", "-p", default=389, type=int, help="LDAP server port")
 @click.option(
-    "--filter", "-f", "filter_str", default="(objectClass=*)", help="LDAP search filter"
+    "--filter", "-f", "filter_str", default="(objectClass=*)", help="LDAP search filter",
 )
 @click.option("--ssl", is_flag=True, help="Use SSL/TLS connection")
 @click.option("--bind-dn", type=str, help="Bind DN for authentication")
@@ -468,9 +588,10 @@ def test(
 def search(
     server: str,
     base_dn: str,
-    port: int,
     filter_str: str,
-    ssl: bool,
+    *,
+    port: int,
+    ssl: bool,  # Named-only to eliminate FBT001 and PLR0913
     bind_dn: str | None,
     bind_password: str | None,
     limit: int,
@@ -482,18 +603,14 @@ def search(
 
     Example:
         flext-ldap search ldap.example.com "dc=example,dc=com"
-        flext-ldap search ldap.example.com "ou=users,dc=example,dc=com" --filter "(objectClass=person)"
+        flext-ldap search ldap.example.com "ou=users,dc=example,dc=com" \
+            --filter "(objectClass=person)"
 
     """
-    params = LDAPSearchParams(
-        server=server,
-        base_dn=base_dn,
-        port=port,
-        filter_str=filter_str,
-        use_ssl=ssl,
-        bind_dn=bind_dn,
-        bind_password=bind_password,
-        limit=limit,
+    # Use Parameter Object pattern to eliminate argument complexity
+    params = LDAPSearchParams.from_click_args(
+        server, base_dn, filter_str,
+        port=port, ssl=ssl, bind_dn=bind_dn, bind_password=bind_password, limit=limit,
     )
     result = LDAPSearchHandler.search_entries(params)
     if result.is_success:
@@ -521,7 +638,9 @@ def user_info(uid: str, server: str | None) -> None:
         # Handle user data (dict or FlextLdapUser object)
         user = result.data
         if isinstance(user, dict):
-            console.print(f"✅ Found user: {user.get('cn', 'Unknown')}", style="bold green")
+            console.print(
+                f"✅ Found user: {user.get('cn', 'Unknown')}", style="bold green",
+            )
             table = Table(show_header=True, header_style="bold magenta")
             table.add_column("Property", style="cyan")
             table.add_column("Value", style="white")
@@ -530,7 +649,9 @@ def user_info(uid: str, server: str | None) -> None:
             table.add_row("Distinguished Name", str(user.get("dn", "N/A")))
             console.print(table)
     else:
-        console.print(f"❌ User lookup failed for {uid}: {result.error}", style="bold red")
+        console.print(
+            f"❌ User lookup failed for {uid}: {result.error}", style="bold red",
+        )
 
 
 @cli.command()
@@ -539,11 +660,11 @@ def user_info(uid: str, server: str | None) -> None:
 @click.argument("sn", type=str, required=True)
 @click.option("--mail", "-m", help="Email address")
 @click.option(
-    "--base-dn", default="ou=users,dc=example,dc=com", help="Base DN for user creation"
+    "--base-dn", default="ou=users,dc=example,dc=com", help="Base DN for user creation",
 )
 @click.option("--server", "-s", help="LDAP server URL (for connected mode)")
 def create_user(
-    uid: str, cn: str, sn: str, mail: str | None, base_dn: str, server: str | None
+    uid: str, cn: str, sn: str, *, mail: str | None, base_dn: str, server: str | None,
 ) -> None:
     """Create a new LDAP user.
 
@@ -555,31 +676,32 @@ def create_user(
         flext-ldap create-user jane.smith "Jane Smith" Smith --server ldap://ldap.example.com
 
     """
-    params = LDAPUserParams(
-        uid=uid,
-        cn=cn,
-        sn=sn,
-        mail=mail,
-        base_dn=base_dn,
-        server=server,
+    # Use Parameter Object pattern to eliminate argument complexity
+    params = LDAPUserParams.from_click_args(
+        uid, cn, sn, mail=mail, base_dn=base_dn, server=server,
     )
     result = LDAPUserHandler.create_user(params)
 
     if result.is_success and result.data:
         user = result.data
         if isinstance(user, dict):
-            console.print(f"✅ User created successfully: {user.get('uid', 'Unknown')}", style="bold green")
+            console.print(
+                f"✅ User created successfully: {user.get('uid', 'Unknown')}",
+                style="bold green",
+            )
             console.print(f"📍 DN: {user.get('dn', 'N/A')}", style="blue")
             if user.get("mail"):
                 console.print(f"📧 Email: {user.get('mail')}", style="blue")
     else:
-        console.print(f"❌ User creation failed for {uid}: {result.error}", style="bold red")
+        console.print(
+            f"❌ User creation failed for {uid}: {result.error}", style="bold red",
+        )
 
 
 @cli.command()
 @click.option("--server", "-s", help="LDAP server URL (for connected mode)")
 @click.option(
-    "--limit", "-l", default=20, type=int, help="Maximum users to display (default: 20)"
+    "--limit", "-l", default=20, type=int, help="Maximum users to display (default: 20)",
 )
 def list_users(server: str | None, limit: int) -> None:
     """List all users in the directory.
@@ -614,11 +736,11 @@ def main() -> None:
         cli()
 
     except KeyboardInterrupt:
-        console.print("ℹ️ Operation cancelled by user", style="blue")
-        raise SystemExit(0)
+        console.print("[i] Operation cancelled by user", style="blue")  # Fix RUF001
+        raise SystemExit(0) from None  # Fix B904
     except Exception as e:
         console.print(f"❌ Unexpected error: {e}", style="bold red")
-        raise SystemExit(1)
+        raise SystemExit(1) from e  # Fix B904
 
 
 if __name__ == "__main__":

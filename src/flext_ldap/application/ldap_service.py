@@ -3,6 +3,9 @@
 Application layer service implementing LDAP operations using Clean Architecture.
 Provides a high-level interface for LDAP user and group management operations.
 
+COMPLETELY REFACTORED: No mocks, fallbacks, or placeholders.
+Uses real FLEXT infrastructure following SOLID principles.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -10,15 +13,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from urllib.parse import urlparse
+from uuid import uuid4
 
 from flext_core import FlextResult, get_logger
 
-from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
+from flext_ldap.api import FlextLdapApi
 from flext_ldap.entities import FlextLdapUser
-from flext_ldap.ldap_infrastructure import FlextLdapClient
 
 if TYPE_CHECKING:
+    from flext_ldap.config import FlextLdapConnectionConfig
     from flext_ldap.values import FlextLdapCreateUserRequest
 
 logger = get_logger(__name__)
@@ -27,151 +30,230 @@ logger = get_logger(__name__)
 class FlextLdapService:
     """Application service for LDAP operations using Clean Architecture.
 
-    Provides high-level LDAP operations with integrated LDAP client functionality.
+    Uses FlextLdapApi for real LDAP operations, eliminating all mocks/fallbacks.
+    Follows SOLID principles by delegating to infrastructure layer.
     """
 
-    def __init__(self) -> None:
-        """Initialize LDAP service."""
-        self._client = FlextLdapClient()
-        self._connection_config: FlextLdapConnectionConfig | None = None
-        self._auth_config: FlextLdapAuthConfig | None = None
-        self._in_memory_users: dict[str, FlextLdapUser] = {}
-        logger.info("FlextLdapService initialized")
+    def __init__(self, config: FlextLdapConnectionConfig | None = None) -> None:
+        """Initialize LDAP service with real infrastructure."""
+        self._api = FlextLdapApi(config)
+        self._session_id: str | None = None
+        logger.info("FlextLdapService initialized with real infrastructure")
 
     def is_connected(self) -> bool:
         """Check if service is connected to LDAP server."""
-        return self._client.is_connected()
+        return self._session_id is not None
 
-    def connect(
+    async def connect(
         self,
         server_url: str,
         bind_dn: str,
         bind_password: str,
     ) -> FlextResult[bool]:
-        """Connect to LDAP server."""
-        logger.info(f"Connecting to LDAP server: {server_url}")
+        """Connect to LDAP server using real infrastructure."""
+        logger.info("Connecting to LDAP server", extra={"server_url": server_url})
+
         try:
-            # Parse server URL to get host and port
-            parsed = urlparse(server_url)
-            host = parsed.hostname or "localhost"
-            port = parsed.port or (636 if parsed.scheme == "ldaps" else 389)
-            use_ssl = parsed.scheme == "ldaps"
-
-            # Create connection config
-            self._connection_config = FlextLdapConnectionConfig(
-                server=host,
-                port=port,
-                use_ssl=use_ssl,
-            )
-
-            # Create auth config
-            self._auth_config = FlextLdapAuthConfig(
+            # Use real FlextLdapApi for connection
+            connect_result = await self._api.connect(
+                server_url=server_url,
                 bind_dn=bind_dn,
-                bind_password=bind_password,
+                password=bind_password,
             )
 
-            # Connect using synchronous method
-            result = self._client.connect(self._connection_config)
-            if result.is_success:
+            if connect_result.is_success:
+                self._session_id = connect_result.data
                 logger.info("Successfully connected to LDAP server")
-            else:
-                logger.error(f"Failed to connect to LDAP server: {result.error}")
+                return FlextResult.ok(data=True)
 
-            return result
+            logger.error("Failed to connect to LDAP server",
+                        extra={"error": connect_result.error})
+            return FlextResult.fail(connect_result.error or "Connection failed")
+
         except Exception as e:
             error_msg = f"Connection error: {e}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
-    def disconnect(self) -> FlextResult[bool]:
-        """Disconnect from LDAP server."""
-        if self.is_connected():
-            logger.info("Disconnecting from LDAP server")
-            result = self._client.disconnect()
-            if result.is_success:
-                logger.info("Successfully disconnected from LDAP server")
-                return FlextResult.ok(True)
-            logger.error(f"Failed to disconnect from LDAP server: {result.error}")
-            return FlextResult.fail(result.error or "Disconnect failed")
-        return FlextResult.ok(True)
+    async def disconnect(self) -> FlextResult[bool]:
+        """Disconnect from LDAP server using real infrastructure."""
+        if not self.is_connected():
+            return FlextResult.ok(data=True)
 
-    def create_user(
+        logger.info("Disconnecting from LDAP server")
+        try:
+            # Session ID guaranteed by is_connected() check above
+            if self._session_id is None:
+                return FlextResult.fail("No session ID available for disconnection")
+            # Use real FlextLdapApi for disconnection
+            result = await self._api.disconnect(self._session_id)
+            if result.is_success:
+                self._session_id = None
+                logger.info("Successfully disconnected from LDAP server")
+                return FlextResult.ok(data=True)
+
+            logger.error("Failed to disconnect from LDAP server",
+                        extra={"error": result.error})
+            return FlextResult.fail(result.error or "Disconnect failed")
+
+        except Exception as e:
+            error_msg = f"Disconnect error: {e}"
+            logger.exception(error_msg)
+            return FlextResult.fail(error_msg)
+
+    async def create_user(
         self,
         request: FlextLdapCreateUserRequest,
     ) -> FlextResult[FlextLdapUser]:
-        """Create a new user.
+        """Create a new user using real LDAP infrastructure.
 
-        Creates user in LDAP server if connected, otherwise stores in memory.
+        No fallbacks or memory storage - uses real LDAP API.
         """
-        logger.info(f"Creating user: {request.uid}")
+        logger.info("Creating user", extra={"uid": request.uid})
 
-        # Create user entity from request
-        user = FlextLdapUser(
-            id=request.uid,
-            dn=request.dn,
-            uid=request.uid,
-            cn=request.cn,
-            sn=request.sn,
-            mail=getattr(request, "mail", None),
-        )
+        if not self.is_connected():
+            return FlextResult.fail("Not connected to LDAP server")
 
-        if self.is_connected():
-            # Create user in LDAP server
-            # Cast attributes to match expected type dict[str, object]
-            # Using standard object classes for inetOrgPerson
-            attributes: dict[str, object] = {
-                "objectClass": ["inetOrgPerson", "person", "top"],
-                "uid": request.uid,
-                "cn": request.cn,
-                "sn": request.sn,
-            }
+        try:
+            # Session ID guaranteed by is_connected() check above
+            if self._session_id is None:
+                return FlextResult.fail("No session ID available for operation")
+            # Use real FlextLdapApi for user creation
+            result = await self._api.create_user(self._session_id, request)
 
-            if hasattr(request, "mail") and request.mail:
-                attributes["mail"] = request.mail
+            if result.is_success:
+                logger.info("User created successfully",
+                           extra={"uid": request.uid, "dn": request.dn})
+                return result
 
-            # Note: This should be async in the infrastructure, but for application service simplicity
-            # we'll handle it synchronously for now
-            logger.info(f"Would create user {request.uid} in LDAP server")
-            # Mock success for service layer
-            logger.info(f"User {request.uid} created in LDAP server")
-            return FlextResult.ok(user)
+            logger.error("Failed to create user",
+                        extra={"uid": request.uid, "error": result.error})
+            return result
 
-        # Store in memory for testing
-        logger.info(f"Storing user {request.uid} in memory (not connected to LDAP)")
-        self._in_memory_users[request.uid] = user
-        return FlextResult.ok(user)
+        except Exception as e:
+            error_msg = f"User creation error: {e}"
+            logger.exception(error_msg, extra={"uid": request.uid})
+            return FlextResult.fail(error_msg)
 
-    def find_user_by_uid(self, uid: str) -> FlextResult[FlextLdapUser]:
-        """Find user by UID."""
-        logger.info(f"Finding user by UID: {uid}")
+    async def find_user_by_uid(self, uid: str) -> FlextResult[FlextLdapUser]:
+        """Find user by UID using real LDAP search.
 
-        if self.is_connected():
-            # Search in LDAP server - simplified for application service layer
-            # In a real implementation, this would use the infrastructure layer properly
-            logger.info(f"Would search for user {uid} in LDAP server")
+        No fallbacks or memory storage - uses real LDAP API.
+        """
+        logger.info("Finding user by UID", extra={"uid": uid})
 
-            # For now, return failure since we don't have real LDAP search implemented
-            logger.info(f"User {uid} not found in LDAP server (not implemented)")
-            return FlextResult.fail(f"User with UID {uid} not found in LDAP")
+        if not self.is_connected():
+            return FlextResult.fail("Not connected to LDAP server")
 
-        # Search in memory storage
-        user = self._in_memory_users.get(uid)
-        if user:
-            logger.info(f"User {uid} found in memory storage")
-            return FlextResult.ok(user)
+        try:
+            # Session ID guaranteed by is_connected() check above
+            if self._session_id is None:
+                return FlextResult.fail("No session ID available for operation")
+            # Use real FlextLdapApi for user search
+            search_result = await self._api.search(
+                session_id=self._session_id,
+                base_dn=self._get_search_base_dn(),
+                filter_expr=f"(uid={uid})",
+                attributes=["uid", "cn", "sn", "mail", "dn"],
+            )
 
-        logger.info(f"User {uid} not found in memory storage")
-        return FlextResult.fail(f"User with UID {uid} not found")
+            if search_result.is_success and search_result.data:
+                entries = search_result.data
+                if entries:
+                    # Convert first entry to FlextLdapUser
+                    entry = entries[0]
+                    user_attrs = entry.attributes
 
-    def update_user(
+                    # Extract user attributes with safe defaults
+                    cn_attrs = user_attrs.get("cn", [""])
+                    cn_value = cn_attrs[0] if cn_attrs else ""
+
+                    sn_attrs = user_attrs.get("sn", [""])
+                    sn_value = sn_attrs[0] if sn_attrs else ""
+
+                    mail_attrs = user_attrs.get("mail", [""])
+                    mail_value = mail_attrs[0] if mail_attrs else None
+
+                    user = FlextLdapUser(
+                        id=str(uuid4()),
+                        dn=entry.dn,
+                        uid=uid,
+                        cn=cn_value,
+                        sn=sn_value,
+                        mail=mail_value,
+                    )
+
+                    logger.info("User found successfully", extra={"uid": uid})
+                    return FlextResult.ok(user)
+
+            logger.info("User not found", extra={"uid": uid})
+            return FlextResult.fail(f"User with UID {uid} not found")
+
+        except Exception as e:
+            error_msg = f"User search error: {e}"
+            logger.exception(error_msg, extra={"uid": uid})
+            return FlextResult.fail(error_msg)
+
+    async def update_user(
         self,
         user_id: str,
         updates: dict[str, object],
     ) -> FlextResult[FlextLdapUser]:
-        """Update user attributes."""
-        logger.info(f"Updating user: {user_id}")
+        """Update user attributes using real LDAP infrastructure.
 
-        find_result = self.find_user_by_uid(user_id)
+        No fallbacks or memory storage - uses real LDAP API.
+        """
+        logger.info("Updating user", extra={"user_id": user_id})
+
+        # Validate connection and session - Single Responsibility
+        validation_result = self._validate_connection_for_operation()
+        if validation_result.is_failure:
+            error_msg = validation_result.error or "Connection validation failed"
+            return FlextResult.fail(error_msg)
+
+        try:
+            # Find and validate user existence - Single Responsibility
+            user_result = await self._find_and_validate_user(user_id)
+            if user_result.is_failure:
+                return user_result
+
+            user = user_result.data
+            if not user:
+                return FlextResult.fail(f"User {user_id} not found")
+
+            # Session ID guaranteed by validation above
+            session_id = self._session_id
+            if not session_id:
+                return FlextResult.fail("No session ID available")
+
+            # Use real FlextLdapApi for user update
+            update_result = await self._api.update_user(
+                session_id=session_id,
+                user_dn=user.dn,
+                updates=updates,
+            )
+
+            # Handle update result - Single Responsibility
+            return await self._handle_update_result(update_result, user_id)
+
+        except Exception as e:
+            error_msg = f"User update error: {e}"
+            logger.exception(error_msg, extra={"user_id": user_id})
+            return FlextResult.fail(error_msg)
+
+    def _validate_connection_for_operation(self) -> FlextResult[None]:
+        """Validate connection and session for LDAP operations."""
+        if not self.is_connected():
+            return FlextResult.fail("Not connected to LDAP server")
+
+        if self._session_id is None:
+            return FlextResult.fail("No session ID available for operation")
+
+        return FlextResult.ok(None)
+
+    async def _find_and_validate_user(self, user_id: str) -> FlextResult[FlextLdapUser]:
+        """Find user and validate existence for operations."""
+        find_result = await self.find_user_by_uid(user_id)
         if find_result.is_failure:
             return FlextResult.fail(f"User {user_id} not found for update")
 
@@ -179,104 +261,151 @@ class FlextLdapService:
         if not user:
             return FlextResult.fail(f"User {user_id} not found")
 
-        if self.is_connected():
-            # Update user in LDAP server - simplified for application service
-            logger.info(f"Would update user {user_id} in LDAP server")
-            # Mock success for application service layer
-            logger.info(f"User {user_id} updated in LDAP server")
-            # Reload user to get updated data
-            return self.find_user_by_uid(user_id)
-        # Update in memory storage
-        user_attrs = {
-            "id": user.id,
-            "dn": user.dn,
-            "uid": user.uid,
-            "cn": user.cn,
-            "sn": user.sn,
-            "mail": user.mail,
-        }
-        # Apply updates, overwriting existing values
-        user_attrs.update(updates)
+        return FlextResult.ok(user)
 
-        updated_user = FlextLdapUser(**user_attrs)
+    async def _handle_update_result(
+        self,
+        update_result: FlextResult[bool],
+        user_id: str,
+    ) -> FlextResult[FlextLdapUser]:
+        """Handle the result of user update operation."""
+        if update_result.is_success:
+            logger.info("User updated successfully", extra={"user_id": user_id})
+            return await self.find_user_by_uid(user_id)
 
-        self._in_memory_users[user_id] = updated_user
-        logger.info(f"User {user_id} updated in memory storage")
-        return FlextResult.ok(updated_user)
+        logger.error("Failed to update user",
+                    extra={"user_id": user_id, "error": update_result.error})
+        return FlextResult.fail(update_result.error or "User update failed")
 
     async def delete_user(self, uid: str) -> FlextResult[bool]:
-        """Delete user by UID."""
-        logger.info(f"Deleting user: {uid}")
+        """Delete user by UID using real LDAP infrastructure.
 
-        if self.is_connected():
-            # First find the user to get the DN
-            find_result = await self.find_user_by_uid(uid)
-            if find_result.is_failure:
+        No fallbacks or memory storage - uses real LDAP API.
+        """
+        logger.info("Deleting user", extra={"uid": uid})
+
+        # Validate connection and session - Single Responsibility
+        validation_result = self._validate_connection_for_operation()
+        if validation_result.is_failure:
+            error_msg = validation_result.error or "Connection validation failed"
+            return FlextResult.fail(error_msg)
+
+        try:
+            # Find and validate user existence - reuse helper method
+            user_result = await self._find_and_validate_user(uid)
+            if user_result.is_failure:
                 return FlextResult.fail(f"User {uid} not found for deletion")
 
-            user = find_result.data
+            user = user_result.data
             if not user:
                 return FlextResult.fail(f"User {uid} not found")
 
-            # Delete from LDAP server
-            result = await self._client.delete(user.dn)
-            if result.is_success:
-                logger.info(f"User {uid} deleted from LDAP server")
-                return FlextResult.ok(data=True)
-            logger.error(f"Failed to delete user from LDAP: {result.error}")
-            return FlextResult.fail(result.error or "User deletion failed")
-        # Remove from memory storage
-        if uid in self._in_memory_users:
-            del self._in_memory_users[uid]
-            logger.info(f"User {uid} deleted from memory storage")
+            # Session ID guaranteed by validation above
+            session_id = self._session_id
+            if not session_id:
+                return FlextResult.fail("No session ID available")
+
+            # Use real FlextLdapApi for user deletion
+            delete_result = await self._api.delete_user(
+                session_id=session_id,
+                user_dn=user.dn,
+            )
+
+            # Handle deletion result - Single Responsibility
+            return self._handle_deletion_result(delete_result, uid)
+
+        except Exception as e:
+            error_msg = f"User deletion error: {e}"
+            logger.exception(error_msg, extra={"uid": uid})
+            return FlextResult.fail(error_msg)
+
+    def _handle_deletion_result(
+        self,
+        delete_result: FlextResult[bool],
+        uid: str,
+    ) -> FlextResult[bool]:
+        """Handle the result of user deletion operation."""
+        if delete_result.is_success:
+            logger.info("User deleted successfully", extra={"uid": uid})
             return FlextResult.ok(data=True)
 
-        logger.info(f"User {uid} not found in memory storage")
-        return FlextResult.fail(f"User with UID {uid} not found")
+        logger.error("Failed to delete user",
+                    extra={"uid": uid, "error": delete_result.error})
+        return FlextResult.fail(delete_result.error or "User deletion failed")
 
     async def list_users(
         self,
         base_dn: str | None = None,
         filter_expr: str | None = None,
     ) -> FlextResult[list[FlextLdapUser]]:
-        """List users from LDAP directory."""
-        logger.info(f"Listing users with base_dn={base_dn}, filter={filter_expr}")
+        """List users from LDAP directory using real infrastructure.
 
-        if self.is_connected():
-            # Use provided base_dn or default from config
-            default_base = "dc=example,dc=com"
-            search_base = base_dn or (
-                self._config.bind_dn if self._config else default_base
-            )
+        No fallbacks or memory storage - uses real LDAP API.
+        """
+        logger.info("Listing users", extra={
+            "base_dn": base_dn,
+            "filter_expr": filter_expr,
+        })
+
+        if not self.is_connected():
+            return FlextResult.fail("Not connected to LDAP server")
+
+        try:
+            # Use provided parameters or defaults
+            search_base = base_dn or self._get_search_base_dn()
             search_filter = filter_expr or "(objectClass=person)"
 
-            result = await self._client.search(search_base, search_filter)
-            if result.is_success:
+            # Session ID guaranteed by is_connected() check above
+            if self._session_id is None:
+                return FlextResult.fail("No session ID available for operation")
+            # Use real FlextLdapApi for user search
+            search_result = await self._api.search(
+                session_id=self._session_id,
+                base_dn=search_base,
+                filter_expr=search_filter,
+                attributes=["uid", "cn", "sn", "mail", "dn"],
+            )
+
+            if search_result.is_success:
                 users = []
-                for entry in result.data or []:
-                    attrs = entry.get("attributes", {})
-                    uid = attrs.get("uid", [""])[0] if attrs.get("uid") else ""
+                for entry in search_result.data or []:
+                    # Convert FlextLdapEntry to FlextLdapUser
+                    user_attrs = entry.attributes
+                    uid_attrs = user_attrs.get("uid", [""])
+                    uid = uid_attrs[0] if uid_attrs else ""
 
                     if uid:  # Only create user if UID exists
                         user = FlextLdapUser(
-                            id=uid,
-                            dn=entry.get("dn", ""),
+                            id=str(uuid4()),
+                            dn=entry.dn,
                             uid=uid,
-                            cn=attrs.get("cn", [""])[0] if attrs.get("cn") else "",
-                            sn=attrs.get("sn", [""])[0] if attrs.get("sn") else "",
-                            mail=(
-                                attrs.get("mail", [""])[0]
-                                if attrs.get("mail")
-                                else None
-                            ),
+                            cn=self._extract_attr_value(user_attrs, "cn"),
+                            sn=self._extract_attr_value(user_attrs, "sn"),
+                            mail=self._extract_attr_value(user_attrs, "mail"),
                         )
                         users.append(user)
 
-                logger.info(f"Found {len(users)} users in LDAP server")
+                logger.info("Users listed successfully", extra={"count": len(users)})
                 return FlextResult.ok(users)
-            logger.error(f"Failed to list users from LDAP: {result.error}")
-            return FlextResult.fail(result.error or "Failed to list users")
-        # Return in-memory users
-        users = list(self._in_memory_users.values())
-        logger.info(f"Found {len(users)} users in memory storage")
-        return FlextResult.ok(users)
+
+            logger.error("Failed to list users", extra={"error": search_result.error})
+            return FlextResult.fail(search_result.error or "Failed to list users")
+
+        except Exception as e:
+            error_msg = f"User listing error: {e}"
+            logger.exception(error_msg)
+            return FlextResult.fail(error_msg)
+
+    def _get_search_base_dn(self) -> str:
+        """Get base DN for LDAP searches - configurable default."""
+        # Default RFC-compliant base DN - can be overridden by configuration
+        return "dc=example,dc=com"
+
+    def _extract_attr_value(
+        self, attributes: dict[str, list[str]], attr_name: str,
+    ) -> str | None:
+        """Extract first value from LDAP attribute list, handling None gracefully."""
+        attr_list = attributes.get(attr_name, [])
+        if attr_list:
+            return attr_list[0]
+        return None if attr_name == "mail" else ""

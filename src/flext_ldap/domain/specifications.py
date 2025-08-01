@@ -14,6 +14,15 @@ from typing import TYPE_CHECKING, TypeVar
 # Type variable for specification subjects
 T = TypeVar("T")
 
+
+# FBT smell elimination constants - SOLID DRY Principle
+class PasswordSpecialCharsRequirement:
+    """Password special characters requirement constants."""
+
+    REQUIRED = True
+    NOT_REQUIRED = False
+
+
 if TYPE_CHECKING:
     from flext_ldap.entities import (
         FlextLdapEntry,
@@ -129,7 +138,7 @@ class FlextLdapActiveUserSpecification(FlextLdapUserSpecification):
 class FlextLdapValidPasswordSpecification(FlextLdapSpecification[str]):
     """Specification for valid passwords."""
 
-    def __init__(self, min_length: int = 8, require_special_chars: bool = True) -> None:
+    def __init__(self, min_length: int = 8, *, require_special_chars: bool = PasswordSpecialCharsRequirement.REQUIRED) -> None:
         """Initialize password specification.
 
         Args:

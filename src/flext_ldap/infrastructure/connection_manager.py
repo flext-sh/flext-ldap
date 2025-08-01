@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from flext_core import FlextResult
 
-from flext_ldap.client import FlextLdapClient
 from flext_ldap.config import FlextLdapConnectionConfig
+from flext_ldap.ldap_infrastructure import FlextLdapClient
 
 
 class FlextLDAPConnectionManager:
@@ -46,8 +46,12 @@ class FlextLDAPConnectionManager:
 
             client = FlextLdapClient(config)
 
-            # Test connection
-            await client.connect()
+            # Test connection - FlextLdapClient.connect() is synchronous
+            connect_result = client.connect()
+            if not connect_result.is_success:
+                return FlextResult.fail(
+                    f"Connection test failed: {connect_result.error}",
+                )
             return FlextResult.ok(client)
 
         except (ValueError, TypeError, OSError) as e:
@@ -64,7 +68,10 @@ class FlextLDAPConnectionManager:
 
         """
         try:
-            await connection.disconnect()
+            # FlextLdapClient.disconnect() is synchronous
+            disconnect_result = connection.disconnect()
+            if not disconnect_result.is_success:
+                return FlextResult.fail(f"Disconnect failed: {disconnect_result.error}")
             return FlextResult.ok(None)
         except (ValueError, TypeError, OSError) as e:
             return FlextResult.fail(f"Failed to close LDAP connection: {e}")
