@@ -7,7 +7,7 @@ Eliminates code duplication by consolidating multiple API layers.
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -384,7 +384,7 @@ class FlextLdapApi:
         self,
         session_id: str,
         user_dn: str | FlextLdapDistinguishedName,
-        updates: dict[str, Any],
+        updates: dict[str, object],
     ) -> FlextResult[bool]:
         """Update user with LDAP modify operations."""
         try:
@@ -507,7 +507,7 @@ class FlextLdapApi:
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Group creation error: {e}")
 
-    def health(self) -> FlextResult[dict[str, Any]]:
+    def health(self) -> FlextResult[dict[str, object]]:
         """Health check with connection status."""
         try:
             health_data = {

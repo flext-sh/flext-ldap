@@ -58,7 +58,7 @@ class Connection:
         self,
         dn: str,
         object_class: str | list[str] | None = None,
-        attributes: dict[str, Any] | None = None,
+        attributes: dict[str, object] | None = None,
     ) -> bool: ...
     def modify(
         self,

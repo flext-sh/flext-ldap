@@ -22,6 +22,7 @@ logger = get_logger(__name__)
 _USE_CONSOLIDATED_DN = False
 try:
     from flext_ldif.models import FlextLdifDistinguishedName as _FlextDN
+
     _USE_CONSOLIDATED_DN = True
     logger.debug("Successfully imported superior DN implementation from flext-ldif")
 except ImportError:
@@ -143,8 +144,9 @@ class FlextLdapDistinguishedName(FlextValueObject):
         return self.value.lower().endswith(parent.value.lower())
 
 
-# 🚀 CODE CONSOLIDATION: Use better implementation when available
-if _USE_CONSOLIDATED_DN:
+# 🚀 CODE CONSOLIDATION: Temporarily disabled due to API incompatibility
+# TODO: Re-enable after ensuring API compatibility between flext-ldap and flext-ldif DN implementations
+if False:  # _USE_CONSOLIDATED_DN:
     # Override local implementation with superior one from flext-ldif
     FlextLdapDistinguishedName = _FlextDN  # type: ignore[misc]
     logger.debug("Using consolidated DN implementation from flext-ldif")

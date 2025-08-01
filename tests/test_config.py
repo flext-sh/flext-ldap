@@ -212,8 +212,9 @@ class TestFlextLdapAuthConfig:
         """Test domain rules validation when bind DN is required."""
 
         config = FlextLdapAuthConfig(use_anonymous_bind=False, bind_dn="")
-        with pytest.raises(ValueError, match="Bind DN is required"):
-            config.validate_domain_rules()
+        result = config.validate_domain_rules()
+        assert not result.is_success
+        assert "bind dn" in result.error.lower()
 
     @pytest.mark.unit
     def test_domain_rules_validation_password_required(self) -> None:
@@ -428,13 +429,15 @@ class TestFlextLdapSecurityConfig:
 
         # Test client cert without key
         config = FlextLdapSecurityConfig(client_cert_file="/path/to/client.crt")
-        with pytest.raises(ValueError, match="Client key file is required"):
-            config.validate_domain_rules()
+        result = config.validate_domain_rules()
+        assert not result.is_success
+        assert "key file" in result.error.lower()
 
         # Test client key without cert
         config = FlextLdapSecurityConfig(client_key_file="/path/to/client.key")
-        with pytest.raises(ValueError, match="Client cert file is required"):
-            config.validate_domain_rules()
+        result = config.validate_domain_rules()
+        assert not result.is_success
+        assert "cert file" in result.error.lower()
 
 
 class TestFlextLdapLoggingConfig:

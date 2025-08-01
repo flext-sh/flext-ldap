@@ -89,6 +89,7 @@ class OpenLDAPContainerManager:
         except (RuntimeError, ValueError, TypeError):
             # Try to force remove by name if getting by ID fails
             from contextlib import suppress
+
             with suppress(RuntimeError, ValueError, TypeError):
                 self.client.api.remove_container(OPENLDAP_CONTAINER_NAME, force=True)
 
@@ -197,7 +198,7 @@ def docker_openldap_container() -> Container:
 
 
 @pytest.fixture
-def ldap_test_config(docker_openldap_container: Container) -> dict[str, Any]:
+def ldap_test_config(docker_openldap_container: Container) -> dict[str, object]:
     """Provides LDAP test configuration for individual tests."""
     return {
         "server_url": TEST_ENV_VARS["LDAP_TEST_SERVER"],
@@ -232,7 +233,7 @@ async def _cleanup_ldap_entries_under_dn(
 
 
 @pytest.fixture
-async def clean_ldap_container(ldap_test_config: dict[str, Any]) -> dict[str, Any]:
+async def clean_ldap_container(ldap_test_config: dict[str, object]) -> dict[str, object]:
     """Provides a clean LDAP container by removing test entries.
 
     This fixture ensures each test starts with a clean LDAP directory

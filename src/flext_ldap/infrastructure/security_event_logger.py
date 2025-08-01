@@ -13,7 +13,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
@@ -96,7 +96,7 @@ class FlextLdapSecurityEventData:
     request_id: str | None = None
     duration_ms: float | None = None
     data_size_bytes: int | None = None
-    additional_context: dict[str, Any] | None = field(default_factory=dict)
+    additional_context: dict[str, object] | None = field(default_factory=dict)
 
     def to_security_event(self) -> FlextLdapSecurityEvent:
         """Convert to FlextLdapSecurityEvent instance using Parameter Object pattern."""
@@ -158,7 +158,7 @@ class FlextLdapSecurityEvent:
         self.risk_score = None  # Not in data object, default
         self.compliance_flags: list[str] = []  # Not in data object, default
 
-    def _init_from_kwargs(self, kwargs: dict[str, Any]) -> None:
+    def _init_from_kwargs(self, kwargs: dict[str, object]) -> None:
         """Legacy initialization for backward compatibility."""
         self.event_id = kwargs.get("event_id") or uuid4()
         self.event_type = (
@@ -186,7 +186,7 @@ class FlextLdapSecurityEvent:
         self.risk_score: float | None = kwargs.get("risk_score")
         self.compliance_flags = kwargs.get("compliance_flags") or []
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, object]:
         """Convert security event to dictionary."""
         return {
             "event_id": str(self.event_id),
@@ -449,7 +449,7 @@ class FlextLdapSecurityEventLogger:
     async def get_security_metrics(
         self,
         time_window_hours: int = 24,
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Get security metrics for the specified time window."""
         try:
             cutoff_time = datetime.now(UTC) - timedelta(hours=time_window_hours)
