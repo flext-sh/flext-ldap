@@ -139,17 +139,38 @@ class FlextLdapFilterValue(FlextValueObject):
     value: str = Field(..., description="LDAP filter string")
 
     def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for LDAP filter."""
+        """Validate domain rules for LDAP filter using Railway-Oriented Programming.
+
+        SOLID REFACTORING: Reduced from 4 returns to 2 returns using
+        Railway-Oriented Programming + Strategy Pattern.
+        """
+        # Railway-Oriented Programming: Chain validations with early exit
+        validation_errors = self._collect_filter_validation_errors()
+
+        if validation_errors:
+            return FlextResult.fail(validation_errors[0])  # Return first error
+
+        return FlextResult.ok(None)
+
+    def _collect_filter_validation_errors(self) -> list[str]:
+        """DRY helper: Collect all filter validation errors using Strategy Pattern."""
+        errors = []
+
+        # Strategy 1: Empty value validation
         if not self.value:
-            return FlextResult.fail("LDAP filter cannot be empty")
+            errors.append("LDAP filter cannot be empty")
+
+        # Strategy 2: Parentheses wrapping validation
         if not (self.value.startswith("(") and self.value.endswith(")")):
-            return FlextResult.fail("LDAP filter must be enclosed in parentheses")
-        # Check for balanced parentheses
+            errors.append("LDAP filter must be enclosed in parentheses")
+
+        # Strategy 3: Balanced parentheses validation
         open_count = self.value.count("(")
         close_count = self.value.count(")")
         if open_count != close_count:
-            return FlextResult.fail("LDAP filter has unbalanced parentheses")
-        return FlextResult.ok(None)
+            errors.append("LDAP filter has unbalanced parentheses")
+
+        return errors
 
     @field_validator("value")
     @classmethod
@@ -216,30 +237,22 @@ class FlextLdapFilterValue(FlextValueObject):
 
     @classmethod
     def and_filters(cls, *filters: FlextLdapFilterValue) -> FlextLdapFilterValue:
-        """Combine filters with AND logic.
-
-        Args:
-            filters: Filters to combine
-
-        Returns:
-            Combined filter
-
-        """
-        if len(filters) == 0:
-            msg = "At least one filter required"
-            raise ValueError(msg)
-        if len(filters) == 1:
-            return filters[0]
-
-        filter_strings = [f.value for f in filters]
-        combined = f"(&{''.join(filter_strings)})"
-        return cls(value=combined)
+        """Combine filters with AND logic."""
+        return cls._combine_filters("&", *filters)
 
     @classmethod
     def or_filters(cls, *filters: FlextLdapFilterValue) -> FlextLdapFilterValue:
-        """Combine filters with OR logic.
+        """Combine filters with OR logic."""
+        return cls._combine_filters("|", *filters)
+
+    @classmethod
+    def _combine_filters(
+        cls, operator: str, *filters: FlextLdapFilterValue
+    ) -> FlextLdapFilterValue:
+        """Template method for combining filters - eliminates code duplication.
 
         Args:
+            operator: LDAP logical operator ("&" for AND, "|" for OR)
             filters: Filters to combine
 
         Returns:
@@ -253,7 +266,7 @@ class FlextLdapFilterValue(FlextValueObject):
             return filters[0]
 
         filter_strings = [f.value for f in filters]
-        combined = f"(|{''.join(filter_strings)})"
+        combined = f"({operator}{''.join(filter_strings)})"
         return cls(value=combined)
 
     @classmethod
@@ -305,15 +318,38 @@ class FlextLdapUri(FlextValueObject):
     value: str = Field(..., description="LDAP URI string")
 
     def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for LDAP URI."""
+        """Validate domain rules for LDAP URI using Railway-Oriented Programming.
+
+        SOLID REFACTORING: Reduced from 4 returns to 2 returns using
+        Railway-Oriented Programming + Strategy Pattern.
+        """
+        # Railway-Oriented Programming: Chain validations with early exit
+        validation_errors = self._collect_uri_validation_errors()
+
+        if validation_errors:
+            return FlextResult.fail(validation_errors[0])  # Return first error
+
+        return FlextResult.ok(None)
+
+    def _collect_uri_validation_errors(self) -> list[str]:
+        """DRY helper: Collect all URI validation errors using Strategy Pattern."""
+        errors = []
+
+        # Strategy 1: Empty value validation
         if not self.value:
-            return FlextResult.fail("LDAP URI cannot be empty")
+            errors.append("LDAP URI cannot be empty")
+            return errors  # Early exit if empty - no point parsing
+
+        # Strategy 2: Parse and validate scheme
         parsed = urlparse(self.value)
         if parsed.scheme not in {"ldap", "ldaps"}:
-            return FlextResult.fail("LDAP URI must use ldap:// or ldaps:// scheme")
+            errors.append("LDAP URI must use ldap:// or ldaps:// scheme")
+
+        # Strategy 3: Hostname validation
         if not parsed.hostname:
-            return FlextResult.fail("LDAP URI must specify hostname")
-        return FlextResult.ok(None)
+            errors.append("LDAP URI must specify hostname")
+
+        return errors
 
     @field_validator("value")
     @classmethod
@@ -606,14 +642,36 @@ class FlextLdapCreateUserRequest(FlextValueObject):
     object_classes: list[str] | None = Field(None, description="LDAP object classes")
 
     def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for user creation request."""
-        if not self.dn or not self.dn.strip():
-            return FlextResult.fail("DN cannot be empty")
-        if not self.uid or not self.uid.strip():
-            return FlextResult.fail("UID cannot be empty")
-        if self.mail and "@" not in self.mail:
-            return FlextResult.fail("Email must be valid format")
+        """Validate user creation request using Railway-Oriented Programming.
+
+        SOLID REFACTORING: Reduced from 4 returns to 2 returns using
+        Railway-Oriented Programming + Strategy Pattern.
+        """
+        # Railway-Oriented Programming: Chain validations with early exit
+        validation_errors = self._collect_user_request_validation_errors()
+
+        if validation_errors:
+            return FlextResult.fail(validation_errors[0])  # Return first error
+
         return FlextResult.ok(None)
+
+    def _collect_user_request_validation_errors(self) -> list[str]:
+        """DRY helper: Collect user request validation errors using Strategy Pattern."""
+        errors = []
+
+        # Strategy 1: DN validation
+        if not self.dn or not self.dn.strip():
+            errors.append("DN cannot be empty")
+
+        # Strategy 2: UID validation
+        if not self.uid or not self.uid.strip():
+            errors.append("UID cannot be empty")
+
+        # Strategy 3: Email format validation (only if provided)
+        if self.mail and "@" not in self.mail:
+            errors.append("Email must be valid format")
+
+        return errors
 
     @field_validator("dn")
     @classmethod

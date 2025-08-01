@@ -76,13 +76,12 @@ class TestFlextLdapClient:
             assert result.is_success
             assert client._current_connection == mock_connection
 
-    @pytest.mark.asyncio
-    async def test_connect_failure(self) -> None:
+    def test_connect_failure(self) -> None:
         """Test LDAP connection failure."""
         config = FlextLdapConnectionConfig(
-            server_url="ldap://invalid",
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            password="wrong",
+            server="invalid.server.com",
+            port=389,
+            use_ssl=False,
         )
 
         with patch.object(FlextLdapClient, "__init__", return_value=None):
@@ -93,11 +92,11 @@ class TestFlextLdapClient:
             client._current_connection = None
 
             # Mock failed connection
-            client._connection_manager.get_connection = AsyncMock(
+            client._connection_manager.get_connection = MagicMock(
                 return_value=FlextResult.fail("Connection failed")
             )
 
-            result = await client.connect(config)
+            result = client.connect(config)
 
             assert result.is_failure
             assert client._current_connection is None

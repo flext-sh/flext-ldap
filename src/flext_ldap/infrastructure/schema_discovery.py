@@ -10,18 +10,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 from uuid import UUID, uuid4
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from uuid import UUID
 
-    from flext_ldap.entities import FlextLdapConnection
+    from flext_ldap.entities import FlextLdapConnection, FlextLdapSchema
 
 logger = get_logger(__name__)
 
@@ -110,7 +115,7 @@ class FlextLdapSchemaAttribute:
     def create(
         cls,
         oid: str,
-        **attribute_params: Any,
+        **attribute_params: object,
     ) -> FlextLdapSchemaAttribute:
         """Factory method using Parameter Object pattern - cleaner API with **kwargs."""
         data = FlextLdapSchemaAttributeData(
@@ -201,7 +206,7 @@ class FlextLdapSchemaObjectClass:
     def create(
         cls,
         oid: str,
-        **object_class_params: Any,
+        **object_class_params: object,
     ) -> FlextLdapSchemaObjectClass:
         """Factory method using Parameter Object pattern - cleaner API with **kwargs."""
         data = FlextLdapSchemaObjectClassData(
@@ -265,7 +270,7 @@ class FlextLdapSchemaObjectClass:
 
 @dataclass
 class FlextLdapSchemaDiscoveryData:
-    """Data class for schema discovery result parameters - eliminates 11-parameter constructor."""
+    """Data class for schema discovery result parameters."""
 
     discovery_id: UUID | None = None
     timestamp: datetime | None = None
@@ -333,6 +338,37 @@ class FlextLdapSchemaDiscoveryResult:
 
 class FlextLdapSchemaDiscoveryService:
     """LDAP schema discovery service implementation."""
+
+    # Constants to eliminate code duplication - DRY Principle
+    INET_ORG_PERSON_MAY_ATTRIBUTES: ClassVar[list[str]] = [
+        "audio",
+        "businessCategory",
+        "carLicense",
+        "departmentNumber",
+        "displayName",
+        "employeeNumber",
+        "employeeType",
+        "givenName",
+        "homePhone",
+        "homePostalAddress",
+        "initials",
+        "jpegPhoto",
+        "labeledURI",
+        "mail",
+        "manager",
+        "mobile",
+        "o",
+        "pager",
+        "photo",
+        "roomNumber",
+        "secretary",
+        "uid",
+        "userCertificate",
+        "x500uniqueIdentifier",
+        "preferredLanguage",
+        "userSMIMECertificate",
+        "userPKCS12",
+    ]
 
     def __init__(
         self,
@@ -404,27 +440,12 @@ class FlextLdapSchemaDiscoveryService:
         class_name: str,
     ) -> FlextResult[FlextLdapSchemaObjectClass | None]:
         """Get specific object class schema."""
-        try:
-            schema_result = await self.discover_schema(connection)
-            if not schema_result.is_success:
-                return FlextResult.fail(
-                    f"Failed to discover schema: {schema_result.error}",
-                )
-
-            schema = schema_result.data
-            if schema is None:
-                return FlextResult.fail("Schema discovery returned None")
-
-            for oc in schema.object_classes.values():
-                if oc.has_name(class_name):
-                    return FlextResult.ok(oc)
-
-            return FlextResult.ok(None)
-
-        except (RuntimeError, ValueError, TypeError) as e:
-            error_msg = f"Failed to get object class {class_name}: {e}"
-            logger.exception(error_msg)
-            return FlextResult.fail(error_msg)
+        return await self._get_schema_item(
+            connection,
+            class_name,
+            lambda schema: schema.object_classes.values(),
+            "object class",
+        )
 
     async def get_attribute_type(
         self,
@@ -432,6 +453,21 @@ class FlextLdapSchemaDiscoveryService:
         attribute_name: str,
     ) -> FlextResult[FlextLdapSchemaAttribute | None]:
         """Get specific attribute type schema."""
+        return await self._get_schema_item(
+            connection,
+            attribute_name,
+            lambda schema: schema.attributes.values(),
+            "attribute type",
+        )
+
+    async def _get_schema_item(
+        self,
+        connection: FlextLdapConnection,
+        item_name: str,
+        collection_getter: Callable[[FlextLdapSchema], Any],
+        item_type: str,
+    ) -> FlextResult[Any]:
+        """Template method for getting schema items - eliminates code duplication."""
         try:
             schema_result = await self.discover_schema(connection)
             if not schema_result.is_success:
@@ -443,14 +479,16 @@ class FlextLdapSchemaDiscoveryService:
             if schema is None:
                 return FlextResult.fail("Schema discovery returned None")
 
-            for attr in schema.attributes.values():
-                if attr.has_name(attribute_name):
-                    return FlextResult.ok(attr)
+            # Use the collection getter to access the right collection
+            items = collection_getter(schema)
+            for item in items:
+                if item.has_name(item_name):
+                    return FlextResult.ok(item)
 
             return FlextResult.ok(None)
 
         except (RuntimeError, ValueError, TypeError) as e:
-            error_msg = f"Failed to get attribute type {attribute_name}: {e}"
+            error_msg = f"Failed to get {item_type} {item_name}: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -541,7 +579,7 @@ class FlextLdapSchemaDiscoveryService:
                 and len(attr_value) > 1
             ):
                 validation_result["schema_violations"].append(
-                    f"Attribute {attr_name} is single-valued but multiple values provided",
+                    f"Attribute {attr_name} is single-valued but multiple values"
                 )
                 validation_result["is_valid"] = False
 
@@ -796,7 +834,7 @@ class FlextLdapSchemaDiscoveryService:
                     and schema_result.data
                 ):
                     logger.info("Successfully discovered server object classes")
-                    # Parse actual schema from server - this would be full implementation
+                    # Parse actual schema from server - full implementation
                     return self._parse_server_object_classes(schema_result.data)
             except Exception as discovery_error:
                 logger.warning(
@@ -846,35 +884,7 @@ class FlextLdapSchemaDiscoveryService:
                 description="RFC2798: Internet Organizational Person",
                 object_class_type=FlextLdapObjectClassType.STRUCTURAL,
                 superior_classes=["organizationalPerson"],
-                may_attributes=[
-                    "audio",
-                    "businessCategory",
-                    "carLicense",
-                    "departmentNumber",
-                    "displayName",
-                    "employeeNumber",
-                    "employeeType",
-                    "givenName",
-                    "homePhone",
-                    "homePostalAddress",
-                    "initials",
-                    "jpegPhoto",
-                    "labeledURI",
-                    "mail",
-                    "manager",
-                    "mobile",
-                    "o",
-                    "pager",
-                    "photo",
-                    "roomNumber",
-                    "secretary",
-                    "uid",
-                    "userCertificate",
-                    "x500uniqueIdentifier",
-                    "preferredLanguage",
-                    "userSMIMECertificate",
-                    "userPKCS12",
-                ],
+                may_attributes=FlextLdapSchemaDiscoveryService.INET_ORG_PERSON_MAY_ATTRIBUTES,
             ),
         }
 
@@ -980,94 +990,139 @@ class FlextLdapSchemaDiscoveryService:
             ),
         }
 
+    def _extract_object_classes_from_entry(
+        self,
+        entry: dict[str, Any],
+        object_classes: dict[str, FlextLdapSchemaObjectClass],
+    ) -> None:
+        """Extract object classes from schema entry - reduces nested control flow."""
+        # Early return if no object classes in entry
+        attributes = entry.get("attributes", {})
+        if "objectClasses" not in attributes:
+            return
+
+        oc_definitions = attributes["objectClasses"]
+        definition_list = self._normalize_to_list(oc_definitions)
+
+        for oc_def in definition_list:
+            self._process_object_class_definition(oc_def, object_classes)
+
+    def _normalize_to_list(self, definitions: object) -> list[object]:
+        """Normalize object class definitions to list format."""
+        return definitions if isinstance(definitions, list) else [definitions]
+
+    def _process_object_class_definition(
+        self,
+        oc_def: object,
+        object_classes: dict[str, FlextLdapSchemaObjectClass],
+    ) -> None:
+        """Process a single object class definition - Single Responsibility."""
+        # Early return if not a string definition
+        if not isinstance(oc_def, str):
+            return
+
+        # Parse LDAP schema definition format
+        # Example: "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL MUST ( sn $ cn ) )"
+        parsed_oc = self._parse_object_class_definition(oc_def)
+        if parsed_oc:
+            object_classes[parsed_oc.primary_name] = parsed_oc
+
     def _parse_server_object_classes(
         self,
         schema_data: list[dict[str, Any]],
     ) -> dict[str, FlextLdapSchemaObjectClass]:
-        """Parse object classes from server schema data.
-
-        This is a REAL implementation that parses actual LDAP schema responses.
-        """
-        logger.debug(
-            "Parsing server object classes",
-            extra={"data_count": len(schema_data)},
+        """Parse object classes from server schema data."""
+        return self._parse_server_schema_items(
+            schema_data,
+            "object classes",
+            "classes_found",
+            self._extract_object_classes_from_entry,
+            self._get_standard_object_classes,
         )
-        object_classes: dict[str, FlextLdapSchemaObjectClass] = {}
-
-        try:
-            for entry in schema_data:
-                if "objectClasses" in entry.get("attributes", {}):
-                    oc_definitions = entry["attributes"]["objectClasses"]
-
-                    for oc_def in (
-                        oc_definitions
-                        if isinstance(oc_definitions, list)
-                        else [oc_definitions]
-                    ):
-                        # Parse LDAP schema definition format
-                        # Example: "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL MUST ( sn $ cn ) )"
-                        if isinstance(oc_def, str):
-                            parsed_oc = self._parse_object_class_definition(oc_def)
-                            if parsed_oc:
-                                object_classes[parsed_oc.primary_name] = parsed_oc
-
-            logger.info(
-                "Parsed server object classes",
-                extra={"classes_found": len(object_classes)},
-            )
-            return object_classes
-
-        except Exception as parse_error:
-            logger.exception(
-                "Failed to parse server object classes",
-                extra={"error": str(parse_error)},
-            )
-            # Return standard classes on parse failure
-            return self._get_standard_object_classes()
 
     def _parse_server_attributes(
         self,
         schema_data: list[dict[str, Any]],
     ) -> dict[str, FlextLdapSchemaAttribute]:
-        """Parse attributes from server schema data.
+        """Parse attributes from server schema data."""
+        return self._parse_server_schema_items(
+            schema_data,
+            "attributes",
+            "attributes_found",
+            self._extract_attribute_types_from_entry,
+            self._get_standard_attributes,
+        )
 
-        This is a REAL implementation that parses actual LDAP schema responses.
-        """
+    def _parse_server_schema_items(
+        self,
+        schema_data: list[dict[str, Any]],
+        item_type: str,
+        count_key: str,
+        extractor_func: Callable[[dict[str, Any], dict[str, Any]], None],
+        fallback_func: Callable[[], dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Template method for parsing server schema items."""
         logger.debug(
-            "Parsing server attributes",
+            f"Parsing server {item_type}",
             extra={"data_count": len(schema_data)},
         )
-        attributes: dict[str, FlextLdapSchemaAttribute] = {}
+        items: dict[str, Any] = {}
 
         try:
             for entry in schema_data:
-                if "attributeTypes" in entry.get("attributes", {}):
-                    attr_definitions = entry["attributes"]["attributeTypes"]
-
-                    for attr_def in (
-                        attr_definitions
-                        if isinstance(attr_definitions, list)
-                        else [attr_definitions]
-                    ):
-                        # Parse LDAP schema definition format
-                        if isinstance(attr_def, str):
-                            parsed_attr = self._parse_attribute_definition(attr_def)
-                            if parsed_attr:
-                                attributes[parsed_attr.primary_name] = parsed_attr
+                extractor_func(entry, items)
 
             logger.info(
-                "Parsed server attributes",
-                extra={"attributes_found": len(attributes)},
+                f"Parsed server {item_type}",
+                extra={count_key: len(items)},
             )
-            return attributes
+            return items
 
         except Exception as parse_error:
             logger.exception(
-                "Failed to parse server attributes",
+                f"Failed to parse server {item_type}",
                 extra={"error": str(parse_error)},
             )
-            # Return standard attributes on parse failure
-            return self._get_standard_attributes()
+            # Return standard items on parse failure
+            return fallback_func()
+
+    def _extract_attribute_types_from_entry(
+        self,
+        entry: dict[str, Any],
+        attributes: dict[str, FlextLdapSchemaAttribute],
+    ) -> None:
+        """Extract attribute types from schema entry - reduces nested control flow."""
+        # Early return if no attribute types in entry
+        entry_attributes = entry.get("attributes", {})
+        if "attributeTypes" not in entry_attributes:
+            return
+
+        attr_definitions = entry_attributes["attributeTypes"]
+
+        # Normalize to list for consistent processing
+        definitions_list = (
+            attr_definitions
+            if isinstance(attr_definitions, list)
+            else [attr_definitions]
+        )
+
+        # Process each attribute definition
+        for attr_def in definitions_list:
+            self._process_attribute_definition(attr_def, attributes)
+
+    def _process_attribute_definition(
+        self,
+        attr_def: object,
+        attributes: dict[str, FlextLdapSchemaAttribute],
+    ) -> None:
+        """Process individual attribute definition - Single Responsibility."""
+        # Early return if not a string definition
+        if not isinstance(attr_def, str):
+            return
+
+        parsed_attr = self._parse_attribute_definition(attr_def)
+        if parsed_attr:
+            attributes[parsed_attr.primary_name] = parsed_attr
 
     def _parse_object_class_definition(
         self,
@@ -1076,7 +1131,6 @@ class FlextLdapSchemaDiscoveryService:
         """Parse a single object class definition string."""
         try:
             # Basic parsing - in production this would be more robust
-            import re
 
             # Extract OID
             oid_match = re.search(r"\(\s*([0-9.]+)", definition)
@@ -1099,7 +1153,9 @@ class FlextLdapSchemaDiscoveryService:
                 oid=oid,
                 names=names,
                 object_class_type=oc_type,
-                description=f"Server-discovered object class: {names[0] if names else oid}",
+                description=(
+                    f"Server-discovered object class: {names[0] if names else oid}"
+                )
             )
 
         except Exception as parse_error:
@@ -1115,7 +1171,6 @@ class FlextLdapSchemaDiscoveryService:
     ) -> FlextLdapSchemaAttribute | None:
         """Parse a single attribute definition string."""
         try:
-            import re
 
             # Extract OID
             oid_match = re.search(r"\(\s*([0-9.]+)", definition)
@@ -1135,7 +1190,7 @@ class FlextLdapSchemaDiscoveryService:
                 oid=oid,
                 names=names,
                 syntax=syntax,
-                description=f"Server-discovered attribute: {names[0] if names else oid}",
+                description=f"Server-discovered attribute: {names[0] if names else oid}"
             )
 
         except Exception as parse_error:
@@ -1206,35 +1261,7 @@ class FlextLdapSchemaDiscoveryService:
                 object_class_type=FlextLdapObjectClassType.STRUCTURAL,
                 superior_classes=["organizationalPerson"],
                 must_attributes=[],
-                may_attributes=[
-                    "audio",
-                    "businessCategory",
-                    "carLicense",
-                    "departmentNumber",
-                    "displayName",
-                    "employeeNumber",
-                    "employeeType",
-                    "givenName",
-                    "homePhone",
-                    "homePostalAddress",
-                    "initials",
-                    "jpegPhoto",
-                    "labeledURI",
-                    "mail",
-                    "manager",
-                    "mobile",
-                    "o",
-                    "pager",
-                    "photo",
-                    "roomNumber",
-                    "secretary",
-                    "uid",
-                    "userCertificate",
-                    "x500uniqueIdentifier",
-                    "preferredLanguage",
-                    "userSMIMECertificate",
-                    "userPKCS12",
-                ],
+                may_attributes=FlextLdapSchemaDiscoveryService.INET_ORG_PERSON_MAY_ATTRIBUTES,
             ),
             "groupOfNames": FlextLdapSchemaObjectClass.create(
                 oid="2.5.6.9",
@@ -1277,7 +1304,9 @@ class FlextLdapSchemaDiscoveryService:
             "sn": FlextLdapSchemaAttribute.create(
                 oid="2.5.4.4",
                 names=["sn", "surname"],
-                description="RFC2256: last (family) name(s) for which the entity is known by",
+                description=(
+                    "RFC2256: last (family) name(s) for which the entity is known by"
+                ),
                 syntax="1.3.6.1.4.1.1466.115.121.1.15",
                 equality_matching_rule="caseIgnoreMatch",
                 substring_matching_rule="caseIgnoreSubstringsMatch",

@@ -70,45 +70,10 @@ class FlextLdapApi:
 
         """
         try:
-            # Parse server URL to get host and port
-            parsed = urlparse(server_url)
-            host = parsed.hostname or "localhost"
-            port = parsed.port or (636 if parsed.scheme == "ldaps" else 389)
-            use_ssl = parsed.scheme == "ldaps"
-
-            # Create connection config
-            conn_config = FlextLdapConnectionConfig(
-                server=host,
-                port=port,
-                use_ssl=use_ssl,
+            # Railway Oriented Programming - consolidated connection pipeline
+            return await self._execute_connection_pipeline(
+                server_url, bind_dn, password, session_id
             )
-
-            # Create client with config
-            self._client = FlextLdapSimpleClient(conn_config)
-
-            # Connect - FlextLdapClient.connect() is synchronous, not async
-            result = self._client.connect(conn_config)
-            if not result.is_success:
-                return FlextResult.fail(f"Connection failed: {result.error}")
-
-            # Authenticate if credentials provided
-            if bind_dn and password:
-                auth_config = FlextLdapAuthConfig(
-                    bind_dn=bind_dn,
-                    bind_password=password,
-                )
-                auth_result = await self._client.connect_with_auth(auth_config)
-                if not auth_result.is_success:
-                    return FlextResult.fail(
-                        f"Authentication failed: {auth_result.error}",
-                    )
-
-            # Manage session
-            session = session_id or str(uuid4())
-            self._connections[session] = str(uuid4())  # Connection ID
-
-            logger.info("Connected to LDAP server", extra={"session_id": session})
-            return FlextResult.ok(session)
 
         except ConnectionError as e:
             return FlextResult.fail(f"Connection error: {e}")
@@ -116,6 +81,65 @@ class FlextLdapApi:
             return FlextResult.fail(f"Network error: {e}")
         except ValueError as e:
             return FlextResult.fail(f"Configuration error: {e}")
+
+    async def _execute_connection_pipeline(
+        self,
+        server_url: str,
+        bind_dn: str | None,
+        password: str | None,
+        session_id: str | None,
+    ) -> FlextResult[str]:
+        """Execute connection pipeline with consolidated error handling."""
+        # Parse server URL to get host and port
+        parsed = urlparse(server_url)
+        host = parsed.hostname or "localhost"
+        port = parsed.port or (636 if parsed.scheme == "ldaps" else 389)
+        use_ssl = parsed.scheme == "ldaps"
+
+        # Create connection config
+        conn_config = FlextLdapConnectionConfig(
+            server=host,
+            port=port,
+            use_ssl=use_ssl,
+        )
+
+        # Create client with config
+        self._client = FlextLdapSimpleClient(conn_config)
+
+        # Railway pattern - chain operations
+        connection_result = self._client.connect(conn_config)
+        if not connection_result.is_success:
+            return FlextResult.fail(f"Connection failed: {connection_result.error}")
+
+        # Handle authentication if provided
+        if bind_dn and password:
+            auth_result = await self._authenticate_connection(bind_dn, password)
+            if not auth_result.is_success:
+                return auth_result
+
+        # Manage session and return success
+        return self._create_session(session_id)
+
+    async def _authenticate_connection(
+        self, bind_dn: str, password: str
+    ) -> FlextResult[str]:
+        """Handle authentication for connection."""
+        auth_config = FlextLdapAuthConfig(
+            bind_dn=bind_dn,
+            bind_password=password,
+        )
+        auth_result = await self._client.connect_with_auth(auth_config)
+        if not auth_result.is_success:
+            return FlextResult.fail(f"Authentication failed: {auth_result.error}")
+        return FlextResult.ok("authenticated")
+
+    def _create_session(self, session_id: str | None) -> FlextResult[str]:
+        """Create and manage session."""
+        session = session_id or str(uuid4())
+        self._connections[session] = str(uuid4())  # Connection ID
+
+        logger.info("Connected to LDAP server", extra={"session_id": session})
+        return FlextResult.ok(session)
 
     async def disconnect(self, session_id: str) -> FlextResult[bool]:
         """Disconnect from LDAP server."""
@@ -174,63 +198,101 @@ class FlextLdapApi:
         Returns FlextLdapEntry entities instead of raw dictionaries.
         """
         try:
+            # Reduced complexity by extracting methods
             if session_id not in self._connections:
                 return FlextResult.fail(f"Session {session_id} not found")
 
-            # Note: connection_id available for future connection management
-            base_str = (
-                str(base_dn)
-                if isinstance(base_dn, FlextLdapDistinguishedName)
-                else base_dn
+            # Execute search with consolidated logic
+            search_result = await self._execute_ldap_search(
+                base_dn, filter_expr, attributes, scope
             )
 
-            # FlextLdapClient.search() is async, REALLY USE scope parameter
-            result = await self._client.search(
-                base_str,
-                filter_expr,
-                attributes or ["*"],
-                scope=scope,  # REALLY USE the scope parameter
-            )
-
-            if not result.is_success:
-                return FlextResult.fail(result.error or "Unknown search error")
+            if not search_result.is_success:
+                return search_result
 
             # Convert to domain entities
-            entries = []
-            search_data = result.data or []
-            for raw_entry in search_data:
-                # Type casting for safety
-                dn = str(raw_entry.get("dn", "")) if raw_entry.get("dn") else ""
-                raw_attrs = raw_entry.get("attributes", {})
-                attrs = raw_attrs if isinstance(raw_attrs, dict) else {}
-                obj_classes_raw = (
-                    attrs.get("objectClass", []) if hasattr(attrs, "get") else []
-                )
-                obj_classes = (
-                    obj_classes_raw if isinstance(obj_classes_raw, list) else []
-                )
-
-                # Convert attributes to expected format
-                formatted_attrs: dict[str, list[str]] = {}
-                if hasattr(attrs, "items"):
-                    for key, value in attrs.items():
-                        if isinstance(value, list):
-                            formatted_attrs[key] = [str(v) for v in value]
-                        else:
-                            formatted_attrs[key] = [str(value)]
-
-                entry = FlextLdapEntry(
-                    dn=dn,
-                    object_classes=[str(cls) for cls in obj_classes],
-                    attributes=formatted_attrs,
-                    id=str(uuid4()),  # FlextEntity requires id
-                )
-                entries.append(entry)
-
-            return FlextResult.ok(entries)
+            return self._convert_to_domain_entities(search_result.data or [])
 
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Search error: {e}")
+
+    async def _execute_ldap_search(
+        self,
+        base_dn: str | FlextLdapDistinguishedName,
+        filter_expr: str,
+        attributes: list[str] | None,
+        scope: str,
+    ) -> FlextResult:
+        """Execute LDAP search with proper base DN handling."""
+        base_str = (
+            str(base_dn)
+            if isinstance(base_dn, FlextLdapDistinguishedName)
+            else base_dn
+        )
+
+        # FlextLdapClient.search() is async, REALLY USE scope parameter
+        result = await self._client.search(
+            base_str,
+            filter_expr,
+            attributes or ["*"],
+            scope=scope,  # REALLY USE the scope parameter
+        )
+
+        if not result.is_success:
+            return FlextResult.fail(result.error or "Unknown search error")
+
+        return result
+
+    def _convert_to_domain_entities(
+        self, search_data: list
+    ) -> FlextResult[list[FlextLdapEntry]]:
+        """Convert raw search results to domain entities."""
+        entries = []
+        for raw_entry in search_data:
+            entry = self._create_ldap_entry_from_raw(raw_entry)
+            entries.append(entry)
+
+        return FlextResult.ok(entries)
+
+    def _create_ldap_entry_from_raw(self, raw_entry: dict) -> FlextLdapEntry:
+        """Create FlextLdapEntry from raw LDAP data."""
+        # Extract DN safely
+        dn = str(raw_entry.get("dn", "")) if raw_entry.get("dn") else ""
+
+        # Extract and validate attributes
+        raw_attrs = raw_entry.get("attributes", {})
+        attrs = raw_attrs if isinstance(raw_attrs, dict) else {}
+
+        # Extract object classes
+        obj_classes = self._extract_object_classes(attrs)
+
+        # Format attributes
+        formatted_attrs = self._format_attributes(attrs)
+
+        return FlextLdapEntry(
+            dn=dn,
+            object_classes=[str(cls) for cls in obj_classes],
+            attributes=formatted_attrs,
+            id=str(uuid4()),  # FlextEntity requires id
+        )
+
+    def _extract_object_classes(self, attrs: dict) -> list:
+        """Extract object classes from attributes safely."""
+        obj_classes_raw = (
+            attrs.get("objectClass", []) if hasattr(attrs, "get") else []
+        )
+        return obj_classes_raw if isinstance(obj_classes_raw, list) else []
+
+    def _format_attributes(self, attrs: dict) -> dict[str, list[str]]:
+        """Format attributes to expected dict[str, list[str]] format."""
+        formatted_attrs: dict[str, list[str]] = {}
+        if hasattr(attrs, "items"):
+            for key, value in attrs.items():
+                if isinstance(value, list):
+                    formatted_attrs[key] = [str(v) for v in value]
+                else:
+                    formatted_attrs[key] = [str(value)]
+        return formatted_attrs
 
     def _build_user_attributes(
         self,

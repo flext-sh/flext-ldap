@@ -136,12 +136,12 @@ class TestFlextLdapRepository:
         """Test finding entities with multiple conditions."""
         repository.save(sample_user)
 
-        results = await repository.find_where(uid="testuser", cn="Test User")
+        results = repository.find_where(uid="testuser", cn="Test User")
         assert len(results) == 1
         assert results[0] == sample_user
 
         # Should not match if one condition fails
-        results = await repository.find_where(uid="testuser", cn="Wrong Name")
+        results = repository.find_where(uid="testuser", cn="Wrong Name")
         assert len(results) == 0
 
     @pytest.mark.asyncio

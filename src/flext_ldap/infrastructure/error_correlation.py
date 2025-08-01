@@ -64,7 +64,7 @@ class FlextLdapErrorCategory(Enum):
 
 @dataclass
 class FlextLdapErrorPatternData:
-    """Parameter Object for FlextLdapErrorPattern - eliminates 10-parameter constructor."""
+    """Parameter Object for FlextLdapErrorPattern - eliminates large constructor."""
 
     pattern_id: UUID | None = None
     error_signature: str | None = None
@@ -127,7 +127,7 @@ class FlextLdapErrorPattern:
 
 @dataclass
 class FlextLdapErrorEventData:
-    """Parameter Object for FlextLdapErrorEvent - eliminates 13-parameter constructor."""
+    """Parameter Object for FlextLdapErrorEvent - eliminates large constructor."""
 
     event_id: UUID | None = None
     timestamp: datetime | None = None
@@ -360,10 +360,9 @@ class FlextLdapErrorCorrelationService:
             significant_correlations = []
             for other_event in correlated_events:
                 correlation_score = self._calculate_correlation(event, other_event)
-                if (
-                    correlation_score
-                    > FlextLdapErrorCorrelationConstants.SIGNIFICANT_CORRELATION_THRESHOLD
-                ):
+                constants = FlextLdapErrorCorrelationConstants
+                threshold = constants.SIGNIFICANT_CORRELATION_THRESHOLD
+                if correlation_score > threshold:
                     significant_correlations.append(other_event)
 
             return FlextResult.ok(significant_correlations)

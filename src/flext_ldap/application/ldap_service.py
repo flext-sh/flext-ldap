@@ -212,41 +212,50 @@ class FlextLdapService:
         """
         logger.info("Updating user", extra={"user_id": user_id})
 
+        try:
+            # Railway Oriented Programming - consolidated update pipeline
+            return await self._execute_user_update_pipeline(user_id, updates)
+
+        except Exception as e:
+            error_msg = f"User update error: {e}"
+            logger.exception(error_msg, extra={"user_id": user_id})
+            return FlextResult.fail(error_msg)
+
+    async def _execute_user_update_pipeline(
+        self,
+        user_id: str,
+        updates: dict[str, object],
+    ) -> FlextResult[FlextLdapUser]:
+        """Execute user update pipeline with consolidated error handling."""
         # Validate connection and session - Single Responsibility
         validation_result = self._validate_connection_for_operation()
         if validation_result.is_failure:
             error_msg = validation_result.error or "Connection validation failed"
             return FlextResult.fail(error_msg)
 
-        try:
-            # Find and validate user existence - Single Responsibility
-            user_result = await self._find_and_validate_user(user_id)
-            if user_result.is_failure:
-                return user_result
+        # Find and validate user existence - Single Responsibility
+        user_result = await self._find_and_validate_user(user_id)
+        if user_result.is_failure:
+            return user_result
 
-            user = user_result.data
-            if not user:
-                return FlextResult.fail(f"User {user_id} not found")
+        user = user_result.data
+        if not user:
+            return FlextResult.fail(f"User {user_id} not found")
 
-            # Session ID guaranteed by validation above
-            session_id = self._session_id
-            if not session_id:
-                return FlextResult.fail("No session ID available")
+        # Session ID guaranteed by validation above
+        session_id = self._session_id
+        if not session_id:
+            return FlextResult.fail("No session ID available")
 
-            # Use real FlextLdapApi for user update
-            update_result = await self._api.update_user(
-                session_id=session_id,
-                user_dn=user.dn,
-                updates=updates,
-            )
+        # Use real FlextLdapApi for user update
+        update_result = await self._api.update_user(
+            session_id=session_id,
+            user_dn=user.dn,
+            updates=updates,
+        )
 
-            # Handle update result - Single Responsibility
-            return await self._handle_update_result(update_result, user_id)
-
-        except Exception as e:
-            error_msg = f"User update error: {e}"
-            logger.exception(error_msg, extra={"user_id": user_id})
-            return FlextResult.fail(error_msg)
+        # Handle update result - Single Responsibility
+        return await self._handle_update_result(update_result, user_id)
 
     def _validate_connection_for_operation(self) -> FlextResult[None]:
         """Validate connection and session for LDAP operations."""
@@ -293,40 +302,45 @@ class FlextLdapService:
         """
         logger.info("Deleting user", extra={"uid": uid})
 
+        try:
+            # Railway Oriented Programming - consolidated deletion pipeline
+            return await self._execute_user_deletion_pipeline(uid)
+
+        except Exception as e:
+            error_msg = f"User deletion error: {e}"
+            logger.exception(error_msg, extra={"uid": uid})
+            return FlextResult.fail(error_msg)
+
+    async def _execute_user_deletion_pipeline(self, uid: str) -> FlextResult[bool]:
+        """Execute user deletion pipeline with consolidated error handling."""
         # Validate connection and session - Single Responsibility
         validation_result = self._validate_connection_for_operation()
         if validation_result.is_failure:
             error_msg = validation_result.error or "Connection validation failed"
             return FlextResult.fail(error_msg)
 
-        try:
-            # Find and validate user existence - reuse helper method
-            user_result = await self._find_and_validate_user(uid)
-            if user_result.is_failure:
-                return FlextResult.fail(f"User {uid} not found for deletion")
+        # Find and validate user existence - reuse helper method
+        user_result = await self._find_and_validate_user(uid)
+        if user_result.is_failure:
+            return FlextResult.fail(f"User {uid} not found for deletion")
 
-            user = user_result.data
-            if not user:
-                return FlextResult.fail(f"User {uid} not found")
+        user = user_result.data
+        if not user:
+            return FlextResult.fail(f"User {uid} not found")
 
-            # Session ID guaranteed by validation above
-            session_id = self._session_id
-            if not session_id:
-                return FlextResult.fail("No session ID available")
+        # Session ID guaranteed by validation above
+        session_id = self._session_id
+        if not session_id:
+            return FlextResult.fail("No session ID available")
 
-            # Use real FlextLdapApi for user deletion
-            delete_result = await self._api.delete_user(
-                session_id=session_id,
-                user_dn=user.dn,
-            )
+        # Use real FlextLdapApi for user deletion
+        delete_result = await self._api.delete_user(
+            session_id=session_id,
+            user_dn=user.dn,
+        )
 
-            # Handle deletion result - Single Responsibility
-            return self._handle_deletion_result(delete_result, uid)
-
-        except Exception as e:
-            error_msg = f"User deletion error: {e}"
-            logger.exception(error_msg, extra={"uid": uid})
-            return FlextResult.fail(error_msg)
+        # Handle deletion result - Single Responsibility
+        return self._handle_deletion_result(delete_result, uid)
 
     def _handle_deletion_result(
         self,
