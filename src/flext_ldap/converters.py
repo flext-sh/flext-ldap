@@ -12,11 +12,18 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any
 
 from flext_core import FlextResult, get_logger
 
 logger = get_logger(__name__)
+
+
+class FlextLdapConverterConstants:
+    """Converter constants following DRY principle."""
+
+    # LDAP Time Format Lengths
+    LDAP_TIME_FORMAT_LONG: int = 15  # YYYYMMDDHHMMSSZ
+    LDAP_TIME_FORMAT_SHORT: int = 13  # YYMMDDHHMMSSZ
 
 
 class FlextLdapDataType(Enum):
@@ -35,7 +42,7 @@ class FlextLdapDataType(Enum):
     MAC_ADDRESS = "mac_address"
     UUID = "uuid"
     CERTIFICATE = "certificate"
-    PASSWORD = "password"
+    PASSWORD_DATA_TYPE = "password_field"  # Data type constant, not password
     UNKNOWN = "unknown"
 
 
@@ -48,7 +55,9 @@ class FlextSimpleConverter:
     def __init__(self) -> None:
         """Initialize the simplified converter."""
 
-    async def detect_type(self, value: Any) -> FlextResult[FlextLdapDataType]:
+    async def detect_type(
+        self, value: str | int | None,
+    ) -> FlextResult[FlextLdapDataType]:
         """Detect LDAP data type from value (test compatibility)."""
         try:
             if value is None:
@@ -64,11 +73,20 @@ class FlextSimpleConverter:
             return FlextResult.fail(f"Failed to detect data type: {e}")
 
     def detect_business_type(self, value: str) -> FlextLdapDataType:
-        """Detect business-specific data types."""
+        """Detect business-specific data types using Single Responsibility Principle."""
         if not value:
             return FlextLdapDataType.STRING
 
-        # Only detect types that require business logic
+        # Apply Single Responsibility - delegate to specialized detectors
+        detected_type = self._detect_special_business_types(value)
+        if detected_type != FlextLdapDataType.STRING:
+            return detected_type
+
+        # Fallback to basic type detection
+        return self._detect_basic_types(value)
+
+    def _detect_special_business_types(self, value: str) -> FlextLdapDataType:
+        """Detect special business types (email, DN, datetime, boolean)."""
         if self._is_email(value):
             return FlextLdapDataType.EMAIL
         if self._is_dn(value):
@@ -77,6 +95,10 @@ class FlextSimpleConverter:
             return FlextLdapDataType.DATE_TIME
         if self._is_boolean_text(value):
             return FlextLdapDataType.BOOLEAN
+        return FlextLdapDataType.STRING
+
+    def _detect_basic_types(self, value: str) -> FlextLdapDataType:
+        """Detect basic data types (integer, string)."""
         if value.isdigit():
             return FlextLdapDataType.INTEGER
         return FlextLdapDataType.STRING
@@ -113,16 +135,25 @@ class FlextSimpleConverter:
         try:
             # Handle common LDAP time formats
             if ldap_time.endswith("Z"):
-                if len(ldap_time) == 15:  # YYYYMMDDHHMMSSZ
-                    dt = datetime.strptime(ldap_time, "%Y%m%d%H%M%SZ")
-                elif len(ldap_time) == 13:  # YYMMDDHHMMSSZ
-                    dt = datetime.strptime(ldap_time, "%y%m%d%H%M%SZ")
+                # Long format: YYYYMMDDHHMMSSZ
+                long_format_length = FlextLdapConverterConstants.LDAP_TIME_FORMAT_LONG
+                # Short format: YYMMDDHHMMSSZ
+                short_format_length = FlextLdapConverterConstants.LDAP_TIME_FORMAT_SHORT
+
+                if len(ldap_time) == long_format_length:
+                    dt = datetime.strptime(ldap_time, "%Y%m%d%H%M%SZ").replace(
+                        tzinfo=UTC,
+                    )
+                elif len(ldap_time) == short_format_length:
+                    dt = datetime.strptime(ldap_time, "%y%m%d%H%M%SZ").replace(
+                        tzinfo=UTC,
+                    )
                 else:
                     return FlextResult.fail(
                         f"Unsupported LDAP time format: {ldap_time}",
                     )
 
-                return FlextResult.ok(dt.replace(tzinfo=UTC))
+                return FlextResult.ok(dt)
             return FlextResult.fail(f"Invalid LDAP time format: {ldap_time}")
         except ValueError as e:
             return FlextResult.fail(f"Failed to parse LDAP time: {e}")
@@ -150,8 +181,6 @@ class FlextSimpleConverter:
             r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}",  # ISO format without Z
             r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}",  # SQL datetime format
         ]
-
-        import re
 
         return any(re.match(pattern, value) for pattern in datetime_patterns)
 

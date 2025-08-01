@@ -9,6 +9,14 @@ from flext_core import FlextResult
 # Constants
 EXPECTED_DATA_COUNT = 3
 
+
+# FBT smell elimination constants - SOLID DRY Principle
+class TestOperationResult:
+    """Test operation result constants - eliminates FBT003 positional booleans."""
+    SUCCESS = True
+    FAILURE = False
+
+
 from flext_ldap.adapters.directory_adapter import (
     FlextLdapDirectoryAdapter,
     FlextLdapDirectoryAdapterInterface,
@@ -171,7 +179,7 @@ class TestFlextLdapDirectoryService:
 
         # Mock the ldap_client.disconnect method
         directory_service._ldap_client.disconnect = AsyncMock(
-            return_value=FlextResult.ok(True),
+            return_value=FlextResult.ok(TestOperationResult.SUCCESS),
         )
 
         result = await directory_service.disconnect(connection_id)
@@ -359,7 +367,7 @@ class TestFlextLdapDirectoryService:
 
         # Mock successful add
         directory_service._ldap_client.add_entry = AsyncMock(
-            return_value=FlextResult.ok(True),
+            return_value=FlextResult.ok(TestOperationResult.SUCCESS),
         )
 
         result = await directory_service.add_entry(
@@ -441,7 +449,7 @@ class TestFlextLdapDirectoryService:
 
         # Mock successful modify
         directory_service._ldap_client.modify_entry = AsyncMock(
-            return_value=FlextResult.ok(True),
+            return_value=FlextResult.ok(TestOperationResult.SUCCESS),
         )
 
         result = await directory_service.modify_entry(
@@ -522,7 +530,7 @@ class TestFlextLdapDirectoryService:
 
         # Mock successful delete
         directory_service._ldap_client.delete_entry = AsyncMock(
-            return_value=FlextResult.ok(True),
+            return_value=FlextResult.ok(TestOperationResult.SUCCESS),
         )
 
         result = await directory_service.delete_entry(

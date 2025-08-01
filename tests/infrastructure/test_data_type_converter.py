@@ -13,6 +13,13 @@ import pytest
 from flext_ldap.ldap_infrastructure import FlextLdapConverter, FlextLdapDataType
 
 
+# FBT smell elimination constants - SOLID DRY Principle
+class TestBooleanValue:
+    """Test boolean value constants - eliminates FBT003 positional booleans."""
+    TRUE = True
+    FALSE = False
+
+
 class TestFlextLdapDataType:
     """Test suite for FlextLdapDataType enum."""
 
@@ -71,7 +78,7 @@ class TestFlextLdapConverter:
 
     def test_detect_type_boolean(self, converter: FlextLdapConverter) -> None:
         """Test boolean type detection."""
-        assert converter.detect_type(True) == FlextLdapDataType.BOOLEAN
+        assert converter.detect_type(TestBooleanValue.TRUE) == FlextLdapDataType.BOOLEAN
         assert converter.detect_type("true") == FlextLdapDataType.BOOLEAN
         assert converter.detect_type("yes") == FlextLdapDataType.BOOLEAN
 
@@ -96,8 +103,8 @@ class TestFlextLdapConverter:
 
     def test_to_ldap_boolean(self, converter: FlextLdapConverter) -> None:
         """Test boolean to LDAP conversion."""
-        assert converter.to_ldap(True) == "TRUE"
-        assert converter.to_ldap(False) == "FALSE"
+        assert converter.to_ldap(TestBooleanValue.TRUE) == "TRUE"
+        assert converter.to_ldap(TestBooleanValue.FALSE) == "FALSE"
 
     def test_to_ldap_datetime(self, converter: FlextLdapConverter) -> None:
         """Test datetime to LDAP conversion."""

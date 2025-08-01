@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import TYPE_CHECKING, Any
@@ -19,7 +20,6 @@ from uuid import uuid4
 from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
-    from uuid import UUID
 
     from flext_ldap.entities import FlextLdapConnection
 
@@ -72,59 +72,118 @@ class FlextLdapSecurityEventStatus(Enum):
     INFO = "info"
 
 
+@dataclass
+class FlextLdapSecurityEventData:
+    """Data transfer object for security event creation.
+
+    Eliminates the need for 18+ parameters in log_event method.
+    Follows Parameter Object pattern for cleaner method signatures.
+    """
+
+    event_type: FlextLdapSecurityEventType
+    severity: FlextLdapSecurityEventSeverity = FlextLdapSecurityEventSeverity.INFO
+    status: FlextLdapSecurityEventStatus = FlextLdapSecurityEventStatus.INFO
+    connection: FlextLdapConnection | None = None
+    user_dn: str | None = None
+    client_ip: str | None = None
+    operation_id: str | None = None
+    target_dn: str | None = None
+    attributes: list[str] | None = field(default_factory=list)
+    filter_expression: str | None = None
+    result_count: int | None = None
+    error_message: str | None = None
+    error_code: str | None = None
+    session_id: str | None = None
+    request_id: str | None = None
+    duration_ms: float | None = None
+    data_size_bytes: int | None = None
+    additional_context: dict[str, Any] | None = field(default_factory=dict)
+
+    def to_security_event(self) -> FlextLdapSecurityEvent:
+        """Convert to FlextLdapSecurityEvent instance using Parameter Object pattern."""
+        return FlextLdapSecurityEvent(data=self)
+
+
 class FlextLdapSecurityEvent:
-    """Security event data structure."""
+    """Security event data structure using Parameter Object pattern."""
 
     def __init__(
         self,
-        event_id: UUID | None = None,
-        event_type: FlextLdapSecurityEventType | None = None,
-        severity: FlextLdapSecurityEventSeverity = FlextLdapSecurityEventSeverity.INFO,
-        status: FlextLdapSecurityEventStatus = FlextLdapSecurityEventStatus.INFO,
-        timestamp: datetime | None = None,
-        user_dn: str | None = None,
-        client_ip: str | None = None,
-        server_host: str | None = None,
-        server_port: int | None = None,
-        operation_id: str | None = None,
-        target_dn: str | None = None,
-        attributes: list[str] | None = None,
-        filter_expression: str | None = None,
-        result_count: int | None = None,
-        error_message: str | None = None,
-        error_code: str | None = None,
-        session_id: str | None = None,
-        request_id: str | None = None,
-        duration_ms: float | None = None,
-        data_size_bytes: int | None = None,
-        additional_context: dict[str, Any] | None = None,
-        risk_score: float | None = None,
-        compliance_flags: list[str] | None = None,
+        data: FlextLdapSecurityEventData | None = None,
+        **kwargs: Any,
     ) -> None:
-        """Initialize security event."""
-        self.event_id = event_id or uuid4()
-        self.event_type = event_type
-        self.severity = severity
-        self.status = status
-        self.timestamp = timestamp or datetime.now(UTC)
-        self.user_dn = user_dn
-        self.client_ip = client_ip
+        """Initialize security event using Parameter Object pattern.
+
+        Args:
+            data: FlextLdapSecurityEventData object (preferred approach)
+            **kwargs: Legacy individual parameters for backward compatibility
+
+        """
+        if data is not None:
+            # Use Parameter Object pattern - preferred approach
+            self._init_from_data_object(data)
+        else:
+            # Legacy initialization for backward compatibility
+            self._init_from_kwargs(kwargs)
+
+    def _init_from_data_object(self, data: FlextLdapSecurityEventData) -> None:
+        """Initialize from FlextLdapSecurityEventData using Parameter Object pattern."""
+        # Extract connection details if available
+        server_host = None
+        server_port = None
+        if data.connection:
+            server_host = getattr(data.connection, "host", None)
+            server_port = getattr(data.connection, "port", None)
+
+        self.event_id = uuid4()
+        self.event_type = data.event_type
+        self.severity = data.severity
+        self.status = data.status
+        self.timestamp = datetime.now(UTC)
+        self.user_dn = data.user_dn
+        self.client_ip = data.client_ip
         self.server_host = server_host
         self.server_port = server_port
-        self.operation_id = operation_id
-        self.target_dn = target_dn
-        self.attributes = attributes or []
-        self.filter_expression = filter_expression
-        self.result_count = result_count
-        self.error_message = error_message
-        self.error_code = error_code
-        self.session_id = session_id
-        self.request_id = request_id
-        self.duration_ms = duration_ms
-        self.data_size_bytes = data_size_bytes
-        self.additional_context = additional_context or {}
-        self.risk_score = risk_score
-        self.compliance_flags = compliance_flags or []
+        self.operation_id = data.operation_id
+        self.target_dn = data.target_dn
+        self.attributes = data.attributes or []
+        self.filter_expression = data.filter_expression
+        self.result_count = data.result_count
+        self.error_message = data.error_message
+        self.error_code = data.error_code
+        self.session_id = data.session_id
+        self.request_id = data.request_id
+        self.duration_ms = data.duration_ms
+        self.data_size_bytes = data.data_size_bytes
+        self.additional_context = data.additional_context or {}
+        self.risk_score = None  # Not in data object, default
+        self.compliance_flags: list[str] = []  # Not in data object, default
+
+    def _init_from_kwargs(self, kwargs: dict[str, Any]) -> None:
+        """Legacy initialization for backward compatibility."""
+        self.event_id = kwargs.get("event_id") or uuid4()
+        self.event_type = kwargs.get("event_type")
+        self.severity = kwargs.get("severity", FlextLdapSecurityEventSeverity.INFO)
+        self.status = kwargs.get("status", FlextLdapSecurityEventStatus.INFO)
+        self.timestamp = kwargs.get("timestamp") or datetime.now(UTC)
+        self.user_dn = kwargs.get("user_dn")
+        self.client_ip = kwargs.get("client_ip")
+        self.server_host = kwargs.get("server_host")
+        self.server_port = kwargs.get("server_port")
+        self.operation_id = kwargs.get("operation_id")
+        self.target_dn = kwargs.get("target_dn")
+        self.attributes = kwargs.get("attributes") or []
+        self.filter_expression = kwargs.get("filter_expression")
+        self.result_count = kwargs.get("result_count")
+        self.error_message = kwargs.get("error_message")
+        self.error_code = kwargs.get("error_code")
+        self.session_id = kwargs.get("session_id")
+        self.request_id = kwargs.get("request_id")
+        self.duration_ms = kwargs.get("duration_ms")
+        self.data_size_bytes = kwargs.get("data_size_bytes")
+        self.additional_context = kwargs.get("additional_context") or {}
+        self.risk_score = kwargs.get("risk_score")
+        self.compliance_flags = kwargs.get("compliance_flags") or []
 
     def to_dict(self) -> dict[str, Any]:
         """Convert security event to dictionary."""
@@ -193,99 +252,24 @@ class FlextLdapSecurityEventLogger:
 
     async def log_event(
         self,
-        event_type: FlextLdapSecurityEventType,
-        severity: FlextLdapSecurityEventSeverity = FlextLdapSecurityEventSeverity.INFO,
-        status: FlextLdapSecurityEventStatus = FlextLdapSecurityEventStatus.INFO,
-        connection: FlextLdapConnection | None = None,
-        user_dn: str | None = None,
-        client_ip: str | None = None,
-        operation_id: str | None = None,
-        target_dn: str | None = None,
-        attributes: list[str] | None = None,
-        filter_expression: str | None = None,
-        result_count: int | None = None,
-        error_message: str | None = None,
-        error_code: str | None = None,
-        session_id: str | None = None,
-        request_id: str | None = None,
-        duration_ms: float | None = None,
-        data_size_bytes: int | None = None,
-        additional_context: dict[str, Any] | None = None,
+        event_data: FlextLdapSecurityEventData,
     ) -> FlextResult[FlextLdapSecurityEvent]:
-        """Log a security event.
+        """Log a security event using data transfer object.
 
         Args:
-            event_type: Type of security event
-            severity: Event severity level
-            status: Event status
-            connection: LDAP connection (optional)
-            user_dn: User DN performing the operation
-            client_ip: Client IP address
-            operation_id: Operation identifier
-            target_dn: Target DN for the operation
-            attributes: Attributes involved in the operation
-            filter_expression: Search filter used
-            result_count: Number of results returned
-            error_message: Error message if any
-            error_code: Error code if any
-            session_id: Session identifier
-            request_id: Request identifier
-            duration_ms: Operation duration in milliseconds
-            data_size_bytes: Size of data processed
-            additional_context: Additional context information
+            event_data: Security event data containing all event information
 
         Returns:
             FlextResult containing the logged security event
 
         """
         try:
-            # Extract connection information if provided
-            server_host = None
-            server_port = None
-            if connection:
-                # Parse server_url to extract host and port
-                server_url = connection.server_url
-                if "://" in server_url:
-                    # Extract host and port from URL like ldap://host:port
-                    protocol_part, host_part = server_url.split("://", 1)
-                    if ":" in host_part:
-                        server_host, port_str = host_part.split(":", 1)
-                        try:
-                            server_port = int(port_str)
-                        except ValueError:
-                            server_port = 389  # Default LDAP port
-                    else:
-                        server_host = host_part
-                        server_port = 636 if protocol_part == "ldaps" else 389
-                else:
-                    server_host = server_url
-                    server_port = 389
+            # Enhance event data with connection details if needed
+            if event_data.connection and not event_data.user_dn:
+                event_data.user_dn = event_data.connection.bind_dn
 
-                if not user_dn:
-                    user_dn = connection.bind_dn
-
-            # Create security event
-            event = FlextLdapSecurityEvent(
-                event_type=event_type,
-                severity=severity,
-                status=status,
-                user_dn=user_dn,
-                client_ip=client_ip,
-                server_host=server_host,
-                server_port=server_port,
-                operation_id=operation_id,
-                target_dn=target_dn,
-                attributes=attributes,
-                filter_expression=filter_expression,
-                result_count=result_count,
-                error_message=error_message,
-                error_code=error_code,
-                session_id=session_id,
-                request_id=request_id,
-                duration_ms=duration_ms,
-                data_size_bytes=data_size_bytes,
-                additional_context=additional_context,
-            )
+            # Create security event using the data transfer object
+            event = event_data.to_security_event()
 
             # Calculate risk score if enabled
             if self.enable_risk_scoring:
@@ -301,13 +285,13 @@ class FlextLdapSecurityEventLogger:
             # Log event based on severity with proper logging
             event_dict = event.to_dict()
             event_msg = f"Security Event: {event_dict}"
-            if severity == FlextLdapSecurityEventSeverity.CRITICAL:
+            if event_data.severity == FlextLdapSecurityEventSeverity.CRITICAL:
                 logger.critical(event_msg)
-            elif severity == FlextLdapSecurityEventSeverity.HIGH:
+            elif event_data.severity == FlextLdapSecurityEventSeverity.HIGH:
                 logger.error(event_msg)
-            elif severity == FlextLdapSecurityEventSeverity.MEDIUM:
+            elif event_data.severity == FlextLdapSecurityEventSeverity.MEDIUM:
                 logger.warning(event_msg)
-            elif severity == FlextLdapSecurityEventSeverity.LOW:
+            elif event_data.severity == FlextLdapSecurityEventSeverity.LOW:
                 logger.info(event_msg)
             else:
                 logger.debug(event_msg)
@@ -319,16 +303,52 @@ class FlextLdapSecurityEventLogger:
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
+    # Convenience method using Parameter Object pattern for better maintainability
+    async def log_event_simple(
+        self,
+        event_type: FlextLdapSecurityEventType,
+        **event_params: Any,
+    ) -> FlextResult[FlextLdapSecurityEvent]:
+        """Convenience method for logging security events using flexible parameters.
+
+        Uses **kwargs to avoid parameter explosion while maintaining ease of use.
+        All FlextLdapSecurityEventData fields can be passed as keyword arguments.
+
+        Args:
+            event_type: The type of security event (required)
+            **event_params: All other event parameters as keyword arguments
+                           (severity, status, connection, user_dn, client_ip, etc.)
+
+        """
+        # Create event data using Parameter Object pattern with defaults
+        event_data = FlextLdapSecurityEventData(
+            event_type=event_type,
+            severity=event_params.get("severity", FlextLdapSecurityEventSeverity.INFO),
+            status=event_params.get("status", FlextLdapSecurityEventStatus.INFO),
+            connection=event_params.get("connection"),
+            user_dn=event_params.get("user_dn"),
+            client_ip=event_params.get("client_ip"),
+            operation_id=event_params.get("operation_id"),
+            target_dn=event_params.get("target_dn"),
+            attributes=event_params.get("attributes"),
+            filter_expression=event_params.get("filter_expression"),
+            result_count=event_params.get("result_count"),
+            error_message=event_params.get("error_message"),
+            error_code=event_params.get("error_code"),
+            session_id=event_params.get("session_id"),
+            request_id=event_params.get("request_id"),
+            duration_ms=event_params.get("duration_ms"),
+            data_size_bytes=event_params.get("data_size_bytes"),
+            additional_context=event_params.get("additional_context"),
+        )
+        return await self.log_event(event_data)
+
     async def log_authentication_event(
         self,
         *,
-        success: bool,
+        success: bool,  # Named-only to eliminate FBT001
         user_dn: str,
-        client_ip: str | None = None,
-        connection: FlextLdapConnection | None = None,
-        error_message: str | None = None,
-        session_id: str | None = None,
-        additional_context: dict[str, Any] | None = None,
+        **event_params: Any,
     ) -> FlextResult[FlextLdapSecurityEvent]:
         """Log authentication event."""
         event_type = (
@@ -347,16 +367,13 @@ class FlextLdapSecurityEventLogger:
             else FlextLdapSecurityEventStatus.FAILURE
         )
 
-        return await self.log_event(
+        # Use log_event_simple with Parameter Object pattern approach
+        return await self.log_event_simple(
             event_type=event_type,
             severity=severity,
             status=status,
-            connection=connection,
             user_dn=user_dn,
-            client_ip=client_ip,
-            error_message=error_message,
-            session_id=session_id,
-            additional_context=additional_context,
+            **event_params,  # Pass all additional parameters through
         )
 
     def _calculate_risk_score(self, event: FlextLdapSecurityEvent) -> float:

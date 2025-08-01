@@ -92,6 +92,9 @@ def __getattr__(name: str) -> object:
         "LDAPEntry": FlextLdapEntry,
         "FlextLdapDistinguishedName": FlextLdapDistinguishedName,
         "CreateUserRequest": FlextLdapCreateUserRequest,
+        # Add missing legacy mappings
+        "FlextLdapFilter": FlextLdapFilterValue,
+        "FlextLdapScope": FlextLdapScopeEnum,
     }
 
     if name in entity_mappings:

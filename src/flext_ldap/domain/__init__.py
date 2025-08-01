@@ -94,8 +94,6 @@ class LDAPSecurityContext:
     """Deprecated: Use flext_ldap.domain.security module instead."""
 
     def __init__(self) -> None:
-        import warnings
-
         warnings.warn(
             "LDAPSecurityContext is deprecated. Use flext_ldap.domain.security module.",
             DeprecationWarning,
@@ -107,10 +105,9 @@ class LDAPOperation:
     """Deprecated: Use flext_ldap.application.ldap_service module instead."""
 
     def __init__(self) -> None:
-        import warnings
-
         warnings.warn(
-            "LDAPOperation is deprecated. Use flext_ldap.application.ldap_service module.",
+            "LDAPOperation is deprecated. "
+            "Use flext_ldap.application.ldap_service module.",
             DeprecationWarning,
             stacklevel=2,
         )

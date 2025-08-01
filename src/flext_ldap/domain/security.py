@@ -18,6 +18,14 @@ from enum import Enum
 from flext_core import FlextEntity, FlextResult
 
 
+class FlextLdapSecurityConstants:
+    """Security constants following DRY principle."""
+
+    # Network Port Constants
+    MIN_PORT: int = 1
+    MAX_PORT: int = 65535
+
+
 class FlextLdapCertificateValidationResult(Enum):
     """Certificate validation result types."""
 
@@ -105,8 +113,8 @@ class FlextLdapCertificateValidationContext(FlextEntity):
 
     def model_post_init(self, __context: object, /) -> None:
         """Post-initialization validation."""
-        if self.port <= 0 or self.port > 65535:
-            msg = "Port must be between 1 and 65535"
+        if self.port <= 0 or self.port > FlextLdapSecurityConstants.MAX_PORT:
+            msg = f"Port must be between {FlextLdapSecurityConstants.MIN_PORT} and {FlextLdapSecurityConstants.MAX_PORT}"
             raise ValueError(msg)
 
         if not self.hostname:
@@ -119,8 +127,8 @@ class FlextLdapCertificateValidationContext(FlextEntity):
             return FlextResult.fail(
                 "Certificate validation context must have a hostname",
             )
-        if self.port <= 0 or self.port > 65535:
-            return FlextResult.fail("Port must be between 1 and 65535")
+        if self.port <= 0 or self.port > FlextLdapSecurityConstants.MAX_PORT:
+            return FlextResult.fail(f"Port must be between {FlextLdapSecurityConstants.MIN_PORT} and {FlextLdapSecurityConstants.MAX_PORT}")
         if self.minimum_tls_version not in {"TLSv1.2", "TLSv1.3"}:
             return FlextResult.fail("Minimum TLS version must be TLSv1.2 or TLSv1.3")
         if self.maximum_tls_version not in {"TLSv1.2", "TLSv1.3"}:

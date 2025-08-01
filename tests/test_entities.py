@@ -42,7 +42,8 @@ class TestFlextLdapEntry:
 
     def test_entry_domain_validation(self) -> None:
         """Test domain rule validation."""
-        with pytest.raises(ValueError):
+        # Use specific error message matching for better test quality
+        with pytest.raises(ValueError, match=".*DN.*required.*"):
             entry = FlextLdapEntry(
                 id=str(uuid4()),
                 dn="",  # Empty DN should fail

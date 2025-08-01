@@ -23,8 +23,9 @@ BaseSettings = FlextBaseSettings
 
 
 class FlextLdapConstants:
-    """Constants for LDAP configuration."""
+    """Constants for LDAP configuration following DRY principle."""
 
+    # LDAP Configuration Constants
     DEFAULT_TIMEOUT_SECONDS: int = 30
     MAX_TIMEOUT_SECONDS: int = 300
     DEFAULT_POOL_SIZE: int = 10
@@ -35,6 +36,10 @@ class FlextLdapConstants:
     MAX_RETRIES: int = 10
     DEFAULT_RETRY_DELAY: float = 1.0
     MAX_RETRY_DELAY: float = 60.0
+
+    # Logging Level Constants - DRY principle for magic numbers
+    TRACE_LEVEL_VALUE: int = 5
+    DEBUG_LEVEL_VALUE: int = 10
 
 
 type LogLevelLiteral = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
@@ -62,6 +67,22 @@ class FlextLdapConnectionConfig(FlextValueObject):
 
     enable_connection_pooling: bool = Field(default=True)
 
+    @staticmethod
+    def _is_trace_enabled() -> bool:
+        """Check if TRACE logging is enabled - DRY helper method."""
+        return (
+            hasattr(logger, "_level_value")
+            and logger._level_value <= FlextLdapConstants.TRACE_LEVEL_VALUE
+        )
+
+    @staticmethod
+    def _is_debug_enabled() -> bool:
+        """Check if DEBUG logging is enabled - DRY helper method."""
+        return (
+            hasattr(logger, "_level_value")
+            and logger._level_value <= FlextLdapConstants.DEBUG_LEVEL_VALUE
+        )
+
     @field_validator("server")
     @classmethod
     def validate_server(cls, v: str) -> str:
@@ -78,28 +99,35 @@ class FlextLdapConnectionConfig(FlextValueObject):
 
         """
         # Efficient TRACE logging - only compute if TRACE is enabled
-        if hasattr(logger, "_level_value") and logger._level_value <= 5:  # TRACE level
-            logger.trace("Validating LDAP server hostname", extra={
-                "original_value": v,
-                "is_empty": not v,
-                "is_whitespace": v.isspace() if v else False
-            })
+        if FlextLdapConnectionConfig._is_trace_enabled():
+            logger.trace(
+                "Validating LDAP server hostname",
+                extra={
+                    "original_value": v,
+                    "is_empty": not v,
+                    "is_whitespace": v.isspace() if v else False,
+                },
+            )
 
         if not v or v.isspace():
-            logger.error("Server validation failed: empty or whitespace", extra={
-                "value": repr(v)
-            })
+            logger.error(
+                "Server validation failed: empty or whitespace",
+                extra={"value": repr(v)},
+            )
             msg = "Server cannot be empty or whitespace only"
             raise ValueError(msg)
 
         validated_server = v.strip()
         # Efficient DEBUG logging - only compute if DEBUG is enabled
-        if hasattr(logger, "_level_value") and logger._level_value <= 10:  # DEBUG level
-            logger.debug("Server hostname validated", extra={
-                "original": v,
-                "validated": validated_server,
-                "was_changed": v != validated_server
-            })
+        if FlextLdapConnectionConfig._is_debug_enabled():
+            logger.debug(
+                "Server hostname validated",
+                extra={
+                    "original": v,
+                    "validated": validated_server,
+                    "was_changed": v != validated_server,
+                },
+            )
         return validated_server
 
     def validate_domain_rules(self) -> FlextResult[None]:
@@ -138,36 +166,56 @@ class FlextLdapAuthConfig(FlextValueObject):
 
         """
         # Efficient TRACE logging following flext-core patterns
-        if hasattr(logger, "_level_value") and logger._level_value <= 5:
-            logger.trace("Validating LDAP bind DN", extra={
-                "original_value": v,
-                "is_empty": not v,
-                "length": len(v) if v else 0
-            })
+        if FlextLdapConnectionConfig._is_trace_enabled():
+            logger.trace(
+                "Validating LDAP bind DN",
+                extra={
+                    "original_value": v,
+                    "is_empty": not v,
+                    "length": len(v) if v else 0,
+                },
+            )
 
         validated_dn = v.strip() if v else ""
-        # Efficient DEBUG logging with performance check
-        if hasattr(logger, "_level_value") and logger._level_value <= 10:
-            logger.debug("Bind DN validated", extra={
-                "original": v,
-                "validated": validated_dn,
-                "was_changed": v != validated_dn
-            })
+        # Efficient DEBUG logging with performance check - Extract Variable pattern
+        is_debug_enabled = (
+            hasattr(logger, "_level_value")
+            and logger._level_value <= FlextLdapConstants.DEBUG_LEVEL_VALUE
+        )
+        if is_debug_enabled:
+            logger.debug(
+                "Bind DN validated",
+                extra={
+                    "original": v,
+                    "validated": validated_dn,
+                    "was_changed": v != validated_dn,
+                },
+            )
         return validated_dn
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP authentication configuration."""
-        logger.debug("Validating authentication domain rules", extra={
-            "use_anonymous_bind": self.use_anonymous_bind,
-            "has_bind_dn": bool(self.bind_dn),
-            "has_password": bool(self.bind_password)
-        })
+        logger.debug(
+            "Validating authentication domain rules",
+            extra={
+                "use_anonymous_bind": self.use_anonymous_bind,
+                "has_bind_dn": bool(self.bind_dn),
+                "has_password": bool(self.bind_password),
+            },
+        )
 
         if not self.use_anonymous_bind and not self.bind_dn:
-            logger.error("Authentication validation failed: missing bind DN for non-anonymous bind")
+            # Extract error message for readability
+            error_msg = (
+                "Authentication validation failed: "
+                "missing bind DN for non-anonymous bind"
+            )
+            logger.error(error_msg)
             return FlextResult.fail("Bind DN is required when not using anonymous bind")
         if self.bind_dn and not self.bind_password and not self.use_anonymous_bind:
-            logger.error("Authentication validation failed: missing password for bind DN")
+            logger.error(
+                "Authentication validation failed: missing password for bind DN",
+            )
             return FlextResult.fail(
                 "Bind password is required when bind DN is provided",
             )
@@ -199,21 +247,33 @@ class FlextLdapSearchConfig(FlextValueObject):
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP search configuration."""
-        logger.debug("Validating search domain rules", extra={
-            "size_limit": self.size_limit,
-            "time_limit": self.time_limit,
-            "page_size": self.page_size,
-            "paged_search": self.paged_search
-        })
+        logger.debug(
+            "Validating search domain rules",
+            extra={
+                "size_limit": self.size_limit,
+                "time_limit": self.time_limit,
+                "page_size": self.page_size,
+                "paged_search": self.paged_search,
+            },
+        )
 
         if self.size_limit < 0:
-            logger.error("Search validation failed: negative size limit", extra={"size_limit": self.size_limit})
+            logger.error(
+                "Search validation failed: negative size limit",
+                extra={"size_limit": self.size_limit},
+            )
             return FlextResult.fail("Size limit must be non-negative")
         if self.time_limit < 0:
-            logger.error("Search validation failed: negative time limit", extra={"time_limit": self.time_limit})
+            logger.error(
+                "Search validation failed: negative time limit",
+                extra={"time_limit": self.time_limit},
+            )
             return FlextResult.fail("Time limit must be non-negative")
         if self.page_size <= 0:
-            logger.error("Search validation failed: invalid page size", extra={"page_size": self.page_size})
+            logger.error(
+                "Search validation failed: invalid page size",
+                extra={"page_size": self.page_size},
+            )
             return FlextResult.fail("Page size must be positive")
 
         logger.trace("Search domain rules validation passed")
@@ -293,36 +353,45 @@ class FlextLdapLoggingConfig(BaseConfig):
     @classmethod
     def normalize_log_level(cls, v: object) -> str:
         """Normalize log level to uppercase for FlextLogLevel enum."""
-        logger.trace("Normalizing log level", extra={
-            "original_value": v,
-            "original_type": type(v).__name__,
-            "is_string": isinstance(v, str),
-            "has_value_attr": hasattr(v, "value")
-        })
+        logger.trace(
+            "Normalizing log level",
+            extra={
+                "original_value": v,
+                "original_type": type(v).__name__,
+                "is_string": isinstance(v, str),
+                "has_value_attr": hasattr(v, "value"),
+            },
+        )
 
         if isinstance(v, str):
             # Handle enum string representation
             if v.startswith("FlextLogLevel."):
                 normalized = v.split(".")[-1].upper()
-                logger.debug("Normalized enum string log level", extra={
-                    "original": v,
-                    "normalized": normalized
-                })
+                logger.debug(
+                    "Normalized enum string log level",
+                    extra={"original": v, "normalized": normalized},
+                )
                 return normalized
             normalized = v.upper()
-            logger.debug("Normalized string log level", extra={"original": v, "normalized": normalized})
+            logger.debug(
+                "Normalized string log level",
+                extra={"original": v, "normalized": normalized},
+            )
             return normalized
         # Handle enum objects
         if hasattr(v, "value"):
             normalized = str(v.value).upper()
-            logger.debug("Normalized enum object log level", extra={
-                "original": str(v),
-                "normalized": normalized
-            })
+            logger.debug(
+                "Normalized enum object log level",
+                extra={"original": str(v), "normalized": normalized},
+            )
             return normalized
         # Return as string for enum validation
         normalized = str(v).upper()
-        logger.debug("Normalized generic log level", extra={"original": str(v), "normalized": normalized})
+        logger.debug(
+            "Normalized generic log level",
+            extra={"original": str(v), "normalized": normalized},
+        )
         return normalized
 
 
@@ -377,23 +446,29 @@ class FlextLdapSettings(BaseSettings):
             "page_size": self.search.page_size,
         }
 
-        logger.trace("Generated LDAP client config", extra={
-            "server": config["server"],
-            "port": config["port"],
-            "use_ssl": config["use_ssl"],
-            "has_auth": bool(config["bind_dn"]),
-            "config_keys": list(config.keys())
-        })
+        logger.trace(
+            "Generated LDAP client config",
+            extra={
+                "server": config["server"],
+                "port": config["port"],
+                "use_ssl": config["use_ssl"],
+                "has_auth": bool(config["bind_dn"]),
+                "config_keys": list(config.keys()),
+            },
+        )
 
         return config
 
 
 def create_development_config(**overrides: object) -> FlextLdapSettings:
     """Create development configuration with sensible defaults."""
-    logger.debug("Creating development configuration", extra={
-        "overrides_count": len(overrides),
-        "override_keys": list(overrides.keys()) if overrides else []
-    })
+    logger.debug(
+        "Creating development configuration",
+        extra={
+            "overrides_count": len(overrides),
+            "override_keys": list(overrides.keys()) if overrides else [],
+        },
+    )
 
     defaults = {
         "enable_debug_mode": True,
@@ -415,15 +490,21 @@ def create_development_config(**overrides: object) -> FlextLdapSettings:
     }
     defaults.update(overrides)
 
-    logger.trace("Development config defaults prepared", extra={
-        "defaults_keys": list(defaults.keys()),
-        "debug_mode": defaults["enable_debug_mode"]
-    })
+    logger.trace(
+        "Development config defaults prepared",
+        extra={
+            "defaults_keys": list(defaults.keys()),
+            "debug_mode": defaults["enable_debug_mode"],
+        },
+    )
 
     config = FlextLdapSettings()  # Use default environment-based configuration
-    logger.info("Development configuration created", extra={
-        "project_name": config.project_name,
-        "project_version": config.project_version,
-        "debug_mode": config.enable_debug_mode
-    })
+    logger.info(
+        "Development configuration created",
+        extra={
+            "project_name": config.project_name,
+            "project_version": config.project_version,
+            "debug_mode": config.enable_debug_mode,
+        },
+    )
     return config

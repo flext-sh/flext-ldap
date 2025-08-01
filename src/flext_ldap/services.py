@@ -41,28 +41,34 @@ class FlextLdapService(FlextLdapDomainService):
 
     def __init__(self, entity_type: type[object]) -> None:
         """Initialize service for specific entity type."""
-        logger.debug("Initializing FlextLdapService", extra={
-            "entity_type": entity_type.__name__,
-            "entity_module": entity_type.__module__
-        })
+        logger.debug(
+            "Initializing FlextLdapService",
+            extra={
+                "entity_type": entity_type.__name__,
+                "entity_module": entity_type.__module__,
+            },
+        )
         super().__init__()
         self._entity_type: type[object] = entity_type
         self._type_name = entity_type.__name__.lower().replace("flextldap", "")
-        logger.trace("FlextLdapService initialized", extra={
-            "entity_type": entity_type.__name__,
-            "type_name": self._type_name
-        })
+        logger.trace(
+            "FlextLdapService initialized",
+            extra={"entity_type": entity_type.__name__, "type_name": self._type_name},
+        )
 
     def create(
         self,
         **kwargs: str | int | bool | list[str] | dict[str, object],
     ) -> FlextResult[object]:
         """Create entity of configured type."""
-        logger.debug(f"Creating {self._type_name} entity", extra={
-            "entity_type": self._entity_type.__name__,
-            "kwargs_count": len(kwargs),
-            "has_id": "id" in kwargs
-        })
+        logger.debug(
+            f"Creating {self._type_name} entity",
+            extra={
+                "entity_type": self._entity_type.__name__,
+                "kwargs_count": len(kwargs),
+                "has_id": "id" in kwargs,
+            },
+        )
         try:
             # Ensure ID is set
             if "id" not in kwargs or not kwargs["id"]:
@@ -72,36 +78,45 @@ class FlextLdapService(FlextLdapDomainService):
 
             # Type cast kwargs to ensure compatibility with entity constructor
             entity_kwargs = {str(k): v for k, v in kwargs.items()}
-            logger.trace(f"Creating {self._type_name} with kwargs", extra={
-                "entity_kwargs": list(entity_kwargs.keys())
-            })
+            logger.trace(
+                f"Creating {self._type_name} with kwargs",
+                extra={"entity_kwargs": list(entity_kwargs.keys())},
+            )
 
             entity = self._entity_type(**entity_kwargs)
             result = self.create_entity(entity)
 
             if result.is_success:
-                logger.info(f"{self._type_name} created successfully", extra={
-                    "entity_id": kwargs.get("id"),
-                    "entity_type": self._entity_type.__name__
-                })
+                logger.info(
+                    f"{self._type_name} created successfully",
+                    extra={
+                        "entity_id": kwargs.get("id"),
+                        "entity_type": self._entity_type.__name__,
+                    },
+                )
             else:
-                logger.error(f"Failed to create {self._type_name}", extra={
-                    "error": result.error,
-                    "entity_type": self._entity_type.__name__
-                })
+                logger.error(
+                    f"Failed to create {self._type_name}",
+                    extra={
+                        "error": result.error,
+                        "entity_type": self._entity_type.__name__,
+                    },
+                )
 
             return result
         except ValueError as e:
-            logger.exception(f"Invalid data for {self._type_name} creation", extra={
-                "kwargs": list(kwargs.keys())
-            })
+            logger.exception(
+                f"Invalid data for {self._type_name} creation",
+                extra={"kwargs": list(kwargs.keys())},
+            )
             return FlextResult.fail(
                 f"Failed to create {self._type_name} - invalid data: {e}",
             )
         except TypeError as e:
-            logger.exception(f"Type error creating {self._type_name}", extra={
-                "entity_type": self._entity_type.__name__
-            })
+            logger.exception(
+                f"Type error creating {self._type_name}",
+                extra={"entity_type": self._entity_type.__name__},
+            )
             return FlextResult.fail(
                 f"Failed to create {self._type_name} - type error: {e}",
             )

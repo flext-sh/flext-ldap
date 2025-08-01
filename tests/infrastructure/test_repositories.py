@@ -11,9 +11,9 @@ class TestFlextLdapRepository:
     """Test suite for FlextLdapRepository."""
 
     @pytest.fixture
-    def repository(self) -> FlextLdapRepository[FlextLdapUser]:
+    def repository(self) -> FlextLdapRepository:
         """Create a repository for testing."""
-        return FlextLdapRepository[FlextLdapUser]()
+        return FlextLdapRepository()
 
     @pytest.fixture
     def sample_user(self) -> FlextLdapUser:
@@ -27,13 +27,13 @@ class TestFlextLdapRepository:
             mail="testuser@example.com"
         )
 
-    def test_init(self, repository: FlextLdapRepository[FlextLdapUser]) -> None:
+    def test_init(self, repository: FlextLdapRepository) -> None:
         """Test repository initialization."""
         assert repository._storage == {}
 
     def test_save_success(
         self,
-        repository: FlextLdapRepository[FlextLdapUser],
+        repository: FlextLdapRepository,
         sample_user: FlextLdapUser
     ) -> None:
         """Test successful save operation."""
@@ -45,18 +45,24 @@ class TestFlextLdapRepository:
 
     def test_save_with_validation(
         self,
-        repository: FlextLdapRepository[FlextLdapUser]
+        repository: FlextLdapRepository
     ) -> None:
         """Test save with entity validation."""
-        # Create a user with validation method
+        # Create a user with validation method - FBT eliminated
+        class ValidationConfig:
+            """Constants for validation behavior - eliminates FBT smells."""
+            SHOULD_FAIL = True
+            SHOULD_PASS = False
+
         class ValidatingUser:
-            def __init__(self, id: str, should_fail: bool = False) -> None:
+            def __init__(self, id: str, *, should_fail: bool = ValidationConfig.SHOULD_PASS) -> None:
                 self.id = id
                 self.should_fail = should_fail
 
             def validate_domain_rules(self) -> None:
                 if self.should_fail:
-                    raise ValueError("Validation failed")
+                    msg = "Validation failed"
+                    raise ValueError(msg)
 
         # Test successful validation
         user = ValidatingUser("valid_user")
@@ -64,14 +70,14 @@ class TestFlextLdapRepository:
         assert result.is_success
 
         # Test failed validation
-        invalid_user = ValidatingUser("invalid_user", should_fail=True)
+        invalid_user = ValidatingUser("invalid_user", should_fail=ValidationConfig.SHOULD_FAIL)
         result = repository.save(invalid_user)  # type: ignore[arg-type]
         assert result.is_failure
         assert "Validation failed" in result.error
 
     def test_find_by_id_exists(
         self,
-        repository: FlextLdapRepository[FlextLdapUser],
+        repository: FlextLdapRepository,
         sample_user: FlextLdapUser
     ) -> None:
         """Test finding existing entity by ID."""
@@ -83,7 +89,7 @@ class TestFlextLdapRepository:
 
     def test_find_by_id_not_exists(
         self,
-        repository: FlextLdapRepository[FlextLdapUser]
+        repository: FlextLdapRepository
     ) -> None:
         """Test finding non-existing entity by ID."""
         result = repository.find_by_id("nonexistent")
@@ -92,7 +98,7 @@ class TestFlextLdapRepository:
 
     def test_delete_exists(
         self,
-        repository: FlextLdapRepository[FlextLdapUser],
+        repository: FlextLdapRepository,
         sample_user: FlextLdapUser
     ) -> None:
         """Test deleting existing entity."""
@@ -104,7 +110,7 @@ class TestFlextLdapRepository:
 
     def test_delete_not_exists(
         self,
-        repository: FlextLdapRepository[FlextLdapUser]
+        repository: FlextLdapRepository
     ) -> None:
         """Test deleting non-existing entity."""
         result = repository.delete("nonexistent")
@@ -114,7 +120,7 @@ class TestFlextLdapRepository:
     @pytest.mark.asyncio
     async def test_find_where_match(
         self,
-        repository: FlextLdapRepository[FlextLdapUser],
+        repository: FlextLdapRepository,
         sample_user: FlextLdapUser
     ) -> None:
         """Test finding entities matching conditions."""
@@ -127,7 +133,7 @@ class TestFlextLdapRepository:
     @pytest.mark.asyncio
     async def test_find_where_no_match(
         self,
-        repository: FlextLdapRepository[FlextLdapUser],
+        repository: FlextLdapRepository,
         sample_user: FlextLdapUser
     ) -> None:
         """Test finding entities with no matches."""
@@ -139,7 +145,7 @@ class TestFlextLdapRepository:
     @pytest.mark.asyncio
     async def test_find_where_multiple_conditions(
         self,
-        repository: FlextLdapRepository[FlextLdapUser],
+        repository: FlextLdapRepository,
         sample_user: FlextLdapUser
     ) -> None:
         """Test finding entities with multiple conditions."""
@@ -156,7 +162,7 @@ class TestFlextLdapRepository:
     @pytest.mark.asyncio
     async def test_find_by_attribute(
         self,
-        repository: FlextLdapRepository[FlextLdapUser],
+        repository: FlextLdapRepository,
         sample_user: FlextLdapUser
     ) -> None:
         """Test finding entities by single attribute."""
@@ -169,7 +175,7 @@ class TestFlextLdapRepository:
     @pytest.mark.asyncio
     async def test_list_all_empty(
         self,
-        repository: FlextLdapRepository[FlextLdapUser]
+        repository: FlextLdapRepository
     ) -> None:
         """Test listing all entities when repository is empty."""
         results = await repository.list_all()
@@ -178,7 +184,7 @@ class TestFlextLdapRepository:
     @pytest.mark.asyncio
     async def test_list_all_with_data(
         self,
-        repository: FlextLdapRepository[FlextLdapUser],
+        repository: FlextLdapRepository,
         sample_user: FlextLdapUser
     ) -> None:
         """Test listing all entities with data."""
@@ -191,7 +197,7 @@ class TestFlextLdapRepository:
     @pytest.mark.asyncio
     async def test_list_all_with_pagination(
         self,
-        repository: FlextLdapRepository[FlextLdapUser]
+        repository: FlextLdapRepository
     ) -> None:
         """Test listing entities with pagination."""
         # Create multiple users
@@ -218,7 +224,7 @@ class TestFlextLdapRepository:
     @pytest.mark.asyncio
     async def test_count_empty(
         self,
-        repository: FlextLdapRepository[FlextLdapUser]
+        repository: FlextLdapRepository
     ) -> None:
         """Test counting entities in empty repository."""
         count = await repository.count()
@@ -227,7 +233,7 @@ class TestFlextLdapRepository:
     @pytest.mark.asyncio
     async def test_count_with_data(
         self,
-        repository: FlextLdapRepository[FlextLdapUser],
+        repository: FlextLdapRepository,
         sample_user: FlextLdapUser
     ) -> None:
         """Test counting entities with data."""
@@ -239,7 +245,7 @@ class TestFlextLdapRepository:
     @pytest.mark.asyncio
     async def test_count_with_conditions(
         self,
-        repository: FlextLdapRepository[FlextLdapUser]
+        repository: FlextLdapRepository
     ) -> None:
         """Test counting entities with filter conditions."""
         # Create multiple users
@@ -263,7 +269,7 @@ class TestFlextLdapRepository:
 
     def test_validate_entity_success(
         self,
-        repository: FlextLdapRepository[FlextLdapUser],
+        repository: FlextLdapRepository,
         sample_user: FlextLdapUser
     ) -> None:
         """Test entity validation success."""
@@ -272,12 +278,13 @@ class TestFlextLdapRepository:
 
     def test_validate_entity_with_validation_method(
         self,
-        repository: FlextLdapRepository[FlextLdapUser]
+        repository: FlextLdapRepository
     ) -> None:
         """Test entity validation with validation method."""
         class ValidatingEntity:
             def validate_domain_rules(self) -> None:
-                raise ValueError("Test validation error")
+                msg = "Test validation error"
+                raise ValueError(msg)
 
         entity = ValidatingEntity()
         result = repository._validate_entity(entity)  # type: ignore[arg-type]
@@ -286,7 +293,7 @@ class TestFlextLdapRepository:
 
     def test_multiple_users_operations(
         self,
-        repository: FlextLdapRepository[FlextLdapUser]
+        repository: FlextLdapRepository
     ) -> None:
         """Test operations with multiple users."""
         # Create and save multiple users
