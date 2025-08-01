@@ -13,6 +13,11 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from flext_core import FlextResult
+from flext_ldap.api import FlextLdapApi
+from flext_ldap.application.ldap_service import FlextLdapService
+from flext_ldap.config import FlextLdapConnectionConfig
+from flext_ldap.entities import FlextLdapEntry, FlextLdapUser
+from flext_ldap.values import FlextLdapCreateUserRequest
 
 
 # FBT smell elimination constants - SOLID DRY Principle
@@ -21,13 +26,6 @@ class TestLDAPOperationResult:
 
     SUCCESS = True
     FAILURE = False
-
-
-from flext_ldap.api import FlextLdapApi
-from flext_ldap.application.ldap_service import FlextLdapService
-from flext_ldap.config import FlextLdapConnectionConfig
-from flext_ldap.entities import FlextLdapEntry, FlextLdapUser
-from flext_ldap.values import FlextLdapCreateUserRequest
 
 
 @pytest.fixture

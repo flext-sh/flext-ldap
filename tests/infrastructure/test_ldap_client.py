@@ -10,7 +10,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from flext_core import FlextResult
-from flext_ldap.ldap_infrastructure import FlextLdapClient, FlextLdapConnectionConfig
+from flext_ldap.ldap_infrastructure import (
+    FlextLdapConnectionConfig,
+    FlextLdapSimpleClient,
+)
 
 
 # FBT smell elimination constants - SOLID DRY Principle
@@ -21,12 +24,12 @@ class TestOperationResult:
     FAILURE = False
 
 
-class TestFlextLdapClient:
+class TestFlextLdapSimpleClient:
     """Test suite for LDAP infrastructure client."""
 
     def test_init_default(self) -> None:
         """Test client initialization with default config."""
-        client = FlextLdapClient()
+        client = FlextLdapSimpleClient()
         assert client._current_connection is None
         assert client._connection_manager is not None
         assert client._converter is not None
@@ -39,12 +42,12 @@ class TestFlextLdapClient:
             bind_dn="cn=admin,dc=example,dc=com",
             password="admin",
         )
-        client = FlextLdapClient(config)
+        client = FlextLdapSimpleClient(config)
         assert client._config == config
 
     def test_is_connected_false(self) -> None:
         """Test is_connected returns False when not connected."""
-        client = FlextLdapClient()
+        client = FlextLdapSimpleClient()
         assert not client.is_connected()
 
     @pytest.mark.asyncio
@@ -57,8 +60,8 @@ class TestFlextLdapClient:
         )
 
         # Mock the connection manager to return success
-        with patch.object(FlextLdapClient, "__init__", return_value=None):
-            client = FlextLdapClient.__new__(FlextLdapClient)
+        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
+            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
             client._config = config
             client._connection_manager = MagicMock()
             client._converter = MagicMock()
@@ -84,8 +87,8 @@ class TestFlextLdapClient:
             use_ssl=False,
         )
 
-        with patch.object(FlextLdapClient, "__init__", return_value=None):
-            client = FlextLdapClient.__new__(FlextLdapClient)
+        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
+            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
             client._config = None
             client._connection_manager = MagicMock()
             client._converter = MagicMock()
@@ -103,7 +106,7 @@ class TestFlextLdapClient:
 
     def test_connect_no_config(self) -> None:
         """Test connect with no configuration."""
-        client = FlextLdapClient()
+        client = FlextLdapSimpleClient()
         result = client.connect()
 
         assert result.is_failure
@@ -112,8 +115,8 @@ class TestFlextLdapClient:
     @pytest.mark.asyncio
     async def test_search_success(self) -> None:
         """Test successful LDAP search."""
-        with patch.object(FlextLdapClient, "__init__", return_value=None):
-            client = FlextLdapClient.__new__(FlextLdapClient)
+        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
+            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
             client._converter = MagicMock()
 
             # Mock connected state
@@ -143,7 +146,7 @@ class TestFlextLdapClient:
     @pytest.mark.asyncio
     async def test_search_not_connected(self) -> None:
         """Test search when not connected."""
-        client = FlextLdapClient()
+        client = FlextLdapSimpleClient()
         result = await client.search("dc=example,dc=com", "(cn=test)")
 
         assert result.is_failure
@@ -152,8 +155,8 @@ class TestFlextLdapClient:
     @pytest.mark.asyncio
     async def test_search_failure(self) -> None:
         """Test search failure."""
-        with patch.object(FlextLdapClient, "__init__", return_value=None):
-            client = FlextLdapClient.__new__(FlextLdapClient)
+        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
+            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
 
             # Mock connected state with search failure
             mock_connection = MagicMock()
@@ -171,8 +174,8 @@ class TestFlextLdapClient:
     @pytest.mark.asyncio
     async def test_add_success(self) -> None:
         """Test successful LDAP add operation."""
-        with patch.object(FlextLdapClient, "__init__", return_value=None):
-            client = FlextLdapClient.__new__(FlextLdapClient)
+        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
+            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
             client._converter = MagicMock()
 
             # Mock connected state
@@ -196,7 +199,7 @@ class TestFlextLdapClient:
     @pytest.mark.asyncio
     async def test_add_not_connected(self) -> None:
         """Test add when not connected."""
-        client = FlextLdapClient()
+        client = FlextLdapSimpleClient()
         result = await client.add(
             "cn=test,dc=example,dc=com", ["person"], {"cn": "test"}
         )
@@ -207,8 +210,8 @@ class TestFlextLdapClient:
     @pytest.mark.asyncio
     async def test_modify_success(self) -> None:
         """Test successful LDAP modify operation."""
-        with patch.object(FlextLdapClient, "__init__", return_value=None):
-            client = FlextLdapClient.__new__(FlextLdapClient)
+        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
+            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
             client._converter = MagicMock()
 
             # Mock connected state
@@ -230,8 +233,8 @@ class TestFlextLdapClient:
     @pytest.mark.asyncio
     async def test_delete_success(self) -> None:
         """Test successful LDAP delete operation."""
-        with patch.object(FlextLdapClient, "__init__", return_value=None):
-            client = FlextLdapClient.__new__(FlextLdapClient)
+        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
+            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
 
             # Mock connected state
             mock_connection = MagicMock()
@@ -249,8 +252,8 @@ class TestFlextLdapClient:
     @pytest.mark.asyncio
     async def test_disconnect_success(self) -> None:
         """Test successful disconnect."""
-        with patch.object(FlextLdapClient, "__init__", return_value=None):
-            client = FlextLdapClient.__new__(FlextLdapClient)
+        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
+            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
             client._connection_manager = MagicMock()
 
             # Mock connected state
@@ -268,15 +271,15 @@ class TestFlextLdapClient:
 
     def test_disconnect_not_connected(self) -> None:
         """Test disconnect when not connected."""
-        client = FlextLdapClient()
+        client = FlextLdapSimpleClient()
         result = client.disconnect()
 
         assert result.is_success  # Should succeed even if not connected
 
     def test_is_connected_with_connection(self) -> None:
         """Test is_connected returns True when connected."""
-        with patch.object(FlextLdapClient, "__init__", return_value=None):
-            client = FlextLdapClient.__new__(FlextLdapClient)
+        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
+            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
 
             # Mock connected state
             mock_connection = MagicMock()
@@ -287,8 +290,8 @@ class TestFlextLdapClient:
 
     def test_is_connected_with_closed_connection(self) -> None:
         """Test is_connected returns False when connection is closed."""
-        with patch.object(FlextLdapClient, "__init__", return_value=None):
-            client = FlextLdapClient.__new__(FlextLdapClient)
+        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
+            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
 
             # Mock closed connection
             mock_connection = MagicMock()
@@ -341,7 +344,7 @@ class TestFactoryFunctions:
             "ldap://localhost", "cn=admin,dc=example,dc=com", "admin"
         )
 
-        assert isinstance(client, FlextLdapClient)
+        assert isinstance(client, FlextLdapSimpleClient)
         assert client._config is not None
         assert client._config.server_url == "ldap://localhost"
         assert client._config.bind_dn == "cn=admin,dc=example,dc=com"

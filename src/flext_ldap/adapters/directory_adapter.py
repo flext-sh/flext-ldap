@@ -18,7 +18,7 @@ from urllib.parse import urlparse
 from flext_core import FlextResult, get_logger
 
 from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
-from flext_ldap.ldap_infrastructure import FlextLdapClient as FlextLdapSimpleClient
+from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
 
 logger = get_logger(__name__)
 
@@ -397,9 +397,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             entries.append(entry)
             # Type-safe attribute count calculation
             attrs_obj = (
-                raw_entry.get("attributes", {})
-                if isinstance(raw_entry, dict)
-                else {}
+                raw_entry.get("attributes", {}) if isinstance(raw_entry, dict) else {}
             )
             attr_count = len(attrs_obj) if isinstance(attrs_obj, dict) else 0
 

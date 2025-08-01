@@ -93,7 +93,7 @@ class TestLDAPConnectionHandler:
 
     def test_test_connection_success(self) -> None:
         """Test successful connection test."""
-        with patch("flext_ldap.cli.FlextLdapClient") as mock_client_class:
+        with patch("flext_ldap.cli.FlextLdapSimpleClient") as mock_client_class:
             mock_client = mock_client_class.return_value
             # connect/disconnect are SYNCHRONOUS methods
             mock_client.connect.return_value = FlextResult.ok(
@@ -113,7 +113,7 @@ class TestLDAPConnectionHandler:
 
     def test_test_connection_failure(self) -> None:
         """Test connection test failure."""
-        with patch("flext_ldap.cli.FlextLdapClient") as mock_client_class:
+        with patch("flext_ldap.cli.FlextLdapSimpleClient") as mock_client_class:
             mock_client = mock_client_class.return_value
             # connect is SYNCHRONOUS method
             mock_client.connect.return_value = FlextResult.fail("Connection refused")
@@ -136,7 +136,7 @@ class TestLDAPSearchHandler:
             }
         ]
 
-        with patch("flext_ldap.cli.FlextLdapClient") as mock_client_class:
+        with patch("flext_ldap.cli.FlextLdapSimpleClient") as mock_client_class:
             mock_client = mock_client_class.return_value
             # connect/disconnect are SYNCHRONOUS, search is ASYNCHRONOUS
             mock_client.connect.return_value = FlextResult.ok(
@@ -160,7 +160,7 @@ class TestLDAPSearchHandler:
 
     def test_search_entries_connection_failure(self) -> None:
         """Test search entries with connection failure."""
-        with patch("flext_ldap.cli.FlextLdapClient") as mock_client_class:
+        with patch("flext_ldap.cli.FlextLdapSimpleClient") as mock_client_class:
             mock_client = mock_client_class.return_value
             # connect is SYNCHRONOUS method
             mock_client.connect.return_value = FlextResult.fail("Connection failed")
@@ -186,7 +186,7 @@ class TestLDAPUserHandler:
             "attributes": {"uid": ["john"], "cn": ["John Doe"], "sn": ["Doe"]},
         }
 
-        with patch("flext_ldap.cli.FlextLdapClient") as mock_client_class:
+        with patch("flext_ldap.cli.FlextLdapSimpleClient") as mock_client_class:
             mock_client = mock_client_class.return_value
             # connect/disconnect are SYNCHRONOUS, search is ASYNCHRONOUS
             mock_client.connect.return_value = FlextResult.ok(
@@ -206,7 +206,7 @@ class TestLDAPUserHandler:
 
     def test_get_user_info_not_found(self) -> None:
         """Test user info when user not found."""
-        with patch("flext_ldap.cli.FlextLdapClient") as mock_client_class:
+        with patch("flext_ldap.cli.FlextLdapSimpleClient") as mock_client_class:
             mock_client = mock_client_class.return_value
             # connect/disconnect are SYNCHRONOUS, search is ASYNCHRONOUS
             mock_client.connect.return_value = FlextResult.ok(
@@ -226,7 +226,7 @@ class TestLDAPUserHandler:
 
     def test_create_user_success(self) -> None:
         """Test successful user creation."""
-        with patch("flext_ldap.cli.FlextLdapClient") as mock_client_class:
+        with patch("flext_ldap.cli.FlextLdapSimpleClient") as mock_client_class:
             mock_client = mock_client_class.return_value
             # connect/disconnect are SYNCHRONOUS, add is ASYNCHRONOUS
             mock_client.connect.return_value = FlextResult.ok(
@@ -261,7 +261,7 @@ class TestLDAPUserHandler:
             },
         ]
 
-        with patch("flext_ldap.cli.FlextLdapClient") as mock_client_class:
+        with patch("flext_ldap.cli.FlextLdapSimpleClient") as mock_client_class:
             mock_client = mock_client_class.return_value
             # connect/disconnect are SYNCHRONOUS, search is ASYNCHRONOUS
             mock_client.connect.return_value = FlextResult.ok(

@@ -88,10 +88,9 @@ class OpenLDAPContainerManager:
             pass  # Container doesn't exist, nothing to stop
         except (RuntimeError, ValueError, TypeError):
             # Try to force remove by name if getting by ID fails
-            try:
+            from contextlib import suppress
+            with suppress(RuntimeError, ValueError, TypeError):
                 self.client.api.remove_container(OPENLDAP_CONTAINER_NAME, force=True)
-            except (RuntimeError, ValueError, TypeError):
-                pass  # If all else fails, continue
 
         self.container = None
 

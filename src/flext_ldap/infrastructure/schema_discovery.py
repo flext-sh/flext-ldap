@@ -1155,7 +1155,7 @@ class FlextLdapSchemaDiscoveryService:
                 object_class_type=oc_type,
                 description=(
                     f"Server-discovered object class: {names[0] if names else oid}"
-                )
+                ),
             )
 
         except Exception as parse_error:
@@ -1171,7 +1171,6 @@ class FlextLdapSchemaDiscoveryService:
     ) -> FlextLdapSchemaAttribute | None:
         """Parse a single attribute definition string."""
         try:
-
             # Extract OID
             oid_match = re.search(r"\(\s*([0-9.]+)", definition)
             if not oid_match:
@@ -1190,7 +1189,7 @@ class FlextLdapSchemaDiscoveryService:
                 oid=oid,
                 names=names,
                 syntax=syntax,
-                description=f"Server-discovered attribute: {names[0] if names else oid}"
+                description=f"Server-discovered attribute: {names[0] if names else oid}",
             )
 
         except Exception as parse_error:

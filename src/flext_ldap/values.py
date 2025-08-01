@@ -17,6 +17,16 @@ from pydantic import Field, field_validator
 
 logger = get_logger(__name__)
 
+# 🚀 CODE CONSOLIDATION: Use superior DN implementation from flext-ldif
+# This eliminates duplication and uses the better implementation
+_USE_CONSOLIDATED_DN = False
+try:
+    from flext_ldif.models import FlextLdifDistinguishedName as _FlextDN
+    _USE_CONSOLIDATED_DN = True
+    logger.debug("Successfully imported superior DN implementation from flext-ldif")
+except ImportError:
+    logger.debug("flext-ldif not available, using local DN implementation")
+
 
 class FlextLdapScopeEnum(StrEnum):
     """LDAP search scope enumeration."""
@@ -131,6 +141,13 @@ class FlextLdapDistinguishedName(FlextValueObject):
 
         """
         return self.value.lower().endswith(parent.value.lower())
+
+
+# 🚀 CODE CONSOLIDATION: Use better implementation when available
+if _USE_CONSOLIDATED_DN:
+    # Override local implementation with superior one from flext-ldif
+    FlextLdapDistinguishedName = _FlextDN  # type: ignore[misc]
+    logger.debug("Using consolidated DN implementation from flext-ldif")
 
 
 class FlextLdapFilterValue(FlextValueObject):

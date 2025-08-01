@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_core import FlextResult
 
 from flext_ldap.config import FlextLdapConnectionConfig
-from flext_ldap.ldap_infrastructure import FlextLdapClient
+from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
 
 
 class FlextLDAPConnectionManager:
@@ -28,7 +28,7 @@ class FlextLDAPConnectionManager:
         self.port = port
         self.use_ssl = use_ssl
 
-    async def create_connection(self) -> FlextResult[FlextLdapClient]:
+    async def create_connection(self) -> FlextResult[FlextLdapSimpleClient]:
         """Create a new LDAP connection.
 
         Returns:
@@ -44,9 +44,9 @@ class FlextLDAPConnectionManager:
                 use_ssl=self.use_ssl,
             )
 
-            client = FlextLdapClient(config)
+            client = FlextLdapSimpleClient(config)
 
-            # Test connection - FlextLdapClient.connect() is synchronous
+            # Test connection - FlextLdapSimpleClient.connect() is synchronous
             connect_result = client.connect()
             if not connect_result.is_success:
                 return FlextResult.fail(
@@ -57,7 +57,7 @@ class FlextLDAPConnectionManager:
         except (ValueError, TypeError, OSError) as e:
             return FlextResult.fail(f"Failed to create LDAP connection: {e}")
 
-    async def close_connection(self, connection: FlextLdapClient) -> FlextResult[None]:
+    async def close_connection(self, connection: FlextLdapSimpleClient) -> FlextResult[None]:
         """Close LDAP connection.
 
         Args:
@@ -68,7 +68,7 @@ class FlextLDAPConnectionManager:
 
         """
         try:
-            # FlextLdapClient.disconnect() is synchronous
+            # FlextLdapSimpleClient.disconnect() is synchronous
             disconnect_result = connection.disconnect()
             if not disconnect_result.is_success:
                 return FlextResult.fail(f"Disconnect failed: {disconnect_result.error}")
@@ -78,7 +78,7 @@ class FlextLDAPConnectionManager:
 
     async def validate_connection(
         self,
-        connection: FlextLdapClient,
+        connection: FlextLdapSimpleClient,
     ) -> FlextResult[bool]:
         """Validate LDAP connection is still active.
 

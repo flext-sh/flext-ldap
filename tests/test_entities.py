@@ -391,14 +391,15 @@ class TestFlextLdapOperation:
 
     def test_operation_domain_validation(self) -> None:
         """Test operation business rules."""
-        with pytest.raises(ValueError):
-            operation = FlextLdapOperation(
-                id=str(uuid4()),
-                operation_type="",  # Empty type should fail
-                target_dn="dc=example,dc=com",
-                connection_id=str(uuid4()),
-            )
-            operation.validate_domain_rules()
+        operation = FlextLdapOperation(
+            id=str(uuid4()),
+            operation_type="",  # Empty type should fail
+            target_dn="dc=example,dc=com",
+            connection_id=str(uuid4()),
+        )
+        result = operation.validate_domain_rules()
+        assert not result.is_success
+        assert "operation type" in result.error.lower()
 
 
 class TestEntityImmutability:

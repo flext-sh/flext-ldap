@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
     from flext_ldap.entities import FlextLdapConnection, FlextLdapUser
     from flext_ldap.ldap_infrastructure import (
-        FlextLdapClient as FlextLdapInfrastructureClient,
+        FlextLdapSimpleClient as FlextLdapInfrastructureClient,
     )
 
 logger = get_logger(__name__)
@@ -172,7 +172,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 base_dn="",  # Will use configured base DN
                 search_filter=search_filter,
                 attributes=["*"],  # Get all attributes
-                search_scope="subtree",
+                scope="subtree",
             )
 
             if search_result.is_success:
@@ -271,7 +271,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 base_dn="",  # Will use configured base DN
                 search_filter=search_filter,
                 attributes=["*"],
-                search_scope="subtree",
+                scope="subtree",
             )
 
             if search_result.is_success:
@@ -316,7 +316,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 base_dn=base_dn.value,
                 search_filter=filter_string.strip(),
                 attributes=attributes or ["*"],
-                search_scope="subtree",
+                scope="subtree",
             )
 
             if search_result.is_success:

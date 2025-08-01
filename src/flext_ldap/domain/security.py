@@ -162,9 +162,7 @@ class FlextLdapCertificateValidationContext(FlextEntity):
         if self.port <= 0 or self.port > FlextLdapSecurityConstants.MAX_PORT:
             min_port = FlextLdapSecurityConstants.MIN_PORT
             max_port = FlextLdapSecurityConstants.MAX_PORT
-            return FlextResult.fail(
-                f"Port must be between {min_port} and {max_port}"
-            )
+            return FlextResult.fail(f"Port must be between {min_port} and {max_port}")
         if self.minimum_tls_version not in {"TLSv1.2", "TLSv1.3"}:
             return FlextResult.fail("Minimum TLS version must be TLSv1.2 or TLSv1.3")
         if self.maximum_tls_version not in {"TLSv1.2", "TLSv1.3"}:
