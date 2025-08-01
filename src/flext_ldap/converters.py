@@ -56,7 +56,8 @@ class FlextSimpleConverter:
         """Initialize the simplified converter."""
 
     async def detect_type(
-        self, value: str | int | None,
+        self,
+        value: str | int | None,
     ) -> FlextResult[FlextLdapDataType]:
         """Detect LDAP data type from value (test compatibility)."""
         try:

@@ -138,7 +138,12 @@ class FlextLdapActiveUserSpecification(FlextLdapUserSpecification):
 class FlextLdapValidPasswordSpecification(FlextLdapSpecification[str]):
     """Specification for valid passwords."""
 
-    def __init__(self, min_length: int = 8, *, require_special_chars: bool = PasswordSpecialCharsRequirement.REQUIRED) -> None:
+    def __init__(
+        self,
+        min_length: int = 8,
+        *,
+        require_special_chars: bool = PasswordSpecialCharsRequirement.REQUIRED,
+    ) -> None:
         """Initialize password specification.
 
         Args:

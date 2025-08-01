@@ -36,10 +36,7 @@ async def demonstrate_configuration() -> None:
 
     # 1. Basic connection configuration
     connection_config = FlextLdapConnectionConfig(
-        server="ldap.example.com",
-        port=389,
-        use_ssl=False,
-        timeout_seconds=30
+        server="ldap.example.com", port=389, use_ssl=False, timeout_seconds=30
     )
 
     print(f"✅ Connection config: {connection_config.server}:{connection_config.port}")
@@ -48,7 +45,7 @@ async def demonstrate_configuration() -> None:
     auth_config = FlextLdapAuthConfig(
         bind_dn="cn=admin,dc=example,dc=com",
         bind_password="secret",
-        use_anonymous_bind=False
+        use_anonymous_bind=False,
     )
 
     print(f"✅ Auth config: {auth_config.bind_dn}")
@@ -88,7 +85,7 @@ async def demonstrate_api_usage() -> None:
             server_url="ldap://mock.example.com:389",
             bind_dn="cn=admin,dc=example,dc=com",
             password="secret",
-            session_id="demo_session"
+            session_id="demo_session",
         )
 
         if connection_result.is_success:
@@ -117,7 +114,7 @@ async def demonstrate_search_operations(api: FlextLdapApi) -> None:
             base_dn="dc=example,dc=com",
             filter_expr="(objectClass=person)",
             attributes=["cn", "mail", "uid"],
-            scope="subtree"
+            scope="subtree",
         )
 
         if search_result.is_success:
@@ -153,7 +150,7 @@ async def demonstrate_error_handling() -> None:
     invalid_auth = FlextLdapAuthConfig(
         bind_dn="cn=admin,dc=example,dc=com",
         bind_password="",  # Missing password
-        use_anonymous_bind=False
+        use_anonymous_bind=False,
     )
 
     auth_validation = invalid_auth.validate_domain_rules()
@@ -164,8 +161,7 @@ async def demonstrate_error_handling() -> None:
     api = FlextLdapApi()
     try:
         connection_result = await api.connect(
-            server_url="ldap://nonexistent.server:389",
-            session_id="error_test"
+            server_url="ldap://nonexistent.server:389", session_id="error_test"
         )
 
         if not connection_result.is_success:
@@ -182,22 +178,19 @@ async def demonstrate_logging_integration() -> None:
 
     # Enable TRACE logging for this demo
     import os
+
     os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
 
     logger.info("Starting logging demonstration")
 
     # Create configuration with logging
     logger.debug("Creating connection configuration")
-    config = FlextLdapConnectionConfig(
-        server="demo.example.com",
-        port=389
-    )
+    config = FlextLdapConnectionConfig(server="demo.example.com", port=389)
 
-    logger.debug("Configuration created successfully", extra={
-        "server": config.server,
-        "port": config.port,
-        "ssl": config.use_ssl
-    })
+    logger.debug(
+        "Configuration created successfully",
+        extra={"server": config.server, "port": config.port, "ssl": config.use_ssl},
+    )
 
     # Test validation with logging
     logger.debug("Testing configuration validation")
@@ -206,9 +199,7 @@ async def demonstrate_logging_integration() -> None:
     if result.is_success:
         logger.info("Configuration validation passed")
     else:
-        logger.error("Configuration validation failed", extra={
-            "error": result.error
-        })
+        logger.error("Configuration validation failed", extra={"error": result.error})
 
     print("✅ Check console output for structured logging")
 

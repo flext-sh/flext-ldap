@@ -103,7 +103,9 @@ class FlextLdapErrorPattern:
     ) -> FlextLdapErrorPattern:
         """Factory method for common error pattern creation."""
         data = FlextLdapErrorPatternData(
-            error_signature=error_signature, category=category, severity=severity,
+            error_signature=error_signature,
+            category=category,
+            severity=severity,
         )
         return cls(data)
 
@@ -170,7 +172,9 @@ class FlextLdapErrorEvent:
     ) -> FlextLdapErrorEvent:
         """Factory method for common error event creation."""
         data = FlextLdapErrorEventData(
-            error_message=error_message, category=category, severity=severity,
+            error_message=error_message,
+            category=category,
+            severity=severity,
         )
         return cls(data)
 
@@ -257,7 +261,8 @@ class FlextLdapErrorCorrelationService:
         logger.info("Error correlation service initialized")
 
     async def record_error(
-        self, event_data: FlextLdapErrorEventData,
+        self,
+        event_data: FlextLdapErrorEventData,
     ) -> FlextResult[FlextLdapErrorEvent]:
         """Record an error event using Parameter Object pattern."""
         try:
@@ -355,7 +360,10 @@ class FlextLdapErrorCorrelationService:
             significant_correlations = []
             for other_event in correlated_events:
                 correlation_score = self._calculate_correlation(event, other_event)
-                if correlation_score > FlextLdapErrorCorrelationConstants.SIGNIFICANT_CORRELATION_THRESHOLD:
+                if (
+                    correlation_score
+                    > FlextLdapErrorCorrelationConstants.SIGNIFICANT_CORRELATION_THRESHOLD
+                ):
                     significant_correlations.append(other_event)
 
             return FlextResult.ok(significant_correlations)
@@ -469,7 +477,10 @@ class FlextLdapErrorCorrelationService:
 
         for other_event in recent_events:
             correlation = self._calculate_correlation(event, other_event)
-            if correlation > FlextLdapErrorCorrelationConstants.MINIMUM_CORRELATION_THRESHOLD:
+            if (
+                correlation
+                > FlextLdapErrorCorrelationConstants.MINIMUM_CORRELATION_THRESHOLD
+            ):
                 total_correlation += correlation
                 correlation_count += 1
 

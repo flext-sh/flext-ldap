@@ -21,12 +21,14 @@ from flext_ldap.cli import (
 # FBT smell elimination constants for tests - SOLID DRY Principle
 class TestConnectionResult:
     """Test connection result constants - eliminates FBT003 positional booleans."""
+
     SUCCESS = True
     FAILURE = False
 
 
 class TestOperationResult:
     """Test operation result constants - eliminates FBT003 positional booleans."""
+
     SUCCESS = True
     FAILURE = False
 
@@ -67,6 +69,7 @@ class TestCLI:
         """Test main function calls cli."""
         with patch("flext_ldap.cli.cli") as mock_cli:
             from flext_ldap.cli import main
+
             main()
             mock_cli.assert_called_once()
 
@@ -93,14 +96,20 @@ class TestLDAPConnectionHandler:
         with patch("flext_ldap.cli.FlextLdapClient") as mock_client_class:
             mock_client = mock_client_class.return_value
             # connect/disconnect are SYNCHRONOUS methods
-            mock_client.connect.return_value = FlextResult.ok(TestConnectionResult.SUCCESS)
-            mock_client.disconnect.return_value = FlextResult.ok(TestConnectionResult.SUCCESS)
+            mock_client.connect.return_value = FlextResult.ok(
+                TestConnectionResult.SUCCESS
+            )
+            mock_client.disconnect.return_value = FlextResult.ok(
+                TestConnectionResult.SUCCESS
+            )
             mock_client.is_connected.return_value = TestConnectionResult.SUCCESS
 
             result = LDAPConnectionHandler.test_connection("ldap.example.com", 389)
 
             assert result.is_success
-            assert "Successfully connected to ldap://ldap.example.com:389" in result.data
+            assert (
+                "Successfully connected to ldap://ldap.example.com:389" in result.data
+            )
 
     def test_test_connection_failure(self) -> None:
         """Test connection test failure."""
@@ -121,20 +130,27 @@ class TestLDAPSearchHandler:
     def test_search_entries_success(self) -> None:
         """Test successful search entries."""
         mock_entries = [
-            {"dn": "cn=user1,dc=example,dc=com", "attributes": {"cn": ["user1"], "objectClass": ["person"]}}
+            {
+                "dn": "cn=user1,dc=example,dc=com",
+                "attributes": {"cn": ["user1"], "objectClass": ["person"]},
+            }
         ]
 
         with patch("flext_ldap.cli.FlextLdapClient") as mock_client_class:
             mock_client = mock_client_class.return_value
             # connect/disconnect are SYNCHRONOUS, search is ASYNCHRONOUS
-            mock_client.connect.return_value = FlextResult.ok(TestConnectionResult.SUCCESS)
+            mock_client.connect.return_value = FlextResult.ok(
+                TestConnectionResult.SUCCESS
+            )
             mock_client.search = AsyncMock(return_value=FlextResult.ok(mock_entries))
-            mock_client.disconnect.return_value = FlextResult.ok(TestConnectionResult.SUCCESS)
+            mock_client.disconnect.return_value = FlextResult.ok(
+                TestConnectionResult.SUCCESS
+            )
 
             from flext_ldap.cli import LDAPSearchParams
+
             params = LDAPSearchParams(
-                server="ldap.example.com",
-                base_dn="dc=example,dc=com"
+                server="ldap.example.com", base_dn="dc=example,dc=com"
             )
             result = LDAPSearchHandler.search_entries(params)
 
@@ -150,9 +166,9 @@ class TestLDAPSearchHandler:
             mock_client.connect.return_value = FlextResult.fail("Connection failed")
 
             from flext_ldap.cli import LDAPSearchParams
+
             params = LDAPSearchParams(
-                server="invalid.example.com",
-                base_dn="dc=example,dc=com"
+                server="invalid.example.com", base_dn="dc=example,dc=com"
             )
             result = LDAPSearchHandler.search_entries(params)
 
@@ -167,15 +183,21 @@ class TestLDAPUserHandler:
         """Test successful user info retrieval."""
         mock_user_data = {
             "dn": "cn=john,dc=example,dc=com",
-            "attributes": {"uid": ["john"], "cn": ["John Doe"], "sn": ["Doe"]}
+            "attributes": {"uid": ["john"], "cn": ["John Doe"], "sn": ["Doe"]},
         }
 
         with patch("flext_ldap.cli.FlextLdapClient") as mock_client_class:
             mock_client = mock_client_class.return_value
             # connect/disconnect are SYNCHRONOUS, search is ASYNCHRONOUS
-            mock_client.connect.return_value = FlextResult.ok(TestConnectionResult.SUCCESS)
-            mock_client.search = AsyncMock(return_value=FlextResult.ok([mock_user_data]))
-            mock_client.disconnect.return_value = FlextResult.ok(TestConnectionResult.SUCCESS)
+            mock_client.connect.return_value = FlextResult.ok(
+                TestConnectionResult.SUCCESS
+            )
+            mock_client.search = AsyncMock(
+                return_value=FlextResult.ok([mock_user_data])
+            )
+            mock_client.disconnect.return_value = FlextResult.ok(
+                TestConnectionResult.SUCCESS
+            )
 
             result = LDAPUserHandler.get_user_info("john")
 
@@ -187,9 +209,15 @@ class TestLDAPUserHandler:
         with patch("flext_ldap.cli.FlextLdapClient") as mock_client_class:
             mock_client = mock_client_class.return_value
             # connect/disconnect are SYNCHRONOUS, search is ASYNCHRONOUS
-            mock_client.connect.return_value = FlextResult.ok(TestConnectionResult.SUCCESS)
-            mock_client.search = AsyncMock(return_value=FlextResult.ok([]))  # Empty results
-            mock_client.disconnect.return_value = FlextResult.ok(TestConnectionResult.SUCCESS)
+            mock_client.connect.return_value = FlextResult.ok(
+                TestConnectionResult.SUCCESS
+            )
+            mock_client.search = AsyncMock(
+                return_value=FlextResult.ok([])
+            )  # Empty results
+            mock_client.disconnect.return_value = FlextResult.ok(
+                TestConnectionResult.SUCCESS
+            )
 
             result = LDAPUserHandler.get_user_info("nonexistent")
 
@@ -201,16 +229,19 @@ class TestLDAPUserHandler:
         with patch("flext_ldap.cli.FlextLdapClient") as mock_client_class:
             mock_client = mock_client_class.return_value
             # connect/disconnect are SYNCHRONOUS, add is ASYNCHRONOUS
-            mock_client.connect.return_value = FlextResult.ok(TestConnectionResult.SUCCESS)
-            mock_client.add = AsyncMock(return_value=FlextResult.ok(TestOperationResult.SUCCESS))
-            mock_client.disconnect.return_value = FlextResult.ok(TestConnectionResult.SUCCESS)
+            mock_client.connect.return_value = FlextResult.ok(
+                TestConnectionResult.SUCCESS
+            )
+            mock_client.add = AsyncMock(
+                return_value=FlextResult.ok(TestOperationResult.SUCCESS)
+            )
+            mock_client.disconnect.return_value = FlextResult.ok(
+                TestConnectionResult.SUCCESS
+            )
 
             from flext_ldap.cli import LDAPUserParams
-            params = LDAPUserParams(
-                uid="john",
-                cn="John Doe",
-                sn="Doe"
-            )
+
+            params = LDAPUserParams(uid="john", cn="John Doe", sn="Doe")
             result = LDAPUserHandler.create_user(params)
 
             assert result.is_success
@@ -220,16 +251,26 @@ class TestLDAPUserHandler:
     def test_list_users_success(self) -> None:
         """Test successful user listing."""
         mock_users = [
-            {"dn": "cn=john,dc=example,dc=com", "attributes": {"uid": ["john"], "cn": ["John Doe"], "sn": ["Doe"]}},
-            {"dn": "cn=jane,dc=example,dc=com", "attributes": {"uid": ["jane"], "cn": ["Jane Smith"], "sn": ["Smith"]}}
+            {
+                "dn": "cn=john,dc=example,dc=com",
+                "attributes": {"uid": ["john"], "cn": ["John Doe"], "sn": ["Doe"]},
+            },
+            {
+                "dn": "cn=jane,dc=example,dc=com",
+                "attributes": {"uid": ["jane"], "cn": ["Jane Smith"], "sn": ["Smith"]},
+            },
         ]
 
         with patch("flext_ldap.cli.FlextLdapClient") as mock_client_class:
             mock_client = mock_client_class.return_value
             # connect/disconnect are SYNCHRONOUS, search is ASYNCHRONOUS
-            mock_client.connect.return_value = FlextResult.ok(TestConnectionResult.SUCCESS)
+            mock_client.connect.return_value = FlextResult.ok(
+                TestConnectionResult.SUCCESS
+            )
             mock_client.search = AsyncMock(return_value=FlextResult.ok(mock_users))
-            mock_client.disconnect.return_value = FlextResult.ok(TestConnectionResult.SUCCESS)
+            mock_client.disconnect.return_value = FlextResult.ok(
+                TestConnectionResult.SUCCESS
+            )
 
             result = LDAPUserHandler.list_users()
 

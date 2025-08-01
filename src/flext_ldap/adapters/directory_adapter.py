@@ -147,21 +147,26 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
         except (ConnectionError, OSError) as e:
             logger.exception(
-                "Directory connection error", extra={"server_url": server_url},
+                "Directory connection error",
+                extra={"server_url": server_url},
             )
             return FlextResult.fail(f"Connection error: {e}")
         except ValueError as e:
             logger.exception(
-                "Directory configuration error", extra={"server_url": server_url},
+                "Directory configuration error",
+                extra={"server_url": server_url},
             )
             return FlextResult.fail(f"Configuration error: {e}")
         except Exception as e:
             logger.exception(
-                "Unexpected directory connection error", extra={"server_url": server_url},
+                "Unexpected directory connection error",
+                extra={"server_url": server_url},
             )
             return FlextResult.fail(f"Unexpected error: {e}")
 
-    def _create_connection_config(self, server_url: str) -> FlextResult[FlextLdapConnectionConfig]:
+    def _create_connection_config(
+        self, server_url: str
+    ) -> FlextResult[FlextLdapConnectionConfig]:
         """Create connection configuration from server URL - Single Responsibility."""
         parsed = urlparse(server_url)
         host = parsed.hostname or "localhost"
@@ -186,7 +191,9 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         logger.trace("Created connection config", extra={"config": config.__dict__})
         return FlextResult.ok(config)
 
-    def _establish_ldap_connection(self, config: FlextLdapConnectionConfig) -> FlextResult[bool]:
+    def _establish_ldap_connection(
+        self, config: FlextLdapConnectionConfig
+    ) -> FlextResult[bool]:
         """Establish LDAP connection using config - Single Responsibility."""
         self._ldap_client = FlextLdapSimpleClient(config)
         logger.debug("Created new LDAP client with config")
@@ -207,7 +214,9 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         logger.debug("LDAP connection established successfully")
         return FlextResult.ok(DirectoryOperationResult.SUCCESS)
 
-    def _handle_authentication(self, bind_dn: str | None, password: str | None) -> FlextResult[bool]:
+    def _handle_authentication(
+        self, bind_dn: str | None, password: str | None
+    ) -> FlextResult[bool]:
         """Handle authentication if credentials provided - Single Responsibility."""
         if not (bind_dn and password):
             return FlextResult.ok(DirectoryOperationResult.SUCCESS)  # No auth needed
@@ -233,7 +242,9 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                         "Authentication failed",
                         extra={"bind_dn": bind_dn, "error": auth_result.error},
                     )
-                    return FlextResult.fail(f"Authentication failed: {auth_result.error}")
+                    return FlextResult.fail(
+                        f"Authentication failed: {auth_result.error}"
+                    )
                 logger.debug("Authentication successful")
         except RuntimeError:
             logger.trace("No event loop available, storing auth config")
@@ -292,7 +303,9 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                         future = executor.submit(
                             asyncio.run,
                             self._ldap_client.search(
-                                actual_base_dn, search_filter, actual_attributes,
+                                actual_base_dn,
+                                search_filter,
+                                actual_attributes,
                             ),
                         )
                         search_result = future.result(timeout=30)
@@ -300,7 +313,9 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                     logger.trace("Using event loop for search")
                     search_result = loop.run_until_complete(
                         self._ldap_client.search(
-                            actual_base_dn, search_filter, actual_attributes,
+                            actual_base_dn,
+                            search_filter,
+                            actual_attributes,
                         ),
                     )
             except RuntimeError:
@@ -308,7 +323,9 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 # No event loop, create new one
                 search_result = asyncio.run(
                     self._ldap_client.search(
-                        actual_base_dn, search_filter, actual_attributes,
+                        actual_base_dn,
+                        search_filter,
+                        actual_attributes,
                     ),
                 )
 
@@ -326,7 +343,9 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             logger.debug(
                 "User search completed successfully",
                 extra={
-                    "result_count": len(search_result.data) if search_result.data else 0,
+                    "result_count": len(search_result.data)
+                    if search_result.data
+                    else 0,
                 },
             )
 
@@ -430,14 +449,18 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                         future = executor.submit(
                             asyncio.run,
                             self._ldap_client.search(
-                                base_dn, search_filter, actual_attributes,
+                                base_dn,
+                                search_filter,
+                                actual_attributes,
                             ),
                         )
                         search_result = future.result(timeout=30)
                 else:
                     search_result = loop.run_until_complete(
                         self._ldap_client.search(
-                            base_dn, search_filter, actual_attributes,
+                            base_dn,
+                            search_filter,
+                            actual_attributes,
                         ),
                     )
             except RuntimeError:
@@ -492,7 +515,10 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
             # Execute REAL add with REAL parameters
             add_result = self._execute_async_operation(
-                self._ldap_client.add, dn, object_classes, clean_attributes,
+                self._ldap_client.add,
+                dn,
+                object_classes,
+                clean_attributes,
             )
 
             if hasattr(add_result, "is_success") and not add_result.is_success:
@@ -509,7 +535,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             return FlextResult.fail(f"Add entry parameter error: {e}")
 
     def _extract_object_classes(
-        self, attributes: dict[str, object],
+        self,
+        attributes: dict[str, object],
     ) -> tuple[list[str], dict[str, object]]:
         """Extract objectClass from attributes following SOLID Single Responsibility.
 
@@ -576,7 +603,9 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             # REALMENTE usar os parâmetros dn e changes!
             # Execute REAL modify with REAL parameters using DRY helper
             modify_result = self._execute_async_operation(
-                self._ldap_client.modify, dn, changes,
+                self._ldap_client.modify,
+                dn,
+                changes,
             )
 
             if hasattr(modify_result, "is_success") and not modify_result.is_success:

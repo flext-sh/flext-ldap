@@ -54,7 +54,7 @@ async def _demo_create_primary_user(service: FlextLdapService) -> None:
         uid="johndoe",
         cn="John Doe",
         sn="Doe",
-        mail="john.doe@example.com"
+        mail="john.doe@example.com",
     )
 
     create_result = await service.create_user(user_request)
@@ -116,14 +116,9 @@ async def _demo_create_additional_users(service: FlextLdapService) -> None:
             "uid": "alice",
             "cn": "Alice Smith",
             "sn": "Smith",
-            "mail": "alice@example.com"
+            "mail": "alice@example.com",
         },
-        {
-            "uid": "bob",
-            "cn": "Bob Johnson",
-            "sn": "Johnson",
-            "mail": "bob@example.com"
-        },
+        {"uid": "bob", "cn": "Bob Johnson", "sn": "Johnson", "mail": "bob@example.com"},
     ]
 
     for user_data in additional_users:
@@ -132,7 +127,7 @@ async def _demo_create_additional_users(service: FlextLdapService) -> None:
             uid=user_data["uid"],
             cn=user_data["cn"],
             sn=user_data["sn"],
-            mail=user_data["mail"]
+            mail=user_data["mail"],
         )
 
         result = await service.create_user(user_req)
@@ -177,9 +172,7 @@ async def demonstrate_connection_handling() -> None:
     # Test connection to non-existent server (will fail gracefully)
     print("1. Testing connection to non-existent LDAP server...")
     result = await service.connect(
-        "ldap://localhost:3389",
-        "cn=admin,dc=example,dc=com",
-        "admin"
+        "ldap://localhost:3389", "cn=admin,dc=example,dc=com", "admin"
     )
 
     if result.is_failure:
@@ -198,7 +191,7 @@ async def demonstrate_connection_handling() -> None:
         dn="cn=testuser,ou=users,dc=example,dc=com",
         uid="testuser",
         cn="Test User",
-        sn="User"
+        sn="User",
     )
 
     create_result = await service.create_user(user_request)

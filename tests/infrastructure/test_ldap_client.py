@@ -16,6 +16,7 @@ from flext_ldap.ldap_infrastructure import FlextLdapClient, FlextLdapConnectionC
 # FBT smell elimination constants - SOLID DRY Principle
 class TestOperationResult:
     """Test operation result constants - eliminates FBT003 positional booleans."""
+
     SUCCESS = True
     FAILURE = False
 
@@ -36,7 +37,7 @@ class TestFlextLdapClient:
         config = FlextLdapConnectionConfig(
             server_url="ldap://localhost",
             bind_dn="cn=admin,dc=example,dc=com",
-            password="admin"
+            password="admin",
         )
         client = FlextLdapClient(config)
         assert client._config == config
@@ -52,7 +53,7 @@ class TestFlextLdapClient:
         config = FlextLdapConnectionConfig(
             server_url="ldap://localhost",
             bind_dn="cn=admin,dc=example,dc=com",
-            password="admin"
+            password="admin",
         )
 
         # Mock the connection manager to return success
@@ -81,7 +82,7 @@ class TestFlextLdapClient:
         config = FlextLdapConnectionConfig(
             server_url="ldap://invalid",
             bind_dn="cn=admin,dc=example,dc=com",
-            password="wrong"
+            password="wrong",
         )
 
         with patch.object(FlextLdapClient, "__init__", return_value=None):
@@ -124,7 +125,10 @@ class TestFlextLdapClient:
             # Mock search results
             mock_entry = MagicMock()
             mock_entry.entry_dn = "cn=test,dc=example,dc=com"
-            mock_entry.entry_attributes_as_dict = {"cn": ["test"], "mail": ["test@example.com"]}
+            mock_entry.entry_attributes_as_dict = {
+                "cn": ["test"],
+                "mail": ["test@example.com"],
+            }
             mock_connection.entries = [mock_entry]
             mock_connection.result = None
 
@@ -184,7 +188,7 @@ class TestFlextLdapClient:
             result = await client.add(
                 "cn=test,dc=example,dc=com",
                 ["person", "inetOrgPerson"],
-                {"cn": "test", "sn": "user"}
+                {"cn": "test", "sn": "user"},
             )
 
             assert result.is_success
@@ -195,9 +199,7 @@ class TestFlextLdapClient:
         """Test add when not connected."""
         client = FlextLdapClient()
         result = await client.add(
-            "cn=test,dc=example,dc=com",
-            ["person"],
-            {"cn": "test"}
+            "cn=test,dc=example,dc=com", ["person"], {"cn": "test"}
         )
 
         assert result.is_failure
@@ -220,8 +222,7 @@ class TestFlextLdapClient:
             client._converter.to_ldap.side_effect = str
 
             result = await client.modify(
-                "cn=test,dc=example,dc=com",
-                {"mail": "newemail@example.com"}
+                "cn=test,dc=example,dc=com", {"mail": "newemail@example.com"}
             )
 
             assert result.is_success
@@ -320,7 +321,7 @@ class TestFlextLdapConnectionConfig:
             port=636,
             use_ssl=True,
             timeout_seconds=30,
-            pool_size=10
+            pool_size=10,
         )
 
         assert config.server == "secure.example.com"
@@ -338,9 +339,7 @@ class TestFactoryFunctions:
         from flext_ldap.ldap_infrastructure import create_ldap_client
 
         client = create_ldap_client(
-            "ldap://localhost",
-            "cn=admin,dc=example,dc=com",
-            "admin"
+            "ldap://localhost", "cn=admin,dc=example,dc=com", "admin"
         )
 
         assert isinstance(client, FlextLdapClient)

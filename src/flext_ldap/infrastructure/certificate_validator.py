@@ -86,7 +86,8 @@ class FlextLdapCertificateValidationService:
         # Validate hostname if requested - Single Responsibility
         if context.verify_hostname:
             hostname_result = await self._validate_hostname_requirement(
-                certificates[0], context,
+                certificates[0],
+                context,
             )
             if hostname_result.is_failure:
                 return hostname_result
@@ -118,11 +119,14 @@ class FlextLdapCertificateValidationService:
                 cert = x509.load_der_x509_certificate(cert_data)
                 certificates.append(cert)
             except (ValueError, TypeError, OSError) as e:
-                return self._create_malformed_result(f"Failed to parse certificate: {e}")
+                return self._create_malformed_result(
+                    f"Failed to parse certificate: {e}"
+                )
         return FlextResult.ok(certificates)
 
     def _validate_certificate_expiry(
-        self, certificates: list[x509.Certificate],
+        self,
+        certificates: list[x509.Certificate],
     ) -> FlextResult[object]:
         """Validate certificate expiry dates - Single Responsibility."""
         now = datetime.now(UTC)
@@ -149,7 +153,9 @@ class FlextLdapCertificateValidationService:
         return FlextResult.ok(None)  # Success - no expiry issues
 
     async def _validate_hostname_requirement(
-        self, leaf_cert: x509.Certificate, context: CertificateValidationContext,
+        self,
+        leaf_cert: x509.Certificate,
+        context: CertificateValidationContext,
     ) -> FlextResult[object]:
         """Validate hostname requirement - Single Responsibility."""
         cert_info_result = await self._extract_certificate_info(leaf_cert)
@@ -170,7 +176,8 @@ class FlextLdapCertificateValidationService:
         return FlextResult.ok(None)  # Success - hostname validated
 
     def _validate_chain_structure(
-        self, certificates: list[x509.Certificate],
+        self,
+        certificates: list[x509.Certificate],
     ) -> FlextResult[object]:
         """Validate certificate chain structure - Single Responsibility."""
         try:
@@ -182,7 +189,9 @@ class FlextLdapCertificateValidationService:
             # Check that each certificate in the chain can be parsed
             for i, cert in enumerate(certificates):
                 logger.debug(
-                    "Certificate %d: Subject=%s", i, cert.subject.rfc4514_string(),
+                    "Certificate %d: Subject=%s",
+                    i,
+                    cert.subject.rfc4514_string(),
                 )
 
             return FlextResult.ok(None)  # Success - basic validation passed
@@ -197,7 +206,8 @@ class FlextLdapCertificateValidationService:
             )
 
     async def _create_validation_success_result(
-        self, leaf_cert: x509.Certificate,
+        self,
+        leaf_cert: x509.Certificate,
     ) -> FlextResult[object]:
         """Create successful validation result - Single Responsibility."""
         cert_info_result = await self._extract_certificate_info(leaf_cert)
@@ -322,7 +332,9 @@ class FlextLdapCertificateValidationService:
             return FlextResult.fail(f"Failed to create SSL context: {e}")
 
     def _configure_ssl_verification(
-        self, context: ssl.SSLContext, config: SSLContextConfig,
+        self,
+        context: ssl.SSLContext,
+        config: SSLContextConfig,
     ) -> None:
         """Configure SSL verification settings - Single Responsibility."""
         context.check_hostname = config.check_hostname
@@ -335,7 +347,9 @@ class FlextLdapCertificateValidationService:
             context.verify_mode = ssl.CERT_REQUIRED
 
     def _configure_tls_versions(
-        self, context: ssl.SSLContext, config: SSLContextConfig,
+        self,
+        context: ssl.SSLContext,
+        config: SSLContextConfig,
     ) -> None:
         """Configure TLS version constraints - Single Responsibility."""
         if config.minimum_version == "TLSv1.2":
@@ -349,7 +363,9 @@ class FlextLdapCertificateValidationService:
             context.maximum_version = ssl.TLSVersion.TLSv1_3
 
     async def _load_ca_certificates(
-        self, context: ssl.SSLContext, config: SSLContextConfig,
+        self,
+        context: ssl.SSLContext,
+        config: SSLContextConfig,
     ) -> FlextResult[object]:
         """Load CA certificates - Single Responsibility."""
         # Load CA certificate file
@@ -359,7 +375,8 @@ class FlextLdapCertificateValidationService:
         # Load CA certificate data from bytes
         if config.ca_cert_data:
             ca_data_result = await self._load_ca_certificate_data(
-                context, config.ca_cert_data,
+                context,
+                config.ca_cert_data,
             )
             if ca_data_result.is_failure:
                 return ca_data_result
@@ -367,7 +384,9 @@ class FlextLdapCertificateValidationService:
         return FlextResult.ok(None)  # Success
 
     async def _load_ca_certificate_data(
-        self, context: ssl.SSLContext, ca_cert_data: bytes,
+        self,
+        context: ssl.SSLContext,
+        ca_cert_data: bytes,
     ) -> FlextResult[object]:
         """Load CA certificate data from bytes - Single Responsibility."""
         try:
@@ -391,14 +410,18 @@ class FlextLdapCertificateValidationService:
             return FlextResult.fail(f"Invalid CA certificate data: {e}")
 
     def _load_client_certificates(
-        self, context: ssl.SSLContext, config: SSLContextConfig,
+        self,
+        context: ssl.SSLContext,
+        config: SSLContextConfig,
     ) -> None:
         """Load client certificates - Single Responsibility."""
         if config.client_cert_file and config.client_key_file:
             context.load_cert_chain(config.client_cert_file, config.client_key_file)
 
     def _configure_cipher_suites(
-        self, context: ssl.SSLContext, config: SSLContextConfig,
+        self,
+        context: ssl.SSLContext,
+        config: SSLContextConfig,
     ) -> None:
         """Configure cipher suites - Single Responsibility."""
         if config.ciphers:

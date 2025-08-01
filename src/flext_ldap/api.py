@@ -78,7 +78,9 @@ class FlextLdapApi:
 
             # Create connection config
             conn_config = FlextLdapConnectionConfig(
-                server=host, port=port, use_ssl=use_ssl,
+                server=host,
+                port=port,
+                use_ssl=use_ssl,
             )
 
             # Create client with config
@@ -92,7 +94,8 @@ class FlextLdapApi:
             # Authenticate if credentials provided
             if bind_dn and password:
                 auth_config = FlextLdapAuthConfig(
-                    bind_dn=bind_dn, bind_password=password,
+                    bind_dn=bind_dn,
+                    bind_password=password,
                 )
                 auth_result = await self._client.connect_with_auth(auth_config)
                 if not auth_result.is_success:
@@ -230,7 +233,8 @@ class FlextLdapApi:
             return FlextResult.fail(f"Search error: {e}")
 
     def _build_user_attributes(
-        self, user_request: FlextLdapCreateUserRequest,
+        self,
+        user_request: FlextLdapCreateUserRequest,
     ) -> dict[str, object]:
         """Build LDAP attributes from user request."""
         attributes: dict[str, object] = {
@@ -252,7 +256,8 @@ class FlextLdapApi:
         return attributes
 
     def _format_attributes_for_entity(
-        self, attributes: dict[str, object],
+        self,
+        attributes: dict[str, object],
     ) -> dict[str, str]:
         """Format attributes for domain entity creation."""
         formatted_attrs: dict[str, str] = {}
