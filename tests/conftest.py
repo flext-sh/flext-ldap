@@ -209,6 +209,29 @@ def ldap_test_config(docker_openldap_container: Container) -> dict[str, Any]:
     }
 
 
+async def _cleanup_ldap_entries_under_dn(
+    client: FlextLdapSimpleClient, connection_id: str, dn: str
+) -> None:
+    """Helper function to cleanup LDAP entries under a DN - reduces nested control flow."""
+    # Try to delete all entries under the specified DN
+    search_result = await client.search(
+        connection_id,
+        dn,
+        "(objectClass=*)",
+        scope="subtree",
+    )
+
+    # Early return if search failed or no data
+    if not search_result.is_success or not search_result.data:
+        return
+
+    # Delete entries (except the OU itself)
+    for entry in search_result.data:
+        entry_dn = entry.get("dn", "")
+        if entry_dn and entry_dn != dn:
+            await client.delete_entry(connection_id, entry_dn)
+
+
 @pytest.fixture
 async def clean_ldap_container(ldap_test_config: dict[str, Any]) -> dict[str, Any]:
     """Provides a clean LDAP container by removing test entries.
@@ -237,20 +260,7 @@ async def clean_ldap_container(ldap_test_config: dict[str, Any]) -> dict[str, An
             ]
 
             for dn in test_dns:
-                # Try to delete all entries under test OUs
-                search_result = await client.search(
-                    connection_id,
-                    dn,
-                    "(objectClass=*)",
-                    scope="subtree",
-                )
-
-                if search_result.is_success and search_result.data:
-                    # Delete entries (except the OU itself)
-                    for entry in search_result.data:
-                        entry_dn = entry.get("dn", "")
-                        if entry_dn and entry_dn != dn:
-                            await client.delete_entry(connection_id, entry_dn)
+                await _cleanup_ldap_entries_under_dn(client, connection_id, dn)
 
         finally:
             await client.disconnect(connection_id)

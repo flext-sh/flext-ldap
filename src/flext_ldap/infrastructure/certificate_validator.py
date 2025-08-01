@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import socket
 import ssl
+import tempfile
 from datetime import UTC, datetime
 from ssl import SSLError
 from typing import TYPE_CHECKING, cast as type_cast
@@ -67,23 +68,51 @@ class FlextLdapCertificateValidationService:
         cert_chain: list[bytes],
         context: CertificateValidationContext,
     ) -> FlextResult[object]:
-        """Execute validation pipeline with consolidated error handling - Single Responsibility."""
-        # Validate input - Single Responsibility
-        if not cert_chain:
-            return self._create_malformed_result("Empty certificate chain provided")
+        """Execute validation pipeline with consolidated error handling."""
+        try:
+            # Railway Oriented Programming - Consolidated validation pipeline
+            return await self._run_certificate_validation_chain(cert_chain, context)
+        except Exception as e:
+            return FlextResult.fail(f"Certificate validation pipeline error: {e}")
 
-        # Parse certificates - Single Responsibility
+    async def _run_certificate_validation_chain(
+        self,
+        cert_chain: list[bytes],
+        context: CertificateValidationContext,
+    ) -> FlextResult[object]:
+        """Run the certificate validation chain with consolidated error handling."""
+        # Step 1: Input validation
+        input_result = self._validate_input_chain(cert_chain)
+        if input_result.is_failure:
+            return input_result
+
+        # Step 2: Parse certificates
         parse_result = self._parse_certificate_chain(cert_chain)
         if parse_result.is_failure:
             return parse_result
         certificates = type_cast("list[x509.Certificate]", parse_result.data)
 
+        # Step 3: Run validation pipeline
+        return await self._execute_certificate_validation_steps(certificates, context)
+
+    def _validate_input_chain(self, cert_chain: list[bytes]) -> FlextResult[None]:
+        """Validate input certificate chain - Single Responsibility."""
+        if not cert_chain:
+            return self._create_malformed_result("Empty certificate chain provided")
+        return FlextResult.ok(None)
+
+    async def _execute_certificate_validation_steps(
+        self,
+        certificates: list,
+        context: CertificateValidationContext,
+    ) -> FlextResult[object]:
+        """Execute certificate validation steps in sequence."""
         # Validate certificate dates - Single Responsibility
         expiry_result = self._validate_certificate_expiry(certificates)
         if expiry_result.is_failure:
             return expiry_result
 
-        # Validate hostname if requested - Single Responsibility
+        # Optional hostname validation
         if context.verify_hostname:
             hostname_result = await self._validate_hostname_requirement(
                 certificates[0],
@@ -92,7 +121,7 @@ class FlextLdapCertificateValidationService:
             if hostname_result.is_failure:
                 return hostname_result
 
-        # Validate certificate chain if requested - Single Responsibility
+        # Optional chain validation
         if context.verify_chain and len(certificates) > 1:
             chain_result = self._validate_chain_structure(certificates)
             if chain_result.is_failure:
@@ -390,8 +419,6 @@ class FlextLdapCertificateValidationService:
     ) -> FlextResult[object]:
         """Load CA certificate data from bytes - Single Responsibility."""
         try:
-            import tempfile
-
             # Create temporary file for CA cert data
             with tempfile.NamedTemporaryFile(mode="wb", delete=False) as tmp_file:
                 tmp_file.write(ca_cert_data)

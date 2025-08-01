@@ -134,24 +134,32 @@ def flext_ldap_compare_dns(dn1: str, dn2: str) -> bool:
 
 
 def flext_ldap_build_filter(operator: str, conditions: dict[str, str]) -> str:
-    """Build LDAP filter from conditions."""
+    """Build LDAP filter from conditions using Railway-Oriented Programming."""
+    # Early return for empty conditions
     if not conditions:
         return ""
 
-    filters = []
-    for attr, value in conditions.items():
-        escaped_value = flext_ldap_escape_filter_chars(value)
-        filters.append(f"({attr}={escaped_value})")
+    # Build individual filter components
+    filters = [
+        f"({attr}={flext_ldap_escape_filter_chars(value)})"
+        for attr, value in conditions.items()
+    ]
 
-    if len(filters) == 1 and operator == "not":
-        return f"(!{filters[0]})"
-    if operator == "and":
-        return f"(&{''.join(filters)})"
-    if operator == "or":
-        return f"(|{''.join(filters)})"
-    if operator == "not":
-        return f"(!(&{''.join(filters)}))"
-    return ""
+    # Filter assembly pipeline - consolidated mapping approach
+    filter_builders = {
+        ("not", True): lambda f: f"(!{f[0]})",  # Single filter negation
+        ("not", False): lambda f: f"(!(&{''.join(f)}))",  # Multiple filter negation
+        ("and", False): lambda f: f"(&{''.join(f)})",  # AND operation
+        ("or", False): lambda f: f"(|{''.join(f)})",  # OR operation
+    }
+
+    # Determine filter key based on operator and single filter condition
+    is_single_filter = len(filters) == 1
+    filter_key = (operator, is_single_filter)
+
+    # Execute appropriate filter builder or return empty string
+    builder = filter_builders.get(filter_key)
+    return builder(filters) if builder else ""
 
 
 def flext_ldap_is_valid_url(url: str) -> bool:

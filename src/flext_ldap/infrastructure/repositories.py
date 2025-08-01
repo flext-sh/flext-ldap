@@ -288,6 +288,19 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             msg = f"Failed to get user by UID {uid}: {e}"
             raise ValueError(msg) from e
 
+    def _validate_search_parameters(
+        self,
+        base_dn: FlextLdapDistinguishedName,
+        filter_string: str,
+    ) -> None:
+        """Validate search parameters - extracted to fix TRY301."""
+        if not base_dn or not base_dn.value:
+            msg = "Base DN is required for search"
+            raise ValueError(msg)
+        if not filter_string or not filter_string.strip():
+            msg = "Filter string is required for search"
+            raise ValueError(msg)
+
     async def search(
         self,
         base_dn: FlextLdapDistinguishedName,
@@ -296,12 +309,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
     ) -> list[FlextLdapUser]:
         """Search for users with filter."""
         try:
-            if not base_dn or not base_dn.value:
-                msg = "Base DN is required for search"
-                raise ValueError(msg)
-            if not filter_string or not filter_string.strip():
-                msg = "Filter string is required for search"
-                raise ValueError(msg)
+            self._validate_search_parameters(base_dn, filter_string)
 
             # Use LDAP client to perform search
             search_result = await self.ldap_client.search(
@@ -333,5 +341,6 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             return user is not None
 
         except (RuntimeError, ValueError, TypeError) as e:
-            msg = f"Failed to check user existence for DN {dn.value if dn else 'unknown'}: {e}"
+            dn_value = dn.value if dn else "unknown"
+            msg = f"Failed to check user existence for DN {dn_value}: {e}"
             raise ValueError(msg) from e

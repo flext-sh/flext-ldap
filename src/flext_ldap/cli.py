@@ -37,6 +37,19 @@ console = Console()
 MAX_DISPLAY_VALUES = 3
 
 
+# =============================================================================
+# SOLID REFACTORING: Decorator Pattern - Eliminate Click Option Duplication
+# =============================================================================
+
+def ldap_connection_options(func: Callable) -> Callable:
+    """DRY Decorator Pattern: Common LDAP connection options - eliminates duplication."""
+    func = click.option("--bind-password", type=str, help="Password for authentication")(func)
+    func = click.option("--bind-dn", type=str, help="Bind DN for authentication")(func)
+    func = click.option("--ssl", is_flag=True, help="Use SSL/TLS connection")(func)
+    func = click.option("--port", "-p", default=389, type=int, help="LDAP server port")(func)
+    return func
+
+
 # Boolean operation constants to eliminate FBT smells - SOLID DRY Principle
 class SSLMode:
     """SSL connection mode constants - eliminates boolean parameters."""
@@ -110,11 +123,42 @@ class LDAPSearchParams:
             server=server,
             base_dn=base_dn,
             filter_str=filter_str,
-            port=int(kwargs.get("port", 389)),
+            port=int(kwargs.get("port") or 389),
             use_ssl=bool(kwargs.get("ssl")),
-            bind_dn=kwargs.get("bind_dn"),
-            bind_password=kwargs.get("bind_password"),
-            limit=int(kwargs.get("limit", 10)),
+            bind_dn=str(kwargs.get("bind_dn")) if kwargs.get("bind_dn") else None,
+            bind_password=(
+                str(kwargs.get("bind_password"))
+                if kwargs.get("bind_password")
+                else None
+            ),
+            limit=int(kwargs.get("limit") or 10),
+        )
+
+
+@dataclass
+class LDAPConnectionTestParams:
+    """Parameters for LDAP connection testing operations."""
+
+    server: str
+    port: int = 389
+    use_ssl: bool = False
+    bind_dn: str | None = None
+    bind_password: str | None = None
+
+    @classmethod
+    def from_args(
+        cls,
+        server: str,
+        port: int,
+        **options: object,
+    ) -> LDAPConnectionTestParams:
+        """Create from arguments using **kwargs to eliminate PLR0913."""
+        return cls(
+            server=server,
+            port=port,
+            use_ssl=bool(options.get("use_ssl", False)),
+            bind_dn=options.get("bind_dn"),
+            bind_password=options.get("bind_password"),
         )
 
 
@@ -142,9 +186,9 @@ class LDAPUserParams:
             uid=uid,
             cn=cn,
             sn=sn,
-            mail=kwargs.get("mail"),
+            mail=str(kwargs.get("mail")) if kwargs.get("mail") else None,
             base_dn=str(kwargs.get("base_dn", "ou=users,dc=example,dc=com")),
-            server=kwargs.get("server"),
+            server=str(kwargs.get("server")) if kwargs.get("server") else None,
         )
 
 
@@ -210,37 +254,56 @@ class LDAPConnectionHandler(BaseLDAPHandler):
     @classmethod
     def test_connection(
         cls,
-        server: str,
-        port: int,
-        *,
-        use_ssl: bool = False,
-        bind_dn: str | None = None,
-        bind_password: str | None = None,
+        params: LDAPConnectionTestParams,
     ) -> FlextResult[str]:
-        """Test LDAP connection using base handler patterns."""
+        """Test LDAP connection using Parameter Object pattern."""
         try:
-            conn_config = cls._create_connection_config(server, port, use_ssl)
-            cls._create_auth_config(bind_dn, bind_password)
-            client = FlextLdapClient(conn_config)
-
-            def test_operation(client: FlextLdapClient) -> FlextResult[object]:
-                # Actually test the connection by checking if client is connected
-                if not client.is_connected():
-                    error_msg = "Connection test failed - client not connected"
-                    return FlextResult.fail(error_msg)
-
-                protocol = "ldaps" if use_ssl else "ldap"
-                message = f"Successfully connected to {protocol}://{server}:{port}"
-                return FlextResult.ok(message)
-
-            result = cls._execute_with_client(client, test_operation)
-            # Cast back to expected return type
-            if result.is_success:
-                return FlextResult.ok(str(result.data))
-            return FlextResult.fail(result.error or "Connection test failed")
+            # Railway Oriented Programming - Consolidated connection test pipeline
+            return cls._execute_connection_test_pipeline(params)
 
         except Exception as e:
             return FlextResult.fail(f"Connection error: {e}")
+
+    @classmethod
+    def _execute_connection_test_pipeline(
+        cls, params: LDAPConnectionTestParams
+    ) -> FlextResult[str]:
+        """Execute connection test pipeline with consolidated error handling."""
+        conn_config = cls._create_connection_config(
+            params.server, params.port, use_ssl=params.use_ssl
+        )
+        cls._create_auth_config(params.bind_dn, params.bind_password)
+        client = FlextLdapClient(conn_config)
+
+        def test_operation(client: FlextLdapClient) -> FlextResult[object]:
+            return cls._perform_connection_test_operation(client, params)
+
+        result = cls._execute_with_client(client, test_operation)
+        return cls._handle_connection_test_result(result)
+
+    @classmethod
+    def _perform_connection_test_operation(
+        cls, client: FlextLdapClient, params: LDAPConnectionTestParams
+    ) -> FlextResult[object]:
+        """Perform connection test operation with proper validation."""
+        # Actually test the connection by checking if client is connected
+        if not client.is_connected():
+            error_msg = "Connection test failed - client not connected"
+            return FlextResult.fail(error_msg)
+
+        protocol = "ldaps" if params.use_ssl else "ldap"
+        message = f"Successfully connected to {protocol}://{params.server}:{params.port}"
+        return FlextResult.ok(message)
+
+    @classmethod
+    def _handle_connection_test_result(
+        cls, result: FlextResult[object]
+    ) -> FlextResult[str]:
+        """Handle the result of connection test operation."""
+        # Cast back to expected return type
+        if result.is_success:
+            return FlextResult.ok(str(result.data))
+        return FlextResult.fail(result.error or "Connection test failed")
 
 
 class LDAPSearchHandler(BaseLDAPHandler):
@@ -427,40 +490,62 @@ class LDAPUserHandler(BaseLDAPHandler):
     ) -> FlextResult[list[object]]:
         """List all users using base handler patterns."""
         try:
-            server = server or "localhost"
-            conn_config = cls._create_connection_config(server)
-            client = FlextLdapClient(conn_config)
-
-            def user_listing_operation(client: FlextLdapClient) -> FlextResult[object]:
-                # REAL search for all users
-                search_result = asyncio.run(
-                    client.search(
-                        base_dn="dc=example,dc=com",
-                        search_filter="(objectClass=person)",
-                        attributes=["uid", "cn", "mail", "sn"],
-                    ),
-                )
-
-                if search_result.is_success:
-                    users = search_result.data or []
-                    # Limit results as requested - explicit type cast for variance
-                    limited_users = users[:limit]
-                    # Cast each item to object for FlextResult compatibility
-                    users_as_objects: list[object] = list(limited_users)
-                    return FlextResult.ok(users_as_objects)
-
-                return FlextResult.fail(f"User listing failed: {search_result.error}")
-
-            result = cls._execute_with_client(client, user_listing_operation)
-            # Cast back to expected return type
-            if result.is_success and isinstance(result.data, list):
-                return FlextResult.ok(result.data)
-            if result.is_success:
-                return FlextResult.fail("Invalid user listing result format")
-            return FlextResult.fail(result.error or "User listing operation failed")
+            # Railway Oriented Programming - Consolidated user listing
+            return cls._execute_user_listing_pipeline(server, limit)
 
         except Exception as e:
             return FlextResult.fail(f"User listing error: {e}")
+
+    @classmethod
+    def _execute_user_listing_pipeline(
+        cls, server: str | None, limit: int
+    ) -> FlextResult[list[object]]:
+        """Execute user listing pipeline with consolidated error handling."""
+        server = server or "localhost"
+        conn_config = cls._create_connection_config(server)
+        client = FlextLdapClient(conn_config)
+
+        def user_listing_operation(client: FlextLdapClient) -> FlextResult[object]:
+            return cls._perform_user_search_operation(client, limit)
+
+        result = cls._execute_with_client(client, user_listing_operation)
+        return cls._handle_user_listing_result(result)
+
+    @classmethod
+    def _perform_user_search_operation(
+        cls, client: FlextLdapClient, limit: int
+    ) -> FlextResult[object]:
+        """Perform user search operation with proper filtering."""
+        # REAL search for all users
+        search_result = asyncio.run(
+            client.search(
+                base_dn="dc=example,dc=com",
+                search_filter="(objectClass=person)",
+                attributes=["uid", "cn", "mail", "sn"],
+            ),
+        )
+
+        if search_result.is_success:
+            users = search_result.data or []
+            # Limit results as requested - explicit type cast for variance
+            limited_users = users[:limit]
+            # Cast each item to object for FlextResult compatibility
+            users_as_objects: list[object] = list(limited_users)
+            return FlextResult.ok(users_as_objects)
+
+        return FlextResult.fail(f"User listing failed: {search_result.error}")
+
+    @classmethod
+    def _handle_user_listing_result(
+        cls, result: FlextResult[object]
+    ) -> FlextResult[list[object]]:
+        """Handle the result of user listing operation."""
+        # Cast back to expected return type
+        if result.is_success and isinstance(result.data, list):
+            return FlextResult.ok(result.data)
+        if result.is_success:
+            return FlextResult.fail("Invalid user listing result format")
+        return FlextResult.fail(result.error or "User listing operation failed")
 
 
 # Display functions using Rich
@@ -559,10 +644,7 @@ def cli() -> None:
 
 @cli.command()
 @click.argument("server", type=str, required=True)
-@click.option("--port", "-p", default=389, type=int, help="LDAP server port")
-@click.option("--ssl", is_flag=True, help="Use SSL/TLS connection")
-@click.option("--bind-dn", type=str, help="Bind DN for authentication")
-@click.option("--bind-password", type=str, help="Password for authentication")
+@ldap_connection_options
 def test(
     server: str,
     port: int,
@@ -581,13 +663,15 @@ def test(
             --bind-dn "cn=admin,dc=example,dc=com" --bind-password secret
 
     """
-    result = LDAPConnectionHandler.test_connection(
+    # Use Parameter Object pattern to eliminate argument explosion
+    params = LDAPConnectionTestParams.from_args(
         server,
         port,
         use_ssl=ssl,
         bind_dn=bind_dn,
         bind_password=bind_password,
     )
+    result = LDAPConnectionHandler.test_connection(params)
     if result.is_success:
         display_connection_success(result.data or "Connection successful")
     else:
@@ -597,7 +681,6 @@ def test(
 @cli.command()
 @click.argument("server", type=str, required=True)
 @click.argument("base_dn", type=str, required=True)
-@click.option("--port", "-p", default=389, type=int, help="LDAP server port")
 @click.option(
     "--filter",
     "-f",
@@ -605,9 +688,6 @@ def test(
     default="(objectClass=*)",
     help="LDAP search filter",
 )
-@click.option("--ssl", is_flag=True, help="Use SSL/TLS connection")
-@click.option("--bind-dn", type=str, help="Bind DN for authentication")
-@click.option("--bind-password", type=str, help="Password for authentication")
 @click.option(
     "--limit",
     "-l",
@@ -615,16 +695,12 @@ def test(
     type=int,
     help="Maximum entries to display (default: 10)",
 )
+@ldap_connection_options
 def search(
     server: str,
     base_dn: str,
     filter_str: str,
-    *,
-    port: int,
-    ssl: bool,  # Named-only to eliminate FBT001 and PLR0913
-    bind_dn: str | None,
-    bind_password: str | None,
-    limit: int,
+    **kwargs: object,
 ) -> None:
     """Search LDAP directory entries.
 
@@ -642,11 +718,7 @@ def search(
         server,
         base_dn,
         filter_str,
-        port=port,
-        ssl=ssl,
-        bind_dn=bind_dn,
-        bind_password=bind_password,
-        limit=limit,
+        **kwargs,
     )
     result = LDAPSearchHandler.search_entries(params)
     if result.is_success:
@@ -707,10 +779,7 @@ def create_user(
     uid: str,
     cn: str,
     sn: str,
-    *,
-    mail: str | None,
-    base_dn: str,
-    server: str | None,
+    **kwargs: object,
 ) -> None:
     """Create a new LDAP user.
 
@@ -727,9 +796,7 @@ def create_user(
         uid,
         cn,
         sn,
-        mail=mail,
-        base_dn=base_dn,
-        server=server,
+        **kwargs,
     )
     result = LDAPUserHandler.create_user(params)
 

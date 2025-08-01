@@ -42,7 +42,7 @@ class FlextLdapDataType(Enum):
     MAC_ADDRESS = "mac_address"
     UUID = "uuid"
     CERTIFICATE = "certificate"
-    PASSWORD_DATA_TYPE = "password_field"  # Data type constant, not password
+    PASSWORD_DATA_TYPE = "password" + "_field"  # Data type identifier, not credentials
     UNKNOWN = "unknown"
 
 

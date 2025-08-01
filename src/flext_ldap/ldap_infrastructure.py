@@ -14,7 +14,7 @@ from uuid import UUID
 
 import ldap3
 from flext_core import FlextResult, get_logger
-from ldap3 import ALL, AUTO_BIND_NONE, Connection, Server
+from ldap3 import ALL, AUTO_BIND_NONE, BASE, LEVEL, SUBTREE, Connection, Server
 from ldap3.core.exceptions import LDAPException
 
 from flext_ldap.base import FlextLdapRepository
@@ -118,20 +118,27 @@ class FlextLdapConverter:
         )
         return detected_type
 
-    def _detect_type_impl(self, value: object) -> FlextLdapDataType:  # noqa: PLR0911
-        """Implementation of type detection."""
-        if isinstance(value, bool):
-            return FlextLdapDataType.BOOLEAN
-        if isinstance(value, int):
-            return FlextLdapDataType.INTEGER
-        if isinstance(value, bytes):
-            return FlextLdapDataType.BINARY
-        if isinstance(value, datetime):
-            return FlextLdapDataType.DATETIME
-        if isinstance(value, UUID):
-            return FlextLdapDataType.UUID
+    def _detect_type_impl(self, value: object) -> FlextLdapDataType:
+        """Implementation of type detection using Railway-Oriented Programming."""
+        # Type detection pipeline - consolidated mapping approach
+        type_detectors = [
+            (bool, FlextLdapDataType.BOOLEAN),
+            (int, FlextLdapDataType.INTEGER),
+            (bytes, FlextLdapDataType.BINARY),
+            (datetime, FlextLdapDataType.DATETIME),
+            (UUID, FlextLdapDataType.UUID),
+        ]
+
+        # Execute type detection pipeline
+        for type_class, ldap_type in type_detectors:
+            if isinstance(value, type_class):
+                return ldap_type
+
+        # Handle string types with specialized detection
         if isinstance(value, str):
             return self._detect_string_type(value)
+
+        # Default fallback
         return FlextLdapDataType.STRING
 
     def _detect_string_type(self, value: str) -> FlextLdapDataType:
@@ -524,7 +531,6 @@ class FlextLdapClient:
             search_attributes = attributes or ["*"]
 
             # Map scope string to ldap3 constants - REALLY USE scope parameter
-            from ldap3 import BASE, LEVEL, SUBTREE
 
             scope_mapping = {
                 "base": BASE,

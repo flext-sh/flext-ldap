@@ -430,14 +430,36 @@ class FlextLdapOperation(FlextEntity):
     status: str = FlextLdapEntityStatus.PENDING
 
     def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate business rules for LDAP operation."""
-        if not self.operation_type:
-            return FlextResult.fail("LDAP operation must have an operation type")
-        if not self.target_dn:
-            return FlextResult.fail("LDAP operation must have a target DN")
-        if not self.connection_id:
-            return FlextResult.fail("LDAP operation must have a connection ID")
+        """Validate business rules using Railway-Oriented Programming.
+
+        SOLID REFACTORING: Reduced from 4 returns to 2 returns using
+        Railway-Oriented Programming + Strategy Pattern.
+        """
+        # Railway-Oriented Programming: Chain validations with early exit
+        validation_errors = self._collect_operation_validation_errors()
+
+        if validation_errors:
+            return FlextResult.fail(validation_errors[0])  # Return first error
+
         return FlextResult.ok(None)
+
+    def _collect_operation_validation_errors(self) -> list[str]:
+        """DRY helper: Collect operation validation errors using Strategy Pattern."""
+        errors = []
+
+        # Strategy 1: Operation type validation
+        if not self.operation_type:
+            errors.append("LDAP operation must have an operation type")
+
+        # Strategy 2: Target DN validation
+        if not self.target_dn:
+            errors.append("LDAP operation must have a target DN")
+
+        # Strategy 3: Connection ID validation
+        if not self.connection_id:
+            errors.append("LDAP operation must have a connection ID")
+
+        return errors
 
     def start_operation(self) -> FlextLdapOperation:
         """Mark operation as started."""

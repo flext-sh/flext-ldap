@@ -107,17 +107,35 @@ class FlextLdapEntryDeleted(FlextValueObject):
         return FlextResult.ok(None)
 
 
-class FlextLdapUserAuthenticated(FlextValueObject):
-    """Event raised when user authenticates successfully."""
+# Base event class to eliminate code duplication - DRY Principle
+class FlextLdapDomainEventBase(FlextValueObject):
+    """Base class for LDAP domain events - eliminates code duplication."""
 
     aggregate_id: str
+
+    def validate_domain_rules(self) -> FlextResult[None]:
+        """Validate common domain rules - Template Method pattern."""
+        # Common validation for all events
+        if not self.aggregate_id:
+            event_name = self.__class__.__name__
+            return FlextResult.fail(f"{event_name} must have aggregate_id")
+
+        # Delegate to specific event validation
+        return self._validate_specific_rules()
+
+    def _validate_specific_rules(self) -> FlextResult[None]:
+        """Override in subclasses for specific validation - Template Method pattern."""
+        return FlextResult.ok(None)
+
+
+class FlextLdapUserAuthenticated(FlextLdapDomainEventBase):
+    """Event raised when user authenticates successfully."""
+
     user_dn: str
     authentication_method: str
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for user authenticated event."""
-        if not self.aggregate_id:
-            return FlextResult.fail("User authenticated event must have aggregate_id")
+    def _validate_specific_rules(self) -> FlextResult[None]:
+        """Validate specific rules for user authenticated event."""
         if not self.user_dn:
             return FlextResult.fail("User authenticated event must have user_dn")
         if not self.authentication_method:
@@ -127,20 +145,15 @@ class FlextLdapUserAuthenticated(FlextValueObject):
         return FlextResult.ok(None)
 
 
-class FlextLdapAuthenticationFailed(FlextValueObject):
+class FlextLdapAuthenticationFailed(FlextLdapDomainEventBase):
     """Event raised when authentication fails."""
 
-    aggregate_id: str
     user_dn: str
     reason: str
     attempt_count: int = 1
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for authentication failed event."""
-        if not self.aggregate_id:
-            return FlextResult.fail(
-                "Authentication failed event must have aggregate_id",
-            )
+    def _validate_specific_rules(self) -> FlextResult[None]:
+        """Validate specific rules for authentication failed event."""
         if not self.user_dn:
             return FlextResult.fail("Authentication failed event must have user_dn")
         if not self.reason:
@@ -150,17 +163,14 @@ class FlextLdapAuthenticationFailed(FlextValueObject):
         return FlextResult.ok(None)
 
 
-class FlextLdapGroupMemberAdded(FlextValueObject):
+class FlextLdapGroupMemberAdded(FlextLdapDomainEventBase):
     """Event raised when member is added to group."""
 
-    aggregate_id: str
     group_dn: str
     member_dn: str
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for group member added event."""
-        if not self.aggregate_id:
-            return FlextResult.fail("Group member added event must have aggregate_id")
+    def _validate_specific_rules(self) -> FlextResult[None]:
+        """Validate specific rules for group member added event."""
         if not self.group_dn:
             return FlextResult.fail("Group member added event must have group_dn")
         if not self.member_dn:
@@ -168,17 +178,14 @@ class FlextLdapGroupMemberAdded(FlextValueObject):
         return FlextResult.ok(None)
 
 
-class FlextLdapGroupMemberRemoved(FlextValueObject):
+class FlextLdapGroupMemberRemoved(FlextLdapDomainEventBase):
     """Event raised when member is removed from group."""
 
-    aggregate_id: str
     group_dn: str
     member_dn: str
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for group member removed event."""
-        if not self.aggregate_id:
-            return FlextResult.fail("Group member removed event must have aggregate_id")
+    def _validate_specific_rules(self) -> FlextResult[None]:
+        """Validate specific rules for group member removed event."""
         if not self.group_dn:
             return FlextResult.fail("Group member removed event must have group_dn")
         if not self.member_dn:

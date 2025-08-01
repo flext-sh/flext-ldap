@@ -109,7 +109,7 @@ class FlextLdapSecurityEvent:
     def __init__(
         self,
         data: FlextLdapSecurityEventData | None = None,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> None:
         """Initialize security event using Parameter Object pattern.
 
@@ -161,7 +161,9 @@ class FlextLdapSecurityEvent:
     def _init_from_kwargs(self, kwargs: dict[str, Any]) -> None:
         """Legacy initialization for backward compatibility."""
         self.event_id = kwargs.get("event_id") or uuid4()
-        self.event_type = kwargs.get("event_type")
+        self.event_type = (
+            kwargs.get("event_type") or FlextLdapSecurityEventType.AUTHENTICATION
+        )
         self.severity = kwargs.get("severity", FlextLdapSecurityEventSeverity.INFO)
         self.status = kwargs.get("status", FlextLdapSecurityEventStatus.INFO)
         self.timestamp = kwargs.get("timestamp") or datetime.now(UTC)
@@ -181,7 +183,7 @@ class FlextLdapSecurityEvent:
         self.duration_ms = kwargs.get("duration_ms")
         self.data_size_bytes = kwargs.get("data_size_bytes")
         self.additional_context = kwargs.get("additional_context") or {}
-        self.risk_score = kwargs.get("risk_score")
+        self.risk_score: float | None = kwargs.get("risk_score")
         self.compliance_flags = kwargs.get("compliance_flags") or []
 
     def to_dict(self) -> dict[str, Any]:
@@ -306,7 +308,7 @@ class FlextLdapSecurityEventLogger:
     async def log_event_simple(
         self,
         event_type: FlextLdapSecurityEventType,
-        **event_params: Any,
+        **event_params: object,
     ) -> FlextResult[FlextLdapSecurityEvent]:
         """Convenience method for logging security events using flexible parameters.
 
@@ -347,7 +349,7 @@ class FlextLdapSecurityEventLogger:
         *,
         success: bool,  # Named-only to eliminate FBT001
         user_dn: str,
-        **event_params: Any,
+        **event_params: object,
     ) -> FlextResult[FlextLdapSecurityEvent]:
         """Log authentication event."""
         event_type = (
