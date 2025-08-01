@@ -66,8 +66,10 @@ class FlextLdapService:
                 logger.info("Successfully connected to LDAP server")
                 return FlextResult.ok(data=True)
 
-            logger.error("Failed to connect to LDAP server",
-                        extra={"error": connect_result.error})
+            logger.error(
+                "Failed to connect to LDAP server",
+                extra={"error": connect_result.error},
+            )
             return FlextResult.fail(connect_result.error or "Connection failed")
 
         except Exception as e:
@@ -92,8 +94,9 @@ class FlextLdapService:
                 logger.info("Successfully disconnected from LDAP server")
                 return FlextResult.ok(data=True)
 
-            logger.error("Failed to disconnect from LDAP server",
-                        extra={"error": result.error})
+            logger.error(
+                "Failed to disconnect from LDAP server", extra={"error": result.error}
+            )
             return FlextResult.fail(result.error or "Disconnect failed")
 
         except Exception as e:
@@ -122,12 +125,16 @@ class FlextLdapService:
             result = await self._api.create_user(self._session_id, request)
 
             if result.is_success:
-                logger.info("User created successfully",
-                           extra={"uid": request.uid, "dn": request.dn})
+                logger.info(
+                    "User created successfully",
+                    extra={"uid": request.uid, "dn": request.dn},
+                )
                 return result
 
-            logger.error("Failed to create user",
-                        extra={"uid": request.uid, "error": result.error})
+            logger.error(
+                "Failed to create user",
+                extra={"uid": request.uid, "error": result.error},
+            )
             return result
 
         except Exception as e:
@@ -273,8 +280,10 @@ class FlextLdapService:
             logger.info("User updated successfully", extra={"user_id": user_id})
             return await self.find_user_by_uid(user_id)
 
-        logger.error("Failed to update user",
-                    extra={"user_id": user_id, "error": update_result.error})
+        logger.error(
+            "Failed to update user",
+            extra={"user_id": user_id, "error": update_result.error},
+        )
         return FlextResult.fail(update_result.error or "User update failed")
 
     async def delete_user(self, uid: str) -> FlextResult[bool]:
@@ -329,8 +338,9 @@ class FlextLdapService:
             logger.info("User deleted successfully", extra={"uid": uid})
             return FlextResult.ok(data=True)
 
-        logger.error("Failed to delete user",
-                    extra={"uid": uid, "error": delete_result.error})
+        logger.error(
+            "Failed to delete user", extra={"uid": uid, "error": delete_result.error}
+        )
         return FlextResult.fail(delete_result.error or "User deletion failed")
 
     async def list_users(
@@ -342,10 +352,13 @@ class FlextLdapService:
 
         No fallbacks or memory storage - uses real LDAP API.
         """
-        logger.info("Listing users", extra={
-            "base_dn": base_dn,
-            "filter_expr": filter_expr,
-        })
+        logger.info(
+            "Listing users",
+            extra={
+                "base_dn": base_dn,
+                "filter_expr": filter_expr,
+            },
+        )
 
         if not self.is_connected():
             return FlextResult.fail("Not connected to LDAP server")
@@ -402,7 +415,9 @@ class FlextLdapService:
         return "dc=example,dc=com"
 
     def _extract_attr_value(
-        self, attributes: dict[str, list[str]], attr_name: str,
+        self,
+        attributes: dict[str, list[str]],
+        attr_name: str,
     ) -> str | None:
         """Extract first value from LDAP attribute list, handling None gracefully."""
         attr_list = attributes.get(attr_name, [])

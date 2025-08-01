@@ -30,9 +30,7 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def ldap_session(
-    server_url: str,
-    bind_dn: str | None = None,
-    password: str | None = None
+    server_url: str, bind_dn: str | None = None, password: str | None = None
 ) -> AsyncIterator[tuple[FlextLdapApi, str]]:
     """Enterprise LDAP session context manager.
 
@@ -41,11 +39,14 @@ async def ldap_session(
     api = FlextLdapApi()
     session_id = f"session_{id(api)}"
 
-    logger.info("Establishing LDAP session", extra={
-        "server_url": server_url,
-        "session_id": session_id,
-        "has_auth": bool(bind_dn)
-    })
+    logger.info(
+        "Establishing LDAP session",
+        extra={
+            "server_url": server_url,
+            "session_id": session_id,
+            "has_auth": bool(bind_dn),
+        },
+    )
 
     try:
         # Attempt connection
@@ -53,7 +54,7 @@ async def ldap_session(
             server_url=server_url,
             bind_dn=bind_dn,
             password=password,
-            session_id=session_id
+            session_id=session_id,
         )
 
         if not connection_result.is_success:
@@ -64,10 +65,9 @@ async def ldap_session(
         yield api, session_id
 
     except Exception as e:
-        logger.exception("LDAP session failed", extra={
-            "error": str(e),
-            "session_id": session_id
-        })
+        logger.exception(
+            "LDAP session failed", extra={"error": str(e), "session_id": session_id}
+        )
         raise
     finally:
         # Cleanup
@@ -75,10 +75,10 @@ async def ldap_session(
             await api.disconnect(session_id)
             logger.info("LDAP session closed", extra={"session_id": session_id})
         except Exception as e:
-            logger.warning("Session cleanup failed", extra={
-                "error": str(e),
-                "session_id": session_id
-            })
+            logger.warning(
+                "Session cleanup failed",
+                extra={"error": str(e), "session_id": session_id},
+            )
 
 
 async def demonstrate_value_objects() -> None:
@@ -124,7 +124,7 @@ async def demonstrate_comprehensive_configuration() -> None:
             project_name="enterprise-ldap-integration",
             project_version="1.0.0",
             enable_debug_mode=True,
-            enable_performance_monitoring=True
+            enable_performance_monitoring=True,
         )
 
         print(f"✅ Settings: {settings.project_name} v{settings.project_version}")
@@ -138,7 +138,7 @@ async def demonstrate_comprehensive_configuration() -> None:
             paged_search=True,
             page_size=100,
             enable_referral_chasing=True,
-            max_referral_hops=3
+            max_referral_hops=3,
         )
 
         search_validation = search_config.validate_domain_rules()
@@ -170,7 +170,7 @@ async def demonstrate_async_patterns() -> None:
             search_bases = [
                 "ou=users,dc=example,dc=com",
                 "ou=groups,dc=example,dc=com",
-                "ou=services,dc=example,dc=com"
+                "ou=services,dc=example,dc=com",
             ]
 
             for base_dn in search_bases:
@@ -179,7 +179,7 @@ async def demonstrate_async_patterns() -> None:
                     base_dn=base_dn,
                     filter_expr="(objectClass=*)",
                     attributes=["dn"],
-                    scope="onelevel"
+                    scope="onelevel",
                 )
                 tasks.append(task)
 
@@ -187,11 +187,15 @@ async def demonstrate_async_patterns() -> None:
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             successful_searches = sum(
-                1 for result in results
-                if not isinstance(result, Exception) and getattr(result, "is_success", False)
+                1
+                for result in results
+                if not isinstance(result, Exception)
+                and getattr(result, "is_success", False)
             )
 
-            print(f"✅ Concurrent searches: {successful_searches}/{len(tasks)} successful")
+            print(
+                f"✅ Concurrent searches: {successful_searches}/{len(tasks)} successful"
+            )
 
     except Exception as e:
         logger.exception("Async patterns demonstration failed")
@@ -203,38 +207,44 @@ async def demonstrate_error_recovery() -> None:
     print("\n🔄 Error Recovery Patterns")
     print("=" * 40)
 
-    async def attempt_operation_with_retry(operation_name: str, max_retries: int = 3) -> str | None:
+    async def attempt_operation_with_retry(
+        operation_name: str, max_retries: int = 3
+    ) -> str | None:
         """Retry pattern for LDAP operations."""
         for attempt in range(max_retries):
             try:
-                logger.debug(f"Attempting {operation_name}", extra={
-                    "attempt": attempt + 1,
-                    "max_retries": max_retries
-                })
+                logger.debug(
+                    f"Attempting {operation_name}",
+                    extra={"attempt": attempt + 1, "max_retries": max_retries},
+                )
 
                 # Simulate operation (would be real LDAP operation)
                 if attempt < 2:  # Fail first 2 attempts
                     msg = f"Simulated failure for {operation_name}"
                     raise ConnectionError(msg)
 
-                logger.info(f"Operation {operation_name} succeeded", extra={
-                    "attempts_used": attempt + 1
-                })
+                logger.info(
+                    f"Operation {operation_name} succeeded",
+                    extra={"attempts_used": attempt + 1},
+                )
                 return f"Success after {attempt + 1} attempts"
 
             except Exception as e:
-                logger.warning(f"Attempt {attempt + 1} failed", extra={
-                    "operation": operation_name,
-                    "error": str(e),
-                    "remaining_attempts": max_retries - attempt - 1
-                })
+                logger.warning(
+                    f"Attempt {attempt + 1} failed",
+                    extra={
+                        "operation": operation_name,
+                        "error": str(e),
+                        "remaining_attempts": max_retries - attempt - 1,
+                    },
+                )
 
                 if attempt == max_retries - 1:
                     logger.exception(f"All attempts failed for {operation_name}")
                     raise
 
                 # Exponential backoff
-                await asyncio.sleep(2 ** attempt)
+                await asyncio.sleep(2**attempt)
         return None
 
     try:
@@ -323,6 +333,7 @@ async def main() -> None:
 if __name__ == "__main__":
     # Enable comprehensive logging for demonstration
     import os
+
     os.environ["FLEXT_LOG_LEVEL"] = "INFO"
 
     asyncio.run(main())

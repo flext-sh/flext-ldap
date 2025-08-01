@@ -20,7 +20,6 @@ from uuid import uuid4
 from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
-
     from flext_ldap.entities import FlextLdapConnection
 
 logger = get_logger(__name__)

@@ -209,7 +209,9 @@ async def _demo_error_handling(ldap_service: LDAPService) -> None:
     # Try to disconnect when not connected
     disconnect_result = await ldap_service.disconnect_from_server()
     if disconnect_result.is_failure:
-        print(f"   Expected error for disconnect when not connected: {disconnect_result.error}")
+        print(
+            f"   Expected error for disconnect when not connected: {disconnect_result.error}"
+        )
 
     print("   Error handling demonstration completed")
     print()

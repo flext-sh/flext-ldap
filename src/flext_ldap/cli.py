@@ -158,21 +158,28 @@ class BaseLDAPHandler:
 
     @staticmethod
     def _create_connection_config(
-        server: str, port: int = 389, *, use_ssl: bool = SSLMode.DISABLED,
+        server: str,
+        port: int = 389,
+        *,
+        use_ssl: bool = SSLMode.DISABLED,
     ) -> FlextLdapConnectionConfig:
         """Create LDAP connection configuration."""
         return FlextLdapConnectionConfig(
-            server=server, port=port, use_ssl=use_ssl,
+            server=server,
+            port=port,
+            use_ssl=use_ssl,
         )
 
     @staticmethod
     def _create_auth_config(
-        bind_dn: str | None, bind_password: str | None,
+        bind_dn: str | None,
+        bind_password: str | None,
     ) -> FlextLdapAuthConfig | None:
         """Create authentication configuration if credentials provided."""
         if bind_dn:
             return FlextLdapAuthConfig(
-                bind_dn=bind_dn, bind_password=bind_password or "",
+                bind_dn=bind_dn,
+                bind_password=bind_password or "",
             )
         return None
 
@@ -241,7 +248,8 @@ class LDAPSearchHandler(BaseLDAPHandler):
 
     @classmethod
     def _convert_raw_entry_to_extended(
-        cls, raw_entry: dict[str, object],
+        cls,
+        raw_entry: dict[str, object],
     ) -> ExtendedLDAPEntry:
         """Convert raw LDAP entry to ExtendedLDAPEntry format."""
         # Type-safe extraction with validation
@@ -264,7 +272,9 @@ class LDAPSearchHandler(BaseLDAPHandler):
 
     @classmethod
     def _convert_search_results(
-        cls, raw_entries: list[dict[str, object]], limit: int,
+        cls,
+        raw_entries: list[dict[str, object]],
+        limit: int,
     ) -> list[ExtendedLDAPEntry]:
         """Convert raw search results to ExtendedLDAPEntry list."""
         entries: list[ExtendedLDAPEntry] = []
@@ -275,7 +285,9 @@ class LDAPSearchHandler(BaseLDAPHandler):
 
     @classmethod
     def _execute_ldap_search(
-        cls, client: FlextLdapClient, params: LDAPSearchParams,
+        cls,
+        client: FlextLdapClient,
+        params: LDAPSearchParams,
     ) -> FlextResult[object]:
         """Execute LDAP search operation."""
         search_result = asyncio.run(
@@ -296,12 +308,15 @@ class LDAPSearchHandler(BaseLDAPHandler):
 
     @classmethod
     def search_entries(
-        cls, params: LDAPSearchParams,
+        cls,
+        params: LDAPSearchParams,
     ) -> FlextResult[list[ExtendedLDAPEntry]]:
         """Search LDAP entries using base handler patterns."""
         try:
             conn_config = cls._create_connection_config(
-                params.server, params.port, params.use_ssl,
+                params.server,
+                params.port,
+                params.use_ssl,
             )
             cls._create_auth_config(params.bind_dn, params.bind_password)
 
@@ -406,7 +421,9 @@ class LDAPUserHandler(BaseLDAPHandler):
 
     @classmethod
     def list_users(
-        cls, server: str | None = None, limit: int = 20,
+        cls,
+        server: str | None = None,
+        limit: int = 20,
     ) -> FlextResult[list[object]]:
         """List all users using base handler patterns."""
         try:
@@ -547,7 +564,12 @@ def cli() -> None:
 @click.option("--bind-dn", type=str, help="Bind DN for authentication")
 @click.option("--bind-password", type=str, help="Password for authentication")
 def test(
-    server: str, port: int, *, ssl: bool, bind_dn: str | None, bind_password: str | None,
+    server: str,
+    port: int,
+    *,
+    ssl: bool,
+    bind_dn: str | None,
+    bind_password: str | None,
 ) -> None:
     """Test connection to LDAP server.
 
@@ -560,7 +582,11 @@ def test(
 
     """
     result = LDAPConnectionHandler.test_connection(
-        server, port, use_ssl=ssl, bind_dn=bind_dn, bind_password=bind_password,
+        server,
+        port,
+        use_ssl=ssl,
+        bind_dn=bind_dn,
+        bind_password=bind_password,
     )
     if result.is_success:
         display_connection_success(result.data or "Connection successful")
@@ -573,7 +599,11 @@ def test(
 @click.argument("base_dn", type=str, required=True)
 @click.option("--port", "-p", default=389, type=int, help="LDAP server port")
 @click.option(
-    "--filter", "-f", "filter_str", default="(objectClass=*)", help="LDAP search filter",
+    "--filter",
+    "-f",
+    "filter_str",
+    default="(objectClass=*)",
+    help="LDAP search filter",
 )
 @click.option("--ssl", is_flag=True, help="Use SSL/TLS connection")
 @click.option("--bind-dn", type=str, help="Bind DN for authentication")
@@ -609,8 +639,14 @@ def search(
     """
     # Use Parameter Object pattern to eliminate argument complexity
     params = LDAPSearchParams.from_click_args(
-        server, base_dn, filter_str,
-        port=port, ssl=ssl, bind_dn=bind_dn, bind_password=bind_password, limit=limit,
+        server,
+        base_dn,
+        filter_str,
+        port=port,
+        ssl=ssl,
+        bind_dn=bind_dn,
+        bind_password=bind_password,
+        limit=limit,
     )
     result = LDAPSearchHandler.search_entries(params)
     if result.is_success:
@@ -639,7 +675,8 @@ def user_info(uid: str, server: str | None) -> None:
         user = result.data
         if isinstance(user, dict):
             console.print(
-                f"✅ Found user: {user.get('cn', 'Unknown')}", style="bold green",
+                f"✅ Found user: {user.get('cn', 'Unknown')}",
+                style="bold green",
             )
             table = Table(show_header=True, header_style="bold magenta")
             table.add_column("Property", style="cyan")
@@ -650,7 +687,8 @@ def user_info(uid: str, server: str | None) -> None:
             console.print(table)
     else:
         console.print(
-            f"❌ User lookup failed for {uid}: {result.error}", style="bold red",
+            f"❌ User lookup failed for {uid}: {result.error}",
+            style="bold red",
         )
 
 
@@ -660,11 +698,19 @@ def user_info(uid: str, server: str | None) -> None:
 @click.argument("sn", type=str, required=True)
 @click.option("--mail", "-m", help="Email address")
 @click.option(
-    "--base-dn", default="ou=users,dc=example,dc=com", help="Base DN for user creation",
+    "--base-dn",
+    default="ou=users,dc=example,dc=com",
+    help="Base DN for user creation",
 )
 @click.option("--server", "-s", help="LDAP server URL (for connected mode)")
 def create_user(
-    uid: str, cn: str, sn: str, *, mail: str | None, base_dn: str, server: str | None,
+    uid: str,
+    cn: str,
+    sn: str,
+    *,
+    mail: str | None,
+    base_dn: str,
+    server: str | None,
 ) -> None:
     """Create a new LDAP user.
 
@@ -678,7 +724,12 @@ def create_user(
     """
     # Use Parameter Object pattern to eliminate argument complexity
     params = LDAPUserParams.from_click_args(
-        uid, cn, sn, mail=mail, base_dn=base_dn, server=server,
+        uid,
+        cn,
+        sn,
+        mail=mail,
+        base_dn=base_dn,
+        server=server,
     )
     result = LDAPUserHandler.create_user(params)
 
@@ -694,14 +745,19 @@ def create_user(
                 console.print(f"📧 Email: {user.get('mail')}", style="blue")
     else:
         console.print(
-            f"❌ User creation failed for {uid}: {result.error}", style="bold red",
+            f"❌ User creation failed for {uid}: {result.error}",
+            style="bold red",
         )
 
 
 @cli.command()
 @click.option("--server", "-s", help="LDAP server URL (for connected mode)")
 @click.option(
-    "--limit", "-l", default=20, type=int, help="Maximum users to display (default: 20)",
+    "--limit",
+    "-l",
+    default=20,
+    type=int,
+    help="Maximum users to display (default: 20)",
 )
 def list_users(server: str | None, limit: int) -> None:
     """List all users in the directory.

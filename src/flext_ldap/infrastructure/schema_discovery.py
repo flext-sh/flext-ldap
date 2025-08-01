@@ -121,10 +121,14 @@ class FlextLdapSchemaAttribute:
             equality_matching_rule=attribute_params.get("equality_matching_rule"),
             ordering_matching_rule=attribute_params.get("ordering_matching_rule"),
             substring_matching_rule=attribute_params.get("substring_matching_rule"),
-            usage=attribute_params.get("usage", FlextLdapAttributeUsage.USER_APPLICATIONS),
+            usage=attribute_params.get(
+                "usage", FlextLdapAttributeUsage.USER_APPLICATIONS
+            ),
             is_single_value=attribute_params.get("is_single_value", False),
             is_collective=attribute_params.get("is_collective", False),
-            is_no_user_modification=attribute_params.get("is_no_user_modification", False),
+            is_no_user_modification=attribute_params.get(
+                "is_no_user_modification", False
+            ),
             is_obsolete=attribute_params.get("is_obsolete", False),
             superior=attribute_params.get("superior"),
             extensions=attribute_params.get("extensions"),
@@ -204,7 +208,9 @@ class FlextLdapSchemaObjectClass:
             oid=oid,
             names=object_class_params.get("names"),
             description=object_class_params.get("description"),
-            object_class_type=object_class_params.get("object_class_type", FlextLdapObjectClassType.STRUCTURAL),
+            object_class_type=object_class_params.get(
+                "object_class_type", FlextLdapObjectClassType.STRUCTURAL
+            ),
             superior_classes=object_class_params.get("superior_classes"),
             must_attributes=object_class_params.get("must_attributes"),
             may_attributes=object_class_params.get("may_attributes"),
@@ -375,7 +381,10 @@ class FlextLdapSchemaDiscoveryService:
                 self._cache_schema(cache_key, discovery_result)
 
             self._discovery_history.append(discovery_result)
-            if len(self._discovery_history) > FlextLdapSchemaDiscoveryConstants.MAX_DISCOVERY_HISTORY:
+            if (
+                len(self._discovery_history)
+                > FlextLdapSchemaDiscoveryConstants.MAX_DISCOVERY_HISTORY
+            ):
                 self._discovery_history.pop(0)
 
             logger.info(
@@ -546,7 +555,9 @@ class FlextLdapSchemaDiscoveryService:
         try:
             schema_result = await self.discover_schema(connection)
             if not schema_result.is_success:
-                return FlextResult.fail(f"Failed to discover schema: {schema_result.error}")
+                return FlextResult.fail(
+                    f"Failed to discover schema: {schema_result.error}"
+                )
 
             schema = schema_result.data
             if schema is None:
@@ -556,19 +567,28 @@ class FlextLdapSchemaDiscoveryService:
 
             # Collect attributes from object classes
             all_must_attrs, all_may_attrs = self._collect_object_class_attributes(
-                object_classes, schema, validation_result,
+                object_classes,
+                schema,
+                validation_result,
             )
 
             # Validate required attributes
-            self._validate_required_attributes(all_must_attrs, attributes, validation_result)
+            self._validate_required_attributes(
+                all_must_attrs, attributes, validation_result
+            )
 
             # Check for unknown attributes
             self._validate_unknown_attributes(
-                all_must_attrs, all_may_attrs, attributes, validation_result,
+                all_must_attrs,
+                all_may_attrs,
+                attributes,
+                validation_result,
             )
 
             # Validate single-value constraints
-            self._validate_single_value_constraints(schema, attributes, validation_result)
+            self._validate_single_value_constraints(
+                schema, attributes, validation_result
+            )
 
             return FlextResult.ok(validation_result)
 
@@ -597,7 +617,9 @@ class FlextLdapSchemaDiscoveryService:
     def _extract_schema_from_connection(
         self,
         connection: FlextLdapConnection,
-    ) -> tuple[dict[str, FlextLdapSchemaObjectClass], dict[str, FlextLdapSchemaAttribute]]:
+    ) -> tuple[
+        dict[str, FlextLdapSchemaObjectClass], dict[str, FlextLdapSchemaAttribute]
+    ]:
         """Extract schema elements from LDAP connection."""
         real_object_classes = {}
         real_attributes = {}
@@ -608,14 +630,18 @@ class FlextLdapSchemaDiscoveryService:
                 # Extract object classes
                 if hasattr(schema, "object_classes"):
                     for oc_name, oc_def in schema.object_classes.items():
-                        real_object_classes[oc_name] = FlextLdapSchemaObjectClass.create(
-                            oid=getattr(oc_def, "oid", f"unknown.{oc_name}"),
-                            names=[oc_name],
-                            description=getattr(oc_def, "description", f"Schema for {oc_name}"),
-                            object_class_type=FlextLdapObjectClassType.STRUCTURAL,
-                            superior_classes=getattr(oc_def, "superior", []),
-                            must_attributes=getattr(oc_def, "must_contain", []),
-                            may_attributes=getattr(oc_def, "may_contain", []),
+                        real_object_classes[oc_name] = (
+                            FlextLdapSchemaObjectClass.create(
+                                oid=getattr(oc_def, "oid", f"unknown.{oc_name}"),
+                                names=[oc_name],
+                                description=getattr(
+                                    oc_def, "description", f"Schema for {oc_name}"
+                                ),
+                                object_class_type=FlextLdapObjectClassType.STRUCTURAL,
+                                superior_classes=getattr(oc_def, "superior", []),
+                                must_attributes=getattr(oc_def, "must_contain", []),
+                                may_attributes=getattr(oc_def, "may_contain", []),
+                            )
                         )
 
                 # Extract attributes
@@ -624,10 +650,16 @@ class FlextLdapSchemaDiscoveryService:
                         real_attributes[attr_name] = FlextLdapSchemaAttribute.create(
                             oid=getattr(attr_def, "oid", f"unknown.{attr_name}"),
                             names=[attr_name],
-                            description=getattr(attr_def, "description", f"Attribute {attr_name}"),
-                            syntax=getattr(attr_def, "syntax", "1.3.6.1.4.1.1466.115.121.1.15"),
+                            description=getattr(
+                                attr_def, "description", f"Attribute {attr_name}"
+                            ),
+                            syntax=getattr(
+                                attr_def, "syntax", "1.3.6.1.4.1.1466.115.121.1.15"
+                            ),
                             equality_matching_rule=getattr(attr_def, "equality", None),
-                            substring_matching_rule=getattr(attr_def, "substring", None),
+                            substring_matching_rule=getattr(
+                                attr_def, "substring", None
+                            ),
                         )
 
         return real_object_classes, real_attributes
@@ -643,7 +675,9 @@ class FlextLdapSchemaDiscoveryService:
             server_info = self._extract_server_info(connection)
 
             # Extract schema from connection
-            real_object_classes, real_attributes = self._extract_schema_from_connection(connection)
+            real_object_classes, real_attributes = self._extract_schema_from_connection(
+                connection
+            )
 
             # Use discovered schema or fallback to standard schemas
             if not real_object_classes:
@@ -737,7 +771,8 @@ class FlextLdapSchemaDiscoveryService:
         return self._discovery_history[-limit:] if self._discovery_history else []
 
     def _discover_standard_object_classes(
-        self, connection: FlextLdapConnection | None,
+        self,
+        connection: FlextLdapConnection | None,
     ) -> dict[str, FlextLdapSchemaObjectClass]:
         """Discover standard object classes from LDAP server or use RFC standards."""
         logger.debug(
@@ -844,7 +879,8 @@ class FlextLdapSchemaDiscoveryService:
         }
 
     def _discover_standard_attributes(
-        self, connection: FlextLdapConnection | None,
+        self,
+        connection: FlextLdapConnection | None,
     ) -> dict[str, FlextLdapSchemaAttribute]:
         """Discover standard attributes from LDAP server or use RFC standards."""
         logger.debug(
@@ -945,14 +981,16 @@ class FlextLdapSchemaDiscoveryService:
         }
 
     def _parse_server_object_classes(
-        self, schema_data: list[dict[str, Any]],
+        self,
+        schema_data: list[dict[str, Any]],
     ) -> dict[str, FlextLdapSchemaObjectClass]:
         """Parse object classes from server schema data.
 
         This is a REAL implementation that parses actual LDAP schema responses.
         """
         logger.debug(
-            "Parsing server object classes", extra={"data_count": len(schema_data)},
+            "Parsing server object classes",
+            extra={"data_count": len(schema_data)},
         )
         object_classes: dict[str, FlextLdapSchemaObjectClass] = {}
 
@@ -988,14 +1026,16 @@ class FlextLdapSchemaDiscoveryService:
             return self._get_standard_object_classes()
 
     def _parse_server_attributes(
-        self, schema_data: list[dict[str, Any]],
+        self,
+        schema_data: list[dict[str, Any]],
     ) -> dict[str, FlextLdapSchemaAttribute]:
         """Parse attributes from server schema data.
 
         This is a REAL implementation that parses actual LDAP schema responses.
         """
         logger.debug(
-            "Parsing server attributes", extra={"data_count": len(schema_data)},
+            "Parsing server attributes",
+            extra={"data_count": len(schema_data)},
         )
         attributes: dict[str, FlextLdapSchemaAttribute] = {}
 
@@ -1016,19 +1056,22 @@ class FlextLdapSchemaDiscoveryService:
                                 attributes[parsed_attr.primary_name] = parsed_attr
 
             logger.info(
-                "Parsed server attributes", extra={"attributes_found": len(attributes)},
+                "Parsed server attributes",
+                extra={"attributes_found": len(attributes)},
             )
             return attributes
 
         except Exception as parse_error:
             logger.exception(
-                "Failed to parse server attributes", extra={"error": str(parse_error)},
+                "Failed to parse server attributes",
+                extra={"error": str(parse_error)},
             )
             # Return standard attributes on parse failure
             return self._get_standard_attributes()
 
     def _parse_object_class_definition(
-        self, definition: str,
+        self,
+        definition: str,
     ) -> FlextLdapSchemaObjectClass | None:
         """Parse a single object class definition string."""
         try:
@@ -1067,7 +1110,8 @@ class FlextLdapSchemaDiscoveryService:
             return None
 
     def _parse_attribute_definition(
-        self, definition: str,
+        self,
+        definition: str,
     ) -> FlextLdapSchemaAttribute | None:
         """Parse a single attribute definition string."""
         try:

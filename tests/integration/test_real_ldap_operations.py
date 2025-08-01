@@ -7,7 +7,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-
 import pytest
 from flext_ldap.application.ldap_service import FlextLdapService
 from flext_ldap.ldap_infrastructure import FlextLdapClient, FlextLdapConnectionConfig
@@ -24,11 +23,13 @@ class TestRealLdapOperations:
         return FlextLdapConnectionConfig(
             server_url="ldap://localhost:3389",  # Non-standard port for testing
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            password="REDACTED_LDAP_BIND_PASSWORD"
+            password="REDACTED_LDAP_BIND_PASSWORD",
         )
 
     @pytest.fixture
-    async def ldap_client(self, ldap_config: FlextLdapConnectionConfig) -> FlextLdapClient:
+    async def ldap_client(
+        self, ldap_config: FlextLdapConnectionConfig
+    ) -> FlextLdapClient:
         """Real LDAP client for testing."""
         client = FlextLdapClient(ldap_config)
         yield client
@@ -41,9 +42,7 @@ class TestRealLdapOperations:
         return FlextLdapService()
 
     async def test_ldap_service_connection(
-        self,
-        ldap_service: FlextLdapService,
-        ldap_config: FlextLdapConnectionConfig
+        self, ldap_service: FlextLdapService, ldap_config: FlextLdapConnectionConfig
     ) -> None:
         """Test LDAP service connection."""
         # Test that service starts disconnected
@@ -53,7 +52,7 @@ class TestRealLdapOperations:
         result = await ldap_service.connect(
             ldap_config.server_url,
             ldap_config.bind_dn or "",
-            ldap_config.password or ""
+            ldap_config.password or "",
         )
 
         # If connection fails (no server), test the fallback behavior
@@ -66,8 +65,7 @@ class TestRealLdapOperations:
             assert disconnect_result.is_success
 
     async def test_ldap_service_user_operations_memory_mode(
-        self,
-        ldap_service: FlextLdapService
+        self, ldap_service: FlextLdapService
     ) -> None:
         """Test LDAP service user operations in memory mode (no server)."""
         # Ensure not connected (memory mode)
@@ -79,7 +77,7 @@ class TestRealLdapOperations:
             uid="testuser",
             cn="Test User",
             sn="User",
-            mail="testuser@example.com"
+            mail="testuser@example.com",
         )
 
         # Test user creation in memory mode
@@ -95,7 +93,9 @@ class TestRealLdapOperations:
         assert find_result.data.uid == "testuser"
 
         # Test user update
-        update_result = await ldap_service.update_user("testuser", {"mail": "newemail@example.com"})
+        update_result = await ldap_service.update_user(
+            "testuser", {"mail": "newemail@example.com"}
+        )
         assert update_result.is_success
         assert update_result.data is not None
         assert update_result.data.mail == "newemail@example.com"
@@ -114,7 +114,9 @@ class TestRealLdapOperations:
         find_result = await ldap_service.find_user_by_uid("testuser")
         assert find_result.is_failure
 
-    async def test_ldap_client_basic_operations(self, ldap_client: FlextLdapClient) -> None:
+    async def test_ldap_client_basic_operations(
+        self, ldap_client: FlextLdapClient
+    ) -> None:
         """Test basic LDAP client operations."""
         # Test that client is initialized
         assert ldap_client is not None
@@ -124,7 +126,7 @@ class TestRealLdapOperations:
         config = FlextLdapConnectionConfig(
             server_url="ldap://localhost:3389",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            password="REDACTED_LDAP_BIND_PASSWORD"
+            password="REDACTED_LDAP_BIND_PASSWORD",
         )
 
         result = await ldap_client.connect(config)
@@ -136,10 +138,7 @@ class TestRealLdapOperations:
             assert ldap_client.is_connected()
 
             # Test search
-            await ldap_client.search(
-                "dc=example,dc=com",
-                "(objectClass=*)"
-            )
+            await ldap_client.search("dc=example,dc=com", "(objectClass=*)")
             # Search may succeed or fail depending on server state
 
             # Test disconnect
@@ -147,7 +146,9 @@ class TestRealLdapOperations:
             assert disconnect_result.is_success
             assert not ldap_client.is_connected()
 
-    async def test_multiple_users_without_connection(self, ldap_service: FlextLdapService) -> None:
+    async def test_multiple_users_without_connection(
+        self, ldap_service: FlextLdapService
+    ) -> None:
         """Test that operations properly fail when not connected to LDAP server.
 
         This test validates error handling for operations without connection.
@@ -161,7 +162,7 @@ class TestRealLdapOperations:
                 dn=f"cn=user{i},ou=users,dc=example,dc=com",
                 uid=f"user{i}",
                 cn=f"User {i}",
-                sn="User"
+                sn="User",
             )
 
             # This should FAIL because we're not connected - REAL behavior
@@ -186,7 +187,9 @@ class TestRealLdapOperations:
         assert "Not connected to LDAP server" in delete_result.error
 
     @pytest.mark.slow
-    async def test_ldap_service_error_handling(self, ldap_service: FlextLdapService) -> None:
+    async def test_ldap_service_error_handling(
+        self, ldap_service: FlextLdapService
+    ) -> None:
         """Test LDAP service error handling."""
         # Test finding non-existent user
         find_result = await ldap_service.find_user_by_uid("nonexistent")
@@ -199,6 +202,8 @@ class TestRealLdapOperations:
         assert "not found" in delete_result.error
 
         # Test updating non-existent user
-        update_result = await ldap_service.update_user("nonexistent", {"mail": "test@example.com"})
+        update_result = await ldap_service.update_user(
+            "nonexistent", {"mail": "test@example.com"}
+        )
         assert update_result.is_failure
         assert "not found" in update_result.error

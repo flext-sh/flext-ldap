@@ -51,7 +51,7 @@ from flext_ldap.entities import (
 )
 from flext_ldap.values import (
     FlextLdapAttributesValue as LDAPAttributes,
-    FlextLdapDistinguishedName as FlextLdapDistinguishedName,
+    FlextLdapDistinguishedName,
     FlextLdapFilterValue as LDAPFilter,
     FlextLdapObjectClass as LDAPObjectClass,
     FlextLdapScopeEnum as LDAPScope,

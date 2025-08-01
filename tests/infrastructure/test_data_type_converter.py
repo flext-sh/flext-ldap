@@ -16,6 +16,7 @@ from flext_ldap.ldap_infrastructure import FlextLdapConverter, FlextLdapDataType
 # FBT smell elimination constants - SOLID DRY Principle
 class TestBooleanValue:
     """Test boolean value constants - eliminates FBT003 positional booleans."""
+
     TRUE = True
     FALSE = False
 
@@ -210,16 +211,23 @@ class TestFlextLdapConverter:
         result = converter.from_ldap("invalid-uuid", FlextLdapDataType.UUID)
         assert isinstance(result, str)
 
-    def test_string_type_detection_patterns(self, converter: FlextLdapConverter) -> None:
+    def test_string_type_detection_patterns(
+        self, converter: FlextLdapConverter
+    ) -> None:
         """Test specific string pattern detection."""
         # Email patterns
-        assert converter._detect_string_type("user@domain.com") == FlextLdapDataType.EMAIL
+        assert (
+            converter._detect_string_type("user@domain.com") == FlextLdapDataType.EMAIL
+        )
 
         # Phone patterns
         assert converter._detect_string_type("+1234567890") == FlextLdapDataType.PHONE
 
         # DN patterns
-        assert converter._detect_string_type("cn=test,dc=example,dc=com") == FlextLdapDataType.DN
+        assert (
+            converter._detect_string_type("cn=test,dc=example,dc=com")
+            == FlextLdapDataType.DN
+        )
 
         # Boolean patterns
         assert converter._detect_string_type("true") == FlextLdapDataType.BOOLEAN

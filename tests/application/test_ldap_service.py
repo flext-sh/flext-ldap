@@ -18,6 +18,7 @@ from flext_core import FlextResult
 # FBT smell elimination constants - SOLID DRY Principle
 class TestLDAPOperationResult:
     """Test LDAP operation result constants - eliminates FBT003 positional booleans."""
+
     SUCCESS = True
     FAILURE = False
 
@@ -87,7 +88,7 @@ def sample_ldap_entry() -> FlextLdapEntry:
             "cn": ["Test User"],
             "sn": ["User"],
             "mail": ["testuser@example.com"],
-        }
+        },
     )
 
 
@@ -106,20 +107,14 @@ class TestFlextLdapService:
     @pytest.mark.unit
     def test_service_initialization_with_config(self) -> None:
         """Test service initialization with configuration."""
-        config = FlextLdapConnectionConfig(
-            server="localhost",
-            port=389,
-            use_ssl=False
-        )
+        config = FlextLdapConnectionConfig(server="localhost", port=389, use_ssl=False)
         service = FlextLdapService(config)
         assert service is not None
         assert isinstance(service._api, FlextLdapApi)
 
     @pytest.mark.unit
     async def test_connect_success(
-        self,
-        ldap_service: FlextLdapService,
-        mock_api: Mock
+        self, ldap_service: FlextLdapService, mock_api: Mock
     ) -> None:
         """Test successful connection to LDAP server."""
         # Setup mock
@@ -127,9 +122,7 @@ class TestFlextLdapService:
 
         # Test connection
         result = await ldap_service.connect(
-            "ldap://localhost:389",
-            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            "password"
+            "ldap://localhost:389", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "password"
         )
 
         # Verify
@@ -142,14 +135,12 @@ class TestFlextLdapService:
         mock_api.connect.assert_called_once_with(
             server_url="ldap://localhost:389",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            password="password"
+            password="password",
         )
 
     @pytest.mark.unit
     async def test_connect_failure(
-        self,
-        ldap_service: FlextLdapService,
-        mock_api: Mock
+        self, ldap_service: FlextLdapService, mock_api: Mock
     ) -> None:
         """Test failed connection to LDAP server."""
         # Setup mock
@@ -157,9 +148,7 @@ class TestFlextLdapService:
 
         # Test connection
         result = await ldap_service.connect(
-            "ldap://invalid:389",
-            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            "wrong_password"
+            "ldap://invalid:389", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "wrong_password"
         )
 
         # Verify
@@ -170,14 +159,14 @@ class TestFlextLdapService:
 
     @pytest.mark.unit
     async def test_disconnect_success(
-        self,
-        ldap_service: FlextLdapService,
-        mock_api: Mock
+        self, ldap_service: FlextLdapService, mock_api: Mock
     ) -> None:
         """Test successful disconnection from LDAP server."""
         # Setup - simulate connected state
         ldap_service._session_id = "session_123"
-        mock_api.disconnect.return_value = FlextResult.ok(TestLDAPOperationResult.SUCCESS)
+        mock_api.disconnect.return_value = FlextResult.ok(
+            TestLDAPOperationResult.SUCCESS
+        )
 
         # Test disconnection
         result = await ldap_service.disconnect()
@@ -193,9 +182,7 @@ class TestFlextLdapService:
 
     @pytest.mark.unit
     async def test_disconnect_when_not_connected(
-        self,
-        ldap_service: FlextLdapService,
-        mock_api: Mock
+        self, ldap_service: FlextLdapService, mock_api: Mock
     ) -> None:
         """Test disconnection when not connected."""
         # Test disconnection
@@ -212,7 +199,7 @@ class TestFlextLdapService:
         ldap_service: FlextLdapService,
         mock_api: Mock,
         sample_user_request: FlextLdapCreateUserRequest,
-        sample_user: FlextLdapUser
+        sample_user: FlextLdapUser,
     ) -> None:
         """Test successful user creation."""
         # Setup - simulate connected state
@@ -233,7 +220,7 @@ class TestFlextLdapService:
     async def test_create_user_not_connected(
         self,
         ldap_service: FlextLdapService,
-        sample_user_request: FlextLdapCreateUserRequest
+        sample_user_request: FlextLdapCreateUserRequest,
     ) -> None:
         """Test user creation when not connected."""
         # Test user creation
@@ -248,7 +235,7 @@ class TestFlextLdapService:
         self,
         ldap_service: FlextLdapService,
         mock_api: Mock,
-        sample_ldap_entry: FlextLdapEntry
+        sample_ldap_entry: FlextLdapEntry,
     ) -> None:
         """Test successful user search by UID."""
         # Setup - simulate connected state
@@ -270,14 +257,12 @@ class TestFlextLdapService:
             session_id="session_123",
             base_dn="dc=example,dc=com",
             filter_expr="(uid=testuser)",
-            attributes=["uid", "cn", "sn", "mail", "dn"]
+            attributes=["uid", "cn", "sn", "mail", "dn"],
         )
 
     @pytest.mark.unit
     async def test_find_user_by_uid_not_found(
-        self,
-        ldap_service: FlextLdapService,
-        mock_api: Mock
+        self, ldap_service: FlextLdapService, mock_api: Mock
     ) -> None:
         """Test user search when user not found."""
         # Setup - simulate connected state
@@ -296,13 +281,15 @@ class TestFlextLdapService:
         self,
         ldap_service: FlextLdapService,
         mock_api: Mock,
-        sample_ldap_entry: FlextLdapEntry
+        sample_ldap_entry: FlextLdapEntry,
     ) -> None:
         """Test successful user update."""
         # Setup - simulate connected state and mock find_user_by_uid
         ldap_service._session_id = "session_123"
         mock_api.search.return_value = FlextResult.ok([sample_ldap_entry])
-        mock_api.update_user.return_value = FlextResult.ok(TestLDAPOperationResult.SUCCESS)
+        mock_api.update_user.return_value = FlextResult.ok(
+            TestLDAPOperationResult.SUCCESS
+        )
 
         updates = {"cn": "Updated User", "mail": "updated@example.com"}
 
@@ -317,7 +304,7 @@ class TestFlextLdapService:
         mock_api.update_user.assert_called_once_with(
             session_id="session_123",
             user_dn="cn=testuser,ou=people,dc=example,dc=com",
-            updates=updates
+            updates=updates,
         )
 
     @pytest.mark.unit
@@ -325,13 +312,15 @@ class TestFlextLdapService:
         self,
         ldap_service: FlextLdapService,
         mock_api: Mock,
-        sample_ldap_entry: FlextLdapEntry
+        sample_ldap_entry: FlextLdapEntry,
     ) -> None:
         """Test successful user deletion."""
         # Setup - simulate connected state
         ldap_service._session_id = "session_123"
         mock_api.search.return_value = FlextResult.ok([sample_ldap_entry])
-        mock_api.delete_user.return_value = FlextResult.ok(TestLDAPOperationResult.SUCCESS)
+        mock_api.delete_user.return_value = FlextResult.ok(
+            TestLDAPOperationResult.SUCCESS
+        )
 
         # Test user deletion
         result = await ldap_service.delete_user("testuser")
@@ -343,8 +332,7 @@ class TestFlextLdapService:
         # Verify API calls
         mock_api.search.assert_called_once()  # Find user to get DN
         mock_api.delete_user.assert_called_once_with(
-            session_id="session_123",
-            user_dn="cn=testuser,ou=people,dc=example,dc=com"
+            session_id="session_123", user_dn="cn=testuser,ou=people,dc=example,dc=com"
         )
 
     @pytest.mark.unit
@@ -352,7 +340,7 @@ class TestFlextLdapService:
         self,
         ldap_service: FlextLdapService,
         mock_api: Mock,
-        sample_ldap_entry: FlextLdapEntry
+        sample_ldap_entry: FlextLdapEntry,
     ) -> None:
         """Test successful user listing."""
         # Setup - simulate connected state
@@ -373,14 +361,12 @@ class TestFlextLdapService:
             session_id="session_123",
             base_dn="dc=example,dc=com",
             filter_expr="(objectClass=person)",
-            attributes=["uid", "cn", "sn", "mail", "dn"]
+            attributes=["uid", "cn", "sn", "mail", "dn"],
         )
 
     @pytest.mark.unit
     async def test_list_users_with_custom_parameters(
-        self,
-        ldap_service: FlextLdapService,
-        mock_api: Mock
+        self, ldap_service: FlextLdapService, mock_api: Mock
     ) -> None:
         """Test user listing with custom parameters."""
         # Setup - simulate connected state
@@ -390,7 +376,7 @@ class TestFlextLdapService:
         # Test user listing with custom parameters
         result = await ldap_service.list_users(
             base_dn="ou=users,dc=example,dc=com",
-            filter_expr="(objectClass=inetOrgPerson)"
+            filter_expr="(objectClass=inetOrgPerson)",
         )
 
         # Verify
@@ -401,14 +387,14 @@ class TestFlextLdapService:
             session_id="session_123",
             base_dn="ou=users,dc=example,dc=com",
             filter_expr="(objectClass=inetOrgPerson)",
-            attributes=["uid", "cn", "sn", "mail", "dn"]
+            attributes=["uid", "cn", "sn", "mail", "dn"],
         )
 
     @pytest.mark.unit
     async def test_operations_require_connection(
         self,
         ldap_service: FlextLdapService,
-        sample_user_request: FlextLdapCreateUserRequest
+        sample_user_request: FlextLdapCreateUserRequest,
     ) -> None:
         """Test that all operations require connection."""
         # Test all operations fail when not connected

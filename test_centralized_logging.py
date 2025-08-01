@@ -87,7 +87,9 @@ def test_centralized_logging() -> None:
     dev_config = create_development_config()
     test_logger.info("✅ Development config created successfully")
     test_logger.info(f"  Debug mode: {dev_config.enable_debug_mode}")
-    test_logger.info(f"  Project: {dev_config.project_name} v{dev_config.project_version}")
+    test_logger.info(
+        f"  Project: {dev_config.project_name} v{dev_config.project_version}"
+    )
 
     # Assertions for proper testing
     assert dev_config is not None

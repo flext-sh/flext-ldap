@@ -9,13 +9,13 @@ The flext-ldap library is fully integrated with flext-core's centralized logging
 ### Environment Variables (Priority Order)
 
 1. **client-a_LOG_LEVEL** - Project-specific (highest priority)
-2. **FLEXT_LOG_LEVEL** - Framework-specific 
+2. **FLEXT_LOG_LEVEL** - Framework-specific
 3. **LOG_LEVEL** - Generic (lowest priority)
 
 ### Available Log Levels
 
 | Level    | Numeric | Usage                                    |
-|----------|---------|------------------------------------------|
+| -------- | ------- | ---------------------------------------- |
 | TRACE    | 5       | Detailed debugging, performance analysis |
 | DEBUG    | 10      | General debugging information            |
 | INFO     | 20      | General application flow (default)       |
@@ -35,7 +35,7 @@ export FLEXT_LOG_LEVEL=TRACE
 python your_app.py
 ```
 
-### 2. Enable DEBUG for Testing  
+### 2. Enable DEBUG for Testing
 
 ```bash
 # Set DEBUG level for framework
@@ -75,6 +75,7 @@ converter.detect_type('test@example.com')  # Shows cache hit
 ```
 
 Output includes:
+
 - Parameter validation steps
 - Cache hit/miss information
 - Type detection logic
@@ -84,6 +85,7 @@ Output includes:
 ## 🎆 Enterprise Features
 
 ### Context Binding
+
 ```python
 from flext_core import get_logger
 
@@ -102,9 +104,10 @@ operation_logger.info("Search completed successfully")
 ```
 
 ### Structured Logging
+
 ```python
 logger.debug("LDAP connection established", extra={
-    "server": "ldap.example.com", 
+    "server": "ldap.example.com",
     "port": 389,
     "ssl": False,
     "auth_type": "simple",
@@ -113,6 +116,7 @@ logger.debug("LDAP connection established", extra={
 ```
 
 ### Performance-Optimized Logging
+
 The library includes performance checks to avoid expensive operations when not needed:
 
 ```python
@@ -133,6 +137,7 @@ python test_centralized_logging.py
 ```
 
 This script:
+
 - Shows current environment configuration
 - Tests all log levels
 - Validates TRACE functionality
@@ -142,6 +147,7 @@ This script:
 ## 📈 Integration with flext-core Patterns
 
 ### Logger Creation
+
 ```python
 from flext_core import get_logger
 
@@ -150,17 +156,19 @@ logger = get_logger(__name__)
 ```
 
 ### FlextResult Integration
+
 ```python
 def validate_connection(config):
     if not config.server:
         logger.error("Connection validation failed", extra={"error": "missing_server"})
         return FlextResult.fail("Server is required")
-    
+
     logger.debug("Connection validated", extra={"server": config.server})
     return FlextResult.ok(True)
 ```
 
 ### Error Correlation
+
 ```python
 try:
     result = perform_ldap_operation()
@@ -180,13 +188,16 @@ except Exception as e:
 ## 🚀 Production Best Practices
 
 ### 1. Log Level Strategy
+
 - **Development**: TRACE or DEBUG for detailed diagnostics
 - **Testing**: DEBUG or INFO for validation
-- **Staging**: INFO for application flow monitoring  
+- **Staging**: INFO for application flow monitoring
 - **Production**: INFO or WARNING based on volume
 
 ### 2. Structured Data
+
 Always include relevant context in log messages:
+
 ```python
 logger.info("User authentication successful", extra={
     "user_dn": user.dn,
@@ -197,12 +208,15 @@ logger.info("User authentication successful", extra={
 ```
 
 ### 3. Performance Considerations
+
 - TRACE level includes expensive operations (cache stats, detailed validation)
 - DEBUG includes moderate operations (parameter logging, flow tracking)
 - INFO includes essential operations (success/failure, metrics)
 
 ### 4. Error Handling
+
 Combine FlextResult patterns with comprehensive logging:
+
 ```python
 result = ldap_client.search(base_dn, filter)
 if not result.is_success:
@@ -225,7 +239,7 @@ logger.info("LDAP search successful", extra={
 
 - [ ] Environment variables set correctly
 - [ ] TRACE level shows detailed debugging
-- [ ] DEBUG level shows general debugging  
+- [ ] DEBUG level shows general debugging
 - [ ] INFO level shows application flow
 - [ ] Structured logging includes relevant context
 - [ ] Performance checks prevent expensive operations
@@ -235,6 +249,7 @@ logger.info("LDAP search successful", extra={
 ## 🎯 Summary
 
 The flext-ldap library provides enterprise-grade logging that:
+
 - ✅ Respects centralized flext-core configuration
 - ✅ Supports all standard log levels including TRACE
 - ✅ Includes performance optimizations

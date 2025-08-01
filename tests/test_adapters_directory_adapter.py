@@ -13,6 +13,7 @@ EXPECTED_DATA_COUNT = 3
 # FBT smell elimination constants - SOLID DRY Principle
 class TestOperationResult:
     """Test operation result constants - eliminates FBT003 positional booleans."""
+
     SUCCESS = True
     FAILURE = False
 

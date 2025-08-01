@@ -429,7 +429,8 @@ class FlextLdapClient:
             return FlextResult.fail(f"Connection failed: {e}")
 
     async def connect_with_auth(
-        self, auth_config: FlextLdapAuthConfig,
+        self,
+        auth_config: FlextLdapAuthConfig,
     ) -> FlextResult[bool]:
         """Connect with authentication using provided credentials."""
         logger.debug(
@@ -471,7 +472,8 @@ class FlextLdapClient:
             self._current_connection = connection_result.data
 
             logger.info(
-                "LDAP authentication successful", extra={"bind_dn": auth_config.bind_dn},
+                "LDAP authentication successful",
+                extra={"bind_dn": auth_config.bind_dn},
             )
             return FlextResult.ok(LDAPOperationResult.SUCCESS)
         except LDAPException as e:
@@ -501,7 +503,9 @@ class FlextLdapClient:
         """Search with intelligent result conversion."""
         # Use flext-core context binding for operation tracking
         operation_logger = logger.bind(
-            operation="ldap_search", base_dn=base_dn, filter=search_filter,
+            operation="ldap_search",
+            base_dn=base_dn,
+            filter=search_filter,
         )
 
         operation_logger.debug(
@@ -604,7 +608,8 @@ class FlextLdapClient:
             return FlextResult.ok(results)
         except (RuntimeError, ValueError, TypeError) as e:
             operation_logger.exception(
-                "Search exception", extra={"error": str(e), "type": type(e).__name__},
+                "Search exception",
+                extra={"error": str(e), "type": type(e).__name__},
             )
             return FlextResult.fail(f"Search error: {e}")
 
@@ -617,7 +622,9 @@ class FlextLdapClient:
         """Add entry with intelligent attribute conversion."""
         # Use flext-core context binding for operation tracking
         operation_logger = logger.bind(
-            operation="ldap_add", dn=dn, object_classes=object_classes,
+            operation="ldap_add",
+            dn=dn,
+            object_classes=object_classes,
         )
 
         operation_logger.debug(
@@ -674,7 +681,8 @@ class FlextLdapClient:
             return FlextResult.ok(LDAPOperationResult.SUCCESS)
         except (RuntimeError, ValueError, TypeError) as e:
             operation_logger.exception(
-                "Add exception", extra={"error": str(e), "type": type(e).__name__},
+                "Add exception",
+                extra={"error": str(e), "type": type(e).__name__},
             )
             return FlextResult.fail(f"Add error: {e}")
 
@@ -884,7 +892,8 @@ def create_ldap_client(
     # If authentication credentials provided, store them for later use
     if bind_dn and password:
         logger.debug(
-            "Configuring authentication for client", extra={"bind_dn": bind_dn},
+            "Configuring authentication for client",
+            extra={"bind_dn": bind_dn},
         )
         # Store auth config in client for future authentication
         auth_config = FlextLdapAuthConfig(
@@ -894,7 +903,8 @@ def create_ldap_client(
         # REALLY use the auth_config by storing it in the client
         client._auth_config = auth_config
         logger.info(
-            "Created LDAP client with authentication credentials for %s", bind_dn,
+            "Created LDAP client with authentication credentials for %s",
+            bind_dn,
         )
     else:
         logger.debug("Created LDAP client without authentication")

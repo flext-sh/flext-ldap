@@ -163,7 +163,9 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             user_id_str = str(user_id)
 
             # Search for user with UUID in common LDAP attributes
-            search_filter = f"(|(uid={user_id_str})(cn={user_id_str})(entryUUID={user_id_str}))"
+            search_filter = (
+                f"(|(uid={user_id_str})(cn={user_id_str})(entryUUID={user_id_str}))"
+            )
 
             # Use LDAP client to search
             search_result = await self.ldap_client.search(
