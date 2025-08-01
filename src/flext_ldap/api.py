@@ -225,9 +225,7 @@ class FlextLdapApi:
     ) -> FlextResult:
         """Execute LDAP search with proper base DN handling."""
         base_str = (
-            str(base_dn)
-            if isinstance(base_dn, FlextLdapDistinguishedName)
-            else base_dn
+            str(base_dn) if isinstance(base_dn, FlextLdapDistinguishedName) else base_dn
         )
 
         # FlextLdapClient.search() is async, REALLY USE scope parameter
@@ -278,9 +276,7 @@ class FlextLdapApi:
 
     def _extract_object_classes(self, attrs: dict) -> list:
         """Extract object classes from attributes safely."""
-        obj_classes_raw = (
-            attrs.get("objectClass", []) if hasattr(attrs, "get") else []
-        )
+        obj_classes_raw = attrs.get("objectClass", []) if hasattr(attrs, "get") else []
         return obj_classes_raw if isinstance(obj_classes_raw, list) else []
 
     def _format_attributes(self, attrs: dict) -> dict[str, list[str]]:

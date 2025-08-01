@@ -159,7 +159,7 @@ def flext_ldap_build_filter(operator: str, conditions: dict[str, str]) -> str:
 
     # Execute appropriate filter builder or return empty string
     builder = filter_builders.get(filter_key)
-    return builder(filters) if builder else ""
+    return str(builder(filters)) if builder else ""
 
 
 def flext_ldap_is_valid_url(url: str) -> bool:

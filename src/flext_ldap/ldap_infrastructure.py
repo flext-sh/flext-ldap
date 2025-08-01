@@ -352,13 +352,13 @@ class FlextLdapConnectionManager:
             return FlextResult.fail(f"Failed to close connection: {e}")
 
 
-class FlextLdapClient:
+class FlextLdapSimpleClient:
     """UNIFIED LDAP client with intelligent infrastructure."""
 
     def __init__(self, config: FlextLdapConnectionConfig | None = None) -> None:
         """Initialize unified client."""
         logger.debug(
-            "Initializing FlextLdapClient",
+            "Initializing FlextLdapSimpleClient",
             extra={
                 "has_config": config is not None,
                 "config": config.__dict__ if config else None,
@@ -474,7 +474,7 @@ class FlextLdapClient:
 
             # Replace current connection with authenticated one
             if self._current_connection:
-                self._current_connection.unbind()
+                self._current_connection.unbind()  # type: ignore[no-untyped-call]
 
             self._current_connection = connection_result.data
 
@@ -812,9 +812,31 @@ class FlextLdapClient:
             self._current_connection is not None and not self._current_connection.closed
         )
 
+    async def get_entry(self, dn: str) -> FlextResult[dict[str, object]]:
+        """Get single LDAP entry by DN."""
+        logger.debug("Getting LDAP entry", extra={"dn": dn})
+
+        # Use search with BASE scope to get single entry
+        search_result = await self.search(dn, "(objectClass=*)", scope="base")
+
+        if not search_result.is_success:
+            return FlextResult.fail(f"Failed to get entry: {search_result.error}")
+
+        entries = search_result.data or []
+        if not entries:
+            return FlextResult.fail(f"Entry not found: {dn}")
+
+        return FlextResult.ok(entries[0])
+
+    async def delete_entry(self, dn: str) -> FlextResult[bool]:
+        """Delete LDAP entry by DN."""
+        logger.debug("Deleting LDAP entry", extra={"dn": dn})
+
+        # Use the existing delete method
+        return await self.delete(dn)
+
 
 # COMPATIBILITY ALIASES
-FlextLdapSimpleClient = FlextLdapClient  # From old client.py
 FlextSimpleConverter = FlextLdapConverter  # From old converters.py
 
 
@@ -824,7 +846,7 @@ def create_ldap_client(
     bind_dn: str | None = None,
     password: str | None = None,
     **kwargs: object,
-) -> FlextLdapClient:
+) -> FlextLdapSimpleClient:
     """Factory for creating configured LDAP client.
 
     Args:
@@ -890,10 +912,10 @@ def create_ldap_client(
 
     # Create client with REAL config
     logger.trace(
-        "Creating FlextLdapClient with config",
+        "Creating FlextLdapSimpleClient with config",
         extra={"host": host, "port": port, "ssl": use_ssl, "timeout": timeout_seconds},
     )
-    client = FlextLdapClient(config)
+    client = FlextLdapSimpleClient(config)
 
     # If authentication credentials provided, store them for later use
     if bind_dn and password:

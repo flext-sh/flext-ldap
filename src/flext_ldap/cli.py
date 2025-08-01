@@ -20,7 +20,7 @@ from rich.console import Console
 from rich.table import Table
 
 from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
-from flext_ldap.ldap_infrastructure import FlextLdapClient
+from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
 from flext_ldap.values import ExtendedLDAPEntry
 
 if TYPE_CHECKING:
@@ -38,16 +38,21 @@ MAX_DISPLAY_VALUES = 3
 
 
 # =============================================================================
-# SOLID REFACTORING: Decorator Pattern - Eliminate Click Option Duplication
+# REFACTORING: Decorator Pattern - Eliminate Click Option Duplication
 # =============================================================================
+
 
 def ldap_connection_options(func: Callable) -> Callable:
     """DRY Decorator Pattern: Common LDAP connection options - eliminates duplication."""
-    func = click.option("--bind-password", type=str, help="Password for authentication")(func)
-    func = click.option("--bind-dn", type=str, help="Bind DN for authentication")(func)
-    func = click.option("--ssl", is_flag=True, help="Use SSL/TLS connection")(func)
-    func = click.option("--port", "-p", default=389, type=int, help="LDAP server port")(func)
-    return func
+    return click.option("--port", "-p", default=389, type=int, help="LDAP server port")(
+        click.option("--ssl", is_flag=True, help="Use SSL/TLS connection")(
+            click.option("--bind-dn", type=str, help="Bind DN for authentication")(
+                click.option(
+                    "--bind-password", type=str, help="Password for authentication"
+                )(func)
+            )
+        )
+    )
 
 
 # Boolean operation constants to eliminate FBT smells - SOLID DRY Principle
@@ -229,8 +234,8 @@ class BaseLDAPHandler:
 
     @staticmethod
     def _execute_with_client(
-        client: FlextLdapClient,
-        operation: Callable[[FlextLdapClient], FlextResult[object]],
+        client: FlextLdapSimpleClient,
+        operation: Callable[[FlextLdapSimpleClient], FlextResult[object]],
     ) -> FlextResult[object]:
         """Execute operation with client lifecycle management."""
         try:
@@ -273,9 +278,9 @@ class LDAPConnectionHandler(BaseLDAPHandler):
             params.server, params.port, use_ssl=params.use_ssl
         )
         cls._create_auth_config(params.bind_dn, params.bind_password)
-        client = FlextLdapClient(conn_config)
+        client = FlextLdapSimpleClient(conn_config)
 
-        def test_operation(client: FlextLdapClient) -> FlextResult[object]:
+        def test_operation(client: FlextLdapSimpleClient) -> FlextResult[object]:
             return cls._perform_connection_test_operation(client, params)
 
         result = cls._execute_with_client(client, test_operation)
@@ -283,7 +288,7 @@ class LDAPConnectionHandler(BaseLDAPHandler):
 
     @classmethod
     def _perform_connection_test_operation(
-        cls, client: FlextLdapClient, params: LDAPConnectionTestParams
+        cls, client: FlextLdapSimpleClient, params: LDAPConnectionTestParams
     ) -> FlextResult[object]:
         """Perform connection test operation with proper validation."""
         # Actually test the connection by checking if client is connected
@@ -292,7 +297,9 @@ class LDAPConnectionHandler(BaseLDAPHandler):
             return FlextResult.fail(error_msg)
 
         protocol = "ldaps" if params.use_ssl else "ldap"
-        message = f"Successfully connected to {protocol}://{params.server}:{params.port}"
+        message = (
+            f"Successfully connected to {protocol}://{params.server}:{params.port}"
+        )
         return FlextResult.ok(message)
 
     @classmethod
@@ -349,7 +356,7 @@ class LDAPSearchHandler(BaseLDAPHandler):
     @classmethod
     def _execute_ldap_search(
         cls,
-        client: FlextLdapClient,
+        client: FlextLdapSimpleClient,
         params: LDAPSearchParams,
     ) -> FlextResult[object]:
         """Execute LDAP search operation."""
@@ -389,9 +396,9 @@ class LDAPSearchHandler(BaseLDAPHandler):
                     extra={"bind_dn": params.bind_dn},
                 )
 
-            client = FlextLdapClient(conn_config)
+            client = FlextLdapSimpleClient(conn_config)
 
-            def search_operation(client: FlextLdapClient) -> FlextResult[object]:
+            def search_operation(client: FlextLdapSimpleClient) -> FlextResult[object]:
                 return cls._execute_ldap_search(client, params)
 
             result = cls._execute_with_client(client, search_operation)
@@ -415,9 +422,11 @@ class LDAPUserHandler(BaseLDAPHandler):
         try:
             server = server or "localhost"
             conn_config = cls._create_connection_config(server)
-            client = FlextLdapClient(conn_config)
+            client = FlextLdapSimpleClient(conn_config)
 
-            def user_lookup_operation(client: FlextLdapClient) -> FlextResult[object]:
+            def user_lookup_operation(
+                client: FlextLdapSimpleClient,
+            ) -> FlextResult[object]:
                 # REAL search for user by uid
                 search_result = asyncio.run(
                     client.search(
@@ -445,13 +454,15 @@ class LDAPUserHandler(BaseLDAPHandler):
         try:
             server = params.server or "localhost"
             conn_config = cls._create_connection_config(server)
-            client = FlextLdapClient(conn_config)
+            client = FlextLdapSimpleClient(conn_config)
 
-            def user_creation_operation(client: FlextLdapClient) -> FlextResult[object]:
+            def user_creation_operation(
+                client: FlextLdapSimpleClient,
+            ) -> FlextResult[object]:
                 # REAL user creation
                 user_dn = f"cn={params.uid},{params.base_dn}"
                 object_classes = ["person", "organizationalPerson", "inetOrgPerson"]
-                # Type-safe attributes dictionary for FlextLdapClient.add
+                # Type-safe attributes dictionary for FlextLdapSimpleClient.add
                 attributes: dict[str, object] = {
                     "uid": params.uid,
                     "cn": params.cn,
@@ -503,9 +514,11 @@ class LDAPUserHandler(BaseLDAPHandler):
         """Execute user listing pipeline with consolidated error handling."""
         server = server or "localhost"
         conn_config = cls._create_connection_config(server)
-        client = FlextLdapClient(conn_config)
+        client = FlextLdapSimpleClient(conn_config)
 
-        def user_listing_operation(client: FlextLdapClient) -> FlextResult[object]:
+        def user_listing_operation(
+            client: FlextLdapSimpleClient,
+        ) -> FlextResult[object]:
             return cls._perform_user_search_operation(client, limit)
 
         result = cls._execute_with_client(client, user_listing_operation)
@@ -513,7 +526,7 @@ class LDAPUserHandler(BaseLDAPHandler):
 
     @classmethod
     def _perform_user_search_operation(
-        cls, client: FlextLdapClient, limit: int
+        cls, client: FlextLdapSimpleClient, limit: int
     ) -> FlextResult[object]:
         """Perform user search operation with proper filtering."""
         # REAL search for all users

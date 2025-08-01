@@ -9,7 +9,10 @@ SPDX-License-Identifier: MIT
 
 import pytest
 from flext_ldap.application.ldap_service import FlextLdapService
-from flext_ldap.ldap_infrastructure import FlextLdapClient, FlextLdapConnectionConfig
+from flext_ldap.ldap_infrastructure import (
+    FlextLdapConnectionConfig,
+    FlextLdapSimpleClient,
+)
 from flext_ldap.values import FlextLdapCreateUserRequest
 
 
@@ -21,20 +24,21 @@ class TestRealLdapOperations:
     def ldap_config(self) -> FlextLdapConnectionConfig:
         """LDAP configuration for testing."""
         return FlextLdapConnectionConfig(
-            server_url="ldap://localhost:3389",  # Non-standard port for testing
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            password="REDACTED_LDAP_BIND_PASSWORD",
+            server="localhost",
+            port=3389,  # Non-standard port for testing
+            use_ssl=False,
+            timeout_seconds=30,
         )
 
     @pytest.fixture
     async def ldap_client(
         self, ldap_config: FlextLdapConnectionConfig
-    ) -> FlextLdapClient:
+    ) -> FlextLdapSimpleClient:
         """Real LDAP client for testing."""
-        client = FlextLdapClient(ldap_config)
+        client = FlextLdapSimpleClient(ldap_config)
         yield client
         # Cleanup
-        await client.disconnect()
+        client.disconnect()
 
     @pytest.fixture
     async def ldap_service(self) -> FlextLdapService:
@@ -115,7 +119,7 @@ class TestRealLdapOperations:
         assert find_result.is_failure
 
     async def test_ldap_client_basic_operations(
-        self, ldap_client: FlextLdapClient
+        self, ldap_client: FlextLdapSimpleClient
     ) -> None:
         """Test basic LDAP client operations."""
         # Test that client is initialized
@@ -124,12 +128,13 @@ class TestRealLdapOperations:
 
         # Test connection attempt (may fail if no server)
         config = FlextLdapConnectionConfig(
-            server_url="ldap://localhost:3389",
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            password="REDACTED_LDAP_BIND_PASSWORD",
+            server="localhost",
+            port=3389,
+            use_ssl=False,
+            timeout_seconds=30,
         )
 
-        result = await ldap_client.connect(config)
+        result = ldap_client.connect(config)
         # If connection fails, that's expected without a real server
         if result.is_failure:
             assert not ldap_client.is_connected()

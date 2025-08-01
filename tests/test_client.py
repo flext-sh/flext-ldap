@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from flext_core.exceptions import FlextConnectionError
-from flext_ldap.ldap_infrastructure import FlextLdapClient
+from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
 
 if TYPE_CHECKING:
     from flext_ldap.config import FlextLdapSettings
@@ -20,7 +20,7 @@ class TestLDAPClient:
     def test_client_import(self) -> None:
         """Test that LDAPClient can be imported."""
 
-        assert FlextLdapClient is not None
+        assert FlextLdapSimpleClient is not None
 
     @pytest.mark.unit
     def test_client_instantiation_with_settings(
@@ -28,10 +28,10 @@ class TestLDAPClient:
         ldap_settings: FlextLdapSettings,
     ) -> None:
         """Test that LDAPClient can be instantiated with settings."""
-        from flext_ldap.client import FlextLdapClient
+        from flext_ldap.client import FlextLdapSimpleClient
 
         # ldap_settings fixture returns FlextLDAPSettings instance
-        client = FlextLdapClient(ldap_settings)
+        client = FlextLdapSimpleClient(ldap_settings)
         assert client is not None
         assert not client.is_connected()
 
@@ -39,7 +39,7 @@ class TestLDAPClient:
     def test_client_instantiation_without_config(self) -> None:
         """Test that LDAPClient can be instantiated without config."""
 
-        client = FlextLdapClient()
+        client = FlextLdapSimpleClient()
         assert client is not None
         assert not client.is_connected()
 
@@ -47,7 +47,7 @@ class TestLDAPClient:
     def test_get_server_info_disconnected(self) -> None:
         """Test get_server_info when disconnected."""
 
-        client = FlextLdapClient()
+        client = FlextLdapSimpleClient()
         info = client.get_server_info()
         expected_info = {"status": "disconnected"}
         if info != expected_info:
@@ -68,7 +68,7 @@ class TestLDAPClient:
             )
             mock_infra_client.return_value = mock_instance
 
-            client = FlextLdapClient()
+            client = FlextLdapSimpleClient()
             await client.connect()
 
             if not (client.is_connected()):
@@ -90,7 +90,7 @@ class TestLDAPClient:
             )
             mock_infra_client.return_value = mock_instance
 
-            client = FlextLdapClient()
+            client = FlextLdapSimpleClient()
 
             with pytest.raises(FlextConnectionError, match="Connection failed"):
                 await client.connect()
@@ -113,7 +113,7 @@ class TestLDAPClient:
             mock_instance.disconnect.return_value = MagicMock(success=True, data=True)
             mock_infra_client.return_value = mock_instance
 
-            client = FlextLdapClient()
+            client = FlextLdapSimpleClient()
             await client.connect()
             await client.disconnect()
 
@@ -136,7 +136,7 @@ class TestLDAPClient:
             mock_instance.search.return_value = MagicMock(success=True, data=[])
             mock_infra_client.return_value = mock_instance
 
-            client = FlextLdapClient()
+            client = FlextLdapSimpleClient()
             await client.connect()
             result = await client.ping()
 
@@ -147,7 +147,7 @@ class TestLDAPClient:
     async def test_ping_disconnected(self) -> None:
         """Test ping when disconnected."""
 
-        client = FlextLdapClient()
+        client = FlextLdapSimpleClient()
         result = await client.ping()
 
         if result:
@@ -183,7 +183,7 @@ class TestLDAPClient:
             )
             mock_infra_client.return_value = mock_instance
 
-            client = FlextLdapClient()
+            client = FlextLdapSimpleClient()
             await client.connect()
 
             result = await client.search(
@@ -207,7 +207,7 @@ class TestLDAPClient:
     async def test_search_not_connected(self) -> None:
         """Test search when not connected."""
 
-        client = FlextLdapClient()
+        client = FlextLdapSimpleClient()
 
         result = await client.search(
             base_dn="ou=users,dc=example,dc=org",
@@ -235,7 +235,7 @@ class TestLDAPClient:
             mock_instance.modify_entry.return_value = MagicMock(success=True, data=True)
             mock_infra_client.return_value = mock_instance
 
-            client = FlextLdapClient()
+            client = FlextLdapSimpleClient()
             await client.connect()
 
             result = await client.modify(
@@ -251,7 +251,7 @@ class TestLDAPClient:
     async def test_modify_not_connected(self) -> None:
         """Test modify when not connected."""
 
-        client = FlextLdapClient()
+        client = FlextLdapSimpleClient()
 
         result = await client.modify(
             dn="uid=test,ou=users,dc=example,dc=org",
@@ -279,7 +279,7 @@ class TestLDAPClient:
             mock_instance.disconnect.return_value = MagicMock(success=True, data=True)
             mock_infra_client.return_value = mock_instance
 
-            async with FlextLdapClient() as client:
+            async with FlextLdapSimpleClient() as client:
                 if not (client.is_connected()):
                     raise AssertionError(f"Expected True, got {client.is_connected()}")
 
@@ -301,7 +301,7 @@ class TestLDAPClient:
             )
             mock_infra_client.return_value = mock_instance
 
-            client = FlextLdapClient()
+            client = FlextLdapSimpleClient()
             await client.connect()
 
             async with client.transaction() as tx_client:
@@ -326,7 +326,7 @@ class TestLDAPClient:
             )
             mock_infra_client.return_value = mock_instance
 
-            client = FlextLdapClient()
+            client = FlextLdapSimpleClient()
             client._connection_id = "conn_123"  # Simulate connected state
             client._connected = True  # Also need to set connected flag
 

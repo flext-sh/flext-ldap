@@ -407,15 +407,17 @@ class TestFlextLdapCreateUserRequest:
         )
         request.validate_domain_rules()  # Should not raise
 
-        # Test invalid email
-        with pytest.raises(ValueError):
-            FlextLdapCreateUserRequest(
-                dn="cn=test,dc=example,dc=com",
-                uid="test",
-                cn="Test",
-                sn="User",
-                mail="invalid-email",
-            )
+        # Test invalid email (domain validation check)
+        request_with_invalid_email = FlextLdapCreateUserRequest(
+            dn="cn=test,dc=example,dc=com",
+            uid="test",
+            cn="Test",
+            sn="User",
+            mail="invalid-email",
+        )
+        result = request_with_invalid_email.validate_domain_rules()
+        assert not result.is_success
+        assert "email" in result.error.lower()
 
     def test_user_request_field_validation(self) -> None:
         """Test individual field validation."""

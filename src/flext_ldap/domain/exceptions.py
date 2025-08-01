@@ -53,9 +53,9 @@ FlextLdapAuthenticationError = cast(
 )
 FlextLdapTimeoutError = cast("type[Exception]", _exceptions["FlextLdapTimeoutError"])
 
-# SOLID SRP: Domain-specific LDAP errors using composition over duplication
+# Domain-specific LDAP errors using composition over duplication
 # =============================================================================
-# SOLID REFACTORING: Factory Method Pattern - eliminates 16-line duplication
+# REFACTORING: Factory Method Pattern - eliminates 16-line duplication
 # =============================================================================
 
 
