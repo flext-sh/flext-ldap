@@ -42,14 +42,15 @@ class TestFlextLdapEntry:
 
     def test_entry_domain_validation(self) -> None:
         """Test domain rule validation."""
-        # Use specific error message matching for better test quality
-        with pytest.raises(ValueError, match=".*DN.*required.*"):
-            entry = FlextLdapEntry(
-                id=str(uuid4()),
-                dn="",  # Empty DN should fail
-                object_classes=[],
-            )
-            entry.validate_domain_rules()
+        # Test domain validation with empty DN
+        entry = FlextLdapEntry(
+            id=str(uuid4()),
+            dn="",  # Empty DN should fail
+            object_classes=[],
+        )
+        result = entry.validate_domain_rules()
+        assert not result.is_success
+        assert "distinguished name" in result.error.lower()
 
     def test_entry_object_class_management(self) -> None:
         """Test object class operations."""
@@ -75,9 +76,9 @@ class TestFlextLdapEntry:
 
         # Test removal
         entry.remove_object_class("person")
-        if "person" not in entry.object_classes:
+        if "person" in entry.object_classes:
             raise AssertionError(
-                f"Expected 'person' not to be in {entry.object_classes}"
+                f"Expected 'person' to be removed from {entry.object_classes}"
             )
 
     def test_entry_attribute_management(self) -> None:
@@ -163,13 +164,14 @@ class TestFlextLdapUser:
     def test_user_domain_validation(self) -> None:
         """Test user business rules."""
         # Test invalid email
-        with pytest.raises(ValueError):
-            user = FlextLdapUser(
-                id=str(uuid4()),
-                dn="cn=test,dc=example,dc=com",
-                mail="invalid-email",  # Should fail validation
-            )
-            user.validate_domain_rules()
+        user = FlextLdapUser(
+            id=str(uuid4()),
+            dn="cn=test,dc=example,dc=com",
+            mail="invalid-email",  # Should fail validation
+        )
+        result = user.validate_domain_rules()
+        assert not result.is_success
+        assert "email" in result.error.lower()
 
     def test_user_attribute_management(self) -> None:
         """Test user-specific attribute operations."""
@@ -235,13 +237,14 @@ class TestFlextLdapGroup:
 
     def test_group_domain_validation(self) -> None:
         """Test group business rules."""
-        with pytest.raises(ValueError):
-            group = FlextLdapGroup(
-                id=str(uuid4()),
-                dn="cn=test,dc=example,dc=com",
-                cn="",  # Empty CN should fail
-            )
-            group.validate_domain_rules()
+        group = FlextLdapGroup(
+            id=str(uuid4()),
+            dn="cn=test,dc=example,dc=com",
+            cn="",  # Empty CN should fail
+        )
+        result = group.validate_domain_rules()
+        assert not result.is_success
+        assert "common name" in result.error.lower()
 
     def test_group_member_management(self) -> None:
         """Test group member operations."""
@@ -329,12 +332,13 @@ class TestFlextLdapConnection:
 
     def test_connection_domain_validation(self) -> None:
         """Test connection business rules."""
-        with pytest.raises(ValueError):
-            connection = FlextLdapConnection(
-                id=str(uuid4()),
-                server_url="",  # Empty URL should fail
-            )
-            connection.validate_domain_rules()
+        connection = FlextLdapConnection(
+            id=str(uuid4()),
+            server_url="",  # Empty URL should fail
+        )
+        result = connection.validate_domain_rules()
+        assert not result.is_success
+        assert "server" in result.error.lower()
 
 
 class TestFlextLdapOperation:

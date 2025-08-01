@@ -149,7 +149,7 @@ class FlextLdapSchemaAttribute:
         """Check if attribute has given name."""
         return name.lower() in [n.lower() for n in self.names]
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, object]:
         """Convert to dictionary representation."""
         return {
             "oid": self.oid,
@@ -253,7 +253,7 @@ class FlextLdapSchemaObjectClass:
 
         return all_must, all_may
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, object]:
         """Convert to dictionary representation."""
         return {
             "oid": self.oid,
@@ -274,11 +274,11 @@ class FlextLdapSchemaDiscoveryData:
 
     discovery_id: UUID | None = None
     timestamp: datetime | None = None
-    server_info: dict[str, Any] | None = None
+    server_info: dict[str, object] | None = None
     object_classes: dict[str, FlextLdapSchemaObjectClass] | None = None
     attributes: dict[str, FlextLdapSchemaAttribute] | None = None
-    syntaxes: dict[str, dict[str, Any]] | None = None
-    matching_rules: dict[str, dict[str, Any]] | None = None
+    syntaxes: dict[str, dict[str, object]] | None = None
+    matching_rules: dict[str, dict[str, object]] | None = None
     discovery_errors: list[str] | None = None
     discovery_warnings: list[str] | None = None
     cache_hit: bool = False
@@ -318,7 +318,7 @@ class FlextLdapSchemaDiscoveryResult:
             + len(self.matching_rules)
         )
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, object]:
         """Convert to dictionary representation."""
         return {
             "discovery_id": str(self.discovery_id),
@@ -492,7 +492,7 @@ class FlextLdapSchemaDiscoveryService:
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
-    def _create_validation_result(self) -> dict[str, Any]:
+    def _create_validation_result(self) -> dict[str, object]:
         """Create initial validation result structure."""
         return {
             "is_valid": True,
@@ -507,7 +507,7 @@ class FlextLdapSchemaDiscoveryService:
         self,
         object_classes: list[str],
         schema: FlextLdapSchemaDiscoveryResult,
-        validation_result: dict[str, Any],
+        validation_result: dict[str, object],
     ) -> tuple[set[str], set[str]]:
         """Collect must and may attributes from object classes."""
         all_must_attrs: set[str] = set()
@@ -534,8 +534,8 @@ class FlextLdapSchemaDiscoveryService:
     def _validate_required_attributes(
         self,
         all_must_attrs: set[str],
-        attributes: dict[str, Any],
-        validation_result: dict[str, Any],
+        attributes: dict[str, object],
+        validation_result: dict[str, object],
     ) -> None:
         """Validate that all required attributes are provided."""
         provided_attrs = {attr.lower() for attr in attributes}
@@ -548,8 +548,8 @@ class FlextLdapSchemaDiscoveryService:
         self,
         all_must_attrs: set[str],
         all_may_attrs: set[str],
-        attributes: dict[str, Any],
-        validation_result: dict[str, Any],
+        attributes: dict[str, object],
+        validation_result: dict[str, object],
     ) -> None:
         """Check for unknown attributes."""
         all_known_attrs = all_must_attrs.union(all_may_attrs)
@@ -561,8 +561,8 @@ class FlextLdapSchemaDiscoveryService:
     def _validate_single_value_constraints(
         self,
         schema: FlextLdapSchemaDiscoveryResult,
-        attributes: dict[str, Any],
-        validation_result: dict[str, Any],
+        attributes: dict[str, object],
+        validation_result: dict[str, object],
     ) -> None:
         """Validate single-value attribute constraints."""
         for attr_name, attr_value in attributes.items():
@@ -587,8 +587,8 @@ class FlextLdapSchemaDiscoveryService:
         self,
         connection: FlextLdapConnection,
         object_classes: list[str],
-        attributes: dict[str, Any],
-    ) -> FlextResult[dict[str, Any]]:
+        attributes: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         """Validate object structure against schema."""
         try:
             schema_result = await self.discover_schema(connection)
@@ -792,7 +792,7 @@ class FlextLdapSchemaDiscoveryService:
         self._schema_cache.clear()
         logger.info("Schema cache cleared")
 
-    def get_cache_stats(self) -> dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, object]:
         """Get cache statistics."""
         return {
             "cache_size": len(self._schema_cache),
@@ -992,7 +992,7 @@ class FlextLdapSchemaDiscoveryService:
 
     def _extract_object_classes_from_entry(
         self,
-        entry: dict[str, Any],
+        entry: dict[str, object],
         object_classes: dict[str, FlextLdapSchemaObjectClass],
     ) -> None:
         """Extract object classes from schema entry - reduces nested control flow."""
@@ -1029,7 +1029,7 @@ class FlextLdapSchemaDiscoveryService:
 
     def _parse_server_object_classes(
         self,
-        schema_data: list[dict[str, Any]],
+        schema_data: list[dict[str, object]],
     ) -> dict[str, FlextLdapSchemaObjectClass]:
         """Parse object classes from server schema data."""
         return self._parse_server_schema_items(
@@ -1042,7 +1042,7 @@ class FlextLdapSchemaDiscoveryService:
 
     def _parse_server_attributes(
         self,
-        schema_data: list[dict[str, Any]],
+        schema_data: list[dict[str, object]],
     ) -> dict[str, FlextLdapSchemaAttribute]:
         """Parse attributes from server schema data."""
         return self._parse_server_schema_items(
@@ -1055,18 +1055,18 @@ class FlextLdapSchemaDiscoveryService:
 
     def _parse_server_schema_items(
         self,
-        schema_data: list[dict[str, Any]],
+        schema_data: list[dict[str, object]],
         item_type: str,
         count_key: str,
-        extractor_func: Callable[[dict[str, Any], dict[str, Any]], None],
-        fallback_func: Callable[[], dict[str, Any]],
-    ) -> dict[str, Any]:
+        extractor_func: Callable[[dict[str, object], dict[str, object]], None],
+        fallback_func: Callable[[], dict[str, object]],
+    ) -> dict[str, object]:
         """Template method for parsing server schema items."""
         logger.debug(
             f"Parsing server {item_type}",
             extra={"data_count": len(schema_data)},
         )
-        items: dict[str, Any] = {}
+        items: dict[str, object] = {}
 
         try:
             for entry in schema_data:
@@ -1088,7 +1088,7 @@ class FlextLdapSchemaDiscoveryService:
 
     def _extract_attribute_types_from_entry(
         self,
-        entry: dict[str, Any],
+        entry: dict[str, object],
         attributes: dict[str, FlextLdapSchemaAttribute],
     ) -> None:
         """Extract attribute types from schema entry - reduces nested control flow."""
