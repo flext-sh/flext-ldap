@@ -5,6 +5,7 @@ The application layer orchestrates domain objects and coordinates use cases, imp
 ## Architecture Principles
 
 This layer serves as the orchestration hub:
+
 - **Use case implementation**: Business workflow coordination
 - **Domain orchestration**: Coordinates multiple domain entities
 - **Infrastructure coordination**: Manages external system interactions
@@ -29,23 +30,25 @@ application/
 ## Application Services
 
 ### FlextLdapService
+
 Main application service coordinating LDAP operations:
 
 ```python
 class FlextLdapService:
     """Application service orchestrating LDAP operations."""
-    
+
     async def create_user(self, request: FlextLdapCreateUserRequest) -> FlextResult[FlextLdapUser]:
         """Create user with complete business logic validation."""
-        
+
     async def find_user_by_uid(self, uid: str) -> FlextResult[FlextLdapUser]:
         """Find user by UID with domain entity conversion."""
-        
+
     async def update_user(self, user_id: str, updates: dict) -> FlextResult[FlextLdapUser]:
         """Update user with business rule validation."""
 ```
 
 Key responsibilities:
+
 - **Connection management**: LDAP session lifecycle
 - **Domain coordination**: Orchestrates domain entities and business rules
 - **Error handling**: Converts infrastructure errors to domain errors
@@ -54,6 +57,7 @@ Key responsibilities:
 ## CQRS Implementation
 
 ### Command Pattern
+
 Commands represent user intentions to change system state:
 
 ```python
@@ -68,23 +72,25 @@ class CreateUserCommand(FlextLdapCommand):
 ```
 
 ### Command Handlers
+
 Process commands and coordinate domain operations:
 
 ```python
 class CreateUserHandler(FlextLdapCommandHandler[CreateUserCommand, FlextLdapUser]):
     """Handler for user creation commands."""
-    
+
     async def handle(self, command: CreateUserCommand) -> FlextResult[FlextLdapUser]:
         """Process user creation with domain validation."""
 ```
 
 ### Query Handlers
+
 Handle read operations and data retrieval:
 
 ```python
 class FindUserByUidHandler(FlextLdapQueryHandler[FindUserByUidQuery, FlextLdapUser]):
     """Handler for user lookup queries."""
-    
+
     async def handle(self, query: FindUserByUidQuery) -> FlextResult[FlextLdapUser]:
         """Process user lookup with optimization."""
 ```
@@ -92,6 +98,7 @@ class FindUserByUidHandler(FlextLdapQueryHandler[FindUserByUidQuery, FlextLdapUs
 ## Use Case Patterns
 
 ### Railway-Oriented Programming
+
 All operations use FlextResult for consistent error handling:
 
 ```python
@@ -107,13 +114,14 @@ async def create_user_workflow(self, command: CreateUserCommand) -> FlextResult[
 ```
 
 ### Transaction Management
+
 Application services define transaction boundaries:
 
 ```python
 async def transfer_user_between_groups(
-    self, 
-    user_id: str, 
-    from_group: str, 
+    self,
+    user_id: str,
+    from_group: str,
     to_group: str
 ) -> FlextResult[bool]:
     """Transfer user between groups as single transaction."""
@@ -127,37 +135,39 @@ async def transfer_user_between_groups(
 ## Integration Patterns
 
 ### Domain Layer Integration
+
 Application services coordinate domain entities:
 
 ```python
 async def activate_user_with_email_notification(
-    self, 
+    self,
     user_id: str
 ) -> FlextResult[FlextLdapUser]:
     """Activate user and send notification."""
-    
+
     # Get domain entity
     user_result = await self._user_repository.find_by_id(user_id)
     if user_result.is_failure:
         return user_result
-    
+
     # Execute domain logic
     activation_result = user_result.data.activate()
     if activation_result.is_failure:
         return FlextResult.fail(activation_result.error)
-    
+
     # Persist changes
     save_result = await self._user_repository.save(user_result.data)
     if save_result.is_failure:
         return save_result
-    
+
     # Handle side effects
     await self._notification_service.send_activation_email(user_result.data)
-    
+
     return save_result
 ```
 
 ### Infrastructure Integration
+
 Application services abstract infrastructure complexity:
 
 ```python
@@ -168,10 +178,10 @@ async def search_users_with_pagination(
     page_token: Optional[str] = None
 ) -> FlextResult[PaginatedResult[FlextLdapUser]]:
     """Search users with pagination and caching."""
-    
+
     # Convert application request to infrastructure format
     ldap_filter = self._build_ldap_filter(filter_criteria)
-    
+
     # Execute infrastructure operation
     search_result = await self._ldap_client.search_with_pagination(
         base_dn=self._config.base_dn,
@@ -179,7 +189,7 @@ async def search_users_with_pagination(
         page_size=page_size,
         page_token=page_token
     )
-    
+
     # Convert to domain entities
     return search_result.map(lambda results: self._convert_to_domain_entities(results))
 ```
@@ -187,6 +197,7 @@ async def search_users_with_pagination(
 ## Error Handling Strategy
 
 ### Layered Error Mapping
+
 Application services map infrastructure errors to domain errors:
 
 ```python
@@ -204,35 +215,37 @@ async def _handle_ldap_operation_error(self, error: Exception) -> FlextResult[No
 ```
 
 ### Validation Pipeline
+
 Multi-stage validation with clear error reporting:
 
 ```python
 def _validate_user_creation_request(
-    self, 
+    self,
     request: CreateUserCommand
 ) -> FlextResult[CreateUserCommand]:
     """Validate user creation with detailed error reporting."""
-    
+
     errors = []
-    
+
     # Business rule validation
     if not request.uid or len(request.uid) < 3:
         errors.append("User ID must be at least 3 characters")
-    
+
     # Format validation
     if request.mail and '@' not in request.mail:
         errors.append("Invalid email format")
-    
+
     # Domain validation
     if request.department and request.department not in VALID_DEPARTMENTS:
         errors.append(f"Invalid department: {request.department}")
-    
+
     return FlextResult.fail(errors) if errors else FlextResult.ok(request)
 ```
 
 ## Testing Strategies
 
 ### Unit Testing
+
 Test application logic in isolation:
 
 ```python
@@ -242,16 +255,17 @@ async def test_create_user_success_path():
     # Arrange
     service = FlextLdapService(mock_repositories)
     command = CreateUserCommand(uid="test", cn="Test User", sn="User")
-    
+
     # Act
     result = await service.create_user(command)
-    
+
     # Assert
     assert result.is_success
     assert result.data.uid == "test"
 ```
 
 ### Integration Testing
+
 Test coordination with real infrastructure:
 
 ```python

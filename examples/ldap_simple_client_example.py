@@ -3,7 +3,13 @@
 
 This example demonstrates how to use the minimal LDAP infrastructure client
 following Clean Architecture principles.
+
+Copyright (c) 2025 FLEXT Contributors
+SPDX-License-Identifier: MIT
+
 """
+
+from __future__ import annotations
 
 import asyncio
 

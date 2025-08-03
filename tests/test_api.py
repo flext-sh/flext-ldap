@@ -67,7 +67,7 @@ class TestFlextLdapApi:
     def test_api_with_config(self) -> None:
         """Test API initialization with configuration."""
         config = FlextLdapConnectionConfig(
-            server="ldap://test.example.com",
+            host="test.example.com",
             port=389,
         )
         api = FlextLdapApi(config=config)

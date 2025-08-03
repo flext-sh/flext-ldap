@@ -105,7 +105,7 @@ class TestFlextLdapService:
     @pytest.mark.unit
     def test_service_initialization_with_config(self) -> None:
         """Test service initialization with configuration."""
-        config = FlextLdapConnectionConfig(server="localhost", port=389, use_ssl=False)
+        config = FlextLdapConnectionConfig(host="localhost", port=389, use_ssl=False)
         service = FlextLdapService(config)
         assert service is not None
         assert isinstance(service._api, FlextLdapApi)

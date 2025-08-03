@@ -7,10 +7,11 @@ REFATORADO COMPLETO usando create_module_exception_classes:
 - SOLID: Single source of truth para module exception patterns
 - Redução de 179+ linhas para 95 linhas (47% reduction)
 
+Domain-specific exceptions using factory pattern to eliminate duplication.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Domain-specific exceptions using factory pattern to eliminate duplication.
 """
 
 from __future__ import annotations

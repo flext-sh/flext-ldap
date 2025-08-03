@@ -6,10 +6,12 @@ hostname verification, and SSL/TLS context management.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
+import pathlib
 import socket
 import ssl
 import tempfile
@@ -17,6 +19,10 @@ from datetime import UTC, datetime
 from ssl import SSLError
 from typing import TYPE_CHECKING, cast as type_cast
 
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import ExtensionOID, NameOID
 from flext_core import FlextResult, get_logger
 from flext_core.utilities import FlextGenerators
 
@@ -31,14 +37,6 @@ if TYPE_CHECKING:
         CertificateValidationContext,
         SSLContextConfig,
     )
-
-import pathlib
-
-from cryptography import x509
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.x509.oid import ExtensionOID, NameOID
-
 logger = get_logger(__name__)
 
 

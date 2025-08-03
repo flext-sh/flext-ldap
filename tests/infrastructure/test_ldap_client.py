@@ -24,12 +24,11 @@ Architecture:
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Author: FLEXT Development Team
 """
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from flext_core import FlextResult
@@ -79,7 +78,7 @@ class TestFlextLdapSimpleClient:
         configuration settings for LDAP connection parameters.
         """
         config = FlextLdapConnectionConfig(
-            server="localhost",
+            host="localhost",
             port=389,
             use_ssl=False,
         )
@@ -98,7 +97,7 @@ class TestFlextLdapSimpleClient:
     def test_connect_success(self) -> None:
         """Test successful LDAP connection."""
         config = FlextLdapConnectionConfig(
-            server="localhost",
+            host="localhost",
             port=389,
             use_ssl=False,
         )
@@ -126,7 +125,7 @@ class TestFlextLdapSimpleClient:
     def test_connect_failure(self) -> None:
         """Test LDAP connection failure."""
         config = FlextLdapConnectionConfig(
-            server="invalid.server.com",
+            host="invalid.server.com",
             port=389,
             use_ssl=False,
         )
@@ -304,11 +303,13 @@ class TestFlextLdapSimpleClient:
             mock_connection = MagicMock()
             client._current_connection = mock_connection
 
-            client._connection_manager.close_connection = AsyncMock(
+            from unittest.mock import Mock
+
+            client._connection_manager.close_connection = Mock(
                 return_value=FlextResult.ok(TestOperationResult.SUCCESS)
             )
 
-            result = await client.disconnect()
+            result = client.disconnect()
 
             assert result.is_success
             assert client._current_connection is None
@@ -317,7 +318,7 @@ class TestFlextLdapSimpleClient:
     async def test_disconnect_not_connected(self) -> None:
         """Test disconnect when not connected."""
         client = FlextLdapSimpleClient()
-        result = await client.disconnect()  # async call
+        result = client.disconnect()  # sync call
 
         assert result.is_success  # Should succeed even if not connected
 
@@ -351,7 +352,7 @@ class TestFlextLdapConnectionConfig:
 
     def test_default_values(self) -> None:
         """Test default configuration values."""
-        config = FlextLdapConnectionConfig(server="localhost")
+        config = FlextLdapConnectionConfig(host="localhost")
 
         assert config.server == "localhost"
         assert config.port == 389
@@ -363,7 +364,7 @@ class TestFlextLdapConnectionConfig:
     def test_custom_values(self) -> None:
         """Test custom configuration values."""
         config = FlextLdapConnectionConfig(
-            server="secure.example.com",
+            host="secure.example.com",
             port=636,
             use_ssl=True,
             timeout_seconds=60,

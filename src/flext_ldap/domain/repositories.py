@@ -1,6 +1,10 @@
 """LDAP Domain Repository Interfaces - Version 0.9.0.
 
 Abstract repository interfaces - no implementation details.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

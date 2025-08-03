@@ -6,6 +6,7 @@ caching and enterprise-grade validation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -16,9 +17,6 @@ from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, TypedDict
 from uuid import UUID, uuid4
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 from flext_core import FlextResult, get_logger
 
@@ -158,7 +156,8 @@ class FlextLdapSchemaAttribute:
 
         def safe_extract_usage() -> FlextLdapAttributeUsage:
             value = attribute_params.get(
-                "usage", FlextLdapAttributeUsage.USER_APPLICATIONS,
+                "usage",
+                FlextLdapAttributeUsage.USER_APPLICATIONS,
             )
             return (
                 value
@@ -315,7 +314,8 @@ class FlextLdapSchemaObjectClass:
 
         def safe_extract_object_class_type() -> FlextLdapObjectClassType:
             value = object_class_params.get(
-                "object_class_type", FlextLdapObjectClassType.STRUCTURAL,
+                "object_class_type",
+                FlextLdapObjectClassType.STRUCTURAL,
             )
             return (
                 value
@@ -429,6 +429,88 @@ class FlextLdapSchemaDiscoveryData:
     discovery_duration_ms: int = 0
 
 
+class SafeExtractorStrategy:
+    """Strategy Pattern for safe parameter extraction - reduces complexity."""
+
+    def __init__(self, discovery_params: dict[str, object]) -> None:
+        """Initialize extractor with parameters."""
+        self.params = discovery_params
+
+    def create_discovery_data(self) -> FlextLdapSchemaDiscoveryData:
+        """Template Method Pattern for creating discovery data."""
+        return FlextLdapSchemaDiscoveryData(
+            discovery_id=self._extract_uuid("discovery_id"),
+            timestamp=self._extract_datetime("timestamp"),
+            server_info=self._extract_dict("server_info"),
+            object_classes=self._extract_object_classes_dict("object_classes"),
+            attributes=self._extract_attributes_dict("attributes"),
+            syntaxes=self._extract_nested_dict("syntaxes"),
+            matching_rules=self._extract_nested_dict("matching_rules"),
+            discovery_errors=self._extract_string_list("discovery_errors"),
+            discovery_warnings=self._extract_string_list("discovery_warnings"),
+            cache_hit=self._extract_bool("cache_hit", False),
+            discovery_duration_ms=self._extract_int("discovery_duration_ms", 0),
+        )
+
+    def _extract_uuid(self, key: str) -> UUID | None:
+        """Extract UUID value safely."""
+        value = self.params.get(key)
+        return value if isinstance(value, UUID) else None
+
+    def _extract_datetime(self, key: str) -> datetime | None:
+        """Extract datetime value safely."""
+        value = self.params.get(key)
+        return value if isinstance(value, datetime) else None
+
+    def _extract_dict(self, key: str) -> dict[str, object] | None:
+        """Extract dict value safely."""
+        value = self.params.get(key)
+        return dict(value) if isinstance(value, dict) else None
+
+    def _extract_nested_dict(self, key: str) -> dict[str, dict[str, object]] | None:
+        """Extract nested dict safely."""
+        value = self.params.get(key)
+        if isinstance(value, dict):
+            return {
+                str(k): dict(v) if isinstance(v, dict) else {"value": v}
+                for k, v in value.items()
+            }
+        return None
+
+    def _extract_object_classes_dict(
+        self,
+        key: str,
+    ) -> dict[str, FlextLdapSchemaObjectClass] | None:
+        """Extract object classes dict safely."""
+        value = self.params.get(key)
+        return dict(value) if isinstance(value, dict) else None
+
+    def _extract_attributes_dict(
+        self,
+        key: str,
+    ) -> dict[str, FlextLdapSchemaAttribute] | None:
+        """Extract attributes dict safely."""
+        value = self.params.get(key)
+        return dict(value) if isinstance(value, dict) else None
+
+    def _extract_string_list(self, key: str) -> list[str] | None:
+        """Extract string list safely."""
+        value = self.params.get(key)
+        if isinstance(value, (list, tuple)):
+            return [str(item) for item in value]
+        return None
+
+    def _extract_bool(self, key: str, default: bool = False) -> bool:
+        """Extract boolean value safely."""
+        value = self.params.get(key, default)
+        return bool(value) if value is not None else default
+
+    def _extract_int(self, key: str, default: int = 0) -> int:
+        """Extract integer value safely."""
+        value = self.params.get(key, default)
+        return int(value) if isinstance(value, (int, float)) else default
+
+
 class FlextLdapSchemaDiscoveryResult:
     """Schema discovery operation result."""
 
@@ -452,10 +534,10 @@ class FlextLdapSchemaDiscoveryResult:
         cls,
         **discovery_params: object,
     ) -> FlextLdapSchemaDiscoveryResult:
-        """Factory method to create FlextLdapSchemaDiscoveryResult from parameters.
+        """Factory method using Strategy Pattern for reduced complexity.
 
-        REFACTORED: Eliminates direct **kwargs to constructor issues.
-        Uses type-safe data creation.
+        REFACTORED: Uses SafeExtractorStrategy to eliminate complex function nesting.
+        Implements Template Method Pattern for clean separation.
 
         Args:
             **discovery_params: All discovery result parameters as keyword arguments
@@ -464,69 +546,8 @@ class FlextLdapSchemaDiscoveryResult:
             Type-safe FlextLdapSchemaDiscoveryResult instance
 
         """
-
-        # Safe type extraction functions
-        def safe_extract_uuid(key: str) -> UUID | None:
-            value = discovery_params.get(key)
-            return value if isinstance(value, UUID) else None
-
-        def safe_extract_datetime(key: str) -> datetime | None:
-            value = discovery_params.get(key)
-            return value if isinstance(value, datetime) else None
-
-        def safe_extract_dict(key: str) -> dict[str, object] | None:
-            value = discovery_params.get(key)
-            return dict(value) if isinstance(value, dict) else None
-
-        def safe_extract_nested_dict(key: str) -> dict[str, dict[str, object]] | None:
-            value = discovery_params.get(key)
-            if isinstance(value, dict):
-                # Ensure all values are dict[str, object]
-                return {
-                    str(k): dict(v) if isinstance(v, dict) else {"value": v}
-                    for k, v in value.items()
-                }
-            return None
-
-        def safe_extract_object_classes_dict(
-            key: str,
-        ) -> dict[str, FlextLdapSchemaObjectClass] | None:
-            value = discovery_params.get(key)
-            return dict(value) if isinstance(value, dict) else None
-
-        def safe_extract_attributes_dict(
-            key: str,
-        ) -> dict[str, FlextLdapSchemaAttribute] | None:
-            value = discovery_params.get(key)
-            return dict(value) if isinstance(value, dict) else None
-
-        def safe_extract_string_list(key: str) -> list[str] | None:
-            value = discovery_params.get(key)
-            if isinstance(value, (list, tuple)):
-                return [str(item) for item in value]
-            return None
-
-        def safe_extract_bool(key: str, default: bool = False) -> bool:
-            value = discovery_params.get(key, default)
-            return bool(value) if value is not None else default
-
-        def safe_extract_int(key: str, default: int = 0) -> int:
-            value = discovery_params.get(key, default)
-            return int(value) if isinstance(value, (int, float)) else default
-
-        data = FlextLdapSchemaDiscoveryData(
-            discovery_id=safe_extract_uuid("discovery_id"),
-            timestamp=safe_extract_datetime("timestamp"),
-            server_info=safe_extract_dict("server_info"),
-            object_classes=safe_extract_object_classes_dict("object_classes"),
-            attributes=safe_extract_attributes_dict("attributes"),
-            syntaxes=safe_extract_nested_dict("syntaxes"),
-            matching_rules=safe_extract_nested_dict("matching_rules"),
-            discovery_errors=safe_extract_string_list("discovery_errors"),
-            discovery_warnings=safe_extract_string_list("discovery_warnings"),
-            cache_hit=safe_extract_bool("cache_hit", False),
-            discovery_duration_ms=safe_extract_int("discovery_duration_ms", 0),
-        )
+        extractor = SafeExtractorStrategy(discovery_params)
+        data = extractor.create_discovery_data()
         return cls(data)
 
     @property
@@ -685,7 +706,9 @@ class FlextLdapSchemaDiscoveryService:
         try:
             schema_result = await self.discover_schema(connection)
             if not schema_result.is_success:
-                return FlextResult.fail(f"Failed to discover schema: {schema_result.error}")
+                return FlextResult.fail(
+                    f"Failed to discover schema: {schema_result.error}"
+                )
 
             schema = schema_result.data
             if schema is None:
@@ -713,7 +736,9 @@ class FlextLdapSchemaDiscoveryService:
         try:
             schema_result = await self.discover_schema(connection)
             if not schema_result.is_success:
-                return FlextResult.fail(f"Failed to discover schema: {schema_result.error}")
+                return FlextResult.fail(
+                    f"Failed to discover schema: {schema_result.error}"
+                )
 
             schema = schema_result.data
             if schema is None:
@@ -1403,7 +1428,10 @@ class FlextLdapSchemaDiscoveryService:
         """Extract attribute types from schema entry - reduces nested control flow."""
         # Early return if no attribute types in entry
         entry_attributes = entry.get("attributes", {})
-        if not isinstance(entry_attributes, dict) or "attributeTypes" not in entry_attributes:
+        if (
+            not isinstance(entry_attributes, dict)
+            or "attributeTypes" not in entry_attributes
+        ):
             return
 
         attr_definitions = entry_attributes["attributeTypes"]

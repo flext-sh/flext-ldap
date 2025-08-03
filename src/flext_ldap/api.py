@@ -37,7 +37,8 @@ Dependencies:
     - FlextLdapSimpleClient: Infrastructure LDAP protocol implementation
     - Domain entities: Rich business objects for LDAP data representation
 
-Author: FLEXT Development Team
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 
 """
 

@@ -44,15 +44,16 @@ Integration:
     - Compatible with LDAP protocol implementations
     - Supports serialization for data interchange
 
-Author: FLEXT Development Team
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 
 """
 
 from __future__ import annotations
 
+from enum import StrEnum
 from urllib.parse import urlparse
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core centralized models
 from flext_core import (
     FlextDomainValueObject,
     FlextResult,
@@ -61,22 +62,6 @@ from flext_core import (
 from pydantic import Field, field_validator
 
 logger = get_logger(__name__)
-
-# 🚀 CODE CONSOLIDATION: Use flext-core centralized patterns
-_USE_CONSOLIDATED_VO = False
-try:
-    # Check if flext-core VO is available but don't import unused
-    import importlib.util
-
-    spec = importlib.util.find_spec("flext_core.FlextDomainValueObject")
-    _USE_CONSOLIDATED_VO = spec is not None
-    logger.debug("Using flext-core centralized value object patterns")
-except ImportError:
-    logger.debug("Using local value object implementation")
-
-
-# Define local enum for LDAP-specific needs
-from enum import StrEnum
 
 
 class FlextLdapScopeEnum(StrEnum):
@@ -132,7 +117,9 @@ class FlextLdapDistinguishedName(FlextDomainValueObject):
         - get_components(): Parse DN structure
 
     Example:
-        >>> dn = FlextLdapDistinguishedName(value="cn=John Doe,ou=users,dc=example,dc=com")
+        >>> dn = FlextLdapDistinguishedName(
+        ...     value="cn=John Doe,ou=users,dc=example,dc=com"
+        ... )
         >>> print(dn.get_rdn())  # "cn=John Doe"
         >>> parent = dn.get_parent_dn()  # "ou=users,dc=example,dc=com"
 
@@ -733,7 +720,7 @@ class FlextLdapExtendedEntry(FlextDomainValueObject):
     Example:
         >>> entry = FlextLdapExtendedEntry(
         ...     dn="uid=john,ou=users,dc=example,dc=com",
-        ...     attributes={"cn": ["John Doe"], "objectClass": ["person"]}
+        ...     attributes={"cn": ["John Doe"], "objectClass": ["person"]},
         ... )
         >>> print(entry.get_cn())  # "John Doe"
         >>> print(entry.is_person())  # True
@@ -830,7 +817,7 @@ class FlextLdapCreateUserRequest(FlextDomainValueObject):
         ...     uid="john",
         ...     cn="John Doe",
         ...     sn="Doe",
-        ...     mail="john.doe@example.com"
+        ...     mail="john.doe@example.com",
         ... )
         >>> validation = request.validate_domain_rules()
 

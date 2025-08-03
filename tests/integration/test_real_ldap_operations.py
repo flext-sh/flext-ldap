@@ -5,7 +5,10 @@ Run with: pytest tests/integration/test_real_ldap_operations.py -m integration
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
+
+from __future__ import annotations
 
 import pytest
 from flext_ldap.application.ldap_service import FlextLdapService
@@ -24,7 +27,7 @@ class TestRealLdapOperations:
     def ldap_config(self) -> FlextLdapConnectionConfig:
         """LDAP configuration for testing."""
         return FlextLdapConnectionConfig(
-            server="localhost",
+            host="localhost",
             port=3389,  # Non-standard port for testing
             use_ssl=False,
             timeout_seconds=30,
@@ -128,7 +131,7 @@ class TestRealLdapOperations:
 
         # Test connection attempt (may fail if no server)
         config = FlextLdapConnectionConfig(
-            server="localhost",
+            host="localhost",
             port=3389,
             use_ssl=False,
             timeout_seconds=30,

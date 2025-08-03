@@ -9,6 +9,7 @@ This guide will help you set up a complete development environment for FLEXT-LDA
 ## 🎯 Prerequisites
 
 ### System Requirements
+
 - **Python**: 3.13+ with pip and venv support
 - **Docker**: For LDAP server testing and integration tests
 - **Git**: Version control and FLEXT workspace management
@@ -16,6 +17,7 @@ This guide will help you set up a complete development environment for FLEXT-LDA
 - **Poetry**: Python dependency management (1.7+)
 
 ### FLEXT Workspace
+
 FLEXT-LDAP is part of the FLEXT ecosystem and requires the complete workspace:
 
 ```bash
@@ -33,6 +35,7 @@ ls -la
 ## 🚀 Quick Setup
 
 ### Automated Setup (Recommended)
+
 ```bash
 cd flext/flext-ldap
 
@@ -44,6 +47,7 @@ make doctor
 ```
 
 This will:
+
 - Install Poetry if not present
 - Create Python virtual environment
 - Install all dependencies (dev, test, docs)
@@ -52,6 +56,7 @@ This will:
 - Verify FLEXT-Core integration
 
 ### Manual Setup (Alternative)
+
 ```bash
 # 1. Install Poetry (if not installed)
 curl -sSL https://install.python-poetry.org | python3 -
@@ -74,6 +79,7 @@ make validate
 ## 🏗️ Development Environment
 
 ### Python Environment
+
 ```bash
 # Verify Python version
 python --version  # Should be 3.13+
@@ -91,7 +97,9 @@ poetry run pip-audit
 ### IDE Configuration
 
 #### VS Code Setup
+
 Create `.vscode/settings.json`:
+
 ```json
 {
     "python.defaultInterpreterPath": "./.venv/bin/python",
@@ -100,11 +108,7 @@ Create `.vscode/settings.json`:
     "python.linting.mypyEnabled": true,
     "python.formatting.provider": "ruff",
     "python.testing.pytestEnabled": true,
-    "python.testing.pytestArgs": [
-        "tests",
-        "--cov=src",
-        "--cov-report=html"
-    ],
+    "python.testing.pytestArgs": ["tests", "--cov=src", "--cov-report=html"],
     "files.exclude": {
         "**/__pycache__": true,
         "**/.pytest_cache": true,
@@ -115,13 +119,16 @@ Create `.vscode/settings.json`:
 ```
 
 #### PyCharm Setup
+
 1. **Interpreter**: Set to Poetry virtual environment
 2. **Code Style**: Import FLEXT code style configuration
 3. **Run Configurations**: Configure pytest and make targets
 4. **Plugins**: Install Poetry, Ruff, and MyPy plugins
 
 ### Environment Variables
+
 Create `.env` file for development:
+
 ```bash
 # Development LDAP server
 FLEXT_LDAP_HOST=localhost
@@ -147,6 +154,7 @@ FLEXT_LDAP_TEST_DOMAIN=internal.invalid
 ## 🧪 Testing Environment
 
 ### Docker LDAP Server
+
 Development and testing use containerized OpenLDAP:
 
 ```bash
@@ -164,6 +172,7 @@ make ldap-test-server-stop
 ```
 
 ### Manual LDAP Server Setup
+
 ```bash
 # Start OpenLDAP container
 docker run -d \
@@ -182,6 +191,7 @@ ldapadd -H ldap://localhost:3389 \
 ```
 
 ### Test Execution
+
 ```bash
 # Run all tests
 make test
@@ -207,6 +217,7 @@ poetry run pytest --cov=src --cov-report=html --cov-report=term
 ```
 
 ### Test Data Management
+
 ```bash
 # Load test data into LDAP server
 make test-data-load
@@ -223,6 +234,7 @@ make test-reset
 ## 🔧 Development Tools
 
 ### Code Quality Tools
+
 ```bash
 # Linting with Ruff
 make lint                    # Check code style
@@ -241,6 +253,7 @@ poetry run pip-audit         # Dependency vulnerability scan
 ```
 
 ### Documentation Tools
+
 ```bash
 # Build documentation
 make docs                    # Build all documentation
@@ -255,6 +268,7 @@ poetry run mkdocs serve     # Serve locally
 ```
 
 ### Database Tools
+
 ```bash
 # LDAP browser/client tools
 sudo apt-get install ldap-utils    # Ubuntu/Debian
@@ -287,6 +301,7 @@ EOF
 ## 🔗 FLEXT Integration Setup
 
 ### flext-core Integration
+
 ```bash
 # Verify flext-core is available
 cd ../flext-core
@@ -302,6 +317,7 @@ print('✅ FLEXT-Core integration working')
 ```
 
 ### flext-observability Integration
+
 ```bash
 # Setup observability
 cd ../flext-observability
@@ -317,6 +333,7 @@ logger.info('✅ Observability integration working')
 ```
 
 ### Singer Ecosystem Setup
+
 ```bash
 # Install Singer SDK (for future integration)
 poetry add singer-sdk
@@ -335,6 +352,7 @@ mkdir -p ../flext-dbt-ldap
 ## 🎯 Development Workflow
 
 ### Daily Development Cycle
+
 ```bash
 # 1. Start development session
 cd flext/flext-ldap
@@ -359,6 +377,7 @@ make ldap-test-server-stop
 ```
 
 ### Feature Development
+
 ```bash
 # 1. Create feature branch
 git checkout -b feature/new-ldap-operation
@@ -384,6 +403,7 @@ git push origin feature/new-ldap-operation
 ```
 
 ### Debugging Setup
+
 ```bash
 # Enable debug logging
 export FLEXT_LOG_LEVEL=DEBUG
@@ -404,6 +424,7 @@ poetry run python examples/debug_example.py
 ## 📊 Performance Development
 
 ### Profiling Setup
+
 ```bash
 # Install profiling tools
 poetry add --group dev py-spy cProfile line-profiler memory-profiler
@@ -417,6 +438,7 @@ poetry run mprof plot
 ```
 
 ### Benchmarking
+
 ```bash
 # Run performance benchmarks
 make benchmark
@@ -430,6 +452,7 @@ poetry run pytest tests/test_performance.py --benchmark-only
 ## 🔒 Security Development
 
 ### Security Testing
+
 ```bash
 # Security scans
 make security                       # Bandit + pip-audit
@@ -442,6 +465,7 @@ poetry run python tests/security/test_credential_handling.py
 ```
 
 ### Secrets Management
+
 ```bash
 # Never commit secrets - use environment variables
 echo "FLEXT_LDAP_BIND_PASSWORD=secret123" >> .env
@@ -458,6 +482,7 @@ poetry self add poetry-plugin-env
 ### Common Issues
 
 **Poetry Installation Issues**
+
 ```bash
 # Clear Poetry cache
 poetry cache clear pypi --all
@@ -468,6 +493,7 @@ poetry install
 ```
 
 **Docker LDAP Server Issues**
+
 ```bash
 # Remove problematic container
 docker stop flext-ldap-test-server
@@ -484,6 +510,7 @@ docker run -d --name flext-ldap-test-server \
 ```
 
 **Import/Path Issues**
+
 ```bash
 # Verify Python path
 poetry run python -c "import sys; print('\n'.join(sys.path))"
@@ -496,6 +523,7 @@ poetry install --no-deps
 ```
 
 **Test Failures**
+
 ```bash
 # Run with maximum verbosity
 poetry run pytest -vvv --tb=long --no-header
@@ -508,6 +536,7 @@ poetry run pytest --collect-only
 ```
 
 ### Getting Help
+
 - **Documentation**: Check [docs/](../README.md) for detailed guides
 - **Issues**: Search [GitHub issues](https://github.com/flext-sh/flext/issues)
 - **Discussions**: Ask in [GitHub discussions](https://github.com/flext-sh/flext/discussions)
@@ -547,4 +576,4 @@ If all checks pass, your development environment is ready! 🎉
 
 ---
 
-*This setup guide is part of the FLEXT-LDAP development documentation and follows FLEXT Framework development standards.*
+_This setup guide is part of the FLEXT-LDAP development documentation and follows FLEXT Framework development standards._

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Modern FLEXT LDAP CLI using flext-cli framework.
 
+Enterprise-grade command-line interface for LDAP operations.
+Built with flext-cli framework for consistency and rich terminal output.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Enterprise-grade command-line interface for LDAP operations.
-Built with flext-cli framework for consistency and rich terminal output.
 """
 
 from __future__ import annotations
@@ -175,7 +176,9 @@ class LDAPConnectionTestParams:
             port=port,
             use_ssl=bool(options.get("use_ssl")),
             bind_dn=str(options.get("bind_dn")) if options.get("bind_dn") else None,
-            bind_password=str(options.get("bind_password")) if options.get("bind_password") else None,
+            bind_password=str(options.get("bind_password"))
+            if options.get("bind_password")
+            else None,
         )
 
 

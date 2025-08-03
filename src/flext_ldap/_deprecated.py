@@ -4,6 +4,10 @@ Handles backward compatibility and migration warnings pointing users
 to the new simplified import patterns.
 
 Old complex paths still work but show clear guidance to simple alternatives.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

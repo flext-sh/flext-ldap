@@ -1,10 +1,11 @@
 """Simplified Data Type Converter - Uses ldap3's native capabilities.
 
+Refactored to eliminate duplication with ldap3's built-in type handling.
+Focuses only on FLEXT-specific business logic.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Refactored to eliminate duplication with ldap3's built-in type handling.
-Focuses only on FLEXT-specific business logic.
 """
 
 from __future__ import annotations

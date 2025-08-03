@@ -2,11 +2,14 @@
 
 This module contains LDAP-specific authentication and validation patterns
 that were extracted from flext-core for better separation of concerns.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
 from flext_core import FlextResult, FlextValueObject
 from pydantic import Field, field_validator
 

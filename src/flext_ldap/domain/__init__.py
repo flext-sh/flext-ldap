@@ -8,13 +8,16 @@ Old imports are deprecated. Use new semantic structure:
 - entities.* → domain.aggregates.*
 - value_objects.* → domain.values.*
 - ports.* → domain.interfaces.*
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
 import warnings
 
-# NEW SEMANTIC STRUCTURE - Import all real implementations (NO FALLBACKS)
 from flext_ldap.domain.aggregates import (
     FlextLdapDirectory,
     FlextLdapDirectoryAggregate,

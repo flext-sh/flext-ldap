@@ -14,9 +14,16 @@ Requirements:
 
 Usage:
     python examples/basic_ldap_operations.py
+
+Copyright (c) 2025 FLEXT Contributors
+SPDX-License-Identifier: MIT
+
 """
 
+from __future__ import annotations
+
 import asyncio
+import os
 
 from flext_core import get_logger
 from flext_ldap import (
@@ -177,8 +184,6 @@ async def demonstrate_logging_integration() -> None:
     print("=" * 40)
 
     # Enable TRACE logging for this demo
-    import os
-
     os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
 
     logger.info("Starting logging demonstration")

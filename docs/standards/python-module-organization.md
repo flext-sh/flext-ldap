@@ -34,6 +34,7 @@ src/flext_ldap/
 **Responsibility**: Establish LDAP-specific contracts extending flext-core foundation.
 
 **Import Pattern**:
+
 ```python
 # Primary FLEXT-LDAP imports
 from flext_ldap import get_ldap_api, FlextLdapUser, FlextLdapCreateUserRequest
@@ -48,13 +49,14 @@ from flext_ldap import FlextLdapApi
 ```python
 # Main API entry point
 ├── api.py                   # 🚀 FlextLdapApi - Unified LDAP operations
-├── base.py                  # 🚀 Base LDAP functionality and mixins  
+├── base.py                  # 🚀 Base LDAP functionality and mixins
 └── client.py                # 🚀 LDAP client abstraction (deprecated)
 ```
 
 **Responsibility**: Provide unified, type-safe LDAP operations with session management.
 
 **Usage Pattern**:
+
 ```python
 from flext_ldap.api import FlextLdapApi, get_ldap_api
 
@@ -85,6 +87,7 @@ async with api.connection(server_url, bind_dn, password) as session:
 **Responsibility**: Pure business logic for LDAP directory operations without external dependencies.
 
 **Domain Modeling Pattern**:
+
 ```python
 from flext_ldap.domain.entities import FlextLdapUser, FlextLdapGroup
 from flext_ldap.domain.value_objects import FlextLdapDistinguishedName
@@ -96,12 +99,12 @@ class FlextLdapUser(FlextEntity):
     uid: str
     cn: str
     sn: str
-    
+
     def activate(self) -> FlextResult[None]:
         """Business logic for user activation."""
         if self.is_active:
             return FlextResult.fail("User already active")
-        
+
         self.is_active = True
         self.add_domain_event(UserActivatedEvent(user_id=self.id))
         return FlextResult.ok(None)
@@ -109,7 +112,7 @@ class FlextLdapUser(FlextEntity):
 class FlextLdapDistinguishedName(FlextValueObject):
     """Distinguished Name value object with RFC 4514 validation."""
     value: str
-    
+
     def __post_init__(self) -> None:
         if not self._is_valid_dn(self.value):
             raise ValueError(f"Invalid DN format: {self.value}")
@@ -136,13 +139,14 @@ class FlextLdapDistinguishedName(FlextValueObject):
 **Responsibility**: Orchestrate domain objects and coordinate with infrastructure.
 
 **Application Service Pattern**:
+
 ```python
 from flext_ldap.application.ldap_service import FlextLdapService
 from flext_ldap.application.commands.user_commands import CreateUserCommand
 
 class FlextLdapService:
     """Application service orchestrating LDAP operations."""
-    
+
     def __init__(
         self,
         user_repository: FlextLdapUserRepository,
@@ -150,9 +154,9 @@ class FlextLdapService:
     ):
         self._user_repository = user_repository
         self._validator = validator
-    
+
     async def create_user(
-        self, 
+        self,
         command: CreateUserCommand
     ) -> FlextResult[FlextLdapUser]:
         """Create user with complete business logic."""
@@ -184,28 +188,29 @@ class FlextLdapService:
 **Responsibility**: Handle external LDAP servers, persistence, and third-party integrations.
 
 **Infrastructure Pattern**:
+
 ```python
 from flext_ldap.infrastructure.repositories import FlextLdapUserRepositoryImpl
 from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
 
 class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
     """Concrete LDAP user repository implementation."""
-    
+
     def __init__(self, ldap_client: FlextLdapSimpleClient):
         self._ldap_client = ldap_client
-    
+
     async def save(self, user: FlextLdapUser) -> FlextResult[FlextLdapUser]:
         """Save user to LDAP directory."""
         try:
             # Convert domain entity to LDAP entry
             entry_data = self._to_ldap_entry(user)
-            
+
             # Use infrastructure client
             result = await self._ldap_client.add_entry(
                 dn=user.dn.value,
                 attributes=entry_data
             )
-            
+
             return FlextResult.ok(user) if result.is_success else FlextResult.fail(result.error)
         except Exception as e:
             return FlextResult.fail(f"Infrastructure error: {str(e)}")
@@ -224,12 +229,13 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 **Responsibility**: Adapt external interfaces to domain contracts.
 
 **Adapter Pattern**:
+
 ```python
 from flext_ldap.adapters.directory_adapter import FlextLdapDirectoryAdapter
 
 class FlextLdapDirectoryAdapter:
     """Adapter for directory service integration."""
-    
+
     async def search(
         self,
         base_dn: FlextLdapDistinguishedName,
@@ -252,25 +258,26 @@ class FlextLdapDirectoryAdapter:
 **Responsibility**: Handle LDAP-specific configuration extending flext-core patterns.
 
 **Configuration Pattern**:
+
 ```python
 from flext_core.config import FlextBaseSettings
 from flext_ldap.config import FlextLdapSettings
 
 class FlextLdapSettings(FlextBaseSettings):
     """LDAP configuration with environment variable support."""
-    
+
     # LDAP Connection settings
     server_url: str = "ldap://localhost"
     port: int = 389
     use_ssl: bool = False
     bind_dn: str = ""
     bind_password: SecretStr = SecretStr("")
-    
+
     # Search settings
     base_dn: str = "dc=example,dc=com"
     timeout: int = 30
     page_size: int = 1000
-    
+
     class Config:
         env_prefix = "FLEXT_LDAP_"
         env_file = ".env"
@@ -288,6 +295,7 @@ class FlextLdapSettings(FlextBaseSettings):
 **Responsibility**: Rich domain entities with business logic and immutable value objects.
 
 **Entity Pattern**:
+
 ```python
 from flext_ldap.entities import FlextLdapUser, FlextLdapGroup
 
@@ -299,20 +307,20 @@ class FlextLdapUser(FlextEntity):
     cn: str
     sn: str
     mail: Optional[str] = None
-    
+
     def is_valid(self) -> bool:
         """Domain validation logic."""
         return bool(self.dn and self.uid and self.cn and self.sn)
-    
+
     def get_display_name(self) -> str:
         """Business logic for display name."""
         return self.cn or f"{self.uid}"
-    
+
     def change_email(self, new_email: str) -> FlextResult[None]:
         """Email change with validation."""
         if not "@" in new_email:
             return FlextResult.fail("Invalid email format")
-        
+
         old_email = self.mail
         self.mail = new_email
         self.add_domain_event(EmailChangedEvent(
@@ -335,17 +343,18 @@ class FlextLdapUser(FlextEntity):
 **Responsibility**: Consolidated LDAP infrastructure with type conversion and connection management.
 
 **Infrastructure Pattern**:
+
 ```python
 from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient, FlextLdapConverter
 
 class FlextLdapSimpleClient:
     """Consolidated LDAP client with flext-core integration."""
-    
+
     def __init__(self, config: FlextLdapConnectionConfig):
         self._config = config
         self._converter = FlextLdapConverter()
         self._connection: Optional[Connection] = None
-    
+
     async def search(
         self,
         base_dn: str,
@@ -357,13 +366,13 @@ class FlextLdapSimpleClient:
         try:
             # LDAP search implementation
             raw_results = self._execute_ldap_search(base_dn, filter_expr, attributes, scope)
-            
+
             # Convert to typed results
             converted_results = [
-                self._converter.convert_ldap_entry(entry) 
+                self._converter.convert_ldap_entry(entry)
                 for entry in raw_results
             ]
-            
+
             return FlextResult.ok(converted_results)
         except Exception as e:
             return FlextResult.fail(f"Search error: {str(e)}")
@@ -384,13 +393,14 @@ class FlextLdapSimpleClient:
 **Responsibility**: Cross-cutting concerns and reusable LDAP patterns.
 
 **Pattern Usage**:
+
 ```python
 from flext_ldap.patterns.auth_patterns import FlextLdapAuthMixin
 from flext_ldap.utils import parse_ldap_dn, validate_ldap_filter
 
 class AuthenticatedLdapService(FlextLdapService, FlextLdapAuthMixin):
     """LDAP service with authentication patterns."""
-    
+
     async def secure_search(
         self,
         session_id: str,
@@ -401,7 +411,7 @@ class AuthenticatedLdapService(FlextLdapService, FlextLdapAuthMixin):
         auth_result = await self.validate_session(session_id)
         if auth_result.is_failure:
             return FlextResult.fail("Authentication required")
-        
+
         return await self.search(session_id, base_dn, filter_expr)
 ```
 
@@ -419,6 +429,7 @@ class AuthenticatedLdapService(FlextLdapService, FlextLdapAuthMixin):
 **Responsibility**: Command-line interface for LDAP operations.
 
 **CLI Pattern**:
+
 ```python
 import click
 from flext_ldap import get_ldap_api
@@ -437,17 +448,17 @@ def cli():
 def search(server, bind_dn, password, base_dn, filter):
     """Search LDAP directory."""
     api = get_ldap_api()
-    
+
     async def run_search():
         async with api.connection(server, bind_dn, password) as session:
             result = await api.search(session, base_dn, filter)
-            
+
             if result.is_success:
                 for entry in result.data:
                     click.echo(f"DN: {entry.dn}")
             else:
                 click.echo(f"Error: {result.error}")
-    
+
     import asyncio
     asyncio.run(run_search())
 ```
@@ -469,7 +480,7 @@ FlextLdapConnectionConfig  # Connection configuration
 
 # Domain entities
 FlextLdapUser              # LDAP user entity
-FlextLdapGroup             # LDAP group entity  
+FlextLdapGroup             # LDAP group entity
 FlextLdapEntry             # Generic LDAP entry entity
 
 # Value objects
@@ -520,7 +531,7 @@ domain/
 # Standard import patterns for FLEXT-LDAP
 from flext_ldap import (
     FlextLdapApi,              # Never alias - ecosystem standard
-    FlextLdapUser,             # Never alias - ecosystem standard  
+    FlextLdapUser,             # Never alias - ecosystem standard
     FlextLdapCreateUserRequest,# Never alias - clear intent
     get_ldap_api               # Factory function - never alias
 )
@@ -570,7 +581,7 @@ from flext_core import FlextResult
 
 async def create_ldap_user(user_data: dict) -> FlextResult[FlextLdapUser]:
     api = get_ldap_api()
-    
+
     request = FlextLdapCreateUserRequest(
         dn=f"uid={user_data['uid']},ou=users,dc=example,dc=com",
         uid=user_data['uid'],
@@ -578,7 +589,7 @@ async def create_ldap_user(user_data: dict) -> FlextResult[FlextLdapUser]:
         sn=user_data['surname'],
         mail=user_data.get('email')
     )
-    
+
     async with api.connection(server_url, bind_dn, password) as session:
         return await api.create_user(session, request)
 ```
@@ -665,40 +676,40 @@ class FlextLdapUser(FlextEntity):
     mail: Optional[str] = None
     is_active: bool = False
     _domain_events: List[Dict[str, Any]] = field(default_factory=list, init=False)
-    
+
     def activate(self) -> FlextResult[None]:
         """Business operation with domain rules."""
         if self.is_active:
             return FlextResult.fail("User already active")
-        
+
         # Apply business rule
         if not self.mail:
             return FlextResult.fail("Email required for activation")
-        
+
         self.is_active = True
         self.add_domain_event(UserActivatedEvent(
             user_id=self.id,
             user_dn=self.dn.value,
             timestamp=datetime.utcnow()
         ))
-        
+
         return FlextResult.ok(None)
-    
+
     def change_password(self, old_password: str, new_password: str) -> FlextResult[None]:
         """Password change with domain validation."""
         # Domain validation logic
         if len(new_password) < 8:
             return FlextResult.fail("Password must be at least 8 characters")
-        
+
         if new_password == old_password:
             return FlextResult.fail("New password must be different")
-        
+
         # Business logic for password change
         self.add_domain_event(PasswordChangedEvent(
             user_id=self.id,
             user_dn=self.dn.value
         ))
-        
+
         return FlextResult.ok(None)
 ```
 
@@ -711,32 +722,32 @@ from flext_core import FlextValueObject
 class FlextLdapDistinguishedName(FlextValueObject):
     """Distinguished Name value object with RFC 4514 validation."""
     value: str
-    
+
     def __post_init__(self) -> None:
         if not self._is_valid_dn(self.value):
             raise ValueError(f"Invalid DN format: {self.value}")
-    
+
     def _is_valid_dn(self, dn: str) -> bool:
         """Validate DN format according to RFC 4514."""
         return bool(
-            dn and 
-            '=' in dn and 
+            dn and
+            '=' in dn and
             len(dn.strip()) > 0 and
             not dn.startswith('=') and
             not dn.endswith('=')
         )
-    
+
     @property
     def rdn(self) -> str:
         """Get Relative Distinguished Name (first component)."""
         return self.value.split(',')[0].strip()
-    
+
     @property
     def parent_dn(self) -> Optional[str]:
         """Get parent DN (all components except first)."""
         components = self.value.split(',')
         return ','.join(components[1:]).strip() if len(components) > 1 else None
-    
+
     def is_child_of(self, parent_dn: str) -> bool:
         """Check if this DN is a child of parent DN."""
         return self.value.lower().endswith(parent_dn.lower())
@@ -745,29 +756,29 @@ class FlextLdapDistinguishedName(FlextValueObject):
 class FlextLdapFilter(FlextValueObject):
     """LDAP filter value object with RFC 4515 validation."""
     expression: str
-    
+
     def __post_init__(self) -> None:
         if not self._is_valid_filter(self.expression):
             raise ValueError(f"Invalid LDAP filter: {self.expression}")
-    
+
     def _is_valid_filter(self, filter_str: str) -> bool:
         """Basic LDAP filter validation."""
         return bool(
-            filter_str and 
-            filter_str.startswith('(') and 
+            filter_str and
+            filter_str.startswith('(') and
             filter_str.endswith(')')
         )
-    
+
     @classmethod
     def equals(cls, attribute: str, value: str) -> 'FlextLdapFilter':
         """Create equality filter."""
         return cls(f"({attribute}={value})")
-    
+
     @classmethod
     def present(cls, attribute: str) -> 'FlextLdapFilter':
         """Create presence filter."""
         return cls(f"({attribute}=*)")
-    
+
     @classmethod
     def and_filters(cls, *filters: 'FlextLdapFilter') -> 'FlextLdapFilter':
         """Combine filters with AND logic."""
@@ -785,36 +796,36 @@ class FlextLdapUserAggregate(FlextAggregateRoot):
     """User aggregate managing user lifecycle and group membership."""
     user: FlextLdapUser
     group_memberships: List[str] = field(default_factory=list)
-    
+
     def add_to_group(self, group_dn: str) -> FlextResult[None]:
         """Add user to group with business rules."""
         if not self.user.is_active:
             return FlextResult.fail("Cannot add inactive user to group")
-        
+
         if group_dn in self.group_memberships:
             return FlextResult.fail("User already member of group")
-        
+
         self.group_memberships.append(group_dn)
         self.add_domain_event(UserAddedToGroupEvent(
             user_id=self.user.id,
             user_dn=self.user.dn.value,
             group_dn=group_dn
         ))
-        
+
         return FlextResult.ok(None)
-    
+
     def remove_from_group(self, group_dn: str) -> FlextResult[None]:
         """Remove user from group with business rules."""
         if group_dn not in self.group_memberships:
             return FlextResult.fail("User not member of group")
-        
+
         self.group_memberships.remove(group_dn)
         self.add_domain_event(UserRemovedFromGroupEvent(
             user_id=self.user.id,
             user_dn=self.user.dn.value,
             group_dn=group_dn
         ))
-        
+
         return FlextResult.ok(None)
 ```
 
@@ -831,7 +842,7 @@ from flext_ldap import get_ldap_api, FlextLdapCreateUserRequest
 async def create_user_pipeline(user_data: dict) -> FlextResult[FlextLdapUser]:
     """Complete user creation pipeline with error handling."""
     api = get_ldap_api()
-    
+
     return (
         validate_user_data(user_data)
         .map(create_user_request)
@@ -845,7 +856,7 @@ async def create_user_pipeline(user_data: dict) -> FlextResult[FlextLdapUser]:
 def validate_user_data(data: dict) -> FlextResult[dict]:
     """Validate user data with business rules."""
     errors = []
-    
+
     if not data.get('uid'):
         errors.append("UID is required")
     if not data.get('cn'):
@@ -854,7 +865,7 @@ def validate_user_data(data: dict) -> FlextResult[dict]:
         errors.append("Surname is required")
     if data.get('mail') and '@' not in data['mail']:
         errors.append("Invalid email format")
-    
+
     return FlextResult.fail(errors) if errors else FlextResult.ok(data)
 
 def create_user_request(data: dict) -> FlextLdapCreateUserRequest:
@@ -876,8 +887,8 @@ async def create_ldap_connection(api: FlextLdapApi) -> FlextResult[str]:
     )
 
 async def create_user_in_ldap(
-    api: FlextLdapApi, 
-    session: str, 
+    api: FlextLdapApi,
+    session: str,
     request: FlextLdapCreateUserRequest
 ) -> FlextResult[FlextLdapUser]:
     """Create user in LDAP directory."""
@@ -892,24 +903,24 @@ async def bulk_user_creation(user_data_list: List[dict]) -> FlextResult[List[Fle
     api = get_ldap_api()
     results = []
     errors = []
-    
+
     async with api.connection(server_url, bind_dn, password) as session:
         for user_data in user_data_list:
             result = await create_user_pipeline_with_session(api, session, user_data)
-            
+
             if result.is_success:
                 results.append(result.data)
             else:
                 errors.append(f"User {user_data.get('uid', 'unknown')}: {result.error}")
-    
+
     if errors:
         return FlextResult.fail(f"Errors in bulk creation: {'; '.join(errors)}")
-    
+
     return FlextResult.ok(results)
 
 async def create_user_pipeline_with_session(
-    api: FlextLdapApi, 
-    session: str, 
+    api: FlextLdapApi,
+    session: str,
     user_data: dict
 ) -> FlextResult[FlextLdapUser]:
     """User creation pipeline with existing session."""
@@ -937,7 +948,7 @@ class FlextLdapConnectionSettings(FlextBaseSettings):
     use_ssl: bool = False
     use_tls: bool = False
     timeout: int = 30
-    
+
     class Config:
         env_prefix = "FLEXT_LDAP_CONN_"
 
@@ -946,10 +957,10 @@ class FlextLdapAuthSettings(FlextBaseSettings):
     bind_dn: str = ""
     bind_password: SecretStr = SecretStr("")
     auth_method: str = "simple"
-    
+
     class Config:
         env_prefix = "FLEXT_LDAP_AUTH_"
-        
+
 class FlextLdapSearchSettings(FlextBaseSettings):
     """LDAP search configuration."""
     base_dn: str = "dc=example,dc=com"
@@ -957,7 +968,7 @@ class FlextLdapSearchSettings(FlextBaseSettings):
     page_size: int = 1000
     size_limit: int = 0
     time_limit: int = 0
-    
+
     class Config:
         env_prefix = "FLEXT_LDAP_SEARCH_"
 
@@ -966,13 +977,13 @@ class FlextLdapSettings(FlextBaseSettings):
     connection: FlextLdapConnectionSettings = Field(default_factory=FlextLdapConnectionSettings)
     authentication: FlextLdapAuthSettings = Field(default_factory=FlextLdapAuthSettings)
     search: FlextLdapSearchSettings = Field(default_factory=FlextLdapSearchSettings)
-    
+
     # Integration settings
     enable_connection_pooling: bool = True
     pool_size: int = 10
     enable_metrics: bool = True
     enable_tracing: bool = True
-    
+
     class Config:
         env_prefix = "FLEXT_LDAP_"
         env_nested_delimiter = "__"
@@ -997,7 +1008,7 @@ class FlextLdapEnvironment(str, Enum):
 class FlextLdapEnvironmentSettings(FlextBaseSettings):
     """Environment-specific LDAP settings."""
     environment: FlextLdapEnvironment = FlextLdapEnvironment.DEVELOPMENT
-    
+
     @property
     def ldap_settings(self) -> FlextLdapSettings:
         """Get environment-specific LDAP settings."""
@@ -1068,7 +1079,7 @@ from flext_ldap.domain.value_objects import FlextLdapDistinguishedName
 
 class TestFlextLdapUser:
     """Test LDAP user domain entity behavior."""
-    
+
     def test_user_creation_with_valid_data(self):
         """Test successful user creation with valid data."""
         dn = FlextLdapDistinguishedName("uid=john,ou=users,dc=example,dc=com")
@@ -1080,29 +1091,29 @@ class TestFlextLdapUser:
             sn="Doe",
             mail="john@example.com"
         )
-        
+
         assert user.is_valid()
         assert user.get_display_name() == "John Doe"
         assert user.email == "john@example.com"
-    
+
     def test_user_activation_success(self):
         """Test successful user activation."""
         user = FlextLdapUser(
             id="user-123",
             dn=FlextLdapDistinguishedName("uid=john,ou=users,dc=example,dc=com"),
             uid="john",
-            cn="John Doe", 
+            cn="John Doe",
             sn="Doe",
             mail="john@example.com"
         )
-        
+
         result = user.activate()
-        
+
         assert result.is_success
         assert user.is_active
         assert len(user.domain_events) == 1
         assert user.domain_events[0]["type"] == "UserActivated"
-    
+
     def test_user_activation_already_active(self):
         """Test activation of already active user."""
         user = FlextLdapUser(
@@ -1113,13 +1124,13 @@ class TestFlextLdapUser:
             sn="Doe",
             is_active=True
         )
-        
+
         result = user.activate()
-        
+
         assert result.is_failure
         assert result.error == "User already active"
         assert len(user.domain_events) == 0
-    
+
     def test_user_activation_requires_email(self):
         """Test activation requires email address."""
         user = FlextLdapUser(
@@ -1130,9 +1141,9 @@ class TestFlextLdapUser:
             sn="Doe",
             mail=None  # No email
         )
-        
+
         result = user.activate()
-        
+
         assert result.is_failure
         assert result.error == "Email required for activation"
 ```
@@ -1145,30 +1156,30 @@ from flext_ldap.domain.value_objects import FlextLdapDistinguishedName, FlextLda
 
 class TestFlextLdapDistinguishedName:
     """Test DN value object validation and behavior."""
-    
+
     def test_valid_dn_creation(self):
         """Test creation with valid DN."""
         dn = FlextLdapDistinguishedName("uid=john,ou=users,dc=example,dc=com")
-        
+
         assert dn.value == "uid=john,ou=users,dc=example,dc=com"
         assert dn.rdn == "uid=john"
         assert dn.parent_dn == "ou=users,dc=example,dc=com"
-    
+
     def test_invalid_dn_creation(self):
         """Test creation with invalid DN."""
         with pytest.raises(ValueError, match="Invalid DN format"):
             FlextLdapDistinguishedName("invalid-dn-format")
-        
+
         with pytest.raises(ValueError, match="Invalid DN format"):
             FlextLdapDistinguishedName("=invalid")
-        
+
         with pytest.raises(ValueError, match="Invalid DN format"):
             FlextLdapDistinguishedName("")
-    
+
     def test_dn_hierarchy_checking(self):
         """Test DN hierarchy checking."""
         child_dn = FlextLdapDistinguishedName("uid=john,ou=users,dc=example,dc=com")
-        
+
         assert child_dn.is_child_of("ou=users,dc=example,dc=com")
         assert child_dn.is_child_of("dc=example,dc=com")
         assert child_dn.is_child_of("dc=com")
@@ -1176,28 +1187,28 @@ class TestFlextLdapDistinguishedName:
 
 class TestFlextLdapFilter:
     """Test LDAP filter value object validation."""
-    
+
     def test_valid_filter_creation(self):
         """Test creation with valid filter."""
         filter_obj = FlextLdapFilter("(uid=john)")
         assert filter_obj.expression == "(uid=john)"
-    
+
     def test_invalid_filter_creation(self):
         """Test creation with invalid filter."""
         with pytest.raises(ValueError, match="Invalid LDAP filter"):
             FlextLdapFilter("invalid-filter")
-        
+
         with pytest.raises(ValueError, match="Invalid LDAP filter"):
             FlextLdapFilter("(incomplete")
-    
+
     def test_filter_factory_methods(self):
         """Test filter factory methods."""
         equals_filter = FlextLdapFilter.equals("uid", "john")
         assert equals_filter.expression == "(uid=john)"
-        
+
         present_filter = FlextLdapFilter.present("mail")
         assert present_filter.expression == "(mail=*)"
-        
+
         and_filter = FlextLdapFilter.and_filters(
             FlextLdapFilter.equals("uid", "john"),
             FlextLdapFilter.present("mail")
@@ -1215,22 +1226,22 @@ from flext_ldap import get_ldap_api
 @pytest.mark.asyncio
 class TestLdapPipelines:
     """Test LDAP operation pipelines with FlextResult chains."""
-    
+
     async def test_successful_user_creation_pipeline(self, mock_ldap_api):
         """Test successful user creation pipeline."""
         user_data = {
             "uid": "john",
-            "cn": "John Doe", 
+            "cn": "John Doe",
             "sn": "Doe",
             "mail": "john@example.com"
         }
-        
+
         result = await create_user_pipeline(user_data)
-        
+
         assert result.is_success
         assert result.data.uid == "john"
         assert result.data.cn == "John Doe"
-    
+
     async def test_user_creation_pipeline_validation_failure(self):
         """Test user creation pipeline with validation failure."""
         invalid_user_data = {
@@ -1238,12 +1249,12 @@ class TestLdapPipelines:
             "cn": "John Doe",
             "sn": "Doe"
         }
-        
+
         result = await create_user_pipeline(invalid_user_data)
-        
+
         assert result.is_failure
         assert "UID is required" in result.error
-    
+
     async def test_user_creation_pipeline_ldap_failure(self, mock_failing_ldap_api):
         """Test user creation pipeline with LDAP failure."""
         user_data = {
@@ -1252,12 +1263,12 @@ class TestLdapPipelines:
             "sn": "Doe",
             "mail": "john@example.com"
         }
-        
+
         result = await create_user_pipeline(user_data)
-        
+
         assert result.is_failure
         assert "LDAP" in result.error
-    
+
     async def test_bulk_user_creation_partial_success(self, mock_ldap_api):
         """Test bulk user creation with partial success."""
         user_data_list = [
@@ -1265,9 +1276,9 @@ class TestLdapPipelines:
             {"uid": "", "cn": "Invalid User", "sn": "User"},  # Invalid
             {"uid": "jane", "cn": "Jane Doe", "sn": "Doe"}
         ]
-        
+
         result = await bulk_user_creation(user_data_list)
-        
+
         assert result.is_failure
         assert "UID is required" in result.error
         # Should contain error for invalid user but processing should continue
@@ -1330,10 +1341,10 @@ class FlextLdapAuthIntegration:
     def __init__(self, container: FlextContainer):
         self._ldap_api = container.resolve("ldap_api")
         self._auth_service = container.resolve("auth_service")
-    
+
     async def authenticate_user(
-        self, 
-        username: str, 
+        self,
+        username: str,
         password: str
     ) -> FlextResult[FlextLdapUser]:
         """Authenticate user against LDAP directory."""
@@ -1343,20 +1354,20 @@ class FlextLdapAuthIntegration:
             .flat_map(lambda user: self._validate_user_permissions(user))
         )
 
-# ✅ LDAP-Meltano Singer integration pattern  
+# ✅ LDAP-Meltano Singer integration pattern
 from flext_tap_ldap import FlextLdapTap
 from flext_target_ldap import FlextLdapTarget
 
 class FlextLdapMeltanoIntegration:
     def __init__(self, ldap_api: FlextLdapApi):
         self._ldap_api = ldap_api
-    
+
     def create_ldap_tap(self, config: dict) -> FlextLdapTap:
         """Create LDAP tap with API integration."""
         tap = FlextLdapTap(config)
         tap.set_ldap_provider(self._ldap_api)  # Inject LDAP API
         return tap
-    
+
     def create_ldap_target(self, config: dict) -> FlextLdapTarget:
         """Create LDAP target with API integration."""
         target = FlextLdapTarget(config)
@@ -1375,17 +1386,17 @@ from flext_observability import FlextObservabilitySettings
 
 class FlextEcosystemSettings(FlextBaseSettings):
     """Complete FLEXT ecosystem configuration."""
-    
+
     # Core components
     ldap: FlextLdapSettings = Field(default_factory=FlextLdapSettings)
     auth: FlextAuthSettings = Field(default_factory=FlextAuthSettings)
     observability: FlextObservabilitySettings = Field(default_factory=FlextObservabilitySettings)
-    
+
     # Integration settings
     enable_ldap_auth: bool = True
     enable_ldap_metrics: bool = True
     enable_singer_integration: bool = True
-    
+
     class Config:
         env_prefix = "FLEXT_"
         env_nested_delimiter = "__"
@@ -1393,7 +1404,7 @@ class FlextEcosystemSettings(FlextBaseSettings):
         # FLEXT_LDAP__CONNECTION__HOST=ldap.company.com
         # FLEXT_AUTH__LDAP_PROVIDER_ENABLED=true
         # FLEXT_OBSERVABILITY__ENABLE_TRACING=true
-    
+
     @property
     def ldap_auth_enabled(self) -> bool:
         """Check if LDAP authentication is enabled."""
@@ -1448,15 +1459,15 @@ from flext_ldap.values import FlextLdapDistinguishedName, FlextLdapCreateUserReq
 # Legacy import handling with deprecation warnings
 def __getattr__(name: str) -> Any:
     """Handle legacy imports with deprecation warnings."""
-    
+
     # Legacy API mappings (deprecated in 0.9.0, removed in 2.0.0)
     legacy_api_mappings = {
         "FlextLdapClient": "FlextLdapApi",
-        "LDAPClient": "FlextLdapApi", 
+        "LDAPClient": "FlextLdapApi",
         "SimpleAPI": "FlextLdapApi",
         "LDAPService": "FlextLdapApi"
     }
-    
+
     if name in legacy_api_mappings:
         warnings.warn(
             f"Importing {name} is deprecated since 0.9.0. "
@@ -1466,7 +1477,7 @@ def __getattr__(name: str) -> Any:
             stacklevel=2
         )
         return FlextLdapApi
-    
+
     # Legacy entity mappings (deprecated in 1.0.0, removed in 2.0.0)
     legacy_entity_mappings = {
         "LDAPUser": FlextLdapUser,
@@ -1474,7 +1485,7 @@ def __getattr__(name: str) -> Any:
         "LDAPEntry": FlextLdapEntry,
         "CreateUserRequest": FlextLdapCreateUserRequest
     }
-    
+
     if name in legacy_entity_mappings:
         warnings.warn(
             f"Importing {name} from root is deprecated since 1.0.0. "
@@ -1484,7 +1495,7 @@ def __getattr__(name: str) -> Any:
             stacklevel=2
         )
         return legacy_entity_mappings[name]
-    
+
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 # Clean public API (current and future)
@@ -1492,19 +1503,19 @@ __all__ = [
     # Core API (stable)
     "FlextLdapApi",
     "get_ldap_api",
-    
+
     # Domain entities (stable)
-    "FlextLdapUser", 
+    "FlextLdapUser",
     "FlextLdapGroup",
     "FlextLdapEntry",
-    
+
     # Value objects (stable)
     "FlextLdapDistinguishedName",
     "FlextLdapCreateUserRequest",
-    
+
     # Configuration (stable)
     "FlextLdapSettings",
-    
+
     # Infrastructure (advanced usage)
     "FlextLdapSimpleClient"
 ]

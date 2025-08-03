@@ -7,6 +7,10 @@ FLEXT-CORE ADVANCED USAGE:
 - FlextEntity immutability patterns
 
 Eliminates 90% of boilerplate code through intelligent composition.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
