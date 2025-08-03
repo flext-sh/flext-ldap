@@ -1,39 +1,57 @@
-"""FLEXT LDAP - Enterprise LDAP Operations Library.
+"""FLEXT-LDAP - Enterprise LDAP Directory Services Library.
 
-Unified enterprise-grade LDAP library using flext-core patterns.
-Provides Clean Architecture with Domain-Driven Design for LDAP operations.
+Enterprise-grade LDAP operations library implementing Clean Architecture and
+Domain-Driven Design patterns. Built on the FLEXT Core foundation for type-safe,
+scalable LDAP directory integration.
 
-✅ UNIFIED API (NEW):
-from flext_ldap import FlextLdapApi, get_ldap_api
+Architecture:
+    This library follows Clean Architecture principles with clear separation
+    between domain logic, application services, and infrastructure concerns.
+    All operations use railway-oriented programming via FlextResult for
+    comprehensive error handling.
 
-🚀 USAGE EXAMPLES:
-```python
-# Simple API usage
-from flext_ldap import get_ldap_api
+Key Components:
+    - FlextLdapApi: Unified interface for all LDAP operations
+    - Domain Entities: Rich business objects (FlextLdapUser, FlextLdapGroup)
+    - Value Objects: Immutable data structures with validation
+    - Repository Pattern: Abstract data access with concrete implementations
 
-api = get_ldap_api()
+Example:
+    Basic LDAP operations using the unified API:
 
-# Connect with session management
-async with api.connection(
-    "ldap://localhost", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "REDACTED_LDAP_BIND_PASSWORD"
-) as session:
-    # Search users
-    users = await api.search(
-        session, "ou=users,dc=example,dc=com", "(objectClass=person)"
-    )
+    >>> from flext_ldap import get_ldap_api, FlextLdapCreateUserRequest
+    >>>
+    >>> api = get_ldap_api()
+    >>> async with api.connection(server_url, bind_dn, password) as session:
+    ...     # Search directory entries
+    ...     result = await api.search(session, base_dn, "(objectClass=person)")
+    ...     if result.is_success:
+    ...         for entry in result.data:
+    ...             print(f"Found: {entry.dn}")
+    ...
+    ...     # Create new user
+    ...     user_request = FlextLdapCreateUserRequest(
+    ...         dn="uid=john,ou=users,dc=example,dc=com",
+    ...         uid="john", cn="John Doe", sn="Doe"
+    ...     )
+    ...     create_result = await api.create_user(session, user_request)
 
-    # Create user
-    user_request = FlextLdapCreateUserRequest(
-        dn="cn=john,ou=users,dc=example,dc=com", uid="john", cn="John Doe", sn="Doe"
-    )
-    new_user = await api.create_user(session, user_request)
-```
+Integration:
+    - Built on flext-core foundation patterns
+    - Integrates with flext-auth for authentication services
+    - Compatible with Singer/Meltano data pipeline ecosystem
+    - Supports LDIF data interchange format
 
-🏗️ DOMAIN OBJECTS:
-All operations return rich domain entities instead of raw dictionaries.
-Type-safe error handling via FlextResult pattern.
+Standards Compliance:
+    - RFC 4510-4519: LDAP protocol compliance
+    - RFC 4514: Distinguished Names (DN) format
+    - RFC 4515: LDAP search filters
+    - Type-safe operations with 100% MyPy compliance
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Author: FLEXT Development Team
+Version: 0.9.0
+License: MIT
+
 """
 
 from __future__ import annotations
@@ -41,10 +59,11 @@ from __future__ import annotations
 # Legacy compatibility - these will show deprecation warnings
 import warnings
 
+# Configuration - Updated to use centralized FlextLDAPConfig from flext-core
+from flext_core import FlextLDAPConfig
+
 # Core API - Single point of entry
 from flext_ldap.api import FlextLdapApi, get_ldap_api
-
-# Configuration
 from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
 
 # Domain entities and value objects (now at root - cleaner imports)
@@ -112,9 +131,10 @@ def __getattr__(name: str) -> object:
 
 # Clean public API
 __all__ = [
+    # Configuration - Centralized from flext-core
+    "FlextLDAPConfig",
     # Core API
     "FlextLdapApi",
-    # Configuration
     "FlextLdapConnectionConfig",
     "FlextLdapCreateUserRequest",
     "FlextLdapDistinguishedName",

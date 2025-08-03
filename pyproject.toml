@@ -8,7 +8,7 @@ version = "0.9.0"
 description = "Enterprise LDAP Operations Library for FLEXT Framework"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-keywords = ["flext", "enterprise", "async", "typed", "integration", "adapter"]
+keywords = ["flext", "enterprise", "async", "typed", "integration", "adapter", "ldap", "ddd", "clean-architecture"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -17,17 +17,18 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
     "Typing :: Typed",
 ]
 dependencies = [
-    "pydantic-settings (>=2.10.1,<3.0.0)",
     "flext-core @ file:///home/marlonsc/flext/flext-core",
-    "flext-cli @ file:///home/marlonsc/flext/flext-cli",
     "pydantic (>=2.11.7,<3.0.0)",
-    "cryptography (>=45.0.5,<46.0.0)",
+    "pydantic-settings (>=2.10.1,<3.0.0)",
     "ldap3 (>=2.9.1,<3.0.0)",
+    "cryptography (>=45.0.5,<46.0.0)",
     "click (>=8.2.1,<9.0.0)",
     "rich (>=14.0.0,<15.0.0)",
+    "structlog (>=25.4.0,<26.0.0)",
 ]
 [[project.authors]]
 name = "FLEXT Team"
@@ -78,14 +79,6 @@ files = ["src", "tests"]
 plugins = ["pydantic.mypy"]
 exclude = ["build", "dist", ".venv", ".mypy_cache"]
 
-[[tool.mypy.overrides]]
-module = [
-    "flext_observability.*",
-    "flext_core.*",
-    "flext_auth.*",
-    "flext_plugin.*",
-]
-ignore_missing_imports = true
 
 [tool.bandit]
 exclude_dirs = ["tests", "build", "dist"]
@@ -158,13 +151,14 @@ output = "reports/coverage.xml"
 
 [tool.poetry.dependencies]
 python = ">=3.13,<3.14"
-
-
-
-
-[tool.poetry.dependencies.flext-core]
-path = "../flext-core"
-develop = true
+flext-core = {path = "../flext-core", develop = true}
+pydantic = ">=2.11.7,<3.0.0"
+pydantic-settings = ">=2.10.1,<3.0.0"
+ldap3 = ">=2.9.1,<3.0.0"
+cryptography = ">=45.0.5,<46.0.0"
+click = ">=8.2.1,<9.0.0"
+rich = ">=14.0.0,<15.0.0"
+structlog = ">=25.4.0,<26.0.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.12.3"

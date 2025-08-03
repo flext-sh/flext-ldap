@@ -13,7 +13,12 @@ from __future__ import annotations
 
 from uuid import UUID, uuid4
 
-from flext_core import FlextDomainService, FlextRepository, FlextResult
+from flext_core import (
+    FlextContainer,
+    FlextDomainService,
+    FlextRepository,
+    FlextResult,
+)
 
 
 class FlextLdapRepository(FlextRepository):
@@ -23,9 +28,10 @@ class FlextLdapRepository(FlextRepository):
     Follows Clean Architecture patterns for data access abstraction.
     """
 
-    def __init__(self) -> None:
-        """Initialize repository with in-memory storage for development."""
+    def __init__(self, container: FlextContainer | None = None) -> None:
+        """Initialize with in-memory storage and dependency injection."""
         super().__init__()
+        self._container = container or FlextContainer()
         self._storage: dict[str, object] = {}
 
     def find_by_id(self, entity_id: str) -> FlextResult[object]:
@@ -43,7 +49,7 @@ class FlextLdapRepository(FlextRepository):
             # Use flext-core validation if available
             if hasattr(entity, "validate_domain_rules"):
                 validation_result = entity.validate_domain_rules()
-                if validation_result.is_failure:
+                if validation_result is not None and validation_result.is_failure:
                     return FlextResult.fail(
                         f"Validation failed: {validation_result.error}",
                     )
@@ -63,8 +69,8 @@ class FlextLdapRepository(FlextRepository):
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Delete failed: {e}")
 
-    def find_where(self, **conditions: object) -> list[object]:
-        """Find entities matching conditions using filtering."""
+    def _find_where_sync(self, **conditions: object) -> list[object]:
+        """Find entities matching conditions using filtering (sync version)."""
         results = []
         for entity in self._storage.values():
             match = True
@@ -76,9 +82,21 @@ class FlextLdapRepository(FlextRepository):
                 results.append(entity)
         return results
 
+    def find_where(self, **conditions: object) -> list[object]:
+        """Find entities matching conditions using filtering."""
+        return self._find_where_sync(**conditions)
+
     def find_by_attribute(self, attr_name: str, attr_value: object) -> list[object]:
         """Find by single attribute - optimized path."""
         return self.find_where(**{attr_name: attr_value})
+
+    async def find_by_attribute_async(
+        self,
+        attr_name: str,
+        attr_value: object,
+    ) -> list[object]:
+        """Async find by single attribute."""
+        return self._find_where_sync(**{attr_name: attr_value})
 
     def list_all(self, limit: int = 100, offset: int = 0) -> list[object]:
         """List entities with pagination."""
@@ -89,8 +107,21 @@ class FlextLdapRepository(FlextRepository):
         """Count entities matching conditions."""
         if not conditions:
             return len(self._storage)
-        matching = self.find_where(**conditions)
+        matching = self._find_where_sync(**conditions)
         return len(matching)
+
+    async def count(self, **conditions: object) -> int:
+        """Async count entities matching conditions."""
+        return self.count_entities(**conditions)
+
+    async def list_all_async(self, limit: int = 100, offset: int = 0) -> list[object]:
+        """Async list entities with pagination."""
+        entities = list(self._storage.values())
+        return entities[offset : offset + limit]
+
+    async def find_where_async(self, **conditions: object) -> list[object]:
+        """Async find entities matching conditions."""
+        return self._find_where_sync(**conditions)
 
     def _validate_entity(self, entity: object) -> FlextResult[None]:
         """Validate entity using flext-core validation chain."""
@@ -113,10 +144,15 @@ class FlextLdapDomainService(FlextDomainService):
     - Clean Architecture compliance
     """
 
-    def __init__(self, repository: FlextLdapRepository | None = None) -> None:
-        """Initialize with repository dependency."""
+    def __init__(
+        self,
+        repository: FlextLdapRepository | None = None,
+        container: FlextContainer | None = None,
+    ) -> None:
+        """Initialize with repository dependency and dependency injection."""
         super().__init__()
-        self._repository = repository or FlextLdapRepository()
+        self._container = container or FlextContainer()
+        self._repository = repository or FlextLdapRepository(self._container)
 
     def get_by_id(self, entity_id: UUID | str) -> FlextResult[object | None]:
         """Get with automatic caching and error handling."""
@@ -410,16 +446,19 @@ class FlextLdapDomainService(FlextDomainService):
 
 
 # FACTORY FUNCTIONS - Eliminate service instantiation boilerplate
-def create_ldap_repository() -> FlextLdapRepository:
-    """Factory for creating LDAP repositories."""
-    return FlextLdapRepository()
+def create_ldap_repository(
+    container: FlextContainer | None = None,
+) -> FlextLdapRepository:
+    """Factory for creating LDAP repositories with dependency injection."""
+    return FlextLdapRepository(container)
 
 
 def create_ldap_service(
     repository: FlextLdapRepository | None = None,
+    container: FlextContainer | None = None,
 ) -> FlextLdapDomainService:
-    """Factory for creating LDAP services."""
-    return FlextLdapDomainService(repository)
+    """Factory for creating LDAP services with dependency injection."""
+    return FlextLdapDomainService(repository, container)
 
 
 # COMPATIBILITY ALIASES - Maintain existing code

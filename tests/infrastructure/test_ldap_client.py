@@ -1,7 +1,30 @@
-"""Tests for LDAP client infrastructure module.
+"""FLEXT-LDAP Infrastructure Client Tests - Protocol Implementation Validation.
+
+Enterprise-grade test suite for FlextLdapSimpleClient infrastructure layer,
+validating LDAP protocol implementation, connection management, and
+infrastructure-level operations with proper error handling.
+
+This test module ensures the infrastructure layer correctly implements
+LDAP protocol operations, manages connections reliably, and provides
+proper abstraction between domain logic and LDAP protocol details.
+
+Test Coverage:
+    - Client initialization and configuration
+    - Connection establishment and management
+    - LDAP protocol operation execution
+    - Error handling and recovery mechanisms
+    - Connection pooling and resource management
+    - Infrastructure-level data conversion
+
+Architecture:
+    Tests validate Clean Architecture infrastructure layer compliance,
+    ensuring proper separation between protocol implementation and
+    domain logic with reliable error propagation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
+Author: FLEXT Development Team
 """
 
 from __future__ import annotations
@@ -25,10 +48,24 @@ class TestOperationResult:
 
 
 class TestFlextLdapSimpleClient:
-    """Test suite for LDAP infrastructure client."""
+    """Test suite for FlextLdapSimpleClient infrastructure implementation.
+
+    Comprehensive testing of the LDAP infrastructure client covering
+    initialization, configuration, connection management, and protocol
+    operations with proper error handling and resource management.
+
+    Tests ensure the infrastructure layer correctly abstracts LDAP
+    protocol complexities while providing reliable operations to
+    higher architectural layers.
+    """
 
     def test_init_default(self) -> None:
-        """Test client initialization with default config."""
+        """Test client initialization with default configuration settings.
+
+        Validates that the client properly initializes with default settings
+        and correctly sets up internal state including connection manager,
+        data converter, and configuration handling.
+        """
         client = FlextLdapSimpleClient()
         assert client._current_connection is None
         assert client._connection_manager is not None
@@ -36,27 +73,34 @@ class TestFlextLdapSimpleClient:
         assert client._config is None
 
     def test_init_with_config(self) -> None:
-        """Test client initialization with config."""
+        """Test client initialization with custom configuration.
+
+        Validates that the client properly accepts and stores custom
+        configuration settings for LDAP connection parameters.
+        """
         config = FlextLdapConnectionConfig(
-            server_url="ldap://localhost",
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            password="REDACTED_LDAP_BIND_PASSWORD",
+            server="localhost",
+            port=389,
+            use_ssl=False,
         )
         client = FlextLdapSimpleClient(config)
         assert client._config == config
 
     def test_is_connected_false(self) -> None:
-        """Test is_connected returns False when not connected."""
+        """Test connection status reporting for disconnected client.
+
+        Validates that connection status correctly returns False when
+        no active LDAP connection has been established.
+        """
         client = FlextLdapSimpleClient()
         assert not client.is_connected()
 
-    @pytest.mark.asyncio
-    async def test_connect_success(self) -> None:
+    def test_connect_success(self) -> None:
         """Test successful LDAP connection."""
         config = FlextLdapConnectionConfig(
-            server_url="ldap://localhost",
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            password="REDACTED_LDAP_BIND_PASSWORD",
+            server="localhost",
+            port=389,
+            use_ssl=False,
         )
 
         # Mock the connection manager to return success
@@ -70,11 +114,11 @@ class TestFlextLdapSimpleClient:
             # Mock successful connection
             mock_connection = MagicMock()
             mock_connection.closed = False
-            client._connection_manager.get_connection = AsyncMock(
+            client._connection_manager.get_connection = MagicMock(
                 return_value=FlextResult.ok(mock_connection)
             )
 
-            result = await client.connect(config)
+            result = client.connect(config)  # sync call
 
             assert result.is_success
             assert client._current_connection == mock_connection
@@ -99,7 +143,7 @@ class TestFlextLdapSimpleClient:
                 return_value=FlextResult.fail("Connection failed")
             )
 
-            result = client.connect(config)
+            result = client.connect(config)  # sync call
 
             assert result.is_failure
             assert client._current_connection is None
@@ -107,7 +151,7 @@ class TestFlextLdapSimpleClient:
     def test_connect_no_config(self) -> None:
         """Test connect with no configuration."""
         client = FlextLdapSimpleClient()
-        result = client.connect()
+        result = client.connect()  # sync call
 
         assert result.is_failure
         assert "No connection configuration provided" in result.error
@@ -269,10 +313,11 @@ class TestFlextLdapSimpleClient:
             assert result.is_success
             assert client._current_connection is None
 
-    def test_disconnect_not_connected(self) -> None:
+    @pytest.mark.asyncio
+    async def test_disconnect_not_connected(self) -> None:
         """Test disconnect when not connected."""
         client = FlextLdapSimpleClient()
-        result = client.disconnect()
+        result = await client.disconnect()  # async call
 
         assert result.is_success  # Should succeed even if not connected
 
@@ -306,15 +351,14 @@ class TestFlextLdapConnectionConfig:
 
     def test_default_values(self) -> None:
         """Test default configuration values."""
-        config = FlextLdapConnectionConfig(server_url="ldap://localhost")
+        config = FlextLdapConnectionConfig(server="localhost")
 
-        assert config.server_url == "ldap://localhost"
-        assert config.bind_dn is None
-        assert config.password is None
+        assert config.server == "localhost"
+        assert config.port == 389
         assert config.use_ssl is False
-        assert config.tls_config is None
-        assert config.connection_timeout == 10
-        assert config.pool_size == 5
+        assert config.timeout_seconds == 30
+        assert config.pool_size == 10
+        assert config.enable_connection_pooling is True
 
     def test_custom_values(self) -> None:
         """Test custom configuration values."""
@@ -322,15 +366,15 @@ class TestFlextLdapConnectionConfig:
             server="secure.example.com",
             port=636,
             use_ssl=True,
-            timeout_seconds=30,
-            pool_size=10,
+            timeout_seconds=60,
+            pool_size=20,
         )
 
         assert config.server == "secure.example.com"
         assert config.port == 636
         assert config.use_ssl is True
-        assert config.timeout_seconds == 30
-        assert config.pool_size == 10
+        assert config.timeout_seconds == 60
+        assert config.pool_size == 20
 
 
 class TestFactoryFunctions:
@@ -346,9 +390,9 @@ class TestFactoryFunctions:
 
         assert isinstance(client, FlextLdapSimpleClient)
         assert client._config is not None
-        assert client._config.server_url == "ldap://localhost"
-        assert client._config.bind_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
-        assert client._config.password == "REDACTED_LDAP_BIND_PASSWORD"
+        assert client._config.server == "localhost"
+        assert client._config.port == 389
+        assert not client._config.use_ssl
 
     def test_create_ldap_converter(self) -> None:
         """Test create_ldap_converter factory function."""

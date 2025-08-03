@@ -1,0 +1,501 @@
+# FLEXT-LDAP Architecture Overview
+
+**Clean Architecture + Domain-Driven Design Implementation**
+
+FLEXT-LDAP implements Clean Architecture principles with Domain-Driven Design patterns, built on the FLEXT-Core foundation. This document provides a comprehensive overview of the system architecture, design decisions, and integration patterns.
+
+---
+
+## 🏛️ Architectural Principles
+
+### Clean Architecture Foundation
+FLEXT-LDAP follows Clean Architecture principles with clear separation of concerns:
+
+1. **Independence of Frameworks**: Business logic doesn't depend on external frameworks
+2. **Testability**: Business rules can be tested without UI, database, or external elements
+3. **Independence of UI**: UI layer can change without affecting business rules
+4. **Independence of Database**: Business rules don't know about persistence mechanisms
+5. **Independence of External Agencies**: Business rules don't know about external interfaces
+
+### Domain-Driven Design Integration
+- **Ubiquitous Language**: Consistent terminology across all layers
+- **Bounded Contexts**: Clear boundaries between different business domains
+- **Domain Events**: Business events that drive system behavior
+- **Aggregates**: Consistency boundaries for business operations
+
+---
+
+## 🏗️ System Architecture
+
+### Layer Structure
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Application Layer                        │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   FLEXT-LDAP   │  │   flext-auth    │  │  flext-meltano  │ │
+│  │      API       │  │  Integration    │  │  Integration    │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                      Interface Adapters                        │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Directory     │  │    Singer       │  │      CLI        │ │
+│  │    Adapter      │  │    Adapter      │  │    Interface    │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                       Application Layer                        │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   LDAP Service  │  │  Command/Query  │  │   Event         │ │
+│  │   Orchestration │  │    Handlers     │  │   Handlers      │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                         Domain Layer                           │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │    Entities     │  │  Value Objects  │  │   Domain        │ │
+│  │   Aggregates    │  │  Specifications │  │   Services      │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                     Infrastructure Layer                       │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   LDAP Client   │  │   Repositories  │  │   External      │ │
+│  │   (ldap3)       │  │ Implementation  │  │   Services      │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                          FLEXT-Core                            │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   FlextResult   │  │  FlextContainer │  │ FlextLDAPConfig │ │
+│  │    Pattern      │  │  (DI Container) │  │  (Centralized)  │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🎯 Domain Model
+
+### Core Entities
+
+#### FlextLdapUser
+```python
+@dataclass
+class FlextLdapUser:
+    \"\"\"LDAP user entity with business logic.\"\"\"
+    id: str
+    dn: str  # Distinguished Name
+    uid: str
+    cn: str  # Common Name
+    sn: str  # Surname
+    mail: Optional[str]
+    
+    def is_valid(self) -> bool:
+        \"\"\"Domain validation logic.\"\"\"
+        return bool(self.dn and self.uid and self.cn and self.sn)
+    
+    def get_display_name(self) -> str:
+        \"\"\"Business logic for display name.\"\"\"
+        return self.cn or f\"{self.uid}\"
+```
+
+#### FlextLdapGroup
+```python
+@dataclass  
+class FlextLdapGroup:
+    \"\"\"LDAP group aggregate with membership management.\"\"\"
+    id: str
+    dn: str
+    cn: str
+    members: List[str]  # DNs of members
+    
+    def add_member(self, member_dn: str) -> None:
+        \"\"\"Add member with business rules.\"\"\"
+        if member_dn not in self.members:
+            self.members.append(member_dn)
+    
+    def remove_member(self, member_dn: str) -> None:
+        \"\"\"Remove member with business rules.\"\"\"
+        if member_dn in self.members:
+            self.members.remove(member_dn)
+```
+
+### Value Objects
+
+#### FlextLdapDistinguishedName
+```python
+@dataclass(frozen=True)
+class FlextLdapDistinguishedName:
+    \"\"\"Distinguished Name value object with validation.\"\"\"
+    value: str
+    
+    def __post_init__(self) -> None:
+        if not self._is_valid_dn(self.value):
+            raise ValueError(f\"Invalid DN format: {self.value}\")
+    
+    def _is_valid_dn(self, dn: str) -> bool:
+        \"\"\"Validate DN format according to RFC 4514.\"\"\"
+        # Implementation of DN validation logic
+        return bool(dn and '=' in dn)
+```
+
+### Domain Services
+
+#### FlextLdapUserValidator
+```python
+class FlextLdapUserValidator:
+    \"\"\"Domain service for complex user validation.\"\"\"
+    
+    def validate_user_creation(self, user: FlextLdapUser) -> FlextResult[bool]:
+        \"\"\"Validate user creation according to business rules.\"\"\"
+        if not user.is_valid():
+            return FlextResult.fail(\"User data is invalid\")
+            
+        if self._is_duplicate_uid(user.uid):
+            return FlextResult.fail(f\"UID {user.uid} already exists\")
+            
+        return FlextResult.ok(True)
+```
+
+---
+
+## 🔄 Application Layer
+
+### Application Services
+
+#### FlextLdapService
+```python
+class FlextLdapService:
+    \"\"\"Application service orchestrating LDAP operations.\"\"\"
+    
+    def __init__(
+        self,
+        user_repository: FlextLdapUserRepository,
+        validator: FlextLdapUserValidator,
+        event_publisher: FlextEventPublisher
+    ):
+        self._user_repository = user_repository
+        self._validator = validator
+        self._event_publisher = event_publisher
+    
+    async def create_user(
+        self, 
+        request: CreateUserRequest
+    ) -> FlextResult[FlextLdapUser]:
+        \"\"\"Create user with complete business logic.\"\"\"
+        
+        # 1. Create domain entity
+        user = FlextLdapUser.from_request(request)
+        
+        # 2. Domain validation
+        validation_result = self._validator.validate_user_creation(user)
+        if validation_result.is_failure:
+            return FlextResult.fail(validation_result.error)
+        
+        # 3. Persist entity
+        save_result = await self._user_repository.save(user)
+        if save_result.is_failure:
+            return FlextResult.fail(save_result.error)
+        
+        # 4. Publish domain event
+        await self._event_publisher.publish(
+            UserCreatedEvent(user_id=user.id, dn=user.dn)
+        )
+        
+        return FlextResult.ok(user)
+```
+
+### Command/Query Handlers (CQRS)
+
+#### Commands
+```python
+@dataclass
+class CreateUserCommand:
+    \"\"\"Command to create a new user.\"\"\"
+    dn: str
+    uid: str
+    cn: str
+    sn: str
+    mail: Optional[str] = None
+
+class CreateUserHandler:
+    \"\"\"Handler for user creation command.\"\"\"
+    
+    def __init__(self, ldap_service: FlextLdapService):
+        self._ldap_service = ldap_service
+    
+    async def handle(self, command: CreateUserCommand) -> FlextResult[FlextLdapUser]:
+        return await self._ldap_service.create_user(command)
+```
+
+#### Queries
+```python
+@dataclass
+class FindUserByUidQuery:
+    \"\"\"Query to find user by UID.\"\"\"
+    uid: str
+
+class FindUserByUidHandler:
+    \"\"\"Handler for user lookup query.\"\"\"
+    
+    def __init__(self, user_repository: FlextLdapUserRepository):
+        self._user_repository = user_repository
+    
+    async def handle(self, query: FindUserByUidQuery) -> FlextResult[FlextLdapUser]:
+        return await self._user_repository.get_by_uid(query.uid)
+```
+
+---
+
+## 🔌 Infrastructure Layer
+
+### Repository Implementation
+
+```python
+class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
+    \"\"\"Infrastructure implementation of user repository.\"\"\"
+    
+    def __init__(self, ldap_client: FlextLdapClient):
+        self._ldap_client = ldap_client
+    
+    async def save(self, user: FlextLdapUser) -> FlextResult[FlextLdapUser]:
+        \"\"\"Save user to LDAP directory.\"\"\"
+        try:
+            # Convert domain entity to LDAP entry
+            entry_data = self._to_ldap_entry(user)
+            
+            # Use infrastructure client
+            result = await self._ldap_client.add_entry(
+                dn=user.dn,
+                attributes=entry_data
+            )
+            
+            if result.is_success:
+                return FlextResult.ok(user)
+            else:
+                return FlextResult.fail(f\"Failed to save user: {result.error}\")
+                
+        except Exception as e:
+            return FlextResult.fail(f\"Infrastructure error: {str(e)}\")
+    
+    def _to_ldap_entry(self, user: FlextLdapUser) -> Dict[str, Any]:
+        \"\"\"Convert domain entity to LDAP entry format.\"\"\"
+        return {
+            \"objectClass\": [\"person\", \"organizationalPerson\", \"inetOrgPerson\"],
+            \"uid\": user.uid,
+            \"cn\": user.cn,
+            \"sn\": user.sn,
+            \"mail\": user.mail
+        }
+```
+
+### LDAP Client Implementation
+
+```python
+class FlextLdapClient:
+    \"\"\"Infrastructure LDAP client using ldap3.\"\"\"
+    
+    def __init__(self, connection_config: FlextLdapConnectionConfig):
+        self._config = connection_config
+        self._connection: Optional[Connection] = None
+    
+    async def connect(self) -> FlextResult[str]:
+        \"\"\"Establish LDAP connection.\"\"\"
+        try:
+            server = Server(
+                self._config.server_url,
+                port=self._config.port,
+                use_ssl=self._config.use_ssl
+            )
+            
+            self._connection = Connection(
+                server,
+                user=self._config.bind_dn,
+                password=self._config.bind_password.get_secret_value(),
+                auto_bind=AUTO_BIND_NONE
+            )
+            
+            if self._connection.bind():
+                connection_id = str(uuid4())
+                return FlextResult.ok(connection_id)
+            else:
+                return FlextResult.fail(\"LDAP bind failed\")
+                
+        except LDAPException as e:
+            return FlextResult.fail(f\"LDAP connection error: {str(e)}\")
+```
+
+---
+
+## 🎨 Design Patterns
+
+### Repository Pattern
+- **Interface**: Abstract repository definitions in domain layer
+- **Implementation**: Concrete implementations in infrastructure layer
+- **Benefits**: Testability, flexibility, separation of concerns
+
+### Factory Pattern
+```python
+class FlextLdapUserFactory:
+    \"\"\"Factory for creating user entities with validation.\"\"\"
+    
+    @staticmethod
+    def create_from_ldap_entry(entry: Dict[str, Any]) -> FlextResult[FlextLdapUser]:
+        \"\"\"Create user entity from LDAP entry data.\"\"\"
+        try:
+            user = FlextLdapUser(
+                id=str(uuid4()),
+                dn=entry.get(\"dn\", \"\"),
+                uid=entry.get(\"uid\", [\"\"])[0],
+                cn=entry.get(\"cn\", [\"\"])[0],
+                sn=entry.get(\"sn\", [\"\"])[0],
+                mail=entry.get(\"mail\", [None])[0]
+            )
+            
+            if user.is_valid():
+                return FlextResult.ok(user)
+            else:
+                return FlextResult.fail(\"Invalid user data from LDAP entry\")
+                
+        except Exception as e:
+            return FlextResult.fail(f\"Factory error: {str(e)}\")
+```
+
+### Service Pattern
+- **Domain Services**: Complex business logic that doesn't fit in entities
+- **Application Services**: Orchestrate use cases and coordinate domain objects
+- **Infrastructure Services**: Handle external system integration
+
+---
+
+## 🔗 FLEXT-Core Integration
+
+### FlextResult Pattern
+All operations return `FlextResult<T>` for type-safe error handling:
+
+```python
+# Success case
+result = FlextResult.ok(user)
+if result.is_success:
+    user = result.data  # Type: FlextLdapUser
+
+# Failure case  
+result = FlextResult.fail(\"User not found\")
+if result.is_failure:
+    error = result.error  # Type: str
+```
+
+### Dependency Injection
+Uses FlextContainer for service orchestration:
+
+```python
+# Container configuration
+container = get_flext_container()
+container.register(FlextLdapUserRepository, FlextLdapUserRepositoryImpl)
+container.register(FlextLdapUserValidator, FlextLdapUserValidator)
+
+# Service resolution
+user_service = container.resolve(FlextLdapService)
+```
+
+### Configuration Management
+Centralized configuration via FlextLDAPConfig:
+
+```python
+# Configuration class
+@dataclass
+class FlextLdapSettings(FlextBaseSettings):
+    \"\"\"LDAP configuration with validation.\"\"\"
+    server_url: str
+    port: int = 389
+    use_ssl: bool = False
+    bind_dn: str
+    bind_password: SecretStr
+    
+    class Config:
+        env_prefix = \"FLEXT_LDAP_\"
+```
+
+---
+
+## 📊 Quality Attributes
+
+### Performance
+- **Async Operations**: Non-blocking I/O with asyncio
+- **Connection Pooling**: Efficient LDAP connection management
+- **Caching**: Strategic caching of frequently accessed data
+- **Lazy Loading**: Load data only when needed
+
+### Scalability
+- **Stateless Design**: No server-side state for horizontal scaling
+- **Resource Management**: Proper connection and memory management
+- **Load Distribution**: Support for multiple LDAP servers
+
+### Reliability
+- **Error Handling**: Comprehensive error handling with FlextResult
+- **Retry Logic**: Automatic retry for transient failures
+- **Circuit Breaker**: Prevent cascade failures
+- **Health Checks**: Built-in health monitoring
+
+### Security
+- **Secure Connections**: TLS/SSL support for LDAP connections
+- **Credential Management**: Secure handling of authentication credentials
+- **Input Validation**: Comprehensive input validation and sanitization
+- **Audit Logging**: Security event logging and monitoring
+
+---
+
+## 🔄 Event-Driven Architecture
+
+### Domain Events
+```python
+@dataclass
+class UserCreatedEvent:
+    \"\"\"Domain event for user creation.\"\"\"
+    user_id: str
+    dn: str
+    timestamp: datetime
+    
+@dataclass
+class UserModifiedEvent:
+    \"\"\"Domain event for user modification.\"\"\"
+    user_id: str
+    dn: str
+    changes: Dict[str, Any]
+    timestamp: datetime
+```
+
+### Event Handlers
+```python
+class UserCreatedHandler:
+    \"\"\"Handle user creation events.\"\"\"
+    
+    async def handle(self, event: UserCreatedEvent) -> None:
+        # Send notification
+        # Update audit log
+        # Trigger downstream processes
+        pass
+```
+
+---
+
+## 📈 Future Architecture Evolution
+
+### Planned Enhancements
+1. **Event Sourcing**: Complete event sourcing for audit and replay
+2. **CQRS Optimization**: Separate read/write models for performance
+3. **Microservices**: Break into smaller, focused services
+4. **GraphQL**: Add GraphQL layer for flexible querying
+5. **Real-time**: WebSocket support for real-time updates
+
+### Migration Strategy
+- **Incremental**: Gradual migration maintaining backward compatibility
+- **Feature Flags**: Use feature flags for safe rollout
+- **Parallel Systems**: Run old and new systems in parallel during transition
+- **Data Migration**: Automated data migration with validation
+
+---
+
+*This architecture documentation is part of the FLEXT-LDAP project and follows FLEXT Framework architectural standards.*

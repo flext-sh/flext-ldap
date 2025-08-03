@@ -5,10 +5,6 @@ Tests all application services with flext-core integration.
 
 from uuid import uuid4
 
-# Constants
-EXPECTED_BULK_SIZE = 2
-EXPECTED_DATA_COUNT = 3
-
 import pytest
 from flext_ldap.entities import (
     FlextLdapGroup,
@@ -23,17 +19,21 @@ from flext_ldap.services import (
 )
 from flext_ldap.values import FlextLdapCreateUserRequest
 
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_DATA_COUNT = 3
+
 
 class TestFlextLdapUserApplicationService:
     """Test user application service."""
 
     @pytest.fixture
-    def user_service(self):
+    def user_service(self) -> FlextLdapUserApplicationService:
         """Create user service for testing."""
         return FlextLdapUserApplicationService()
 
     @pytest.fixture
-    def sample_user_request(self):
+    def sample_user_request(self) -> FlextLdapCreateUserRequest:
         """Create sample user request."""
         return FlextLdapCreateUserRequest(
             dn="cn=john.doe,ou=users,dc=example,dc=com",
@@ -44,9 +44,13 @@ class TestFlextLdapUserApplicationService:
         )
 
     @pytest.mark.asyncio
-    async def test_create_user(self, user_service, sample_user_request) -> None:
+    async def test_create_user(
+        self,
+        user_service: FlextLdapUserApplicationService,
+        sample_user_request: FlextLdapCreateUserRequest,
+    ) -> None:
         """Test user creation."""
-        result = await user_service.create_user(sample_user_request)
+        result = user_service.create_user(sample_user_request)
 
         assert result.is_success
         assert isinstance(result.data, FlextLdapUser)
@@ -56,16 +60,20 @@ class TestFlextLdapUserApplicationService:
         assert result.data.cn == "John Doe"
 
     @pytest.mark.asyncio
-    async def test_get_user(self, user_service, sample_user_request) -> None:
+    async def test_get_user(
+        self,
+        user_service: FlextLdapUserApplicationService,
+        sample_user_request: FlextLdapCreateUserRequest,
+    ) -> None:
         """Test user retrieval."""
         # Create user first
-        create_result = await user_service.create_user(sample_user_request)
+        create_result = user_service.create_user(sample_user_request)
         assert create_result.is_success
 
         user_id = create_result.data.id
 
         # Retrieve user
-        get_result = await user_service.get_user(user_id)
+        get_result = user_service.get_user(user_id)
         assert get_result.is_success
         assert get_result.data is not None
         if get_result.data.uid != "john.doe":
@@ -73,14 +81,18 @@ class TestFlextLdapUserApplicationService:
             raise AssertionError(msg)
 
     @pytest.mark.asyncio
-    async def test_find_user_by_dn(self, user_service, sample_user_request) -> None:
+    async def test_find_user_by_dn(
+        self,
+        user_service: FlextLdapUserApplicationService,
+        sample_user_request: FlextLdapCreateUserRequest,
+    ) -> None:
         """Test finding user by DN."""
         # Create user first
-        create_result = await user_service.create_user(sample_user_request)
+        create_result = user_service.create_user(sample_user_request)
         assert create_result.is_success
 
         # Find by DN
-        find_result = await user_service.find_user_by_dn(sample_user_request.dn)
+        find_result = user_service.find_user_by_dn(sample_user_request.dn)
         assert find_result.is_success
         assert find_result.data is not None
         if find_result.data.dn != sample_user_request.dn:
@@ -88,14 +100,18 @@ class TestFlextLdapUserApplicationService:
             raise AssertionError(msg)
 
     @pytest.mark.asyncio
-    async def test_find_user_by_uid(self, user_service, sample_user_request) -> None:
+    async def test_find_user_by_uid(
+        self,
+        user_service: FlextLdapUserApplicationService,
+        sample_user_request: FlextLdapCreateUserRequest,
+    ) -> None:
         """Test finding user by UID."""
         # Create user first
-        create_result = await user_service.create_user(sample_user_request)
+        create_result = user_service.create_user(sample_user_request)
         assert create_result.is_success
 
         # Find by UID
-        find_result = await user_service.find_user_by_uid(sample_user_request.uid)
+        find_result = user_service.find_user_by_uid(sample_user_request.uid)
         assert find_result.is_success
         assert find_result.data is not None
         if find_result.data.uid != sample_user_request.uid:
@@ -103,17 +119,21 @@ class TestFlextLdapUserApplicationService:
             raise AssertionError(msg)
 
     @pytest.mark.asyncio
-    async def test_update_user(self, user_service, sample_user_request) -> None:
+    async def test_update_user(
+        self,
+        user_service: FlextLdapUserApplicationService,
+        sample_user_request: FlextLdapCreateUserRequest,
+    ) -> None:
         """Test user update."""
         # Create user first
-        create_result = await user_service.create_user(sample_user_request)
+        create_result = user_service.create_user(sample_user_request)
         assert create_result.is_success
 
         user_id = create_result.data.id
 
         # Update user
         updates = {"phone": "+1-555-0123", "title": "Senior Developer"}
-        update_result = await user_service.update_user(user_id, updates)
+        update_result = user_service.update_user(user_id, updates)
 
         assert update_result.is_success
         if update_result.data.phone != "+1-555-0123":
@@ -122,47 +142,57 @@ class TestFlextLdapUserApplicationService:
         assert update_result.data.title == "Senior Developer"
 
     @pytest.mark.asyncio
-    async def test_lock_unlock_user(self, user_service, sample_user_request) -> None:
+    async def test_lock_unlock_user(
+        self,
+        user_service: FlextLdapUserApplicationService,
+        sample_user_request: FlextLdapCreateUserRequest,
+    ) -> None:
         """Test user account locking/unlocking."""
         # Create user first
-        create_result = await user_service.create_user(sample_user_request)
+        create_result = user_service.create_user(sample_user_request)
         assert create_result.is_success
 
         user_id = create_result.data.id
 
         # Lock user
-        lock_result = await user_service.lock_user(user_id)
+        lock_result = user_service.lock_user(user_id)
         assert lock_result.is_success
         assert not lock_result.data.is_active()
 
         # Unlock user
-        unlock_result = await user_service.unlock_user(user_id)
+        unlock_result = user_service.unlock_user(user_id)
         assert unlock_result.is_success
         assert unlock_result.data.is_active()
 
     @pytest.mark.asyncio
-    async def test_delete_user(self, user_service, sample_user_request) -> None:
+    async def test_delete_user(
+        self,
+        user_service: FlextLdapUserApplicationService,
+        sample_user_request: FlextLdapCreateUserRequest,
+    ) -> None:
         """Test user deletion."""
         # Create user first
-        create_result = await user_service.create_user(sample_user_request)
+        create_result = user_service.create_user(sample_user_request)
         assert create_result.is_success
 
         user_id = create_result.data.id
 
         # Delete user
-        delete_result = await user_service.delete_user(user_id)
+        delete_result = user_service.delete_user(user_id)
         assert delete_result.is_success
         if not (delete_result.data):
             msg = f"Expected True, got {delete_result.data}"
             raise AssertionError(msg)
 
         # Verify deletion
-        get_result = await user_service.get_user(user_id)
+        get_result = user_service.get_user(user_id)
         assert get_result.is_success
         assert get_result.data is None
 
     @pytest.mark.asyncio
-    async def test_list_users(self, user_service) -> None:
+    async def test_list_users(
+        self, user_service: FlextLdapUserApplicationService
+    ) -> None:
         """Test user listing."""
         # Create multiple users
         for i in range(3):
@@ -173,17 +203,17 @@ class TestFlextLdapUserApplicationService:
                 sn="Test",
                 ou="Engineering",
             )
-            await user_service.create_user(request)
+            user_service.create_user(request)
 
         # List all users
-        list_result = await user_service.list_users()
+        list_result = user_service.list_users()
         assert list_result.is_success
         if len(list_result.data) != EXPECTED_DATA_COUNT:
             msg = f"Expected {3}, got {len(list_result.data)}"
             raise AssertionError(msg)
 
         # List users by OU
-        ou_result = await user_service.list_users(ou="Engineering")
+        ou_result = user_service.list_users(ou="Engineering")
         assert ou_result.is_success
         if len(ou_result.data) != EXPECTED_DATA_COUNT:
             msg = f"Expected {3}, got {len(ou_result.data)}"
@@ -194,14 +224,14 @@ class TestFlextLdapGroupService:
     """Test group service."""
 
     @pytest.fixture
-    def group_service(self):
+    def group_service(self) -> FlextLdapGroupService:
         """Create group service for testing."""
         return FlextLdapGroupService()
 
     @pytest.mark.asyncio
-    async def test_create_group(self, group_service) -> None:
+    async def test_create_group(self, group_service: FlextLdapGroupService) -> None:
         """Test group creation."""
-        result = await group_service.create_group(
+        result = group_service.create_group(
             dn="cn=developers,ou=groups,dc=example,dc=com",
             cn="Developers",
             ou="Engineering",
@@ -216,10 +246,12 @@ class TestFlextLdapGroupService:
         assert len(result.data.members) == 1
 
     @pytest.mark.asyncio
-    async def test_group_member_management(self, group_service) -> None:
+    async def test_group_member_management(
+        self, group_service: FlextLdapGroupService
+    ) -> None:
         """Test group member operations."""
         # Create group
-        create_result = await group_service.create_group(
+        create_result = group_service.create_group(
             dn="cn=test,ou=groups,dc=example,dc=com",
             cn="Test Group",
         )
@@ -228,7 +260,7 @@ class TestFlextLdapGroupService:
         group_id = create_result.data.id
 
         # Add member
-        add_result = await group_service.add_member(
+        add_result = group_service.add_member(
             group_id,
             "cn=user1,ou=users,dc=example,dc=com",
         )
@@ -236,7 +268,7 @@ class TestFlextLdapGroupService:
         assert add_result.data.has_member("cn=user1,ou=users,dc=example,dc=com")
 
         # Remove member
-        remove_result = await group_service.remove_member(
+        remove_result = group_service.remove_member(
             group_id,
             "cn=user1,ou=users,dc=example,dc=com",
         )
@@ -244,16 +276,16 @@ class TestFlextLdapGroupService:
         assert not remove_result.data.has_member("cn=user1,ou=users,dc=example,dc=com")
 
     @pytest.mark.asyncio
-    async def test_find_group_by_dn(self, group_service) -> None:
+    async def test_find_group_by_dn(self, group_service: FlextLdapGroupService) -> None:
         """Test finding group by DN."""
         dn = "cn=test,ou=groups,dc=example,dc=com"
 
         # Create group
-        create_result = await group_service.create_group(dn=dn, cn="Test")
+        create_result = group_service.create_group(dn=dn, cn="Test")
         assert create_result.is_success
 
         # Find by DN
-        find_result = await group_service.find_group_by_dn(dn)
+        find_result = group_service.find_group_by_dn(dn)
         assert find_result.is_success
         assert find_result.data is not None
         if find_result.data.dn != dn:
@@ -265,14 +297,16 @@ class TestFlextLdapConnectionApplicationService:
     """Test connection application service."""
 
     @pytest.fixture
-    def connection_service(self):
+    def connection_service(self) -> FlextLdapConnectionApplicationService:
         """Create connection service for testing."""
         return FlextLdapConnectionApplicationService()
 
     @pytest.mark.asyncio
-    async def test_create_connection(self, connection_service) -> None:
+    async def test_create_connection(
+        self, connection_service: FlextLdapConnectionApplicationService
+    ) -> None:
         """Test connection creation."""
-        result = await connection_service.create_connection(
+        result = connection_service.create_connection(
             server_uri="ldap://test.example.com:389",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             password="secret",
@@ -284,13 +318,15 @@ class TestFlextLdapConnectionApplicationService:
         assert result is not None
 
     @pytest.mark.asyncio
-    async def test_connection_operations(self, connection_service) -> None:
+    async def test_connection_operations(
+        self, connection_service: FlextLdapConnectionApplicationService
+    ) -> None:
         """Test connection operations."""
         # Test basic connection service functionality
         # In real scenario, we'd have proper LDAP server setup
 
         # Test connection listing
-        list_result = await connection_service.list_connections()
+        list_result = connection_service.list_connections()
         assert list_result.is_success
         assert isinstance(list_result.data, list)
 
@@ -299,11 +335,13 @@ class TestFlextLdapOperationService:
     """Test operation service."""
 
     @pytest.fixture
-    def operation_service(self):
+    def operation_service(self) -> FlextLdapOperationService:
         """Create operation service for testing."""
         return FlextLdapOperationService()
 
-    def test_create_operation(self, operation_service) -> None:
+    def test_create_operation(
+        self, operation_service: FlextLdapOperationService
+    ) -> None:
         """Test operation creation."""
         connection_id = str(uuid4())
 
@@ -323,12 +361,14 @@ class TestFlextLdapOperationService:
         assert result.data.target_dn == "ou=users,dc=example,dc=com"
 
     @pytest.mark.asyncio
-    async def test_complete_operation(self, operation_service) -> None:
+    async def test_complete_operation(
+        self, operation_service: FlextLdapOperationService
+    ) -> None:
         """Test operation completion."""
         connection_id = str(uuid4())
 
         # Create operation
-        create_result = await operation_service.create_operation(
+        create_result = operation_service.create_operation(
             operation_type="search",
             target_dn="ou=users,dc=example,dc=com",
             connection_id=connection_id,
@@ -338,7 +378,7 @@ class TestFlextLdapOperationService:
         operation_id = create_result.data.id
 
         # Complete operation
-        complete_result = await operation_service.complete_operation(
+        complete_result = operation_service.complete_operation(
             operation_id,
             success=True,
             result_count=5,
@@ -354,29 +394,29 @@ class TestFlextLdapOperationService:
         assert complete_result.data.is_completed()
 
     @pytest.mark.asyncio
-    async def test_list_operations(self, operation_service) -> None:
+    async def test_list_operations(
+        self, operation_service: FlextLdapOperationService
+    ) -> None:
         """Test operation listing."""
         connection_id = str(uuid4())
 
         # Create multiple operations
         for i in range(3):
-            await operation_service.create_operation(
+            operation_service.create_operation(
                 operation_type="search",
                 target_dn=f"ou=users{i},dc=example,dc=com",
                 connection_id=connection_id,
             )
 
         # List all operations
-        list_result = await operation_service.list_operations()
+        list_result = operation_service.list_operations()
         assert list_result.is_success
         if len(list_result.data) != EXPECTED_DATA_COUNT:
             msg = f"Expected {3}, got {len(list_result.data)}"
             raise AssertionError(msg)
 
         # List operations by connection
-        conn_result = await operation_service.list_operations(
-            connection_id=connection_id
-        )
+        conn_result = operation_service.list_operations(connection_id=connection_id)
         assert conn_result.is_success
         if len(conn_result.data) != EXPECTED_DATA_COUNT:
             msg = f"Expected {3}, got {len(conn_result.data)}"
@@ -399,7 +439,7 @@ class TestServiceIntegration:
             sn="User",
         )
 
-        result = await user_service.create_user(request)
+        result = user_service.create_user(request)
 
         # Should use FlextResult pattern
         assert hasattr(result, "is_success")
@@ -433,7 +473,7 @@ class TestServiceIntegration:
         invalid_request.cn = "Test"
         invalid_request.sn = "User"
 
-        result = await user_service.create_user(invalid_request)
+        result = user_service.create_user(invalid_request)
 
         # Should handle errors gracefully with FlextResult
         assert not result.is_success
@@ -452,18 +492,18 @@ class TestServiceIntegration:
             cn="Test User",
             sn="User",
         )
-        user_result = await user_service.create_user(user_request)
+        user_result = user_service.create_user(user_request)
         assert user_result.is_success
 
         # Create group
-        group_result = await group_service.create_group(
+        group_result = group_service.create_group(
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="Test Group",
         )
         assert group_result.is_success
 
         # Add user to group
-        add_result = await group_service.add_member(
+        add_result = group_service.add_member(
             group_result.data.id,
             user_result.data.dn,
         )
@@ -490,12 +530,12 @@ class TestServiceIntegrationComplete:
                 cn=f"User {i}",
                 sn="Test",
             )
-            result = await user_service.create_user(request)
+            result = user_service.create_user(request)
             assert result.is_success
             users.append(result.data)
 
         # 2. Create group
-        group_result = await group_service.create_group(
+        group_result = group_service.create_group(
             dn="cn=team,ou=groups,dc=example,dc=com",
             cn="Team",
         )
@@ -503,14 +543,14 @@ class TestServiceIntegrationComplete:
 
         # 3. Add users to group
         for user in users:
-            add_result = await group_service.add_member(
+            add_result = group_service.add_member(
                 group_result.data.id,
                 user.dn,
             )
             assert add_result.is_success
 
         # 4. Verify group membership
-        final_group = await group_service.get_group(group_result.data.id)
+        final_group = group_service.get_group(group_result.data.id)
         assert final_group.is_success
         if len(final_group.data.members) != EXPECTED_BULK_SIZE:
             msg = f"Expected {2}, got {len(final_group.data.members)}"
@@ -525,7 +565,7 @@ class TestServiceIntegrationComplete:
         # Create and track multiple operations
         operations = []
         for i in range(3):
-            create_result = await operation_service.create_operation(
+            create_result = operation_service.create_operation(
                 operation_type="search",
                 target_dn=f"ou=dept{i},dc=example,dc=com",
                 connection_id=connection_id,
@@ -535,7 +575,7 @@ class TestServiceIntegrationComplete:
 
         # Complete operations
         for i, operation in enumerate(operations):
-            complete_result = await operation_service.complete_operation(
+            complete_result = operation_service.complete_operation(
                 operation.id,
                 success=True,
                 result_count=i + 1,
@@ -543,9 +583,7 @@ class TestServiceIntegrationComplete:
             assert complete_result.is_success
 
         # Verify operation history
-        list_result = await operation_service.list_operations(
-            connection_id=connection_id
-        )
+        list_result = operation_service.list_operations(connection_id=connection_id)
         assert list_result.is_success
         if len(list_result.data) != EXPECTED_DATA_COUNT:
             msg = f"Expected {3}, got {len(list_result.data)}"

@@ -1,14 +1,32 @@
-"""Enterprise-grade tests for FlextLdap domain entities.
+"""FLEXT-LDAP Domain Entity Tests - Comprehensive Entity Validation.
 
-Tests all domain entities without mockups or fake data.
+Enterprise-grade test suite for FLEXT-LDAP domain entities, validating
+business rules, domain operations, and entity lifecycle management.
+
+This test module ensures domain entities maintain data integrity, enforce
+business constraints, and provide reliable domain operations following
+Clean Architecture and Domain-Driven Design principles.
+
+Test Coverage:
+    - Entity creation and initialization
+    - Domain rule validation and constraint enforcement
+    - Business operation correctness
+    - Entity lifecycle state transitions
+    - Attribute management and manipulation
+    - Immutability and version control
+
+Architecture:
+    Tests are organized by entity type with comprehensive coverage of:
+    - Happy path scenarios with valid data
+    - Edge cases and boundary conditions
+    - Error conditions and constraint violations
+    - Domain-specific business rule validation
+
+Author: FLEXT Development Team
 """
 
 from uuid import uuid4
 
-# Constants
-EXPECTED_BULK_SIZE = 2
-
-import pytest
 from flext_ldap.entities import (
     FlextLdapConnection,
     FlextLdapEntityStatus,
@@ -18,12 +36,27 @@ from flext_ldap.entities import (
     FlextLdapUser,
 )
 
+# Constants
+EXPECTED_BULK_SIZE = 2
+
 
 class TestFlextLdapEntry:
-    """Test base LDAP entry entity."""
+    """Test suite for FlextLdapEntry domain entity.
+
+    Comprehensive testing of the base LDAP entry entity covering domain
+    rule validation, attribute management, object class operations,
+    and entity lifecycle management.
+
+    Tests ensure the entity maintains LDAP protocol compliance,
+    enforces business constraints, and provides reliable domain operations.
+    """
 
     def test_entry_creation(self) -> None:
-        """Test entry creation with required fields."""
+        """Test successful LDAP entry creation with valid required fields.
+
+        Validates that FlextLdapEntry can be created with minimum required
+        attributes and initializes with correct default values and status.
+        """
         entry = FlextLdapEntry(
             id=str(uuid4()),
             dn="cn=test,dc=example,dc=com",
@@ -41,7 +74,11 @@ class TestFlextLdapEntry:
         assert entry.is_active()
 
     def test_entry_domain_validation(self) -> None:
-        """Test domain rule validation."""
+        """Test domain rule validation for LDAP entry constraints.
+
+        Validates that domain rule validation correctly identifies and
+        reports constraint violations for missing required fields.
+        """
         # Test domain validation with empty DN
         entry = FlextLdapEntry(
             id=str(uuid4()),

@@ -53,9 +53,9 @@ class TestFlextLdapRepository:
 
         class ValidatingUser:
             def __init__(
-                self, id: str, *, should_fail: bool = ValidationConfig.SHOULD_PASS
+                self, user_id: str, *, should_fail: bool = ValidationConfig.SHOULD_PASS
             ) -> None:
-                self.id = id
+                self.id = user_id
                 self.should_fail = should_fail
 
             def validate_domain_rules(self) -> None:
@@ -89,8 +89,8 @@ class TestFlextLdapRepository:
     def test_find_by_id_not_exists(self, repository: FlextLdapRepository) -> None:
         """Test finding non-existing entity by ID."""
         result = repository.find_by_id("nonexistent")
-        assert result.is_success
-        assert result.data is None
+        assert not result.is_success
+        assert "not found" in result.error.lower()
 
     def test_delete_exists(
         self, repository: FlextLdapRepository, sample_user: FlextLdapUser
@@ -115,7 +115,7 @@ class TestFlextLdapRepository:
         """Test finding entities matching conditions."""
         repository.save(sample_user)
 
-        results = await repository.find_where(uid="testuser")
+        results = await repository.find_where_async(uid="testuser")
         assert len(results) == 1
         assert results[0] == sample_user
 
@@ -126,7 +126,7 @@ class TestFlextLdapRepository:
         """Test finding entities with no matches."""
         repository.save(sample_user)
 
-        results = await repository.find_where(uid="nonexistent")
+        results = await repository.find_where_async(uid="nonexistent")
         assert len(results) == 0
 
     @pytest.mark.asyncio
@@ -136,12 +136,12 @@ class TestFlextLdapRepository:
         """Test finding entities with multiple conditions."""
         repository.save(sample_user)
 
-        results = repository.find_where(uid="testuser", cn="Test User")
+        results = await repository.find_where_async(uid="testuser", cn="Test User")
         assert len(results) == 1
         assert results[0] == sample_user
 
         # Should not match if one condition fails
-        results = repository.find_where(uid="testuser", cn="Wrong Name")
+        results = await repository.find_where_async(uid="testuser", cn="Wrong Name")
         assert len(results) == 0
 
     @pytest.mark.asyncio
@@ -151,7 +151,9 @@ class TestFlextLdapRepository:
         """Test finding entities by single attribute."""
         repository.save(sample_user)
 
-        results = await repository.find_by_attribute("mail", "testuser@example.com")
+        results = await repository.find_by_attribute_async(
+            "mail", "testuser@example.com"
+        )
         assert len(results) == 1
         assert results[0] == sample_user
 
@@ -290,5 +292,5 @@ class TestFlextLdapRepository:
 
         # Verify deleted user is not found
         result = repository.find_by_id(users[1].id)
-        assert result.is_success
-        assert result.data is None
+        assert not result.is_success
+        assert "not found" in result.error.lower()

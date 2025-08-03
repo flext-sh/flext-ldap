@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 import time
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import docker
 import pytest
@@ -95,6 +95,10 @@ class OpenLDAPContainerManager:
 
         self.container = None
 
+    def _raise_container_error(self, msg: str) -> None:
+        """Raise container error with message."""
+        raise RuntimeError(msg)
+
     def _wait_for_container_ready(self, timeout: int = 30) -> None:
         """Wait for OpenLDAP container to be ready to accept connections."""
         if not self.container:
@@ -108,7 +112,7 @@ class OpenLDAPContainerManager:
                 self.container.reload()
                 if self.container.status != "running":
                     msg = f"Container failed to start: {self.container.status}"
-                    raise RuntimeError(msg)
+                    self._raise_container_error(msg)
 
                 # Try to connect to LDAP port
                 exec_result = self.container.exec_run(
@@ -175,7 +179,7 @@ def docker_openldap_container() -> Container:
     This fixture starts an OpenLDAP container at the beginning of the test session
     and stops it at the end. The container is shared across all tests.
     """
-    global _container_manager
+    global _container_manager  # noqa: PLW0603
 
     if _container_manager is None:
         _container_manager = OpenLDAPContainerManager()
@@ -233,7 +237,9 @@ async def _cleanup_ldap_entries_under_dn(
 
 
 @pytest.fixture
-async def clean_ldap_container(ldap_test_config: dict[str, object]) -> dict[str, object]:
+async def clean_ldap_container(
+    ldap_test_config: dict[str, object],
+) -> dict[str, object]:
     """Provides a clean LDAP container by removing test entries.
 
     This fixture ensures each test starts with a clean LDAP directory
@@ -270,7 +276,7 @@ async def clean_ldap_container(ldap_test_config: dict[str, object]) -> dict[str,
 
 @asynccontextmanager
 async def temporary_ldap_entry(
-    client: Any,
+    client: object,
     connection_id: str,
     dn: str,
     attributes: dict[str, list[str]],
@@ -287,10 +293,10 @@ async def temporary_ldap_entry(
 
     finally:
         # Auto-cleanup
-        try:
+        import contextlib
+
+        with contextlib.suppress(RuntimeError, ValueError, TypeError):
             await client.delete_entry(connection_id, dn)
-        except (RuntimeError, ValueError, TypeError):
-            pass  # Ignore cleanup errors
 
 
 # Mark integration tests

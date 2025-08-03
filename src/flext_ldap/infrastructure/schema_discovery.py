@@ -14,7 +14,7 @@ import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypedDict
 from uuid import UUID, uuid4
 
 if TYPE_CHECKING:
@@ -24,11 +24,21 @@ from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from uuid import UUID
 
-    from flext_ldap.entities import FlextLdapConnection, FlextLdapSchema
+    from flext_ldap.entities import FlextLdapConnection
 
 logger = get_logger(__name__)
+
+
+class ValidationResult(TypedDict):
+    """Type-safe validation result structure."""
+
+    is_valid: bool
+    errors: list[str]
+    warnings: list[str]
+    missing_required: list[str]
+    unknown_attributes: list[str]
+    schema_violations: list[str]
 
 
 class FlextLdapSchemaDiscoveryConstants:
@@ -112,32 +122,98 @@ class FlextLdapSchemaAttribute:
         self.extensions = data.extensions or {}
 
     @classmethod
+    def _create_data_from_params(
+        cls,
+        oid: str,
+        **attribute_params: object,
+    ) -> FlextLdapSchemaAttributeData:
+        """Factory method to create type-safe FlextLdapSchemaAttributeData from parameters.
+
+        REFACTORED: Eliminates object-to-specific-type assignment issues.
+        Uses proper type validation and safe conversion.
+
+        Args:
+            oid: Object identifier (required)
+            **attribute_params: All other attribute parameters as keyword arguments
+
+        Returns:
+            Type-safe FlextLdapSchemaAttributeData instance
+
+        """
+
+        # Safe type extraction functions
+        def safe_extract_string(key: str) -> str | None:
+            value = attribute_params.get(key)
+            return str(value) if value is not None else None
+
+        def safe_extract_string_list(key: str) -> list[str] | None:
+            value = attribute_params.get(key)
+            if isinstance(value, (list, tuple)):
+                return [str(item) for item in value]
+            return None
+
+        def safe_extract_bool(key: str, default: bool) -> bool:
+            value = attribute_params.get(key, default)
+            return bool(value) if value is not None else default
+
+        def safe_extract_usage() -> FlextLdapAttributeUsage:
+            value = attribute_params.get(
+                "usage", FlextLdapAttributeUsage.USER_APPLICATIONS,
+            )
+            return (
+                value
+                if isinstance(value, FlextLdapAttributeUsage)
+                else FlextLdapAttributeUsage.USER_APPLICATIONS
+            )
+
+        def safe_extract_extensions() -> dict[str, list[str]] | None:
+            value = attribute_params.get("extensions")
+            if isinstance(value, dict):
+                return {
+                    str(k): [
+                        str(v)
+                        for v in (val if isinstance(val, (list, tuple)) else [val])
+                    ]
+                    for k, val in value.items()
+                }
+            return None
+
+        return FlextLdapSchemaAttributeData(
+            oid=oid,
+            names=safe_extract_string_list("names"),
+            description=safe_extract_string("description"),
+            syntax=safe_extract_string("syntax"),
+            equality_matching_rule=safe_extract_string("equality_matching_rule"),
+            ordering_matching_rule=safe_extract_string("ordering_matching_rule"),
+            substring_matching_rule=safe_extract_string("substring_matching_rule"),
+            usage=safe_extract_usage(),
+            is_single_value=safe_extract_bool("is_single_value", False),
+            is_collective=safe_extract_bool("is_collective", False),
+            is_no_user_modification=safe_extract_bool("is_no_user_modification", False),
+            is_obsolete=safe_extract_bool("is_obsolete", False),
+            superior=safe_extract_string("superior"),
+            extensions=safe_extract_extensions(),
+        )
+
+    @classmethod
     def create(
         cls,
         oid: str,
         **attribute_params: object,
     ) -> FlextLdapSchemaAttribute:
-        """Factory method using Parameter Object pattern - cleaner API with **kwargs."""
-        data = FlextLdapSchemaAttributeData(
-            oid=oid,
-            names=attribute_params.get("names"),
-            description=attribute_params.get("description"),
-            syntax=attribute_params.get("syntax"),
-            equality_matching_rule=attribute_params.get("equality_matching_rule"),
-            ordering_matching_rule=attribute_params.get("ordering_matching_rule"),
-            substring_matching_rule=attribute_params.get("substring_matching_rule"),
-            usage=attribute_params.get(
-                "usage", FlextLdapAttributeUsage.USER_APPLICATIONS
-            ),
-            is_single_value=attribute_params.get("is_single_value", False),
-            is_collective=attribute_params.get("is_collective", False),
-            is_no_user_modification=attribute_params.get(
-                "is_no_user_modification", False
-            ),
-            is_obsolete=attribute_params.get("is_obsolete", False),
-            superior=attribute_params.get("superior"),
-            extensions=attribute_params.get("extensions"),
-        )
+        """Factory method using type-safe Parameter Object pattern.
+
+        REFACTORED: Uses type-safe data creation method to eliminate MyPy errors.
+
+        Args:
+            oid: Object identifier (required)
+            **attribute_params: All other attribute parameters as keyword arguments
+
+        Returns:
+            Type-safe FlextLdapSchemaAttribute instance
+
+        """
+        data = cls._create_data_from_params(oid, **attribute_params)
         return cls(data)
 
     @property
@@ -203,25 +279,93 @@ class FlextLdapSchemaObjectClass:
         self.extensions = data.extensions or {}
 
     @classmethod
+    def _create_data_from_params(
+        cls,
+        oid: str,
+        **object_class_params: object,
+    ) -> FlextLdapSchemaObjectClassData:
+        """Factory method to create type-safe FlextLdapSchemaObjectClassData from parameters.
+
+        REFACTORED: Eliminates object-to-specific-type assignment issues.
+        Uses proper type validation and safe conversion.
+
+        Args:
+            oid: Object identifier (required)
+            **object_class_params: All other object class parameters as keyword arguments
+
+        Returns:
+            Type-safe FlextLdapSchemaObjectClassData instance
+
+        """
+
+        # Safe type extraction functions
+        def safe_extract_string(key: str) -> str | None:
+            value = object_class_params.get(key)
+            return str(value) if value is not None else None
+
+        def safe_extract_string_list(key: str) -> list[str] | None:
+            value = object_class_params.get(key)
+            if isinstance(value, (list, tuple)):
+                return [str(item) for item in value]
+            return None
+
+        def safe_extract_bool(key: str, default: bool) -> bool:
+            value = object_class_params.get(key, default)
+            return bool(value) if value is not None else default
+
+        def safe_extract_object_class_type() -> FlextLdapObjectClassType:
+            value = object_class_params.get(
+                "object_class_type", FlextLdapObjectClassType.STRUCTURAL,
+            )
+            return (
+                value
+                if isinstance(value, FlextLdapObjectClassType)
+                else FlextLdapObjectClassType.STRUCTURAL
+            )
+
+        def safe_extract_extensions() -> dict[str, list[str]] | None:
+            value = object_class_params.get("extensions")
+            if isinstance(value, dict):
+                return {
+                    str(k): [
+                        str(v)
+                        for v in (val if isinstance(val, (list, tuple)) else [val])
+                    ]
+                    for k, val in value.items()
+                }
+            return None
+
+        return FlextLdapSchemaObjectClassData(
+            oid=oid,
+            names=safe_extract_string_list("names"),
+            description=safe_extract_string("description"),
+            object_class_type=safe_extract_object_class_type(),
+            superior_classes=safe_extract_string_list("superior_classes"),
+            must_attributes=safe_extract_string_list("must_attributes"),
+            may_attributes=safe_extract_string_list("may_attributes"),
+            is_obsolete=safe_extract_bool("is_obsolete", False),
+            extensions=safe_extract_extensions(),
+        )
+
+    @classmethod
     def create(
         cls,
         oid: str,
         **object_class_params: object,
     ) -> FlextLdapSchemaObjectClass:
-        """Factory method using Parameter Object pattern - cleaner API with **kwargs."""
-        data = FlextLdapSchemaObjectClassData(
-            oid=oid,
-            names=object_class_params.get("names"),
-            description=object_class_params.get("description"),
-            object_class_type=object_class_params.get(
-                "object_class_type", FlextLdapObjectClassType.STRUCTURAL
-            ),
-            superior_classes=object_class_params.get("superior_classes"),
-            must_attributes=object_class_params.get("must_attributes"),
-            may_attributes=object_class_params.get("may_attributes"),
-            is_obsolete=object_class_params.get("is_obsolete", False),
-            extensions=object_class_params.get("extensions"),
-        )
+        """Factory method using type-safe Parameter Object pattern.
+
+        REFACTORED: Uses type-safe data creation method to eliminate MyPy errors.
+
+        Args:
+            oid: Object identifier (required)
+            **object_class_params: All other object class parameters as keyword arguments
+
+        Returns:
+            Type-safe FlextLdapSchemaObjectClass instance
+
+        """
+        data = cls._create_data_from_params(oid, **object_class_params)
         return cls(data)
 
     @property
@@ -302,6 +446,88 @@ class FlextLdapSchemaDiscoveryResult:
         self.discovery_warnings = data.discovery_warnings or []
         self.cache_hit = data.cache_hit
         self.discovery_duration_ms = data.discovery_duration_ms
+
+    @classmethod
+    def create(
+        cls,
+        **discovery_params: object,
+    ) -> FlextLdapSchemaDiscoveryResult:
+        """Factory method to create FlextLdapSchemaDiscoveryResult from parameters.
+
+        REFACTORED: Eliminates direct **kwargs to constructor issues.
+        Uses type-safe data creation.
+
+        Args:
+            **discovery_params: All discovery result parameters as keyword arguments
+
+        Returns:
+            Type-safe FlextLdapSchemaDiscoveryResult instance
+
+        """
+
+        # Safe type extraction functions
+        def safe_extract_uuid(key: str) -> UUID | None:
+            value = discovery_params.get(key)
+            return value if isinstance(value, UUID) else None
+
+        def safe_extract_datetime(key: str) -> datetime | None:
+            value = discovery_params.get(key)
+            return value if isinstance(value, datetime) else None
+
+        def safe_extract_dict(key: str) -> dict[str, object] | None:
+            value = discovery_params.get(key)
+            return dict(value) if isinstance(value, dict) else None
+
+        def safe_extract_nested_dict(key: str) -> dict[str, dict[str, object]] | None:
+            value = discovery_params.get(key)
+            if isinstance(value, dict):
+                # Ensure all values are dict[str, object]
+                return {
+                    str(k): dict(v) if isinstance(v, dict) else {"value": v}
+                    for k, v in value.items()
+                }
+            return None
+
+        def safe_extract_object_classes_dict(
+            key: str,
+        ) -> dict[str, FlextLdapSchemaObjectClass] | None:
+            value = discovery_params.get(key)
+            return dict(value) if isinstance(value, dict) else None
+
+        def safe_extract_attributes_dict(
+            key: str,
+        ) -> dict[str, FlextLdapSchemaAttribute] | None:
+            value = discovery_params.get(key)
+            return dict(value) if isinstance(value, dict) else None
+
+        def safe_extract_string_list(key: str) -> list[str] | None:
+            value = discovery_params.get(key)
+            if isinstance(value, (list, tuple)):
+                return [str(item) for item in value]
+            return None
+
+        def safe_extract_bool(key: str, default: bool = False) -> bool:
+            value = discovery_params.get(key, default)
+            return bool(value) if value is not None else default
+
+        def safe_extract_int(key: str, default: int = 0) -> int:
+            value = discovery_params.get(key, default)
+            return int(value) if isinstance(value, (int, float)) else default
+
+        data = FlextLdapSchemaDiscoveryData(
+            discovery_id=safe_extract_uuid("discovery_id"),
+            timestamp=safe_extract_datetime("timestamp"),
+            server_info=safe_extract_dict("server_info"),
+            object_classes=safe_extract_object_classes_dict("object_classes"),
+            attributes=safe_extract_attributes_dict("attributes"),
+            syntaxes=safe_extract_nested_dict("syntaxes"),
+            matching_rules=safe_extract_nested_dict("matching_rules"),
+            discovery_errors=safe_extract_string_list("discovery_errors"),
+            discovery_warnings=safe_extract_string_list("discovery_warnings"),
+            cache_hit=safe_extract_bool("cache_hit", False),
+            discovery_duration_ms=safe_extract_int("discovery_duration_ms", 0),
+        )
+        return cls(data)
 
     @property
     def is_successful(self) -> bool:
@@ -440,12 +666,7 @@ class FlextLdapSchemaDiscoveryService:
         class_name: str,
     ) -> FlextResult[FlextLdapSchemaObjectClass | None]:
         """Get specific object class schema."""
-        return await self._get_schema_item(
-            connection,
-            class_name,
-            lambda schema: schema.object_classes.values(),
-            "object class",
-        )
+        return await self._get_object_class_item(connection, class_name)
 
     async def get_attribute_type(
         self,
@@ -453,20 +674,71 @@ class FlextLdapSchemaDiscoveryService:
         attribute_name: str,
     ) -> FlextResult[FlextLdapSchemaAttribute | None]:
         """Get specific attribute type schema."""
-        return await self._get_schema_item(
-            connection,
-            attribute_name,
-            lambda schema: schema.attributes.values(),
-            "attribute type",
-        )
+        return await self._get_attribute_type_item(connection, attribute_name)
+
+    async def _get_object_class_item(
+        self,
+        connection: FlextLdapConnection,
+        class_name: str,
+    ) -> FlextResult[FlextLdapSchemaObjectClass | None]:
+        """Get specific object class schema item - type-safe implementation."""
+        try:
+            schema_result = await self.discover_schema(connection)
+            if not schema_result.is_success:
+                return FlextResult.fail(f"Failed to discover schema: {schema_result.error}")
+
+            schema = schema_result.data
+            if schema is None:
+                return FlextResult.fail("Schema discovery returned None")
+
+            # Type-safe access to object_classes only
+            if hasattr(schema, "object_classes"):
+                for item in schema.object_classes.values():
+                    if hasattr(item, "has_name") and item.has_name(class_name):
+                        return FlextResult.ok(item)
+
+            return FlextResult.ok(None)
+
+        except (RuntimeError, ValueError, TypeError) as e:
+            error_msg = f"Failed to get object class {class_name}: {e}"
+            logger.exception(error_msg)
+            return FlextResult.fail(error_msg)
+
+    async def _get_attribute_type_item(
+        self,
+        connection: FlextLdapConnection,
+        attribute_name: str,
+    ) -> FlextResult[FlextLdapSchemaAttribute | None]:
+        """Get specific attribute type schema item - type-safe implementation."""
+        try:
+            schema_result = await self.discover_schema(connection)
+            if not schema_result.is_success:
+                return FlextResult.fail(f"Failed to discover schema: {schema_result.error}")
+
+            schema = schema_result.data
+            if schema is None:
+                return FlextResult.fail("Schema discovery returned None")
+
+            # Type-safe access to attributes only
+            if hasattr(schema, "attributes"):
+                for item in schema.attributes.values():
+                    if hasattr(item, "has_name") and item.has_name(attribute_name):
+                        return FlextResult.ok(item)
+
+            return FlextResult.ok(None)
+
+        except (RuntimeError, ValueError, TypeError) as e:
+            error_msg = f"Failed to get attribute type {attribute_name}: {e}"
+            logger.exception(error_msg)
+            return FlextResult.fail(error_msg)
 
     async def _get_schema_item(
         self,
         connection: FlextLdapConnection,
         item_name: str,
-        collection_getter: Callable[[FlextLdapSchema], Any],
+        collection_getter: Callable[[object], Any],
         item_type: str,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[FlextLdapSchemaObjectClass | FlextLdapSchemaAttribute | None]:
         """Template method for getting schema items - eliminates code duplication."""
         try:
             schema_result = await self.discover_schema(connection)
@@ -492,22 +764,22 @@ class FlextLdapSchemaDiscoveryService:
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
-    def _create_validation_result(self) -> dict[str, object]:
+    def _create_validation_result(self) -> ValidationResult:
         """Create initial validation result structure."""
-        return {
-            "is_valid": True,
-            "errors": [],
-            "warnings": [],
-            "missing_required": [],
-            "unknown_attributes": [],
-            "schema_violations": [],
-        }
+        return ValidationResult(
+            is_valid=True,
+            errors=[],
+            warnings=[],
+            missing_required=[],
+            unknown_attributes=[],
+            schema_violations=[],
+        )
 
     def _collect_object_class_attributes(
         self,
         object_classes: list[str],
         schema: FlextLdapSchemaDiscoveryResult,
-        validation_result: dict[str, object],
+        validation_result: ValidationResult,
     ) -> tuple[set[str], set[str]]:
         """Collect must and may attributes from object classes."""
         all_must_attrs: set[str] = set()
@@ -535,7 +807,7 @@ class FlextLdapSchemaDiscoveryService:
         self,
         all_must_attrs: set[str],
         attributes: dict[str, object],
-        validation_result: dict[str, object],
+        validation_result: ValidationResult,
     ) -> None:
         """Validate that all required attributes are provided."""
         provided_attrs = {attr.lower() for attr in attributes}
@@ -549,7 +821,7 @@ class FlextLdapSchemaDiscoveryService:
         all_must_attrs: set[str],
         all_may_attrs: set[str],
         attributes: dict[str, object],
-        validation_result: dict[str, object],
+        validation_result: ValidationResult,
     ) -> None:
         """Check for unknown attributes."""
         all_known_attrs = all_must_attrs.union(all_may_attrs)
@@ -562,7 +834,7 @@ class FlextLdapSchemaDiscoveryService:
         self,
         schema: FlextLdapSchemaDiscoveryResult,
         attributes: dict[str, object],
-        validation_result: dict[str, object],
+        validation_result: ValidationResult,
     ) -> None:
         """Validate single-value attribute constraints."""
         for attr_name, attr_value in attributes.items():
@@ -579,7 +851,7 @@ class FlextLdapSchemaDiscoveryService:
                 and len(attr_value) > 1
             ):
                 validation_result["schema_violations"].append(
-                    f"Attribute {attr_name} is single-valued but multiple values"
+                    f"Attribute {attr_name} is single-valued but multiple values",
                 )
                 validation_result["is_valid"] = False
 
@@ -588,13 +860,13 @@ class FlextLdapSchemaDiscoveryService:
         connection: FlextLdapConnection,
         object_classes: list[str],
         attributes: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[ValidationResult]:
         """Validate object structure against schema."""
         try:
             schema_result = await self.discover_schema(connection)
             if not schema_result.is_success:
                 return FlextResult.fail(
-                    f"Failed to discover schema: {schema_result.error}"
+                    f"Failed to discover schema: {schema_result.error}",
                 )
 
             schema = schema_result.data
@@ -612,7 +884,9 @@ class FlextLdapSchemaDiscoveryService:
 
             # Validate required attributes
             self._validate_required_attributes(
-                all_must_attrs, attributes, validation_result
+                all_must_attrs,
+                attributes,
+                validation_result,
             )
 
             # Check for unknown attributes
@@ -625,7 +899,9 @@ class FlextLdapSchemaDiscoveryService:
 
             # Validate single-value constraints
             self._validate_single_value_constraints(
-                schema, attributes, validation_result
+                schema,
+                attributes,
+                validation_result,
             )
 
             return FlextResult.ok(validation_result)
@@ -656,7 +932,8 @@ class FlextLdapSchemaDiscoveryService:
         self,
         connection: FlextLdapConnection,
     ) -> tuple[
-        dict[str, FlextLdapSchemaObjectClass], dict[str, FlextLdapSchemaAttribute]
+        dict[str, FlextLdapSchemaObjectClass],
+        dict[str, FlextLdapSchemaAttribute],
     ]:
         """Extract schema elements from LDAP connection."""
         real_object_classes = {}
@@ -673,7 +950,9 @@ class FlextLdapSchemaDiscoveryService:
                                 oid=getattr(oc_def, "oid", f"unknown.{oc_name}"),
                                 names=[oc_name],
                                 description=getattr(
-                                    oc_def, "description", f"Schema for {oc_name}"
+                                    oc_def,
+                                    "description",
+                                    f"Schema for {oc_name}",
                                 ),
                                 object_class_type=FlextLdapObjectClassType.STRUCTURAL,
                                 superior_classes=getattr(oc_def, "superior", []),
@@ -689,14 +968,20 @@ class FlextLdapSchemaDiscoveryService:
                             oid=getattr(attr_def, "oid", f"unknown.{attr_name}"),
                             names=[attr_name],
                             description=getattr(
-                                attr_def, "description", f"Attribute {attr_name}"
+                                attr_def,
+                                "description",
+                                f"Attribute {attr_name}",
                             ),
                             syntax=getattr(
-                                attr_def, "syntax", "1.3.6.1.4.1.1466.115.121.1.15"
+                                attr_def,
+                                "syntax",
+                                "1.3.6.1.4.1.1466.115.121.1.15",
                             ),
                             equality_matching_rule=getattr(attr_def, "equality", None),
                             substring_matching_rule=getattr(
-                                attr_def, "substring", None
+                                attr_def,
+                                "substring",
+                                None,
                             ),
                         )
 
@@ -714,7 +999,7 @@ class FlextLdapSchemaDiscoveryService:
 
             # Extract schema from connection
             real_object_classes, real_attributes = self._extract_schema_from_connection(
-                connection
+                connection,
             )
 
             # Use discovered schema or fallback to standard schemas
@@ -728,7 +1013,7 @@ class FlextLdapSchemaDiscoveryService:
                 (datetime.now(UTC) - start_time).total_seconds() * 1000,
             )
 
-            return FlextLdapSchemaDiscoveryResult(
+            return FlextLdapSchemaDiscoveryResult.create(
                 server_info=server_info,
                 object_classes=real_object_classes,
                 attributes=real_attributes,
@@ -741,7 +1026,7 @@ class FlextLdapSchemaDiscoveryService:
             discovery_duration = int(
                 (datetime.now(UTC) - start_time).total_seconds() * 1000,
             )
-            return FlextLdapSchemaDiscoveryResult(
+            return FlextLdapSchemaDiscoveryResult.create(
                 server_info={"vendor": "Unknown", "version": "Unknown"},
                 object_classes=self._discover_standard_object_classes(None),
                 attributes=self._discover_standard_attributes(None),
@@ -998,7 +1283,7 @@ class FlextLdapSchemaDiscoveryService:
         """Extract object classes from schema entry - reduces nested control flow."""
         # Early return if no object classes in entry
         attributes = entry.get("attributes", {})
-        if "objectClasses" not in attributes:
+        if not isinstance(attributes, dict) or "objectClasses" not in attributes:
             return
 
         oc_definitions = attributes["objectClasses"]
@@ -1032,26 +1317,50 @@ class FlextLdapSchemaDiscoveryService:
         schema_data: list[dict[str, object]],
     ) -> dict[str, FlextLdapSchemaObjectClass]:
         """Parse object classes from server schema data."""
-        return self._parse_server_schema_items(
-            schema_data,
-            "object classes",
-            "classes_found",
-            self._extract_object_classes_from_entry,
-            self._get_standard_object_classes,
+        logger.debug(
+            "Parsing server object classes",
+            extra={"data_count": len(schema_data)},
         )
+        object_classes: dict[str, FlextLdapSchemaObjectClass] = {}
+
+        try:
+            for entry in schema_data:
+                self._extract_object_classes_from_entry(entry, object_classes)
+
+            logger.info(
+                "Parsed server object classes",
+                extra={"classes_found": len(object_classes)},
+            )
+            return object_classes
+
+        except (RuntimeError, ValueError, TypeError) as e:
+            logger.warning(f"Error parsing server object classes: {e}")
+            return self._get_standard_object_classes()
 
     def _parse_server_attributes(
         self,
         schema_data: list[dict[str, object]],
     ) -> dict[str, FlextLdapSchemaAttribute]:
         """Parse attributes from server schema data."""
-        return self._parse_server_schema_items(
-            schema_data,
-            "attributes",
-            "attributes_found",
-            self._extract_attribute_types_from_entry,
-            self._get_standard_attributes,
+        logger.debug(
+            "Parsing server attributes",
+            extra={"data_count": len(schema_data)},
         )
+        attributes: dict[str, FlextLdapSchemaAttribute] = {}
+
+        try:
+            for entry in schema_data:
+                self._extract_attribute_types_from_entry(entry, attributes)
+
+            logger.info(
+                "Parsed server attributes",
+                extra={"attributes_found": len(attributes)},
+            )
+            return attributes
+
+        except (RuntimeError, ValueError, TypeError) as e:
+            logger.warning(f"Error parsing server attributes: {e}")
+            return self._get_standard_attributes()
 
     def _parse_server_schema_items(
         self,
@@ -1094,7 +1403,7 @@ class FlextLdapSchemaDiscoveryService:
         """Extract attribute types from schema entry - reduces nested control flow."""
         # Early return if no attribute types in entry
         entry_attributes = entry.get("attributes", {})
-        if "attributeTypes" not in entry_attributes:
+        if not isinstance(entry_attributes, dict) or "attributeTypes" not in entry_attributes:
             return
 
         attr_definitions = entry_attributes["attributeTypes"]
@@ -1189,7 +1498,7 @@ class FlextLdapSchemaDiscoveryService:
                 oid=oid,
                 names=names,
                 syntax=syntax,
-                description=f"Server-discovered attribute: {names[0] if names else oid}",
+                description=f"Server-discovered: {names[0] if names else oid}",
             )
 
         except Exception as parse_error:

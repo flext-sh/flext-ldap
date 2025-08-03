@@ -6,7 +6,10 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 from urllib.parse import parse_qs, urlparse
 
 from flext_core import get_logger
@@ -146,10 +149,12 @@ def flext_ldap_build_filter(operator: str, conditions: dict[str, str]) -> str:
     ]
 
     # Filter assembly pipeline - consolidated mapping approach
-    filter_builders = {
+    filter_builders: dict[tuple[str, bool], Callable[[list[str]], str]] = {
         ("not", True): lambda f: f"(!{f[0]})",  # Single filter negation
         ("not", False): lambda f: f"(!(&{''.join(f)}))",  # Multiple filter negation
+        ("and", True): lambda f: f"(&{f[0]})",  # Single AND operation
         ("and", False): lambda f: f"(&{''.join(f)})",  # AND operation
+        ("or", True): lambda f: f"(|{f[0]})",  # Single OR operation
         ("or", False): lambda f: f"(|{''.join(f)})",  # OR operation
     }
 

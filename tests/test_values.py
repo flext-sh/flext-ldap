@@ -1,14 +1,30 @@
-"""Enterprise-grade tests for FlextLdap value objects.
+"""FLEXT-LDAP Value Object Tests - Immutable Domain Data Validation.
 
-Tests all value objects with comprehensive validation.
+Enterprise-grade test suite for FLEXT-LDAP value objects, ensuring
+immutability, validation, and domain-specific business rules are
+properly enforced across all value object implementations.
+
+This test module validates RFC compliance, data integrity, and proper
+encapsulation of domain logic within immutable value objects following
+Domain-Driven Design principles.
+
+Test Coverage:
+    - Value object creation and validation
+    - RFC compliance for LDAP-specific formats
+    - Domain rule enforcement and constraint validation
+    - Immutability and equality semantics
+    - Error handling for invalid data
+    - Business operation correctness
+
+Architecture:
+    Tests are organized by value object type with comprehensive coverage
+    of valid data scenarios, boundary conditions, and error cases to
+    ensure robust domain data handling.
+
+Author: FLEXT Development Team
 """
 
 import pytest
-from pydantic import ValidationError
-
-# Constants
-EXPECTED_BULK_SIZE = 2
-EXPECTED_DATA_COUNT = 3
 from flext_ldap.values import (
     FlextLdapAttributesValue,
     FlextLdapConnectionInfo,
@@ -20,13 +36,31 @@ from flext_ldap.values import (
     FlextLdapScopeEnum,
     FlextLdapUri,
 )
+from pydantic import ValidationError
+
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_DATA_COUNT = 3
 
 
 class TestFlextLdapDistinguishedName:
-    """Test DN value object."""
+    """Test suite for FlextLdapDistinguishedName value object.
+
+    Comprehensive testing of LDAP Distinguished Name value object
+    covering RFC 4514 format validation, hierarchical operations,
+    and domain-specific parsing and manipulation capabilities.
+
+    Tests ensure DN format compliance and reliable hierarchical
+    directory navigation operations.
+    """
 
     def test_dn_creation_valid(self) -> None:
-        """Test DN creation with valid format."""
+        """Test Distinguished Name creation with valid RFC 4514 format.
+
+        Validates that properly formatted DN strings are accepted and
+        correctly parsed into value object with expected string representation
+        and RDN extraction capabilities.
+        """
         dn = FlextLdapDistinguishedName(value="cn=john,ou=users,dc=example,dc=com")
 
         if str(dn) != "cn=john,ou=users,dc=example,dc=com":
@@ -35,15 +69,23 @@ class TestFlextLdapDistinguishedName:
         assert dn.get_rdn() == "cn=john"
 
     def test_dn_creation_invalid(self) -> None:
-        """Test DN creation with invalid format."""
-        with pytest.raises(ValueError):
+        """Test Distinguished Name validation with invalid formats.
+
+        Validates that improperly formatted DN strings are rejected with
+        appropriate error messages indicating the specific validation failure.
+        """
+        with pytest.raises(ValueError, match="attribute=value"):
             FlextLdapDistinguishedName(value="invalid-dn")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="non-empty"):
             FlextLdapDistinguishedName(value="")
 
     def test_dn_parent_operations(self) -> None:
-        """Test DN parent operations."""
+        """Test Distinguished Name hierarchical navigation operations.
+
+        Validates parent DN extraction and hierarchical relationship
+        operations for directory tree navigation and validation.
+        """
         dn = FlextLdapDistinguishedName(value="cn=john,ou=users,dc=example,dc=com")
 
         parent = dn.get_parent_dn()
@@ -102,10 +144,10 @@ class TestFlextLdapFilterValue:
 
     def test_filter_creation_invalid(self) -> None:
         """Test filter creation with invalid format."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="parentheses"):
             FlextLdapFilterValue(value="cn=john")  # Missing parentheses
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="balanced"):
             FlextLdapFilterValue(value="(cn=john")  # Unbalanced
 
     def test_filter_equals(self) -> None:
@@ -228,10 +270,10 @@ class TestFlextLdapUri:
 
     def test_uri_creation_invalid(self) -> None:
         """Test URI creation with invalid format."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="scheme"):
             FlextLdapUri(value="http://example.com")  # Wrong scheme
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="hostname"):
             FlextLdapUri(value="ldap://")  # No hostname
 
     def test_uri_port_defaults(self) -> None:
@@ -281,10 +323,10 @@ class TestFlextLdapObjectClass:
 
     def test_object_class_validation(self) -> None:
         """Test object class name validation."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="empty"):
             FlextLdapObjectClass(name="")  # Empty name
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="invalid"):
             FlextLdapObjectClass(name="invalid@class")  # Invalid characters
 
 
@@ -326,7 +368,9 @@ class TestFlextLdapAttributesValue:
         """Test attributes domain validation."""
         # Test invalid attributes - create with invalid data directly
         try:
-            invalid_attrs = FlextLdapAttributesValue(attributes={"": ["value"]})  # Empty name
+            invalid_attrs = FlextLdapAttributesValue(
+                attributes={"": ["value"]}
+            )  # Empty name
             result = invalid_attrs.validate_domain_rules()
             assert not result.is_success
             assert "attribute name" in result.error.lower()
@@ -370,7 +414,7 @@ class TestFlextLdapConnectionInfo:
         try:
             invalid_info = FlextLdapConnectionInfo(
                 server_uri=uri,
-                protocol_version=1  # Invalid
+                protocol_version=1,  # Invalid
             )
             result = invalid_info.validate_domain_rules()
             assert not result.is_success
@@ -430,7 +474,7 @@ class TestFlextLdapCreateUserRequest:
     def test_user_request_field_validation(self) -> None:
         """Test individual field validation."""
         # Test empty required fields
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="DN"):
             FlextLdapCreateUserRequest(
                 dn="",  # Empty DN
                 uid="test",
@@ -438,7 +482,7 @@ class TestFlextLdapCreateUserRequest:
                 sn="User",
             )
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="cn"):
             FlextLdapCreateUserRequest(
                 dn="cn=test,dc=example,dc=com",
                 uid="",  # Empty UID

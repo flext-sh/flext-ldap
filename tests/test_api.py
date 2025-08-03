@@ -1,6 +1,26 @@
-"""Enterprise-grade tests for FlextLdapApi - Core API functionality.
+"""FLEXT-LDAP API Tests - Comprehensive Unified API Validation.
 
-Tests the main unified API without duplication or mockups.
+Enterprise-grade test suite for FlextLdapApi, the primary interface for
+all LDAP directory operations. Tests cover connection management, session
+handling, and core LDAP operations with comprehensive error scenarios.
+
+This test module ensures the unified API maintains Clean Architecture
+principles, provides reliable error handling via FlextResult patterns,
+and integrates properly with flext-core dependency injection.
+
+Test Coverage:
+    - API instantiation and configuration
+    - Connection lifecycle management
+    - Session creation and cleanup
+    - LDAP operation execution
+    - Error handling and recovery
+    - flext-core integration validation
+
+Architecture:
+    Tests use real LDAP protocol behavior without mocking to ensure
+    authentic integration testing and reliable error condition validation.
+
+Author: FLEXT Development Team
 """
 
 from uuid import uuid4
@@ -13,15 +33,32 @@ from flext_ldap.values import FlextLdapCreateUserRequest
 
 
 class TestFlextLdapApi:
-    """Test suite for unified FlextLdapApi - NO MOCKUPS."""
+    """Test suite for FlextLdapApi unified LDAP interface.
+
+    Comprehensive testing of the primary LDAP API interface covering
+    initialization, configuration, connection management, and core
+    operations with authentic LDAP protocol interactions.
+
+    Tests validate Clean Architecture compliance, railway-oriented
+    programming patterns, and proper integration with flext-core systems.
+    """
 
     def test_api_instantiation(self) -> None:
-        """Test API can be instantiated correctly."""
+        """Test FlextLdapApi instantiation with default configuration.
+
+        Validates that the API can be created with default settings and
+        properly initializes internal state including dependency injection
+        container registration.
+        """
         api = FlextLdapApi()
         assert api is not None
 
     def test_get_ldap_api_singleton(self) -> None:
-        """Test get_ldap_api returns consistent instance."""
+        """Test factory function provides consistent API instances.
+
+        Validates that the get_ldap_api factory function properly manages
+        instance creation and retrieval from the dependency injection container.
+        """
         api1 = get_ldap_api()
         api2 = get_ldap_api()
         assert api1 is not None
@@ -38,7 +75,11 @@ class TestFlextLdapApi:
 
     @pytest.mark.asyncio
     async def test_connection_lifecycle(self) -> None:
-        """Test connection creation and management."""
+        """Test LDAP connection lifecycle management.
+
+        Validates connection creation, session management, and cleanup
+        operations including proper error handling for connection failures.
+        """
         api = FlextLdapApi()
 
         # Test connection creation

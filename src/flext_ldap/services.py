@@ -9,7 +9,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from flext_core import FlextResult, get_logger
+from flext_core import (
+    FlextContainer,
+    FlextResult,
+    get_logger,
+)
 
 from flext_ldap.base import FlextLdapDomainService
 from flext_ldap.entities import (
@@ -39,16 +43,22 @@ class FlextLdapService(FlextLdapDomainService):
     - Single point of maintenance
     """
 
-    def __init__(self, entity_type: type[object]) -> None:
-        """Initialize service for specific entity type."""
+    def __init__(
+        self,
+        entity_type: type[object],
+        container: FlextContainer | None = None,
+    ) -> None:
+        """Initialize service for specific entity type with dependency injection."""
         logger.debug(
             "Initializing FlextLdapService",
             extra={
                 "entity_type": entity_type.__name__,
                 "entity_module": entity_type.__module__,
+                "has_container": container is not None,
             },
         )
         super().__init__()
+        self._container = container or FlextContainer()
         self._entity_type: type[object] = entity_type
         self._type_name = entity_type.__name__.lower().replace("flextldap", "")
         logger.trace(
@@ -214,9 +224,9 @@ class FlextLdapService(FlextLdapDomainService):
 class FlextLdapUserService(FlextLdapService):
     """User service with specialized user operations."""
 
-    def __init__(self) -> None:
-        """Initialize user service."""
-        super().__init__(FlextLdapUser)
+    def __init__(self, container: FlextContainer | None = None) -> None:
+        """Initialize user service with dependency injection support."""
+        super().__init__(FlextLdapUser, container)
 
     def create_user(
         self,
@@ -281,9 +291,9 @@ class FlextLdapUserService(FlextLdapService):
 class FlextLdapGroupService(FlextLdapService):
     """Group service with specialized group operations."""
 
-    def __init__(self) -> None:
-        """Initialize group service."""
-        super().__init__(FlextLdapGroup)
+    def __init__(self, container: FlextContainer | None = None) -> None:
+        """Initialize group service with dependency injection support."""
+        super().__init__(FlextLdapGroup, container)
 
     def create_group(
         self,
@@ -341,9 +351,9 @@ class FlextLdapGroupService(FlextLdapService):
 class FlextLdapConnectionService(FlextLdapService):
     """Connection service with specialized connection operations."""
 
-    def __init__(self) -> None:
-        """Initialize connection service."""
-        super().__init__(FlextLdapConnection)
+    def __init__(self, container: FlextContainer | None = None) -> None:
+        """Initialize connection service with dependency injection support."""
+        super().__init__(FlextLdapConnection, container)
 
     def create_connection(
         self,
@@ -379,9 +389,9 @@ class FlextLdapConnectionService(FlextLdapService):
 class FlextLdapOperationService(FlextLdapService):
     """Operation service with specialized operation tracking."""
 
-    def __init__(self) -> None:
-        """Initialize operation service."""
-        super().__init__(FlextLdapOperation)
+    def __init__(self, container: FlextContainer | None = None) -> None:
+        """Initialize operation service with dependency injection support."""
+        super().__init__(FlextLdapOperation, container)
 
     def create_operation(
         self,
@@ -414,8 +424,8 @@ class FlextLdapOperationService(FlextLdapService):
 
         if hasattr(operation_result.data, "complete_operation"):
             completed_operation = operation_result.data.complete_operation(
-                success,
-                result_count,
+                success=success,
+                result_count=result_count,
             )
             return self.create_entity(completed_operation)
         return FlextResult.fail("Operation does not support complete_operation")

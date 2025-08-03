@@ -12,6 +12,7 @@ from click.testing import CliRunner
 from flext_core import FlextResult
 from flext_ldap.cli import (
     LDAPConnectionHandler,
+    LDAPConnectionTestParams,
     LDAPSearchHandler,
     LDAPUserHandler,
     cli,
@@ -104,7 +105,8 @@ class TestLDAPConnectionHandler:
             )
             mock_client.is_connected.return_value = TestConnectionResult.SUCCESS
 
-            result = LDAPConnectionHandler.test_connection("ldap.example.com", 389)
+            params = LDAPConnectionTestParams(server="ldap.example.com", port=389)
+            result = LDAPConnectionHandler.test_connection(params)
 
             assert result.is_success
             assert (
@@ -118,7 +120,8 @@ class TestLDAPConnectionHandler:
             # connect is SYNCHRONOUS method
             mock_client.connect.return_value = FlextResult.fail("Connection refused")
 
-            result = LDAPConnectionHandler.test_connection("invalid.example.com", 389)
+            params = LDAPConnectionTestParams(server="invalid.example.com", port=389)
+            result = LDAPConnectionHandler.test_connection(params)
 
             assert result.is_failure
             assert "Connection failed" in result.error
