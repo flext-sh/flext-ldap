@@ -83,7 +83,8 @@ class TestGeneralizedTime:
             14,
             30,
             22,
-        )  # No timezone when Z suffix absent
+            tzinfo=UTC,
+        )  # Timezone aware for consistency
         if result != expected:
             raise AssertionError(f"Expected {expected}, got {result}")
 

@@ -74,7 +74,7 @@ class TestFlextLdapConnectionConfig:
         """Test FlextLdapConnectionConfig with custom values."""
 
         config = FlextLdapConnectionConfig(
-            server="test.example.com",
+            host="test.example.com",
             port=636,
             use_ssl=True,
             timeout_seconds=60,
@@ -98,20 +98,20 @@ class TestFlextLdapConnectionConfig:
     def test_server_validation_valid(self) -> None:
         """Test server validation with valid values."""
 
-        config = FlextLdapConnectionConfig(server="  localhost  ")
-        if config.server != "localhost":  # Should be stripped
-            expected_server = "localhost"  # Should be stripped
-            raise AssertionError(f"Expected {expected_server}, got {config.server}")
+        config = FlextLdapConnectionConfig(host="localhost")
+        if config.host != "localhost":
+            expected_host = "localhost"
+            raise AssertionError(f"Expected {expected_host}, got {config.host}")
 
     @pytest.mark.unit
     def test_server_validation_invalid(self) -> None:
         """Test server validation with invalid values."""
 
-        with pytest.raises(ValueError, match="Server cannot be empty"):
-            FlextLdapConnectionConfig(server="")
+        with pytest.raises(ValueError, match="Host cannot be empty"):
+            FlextLdapConnectionConfig(host="")
 
-        with pytest.raises(ValueError, match="Server cannot be empty"):
-            FlextLdapConnectionConfig(server="   ")
+        with pytest.raises(ValueError, match="Host cannot be empty"):
+            FlextLdapConnectionConfig(host="   ")
 
     @pytest.mark.unit
     def test_port_validation_valid(self) -> None:
@@ -136,7 +136,7 @@ class TestFlextLdapConnectionConfig:
         """Test domain rules validation with valid config."""
 
         config = FlextLdapConnectionConfig(
-            server="localhost",
+            host="localhost",
             port=389,
             timeout_seconds=30,
             pool_size=10,
@@ -571,7 +571,7 @@ class TestFlextLdapSettings:
         )
 
         connection_config = FlextLdapConnectionConfig(
-            server="custom.ldap.com",
+            host="custom.ldap.com",
             port=636,
             use_ssl=True,
         )
@@ -617,7 +617,7 @@ class TestFlextLdapSettings:
         )
 
         connection = FlextLdapConnectionConfig(
-            server="test.ldap.com",
+            host="test.ldap.com",
             port=636,
             use_ssl=True,
             timeout_seconds=60,

@@ -5,6 +5,14 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from flext_core import FlextResult
+from flext_ldap.adapters.directory_adapter import (
+    FlextLdapDirectoryAdapter,
+    FlextLdapDirectoryAdapterInterface,
+    FlextLdapDirectoryConnectionProtocol,
+    FlextLdapDirectoryEntryProtocol,
+    FlextLdapDirectoryService,
+    FlextLdapDirectoryServiceInterface,
+)
 
 # Constants
 EXPECTED_DATA_COUNT = 3
@@ -16,16 +24,6 @@ class TestOperationResult:
 
     SUCCESS = True
     FAILURE = False
-
-
-from flext_ldap.adapters.directory_adapter import (
-    FlextLdapDirectoryAdapter,
-    FlextLdapDirectoryAdapterInterface,
-    FlextLdapDirectoryConnectionProtocol,
-    FlextLdapDirectoryEntryProtocol,
-    FlextLdapDirectoryService,
-    FlextLdapDirectoryServiceInterface,
-)
 
 
 class TestFlextLdapDirectoryConnectionProtocol:

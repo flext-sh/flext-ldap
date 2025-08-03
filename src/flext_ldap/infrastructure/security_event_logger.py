@@ -106,24 +106,17 @@ class FlextLdapSecurityEventData:
 class FlextLdapSecurityEvent:
     """Security event data structure using Parameter Object pattern."""
 
-    def __init__(
-        self,
-        data: FlextLdapSecurityEventData | None = None,
-        **kwargs: object,
-    ) -> None:
-        """Initialize security event using Parameter Object pattern.
+    def __init__(self, data: FlextLdapSecurityEventData) -> None:
+        """Initialize security event using type-safe Parameter Object pattern.
 
         Args:
-            data: FlextLdapSecurityEventData object (preferred approach)
-            **kwargs: Legacy individual parameters for backward compatibility
+            data: FlextLdapSecurityEventData object (required)
+
+        REFACTORED: Eliminated dual initialization anti-pattern.
+        All event creation now uses type-safe FlextLdapSecurityEventData.
 
         """
-        if data is not None:
-            # Use Parameter Object pattern - preferred approach
-            self._init_from_data_object(data)
-        else:
-            # Legacy initialization for backward compatibility
-            self._init_from_kwargs(kwargs)
+        self._init_from_data_object(data)
 
     def _init_from_data_object(self, data: FlextLdapSecurityEventData) -> None:
         """Initialize from FlextLdapSecurityEventData using Parameter Object pattern."""
@@ -155,36 +148,8 @@ class FlextLdapSecurityEvent:
         self.duration_ms = data.duration_ms
         self.data_size_bytes = data.data_size_bytes
         self.additional_context = data.additional_context or {}
-        self.risk_score = None  # Not in data object, default
+        self.risk_score: float | None = None  # Not in data object, default
         self.compliance_flags: list[str] = []  # Not in data object, default
-
-    def _init_from_kwargs(self, kwargs: dict[str, object]) -> None:
-        """Legacy initialization for backward compatibility."""
-        self.event_id = kwargs.get("event_id") or uuid4()
-        self.event_type = (
-            kwargs.get("event_type") or FlextLdapSecurityEventType.AUTHENTICATION
-        )
-        self.severity = kwargs.get("severity", FlextLdapSecurityEventSeverity.INFO)
-        self.status = kwargs.get("status", FlextLdapSecurityEventStatus.INFO)
-        self.timestamp = kwargs.get("timestamp") or datetime.now(UTC)
-        self.user_dn = kwargs.get("user_dn")
-        self.client_ip = kwargs.get("client_ip")
-        self.server_host = kwargs.get("server_host")
-        self.server_port = kwargs.get("server_port")
-        self.operation_id = kwargs.get("operation_id")
-        self.target_dn = kwargs.get("target_dn")
-        self.attributes = kwargs.get("attributes") or []
-        self.filter_expression = kwargs.get("filter_expression")
-        self.result_count = kwargs.get("result_count")
-        self.error_message = kwargs.get("error_message")
-        self.error_code = kwargs.get("error_code")
-        self.session_id = kwargs.get("session_id")
-        self.request_id = kwargs.get("request_id")
-        self.duration_ms = kwargs.get("duration_ms")
-        self.data_size_bytes = kwargs.get("data_size_bytes")
-        self.additional_context = kwargs.get("additional_context") or {}
-        self.risk_score: float | None = kwargs.get("risk_score")
-        self.compliance_flags = kwargs.get("compliance_flags") or []
 
     def to_dict(self) -> dict[str, object]:
         """Convert security event to dictionary."""
@@ -304,7 +269,81 @@ class FlextLdapSecurityEventLogger:
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
-    # Convenience method using Parameter Object pattern for better maintainability
+    # Factory method using Parameter Object pattern for better maintainability
+    def _create_event_data_from_params(
+        self,
+        event_type: FlextLdapSecurityEventType,
+        **event_params: object,
+    ) -> FlextLdapSecurityEventData:
+        """Factory method to create type-safe FlextLdapSecurityEventData from parameters.
+
+        REFACTORED: Eliminates redundant casts and type confusion.
+        Uses proper type validation and safe conversion.
+
+        Args:
+            event_type: The type of security event (required)
+            **event_params: All other event parameters as keyword arguments
+
+        Returns:
+            Type-safe FlextLdapSecurityEventData instance
+
+        """
+        from flext_ldap.entities import FlextLdapConnection
+
+        # Safe type extraction with proper defaults
+        def safe_extract_severity(key: str) -> FlextLdapSecurityEventSeverity:
+            value = event_params.get(key, FlextLdapSecurityEventSeverity.INFO)
+            return value if isinstance(value, FlextLdapSecurityEventSeverity) else FlextLdapSecurityEventSeverity.INFO
+
+        def safe_extract_status(key: str) -> FlextLdapSecurityEventStatus:
+            value = event_params.get(key, FlextLdapSecurityEventStatus.INFO)
+            return value if isinstance(value, FlextLdapSecurityEventStatus) else FlextLdapSecurityEventStatus.INFO
+
+        def safe_extract_string(key: str) -> str | None:
+            value = event_params.get(key)
+            return str(value) if value is not None else None
+
+        def safe_extract_int(key: str) -> int | None:
+            value = event_params.get(key)
+            return int(value) if isinstance(value, (int, float, str)) and str(value).isdigit() else None
+
+        def safe_extract_float(key: str) -> float | None:
+            value = event_params.get(key)
+            return float(value) if isinstance(value, (int, float, str)) else None
+
+        # Extract connection safely
+        connection_value = event_params.get("connection")
+        connection = connection_value if isinstance(connection_value, FlextLdapConnection) else None
+
+        # Extract attributes safely
+        attributes_value = event_params.get("attributes")
+        attributes = list(attributes_value) if isinstance(attributes_value, (list, tuple)) else None
+
+        # Extract additional context safely
+        additional_context_value = event_params.get("additional_context")
+        additional_context = dict(additional_context_value) if isinstance(additional_context_value, dict) else None
+
+        return FlextLdapSecurityEventData(
+            event_type=event_type,
+            severity=safe_extract_severity("severity"),
+            status=safe_extract_status("status"),
+            connection=connection,
+            user_dn=safe_extract_string("user_dn"),
+            client_ip=safe_extract_string("client_ip"),
+            operation_id=safe_extract_string("operation_id"),
+            target_dn=safe_extract_string("target_dn"),
+            attributes=attributes,
+            filter_expression=safe_extract_string("filter_expression"),
+            result_count=safe_extract_int("result_count"),
+            error_message=safe_extract_string("error_message"),
+            error_code=safe_extract_string("error_code"),
+            session_id=safe_extract_string("session_id"),
+            request_id=safe_extract_string("request_id"),
+            duration_ms=safe_extract_float("duration_ms"),
+            data_size_bytes=safe_extract_int("data_size_bytes"),
+            additional_context=additional_context,
+        )
+
     async def log_event_simple(
         self,
         event_type: FlextLdapSecurityEventType,
@@ -312,36 +351,18 @@ class FlextLdapSecurityEventLogger:
     ) -> FlextResult[FlextLdapSecurityEvent]:
         """Convenience method for logging security events using flexible parameters.
 
-        Uses **kwargs to avoid parameter explosion while maintaining ease of use.
-        All FlextLdapSecurityEventData fields can be passed as keyword arguments.
+        REFACTORED: Uses factory method for type-safe parameter conversion.
+        Eliminates redundant casts and type confusion.
 
         Args:
             event_type: The type of security event (required)
             **event_params: All other event parameters as keyword arguments
-                           (severity, status, connection, user_dn, client_ip, etc.)
+
+        Returns:
+            FlextResult containing the logged security event
 
         """
-        # Create event data using Parameter Object pattern with defaults
-        event_data = FlextLdapSecurityEventData(
-            event_type=event_type,
-            severity=event_params.get("severity", FlextLdapSecurityEventSeverity.INFO),
-            status=event_params.get("status", FlextLdapSecurityEventStatus.INFO),
-            connection=event_params.get("connection"),
-            user_dn=event_params.get("user_dn"),
-            client_ip=event_params.get("client_ip"),
-            operation_id=event_params.get("operation_id"),
-            target_dn=event_params.get("target_dn"),
-            attributes=event_params.get("attributes"),
-            filter_expression=event_params.get("filter_expression"),
-            result_count=event_params.get("result_count"),
-            error_message=event_params.get("error_message"),
-            error_code=event_params.get("error_code"),
-            session_id=event_params.get("session_id"),
-            request_id=event_params.get("request_id"),
-            duration_ms=event_params.get("duration_ms"),
-            data_size_bytes=event_params.get("data_size_bytes"),
-            additional_context=event_params.get("additional_context"),
-        )
+        event_data = self._create_event_data_from_params(event_type, **event_params)
         return await self.log_event(event_data)
 
     async def log_authentication_event(
@@ -471,7 +492,7 @@ class FlextLdapSecurityEventLogger:
             unique_users = len({e.user_dn for e in recent_events if e.user_dn})
             unique_sessions = len({e.session_id for e in recent_events if e.session_id})
 
-            metrics = {
+            metrics: dict[str, object] = {
                 "time_window_hours": time_window_hours,
                 "total_events": total_events,
                 "authentication_failures": auth_failures,

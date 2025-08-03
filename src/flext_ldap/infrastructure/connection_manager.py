@@ -39,7 +39,7 @@ class FlextLDAPConnectionManager:
             # Create configuration for the client
 
             config = FlextLdapConnectionConfig(
-                server=self.host,
+                host=self.host,
                 port=self.port,
                 use_ssl=self.use_ssl,
             )
@@ -58,7 +58,8 @@ class FlextLDAPConnectionManager:
             return FlextResult.fail(f"Failed to create LDAP connection: {e}")
 
     async def close_connection(
-        self, connection: FlextLdapSimpleClient
+        self,
+        connection: FlextLdapSimpleClient,
     ) -> FlextResult[None]:
         """Close LDAP connection.
 
@@ -71,7 +72,7 @@ class FlextLDAPConnectionManager:
         """
         try:
             # FlextLdapSimpleClient.disconnect() is synchronous
-            disconnect_result = connection.disconnect()
+            disconnect_result = await connection.disconnect()
             if not disconnect_result.is_success:
                 return FlextResult.fail(f"Disconnect failed: {disconnect_result.error}")
             return FlextResult.ok(None)

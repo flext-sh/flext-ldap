@@ -84,7 +84,7 @@ class FlextLdapCertificateValidationService:
         # Step 1: Input validation
         input_result = self._validate_input_chain(cert_chain)
         if input_result.is_failure:
-            return input_result
+            return FlextResult.fail(input_result.error or "Input validation failed")
 
         # Step 2: Parse certificates
         parse_result = self._parse_certificate_chain(cert_chain)
@@ -95,7 +95,7 @@ class FlextLdapCertificateValidationService:
         # Step 3: Run validation pipeline
         return await self._execute_certificate_validation_steps(certificates, context)
 
-    def _validate_input_chain(self, cert_chain: list[bytes]) -> FlextResult[None]:
+    def _validate_input_chain(self, cert_chain: list[bytes]) -> FlextResult[object]:
         """Validate input certificate chain - Single Responsibility."""
         if not cert_chain:
             return self._create_malformed_result("Empty certificate chain provided")
@@ -103,7 +103,7 @@ class FlextLdapCertificateValidationService:
 
     async def _execute_certificate_validation_steps(
         self,
-        certificates: list,
+        certificates: list[x509.Certificate],
         context: CertificateValidationContext,
     ) -> FlextResult[object]:
         """Execute certificate validation steps in sequence."""
@@ -149,7 +149,7 @@ class FlextLdapCertificateValidationService:
                 certificates.append(cert)
             except (ValueError, TypeError, OSError) as e:
                 return self._create_malformed_result(
-                    f"Failed to parse certificate: {e}"
+                    f"Failed to parse certificate: {e}",
                 )
         return FlextResult.ok(certificates)
 

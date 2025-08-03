@@ -164,7 +164,7 @@ def validate_connection(config):
         return FlextResult.fail("Server is required")
 
     logger.debug("Connection validated", extra={"server": config.server})
-    return FlextResult.ok(True)
+    return FlextResult.ok(data=True)
 ```
 
 ### Error Correlation

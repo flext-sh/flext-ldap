@@ -13,9 +13,14 @@ from enum import Enum
 from uuid import UUID
 
 import ldap3
-from flext_core import FlextResult, get_logger
+from flext_core import (
+    FlextContainer,
+    FlextResult,
+    get_logger,
+)
 from ldap3 import ALL, AUTO_BIND_NONE, BASE, LEVEL, SUBTREE, Connection, Server
 from ldap3.core.exceptions import LDAPException
+from pydantic import SecretStr
 
 from flext_ldap.base import FlextLdapRepository
 from flext_ldap.config import (
@@ -261,8 +266,9 @@ class FlextLdapConverter:
 class FlextLdapConnectionManager:
     """INTELLIGENT connection manager using flext-core repository pattern."""
 
-    def __init__(self) -> None:
-        """Initialize with connection repository."""
+    def __init__(self, container: FlextContainer | None = None) -> None:
+        """Initialize with connection repository and dependency injection."""
+        self._container = container or FlextContainer()
         self._connections: FlextLdapRepository = FlextLdapRepository()
         self._pool_configs: dict[str, FlextLdapConnectionConfig] = {}
 
@@ -355,17 +361,23 @@ class FlextLdapConnectionManager:
 class FlextLdapSimpleClient:
     """UNIFIED LDAP client with intelligent infrastructure."""
 
-    def __init__(self, config: FlextLdapConnectionConfig | None = None) -> None:
-        """Initialize unified client."""
+    def __init__(
+        self,
+        config: FlextLdapConnectionConfig | None = None,
+        container: FlextContainer | None = None,
+    ) -> None:
+        """Initialize unified client with dependency injection support."""
         logger.debug(
             "Initializing FlextLdapSimpleClient",
             extra={
                 "has_config": config is not None,
+                "has_container": container is not None,
                 "config": config.__dict__ if config else None,
             },
         )
+        self._container = container or FlextContainer()
         self._config = config
-        self._connection_manager = FlextLdapConnectionManager()
+        self._connection_manager = FlextLdapConnectionManager(self._container)
         self._converter = FlextLdapConverter()
         self._current_connection: Connection | None = None
         self._auth_config: FlextLdapAuthConfig | None = None
@@ -454,10 +466,16 @@ class FlextLdapSimpleClient:
                 return FlextResult.fail("Connection configuration required")
 
             logger.trace("Creating authenticated connection")
+            password = auth_config.bind_password
+            if password is not None and hasattr(password, "get_secret_value"):
+                password_str = password.get_secret_value()
+            else:
+                password_str = None
+
             connection_result = self._connection_manager._create_connection(
                 self._config,
                 user=auth_config.bind_dn,
-                password=auth_config.bind_password,
+                password=password_str,
             )
 
             if not connection_result.is_success:
@@ -551,7 +569,7 @@ class FlextLdapSimpleClient:
             )
 
             # Use ldap3 constants - MyPy limitation with literal types
-            success = self._current_connection.search(
+            success: bool = self._current_connection.search(
                 search_base=base_dn,
                 search_filter=search_filter,
                 search_scope=ldap_scope,  # type: ignore[arg-type]  # ldap3 limitation
@@ -783,7 +801,7 @@ class FlextLdapSimpleClient:
             )
             return FlextResult.fail(f"Delete error: {e}")
 
-    def disconnect(self) -> FlextResult[bool]:
+    async def disconnect(self) -> FlextResult[bool]:
         """Disconnect with proper cleanup."""
         logger.debug(
             "Disconnecting from LDAP server",
@@ -903,10 +921,10 @@ def create_ldap_client(
 
     # Create config with REAL parameters from server_url and kwargs
     config = FlextLdapConnectionConfig(
-        server=host,
+        host=host,
         port=port,
         use_ssl=use_ssl,
-        timeout_seconds=timeout_seconds,
+        timeout=timeout_seconds,
         pool_size=pool_size,
     )
 
@@ -926,7 +944,7 @@ def create_ldap_client(
         # Store auth config in client for future authentication
         auth_config = FlextLdapAuthConfig(
             bind_dn=bind_dn,
-            bind_password=password,
+            bind_password=SecretStr(password),
         )
         # REALLY use the auth_config by storing it in the client
         client._auth_config = auth_config

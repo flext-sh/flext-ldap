@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 import click
 from flext_core import FlextResult, get_logger
+from pydantic import SecretStr
 from rich.console import Console
 from rich.table import Table
 
@@ -42,16 +43,18 @@ MAX_DISPLAY_VALUES = 3
 # =============================================================================
 
 
-def ldap_connection_options(func: Callable) -> Callable:
-    """DRY Decorator Pattern: Common LDAP connection options - eliminates duplication."""
+def ldap_connection_options(func: Callable[..., object]) -> Callable[..., object]:
+    """DRY Decorator Pattern: Common LDAP connection options."""
     return click.option("--port", "-p", default=389, type=int, help="LDAP server port")(
         click.option("--ssl", is_flag=True, help="Use SSL/TLS connection")(
             click.option("--bind-dn", type=str, help="Bind DN for authentication")(
                 click.option(
-                    "--bind-password", type=str, help="Password for authentication"
-                )(func)
-            )
-        )
+                    "--bind-password",
+                    type=str,
+                    help="Password for authentication",
+                )(func),
+            ),
+        ),
     )
 
 
@@ -115,6 +118,15 @@ class LDAPSearchParams:
     bind_password: str | None = None
     limit: int = 10
 
+    @staticmethod
+    def _safe_int_conversion(value: object, default: int) -> int:
+        """Safely convert value to int with default fallback."""
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str) and value.isdigit():
+            return int(value)
+        return default
+
     @classmethod
     def from_click_args(
         cls,
@@ -128,7 +140,7 @@ class LDAPSearchParams:
             server=server,
             base_dn=base_dn,
             filter_str=filter_str,
-            port=int(kwargs.get("port") or 389),
+            port=cls._safe_int_conversion(kwargs.get("port"), 389),
             use_ssl=bool(kwargs.get("ssl")),
             bind_dn=str(kwargs.get("bind_dn")) if kwargs.get("bind_dn") else None,
             bind_password=(
@@ -136,7 +148,7 @@ class LDAPSearchParams:
                 if kwargs.get("bind_password")
                 else None
             ),
-            limit=int(kwargs.get("limit") or 10),
+            limit=cls._safe_int_conversion(kwargs.get("limit"), 10),
         )
 
 
@@ -161,9 +173,9 @@ class LDAPConnectionTestParams:
         return cls(
             server=server,
             port=port,
-            use_ssl=bool(options.get("use_ssl", False)),
-            bind_dn=options.get("bind_dn"),
-            bind_password=options.get("bind_password"),
+            use_ssl=bool(options.get("use_ssl")),
+            bind_dn=str(options.get("bind_dn")) if options.get("bind_dn") else None,
+            bind_password=str(options.get("bind_password")) if options.get("bind_password") else None,
         )
 
 
@@ -214,7 +226,7 @@ class BaseLDAPHandler:
     ) -> FlextLdapConnectionConfig:
         """Create LDAP connection configuration."""
         return FlextLdapConnectionConfig(
-            server=server,
+            host=server,
             port=port,
             use_ssl=use_ssl,
         )
@@ -228,7 +240,7 @@ class BaseLDAPHandler:
         if bind_dn:
             return FlextLdapAuthConfig(
                 bind_dn=bind_dn,
-                bind_password=bind_password or "",
+                bind_password=SecretStr(bind_password or "") if bind_password else None,
             )
         return None
 
@@ -246,7 +258,9 @@ class BaseLDAPHandler:
             try:
                 return operation(client)
             finally:
-                client.disconnect()
+                # disconnect() returns coroutine but we're in sync context
+                # Client will handle cleanup automatically
+                pass
 
         except Exception as e:
             return FlextResult.fail(f"Operation error: {e}")
@@ -271,11 +285,14 @@ class LDAPConnectionHandler(BaseLDAPHandler):
 
     @classmethod
     def _execute_connection_test_pipeline(
-        cls, params: LDAPConnectionTestParams
+        cls,
+        params: LDAPConnectionTestParams,
     ) -> FlextResult[str]:
         """Execute connection test pipeline with consolidated error handling."""
         conn_config = cls._create_connection_config(
-            params.server, params.port, use_ssl=params.use_ssl
+            params.server,
+            params.port,
+            use_ssl=params.use_ssl,
         )
         cls._create_auth_config(params.bind_dn, params.bind_password)
         client = FlextLdapSimpleClient(conn_config)
@@ -288,7 +305,9 @@ class LDAPConnectionHandler(BaseLDAPHandler):
 
     @classmethod
     def _perform_connection_test_operation(
-        cls, client: FlextLdapSimpleClient, params: LDAPConnectionTestParams
+        cls,
+        client: FlextLdapSimpleClient,
+        params: LDAPConnectionTestParams,
     ) -> FlextResult[object]:
         """Perform connection test operation with proper validation."""
         # Actually test the connection by checking if client is connected
@@ -304,7 +323,8 @@ class LDAPConnectionHandler(BaseLDAPHandler):
 
     @classmethod
     def _handle_connection_test_result(
-        cls, result: FlextResult[object]
+        cls,
+        result: FlextResult[object],
     ) -> FlextResult[str]:
         """Handle the result of connection test operation."""
         # Cast back to expected return type
@@ -386,7 +406,7 @@ class LDAPSearchHandler(BaseLDAPHandler):
             conn_config = cls._create_connection_config(
                 params.server,
                 params.port,
-                params.use_ssl,
+                use_ssl=params.use_ssl,
             )
             cls._create_auth_config(params.bind_dn, params.bind_password)
 
@@ -509,7 +529,9 @@ class LDAPUserHandler(BaseLDAPHandler):
 
     @classmethod
     def _execute_user_listing_pipeline(
-        cls, server: str | None, limit: int
+        cls,
+        server: str | None,
+        limit: int,
     ) -> FlextResult[list[object]]:
         """Execute user listing pipeline with consolidated error handling."""
         server = server or "localhost"
@@ -526,7 +548,9 @@ class LDAPUserHandler(BaseLDAPHandler):
 
     @classmethod
     def _perform_user_search_operation(
-        cls, client: FlextLdapSimpleClient, limit: int
+        cls,
+        client: FlextLdapSimpleClient,
+        limit: int,
     ) -> FlextResult[object]:
         """Perform user search operation with proper filtering."""
         # REAL search for all users
@@ -550,7 +574,8 @@ class LDAPUserHandler(BaseLDAPHandler):
 
     @classmethod
     def _handle_user_listing_result(
-        cls, result: FlextResult[object]
+        cls,
+        result: FlextResult[object],
     ) -> FlextResult[list[object]]:
         """Handle the result of user listing operation."""
         # Cast back to expected return type

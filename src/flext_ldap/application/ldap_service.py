@@ -21,7 +21,7 @@ from flext_ldap.api import FlextLdapApi
 from flext_ldap.entities import FlextLdapUser
 
 if TYPE_CHECKING:
-    from flext_ldap.config import FlextLdapConnectionConfig
+    from flext_ldap.config import FlextLdapSettings
     from flext_ldap.values import FlextLdapCreateUserRequest
 
 logger = get_logger(__name__)
@@ -34,7 +34,7 @@ class FlextLdapService:
     Follows SOLID principles by delegating to infrastructure layer.
     """
 
-    def __init__(self, config: FlextLdapConnectionConfig | None = None) -> None:
+    def __init__(self, config: FlextLdapSettings | None = None) -> None:
         """Initialize LDAP service with real infrastructure."""
         self._api = FlextLdapApi(config)
         self._session_id: str | None = None
@@ -95,7 +95,8 @@ class FlextLdapService:
                 return FlextResult.ok(data=True)
 
             logger.error(
-                "Failed to disconnect from LDAP server", extra={"error": result.error}
+                "Failed to disconnect from LDAP server",
+                extra={"error": result.error},
             )
             return FlextResult.fail(result.error or "Disconnect failed")
 
@@ -353,7 +354,8 @@ class FlextLdapService:
             return FlextResult.ok(data=True)
 
         logger.error(
-            "Failed to delete user", extra={"uid": uid, "error": delete_result.error}
+            "Failed to delete user",
+            extra={"uid": uid, "error": delete_result.error},
         )
         return FlextResult.fail(delete_result.error or "User deletion failed")
 

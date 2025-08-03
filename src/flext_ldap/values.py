@@ -1,50 +1,141 @@
-"""LDAP Domain Value Objects - Immutable Values.
+"""FLEXT-LDAP Domain Value Objects - Immutable Business Data Structures.
 
-🏗️ CLEAN ARCHITECTURE: Domain Value Objects
-Built on flext-core foundation patterns.
+This module defines domain value objects that represent immutable concepts
+in the LDAP directory domain. All value objects extend flext-core foundation
+patterns and implement comprehensive validation and business rules.
 
-Value objects represent immutable concepts in the LDAP domain.
+Value objects are immutable data structures that encapsulate LDAP-specific
+data types with built-in validation, formatting, and domain logic.
+
+Architecture:
+    Following Clean Architecture and Domain-Driven Design principles,
+    value objects represent concepts that:
+    - Are immutable after creation
+    - Contain business logic specific to their domain
+    - Validate their own consistency and constraints
+    - Provide rich domain operations beyond simple data storage
+
+Key Components:
+    - FlextLdapDistinguishedName: RFC 4514 compliant DN representation
+    - FlextLdapFilterValue: LDAP search filter with validation
+    - FlextLdapUri: LDAP URI parsing and validation
+    - FlextLdapScopeEnum: Search scope enumeration
+    - Request Objects: User creation and operation requests
+
+Standards Compliance:
+    - RFC 4514: Distinguished Names format validation
+    - RFC 4515: LDAP search filter syntax
+    - RFC 4516: LDAP URI format specification
+    - Type-safe operations with comprehensive MyPy compliance
+
+Example:
+    Creating and using domain value objects:
+
+    >>> dn = FlextLdapDistinguishedName(value="uid=john,ou=users,dc=example,dc=com")
+    >>> filter_obj = FlextLdapFilterValue.equals("uid", "john")
+    >>> uri = FlextLdapUri(value="ldaps://directory.example.com:636")
+    >>>
+    >>> validation = dn.validate_domain_rules()
+    >>> if validation.is_success:
+    ...     print(f"Valid DN: {dn.get_rdn()}")
+
+Integration:
+    - Built on flext-core FlextDomainValueObject foundation
+    - Compatible with LDAP protocol implementations
+    - Supports serialization for data interchange
+
+Author: FLEXT Development Team
+
 """
 
 from __future__ import annotations
 
-from enum import StrEnum
 from urllib.parse import urlparse
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
-from flext_core import FlextResult, FlextValueObject, get_logger
+# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core centralized models
+from flext_core import (
+    FlextDomainValueObject,
+    FlextResult,
+    get_logger,
+)
 from pydantic import Field, field_validator
 
 logger = get_logger(__name__)
 
-# 🚀 CODE CONSOLIDATION: Use superior DN implementation from flext-ldif
-# This eliminates duplication and uses the better implementation
-_USE_CONSOLIDATED_DN = False
+# 🚀 CODE CONSOLIDATION: Use flext-core centralized patterns
+_USE_CONSOLIDATED_VO = False
 try:
-    from flext_ldif.models import FlextLdifDistinguishedName as _FlextDN
+    # Check if flext-core VO is available but don't import unused
+    import importlib.util
 
-    _USE_CONSOLIDATED_DN = True
-    logger.debug("Successfully imported superior DN implementation from flext-ldif")
+    spec = importlib.util.find_spec("flext_core.FlextDomainValueObject")
+    _USE_CONSOLIDATED_VO = spec is not None
+    logger.debug("Using flext-core centralized value object patterns")
 except ImportError:
-    logger.debug("flext-ldif not available, using local DN implementation")
+    logger.debug("Using local value object implementation")
+
+
+# Define local enum for LDAP-specific needs
+from enum import StrEnum
 
 
 class FlextLdapScopeEnum(StrEnum):
-    """LDAP search scope enumeration."""
+    """LDAP search scope enumeration with legacy compatibility.
+
+    Defines valid search scope values for LDAP directory operations
+    with backward compatibility aliases for existing implementations.
+
+    Search scopes determine the breadth of directory tree traversal
+    during LDAP search operations.
+
+    Values:
+        BASE: Search only the base entry (scope 0)
+        ONE_LEVEL: Search immediate children only (scope 1)
+        SUBTREE: Search entire subtree recursively (scope 2)
+
+    Legacy Aliases:
+        ONE: Alias for ONE_LEVEL
+        SUB: Alias for SUBTREE
+    """
 
     BASE = "base"
     ONE_LEVEL = "onelevel"
     SUBTREE = "subtree"
 
-    # Legacy mappings for backward compatibility (from models.py)
-    ONE = "onelevel"  # Map ONE to ONE_LEVEL
-    SUB = "subtree"  # Map SUB to SUBTREE
+    # Legacy mappings for backward compatibility
+    ONE = "onelevel"
+    SUB = "subtree"
 
 
-class FlextLdapDistinguishedName(FlextValueObject):
-    """Distinguished Name value object.
+class FlextLdapDistinguishedName(FlextDomainValueObject):
+    """LDAP Distinguished Name value object with RFC 4514 compliance.
 
-    Represents an immutable LDAP distinguished name.
+    Immutable value object representing LDAP Distinguished Names (DNs)
+    with comprehensive validation, parsing, and hierarchical operations.
+
+    Distinguished Names uniquely identify entries in LDAP directory
+    hierarchies and must conform to RFC 4514 format specifications.
+
+    Attributes:
+        value: String representation of the Distinguished Name
+
+    Business Rules:
+        - DN must contain at least one attribute=value pair
+        - Components must be properly formatted with '=' separators
+        - Attribute names and values cannot be empty
+        - Format must comply with RFC 4514 specifications
+
+    Domain Operations:
+        - get_rdn(): Extract Relative Distinguished Name
+        - get_parent_dn(): Navigate directory hierarchy
+        - is_child_of(): Check hierarchical relationships
+        - get_components(): Parse DN structure
+
+    Example:
+        >>> dn = FlextLdapDistinguishedName(value="cn=John Doe,ou=users,dc=example,dc=com")
+        >>> print(dn.get_rdn())  # "cn=John Doe"
+        >>> parent = dn.get_parent_dn()  # "ou=users,dc=example,dc=com"
+
     """
 
     value: str = Field(..., description="DN string value")
@@ -145,15 +236,41 @@ class FlextLdapDistinguishedName(FlextValueObject):
 
 
 # 🚀 CODE CONSOLIDATION: Temporarily disabled due to API incompatibility
-# TODO: Re-enable after ensuring API compatibility between flext-ldap and flext-ldif DN implementations
-if False:  # _USE_CONSOLIDATED_DN:
-    # Override local implementation with superior one from flext-ldif
-    FlextLdapDistinguishedName = _FlextDN  # type: ignore[misc]
-    logger.debug("Using consolidated DN implementation from flext-ldif")
+# TODO(claude): Re-enable after API compatibility with flext-ldif DN (https://github.com/flext/flext-ldap/issues/consolidation)
+# Note: Consolidation disabled - using local implementation for now
 
 
-class FlextLdapFilterValue(FlextValueObject):
-    """LDAP search filter value object."""
+class FlextLdapFilterValue(FlextDomainValueObject):
+    """LDAP search filter value object with RFC 4515 compliance.
+
+    Immutable value object representing LDAP search filters with comprehensive
+    validation, composition operations, and filter building capabilities.
+
+    LDAP filters define search criteria for directory queries and must
+    conform to RFC 4515 filter syntax specifications.
+
+    Attributes:
+        value: String representation of the LDAP filter expression
+
+    Business Rules:
+        - Filter must be enclosed in parentheses
+        - Parentheses must be balanced throughout expression
+        - Filter syntax must comply with RFC 4515 format
+        - Empty filters are not permitted
+
+    Domain Operations:
+        - equals()/present(): Create basic filter expressions
+        - and_filters()/or_filters(): Combine multiple filters
+        - contains()/starts_with(): Pattern matching filters
+        - person_filter()/group_filter(): Object class filters
+
+    Example:
+        >>> user_filter = FlextLdapFilterValue.equals("uid", "john")
+        >>> mail_filter = FlextLdapFilterValue.present("mail")
+        >>> combined = FlextLdapFilterValue.and_filters(user_filter, mail_filter)
+        >>> print(combined.value)  # "(&(uid=john)(mail=*))"
+
+    """
 
     value: str = Field(..., description="LDAP filter string")
 
@@ -266,7 +383,9 @@ class FlextLdapFilterValue(FlextValueObject):
 
     @classmethod
     def _combine_filters(
-        cls, operator: str, *filters: FlextLdapFilterValue
+        cls,
+        operator: str,
+        *filters: FlextLdapFilterValue,
     ) -> FlextLdapFilterValue:
         """Template method for combining filters - eliminates code duplication.
 
@@ -331,7 +450,7 @@ class FlextLdapFilterValue(FlextValueObject):
         return self.or_filters(self, other)
 
 
-class FlextLdapUri(FlextValueObject):
+class FlextLdapUri(FlextDomainValueObject):
     """LDAP URI value object."""
 
     value: str = Field(..., description="LDAP URI string")
@@ -423,7 +542,7 @@ class FlextLdapUri(FlextValueObject):
         return urlparse(self.value).scheme == "ldaps"
 
 
-class FlextLdapObjectClass(FlextValueObject):
+class FlextLdapObjectClass(FlextDomainValueObject):
     """LDAP object class value object."""
 
     name: str = Field(..., description="Object class name")
@@ -468,7 +587,7 @@ class FlextLdapObjectClass(FlextValueObject):
         return self.name
 
 
-class FlextLdapAttributesValue(FlextValueObject):
+class FlextLdapAttributesValue(FlextDomainValueObject):
     """LDAP attributes value object."""
 
     attributes: dict[str, list[str]] = Field(
@@ -562,7 +681,7 @@ class FlextLdapAttributesValue(FlextValueObject):
         return FlextLdapAttributesValue(attributes=new_attrs)
 
 
-class FlextLdapConnectionInfo(FlextValueObject):
+class FlextLdapConnectionInfo(FlextDomainValueObject):
     """LDAP connection information value object."""
 
     server_uri: FlextLdapUri
@@ -587,8 +706,39 @@ class FlextLdapConnectionInfo(FlextValueObject):
         return f"{self.server_uri} ({auth_status}, {security})"
 
 
-class FlextLdapExtendedEntry(FlextValueObject):
-    """Extended LDAP entry with utility methods (consolidated from models.py)."""
+class FlextLdapExtendedEntry(FlextDomainValueObject):
+    """Extended LDAP entry value object with rich domain operations.
+
+    Value object representing LDAP directory entries with comprehensive
+    utility methods for attribute access, type detection, and data extraction.
+
+    Provides high-level operations for working with LDAP entry data
+    while maintaining immutability and domain logic encapsulation.
+
+    Attributes:
+        dn: Distinguished Name of the entry
+        attributes: Dictionary of LDAP attributes with multi-valued support
+
+    Domain Operations:
+        - get_attribute()/get_single_attribute(): Safe attribute access
+        - get_cn()/get_uid()/get_mail(): Convenience methods for common attributes
+        - is_person()/is_group(): Object class type detection
+        - has_attribute(): Attribute presence checking
+
+    Business Rules:
+        - Distinguished Name must be present and non-empty
+        - Attributes follow LDAP multi-value conventions
+        - Type detection based on standard object classes
+
+    Example:
+        >>> entry = FlextLdapExtendedEntry(
+        ...     dn="uid=john,ou=users,dc=example,dc=com",
+        ...     attributes={"cn": ["John Doe"], "objectClass": ["person"]}
+        ... )
+        >>> print(entry.get_cn())  # "John Doe"
+        >>> print(entry.is_person())  # True
+
+    """
 
     dn: str = Field(..., description="Distinguished Name")
     attributes: dict[str, list[str]] = Field(
@@ -646,8 +796,45 @@ class FlextLdapExtendedEntry(FlextValueObject):
         return FlextResult.ok(None)
 
 
-class FlextLdapCreateUserRequest(FlextValueObject):
-    """Value object for creating LDAP users with validation."""
+class FlextLdapCreateUserRequest(FlextDomainValueObject):
+    """User creation request value object with comprehensive validation.
+
+    Immutable value object encapsulating all required and optional data
+    for creating LDAP user accounts with business rule validation.
+
+    This request object ensures data consistency and validates business
+    constraints before user creation operations are performed.
+
+    Attributes:
+        dn: Distinguished Name for the new user account
+        uid: Unique user identifier (login name)
+        cn: Common name (display name)
+        sn: Surname (family name)
+        mail: Optional email address
+        phone: Optional telephone number
+        ou: Optional organizational unit
+        department: Optional department affiliation
+        title: Optional job title or position
+        object_classes: Optional LDAP object classes (defaults to inetOrgPerson)
+
+    Business Rules:
+        - Distinguished Name must be present and non-empty
+        - User identifier (uid) must be specified
+        - Common name (cn) and surname (sn) are required
+        - Email address must follow valid format if provided
+        - All text fields must not be whitespace-only
+
+    Example:
+        >>> request = FlextLdapCreateUserRequest(
+        ...     dn="uid=john,ou=users,dc=example,dc=com",
+        ...     uid="john",
+        ...     cn="John Doe",
+        ...     sn="Doe",
+        ...     mail="john.doe@example.com"
+        ... )
+        >>> validation = request.validate_domain_rules()
+
+    """
 
     dn: str = Field(..., description="Distinguished name for the user")
     uid: str = Field(..., description="User identifier")
