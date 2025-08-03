@@ -5,6 +5,7 @@ the concrete FLEXT LDAP infrastructure implementation.
 
 Copyright (c) 2025 Flext. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -236,6 +237,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
         logger.debug("Configuring authentication", extra={"bind_dn": bind_dn})
         from pydantic import SecretStr
+
         auth_config = FlextLdapAuthConfig(
             bind_dn=bind_dn,
             bind_password=SecretStr(password),

@@ -5,6 +5,7 @@ with audit trails, event correlation, and security monitoring capabilities.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -16,7 +17,6 @@ from enum import Enum
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
 from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
@@ -293,11 +293,19 @@ class FlextLdapSecurityEventLogger:
         # Safe type extraction with proper defaults
         def safe_extract_severity(key: str) -> FlextLdapSecurityEventSeverity:
             value = event_params.get(key, FlextLdapSecurityEventSeverity.INFO)
-            return value if isinstance(value, FlextLdapSecurityEventSeverity) else FlextLdapSecurityEventSeverity.INFO
+            return (
+                value
+                if isinstance(value, FlextLdapSecurityEventSeverity)
+                else FlextLdapSecurityEventSeverity.INFO
+            )
 
         def safe_extract_status(key: str) -> FlextLdapSecurityEventStatus:
             value = event_params.get(key, FlextLdapSecurityEventStatus.INFO)
-            return value if isinstance(value, FlextLdapSecurityEventStatus) else FlextLdapSecurityEventStatus.INFO
+            return (
+                value
+                if isinstance(value, FlextLdapSecurityEventStatus)
+                else FlextLdapSecurityEventStatus.INFO
+            )
 
         def safe_extract_string(key: str) -> str | None:
             value = event_params.get(key)
@@ -305,7 +313,11 @@ class FlextLdapSecurityEventLogger:
 
         def safe_extract_int(key: str) -> int | None:
             value = event_params.get(key)
-            return int(value) if isinstance(value, (int, float, str)) and str(value).isdigit() else None
+            return (
+                int(value)
+                if isinstance(value, (int, float, str)) and str(value).isdigit()
+                else None
+            )
 
         def safe_extract_float(key: str) -> float | None:
             value = event_params.get(key)
@@ -313,15 +325,27 @@ class FlextLdapSecurityEventLogger:
 
         # Extract connection safely
         connection_value = event_params.get("connection")
-        connection = connection_value if isinstance(connection_value, FlextLdapConnection) else None
+        connection = (
+            connection_value
+            if isinstance(connection_value, FlextLdapConnection)
+            else None
+        )
 
         # Extract attributes safely
         attributes_value = event_params.get("attributes")
-        attributes = list(attributes_value) if isinstance(attributes_value, (list, tuple)) else None
+        attributes = (
+            list(attributes_value)
+            if isinstance(attributes_value, (list, tuple))
+            else None
+        )
 
         # Extract additional context safely
         additional_context_value = event_params.get("additional_context")
-        additional_context = dict(additional_context_value) if isinstance(additional_context_value, dict) else None
+        additional_context = (
+            dict(additional_context_value)
+            if isinstance(additional_context_value, dict)
+            else None
+        )
 
         return FlextLdapSecurityEventData(
             event_type=event_type,

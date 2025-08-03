@@ -6,6 +6,7 @@ contexts following enterprise security standards.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -14,7 +15,6 @@ from dataclasses import field
 from datetime import UTC, datetime
 from enum import Enum
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
 from flext_core import FlextEntity, FlextResult
 
 

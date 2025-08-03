@@ -1,15 +1,12 @@
-"""Application layer for FLEXT-LDAP v0.7.0.
+"""Application layer for FLEXT-LDAP.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 
-REFACTORED:
-            Using flext-core application patterns - NO duplication.
 """
 
 from __future__ import annotations
 
-# Import application service
 from flext_ldap.application.ldap_service import FlextLdapService
 from flext_ldap.domain.ports import (
     FlextLdapMigrationService,
@@ -19,25 +16,22 @@ from flext_ldap.domain.ports import (
 )
 
 # Import specialized services from root (services moved to root)
-from flext_ldap.services import (
-    FlextLdapConnectionApplicationService,
-    FlextLdapGroupService,
-    FlextLdapOperationService,
-    FlextLdapUserApplicationService,
-)
+# TEMPORARILY COMMENTED to avoid circular import with services.py
+# from flext_ldap.services import (
+#     FlextLdapConnectionApplicationService,
+#     FlextLdapGroupService,
+#     FlextLdapOperationService,
+#     FlextLdapUserApplicationService,
+# )
 
 __all__ = [
-    # Application services (consolidated - no more wrapper service)
-    "FlextLdapConnectionApplicationService",
-    "FlextLdapGroupService",
     # Domain ports
     "FlextLdapMigrationService",
-    "FlextLdapOperationService",
     "FlextLdapSchemaService",
     "FlextLdapSearchService",
     "FlextLdapService",  # Main application service
-    "FlextLdapUserApplicationService",
     "FlextLdapUserService",
+    # NOTE: Other services moved to root services.py to avoid circular imports
 ]
 
 # Note: FlextLdapService wrapper eliminated per user requirements to reduce modules

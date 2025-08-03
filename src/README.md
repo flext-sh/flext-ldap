@@ -20,20 +20,24 @@ src/flext_ldap/
 ## Key Components
 
 ### Core API Layer
+
 - **api.py**: Main FlextLdapApi interface providing unified LDAP operations
 - **base.py**: Base functionality and shared patterns
 - **config.py**: Configuration management with environment variable support
 
 ### Domain Layer
+
 - **entities.py**: Rich domain entities (FlextLdapUser, FlextLdapGroup)
 - **values.py**: Value objects and data transfer objects
 - **domain/**: Pure business logic without external dependencies
 
 ### Application Layer
+
 - **application/**: Use cases, command handlers, and application services
 - **services.py**: Application service implementations
 
 ### Infrastructure Layer
+
 - **infrastructure/**: Repository implementations and external integrations
 - **ldap_infrastructure.py**: LDAP protocol client implementation
 - **adapters/**: External system adapters
@@ -60,6 +64,7 @@ FLEXT-LDAP integrates seamlessly with the broader FLEXT ecosystem:
 ## Getting Started
 
 For development setup and usage examples, see:
+
 - [Project README](../README.md) - Complete project overview
 - [Documentation Hub](../docs/README.md) - Comprehensive documentation
 - [Examples](../examples/) - Practical usage examples

@@ -1,7 +1,9 @@
-# Copyright (c) 2025 FLEXT
-# SPDX-License-Identifier: MIT
+"""LDAP utilities following DRY principle.
 
-"""LDAP utilities following DRY principle."""
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
+"""
 
 from __future__ import annotations
 
@@ -65,12 +67,8 @@ def flext_ldap_parse_generalized_time(time_str: str) -> datetime:
         logger.trace("Removed Z suffix, will use UTC timezone")
 
     # Parse the time string
-    # Create timezone-aware datetime directly
-    dt = datetime.strptime(time_str, "%Y%m%d%H%M%S").replace(tzinfo=UTC if tz else None)
-
-    # If no timezone was specified, make it timezone-naive
-    if not tz and dt.tzinfo:
-        dt = dt.replace(tzinfo=None)
+    # Always create timezone-aware datetime for consistency
+    dt = datetime.strptime(time_str, "%Y%m%d%H%M%S").replace(tzinfo=UTC)
 
     logger.debug(
         "LDAP generalized time parsed",

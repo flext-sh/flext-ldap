@@ -2,6 +2,10 @@
 
 This module provides standardized LDAP connection management using
 FLEXT core patterns to eliminate manual connection handling.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

@@ -4,9 +4,12 @@
 This example demonstrates the main functionality of the FLEXT LDAP library
 including user creation, search, update, and deletion operations.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
+
+from __future__ import annotations
 
 import asyncio
 

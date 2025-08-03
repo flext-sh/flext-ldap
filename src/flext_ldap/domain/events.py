@@ -4,11 +4,14 @@
 Built on flext-core foundation patterns.
 
 Events represent important business occurrences in the LDAP domain.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
 from flext_core import FlextResult, FlextValueObject
 
 

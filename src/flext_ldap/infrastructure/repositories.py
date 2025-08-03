@@ -1,9 +1,10 @@
 """LDAP Infrastructure Repositories.
 
+Real LDAP repository implementations.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Real LDAP repository implementations.
 """
 
 from __future__ import annotations
@@ -170,7 +171,9 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             )
 
             # Use LDAP client to search
-            search_result: FlextResult[list[dict[str, object]]] = await self.ldap_client.search(
+            search_result: FlextResult[
+                list[dict[str, object]]
+            ] = await self.ldap_client.search(
                 base_dn="",  # Will use configured base DN
                 search_filter=search_filter,
                 attributes=["*"],  # Get all attributes
@@ -181,7 +184,9 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 entries = search_result.data or []
                 if entries:
                     # Return first matching entry converted to FlextLdapUser
-                    first_entry = entries[0] if isinstance(entries, list) and entries else None
+                    first_entry = (
+                        entries[0] if isinstance(entries, list) and entries else None
+                    )
                     return FlextResult.ok(first_entry)
                 return FlextResult.ok(None)  # User not found
             return FlextResult.fail(f"LDAP search failed: {search_result.error}")
@@ -200,7 +205,9 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 return FlextResult.fail("Distinguished name cannot be empty")
 
             # Use LDAP client to get entry by DN
-            get_result: FlextResult[dict[str, object]] = await self.ldap_client.get_entry(
+            get_result: FlextResult[
+                dict[str, object]
+            ] = await self.ldap_client.get_entry(
                 dn=dn.strip(),
             )
 
@@ -276,7 +283,9 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             # Search for user with specific UID
             search_filter = f"(uid={uid.strip()})"
 
-            search_result: FlextResult[list[dict[str, object]]] = await self.ldap_client.search(
+            search_result: FlextResult[
+                list[dict[str, object]]
+            ] = await self.ldap_client.search(
                 base_dn="",  # Will use configured base DN
                 search_filter=search_filter,
                 attributes=["*"],
@@ -285,18 +294,14 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 
             if search_result.is_success:
                 entries = search_result.data or []
-                if entries and isinstance(entries, list):
-                    # Convert first entry to FlextLdapUser
-                    first_entry = entries[0]
-                    # Since LDAP client returns dict[str, object], convert to FlextLdapUser if needed
-                    if isinstance(first_entry, dict):
-                        # Convert dict to FlextLdapUser - this is the expected case
-                        logger.info("Converting LDAP response dict to FlextLdapUser")
-                        return None  # For now, return None - proper conversion would need implementation
-                    # For any other type, log and return None
-                    logger.warning("Received unexpected type from LDAP client")
-                    return None
-                return None  # User not found
+                if entries:
+                    # Convert first entry to FlextLdapUser - we know it's list[dict[str, object]] from type annotation
+                    entries[0]  # This is guaranteed to be dict[str, object]
+                    # Convert dict to FlextLdapUser - this is the expected case
+                    logger.info("Converting LDAP response dict to FlextLdapUser")
+                    # For now, return None - proper conversion would need implementation
+
+                return None  # User not found or conversion not implemented
             # Log error but return None for compatibility
             msg = f"Failed to search user by UID {uid}: {search_result.error}"
             logger.warning(msg)
@@ -330,7 +335,9 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             self._validate_search_parameters(base_dn, filter_string)
 
             # Use LDAP client to perform search
-            search_result: FlextResult[list[dict[str, object]]] = await self.ldap_client.search(
+            search_result: FlextResult[
+                list[dict[str, object]]
+            ] = await self.ldap_client.search(
                 base_dn=base_dn.value,
                 search_filter=filter_string.strip(),
                 attributes=attributes or ["*"],
@@ -341,7 +348,9 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 # MYPY FIX: Return empty list since we need FlextLdapUser objects but client returns dict
                 # This method needs proper conversion from dict[str, object] to FlextLdapUser
                 search_data = search_result.data or []
-                logger.info(f"Found {len(search_data)} LDAP entries - conversion to FlextLdapUser not implemented")
+                logger.info(
+                    f"Found {len(search_data)} LDAP entries - conversion to FlextLdapUser not implemented"
+                )
                 return []  # Return empty list for now - proper conversion needed
             # Log error but return empty list for compatibility
             msg = f"LDAP search failed: {search_result.error}"

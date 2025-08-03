@@ -11,7 +11,13 @@ This example demonstrates advanced usage patterns:
 
 Usage:
     python examples/advanced_patterns.py
+
+Copyright (c) 2025 FLEXT Contributors
+SPDX-License-Identifier: MIT
+
 """
+
+from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator

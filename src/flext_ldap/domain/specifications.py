@@ -4,6 +4,10 @@
 Built on flext-core foundation patterns.
 
 Specifications encapsulate business rules that can be combined and reused.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

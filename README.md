@@ -17,16 +17,19 @@ Modern LDAP operations library built on **FLEXT-Core** foundation implementing C
 FLEXT-LDAP is a core infrastructure component of the **FLEXT Data Platform**, providing enterprise-grade LDAP directory services with full integration across the ecosystem:
 
 ### Core Dependencies
+
 - **[flext-core](../flext-core)**: Foundation patterns (FlextResult, FlextContainer, FlextLDAPConfig)
 - **[flext-observability](../flext-observability)**: Structured logging, metrics, and health monitoring
 
 ### Data Pipeline Integration
+
 - **[flext-tap-ldap](../flext-tap-ldap)**: Singer tap for LDAP data extraction
-- **[flext-target-ldap](../flext-target-ldap)**: Singer target for LDAP data loading  
+- **[flext-target-ldap](../flext-target-ldap)**: Singer target for LDAP data loading
 - **[flext-dbt-ldap](../flext-dbt-ldap)**: DBT transformations for LDAP directory data
 - **[flext-meltano](../flext-meltano)**: Orchestration of LDAP data pipelines
 
 ### Authentication & Security
+
 - **[flext-auth](../flext-auth)**: Enterprise authentication with LDAP directory integration
 - **[flext-ldif](../flext-ldif)**: LDIF data format support for backup/restore operations
 
@@ -35,14 +38,16 @@ FLEXT-LDAP is a core infrastructure component of the **FLEXT Data Platform**, pr
 ## 🎯 Project Objectives
 
 ### Primary Mission
+
 Provide enterprise-grade LDAP directory services integration for the FLEXT data platform, enabling:
 
 1. **Data Pipeline Integration**: Extract, transform, and load directory data using Singer/Meltano patterns
-2. **Authentication Services**: Power enterprise authentication through flext-auth integration  
+2. **Authentication Services**: Power enterprise authentication through flext-auth integration
 3. **Directory Management**: Comprehensive LDAP operations with Clean Architecture patterns
 4. **Production Reliability**: Type-safe operations with comprehensive error handling
 
 ### Business Value
+
 - **Enterprise Migrations**: Powers large-scale directory migrations (e.g., Oracle Unified Directory)
 - **Data Integration**: Enables LDAP data in analytical pipelines and data warehouses
 - **Identity Management**: Provides foundation for enterprise identity and access management
@@ -53,6 +58,7 @@ Provide enterprise-grade LDAP directory services integration for the FLEXT data 
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.13+
 - FLEXT workspace environment
 - LDAP server access (or Docker for testing)
@@ -76,33 +82,33 @@ from flext_ldap import get_ldap_api, FlextLdapCreateUserRequest
 async def example_ldap_operations():
     # Initialize FLEXT-LDAP API with dependency injection
     api = get_ldap_api()
-    
+
     # Establish secure connection with FlextResult pattern
     async with api.connection(
         "ldap://directory.company.com",
-        "cn=admin,dc=company,dc=com", 
+        "cn=admin,dc=company,dc=com",
         "secure_password"
     ) as session:
-        
+
         # Search directory entries
         users = await api.search(
-            session, 
-            "ou=users,dc=company,dc=com", 
+            session,
+            "ou=users,dc=company,dc=com",
             "(objectClass=person)"
         )
-        
+
         if users.is_success:
             print(f"Found {len(users.data)} users")
-        
+
         # Create new user with domain validation
         user_request = FlextLdapCreateUserRequest(
             dn="cn=jane.doe,ou=users,dc=company,dc=com",
             uid="jane.doe",
-            cn="Jane Doe", 
+            cn="Jane Doe",
             sn="Doe",
             mail="jane.doe@company.com"
         )
-        
+
         result = await api.create_user(session, user_request)
         if result.is_success:
             print(f"Created user: {result.data.dn}")
@@ -124,7 +130,7 @@ src/flext_ldap/
 │   ├── repositories.py  # Repository interfaces
 │   ├── services.py      # Domain services
 │   └── events.py        # Domain events
-├── application/         # Application Layer  
+├── application/         # Application Layer
 │   ├── ldap_service.py  # Application services
 │   └── handlers/        # Command/Query handlers
 ├── infrastructure/     # Infrastructure Layer
@@ -195,7 +201,7 @@ ldif_processor = FlextLdifProcessor()
 async with ldap_api.connection(...) as session:
     users = await ldap_api.search(session, "ou=users,dc=company,dc=com", "(objectClass=person)")
     ldif_data = ldif_processor.export_entries(users.data)
-    
+
     # Backup directory data
     with open("directory_backup.ldif", "w") as f:
         f.write(ldif_data)
@@ -253,6 +259,7 @@ make test-ldap          # Live LDAP server integration tests
 ### Enterprise Deployments
 
 **Currently Powers**:
+
 - **ALGAR Oracle Unified Directory Migration**: Large-scale enterprise directory migration
 - **GrupoNos Identity Management**: Multi-domain LDAP authentication
 - **Corporate Data Pipelines**: Directory data analytics and reporting
@@ -260,7 +267,7 @@ make test-ldap          # Live LDAP server integration tests
 ### Performance Characteristics
 
 - **Connection Pooling**: Efficient LDAP connection management
-- **Async Operations**: Non-blocking I/O for high-throughput scenarios  
+- **Async Operations**: Non-blocking I/O for high-throughput scenarios
 - **Type Safety**: Zero runtime type errors with strict MyPy validation
 - **Error Handling**: Comprehensive error recovery and retry mechanisms
 
@@ -322,6 +329,7 @@ settings.enable_connection_pooling = True
 ## 📈 Roadmap
 
 ### Current Version: 0.9.0
+
 - ✅ Clean Architecture implementation
 - ✅ FLEXT-Core integration
 - ✅ Production LDAP operations
@@ -329,6 +337,7 @@ settings.enable_connection_pooling = True
 - ✅ Comprehensive testing
 
 ### Upcoming: 1.0.0 (Target: Q1 2025)
+
 - 🔄 Singer ecosystem integration (flext-tap-ldap, flext-target-ldap)
 - 🔄 flext-auth authentication integration
 - 🔄 flext-ldif data format support
@@ -336,6 +345,7 @@ settings.enable_connection_pooling = True
 - 🔄 Production monitoring dashboards
 
 ### Future: 1.1.0+
+
 - 📋 Advanced LDAP controls and extensions
 - 📋 Schema validation and migration tools
 - 📋 Multi-server replication support
@@ -364,7 +374,7 @@ make setup
 
 # 2. Implement changes following Clean Architecture
 # - Domain layer: Business logic and entities
-# - Application layer: Use cases and workflows  
+# - Application layer: Use cases and workflows
 # - Infrastructure layer: External integrations
 # - API layer: Interface adapters
 
@@ -381,6 +391,7 @@ make validate
 ### Code Review Process
 
 All contributions require:
+
 - ✅ Architecture review for Clean Architecture compliance
 - ✅ Security review for LDAP operations
 - ✅ Performance impact assessment
@@ -398,12 +409,14 @@ MIT License - See [LICENSE](LICENSE) file for details.
 ## 🔗 Related Projects
 
 ### FLEXT Ecosystem
+
 - **[FLEXT Platform](https://github.com/flext-sh/flext)**: Complete data integration platform
 - **[flext-core](../flext-core)**: Foundation library with core patterns
 - **[flext-observability](../flext-observability)**: Monitoring and observability
 - **[flext-meltano](../flext-meltano)**: Singer/Meltano orchestration platform
 
 ### Enterprise Deployments
+
 - **[algar-oud-mig](../algar-oud-mig)**: Oracle Unified Directory migration project
 - **[gruponos-meltano-native](../gruponos-meltano-native)**: GrupoNos identity management
 
@@ -414,8 +427,8 @@ MIT License - See [LICENSE](LICENSE) file for details.
 - **Documentation**: [FLEXT Documentation Hub](../docs/)
 - **Issues**: [GitHub Issues](https://github.com/flext-sh/flext/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/flext-sh/flext/discussions)
-- **Enterprise Support**: Contact FLEXT Team at team@flext.sh
+- **Enterprise Support**: Contact FLEXT Team at <team@flext.sh>
 
 ---
 
-*Part of the **FLEXT Framework** ecosystem - Enterprise-grade data integration platform*
+_Part of the **FLEXT Framework** ecosystem - Enterprise-grade data integration platform_

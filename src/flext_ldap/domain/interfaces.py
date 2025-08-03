@@ -4,14 +4,16 @@
 Built on flext-core foundation patterns.
 
 Interfaces define contracts for infrastructure implementations.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
-
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core root imports
 
 if TYPE_CHECKING:
     from flext_core import FlextResult

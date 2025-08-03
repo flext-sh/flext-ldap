@@ -3,6 +3,10 @@
 
 This script automatically starts an OpenLDAP container and runs examples against it.
 Perfect for testing and demonstration without needing a manual LDAP setup.
+
+Copyright (c) 2025 FLEXT Contributors
+SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -17,10 +21,6 @@ from pathlib import Path
 
 from integrated_ldap_service import main as integrated_main
 from ldap_simple_client_example import main as simple_main
-
-# Add src to path for local testing
-src_path = Path(__file__).parent.parent / "src"
-sys.path.insert(0, str(src_path))
 
 
 def start_openldap_container() -> bool:

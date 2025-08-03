@@ -25,7 +25,7 @@ def test_docker_ldap_connection_shared(
 
     # Create proper config
     config = FlextLdapConnectionConfig(
-        server="localhost",
+        host="localhost",
         port=3389,
         use_ssl=False,
         timeout_seconds=30,

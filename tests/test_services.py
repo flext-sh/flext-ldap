@@ -107,11 +107,11 @@ class TestFlextLdapUserApplicationService:
     ) -> None:
         """Test finding user by UID."""
         # Create user first
-        create_result = user_service.create_user(sample_user_request)
+        create_result = await user_service.create_user(sample_user_request)
         assert create_result.is_success
 
         # Find by UID
-        find_result = user_service.find_user_by_uid(sample_user_request.uid)
+        find_result = await user_service.find_user_by_uid(sample_user_request.uid)
         assert find_result.is_success
         assert find_result.data is not None
         if find_result.data.uid != sample_user_request.uid:

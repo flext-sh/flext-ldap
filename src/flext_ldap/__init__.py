@@ -32,7 +32,9 @@ Example:
     ...     # Create new user
     ...     user_request = FlextLdapCreateUserRequest(
     ...         dn="uid=john,ou=users,dc=example,dc=com",
-    ...         uid="john", cn="John Doe", sn="Doe"
+    ...         uid="john",
+    ...         cn="John Doe",
+    ...         sn="Doe",
     ...     )
     ...     create_result = await api.create_user(session, user_request)
 
@@ -48,28 +50,20 @@ Standards Compliance:
     - RFC 4515: LDAP search filters
     - Type-safe operations with 100% MyPy compliance
 
-Author: FLEXT Development Team
-Version: 0.9.0
-License: MIT
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 
 """
 
 from __future__ import annotations
 
-# Legacy compatibility - these will show deprecation warnings
 import warnings
 
-# Configuration - Updated to use centralized FlextLDAPConfig from flext-core
 from flext_core import FlextLDAPConfig
 
-# Core API - Single point of entry
 from flext_ldap.api import FlextLdapApi, get_ldap_api
 from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
-
-# Domain entities and value objects (now at root - cleaner imports)
 from flext_ldap.entities import FlextLdapEntry, FlextLdapGroup, FlextLdapUser
-
-# Infrastructure client (now at root)
 from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
 from flext_ldap.values import (
     FlextLdapCreateUserRequest,
@@ -77,7 +71,6 @@ from flext_ldap.values import (
     FlextLdapExtendedEntry,
     FlextLdapFilterValue,
     FlextLdapScopeEnum,
-    # Consolidated aliases for backward compatibility
     LDAPEntry,
     LDAPFilter,
     LDAPScope,

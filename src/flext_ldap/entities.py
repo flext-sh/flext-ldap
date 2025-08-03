@@ -34,7 +34,7 @@ Example:
     ...     id="entry-123",
     ...     dn="uid=john,ou=users,dc=example,dc=com",
     ...     object_classes=["inetOrgPerson", "person"],
-    ...     attributes={"uid": ["john"], "cn": ["John Doe"]}
+    ...     attributes={"uid": ["john"], "cn": ["John Doe"]},
     ... )
     >>> validation_result = entry.validate_domain_rules()
     >>> if validation_result.is_success:
@@ -45,7 +45,8 @@ Integration:
     - Compatible with repository pattern implementations
     - Supports domain event sourcing and CQRS patterns
 
-Author: FLEXT Development Team
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 
 """
 
@@ -54,7 +55,6 @@ from __future__ import annotations
 import warnings
 from datetime import UTC, datetime
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core centralized models
 from flext_core import (
     FlextDomainEntity,
     FlextEntity,
@@ -106,10 +106,7 @@ class FlextLdapEntry(FlextDomainEntity):
         ...     id="uuid-123",
         ...     dn="cn=server,ou=hosts,dc=company,dc=com",
         ...     object_classes=["device", "ipHost"],
-        ...     attributes={
-        ...         "cn": ["server"],
-        ...         "ipHostNumber": ["192.168.1.100"]
-        ...     }
+        ...     attributes={"cn": ["server"], "ipHostNumber": ["192.168.1.100"]},
         ... )
         >>> validation = entry.validate_domain_rules()
         >>> assert validation.is_success

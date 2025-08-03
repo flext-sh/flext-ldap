@@ -2,6 +2,10 @@
 
 Consolidates client.py and converters.py into intelligent infrastructure layer.
 Uses flext-core patterns for connection management, type conversion, and caching.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -801,7 +805,7 @@ class FlextLdapSimpleClient:
             )
             return FlextResult.fail(f"Delete error: {e}")
 
-    async def disconnect(self) -> FlextResult[bool]:
+    def disconnect(self) -> FlextResult[bool]:
         """Disconnect with proper cleanup."""
         logger.debug(
             "Disconnecting from LDAP server",

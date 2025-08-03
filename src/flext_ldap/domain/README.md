@@ -5,6 +5,7 @@ The domain layer contains pure business logic for LDAP directory operations, imp
 ## Architecture Principles
 
 This layer follows strict Clean Architecture rules:
+
 - **No external dependencies**: Only imports from the same layer or flext-core
 - **Business logic focus**: Rich domain entities with embedded business rules
 - **Immutable value objects**: Type-safe data structures with validation
@@ -22,12 +23,13 @@ domain/
 ├── exceptions.py         # Domain-specific exception types
 ├── events.py            # Domain event definitions
 ├── interfaces.py        # Domain service interfaces
-├── ports.py             # Port definitions for Clean Architecture  
+├── ports.py             # Port definitions for Clean Architecture
 ├── security.py          # Domain security rules and validations
 └── aggregates.py        # Aggregate root definitions
 ```
 
 ### Entity Definitions (Root Level)
+
 - **entities.py**: Rich domain entities (FlextLdapUser, FlextLdapGroup, FlextLdapEntry)
 - **values.py**: Value objects and immutable data structures
 
@@ -36,20 +38,26 @@ domain/
 Domain entities contain business logic and maintain consistency boundaries:
 
 ### FlextLdapUser
+
 Rich user entity with business operations:
+
 - User activation/deactivation logic
 - Email change validation
 - Group membership management
 - Business rule enforcement
 
-### FlextLdapGroup  
+### FlextLdapGroup
+
 Group entity managing membership:
+
 - Member addition/removal
 - Permission validation
 - Group hierarchy management
 
 ### FlextLdapEntry
+
 Generic LDAP entry with:
+
 - Attribute validation
 - Schema compliance checking
 - DN hierarchy management
@@ -59,11 +67,13 @@ Generic LDAP entry with:
 Immutable value objects ensure data integrity:
 
 ### FlextLdapDistinguishedName
+
 - RFC 4514 DN format validation
 - Hierarchy navigation (parent/child relationships)
 - RDN extraction utilities
 
 ### FlextLdapFilter
+
 - RFC 4515 filter syntax validation
 - Filter composition operations
 - Search optimization hints
@@ -75,12 +85,12 @@ Abstract contracts for data access:
 ```python
 class FlextLdapUserRepository(ABC):
     """Domain repository contract for user operations."""
-    
+
     @abstractmethod
     async def save(self, user: FlextLdapUser) -> FlextResult[FlextLdapUser]:
         """Save user to directory."""
-        
-    @abstractmethod  
+
+    @abstractmethod
     async def find_by_dn(self, dn: str) -> FlextResult[Optional[FlextLdapUser]]:
         """Find user by distinguished name."""
 ```
@@ -92,7 +102,7 @@ Business rule specifications using the Specification pattern:
 ```python
 class ActiveUserSpecification(FlextLdapSpecification[FlextLdapUser]):
     """Specification for active user validation."""
-    
+
     def is_satisfied_by(self, user: FlextLdapUser) -> bool:
         return user.is_active and user.mail is not None
 ```
@@ -113,17 +123,20 @@ class UserActivatedEvent(FlextLdapDomainEvent):
 ## Usage Guidelines
 
 ### Business Logic Placement
+
 - Put business rules in domain entities
 - Use specifications for complex validation logic
 - Implement domain services for multi-entity operations
 - Raise domain events for significant business occurrences
 
 ### External Dependencies
+
 - Never import from infrastructure or application layers
 - Only use flext-core foundation types
 - Maintain pure business logic without framework coupling
 
 ### Testing Strategy
+
 - Test business logic in isolation
 - Use test doubles for repository interfaces
 - Validate domain events are raised correctly
@@ -132,6 +145,7 @@ class UserActivatedEvent(FlextLdapDomainEvent):
 ## Integration with Application Layer
 
 The domain layer provides contracts that the application layer implements:
+
 - Repository interfaces → Infrastructure implementations
 - Domain services → Application service coordination
 - Domain events → Event handlers and side effects

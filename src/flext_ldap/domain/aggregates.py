@@ -4,13 +4,16 @@
 Built on flext-core foundation patterns.
 
 Aggregates define consistency boundaries in the LDAP domain.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext-core root imports
 from flext_core import FlextAggregateRoot, FlextEntity
 
 if TYPE_CHECKING:

@@ -1,27 +1,22 @@
 #!/usr/bin/env python3
 """Example of using the integrated LDAP service.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+This example demonstrates how to use the LDAPService for LDAP operations.
+
+Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 
-This example demonstrates how to use the LDAPService for LDAP operations.
 """
 
 from __future__ import annotations
 
 import asyncio
-import sys
-from pathlib import Path
 
 from flext_core import get_logger
 from flext_ldap import LDAPService
 from flext_ldap.domain.value_objects import FlextLdapCreateUserRequest
 
 logger = get_logger(__name__)
-
-# Force use of local src instead of installed package
-src_path = Path(__file__).parent.parent / "src"
-sys.path.insert(0, str(src_path))
 
 
 async def main() -> None:

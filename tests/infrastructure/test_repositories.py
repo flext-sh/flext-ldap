@@ -1,4 +1,9 @@
-"""Tests for LDAP infrastructure repositories."""
+"""Tests for LDAP infrastructure repositories.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
+"""
 
 from __future__ import annotations
 
@@ -160,7 +165,7 @@ class TestFlextLdapRepository:
     @pytest.mark.asyncio
     async def test_list_all_empty(self, repository: FlextLdapRepository) -> None:
         """Test listing all entities when repository is empty."""
-        results = await repository.list_all()
+        results = repository.list_all()
         assert len(results) == 0
 
     @pytest.mark.asyncio
@@ -170,7 +175,7 @@ class TestFlextLdapRepository:
         """Test listing all entities with data."""
         repository.save(sample_user)
 
-        results = await repository.list_all()
+        results = repository.list_all()
         assert len(results) == 1
         assert results[0] == sample_user
 
@@ -193,11 +198,11 @@ class TestFlextLdapRepository:
             repository.save(user)
 
         # Test limit
-        results = await repository.list_all(limit=3)
+        results = repository.list_all(limit=3)
         assert len(results) == 3
 
         # Test offset
-        results = await repository.list_all(limit=2, offset=2)
+        results = repository.list_all(limit=2, offset=2)
         assert len(results) == 2
 
     @pytest.mark.asyncio

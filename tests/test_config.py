@@ -56,8 +56,8 @@ class TestFlextLdapConnectionConfig:
         """Test FlextLdapConnectionConfig with default values."""
 
         config = FlextLdapConnectionConfig()
-        if config.server != "localhost":
-            raise AssertionError(f"Expected {'localhost'}, got {config.server}")
+        if config.host != "localhost":
+            raise AssertionError(f"Expected {'localhost'}, got {config.host}")
         assert config.port == 389
         if config.use_ssl:
             raise AssertionError(f"Expected False, got {config.use_ssl}")
@@ -81,8 +81,8 @@ class TestFlextLdapConnectionConfig:
             pool_size=20,
             enable_connection_pooling=False,
         )
-        if config.server != "test.example.com":
-            raise AssertionError(f"Expected {'test.example.com'}, got {config.server}")
+        if config.host != "test.example.com":
+            raise AssertionError(f"Expected {'test.example.com'}, got {config.host}")
         assert config.port == 636
         if not (config.use_ssl):
             raise AssertionError(f"Expected True, got {config.use_ssl}")
@@ -165,7 +165,10 @@ class TestFlextLdapAuthConfig:
         config = FlextLdapAuthConfig()
         if config.bind_dn != "":
             raise AssertionError(f"Expected {''}, got {config.bind_dn}")
-        assert config.bind_password == ""
+        assert (
+            config.bind_password is not None
+            and config.bind_password.get_secret_value() == ""
+        )
         if config.use_anonymous_bind:
             raise AssertionError(f"Expected False, got {config.use_anonymous_bind}")
         assert config.sasl_mechanism is None
@@ -184,7 +187,8 @@ class TestFlextLdapAuthConfig:
             raise AssertionError(
                 f"Expected {'cn=admin,dc=example,dc=org'}, got {config.bind_dn}"
             )
-        assert config.bind_password == "secret"
+        assert config.bind_password is not None
+        assert config.bind_password.get_secret_value() == "secret"
         if not (config.use_anonymous_bind):
             raise AssertionError(f"Expected True, got {config.use_anonymous_bind}")
         if config.sasl_mechanism != "EXTERNAL":
@@ -543,9 +547,9 @@ class TestFlextLdapSettings:
 
             settings = FlextLdapSettings()
             assert settings is not None
-            if settings.connection.server != "localhost":
+            if settings.connection.host != "localhost":
                 raise AssertionError(
-                    f"Expected {'localhost'}, got {settings.connection.server}"
+                    f"Expected {'localhost'}, got {settings.connection.host}"
                 )
             assert settings.connection.port == 389
             if settings.project_name != "flext-infrastructure.databases.flext-ldap":
@@ -593,9 +597,9 @@ class TestFlextLdapSettings:
                 f"Expected {'custom-project'}, got {settings.project_name}"
             )
         assert settings.project_version == "0.9.0"
-        if settings.connection.server != "custom.ldap.com":
+        if settings.connection.host != "custom.ldap.com":
             raise AssertionError(
-                f"Expected {'custom.ldap.com'}, got {settings.connection.server}"
+                f"Expected {'custom.ldap.com'}, got {settings.connection.host}"
             )
         assert settings.connection.port == 636
         if not (settings.connection.use_ssl):
