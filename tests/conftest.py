@@ -111,7 +111,7 @@ class OpenLDAPContainerManager:
                 # Check if container is still running
                 self.container.reload()
                 if self.container.status != "running":
-                    msg = f"Container failed to start: {self.container.status}"
+                    msg: str = f"Container failed to start: {self.container.status}"
                     self._raise_container_error(msg)
 
                 # Try to connect to LDAP port
@@ -143,7 +143,7 @@ class OpenLDAPContainerManager:
 
             time.sleep(1)
 
-        msg = f"OpenLDAP container failed to become ready within {timeout} seconds"
+        msg: str = f"OpenLDAP container failed to become ready within {timeout} seconds"
         raise RuntimeError(msg)
 
     def is_container_running(self) -> bool:
@@ -226,7 +226,7 @@ async def _cleanup_ldap_entries_under_dn(
     )
 
     # Early return if search failed or no data
-    if not search_result.is_success or not search_result.data:
+    if not search_result.success or not search_result.data:
         return
 
     # Delete entries (except the OU itself)
@@ -255,7 +255,7 @@ async def clean_ldap_container(
         ldap_test_config["password"],
     )
 
-    if connect_result.is_success:
+    if connect_result.success:
         connection_id = connect_result.data
 
         try:
@@ -285,8 +285,8 @@ async def temporary_ldap_entry(
     try:
         # Create entry
         result = await client.add_entry(connection_id, dn, attributes)
-        if not result.is_success:
-            msg = f"Failed to create temporary entry {dn}: {result.error}"
+        if not result.success:
+            msg: str = f"Failed to create temporary entry {dn}: {result.error}"
             raise RuntimeError(msg)
 
         yield dn

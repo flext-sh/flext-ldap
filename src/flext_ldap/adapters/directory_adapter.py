@@ -361,7 +361,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             )
             return FlextResult.fail(f"Search failed: {search_result.error}")
 
-        # Convert and return results - search_result.data already contains FlextLdapDirectoryEntry objects
+        # Convert and return results - search_result.data already contains
+        # FlextLdapDirectoryEntry objects
         entries_data = search_result.data or []
         return FlextResult.ok(entries_data)
 
@@ -399,7 +400,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             )
             return self._convert_raw_search_result(raw_result)
         except Exception as e:
-            logger.exception(f"Search operation failed: {e}")
+            logger.exception("Search operation failed", exc_info=e)
             return FlextResult.fail(f"Search error: {e}")
 
     def _convert_raw_search_result(
@@ -464,7 +465,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         )
         return FlextResult.ok(entries)
 
-    async def disconnect(self, connection_id: str | None = None) -> FlextResult[bool]:
+    async def disconnect(self, connection_id: str | None = None) -> FlextResult[bool]:  # noqa: ARG002
         """Disconnect from directory server.
 
         Args:
@@ -477,7 +478,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         try:
             # For compatibility with test expectations, we accept connection_id
             # but the underlying client disconnect() doesn't use it
-            disconnect_result = await self._ldap_client.disconnect()
+            disconnect_result = self._ldap_client.disconnect()
             if disconnect_result.is_success:
                 return FlextResult.ok(data=DirectoryOperationResult.SUCCESS)
             return FlextResult.fail(f"Disconnect failed: {disconnect_result.error}")
@@ -580,7 +581,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 self._ldap_client.search(base_dn, search_filter, actual_attributes),
             )
         except Exception as e:
-            logger.exception(f"LDAP search operation failed: {e}")
+            logger.exception("LDAP search operation failed", exc_info=e)
             return FlextResult.fail(f"Search error: {e}")
 
     def _convert_search_results_to_directory_protocol(
@@ -591,8 +592,12 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         entries: list[FlextLdapDirectoryEntryProtocol] = []
         for raw_entry in raw_results:
             entry = FlextLdapDirectoryEntry(
-                dn=raw_entry.get("dn", ""),
-                attributes=raw_entry.get("attributes", {}),
+                dn=str(raw_entry.get("dn", "")),
+                attributes=(
+                    cast("dict[str, object]", raw_entry.get("attributes", {}))
+                    if isinstance(raw_entry.get("attributes"), dict)
+                    else {}
+                ),
             )
             entries.append(entry)
 
@@ -686,7 +691,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                     # Type ignore for dynamic callable execution
                     future = executor.submit(lambda: asyncio.run(operation_func(*args)))  # type: ignore[operator]
                     raw_result = future.result(timeout=30)
-                    # Only convert search results - other operations return their results directly
+                    # Only convert search results - other operations return their
+                    # results directly
                     if hasattr(operation_func, "__name__") and "search" in str(
                         operation_func,
                     ):
@@ -699,7 +705,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             # Type ignore for dynamic callable execution
             return asyncio.run(operation_func(*args))  # type: ignore[operator]
         except Exception as e:
-            logger.exception(f"Async operation failed: {e}")
+            logger.exception("Async operation failed", exc_info=e)
             return FlextResult.fail(f"Operation error: {e}")
 
     def modify_entry(

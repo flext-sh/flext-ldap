@@ -211,7 +211,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 attributes=entry_data
             )
 
-            return FlextResult.ok(user) if result.is_success else FlextResult.fail(result.error)
+            return FlextResult.ok(user) if result.success else FlextResult.fail(result.error)
         except Exception as e:
             return FlextResult.fail(f"Infrastructure error: {str(e)}")
 ```
@@ -453,7 +453,7 @@ def search(server, bind_dn, password, base_dn, filter):
         async with api.connection(server, bind_dn, password) as session:
             result = await api.search(session, base_dn, filter)
 
-            if result.is_success:
+            if result.success:
                 for entry in result.data:
                     click.echo(f"DN: {entry.dn}")
             else:
@@ -908,7 +908,7 @@ async def bulk_user_creation(user_data_list: List[dict]) -> FlextResult[List[Fle
         for user_data in user_data_list:
             result = await create_user_pipeline_with_session(api, session, user_data)
 
-            if result.is_success:
+            if result.success:
                 results.append(result.data)
             else:
                 errors.append(f"User {user_data.get('uid', 'unknown')}: {result.error}")
@@ -1109,7 +1109,7 @@ class TestFlextLdapUser:
 
         result = user.activate()
 
-        assert result.is_success
+        assert result.success
         assert user.is_active
         assert len(user.domain_events) == 1
         assert user.domain_events[0]["type"] == "UserActivated"
@@ -1238,7 +1238,7 @@ class TestLdapPipelines:
 
         result = await create_user_pipeline(user_data)
 
-        assert result.is_success
+        assert result.success
         assert result.data.uid == "john"
         assert result.data.cn == "John Doe"
 
@@ -1499,7 +1499,7 @@ def __getattr__(name: str) -> Any:
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 # Clean public API (current and future)
-__all__ = [
+__all__: list[str] = [
     # Core API (stable)
     "FlextLdapApi",
     "get_ldap_api",

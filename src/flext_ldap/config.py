@@ -183,7 +183,8 @@ type Version = str
 class FlextLdapAuthConfig(FlextLDAPConfig):
     """LDAP authentication configuration with specialized validation."""
 
-    # Override base defaults to match test expectations - maintain base class type compatibility
+    # Override base defaults to match test expectations - maintain base class
+    # type compatibility
     bind_dn: str | None = Field(
         default="", description="LDAP bind DN for authentication",
     )
@@ -217,7 +218,10 @@ class FlextLdapAuthConfig(FlextLDAPConfig):
 
 
 class FlextLdapSearchConfig(FlextBaseConfigModel):
-    """LDAP search configuration with specialized validation - avoids FlextLDAPConfig restrictions."""
+    """LDAP search configuration with specialized validation.
+
+    Avoids FlextLDAPConfig restrictions.
+    """
 
     # Copy essential LDAP fields from FlextLDAPConfig but with flexible validation
     host: str = Field("localhost", description="LDAP host address")
@@ -245,7 +249,10 @@ class FlextLdapSearchConfig(FlextBaseConfigModel):
     @field_validator("base_dn")
     @classmethod
     def validate_base_dn_search_flexible(cls, v: str) -> str:
-        """Validate base DN with flexible rules for search contexts - allows empty for search flexibility."""
+        """Validate base DN with flexible rules for search contexts.
+
+        Allows empty for search flexibility.
+        """
         # Allow empty base_dn for search configuration flexibility
         if not v or not v.strip():
             return ""

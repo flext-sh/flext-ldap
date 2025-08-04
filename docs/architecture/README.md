@@ -281,7 +281,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 attributes=entry_data
             )
 
-            if result.is_success:
+            if result.success:
                 return FlextResult.ok(user)
             else:
                 return FlextResult.fail(f\"Failed to save user: {result.error}\")
@@ -391,7 +391,7 @@ All operations return `FlextResult<T>` for type-safe error handling:
 ```python
 # Success case
 result = FlextResult.ok(user)
-if result.is_success:
+if result.success:
     user = result.data  # Type: FlextLdapUser
 
 # Failure case

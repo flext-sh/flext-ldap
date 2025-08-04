@@ -172,7 +172,7 @@ def validate_connection(config):
 ```python
 try:
     result = perform_ldap_operation()
-    if not result.is_success:
+    if not result.success:
         logger.error("LDAP operation failed", extra={
             "operation": "search",
             "error": result.error,
@@ -219,7 +219,7 @@ Combine FlextResult patterns with comprehensive logging:
 
 ```python
 result = ldap_client.search(base_dn, filter)
-if not result.is_success:
+if not result.success:
     logger.error("LDAP search failed", extra={
         "base_dn": base_dn,
         "filter": filter,

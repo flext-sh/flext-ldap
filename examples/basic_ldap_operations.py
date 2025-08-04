@@ -68,10 +68,10 @@ async def demonstrate_configuration() -> None:
     auth_validation = auth_config.validate_domain_rules()
 
     # Split long line for readability
-    conn_status = "PASS" if conn_validation.is_success else "FAIL"
+    conn_status = "PASS" if conn_validation.success else "FAIL"
     print(f"✅ Connection validation: {conn_status}")
     # Split long line for readability
-    auth_status = "PASS" if auth_validation.is_success else "FAIL"
+    auth_status = "PASS" if auth_validation.success else "FAIL"
     print(f"✅ Auth validation: {auth_status}")
 
     return connection_config, auth_config
@@ -95,7 +95,7 @@ async def demonstrate_api_usage() -> None:
             session_id="demo_session",
         )
 
-        if connection_result.is_success:
+        if connection_result.success:
             print(f"✅ Connected with session: {connection_result.data}")
         else:
             print(f"❌ Connection failed: {connection_result.error}")
@@ -124,7 +124,7 @@ async def demonstrate_search_operations(api: FlextLdapApi) -> None:
             scope="subtree",
         )
 
-        if search_result.is_success:
+        if search_result.success:
             entries = search_result.data or []
             print(f"✅ Search completed: {len(entries)} entries found")
 
@@ -150,7 +150,7 @@ async def demonstrate_error_handling() -> None:
     )
 
     validation_result = invalid_config.validate_domain_rules()
-    if not validation_result.is_success:
+    if not validation_result.success:
         print(f"✅ Caught configuration error: {validation_result.error}")
 
     # 2. Authentication errors
@@ -161,7 +161,7 @@ async def demonstrate_error_handling() -> None:
     )
 
     auth_validation = invalid_auth.validate_domain_rules()
-    if not auth_validation.is_success:
+    if not auth_validation.success:
         print(f"✅ Caught authentication error: {auth_validation.error}")
 
     # 3. Connection errors (simulated)
@@ -171,7 +171,7 @@ async def demonstrate_error_handling() -> None:
             server_url="ldap://nonexistent.server:389", session_id="error_test"
         )
 
-        if not connection_result.is_success:
+        if not connection_result.success:
             print(f"✅ Caught connection error: {connection_result.error}")
 
     except Exception as e:
@@ -201,7 +201,7 @@ async def demonstrate_logging_integration() -> None:
     logger.debug("Testing configuration validation")
     result = config.validate_domain_rules()
 
-    if result.is_success:
+    if result.success:
         logger.info("Configuration validation passed")
     else:
         logger.error("Configuration validation failed", extra={"error": result.error})

@@ -13,8 +13,8 @@ from __future__ import annotations
 
 import asyncio
 
-from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
 from flext_ldap.config import FlextLdapConnectionConfig
+from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
 
 
 async def main() -> None:
@@ -33,7 +33,7 @@ async def main() -> None:
     )
 
     result = client.connect(single_config)
-    if result.is_success:
+    if result.success:
         print("✅ Connected successfully")
 
         # Example search
@@ -43,7 +43,7 @@ async def main() -> None:
             attributes=["cn", "mail"],
         )
 
-        if search_result.is_success:
+        if search_result.success:
             for _entry in search_result.data[:3]:  # Show first 3
                 pass
 
@@ -64,7 +64,7 @@ async def main() -> None:
     )
 
     op_result = client.connect(test_config)
-    if op_result.is_success:
+    if op_result.success:
         print("✅ Connected for operations")
 
         # Add entry
@@ -78,20 +78,20 @@ async def main() -> None:
             },
         )
 
-        if add_result.is_success:
+        if add_result.success:
             # Modify entry
             modify_result = await client.modify(
                 dn="cn=testuser,dc=example,dc=com",
                 changes={"mail": "updated@example.com"},
             )
 
-            if modify_result.is_success:
+            if modify_result.success:
                 # Delete entry
                 delete_result = await client.delete(
                     dn="cn=testuser,dc=example,dc=com",
                 )
 
-                if delete_result.is_success:
+                if delete_result.success:
                     print("✅ Entry lifecycle completed")
 
         # Disconnect

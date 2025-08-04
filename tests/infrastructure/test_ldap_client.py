@@ -119,7 +119,7 @@ class TestFlextLdapSimpleClient:
 
             result = client.connect(config)  # sync call
 
-            assert result.is_success
+            assert result.success
             assert client._current_connection == mock_connection
 
     def test_connect_failure(self) -> None:
@@ -182,7 +182,7 @@ class TestFlextLdapSimpleClient:
 
             result = await client.search("dc=example,dc=com", "(cn=test)")
 
-            assert result.is_success
+            assert result.success
             assert len(result.data) == 1
             assert result.data[0]["dn"] == "cn=test,dc=example,dc=com"
 
@@ -236,7 +236,7 @@ class TestFlextLdapSimpleClient:
                 {"cn": "test", "sn": "user"},
             )
 
-            assert result.is_success
+            assert result.success
             assert result.data is True
 
     @pytest.mark.asyncio
@@ -270,7 +270,7 @@ class TestFlextLdapSimpleClient:
                 "cn=test,dc=example,dc=com", {"mail": "newemail@example.com"}
             )
 
-            assert result.is_success
+            assert result.success
             assert result.data is True
 
     @pytest.mark.asyncio
@@ -289,7 +289,7 @@ class TestFlextLdapSimpleClient:
 
             result = await client.delete("cn=test,dc=example,dc=com")
 
-            assert result.is_success
+            assert result.success
             assert result.data is True
 
     @pytest.mark.asyncio
@@ -311,7 +311,7 @@ class TestFlextLdapSimpleClient:
 
             result = client.disconnect()
 
-            assert result.is_success
+            assert result.success
             assert client._current_connection is None
 
     @pytest.mark.asyncio
@@ -320,7 +320,7 @@ class TestFlextLdapSimpleClient:
         client = FlextLdapSimpleClient()
         result = client.disconnect()  # sync call
 
-        assert result.is_success  # Should succeed even if not connected
+        assert result.success  # Should succeed even if not connected
 
     def test_is_connected_with_connection(self) -> None:
         """Test is_connected returns True when connected."""

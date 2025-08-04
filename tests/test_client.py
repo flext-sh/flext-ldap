@@ -67,8 +67,8 @@ class TestLDAPClient:
         # Test successful connection
         result = client.connect()
 
-        if not result.is_success:
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not result.success:
+            raise AssertionError(f"Expected True, got {result.success}")
 
         if not client.is_connected():
             raise AssertionError(f"Expected True, got {client.is_connected()}")
@@ -95,8 +95,8 @@ class TestLDAPClient:
         result = client.connect()
 
         # Enterprise-compatible: check FlextResult instead of expecting exception
-        if result.is_success:
-            raise AssertionError(f"Expected False, got {result.is_success}")
+        if result.success:
+            raise AssertionError(f"Expected False, got {result.success}")
 
         assert result.error is not None
         if "Connection failed" not in result.error:
@@ -125,12 +125,12 @@ class TestLDAPClient:
 
         # Test connection and disconnection
         connect_result = client.connect()
-        if not connect_result.is_success:
-            raise AssertionError(f"Expected True, got {connect_result.is_success}")
+        if not connect_result.success:
+            raise AssertionError(f"Expected True, got {connect_result.success}")
 
         disconnect_result = client.disconnect()
-        if not disconnect_result.is_success:
-            raise AssertionError(f"Expected True, got {disconnect_result.is_success}")
+        if not disconnect_result.success:
+            raise AssertionError(f"Expected True, got {disconnect_result.success}")
 
         # After disconnect, should not be connected
         if client.is_connected():
@@ -162,8 +162,8 @@ class TestLDAPClient:
 
         # Test connection and ping
         connect_result = client.connect()
-        if not connect_result.is_success:
-            raise AssertionError(f"Expected True, got {connect_result.is_success}")
+        if not connect_result.success:
+            raise AssertionError(f"Expected True, got {connect_result.success}")
 
         ping_result = client.ping()
         if not ping_result:
@@ -216,8 +216,8 @@ class TestLDAPClient:
 
         # Test connection
         connect_result = client.connect()
-        if not connect_result.is_success:
-            raise AssertionError(f"Expected True, got {connect_result.is_success}")
+        if not connect_result.success:
+            raise AssertionError(f"Expected True, got {connect_result.success}")
 
         # Test search operation (now properly awaited)
         result = await client.search(
@@ -226,8 +226,8 @@ class TestLDAPClient:
             attributes=["uid", "cn"],
         )
 
-        if not result.is_success:
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not result.success:
+            raise AssertionError(f"Expected True, got {result.success}")
         assert result.data is not None
         if len(result.data) != 1:
             raise AssertionError(f"Expected {1}, got {len(result.data)}")
@@ -257,8 +257,8 @@ class TestLDAPClient:
             search_filter="(uid=test)",
         )
 
-        if result.is_success:
-            raise AssertionError(f"Expected False, got {result.is_success}")
+        if result.success:
+            raise AssertionError(f"Expected False, got {result.success}")
         assert result.error is not None
         if "Not connected" not in result.error:
             raise AssertionError(f"Expected {'Not connected'} in {result.error}")
@@ -276,7 +276,7 @@ class TestLDAPClient:
         # Mock connect method to return success
         client.connect = Mock(return_value=FlextResult.ok(True))
 
-        # Mock modify method to return success
+        # Mock modify method to return success:
         client.modify = AsyncMock(return_value=FlextResult.ok(True))
 
         # Mock is_connected to return True
@@ -284,8 +284,8 @@ class TestLDAPClient:
 
         # Test connection
         connect_result = client.connect()
-        if not connect_result.is_success:
-            raise AssertionError(f"Expected True, got {connect_result.is_success}")
+        if not connect_result.success:
+            raise AssertionError(f"Expected True, got {connect_result.success}")
 
         # Test modify operation
         result = await client.modify(
@@ -293,8 +293,8 @@ class TestLDAPClient:
             changes={"mail": "test@example.org"},
         )
 
-        if not result.is_success:
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not result.success:
+            raise AssertionError(f"Expected True, got {result.success}")
 
         # Verify methods were called
         client.connect.assert_called_once()
@@ -323,8 +323,8 @@ class TestLDAPClient:
             changes={"mail": "test@example.org"},
         )
 
-        if result.is_success:
-            raise AssertionError(f"Expected False, got {result.is_success}")
+        if result.success:
+            raise AssertionError(f"Expected False, got {result.success}")
         assert result.error is not None
         if "Not connected" not in result.error:
             raise AssertionError(f"Expected {'Not connected'} in {result.error}")

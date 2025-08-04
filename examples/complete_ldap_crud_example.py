@@ -13,44 +13,57 @@ Uses MAXIMUM Docker container functionality for real LDAP operations.
 import asyncio
 import subprocess
 import time
+
 from flext_core import get_logger
 from flext_ldap import FlextLdapApi
 from flext_ldap.values import FlextLdapCreateUserRequest
 
 logger = get_logger(__name__)
 
+
 class DockerLDAPContainer:
     """Manages Docker LDAP container for testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.container_name = "flext-ldap-crud-test"
         self.port = 3389
 
-    def start_container(self):
+    def start_container(self) -> None:
         """Start Docker LDAP container."""
         print("🐳 Starting Docker LDAP container...")
 
         # Stop and remove existing container
-        subprocess.run(["docker", "stop", self.container_name],
-                      capture_output=True, check=False)
-        subprocess.run(["docker", "rm", self.container_name],
-                      capture_output=True, check=False)
+        subprocess.run(
+            ["docker", "stop", self.container_name], capture_output=True, check=False
+        )
+        subprocess.run(
+            ["docker", "rm", self.container_name], capture_output=True, check=False
+        )
 
         # Start new container
         cmd = [
-            "docker", "run", "-d",
-            "--name", self.container_name,
-            "-p", f"{self.port}:389",
-            "-e", "LDAP_ORGANISATION=FLEXT",
-            "-e", "LDAP_DOMAIN=flext.local",
-            "-e", "LDAP_ADMIN_PASSWORD=admin123",
-            "-e", "LDAP_TLS=false",
-            "osixia/openldap:1.5.0"
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            self.container_name,
+            "-p",
+            f"{self.port}:389",
+            "-e",
+            "LDAP_ORGANISATION=FLEXT",
+            "-e",
+            "LDAP_DOMAIN=flext.local",
+            "-e",
+            "LDAP_ADMIN_PASSWORD=admin123",
+            "-e",
+            "LDAP_TLS=false",
+            "osixia/openldap:1.5.0",
         ]
 
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True)
         if result.returncode != 0:
-            raise RuntimeError(f"Failed to start container: {result.stderr}")
+            msg = f"Failed to start container: {result.stderr}"
+            raise RuntimeError(msg)
 
         print(f"✅ Container started: {self.container_name}")
 
@@ -61,7 +74,7 @@ class DockerLDAPContainer:
         # Create organizational units
         self._setup_directory_structure()
 
-    def _setup_directory_structure(self):
+    def _setup_directory_structure(self) -> None:
         """Setup LDAP directory structure."""
         print("🏗️  Setting up directory structure...")
 
@@ -78,32 +91,42 @@ description: Container for groups
 """
 
         # Write LDIF to temp file
-        with open("/tmp/setup_directory.ldif", "w") as f:
+        with open("/tmp/setup_directory.ldif", "w", encoding="utf-8") as f:
             f.write(ldif_content)
 
         # Add entries to LDAP
         cmd = [
-            "ldapadd", "-x",
-            "-H", f"ldap://localhost:{self.port}",
-            "-D", "cn=admin,dc=flext,dc=local",
-            "-w", "admin123",
-            "-f", "/tmp/setup_directory.ldif"
+            "ldapadd",
+            "-x",
+            "-H",
+            f"ldap://localhost:{self.port}",
+            "-D",
+            "cn=admin,dc=flext,dc=local",
+            "-w",
+            "admin123",
+            "-f",
+            "/tmp/setup_directory.ldif",
         ]
 
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True)
         if result.returncode == 0:
             print("✅ Directory structure created")
         else:
             print(f"⚠️  Directory structure may already exist: {result.stderr}")
 
-    def stop_container(self):
+    def stop_container(self) -> None:
         """Stop and remove container."""
         print("🛑 Stopping Docker container...")
-        subprocess.run(["docker", "stop", self.container_name], capture_output=True)
-        subprocess.run(["docker", "rm", self.container_name], capture_output=True)
+        subprocess.run(
+            ["docker", "stop", self.container_name], check=False, capture_output=True
+        )
+        subprocess.run(
+            ["docker", "rm", self.container_name], check=False, capture_output=True
+        )
         print("✅ Container stopped and removed")
 
-async def demonstrate_complete_crud_operations():
+
+async def demonstrate_complete_crud_operations() -> None:
     """Demonstrate COMPLETE LDAP CRUD operations."""
     print("=== COMPLETE LDAP CRUD OPERATIONS DEMO ===")
 
@@ -119,7 +142,8 @@ async def demonstrate_complete_crud_operations():
         # Connect to LDAP
         connection_result = await ldap_service.connect(server_url, bind_dn, password)
         if connection_result.is_failure:
-            raise RuntimeError(f"Connection failed: {connection_result.error}")
+            msg = f"Connection failed: {connection_result.error}"
+            raise RuntimeError(msg)
 
         session_id = connection_result.data
         print(f"✅ Connected to LDAP server: {session_id}")
@@ -148,7 +172,8 @@ async def demonstrate_complete_crud_operations():
         print(f"❌ CRUD operations failed: {e}")
         raise
 
-async def perform_create_groups(ldap_service, session_id):
+
+async def perform_create_groups(ldap_service, session_id) -> None:
     """Perform CREATE operations for groups."""
     print("\n🔨 === CREATE GROUPS ===")
 
@@ -157,33 +182,31 @@ async def perform_create_groups(ldap_service, session_id):
         {
             "dn": "cn=engineers,ou=groups,dc=flext,dc=local",
             "cn": "engineers",
-            "description": "Engineering team"
+            "description": "Engineering team",
         },
         {
             "dn": "cn=marketing,ou=groups,dc=flext,dc=local",
             "cn": "marketing",
-            "description": "Marketing team"
-        }
+            "description": "Marketing team",
+        },
     ]
 
     for group_data in groups_to_create:
         print(f"   Creating group: {group_data['cn']}")
 
         result = await ldap_service.create_group(
-            session_id,
-            group_data["dn"],
-            group_data["cn"],
-            group_data["description"]
+            session_id, group_data["dn"], group_data["cn"], group_data["description"]
         )
 
-        if result.is_success:
+        if result.success:
             print(f"   ✅ Created group: {group_data['cn']}")
         else:
             print(f"   ❌ Failed to create group {group_data['cn']}: {result.error}")
 
     print("✅ CREATE groups completed")
 
-async def perform_create_users(ldap_service, session_id):
+
+async def perform_create_users(ldap_service, session_id) -> None:
     """Perform CREATE operations for users."""
     print("\n🔨 === CREATE USERS ===")
 
@@ -195,7 +218,7 @@ async def perform_create_users(ldap_service, session_id):
             "cn": "John Doe",
             "sn": "Doe",
             "mail": "john.doe@flext.local",
-            "title": "Software Engineer"
+            "title": "Software Engineer",
         },
         {
             "dn": "cn=jane.smith,ou=people,dc=flext,dc=local",
@@ -203,7 +226,7 @@ async def perform_create_users(ldap_service, session_id):
             "cn": "Jane Smith",
             "sn": "Smith",
             "mail": "jane.smith@flext.local",
-            "title": "Marketing Specialist"
+            "title": "Marketing Specialist",
         },
         {
             "dn": "cn=bob.wilson,ou=people,dc=flext,dc=local",
@@ -211,8 +234,8 @@ async def perform_create_users(ldap_service, session_id):
             "cn": "Bob Wilson",
             "sn": "Wilson",
             "mail": "bob.wilson@flext.local",
-            "title": "Senior Engineer"
-        }
+            "title": "Senior Engineer",
+        },
     ]
 
     created_users = []
@@ -223,15 +246,16 @@ async def perform_create_users(ldap_service, session_id):
         user_request = FlextLdapCreateUserRequest(**user_data)
         result = await ldap_service.create_user(session_id, user_request)
 
-        if result.is_success:
+        if result.success:
             print(f"   ✅ Created user: {user_data['uid']}")
-            created_users.append(user_data['uid'])
+            created_users.append(user_data["uid"])
         else:
             print(f"   ❌ Failed to create user {user_data['uid']}: {result.error}")
 
     print(f"✅ CREATE users completed - Created {len(created_users)} users")
 
-async def perform_read_operations(ldap_service, session_id):
+
+async def perform_read_operations(ldap_service, session_id) -> None:
     """Perform READ/SEARCH operations."""
     print("\n🔍 === READ/SEARCH OPERATIONS ===")
 
@@ -241,10 +265,10 @@ async def perform_read_operations(ldap_service, session_id):
         session_id=session_id,
         base_dn="ou=people,dc=flext,dc=local",
         filter_expr="(objectClass=inetOrgPerson)",
-        attributes=["uid", "cn", "mail", "title"]
+        attributes=["uid", "cn", "mail", "title"],
     )
 
-    if users_result.is_success and users_result.data:
+    if users_result.success and users_result.data:
         print(f"   ✅ Found {len(users_result.data)} users:")
         for user in users_result.data:
             uid = user.attributes.get("uid", ["N/A"])[0]
@@ -261,10 +285,10 @@ async def perform_read_operations(ldap_service, session_id):
         session_id=session_id,
         base_dn="ou=people,dc=flext,dc=local",
         filter_expr="(title=*Engineer*)",
-        attributes=["uid", "cn", "title"]
+        attributes=["uid", "cn", "title"],
     )
 
-    if eng_result.is_success and eng_result.data:
+    if eng_result.success and eng_result.data:
         print(f"   ✅ Found {len(eng_result.data)} Engineer users")
     else:
         print("   ℹ️  No Engineer users found (expected if CREATE failed)")
@@ -275,10 +299,10 @@ async def perform_read_operations(ldap_service, session_id):
         session_id=session_id,
         base_dn="ou=groups,dc=flext,dc=local",
         filter_expr="(objectClass=groupOfNames)",
-        attributes=["cn", "description"]
+        attributes=["cn", "description"],
     )
 
-    if groups_result.is_success and groups_result.data:
+    if groups_result.success and groups_result.data:
         print(f"   ✅ Found {len(groups_result.data)} groups:")
         for group in groups_result.data:
             cn = group.attributes.get("cn", ["N/A"])[0]
@@ -289,7 +313,8 @@ async def perform_read_operations(ldap_service, session_id):
 
     print("✅ READ operations completed")
 
-async def perform_update_operations(ldap_service, session_id):
+
+async def perform_update_operations(ldap_service, session_id) -> None:
     """Perform UPDATE operations."""
     print("\n🔄 === UPDATE OPERATIONS ===")
 
@@ -299,16 +324,16 @@ async def perform_update_operations(ldap_service, session_id):
             "dn": "cn=john.doe,ou=people,dc=flext,dc=local",
             "updates": {
                 "mail": "john.doe.updated@flext.local",
-                "title": "Senior Software Engineer"
-            }
+                "title": "Senior Software Engineer",
+            },
         },
         {
             "dn": "cn=jane.smith,ou=people,dc=flext,dc=local",
             "updates": {
                 "mail": "jane.smith.updated@flext.local",
-                "title": "Marketing Manager"
-            }
-        }
+                "title": "Marketing Manager",
+            },
+        },
     ]
 
     for user_update in users_to_update:
@@ -318,10 +343,10 @@ async def perform_update_operations(ldap_service, session_id):
         result = await ldap_service.update_user(
             session_id=session_id,
             user_dn=user_update["dn"],
-            updates=user_update["updates"]
+            updates=user_update["updates"],
         )
 
-        if result.is_success:
+        if result.success:
             print(f"   ✅ Updated user: {uid}")
 
             # Verify update by searching
@@ -330,10 +355,10 @@ async def perform_update_operations(ldap_service, session_id):
                 base_dn=user_update["dn"],
                 filter_expr="(objectClass=*)",
                 scope="base",
-                attributes=["mail", "title"]
+                attributes=["mail", "title"],
             )
 
-            if verify_result.is_success and verify_result.data:
+            if verify_result.success and verify_result.data:
                 entry = verify_result.data[0]
                 mail = entry.attributes.get("mail", ["N/A"])[0]
                 title = entry.attributes.get("title", ["N/A"])[0]
@@ -344,7 +369,8 @@ async def perform_update_operations(ldap_service, session_id):
 
     print("✅ UPDATE operations completed")
 
-async def perform_delete_operations(ldap_service, session_id):
+
+async def perform_delete_operations(ldap_service, session_id) -> None:
     """Perform DELETE operations."""
     print("\n🗑️  === DELETE OPERATIONS ===")
 
@@ -353,11 +379,10 @@ async def perform_delete_operations(ldap_service, session_id):
     print(f"   Deleting user: {user_to_delete}")
 
     result = await ldap_service.delete_user(
-        session_id=session_id,
-        user_dn=user_to_delete
+        session_id=session_id, user_dn=user_to_delete
     )
 
-    if result.is_success:
+    if result.success:
         print(f"   ✅ Deleted user: {user_to_delete}")
 
         # Verify deletion
@@ -365,7 +390,7 @@ async def perform_delete_operations(ldap_service, session_id):
             session_id=session_id,
             base_dn=user_to_delete,
             filter_expr="(objectClass=*)",
-            scope="base"
+            scope="base",
         )
 
         if verify_result.is_failure or not verify_result.data:
@@ -382,16 +407,17 @@ async def perform_delete_operations(ldap_service, session_id):
         session_id=session_id,
         base_dn="ou=people,dc=flext,dc=local",
         filter_expr="(objectClass=inetOrgPerson)",
-        attributes=["uid"]
+        attributes=["uid"],
     )
 
-    if final_count_result.is_success:
+    if final_count_result.success:
         remaining_users = len(final_count_result.data) if final_count_result.data else 0
         print(f"   ✅ Final user count: {remaining_users} users remaining")
 
     print("✅ DELETE operations completed")
 
-async def main():
+
+async def main() -> None:
     """Main execution function."""
     container = DockerLDAPContainer()
 
@@ -413,6 +439,7 @@ async def main():
     finally:
         # Always clean up container
         container.stop_container()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

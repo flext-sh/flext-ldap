@@ -110,8 +110,8 @@ class TestFlextLdapDirectoryService:
         """Test successful connection."""
         result = directory_service.connect(server_url="ldap://test.example.com:389")
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not (result.success):
+            raise AssertionError(f"Expected True, got {result.success}")
         assert result.data is True
 
     def test_connect_exception(
@@ -125,8 +125,8 @@ class TestFlextLdapDirectoryService:
 
             result = directory_service.connect(server_url="ldap://test.example.com:389")
 
-            if result.is_success:
-                raise AssertionError(f"Expected False, got {result.is_success}")
+            if result.success:
+                raise AssertionError(f"Expected False, got {result.success}")
             assert result.error is not None
             if "Connection" not in result.error:
                 raise AssertionError(f"Expected {'Connection'} in {result.error}")
@@ -148,8 +148,8 @@ class TestFlextLdapDirectoryService:
 
         result = directory_service.search_users(search_filter)
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not (result.success):
+            raise AssertionError(f"Expected True, got {result.success}")
         assert result.data is not None
         if len(result.data) != 1:
             raise AssertionError(f"Expected {1}, got {len(result.data)}")
@@ -185,8 +185,8 @@ class TestFlextLdapDirectoryService:
 
         result = directory_service.search_users(search_filter)
 
-        if result.is_success:
-            raise AssertionError(f"Expected False, got {result.is_success}")
+        if result.success:
+            raise AssertionError(f"Expected False, got {result.success}")
         assert result.error is not None
         if "Search error" not in result.error:
             raise AssertionError(f"Expected {'Search error'} in {result.error}")
@@ -205,8 +205,8 @@ class TestFlextLdapDirectoryService:
 
         result = await directory_service.disconnect(connection_id)
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not (result.success):
+            raise AssertionError(f"Expected True, got {result.success}")
         assert result.data is True
         directory_service._ldap_client.disconnect.assert_called_once()
 
@@ -224,8 +224,8 @@ class TestFlextLdapDirectoryService:
 
         result = await directory_service.disconnect(connection_id)
 
-        if result.is_success:
-            raise AssertionError(f"Expected False, got {result.is_success}")
+        if result.success:
+            raise AssertionError(f"Expected False, got {result.success}")
         assert result.error is not None
         if "Disconnect error" not in result.error:
             raise AssertionError(f"Expected {'Disconnect error'} in {result.error}")
@@ -235,7 +235,6 @@ class TestFlextLdapDirectoryService:
         directory_service: FlextLdapDirectoryService,
     ) -> None:
         """Test successful search."""
-        connection_id = "test_connection"
         base_dn = "ou=users,dc=example,dc=org"
         search_filter = "(objectClass=inetOrgPerson)"
         attributes = ["uid", "cn", "mail"]
@@ -263,8 +262,8 @@ class TestFlextLdapDirectoryService:
             attributes=attributes,
         )
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not (result.success):
+            raise AssertionError(f"Expected True, got {result.success}")
         assert result.data is not None
         if len(result.data) != 1:
             raise AssertionError(f"Expected {1}, got {len(result.data)}")
@@ -303,8 +302,8 @@ class TestFlextLdapDirectoryService:
             search_filter=search_filter,
         )
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not (result.success):
+            raise AssertionError(f"Expected True, got {result.success}")
         directory_service._ldap_client.search.assert_called_once_with(
             base_dn, search_filter, ["*"]
         )
@@ -327,8 +326,8 @@ class TestFlextLdapDirectoryService:
             search_filter=search_filter,
         )
 
-        if result.is_success:
-            raise AssertionError(f"Expected False, got {result.is_success}")
+        if result.success:
+            raise AssertionError(f"Expected False, got {result.success}")
         assert result.error is not None
         if "Search failed" not in result.error:
             raise AssertionError(f"Expected {'Search failed'} in {result.error}")
@@ -351,8 +350,8 @@ class TestFlextLdapDirectoryService:
             search_filter=search_filter,
         )
 
-        if result.is_success:
-            raise AssertionError(f"Expected False, got {result.is_success}")
+        if result.success:
+            raise AssertionError(f"Expected False, got {result.success}")
         assert result.error is not None
         if "Search error" not in result.error:
             raise AssertionError(f"Expected {'Search error'} in {result.error}")
@@ -380,8 +379,8 @@ class TestFlextLdapDirectoryService:
             attributes=attributes,
         )
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not (result.success):
+            raise AssertionError(f"Expected True, got {result.success}")
         assert result.data is True
 
         directory_service._ldap_client.add.assert_called_once()
@@ -404,8 +403,8 @@ class TestFlextLdapDirectoryService:
             attributes=attributes,
         )
 
-        if result.is_success:
-            raise AssertionError(f"Expected False, got {result.is_success}")
+        if result.success:
+            raise AssertionError(f"Expected False, got {result.success}")
         assert result.error is not None
         if "Add entry failed" not in result.error:
             raise AssertionError(f"Expected {'Add entry failed'} in {result.error}")
@@ -428,8 +427,8 @@ class TestFlextLdapDirectoryService:
             attributes=attributes,
         )
 
-        if result.is_success:
-            raise AssertionError(f"Expected False, got {result.is_success}")
+        if result.success:
+            raise AssertionError(f"Expected False, got {result.success}")
         assert result.error is not None
         if "Add entry error" not in result.error:
             raise AssertionError(f"Expected {'Add entry error'} in {result.error}")
@@ -452,9 +451,9 @@ class TestFlextLdapDirectoryService:
             changes=changes,
         )
 
-        if not (result.is_success):
+        if not (result.success):
             raise AssertionError(
-                f"Expected True, got {result.is_success}. Error: {result.error}"
+                f"Expected True, got {result.success}. Error: {result.error}"
             )
         assert result.data is True
 
@@ -481,8 +480,8 @@ class TestFlextLdapDirectoryService:
             changes=changes,
         )
 
-        if result.is_success:
-            raise AssertionError(f"Expected False, got {result.is_success}")
+        if result.success:
+            raise AssertionError(f"Expected False, got {result.success}")
         assert result.error is not None
         if "Modify entry failed" not in result.error:
             raise AssertionError(f"Expected {'Modify entry failed'} in {result.error}")
@@ -505,8 +504,8 @@ class TestFlextLdapDirectoryService:
             changes=changes,
         )
 
-        if result.is_success:
-            raise AssertionError(f"Expected False, got {result.is_success}")
+        if result.success:
+            raise AssertionError(f"Expected False, got {result.success}")
         assert result.error is not None
         if "Modify entry" not in result.error:
             raise AssertionError(f"Expected {'Modify entry'} in {result.error}")
@@ -525,8 +524,8 @@ class TestFlextLdapDirectoryService:
 
         result = directory_service.delete_entry(dn=dn)
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not (result.success):
+            raise AssertionError(f"Expected True, got {result.success}")
         assert result.data is True
 
         directory_service._ldap_client.delete.assert_called_once_with(dn)
@@ -545,8 +544,8 @@ class TestFlextLdapDirectoryService:
 
         result = directory_service.delete_entry(dn=dn)
 
-        if result.is_success:
-            raise AssertionError(f"Expected False, got {result.is_success}")
+        if result.success:
+            raise AssertionError(f"Expected False, got {result.success}")
         assert result.error is not None
         if "Delete entry failed" not in result.error:
             raise AssertionError(f"Expected {'Delete entry failed'} in {result.error}")
@@ -565,8 +564,8 @@ class TestFlextLdapDirectoryService:
 
         result = directory_service.delete_entry(dn=dn)
 
-        if result.is_success:
-            raise AssertionError(f"Expected False, got {result.is_success}")
+        if result.success:
+            raise AssertionError(f"Expected False, got {result.success}")
         assert result.error is not None
         if "Delete entry failed" not in result.error:
             raise AssertionError(f"Expected {'Delete entry failed'} in {result.error}")

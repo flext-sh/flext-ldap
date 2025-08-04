@@ -12,9 +12,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import asyncio
+import concurrent.futures
 import os
-from datetime import datetime
-from typing import TYPE_CHECKING
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, cast
 from uuid import uuid4
 
 from flext_core import FlextEntityStatus, FlextResult, get_logger
@@ -43,7 +45,8 @@ class FlextLdapUserApplicationService:
     def __init__(self) -> None:
         """Initialize user service wrapper."""
         self._core_service = CoreLdapService()
-        self._test_user_cache = {}  # Cache for test mode consistency
+        # Cache for test mode consistency
+        self._test_user_cache: dict[str, FlextLdapUser] = {}
         logger.debug("Initialized FlextLdapUserApplicationService wrapper")
 
     def create_user(
@@ -81,10 +84,10 @@ class FlextLdapUserApplicationService:
                 result = asyncio.run(self._core_service.create_user(user_request))
             return result
         except Exception as e:
-            logger.exception(f"Failed to create user: {e}")
+            logger.exception("Failed to create user", exc_info=e)
             return FlextResult.fail(f"User creation failed: {e}")
 
-    def get_user(self, user_id: str) -> FlextResult[FlextLdapUser]:
+    def get_user(self, user_id: str) -> FlextResult[FlextLdapUser | None]:
         """Get user by ID - delegates to core service with test fallback."""
         # In test environment, return cached user for consistency
         if os.getenv("PYTEST_CURRENT_TEST") or "pytest" in os.getenv("_", ""):
@@ -109,12 +112,13 @@ class FlextLdapUserApplicationService:
             except RuntimeError:
                 # No event loop - use asyncio.run directly
                 result = asyncio.run(self._core_service.find_user_by_uid(user_id))
-            return result
+            # Type cast to match the expected return type
+            return cast("FlextResult[FlextLdapUser | None]", result)
         except Exception as e:
-            logger.exception(f"Failed to get user {user_id}: {e}")
+            logger.exception(f"Failed to get user {user_id}", exc_info=e)
             return FlextResult.fail(f"User retrieval failed: {e}")
 
-    def find_user_by_dn(self, dn: str) -> FlextResult[FlextLdapUser]:
+    def find_user_by_dn(self, dn: str) -> FlextResult[FlextLdapUser | None]:
         """Find user by DN - delegates to core service with test fallback."""
         # In test environment, search cache by dn
         if os.getenv("PYTEST_CURRENT_TEST") or "pytest" in os.getenv("_", ""):
@@ -127,7 +131,7 @@ class FlextLdapUserApplicationService:
         logger.warning(f"find_user_by_dn not available in core service API, dn: {dn}")
         return FlextResult.fail("find_user_by_dn not available in core service")
 
-    async def find_user_by_uid(self, uid: str) -> FlextResult[FlextLdapUser]:
+    async def find_user_by_uid(self, uid: str) -> FlextResult[FlextLdapUser | None]:
         """Find user by UID - delegates to core service with test fallback (async)."""
         # In test environment, search cache by uid
         if os.getenv("PYTEST_CURRENT_TEST") or "pytest" in os.getenv("_", ""):
@@ -138,9 +142,11 @@ class FlextLdapUserApplicationService:
 
         # Production environment - delegate to core service
         try:
-            return await self._core_service.find_user_by_uid(uid)
+            result = await self._core_service.find_user_by_uid(uid)
+            # Type cast to match the expected return type
+            return cast("FlextResult[FlextLdapUser | None]", result)
         except Exception as e:
-            logger.exception(f"Failed to find user {uid}: {e}")
+            logger.exception(f"Failed to find user {uid}", exc_info=e)
             return FlextResult.fail(f"User lookup failed: {e}")
 
     def lock_user(self, user_id: str) -> FlextResult[FlextLdapUser]:
@@ -201,15 +207,18 @@ class FlextLdapUserApplicationService:
                 # Already in event loop - use different approach
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     future = executor.submit(
-                        asyncio.run, self._core_service.update_user(user_id, updates),
+                        asyncio.run,
+                        self._core_service.update_user(user_id, dict(updates)),
                     )
                     result = future.result()
             except RuntimeError:
                 # No event loop - use asyncio.run directly
-                result = asyncio.run(self._core_service.update_user(user_id, updates))
+                result = asyncio.run(
+                    self._core_service.update_user(user_id, dict(updates))
+                )
             return result
         except Exception as e:
-            logger.exception(f"Failed to update user {user_id}: {e}")
+            logger.exception(f"Failed to update user {user_id}", exc_info=e)
             return FlextResult.fail(f"User update failed: {e}")
 
     def delete_user(self, user_id: str) -> FlextResult[bool]:
@@ -218,7 +227,7 @@ class FlextLdapUserApplicationService:
         if os.getenv("PYTEST_CURRENT_TEST") or "pytest" in os.getenv("_", ""):
             if user_id in self._test_user_cache:
                 del self._test_user_cache[user_id]
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
             return FlextResult.fail("User not found in cache")
 
         # Production environment - delegate to core service
@@ -237,10 +246,10 @@ class FlextLdapUserApplicationService:
                 result = asyncio.run(self._core_service.delete_user(user_id))
             return result
         except Exception as e:
-            logger.exception(f"Failed to delete user {user_id}: {e}")
+            logger.exception(f"Failed to delete user {user_id}", exc_info=e)
             return FlextResult.fail(f"User deletion failed: {e}")
 
-    def list_users(self, **kwargs) -> FlextResult[list[FlextLdapUser]]:
+    def list_users(self, **kwargs: object) -> FlextResult[list[FlextLdapUser]]:  # noqa: ARG002
         """List users - delegates to core service with test fallback."""
         # In test environment, return cached users
         if os.getenv("PYTEST_CURRENT_TEST") or "pytest" in os.getenv("_", ""):
@@ -264,7 +273,7 @@ class FlextLdapUserApplicationService:
                 result = asyncio.run(self._core_service.list_users())
             return result
         except Exception as e:
-            logger.exception(f"Failed to list users: {e}")
+            logger.exception("Failed to list users", exc_info=e)
             return FlextResult.fail(f"User listing failed: {e}")
 
 
@@ -274,10 +283,11 @@ class FlextLdapGroupService:
     def __init__(self) -> None:
         """Initialize group service wrapper."""
         self._core_service = CoreLdapService()
-        self._test_group_cache = {}  # Cache for test mode consistency
+        # Cache for test mode consistency
+        self._test_group_cache: dict[str, FlextLdapGroup] = {}
         logger.debug("Initialized FlextLdapGroupService wrapper")
 
-    def create_group(self, **kwargs) -> FlextResult[FlextLdapGroup]:
+    def create_group(self, **kwargs: object) -> FlextResult[FlextLdapGroup]:
         """Create group - delegates to core service with test fallback."""
         # In test environment, create mock group for compatibility
         if os.getenv("PYTEST_CURRENT_TEST") or "pytest" in os.getenv("_", ""):
@@ -285,10 +295,14 @@ class FlextLdapGroupService:
             group_id = str(uuid4())
             mock_group = FlextLdapGroup(
                 id=group_id,
-                dn=kwargs.get("dn", "cn=group,ou=groups,dc=example,dc=com"),
-                cn=kwargs.get("cn", "Test Group"),
-                ou=kwargs.get("ou"),
-                members=kwargs.get("members", []),
+                dn=str(kwargs.get("dn", "cn=group,ou=groups,dc=example,dc=com")),
+                cn=str(kwargs.get("cn", "Test Group")),
+                ou=str(kwargs.get("ou")) if kwargs.get("ou") is not None else None,
+                members=(
+                    cast("list[str]", kwargs.get("members", []))
+                    if isinstance(kwargs.get("members"), list)
+                    else []
+                ),
             )
             # Cache group for consistency in get_group calls
             self._test_group_cache[group_id] = mock_group
@@ -298,7 +312,7 @@ class FlextLdapGroupService:
         logger.warning("create_group not fully implemented in core service")
         return FlextResult.fail("create_group not implemented in core service")
 
-    def find_group_by_dn(self, dn: str) -> FlextResult[FlextLdapGroup]:
+    def find_group_by_dn(self, dn: str) -> FlextResult[FlextLdapGroup | None]:
         """Find group by DN - delegates to core service with test fallback."""
         # In test environment, search cache by dn
         if os.getenv("PYTEST_CURRENT_TEST") or "pytest" in os.getenv("_", ""):
@@ -400,10 +414,11 @@ class FlextLdapOperationService:
     def __init__(self) -> None:
         """Initialize operation service wrapper."""
         self._core_service = CoreLdapService()
-        self._test_operation_cache = {}  # Cache for test mode consistency
+        # Cache for test mode consistency
+        self._test_operation_cache: dict[str, FlextLdapOperation] = {}
         logger.debug("Initialized FlextLdapOperationService wrapper")
 
-    def create_operation(self, **kwargs) -> FlextResult[FlextLdapOperation]:
+    def create_operation(self, **kwargs: object) -> FlextResult[FlextLdapOperation]:
         """Create operation - delegates to core service with test fallback."""
         # In test environment, create mock operation for compatibility
         if os.getenv("PYTEST_CURRENT_TEST") or "pytest" in os.getenv("_", ""):
@@ -411,11 +426,19 @@ class FlextLdapOperationService:
             operation_id = str(uuid4())
             mock_operation = FlextLdapOperation(
                 id=operation_id,
-                operation_type=kwargs.get("operation_type", "search"),
-                target_dn=kwargs.get("target_dn", "ou=users,dc=example,dc=com"),
-                connection_id=kwargs.get("connection_id", str(uuid4())),
-                filter_expression=kwargs.get("filter_expression", "(objectClass=*)"),
-                attributes=kwargs.get("attributes", []),
+                operation_type=str(kwargs.get("operation_type", "search")),
+                target_dn=str(kwargs.get("target_dn", "ou=users,dc=example,dc=com")),
+                connection_id=str(kwargs.get("connection_id", str(uuid4()))),
+                filter_expression=(
+                    str(kwargs.get("filter_expression", "(objectClass=*)"))
+                    if kwargs.get("filter_expression") is not None
+                    else None
+                ),
+                attributes=(
+                    cast("list[str]", kwargs.get("attributes", []))
+                    if isinstance(kwargs.get("attributes"), list)
+                    else []
+                ),
             )
             # Cache operation for consistency in complete_operation calls
             self._test_operation_cache[operation_id] = mock_operation
@@ -426,7 +449,7 @@ class FlextLdapOperationService:
         return FlextResult.fail("create_operation not implemented in core service")
 
     def complete_operation(
-        self, operation_id: str, **kwargs,
+        self, operation_id: str, **kwargs: object,
     ) -> FlextResult[FlextLdapOperation]:
         """Complete operation - delegates to core service with test fallback."""
         # In test environment, modify cached operation
@@ -442,9 +465,13 @@ class FlextLdapOperationService:
                     connection_id=base_operation.connection_id,
                     filter_expression=base_operation.filter_expression,
                     attributes=base_operation.attributes,
-                    success=kwargs.get("success", True),
-                    result_count=kwargs.get("result_count", 0),
-                    completed_at=datetime.utcnow().isoformat(),
+                    success=bool(kwargs.get("success", True)),
+                    result_count=(
+                        cast("int", kwargs.get("result_count", 0))
+                        if isinstance(kwargs.get("result_count"), (int, str))
+                        else 0
+                    ),
+                    completed_at=datetime.now(UTC).isoformat(),
                 )
             else:
                 # Create new completed operation
@@ -453,9 +480,13 @@ class FlextLdapOperationService:
                     operation_type="search",
                     target_dn="ou=users,dc=example,dc=com",
                     connection_id=str(uuid4()),
-                    success=kwargs.get("success", True),
-                    result_count=kwargs.get("result_count", 0),
-                    completed_at=datetime.utcnow().isoformat(),
+                    success=bool(kwargs.get("success", True)),
+                    result_count=(
+                        cast("int", kwargs.get("result_count", 0))
+                        if isinstance(kwargs.get("result_count"), (int, str))
+                        else 0
+                    ),
+                    completed_at=datetime.now(UTC).isoformat(),
                 )
 
             # Update cache with completed operation
@@ -464,11 +495,14 @@ class FlextLdapOperationService:
 
         # Production environment - delegate to core service (not implemented yet)
         logger.warning(
-            f"complete_operation not implemented in core service, operation_id: {operation_id}",
+            f"complete_operation not implemented in core service, "
+            f"operation_id: {operation_id}",
         )
         return FlextResult.fail("complete_operation not implemented in core service")
 
-    def list_operations(self, **kwargs) -> FlextResult[list[FlextLdapOperation]]:
+    def list_operations(
+        self, **kwargs: object
+    ) -> FlextResult[list[FlextLdapOperation]]:
         """List operations - delegates to core service with test fallback."""
         # In test environment, return cached operations or create mock list
         if os.getenv("PYTEST_CURRENT_TEST") or "pytest" in os.getenv("_", ""):
@@ -490,7 +524,7 @@ class FlextLdapOperationService:
                     id=str(uuid4()),
                     operation_type="search",
                     target_dn=f"ou=users{i},dc=example,dc=com",
-                    connection_id=kwargs.get("connection_id", str(uuid4())),
+                    connection_id=str(kwargs.get("connection_id", str(uuid4()))),
                 )
                 for i in range(3)
             ]
@@ -510,10 +544,11 @@ class FlextLdapConnectionApplicationService:
     def __init__(self) -> None:
         """Initialize connection service wrapper."""
         self._core_service = CoreLdapService()
-        self._test_connection_cache = {}  # Cache for test mode consistency
+        # Cache for test mode consistency
+        self._test_connection_cache: dict[str, object] = {}
         logger.debug("Initialized FlextLdapConnectionApplicationService wrapper")
 
-    def create_connection(self, **kwargs):
+    def create_connection(self, **kwargs: object) -> FlextResult[object]:
         """Create connection - delegates to core service with test fallback."""
         # In test environment, create mock connection for compatibility
         if os.getenv("PYTEST_CURRENT_TEST") or "pytest" in os.getenv("_", ""):
@@ -528,16 +563,13 @@ class FlextLdapConnectionApplicationService:
             }
             # Cache connection for consistency in list_connections calls
             self._test_connection_cache[connection_id] = mock_connection
-            return mock_connection
+            return FlextResult.ok(mock_connection)
 
         # Production environment - delegate to core service (not implemented yet)
         logger.warning("create_connection not fully implemented in core service")
-        return {
-            "status": "error",
-            "message": "create_connection not implemented in core service",
-        }
+        return FlextResult.fail("create_connection not implemented in core service")
 
-    def list_connections(self) -> FlextResult[list]:
+    def list_connections(self) -> FlextResult[list[object]]:
         """List connections - delegates to core service with test fallback."""
         # In test environment, return cached connections
         if os.getenv("PYTEST_CURRENT_TEST") or "pytest" in os.getenv("_", ""):

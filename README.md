@@ -84,7 +84,7 @@ user_request = FlextLdapCreateUserRequest(
 
 # Create user (test environment uses mock implementation)
 result = user_service.create_user(user_request)
-if result.is_success:
+if result.success:
     print(f"Created user: {result.data.dn}")
 else:
     print(f"Error: {result.error}")

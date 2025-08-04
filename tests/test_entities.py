@@ -86,7 +86,7 @@ class TestFlextLdapEntry:
             object_classes=[],
         )
         result = entry.validate_domain_rules()
-        assert not result.is_success
+        assert not result.success
         assert "distinguished name" in result.error.lower()
 
     def test_entry_object_class_management(self) -> None:
@@ -207,7 +207,7 @@ class TestFlextLdapUser:
             mail="invalid-email",  # Should fail validation
         )
         result = user.validate_domain_rules()
-        assert not result.is_success
+        assert not result.success
         assert "email" in result.error.lower()
 
     def test_user_attribute_management(self) -> None:
@@ -280,7 +280,7 @@ class TestFlextLdapGroup:
             cn="",  # Empty CN should fail
         )
         result = group.validate_domain_rules()
-        assert not result.is_success
+        assert not result.success
         assert "common name" in result.error.lower()
 
     def test_group_member_management(self) -> None:
@@ -374,7 +374,7 @@ class TestFlextLdapConnection:
             server_url="",  # Empty URL should fail
         )
         result = connection.validate_domain_rules()
-        assert not result.is_success
+        assert not result.success
         assert "server" in result.error.lower()
 
 
@@ -428,7 +428,7 @@ class TestFlextLdapOperation:
         if completed.result_count != 5:
             raise AssertionError(f"Expected {5}, got {completed.result_count}")
         assert completed.is_completed()
-        assert completed.is_successful() is not False  # success=True
+        assert completed.successful() is not False  # success=True
 
     def test_operation_domain_validation(self) -> None:
         """Test operation business rules."""
@@ -439,7 +439,7 @@ class TestFlextLdapOperation:
             connection_id=str(uuid4()),
         )
         result = operation.validate_domain_rules()
-        assert not result.is_success
+        assert not result.success
         assert "operation type" in result.error.lower()
 
 

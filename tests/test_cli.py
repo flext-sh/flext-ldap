@@ -108,7 +108,7 @@ class TestLDAPConnectionHandler:
             params = LDAPConnectionTestParams(server="ldap.example.com", port=389)
             result = LDAPConnectionHandler.test_connection(params)
 
-            assert result.is_success
+            assert result.success
             assert (
                 "Successfully connected to ldap://ldap.example.com:389" in result.data
             )
@@ -157,7 +157,7 @@ class TestLDAPSearchHandler:
             )
             result = LDAPSearchHandler.search_entries(params)
 
-            assert result.is_success
+            assert result.success
             assert len(result.data) == 1
             assert result.data[0].dn == "cn=user1,dc=example,dc=com"
 
@@ -204,7 +204,7 @@ class TestLDAPUserHandler:
 
             result = LDAPUserHandler.get_user_info("john")
 
-            assert result.is_success
+            assert result.success
             assert result.data["attributes"]["uid"] == ["john"]
 
     def test_get_user_info_not_found(self) -> None:
@@ -247,7 +247,7 @@ class TestLDAPUserHandler:
             params = LDAPUserParams(uid="john", cn="John Doe", sn="Doe")
             result = LDAPUserHandler.create_user(params)
 
-            assert result.is_success
+            assert result.success
             assert result.data["uid"] == "john"
             assert result.data["cn"] == "John Doe"
 
@@ -277,5 +277,5 @@ class TestLDAPUserHandler:
 
             result = LDAPUserHandler.list_users()
 
-            assert result.is_success
+            assert result.success
             assert len(result.data) == 2

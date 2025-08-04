@@ -124,7 +124,7 @@ class TestFlextLdapService:
         )
 
         # Verify
-        assert result.is_success
+        assert result.success
         assert result.data is True
         assert ldap_service.is_connected()
         assert ldap_service._session_id == "session_123"
@@ -170,7 +170,7 @@ class TestFlextLdapService:
         result = await ldap_service.disconnect()
 
         # Verify
-        assert result.is_success
+        assert result.success
         assert result.data is True
         assert not ldap_service.is_connected()
         assert ldap_service._session_id is None
@@ -187,7 +187,7 @@ class TestFlextLdapService:
         result = await ldap_service.disconnect()
 
         # Verify - should succeed without calling API
-        assert result.is_success
+        assert result.success
         assert result.data is True
         mock_api.disconnect.assert_not_called()
 
@@ -208,7 +208,7 @@ class TestFlextLdapService:
         result = await ldap_service.create_user(sample_user_request)
 
         # Verify
-        assert result.is_success
+        assert result.success
         assert result.data == sample_user
 
         # Verify API was called correctly
@@ -244,7 +244,7 @@ class TestFlextLdapService:
         result = await ldap_service.find_user_by_uid("testuser")
 
         # Verify
-        assert result.is_success
+        assert result.success
         user = result.data
         assert user.uid == "testuser"
         assert user.cn == "Test User"
@@ -295,7 +295,7 @@ class TestFlextLdapService:
         result = await ldap_service.update_user("testuser", updates)
 
         # Verify
-        assert result.is_success
+        assert result.success
 
         # Verify API calls
         assert mock_api.search.call_count == 2  # Find + re-find after update
@@ -324,7 +324,7 @@ class TestFlextLdapService:
         result = await ldap_service.delete_user("testuser")
 
         # Verify
-        assert result.is_success
+        assert result.success
         assert result.data is True
 
         # Verify API calls
@@ -349,7 +349,7 @@ class TestFlextLdapService:
         result = await ldap_service.list_users()
 
         # Verify
-        assert result.is_success
+        assert result.success
         users = result.data
         assert len(users) == 1
         assert users[0].uid == "testuser"
@@ -378,7 +378,7 @@ class TestFlextLdapService:
         )
 
         # Verify
-        assert result.is_success
+        assert result.success
 
         # Verify API was called with custom parameters
         mock_api.search.assert_called_once_with(

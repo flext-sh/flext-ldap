@@ -71,7 +71,7 @@ class TestRealLdapOperations:
             assert ldap_service.is_connected()
             # Test disconnect
             disconnect_result = await ldap_service.disconnect()
-            assert disconnect_result.is_success
+            assert disconnect_result.success
 
     async def test_ldap_service_user_operations_memory_mode(
         self, ldap_service: FlextLdapService
@@ -93,31 +93,31 @@ class TestRealLdapOperations:
         create_result = await ldap_service.create_user(user_request)
 
         # Application layer requires connection - should fail gracefully
-        assert not create_result.is_success
+        assert not create_result.success
         assert "Not connected to LDAP server" in create_result.error
 
         # Test user lookup - also should fail without connection
         find_result = await ldap_service.find_user_by_uid("testuser")
-        assert not find_result.is_success
+        assert not find_result.success
         assert "Not connected to LDAP server" in find_result.error
 
         # Test user update
         update_result = await ldap_service.update_user(
             "testuser", {"mail": "newemail@example.com"}
         )
-        assert update_result.is_success
+        assert update_result.success
         assert update_result.data is not None
         assert update_result.data.mail == "newemail@example.com"
 
         # Test user listing
         list_result = await ldap_service.list_users()
-        assert list_result.is_success
+        assert list_result.success
         assert len(list_result.data) == 1
         assert list_result.data[0].uid == "testuser"
 
         # Test user deletion
         delete_result = await ldap_service.delete_user("testuser")
-        assert delete_result.is_success
+        assert delete_result.success
 
         # Verify user is deleted
         find_result = await ldap_service.find_user_by_uid("testuser")
@@ -153,7 +153,7 @@ class TestRealLdapOperations:
 
             # Test disconnect
             disconnect_result = await ldap_client.disconnect()
-            assert disconnect_result.is_success
+            assert disconnect_result.success
             assert not ldap_client.is_connected()
 
     async def test_multiple_users_without_connection(

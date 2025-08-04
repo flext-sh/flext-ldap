@@ -68,7 +68,7 @@ async def integrate_with_core():
     # All operations return FlextResult for consistent error handling
     result = await api.search(session, \"ou=users,dc=company,dc=com\", \"(uid=*)\")
 
-    if result.is_success:
+    if result.success:
         logger.info(f\"Found {len(result.data)} users\")
         return result.data
     else:
@@ -134,7 +134,7 @@ async def ldap_operation_with_logging():
         async with api.connection(...) as session:
             result = await api.search(session, base_dn, filter_expr)
 
-            if result.is_success:
+            if result.success:
                 logger.info(
                     \"LDAP search completed successfully\",
                     extra={
@@ -176,7 +176,7 @@ async def ldap_operation_with_metrics():
 
         result = await api.create_user(session, user_request)
 
-        if result.is_success:
+        if result.success:
             metrics.increment(\"ldap_user_created_total\")
         else:
             metrics.increment(\"ldap_user_creation_errors_total\")
@@ -205,7 +205,7 @@ async def check_ldap_health():
             # Simple search to verify connectivity
             result = await api.search(session, \"dc=company,dc=com\", \"(objectClass=organization)\")
 
-            if result.is_success:
+            if result.success:
                 return {\"status\": \"healthy\", \"response_time_ms\": 45}
             else:
                 return {\"status\": \"unhealthy\", \"error\": result.error}
@@ -349,7 +349,7 @@ async def load_data_to_ldap(singer_records):
             # Create LDAP entry
             result = await api.create_entry(session, ldap_entry)
 
-            if result.is_success:
+            if result.success:
                 logger.info(f\"Created LDAP entry: {ldap_entry.dn}\")
             else:
                 logger.error(f\"Failed to create entry: {result.error}\")
@@ -456,7 +456,7 @@ class FlextLdapAuthProvider(AuthProvider):
                     attributes=[\"uid\", \"cn\", \"mail\", \"memberOf\"]
                 )
 
-                if user_result.is_success and user_result.data:
+                if user_result.success and user_result.data:
                     user_entry = user_result.data[0]
 
                     # Convert LDAP user to AuthUser
@@ -521,7 +521,7 @@ class FlextLdapSSOProvider:
                 attributes=[\"uid\", \"cn\", \"mail\", \"memberOf\"]
             )
 
-            if user_result.is_success and user_result.data:
+            if user_result.success and user_result.data:
                 # User exists, create AuthUser
                 return self._create_auth_user(user_result.data[0])
             else:
@@ -555,7 +555,7 @@ async def export_ldap_to_ldif():
             attributes=[\"*\"]
         )
 
-        if users_result.is_success:
+        if users_result.success:
             # Convert LDAP entries to LDIF format
             ldif_entries = []
             for user in users_result.data:
@@ -588,7 +588,7 @@ async def import_ldif_to_ldap(ldif_file_path: str):
             # Convert LDIF entry to LDAP entry
             result = await api.create_entry(session, entry)
 
-            if result.is_success:
+            if result.success:
                 logger.info(f\"Imported entry: {entry.dn}\")
             else:
                 logger.error(f\"Failed to import {entry.dn}: {result.error}\")
@@ -665,7 +665,7 @@ async def search_ldap_users(request: SearchUsersRequest):
             request.attributes
         )
 
-        if result.is_success:
+        if result.success:
             return {
                 \"status\": \"success\",
                 \"data\": [user.to_dict() for user in result.data],
@@ -712,9 +712,9 @@ async def traced_ldap_operation():
                     result = await api.search(session, ...)
 
                     search_span.set_attributes({
-                        \"ldap.results_count\": len(result.data) if result.is_success else 0,
+                        \"ldap.results_count\": len(result.data) if result.success else 0,
                         \"ldap.search_time_ms\": 450,
-                        \"ldap.success\": result.is_success
+                        \"ldap.success\": result.success
                     })
 
                     return result
@@ -755,7 +755,7 @@ async def monitored_ldap_operation():
             ldap_operations_total.labels(
                 operation=\"search\",
                 server=\"ldap.company.com\",
-                status=\"success\" if result.is_success else \"failure\"
+                status=\"success\" if result.success else \"failure\"
             ).inc()
 
             return result
