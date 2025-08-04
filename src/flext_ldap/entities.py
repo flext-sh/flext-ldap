@@ -60,6 +60,7 @@ from flext_core import (
     FlextEntity,
     FlextEntityStatus,
     FlextResult,
+    TEntityId,
     get_logger,
 )
 from pydantic import Field
@@ -954,3 +955,10 @@ def __getattr__(name: str) -> object:
 
     msg = f"module 'flext_ldap.domain.entities' has no attribute '{name}'"
     raise AttributeError(msg)
+
+
+# Rebuild models after all classes are defined
+FlextLdapEntry.model_rebuild()
+FlextLdapUser.model_rebuild()
+FlextLdapGroup.model_rebuild()
+FlextLdapConnection.model_rebuild()

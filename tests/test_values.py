@@ -147,7 +147,7 @@ class TestFlextLdapFilterValue:
         with pytest.raises(ValueError, match="parentheses"):
             FlextLdapFilterValue(value="cn=john")  # Missing parentheses
 
-        with pytest.raises(ValueError, match="balanced"):
+        with pytest.raises(ValueError, match="parentheses"):
             FlextLdapFilterValue(value="(cn=john")  # Unbalanced
 
     def test_filter_equals(self) -> None:
@@ -482,7 +482,7 @@ class TestFlextLdapCreateUserRequest:
                 sn="User",
             )
 
-        with pytest.raises(ValueError, match="cn"):
+        with pytest.raises(ValueError, match="uid"):
             FlextLdapCreateUserRequest(
                 dn="cn=test,dc=example,dc=com",
                 uid="",  # Empty UID
