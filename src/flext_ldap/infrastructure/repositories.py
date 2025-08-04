@@ -263,7 +263,8 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 # Type-safe conversion: only return if data is appropriate type
                 if data is None:
                     return None
-                # For now, return the data as is - proper FlextLdapUser conversion would be needed
+                # For now, return the data as is - proper FlextLdapUser
+                # conversion would be needed
                 return data  # type: ignore[return-value]
             # Log error but return None for compatibility
             msg = f"Failed to get user by DN {dn.value}: {result.error}"
@@ -295,7 +296,8 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             if search_result.is_success:
                 entries = search_result.data or []
                 if entries:
-                    # Convert first entry to FlextLdapUser - we know it's list[dict[str, object]] from type annotation
+                    # Convert first entry to FlextLdapUser - we know it's
+                    # list[dict[str, object]] from type annotation
                     entries[0]  # This is guaranteed to be dict[str, object]
                     # Convert dict to FlextLdapUser - this is the expected case
                     logger.info("Converting LDAP response dict to FlextLdapUser")
@@ -345,11 +347,14 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             )
 
             if search_result.is_success:
-                # MYPY FIX: Return empty list since we need FlextLdapUser objects but client returns dict
-                # This method needs proper conversion from dict[str, object] to FlextLdapUser
+                # MYPY FIX: Return empty list since we need FlextLdapUser
+                # objects but client returns dict
+                # This method needs proper conversion from dict[str, object]
+                # to FlextLdapUser
                 search_data = search_result.data or []
                 logger.info(
-                    f"Found {len(search_data)} LDAP entries - conversion to FlextLdapUser not implemented",
+                    f"Found {len(search_data)} LDAP entries - conversion to "
+                    f"FlextLdapUser not implemented",
                 )
                 return []  # Return empty list for now - proper conversion needed
             # Log error but return empty list for compatibility

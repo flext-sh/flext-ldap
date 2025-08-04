@@ -5,19 +5,20 @@ Teste focado e direto das classes e enums básicos.
 """
 
 import sys
-sys.path.insert(0, 'src')
+
+sys.path.insert(0, "src")
 
 from flext_ldap.converters import FlextLdapConverterConstants, FlextLdapDataType
 
-def test_converter_constants():
+
+def test_converter_constants() -> None:
     """Testa constantes do converter."""
     # Test constants exist and have expected values
     assert FlextLdapConverterConstants.LDAP_TIME_FORMAT_LONG == 15
     assert FlextLdapConverterConstants.LDAP_TIME_FORMAT_SHORT == 13
 
-    print("✅ test_converter_constants PASSED")
 
-def test_data_type_enum():
+def test_data_type_enum() -> None:
     """Testa enum de tipos de dados."""
     # Test enum values exist
     data_types = [member.value for member in FlextLdapDataType]
@@ -32,9 +33,8 @@ def test_data_type_enum():
     assert FlextLdapDataType.INTEGER.value == "integer"
     assert FlextLdapDataType.BOOLEAN.value == "boolean"
 
-    print("✅ test_data_type_enum PASSED")
 
-def test_enum_properties():
+def test_enum_properties() -> None:
     """Testa propriedades do enum."""
     # Test that we can iterate over enum
     type_count = len(list(FlextLdapDataType))
@@ -44,10 +44,8 @@ def test_enum_properties():
     assert FlextLdapDataType.STRING.name == "STRING"
     assert FlextLdapDataType.INTEGER.name == "INTEGER"
 
-    print("✅ test_enum_properties PASSED")
 
 if __name__ == "__main__":
     test_converter_constants()
     test_data_type_enum()
     test_enum_properties()
-    print("🎉 ALL CONVERTERS TESTS PASSED - Coverage increased!")

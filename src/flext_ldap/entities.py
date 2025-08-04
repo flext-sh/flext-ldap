@@ -60,7 +60,6 @@ from flext_core import (
     FlextEntity,
     FlextEntityStatus,
     FlextResult,
-    TEntityId,
     get_logger,
 )
 from pydantic import Field
@@ -313,7 +312,8 @@ class FlextLdapEntry(FlextDomainEntity):
         which represents the entry's Relative Distinguished Name (RDN).
 
         Returns:
-            str: RDN component (e.g., 'uid=john' from 'uid=john,ou=users,dc=example,dc=com')
+            str: RDN component (e.g., 'uid=john' from
+                 'uid=john,ou=users,dc=example,dc=com')
                  Empty string if DN is not set
 
         Example:

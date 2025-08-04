@@ -76,7 +76,7 @@ class FlextLDAPConnectionManager:
         """
         try:
             # FlextLdapSimpleClient.disconnect() is synchronous
-            disconnect_result = await connection.disconnect()
+            disconnect_result = connection.disconnect()
             if not disconnect_result.is_success:
                 return FlextResult.fail(f"Disconnect failed: {disconnect_result.error}")
             return FlextResult.ok(None)

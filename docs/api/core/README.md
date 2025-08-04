@@ -20,7 +20,7 @@ This document provides complete API reference for FLEXT-LDAP core components, in
 
 All APIs follow FLEXT-Core patterns:
 
-- **FlextResult<T>**: Type-safe error handling
+- **FlextResult[T]**: Type-safe error handling
 - **FlextContainer**: Dependency injection
 - **FlextLogger**: Structured logging
 - **FlextLDAPConfig**: Centralized configuration
@@ -137,7 +137,7 @@ async def connect(
             \"REDACTED_LDAP_BIND_PASSWORD_password\"
         )
 
-        if result.is_success:
+        if result.success:
             session_id = result.data
             # Use session_id for subsequent operations
         else:
@@ -159,7 +159,7 @@ async def disconnect(self, session_id: str) -> FlextResult[bool]:
 
     Example:
         result = await api.disconnect(session_id)
-        if result.is_success:
+        if result.success:
             print(\"Disconnected successfully\")
     \"\"\"
 ```
@@ -198,7 +198,7 @@ async def search(
             attributes=[\"uid\", \"cn\", \"mail\"]
         )
 
-        if result.is_success:
+        if result.success:
             for entry in result.data:
                 print(f\"User: {entry.get_attribute('cn')}\")
 
@@ -234,7 +234,7 @@ async def search_users(
     Example:
         result = await api.search_users(session)
 
-        if result.is_success:
+        if result.success:
             for user in result.data:
                 print(f\"User: {user.display_name} ({user.email})\")
     \"\"\"
@@ -270,7 +270,7 @@ async def create_user(
 
         result = await api.create_user(session, request)
 
-        if result.is_success:
+        if result.success:
             user = result.data
             print(f\"Created user: {user.dn}\")
         else:
@@ -335,7 +335,7 @@ async def delete_user(
             \"uid=jane.doe,ou=users,dc=company,dc=com\"
         )
 
-        if result.is_success:
+        if result.success:
             print(\"User deleted successfully\")
     \"\"\"
 ```
@@ -363,7 +363,7 @@ async def get_user(
             \"uid=jane.doe,ou=users,dc=company,dc=com\"
         )
 
-        if result.is_success:
+        if result.success:
             user = result.data
             print(f\"Found user: {user.display_name}\")
     \"\"\"
@@ -391,7 +391,7 @@ async def find_user_by_uid(
     Example:
         result = await api.find_user_by_uid(session, \"jane.doe\")
 
-        if result.is_success:
+        if result.success:
             user = result.data
             print(f\"Found user: {user.dn}\")
         else:
@@ -937,7 +937,7 @@ All API operations return `FlextResult<T>` for type-safe error handling:
 # Success case
 result: FlextResult[FlextLdapUser] = await api.get_user(session, dn)
 
-if result.is_success:
+if result.success:
     user: FlextLdapUser = result.data
     print(f\"Found user: {user.display_name}\")
 else:
@@ -946,10 +946,10 @@ else:
 
 # Chaining operations
 result = await api.find_user_by_uid(session, \"jane.doe\")
-if result.is_success:
+if result.success:
     user = result.data
     update_result = await api.update_user(session, user.dn, {\"title\": \"Senior Developer\"})
-    if update_result.is_success:
+    if update_result.success:
         print(\"User updated successfully\")
 ```
 
@@ -995,7 +995,7 @@ async def complete_user_management_example():
         )
 
         create_result = await api.create_user(session, user_request)
-        if not create_result.is_success:
+        if not create_result.success:
             print(f\"Failed to create user: {create_result.error}\")
             return
 
@@ -1008,7 +1008,7 @@ async def complete_user_management_example():
             \"(cn=*Doe*)\"
         )
 
-        if search_result.is_success:
+        if search_result.success:
             print(f\"Found {len(search_result.data)} users with 'Doe' in name\")
 
         # 3. Update user
@@ -1021,12 +1021,12 @@ async def complete_user_management_example():
             }
         )
 
-        if update_result.is_success:
+        if update_result.success:
             print(\"User updated successfully\")
 
         # 4. Find user by UID
         find_result = await api.find_user_by_uid(session, \"jane.doe\")
-        if find_result.is_success:
+        if find_result.success:
             user = find_result.data
             print(f\"Found user: {user.display_name} ({user.email})\")
 ```

@@ -42,7 +42,7 @@ class TestFlextLdapRepository:
         """Test successful save operation."""
         result = repository.save(sample_user)
 
-        assert result.is_success
+        assert result.success
         assert sample_user.id in repository._storage
         assert repository._storage[sample_user.id] == sample_user
 
@@ -71,7 +71,7 @@ class TestFlextLdapRepository:
         # Test successful validation
         user = ValidatingUser("valid_user")
         result = repository.save(user)  # type: ignore[arg-type]
-        assert result.is_success
+        assert result.success
 
         # Test failed validation
         invalid_user = ValidatingUser(
@@ -88,13 +88,13 @@ class TestFlextLdapRepository:
         repository.save(sample_user)
 
         result = repository.find_by_id(sample_user.id)
-        assert result.is_success
+        assert result.success
         assert result.data == sample_user
 
     def test_find_by_id_not_exists(self, repository: FlextLdapRepository) -> None:
         """Test finding non-existing entity by ID."""
         result = repository.find_by_id("nonexistent")
-        assert not result.is_success
+        assert not result.success
         assert "not found" in result.error.lower()
 
     def test_delete_exists(
@@ -104,7 +104,7 @@ class TestFlextLdapRepository:
         repository.save(sample_user)
 
         result = repository.delete(sample_user.id)
-        assert result.is_success
+        assert result.success
         assert sample_user.id not in repository._storage
 
     def test_delete_not_exists(self, repository: FlextLdapRepository) -> None:
@@ -248,7 +248,7 @@ class TestFlextLdapRepository:
     ) -> None:
         """Test entity validation success."""
         result = repository._validate_entity(sample_user)
-        assert result.is_success
+        assert result.success
 
     def test_validate_entity_with_validation_method(
         self, repository: FlextLdapRepository
@@ -279,7 +279,7 @@ class TestFlextLdapRepository:
             )
             users.append(user)
             result = repository.save(user)
-            assert result.is_success
+            assert result.success
 
         # Verify all users are saved
         assert len(repository._storage) == 3
@@ -287,15 +287,15 @@ class TestFlextLdapRepository:
         # Find each user
         for user in users:
             result = repository.find_by_id(user.id)
-            assert result.is_success
+            assert result.success
             assert result.data == user
 
         # Delete one user
         result = repository.delete(users[1].id)
-        assert result.is_success
+        assert result.success
         assert len(repository._storage) == 2
 
         # Verify deleted user is not found
         result = repository.find_by_id(users[1].id)
-        assert not result.is_success
+        assert not result.success
         assert "not found" in result.error.lower()

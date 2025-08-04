@@ -110,7 +110,7 @@ async def _demo_create_additional_users(service: FlextLdapApi) -> None:
     ]
 
     for user_data in additional_users:
-        user_req = FlextLdapCreateUserRequest(
+        FlextLdapCreateUserRequest(
             dn=f"cn={user_data['uid']},ou=users,dc=example,dc=com",
             uid=user_data["uid"],
             cn=user_data["cn"],
@@ -167,7 +167,7 @@ async def demonstrate_connection_handling() -> None:
 
     # Show that operations still work in memory mode
     print("2. Operations work seamlessly in memory mode...")
-    user_request = FlextLdapCreateUserRequest(
+    FlextLdapCreateUserRequest(
         dn="cn=testuser,ou=users,dc=example,dc=com",
         uid="testuser",
         cn="Test User",

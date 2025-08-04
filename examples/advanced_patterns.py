@@ -66,8 +66,8 @@ async def ldap_session(
             session_id=session_id,
         )
 
-        if not connection_result.is_success:
-            msg = f"Failed to connect: {connection_result.error}"
+        if not connection_result.success:
+            msg: str = f"Failed to connect: {connection_result.error}"
             raise ConnectionError(msg)
 
         logger.info("LDAP session established", extra={"session_id": session_id})
@@ -100,7 +100,7 @@ async def demonstrate_value_objects() -> None:
         dn = FlextLdapDistinguishedName(value="cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com")
         validation_result = dn.validate_domain_rules()
 
-        print(f"✅ DN validation: {'PASS' if validation_result.is_success else 'FAIL'}")
+        print(f"✅ DN validation: {'PASS' if validation_result.success else 'FAIL'}")
         print(f"   DN: {dn.value}")
 
         # 2. LDAP Filters - Extract Variable pattern for readability
@@ -109,7 +109,7 @@ async def demonstrate_value_objects() -> None:
         filter_validation = filter_obj.validate_domain_rules()
 
         # Extract status for readability
-        filter_status = "PASS" if filter_validation.is_success else "FAIL"
+        filter_status = "PASS" if filter_validation.success else "FAIL"
         print(f"✅ Filter validation: {filter_status}")
         print(f"   Filter: {filter_obj.value}")
 
@@ -152,7 +152,7 @@ async def demonstrate_comprehensive_configuration() -> None:
 
         search_validation = search_config.validate_domain_rules()
         # Extract status for readability
-        search_status = "VALID" if search_validation.is_success else "INVALID"
+        search_status = "VALID" if search_validation.success else "INVALID"
         print(f"✅ Search config: {search_status}")
 
         # 3. Convert to client configuration
@@ -199,7 +199,7 @@ async def demonstrate_async_patterns() -> None:
                 1
                 for result in results
                 if not isinstance(result, Exception)
-                and getattr(result, "is_success", False)
+                and getattr(result, "success", False)
             )
 
             print(
@@ -229,7 +229,7 @@ async def demonstrate_error_recovery() -> None:
 
                 # Simulate operation (would be real LDAP operation)
                 if attempt < 2:  # Fail first 2 attempts
-                    msg = f"Simulated failure for {operation_name}"
+                    msg: str = f"Simulated failure for {operation_name}"
                     raise ConnectionError(msg)
 
                 logger.info(

@@ -165,12 +165,8 @@ class TestFlextLdapAuthConfig:
         config = FlextLdapAuthConfig()
         if config.bind_dn != "":
             raise AssertionError(f"Expected {''}, got {config.bind_dn}")
-        assert (
-            config.bind_password is not None
-        )
-        assert (
-            config.bind_password.get_secret_value() == ""
-        )
+        assert config.bind_password is not None
+        assert config.bind_password.get_secret_value() == ""
         if config.use_anonymous_bind:
             raise AssertionError(f"Expected False, got {config.use_anonymous_bind}")
         assert config.sasl_mechanism is None
@@ -219,7 +215,7 @@ class TestFlextLdapAuthConfig:
 
         config = FlextLdapAuthConfig(use_anonymous_bind=False, bind_dn="")
         result = config.validate_domain_rules()
-        assert not result.is_success
+        assert not result.success
         assert "bind dn" in result.error.lower()
 
     @pytest.mark.unit
@@ -232,7 +228,7 @@ class TestFlextLdapAuthConfig:
             bind_password="",
         )
         result = config.validate_domain_rules()
-        assert not result.is_success
+        assert not result.success
         assert "Bind password is required" in (result.error or "")
 
 
@@ -436,13 +432,13 @@ class TestFlextLdapSecurityConfig:
         # Test client cert without key
         config = FlextLdapSecurityConfig(client_cert_file="/path/to/client.crt")
         result = config.validate_domain_rules()
-        assert not result.is_success
+        assert not result.success
         assert "key file" in result.error.lower()
 
         # Test client key without cert
         config = FlextLdapSecurityConfig(client_key_file="/path/to/client.key")
         result = config.validate_domain_rules()
-        assert not result.is_success
+        assert not result.success
         assert "cert file" in result.error.lower()
 
 

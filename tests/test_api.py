@@ -118,7 +118,7 @@ class TestFlextLdapApiEntityOperations:
         # Note: Tests the flow without actual LDAP connection
         assert user_request is not None
         if user_request.dn != "cn=testuser,ou=users,dc=example,dc=com":
-            msg = f"Expected {'cn=testuser,ou=users,dc=example,dc=com'}, got {user_request.dn}"
+            msg: str = f"Expected {'cn=testuser,ou=users,dc=example,dc=com'}, got {user_request.dn}"
             raise AssertionError(msg)
 
     def test_entity_domain_rules(self) -> None:

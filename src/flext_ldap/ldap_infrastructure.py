@@ -847,7 +847,7 @@ class FlextLdapSimpleClient:
                 "user": str(getattr(self._current_connection, "user", "anonymous")),
             }
         except Exception as e:
-            logger.exception(f"Error getting server info: {e}")
+            logger.exception("Error getting server info", exc_info=e)
             return {"status": "error", "error": str(e)}
 
     async def get_entry(self, dn: str) -> FlextResult[dict[str, object]]:

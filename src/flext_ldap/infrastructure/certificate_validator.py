@@ -186,7 +186,7 @@ class FlextLdapCertificateValidationService:
     ) -> FlextResult[object]:
         """Validate hostname requirement - Single Responsibility."""
         cert_info_result = await self._extract_certificate_info(leaf_cert)
-        if not cert_info_result.is_success:
+        if not cert_info_result.success:
             return self._create_malformed_result(
                 f"Failed to extract certificate info: {cert_info_result.error}",
             )
@@ -245,8 +245,7 @@ class FlextLdapCertificateValidationService:
                 message="Certificate validation successful",
                 certificate_info=(
                     type_cast("CertificateInfo", cert_info_result.data)
-                    if cert_info_result.is_success
-                    else None
+                    if cert_info_result.success else None
                 ),
                 chain_length=1,  # Will be updated by caller if needed
             ),
@@ -289,7 +288,7 @@ class FlextLdapCertificateValidationService:
                 # Validate the certificate
                 cert_result = await self.validate_certificate_chain([cert_der], context)
 
-                if cert_result.is_success:
+                if cert_result.success:
                     return cert_result
                 return FlextResult.ok(
                     ValidationResult(
@@ -431,7 +430,7 @@ class FlextLdapCertificateValidationService:
             return FlextResult.ok(None)  # Success
 
         except (OSError, ssl.SSLError) as e:
-            logger.warning(f"Failed to load CA certificate data: {e}")
+            logger.warning("Failed to load CA certificate data: %s", e)
             return FlextResult.fail(f"Invalid CA certificate data: {e}")
 
     def _load_client_certificates(

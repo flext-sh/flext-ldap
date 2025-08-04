@@ -150,7 +150,7 @@ class FlextLdapSchemaAttribute:
                 return [str(item) for item in value]
             return None
 
-        def safe_extract_bool(key: str, default: bool) -> bool:
+        def safe_extract_bool(key: str, default: bool) -> bool:  # noqa: FBT001
             value = attribute_params.get(key, default)
             return bool(value) if value is not None else default
 
@@ -186,10 +186,10 @@ class FlextLdapSchemaAttribute:
             ordering_matching_rule=safe_extract_string("ordering_matching_rule"),
             substring_matching_rule=safe_extract_string("substring_matching_rule"),
             usage=safe_extract_usage(),
-            is_single_value=safe_extract_bool("is_single_value", False),
-            is_collective=safe_extract_bool("is_collective", False),
-            is_no_user_modification=safe_extract_bool("is_no_user_modification", False),
-            is_obsolete=safe_extract_bool("is_obsolete", False),
+            is_single_value=safe_extract_bool("is_single_value", default=False),
+            is_collective=safe_extract_bool("is_collective", default=False),
+            is_no_user_modification=safe_extract_bool("is_no_user_modification", default=False),
+            is_obsolete=safe_extract_bool("is_obsolete", default=False),
             superior=safe_extract_string("superior"),
             extensions=safe_extract_extensions(),
         )
@@ -290,7 +290,8 @@ class FlextLdapSchemaObjectClass:
 
         Args:
             oid: Object identifier (required)
-            **object_class_params: All other object class parameters as keyword arguments
+            **object_class_params: All other object class parameters as
+                keyword arguments
 
         Returns:
             Type-safe FlextLdapSchemaObjectClassData instance
@@ -308,7 +309,7 @@ class FlextLdapSchemaObjectClass:
                 return [str(item) for item in value]
             return None
 
-        def safe_extract_bool(key: str, default: bool) -> bool:
+        def safe_extract_bool(key: str, default: bool) -> bool:  # noqa: FBT001
             value = object_class_params.get(key, default)
             return bool(value) if value is not None else default
 
@@ -343,7 +344,7 @@ class FlextLdapSchemaObjectClass:
             superior_classes=safe_extract_string_list("superior_classes"),
             must_attributes=safe_extract_string_list("must_attributes"),
             may_attributes=safe_extract_string_list("may_attributes"),
-            is_obsolete=safe_extract_bool("is_obsolete", False),
+            is_obsolete=safe_extract_bool("is_obsolete", default=False),
             extensions=safe_extract_extensions(),
         )
 
@@ -448,7 +449,7 @@ class SafeExtractorStrategy:
             matching_rules=self._extract_nested_dict("matching_rules"),
             discovery_errors=self._extract_string_list("discovery_errors"),
             discovery_warnings=self._extract_string_list("discovery_warnings"),
-            cache_hit=self._extract_bool("cache_hit", False),
+            cache_hit=self._extract_bool("cache_hit", default=False),
             discovery_duration_ms=self._extract_int("discovery_duration_ms", 0),
         )
 
@@ -500,7 +501,7 @@ class SafeExtractorStrategy:
             return [str(item) for item in value]
         return None
 
-    def _extract_bool(self, key: str, default: bool = False) -> bool:
+    def _extract_bool(self, key: str, *, default: bool = False) -> bool:  # noqa: FBT001,FBT002
         """Extract boolean value safely."""
         value = self.params.get(key, default)
         return bool(value) if value is not None else default

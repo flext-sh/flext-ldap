@@ -29,7 +29,7 @@ def test_ldap_integration_with_docker_container(
     # Test connection
     result = client.connect()
 
-    if result.is_success:
+    if result.success:
         # Test basic search
         asyncio.run(
             client.search(

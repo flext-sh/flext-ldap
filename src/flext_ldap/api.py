@@ -239,12 +239,13 @@ class FlextLdapApi:
         # Railway pattern - chain operations with proper authentication
         if bind_dn and password:
             # Use connect_with_auth for authenticated connections
-            from flext_ldap.config import FlextLdapAuthConfig
-            from pydantic import SecretStr
+            from pydantic import SecretStr  # noqa: PLC0415
+
+            from flext_ldap.config import FlextLdapAuthConfig  # noqa: PLC0415
 
             auth_config = FlextLdapAuthConfig(
                 bind_dn=bind_dn,
-                bind_password=SecretStr(password)
+                bind_password=SecretStr(password),
             )
             connection_result = await self._client.connect_with_auth(auth_config)
         else:
@@ -268,7 +269,7 @@ class FlextLdapApi:
         try:
             # For now, we'll assume authentication is handled by the client
             # In a real implementation, this would involve proper LDAP bind operations
-            # TODO(@flext-contributors): Implement actual authentication (https://github.com/flext/flext-ldap/issues/auth-implementation)
+            # TODO(https://github.com/flext/flext-ldap/issues/auth-implementation): Implement actual authentication  # noqa: FIX002,TD005
             logger.debug(
                 "Authentication requested",
                 extra={"bind_dn": bind_dn, "has_password": bool(password)},
@@ -293,7 +294,7 @@ class FlextLdapApi:
 
             # FlextLdapClient.disconnect() is synchronous and takes no arguments
             # Note: connection_id stored for future connection management features
-            result = await self._client.disconnect()
+            result = self._client.disconnect()
 
             if result.is_success:
                 del self._connections[session_id]
@@ -359,7 +360,8 @@ class FlextLdapApi:
 
             # Convert to domain entities - type-safe conversion
             raw_data = search_result.data or []
-            # Cast for type safety since we know this is list[dict[str, object]] from search
+            # Cast for type safety since we know this is
+            # list[dict[str, object]] from search
             dict_data = [entry for entry in raw_data if isinstance(entry, dict)]
             return self._convert_to_domain_entities(dict_data)
 
@@ -622,9 +624,11 @@ class FlextLdapApi:
             # Use posixGroup which doesn't require initial members
             # Generate unique gidNumber if not provided
             if gid_number is None:
-                import hashlib
+                import hashlib  # noqa: PLC0415
                 # Generate gidNumber from group name hash to ensure uniqueness
-                gid_number = 1000 + int(hashlib.md5(cn.encode()).hexdigest()[:4], 16) % 60000
+                gid_number = (
+                    1000 + int(hashlib.sha256(cn.encode()).hexdigest()[:4], 16) % 60000
+                )
 
             attributes: dict[str, object] = {
                 "objectClass": ["posixGroup"],
@@ -635,7 +639,8 @@ class FlextLdapApi:
             if description:
                 attributes["description"] = [description]
 
-            # posixGroup doesn't require initial members, members can be added later via memberUid
+            # posixGroup doesn't require initial members, members can be added
+            # later via memberUid
 
             # FlextLdapClient.add() is async with different signature
             object_classes_list = attributes["objectClass"]

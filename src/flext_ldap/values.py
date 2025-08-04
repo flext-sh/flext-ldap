@@ -223,7 +223,7 @@ class FlextLdapDistinguishedName(FlextDomainValueObject):
 
 
 # 🚀 CODE CONSOLIDATION: Temporarily disabled due to API incompatibility
-# TODO(claude): Re-enable after API compatibility with flext-ldif DN (https://github.com/flext/flext-ldap/issues/consolidation)
+# TODO(https://github.com/flext/flext-ldap/issues/consolidation): Re-enable after API compatibility with flext-ldif DN  # noqa: FIX002,TD005
 # Note: Consolidation disabled - using local implementation for now
 
 

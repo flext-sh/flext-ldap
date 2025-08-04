@@ -36,13 +36,13 @@ def test_docker_ldap_connection_shared(
     # Test connection
     result = client.connect()
 
-    if result.is_success:
+    if result.success:
         # Test search on base DN
         try:
             search_result = asyncio.run(
                 client.search(base_dn, "(objectClass=*)", scope="base")
             )
-            if not search_result.is_success:
+            if not search_result.success:
                 # Test search failed but connection succeeded
                 pass
 

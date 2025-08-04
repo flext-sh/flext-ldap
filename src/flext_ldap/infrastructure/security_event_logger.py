@@ -248,7 +248,7 @@ class FlextLdapSecurityEventLogger:
 
             # Log event based on severity with proper logging
             event_dict = event.to_dict()
-            event_msg = f"Security Event: {event_dict}"
+            event_msg: str = f"Security Event: {event_dict}"
             if event_data.severity == FlextLdapSecurityEventSeverity.CRITICAL:
                 logger.critical(event_msg)
             elif event_data.severity == FlextLdapSecurityEventSeverity.HIGH:
@@ -263,7 +263,7 @@ class FlextLdapSecurityEventLogger:
             return FlextResult.ok(event)
 
         except (RuntimeError, ValueError, TypeError) as e:
-            error_msg = f"Failed to log security event: {e}"
+            error_msg: str = f"Failed to log security event: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
@@ -273,7 +273,8 @@ class FlextLdapSecurityEventLogger:
         event_type: FlextLdapSecurityEventType,
         **event_params: object,
     ) -> FlextLdapSecurityEventData:
-        """Factory method to create type-safe FlextLdapSecurityEventData from parameters.
+        """Factory method to create type-safe FlextLdapSecurityEventData
+        from parameters.
 
         REFACTORED: Eliminates redundant casts and type confusion.
         Uses proper type validation and safe conversion.
@@ -524,7 +525,7 @@ class FlextLdapSecurityEventLogger:
             return FlextResult.ok(metrics)
 
         except (RuntimeError, ValueError, TypeError) as e:
-            error_msg = f"Failed to get security metrics: {e}"
+            error_msg: str = f"Failed to get security metrics: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 

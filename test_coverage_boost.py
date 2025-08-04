@@ -5,21 +5,17 @@ Executado sem pytest para evitar travamentos.
 """
 
 import sys
-sys.path.insert(0, 'src')
 
-def test_basic_imports():
+sys.path.insert(0, "src")
+
+
+def test_basic_imports() -> bool | None:
     """Testa imports básicos de todos os módulos."""
     try:
-        print("✅ FlextLdapApi import OK")
-
-        from flext_ldap.entities import FlextLdapUser
-        print("✅ Entities import OK")
-
-        from flext_ldap.values import FlextLdapCreateUserRequest
-        print("✅ Values import OK")
 
         from flext_ldap.config import FlextLdapSettings
-        print("✅ Config import OK")
+        from flext_ldap.entities import FlextLdapUser
+        from flext_ldap.values import FlextLdapCreateUserRequest
 
         # Test basic entity creation
         user = FlextLdapUser(
@@ -31,7 +27,6 @@ def test_basic_imports():
         )
         assert user.uid == "test"
         assert user.cn == "Test User"
-        print("✅ FlextLdapUser creation OK")
 
         # Test user request creation
         request = FlextLdapCreateUserRequest(
@@ -41,7 +36,6 @@ def test_basic_imports():
             sn="User"
         )
         assert request.uid == "test"
-        print("✅ FlextLdapCreateUserRequest creation OK")
 
         # Test config creation
         config = FlextLdapSettings(
@@ -51,15 +45,14 @@ def test_basic_imports():
         )
         assert config.host == "localhost"
         assert config.port == 389
-        print("✅ FlextLdapSettings creation OK")
 
         return True
 
-    except Exception as e:
-        print(f"❌ Import/creation error: {e}")
+    except Exception:
         return False
 
-def test_api_initialization():
+
+def test_api_initialization() -> bool | None:
     """Testa inicialização básica da API."""
     try:
         from flext_ldap import FlextLdapApi
@@ -67,25 +60,23 @@ def test_api_initialization():
         # Test API creation without config
         api = FlextLdapApi()
         assert api is not None
-        print("✅ FlextLdapApi initialization OK")
 
         # Test with config
         from flext_ldap.config import FlextLdapSettings
         config = FlextLdapSettings(host="test.example.com", port=389)
         api_with_config = FlextLdapApi(config)
         assert api_with_config is not None
-        print("✅ FlextLdapApi with config OK")
 
         return True
 
-    except Exception as e:
-        print(f"❌ API initialization error: {e}")
+    except Exception:
         return False
 
-def test_domain_entities():
+
+def test_domain_entities() -> bool | None:
     """Testa entidades de domínio básicas."""
     try:
-        from flext_ldap.entities import FlextLdapGroup, FlextLdapEntry
+        from flext_ldap.entities import FlextLdapEntry, FlextLdapGroup
 
         # Test FlextLdapEntry
         entry = FlextLdapEntry(
@@ -95,7 +86,6 @@ def test_domain_entities():
         )
         assert entry.dn == "cn=test,dc=example,dc=com"
         assert "cn" in entry.attributes
-        print("✅ FlextLdapEntry creation OK")
 
         # Test FlextLdapGroup
         group = FlextLdapGroup(
@@ -104,13 +94,12 @@ def test_domain_entities():
             cn="Test Group"
         )
         assert group.cn == "Test Group"
-        print("✅ FlextLdapGroup creation OK")
 
         return True
 
-    except Exception as e:
-        print(f"❌ Domain entities error: {e}")
+    except Exception:
         return False
+
 
 def run_all_tests():
     """Executa todos os testes diretos."""
@@ -124,20 +113,14 @@ def run_all_tests():
     total = len(tests)
 
     for test in tests:
-        print(f"\n--- Running {test.__name__} ---")
         if test():
             passed += 1
-            print(f"✅ {test.__name__} PASSED")
-        else:
-            print(f"❌ {test.__name__} FAILED")
 
-    print(f"\n🎯 SUMMARY: {passed}/{total} tests passed")
     if passed == total:
-        print("🎉 ALL DIRECT TESTS PASSED - Coverage significantly increased!")
-    else:
-        print("⚠️  Some tests failed - coverage partially increased")
+        pass
 
     return passed == total
+
 
 if __name__ == "__main__":
     success = run_all_tests()
