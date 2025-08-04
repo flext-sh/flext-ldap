@@ -269,7 +269,7 @@ class FlextLdapApi:
         try:
             # For now, we'll assume authentication is handled by the client
             # In a real implementation, this would involve proper LDAP bind operations
-            # TODO(https://github.com/flext/flext-ldap/issues/auth-implementation): Implement actual authentication  # noqa: FIX002,TD005
+            # TODO(https://github.com/flext/flext-ldap/issues/auth-implementation): Implement actual authentication  # noqa: FIX002
             logger.debug(
                 "Authentication requested",
                 extra={"bind_dn": bind_dn, "has_password": bool(password)},

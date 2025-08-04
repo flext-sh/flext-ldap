@@ -115,7 +115,7 @@ class FlextLdapUserApplicationService:
             # Type cast to match the expected return type
             return cast("FlextResult[FlextLdapUser | None]", result)
         except Exception as e:
-            logger.exception(f"Failed to get user {user_id}", exc_info=e)
+            logger.exception("Failed to get user %s", user_id, exc_info=e)
             return FlextResult.fail(f"User retrieval failed: {e}")
 
     def find_user_by_dn(self, dn: str) -> FlextResult[FlextLdapUser | None]:
@@ -128,7 +128,7 @@ class FlextLdapUserApplicationService:
             return FlextResult.ok(None)  # User not found
 
         # Production - not implemented in core service yet
-        logger.warning(f"find_user_by_dn not available in core service API, dn: {dn}")
+        logger.warning("find_user_by_dn not available in core service API, dn: %s", dn)
         return FlextResult.fail("find_user_by_dn not available in core service")
 
     async def find_user_by_uid(self, uid: str) -> FlextResult[FlextLdapUser | None]:
@@ -146,7 +146,7 @@ class FlextLdapUserApplicationService:
             # Type cast to match the expected return type
             return cast("FlextResult[FlextLdapUser | None]", result)
         except Exception as e:
-            logger.exception(f"Failed to find user {uid}", exc_info=e)
+            logger.exception("Failed to find user %s", uid, exc_info=e)
             return FlextResult.fail(f"User lookup failed: {e}")
 
     def lock_user(self, user_id: str) -> FlextResult[FlextLdapUser]:
@@ -161,7 +161,8 @@ class FlextLdapUserApplicationService:
 
         # Production - not implemented in core service yet
         logger.warning(
-            f"lock_user not available in core service API, user_id: {user_id}",
+            "lock_user not available in core service API, user_id: %s",
+            user_id,
         )
         return FlextResult.fail("User locking not implemented in core service")
 
@@ -177,7 +178,8 @@ class FlextLdapUserApplicationService:
 
         # Production - not implemented in core service yet
         logger.warning(
-            f"unlock_user not available in core service API, user_id: {user_id}",
+            "unlock_user not available in core service API, user_id: %s",
+            user_id,
         )
         return FlextResult.fail("User unlocking not implemented in core service")
 
@@ -214,11 +216,11 @@ class FlextLdapUserApplicationService:
             except RuntimeError:
                 # No event loop - use asyncio.run directly
                 result = asyncio.run(
-                    self._core_service.update_user(user_id, dict(updates))
+                    self._core_service.update_user(user_id, dict(updates)),
                 )
             return result
         except Exception as e:
-            logger.exception(f"Failed to update user {user_id}", exc_info=e)
+            logger.exception("Failed to update user %s", user_id, exc_info=e)
             return FlextResult.fail(f"User update failed: {e}")
 
     def delete_user(self, user_id: str) -> FlextResult[bool]:
@@ -246,7 +248,7 @@ class FlextLdapUserApplicationService:
                 result = asyncio.run(self._core_service.delete_user(user_id))
             return result
         except Exception as e:
-            logger.exception(f"Failed to delete user {user_id}", exc_info=e)
+            logger.exception("Failed to delete user %s", user_id, exc_info=e)
             return FlextResult.fail(f"User deletion failed: {e}")
 
     def list_users(self, **kwargs: object) -> FlextResult[list[FlextLdapUser]]:  # noqa: ARG002
@@ -322,7 +324,7 @@ class FlextLdapGroupService:
             return FlextResult.ok(None)  # Group not found
 
         # Production - not implemented in core service yet
-        logger.warning(f"find_group_by_dn not implemented in core service, dn: {dn}")
+        logger.warning("find_group_by_dn not implemented in core service, dn: %s", dn)
         return FlextResult.fail("find_group_by_dn not implemented in core service")
 
     def get_group(self, group_id: str) -> FlextResult[FlextLdapGroup]:
@@ -501,7 +503,7 @@ class FlextLdapOperationService:
         return FlextResult.fail("complete_operation not implemented in core service")
 
     def list_operations(
-        self, **kwargs: object
+        self, **kwargs: object,
     ) -> FlextResult[list[FlextLdapOperation]]:
         """List operations - delegates to core service with test fallback."""
         # In test environment, return cached operations or create mock list

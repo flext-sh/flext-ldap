@@ -351,10 +351,9 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 # objects but client returns dict
                 # This method needs proper conversion from dict[str, object]
                 # to FlextLdapUser
-                search_data = search_result.data or []
                 logger.info(
-                    f"Found {len(search_data)} LDAP entries - conversion to "
-                    f"FlextLdapUser not implemented",
+                    "Found %d LDAP entries - conversion to "
+                    "FlextLdapUser not implemented",
                 )
                 return []  # Return empty list for now - proper conversion needed
             # Log error but return empty list for compatibility

@@ -303,7 +303,7 @@ class FlextLdapConnectionManager:
             if connection.is_success:
                 save_result = self._connections.save(connection.data)
                 if not save_result.is_success:
-                    logger.error(f"Failed to save connection: {save_result.error}")
+                    logger.error("Failed to save connection: %s", save_result.error)
                 self._pool_configs[config_key] = config
 
             return connection
@@ -354,7 +354,7 @@ class FlextLdapConnectionManager:
                     getattr(connection, "server", ""),
                 )
                 if not delete_result.is_success:
-                    logger.error(f"Failed to delete connection: {delete_result.error}")
+                    logger.error("Failed to delete connection: %s", delete_result.error)
             if hasattr(connection, "unbind"):
                 connection.unbind()  # type: ignore[no-untyped-call]
             return FlextResult.ok(LDAPOperationResult.SUCCESS)
