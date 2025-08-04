@@ -14,13 +14,11 @@ import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum
-from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from flext_core import FlextResult, get_logger
 
-if TYPE_CHECKING:
-    from flext_ldap.entities import FlextLdapConnection
+from flext_ldap.entities import FlextLdapConnection
 
 logger = get_logger(__name__)
 
@@ -288,7 +286,6 @@ class FlextLdapSecurityEventLogger:
             Type-safe FlextLdapSecurityEventData instance
 
         """
-        from flext_ldap.entities import FlextLdapConnection
 
         # Safe type extraction with proper defaults
         def safe_extract_severity(key: str) -> FlextLdapSecurityEventSeverity:

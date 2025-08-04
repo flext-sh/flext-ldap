@@ -167,7 +167,9 @@ class TestFlextLdapAuthConfig:
             raise AssertionError(f"Expected {''}, got {config.bind_dn}")
         assert (
             config.bind_password is not None
-            and config.bind_password.get_secret_value() == ""
+        )
+        assert (
+            config.bind_password.get_secret_value() == ""
         )
         if config.use_anonymous_bind:
             raise AssertionError(f"Expected False, got {config.use_anonymous_bind}")

@@ -135,7 +135,7 @@ class FlextLdapConnectionConfig(FlextLDAPConfig):
 
     # Compatibility field for initialization (maps to timeout field)
     timeout_seconds: int = Field(
-        default=30, description="Connection timeout in seconds (compatibility field)"
+        default=30, description="Connection timeout in seconds (compatibility field)",
     )
 
     @field_validator("host")
@@ -143,7 +143,8 @@ class FlextLdapConnectionConfig(FlextLDAPConfig):
     def validate_host(cls, v: str) -> str:
         """Validate host is not empty."""
         if not v or not v.strip():
-            raise ValueError("Host cannot be empty")
+            msg = "Host cannot be empty"
+            raise ValueError(msg)
         return v.strip()
 
     @field_validator("timeout_seconds")
@@ -184,10 +185,10 @@ class FlextLdapAuthConfig(FlextLDAPConfig):
 
     # Override base defaults to match test expectations - maintain base class type compatibility
     bind_dn: str | None = Field(
-        default="", description="LDAP bind DN for authentication"
+        default="", description="LDAP bind DN for authentication",
     )
     bind_password: SecretStr | None = Field(
-        default_factory=lambda: SecretStr(""), description="LDAP bind password"
+        default_factory=lambda: SecretStr(""), description="LDAP bind password",
     )
 
     use_anonymous_bind: bool = Field(default=False, description="Use anonymous binding")
@@ -210,7 +211,7 @@ class FlextLdapAuthConfig(FlextLDAPConfig):
                 self.bind_password and not self.bind_password.get_secret_value()
             ):
                 return FlextResult.fail(
-                    "Bind password is required for authenticated binding"
+                    "Bind password is required for authenticated binding",
                 )
         return FlextResult.ok(None)
 
@@ -230,14 +231,14 @@ class FlextLdapSearchConfig(FlextBaseConfigModel):
     pool_size: int = Field(10, description="Connection pool size", ge=1)
 
     default_search_scope: str = Field(
-        default="subtree", description="Default search scope"
+        default="subtree", description="Default search scope",
     )
     size_limit: int = Field(default=1000, ge=0, description="Search size limit")
     time_limit: int = Field(default=30, ge=0, description="Search time limit")
     paged_search: bool = Field(default=True, description="Enable paged search")
     page_size: int = Field(default=1000, ge=1, description="Page size for paged search")
     enable_referral_chasing: bool = Field(
-        default=False, description="Enable referral chasing"
+        default=False, description="Enable referral chasing",
     )
     max_referral_hops: int = Field(default=5, ge=0, description="Maximum referral hops")
 
@@ -269,10 +270,10 @@ class FlextLdapOperationConfig(FlextLDAPConfig):
 
     max_retries: int = Field(default=3, ge=0, description="Maximum retry attempts")
     retry_delay: float = Field(
-        default=1.0, ge=0.0, description="Retry delay in seconds"
+        default=1.0, ge=0.0, description="Retry delay in seconds",
     )
     enable_transactions: bool = Field(
-        default=False, description="Enable transaction support"
+        default=False, description="Enable transaction support",
     )
     batch_size: int = Field(default=100, ge=1, description="Batch operation size")
 
@@ -286,13 +287,13 @@ class FlextLdapSecurityConfig(FlextLDAPConfig):
 
     tls_validation: str = Field(default="strict", description="TLS validation mode")
     ca_cert_file: str | None = Field(
-        default=None, description="CA certificate file path"
+        default=None, description="CA certificate file path",
     )
     client_cert_file: str | None = Field(
-        default=None, description="Client certificate file path"
+        default=None, description="Client certificate file path",
     )
     client_key_file: str | None = Field(
-        default=None, description="Client key file path"
+        default=None, description="Client key file path",
     )
     enable_start_tls: bool = Field(default=False, description="Enable StartTLS")
     tls_version: str | None = Field(default=None, description="TLS version")
@@ -301,11 +302,11 @@ class FlextLdapSecurityConfig(FlextLDAPConfig):
         """Validate security domain rules."""
         if self.client_cert_file and not self.client_key_file:
             return FlextResult.fail(
-                "Client key file required when client cert file is specified"
+                "Client key file required when client cert file is specified",
             )
         if self.client_key_file and not self.client_cert_file:
             return FlextResult.fail(
-                "Client cert file required when client key file is specified"
+                "Client cert file required when client key file is specified",
             )
         return FlextResult.ok(None)
 
@@ -314,17 +315,17 @@ class FlextLdapLoggingConfig(FlextLDAPConfig):
     """LDAP logging configuration with specialized validation."""
 
     log_level: FlextLogLevel = Field(
-        default=FlextLogLevel.INFO, description="Logging level"
+        default=FlextLogLevel.INFO, description="Logging level",
     )
     enable_connection_logging: bool = Field(
-        default=False, description="Enable connection logging"
+        default=False, description="Enable connection logging",
     )
     enable_operation_logging: bool = Field(
-        default=True, description="Enable operation logging"
+        default=True, description="Enable operation logging",
     )
     log_sensitive_data: bool = Field(default=False, description="Log sensitive data")
     structured_logging: bool = Field(
-        default=True, description="Enable structured logging"
+        default=True, description="Enable structured logging",
     )
 
     def validate_domain_rules(self) -> FlextResult[None]:
@@ -379,7 +380,7 @@ class FlextLdapSettings(FlextLDAPConfig):
 
     # Composite configuration objects for specialized settings
     connection: FlextLdapConnectionConfig = Field(
-        default_factory=FlextLdapConnectionConfig
+        default_factory=FlextLdapConnectionConfig,
     )
     auth: FlextLdapAuthConfig = Field(default_factory=FlextLdapAuthConfig)
     search: FlextLdapSearchConfig = Field(default_factory=FlextLdapSearchConfig)

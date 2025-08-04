@@ -20,8 +20,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 
 from flext_core import get_logger
 from flext_ldap import (
@@ -30,6 +30,9 @@ from flext_ldap import (
     FlextLdapSettings,
 )
 from flext_ldap.values import FlextLdapDistinguishedName, FlextLdapFilterValue
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 logger = get_logger(__name__)
 

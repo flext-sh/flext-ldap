@@ -834,6 +834,22 @@ class FlextLdapSimpleClient:
             self._current_connection is not None and not self._current_connection.closed
         )
 
+    def get_server_info(self) -> dict[str, str]:
+        """Get server connection information."""
+        if not self.is_connected() or not self._current_connection:
+            return {"status": "disconnected"}
+
+        try:
+            return {
+                "status": "connected",
+                "server": str(self._current_connection.server),
+                "bound": str(self._current_connection.bound),
+                "user": str(getattr(self._current_connection, "user", "anonymous")),
+            }
+        except Exception as e:
+            logger.exception(f"Error getting server info: {e}")
+            return {"status": "error", "error": str(e)}
+
     async def get_entry(self, dn: str) -> FlextResult[dict[str, object]]:
         """Get single LDAP entry by DN."""
         logger.debug("Getting LDAP entry", extra={"dn": dn})

@@ -707,7 +707,7 @@ class FlextLdapSchemaDiscoveryService:
             schema_result = await self.discover_schema(connection)
             if not schema_result.is_success:
                 return FlextResult.fail(
-                    f"Failed to discover schema: {schema_result.error}"
+                    f"Failed to discover schema: {schema_result.error}",
                 )
 
             schema = schema_result.data
@@ -737,7 +737,7 @@ class FlextLdapSchemaDiscoveryService:
             schema_result = await self.discover_schema(connection)
             if not schema_result.is_success:
                 return FlextResult.fail(
-                    f"Failed to discover schema: {schema_result.error}"
+                    f"Failed to discover schema: {schema_result.error}",
                 )
 
             schema = schema_result.data

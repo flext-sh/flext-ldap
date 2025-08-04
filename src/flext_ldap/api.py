@@ -236,16 +236,23 @@ class FlextLdapApi:
         # Create client with config
         self._client = FlextLdapSimpleClient(conn_config)
 
-        # Railway pattern - chain operations
-        connection_result = self._client.connect(conn_config)
+        # Railway pattern - chain operations with proper authentication
+        if bind_dn and password:
+            # Use connect_with_auth for authenticated connections
+            from flext_ldap.config import FlextLdapAuthConfig
+            from pydantic import SecretStr
+
+            auth_config = FlextLdapAuthConfig(
+                bind_dn=bind_dn,
+                bind_password=SecretStr(password)
+            )
+            connection_result = await self._client.connect_with_auth(auth_config)
+        else:
+            # Use regular connect for anonymous connections
+            connection_result = self._client.connect(conn_config)
+
         if not connection_result.is_success:
             return FlextResult.fail(f"Connection failed: {connection_result.error}")
-
-        # Handle authentication if provided
-        if bind_dn and password:
-            auth_result = await self._authenticate_connection(bind_dn, password)
-            if not auth_result.is_success:
-                return auth_result
 
         # Manage session and return success
         return self._create_session(session_id)
@@ -601,6 +608,7 @@ class FlextLdapApi:
         dn: str | FlextLdapDistinguishedName,
         cn: str,
         description: str | None = None,
+        gid_number: int | None = None,
     ) -> FlextResult[FlextLdapGroup]:
         """Create LDAP group with domain validation."""
         try:
@@ -611,16 +619,23 @@ class FlextLdapApi:
             dn_str = str(dn) if isinstance(dn, FlextLdapDistinguishedName) else dn
 
             # Prepare attributes - cast to dict[str, object] for client
+            # Use posixGroup which doesn't require initial members
+            # Generate unique gidNumber if not provided
+            if gid_number is None:
+                import hashlib
+                # Generate gidNumber from group name hash to ensure uniqueness
+                gid_number = 1000 + int(hashlib.md5(cn.encode()).hexdigest()[:4], 16) % 60000
+
             attributes: dict[str, object] = {
-                "objectClass": ["groupOfNames"],
+                "objectClass": ["posixGroup"],
                 "cn": [cn],
+                "gidNumber": [str(gid_number)],  # Required for posixGroup
             }
 
             if description:
                 attributes["description"] = [description]
 
-            # Groups require at least one member initially
-            attributes["member"] = [""]  # Empty member initially
+            # posixGroup doesn't require initial members, members can be added later via memberUid
 
             # FlextLdapClient.add() is async with different signature
             object_classes_list = attributes["objectClass"]

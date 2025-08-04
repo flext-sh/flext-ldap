@@ -1,8 +1,8 @@
-# FLEXT-LDAP Documentation Hub
+# FLEXT-LDAP Documentation
 
-**Enterprise LDAP Directory Services Integration Documentation**
+**LDAP Directory Operations Library Documentation**
 
-Welcome to the comprehensive documentation for FLEXT-LDAP, the enterprise-grade LDAP operations library built on FLEXT-Core foundation.
+Documentation for FLEXT-LDAP, an LDAP operations library built with Clean Architecture patterns and FlextResult error handling.
 
 ---
 
