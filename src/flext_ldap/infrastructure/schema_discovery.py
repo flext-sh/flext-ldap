@@ -501,7 +501,7 @@ class SafeExtractorStrategy:
             return [str(item) for item in value]
         return None
 
-    def _extract_bool(self, key: str, *, default: bool = False) -> bool:  # noqa: FBT001,FBT002
+    def _extract_bool(self, key: str, *, default: bool = False) -> bool:
         """Extract boolean value safely."""
         value = self.params.get(key, default)
         return bool(value) if value is not None else default
@@ -1360,7 +1360,7 @@ class FlextLdapSchemaDiscoveryService:
             return object_classes
 
         except (RuntimeError, ValueError, TypeError) as e:
-            logger.warning(f"Error parsing server object classes: {e}")
+            logger.warning("Error parsing server object classes: %s", e)
             return self._get_standard_object_classes()
 
     def _parse_server_attributes(
@@ -1385,7 +1385,7 @@ class FlextLdapSchemaDiscoveryService:
             return attributes
 
         except (RuntimeError, ValueError, TypeError) as e:
-            logger.warning(f"Error parsing server attributes: {e}")
+            logger.warning("Error parsing server attributes: %s", e)
             return self._get_standard_attributes()
 
     def _parse_server_schema_items(
@@ -1398,7 +1398,8 @@ class FlextLdapSchemaDiscoveryService:
     ) -> dict[str, object]:
         """Template method for parsing server schema items."""
         logger.debug(
-            f"Parsing server {item_type}",
+            "Parsing server %s",
+            item_type,
             extra={"data_count": len(schema_data)},
         )
         items: dict[str, object] = {}
@@ -1408,14 +1409,16 @@ class FlextLdapSchemaDiscoveryService:
                 extractor_func(entry, items)
 
             logger.info(
-                f"Parsed server {item_type}",
+                "Parsed server %s",
+                item_type,
                 extra={count_key: len(items)},
             )
             return items
 
         except Exception as parse_error:
             logger.exception(
-                f"Failed to parse server {item_type}",
+                "Failed to parse server %s",
+                item_type,
                 extra={"error": str(parse_error)},
             )
             # Return standard items on parse failure
