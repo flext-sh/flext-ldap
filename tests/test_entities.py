@@ -428,7 +428,7 @@ class TestFlextLdapOperation:
         if completed.result_count != 5:
             raise AssertionError(f"Expected {5}, got {completed.result_count}")
         assert completed.is_completed()
-        assert completed.successful() is not False  # success=True
+        assert completed.is_successful() is not False  # success=True
 
     def test_operation_domain_validation(self) -> None:
         """Test operation business rules."""

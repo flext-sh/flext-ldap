@@ -245,7 +245,8 @@ class FlextLdapCertificateValidationService:
                 message="Certificate validation successful",
                 certificate_info=(
                     type_cast("CertificateInfo", cert_info_result.data)
-                    if cert_info_result.success else None
+                    if cert_info_result.success
+                    else None
                 ),
                 chain_length=1,  # Will be updated by caller if needed
             ),

@@ -18,12 +18,12 @@ from flext_ldap.domain.repositories import (
     FlextLdapConnectionRepository,
     FlextLdapUserRepository,
 )
+from flext_ldap.entities import FlextLdapConnection, FlextLdapUser
 from flext_ldap.values import FlextLdapDistinguishedName
 
 if TYPE_CHECKING:
     from uuid import UUID
 
-    from flext_ldap.entities import FlextLdapConnection, FlextLdapUser
     from flext_ldap.ldap_infrastructure import (
         FlextLdapSimpleClient as FlextLdapInfrastructureClient,
     )
@@ -266,7 +266,6 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 # Type-safe check: verify data has expected FlextLdapUser attributes
                 if hasattr(data, "dn") and hasattr(data, "attributes"):
                     # Runtime type assertion: we expect FlextLdapUser from find_by_dn
-                    from flext_ldap.entities import FlextLdapUser
                     if isinstance(data, FlextLdapUser):
                         return data
                     logger.warning("Expected FlextLdapUser but got %s", type(data))

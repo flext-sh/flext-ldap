@@ -47,10 +47,10 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
-from uuid import uuid4
 
 from flext_core import (
     FlextContainer,
+    FlextGenerators,
     FlextLDAPConfig,
     FlextResult,
     get_flext_container,
@@ -279,8 +279,8 @@ class FlextLdapApi:
 
     def _create_session(self, session_id: str | None) -> FlextResult[str]:
         """Create and manage session."""
-        session = session_id or str(uuid4())
-        self._connections[session] = str(uuid4())  # Connection ID
+        session = session_id or FlextGenerators.generate_session_id()
+        self._connections[session] = FlextGenerators.generate_id()  # Connection ID
 
         logger.info("Connected to LDAP server", extra={"session_id": session})
         return FlextResult.ok(session)
@@ -426,7 +426,7 @@ class FlextLdapApi:
             dn=dn,
             object_classes=[str(cls) for cls in obj_classes],
             attributes=formatted_attrs,
-            id=str(uuid4()),  # FlextEntity requires id
+            id=FlextGenerators.generate_entity_id(),  # FlextEntity requires id
         )
 
     def _extract_object_classes(self, attrs: dict[str, object]) -> list[object]:
@@ -512,7 +512,7 @@ class FlextLdapApi:
             formatted_attrs = self._format_attributes_for_entity(attributes)
 
             user = FlextLdapUser(
-                id=str(uuid4()),
+                id=FlextGenerators.generate_entity_id(),
                 dn=user_request.dn,
                 uid=user_request.uid,
                 cn=user_request.cn,
@@ -624,6 +624,7 @@ class FlextLdapApi:
             # Generate unique gidNumber if not provided
             if gid_number is None:
                 import hashlib  # noqa: PLC0415
+
                 # Generate gidNumber from group name hash to ensure uniqueness
                 gid_number = (
                     1000 + int(hashlib.sha256(cn.encode()).hexdigest()[:4], 16) % 60000
@@ -656,7 +657,7 @@ class FlextLdapApi:
 
             # Create domain entity - only use valid FlextLdapGroup fields
             group = FlextLdapGroup(
-                id=str(uuid4()),
+                id=FlextGenerators.generate_entity_id(),
                 dn=dn_str,
                 cn=cn,
                 members=[],

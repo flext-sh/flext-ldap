@@ -14,9 +14,8 @@ import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum
-from uuid import uuid4
 
-from flext_core import FlextResult, get_logger
+from flext_core import FlextGenerators, FlextResult, get_logger
 
 from flext_ldap.entities import FlextLdapConnection
 
@@ -41,7 +40,7 @@ class FlextLdapSecurityEventType(Enum):
     SCHEMA_ACCESS = "schema_access"
     CERTIFICATE_VALIDATION = "certificate_validation"
     TLS_NEGOTIATION = "tls_negotiation"
-    PASSWORD_CHANGE = "password_change"  # noqa: S105
+    PASSWORD_CHANGE = "password_change"  # nosec B105 - enum constant, not a password  # noqa: S105
     ACCOUNT_LOCKOUT = "account_lockout"
     PRIVILEGE_ESCALATION = "privilege_escalation"
     SUSPICIOUS_ACTIVITY = "suspicious_activity"
@@ -125,7 +124,7 @@ class FlextLdapSecurityEvent:
             server_host = getattr(data.connection, "host", None)
             server_port = getattr(data.connection, "port", None)
 
-        self.event_id = uuid4()
+        self.event_id = FlextGenerators.generate_uuid()
         self.event_type = data.event_type
         self.severity = data.severity
         self.status = data.status

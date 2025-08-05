@@ -12,7 +12,11 @@ __version__ = _metadata["Version"]
 __project__ = _metadata["Name"]
 __description__ = _metadata["Summary"]
 __author__ = _metadata["Author"]
-__author_email__ = _metadata["Author-email"].split("<")[1].rstrip(">") if "<" in _metadata.get("Author-email", "") else ""
+__author_email__ = (
+    _metadata["Author-email"].split("<")[1].rstrip(">")
+    if "<" in _metadata.get("Author-email", "")
+    else ""
+)
 __maintainer__ = _metadata.get("Maintainer", __author__)
 __maintainer_email__ = _metadata.get("Maintainer-email", __author_email__)
 __license__ = _metadata.get("License", "MIT")

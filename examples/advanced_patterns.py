@@ -217,6 +217,9 @@ async def demonstrate_error_recovery() -> None:
     print("\n🔄 Error Recovery Patterns")
     print("=" * 40)
 
+    # Constants for retry logic
+    FAILURE_ATTEMPTS = 2
+
     async def attempt_operation_with_retry(
         operation_name: str, max_retries: int = 3
     ) -> str | None:
@@ -229,7 +232,7 @@ async def demonstrate_error_recovery() -> None:
                 )
 
                 # Simulate operation (would be real LDAP operation)
-                if attempt < 2:  # Fail first 2 attempts
+                if attempt < FAILURE_ATTEMPTS:  # Fail first 2 attempts
                     msg: str = f"Simulated failure for {operation_name}"
                     raise ConnectionError(msg)
 
