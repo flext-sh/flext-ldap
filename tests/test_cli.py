@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, patch
 
 from click.testing import CliRunner
 from flext_core import FlextResult
+
 from flext_ldap.cli import (
     LDAPConnectionHandler,
     LDAPConnectionTestParams,

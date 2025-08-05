@@ -11,12 +11,14 @@ import inspect
 from abc import ABC
 from typing import TYPE_CHECKING
 
-import flext_ldap.domain.ports
 import pytest
+
+import flext_ldap.domain.ports
 from flext_ldap.domain import ports
 
 if TYPE_CHECKING:
     from flext_core import FlextResult
+
     from flext_ldap.entities import FlextLdapConnection
 
 

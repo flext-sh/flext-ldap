@@ -13,6 +13,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from flext_core import FlextResult
+
 from flext_ldap.api import FlextLdapApi
 from flext_ldap.application.ldap_service import FlextLdapService
 from flext_ldap.config import FlextLdapConnectionConfig

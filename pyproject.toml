@@ -61,6 +61,7 @@ flext-ldap = "flext_ldap.cli:main"
 
 [tool.ruff]
 extend = "../.ruff-shared.toml"
+lint.isort.known-first-party = ["flext_ldap"]
 
 [tool.mypy]
 python_version = "3.13"

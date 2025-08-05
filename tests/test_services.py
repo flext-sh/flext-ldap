@@ -6,6 +6,7 @@ Tests all application services with flext-core integration.
 from uuid import uuid4
 
 import pytest
+
 from flext_ldap.entities import (
     FlextLdapGroup,
     FlextLdapOperation,

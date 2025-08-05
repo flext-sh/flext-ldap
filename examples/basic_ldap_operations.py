@@ -26,6 +26,7 @@ import asyncio
 import os
 
 from flext_core import get_logger
+
 from flext_ldap import (
     FlextLdapApi,
     FlextLdapAuthConfig,

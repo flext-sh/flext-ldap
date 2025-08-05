@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+
 from flext_ldap.domain.specifications import (
     FlextLdapActiveUserSpecification,
     FlextLdapDistinguishedNameSpecification,

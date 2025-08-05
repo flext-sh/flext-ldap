@@ -25,6 +25,8 @@ Author: FLEXT Development Team
 """
 
 import pytest
+from pydantic import ValidationError
+
 from flext_ldap.values import (
     FlextLdapAttributesValue,
     FlextLdapConnectionInfo,
@@ -36,7 +38,6 @@ from flext_ldap.values import (
     FlextLdapScopeEnum,
     FlextLdapUri,
 )
-from pydantic import ValidationError
 
 # Constants
 EXPECTED_BULK_SIZE = 2

@@ -1,6 +1,7 @@
 """Test that all imports work correctly."""
 
 import pytest
+
 from flext_ldap.values import LDAPEntry, LDAPFilter, LDAPScope
 
 # Import legacy aliases for backward compatibility testing

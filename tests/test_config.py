@@ -5,6 +5,8 @@ from unittest.mock import patch
 
 import pytest
 from flext_core import FlextLogLevel
+from pydantic import ValidationError
+
 from flext_ldap.config import (
     FlextLdapAuthConfig,
     FlextLdapConnectionConfig,
@@ -16,7 +18,6 @@ from flext_ldap.config import (
     FlextLdapSettings,
     create_development_config,
 )
-from pydantic import ValidationError
 
 # Constants
 HTTP_OK = 200
