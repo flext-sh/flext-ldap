@@ -273,8 +273,9 @@ class FlextLdapSecurityEventLogger:
         event_type: FlextLdapSecurityEventType,
         **event_params: object,
     ) -> FlextLdapSecurityEventData:
-        """Factory method to create type-safe FlextLdapSecurityEventData
-        from parameters.
+        """Factory method to create type-safe FlextLdapSecurityEventData.
+
+        Creates from parameters with proper type validation.
 
         REFACTORED: Eliminates redundant casts and type confusion.
         Uses proper type validation and safe conversion.

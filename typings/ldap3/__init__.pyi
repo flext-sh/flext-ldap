@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Union
 
 # Constants
 ALL: int
@@ -63,18 +63,18 @@ class Connection:
     def modify(
         self,
         dn: str,
-        changes: dict[str, list[tuple[int, Any]]],
+        changes: dict[str, list[tuple[int, list[str] | str]]],
     ) -> bool: ...
     def delete(self, dn: str) -> bool: ...
 
 class Entry:
     entry_dn: str
-    entry_attributes_as_dict: dict[str, list[Any]]
+    entry_attributes_as_dict: dict[str, list[str]]
     entry_attributes: list[str]
 
     def __getitem__(self, key: str) -> Attribute: ...
 
 class Attribute:
-    values: list[Any]
+    values: list[str]
 
-    def __init__(self, key: str, values: list[Any]) -> None: ...
+    def __init__(self, key: str, values: list[str]) -> None: ...

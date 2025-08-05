@@ -689,7 +689,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             if loop.is_running():
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Type ignore for dynamic callable execution
-                    future = executor.submit(lambda: asyncio.run(operation_func(*args)))  # type: ignore[operator]
+                    future = executor.submit(lambda: asyncio.run(operation_func(*args)))
                     raw_result = future.result(timeout=30)
                     # Only convert search results - other operations return their
                     # results directly
@@ -700,10 +700,10 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                     return raw_result
             else:
                 # Type ignore for dynamic callable execution
-                return loop.run_until_complete(operation_func(*args))  # type: ignore[operator]
+                return loop.run_until_complete(operation_func(*args))
         except RuntimeError:
             # Type ignore for dynamic callable execution
-            return asyncio.run(operation_func(*args))  # type: ignore[operator]
+            return asyncio.run(operation_func(*args))
         except Exception as e:
             logger.exception("Async operation failed", exc_info=e)
             return FlextResult.fail(f"Operation error: {e}")

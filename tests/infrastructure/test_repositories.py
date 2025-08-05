@@ -70,14 +70,14 @@ class TestFlextLdapRepository:
 
         # Test successful validation
         user = ValidatingUser("valid_user")
-        result = repository.save(user)  # type: ignore[arg-type]
+        result = repository.save(user)
         assert result.success
 
         # Test failed validation
         invalid_user = ValidatingUser(
             "invalid_user", should_fail=ValidationConfig.SHOULD_FAIL
         )
-        result = repository.save(invalid_user)  # type: ignore[arg-type]
+        result = repository.save(invalid_user)
         assert result.is_failure
         assert "Validation failed" in result.error
 
@@ -261,7 +261,7 @@ class TestFlextLdapRepository:
                 raise ValueError(msg)
 
         entity = ValidatingEntity()
-        result = repository._validate_entity(entity)  # type: ignore[arg-type]
+        result = repository._validate_entity(entity)
         assert result.is_failure
         assert "Test validation error" in result.error
 

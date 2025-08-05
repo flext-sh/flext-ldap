@@ -138,7 +138,7 @@ class FlextLdapRepository(FlextRepository):
             return FlextResult.fail(str(e))
 
 
-class FlextLdapDomainService(FlextDomainService):
+class FlextLdapDomainService(FlextDomainService[None]):
     """LDAP Domain Service implementing flext-core domain service patterns.
 
     Provides LDAP domain operations with:
@@ -363,7 +363,7 @@ class FlextLdapDomainService(FlextDomainService):
         """Publish entity deletion event."""
         # Integration point for flext-core event publishing
 
-    def execute(self) -> FlextResult[object]:
+    def execute(self) -> FlextResult[None]:
         """Execute domain operation - required by FlextDomainService."""
         # Default implementation - subclasses should override for specific operations
         return FlextResult.fail("Base execute method - override in subclass")

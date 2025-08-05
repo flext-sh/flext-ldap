@@ -265,7 +265,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                     return None
                 # For now, return the data as is - proper FlextLdapUser
                 # conversion would be needed
-                return data  # type: ignore[return-value]
+                return data
             # Log error but return None for compatibility
             msg = f"Failed to get user by DN {dn.value}: {result.error}"
             logger.warning(msg)

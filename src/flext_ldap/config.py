@@ -482,7 +482,7 @@ def create_development_config(**overrides: object) -> FlextLdapSettings:
         use_ssl=False,
         timeout=10,
         pool_size=5,
-        **overrides,  # type: ignore[arg-type]
+        **overrides,
     )
 
     # Create project settings with base config

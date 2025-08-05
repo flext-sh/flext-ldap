@@ -79,7 +79,7 @@ connect_result = await self._api.connect(
 
 ```python
 # VIOLATION: Repository returning infrastructure types
-return data  # type: ignore[return-value]
+return data
 ```
 
 #### 2.3 **Missing Domain Services**
@@ -187,7 +187,7 @@ Should use single `FlextLDAPConfig` from flext-core.
 **Files**: Multiple repository implementations
 
 ```python
-return data  # type: ignore[return-value]
+return data
 ```
 
 **Count**: 12+ type ignore comments indicating fundamental type design issues.
