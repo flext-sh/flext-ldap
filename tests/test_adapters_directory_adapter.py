@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from flext_core import FlextResult
+
 from flext_ldap.adapters.directory_adapter import (
     FlextLdapDirectoryAdapter,
     FlextLdapDirectoryAdapterInterface,

@@ -11,6 +11,7 @@ import os
 
 import pytest
 from flext_core import get_logger
+
 from flext_ldap.config import FlextLdapConnectionConfig, create_development_config
 from flext_ldap.ldap_infrastructure import FlextLdapClient, FlextLdapConverter
 

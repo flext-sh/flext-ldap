@@ -15,6 +15,7 @@ import subprocess
 import time
 
 from flext_core import get_logger
+
 from flext_ldap import FlextLdapApi
 from flext_ldap.values import FlextLdapCreateUserRequest
 

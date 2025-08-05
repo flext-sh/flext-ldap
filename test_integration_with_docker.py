@@ -4,6 +4,7 @@
 import asyncio
 
 import pytest
+
 from flext_ldap.ldap_infrastructure import (
     FlextLdapConnectionConfig,
     FlextLdapSimpleClient,

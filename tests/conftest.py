@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 import docker
 import pytest
+
 from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
 
 if TYPE_CHECKING:

@@ -32,6 +32,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from flext_core import FlextResult
+
 from flext_ldap.ldap_infrastructure import (
     FlextLdapConnectionConfig,
     FlextLdapSimpleClient,

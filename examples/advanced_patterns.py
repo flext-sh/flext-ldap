@@ -24,6 +24,7 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
 from flext_core import get_logger
+
 from flext_ldap import (
     FlextLdapApi,
     FlextLdapSearchConfig,

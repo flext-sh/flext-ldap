@@ -5,6 +5,7 @@ Teste simples de integração Docker LDAP compartilhado
 import asyncio
 
 import pytest
+
 from flext_ldap.ldap_infrastructure import (
     FlextLdapConnectionConfig,
     FlextLdapSimpleClient,

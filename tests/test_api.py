@@ -26,6 +26,7 @@ Author: FLEXT Development Team
 from uuid import uuid4
 
 import pytest
+
 from flext_ldap.api import FlextLdapApi, get_ldap_api
 from flext_ldap.config import FlextLdapConnectionConfig
 from flext_ldap.entities import FlextLdapGroup, FlextLdapUser

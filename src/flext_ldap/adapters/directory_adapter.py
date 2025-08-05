@@ -14,6 +14,7 @@ import asyncio
 import concurrent.futures
 from abc import ABC, abstractmethod
 from asyncio import AbstractEventLoop
+from collections.abc import Callable
 from typing import Protocol, cast
 from urllib.parse import urlparse
 
@@ -679,7 +680,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
         return object_classes, clean_attributes
 
-    def _execute_async_operation(self, operation_func: object, *args: object) -> object:
+    def _execute_async_operation(self, operation_func: Callable[..., object], *args: object) -> object:
         """Execute async operation with proper event loop handling.
 
         Following DRY principle - centralized async execution pattern.

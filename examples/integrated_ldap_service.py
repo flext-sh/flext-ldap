@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 
 from flext_core import get_logger
+
 from flext_ldap import FlextLdapApi
 
 logger = get_logger(__name__)
