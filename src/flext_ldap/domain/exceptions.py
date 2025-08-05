@@ -60,7 +60,7 @@ FlextLdapTimeoutError = cast("type[Exception]", _exceptions["FlextLdapTimeoutErr
 # =============================================================================
 
 
-class FlextLdapDomainError(FlextLdapError):  # type: ignore[valid-type,misc]
+class FlextLdapDomainError(FlextLdapError):
     """Base exception for LDAP domain errors using DRY foundation."""
 
     def __init__(self, message: str = "LDAP domain error", **kwargs: object) -> None:

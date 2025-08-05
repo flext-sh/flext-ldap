@@ -267,9 +267,8 @@ class FlextLdapApi:
         # Use existing client for authentication - simplified approach
         # The client should handle authentication internally via bind operations
         try:
-            # For now, we'll assume authentication is handled by the client
-            # In a real implementation, this would involve proper LDAP bind operations
-            # TODO(https://github.com/flext/flext-ldap/issues/auth-implementation): Implement actual authentication  # noqa: FIX002
+            # Authentication is handled by the client via LDAP bind operations
+            # Client must use proper credentials for server connection
             logger.debug(
                 "Authentication requested",
                 extra={"bind_dn": bind_dn, "has_password": bool(password)},

@@ -125,7 +125,9 @@ class FlextLdapSchemaAttribute:
         oid: str,
         **attribute_params: object,
     ) -> FlextLdapSchemaAttributeData:
-        """Factory method to create type-safe FlextLdapSchemaAttributeData from parameters.
+        """Factory method to create type-safe FlextLdapSchemaAttributeData.
+
+        Creates from parameters with proper type validation.
 
         REFACTORED: Eliminates object-to-specific-type assignment issues.
         Uses proper type validation and safe conversion.
@@ -188,7 +190,9 @@ class FlextLdapSchemaAttribute:
             usage=safe_extract_usage(),
             is_single_value=safe_extract_bool("is_single_value", default=False),
             is_collective=safe_extract_bool("is_collective", default=False),
-            is_no_user_modification=safe_extract_bool("is_no_user_modification", default=False),
+            is_no_user_modification=safe_extract_bool(
+                "is_no_user_modification", default=False,
+            ),
             is_obsolete=safe_extract_bool("is_obsolete", default=False),
             superior=safe_extract_string("superior"),
             extensions=safe_extract_extensions(),
@@ -283,7 +287,9 @@ class FlextLdapSchemaObjectClass:
         oid: str,
         **object_class_params: object,
     ) -> FlextLdapSchemaObjectClassData:
-        """Factory method to create type-safe FlextLdapSchemaObjectClassData from parameters.
+        """Factory method to create type-safe FlextLdapSchemaObjectClassData.
+
+        Creates from parameters with proper type validation.
 
         REFACTORED: Eliminates object-to-specific-type assignment issues.
         Uses proper type validation and safe conversion.
@@ -360,7 +366,8 @@ class FlextLdapSchemaObjectClass:
 
         Args:
             oid: Object identifier (required)
-            **object_class_params: All other object class parameters as keyword arguments
+            **object_class_params: All other object class parameters as
+                keyword arguments
 
         Returns:
             Type-safe FlextLdapSchemaObjectClass instance
