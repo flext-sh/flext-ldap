@@ -18,22 +18,16 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import TYPE_CHECKING
-from uuid import uuid4
 
-from flext_core import FlextResult, get_logger
+from flext_core import FlextGenerators, FlextResult, get_logger
+
+# Constants imported from centralized module
+from flext_ldap.constants import FlextLdapErrorCorrelationConstants
 
 if TYPE_CHECKING:
     from uuid import UUID
 
 logger = get_logger(__name__)
-
-
-class FlextLdapErrorCorrelationConstants:
-    """Error correlation constants following DRY principle."""
-
-    # Correlation Threshold Constants
-    SIGNIFICANT_CORRELATION_THRESHOLD: float = 0.5
-    MINIMUM_CORRELATION_THRESHOLD: float = 0.3
 
 
 class FlextLdapErrorSeverity(Enum):
@@ -83,7 +77,7 @@ class FlextLdapErrorPattern:
 
     def __init__(self, data: FlextLdapErrorPatternData) -> None:
         """Initialize error pattern using Parameter Object pattern."""
-        self.pattern_id = data.pattern_id or uuid4()
+        self.pattern_id = data.pattern_id or FlextGenerators.generate_uuid()
         self.error_signature = data.error_signature or ""
         self.category = data.category
         self.severity = data.severity
@@ -149,7 +143,7 @@ class FlextLdapErrorEvent:
 
     def __init__(self, data: FlextLdapErrorEventData) -> None:
         """Initialize error event using Parameter Object pattern."""
-        self.event_id = data.event_id or uuid4()
+        self.event_id = data.event_id or FlextGenerators.generate_uuid()
         self.timestamp = data.timestamp or datetime.now(UTC)
         self.error_message = data.error_message
         self.error_code = data.error_code

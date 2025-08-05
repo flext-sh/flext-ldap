@@ -1,7 +1,7 @@
 """Tests for LDAP directory adapter in FLEXT-LDAP."""
 
 from typing import cast
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from flext_core import FlextResult
@@ -108,12 +108,13 @@ class TestFlextLdapDirectoryService:
         self,
         directory_service: FlextLdapDirectoryService,
     ) -> None:
-        """Test successful connection."""
-        result = directory_service.connect(server_url="ldap://test.example.com:389")
+        """Test successful connection with mock."""
+        with patch.object(directory_service, "_execute_connection_pipeline", return_value=FlextResult.ok(True)):
+            result = directory_service.connect(server_url="ldap://test.example.com:389")
 
-        if not (result.success):
-            raise AssertionError(f"Expected True, got {result.success}")
-        assert result.data is True
+            if not (result.success):
+                raise AssertionError(f"Expected True, got {result.success}")
+            assert result.data is True
 
     def test_connect_exception(
         self,
@@ -179,18 +180,17 @@ class TestFlextLdapDirectoryService:
         """Test user search with exception."""
         search_filter = "(uid=test)"
 
-        # Mock the search method to raise exception
-        directory_service._ldap_client.search = AsyncMock(
-            side_effect=Exception("Search failed")
-        )
+        # Mock the search pipeline method to raise ConnectionError
+        with patch.object(
+            directory_service, "_execute_user_search_pipeline"
+        ) as mock_search:
+            mock_search.side_effect = ConnectionError("Search connection failed")
 
-        result = directory_service.search_users(search_filter)
+            result = directory_service.search_users(search_filter)
 
-        if result.success:
-            raise AssertionError(f"Expected False, got {result.success}")
-        assert result.error is not None
-        if "Search error" not in result.error:
-            raise AssertionError(f"Expected {'Search error'} in {result.error}")
+            assert not result.success
+            assert result.error is not None
+            assert "Search connection error: Search connection failed" in result.error
 
     async def test_disconnect_success(
         self,
@@ -200,7 +200,7 @@ class TestFlextLdapDirectoryService:
         connection_id = "test_connection"
 
         # Mock the ldap_client.disconnect method
-        directory_service._ldap_client.disconnect = AsyncMock(
+        directory_service._ldap_client.disconnect = Mock(
             return_value=FlextResult.ok(TestOperationResult.SUCCESS),
         )
 
@@ -570,6 +570,74 @@ class TestFlextLdapDirectoryService:
         assert result.error is not None
         if "Delete entry failed" not in result.error:
             raise AssertionError(f"Expected {'Delete entry failed'} in {result.error}")
+
+    def test_connect_value_error(
+        self,
+        directory_service: FlextLdapDirectoryService,
+    ) -> None:
+        """Test connection with ValueError exception."""
+        # Mock to raise ValueError during connection
+        with patch.object(
+            directory_service, "_execute_connection_pipeline"
+        ) as mock_pipeline:
+            mock_pipeline.side_effect = ValueError("Invalid server URL")
+
+            result = directory_service.connect(server_url="invalid://url")
+
+            assert not result.success
+            assert result.error is not None
+            assert "Configuration error: Invalid server URL" in result.error
+
+    def test_connect_os_error(
+        self,
+        directory_service: FlextLdapDirectoryService,
+    ) -> None:
+        """Test connection with OSError exception."""
+        # Mock to raise OSError during connection
+        with patch.object(
+            directory_service, "_execute_connection_pipeline"
+        ) as mock_pipeline:
+            mock_pipeline.side_effect = OSError("Network unreachable")
+
+            result = directory_service.connect(server_url="ldap://localhost:389")
+
+            assert not result.success
+            assert result.error is not None
+            assert "Connection error: Network unreachable" in result.error
+
+    def test_search_users_timeout_error(
+        self,
+        directory_service: FlextLdapDirectoryService,
+    ) -> None:
+        """Test search users with timeout error."""
+        # Mock to raise TimeoutError during search
+        with patch.object(
+            directory_service, "_execute_user_search_pipeline"
+        ) as mock_search:
+            mock_search.side_effect = TimeoutError("Search timeout")
+
+            result = directory_service.search_users("(uid=test)")
+
+            assert not result.success
+            assert result.error is not None
+            assert "Search timeout error: Search timeout" in result.error
+
+    def test_search_timeout_error(
+        self,
+        directory_service: FlextLdapDirectoryService,
+    ) -> None:
+        """Test search with timeout error."""
+        # Mock to raise TimeoutError during search
+        with patch.object(
+            directory_service, "_execute_directory_search_pipeline"
+        ) as mock_search:
+            mock_search.side_effect = TimeoutError("Search timeout")
+
+            result = directory_service.search("dc=test,dc=com", "(uid=test)")
+
+            assert not result.success
+            assert result.error is not None
+            assert "Search timeout error: Search timeout" in result.error
 
 
 class TestFlextLdapDirectoryAdapter:

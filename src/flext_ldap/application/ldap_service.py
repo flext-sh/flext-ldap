@@ -14,9 +14,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from uuid import uuid4
 
-from flext_core import FlextResult, get_logger
+from flext_core import FlextGenerators, FlextResult, get_logger
 
 from flext_ldap.api import FlextLdapApi
 from flext_ldap.entities import FlextLdapUser
@@ -184,7 +183,7 @@ class FlextLdapService:
                     mail_value = mail_attrs[0] if mail_attrs else None
 
                     user = FlextLdapUser(
-                        id=str(uuid4()),
+                        id=FlextGenerators.generate_entity_id(),
                         dn=entry.dn,
                         uid=uid,
                         cn=cn_value,
@@ -406,7 +405,7 @@ class FlextLdapService:
 
                     if uid:  # Only create user if UID exists
                         user = FlextLdapUser(
-                            id=str(uuid4()),
+                            id=FlextGenerators.generate_entity_id(),
                             dn=entry.dn,
                             uid=uid,
                             cn=self._extract_attr_value(user_attrs, "cn"),

@@ -38,6 +38,12 @@ class TestFlextLdapDataType:
             "email",
             "phone",
             "uuid",
+            "url",
+            "ip_address",
+            "mac_address",
+            "certificate",
+            "password_field",
+            "unknown",
         }
 
         actual_types = {t.value for t in FlextLdapDataType}

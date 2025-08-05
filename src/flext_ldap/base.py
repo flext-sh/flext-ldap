@@ -15,11 +15,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from flext_core import (
     FlextContainer,
     FlextDomainService,
+    FlextGenerators,
     FlextRepository,
     FlextResult,
 )
@@ -48,7 +49,7 @@ class FlextLdapRepository(FlextRepository):
     def save(self, entity: object) -> FlextResult[None]:
         """Save entity with validation."""
         try:
-            entity_id = getattr(entity, "id", str(uuid4()))
+            entity_id = getattr(entity, "id", FlextGenerators.generate_entity_id())
 
             # Use flext-core validation if available
             if hasattr(entity, "validate_domain_rules"):

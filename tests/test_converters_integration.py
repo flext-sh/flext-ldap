@@ -3,7 +3,8 @@
 Integration tests for flext_ldap.converters to increase coverage.
 """
 
-from flext_ldap.converters import FlextLdapConverterConstants, FlextLdapDataType
+from flext_ldap.constants import FlextLdapConverterConstants
+from flext_ldap.types import FlextLdapDataType
 
 
 class TestFlextLdapConverterConstants:
@@ -29,7 +30,7 @@ class TestFlextLdapDataType:
         assert FlextLdapDataType.STRING.value == "string"
         assert FlextLdapDataType.INTEGER.value == "integer"
         assert FlextLdapDataType.BOOLEAN.value == "boolean"
-        assert FlextLdapDataType.DATE_TIME.value == "datetime"
+        assert FlextLdapDataType.DATETIME.value == "datetime"
         assert FlextLdapDataType.BINARY.value == "binary"
 
     def test_enum_completeness(self) -> None:

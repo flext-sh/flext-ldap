@@ -41,7 +41,7 @@ Example:
     ...     print("Entry is valid")
 
 Integration:
-    - Built on flext-core FlextEntity and FlextDomainEntity
+    - Built on flext-core FlextDomainEntity and FlextDomainEntity
     - Compatible with repository pattern implementations
     - Supports domain event sourcing and CQRS patterns
 
@@ -57,7 +57,6 @@ from datetime import UTC, datetime
 
 from flext_core import (
     FlextDomainEntity,
-    FlextEntity,
     FlextEntityStatus,
     FlextResult,
     get_logger,
@@ -158,12 +157,12 @@ class FlextLdapEntry(FlextDomainEntity):
 
         Side Effects:
             - Updates the object_classes list if class not already present
-            - Triggers automatic timestamp update via FlextEntity lifecycle
+            - Triggers automatic timestamp update via FlextDomainEntity lifecycle
 
         """
         if object_class not in self.object_classes:
             self.object_classes.append(object_class)
-            # Note: timestamp updates handled by FlextEntity
+            # Note: timestamp updates handled by FlextDomainEntity
 
     def remove_object_class(self, object_class: str) -> None:
         """Remove LDAP object class from entry with safety checks.
@@ -176,7 +175,7 @@ class FlextLdapEntry(FlextDomainEntity):
 
         Side Effects:
             - Updates the object_classes list if class is present
-            - Triggers automatic timestamp update via FlextEntity lifecycle
+            - Triggers automatic timestamp update via FlextDomainEntity lifecycle
 
         Note:
             Removing required object classes may violate LDAP schema constraints.
@@ -185,7 +184,7 @@ class FlextLdapEntry(FlextDomainEntity):
         """
         if object_class in self.object_classes:
             self.object_classes.remove(object_class)
-            # Note: timestamp updates handled by FlextEntity
+            # Note: timestamp updates handled by FlextDomainEntity
 
     def has_object_class(self, object_class: str) -> bool:
         """Check if entry contains specified LDAP object class.
@@ -214,7 +213,7 @@ class FlextLdapEntry(FlextDomainEntity):
             - Creates attribute if it doesn't exist
             - Appends new values to existing attribute
             - Prevents duplicate values within the same attribute
-            - Triggers automatic timestamp update via FlextEntity lifecycle
+            - Triggers automatic timestamp update via FlextDomainEntity lifecycle
 
         """
         if name not in self.attributes:
@@ -225,7 +224,7 @@ class FlextLdapEntry(FlextDomainEntity):
             if val not in self.attributes[name]:
                 self.attributes[name].append(val)
 
-        # Note: timestamp updates handled by FlextEntity
+        # Note: timestamp updates handled by FlextDomainEntity
 
     def remove_attribute(self, name: str, value: str | None = None) -> None:
         """Remove LDAP attribute or specific value with granular control.
@@ -241,7 +240,7 @@ class FlextLdapEntry(FlextDomainEntity):
             - If value is None: Removes entire attribute and all its values
             - If value is specified: Removes only that specific value
             - Removes empty attributes after value removal
-            - Triggers automatic timestamp update via FlextEntity lifecycle
+            - Triggers automatic timestamp update via FlextDomainEntity lifecycle
 
         """
         if name in self.attributes:
@@ -254,7 +253,7 @@ class FlextLdapEntry(FlextDomainEntity):
                 # Remove attribute if no values left
                 if not self.attributes[name]:
                     del self.attributes[name]
-            # Note: timestamp updates handled by FlextEntity
+            # Note: timestamp updates handled by FlextDomainEntity
 
     def get_attribute(self, name: str) -> list[str]:
         """Retrieve all values for specified LDAP attribute.
@@ -781,7 +780,7 @@ class FlextLdapGroup(FlextDomainEntity):
         return self.__class__(**entity_data)
 
 
-class FlextLdapOperation(FlextEntity):
+class FlextLdapOperation(FlextDomainEntity):
     """LDAP operation tracking entity for audit and monitoring.
 
     Entity for tracking LDAP operations throughout their lifecycle,
@@ -824,7 +823,7 @@ class FlextLdapOperation(FlextEntity):
     success: bool | None = None
     result_count: int = 0
     error_message: str | None = None
-    status: str = FlextLdapEntityStatus.PENDING
+    status: FlextEntityStatus = FlextLdapEntityStatus.PENDING
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate LDAP operation business rules using Railway-Oriented Programming.
@@ -854,6 +853,10 @@ class FlextLdapOperation(FlextEntity):
             return FlextResult.fail(validation_errors[0])  # Return first error
 
         return FlextResult.ok(None)
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules - alias for domain rules for compatibility."""
+        return self.validate_domain_rules()
 
     def _collect_operation_validation_errors(self) -> list[str]:
         """DRY helper: Collect operation validation errors using Strategy Pattern."""

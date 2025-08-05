@@ -14,15 +14,23 @@ import asyncio
 import concurrent.futures
 from abc import ABC, abstractmethod
 from asyncio import AbstractEventLoop
-from collections.abc import Callable
-from typing import Protocol, cast
+from typing import TYPE_CHECKING, Protocol, cast
 from urllib.parse import urlparse
 
 from flext_core import FlextResult, get_logger
 from pydantic import SecretStr
 
 from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
+from flext_ldap.errors import (
+    FlextLdapConnection,
+    FlextLdapData,
+    FlextLdapError,
+    FlextLdapProtocol,
+)
 from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = get_logger(__name__)
 
@@ -132,23 +140,33 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             return self._execute_connection_pipeline(server_url, bind_dn, password)
 
         except (ConnectionError, OSError) as e:
-            logger.exception(
-                "Directory connection error",
-                extra={"server_url": server_url},
+            # Convert to FLEXT LDAP error with rich context
+            connection_error = FlextLdapConnection.ConnectionError(
+                f"Directory connection failed: {e}",
+                server=server_url,
+                cause=e,
             )
-            return FlextResult.fail(f"Connection error: {e}")
+            return connection_error.to_bool_result()
         except ValueError as e:
-            logger.exception(
-                "Directory configuration error",
-                extra={"server_url": server_url},
+            # Convert to FLEXT LDAP validation error with context
+            validation_error = FlextLdapData.ValidationError(
+                f"Directory configuration invalid: {e}",
+                field_name="server_url",
+                field_value=server_url,
+                cause=e,
             )
-            return FlextResult.fail(f"Configuration error: {e}")
+            return validation_error.to_bool_result()
+        except FlextLdapError:
+            # Re-raise FLEXT LDAP errors as-is (they're already logged)
+            raise
         except Exception as e:
-            logger.exception(
-                "Unexpected directory connection error",
-                extra={"server_url": server_url},
+            # Convert unexpected errors to generic FLEXT LDAP error
+            generic_error = FlextLdapError(
+                f"Unexpected directory connection error: {e}",
+                cause=e,
+                context={"server_url": server_url},
             )
-            return FlextResult.fail(f"Unexpected error: {e}")
+            return generic_error.to_bool_result()
 
     def _execute_connection_pipeline(
         self,
@@ -307,18 +325,35 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 attributes,
             )
 
-        except ConnectionError as e:
-            logger.exception("Search connection error", extra={"filter": search_filter})
-            return FlextResult.fail(f"Search connection error: {e}")
-        except ValueError as e:
-            logger.exception("Search parameter error", extra={"filter": search_filter})
-            return FlextResult.fail(f"Search parameter error: {e}")
-        except OSError as e:
-            logger.exception("Search network error", extra={"filter": search_filter})
-            return FlextResult.fail(f"Search network error: {e}")
         except TimeoutError as e:
-            logger.exception("Search timeout error", extra={"filter": search_filter})
-            return FlextResult.fail(f"Search timeout error: {e}")
+            timeout_error = FlextLdapConnection.TimeoutError(
+                f"User search timed out: {e}",
+                operation="search_users",
+                timeout_seconds=30,
+                cause=e,
+            )
+            return timeout_error.to_typed_result(list[FlextLdapDirectoryEntryProtocol])
+        except ConnectionError as e:
+            connection_error = FlextLdapConnection.ConnectionError(
+                f"Search connection failed: {e}",
+                cause=e,
+            )
+            return connection_error.to_typed_result(
+                list[FlextLdapDirectoryEntryProtocol],
+            )
+        except ValueError as e:
+            filter_error = FlextLdapProtocol.FilterError(
+                f"Invalid search parameters: {e}",
+                filter_string=search_filter,
+                cause=e,
+            )
+            return filter_error.to_typed_result(list[FlextLdapDirectoryEntryProtocol])
+        except OSError as e:
+            network_error = FlextLdapConnection.ConnectionError(
+                f"Network error during search: {e}",
+                cause=e,
+            )
+            return network_error.to_typed_result(list[FlextLdapDirectoryEntryProtocol])
 
     def _execute_user_search_pipeline(
         self,
@@ -484,11 +519,26 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 return FlextResult.ok(data=DirectoryOperationResult.SUCCESS)
             return FlextResult.fail(f"Disconnect failed: {disconnect_result.error}")
         except ConnectionError as e:
-            return FlextResult.fail(f"Disconnect connection error: {e}")
+            connection_error = FlextLdapConnection.ConnectionError(
+                f"Disconnect connection error: {e}",
+                cause=e,
+            )
+            return connection_error.to_bool_result()
         except OSError as e:
-            return FlextResult.fail(f"Disconnect network error: {e}")
+            network_error = FlextLdapConnection.ConnectionError(
+                f"Network error during disconnect: {e}",
+                cause=e,
+            )
+            return network_error.to_bool_result()
+        except FlextLdapError:
+            # Re-raise FLEXT LDAP errors as-is
+            raise
         except Exception as e:
-            return FlextResult.fail(f"Disconnect error: {e}")
+            generic_error = FlextLdapError(
+                f"Unexpected disconnect error: {e}",
+                cause=e,
+            )
+            return generic_error.to_bool_result()
 
     def search(
         self,
@@ -515,14 +565,34 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 attributes,
             )
 
-        except ConnectionError as e:
-            return FlextResult.fail(f"Search connection error: {e}")
-        except ValueError as e:
-            return FlextResult.fail(f"Search parameter error: {e}")
-        except OSError as e:
-            return FlextResult.fail(f"Search network error: {e}")
         except TimeoutError as e:
-            return FlextResult.fail(f"Search timeout error: {e}")
+            timeout_error = FlextLdapConnection.TimeoutError(
+                f"Directory search timed out: {e}",
+                operation="search",
+                cause=e,
+            )
+            return timeout_error.to_typed_result(list[FlextLdapDirectoryEntryProtocol])
+        except ConnectionError as e:
+            connection_error = FlextLdapConnection.ConnectionError(
+                f"Search connection failed: {e}",
+                cause=e,
+            )
+            return connection_error.to_typed_result(
+                list[FlextLdapDirectoryEntryProtocol],
+            )
+        except ValueError as e:
+            filter_error = FlextLdapProtocol.FilterError(
+                f"Invalid search parameters: {e}",
+                filter_string=search_filter,
+                cause=e,
+            )
+            return filter_error.to_typed_result(list[FlextLdapDirectoryEntryProtocol])
+        except OSError as e:
+            network_error = FlextLdapConnection.ConnectionError(
+                f"Network error during search: {e}",
+                cause=e,
+            )
+            return network_error.to_typed_result(list[FlextLdapDirectoryEntryProtocol])
 
     def _execute_directory_search_pipeline(
         self,
@@ -643,11 +713,25 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             return FlextResult.ok(DirectoryOperationResult.SUCCESS)
 
         except ConnectionError as e:
-            return FlextResult.fail(f"Add entry error: {e}")
+            connection_error = FlextLdapConnection.ConnectionError(
+                f"Add entry connection failed: {e}",
+                cause=e,
+            )
+            return connection_error.to_bool_result()
         except TimeoutError as e:
-            return FlextResult.fail(f"Add entry timeout: {e}")
+            timeout_error = FlextLdapConnection.TimeoutError(
+                f"Add entry timed out: {e}",
+                operation="add_entry",
+                cause=e,
+            )
+            return timeout_error.to_bool_result()
         except ValueError as e:
-            return FlextResult.fail(f"Add entry parameter error: {e}")
+            validation_error = FlextLdapData.ValidationError(
+                f"Invalid entry data: {e}",
+                field_name="attributes",
+                cause=e,
+            )
+            return validation_error.to_bool_result()
 
     def _extract_object_classes(
         self,
@@ -680,31 +764,38 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
         return object_classes, clean_attributes
 
-    def _execute_async_operation(self, operation_func: Callable[..., object], *args: object) -> object:
+    def _execute_async_operation(
+        self,
+        operation_func: Callable[..., object],
+        *args: object,
+    ) -> object:
         """Execute async operation with proper event loop handling.
 
         Following DRY principle - centralized async execution pattern.
         """
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
+            # Try to get current event loop
+            try:
+                asyncio.get_running_loop()
+                # We're in an async context, use thread executor
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    # Type ignore for dynamic callable execution
-                    future = executor.submit(lambda: asyncio.run(operation_func(*args)))
+                    # Type annotation for future
+                    future: concurrent.futures.Future[object] = executor.submit(
+                        lambda: asyncio.run(operation_func(*args)),  # type: ignore[arg-type]
+                    )
                     raw_result = future.result(timeout=30)
                     # Only convert search results - other operations return their
                     # results directly
                     if hasattr(operation_func, "__name__") and "search" in str(
                         operation_func,
                     ):
-                        return self._convert_raw_search_result(raw_result)
+                        return self._convert_raw_search_result(
+                            cast("FlextResult[list[dict[str, object]]]", raw_result),
+                        )
                     return raw_result
-            else:
-                # Type ignore for dynamic callable execution
-                return loop.run_until_complete(operation_func(*args))
-        except RuntimeError:
-            # Type ignore for dynamic callable execution
-            return asyncio.run(operation_func(*args))
+            except RuntimeError:
+                # No running loop, we can use asyncio.run directly
+                return asyncio.run(operation_func(*args))  # type: ignore[arg-type]
         except Exception as e:
             logger.exception("Async operation failed", exc_info=e)
             return FlextResult.fail(f"Operation error: {e}")
@@ -728,14 +819,32 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             # Railway Oriented Programming - Consolidated modify execution
             return self._execute_modify_entry_pipeline(dn, changes)
 
-        except ConnectionError as e:
-            return FlextResult.fail(f"Modify entry connection error: {e}")
-        except ValueError as e:
-            return FlextResult.fail(f"Modify entry parameter error: {e}")
-        except OSError as e:
-            return FlextResult.fail(f"Modify entry network error: {e}")
         except TimeoutError as e:
-            return FlextResult.fail(f"Modify entry timeout: {e}")
+            timeout_error = FlextLdapConnection.TimeoutError(
+                f"Modify entry timed out: {e}",
+                operation="modify_entry",
+                cause=e,
+            )
+            return timeout_error.to_bool_result()
+        except ConnectionError as e:
+            connection_error = FlextLdapConnection.ConnectionError(
+                f"Modify entry connection failed: {e}",
+                cause=e,
+            )
+            return connection_error.to_bool_result()
+        except ValueError as e:
+            validation_error = FlextLdapData.ValidationError(
+                f"Invalid modification data: {e}",
+                field_name="changes",
+                cause=e,
+            )
+            return validation_error.to_bool_result()
+        except OSError as e:
+            network_error = FlextLdapConnection.ConnectionError(
+                f"Network error during modify: {e}",
+                cause=e,
+            )
+            return network_error.to_bool_result()
 
     def _execute_modify_entry_pipeline(
         self,
@@ -778,14 +887,32 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             # Railway Oriented Programming - Consolidated delete execution
             return self._execute_delete_entry_pipeline(dn)
 
-        except ConnectionError as e:
-            return FlextResult.fail(f"Delete entry connection error: {e}")
-        except ValueError as e:
-            return FlextResult.fail(f"Delete entry parameter error: {e}")
-        except OSError as e:
-            return FlextResult.fail(f"Delete entry network error: {e}")
         except TimeoutError as e:
-            return FlextResult.fail(f"Delete entry timeout: {e}")
+            timeout_error = FlextLdapConnection.TimeoutError(
+                f"Delete entry timed out: {e}",
+                operation="delete_entry",
+                cause=e,
+            )
+            return timeout_error.to_bool_result()
+        except ConnectionError as e:
+            connection_error = FlextLdapConnection.ConnectionError(
+                f"Delete entry connection failed: {e}",
+                cause=e,
+            )
+            return connection_error.to_bool_result()
+        except ValueError as e:
+            dn_error = FlextLdapProtocol.DNError(
+                f"Invalid DN for delete: {e}",
+                dn=dn,
+                cause=e,
+            )
+            return dn_error.to_bool_result()
+        except OSError as e:
+            network_error = FlextLdapConnection.ConnectionError(
+                f"Network error during delete: {e}",
+                cause=e,
+            )
+            return network_error.to_bool_result()
 
     def _execute_delete_entry_pipeline(self, dn: str) -> FlextResult[bool]:
         """Execute delete entry pipeline with consolidated error handling."""

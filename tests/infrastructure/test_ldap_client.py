@@ -28,11 +28,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from flext_core import FlextResult
 
+from flext_ldap.config import FlextLdapAuthConfig
 from flext_ldap.ldap_infrastructure import (
     FlextLdapConnectionConfig,
     FlextLdapSimpleClient,
@@ -406,3 +407,114 @@ class TestFactoryFunctions:
         converter = create_ldap_converter()
 
         assert isinstance(converter, FlextLdapConverter)
+
+
+class TestFlextLdapSimpleClientAuth:
+    """Test suite for FlextLdapSimpleClient authentication methods."""
+
+    @pytest.fixture
+    def ldap_client(self) -> FlextLdapSimpleClient:
+        """Create LDAP client instance for testing."""
+        config = FlextLdapConnectionConfig(
+            host="localhost",
+            port=389,
+            use_ssl=False,
+        )
+        return FlextLdapSimpleClient(config)
+
+    @pytest.fixture
+    def auth_config(self) -> FlextLdapAuthConfig:
+        """Create auth config for testing."""
+        from pydantic import SecretStr
+        return FlextLdapAuthConfig(
+            bind_dn="cn=admin,dc=example,dc=com",
+            bind_password=SecretStr("admin123")
+        )
+
+    @pytest.mark.asyncio
+    async def test_connect_with_auth_success(
+        self,
+        ldap_client: FlextLdapSimpleClient,
+        auth_config: FlextLdapAuthConfig,
+    ) -> None:
+        """Test successful authentication."""
+        # Mock the connection manager and client methods
+        mock_connection = Mock()
+        mock_connection.unbind = Mock()
+
+        with patch.object(
+            ldap_client._connection_manager, "_create_connection"
+        ) as mock_create:
+            mock_create.return_value = FlextResult.ok(mock_connection)
+            ldap_client._current_connection = mock_connection
+
+            result = await ldap_client.connect_with_auth(auth_config)
+
+            assert result.is_success
+            assert result.data is True
+
+    @pytest.mark.asyncio
+    async def test_connect_with_auth_no_config(
+        self,
+        auth_config: FlextLdapAuthConfig,
+    ) -> None:
+        """Test authentication without connection config."""
+        client = FlextLdapSimpleClient()  # No config
+
+        result = await client.connect_with_auth(auth_config)
+
+        assert not result.is_success
+        assert "Connection configuration required" in result.error
+
+    @pytest.mark.asyncio
+    async def test_connect_with_auth_connection_failure(
+        self,
+        ldap_client: FlextLdapSimpleClient,
+        auth_config: FlextLdapAuthConfig,
+    ) -> None:
+        """Test authentication with connection failure."""
+        with patch.object(
+            ldap_client._connection_manager, "_create_connection"
+        ) as mock_create:
+            mock_create.return_value = FlextResult.fail("Connection failed")
+
+            result = await ldap_client.connect_with_auth(auth_config)
+
+            assert not result.is_success
+            assert "Authentication failed: Connection failed" in result.error
+
+    @pytest.mark.asyncio
+    async def test_connect_with_auth_ldap_exception(
+        self,
+        ldap_client: FlextLdapSimpleClient,
+        auth_config: FlextLdapAuthConfig,
+    ) -> None:
+        """Test authentication with LDAP exception."""
+        from ldap3.core.exceptions import LDAPException
+
+        with patch.object(
+            ldap_client._connection_manager, "_create_connection"
+        ) as mock_create:
+            mock_create.side_effect = LDAPException("LDAP error")
+
+            result = await ldap_client.connect_with_auth(auth_config)
+
+            assert not result.is_success
+            assert "LDAP authentication failed" in result.error
+
+    @pytest.mark.asyncio
+    async def test_connect_with_auth_runtime_error(
+        self,
+        ldap_client: FlextLdapSimpleClient,
+        auth_config: FlextLdapAuthConfig,
+    ) -> None:
+        """Test authentication with runtime error."""
+        with patch.object(
+            ldap_client._connection_manager, "_create_connection"
+        ) as mock_create:
+            mock_create.side_effect = RuntimeError("Runtime error")
+
+            result = await ldap_client.connect_with_auth(auth_config)
+
+            assert not result.is_success
+            assert "Authentication setup failed: Runtime error" in result.error

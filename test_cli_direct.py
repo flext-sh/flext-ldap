@@ -62,11 +62,7 @@ def test_cli_click_structure() -> bool | None:
 
 def run_all_cli_tests():
     """Executa todos os testes do CLI."""
-    tests = [
-        test_cli_imports,
-        test_cli_handlers,
-        test_cli_click_structure
-    ]
+    tests = [test_cli_imports, test_cli_handlers, test_cli_click_structure]
 
     passed = 0
     total = len(tests)

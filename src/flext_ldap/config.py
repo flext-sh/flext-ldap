@@ -45,7 +45,6 @@ from __future__ import annotations
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core configuration system
 from flext_core import (
-    # Infrastructure project configuration - organized hierarchically
     FlextBaseConfigModel,
     FlextLDAPConfig,
     FlextLogLevel,
@@ -56,43 +55,6 @@ from flext_core import (
 from pydantic import Field, SecretStr, field_validator
 
 logger = get_logger(__name__)
-
-
-# Constants for LDAP operations
-class FlextLdapConstants:
-    """Operational constants for FLEXT-LDAP directory operations.
-
-    Centralized constant definitions for LDAP protocol operations,
-    timeout values, port assignments, and logging configurations.
-
-    These constants ensure consistent behavior across the application
-    and provide single points of configuration for operational parameters.
-
-    Constants:
-        TRACE_LEVEL_VALUE: Custom trace logging level (5)
-        DEFAULT_TIMEOUT: Standard operation timeout in seconds (30)
-        DEFAULT_PORT: Standard LDAP port for non-SSL connections (389)
-        DEFAULT_SSL_PORT: Standard LDAPS port for SSL connections (636)
-        DEFAULT_TIMEOUT_SECONDS: Standard operation timeout in seconds (30)
-        MAX_TIMEOUT_SECONDS: Maximum allowed timeout in seconds (300)
-        DEFAULT_POOL_SIZE: Default connection pool size (10)
-        MAX_POOL_SIZE: Maximum connection pool size (100)
-        DEFAULT_PAGE_SIZE: Default page size for paged searches (1000)
-        MAX_PAGE_SIZE: Maximum page size for paged searches (10000)
-    """
-
-    TRACE_LEVEL_VALUE = 5  # Trace logging level
-    DEFAULT_TIMEOUT = 30
-    DEFAULT_PORT = 389
-    DEFAULT_SSL_PORT = 636
-
-    # Extended constants expected by tests
-    DEFAULT_TIMEOUT_SECONDS = 30
-    MAX_TIMEOUT_SECONDS = 300
-    DEFAULT_POOL_SIZE = 10
-    MAX_POOL_SIZE = 100
-    DEFAULT_PAGE_SIZE = 1000
-    MAX_PAGE_SIZE = 10000
 
 
 # Extend flext-core centralized LDAP config with project-specific settings
@@ -135,7 +97,8 @@ class FlextLdapConnectionConfig(FlextLDAPConfig):
 
     # Compatibility field for initialization (maps to timeout field)
     timeout_seconds: int = Field(
-        default=30, description="Connection timeout in seconds (compatibility field)",
+        default=30,
+        description="Connection timeout in seconds (compatibility field)",
     )
 
     @field_validator("host")
@@ -186,10 +149,12 @@ class FlextLdapAuthConfig(FlextLDAPConfig):
     # Override base defaults to match test expectations - maintain base class
     # type compatibility
     bind_dn: str | None = Field(
-        default="", description="LDAP bind DN for authentication",
+        default="",
+        description="LDAP bind DN for authentication",
     )
     bind_password: SecretStr | None = Field(
-        default_factory=lambda: SecretStr(""), description="LDAP bind password",
+        default_factory=lambda: SecretStr(""),
+        description="LDAP bind password",
     )
 
     use_anonymous_bind: bool = Field(default=False, description="Use anonymous binding")
@@ -235,14 +200,16 @@ class FlextLdapSearchConfig(FlextBaseConfigModel):
     pool_size: int = Field(10, description="Connection pool size", ge=1)
 
     default_search_scope: str = Field(
-        default="subtree", description="Default search scope",
+        default="subtree",
+        description="Default search scope",
     )
     size_limit: int = Field(default=1000, ge=0, description="Search size limit")
     time_limit: int = Field(default=30, ge=0, description="Search time limit")
     paged_search: bool = Field(default=True, description="Enable paged search")
     page_size: int = Field(default=1000, ge=1, description="Page size for paged search")
     enable_referral_chasing: bool = Field(
-        default=False, description="Enable referral chasing",
+        default=False,
+        description="Enable referral chasing",
     )
     max_referral_hops: int = Field(default=5, ge=0, description="Maximum referral hops")
 
@@ -277,10 +244,13 @@ class FlextLdapOperationConfig(FlextLDAPConfig):
 
     max_retries: int = Field(default=3, ge=0, description="Maximum retry attempts")
     retry_delay: float = Field(
-        default=1.0, ge=0.0, description="Retry delay in seconds",
+        default=1.0,
+        ge=0.0,
+        description="Retry delay in seconds",
     )
     enable_transactions: bool = Field(
-        default=False, description="Enable transaction support",
+        default=False,
+        description="Enable transaction support",
     )
     batch_size: int = Field(default=100, ge=1, description="Batch operation size")
 
@@ -294,13 +264,16 @@ class FlextLdapSecurityConfig(FlextLDAPConfig):
 
     tls_validation: str = Field(default="strict", description="TLS validation mode")
     ca_cert_file: str | None = Field(
-        default=None, description="CA certificate file path",
+        default=None,
+        description="CA certificate file path",
     )
     client_cert_file: str | None = Field(
-        default=None, description="Client certificate file path",
+        default=None,
+        description="Client certificate file path",
     )
     client_key_file: str | None = Field(
-        default=None, description="Client key file path",
+        default=None,
+        description="Client key file path",
     )
     enable_start_tls: bool = Field(default=False, description="Enable StartTLS")
     tls_version: str | None = Field(default=None, description="TLS version")
@@ -322,17 +295,21 @@ class FlextLdapLoggingConfig(FlextLDAPConfig):
     """LDAP logging configuration with specialized validation."""
 
     log_level: FlextLogLevel = Field(
-        default=FlextLogLevel.INFO, description="Logging level",
+        default=FlextLogLevel.INFO,
+        description="Logging level",
     )
     enable_connection_logging: bool = Field(
-        default=False, description="Enable connection logging",
+        default=False,
+        description="Enable connection logging",
     )
     enable_operation_logging: bool = Field(
-        default=True, description="Enable operation logging",
+        default=True,
+        description="Enable operation logging",
     )
     log_sensitive_data: bool = Field(default=False, description="Log sensitive data")
     structured_logging: bool = Field(
-        default=True, description="Enable structured logging",
+        default=True,
+        description="Enable structured logging",
     )
 
     def validate_domain_rules(self) -> FlextResult[None]:

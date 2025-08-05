@@ -17,13 +17,8 @@ from enum import Enum
 
 from flext_core import FlextEntity, FlextResult
 
-
-class FlextLdapSecurityConstants:
-    """Security constants following DRY principle."""
-
-    # Network Port Constants
-    MIN_PORT: int = 1
-    MAX_PORT: int = 65535
+# Constants imported from centralized module
+from flext_ldap.constants import FlextLdapSecurityConstants
 
 
 class FlextLdapCertificateValidationResult(Enum):
@@ -83,10 +78,14 @@ class FlextLdapCertificateInfo(FlextEntity):
 
         return False
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for certificate information."""
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for certificate information."""
         # Railway Oriented Programming - Consolidated validation pipeline
         return self._execute_certificate_validation_pipeline()
+
+    def validate_domain_rules(self) -> FlextResult[None]:
+        """Validate domain rules for certificate information."""
+        return self.validate_business_rules()
 
     def _execute_certificate_validation_pipeline(self) -> FlextResult[None]:
         """Execute certificate validation pipeline with consolidated error handling."""
@@ -196,13 +195,17 @@ class FlextLdapValidationResult(FlextEntity):
         """Check if validation has warnings."""
         return len(self.validation_warnings) > 0
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for certificate validation result."""
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for certificate validation result."""
         if not self.message:
             return FlextResult.fail("ValidationResult must have a message")
         if self.chain_length < 0:
             return FlextResult.fail("Chain length cannot be negative")
         return FlextResult.ok(None)
+
+    def validate_domain_rules(self) -> FlextResult[None]:
+        """Validate domain rules for certificate validation result."""
+        return self.validate_business_rules()
 
 
 class FlextLdapSSLContextConfig(FlextEntity):
