@@ -16,7 +16,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from flext_ldap.errors import FlextLdapError as BaseFlextLdapError
+else:
+    BaseFlextLdapError = object
 
 from flext_core import get_logger
 from flext_core.exceptions import (
@@ -31,7 +36,7 @@ logger = get_logger(__name__)
 _exceptions = create_module_exception_classes("flext_ldap")
 
 # Extract exception classes with proper names for backward compatibility
-FlextLdapError = cast("type[Exception]", _exceptions["FlextLdapError"])
+FlextLdapError: type[Exception] = _exceptions["FlextLdapError"]
 FlextLdapValidationError = cast(
     "type[Exception]",
     _exceptions["FlextLdapValidationError"],
@@ -60,7 +65,7 @@ FlextLdapTimeoutError = cast("type[Exception]", _exceptions["FlextLdapTimeoutErr
 # =============================================================================
 
 
-class FlextLdapDomainError(FlextLdapError):  # type: ignore[valid-type,misc]
+class FlextLdapDomainError(BaseFlextLdapError):
     """Base exception for LDAP domain errors using DRY foundation."""
 
     def __init__(self, message: str = "LDAP domain error", **kwargs: object) -> None:

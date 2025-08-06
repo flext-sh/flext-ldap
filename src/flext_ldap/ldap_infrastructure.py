@@ -31,8 +31,11 @@ from flext_ldap.config import (
     FlextLdapConnectionConfig,
 )
 from flext_ldap.constants import FlextLdapConstants, LDAPOperationResult
+
+# Import specific error classes to avoid namespace issues
 from flext_ldap.errors import (
     FlextLdapConnection,
+    FlextLdapConnectionError,
     FlextLdapData,
 )
 from flext_ldap.types import FlextLdapDataType
@@ -329,7 +332,7 @@ class FlextLdapConnectionManager:
 
             return FlextResult.ok(connection)
         except LDAPException as e:
-            error = FlextLdapConnection.ConnectionError(
+            error = FlextLdapConnectionError(
                 f"LDAP protocol error: {e}",
                 server=config.server,
                 port=config.port,
@@ -337,7 +340,7 @@ class FlextLdapConnectionManager:
             )
             return error.to_typed_result(Connection)
         except (RuntimeError, ValueError, TypeError) as e:
-            error = FlextLdapConnection.ConnectionError(
+            error = FlextLdapConnectionError(
                 f"Connection setup error: {e}",
                 server=config.server,
                 port=config.port,
@@ -357,12 +360,12 @@ class FlextLdapConnectionManager:
             if hasattr(connection, "unbind") and callable(connection.unbind):
                 try:
                     # Type-safe unbind with error handling
-                    connection.unbind()  # type: ignore[no-untyped-call]  # ldap3 typing
+                    connection.unbind()  # type: ignore[no-untyped-call] # ldap3 typing limitation
                 except Exception as e:
                     logger.warning("Failed to unbind connection: %s", e)
             return FlextResult.ok(data=True)
         except (RuntimeError, ValueError, TypeError) as e:
-            error = FlextLdapConnection.ConnectionError(
+            error = FlextLdapConnectionError(
                 f"Failed to close connection: {e}",
                 cause=e,
             )
@@ -506,7 +509,7 @@ class FlextLdapSimpleClient:
                 try:
                     if callable(self._current_connection.unbind):
                         # Type-safe unbind with error handling
-                        self._current_connection.unbind()  # type: ignore[no-untyped-call]  # ldap3 typing
+                        self._current_connection.unbind()  # type: ignore[no-untyped-call] # ldap3 typing limitation
                 except Exception as e:
                     logger.warning("Failed to unbind previous connection: %s", e)
 
@@ -582,14 +585,14 @@ class FlextLdapSimpleClient:
                 },
             )
 
-            # Use ldap3 constants - typing limitation in ldap3 library
+            # Use ldap3 constants with type annotation fix
             # ldap3 constants (BASE, LEVEL, SUBTREE) are int values but typing expects literals
             success: bool = self._current_connection.search(
                 search_base=base_dn,
                 search_filter=search_filter,
-                search_scope=ldap_scope,  # type: ignore[arg-type]  # ldap3 typing issue
+                search_scope=ldap_scope,  # type: ignore[arg-type] # ldap3 typing limitation
                 attributes=search_attributes,
-            )
+            ) or False
 
             if not success:
                 operation_logger.error(
@@ -646,7 +649,7 @@ class FlextLdapSimpleClient:
             )
             return FlextResult.ok(results)
         except (RuntimeError, ValueError, TypeError) as e:
-            error = FlextLdapConnection.ConnectionError(
+            error = FlextLdapConnectionError(
                 f"Search operation failed: {e}",
                 cause=e,
             )
@@ -710,7 +713,7 @@ class FlextLdapSimpleClient:
 
             operation_logger.trace("Executing LDAP add operation")
             # LDAP add operation - ldap3 Connection.add method
-            success = self._current_connection.add(dn, attributes=ldap_attributes)  # type: ignore[no-untyped-call]  # ldap3 typing
+            success: bool = self._current_connection.add(dn, attributes=ldap_attributes) or False  # type: ignore[no-untyped-call] # ldap3 typing limitation
 
             if not success:
                 operation_logger.error(
@@ -777,7 +780,7 @@ class FlextLdapSimpleClient:
                 extra={"dn": dn, "modifications": list(ldap_changes.keys())},
             )
             # LDAP modify operation - ldap3 Connection.modify method
-            success = self._current_connection.modify(dn, ldap_changes)  # type: ignore[no-untyped-call]  # ldap3 typing
+            success: bool = self._current_connection.modify(dn, ldap_changes) or False  # type: ignore[no-untyped-call] # ldap3 typing limitation
 
             if not success:
                 logger.error(
@@ -823,7 +826,7 @@ class FlextLdapSimpleClient:
         try:
             logger.trace("Executing LDAP delete operation", extra={"dn": dn})
             # LDAP delete operation - ldap3 Connection.delete method
-            success = self._current_connection.delete(dn)  # type: ignore[no-untyped-call]  # ldap3 typing
+            success: bool = self._current_connection.delete(dn) or False  # type: ignore[no-untyped-call] # ldap3 typing limitation
 
             if not success:
                 logger.error(
@@ -837,7 +840,7 @@ class FlextLdapSimpleClient:
             logger.info("LDAP entry deleted successfully", extra={"dn": dn})
             return FlextResult.ok(LDAPOperationResult.SUCCESS)
         except (RuntimeError, ValueError, TypeError) as e:
-            error = FlextLdapConnection.ConnectionError(
+            error = FlextLdapConnectionError(
                 f"Delete operation failed: {e}",
                 cause=e,
             )

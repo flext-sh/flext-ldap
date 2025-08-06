@@ -92,7 +92,8 @@ description: Container for groups
 """
 
         # Write LDIF to temp file
-        with open("/tmp/setup_directory.ldif", "w", encoding="utf-8") as f:
+        ldif_path = Path("/tmp/setup_directory.ldif")
+        with ldif_path.open("w", encoding="utf-8") as f:
             f.write(ldif_content)
 
         # Add entries to LDAP

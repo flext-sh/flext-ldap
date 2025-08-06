@@ -160,8 +160,8 @@ class TestRealLdapOperations:
                 # Search may fail if container is not fully ready - that's ok
                 await ldap_client.search("dc=flext,dc=local", "(objectClass=*)")
 
-            # Test disconnect
-            disconnect_result = await ldap_client.disconnect()
+            # Test disconnect - disconnect() is synchronous, not async
+            disconnect_result = ldap_client.disconnect()
             assert disconnect_result.success
             assert not ldap_client.is_connected()
 
