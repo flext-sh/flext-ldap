@@ -49,7 +49,7 @@ class FlextLdapDataType(Enum):
     IP_ADDRESS = "ip_address"
     MAC_ADDRESS = "mac_address"
     CERTIFICATE = "certificate"
-    PASSWORD_DATA_TYPE = "password_field"  # noqa: S105 - data type identifier, not a password
+    PASSWORD_DATA_TYPE = "password_field"  # noqa: S105  # nosec B105 - data type identifier
     UNKNOWN = "unknown"
 
 

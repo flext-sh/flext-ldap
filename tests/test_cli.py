@@ -316,7 +316,7 @@ class TestCLICommands:
         mock_entries = [
             ExtendedLDAPEntry(
                 dn="cn=test,dc=example,dc=com",
-                attributes={"cn": ["test"], "mail": ["test@example.com"]}
+                attributes={"cn": ["test"], "mail": ["test@example.com"]},
             )
         ]
         mock_search.return_value = FlextResult.ok(mock_entries)
@@ -334,30 +334,38 @@ class TestCLICommands:
         mock_search.return_value = FlextResult.ok([])
 
         runner = CliRunner()
-        result = runner.invoke(cli, [
-            "search", "ldap.example.com", "dc=example,dc=com",
-            "--filter", "(objectClass=person)",
-            "--limit", "25",
-            "--port", "636",
-            "--ssl",
-            "--bind-dn", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            "--bind-password", "secret"
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "search",
+                "ldap.example.com",
+                "dc=example,dc=com",
+                "--filter",
+                "(objectClass=person)",
+                "--limit",
+                "25",
+                "--port",
+                "636",
+                "--ssl",
+                "--bind-dn",
+                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+                "--bind-password",
+                "secret",
+            ],
+        )
 
         assert result.exit_code == 0
 
     @patch.object(LDAPUserHandler, "get_user_info")
     def test_user_info_command_success(self, mock_get_user) -> None:
         """Test user-info command success."""
-        mock_user = {
-            "uid": "john",
-            "cn": "John Doe",
-            "dn": "cn=john,dc=example,dc=com"
-        }
+        mock_user = {"uid": "john", "cn": "John Doe", "dn": "cn=john,dc=example,dc=com"}
         mock_get_user.return_value = FlextResult.ok(mock_user)
 
         runner = CliRunner()
-        result = runner.invoke(cli, ["user-info", "john", "--server", "ldap.example.com"])
+        result = runner.invoke(
+            cli, ["user-info", "john", "--server", "ldap.example.com"]
+        )
 
         assert result.exit_code == 0
         assert "✅" in result.output
@@ -380,17 +388,26 @@ class TestCLICommands:
             "uid": "john",
             "cn": "John Doe",
             "dn": "cn=john,ou=users,dc=example,dc=com",
-            "mail": "john@example.com"
+            "mail": "john@example.com",
         }
         mock_create.return_value = FlextResult.ok(mock_user)
 
         runner = CliRunner()
-        result = runner.invoke(cli, [
-            "create-user", "john", "John Doe", "Doe",
-            "--mail", "john@example.com",
-            "--base-dn", "ou=users,dc=example,dc=com",
-            "--server", "ldap.example.com"
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "create-user",
+                "john",
+                "John Doe",
+                "Doe",
+                "--mail",
+                "john@example.com",
+                "--base-dn",
+                "ou=users,dc=example,dc=com",
+                "--server",
+                "ldap.example.com",
+            ],
+        )
 
         assert result.exit_code == 0
         assert "✅" in result.output
@@ -411,12 +428,14 @@ class TestCLICommands:
         """Test list-users command success."""
         mock_users = [
             {"uid": "john", "cn": "John Doe", "mail": "john@example.com"},
-            {"uid": "jane", "cn": "Jane Smith", "mail": "jane@example.com"}
+            {"uid": "jane", "cn": "Jane Smith", "mail": "jane@example.com"},
         ]
         mock_list_users.return_value = FlextResult.ok(mock_users)
 
         runner = CliRunner()
-        result = runner.invoke(cli, ["list-users", "--limit", "50", "--server", "ldap.example.com"])
+        result = runner.invoke(
+            cli, ["list-users", "--limit", "50", "--server", "ldap.example.com"]
+        )
 
         assert result.exit_code == 0
         assert "📋" in result.output
@@ -498,8 +517,8 @@ class TestCLIDisplayFunctions:
                 attributes={
                     "cn": ["Test User"],
                     "mail": ["test@example.com"],
-                    "objectClass": ["person", "organizationalPerson", "inetOrgPerson"]
-                }
+                    "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
+                },
             )
         ]
 
@@ -520,8 +539,14 @@ class TestCLIDisplayFunctions:
                 dn="cn=test,dc=example,dc=com",
                 attributes={
                     "cn": ["Test User"],
-                    "objectClass": ["person", "org", "inet", "extra1", "extra2"]  # More than MAX_DISPLAY_VALUES
-                }
+                    "objectClass": [
+                        "person",
+                        "org",
+                        "inet",
+                        "extra1",
+                        "extra2",
+                    ],  # More than MAX_DISPLAY_VALUES
+                },
             )
         ]
 
@@ -543,7 +568,7 @@ class TestCLIDisplayFunctions:
             uid="test",
             cn="Test User",
             sn="User",
-            mail="test@example.com"
+            mail="test@example.com",
         )
 
         display_user_info(user)
@@ -558,7 +583,7 @@ class TestCLIDisplayFunctions:
 
         users = [
             {"uid": "john", "cn": "John Doe", "mail": "john@example.com"},
-            {"uid": "jane", "cn": "Jane Smith", "mail": "jane@example.com"}
+            {"uid": "jane", "cn": "Jane Smith", "mail": "jane@example.com"},
         ]
 
         display_users_list(users)
@@ -580,7 +605,7 @@ class TestCLIDisplayFunctions:
 
         users = [
             MockUser("john", "John Doe", "john@example.com"),
-            MockUser("jane", "Jane Smith", "jane@example.com")
+            MockUser("jane", "Jane Smith", "jane@example.com"),
         ]
 
         display_users_list(users)
@@ -612,7 +637,7 @@ class TestCLIParameterObjects:
             636,
             use_ssl=True,
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            bind_password="secret"
+            bind_password="secret",
         )
 
         assert params.server == "ldap.example.com"
@@ -633,7 +658,7 @@ class TestCLIParameterObjects:
             ssl=True,
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             bind_password="secret",
-            limit="25"
+            limit="25",
         )
 
         assert params.server == "ldap.example.com"
@@ -671,7 +696,7 @@ class TestCLIParameterObjects:
             "Doe",
             mail="john@example.com",
             base_dn="ou=users,dc=example,dc=com",
-            server="ldap.example.com"
+            server="ldap.example.com",
         )
 
         assert params.uid == "john"
@@ -735,9 +760,7 @@ class TestBaseLDAPHandler:
         from flext_ldap.cli import BaseLDAPHandler
 
         config = BaseLDAPHandler._create_connection_config(
-            "ldap.example.com",
-            636,
-            use_ssl=True
+            "ldap.example.com", 636, use_ssl=True
         )
 
         assert config.server == "ldap.example.com"
@@ -749,8 +772,7 @@ class TestBaseLDAPHandler:
         from flext_ldap.cli import BaseLDAPHandler
 
         auth_config = BaseLDAPHandler._create_auth_config(
-            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            "secret"
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "secret"
         )
 
         assert auth_config is not None

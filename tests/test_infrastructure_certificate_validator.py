@@ -46,7 +46,7 @@ from flext_ldap.infrastructure.certificate_validator import (
 
 class TestFlextLdapCertificateValidationServiceInitialization:
     """Test suite for certificate validation service initialization.
-    
+
     Validates that the service properly initializes with correct
     cache configuration and maintains proper state.
     """
@@ -80,13 +80,15 @@ class TestFlextLdapCertificateValidationServiceInitialization:
 
 class TestCertificateChainValidation:
     """Test suite for certificate chain validation functionality.
-    
+
     Validates certificate chain validation with various scenarios,
     error handling, and proper FlextResult pattern usage.
     """
 
     @patch("flext_ldap.infrastructure.certificate_validator.logger")
-    async def test_validate_certificate_chain_empty_list(self, mock_logger: Mock) -> None:
+    async def test_validate_certificate_chain_empty_list(
+        self, mock_logger: Mock
+    ) -> None:
         """Test certificate chain validation with empty list."""
         service = FlextLdapCertificateValidationService()
 
@@ -102,7 +104,9 @@ class TestCertificateChainValidation:
         assert "empty" in result.error.lower() or "invalid" in result.error.lower()
 
     @patch("flext_ldap.infrastructure.certificate_validator.x509")
-    async def test_validate_certificate_chain_invalid_certificate(self, mock_x509: Mock) -> None:
+    async def test_validate_certificate_chain_invalid_certificate(
+        self, mock_x509: Mock
+    ) -> None:
         """Test certificate chain validation with invalid certificate data."""
         service = FlextLdapCertificateValidationService()
 
@@ -112,18 +116,24 @@ class TestCertificateChainValidation:
         mock_context.port = 443
 
         # Mock x509 to raise exception for invalid certificate
-        mock_x509.load_der_x509_certificate.side_effect = ValueError("Invalid certificate")
+        mock_x509.load_der_x509_certificate.side_effect = ValueError(
+            "Invalid certificate"
+        )
 
         # Test with invalid certificate data
         invalid_cert_data = [b"invalid_certificate_data"]
-        result = await service.validate_certificate_chain(invalid_cert_data, mock_context)
+        result = await service.validate_certificate_chain(
+            invalid_cert_data, mock_context
+        )
 
         # Should fail with malformed certificate error
         assert not result.is_success
         assert "malformed" in result.error.lower() or "invalid" in result.error.lower()
 
     @patch("flext_ldap.infrastructure.certificate_validator.x509")
-    async def test_validate_certificate_chain_expired_certificate(self, mock_x509: Mock) -> None:
+    async def test_validate_certificate_chain_expired_certificate(
+        self, mock_x509: Mock
+    ) -> None:
         """Test certificate chain validation with expired certificate."""
         service = FlextLdapCertificateValidationService()
 
@@ -134,8 +144,12 @@ class TestCertificateChainValidation:
 
         # Create mock certificate that is expired
         mock_cert = Mock()
-        mock_cert.not_valid_after = datetime.now(UTC) - timedelta(days=1)  # Expired yesterday
-        mock_cert.not_valid_before = datetime.now(UTC) - timedelta(days=365)  # Valid from 1 year ago
+        mock_cert.not_valid_after = datetime.now(UTC) - timedelta(
+            days=1
+        )  # Expired yesterday
+        mock_cert.not_valid_before = datetime.now(UTC) - timedelta(
+            days=365
+        )  # Valid from 1 year ago
 
         mock_x509.load_der_x509_certificate.return_value = mock_cert
 
@@ -148,7 +162,9 @@ class TestCertificateChainValidation:
         assert "expired" in result.error.lower() or "validity" in result.error.lower()
 
     @patch("flext_ldap.infrastructure.certificate_validator.x509")
-    async def test_validate_certificate_chain_not_yet_valid_certificate(self, mock_x509: Mock) -> None:
+    async def test_validate_certificate_chain_not_yet_valid_certificate(
+        self, mock_x509: Mock
+    ) -> None:
         """Test certificate chain validation with not-yet-valid certificate."""
         service = FlextLdapCertificateValidationService()
 
@@ -159,8 +175,12 @@ class TestCertificateChainValidation:
 
         # Create mock certificate that is not yet valid
         mock_cert = Mock()
-        mock_cert.not_valid_before = datetime.now(UTC) + timedelta(days=1)  # Valid from tomorrow
-        mock_cert.not_valid_after = datetime.now(UTC) + timedelta(days=365)  # Expires in 1 year
+        mock_cert.not_valid_before = datetime.now(UTC) + timedelta(
+            days=1
+        )  # Valid from tomorrow
+        mock_cert.not_valid_after = datetime.now(UTC) + timedelta(
+            days=365
+        )  # Expires in 1 year
 
         mock_x509.load_der_x509_certificate.return_value = mock_cert
 
@@ -170,18 +190,23 @@ class TestCertificateChainValidation:
 
         # Should fail with validity error
         assert not result.is_success
-        assert "not yet valid" in result.error.lower() or "validity" in result.error.lower()
+        assert (
+            "not yet valid" in result.error.lower()
+            or "validity" in result.error.lower()
+        )
 
 
 class TestSSLContextCreation:
     """Test suite for SSL context creation and configuration.
-    
+
     Validates SSL context creation with various configurations,
     TLS version settings, and certificate loading operations.
     """
 
     @patch("flext_ldap.infrastructure.certificate_validator.ssl.create_default_context")
-    async def test_create_ssl_context_default_configuration(self, mock_ssl_create: Mock) -> None:
+    async def test_create_ssl_context_default_configuration(
+        self, mock_ssl_create: Mock
+    ) -> None:
         """Test SSL context creation with default configuration."""
         service = FlextLdapCertificateValidationService()
 
@@ -210,7 +235,9 @@ class TestSSLContextCreation:
         mock_ssl_create.assert_called_once()
 
     @patch("flext_ldap.infrastructure.certificate_validator.ssl.create_default_context")
-    async def test_create_ssl_context_with_verification_disabled(self, mock_ssl_create: Mock) -> None:
+    async def test_create_ssl_context_with_verification_disabled(
+        self, mock_ssl_create: Mock
+    ) -> None:
         """Test SSL context creation with certificate verification disabled."""
         service = FlextLdapCertificateValidationService()
 
@@ -240,7 +267,9 @@ class TestSSLContextCreation:
         assert mock_context.verify_mode == ssl.CERT_NONE
 
     @patch("flext_ldap.infrastructure.certificate_validator.ssl.create_default_context")
-    async def test_create_ssl_context_with_custom_tls_versions(self, mock_ssl_create: Mock) -> None:
+    async def test_create_ssl_context_with_custom_tls_versions(
+        self, mock_ssl_create: Mock
+    ) -> None:
         """Test SSL context creation with custom TLS versions."""
         service = FlextLdapCertificateValidationService()
 
@@ -272,7 +301,7 @@ class TestSSLContextCreation:
 
 class TestHostnameValidation:
     """Test suite for hostname validation and certificate matching.
-    
+
     Validates hostname verification against certificate subjects,
     wildcard matching, and various hostname formats.
     """
@@ -312,10 +341,14 @@ class TestHostnameValidation:
         service = FlextLdapCertificateValidationService()
 
         # Test wildcard non-matching cases
-        result1 = service._match_hostname("*.example.com", "example.com")  # Missing subdomain
+        result1 = service._match_hostname(
+            "*.example.com", "example.com"
+        )  # Missing subdomain
         assert result1 is False
 
-        result2 = service._match_hostname("*.example.com", "subdomain.other.com")  # Wrong domain
+        result2 = service._match_hostname(
+            "*.example.com", "subdomain.other.com"
+        )  # Wrong domain
         assert result2 is False
 
     def test_validate_hostname_mismatch(self) -> None:
@@ -329,7 +362,7 @@ class TestHostnameValidation:
 
 class TestCertificateInfoExtraction:
     """Test suite for certificate information extraction.
-    
+
     Validates extraction of certificate details including subject,
     issuer, expiry dates, and certificate properties.
     """
@@ -368,7 +401,9 @@ class TestCertificateInfoExtraction:
         assert result.data is not None
 
     @patch("flext_ldap.infrastructure.certificate_validator.x509")
-    async def test_extract_certificate_info_with_extensions(self, mock_x509: Mock) -> None:
+    async def test_extract_certificate_info_with_extensions(
+        self, mock_x509: Mock
+    ) -> None:
         """Test certificate information extraction with extensions."""
         service = FlextLdapCertificateValidationService()
 
@@ -396,14 +431,16 @@ class TestCertificateInfoExtraction:
 
 class TestServerCertificateValidation:
     """Test suite for server certificate validation.
-    
+
     Validates server-specific certificate validation including
     hostname verification, connection testing, and certificate retrieval.
     """
 
     @patch("flext_ldap.infrastructure.certificate_validator.ssl.create_default_context")
     @patch("flext_ldap.infrastructure.certificate_validator.socket.create_connection")
-    async def test_validate_server_certificate_success(self, mock_socket_create: Mock, mock_ssl_create: Mock) -> None:
+    async def test_validate_server_certificate_success(
+        self, mock_socket_create: Mock, mock_ssl_create: Mock
+    ) -> None:
         """Test successful server certificate validation."""
         service = FlextLdapCertificateValidationService()
 
@@ -430,14 +467,18 @@ class TestServerCertificateValidation:
         assert result.is_success or "connection" in str(result.error).lower()
 
     @patch("flext_ldap.infrastructure.certificate_validator.socket.create_connection")
-    async def test_validate_server_certificate_connection_failure(self, mock_socket_create: Mock) -> None:
+    async def test_validate_server_certificate_connection_failure(
+        self, mock_socket_create: Mock
+    ) -> None:
         """Test server certificate validation with connection failure."""
         service = FlextLdapCertificateValidationService()
 
         # Mock connection failure
         mock_socket_create.side_effect = OSError("Connection refused")
 
-        result = await service.validate_server_certificate("unreachable.example.com", 443)
+        result = await service.validate_server_certificate(
+            "unreachable.example.com", 443
+        )
 
         # Should fail with connection error
         assert not result.is_success
@@ -446,7 +487,7 @@ class TestServerCertificateValidation:
 
 class TestCertificateCaching:
     """Test suite for certificate caching functionality.
-    
+
     Validates certificate cache behavior, TTL handling,
     and cache invalidation scenarios.
     """
@@ -468,7 +509,7 @@ class TestCertificateCaching:
 
 class TestErrorHandlingAndEdgeCases:
     """Test suite for error handling and edge case scenarios.
-    
+
     Validates robust error handling, exception management,
     and graceful degradation in failure scenarios.
     """
@@ -534,7 +575,7 @@ class TestErrorHandlingAndEdgeCases:
 
 class TestFlextResultPatternCompliance:
     """Test suite for FlextResult pattern compliance validation.
-    
+
     Validates that all certificate validation operations properly follow
     the FlextResult pattern for consistent error handling and type safety.
     """
@@ -559,7 +600,9 @@ class TestFlextResultPatternCompliance:
         assert result.error is not None
 
     @patch("flext_ldap.infrastructure.certificate_validator.ssl.create_default_context")
-    async def test_create_ssl_context_returns_flext_result(self, mock_ssl_create: Mock) -> None:
+    async def test_create_ssl_context_returns_flext_result(
+        self, mock_ssl_create: Mock
+    ) -> None:
         """Test that create_ssl_context returns proper FlextResult."""
         service = FlextLdapCertificateValidationService()
 
@@ -604,7 +647,7 @@ class TestFlextResultPatternCompliance:
 
 class TestPrivateMethodBehavior:
     """Test suite for private method behavior validation.
-    
+
     Validates private helper methods that support the main
     certificate validation functionality.
     """

@@ -35,7 +35,7 @@ import pytest
 
 class TestPatternsModuleStructure:
     """Test suite for patterns module basic structure and imports.
-    
+
     Validates that the deprecated patterns module maintains proper
     structure while clearly communicating its deprecated status.
     """
@@ -77,7 +77,7 @@ class TestPatternsModuleStructure:
 
 class TestDeprecationDocumentation:
     """Test suite for deprecation warning documentation.
-    
+
     Comprehensive testing of the deprecation notice content to ensure
     clear communication about the module's deprecated status and
     proper migration guidance for users.
@@ -133,7 +133,9 @@ class TestDeprecationDocumentation:
         lines = docstring.split("\n")
 
         # Should have title line
-        title_line = next((line for line in lines if "FLEXT LDAP Patterns" in line), None)
+        title_line = next(
+            (line for line in lines if "FLEXT LDAP Patterns" in line), None
+        )
         assert title_line is not None
 
         # Should have clear deprecation section
@@ -143,7 +145,7 @@ class TestDeprecationDocumentation:
 
 class TestCopyrightAndLicenseInformation:
     """Test suite for copyright and license information validation.
-    
+
     Validates that the deprecated module maintains proper copyright
     and license information consistent with FLEXT project standards.
     """
@@ -187,7 +189,7 @@ class TestCopyrightAndLicenseInformation:
 
 class TestModuleAttributes:
     """Test suite for module attributes and metadata validation.
-    
+
     Validates that the deprecated patterns module maintains minimal
     required attributes while avoiding unnecessary complexity.
     """
@@ -210,15 +212,18 @@ class TestModuleAttributes:
             if hasattr(patterns_module, attr):
                 # If attribute exists, it should have reasonable value
                 value = getattr(patterns_module, attr)
-                assert value is not None or attr in ["__package__"]  # __package__ can be None
+                assert (
+                    value is not None or attr == "__package__"
+                )  # __package__ can be None
 
     def test_module_does_not_expose_deprecated_functionality(self) -> None:
         """Test that module doesn't accidentally expose deprecated functions."""
         import flext_ldap.patterns as patterns_module
 
         # Get all non-dunder attributes
-        public_attrs = [attr for attr in dir(patterns_module)
-                       if not attr.startswith("_")]
+        public_attrs = [
+            attr for attr in dir(patterns_module) if not attr.startswith("_")
+        ]
 
         # Should have minimal or no public attributes (it's deprecated)
         # If any exist, they should be documented or expected
@@ -234,7 +239,7 @@ class TestModuleAttributes:
 
 class TestDeprecatedModuleIntegration:
     """Test suite for integration behavior of deprecated module.
-    
+
     Validates that the deprecated patterns module integrates properly
     with the rest of the FLEXT-LDAP ecosystem while maintaining
     clear deprecation boundaries.
@@ -255,7 +260,10 @@ class TestDeprecatedModuleIntegration:
         import flext_ldap.patterns as patterns_module
 
         # Should be part of flext_ldap package
-        assert patterns_module.__package__ is None or patterns_module.__package__ == "flext_ldap.patterns"
+        assert (
+            patterns_module.__package__ is None
+            or patterns_module.__package__ == "flext_ldap.patterns"
+        )
 
         # Should have proper file location
         if hasattr(patterns_module, "__file__"):
@@ -265,7 +273,7 @@ class TestDeprecatedModuleIntegration:
 
     def test_import_does_not_raise_warnings(self) -> None:
         """Test that importing the module itself doesn't raise deprecation warnings.
-        
+
         Note: The module is deprecated but importing it should not trigger
         warnings - only using deprecated functionality should warn.
         """
@@ -279,8 +287,9 @@ class TestDeprecatedModuleIntegration:
 
             # Should not have warnings just from importing
             # (warnings would come from using deprecated functionality)
-            deprecation_warnings = [w for w in warning_list
-                                   if issubclass(w.category, DeprecationWarning)]
+            deprecation_warnings = [
+                w for w in warning_list if issubclass(w.category, DeprecationWarning)
+            ]
 
             # Import itself should not warn - only usage
             assert len(deprecation_warnings) == 0
@@ -288,7 +297,7 @@ class TestDeprecatedModuleIntegration:
 
 class TestEdgeCasesAndErrorHandling:
     """Test suite for edge cases and error handling scenarios.
-    
+
     Validates robust behavior of the deprecated patterns module
     under various edge conditions and error scenarios.
     """
@@ -325,7 +334,9 @@ class TestEdgeCasesAndErrorHandling:
         module_repr = repr(patterns_module)
 
         # Should contain module name
-        assert "flext_ldap.patterns" in module_str or "flext_ldap.patterns" in module_repr
+        assert (
+            "flext_ldap.patterns" in module_str or "flext_ldap.patterns" in module_repr
+        )
 
         # Should be valid string representations
         assert isinstance(module_str, str)

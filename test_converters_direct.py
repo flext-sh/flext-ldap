@@ -4,11 +4,10 @@
 Teste focado e direto das classes e enums básicos.
 """
 
-import sys
-
-sys.path.insert(0, "src")
-
-from flext_ldap.converters import FlextLdapConverterConstants, FlextLdapDataType
+from flext_ldap.converters import (
+    FlextLdapConverterConstants,
+    FlextLdapDataType,
+)
 
 
 def test_converter_constants() -> None:

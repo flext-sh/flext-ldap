@@ -156,6 +156,7 @@ class TestRealLdapOperations:
 
             # Test search with proper base DN for test container
             import contextlib
+
             with contextlib.suppress(Exception):
                 # Search may fail if container is not fully ready - that's ok
                 await ldap_client.search("dc=flext,dc=local", "(objectClass=*)")
@@ -219,11 +220,15 @@ class TestRealLdapOperations:
         # Test deleting non-existent user
         delete_result = await ldap_service.delete_user("nonexistent")
         assert delete_result.is_failure
-        assert "not found" in delete_result.error or "Not connected" in delete_result.error
+        assert (
+            "not found" in delete_result.error or "Not connected" in delete_result.error
+        )
 
         # Test updating non-existent user
         update_result = await ldap_service.update_user(
             "nonexistent", {"mail": "test@example.com"}
         )
         assert update_result.is_failure
-        assert "not found" in update_result.error or "Not connected" in update_result.error
+        assert (
+            "not found" in update_result.error or "Not connected" in update_result.error
+        )

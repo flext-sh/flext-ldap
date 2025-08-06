@@ -21,7 +21,7 @@ from flext_core import (
     FlextResult,
     get_logger,
 )
-from ldap3 import ALL, AUTO_BIND_NONE, BASE, LEVEL, SUBTREE, Connection, Server
+from ldap3 import ALL, BASE, LEVEL, SUBTREE, Connection, Server
 from ldap3.core.exceptions import LDAPException
 from pydantic import SecretStr
 
@@ -322,7 +322,7 @@ class FlextLdapConnectionManager:
                 server,
                 user=user,
                 password=password,
-                auto_bind=AUTO_BIND_NONE,
+                auto_bind="NONE",  # Use literal instead of integer
                 raise_exceptions=True,
             )
 
@@ -360,7 +360,7 @@ class FlextLdapConnectionManager:
             if hasattr(connection, "unbind") and callable(connection.unbind):
                 try:
                     # Type-safe unbind with error handling
-                    connection.unbind()  # type: ignore[no-untyped-call] # ldap3 typing limitation
+                    connection.unbind()  # type: ignore[no-untyped-call]
                 except Exception as e:
                     logger.warning("Failed to unbind connection: %s", e)
             return FlextResult.ok(data=True)
@@ -509,7 +509,7 @@ class FlextLdapSimpleClient:
                 try:
                     if callable(self._current_connection.unbind):
                         # Type-safe unbind with error handling
-                        self._current_connection.unbind()  # type: ignore[no-untyped-call] # ldap3 typing limitation
+                        self._current_connection.unbind()  # type: ignore[no-untyped-call]
                 except Exception as e:
                     logger.warning("Failed to unbind previous connection: %s", e)
 
@@ -587,12 +587,15 @@ class FlextLdapSimpleClient:
 
             # Use ldap3 constants with type annotation fix
             # ldap3 constants (BASE, LEVEL, SUBTREE) are int values but typing expects literals
-            success: bool = self._current_connection.search(
-                search_base=base_dn,
-                search_filter=search_filter,
-                search_scope=ldap_scope,  # type: ignore[arg-type] # ldap3 typing limitation
-                attributes=search_attributes,
-            ) or False
+            success: bool = (
+                self._current_connection.search(
+                    search_base=base_dn,
+                    search_filter=search_filter,
+                    search_scope=ldap_scope,  # type: ignore[arg-type]
+                    attributes=search_attributes,
+                )
+                or False
+            )
 
             if not success:
                 operation_logger.error(
@@ -713,7 +716,10 @@ class FlextLdapSimpleClient:
 
             operation_logger.trace("Executing LDAP add operation")
             # LDAP add operation - ldap3 Connection.add method
-            success: bool = self._current_connection.add(dn, attributes=ldap_attributes) or False  # type: ignore[no-untyped-call] # ldap3 typing limitation
+            success: bool = (
+                self._current_connection.add(dn, attributes=ldap_attributes)  # type: ignore[no-untyped-call]
+                or False
+            )
 
             if not success:
                 operation_logger.error(
@@ -745,12 +751,31 @@ class FlextLdapSimpleClient:
             return error.to_bool_result()
 
     async def modify(self, dn: str, changes: dict[str, object]) -> FlextResult[bool]:
-        """Modify entry with intelligent change conversion."""
+        """Modify entry with intelligent change conversion using MODIFY_REPLACE."""
+        return await self.modify_with_type(dn, changes, "MODIFY_REPLACE")
+
+    async def modify_with_type(
+        self, 
+        dn: str, 
+        changes: dict[str, object], 
+        operation_type: str = "MODIFY_REPLACE"
+    ) -> FlextResult[bool]:
+        """Modify entry with intelligent change conversion and configurable operation type.
+        
+        Args:
+            dn: Distinguished name for the entry to modify
+            changes: Dictionary of attribute changes to apply
+            operation_type: Type of modification ("MODIFY_REPLACE", "MODIFY_ADD", "MODIFY_DELETE")
+        
+        Returns:
+            FlextResult containing success status
+        """
         logger.debug(
-            "Modifying LDAP entry",
+            "Modifying LDAP entry with operation type",
             extra={
                 "dn": dn,
                 "changes_count": len(changes),
+                "operation_type": operation_type,
                 "connection_active": self._current_connection is not None,
             },
         )
@@ -759,17 +784,30 @@ class FlextLdapSimpleClient:
             logger.error("Modify attempted without active connection")
             return FlextResult.fail("Not connected")
 
+        # Map operation type strings to ldap3 constants
+        operation_map = {
+            "MODIFY_REPLACE": ldap3.MODIFY_REPLACE,
+            "MODIFY_ADD": ldap3.MODIFY_ADD, 
+            "MODIFY_DELETE": ldap3.MODIFY_DELETE,
+        }
+        
+        if operation_type not in operation_map:
+            return FlextResult.fail(f"Invalid operation type: {operation_type}")
+        
+        ldap_operation = operation_map[operation_type]
+
         try:
             logger.trace("Converting changes for LDAP modify operation")
             # Convert changes using intelligent converter
             ldap_changes = {}
             for attr_name, attr_value in changes.items():
                 converted_value = self._converter.to_ldap(attr_value)
-                ldap_changes[attr_name] = [(ldap3.MODIFY_REPLACE, converted_value)]
+                ldap_changes[attr_name] = [(ldap_operation, converted_value)]
                 logger.trace(
                     "Prepared modification",
                     extra={
                         "attr_name": attr_name,
+                        "operation_type": operation_type,
                         "original_type": type(attr_value).__name__,
                         "converted_type": type(converted_value).__name__,
                     },
@@ -777,15 +815,23 @@ class FlextLdapSimpleClient:
 
             logger.trace(
                 "Executing LDAP modify operation",
-                extra={"dn": dn, "modifications": list(ldap_changes.keys())},
+                extra={
+                    "dn": dn, 
+                    "operation_type": operation_type,
+                    "modifications": list(ldap_changes.keys())
+                },
             )
             # LDAP modify operation - ldap3 Connection.modify method
-            success: bool = self._current_connection.modify(dn, ldap_changes) or False  # type: ignore[no-untyped-call] # ldap3 typing limitation
+            success: bool = self._current_connection.modify(dn, ldap_changes) or False  # type: ignore[no-untyped-call]
 
             if not success:
                 logger.error(
                     "LDAP modify operation failed",
-                    extra={"dn": dn, "result": str(self._current_connection.result)},
+                    extra={
+                        "dn": dn, 
+                        "operation_type": operation_type,
+                        "result": str(self._current_connection.result)
+                    },
                 )
                 return FlextResult.fail(
                     f"Modify failed: {self._current_connection.result}",
@@ -793,7 +839,11 @@ class FlextLdapSimpleClient:
 
             logger.info(
                 "LDAP entry modified successfully",
-                extra={"dn": dn, "changes_applied": list(changes.keys())},
+                extra={
+                    "dn": dn, 
+                    "operation_type": operation_type,
+                    "changes_applied": list(changes.keys())
+                },
             )
             return FlextResult.ok(LDAPOperationResult.SUCCESS)
         except (RuntimeError, ValueError, TypeError) as e:
@@ -808,6 +858,7 @@ class FlextLdapSimpleClient:
                     "error_code": error.error_code,
                     "correlation_id": error.correlation_id,
                     "dn": dn,
+                    "operation_type": operation_type,
                 },
             )
             return error.to_bool_result()
@@ -826,7 +877,7 @@ class FlextLdapSimpleClient:
         try:
             logger.trace("Executing LDAP delete operation", extra={"dn": dn})
             # LDAP delete operation - ldap3 Connection.delete method
-            success: bool = self._current_connection.delete(dn) or False  # type: ignore[no-untyped-call] # ldap3 typing limitation
+            success: bool = self._current_connection.delete(dn) or False  # type: ignore[no-untyped-call]
 
             if not success:
                 logger.error(
