@@ -109,7 +109,11 @@ class TestFlextLdapDirectoryService:
         directory_service: FlextLdapDirectoryService,
     ) -> None:
         """Test successful connection with mock."""
-        with patch.object(directory_service, "_execute_connection_pipeline", return_value=FlextResult.ok(True)):
+        with patch.object(
+            directory_service,
+            "_execute_connection_pipeline",
+            return_value=FlextResult.ok(True),
+        ):
             result = directory_service.connect(server_url="ldap://test.example.com:389")
 
             if not (result.success):

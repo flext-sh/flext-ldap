@@ -812,8 +812,8 @@ def user_info(uid: str, server: str | None) -> None:
 @click.option("--mail", "-m", help="Email address")
 @click.option(
     "--base-dn",
-    default="ou=users,dc=example,dc=com",
-    help="Base DN for user creation",
+    required=True,
+    help="Base DN for user creation - MUST be specified (no default for security)",
 )
 @click.option("--server", "-s", help="LDAP server URL (for connected mode)")
 def create_user(

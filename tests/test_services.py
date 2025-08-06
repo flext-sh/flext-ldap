@@ -1,6 +1,6 @@
 """FLEXT-LDAP Services Tests - Backward Compatibility and Service Layer Testing.
 
-Comprehensive test suite for FLEXT-LDAP service layer, validating backward 
+Comprehensive test suite for FLEXT-LDAP service layer, validating backward
 compatibility, deprecation warnings, and proper service imports following
 Clean Architecture patterns.
 
@@ -36,7 +36,7 @@ from flext_ldap.application.ldap_service import FlextLdapService
 
 class TestFlextLdapServicesDirectImports:
     """Test suite for direct service imports and module structure.
-    
+
     Validates that the services module properly exposes the modern
     FlextLdapService and maintains clean architecture boundaries.
     """
@@ -62,7 +62,7 @@ class TestFlextLdapServicesDirectImports:
 
 class TestLegacyServiceCompatibility:
     """Test suite for legacy service name compatibility.
-    
+
     Comprehensive testing of backward compatibility features including
     deprecation warnings, proper service mapping, and warning content.
     """
@@ -85,8 +85,12 @@ class TestLegacyServiceCompatibility:
             # Validate warning properties
             assert issubclass(warning_msg.category, DeprecationWarning)
             assert "FlextLdapUserService is deprecated" in str(warning_msg.message)
-            assert "Use FlextLdapService from application layer" in str(warning_msg.message)
-            assert "from flext_ldap.application import FlextLdapService" in str(warning_msg.message)
+            assert "Use FlextLdapService from application layer" in str(
+                warning_msg.message
+            )
+            assert "from flext_ldap.application import FlextLdapService" in str(
+                warning_msg.message
+            )
             assert "will be removed in v1.0.0" in str(warning_msg.message)
 
     def test_legacy_user_application_service_compatibility(self) -> None:
@@ -102,7 +106,9 @@ class TestLegacyServiceCompatibility:
 
             # Should trigger deprecation warning
             assert len(warning_list) == 1
-            assert "FlextLdapUserApplicationService is deprecated" in str(warning_list[0].message)
+            assert "FlextLdapUserApplicationService is deprecated" in str(
+                warning_list[0].message
+            )
 
     def test_legacy_group_service_compatibility(self) -> None:
         """Test legacy FlextLdapGroupService compatibility."""
@@ -132,7 +138,9 @@ class TestLegacyServiceCompatibility:
 
             # Should trigger deprecation warning
             assert len(warning_list) == 1
-            assert "FlextLdapOperationService is deprecated" in str(warning_list[0].message)
+            assert "FlextLdapOperationService is deprecated" in str(
+                warning_list[0].message
+            )
 
     def test_legacy_connection_service_compatibility(self) -> None:
         """Test legacy FlextLdapConnectionService compatibility."""
@@ -147,7 +155,9 @@ class TestLegacyServiceCompatibility:
 
             # Should trigger deprecation warning
             assert len(warning_list) == 1
-            assert "FlextLdapConnectionService is deprecated" in str(warning_list[0].message)
+            assert "FlextLdapConnectionService is deprecated" in str(
+                warning_list[0].message
+            )
 
     def test_legacy_connection_application_service_compatibility(self) -> None:
         """Test legacy FlextLdapConnectionApplicationService compatibility."""
@@ -162,12 +172,14 @@ class TestLegacyServiceCompatibility:
 
             # Should trigger deprecation warning
             assert len(warning_list) == 1
-            assert "FlextLdapConnectionApplicationService is deprecated" in str(warning_list[0].message)
+            assert "FlextLdapConnectionApplicationService is deprecated" in str(
+                warning_list[0].message
+            )
 
 
 class TestServiceAttributeErrorHandling:
     """Test suite for proper error handling of invalid service names.
-    
+
     Validates that requesting non-existent services raises appropriate
     AttributeError with helpful error messages.
     """
@@ -178,7 +190,7 @@ class TestServiceAttributeErrorHandling:
             "NonExistentService",
             "FlextLdapInvalidService",
             "SomeRandomServiceName",
-            "FlextLdapUnknownService"
+            "FlextLdapUnknownService",
         ]
 
         for invalid_name in invalid_names:
@@ -186,7 +198,10 @@ class TestServiceAttributeErrorHandling:
                 getattr(services_module, invalid_name)
 
             error_message = str(exc_info.value)
-            assert f"module 'flext_ldap.services' has no attribute '{invalid_name}'" in error_message
+            assert (
+                f"module 'flext_ldap.services' has no attribute '{invalid_name}'"
+                in error_message
+            )
 
     def test_empty_string_service_name(self) -> None:
         """Test that empty string service name raises AttributeError."""
@@ -207,7 +222,7 @@ class TestServiceAttributeErrorHandling:
 
 class TestDeprecationWarningDetails:
     """Test suite for detailed deprecation warning validation.
-    
+
     Validates the content, formatting, and stacklevel of deprecation
     warnings to ensure proper user guidance toward modern patterns.
     """
@@ -242,7 +257,9 @@ class TestDeprecationWarningDetails:
             assert "🏗️ This wrapper layer adds no value" in warning_message
 
             # Should provide clear migration path
-            assert "from flext_ldap.application import FlextLdapService" in warning_message
+            assert (
+                "from flext_ldap.application import FlextLdapService" in warning_message
+            )
 
     def test_multiple_legacy_access_produces_multiple_warnings(self) -> None:
         """Test that multiple legacy service accesses produce multiple warnings."""
@@ -266,7 +283,7 @@ class TestDeprecationWarningDetails:
 
 class TestServiceModuleBehavior:
     """Test suite for overall service module behavior and integration.
-    
+
     Validates the module's behavior as a whole, including proper imports,
     attribute access patterns, and integration with the application layer.
     """
@@ -296,7 +313,7 @@ class TestServiceModuleBehavior:
             "FlextLdapGroupService",
             "FlextLdapOperationService",
             "FlextLdapConnectionApplicationService",
-            "FlextLdapConnectionService"
+            "FlextLdapConnectionService",
         ]
 
         # Suppress warnings for this test

@@ -426,9 +426,9 @@ class TestFlextLdapSimpleClientAuth:
     def auth_config(self) -> FlextLdapAuthConfig:
         """Create auth config for testing."""
         from pydantic import SecretStr
+
         return FlextLdapAuthConfig(
-            bind_dn="cn=admin,dc=example,dc=com",
-            bind_password=SecretStr("admin123")
+            bind_dn="cn=admin,dc=example,dc=com", bind_password=SecretStr("admin123")
         )
 
     @pytest.mark.asyncio

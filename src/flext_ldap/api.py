@@ -758,18 +758,329 @@ class FlextLdapApi:
         except (ConnectionError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Add entry failed: {e}")
 
+    async def merge_entry(
+        self,
+        session_id: str,
+        dn: str,
+        attributes: dict[str, list[str]],
+        force_add: bool = False,
+    ) -> FlextResult[bool]:
+        """Intelligently merge entry data with existing LDAP entry.
+        
+        This method:
+        1. Checks if entry exists
+        2. If not exists: adds the entry
+        3. If exists: compares attributes and applies only necessary changes
+        4. Avoids modifying RDN attributes to prevent RDN errors
+        5. Handles single-valued vs multi-valued attributes correctly
+        
+        Args:
+            session_id: Active session identifier
+            dn: Distinguished name for the entry
+            attributes: Dictionary of attribute name to values list
+            force_add: If True, always try to add (don't check existence)
+            
+        Returns:
+            FlextResult containing success status
+        """
+        try:
+            if session_id not in self._connections:
+                return FlextResult.fail(f"Session {session_id} not found")
+
+            # Normalize DN to avoid space issues
+            normalized_dn = self._normalize_dn(dn)
+            
+            if not force_add:
+                # Check if entry exists first
+                search_result = await self.search(
+                    session_id=session_id,
+                    base_dn=normalized_dn,
+                    filter_expr="(objectClass=*)",
+                    scope="base",
+                    attributes=["*"]
+                )
+                
+                if search_result.is_failure or not search_result.data:
+                    # Entry doesn't exist, add it
+                    logger.debug("Entry doesn't exist, adding: %s", normalized_dn)
+                    return await self.add_entry(session_id, normalized_dn, attributes)
+                
+                # Entry exists, do intelligent merge
+                existing_entry = search_result.data[0]
+                existing_attrs = existing_entry.attributes if hasattr(existing_entry, 'attributes') else {}
+                
+                # Calculate what modifications are needed
+                modifications = self._calculate_attribute_modifications(
+                    normalized_dn, existing_attrs, attributes
+                )
+                
+                if not modifications:
+                    logger.debug("No changes needed for entry: %s", normalized_dn)
+                    return FlextResult.ok(True)
+                
+                # Apply modifications
+                return await self.modify_entry(session_id, normalized_dn, modifications)
+            else:
+                # Force add mode
+                return await self.add_entry(session_id, normalized_dn, attributes)
+                
+        except (ConnectionError, ValueError, TypeError) as e:
+            return FlextResult.fail(f"Merge entry failed: {e}")
+
+    def _normalize_dn(self, dn: str) -> str:
+        """Normalize DN by removing extra spaces around commas and equals.
+        
+        Args:
+            dn: Distinguished name to normalize
+            
+        Returns:
+            Normalized DN with consistent spacing
+        """
+        if not dn:
+            return dn
+            
+        # Split by comma, strip each component, then rejoin
+        components = []
+        for component in dn.split(','):
+            component = component.strip()
+            # Normalize spaces around equals sign within each component
+            if '=' in component:
+                key, value = component.split('=', 1)
+                component = f"{key.strip()}={value.strip()}"
+            components.append(component)
+        
+        normalized = ','.join(components)
+        logger.debug("Normalized DN: '%s' -> '%s'", dn, normalized)
+        return normalized
+
+    def _calculate_attribute_modifications(
+        self, dn: str, existing_attrs: dict, new_attrs: dict[str, list[str]]
+    ) -> dict[str, list[str]]:
+        """Calculate what attribute modifications are needed.
+        
+        Args:
+            dn: Distinguished name (for RDN extraction)
+            existing_attrs: Current attributes in LDAP
+            new_attrs: New attributes to apply
+            
+        Returns:
+            Dictionary of attributes that need modification
+        """
+        modifications = {}
+        
+        # Extract RDN attribute to avoid modifying it
+        rdn_attr = None
+        if '=' in dn:
+            rdn_component = dn.split(',')[0].strip()
+            if '=' in rdn_component:
+                rdn_attr = rdn_component.split('=')[0].strip().lower()
+        
+        for attr_name, new_values in new_attrs.items():
+            attr_lower = attr_name.lower()
+            
+            # Skip RDN attribute to avoid RDN modification errors
+            if attr_lower == rdn_attr:
+                logger.debug("Skipping RDN attribute %s for entry %s", attr_name, dn)
+                continue
+            
+            # Skip objectClass modifications to avoid schema violations
+            if attr_lower == 'objectclass':
+                logger.debug("Skipping objectClass modification for entry %s", dn)
+                continue
+                
+            # Get existing values (normalize to list of strings)
+            existing_values = []
+            if attr_name in existing_attrs:
+                existing_raw = existing_attrs[attr_name]
+                if isinstance(existing_raw, list):
+                    existing_values = [str(v) for v in existing_raw]
+                else:
+                    existing_values = [str(existing_raw)]
+            
+            # Compare values (case-insensitive for most attributes)
+            new_values_normalized = [str(v).strip() for v in new_values]
+            existing_values_normalized = [str(v).strip() for v in existing_values]
+            
+            # Check if values are different
+            if set(new_values_normalized) != set(existing_values_normalized):
+                # Only add if the new values are not empty
+                if new_values_normalized and any(v for v in new_values_normalized):
+                    modifications[attr_name] = new_values_normalized
+                    logger.debug("Attribute %s needs update for entry %s", attr_name, dn)
+        
+        return modifications
+
+    async def batch_merge_entries(
+        self,
+        session_id: str,
+        entries: list[tuple[str, dict[str, list[str]]]],
+        base_dn: str | None = None,
+    ) -> FlextResult[list[dict[str, object]]]:
+        """Batch merge multiple entries with single subtree search optimization.
+        
+        This method:
+        1. Performs single subtree search to get all existing entries
+        2. Compares each entry against existing data
+        3. Applies only necessary changes via merge_entry
+        4. Returns detailed results for each entry
+        
+        Args:
+            session_id: Active session identifier
+            entries: List of (dn, attributes) tuples to merge
+            base_dn: Common base DN for subtree search optimization
+            
+        Returns:
+            FlextResult containing list of operation results
+        """
+        try:
+            if session_id not in self._connections:
+                return FlextResult.fail(f"Session {session_id} not found")
+            
+            if not entries:
+                return FlextResult.ok([])
+            
+            # Extract DNs and normalize them
+            target_dns = {}  # normalized_dn -> original_dn
+            for dn, _ in entries:
+                normalized_dn = self._normalize_dn(dn)
+                target_dns[normalized_dn] = dn
+            
+            # Find common base DN if not provided
+            if not base_dn:
+                base_dn = self._find_common_base_dn(list(target_dns.keys()))
+            
+            logger.info(
+                "Batch merging %d entries with base DN '%s'", 
+                len(entries), 
+                base_dn
+            )
+            
+            # Single subtree search to get all existing entries
+            existing_map = {}
+            try:
+                search_result = await self.search(
+                    session_id=session_id,
+                    base_dn=base_dn,
+                    filter_expr="(objectClass=*)",
+                    scope="sub",
+                    attributes=["*"]
+                )
+                
+                if search_result.is_success and search_result.data:
+                    for entry in search_result.data:
+                        entry_dn = entry.dn if hasattr(entry, 'dn') else str(entry.get('dn', ''))
+                        normalized_entry_dn = self._normalize_dn(entry_dn)
+                        if normalized_entry_dn in target_dns:
+                            existing_map[normalized_entry_dn] = entry.attributes if hasattr(entry, 'attributes') else {}
+                    
+                    logger.info(
+                        "Found %d existing entries out of %d target entries",
+                        len(existing_map),
+                        len(target_dns)
+                    )
+            except Exception as e:
+                logger.warning("Batch search failed, will fallback to individual operations: %s", e)
+            
+            # Process each entry with pre-fetched data
+            results = []
+            for dn, attributes in entries:
+                normalized_dn = self._normalize_dn(dn)
+                existing_attrs = existing_map.get(normalized_dn)
+                
+                try:
+                    if existing_attrs is not None:
+                        # Entry exists - calculate modifications and apply if needed
+                        modifications = self._calculate_attribute_modifications(
+                            normalized_dn, existing_attrs, attributes
+                        )
+                        
+                        if modifications:
+                            merge_result = await self.modify_entry(session_id, normalized_dn, modifications)
+                        else:
+                            merge_result = FlextResult.ok(True)  # No changes needed
+                    else:
+                        # Entry doesn't exist - add it
+                        merge_result = await self.add_entry(session_id, normalized_dn, attributes)
+                    
+                    results.append({
+                        "dn": dn,
+                        "normalized_dn": normalized_dn,
+                        "success": merge_result.is_success,
+                        "error": merge_result.error if merge_result.is_failure else None,
+                        "action": "modify" if existing_attrs is not None else "add"
+                    })
+                    
+                except Exception as e:
+                    logger.exception("Unexpected error processing entry %s", dn)
+                    results.append({
+                        "dn": dn,
+                        "normalized_dn": normalized_dn,
+                        "success": False,
+                        "error": f"Unexpected error: {e}",
+                        "action": "error"
+                    })
+            
+            return FlextResult.ok(results)
+            
+        except (ConnectionError, ValueError, TypeError) as e:
+            return FlextResult.fail(f"Batch merge failed: {e}")
+
+    def _find_common_base_dn(self, dns: list[str]) -> str:
+        """Find the most specific common base DN for a list of DNs."""
+        if not dns:
+            raise ValueError("Cannot compute common base DN from empty list")
+            
+        # Split all DNs into components
+        dn_components = []
+        for dn in dns:
+            if not dn or not isinstance(dn, str):
+                raise ValueError(f"Invalid DN format: {dn}")
+            # Split by comma and reverse to go from most general to most specific
+            components = [comp.strip() for comp in dn.split(',')]
+            components.reverse()  # Now from dc=* to most specific
+            dn_components.append(components)
+        
+        if not dn_components:
+            raise ValueError("No valid DN components found")
+            
+        # Find common suffix starting from the most general components
+        common_components = []
+        min_length = min(len(components) for components in dn_components)
+        
+        for i in range(min_length):
+            component = dn_components[0][i]
+            if all(components[i] == component for components in dn_components):
+                common_components.append(component)
+            else:
+                break
+        
+        if common_components:
+            # Reverse back to proper DN order and join
+            common_components.reverse()
+            base_dn = ','.join(common_components)
+            logger.debug("Computed common base DN: %s", base_dn)
+            return base_dn
+        else:
+            # Use the longest individual DN as fallback
+            longest_dn = max(dns, key=len)
+            logger.warning("No common base DN found, using longest DN as base: %s", longest_dn)
+            return longest_dn
+
     async def modify_entry(
         self,
         session_id: str,
         dn: str,
         attributes: dict[str, list[str]],
+        *,
+        operation_type: str = "MODIFY_REPLACE",
     ) -> FlextResult[bool]:
-        """Generic modify entry method for LDAP operations.
+        """Generic modify entry method for LDAP operations with configurable operation type.
 
         Args:
             session_id: Active session identifier
             dn: Distinguished name for the entry to modify
             attributes: Dictionary of attribute name to values list for modification
+            operation_type: Type of modification ("MODIFY_REPLACE", "MODIFY_ADD", "MODIFY_DELETE")
 
         Returns:
             FlextResult containing success status
@@ -779,18 +1090,86 @@ class FlextLdapApi:
             if session_id not in self._connections:
                 return FlextResult.fail(f"Session {session_id} not found")
 
-            # Use the client modify method with correct signature - cast attributes
+            # Use the enhanced client modify method with operation type
             # Note: connection_id available for future connection management
             attributes_cast: dict[str, object] = dict(attributes)
-            result = await self._client.modify(dn, attributes_cast)
+            result = await self._client.modify_with_type(dn, attributes_cast, operation_type)
 
             if result.is_success:
-                logger.debug("Modified entry: %s", dn)
+                logger.debug("Modified entry with operation %s: %s", operation_type, dn)
                 return FlextResult.ok(data=True)
             return FlextResult.fail(f"Failed to modify entry: {result.error}")
 
         except (ConnectionError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Modify entry failed: {e}")
+    
+    async def add_schema_attributes(
+        self,
+        session_id: str,
+        schema_dn: str = "cn=schema",
+        attribute_types: list[str] | None = None,
+        object_classes: list[str] | None = None,
+    ) -> FlextResult[bool]:
+        """Add schema attributes and object classes using MODIFY_ADD operation.
+        
+        This method is specifically designed for schema installation where MODIFY_ADD
+        is required instead of MODIFY_REPLACE.
+
+        Args:
+            session_id: Active session identifier  
+            schema_dn: Schema entry DN (defaults to "cn=schema")
+            attribute_types: List of attributeTypes to add
+            object_classes: List of objectClasses to add
+
+        Returns:
+            FlextResult containing success status
+        """
+        try:
+            if session_id not in self._connections:
+                return FlextResult.fail(f"Session {session_id} not found")
+                
+            if not attribute_types and not object_classes:
+                return FlextResult.fail("No schema elements provided to add")
+
+            # Prepare modifications for schema installation
+            modifications: dict[str, list[str]] = {}
+            
+            if attribute_types:
+                modifications["attributeTypes"] = attribute_types
+                logger.debug("Prepared %d attributeTypes for addition", len(attribute_types))
+                
+            if object_classes:
+                modifications["objectClasses"] = object_classes
+                logger.debug("Prepared %d objectClasses for addition", len(object_classes))
+
+            # Use MODIFY_ADD for schema installation
+            result = await self.modify_entry(
+                session_id=session_id,
+                dn=schema_dn,
+                attributes=modifications,
+                operation_type="MODIFY_ADD"
+            )
+            
+            if result.is_success:
+                logger.info(
+                    "Schema elements added successfully to %s",
+                    schema_dn,
+                    extra={
+                        "attribute_types_count": len(attribute_types) if attribute_types else 0,
+                        "object_classes_count": len(object_classes) if object_classes else 0,
+                    }
+                )
+                return FlextResult.ok(data=True)
+            else:
+                logger.error(
+                    "Schema addition failed: %s", 
+                    result.error,
+                    extra={"schema_dn": schema_dn}
+                )
+                return result
+            
+        except (ConnectionError, ValueError, TypeError) as e:
+            return FlextResult.fail(f"Schema addition failed: {e}")
 
 
 # Factory function for easy instantiation

@@ -35,6 +35,7 @@ class FlextLdapErrorContext:
     recoverable: bool | None = None
     alert_level: str = "error"
 
+
 logger = get_logger(__name__)
 
 

@@ -456,12 +456,17 @@ def create_development_config(**overrides: object) -> FlextLdapSettings:
 
     # Filter overrides to match create_ldap_config signature and cast types safely
     valid_config_params = {
-        "host", "port", "base_dn", "bind_dn", "bind_password",
-        "use_ssl", "timeout", "pool_size"
+        "host",
+        "port",
+        "base_dn",
+        "bind_dn",
+        "bind_password",
+        "use_ssl",
+        "timeout",
+        "pool_size",
     }
     filtered_overrides = {
-        k: v for k, v in overrides.items()
-        if k in valid_config_params
+        k: v for k, v in overrides.items() if k in valid_config_params
     }
 
     # Use flext-core factory with project-specific defaults

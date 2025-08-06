@@ -40,7 +40,7 @@ class FlextLdapSecurityEventType(Enum):
     SCHEMA_ACCESS = "schema_access"
     CERTIFICATE_VALIDATION = "certificate_validation"
     TLS_NEGOTIATION = "tls_negotiation"
-    PASSWORD_CHANGE = "password_change"  # noqa: S105 - enum constant, not a password
+    PASSWORD_CHANGE = "password_change"  # noqa: S105  # nosec B105 - enum constant
     ACCOUNT_LOCKOUT = "account_lockout"
     PRIVILEGE_ESCALATION = "privilege_escalation"
     SUSPICIOUS_ACTIVITY = "suspicious_activity"

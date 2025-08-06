@@ -404,11 +404,17 @@ class TestEdgeCasesAndErrors:
         import unittest.mock
 
         # Mock urlparse to raise ValueError
-        with unittest.mock.patch("flext_ldap.utils.urlparse", side_effect=ValueError("Invalid URL")):
+        with unittest.mock.patch(
+            "flext_ldap.utils.urlparse", side_effect=ValueError("Invalid URL")
+        ):
             if is_valid_ldap_url("any-url"):
-                raise AssertionError("Expected False when urlparse raises ValueError")
+                msg = "Expected False when urlparse raises ValueError"
+                raise AssertionError(msg)
 
         # Mock urlparse to raise TypeError
-        with unittest.mock.patch("flext_ldap.utils.urlparse", side_effect=TypeError("Type error")):
+        with unittest.mock.patch(
+            "flext_ldap.utils.urlparse", side_effect=TypeError("Type error")
+        ):
             if is_valid_ldap_url("any-url"):
-                raise AssertionError("Expected False when urlparse raises TypeError")
+                msg = "Expected False when urlparse raises TypeError"
+                raise AssertionError(msg)

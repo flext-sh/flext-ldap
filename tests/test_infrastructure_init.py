@@ -35,7 +35,7 @@ import pytest
 
 class TestInfrastructureModuleStructure:
     """Test suite for infrastructure module basic structure and imports.
-    
+
     Validates that the infrastructure module maintains proper Clean Architecture
     boundaries and serves as the appropriate entry point for external integrations.
     """
@@ -77,7 +77,7 @@ class TestInfrastructureModuleStructure:
 
 class TestInfrastructureDocumentation:
     """Test suite for infrastructure module documentation validation.
-    
+
     Comprehensive testing of the infrastructure module documentation to ensure
     proper description of the Clean Architecture infrastructure layer role
     and integration patterns.
@@ -91,7 +91,9 @@ class TestInfrastructureDocumentation:
         assert docstring is not None
 
         # Should describe infrastructure layer role
-        assert "Infrastructure layer" in docstring or "infrastructure" in docstring.lower()
+        assert (
+            "Infrastructure layer" in docstring or "infrastructure" in docstring.lower()
+        )
 
     def test_clean_architecture_context(self) -> None:
         """Test that module is properly positioned in Clean Architecture."""
@@ -106,7 +108,7 @@ class TestInfrastructureDocumentation:
 
 class TestCopyrightAndLicenseInformation:
     """Test suite for copyright and license information validation.
-    
+
     Validates that the infrastructure module maintains proper copyright
     and license information consistent with FLEXT project standards.
     """
@@ -150,7 +152,7 @@ class TestCopyrightAndLicenseInformation:
 
 class TestModuleAttributes:
     """Test suite for module attributes and metadata validation.
-    
+
     Validates that the infrastructure module maintains required attributes
     while serving as a proper Clean Architecture infrastructure layer.
     """
@@ -173,7 +175,9 @@ class TestModuleAttributes:
             if hasattr(infrastructure_module, attr):
                 # If attribute exists, it should have reasonable value
                 value = getattr(infrastructure_module, attr)
-                assert value is not None or attr in ["__package__"]  # __package__ can be None
+                assert (
+                    value is not None or attr == "__package__"
+                )  # __package__ can be None
 
     def test_module_package_structure(self) -> None:
         """Test that module is properly integrated in package structure."""
@@ -192,7 +196,7 @@ class TestModuleAttributes:
 
 class TestInfrastructureLayerIntegration:
     """Test suite for infrastructure layer integration validation.
-    
+
     Validates that the infrastructure module serves as proper entry point
     for Clean Architecture infrastructure layer integrations and external
     system dependencies.
@@ -239,7 +243,7 @@ class TestInfrastructureLayerIntegration:
 
 class TestEdgeCasesAndErrorHandling:
     """Test suite for edge cases and error handling scenarios.
-    
+
     Validates robust behavior of the infrastructure module under
     various edge conditions and error scenarios.
     """
@@ -254,7 +258,11 @@ class TestEdgeCasesAndErrorHandling:
         # All should reference the same module
         assert infrastructure1 is infrastructure2
         assert infrastructure2 is infrastructure3
-        assert infrastructure1.__name__ == infrastructure2.__name__ == infrastructure3.__name__
+        assert (
+            infrastructure1.__name__
+            == infrastructure2.__name__
+            == infrastructure3.__name__
+        )
 
     def test_module_attribute_access_safety(self) -> None:
         """Test that module attribute access is safe and predictable."""
@@ -276,8 +284,10 @@ class TestEdgeCasesAndErrorHandling:
         module_repr = repr(infrastructure_module)
 
         # Should contain module name
-        assert ("flext_ldap.infrastructure" in module_str or
-                "flext_ldap.infrastructure" in module_repr)
+        assert (
+            "flext_ldap.infrastructure" in module_str
+            or "flext_ldap.infrastructure" in module_repr
+        )
 
         # Should be valid string representations
         assert isinstance(module_str, str)
@@ -294,8 +304,10 @@ class TestEdgeCasesAndErrorHandling:
 
         # Re-import should yield same object
         import flext_ldap.infrastructure as infrastructure_reimport
+
         assert id(infrastructure_reimport) == module_id
 
         # Different import style should yield same object
         from flext_ldap import infrastructure as infrastructure_from_import
+
         assert id(infrastructure_from_import) == module_id

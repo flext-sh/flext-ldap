@@ -426,9 +426,12 @@ class FlextLdapService:
             return FlextResult.fail(error_msg)
 
     def _get_search_base_dn(self) -> str:
-        """Get base DN for LDAP searches - configurable default."""
-        # Default RFC-compliant base DN - can be overridden by configuration
-        return "dc=example,dc=com"
+        """Get base DN for LDAP searches - MUST be configured, no dangerous defaults."""
+        # CRITICAL SECURITY: No hardcoded fallback base DN in production
+        # This method should get configuration from proper sources
+        raise NotImplementedError(
+            "Base DN must be explicitly configured - no dangerous fallback defaults allowed"
+        )
 
     def _extract_attr_value(
         self,

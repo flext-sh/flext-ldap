@@ -41,18 +41,14 @@ from flext_ldap.infrastructure.connection_manager import FlextLDAPConnectionMana
 
 class TestFlextLDAPConnectionManagerInitialization:
     """Test suite for connection manager initialization and configuration.
-    
+
     Validates that the connection manager properly initializes with
     various configuration parameters and maintains proper state.
     """
 
     def test_connection_manager_basic_initialization(self) -> None:
         """Test basic connection manager initialization."""
-        manager = FlextLDAPConnectionManager(
-            host="localhost",
-            port=389,
-            use_ssl=False
-        )
+        manager = FlextLDAPConnectionManager(host="localhost", port=389, use_ssl=False)
 
         assert manager.host == "localhost"
         assert manager.port == 389
@@ -61,9 +57,7 @@ class TestFlextLDAPConnectionManagerInitialization:
     def test_connection_manager_ssl_initialization(self) -> None:
         """Test connection manager initialization with SSL."""
         manager = FlextLDAPConnectionManager(
-            host="ldap.example.com",
-            port=636,
-            use_ssl=True
+            host="ldap.example.com", port=636, use_ssl=True
         )
 
         assert manager.host == "ldap.example.com"
@@ -109,14 +103,16 @@ class TestFlextLDAPConnectionManagerInitialization:
 
 class TestConnectionCreation:
     """Test suite for LDAP connection creation functionality.
-    
+
     Validates connection creation with proper configuration, error handling,
     and FlextResult pattern usage with comprehensive mocking for reliability.
     """
 
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapSimpleClient")
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapConnectionConfig")
-    async def test_successful_connection_creation(self, mock_config_class: Mock, mock_client_class: Mock) -> None:
+    async def test_successful_connection_creation(
+        self, mock_config_class: Mock, mock_client_class: Mock
+    ) -> None:
         """Test successful LDAP connection creation."""
         # Setup mocks
         mock_config = Mock()
@@ -138,9 +134,7 @@ class TestConnectionCreation:
 
         # Validate configuration was created correctly
         mock_config_class.assert_called_once_with(
-            host="localhost",
-            port=389,
-            use_ssl=False
+            host="localhost", port=389, use_ssl=False
         )
 
         # Validate client was created with config
@@ -151,7 +145,9 @@ class TestConnectionCreation:
 
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapSimpleClient")
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapConnectionConfig")
-    async def test_connection_creation_with_ssl(self, mock_config_class: Mock, mock_client_class: Mock) -> None:
+    async def test_connection_creation_with_ssl(
+        self, mock_config_class: Mock, mock_client_class: Mock
+    ) -> None:
         """Test LDAP connection creation with SSL configuration."""
         # Setup mocks
         mock_config = Mock()
@@ -162,7 +158,9 @@ class TestConnectionCreation:
         mock_client.connect.return_value = FlextResult.ok("connection_id")
 
         # Create SSL manager and test connection
-        manager = FlextLDAPConnectionManager(host="ldaps.example.com", port=636, use_ssl=True)
+        manager = FlextLDAPConnectionManager(
+            host="ldaps.example.com", port=636, use_ssl=True
+        )
         result = await manager.create_connection()
 
         # Validate result
@@ -171,14 +169,14 @@ class TestConnectionCreation:
 
         # Validate SSL configuration
         mock_config_class.assert_called_once_with(
-            host="ldaps.example.com",
-            port=636,
-            use_ssl=True
+            host="ldaps.example.com", port=636, use_ssl=True
         )
 
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapSimpleClient")
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapConnectionConfig")
-    async def test_connection_creation_failure_on_connect(self, mock_config_class: Mock, mock_client_class: Mock) -> None:
+    async def test_connection_creation_failure_on_connect(
+        self, mock_config_class: Mock, mock_client_class: Mock
+    ) -> None:
         """Test connection creation failure during connection test."""
         # Setup mocks
         mock_config = Mock()
@@ -203,7 +201,9 @@ class TestConnectionCreation:
 
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapSimpleClient")
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapConnectionConfig")
-    async def test_connection_creation_exception_handling(self, mock_config_class: Mock, mock_client_class: Mock) -> None:
+    async def test_connection_creation_exception_handling(
+        self, mock_config_class: Mock, mock_client_class: Mock
+    ) -> None:
         """Test connection creation exception handling."""
         # Setup mocks to raise exception
         mock_config_class.side_effect = ValueError("Invalid configuration")
@@ -218,7 +218,9 @@ class TestConnectionCreation:
 
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapSimpleClient")
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapConnectionConfig")
-    async def test_connection_creation_client_instantiation_error(self, mock_config_class: Mock, mock_client_class: Mock) -> None:
+    async def test_connection_creation_client_instantiation_error(
+        self, mock_config_class: Mock, mock_client_class: Mock
+    ) -> None:
         """Test connection creation with client instantiation error."""
         # Setup mocks
         mock_config = Mock()
@@ -238,7 +240,7 @@ class TestConnectionCreation:
 
 class TestConnectionClosure:
     """Test suite for LDAP connection closure functionality.
-    
+
     Validates proper connection cleanup, resource management, and
     error handling during connection termination operations.
     """
@@ -289,7 +291,9 @@ class TestConnectionClosure:
 
         # Validate exception handling
         assert not result.is_success
-        assert "Failed to close LDAP connection: Invalid connection type" in result.error
+        assert (
+            "Failed to close LDAP connection: Invalid connection type" in result.error
+        )
 
     async def test_connection_closure_with_os_error(self) -> None:
         """Test connection closure with OS-level error."""
@@ -303,12 +307,14 @@ class TestConnectionClosure:
 
         # Validate OS error handling
         assert not result.is_success
-        assert "Failed to close LDAP connection: Network connection lost" in result.error
+        assert (
+            "Failed to close LDAP connection: Network connection lost" in result.error
+        )
 
 
 class TestConnectionValidation:
     """Test suite for LDAP connection validation functionality.
-    
+
     Validates connection health checking, status verification, and
     proper error handling for connection validation operations.
     """
@@ -351,7 +357,9 @@ class TestConnectionValidation:
         """Test connection validation exception handling."""
         # Create mock connection that raises exception
         mock_connection = Mock()
-        mock_connection.is_connected.side_effect = ValueError("Connection state unknown")
+        mock_connection.is_connected.side_effect = ValueError(
+            "Connection state unknown"
+        )
 
         # Create manager and test validation
         manager = FlextLDAPConnectionManager(host="localhost", port=389)
@@ -359,13 +367,18 @@ class TestConnectionValidation:
 
         # Validate exception handling
         assert not result.is_success
-        assert "Failed to validate LDAP connection: Connection state unknown" in result.error
+        assert (
+            "Failed to validate LDAP connection: Connection state unknown"
+            in result.error
+        )
 
     async def test_connection_validation_with_type_error(self) -> None:
         """Test connection validation with type error."""
         # Create mock connection that raises TypeError
         mock_connection = Mock()
-        mock_connection.is_connected.side_effect = TypeError("Invalid connection object")
+        mock_connection.is_connected.side_effect = TypeError(
+            "Invalid connection object"
+        )
 
         # Create manager and test validation
         manager = FlextLDAPConnectionManager(host="localhost", port=389)
@@ -373,7 +386,10 @@ class TestConnectionValidation:
 
         # Validate type error handling
         assert not result.is_success
-        assert "Failed to validate LDAP connection: Invalid connection object" in result.error
+        assert (
+            "Failed to validate LDAP connection: Invalid connection object"
+            in result.error
+        )
 
     async def test_connection_validation_with_os_error(self) -> None:
         """Test connection validation with OS error."""
@@ -387,19 +403,24 @@ class TestConnectionValidation:
 
         # Validate OS error handling
         assert not result.is_success
-        assert "Failed to validate LDAP connection: Socket operation failed" in result.error
+        assert (
+            "Failed to validate LDAP connection: Socket operation failed"
+            in result.error
+        )
 
 
 class TestFlextResultPatternCompliance:
     """Test suite for FlextResult pattern compliance validation.
-    
+
     Validates that all connection manager operations properly follow
     the FlextResult pattern for consistent error handling and type safety.
     """
 
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapSimpleClient")
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapConnectionConfig")
-    async def test_create_connection_returns_flext_result(self, mock_config_class: Mock, mock_client_class: Mock) -> None:
+    async def test_create_connection_returns_flext_result(
+        self, mock_config_class: Mock, mock_client_class: Mock
+    ) -> None:
         """Test that create_connection returns proper FlextResult."""
         # Setup successful mocks
         mock_config = Mock()
@@ -458,7 +479,7 @@ class TestFlextResultPatternCompliance:
 
 class TestEdgeCasesAndErrorScenarios:
     """Test suite for edge cases and comprehensive error scenario coverage.
-    
+
     Validates robust behavior under various edge conditions, ensuring
     proper error handling and graceful degradation in failure scenarios.
     """
@@ -488,13 +509,17 @@ class TestEdgeCasesAndErrorScenarios:
         assert manager2.host == ""
 
         # Long hostname
-        long_hostname = "very-long-hostname-that-might-cause-issues.subdomain.example.com"
+        long_hostname = (
+            "very-long-hostname-that-might-cause-issues.subdomain.example.com"
+        )
         manager3 = FlextLDAPConnectionManager(host=long_hostname, port=389)
         assert manager3.host == long_hostname
 
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapSimpleClient")
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapConnectionConfig")
-    async def test_multiple_exception_types_in_connection_creation(self, mock_config_class: Mock, mock_client_class: Mock) -> None:
+    async def test_multiple_exception_types_in_connection_creation(
+        self, mock_config_class: Mock, mock_client_class: Mock
+    ) -> None:
         """Test handling of different exception types during connection creation."""
         manager = FlextLDAPConnectionManager(host="localhost", port=389)
 
