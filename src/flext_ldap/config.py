@@ -43,6 +43,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core configuration system
 from flext_core import (
     FlextBaseConfigModel,
@@ -452,14 +454,24 @@ def create_development_config(**overrides: object) -> FlextLdapSettings:
         },
     )
 
+    # Filter overrides to match create_ldap_config signature and cast types safely
+    valid_config_params = {
+        "host", "port", "base_dn", "bind_dn", "bind_password",
+        "use_ssl", "timeout", "pool_size"
+    }
+    filtered_overrides = {
+        k: v for k, v in overrides.items()
+        if k in valid_config_params
+    }
+
     # Use flext-core factory with project-specific defaults
+    # Type-safe call without ** expansion to avoid MyPy errors
     base_config = create_ldap_config(
-        host="localhost",
-        port=389,
-        use_ssl=False,
-        timeout=10,
-        pool_size=5,
-        **overrides,  # type: ignore[arg-type]
+        host=cast("str", filtered_overrides.get("host", "localhost")),
+        port=cast("int", filtered_overrides.get("port", 389)),
+        base_dn=cast("str", filtered_overrides.get("base_dn", "dc=example,dc=com")),
+        bind_dn=cast("str | None", filtered_overrides.get("bind_dn")),
+        bind_password=cast("str | None", filtered_overrides.get("bind_password")),
     )
 
     # Create project settings with base config

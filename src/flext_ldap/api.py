@@ -44,6 +44,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import hashlib
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
@@ -56,8 +57,13 @@ from flext_core import (
     get_flext_container,
     get_logger,
 )
+from pydantic import SecretStr
 
-from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
+from flext_ldap.config import (
+    FlextLdapAuthConfig,
+    FlextLdapConnectionConfig,
+    FlextLdapSettings,
+)
 from flext_ldap.entities import (
     FlextLdapEntry,
     FlextLdapGroup,
@@ -107,9 +113,9 @@ class FlextLdapApi:
 
             >>> result = await api.create_user(session, user_request)
             >>> if result.is_success:
-            ...     user = result.data  # Type: FlextLdapUser
+            ...     user = result.data
             >>> else:
-            ...     error = result.error  # Type: str
+            ...     error = result.error
 
     Thread Safety:
         This class is thread-safe for concurrent operations. Each session
@@ -239,10 +245,6 @@ class FlextLdapApi:
         # Railway pattern - chain operations with proper authentication
         if bind_dn and password:
             # Use connect_with_auth for authenticated connections
-            from pydantic import SecretStr  # noqa: PLC0415
-
-            from flext_ldap.config import FlextLdapAuthConfig  # noqa: PLC0415
-
             auth_config = FlextLdapAuthConfig(
                 bind_dn=bind_dn,
                 bind_password=SecretStr(password),
@@ -623,8 +625,6 @@ class FlextLdapApi:
             # Use posixGroup which doesn't require initial members
             # Generate unique gidNumber if not provided
             if gid_number is None:
-                import hashlib  # noqa: PLC0415
-
                 # Generate gidNumber from group name hash to ensure uniqueness
                 gid_number = (
                     1000 + int(hashlib.sha256(cn.encode()).hexdigest()[:4], 16) % 60000

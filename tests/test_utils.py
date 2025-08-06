@@ -394,3 +394,21 @@ class TestMiscUtilities:
         result = format_ldap_timestamp(mock_ts)
         if result != "20231215143022Z":
             raise AssertionError(f"Expected {'20231215143022Z'}, got {result}")
+
+
+class TestEdgeCasesAndErrors:
+    """Test edge cases and error conditions for complete coverage."""
+
+    def test_is_valid_url_exception_handling(self) -> None:
+        """Test URL validation with malformed input that raises exceptions."""
+        import unittest.mock
+
+        # Mock urlparse to raise ValueError
+        with unittest.mock.patch("flext_ldap.utils.urlparse", side_effect=ValueError("Invalid URL")):
+            if is_valid_ldap_url("any-url"):
+                raise AssertionError("Expected False when urlparse raises ValueError")
+
+        # Mock urlparse to raise TypeError
+        with unittest.mock.patch("flext_ldap.utils.urlparse", side_effect=TypeError("Type error")):
+            if is_valid_ldap_url("any-url"):
+                raise AssertionError("Expected False when urlparse raises TypeError")

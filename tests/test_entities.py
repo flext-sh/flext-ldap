@@ -87,6 +87,7 @@ class TestFlextLdapEntry:
         )
         result = entry.validate_domain_rules()
         assert not result.success
+        assert result.error is not None
         assert "distinguished name" in result.error.lower()
 
     def test_entry_object_class_management(self) -> None:
@@ -208,6 +209,7 @@ class TestFlextLdapUser:
         )
         result = user.validate_domain_rules()
         assert not result.success
+        assert result.error is not None
         assert "email" in result.error.lower()
 
     def test_user_attribute_management(self) -> None:
@@ -281,6 +283,7 @@ class TestFlextLdapGroup:
         )
         result = group.validate_domain_rules()
         assert not result.success
+        assert result.error is not None
         assert "common name" in result.error.lower()
 
     def test_group_member_management(self) -> None:
@@ -375,6 +378,7 @@ class TestFlextLdapConnection:
         )
         result = connection.validate_domain_rules()
         assert not result.success
+        assert result.error is not None
         assert "server" in result.error.lower()
 
 
@@ -440,6 +444,7 @@ class TestFlextLdapOperation:
         )
         result = operation.validate_domain_rules()
         assert not result.success
+        assert result.error is not None
         assert "operation type" in result.error.lower()
 
 

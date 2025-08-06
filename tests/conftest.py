@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 # OpenLDAP Container Configuration
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"
 OPENLDAP_CONTAINER_NAME = "flext-ldap-test-server"
-OPENLDAP_PORT = 3389  # Use non-standard port to avoid conflicts
+OPENLDAP_PORT = 3390  # Use non-standard port to avoid conflicts
 OPENLDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
 OPENLDAP_DOMAIN = "internal.invalid"
 OPENLDAP_BASE_DN = f"dc={',dc='.join(OPENLDAP_DOMAIN.split('.'))}"
@@ -87,11 +87,18 @@ class OpenLDAPContainerManager:
             existing.remove(force=True)
         except docker.errors.NotFound:
             pass  # Container doesn't exist, nothing to stop
+        except docker.errors.APIError as e:
+            # Handle conflicts (409) - another process is already removing
+            if e.status_code == 409:
+                pass  # Container removal already in progress - that's fine
+            else:
+                # Re-raise other API errors
+                raise
         except (RuntimeError, ValueError, TypeError):
             # Try to force remove by name if getting by ID fails
             from contextlib import suppress
 
-            with suppress(RuntimeError, ValueError, TypeError):
+            with suppress(RuntimeError, ValueError, TypeError, docker.errors.APIError):
                 self.client.api.remove_container(OPENLDAP_CONTAINER_NAME, force=True)
 
         self.container = None
@@ -180,7 +187,7 @@ def docker_openldap_container() -> Container:
     This fixture starts an OpenLDAP container at the beginning of the test session
     and stops it at the end. The container is shared across all tests.
     """
-    global _container_manager  # noqa: PLW0603
+    global _container_manager  # noqa: PLW0603 # Valid pattern for session-scoped fixture
 
     if _container_manager is None:
         _container_manager = OpenLDAPContainerManager()

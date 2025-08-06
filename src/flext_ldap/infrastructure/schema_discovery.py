@@ -149,7 +149,7 @@ class FlextLdapSchemaAttribute:
                 return [str(item) for item in value]
             return None
 
-        def safe_extract_bool(key: str, default: bool) -> bool:  # noqa: FBT001
+        def safe_extract_bool(key: str, *, default: bool) -> bool:
             value = attribute_params.get(key, default)
             return bool(value) if value is not None else default
 
@@ -313,7 +313,7 @@ class FlextLdapSchemaObjectClass:
                 return [str(item) for item in value]
             return None
 
-        def safe_extract_bool(key: str, default: bool) -> bool:  # noqa: FBT001
+        def safe_extract_bool(key: str, *, default: bool) -> bool:
             value = object_class_params.get(key, default)
             return bool(value) if value is not None else default
 
