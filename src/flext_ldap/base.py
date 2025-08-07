@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from flext_core import (
@@ -24,6 +25,9 @@ from flext_core import (
     FlextRepository,
     FlextResult,
 )
+
+if TYPE_CHECKING:
+    from flext_core.semantic_types import FlextTypes
 
 
 class FlextLdapRepository(FlextRepository):
@@ -37,7 +41,7 @@ class FlextLdapRepository(FlextRepository):
         """Initialize with in-memory storage and dependency injection."""
         super().__init__()
         self._container = container or FlextContainer()
-        self._storage: dict[str, object] = {}
+        self._storage: FlextTypes.Core.JsonDict = {}
 
     def find_by_id(self, entity_id: str) -> FlextResult[object]:
         """Find entity by ID from storage."""
@@ -195,7 +199,7 @@ class FlextLdapDomainService(FlextDomainService[None]):
     def update_entity(
         self,
         entity_id: UUID | str,
-        updates: dict[str, object],
+        updates: FlextTypes.Core.JsonDict,
     ) -> FlextResult[object]:
         """Update with immutable patterns and validation."""
         try:
@@ -264,7 +268,7 @@ class FlextLdapDomainService(FlextDomainService[None]):
     # FLEXT-CORE ORCHESTRATION METHODS
     def execute_batch(
         self,
-        operations: list[dict[str, object]],
+        operations: list[FlextTypes.Core.JsonDict],
     ) -> FlextResult[object]:
         """Execute batch operations with transaction support."""
         try:
@@ -283,7 +287,7 @@ class FlextLdapDomainService(FlextDomainService[None]):
 
     def _execute_single_operation(
         self,
-        operation: dict[str, object],
+        operation: FlextTypes.Core.JsonDict,
     ) -> FlextResult[object]:
         """Execute single operation following Single Responsibility Principle."""
         op_type = operation.get("type")
@@ -298,7 +302,7 @@ class FlextLdapDomainService(FlextDomainService[None]):
 
     def _execute_create_operation(
         self,
-        operation: dict[str, object],
+        operation: FlextTypes.Core.JsonDict,
     ) -> FlextResult[object]:
         """Execute create operation."""
         op_data = operation.get("data", {})
@@ -306,7 +310,7 @@ class FlextLdapDomainService(FlextDomainService[None]):
 
     def _execute_update_operation(
         self,
-        operation: dict[str, object],
+        operation: FlextTypes.Core.JsonDict,
     ) -> FlextResult[object]:
         """Execute update operation."""
         entity_id = operation.get("id")
@@ -322,7 +326,7 @@ class FlextLdapDomainService(FlextDomainService[None]):
 
     def _execute_delete_operation(
         self,
-        operation: dict[str, object],
+        operation: FlextTypes.Core.JsonDict,
     ) -> FlextResult[object]:
         """Execute delete operation."""
         entity_id = operation.get("id")
@@ -341,7 +345,7 @@ class FlextLdapDomainService(FlextDomainService[None]):
     def _apply_updates(
         self,
         entity: object,
-        updates: dict[str, object],
+        updates: FlextTypes.Core.JsonDict,
     ) -> object:
         """Apply updates using immutable patterns."""
         # Try immutable pattern methods first

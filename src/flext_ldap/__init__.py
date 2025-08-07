@@ -55,6 +55,14 @@ from flext_ldap.entities import FlextLdapEntry, FlextLdapGroup, FlextLdapUser
 # ✅ INFRASTRUCTURE - FOR ADVANCED USAGE
 from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
 
+# ✅ VALIDATION UTILITIES - PUBLIC API
+from flext_ldap.utils import (
+    flext_ldap_sanitize_attribute_name,
+    flext_ldap_validate_attribute_name,
+    flext_ldap_validate_attribute_value,
+    flext_ldap_validate_dn,
+)
+
 # ✅ VALUE OBJECTS - IMMUTABLE DATA STRUCTURES
 from flext_ldap.values import (
     FlextLdapCreateUserRequest,
@@ -133,5 +141,9 @@ __all__ = [
     "LDAPEntry",
     "LDAPFilter",
     "LDAPScope",
+    "flext_ldap_sanitize_attribute_name",
+    "flext_ldap_validate_attribute_name",
+    "flext_ldap_validate_attribute_value",
+    "flext_ldap_validate_dn",
     "get_ldap_api",
 ]

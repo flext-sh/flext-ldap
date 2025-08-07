@@ -43,7 +43,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+from typing import Any, cast
 
 # 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core configuration system
 from flext_core import (
@@ -140,7 +140,6 @@ class FlextLdapConnectionConfig(FlextLDAPConfig):
 # Type aliases following flext-core patterns
 type ProjectName = str
 type Version = str
-
 
 # Specialized configuration classes extending FlextLDAPConfig
 
@@ -371,7 +370,7 @@ class FlextLdapSettings(FlextLDAPConfig):
     auth: FlextLdapAuthConfig = Field(default_factory=FlextLdapAuthConfig)
     search: FlextLdapSearchConfig = Field(default_factory=FlextLdapSearchConfig)
 
-    def to_ldap_client_config(self) -> dict[str, object]:
+    def to_ldap_client_config(self) -> dict[str, Any]:
         """Convert configuration to LDAP client library format.
 
         Transforms the FlextLdapSettings configuration into the dictionary
@@ -379,7 +378,7 @@ class FlextLdapSettings(FlextLDAPConfig):
         connection, authentication, and search configurations.
 
         Returns:
-            dict[str, object]: Configuration dictionary with all required
+            "FlextTypes.Core.JsonDict": Configuration dictionary with all required
                               parameters for LDAP client initialization
 
         Side Effects:

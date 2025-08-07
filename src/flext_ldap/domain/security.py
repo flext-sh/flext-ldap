@@ -14,8 +14,12 @@ from __future__ import annotations
 from dataclasses import field
 from datetime import UTC, datetime
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from flext_core import FlextEntity, FlextResult
+
+if TYPE_CHECKING:
+    from flext_core.semantic_types import FlextTypes
 
 # Constants imported from centralized module
 from flext_ldap.constants import FlextLdapSecurityConstants
@@ -45,7 +49,7 @@ class FlextLdapCertificateInfo(FlextEntity):
     public_key_algorithm: str
     public_key_size: int
     fingerprint_sha256: str
-    extensions: dict[str, object] = field(default_factory=dict)
+    extensions: FlextTypes.Core.JsonDict = field(default_factory=dict)
 
     def is_expired(self) -> bool:
         """Check if certificate is expired."""

@@ -65,7 +65,6 @@ from pydantic import Field
 
 logger = get_logger(__name__)
 
-
 # Use centralized FlextEntityStatus from flext-core
 # Legacy compatibility alias
 FlextLdapEntityStatus = FlextEntityStatus

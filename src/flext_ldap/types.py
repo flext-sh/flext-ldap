@@ -29,7 +29,6 @@ from pydantic import Field, field_validator
 
 logger = get_logger(__name__)
 
-
 # CENTRALIZED ENUMS - Single source of truth
 
 
@@ -63,7 +62,6 @@ class FlextLdapScopeEnum(StrEnum):
     # Legacy mappings for backward compatibility
     ONE = "onelevel"
     SUB = "subtree"
-
 
 # CENTRALIZED VALUE OBJECTS - Following foundation patterns
 

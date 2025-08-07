@@ -13,6 +13,9 @@ from typing import TYPE_CHECKING
 
 from flext_core import FlextResult, get_logger
 
+if TYPE_CHECKING:
+    from flext_core.semantic_types import FlextTypes
+
 from flext_ldap.domain.exceptions import FlextLdapUserError
 from flext_ldap.domain.repositories import (
     FlextLdapConnectionRepository,
@@ -131,7 +134,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 
             if user_exists:
                 # Update existing user - type-safe conversion
-                changes: dict[str, object] = dict(user.attributes)
+                changes: FlextTypes.Core.JsonDict = dict(user.attributes)
                 modify_result: FlextResult[bool] = await self.ldap_client.modify(
                     dn=user.dn,
                     changes=changes,
@@ -141,7 +144,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                     return FlextResult.ok(user)
                 return FlextResult.fail(f"LDAP modify failed: {modify_result.error}")
             # Add new user - type-safe conversion
-            attributes: dict[str, object] = dict(user.attributes)
+            attributes: FlextTypes.Core.JsonDict = dict(user.attributes)
             add_result: FlextResult[bool] = await self.ldap_client.add(
                 dn=user.dn,
                 object_classes=user.object_classes,
@@ -172,7 +175,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 
             # Use LDAP client to search
             search_result: FlextResult[
-                list[dict[str, object]]
+                list[FlextTypes.Core.JsonDict]
             ] = await self.ldap_client.search(
                 base_dn="",  # Will use configured base DN
                 search_filter=search_filter,
@@ -206,7 +209,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 
             # Use LDAP client to get entry by DN
             get_result: FlextResult[
-                dict[str, object]
+                FlextTypes.Core.JsonDict
             ] = await self.ldap_client.get_entry(
                 dn=dn.strip(),
             )
@@ -290,7 +293,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             search_filter = f"(uid={uid.strip()})"
 
             search_result: FlextResult[
-                list[dict[str, object]]
+                list[FlextTypes.Core.JsonDict]
             ] = await self.ldap_client.search(
                 base_dn="",  # Will use configured base DN
                 search_filter=search_filter,
@@ -302,8 +305,8 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 entries = search_result.data or []
                 if entries:
                     # Convert first entry to FlextLdapUser - we know it's
-                    # list[dict[str, object]] from type annotation
-                    entries[0]  # This is guaranteed to be dict[str, object]
+                    # list["FlextTypes.Core.JsonDict"] from type annotation
+                    entries[0]  # This is guaranteed to be "FlextTypes.Core.JsonDict"
                     # Convert dict to FlextLdapUser - this is the expected case
                     logger.info("Converting LDAP response dict to FlextLdapUser")
                     # For now, return None - proper conversion would need implementation
@@ -343,7 +346,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 
             # Use LDAP client to perform search
             search_result: FlextResult[
-                list[dict[str, object]]
+                list[FlextTypes.Core.JsonDict]
             ] = await self.ldap_client.search(
                 base_dn=base_dn.value,
                 search_filter=filter_string.strip(),
@@ -354,7 +357,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             if search_result.is_success:
                 # MYPY FIX: Return empty list since we need FlextLdapUser
                 # objects but client returns dict
-                # This method needs proper conversion from dict[str, object]
+                # This method needs proper conversion from "FlextTypes.Core.JsonDict"
                 # to FlextLdapUser
                 logger.info(
                     "Found %d LDAP entries - conversion to "

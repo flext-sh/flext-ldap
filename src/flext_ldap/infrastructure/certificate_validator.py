@@ -24,6 +24,9 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import ExtensionOID, NameOID
 from flext_core import FlextResult, get_logger
+
+if TYPE_CHECKING:
+    from flext_core.semantic_types import FlextTypes
 from flext_core.utilities import FlextGenerators
 
 from flext_ldap.domain.security import (
@@ -485,7 +488,7 @@ class FlextLdapCertificateValidationService:
             fingerprint = cert.fingerprint(hashes.SHA256()).hex()
 
             # Extract extensions
-            extensions: dict[str, object] = {}
+            extensions: FlextTypes.Core.JsonDict = {}
             try:
                 for ext in cert.extensions:
                     extensions[str(ext.oid)] = str(ext.value)
@@ -543,7 +546,10 @@ class FlextLdapCertificateValidationService:
                     if self._match_hostname(san_name, hostname):
                         return True
             except x509.ExtensionNotFound:
-                pass
+                # EXPLICIT TRANSPARENCY: Certificate SAN extension not found - expected for some certificates
+                logger.debug("Certificate does not have Subject Alternative Name (SAN) extension")
+                logger.info("Continuing with Common Name (CN) validation - normal fallback behavior")
+                # Continue to check CN - this is normal fallback behavior for certificates without SAN
 
             # Check Common Name (CN) from subject
             try:

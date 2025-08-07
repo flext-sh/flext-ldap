@@ -14,8 +14,12 @@ import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum
+from typing import TYPE_CHECKING, Any
 
 from flext_core import FlextGenerators, FlextResult, get_logger
+
+if TYPE_CHECKING:
+    from flext_core.semantic_types import FlextTypes
 
 from flext_ldap.entities import FlextLdapConnection
 
@@ -93,7 +97,7 @@ class FlextLdapSecurityEventData:
     request_id: str | None = None
     duration_ms: float | None = None
     data_size_bytes: int | None = None
-    additional_context: dict[str, object] | None = field(default_factory=dict)
+    additional_context: FlextTypes.Core.JsonDict | None = field(default_factory=dict)
 
     def to_security_event(self) -> FlextLdapSecurityEvent:
         """Convert to FlextLdapSecurityEvent instance using Parameter Object pattern."""
@@ -148,7 +152,7 @@ class FlextLdapSecurityEvent:
         self.risk_score: float | None = None  # Not in data object, default
         self.compliance_flags: list[str] = []  # Not in data object, default
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Core.JsonDict:
         """Convert security event to dictionary."""
         return {
             "event_id": str(self.event_id),
@@ -492,7 +496,7 @@ class FlextLdapSecurityEventLogger:
     async def get_security_metrics(
         self,
         time_window_hours: int = 24,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[dict[str, Any]]:
         """Get security metrics for the specified time window."""
         try:
             cutoff_time = datetime.now(UTC) - timedelta(hours=time_window_hours)
@@ -514,7 +518,7 @@ class FlextLdapSecurityEventLogger:
             unique_users = len({e.user_dn for e in recent_events if e.user_dn})
             unique_sessions = len({e.session_id for e in recent_events if e.session_id})
 
-            metrics: dict[str, object] = {
+            metrics: FlextTypes.Core.JsonDict = {
                 "time_window_hours": time_window_hours,
                 "total_events": total_events,
                 "authentication_failures": auth_failures,

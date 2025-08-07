@@ -1,6 +1,6 @@
 # Changelog: FlextLdapSimpleClient Corrections
 
-## Version 0.9.0 - 2025-01-27
+## Version 0.9.0 - 2025-08-07
 
 ### ✅ Correções Implementadas
 

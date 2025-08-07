@@ -16,7 +16,6 @@ from typing import ClassVar
 
 # Import flext-core constants as SINGLE SOURCE OF TRUTH
 
-
 # OPERATION RESULT CONSTANTS - Eliminates FBT003 boolean parameters
 class LDAPOperationResult:
     """LDAP operation result constants to eliminate FBT003 positional boolean values."""

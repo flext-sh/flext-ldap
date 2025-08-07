@@ -7,11 +7,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from flext_core.semantic_types import FlextTypes
 from urllib.parse import parse_qs, urlparse
 
 from flext_core import get_logger
@@ -181,7 +184,7 @@ LDAP_URL_SCOPE_INDEX = 2
 LDAP_URL_FILTER_INDEX = 3
 
 
-def flext_ldap_parse_url(url: str) -> dict[str, object]:
+def flext_ldap_parse_url(url: str) -> FlextTypes.Core.JsonDict:
     """Parse LDAP URL into components."""
     parsed = urlparse(url)
 
@@ -244,6 +247,48 @@ def flext_ldap_build_dn(components: list[dict[str, str]]) -> str:
 def flext_ldap_normalize_attribute_name(name: str) -> str:
     """Normalize attribute name."""
     return name.lower().strip()
+
+
+def flext_ldap_validate_attribute_name(name: str) -> bool:
+    """Validate LDAP attribute name according to RFC 4512."""
+    if not name:
+        return False
+
+    # LDAP attribute names: letters, digits, hyphens
+    # Must start with letter
+    pattern = r"^[a-zA-Z][a-zA-Z0-9\-]*$"
+    return bool(re.match(pattern, name))
+
+
+def flext_ldap_validate_attribute_value(value: object, max_length: int = 1000) -> bool:
+    """Validate LDAP attribute value according to LDAP standards."""
+    if value is None:
+        return True
+
+    # Convert to string for validation
+    str_value = str(value)
+
+    # Basic length check (LDAP typically has limits)
+    return len(str_value) <= max_length
+
+
+def flext_ldap_sanitize_attribute_name(name: str) -> str:
+    """Sanitize field name to be LDAP-compatible."""
+    # Use flext-ldap normalization as base
+    normalized = flext_ldap_normalize_attribute_name(name)
+
+    # Remove invalid characters
+    sanitized = re.sub(r"[^a-zA-Z0-9\-]", "", normalized)
+
+    # Ensure starts with letter
+    if sanitized and not sanitized[0].isalpha():
+        sanitized = "attr" + sanitized
+
+    # Fallback if empty
+    if not sanitized:
+        sanitized = "unknownAttr"
+
+    return sanitized
 
 
 class FlextLdapTimestampProtocol(Protocol):

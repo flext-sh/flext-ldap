@@ -143,7 +143,6 @@ LDAPServiceError = FlextLdapServiceError
 # New pattern for LDAP Operation and Validation errors (using DRY foundation)
 LDAPOperationError = FlextLdapProcessingError
 
-
 __all__ = [
     "FlextLdapAuthenticationError",
     "FlextLdapConfigurationError",
