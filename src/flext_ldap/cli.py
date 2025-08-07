@@ -28,6 +28,8 @@ from flext_ldap.values import ExtendedLDAPEntry
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from flext_core.semantic_types import FlextTypes
+
     from flext_ldap.entities import FlextLdapUser
 
 logger = get_logger(__name__)
@@ -37,7 +39,6 @@ console = Console()
 
 # Constants - DRY principle to eliminate magic numbers and boolean smells
 MAX_DISPLAY_VALUES = 3
-
 
 # =============================================================================
 # REFACTORING: Decorator Pattern - Eliminate Click Option Duplication
@@ -342,7 +343,7 @@ class LDAPSearchHandler(BaseLDAPHandler):
     @classmethod
     def _convert_raw_entry_to_extended(
         cls,
-        raw_entry: dict[str, object],
+        raw_entry: FlextTypes.Core.JsonDict,
     ) -> ExtendedLDAPEntry:
         """Convert raw LDAP entry to ExtendedLDAPEntry format."""
         # Type-safe extraction with validation
@@ -366,7 +367,7 @@ class LDAPSearchHandler(BaseLDAPHandler):
     @classmethod
     def _convert_search_results(
         cls,
-        raw_entries: list[dict[str, object]],
+        raw_entries: list[FlextTypes.Core.JsonDict],
         limit: int,
     ) -> list[ExtendedLDAPEntry]:
         """Convert raw search results to ExtendedLDAPEntry list."""
@@ -486,7 +487,7 @@ class LDAPUserHandler(BaseLDAPHandler):
                 user_dn = f"cn={params.uid},{params.base_dn}"
                 object_classes = ["person", "organizationalPerson", "inetOrgPerson"]
                 # Type-safe attributes dictionary for FlextLdapSimpleClient.add
-                attributes: dict[str, object] = {
+                attributes: FlextTypes.Core.JsonDict = {
                     "uid": params.uid,
                     "cn": params.cn,
                     "sn": params.sn,

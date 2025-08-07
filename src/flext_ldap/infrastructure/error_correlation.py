@@ -17,9 +17,12 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from flext_core import FlextGenerators, FlextResult, get_logger
+
+if TYPE_CHECKING:
+    from flext_core.semantic_types import FlextTypes
 
 # Constants imported from centralized module
 from flext_ldap.constants import FlextLdapErrorCorrelationConstants
@@ -68,7 +71,7 @@ class FlextLdapErrorPatternData:
     first_occurrence: datetime | None = None
     last_occurrence: datetime | None = None
     affected_operations: list[str] | None = None
-    context_patterns: dict[str, object] | None = None
+    context_patterns: FlextTypes.Core.JsonDict | None = None
     correlation_score: float = 0.0
 
 
@@ -103,7 +106,7 @@ class FlextLdapErrorPattern:
         )
         return cls(data)
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Core.JsonDict:
         """Convert error pattern to dictionary."""
         return {
             "pattern_id": str(self.pattern_id),
@@ -133,7 +136,7 @@ class FlextLdapErrorEventData:
     client_ip: str | None = None
     server_host: str | None = None
     stack_trace: str | None = None
-    context: dict[str, object] | None = None
+    context: FlextTypes.Core.JsonDict | None = None
     severity: FlextLdapErrorSeverity = FlextLdapErrorSeverity.MEDIUM
     category: FlextLdapErrorCategory = FlextLdapErrorCategory.UNKNOWN
 
@@ -207,7 +210,7 @@ class FlextLdapErrorEvent:
 
         return message.lower().strip()
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Core.JsonDict:
         """Convert error event to dictionary."""
         return {
             "event_id": str(self.event_id),
@@ -369,7 +372,7 @@ class FlextLdapErrorCorrelationService:
     async def get_error_statistics(
         self,
         time_window_hours: int = 24,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[dict[str, Any]]:
         """Get error statistics for the specified time window."""
         try:
             cutoff_time = datetime.now(UTC) - timedelta(hours=time_window_hours)

@@ -13,6 +13,7 @@ from __future__ import annotations
 import re
 import urllib.parse
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 import ldap3
@@ -24,6 +25,9 @@ from flext_core import (
 from ldap3 import ALL, BASE, LEVEL, SUBTREE, Connection, Server
 from ldap3.core.exceptions import LDAPException
 from pydantic import SecretStr
+
+if TYPE_CHECKING:
+    from flext_core.semantic_types import FlextTypes
 
 from flext_ldap.base import FlextLdapRepository
 from flext_ldap.config import (
@@ -41,7 +45,6 @@ from flext_ldap.errors import (
 from flext_ldap.types import FlextLdapDataType
 
 logger = get_logger(__name__)
-
 
 # Constants and types now imported from centralized modules
 
@@ -541,7 +544,7 @@ class FlextLdapSimpleClient:
         search_filter: str,
         attributes: list[str] | None = None,
         scope: str = "subtree",
-    ) -> FlextResult[list[dict[str, object]]]:
+    ) -> FlextResult[list[dict[str, Any]]]:
         """Search with intelligent result conversion."""
         # Use flext-core context binding for operation tracking
         operation_logger = logger.bind(
@@ -615,9 +618,9 @@ class FlextLdapSimpleClient:
             operation_logger.trace(
                 "Converting search results with intelligent converter",
             )
-            results: list[dict[str, object]] = []
+            results: list[FlextTypes.Core.JsonDict] = []
             for entry in self._current_connection.entries:
-                converted_entry: dict[str, object] = {
+                converted_entry: FlextTypes.Core.JsonDict = {
                     "dn": str(entry.entry_dn),
                     "attributes": {},
                 }
@@ -663,13 +666,13 @@ class FlextLdapSimpleClient:
                     "correlation_id": error.correlation_id,
                 },
             )
-            return error.to_typed_result(list[dict[str, object]])
+            return error.to_typed_result(list["FlextTypes.Core.JsonDict"])
 
     async def add(
         self,
         dn: str,
         object_classes: list[str],
-        attributes: dict[str, object],
+        attributes: FlextTypes.Core.JsonDict,
     ) -> FlextResult[bool]:
         """Add entry with intelligent attribute conversion."""
         # Use flext-core context binding for operation tracking
@@ -750,25 +753,26 @@ class FlextLdapSimpleClient:
             )
             return error.to_bool_result()
 
-    async def modify(self, dn: str, changes: dict[str, object]) -> FlextResult[bool]:
+    async def modify(self, dn: str, changes: FlextTypes.Core.JsonDict) -> FlextResult[bool]:
         """Modify entry with intelligent change conversion using MODIFY_REPLACE."""
         return await self.modify_with_type(dn, changes, "MODIFY_REPLACE")
 
     async def modify_with_type(
-        self, 
-        dn: str, 
-        changes: dict[str, object], 
-        operation_type: str = "MODIFY_REPLACE"
+        self,
+        dn: str,
+        changes: FlextTypes.Core.JsonDict,
+        operation_type: str = "MODIFY_REPLACE",
     ) -> FlextResult[bool]:
         """Modify entry with intelligent change conversion and configurable operation type.
-        
+
         Args:
             dn: Distinguished name for the entry to modify
             changes: Dictionary of attribute changes to apply
             operation_type: Type of modification ("MODIFY_REPLACE", "MODIFY_ADD", "MODIFY_DELETE")
-        
+
         Returns:
             FlextResult containing success status
+
         """
         logger.debug(
             "Modifying LDAP entry with operation type",
@@ -787,13 +791,13 @@ class FlextLdapSimpleClient:
         # Map operation type strings to ldap3 constants
         operation_map = {
             "MODIFY_REPLACE": ldap3.MODIFY_REPLACE,
-            "MODIFY_ADD": ldap3.MODIFY_ADD, 
+            "MODIFY_ADD": ldap3.MODIFY_ADD,
             "MODIFY_DELETE": ldap3.MODIFY_DELETE,
         }
-        
+
         if operation_type not in operation_map:
             return FlextResult.fail(f"Invalid operation type: {operation_type}")
-        
+
         ldap_operation = operation_map[operation_type]
 
         try:
@@ -816,9 +820,9 @@ class FlextLdapSimpleClient:
             logger.trace(
                 "Executing LDAP modify operation",
                 extra={
-                    "dn": dn, 
+                    "dn": dn,
                     "operation_type": operation_type,
-                    "modifications": list(ldap_changes.keys())
+                    "modifications": list(ldap_changes.keys()),
                 },
             )
             # LDAP modify operation - ldap3 Connection.modify method
@@ -828,9 +832,9 @@ class FlextLdapSimpleClient:
                 logger.error(
                     "LDAP modify operation failed",
                     extra={
-                        "dn": dn, 
+                        "dn": dn,
                         "operation_type": operation_type,
-                        "result": str(self._current_connection.result)
+                        "result": str(self._current_connection.result),
                     },
                 )
                 return FlextResult.fail(
@@ -840,9 +844,9 @@ class FlextLdapSimpleClient:
             logger.info(
                 "LDAP entry modified successfully",
                 extra={
-                    "dn": dn, 
+                    "dn": dn,
                     "operation_type": operation_type,
-                    "changes_applied": list(changes.keys())
+                    "changes_applied": list(changes.keys()),
                 },
             )
             return FlextResult.ok(LDAPOperationResult.SUCCESS)
@@ -950,7 +954,7 @@ class FlextLdapSimpleClient:
             logger.exception("Error getting server info", exc_info=e)
             return {"status": "error", "error": str(e)}
 
-    async def get_entry(self, dn: str) -> FlextResult[dict[str, object]]:
+    async def get_entry(self, dn: str) -> FlextResult[dict[str, Any]]:
         """Get single LDAP entry by DN."""
         logger.debug("Getting LDAP entry", extra={"dn": dn})
 

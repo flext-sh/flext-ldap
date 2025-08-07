@@ -21,6 +21,8 @@ from flext_ldap.api import FlextLdapApi
 from flext_ldap.entities import FlextLdapUser
 
 if TYPE_CHECKING:
+    from flext_core.semantic_types import FlextTypes
+
     from flext_ldap.config import FlextLdapSettings
     from flext_ldap.values import FlextLdapCreateUserRequest
 
@@ -205,7 +207,7 @@ class FlextLdapService:
     async def update_user(
         self,
         user_id: str,
-        updates: dict[str, object],
+        updates: FlextTypes.Core.JsonDict,
     ) -> FlextResult[FlextLdapUser]:
         """Update user attributes using real LDAP infrastructure.
 
@@ -225,7 +227,7 @@ class FlextLdapService:
     async def _execute_user_update_pipeline(
         self,
         user_id: str,
-        updates: dict[str, object],
+        updates: FlextTypes.Core.JsonDict,
     ) -> FlextResult[FlextLdapUser]:
         """Execute user update pipeline with consolidated error handling."""
         # Validate connection and session - Single Responsibility
@@ -429,9 +431,8 @@ class FlextLdapService:
         """Get base DN for LDAP searches - MUST be configured, no dangerous defaults."""
         # CRITICAL SECURITY: No hardcoded fallback base DN in production
         # This method should get configuration from proper sources
-        raise NotImplementedError(
-            "Base DN must be explicitly configured - no dangerous fallback defaults allowed"
-        )
+        error_msg = "Base DN must be explicitly configured - no dangerous fallback defaults allowed"
+        raise NotImplementedError(error_msg)
 
     def _extract_attr_value(
         self,

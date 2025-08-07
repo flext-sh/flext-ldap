@@ -12,7 +12,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_core import FlextResult, FlextValueObject
+
+if TYPE_CHECKING:
+    from flext_core.semantic_types import FlextTypes
 
 
 class FlextLdapConnectionEstablished(FlextValueObject):
@@ -21,7 +26,7 @@ class FlextLdapConnectionEstablished(FlextValueObject):
     aggregate_id: str
     connection_id: str
     base_dn: str
-    server_info: dict[str, object] | None = None
+    server_info: FlextTypes.Core.JsonDict | None = None
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for connection established event."""
@@ -78,8 +83,8 @@ class FlextLdapEntryModified(FlextValueObject):
 
     aggregate_id: str
     entry_dn: str
-    changes: dict[str, object]
-    old_values: dict[str, object] | None = None
+    changes: FlextTypes.Core.JsonDict
+    old_values: FlextTypes.Core.JsonDict | None = None
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for entry modified event."""

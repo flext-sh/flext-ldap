@@ -20,6 +20,9 @@ from uuid import UUID
 
 from flext_core import FlextGenerators, FlextResult, get_logger
 
+if TYPE_CHECKING:
+    from flext_core.semantic_types import FlextTypes
+
 from flext_ldap.constants import FlextLdapSchemaDiscoveryConstants
 
 if TYPE_CHECKING:
@@ -226,7 +229,7 @@ class FlextLdapSchemaAttribute:
         """Check if attribute has given name."""
         return name.lower() in [n.lower() for n in self.names]
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Core.JsonDict:
         """Convert to dictionary representation."""
         return {
             "oid": self.oid,
@@ -403,7 +406,7 @@ class FlextLdapSchemaObjectClass:
 
         return all_must, all_may
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Core.JsonDict:
         """Convert to dictionary representation."""
         return {
             "oid": self.oid,
@@ -424,11 +427,11 @@ class FlextLdapSchemaDiscoveryData:
 
     discovery_id: UUID | None = None
     timestamp: datetime | None = None
-    server_info: dict[str, object] | None = None
+    server_info: FlextTypes.Core.JsonDict | None = None
     object_classes: dict[str, FlextLdapSchemaObjectClass] | None = None
     attributes: dict[str, FlextLdapSchemaAttribute] | None = None
-    syntaxes: dict[str, dict[str, object]] | None = None
-    matching_rules: dict[str, dict[str, object]] | None = None
+    syntaxes: dict[str, FlextTypes.Core.JsonDict] | None = None
+    matching_rules: dict[str, FlextTypes.Core.JsonDict] | None = None
     discovery_errors: list[str] | None = None
     discovery_warnings: list[str] | None = None
     cache_hit: bool = False
@@ -438,7 +441,7 @@ class FlextLdapSchemaDiscoveryData:
 class SafeExtractorStrategy:
     """Strategy Pattern for safe parameter extraction - reduces complexity."""
 
-    def __init__(self, discovery_params: dict[str, object]) -> None:
+    def __init__(self, discovery_params: FlextTypes.Core.JsonDict) -> None:
         """Initialize extractor with parameters."""
         self.params = discovery_params
 
@@ -468,12 +471,12 @@ class SafeExtractorStrategy:
         value = self.params.get(key)
         return value if isinstance(value, datetime) else None
 
-    def _extract_dict(self, key: str) -> dict[str, object] | None:
+    def _extract_dict(self, key: str) -> FlextTypes.Core.JsonDict | None:
         """Extract dict value safely."""
         value = self.params.get(key)
         return dict(value) if isinstance(value, dict) else None
 
-    def _extract_nested_dict(self, key: str) -> dict[str, dict[str, object]] | None:
+    def _extract_nested_dict(self, key: str) -> dict[str, FlextTypes.Core.JsonDict] | None:
         """Extract nested dict safely."""
         value = self.params.get(key)
         if isinstance(value, dict):
@@ -571,7 +574,7 @@ class FlextLdapSchemaDiscoveryResult:
             + len(self.matching_rules)
         )
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Core.JsonDict:
         """Convert to dictionary representation."""
         return {
             "discovery_id": str(self.discovery_id),
@@ -840,7 +843,7 @@ class FlextLdapSchemaDiscoveryService:
     def _validate_required_attributes(
         self,
         all_must_attrs: set[str],
-        attributes: dict[str, object],
+        attributes: FlextTypes.Core.JsonDict,
         validation_result: ValidationResult,
     ) -> None:
         """Validate that all required attributes are provided."""
@@ -854,7 +857,7 @@ class FlextLdapSchemaDiscoveryService:
         self,
         all_must_attrs: set[str],
         all_may_attrs: set[str],
-        attributes: dict[str, object],
+        attributes: FlextTypes.Core.JsonDict,
         validation_result: ValidationResult,
     ) -> None:
         """Check for unknown attributes."""
@@ -867,7 +870,7 @@ class FlextLdapSchemaDiscoveryService:
     def _validate_single_value_constraints(
         self,
         schema: FlextLdapSchemaDiscoveryResult,
-        attributes: dict[str, object],
+        attributes: FlextTypes.Core.JsonDict,
         validation_result: ValidationResult,
     ) -> None:
         """Validate single-value attribute constraints."""
@@ -893,7 +896,7 @@ class FlextLdapSchemaDiscoveryService:
         self,
         connection: FlextLdapConnection,
         object_classes: list[str],
-        attributes: dict[str, object],
+        attributes: FlextTypes.Core.JsonDict,
     ) -> FlextResult[ValidationResult]:
         """Validate object structure against schema."""
         try:
@@ -1111,7 +1114,7 @@ class FlextLdapSchemaDiscoveryService:
         self._schema_cache.clear()
         logger.info("Schema cache cleared")
 
-    def get_cache_stats(self) -> dict[str, object]:
+    def get_cache_stats(self) -> FlextTypes.Core.JsonDict:
         """Get cache statistics."""
         return {
             "cache_size": len(self._schema_cache),
@@ -1311,7 +1314,7 @@ class FlextLdapSchemaDiscoveryService:
 
     def _extract_object_classes_from_entry(
         self,
-        entry: dict[str, object],
+        entry: FlextTypes.Core.JsonDict,
         object_classes: dict[str, FlextLdapSchemaObjectClass],
     ) -> None:
         """Extract object classes from schema entry - reduces nested control flow."""
@@ -1348,7 +1351,7 @@ class FlextLdapSchemaDiscoveryService:
 
     def _parse_server_object_classes(
         self,
-        schema_data: list[dict[str, object]],
+        schema_data: list[FlextTypes.Core.JsonDict],
     ) -> dict[str, FlextLdapSchemaObjectClass]:
         """Parse object classes from server schema data."""
         logger.debug(
@@ -1373,7 +1376,7 @@ class FlextLdapSchemaDiscoveryService:
 
     def _parse_server_attributes(
         self,
-        schema_data: list[dict[str, object]],
+        schema_data: list[FlextTypes.Core.JsonDict],
     ) -> dict[str, FlextLdapSchemaAttribute]:
         """Parse attributes from server schema data."""
         logger.debug(
@@ -1398,19 +1401,19 @@ class FlextLdapSchemaDiscoveryService:
 
     def _parse_server_schema_items(
         self,
-        schema_data: list[dict[str, object]],
+        schema_data: list[FlextTypes.Core.JsonDict],
         item_type: str,
         count_key: str,
-        extractor_func: Callable[[dict[str, object], dict[str, object]], None],
-        fallback_func: Callable[[], dict[str, object]],
-    ) -> dict[str, object]:
+        extractor_func: Callable[[FlextTypes.Core.JsonDict, FlextTypes.Core.JsonDict], None],
+        fallback_func: Callable[[], FlextTypes.Core.JsonDict],
+    ) -> FlextTypes.Core.JsonDict:
         """Template method for parsing server schema items."""
         logger.debug(
             "Parsing server %s",
             item_type,
             extra={"data_count": len(schema_data)},
         )
-        items: dict[str, object] = {}
+        items: FlextTypes.Core.JsonDict = {}
 
         try:
             for entry in schema_data:
@@ -1434,7 +1437,7 @@ class FlextLdapSchemaDiscoveryService:
 
     def _extract_attribute_types_from_entry(
         self,
-        entry: dict[str, object],
+        entry: FlextTypes.Core.JsonDict,
         attributes: dict[str, FlextLdapSchemaAttribute],
     ) -> None:
         """Extract attribute types from schema entry - reduces nested control flow."""

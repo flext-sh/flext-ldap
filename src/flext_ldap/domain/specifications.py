@@ -15,8 +15,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, TypeVar
 
+from flext_core import get_logger
+
 # Type variable for specification subjects
 T = TypeVar("T")
+
+logger = get_logger(__name__)
 
 
 # FBT smell elimination constants - SOLID DRY Principle
@@ -129,8 +133,12 @@ class FlextLdapActiveUserSpecification(FlextLdapUserSpecification):
                 control_value = int(user_account_control[0])
                 if control_value & 0x02:
                     return False
-            except (ValueError, IndexError):
-                pass
+            except (ValueError, IndexError) as e:
+                # EXPLICIT TRANSPARENCY: Active Directory userAccountControl parsing fallback
+                logger.warning(f"Failed to parse userAccountControl: {type(e).__name__}: {e}")
+                logger.debug(f"userAccountControl value: {user_account_control}")
+                logger.info("Continuing with fallback behavior - checking accountDisabled attribute")
+                # Continue with fallback behavior - check accountDisabled attribute instead
 
         # Check for explicit disabled flag
         account_disabled: list[str] | str = user.attributes.get("accountDisabled", [])

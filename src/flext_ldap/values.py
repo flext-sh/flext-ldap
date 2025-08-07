@@ -31,7 +31,6 @@ from flext_ldap.types import (
 
 logger = get_logger(__name__)
 
-
 # ADDITIONAL VALUE OBJECTS - Only unique ones not in types.py
 
 
@@ -196,6 +195,35 @@ class FlextLdapExtendedEntry(FlextDomainValueObject):
                 for oc in object_classes
             ),
         )
+
+    def classify_entry_type(self) -> str:
+        """Classify LDAP entry type based on object classes.
+
+        Returns:
+            str: Entry type classification - 'user', 'group', 'organizational_unit', or 'other'
+
+        """
+        object_classes = self.get_attribute("objectClass")
+        if not object_classes:
+            return "other"
+
+        # Convert to lowercase for case-insensitive comparison
+        oc_lower = [oc.lower() for oc in object_classes]
+
+        # Check for user/person entries
+        if "inetorgperson" in oc_lower or "person" in oc_lower:
+            return "user"
+
+        # Check for group entries
+        if any(oc in oc_lower for oc in ["groupofnames", "groupofuniquenames", "group"]):
+            return "group"
+
+        # Check for organizational unit entries
+        if "organizationalunit" in oc_lower:
+            return "organizational_unit"
+
+        # Default for unrecognized types
+        return "other"
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for LDAP extended entry."""

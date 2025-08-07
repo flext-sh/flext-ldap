@@ -17,9 +17,12 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import ClassVar, TypeVar
+from typing import TYPE_CHECKING, ClassVar, TypeVar
 
 from flext_core import FlextResult, get_logger
+
+if TYPE_CHECKING:
+    from flext_core.semantic_types import FlextTypes
 
 T = TypeVar("T")
 
@@ -30,7 +33,7 @@ class FlextLdapErrorContext:
 
     error_code: str | None = None
     correlation_id: str | None = None
-    context: dict[str, object] | None = None
+    context: FlextTypes.Core.JsonDict | None = None
     cause: Exception | None = None
     recoverable: bool | None = None
     alert_level: str = "error"
@@ -160,7 +163,7 @@ class FlextLdapError(Exception):
         # Simplified return without error_code to avoid Any typing issues
         return FlextResult[T].fail(self.message)
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Core.JsonDict:
         """Serialize exception for cross-service communication."""
         return {
             "error_type": self.__class__.__name__,
@@ -418,7 +421,6 @@ FlextLdapTimeoutError = FlextLdapConnection.LdapTimeoutError
 FlextLdapValidationError = FlextLdapData.ValidationError
 FlextLdapNotFoundError = FlextLdapData.EntryNotFoundError
 FlextLdapDuplicateError = FlextLdapData.EntryAlreadyExistsError
-
 
 __all__ = [
     "FlextLdapAuthenticationError",

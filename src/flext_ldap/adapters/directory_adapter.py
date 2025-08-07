@@ -20,6 +20,9 @@ from urllib.parse import urlparse
 from flext_core import FlextResult, get_logger
 from pydantic import SecretStr
 
+if TYPE_CHECKING:
+    from flext_core.semantic_types import FlextTypes
+
 from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
 from flext_ldap.errors import (
     FlextLdapConnectionError,
@@ -55,13 +58,13 @@ class FlextLdapDirectoryEntryProtocol(Protocol):
     """Protocol for directory entries."""
 
     dn: str
-    attributes: dict[str, object]
+    attributes: FlextTypes.Core.JsonDict
 
 
 class FlextLdapDirectoryEntry:
     """Simple implementation of FlextLdapDirectoryEntryProtocol."""
 
-    def __init__(self, dn: str, attributes: dict[str, object]) -> None:
+    def __init__(self, dn: str, attributes: FlextTypes.Core.JsonDict) -> None:
         self.dn = dn
         self.attributes = attributes
 
@@ -442,7 +445,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
     def _convert_raw_search_result(
         self,
-        raw_result: FlextResult[list[dict[str, object]]],
+        raw_result: FlextResult[list[FlextTypes.Core.JsonDict]],
     ) -> FlextResult[list[FlextLdapDirectoryEntryProtocol]]:
         """Convert raw search result to protocol format."""
         if raw_result.is_failure:
@@ -453,7 +456,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
     def _convert_search_results_to_protocol(
         self,
-        raw_results: list[dict[str, object]],
+        raw_results: list[FlextTypes.Core.JsonDict],
         base_dn: str,
         search_filter: str,
         attributes: list[str],
@@ -625,7 +628,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         base_dn: str,
         search_filter: str,
         actual_attributes: list[str],
-    ) -> FlextResult[list[dict[str, object]]]:
+    ) -> FlextResult[list[FlextTypes.Core.JsonDict]]:
         """Perform LDAP search operation with proper async handling."""
         try:
             loop = asyncio.get_event_loop()
@@ -658,7 +661,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
     def _convert_search_results_to_directory_protocol(
         self,
-        raw_results: list[dict[str, object]],
+        raw_results: list[FlextTypes.Core.JsonDict],
     ) -> FlextResult[list[FlextLdapDirectoryEntryProtocol]]:
         """Convert raw search results to directory protocol format."""
         entries: list[FlextLdapDirectoryEntryProtocol] = []
@@ -666,7 +669,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             entry = FlextLdapDirectoryEntry(
                 dn=str(raw_entry.get("dn", "")),
                 attributes=(
-                    cast("dict[str, object]", raw_entry.get("attributes", {}))
+                    cast("FlextTypes.Core.JsonDict", raw_entry.get("attributes", {}))
                     if isinstance(raw_entry.get("attributes"), dict)
                     else {}
                 ),
@@ -678,7 +681,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
     def add_entry(
         self,
         dn: str,
-        attributes: dict[str, object],
+        attributes: FlextTypes.Core.JsonDict,
     ) -> FlextResult[bool]:
         """Add new directory entry using FLEXT LDAP.
 
@@ -736,8 +739,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
     def _extract_object_classes(
         self,
-        attributes: dict[str, object],
-    ) -> tuple[list[str], dict[str, object]]:
+        attributes: FlextTypes.Core.JsonDict,
+    ) -> tuple[list[str], FlextTypes.Core.JsonDict]:
         """Extract objectClass from attributes following SOLID Single Responsibility.
 
         Args:
@@ -791,7 +794,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                         operation_func,
                     ):
                         return self._convert_raw_search_result(
-                            cast("FlextResult[list[dict[str, object]]]", raw_result),
+                            cast("FlextResult[list[FlextTypes.Core.JsonDict]]", raw_result),
                         )
                     return raw_result
             except RuntimeError:
@@ -804,7 +807,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
     def modify_entry(
         self,
         dn: str,
-        changes: dict[str, object],
+        changes: FlextTypes.Core.JsonDict,
     ) -> FlextResult[bool]:
         """Modify existing directory entry using FLEXT LDAP.
 
@@ -850,7 +853,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
     def _execute_modify_entry_pipeline(
         self,
         dn: str,
-        changes: dict[str, object],
+        changes: FlextTypes.Core.JsonDict,
     ) -> FlextResult[bool]:
         """Execute modify entry pipeline with consolidated error handling."""
         # REALMENTE usar os parâmetros dn e changes!

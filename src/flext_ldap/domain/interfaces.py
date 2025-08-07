@@ -17,7 +17,9 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from flext_core import FlextResult
+    from flext_core.semantic_types import FlextTypes
 
+if TYPE_CHECKING:
     from flext_ldap.entities import FlextLdapEntry
     from flext_ldap.values import (
         FlextLdapDistinguishedName,
@@ -121,7 +123,7 @@ class FlextLdapDirectoryRepository(ABC):
         self,
         connection_id: str,
         dn: FlextLdapDistinguishedName,
-        changes: dict[str, object],
+        changes: FlextTypes.Core.JsonDict,
     ) -> FlextResult[object]:
         """Modify LDAP entry.
 
@@ -196,7 +198,6 @@ class FlextLdapSchemaValidator(ABC):
             FlextResult indicating validation result
 
         """
-
 
 # FlextLdapUserRepository moved to domain.repositories for better organization
 
