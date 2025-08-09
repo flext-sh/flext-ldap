@@ -15,13 +15,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import FlextGenerators, FlextResult, get_logger
+from flext_core import FlextIdGenerator, FlextResult, get_logger
 
 from flext_ldap.api import FlextLdapApi
 from flext_ldap.entities import FlextLdapUser
 
 if TYPE_CHECKING:
-    from flext_core.semantic_types import FlextTypes
+    from flext_core.typings import FlextTypes
 
     from flext_ldap.config import FlextLdapSettings
     from flext_ldap.values import FlextLdapCreateUserRequest
@@ -185,7 +185,7 @@ class FlextLdapService:
                     mail_value = mail_attrs[0] if mail_attrs else None
 
                     user = FlextLdapUser(
-                        id=FlextGenerators.generate_entity_id(),
+                        id=FlextIdGenerator.generate_id(),
                         dn=entry.dn,
                         uid=uid,
                         cn=cn_value,
@@ -407,7 +407,7 @@ class FlextLdapService:
 
                     if uid:  # Only create user if UID exists
                         user = FlextLdapUser(
-                            id=FlextGenerators.generate_entity_id(),
+                            id=FlextIdGenerator.generate_id(),
                             dn=entry.dn,
                             uid=uid,
                             cn=self._extract_attr_value(user_attrs, "cn"),

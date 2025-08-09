@@ -187,7 +187,7 @@ def docker_openldap_container() -> Container:
     This fixture starts an OpenLDAP container at the beginning of the test session
     and stops it at the end. The container is shared across all tests.
     """
-    global _container_manager  # noqa: PLW0603 # Valid pattern for session-scoped fixture
+    global _container_manager
 
     if _container_manager is None:
         _container_manager = OpenLDAPContainerManager()

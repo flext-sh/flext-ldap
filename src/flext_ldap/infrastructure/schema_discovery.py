@@ -18,17 +18,15 @@ from enum import Enum
 from typing import TYPE_CHECKING, ClassVar, TypedDict
 from uuid import UUID
 
-from flext_core import FlextGenerators, FlextResult, get_logger
+from flext_core import FlextIdGenerator, FlextResult, get_logger
 
 if TYPE_CHECKING:
-    from flext_core.semantic_types import FlextTypes
+    from flext_core.typings import FlextTypes
 
 from flext_ldap.constants import FlextLdapSchemaDiscoveryConstants
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from flext_core.flext_types import TAnyObject
 
     from flext_ldap.entities import FlextLdapConnection
 
@@ -476,7 +474,9 @@ class SafeExtractorStrategy:
         value = self.params.get(key)
         return dict(value) if isinstance(value, dict) else None
 
-    def _extract_nested_dict(self, key: str) -> dict[str, FlextTypes.Core.JsonDict] | None:
+    def _extract_nested_dict(
+        self, key: str,
+    ) -> dict[str, FlextTypes.Core.JsonDict] | None:
         """Extract nested dict safely."""
         value = self.params.get(key)
         if isinstance(value, dict):
@@ -526,7 +526,7 @@ class FlextLdapSchemaDiscoveryResult:
     def __init__(self, data: FlextLdapSchemaDiscoveryData | None = None) -> None:
         """Initialize schema discovery result using Parameter Object pattern."""
         data = data or FlextLdapSchemaDiscoveryData()
-        self.discovery_id = data.discovery_id or FlextGenerators.generate_uuid()
+        self.discovery_id = data.discovery_id or FlextIdGenerator.generate_id()
         self.timestamp = data.timestamp or datetime.now(UTC)
         self.server_info = data.server_info or {}
         self.object_classes = data.object_classes or {}
@@ -675,7 +675,7 @@ class FlextLdapSchemaDiscoveryService:
             self._discovery_history.append(discovery_result)
             if (
                 len(self._discovery_history)
-                > FlextLdapSchemaDiscoveryConstants.MAX_DISCOVERY_HISTORY
+                > FlextLdapSchemaDiscoveryConstants.Discovery.MAX_DISCOVERY_HISTORY
             ):
                 self._discovery_history.pop(0)
 
@@ -770,7 +770,7 @@ class FlextLdapSchemaDiscoveryService:
         self,
         connection: FlextLdapConnection,
         item_name: str,
-        collection_getter: Callable[[object], TAnyObject],
+        collection_getter: Callable[[object], object],
         item_type: str,
     ) -> FlextResult[FlextLdapSchemaObjectClass | FlextLdapSchemaAttribute | None]:
         """Template method for getting schema items - eliminates code duplication."""
@@ -787,6 +787,10 @@ class FlextLdapSchemaDiscoveryService:
 
             # Use the collection getter to access the right collection
             items = collection_getter(schema)
+            # Type-safe iteration - ensure items is iterable
+            if not hasattr(items, "__iter__"):
+                return FlextResult.fail(f"Schema collection for {item_type} is not iterable")
+
             for item in items:
                 # Type-safe attribute access - check if item has has_name method
                 if hasattr(item, "has_name") and item.has_name(item_name):
@@ -1404,7 +1408,9 @@ class FlextLdapSchemaDiscoveryService:
         schema_data: list[FlextTypes.Core.JsonDict],
         item_type: str,
         count_key: str,
-        extractor_func: Callable[[FlextTypes.Core.JsonDict, FlextTypes.Core.JsonDict], None],
+        extractor_func: Callable[
+            [FlextTypes.Core.JsonDict, FlextTypes.Core.JsonDict], None,
+        ],
         fallback_func: Callable[[], FlextTypes.Core.JsonDict],
     ) -> FlextTypes.Core.JsonDict:
         """Template method for parsing server schema items."""

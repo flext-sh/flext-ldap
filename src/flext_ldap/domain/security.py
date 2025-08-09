@@ -19,10 +19,9 @@ from typing import TYPE_CHECKING
 from flext_core import FlextEntity, FlextResult
 
 if TYPE_CHECKING:
-    from flext_core.semantic_types import FlextTypes
+    from flext_core.typings import FlextTypes
 
 # Constants imported from centralized module
-from flext_ldap.constants import FlextLdapSecurityConstants
 
 
 class FlextLdapCertificateValidationResult(Enum):
@@ -146,9 +145,9 @@ class FlextLdapCertificateValidationContext(FlextEntity):
 
     def model_post_init(self, __context: object, /) -> None:
         """Post-initialization validation."""
-        if self.port <= 0 or self.port > FlextLdapSecurityConstants.MAX_PORT:
-            min_port = FlextLdapSecurityConstants.MIN_PORT
-            max_port = FlextLdapSecurityConstants.MAX_PORT
+        if self.port <= 0 or self.port > 65535:
+            min_port = 1
+            max_port = 65535
             msg = f"Port must be between {min_port} and {max_port}"
             raise ValueError(msg)
 
@@ -162,9 +161,9 @@ class FlextLdapCertificateValidationContext(FlextEntity):
             return FlextResult.fail(
                 "Certificate validation context must have a hostname",
             )
-        if self.port <= 0 or self.port > FlextLdapSecurityConstants.MAX_PORT:
-            min_port = FlextLdapSecurityConstants.MIN_PORT
-            max_port = FlextLdapSecurityConstants.MAX_PORT
+        if self.port <= 0 or self.port > 65535:
+            min_port = 1
+            max_port = 65535
             return FlextResult.fail(f"Port must be between {min_port} and {max_port}")
         if self.minimum_tls_version not in {"TLSv1.2", "TLSv1.3"}:
             return FlextResult.fail("Minimum TLS version must be TLSv1.2 or TLSv1.3")

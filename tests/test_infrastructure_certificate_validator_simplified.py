@@ -204,7 +204,7 @@ class TestInputValidationAndErrorHandling:
         mock_context.port = 443
 
         # None input should be handled gracefully (returns FlextResult.fail)
-        result = await service.validate_certificate_chain(None, mock_context)  # type: ignore[arg-type]
+        result = await service.validate_certificate_chain(None, mock_context)
 
         # Should fail gracefully
         assert not result.is_success

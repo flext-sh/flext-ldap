@@ -135,9 +135,13 @@ class FlextLdapActiveUserSpecification(FlextLdapUserSpecification):
                     return False
             except (ValueError, IndexError) as e:
                 # EXPLICIT TRANSPARENCY: Active Directory userAccountControl parsing fallback
-                logger.warning(f"Failed to parse userAccountControl: {type(e).__name__}: {e}")
+                logger.warning(
+                    f"Failed to parse userAccountControl: {type(e).__name__}: {e}",
+                )
                 logger.debug(f"userAccountControl value: {user_account_control}")
-                logger.info("Continuing with fallback behavior - checking accountDisabled attribute")
+                logger.info(
+                    "Continuing with fallback behavior - checking accountDisabled attribute",
+                )
                 # Continue with fallback behavior - check accountDisabled attribute instead
 
         # Check for explicit disabled flag

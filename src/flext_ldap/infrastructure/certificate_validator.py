@@ -26,8 +26,8 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
-    from flext_core.semantic_types import FlextTypes
-from flext_core.utilities import FlextGenerators
+    from flext_core.typings import FlextTypes
+from flext_core import FlextIdGenerator
 
 from flext_ldap.domain.security import (
     CertificateInfo,
@@ -135,7 +135,7 @@ class FlextLdapCertificateValidationService:
         """Create malformed validation result - Single Responsibility."""
         return FlextResult.ok(
             ValidationResult(
-                id=FlextGenerators.generate_uuid(),
+                id=FlextIdGenerator.generate_id(),
                 result_type=CertificateValidationResult.MALFORMED,
                 message=message,
             ),
@@ -164,7 +164,7 @@ class FlextLdapCertificateValidationService:
             if cert.not_valid_after.replace(tzinfo=UTC) < now:
                 return FlextResult.ok(
                     ValidationResult(
-                        id=FlextGenerators.generate_uuid(),
+                        id=FlextIdGenerator.generate_id(),
                         result_type=CertificateValidationResult.EXPIRED,
                         message=f"Certificate expired at {cert.not_valid_after}",
                     ),
@@ -173,7 +173,7 @@ class FlextLdapCertificateValidationService:
             if cert.not_valid_before.replace(tzinfo=UTC) > now:
                 return FlextResult.ok(
                     ValidationResult(
-                        id=FlextGenerators.generate_uuid(),
+                        id=FlextIdGenerator.generate_id(),
                         result_type=CertificateValidationResult.EXPIRED,
                         message=(
                             f"Certificate not yet valid until {cert.not_valid_before}"
@@ -198,7 +198,7 @@ class FlextLdapCertificateValidationService:
         if cert_info is None or not cert_info.is_valid_for_hostname(context.hostname):
             return FlextResult.ok(
                 ValidationResult(
-                    id=FlextGenerators.generate_uuid(),
+                    id=FlextIdGenerator.generate_id(),
                     result_type=CertificateValidationResult.INVALID_HOSTNAME,
                     message=f"Certificate hostname mismatch for {context.hostname}",
                 ),
@@ -229,7 +229,7 @@ class FlextLdapCertificateValidationService:
         except (ValueError, TypeError, OSError):
             return FlextResult.ok(
                 ValidationResult(
-                    id=FlextGenerators.generate_uuid(),
+                    id=FlextIdGenerator.generate_id(),
                     result_type=CertificateValidationResult.INVALID_SIGNATURE,
                     message="Certificate chain signature validation failed",
                 ),
@@ -243,7 +243,7 @@ class FlextLdapCertificateValidationService:
         cert_info_result = await self._extract_certificate_info(leaf_cert)
         return FlextResult.ok(
             ValidationResult(
-                id=FlextGenerators.generate_uuid(),
+                id=FlextIdGenerator.generate_id(),
                 result_type=CertificateValidationResult.VALID,
                 message="Certificate validation successful",
                 certificate_info=(
@@ -283,7 +283,7 @@ class FlextLdapCertificateValidationService:
                 if not cert_der:
                     return FlextResult.ok(
                         ValidationResult(
-                            id=FlextGenerators.generate_uuid(),
+                            id=FlextIdGenerator.generate_id(),
                             result_type=CertificateValidationResult.MALFORMED,
                             message="No certificate received from server",
                         ),
@@ -296,7 +296,7 @@ class FlextLdapCertificateValidationService:
                     return cert_result
                 return FlextResult.ok(
                     ValidationResult(
-                        id=FlextGenerators.generate_uuid(),
+                        id=FlextIdGenerator.generate_id(),
                         result_type=CertificateValidationResult.INVALID_SIGNATURE,
                         message=(
                             f"Server certificate validation failed: {cert_result.error}"
@@ -307,7 +307,7 @@ class FlextLdapCertificateValidationService:
         except SSLError as e:
             return FlextResult.ok(
                 ValidationResult(
-                    id=FlextGenerators.generate_uuid(),
+                    id=FlextIdGenerator.generate_id(),
                     result_type=CertificateValidationResult.INVALID_SIGNATURE,
                     message=f"SSL handshake failed: {e}",
                 ),
@@ -498,7 +498,7 @@ class FlextLdapCertificateValidationService:
                 logger.debug("Failed to parse certificate extensions")
 
             cert_info = CertificateInfo(
-                id=FlextGenerators.generate_uuid(),
+                id=FlextIdGenerator.generate_id(),
                 subject=subject,
                 issuer=issuer,
                 serial_number=serial_number,
@@ -547,8 +547,12 @@ class FlextLdapCertificateValidationService:
                         return True
             except x509.ExtensionNotFound:
                 # EXPLICIT TRANSPARENCY: Certificate SAN extension not found - expected for some certificates
-                logger.debug("Certificate does not have Subject Alternative Name (SAN) extension")
-                logger.info("Continuing with Common Name (CN) validation - normal fallback behavior")
+                logger.debug(
+                    "Certificate does not have Subject Alternative Name (SAN) extension",
+                )
+                logger.info(
+                    "Continuing with Common Name (CN) validation - normal fallback behavior",
+                )
                 # Continue to check CN - this is normal fallback behavior for certificates without SAN
 
             # Check Common Name (CN) from subject

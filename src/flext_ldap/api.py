@@ -51,31 +51,31 @@ from urllib.parse import urlparse
 
 from flext_core import (
     FlextContainer,
-    FlextGenerators,
+    FlextIdGenerator,
     FlextLDAPConfig,
     FlextResult,
     get_flext_container,
     get_logger,
 )
-from pydantic import SecretStr
 
 from flext_ldap.config import (
-    FlextLdapAuthConfig,
-    FlextLdapConnectionConfig,
     FlextLdapSettings,
 )
+from flext_ldap.constants import FlextLdapScope
 from flext_ldap.entities import (
     FlextLdapEntry,
     FlextLdapGroup,
     FlextLdapUser,
 )
-from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
-from flext_ldap.values import FlextLdapCreateUserRequest, FlextLdapDistinguishedName
+from flext_ldap.infrastructure.ldap_client import FlextLdapClient
+from flext_ldap.value_objects import FlextLdapDistinguishedName, FlextLdapFilter
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
-    from flext_core.semantic_types import FlextTypes
+    from flext_core.typings import FlextTypes
+
+    from flext_ldap.values import FlextLdapCreateUserRequest
 
 logger = get_logger(__name__)
 
@@ -164,7 +164,8 @@ class FlextLdapApi:
         """
         self._container: FlextContainer = get_flext_container()
         self._config = config or FlextLdapSettings()
-        self._client = FlextLdapSimpleClient()
+        # Use the new SOLID FlextLdapClient from infrastructure
+        self._client = FlextLdapClient(self._container)
         self._connections: dict[str, str] = {}  # session_id -> connection_id
 
         # Register self in container for dependency injection following flext-core
@@ -234,33 +235,34 @@ class FlextLdapApi:
         port = parsed.port or (636 if parsed.scheme == "ldaps" else 389)
         use_ssl = parsed.scheme == "ldaps"
 
-        # Create connection config using FlextLdapConnectionConfig
-        conn_config = FlextLdapConnectionConfig(
-            host=host,
-            port=port,
-            use_ssl=use_ssl,
-        )
+        # Use the new SOLID FlextLdapClient architecture
+        # The client is already initialized in __init__, we just need to connect
 
-        # Create client with config
-        self._client = FlextLdapSimpleClient(conn_config)
-
-        # Railway pattern - chain operations with proper authentication
-        if bind_dn and password:
-            # Use connect_with_auth for authenticated connections
-            auth_config = FlextLdapAuthConfig(
-                bind_dn=bind_dn,
-                bind_password=SecretStr(password),
-            )
-            connection_result = await self._client.connect_with_auth(auth_config)
+        # Build server URL if needed
+        if parsed.scheme:
+            full_server_url = server_url
         else:
-            # Use regular connect for anonymous connections
-            connection_result = self._client.connect(conn_config)
+            full_server_url = f"{'ldaps' if use_ssl else 'ldap'}://{host}:{port}"
+
+        # Connect with the new client API
+        connection_result = await self._client.connect(
+            full_server_url,
+            bind_dn,
+            password,
+        )
 
         if not connection_result.is_success:
             return FlextResult.fail(f"Connection failed: {connection_result.error}")
 
-        # Manage session and return success
-        return self._create_session(session_id)
+        # Store the real connection_id from the connect result
+        connection_id = connection_result.data
+        if connection_id is None:
+            return FlextResult.fail("Failed to get connection ID from client")
+        session = session_id or FlextIdGenerator.generate_id()
+        self._connections[session] = connection_id
+
+        logger.info("Connected to LDAP server", extra={"session_id": session})
+        return FlextResult.ok(session)
 
     async def _authenticate_connection(
         self,
@@ -283,8 +285,8 @@ class FlextLdapApi:
 
     def _create_session(self, session_id: str | None) -> FlextResult[str]:
         """Create and manage session."""
-        session = session_id or FlextGenerators.generate_session_id()
-        self._connections[session] = FlextGenerators.generate_id()  # Connection ID
+        session = session_id or FlextIdGenerator.generate_id()
+        self._connections[session] = FlextIdGenerator.generate_id()  # Connection ID
 
         logger.info("Connected to LDAP server", extra={"session_id": session})
         return FlextResult.ok(session)
@@ -295,9 +297,11 @@ class FlextLdapApi:
             if session_id not in self._connections:
                 return FlextResult.fail(f"Session {session_id} not found")
 
-            # FlextLdapClient.disconnect() is synchronous and takes no arguments
-            # Note: connection_id stored for future connection management features
-            result = self._client.disconnect()
+            # Get connection_id from session mapping
+            connection_id = self._connections[session_id]
+
+            # Use new FlextLdapClient.disconnect() with connection_id
+            result = await self._client.disconnect(connection_id)
 
             if result.is_success:
                 del self._connections[session_id]
@@ -305,8 +309,9 @@ class FlextLdapApi:
                     "Disconnected from LDAP server",
                     extra={"session_id": session_id},
                 )
-
-            return result
+                # Convert FlextResult[None] to FlextResult[bool] for compatibility
+                return FlextResult.ok(data=True)
+            return FlextResult.fail(result.error or "Disconnect failed")
 
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Disconnect error: {e}")
@@ -352,6 +357,7 @@ class FlextLdapApi:
 
             # Execute search with consolidated logic
             search_result = await self._execute_ldap_search(
+                session_id,
                 base_dn,
                 filter_expr,
                 attributes,
@@ -373,28 +379,85 @@ class FlextLdapApi:
 
     async def _execute_ldap_search(
         self,
+        session_id: str,
         base_dn: str | FlextLdapDistinguishedName,
         filter_expr: str,
         attributes: list[str] | None,
         scope: str,
     ) -> FlextResult[list[dict[str, Any]]]:
-        """Execute LDAP search with proper base DN handling."""
-        base_str = (
-            str(base_dn) if isinstance(base_dn, FlextLdapDistinguishedName) else base_dn
-        )
-
-        # FlextLdapClient.search() is async, REALLY USE scope parameter
-        result = await self._client.search(
-            base_str,
+        """Execute LDAP search with proper base DN handling - Railway-Oriented."""
+        # Railway-Oriented Programming - consolidate validation pipeline
+        validation_result = await self._validate_search_parameters(
+            session_id,
+            base_dn,
             filter_expr,
-            attributes or ["*"],
-            scope=scope,  # REALLY USE the scope parameter
+            scope,
+        )
+        if validation_result.is_failure:
+            return FlextResult.fail(
+                validation_result.error or "Search validation failed"
+            )
+
+        # Type-safe unpacking - validation_result.data is guaranteed to exist
+        if validation_result.data is None:
+            return FlextResult.fail("Validation result data is None")
+
+        connection_id, base_dn_obj, filter_obj, scope_enum = validation_result.data
+
+        # Execute search with consolidated error handling
+        result = await self._client.search(
+            connection_id,
+            base_dn_obj,
+            filter_obj,
+            scope_enum,
+            attributes,
+        )
+        return (
+            result
+            if result.is_success
+            else FlextResult.fail(result.error or "Unknown search error")
         )
 
-        if not result.is_success:
-            return FlextResult.fail(result.error or "Unknown search error")
+    async def _validate_search_parameters(
+        self,
+        session_id: str,
+        base_dn: str | FlextLdapDistinguishedName,
+        filter_expr: str,
+        scope: str,
+    ) -> FlextResult[
+        tuple[str, FlextLdapDistinguishedName, FlextLdapFilter, FlextLdapScope]
+    ]:
+        """Validate and convert search parameters - consolidated pipeline."""
+        # Session validation
+        if session_id not in self._connections:
+            return FlextResult.fail(f"Session {session_id} not found")
+        connection_id = self._connections[session_id]
 
-        return result
+        # Base DN conversion pipeline
+        if isinstance(base_dn, FlextLdapDistinguishedName):
+            base_dn_obj = base_dn
+        else:
+            dn_result = FlextLdapDistinguishedName.create(base_dn)
+            if not dn_result.is_success or dn_result.data is None:
+                return FlextResult.fail(dn_result.error or "Invalid base DN")
+            base_dn_obj = dn_result.data
+
+        # Filter conversion pipeline
+        filter_result = FlextLdapFilter.create(filter_expr)
+        if not filter_result.is_success or filter_result.data is None:
+            return FlextResult.fail(filter_result.error or "Invalid filter")
+        filter_obj = filter_result.data
+
+        # Scope conversion
+        scope_map = {
+            "base": FlextLdapScope.BASE,
+            "one": FlextLdapScope.ONE,
+            "sub": FlextLdapScope.SUB,
+            "children": FlextLdapScope.CHILDREN,
+        }
+        scope_enum = scope_map.get(scope, FlextLdapScope.SUB)
+
+        return FlextResult.ok(data=(connection_id, base_dn_obj, filter_obj, scope_enum))
 
     def _convert_to_domain_entities(
         self,
@@ -430,7 +493,7 @@ class FlextLdapApi:
             dn=dn,
             object_classes=[str(cls) for cls in obj_classes],
             attributes=formatted_attrs,
-            id=FlextGenerators.generate_entity_id(),  # FlextEntity requires id
+            id=FlextIdGenerator.generate_id(),  # FlextEntity requires id
         )
 
     def _extract_object_classes(self, attrs: FlextTypes.Core.JsonDict) -> list[object]:
@@ -438,7 +501,10 @@ class FlextLdapApi:
         obj_classes_raw = attrs.get("objectClass", []) if hasattr(attrs, "get") else []
         return obj_classes_raw if isinstance(obj_classes_raw, list) else []
 
-    def _format_attributes(self, attrs: FlextTypes.Core.JsonDict) -> dict[str, list[str]]:
+    def _format_attributes(
+        self,
+        attrs: FlextTypes.Core.JsonDict,
+    ) -> dict[str, list[str]]:
         """Format attributes to expected dict[str, list[str]] format."""
         formatted_attrs: dict[str, list[str]] = {}
         if hasattr(attrs, "items"):
@@ -485,6 +551,28 @@ class FlextLdapApi:
                 formatted_attrs[key] = str(value)
         return formatted_attrs
 
+    def _validate_user_creation_preconditions(
+        self,
+        session_id: str,
+        user_request: FlextLdapCreateUserRequest,
+    ) -> FlextResult[tuple[str, FlextLdapDistinguishedName]]:
+        """Validate preconditions for user creation using Railway-Oriented Programming."""
+        # Validate session exists
+        if session_id not in self._connections:
+            return FlextResult.fail(f"Session {session_id} not found")
+
+        connection_id = self._connections[session_id]
+
+        # Convert and validate DN
+        dn_result = FlextLdapDistinguishedName.create(user_request.dn)
+        if not dn_result.is_success:
+            return FlextResult.fail(dn_result.error or "Invalid DN")
+
+        if dn_result.data is None:
+            return FlextResult.fail("Failed to create DN object")
+
+        return FlextResult.ok((connection_id, dn_result.data))
+
     async def create_user(
         self,
         session_id: str,
@@ -492,31 +580,32 @@ class FlextLdapApi:
     ) -> FlextResult[FlextLdapUser]:
         """Create user with domain validation and business rules."""
         try:
-            if session_id not in self._connections:
-                return FlextResult.fail(f"Session {session_id} not found")
-
-            # Build attributes using helper method
-            attributes = self._build_user_attributes(user_request)
-
-            # Add user to LDAP
-            object_classes_list = attributes["objectClass"]
-            if not isinstance(object_classes_list, list):
-                object_classes_list = [str(object_classes_list)]
-
-            result = await self._client.add(
-                user_request.dn,
-                [str(cls) for cls in object_classes_list],
-                attributes,
+            # Validate preconditions using Railway-Oriented Programming
+            validation_result = self._validate_user_creation_preconditions(
+                session_id,
+                user_request,
             )
+            if not validation_result.is_success:
+                return FlextResult.fail(
+                    validation_result.error or "Precondition validation failed",
+                )
+
+            if validation_result.data is None:
+                return FlextResult.fail("Validation succeeded but no data returned")
+
+            connection_id, dn_obj = validation_result.data
+
+            # Build attributes and create user
+            attributes = self._build_user_attributes(user_request)
+            result = await self._client.create_entry(connection_id, dn_obj, attributes)
 
             if not result.is_success:
                 return FlextResult.fail(f"User creation failed: {result.error}")
 
             # Create domain entity using helper method
             formatted_attrs = self._format_attributes_for_entity(attributes)
-
             user = FlextLdapUser(
-                id=FlextGenerators.generate_entity_id(),
+                id=FlextIdGenerator.generate_id(),
                 dn=user_request.dn,
                 uid=user_request.uid,
                 cn=user_request.cn,
@@ -539,6 +628,42 @@ class FlextLdapApi:
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"User creation error: {e}")
 
+    def _validate_user_update_preconditions(
+        self,
+        session_id: str,
+        user_dn: str | FlextLdapDistinguishedName,
+        updates: FlextTypes.Core.JsonDict,
+    ) -> FlextResult[tuple[str, FlextLdapDistinguishedName, FlextTypes.Core.JsonDict]]:
+        """Validate preconditions for user update using Railway-Oriented Programming."""
+        # Validate session exists
+        if session_id not in self._connections:
+            return FlextResult.fail(f"Session {session_id} not found")
+
+        connection_id = self._connections[session_id]
+
+        # Normalize DN string
+        dn_str = (
+            str(user_dn) if isinstance(user_dn, FlextLdapDistinguishedName) else user_dn
+        )
+
+        # Convert and validate DN
+        dn_result = FlextLdapDistinguishedName.create(dn_str)
+        if not dn_result.is_success:
+            return FlextResult.fail(dn_result.error or "Invalid DN")
+
+        if dn_result.data is None:
+            return FlextResult.fail("Failed to create DN object")
+
+        # Convert updates to LDAP modify format
+        modifications: FlextTypes.Core.JsonDict = {}
+        for attr, value in updates.items():
+            if isinstance(value, list):
+                modifications[attr] = [(3, value)]  # MODIFY_REPLACE
+            else:
+                modifications[attr] = [(3, [str(value)])]  # MODIFY_REPLACE
+
+        return FlextResult.ok((connection_id, dn_result.data, modifications))
+
     async def update_user(
         self,
         session_id: str,
@@ -547,37 +672,63 @@ class FlextLdapApi:
     ) -> FlextResult[bool]:
         """Update user with LDAP modify operations."""
         try:
-            if session_id not in self._connections:
-                return FlextResult.fail(f"Session {session_id} not found")
-
-            # Note: connection_id available for future connection management
-            dn_str = (
-                str(user_dn)
-                if isinstance(user_dn, FlextLdapDistinguishedName)
-                else user_dn
+            # Validate preconditions using Railway-Oriented Programming
+            validation_result = self._validate_user_update_preconditions(
+                session_id,
+                user_dn,
+                updates,
             )
+            if not validation_result.is_success:
+                return FlextResult.fail(
+                    validation_result.error or "Precondition validation failed",
+                )
 
-            # Convert updates to LDAP modify format - cast to "FlextTypes.Core.JsonDict"
-            modifications: FlextTypes.Core.JsonDict = {}
-            for attr, value in updates.items():
-                if isinstance(value, list):
-                    modifications[attr] = [(3, value)]  # MODIFY_REPLACE
-                else:
-                    modifications[attr] = [(3, [str(value)])]  # MODIFY_REPLACE
+            if validation_result.data is None:
+                return FlextResult.fail("Validation succeeded but no data returned")
 
-            # FlextLdapClient.modify() is async with different signature
-            result = await self._client.modify(
-                dn_str,
-                modifications,
+            connection_id, dn_obj, modifications = validation_result.data
+
+            # Execute update operation
+            result = await self._client.modify_entry(
+                connection_id, dn_obj, modifications
             )
 
             if result.is_success:
+                dn_str = str(dn_obj)
                 logger.info("User updated", extra={"user_dn": dn_str})
+                return FlextResult.ok(data=True)
 
-            return result
+            return FlextResult.fail(result.error or "Update failed")
 
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"User update error: {e}")
+
+    def _validate_user_deletion_preconditions(
+        self,
+        session_id: str,
+        user_dn: str | FlextLdapDistinguishedName,
+    ) -> FlextResult[tuple[str, FlextLdapDistinguishedName]]:
+        """Validate preconditions for user deletion using Railway-Oriented Programming."""
+        # Validate session exists
+        if session_id not in self._connections:
+            return FlextResult.fail(f"Session {session_id} not found")
+
+        connection_id = self._connections[session_id]
+
+        # Normalize DN string
+        dn_str = (
+            str(user_dn) if isinstance(user_dn, FlextLdapDistinguishedName) else user_dn
+        )
+
+        # Convert and validate DN
+        dn_result = FlextLdapDistinguishedName.create(dn_str)
+        if not dn_result.is_success:
+            return FlextResult.fail(dn_result.error or "Invalid DN")
+
+        if dn_result.data is None:
+            return FlextResult.fail("Failed to create DN object")
+
+        return FlextResult.ok((connection_id, dn_result.data))
 
     async def delete_user(
         self,
@@ -586,23 +737,30 @@ class FlextLdapApi:
     ) -> FlextResult[bool]:
         """Delete user from LDAP directory."""
         try:
-            if session_id not in self._connections:
-                return FlextResult.fail(f"Session {session_id} not found")
-
-            # Note: connection_id available for future connection management
-            dn_str = (
-                str(user_dn)
-                if isinstance(user_dn, FlextLdapDistinguishedName)
-                else user_dn
+            # Validate preconditions using Railway-Oriented Programming
+            validation_result = self._validate_user_deletion_preconditions(
+                session_id,
+                user_dn,
             )
+            if not validation_result.is_success:
+                return FlextResult.fail(
+                    validation_result.error or "Precondition validation failed",
+                )
 
-            # FlextLdapClient.delete() is async with different signature
-            result = await self._client.delete(dn_str)
+            if validation_result.data is None:
+                return FlextResult.fail("Validation succeeded but no data returned")
+
+            connection_id, dn_obj = validation_result.data
+
+            # Execute deletion operation
+            result = await self._client.delete_entry(connection_id, dn_obj)
 
             if result.is_success:
+                dn_str = str(dn_obj)
                 logger.info("User deleted", extra={"user_dn": dn_str})
+                return FlextResult.ok(data=True)
 
-            return result
+            return FlextResult.fail(result.error or "Delete failed")
 
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"User deletion error: {e}")
@@ -648,9 +806,19 @@ class FlextLdapApi:
             object_classes_list = attributes["objectClass"]
             if not isinstance(object_classes_list, list):
                 object_classes_list = [str(object_classes_list)]
-            result = await self._client.add(
-                dn_str,
-                [str(cls) for cls in object_classes_list],
+            # Get connection_id from session
+            connection_id = self._connections[session_id]
+
+            # Convert dn string to FlextLdapDistinguishedName
+            dn_result = FlextLdapDistinguishedName.create(dn_str)
+            if not dn_result.is_success:
+                return FlextResult.fail(dn_result.error or "Invalid DN")
+            if dn_result.data is None:
+                return FlextResult.fail("Failed to create DN object")
+
+            result = await self._client.create_entry(
+                connection_id,
+                dn_result.data,
                 attributes,
             )
 
@@ -659,7 +827,7 @@ class FlextLdapApi:
 
             # Create domain entity - only use valid FlextLdapGroup fields
             group = FlextLdapGroup(
-                id=FlextGenerators.generate_entity_id(),
+                id=FlextIdGenerator.generate_id(),
                 dn=dn_str,
                 cn=cn,
                 members=[],
@@ -718,6 +886,29 @@ class FlextLdapApi:
             logger.exception("Health check failed")
             return FlextResult.fail(f"Health check failed: {e}")
 
+    def _validate_add_entry_preconditions(
+        self,
+        session_id: str,
+        dn: str,
+        attributes: dict[str, list[str]],
+    ) -> FlextResult[tuple[str, FlextLdapDistinguishedName, dict[str, list[str]]]]:
+        """Validate preconditions for add entry using Railway-Oriented Programming."""
+        # Validate session exists
+        if session_id not in self._connections:
+            return FlextResult.fail(f"Session {session_id} not found")
+
+        connection_id = self._connections[session_id]
+
+        # Convert and validate DN
+        dn_result = FlextLdapDistinguishedName.create(dn)
+        if not dn_result.is_success:
+            return FlextResult.fail(dn_result.error or "Invalid DN")
+
+        if dn_result.data is None:
+            return FlextResult.fail("Failed to create DN object")
+
+        return FlextResult.ok((connection_id, dn_result.data, dict(attributes)))
+
     async def add_entry(
         self,
         session_id: str,
@@ -736,25 +927,33 @@ class FlextLdapApi:
 
         """
         try:
-            if session_id not in self._connections:
-                return FlextResult.fail(f"Session {session_id} not found")
-
-            # Extract objectClass from attributes
-            object_classes_raw = attributes.get("objectClass", ["top"])
-            object_classes = (
-                object_classes_raw
-                if isinstance(object_classes_raw, list)
-                else [str(object_classes_raw)]
+            # Validate preconditions using Railway-Oriented Programming
+            validation_result = self._validate_add_entry_preconditions(
+                session_id,
+                dn,
+                attributes,
             )
+            if not validation_result.is_success:
+                return FlextResult.fail(
+                    validation_result.error or "Precondition validation failed",
+                )
 
-            # Use the client add method with correct signature - cast attributes
-            # Note: connection_id available for future connection management
-            attributes_cast: FlextTypes.Core.JsonDict = dict(attributes)
-            result = await self._client.add(dn, object_classes, attributes_cast)
+            if validation_result.data is None:
+                return FlextResult.fail("Validation succeeded but no data returned")
+
+            connection_id, dn_obj, processed_attributes = validation_result.data
+
+            # Execute add operation
+            result = await self._client.create_entry(
+                connection_id,
+                dn_obj,
+                processed_attributes,
+            )
 
             if result.is_success:
                 logger.debug("Added entry: %s", dn)
                 return FlextResult.ok(data=True)
+
             return FlextResult.fail(f"Failed to add entry: {result.error}")
 
         except (ConnectionError, ValueError, TypeError) as e:
@@ -811,11 +1010,17 @@ class FlextLdapApi:
 
                 # Entry exists, do intelligent merge
                 existing_entry = search_result.data[0]
-                existing_attrs = existing_entry.attributes if hasattr(existing_entry, "attributes") else {}
+                existing_attrs = (
+                    existing_entry.attributes
+                    if hasattr(existing_entry, "attributes")
+                    else {}
+                )
 
                 # Calculate what modifications are needed
                 modifications = self._calculate_attribute_modifications(
-                    normalized_dn, existing_attrs, attributes,
+                    normalized_dn,
+                    existing_attrs,
+                    attributes,
                 )
 
                 if not modifications:
@@ -860,7 +1065,10 @@ class FlextLdapApi:
         return normalized
 
     def _calculate_attribute_modifications(
-        self, dn: str, existing_attrs: dict[str, list[str]], new_attrs: dict[str, list[str]],
+        self,
+        dn: str,
+        existing_attrs: dict[str, list[str]],
+        new_attrs: dict[str, list[str]],
     ) -> dict[str, list[str]]:
         """Calculate what attribute modifications are needed.
 
@@ -905,8 +1113,11 @@ class FlextLdapApi:
             existing_values_normalized = [str(v).strip() for v in existing_values]
 
             # Check if values are different and new values are not empty
-            if (set(new_values_normalized) != set(existing_values_normalized)
-                and new_values_normalized and any(v for v in new_values_normalized)):
+            if (
+                set(new_values_normalized) != set(existing_values_normalized)
+                and new_values_normalized
+                and any(v for v in new_values_normalized)
+            ):
                 modifications[attr_name] = new_values_normalized
                 logger.debug("Attribute %s needs update for entry %s", attr_name, dn)
 
@@ -942,13 +1153,25 @@ class FlextLdapApi:
                 return FlextResult.fail(validation_result.error or "Validation failed")
 
             # Prepare target DNS and base DN
-            target_dns, resolved_base_dn = self._prepare_batch_merge_dns(entries, base_dn)
+            target_dns, resolved_base_dn = self._prepare_batch_merge_dns(
+                entries,
+                base_dn,
+            )
 
             # Fetch existing entries with single search
-            existing_map = await self._fetch_existing_entries_batch(session_id, target_dns, resolved_base_dn)
+            existing_map = await self._fetch_existing_entries_batch(
+                session_id,
+                target_dns,
+                resolved_base_dn,
+            )
 
             # Process all entries
-            results = await self._process_batch_merge_entries(session_id, entries, target_dns, existing_map)
+            results = await self._process_batch_merge_entries(
+                session_id,
+                entries,
+                target_dns,
+                existing_map,
+            )
 
             return FlextResult.ok(results)
 
@@ -1012,7 +1235,9 @@ class FlextLdapApi:
                     entry_dn = entry.dn
                     normalized_entry_dn = self._normalize_dn(entry_dn)
                     if normalized_entry_dn in target_dns:
-                        existing_map[normalized_entry_dn] = entry.attributes if hasattr(entry, "attributes") else {}
+                        existing_map[normalized_entry_dn] = (
+                            entry.attributes if hasattr(entry, "attributes") else {}
+                        )
 
                 logger.info(
                     "Found %d existing entries out of %d target entries",
@@ -1020,7 +1245,10 @@ class FlextLdapApi:
                     len(target_dns),
                 )
         except Exception as e:
-            logger.warning("Batch search failed, will fallback to individual operations: %s", e)
+            logger.warning(
+                "Batch search failed, will fallback to individual operations: %s",
+                e,
+            )
 
         return existing_map
 
@@ -1039,26 +1267,35 @@ class FlextLdapApi:
 
             try:
                 merge_result = await self._process_single_merge_entry(
-                    session_id, normalized_dn, attributes, existing_attrs,
+                    session_id,
+                    normalized_dn,
+                    attributes,
+                    existing_attrs,
                 )
 
-                results.append({
-                    "dn": dn,
-                    "normalized_dn": normalized_dn,
-                    "success": merge_result.is_success,
-                    "error": merge_result.error if merge_result.is_failure else None,
-                    "action": "modify" if existing_attrs is not None else "add",
-                })
+                results.append(
+                    {
+                        "dn": dn,
+                        "normalized_dn": normalized_dn,
+                        "success": merge_result.is_success,
+                        "error": merge_result.error
+                        if merge_result.is_failure
+                        else None,
+                        "action": "modify" if existing_attrs is not None else "add",
+                    },
+                )
 
             except Exception as e:
                 logger.exception("Unexpected error processing entry %s", dn)
-                results.append({
-                    "dn": dn,
-                    "normalized_dn": normalized_dn,
-                    "success": False,
-                    "error": f"Unexpected error: {e}",
-                    "action": "error",
-                })
+                results.append(
+                    {
+                        "dn": dn,
+                        "normalized_dn": normalized_dn,
+                        "success": False,
+                        "error": f"Unexpected error: {e}",
+                        "action": "error",
+                    },
+                )
 
         return results
 
@@ -1073,7 +1310,9 @@ class FlextLdapApi:
         if existing_attrs is not None:
             # Entry exists - calculate modifications and apply if needed
             modifications = self._calculate_attribute_modifications(
-                normalized_dn, existing_attrs, attributes,
+                normalized_dn,
+                existing_attrs,
+                attributes,
             )
             if modifications:
                 return await self.modify_entry(session_id, normalized_dn, modifications)
@@ -1121,8 +1360,43 @@ class FlextLdapApi:
             return base_dn
         # Use the longest individual DN as fallback
         longest_dn = max(dns, key=len)
-        logger.warning("No common base DN found, using longest DN as base: %s", longest_dn)
+        logger.warning(
+            "No common base DN found, using longest DN as base: %s",
+            longest_dn,
+        )
         return longest_dn
+
+    def _validate_modify_entry_preconditions(
+        self,
+        session_id: str,
+        dn: str,
+        attributes: dict[str, list[str]],
+    ) -> FlextResult[
+        tuple[str, FlextLdapDistinguishedName, dict[str, list[tuple[int, list[str]]]]]
+    ]:
+        """Validate preconditions for modify entry using Railway-Oriented Programming."""
+        # Validate session exists
+        if session_id not in self._connections:
+            return FlextResult.fail(f"Session {session_id} not found")
+
+        connection_id = self._connections[session_id]
+
+        # Convert and validate DN
+        dn_result = FlextLdapDistinguishedName.create(dn)
+        if not dn_result.is_success:
+            return FlextResult.fail(dn_result.error or "Invalid DN")
+
+        if dn_result.data is None:
+            return FlextResult.fail("Failed to create DN object")
+
+        # Convert to modifications format
+        modifications = {}
+        for attr, values in attributes.items():
+            modifications[attr] = [
+                (3, values if isinstance(values, list) else [str(values)]),
+            ]
+
+        return FlextResult.ok((connection_id, dn_result.data, modifications))
 
     async def modify_entry(
         self,
@@ -1145,17 +1419,31 @@ class FlextLdapApi:
 
         """
         try:
-            if session_id not in self._connections:
-                return FlextResult.fail(f"Session {session_id} not found")
+            # Validate preconditions using Railway-Oriented Programming
+            validation_result = self._validate_modify_entry_preconditions(
+                session_id,
+                dn,
+                attributes,
+            )
+            if not validation_result.is_success:
+                return FlextResult.fail(
+                    validation_result.error or "Precondition validation failed",
+                )
 
-            # Use the enhanced client modify method with operation type
-            # Note: connection_id available for future connection management
-            attributes_cast: FlextTypes.Core.JsonDict = dict(attributes)
-            result = await self._client.modify_with_type(dn, attributes_cast, operation_type)
+            if validation_result.data is None:
+                return FlextResult.fail("Validation succeeded but no data returned")
+
+            connection_id, dn_obj, modifications = validation_result.data
+
+            # Execute modify operation
+            result = await self._client.modify_entry(
+                connection_id, dn_obj, modifications
+            )
 
             if result.is_success:
                 logger.debug("Modified entry with operation %s: %s", operation_type, dn)
                 return FlextResult.ok(data=True)
+
             return FlextResult.fail(f"Failed to modify entry: {result.error}")
 
         except (ConnectionError, ValueError, TypeError) as e:
@@ -1195,11 +1483,17 @@ class FlextLdapApi:
 
             if attribute_types:
                 modifications["attributeTypes"] = attribute_types
-                logger.debug("Prepared %d attributeTypes for addition", len(attribute_types))
+                logger.debug(
+                    "Prepared %d attributeTypes for addition",
+                    len(attribute_types),
+                )
 
             if object_classes:
                 modifications["objectClasses"] = object_classes
-                logger.debug("Prepared %d objectClasses for addition", len(object_classes))
+                logger.debug(
+                    "Prepared %d objectClasses for addition",
+                    len(object_classes),
+                )
 
             # Use MODIFY_ADD for schema installation
             result = await self.modify_entry(
@@ -1214,8 +1508,12 @@ class FlextLdapApi:
                     "Schema elements added successfully to %s",
                     schema_dn,
                     extra={
-                        "attribute_types_count": len(attribute_types) if attribute_types else 0,
-                        "object_classes_count": len(object_classes) if object_classes else 0,
+                        "attribute_types_count": len(attribute_types)
+                        if attribute_types
+                        else 0,
+                        "object_classes_count": len(object_classes)
+                        if object_classes
+                        else 0,
                     },
                 )
                 return FlextResult.ok(data=True)
@@ -1265,7 +1563,10 @@ class FlextLdapApi:
                     # Apply filters if specified
                     if "object_class_filter" in options:
                         required_classes = options["object_class_filter"]
-                        if not any(entry.has_object_class(obj_class) for obj_class in required_classes):
+                        if not any(
+                            entry.has_object_class(obj_class)
+                            for obj_class in required_classes
+                        ):
                             continue
 
                     # Apply DN filters if specified
@@ -1281,7 +1582,10 @@ class FlextLdapApi:
                     if options.get("strict_processing", False):
                         return FlextResult.fail(f"Entry processing failed: {e}")
 
-            logger.info("Successfully processed %d LDAP entries", len(processed_entries))
+            logger.info(
+                "Successfully processed %d LDAP entries",
+                len(processed_entries),
+            )
             return FlextResult.ok(processed_entries)
 
         except Exception as e:
@@ -1315,7 +1619,10 @@ class FlextLdapApi:
             valid_entries = 0
             missing_required_attributes = 0
 
-            required_attributes = rules.get("required_attributes", ["cn", "objectClass"])
+            required_attributes = rules.get(
+                "required_attributes",
+                ["cn", "objectClass"],
+            )
 
             for entry in entries:
                 try:
@@ -1337,7 +1644,9 @@ class FlextLdapApi:
                     logger.debug("Entry validation error for %s: %s", entry.dn, e)
 
             # Calculate quality score
-            quality_score = (valid_entries / total_entries) if total_entries > 0 else 0.0
+            quality_score = (
+                (valid_entries / total_entries) if total_entries > 0 else 0.0
+            )
 
             quality_metrics = {
                 "total_entries": total_entries,
@@ -1345,7 +1654,8 @@ class FlextLdapApi:
                 "valid_entries": valid_entries,
                 "missing_required_attributes": missing_required_attributes,
                 "quality_score": round(quality_score, 3),
-                "validation_passed": quality_score >= rules.get("min_quality_threshold", 0.8),
+                "validation_passed": quality_score
+                >= rules.get("min_quality_threshold", 0.8),
             }
 
             logger.info(

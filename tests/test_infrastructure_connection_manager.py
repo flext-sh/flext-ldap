@@ -547,7 +547,7 @@ class TestEdgeCasesAndErrorScenarios:
 
         # This should raise AttributeError when trying to call methods on None
         with pytest.raises(AttributeError):
-            await manager.close_connection(None)  # type: ignore[arg-type]
+            await manager.close_connection(None)
 
         with pytest.raises(AttributeError):
-            await manager.validate_connection(None)  # type: ignore[arg-type]
+            await manager.validate_connection(None)

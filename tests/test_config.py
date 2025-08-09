@@ -17,7 +17,7 @@ from flext_ldap.config import (
     FlextLdapSettings,
     create_development_config,
 )
-from flext_ldap.constants import FlextLdapConstants
+from flext_ldap.constants_consolidated import FlextLdapAttributeConstants
 
 # Constants
 HTTP_OK = 200

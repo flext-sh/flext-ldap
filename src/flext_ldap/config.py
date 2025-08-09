@@ -45,7 +45,6 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-# 🚨 ARCHITECTURAL COMPLIANCE: Using flext_core configuration system
 from flext_core import (
     FlextBaseConfigModel,
     FlextLDAPConfig,

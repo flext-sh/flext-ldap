@@ -21,7 +21,7 @@ from flext_core import FlextResult, get_logger
 from pydantic import SecretStr
 
 if TYPE_CHECKING:
-    from flext_core.semantic_types import FlextTypes
+    from flext_core.typings import FlextTypes
 
 from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
 from flext_ldap.errors import (
@@ -31,7 +31,7 @@ from flext_ldap.errors import (
     FlextLdapProtocol,
     FlextLdapTimeoutError,
 )
-from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
+from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient, LdapAuthConfig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -73,7 +73,7 @@ class FlextLdapDirectoryServiceInterface(ABC):
     """Abstract interface for directory operations."""
 
     @abstractmethod
-    def connect(
+    async def connect(
         self,
         server_url: str,
         *,
@@ -111,9 +111,10 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         logger.debug("Initializing FlextLdapDirectoryService")
         self._ldap_client: FlextLdapSimpleClient = FlextLdapSimpleClient()
         self._auth_config: FlextLdapAuthConfig | None = None
+        self._connection_id: str | None = None
         logger.trace("FlextLdapDirectoryService initialized with default client")
 
-    def connect(
+    async def connect(
         self,
         server_url: str,
         *,
@@ -141,7 +142,11 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         )
         try:
             # Consolidated connection pipeline - Railway Oriented Programming
-            return self._execute_connection_pipeline(server_url, bind_dn, password)
+            return await self._execute_connection_pipeline(
+                server_url,
+                bind_dn,
+                password,
+            )
 
         except (ConnectionError, OSError) as e:
             # Convert to FLEXT LDAP error with rich context
@@ -172,7 +177,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             )
             return generic_error.to_bool_result()
 
-    def _execute_connection_pipeline(
+    async def _execute_connection_pipeline(
         self,
         server_url: str,
         bind_dn: str | None,
@@ -187,7 +192,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         config = config_result.data
         if config is None:
             return FlextResult.fail("Configuration data is None")
-        connection_result = self._establish_ldap_connection(config)
+        connection_result = await self._establish_ldap_connection(config)
         if connection_result.is_failure:
             return connection_result
 
@@ -234,16 +239,19 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         logger.trace("Created connection config", extra={"config": config.__dict__})
         return FlextResult.ok(config)
 
-    def _establish_ldap_connection(
+    async def _establish_ldap_connection(
         self,
         config: FlextLdapConnectionConfig,
     ) -> FlextResult[bool]:
         """Establish LDAP connection using config - Single Responsibility."""
-        self._ldap_client = FlextLdapSimpleClient(config)
-        logger.debug("Created new LDAP client with config")
+        self._ldap_client = FlextLdapSimpleClient(None)
+        logger.debug("Created new LDAP client")
 
         logger.trace("Attempting LDAP connection")
-        connection_result = self._ldap_client.connect(config)
+        server_url = (
+            f"{'ldaps' if config.use_ssl else 'ldap'}://{config.host}:{config.port}"
+        )
+        connection_result = await self._ldap_client.connect(server_url, None, None)
         if not connection_result.is_success:
             logger.error(
                 "LDAP connection failed",
@@ -256,6 +264,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             return FlextResult.fail(f"Connection failed: {connection_result.error}")
 
         logger.debug("LDAP connection established successfully")
+        # Save connection ID for later use in disconnect
+        self._connection_id = connection_result.data
         return FlextResult.ok(DirectoryOperationResult.SUCCESS)
 
     def _handle_authentication(
@@ -281,8 +291,15 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 self._auth_config = auth_config
             else:
                 logger.trace("Attempting authentication in sync context")
+                # Convert FlextLdapAuthConfig to LdapAuthConfig for compatibility
+                ldap_auth_config = LdapAuthConfig(
+                    bind_dn=auth_config.bind_dn,
+                    password=auth_config.bind_password.get_secret_value()
+                    if auth_config.bind_password
+                    else None,
+                )
                 auth_result = loop.run_until_complete(
-                    self._ldap_client.connect_with_auth(auth_config),
+                    self._ldap_client.connect_with_auth(ldap_auth_config),
                 )
                 if not auth_result.is_success:
                     logger.error(
@@ -516,10 +533,13 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
         """
         try:
-            # For compatibility with test expectations, we accept connection_id
-            # but the underlying client disconnect() doesn't use it
-            disconnect_result = self._ldap_client.disconnect()
+            # Use saved connection_id with new async API
+            if not self._connection_id:
+                return FlextResult.fail("No active connection to disconnect")
+
+            disconnect_result = await self._ldap_client.disconnect(self._connection_id)
             if disconnect_result.is_success:
+                self._connection_id = None
                 return FlextResult.ok(data=DirectoryOperationResult.SUCCESS)
             return FlextResult.fail(f"Disconnect failed: {disconnect_result.error}")
         except ConnectionError as e:
@@ -770,7 +790,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
     def _execute_async_operation(
         self,
-        operation_func: Callable[..., object],
+        operation_func: Callable[..., object],  # Generic callable for flexibility
         *args: object,
     ) -> object:
         """Execute async operation with proper event loop handling.
@@ -785,7 +805,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Type annotation for future
                     future: concurrent.futures.Future[object] = executor.submit(
-                        lambda: asyncio.run(operation_func(*args)),  # type: ignore[arg-type] # operation_func is dynamically typed
+                        lambda: asyncio.run(operation_func(*args)),
                     )
                     raw_result = future.result(timeout=30)
                     # Only convert search results - other operations return their
@@ -794,12 +814,15 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                         operation_func,
                     ):
                         return self._convert_raw_search_result(
-                            cast("FlextResult[list[FlextTypes.Core.JsonDict]]", raw_result),
+                            cast(
+                                "FlextResult[list[FlextTypes.Core.JsonDict]]",
+                                raw_result,
+                            ),
                         )
                     return raw_result
             except RuntimeError:
                 # No running loop, we can use asyncio.run directly
-                return asyncio.run(operation_func(*args))  # type: ignore[arg-type] # operation_func is dynamically typed
+                return asyncio.run(operation_func(*args))
         except Exception as e:
             logger.exception("Async operation failed", exc_info=e)
             return FlextResult.fail(f"Operation error: {e}")

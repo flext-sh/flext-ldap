@@ -260,10 +260,10 @@ class FlextLdapDirectoryAdapter:
 **Configuration Pattern**:
 
 ```python
-from flext_core.config import FlextBaseSettings
+from flext_core.config import FlextSettings
 from flext_ldap.config import FlextLdapSettings
 
-class FlextLdapSettings(FlextBaseSettings):
+class FlextLdapSettings(FlextSettings):
     """LDAP configuration with environment variable support."""
 
     # LDAP Connection settings
@@ -654,7 +654,7 @@ def process_users(api: 'FlextLdapApi') -> 'FlextResult[List[FlextLdapUser]]':
 │  infrastructure/adapters/ - External system adapters          │
 ├─────────────────────────────────────────────────────────────────┤
 │                      FLEXT-Core Foundation                     │
-│  FlextResult, FlextContainer, FlextEntity, FlextBaseSettings   │
+│  FlextResult, FlextContainer, FlextEntity, FlextSettings   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -938,10 +938,10 @@ async def create_user_pipeline_with_session(
 ### **Hierarchical LDAP Configuration**
 
 ```python
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 from pydantic import SecretStr, Field
 
-class FlextLdapConnectionSettings(FlextBaseSettings):
+class FlextLdapConnectionSettings(FlextSettings):
     """LDAP connection configuration."""
     host: str = "localhost"
     port: int = 389
@@ -952,7 +952,7 @@ class FlextLdapConnectionSettings(FlextBaseSettings):
     class Config:
         env_prefix = "FLEXT_LDAP_CONN_"
 
-class FlextLdapAuthSettings(FlextBaseSettings):
+class FlextLdapAuthSettings(FlextSettings):
     """LDAP authentication configuration."""
     bind_dn: str = ""
     bind_password: SecretStr = SecretStr("")
@@ -961,7 +961,7 @@ class FlextLdapAuthSettings(FlextBaseSettings):
     class Config:
         env_prefix = "FLEXT_LDAP_AUTH_"
 
-class FlextLdapSearchSettings(FlextBaseSettings):
+class FlextLdapSearchSettings(FlextSettings):
     """LDAP search configuration."""
     base_dn: str = "dc=example,dc=com"
     default_filter: str = "(objectClass=*)"
@@ -972,7 +972,7 @@ class FlextLdapSearchSettings(FlextBaseSettings):
     class Config:
         env_prefix = "FLEXT_LDAP_SEARCH_"
 
-class FlextLdapSettings(FlextBaseSettings):
+class FlextLdapSettings(FlextSettings):
     """Complete LDAP configuration composition."""
     connection: FlextLdapConnectionSettings = Field(default_factory=FlextLdapConnectionSettings)
     authentication: FlextLdapAuthSettings = Field(default_factory=FlextLdapAuthSettings)
@@ -1005,7 +1005,7 @@ class FlextLdapEnvironment(str, Enum):
     STAGING = "staging"
     PRODUCTION = "production"
 
-class FlextLdapEnvironmentSettings(FlextBaseSettings):
+class FlextLdapEnvironmentSettings(FlextSettings):
     """Environment-specific LDAP settings."""
     environment: FlextLdapEnvironment = FlextLdapEnvironment.DEVELOPMENT
 
@@ -1379,12 +1379,12 @@ class FlextLdapMeltanoIntegration:
 
 ```python
 # ✅ FLEXT ecosystem configuration composition
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 from flext_ldap import FlextLdapSettings
 from flext_auth import FlextAuthSettings
 from flext_observability import FlextObservabilitySettings
 
-class FlextEcosystemSettings(FlextBaseSettings):
+class FlextEcosystemSettings(FlextSettings):
     """Complete FLEXT ecosystem configuration."""
 
     # Core components

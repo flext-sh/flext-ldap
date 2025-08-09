@@ -525,7 +525,7 @@ class TestErrorHandlingAndEdgeCases:
 
         # None input should be handled gracefully
         with pytest.raises((TypeError, AttributeError)):
-            await service.validate_certificate_chain(None, mock_context)  # type: ignore[arg-type]
+            await service.validate_certificate_chain(None, mock_context)
 
     @patch("flext_ldap.infrastructure.certificate_validator.ssl.create_default_context")
     async def test_create_ssl_context_ssl_error(self, mock_ssl_create: Mock) -> None:
