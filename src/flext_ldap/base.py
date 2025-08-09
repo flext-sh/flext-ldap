@@ -21,16 +21,16 @@ from uuid import UUID
 from flext_core import (
     FlextContainer,
     FlextDomainService,
-    FlextGenerators,
+    FlextIdGenerator,
     FlextRepository,
     FlextResult,
 )
 
 if TYPE_CHECKING:
-    from flext_core.semantic_types import FlextTypes
+    from flext_core.typings import FlextTypes
 
 
-class FlextLdapRepository(FlextRepository):
+class FlextLdapRepository(FlextRepository[dict]):
     """LDAP Repository implementing flext-core repository interface.
 
     Provides type-safe LDAP operations with proper error handling.
@@ -50,10 +50,25 @@ class FlextLdapRepository(FlextRepository):
             return FlextResult.fail(f"Entity not found: {entity_id}")
         return FlextResult.ok(entity)
 
+    def find_all(self) -> FlextResult[list[dict]]:
+        """Find all entities in storage."""
+        try:
+            entities = list(self._storage.values())
+            return FlextResult.ok(entities)
+        except Exception as e:
+            return FlextResult.fail(f"Failed to retrieve all entities: {e}")
+
+    def get_by_id(self, entity_id: str) -> FlextResult[dict]:
+        """Get entity by ID with specific return type."""
+        result = self.find_by_id(entity_id)
+        if result.is_failure:
+            return FlextResult.fail(result.error or "Entity not found")
+        return FlextResult.ok(result.data)
+
     def save(self, entity: object) -> FlextResult[None]:
         """Save entity with validation."""
         try:
-            entity_id = getattr(entity, "id", FlextGenerators.generate_entity_id())
+            entity_id = getattr(entity, "id", FlextIdGenerator.generate_id())
 
             # Use flext-core validation if available
             if hasattr(entity, "validate_domain_rules"):

@@ -288,7 +288,7 @@ class FlextLdapProtocolErrorTranslator:
 ### Adapter Configuration
 
 ```python
-class FlextLdapAdapterConfig(FlextBaseSettings):
+class FlextLdapAdapterConfig(FlextSettings):
     """Configuration for adapter layer components."""
 
     # Directory adapter settings

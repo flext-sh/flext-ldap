@@ -16,10 +16,10 @@ from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from flext_core import FlextGenerators, FlextResult, get_logger
+from flext_core import FlextIdGenerator, FlextResult, get_logger
 
 if TYPE_CHECKING:
-    from flext_core.semantic_types import FlextTypes
+    from flext_core.typings import FlextTypes
 
 from flext_ldap.entities import FlextLdapConnection
 
@@ -44,7 +44,7 @@ class FlextLdapSecurityEventType(Enum):
     SCHEMA_ACCESS = "schema_access"
     CERTIFICATE_VALIDATION = "certificate_validation"
     TLS_NEGOTIATION = "tls_negotiation"
-    PASSWORD_CHANGE = "password_change"  # noqa: S105  # nosec B105 - enum constant
+    PASSWORD_CHANGE = "password_change"
     ACCOUNT_LOCKOUT = "account_lockout"
     PRIVILEGE_ESCALATION = "privilege_escalation"
     SUSPICIOUS_ACTIVITY = "suspicious_activity"
@@ -128,7 +128,7 @@ class FlextLdapSecurityEvent:
             server_host = getattr(data.connection, "host", None)
             server_port = getattr(data.connection, "port", None)
 
-        self.event_id = FlextGenerators.generate_uuid()
+        self.event_id = FlextIdGenerator.generate_id()
         self.event_type = data.event_type
         self.severity = data.severity
         self.status = data.status

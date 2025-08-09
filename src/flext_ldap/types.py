@@ -21,11 +21,17 @@ from enum import Enum, StrEnum
 from urllib.parse import urlparse
 
 from flext_core import (
-    FlextDomainValueObject,
     FlextResult,
+    FlextValue,
     get_logger,
 )
 from pydantic import Field, field_validator
+
+from flext_ldap.value_objects import (
+    FlextLdapCreateUserRequest,
+    FlextLdapDistinguishedName,
+    FlextLdapFilter,
+)
 
 logger = get_logger(__name__)
 
@@ -48,7 +54,7 @@ class FlextLdapDataType(Enum):
     IP_ADDRESS = "ip_address"
     MAC_ADDRESS = "mac_address"
     CERTIFICATE = "certificate"
-    PASSWORD_DATA_TYPE = "password_field"  # noqa: S105  # nosec B105 - data type identifier
+    PASSWORD_DATA_TYPE = "password_field"
     UNKNOWN = "unknown"
 
 
@@ -63,212 +69,19 @@ class FlextLdapScopeEnum(StrEnum):
     ONE = "onelevel"
     SUB = "subtree"
 
+
 # CENTRALIZED VALUE OBJECTS - Following foundation patterns
 
 
-class FlextLdapDistinguishedName(FlextDomainValueObject):
-    """LDAP Distinguished Name value object with RFC 4514 compliance."""
-
-    value: str = Field(..., description="DN string value")
-
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for DN."""
-        if not self.value or not self.value.strip():
-            return FlextResult.fail("Distinguished name cannot be empty")
-        if "=" not in self.value:
-            return FlextResult.fail("Distinguished name must contain at least one RDN")
-        return FlextResult.ok(None)
-
-    @field_validator("value")
-    @classmethod
-    def validate_dn(cls, v: str) -> str:
-        """Validate DN format."""
-        if not v or not isinstance(v, str):
-            msg = "DN must be a non-empty string"
-            raise ValueError(msg)
-
-        if "=" not in v:
-            msg = "DN must contain at least one attribute=value pair"
-            raise ValueError(msg)
-
-        # Validate each component
-        components = v.split(",")
-        for raw_component in components:
-            component = raw_component.strip()
-            if "=" not in component:
-                msg = f"Invalid DN component: {component}"
-                raise ValueError(msg)
-
-            attr_name, attr_value = component.split("=", 1)
-            if not attr_name.strip() or not attr_value.strip():
-                msg = f"Invalid DN component: {component}"
-                raise ValueError(msg)
-
-        return v
-
-    def __str__(self) -> str:
-        """Return DN string value."""
-        return self.value
-
-    def get_rdn(self) -> str:
-        """Get relative distinguished name (first component)."""
-        return self.value.split(",")[0].strip()
-
-    def get_parent_dn(self) -> FlextLdapDistinguishedName | None:
-        """Get parent DN."""
-        components = self.value.split(",")
-        if len(components) <= 1:
-            return None
-
-        parent_dn = ",".join(components[1:]).strip()
-        return FlextLdapDistinguishedName(value=parent_dn)
-
-    def get_components(self) -> list[str]:
-        """Get all DN components."""
-        return [component.strip() for component in self.value.split(",")]
-
-    def is_child_of(self, parent: FlextLdapDistinguishedName) -> bool:
-        """Check if this DN is a child of another DN."""
-        return self.value.lower().endswith(parent.value.lower())
+# FlextLdapDistinguishedName: CONSOLIDATED to value_objects.py (RFC 4514 compliant)
+# Import from: from flext_ldap.value_objects import FlextLdapDistinguishedName
 
 
-class FlextLdapFilterValue(FlextDomainValueObject):
-    """LDAP search filter value object with RFC 4515 compliance."""
-
-    value: str = Field(..., description="LDAP filter string")
-
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for LDAP filter."""
-        validation_errors = self._collect_filter_validation_errors()
-
-        if validation_errors:
-            return FlextResult.fail(validation_errors[0])
-
-        return FlextResult.ok(None)
-
-    def _collect_filter_validation_errors(self) -> list[str]:
-        """Collect all filter validation errors."""
-        errors = []
-
-        if not self.value:
-            errors.append("LDAP filter cannot be empty")
-
-        if not (self.value.startswith("(") and self.value.endswith(")")):
-            errors.append("LDAP filter must be enclosed in parentheses")
-
-        open_count = self.value.count("(")
-        close_count = self.value.count(")")
-        if open_count != close_count:
-            errors.append("LDAP filter has unbalanced parentheses")
-
-        return errors
-
-    @field_validator("value")
-    @classmethod
-    def validate_filter(cls, v: str) -> str:
-        """Validate LDAP filter format."""
-        if not v or not isinstance(v, str):
-            msg = "Filter must be a non-empty string"
-            raise ValueError(msg)
-
-        if not (v.startswith("(") and v.endswith(")")):
-            msg = "Filter must be wrapped in parentheses"
-            raise ValueError(msg)
-
-        # Check for balanced parentheses
-        open_count = v.count("(")
-        close_count = v.count(")")
-        if open_count != close_count:
-            msg = "Filter has unbalanced parentheses"
-            raise ValueError(msg)
-
-        return v
-
-    def __str__(self) -> str:
-        """Return filter string value."""
-        return self.value
-
-    @classmethod
-    def equals(cls, attribute: str, value: str) -> FlextLdapFilterValue:
-        """Create equality filter."""
-        return cls(value=f"({attribute}={value})")
-
-    @classmethod
-    def present(cls, attribute: str) -> FlextLdapFilterValue:
-        """Create presence filter."""
-        return cls(value=f"({attribute}=*)")
-
-    @classmethod
-    def and_filters(cls, *filters: FlextLdapFilterValue) -> FlextLdapFilterValue:
-        """Combine filters with AND logic."""
-        return cls._combine_filters("&", *filters)
-
-    @classmethod
-    def or_filters(cls, *filters: FlextLdapFilterValue) -> FlextLdapFilterValue:
-        """Combine filters with OR logic."""
-        return cls._combine_filters("|", *filters)
-
-    @classmethod
-    def _combine_filters(
-        cls,
-        operator: str,
-        *filters: FlextLdapFilterValue,
-    ) -> FlextLdapFilterValue:
-        """Template method for combining filters."""
-        if len(filters) == 0:
-            msg = "At least one filter required"
-            raise ValueError(msg)
-        if len(filters) == 1:
-            return filters[0]
-
-        filter_strings = [f.value for f in filters]
-        combined = f"({operator}{''.join(filter_strings)})"
-        return cls(value=combined)
-
-    @classmethod
-    def contains(cls, attribute: str, value: str) -> FlextLdapFilterValue:
-        """Create a contains filter."""
-        return cls(value=f"({attribute}=*{value}*)")
-
-    @classmethod
-    def starts_with(cls, attribute: str, value: str) -> FlextLdapFilterValue:
-        """Create a starts-with filter."""
-        return cls(value=f"({attribute}={value}*)")
-
-    @classmethod
-    def ends_with(cls, attribute: str, value: str) -> FlextLdapFilterValue:
-        """Create an ends-with filter."""
-        return cls(value=f"({attribute}=*{value})")
-
-    @classmethod
-    def not_equals(cls, attribute: str, value: str) -> FlextLdapFilterValue:
-        """Create a not-equals filter."""
-        return cls(value=f"(!({attribute}={value}))")
-
-    @classmethod
-    def person_filter(cls) -> FlextLdapFilterValue:
-        """Create a filter for person objects."""
-        return cls(value="(objectClass=person)")
-
-    @classmethod
-    def group_filter(cls) -> FlextLdapFilterValue:
-        """Create a filter for group objects."""
-        return cls.or_filters(
-            cls(value="(objectClass=group)"),
-            cls(value="(objectClass=groupOfNames)"),
-            cls(value="(objectClass=groupOfUniqueNames)"),
-        )
-
-    def __and__(self, other: FlextLdapFilterValue) -> FlextLdapFilterValue:
-        """Combine filters with AND operation."""
-        return self.and_filters(self, other)
-
-    def __or__(self, other: FlextLdapFilterValue) -> FlextLdapFilterValue:
-        """Combine filters with OR operation."""
-        return self.or_filters(self, other)
+# FlextLdapFilterValue: CONSOLIDATED to value_objects.py (RFC 4515 compliant)
+# Import from: from flext_ldap.value_objects import FlextLdapFilter
 
 
-class FlextLdapUri(FlextDomainValueObject):
+class FlextLdapUri(FlextValue):
     """LDAP URI value object with RFC 4516 compliance."""
 
     value: str = Field(..., description="LDAP URI string")
@@ -341,69 +154,19 @@ class FlextLdapUri(FlextDomainValueObject):
         return urlparse(self.value).scheme == "ldaps"
 
 
-class FlextLdapCreateUserRequest(FlextDomainValueObject):
-    """User creation request value object with comprehensive validation."""
+# FlextLdapCreateUserRequest: CONSOLIDATED to value_objects.py (comprehensive validation)
+# Import from: from flext_ldap.value_objects import FlextLdapCreateUserRequest
 
-    dn: str = Field(..., description="Distinguished name for the user")
-    uid: str = Field(..., description="User identifier")
-    cn: str = Field(..., description="Common name")
-    sn: str = Field(..., description="Surname")
-    mail: str | None = Field(None, description="Email address")
-    phone: str | None = Field(None, description="Phone number")
-    ou: str | None = Field(None, description="Organizational unit")
-    department: str | None = Field(None, description="Department")
-    title: str | None = Field(None, description="Job title")
-    object_classes: list[str] | None = Field(None, description="LDAP object classes")
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate user creation request."""
-        validation_errors = self._collect_user_request_validation_errors()
-
-        if validation_errors:
-            return FlextResult.fail(validation_errors[0])
-
-        return FlextResult.ok(None)
-
-    def _collect_user_request_validation_errors(self) -> list[str]:
-        """Collect user request validation errors."""
-        errors = []
-
-        if not self.dn or not self.dn.strip():
-            errors.append("DN cannot be empty")
-
-        if not self.uid or not self.uid.strip():
-            errors.append("UID cannot be empty")
-
-        if self.mail and "@" not in self.mail:
-            errors.append("Email must be valid format")
-
-        return errors
-
-    @field_validator("dn")
-    @classmethod
-    def validate_dn(cls, v: str) -> str:
-        """Validate DN is not empty."""
-        if not v or v.isspace():
-            msg = "DN cannot be empty or whitespace only"
-            raise ValueError(msg)
-        return v.strip()
-
-    @field_validator("uid", "cn", "sn")
-    @classmethod
-    def validate_required_fields(cls, v: str) -> str:
-        """Validate required fields are not empty."""
-        if not v or v.isspace():
-            msg = "Required field cannot be empty or whitespace only"
-            raise ValueError(msg)
-        return v.strip()
-
+# Consolidated classes available for backward compatibility aliases
 
 # BACKWARD COMPATIBILITY ALIASES - Centralized
 LDAPScope = FlextLdapScopeEnum
-LDAPFilter = FlextLdapFilterValue
+LDAPFilter = FlextLdapFilter  # Now from value_objects.py
 LDAPUri = FlextLdapUri
-CreateUserRequest = FlextLdapCreateUserRequest
-DistinguishedName = FlextLdapDistinguishedName
+CreateUserRequest = FlextLdapCreateUserRequest  # Now from value_objects.py
+DistinguishedName = FlextLdapDistinguishedName  # Now from value_objects.py
+FlextLdapFilterValue = FlextLdapFilter  # Legacy alias
 
 # Export legacy name used in old converters.py
 FlextSimpleConverter = None  # Will be imported from infrastructure

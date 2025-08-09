@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Protocol
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core.semantic_types import FlextTypes
+    from flext_core.typings import FlextTypes
 from urllib.parse import parse_qs, urlparse
 
 from flext_core import get_logger

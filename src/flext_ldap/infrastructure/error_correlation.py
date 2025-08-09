@@ -19,13 +19,12 @@ from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from flext_core import FlextGenerators, FlextResult, get_logger
+from flext_core import FlextIdGenerator, FlextResult, get_logger
 
 if TYPE_CHECKING:
-    from flext_core.semantic_types import FlextTypes
+    from flext_core.typings import FlextTypes
 
 # Constants imported from centralized module
-from flext_ldap.constants import FlextLdapErrorCorrelationConstants
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -80,7 +79,7 @@ class FlextLdapErrorPattern:
 
     def __init__(self, data: FlextLdapErrorPatternData) -> None:
         """Initialize error pattern using Parameter Object pattern."""
-        self.pattern_id = data.pattern_id or FlextGenerators.generate_uuid()
+        self.pattern_id = data.pattern_id or FlextIdGenerator.generate_id()
         self.error_signature = data.error_signature or ""
         self.category = data.category
         self.severity = data.severity
@@ -146,7 +145,7 @@ class FlextLdapErrorEvent:
 
     def __init__(self, data: FlextLdapErrorEventData) -> None:
         """Initialize error event using Parameter Object pattern."""
-        self.event_id = data.event_id or FlextGenerators.generate_uuid()
+        self.event_id = data.event_id or FlextIdGenerator.generate_id()
         self.timestamp = data.timestamp or datetime.now(UTC)
         self.error_message = data.error_message
         self.error_code = data.error_code
@@ -357,8 +356,8 @@ class FlextLdapErrorCorrelationService:
             significant_correlations = []
             for other_event in correlated_events:
                 correlation_score = self._calculate_correlation(event, other_event)
-                constants = FlextLdapErrorCorrelationConstants
-                threshold = constants.SIGNIFICANT_CORRELATION_THRESHOLD
+                constants = FlextLdapErrorConstants
+                threshold = constants.Thresholds.SIGNIFICANT_CORRELATION_THRESHOLD
                 if correlation_score > threshold:
                     significant_correlations.append(other_event)
 
@@ -475,7 +474,7 @@ class FlextLdapErrorCorrelationService:
             correlation = self._calculate_correlation(event, other_event)
             if (
                 correlation
-                > FlextLdapErrorCorrelationConstants.MINIMUM_CORRELATION_THRESHOLD
+                > 0.5  # Minimum correlation threshold
             ):
                 total_correlation += correlation
                 correlation_count += 1

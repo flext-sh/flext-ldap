@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
-    from flext_core.semantic_types import FlextTypes
+    from flext_core.typings import FlextTypes
 
 from flext_ldap.domain.exceptions import FlextLdapUserError
 from flext_ldap.domain.repositories import (
@@ -22,7 +22,7 @@ from flext_ldap.domain.repositories import (
     FlextLdapUserRepository,
 )
 from flext_ldap.entities import FlextLdapConnection, FlextLdapUser
-from flext_ldap.values import FlextLdapDistinguishedName
+from flext_ldap.value_objects import FlextLdapDistinguishedName
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -129,13 +129,13 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 
             # Check if user exists to determine add vs modify
             user_exists: bool = await self.exists(
-                FlextLdapDistinguishedName(value=user.dn),
+                FlextLdapDistinguishedName(dn=user.dn),
             )
 
             if user_exists:
                 # Update existing user - type-safe conversion
                 changes: FlextTypes.Core.JsonDict = dict(user.attributes)
-                modify_result: FlextResult[bool] = await self.ldap_client.modify(
+                modify_result: FlextResult[None] = await self.ldap_client.modify(
                     dn=user.dn,
                     changes=changes,
                 )
@@ -145,7 +145,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 return FlextResult.fail(f"LDAP modify failed: {modify_result.error}")
             # Add new user - type-safe conversion
             attributes: FlextTypes.Core.JsonDict = dict(user.attributes)
-            add_result: FlextResult[bool] = await self.ldap_client.add(
+            add_result: FlextResult[None] = await self.ldap_client.add(
                 dn=user.dn,
                 object_classes=user.object_classes,
                 attributes=attributes,
@@ -207,19 +207,23 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             if not dn or not dn.strip():
                 return FlextResult.fail("Distinguished name cannot be empty")
 
-            # Use LDAP client to get entry by DN
+            # Use LDAP client to search for entry by DN
             get_result: FlextResult[
-                FlextTypes.Core.JsonDict
-            ] = await self.ldap_client.get_entry(
-                dn=dn.strip(),
+                list[FlextTypes.Core.JsonDict]
+            ] = await self.ldap_client.search(
+                base_dn=dn.strip(),
+                search_filter="(objectClass=*)",
+                attributes=["*"],
+                scope="base",
             )
 
             if get_result.is_success:
-                entry = get_result.data
-                if entry:
-                    return FlextResult.ok(entry)
+                entries = get_result.data or []
+                if entries:
+                    # Return first entry (should only be one for base scope)
+                    return FlextResult.ok(entries[0])
                 return FlextResult.ok(None)  # Entry not found
-            return FlextResult.fail(f"LDAP get entry failed: {get_result.error}")
+            return FlextResult.fail(f"LDAP search failed: {get_result.error}")
 
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to find user by DN {dn}: {e}"
@@ -233,19 +237,58 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             msg = f"Failed to find users: {e}"
             raise FlextLdapUserError(msg) from e
 
+    async def _prepare_user_deletion(
+        self, user: FlextLdapUser,
+    ) -> FlextResult[tuple[str, FlextLdapDistinguishedName]]:
+        """Prepare user deletion using Railway-Oriented Programming."""
+        # Validate user and DN
+        if not user or not user.dn:
+            return FlextResult.fail("User and DN are required for deletion")
+
+        # Establish connection - this is a repository pattern limitation
+        # The repository should receive connection_id or manage connection internally
+        connection_result = await self.ldap_client.connect(
+            "ldap://localhost:389", None, None,
+        )
+        if not connection_result.is_success:
+            return FlextResult.fail(f"Connection failed: {connection_result.error}")
+
+        connection_id = connection_result.data
+        if connection_id is None:
+            return FlextResult.fail("No connection ID received")
+
+        # Create and validate DN object
+        dn_result = FlextLdapDistinguishedName.create(user.dn)
+        if not dn_result.is_success:
+            return FlextResult.fail(f"Invalid DN: {dn_result.error}")
+        if dn_result.data is None:
+            return FlextResult.fail("Failed to create DN object")
+
+        return FlextResult.ok((connection_id, dn_result.data))
+
     async def delete(self, user: FlextLdapUser) -> FlextResult[object]:
         """Delete user from directory."""
         try:
-            if not user or not user.dn:
-                return FlextResult.fail("User and DN are required for deletion")
+            # Prepare deletion using Railway-Oriented Programming
+            preparation_result = await self._prepare_user_deletion(user)
+            if not preparation_result.is_success:
+                return FlextResult.fail(
+                    preparation_result.error or "User deletion preparation failed",
+                )
 
-            # Use LDAP client to delete entry
-            delete_result: FlextResult[bool] = await self.ldap_client.delete_entry(
-                user.dn,
+            if preparation_result.data is None:
+                return FlextResult.fail("Preparation succeeded but no data returned")
+
+            connection_id, dn_obj = preparation_result.data
+
+            # Execute deletion operation
+            delete_result = await self.ldap_client.delete_entry(
+                connection_id=connection_id, dn=dn_obj,
             )
 
             if delete_result.is_success:
                 return FlextResult.ok(data=True)
+
             return FlextResult.fail(f"LDAP delete failed: {delete_result.error}")
 
         except (RuntimeError, ValueError, TypeError) as e:

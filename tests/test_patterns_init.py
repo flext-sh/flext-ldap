@@ -283,8 +283,6 @@ class TestDeprecatedModuleIntegration:
         with warnings.catch_warnings(record=True) as warning_list:
             warnings.simplefilter("always")
 
-            import flext_ldap.patterns as patterns_module  # noqa: F401 # Testing import
-
             # Should not have warnings just from importing
             # (warnings would come from using deprecated functionality)
             deprecation_warnings = [

@@ -14,19 +14,22 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import (
-    FlextDomainValueObject,
     FlextResult,
+    FlextValueObject,
     get_logger,
 )
 from pydantic import Field, field_validator
 
-# Import centralized types - ELIMINATES ALL DUPLICATIONS
 from flext_ldap.types import (
-    FlextLdapCreateUserRequest,
-    FlextLdapDistinguishedName,
-    FlextLdapFilterValue,
     FlextLdapScopeEnum,
     FlextLdapUri,
+)
+
+# Import consolidated value objects - ELIMINATES ALL DUPLICATIONS
+from flext_ldap.value_objects import (
+    FlextLdapCreateUserRequest,
+    FlextLdapDistinguishedName,
+    FlextLdapFilter as FlextLdapFilterValue,  # Alias for compatibility
 )
 
 logger = get_logger(__name__)
@@ -34,7 +37,7 @@ logger = get_logger(__name__)
 # ADDITIONAL VALUE OBJECTS - Only unique ones not in types.py
 
 
-class FlextLdapObjectClass(FlextDomainValueObject):
+class FlextLdapObjectClass(FlextValueObject):
     """LDAP object class value object."""
 
     name: str = Field(..., description="Object class name")
@@ -67,7 +70,7 @@ class FlextLdapObjectClass(FlextDomainValueObject):
         return self.name
 
 
-class FlextLdapAttributesValue(FlextDomainValueObject):
+class FlextLdapAttributesValue(FlextValueObject):
     """LDAP attributes value object."""
 
     attributes: dict[str, list[str]] = Field(
@@ -119,7 +122,7 @@ class FlextLdapAttributesValue(FlextDomainValueObject):
         return FlextLdapAttributesValue(attributes=new_attrs)
 
 
-class FlextLdapConnectionInfo(FlextDomainValueObject):
+class FlextLdapConnectionInfo(FlextValueObject):
     """LDAP connection information value object."""
 
     server_uri: FlextLdapUri
@@ -144,7 +147,7 @@ class FlextLdapConnectionInfo(FlextDomainValueObject):
         return f"{self.server_uri} ({auth_status}, {security})"
 
 
-class FlextLdapExtendedEntry(FlextDomainValueObject):
+class FlextLdapExtendedEntry(FlextValueObject):
     """Extended LDAP entry value object with rich domain operations."""
 
     dn: str = Field(..., description="Distinguished Name")
@@ -215,7 +218,9 @@ class FlextLdapExtendedEntry(FlextDomainValueObject):
             return "user"
 
         # Check for group entries
-        if any(oc in oc_lower for oc in ["groupofnames", "groupofuniquenames", "group"]):
+        if any(
+            oc in oc_lower for oc in ["groupofnames", "groupofuniquenames", "group"]
+        ):
             return "group"
 
         # Check for organizational unit entries

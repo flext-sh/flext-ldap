@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 from flext_core import FlextResult, FlextValueObject
 
 if TYPE_CHECKING:
-    from flext_core.semantic_types import FlextTypes
+    from flext_core.typings import FlextTypes
 
 
 class FlextLdapConnectionEstablished(FlextValueObject):

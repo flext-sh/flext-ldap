@@ -32,7 +32,7 @@ class FlextLDAPConnectionManager:
         self.port = port
         self.use_ssl = use_ssl
 
-    async def create_connection(self) -> FlextResult[FlextLdapSimpleClient]:
+    async def create_connection(self) -> FlextResult[tuple[FlextLdapSimpleClient, str]]:
         """Create a new LDAP connection.
 
         Returns:
@@ -48,35 +48,45 @@ class FlextLDAPConnectionManager:
                 use_ssl=self.use_ssl,
             )
 
-            client = FlextLdapSimpleClient(config)
+            client = FlextLdapSimpleClient(None)
 
-            # Test connection - FlextLdapSimpleClient.connect() is synchronous
-            connect_result = client.connect()
+            # Test connection - using new async API
+            server_url = (
+                f"{'ldaps' if config.use_ssl else 'ldap'}://{config.host}:{config.port}"
+            )
+            connect_result = await client.connect(server_url, None, None)
             if not connect_result.is_success:
                 return FlextResult.fail(
                     f"Connection test failed: {connect_result.error}",
                 )
-            return FlextResult.ok(client)
+            # Store connection ID for later use
+            connection_id = connect_result.data
+            if connection_id is None:
+                return FlextResult.fail(
+                    "Connection succeeded but no connection ID received",
+                )
+            return FlextResult.ok((client, connection_id))
 
         except (ValueError, TypeError, OSError) as e:
             return FlextResult.fail(f"Failed to create LDAP connection: {e}")
 
     async def close_connection(
         self,
-        connection: FlextLdapSimpleClient,
+        connection_info: tuple[FlextLdapSimpleClient, str],
     ) -> FlextResult[None]:
         """Close LDAP connection.
 
         Args:
-            connection: LDAP client to close
+            connection_info: Tuple of (client, connection_id)
 
         Returns:
             Result indicating success or error
 
         """
         try:
-            # FlextLdapSimpleClient.disconnect() is synchronous
-            disconnect_result = connection.disconnect()
+            client, connection_id = connection_info
+            # Use new async disconnect API
+            disconnect_result = await client.disconnect(connection_id)
             if not disconnect_result.is_success:
                 return FlextResult.fail(f"Disconnect failed: {disconnect_result.error}")
             return FlextResult.ok(None)
@@ -85,19 +95,27 @@ class FlextLDAPConnectionManager:
 
     async def validate_connection(
         self,
-        connection: FlextLdapSimpleClient,
+        connection_info: tuple[FlextLdapSimpleClient, str],
     ) -> FlextResult[bool]:
         """Validate LDAP connection is still active.
 
         Args:
-            connection: LDAP client to validate
+            connection_info: Tuple of (client, connection_id)
 
         Returns:
             Result containing validation status
 
         """
         try:
-            is_connected = connection.is_connected()
-            return FlextResult.ok(is_connected)
+            client, connection_id = connection_info
+            is_connected_result = await client.is_connected(connection_id)
+            if is_connected_result.is_success:
+                is_connected = is_connected_result.data
+                if is_connected is None:
+                    return FlextResult.fail(
+                        "Connection status check failed - no data returned",
+                    )
+                return FlextResult.ok(is_connected)
+            return FlextResult.ok(data=False)
         except (ValueError, TypeError, OSError) as e:
             return FlextResult.fail(f"Failed to validate LDAP connection: {e}")

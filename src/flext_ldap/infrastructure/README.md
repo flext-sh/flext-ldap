@@ -311,7 +311,7 @@ class LdapTestContainer:
 Infrastructure components use hierarchical configuration:
 
 ```python
-class FlextLdapInfrastructureConfig(FlextBaseSettings):
+class FlextLdapInfrastructureConfig(FlextSettings):
     """Infrastructure-specific configuration."""
 
     # Connection pooling

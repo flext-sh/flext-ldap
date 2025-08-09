@@ -421,7 +421,7 @@ Centralized configuration via FlextLDAPConfig:
 ```python
 # Configuration class
 @dataclass
-class FlextLdapSettings(FlextBaseSettings):
+class FlextLdapSettings(FlextSettings):
     \"\"\"LDAP configuration with validation.\"\"\"
     server_url: str
     port: int = 389
