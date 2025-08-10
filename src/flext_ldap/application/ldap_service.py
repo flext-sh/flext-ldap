@@ -66,7 +66,7 @@ class FlextLdapService:
             if connect_result.is_success:
                 self._session_id = connect_result.data
                 logger.info("Successfully connected to LDAP server")
-                return FlextResult.ok(data=True)
+                return FlextResult.ok(True)
 
             logger.error(
                 "Failed to connect to LDAP server",
@@ -82,7 +82,7 @@ class FlextLdapService:
     async def disconnect(self) -> FlextResult[bool]:
         """Disconnect from LDAP server using real infrastructure."""
         if not self.is_connected():
-            return FlextResult.ok(data=True)
+            return FlextResult.ok(True)
 
         logger.info("Disconnecting from LDAP server")
         try:
@@ -94,7 +94,7 @@ class FlextLdapService:
             if result.is_success:
                 self._session_id = None
                 logger.info("Successfully disconnected from LDAP server")
-                return FlextResult.ok(data=True)
+                return FlextResult.ok(True)
 
             logger.error(
                 "Failed to disconnect from LDAP server",
@@ -353,7 +353,7 @@ class FlextLdapService:
         """Handle the result of user deletion operation."""
         if delete_result.is_success:
             logger.info("User deleted successfully", extra={"uid": uid})
-            return FlextResult.ok(data=True)
+            return FlextResult.ok(True)
 
         logger.error(
             "Failed to delete user",

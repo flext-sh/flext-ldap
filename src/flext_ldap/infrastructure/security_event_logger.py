@@ -14,7 +14,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from flext_core import FlextIdGenerator, FlextResult, get_logger
 
@@ -44,7 +44,7 @@ class FlextLdapSecurityEventType(Enum):
     SCHEMA_ACCESS = "schema_access"
     CERTIFICATE_VALIDATION = "certificate_validation"
     TLS_NEGOTIATION = "tls_negotiation"
-    PASSWORD_CHANGE = "password_change"
+    PASSWORD_CHANGE = "password_change"  # noqa: S105
     ACCOUNT_LOCKOUT = "account_lockout"
     PRIVILEGE_ESCALATION = "privilege_escalation"
     SUSPICIOUS_ACTIVITY = "suspicious_activity"
@@ -496,7 +496,7 @@ class FlextLdapSecurityEventLogger:
     async def get_security_metrics(
         self,
         time_window_hours: int = 24,
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Get security metrics for the specified time window."""
         try:
             cutoff_time = datetime.now(UTC) - timedelta(hours=time_window_hours)

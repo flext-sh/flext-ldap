@@ -540,7 +540,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             disconnect_result = await self._ldap_client.disconnect(self._connection_id)
             if disconnect_result.is_success:
                 self._connection_id = None
-                return FlextResult.ok(data=DirectoryOperationResult.SUCCESS)
+                return FlextResult.ok(DirectoryOperationResult.SUCCESS)
             return FlextResult.fail(f"Disconnect failed: {disconnect_result.error}")
         except ConnectionError as e:
             connection_error = FlextLdapConnectionError(

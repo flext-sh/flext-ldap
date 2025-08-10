@@ -23,7 +23,6 @@ from flext_core import FlextIdGenerator, FlextResult, get_logger
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-from flext_ldap.constants import FlextLdapSchemaDiscoveryConstants
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -475,7 +474,8 @@ class SafeExtractorStrategy:
         return dict(value) if isinstance(value, dict) else None
 
     def _extract_nested_dict(
-        self, key: str,
+        self,
+        key: str,
     ) -> dict[str, FlextTypes.Core.JsonDict] | None:
         """Extract nested dict safely."""
         value = self.params.get(key)
@@ -673,10 +673,7 @@ class FlextLdapSchemaDiscoveryService:
                 self._cache_schema(cache_key, discovery_result)
 
             self._discovery_history.append(discovery_result)
-            if (
-                len(self._discovery_history)
-                > FlextLdapSchemaDiscoveryConstants.Discovery.MAX_DISCOVERY_HISTORY
-            ):
+            if len(self._discovery_history) > 1000:
                 self._discovery_history.pop(0)
 
             logger.info(
@@ -789,7 +786,9 @@ class FlextLdapSchemaDiscoveryService:
             items = collection_getter(schema)
             # Type-safe iteration - ensure items is iterable
             if not hasattr(items, "__iter__"):
-                return FlextResult.fail(f"Schema collection for {item_type} is not iterable")
+                return FlextResult.fail(
+                    f"Schema collection for {item_type} is not iterable"
+                )
 
             for item in items:
                 # Type-safe attribute access - check if item has has_name method
@@ -1409,7 +1408,8 @@ class FlextLdapSchemaDiscoveryService:
         item_type: str,
         count_key: str,
         extractor_func: Callable[
-            [FlextTypes.Core.JsonDict, FlextTypes.Core.JsonDict], None,
+            [FlextTypes.Core.JsonDict, FlextTypes.Core.JsonDict],
+            None,
         ],
         fallback_func: Callable[[], FlextTypes.Core.JsonDict],
     ) -> FlextTypes.Core.JsonDict:

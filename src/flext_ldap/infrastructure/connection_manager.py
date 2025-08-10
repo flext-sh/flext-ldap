@@ -116,6 +116,6 @@ class FlextLDAPConnectionManager:
                         "Connection status check failed - no data returned",
                     )
                 return FlextResult.ok(is_connected)
-            return FlextResult.ok(data=False)
+            return FlextResult.ok(False)
         except (ValueError, TypeError, OSError) as e:
             return FlextResult.fail(f"Failed to validate LDAP connection: {e}")

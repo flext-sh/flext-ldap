@@ -46,7 +46,7 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-class FlextLdapRepository(FlextRepository):
+class FlextLdapRepository(FlextRepository[dict[str, object]]):
     """CENTRALIZED LDAP Repository extending flext-core FlextRepository.
 
     🎯 CONSOLIDATION: Single source replacing all duplicated repository interfaces.
@@ -309,7 +309,9 @@ class FlextLdapRepository(FlextRepository):
 
         # Ensure both are lists before concatenation
         members_safe = member_list if isinstance(member_list, list) else []
-        unique_members_safe = unique_member_list if isinstance(unique_member_list, list) else []
+        unique_members_safe = (
+            unique_member_list if isinstance(unique_member_list, list) else []
+        )
 
         members = members_safe + unique_members_safe
         return FlextResult.ok([str(member) for member in members])

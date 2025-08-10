@@ -17,7 +17,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from flext_core import FlextIdGenerator, FlextResult, get_logger
 
@@ -356,8 +356,8 @@ class FlextLdapErrorCorrelationService:
             significant_correlations = []
             for other_event in correlated_events:
                 correlation_score = self._calculate_correlation(event, other_event)
-                constants = FlextLdapErrorConstants
-                threshold = constants.Thresholds.SIGNIFICANT_CORRELATION_THRESHOLD
+                # Minimal local threshold to avoid hard dependency on nested constants
+                threshold = 0.5
                 if correlation_score > threshold:
                     significant_correlations.append(other_event)
 
@@ -371,7 +371,7 @@ class FlextLdapErrorCorrelationService:
     async def get_error_statistics(
         self,
         time_window_hours: int = 24,
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Get error statistics for the specified time window."""
         try:
             cutoff_time = datetime.now(UTC) - timedelta(hours=time_window_hours)
@@ -470,12 +470,10 @@ class FlextLdapErrorCorrelationService:
         total_correlation = 0.0
         correlation_count = 0
 
+        min_correlation_threshold = 0.5
         for other_event in recent_events:
             correlation = self._calculate_correlation(event, other_event)
-            if (
-                correlation
-                > 0.5  # Minimum correlation threshold
-            ):
+            if correlation > min_correlation_threshold:
                 total_correlation += correlation
                 correlation_count += 1
 

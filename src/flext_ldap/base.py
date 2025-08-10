@@ -18,19 +18,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from flext_core import (
-    FlextContainer,
-    FlextDomainService,
-    FlextIdGenerator,
-    FlextRepository,
-    FlextResult,
-)
+from flext_core import FlextContainer, FlextDomainService, FlextIdGenerator, FlextResult
+from flext_core.protocols import FlextRepository
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
 
-class FlextLdapRepository(FlextRepository[dict]):
+class FlextLdapRepository(FlextRepository[dict[str, object]]):
     """LDAP Repository implementing flext-core repository interface.
 
     Provides type-safe LDAP operations with proper error handling.
@@ -43,43 +38,52 @@ class FlextLdapRepository(FlextRepository[dict]):
         self._container = container or FlextContainer()
         self._storage: FlextTypes.Core.JsonDict = {}
 
-    def find_by_id(self, entity_id: str) -> FlextResult[object]:
+    def find_by_id(self, entity_id: str) -> FlextResult[dict[str, object] | None]:
         """Find entity by ID from storage."""
         entity = self._storage.get(entity_id)
-        if entity is None:
-            return FlextResult.fail(f"Entity not found: {entity_id}")
-        return FlextResult.ok(entity)
+        # Storage values are dict[str, object]
+        return FlextResult.ok(entity if isinstance(entity, dict) else None)
 
-    def find_all(self) -> FlextResult[list[dict]]:
+    def find_all(self) -> FlextResult[list[dict[str, object]]]:
         """Find all entities in storage."""
         try:
-            entities = list(self._storage.values())
+            entities: list[dict[str, object]] = [
+                v for v in self._storage.values() if isinstance(v, dict)
+            ]
             return FlextResult.ok(entities)
         except Exception as e:
             return FlextResult.fail(f"Failed to retrieve all entities: {e}")
 
-    def get_by_id(self, entity_id: str) -> FlextResult[dict]:
+    def get_by_id(self, entity_id: str) -> FlextResult[dict[str, object] | None]:
         """Get entity by ID with specific return type."""
         result = self.find_by_id(entity_id)
         if result.is_failure:
             return FlextResult.fail(result.error or "Entity not found")
-        return FlextResult.ok(result.data)
+        data: dict[str, object] | None = (
+            result.data if isinstance(result.data, dict) else None
+        )
+        return FlextResult.ok(data)
 
-    def save(self, entity: object) -> FlextResult[None]:
+    def save(self, entity: dict[str, object]) -> FlextResult[dict[str, object]]:
         """Save entity with validation."""
         try:
-            entity_id = getattr(entity, "id", FlextIdGenerator.generate_id())
+            entity_id = str(entity.get("id") or FlextIdGenerator.generate_id())
 
             # Use flext-core validation if available
-            if hasattr(entity, "validate_domain_rules"):
-                validation_result = entity.validate_domain_rules()
-                if validation_result is not None and validation_result.is_failure:
+            # Optional domain validation hook (dictionary-based)
+            validate = entity.get("validate_domain_rules")
+            if callable(validate):
+                validation_result = validate()
+                if validation_result is not None and getattr(
+                    validation_result, "is_failure", False
+                ):
                     return FlextResult.fail(
-                        f"Validation failed: {validation_result.error}",
+                        getattr(validation_result, "error", "Validation failed")
                     )
 
             self._storage[entity_id] = entity
-            return FlextResult.ok(None)
+            typed_entity: dict[str, object] = entity
+            return FlextResult.ok(typed_entity)
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Save failed: {e}")
 
@@ -191,7 +195,9 @@ class FlextLdapDomainService(FlextDomainService[None]):
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to get entity: {e}")
 
-    def create_entity(self, entity: object) -> FlextResult[object]:
+    def create_entity(
+        self, entity: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Create with validation chain and event publishing."""
         try:
             # Apply flext-core validation if available
@@ -202,7 +208,7 @@ class FlextLdapDomainService(FlextDomainService[None]):
             save_result = self._repository.save(entity)
             if not save_result.is_success:
                 return FlextResult.fail(save_result.error or "Failed to save entity")
-            saved_entity = entity  # Return the original entity since save returns None
+            saved_entity = entity  # Dict saved
 
             # Publish domain event if entity supports it
             self._publish_creation_event(saved_entity)
@@ -215,7 +221,7 @@ class FlextLdapDomainService(FlextDomainService[None]):
         self,
         entity_id: UUID | str,
         updates: FlextTypes.Core.JsonDict,
-    ) -> FlextResult[object]:
+    ) -> FlextResult[dict[str, object]]:
         """Update with immutable patterns and validation."""
         try:
             # Get existing entity
@@ -227,13 +233,15 @@ class FlextLdapDomainService(FlextDomainService[None]):
 
             # Apply updates using immutable patterns
             updated_entity = self._apply_updates(entity, updates)
+            if not isinstance(updated_entity, dict):
+                return FlextResult.fail("Updated entity must be a dict")
 
             # Validate and save
             return self.create_entity(updated_entity)
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to update entity: {e}")
 
-    def delete_entity(self, entity_id: UUID | str) -> FlextResult[object]:
+    def delete_entity(self, entity_id: UUID | str) -> FlextResult[bool]:
         """Delete with cascade handling and event publishing."""
         try:
             key = str(entity_id) if isinstance(entity_id, UUID) else entity_id
@@ -321,7 +329,10 @@ class FlextLdapDomainService(FlextDomainService[None]):
     ) -> FlextResult[object]:
         """Execute create operation."""
         op_data = operation.get("data", {})
-        return self.create_entity(op_data)
+        if not isinstance(op_data, dict):
+            return FlextResult.fail("Create operation data must be dict")
+        create_result = self.create_entity(op_data)
+        return create_result.map(lambda x: x)  # upcast to FlextResult[object]
 
     def _execute_update_operation(
         self,
@@ -337,7 +348,8 @@ class FlextLdapDomainService(FlextDomainService[None]):
         if not isinstance(op_data, dict):
             return FlextResult.fail("Update operation data must be dict")
 
-        return self.update_entity(entity_id, op_data)
+        update_result = self.update_entity(entity_id, op_data)
+        return update_result.map(lambda x: x)
 
     def _execute_delete_operation(
         self,
@@ -434,8 +446,9 @@ class FlextLdapDomainService(FlextDomainService[None]):
     def _handle_create_operation(self, **kwargs: object) -> FlextResult[object]:
         """Handle create operation following Single Responsibility."""
         entity = kwargs.get("entity")
-        if entity is not None:
-            return self.create_entity(entity)
+        if isinstance(entity, dict):
+            create_result = self.create_entity(entity)
+            return create_result.map(lambda x: x)
         return FlextResult.fail("Create operation requires entity")
 
     def _handle_update_operation(self, **kwargs: object) -> FlextResult[object]:
@@ -443,14 +456,16 @@ class FlextLdapDomainService(FlextDomainService[None]):
         entity_id = kwargs.get("id")
         updates = kwargs.get("updates", {})
         if isinstance(entity_id, (str, UUID)) and isinstance(updates, dict):
-            return self.update_entity(entity_id, updates)
+            update_result = self.update_entity(entity_id, updates)
+            return update_result.map(lambda x: x)
         return FlextResult.fail("Update operation requires valid ID and updates dict")
 
     def _handle_delete_operation(self, **kwargs: object) -> FlextResult[object]:
         """Handle delete operation following Single Responsibility."""
         entity_id = kwargs.get("id")
         if isinstance(entity_id, (str, UUID)):
-            return self.delete_entity(entity_id)
+            delete_result = self.delete_entity(entity_id)
+            return delete_result.map(lambda x: x)
         return FlextResult.fail("Delete operation requires valid entity ID")
 
     def _handle_list_operation(self, **kwargs: object) -> FlextResult[object]:

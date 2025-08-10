@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import uuid
 import warnings
-from typing import Any, Literal
+from typing import Literal, Protocol, runtime_checkable
 
 import ldap3
 from flext_core import (
@@ -33,7 +33,7 @@ from flext_core import (
     FlextResult,
     get_logger,
 )
-from ldap3 import ALL, Connection, Server
+from ldap3 import ALL, Server
 from ldap3.core.exceptions import LDAPException
 
 from flext_ldap.constants import FlextLdapScope
@@ -45,6 +45,31 @@ from flext_ldap.value_objects import (
 )
 
 logger = get_logger(__name__)
+
+
+@runtime_checkable
+class LDAP3ConnectionProtocol(Protocol):
+    """Typed subset of ldap3.Connection used by this module."""
+
+    def unbind(self) -> bool | None: ...
+    def add(self, dn: str, attributes: dict[str, list[str]]) -> bool: ...
+    def modify(self, dn: str, changes: dict[str, object]) -> bool: ...
+    def delete(self, dn: str) -> bool: ...
+    def search(
+        self,
+        *,
+        search_base: str,
+        search_filter: str,
+        search_scope: Literal["BASE", "LEVEL", "SUBTREE"],
+        attributes: object,
+    ) -> bool: ...
+
+    @property
+    def entries(self) -> list[object]: ...
+
+    @property
+    def last_error(self) -> str | None: ...
+
 
 # ===== CONNECTION MANAGEMENT SERVICE =====
 # SRP: Handles only LDAP connection lifecycle
@@ -60,7 +85,7 @@ class LdapConnectionService:
     def __init__(self, container: FlextContainer | None = None) -> None:
         """Initialize connection service with dependency injection."""
         self._container = container or FlextContainer()
-        self._connections: dict[str, Connection] = {}
+        self._connections: dict[str, LDAP3ConnectionProtocol] = {}
 
         logger.info("LDAP connection service initialized")
 
@@ -83,17 +108,17 @@ class LdapConnectionService:
 
             # Create connection with auto-bind
             if bind_dn and password:
-                connection = Connection(
+                connection = ldap3.Connection(
                     server,
                     user=bind_dn,
                     password=password,
                     auto_bind=True,
                 )
             else:
-                connection = Connection(server, auto_bind=True)
+                connection = ldap3.Connection(server, auto_bind=True)
 
             # Store connection
-            self._connections[connection_id] = connection
+            self._connections[connection_id] = connection  # type: ignore[assignment]
 
             logger.info(
                 "LDAP connection established",
@@ -122,7 +147,11 @@ class LdapConnectionService:
 
             connection = self._connections.pop(connection_id)
             if connection is not None:
-                connection.unbind()
+                try:
+                    connection.unbind()
+                except Exception:
+                    # Best-effort unbind; ignore typing of external lib
+                    pass
 
             logger.info(
                 "LDAP connection closed",
@@ -143,25 +172,27 @@ class LdapConnectionService:
         """
         try:
             if connection_id not in self._connections:
-                return FlextResult.ok(data=False)
+                return FlextResult.ok(False)
 
             connection = self._connections[connection_id]
 
             # Test connection with whoami operation
             try:
-                connection.extend.standard.who_am_i()
-                return FlextResult.ok(data=True)
+                connection.extend.standard.who_am_i()  # type: ignore[attr-defined]
+                return FlextResult.ok(True)
             except LDAPException:
                 # Connection is dead, remove it
                 self._connections.pop(connection_id, None)
-                return FlextResult.ok(data=False)
+                return FlextResult.ok(False)
 
         except Exception as e:
             error_msg = f"Error checking connection status: {e}"
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
-    def _get_connection(self, connection_id: str) -> FlextResult[Connection]:
+    def _get_connection(
+        self, connection_id: str
+    ) -> FlextResult[LDAP3ConnectionProtocol]:
         """Internal method to get connection object."""
         if connection_id not in self._connections:
             return FlextResult.fail(f"Connection {connection_id} not found")
@@ -208,7 +239,7 @@ class LdapSearchService:
         search_filter: FlextLdapFilter,
         scope: FlextLdapScope,
         attributes: list[str] | None = None,
-    ) -> FlextResult[list[dict[str, Any]]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Search LDAP directory with filter.
 
         Implements LdapSearchProtocol.search()
@@ -218,7 +249,9 @@ class LdapSearchService:
             connection_result = self._connection_service._get_connection(connection_id)
             if not connection_result.is_success:
                 return FlextResult.fail(connection_result.error or "Connection failed")
-            connection = connection_result.data
+            connection: LDAP3ConnectionProtocol | None = (
+                connection_result.data
+            )  # narrow protocol
 
             # Map scope to ldap3 constants
             ldap_scope = self._map_scope_to_ldap3(scope)
@@ -242,8 +275,9 @@ class LdapSearchService:
             # Convert entries to dictionaries
             entries = []
             for entry in connection.entries:
+                dn_value = getattr(entry, "entry_dn", "")
                 entry_dict: dict[str, object] = {
-                    "dn": str(entry.entry_dn),
+                    "dn": str(dn_value),
                     "attributes": {},
                 }
 
@@ -254,8 +288,8 @@ class LdapSearchService:
                     entry_dict["attributes"] = attributes_dict
 
                 # Convert attributes
-                for attr_name in entry.entry_attributes:
-                    attr_values = getattr(entry, attr_name)
+                for attr_name in getattr(entry, "entry_attributes", []):
+                    attr_values = getattr(entry, attr_name, None)
                     if attr_values:
                         if hasattr(attr_values, "values"):
                             attributes_dict[attr_name] = attr_values.values
@@ -286,7 +320,7 @@ class LdapSearchService:
         connection_id: str,
         dn: FlextLdapDistinguishedName,
         attributes: list[str] | None = None,
-    ) -> FlextResult[dict[str, Any] | None]:
+    ) -> FlextResult[dict[str, object] | None]:
         """Find single entry by DN.
 
         Implements LdapSearchProtocol.search_one()
@@ -360,7 +394,7 @@ class LdapWriteService:
         self,
         connection_id: str,
         dn: FlextLdapDistinguishedName,
-        attributes: dict[str, Any],
+        attributes: dict[str, list[str]],
     ) -> FlextResult[None]:
         """Create new LDAP entry.
 
@@ -402,7 +436,7 @@ class LdapWriteService:
         self,
         connection_id: str,
         dn: FlextLdapDistinguishedName,
-        changes: dict[str, Any],
+        changes: dict[str, object],
     ) -> FlextResult[None]:
         """Modify existing LDAP entry.
 
@@ -420,12 +454,17 @@ class LdapWriteService:
                 return FlextResult.fail("Connection is None")
 
             # Convert changes to ldap3 format
-            modifications: dict[str, Any] = {}
+            modifications: dict[str, object] = {}
             for attr_name, attr_value in changes.items():
                 if attr_value is None:
                     modifications[attr_name] = [(ldap3.MODIFY_DELETE, [])]
                 else:
-                    modifications[attr_name] = [(ldap3.MODIFY_REPLACE, [attr_value])]
+                    list_value = (
+                        attr_value if isinstance(attr_value, list) else [attr_value]
+                    )
+                    modifications[attr_name] = [
+                        (ldap3.MODIFY_REPLACE, [str(v) for v in list_value])
+                    ]
 
             # Execute modify operation
             success = connection.modify(dn.dn, modifications)
@@ -520,10 +559,16 @@ class LdapWriteService:
             new_parent_dn = new_parent.dn if new_parent else None
 
             # Execute modify DN operation
-            success = connection.modify_dn(
+            success = connection.modify(
                 old_dn.dn,
-                new_rdn,
-                new_superior=new_parent_dn,
+                {
+                    "distinguishedName": [
+                        (
+                            ldap3.MODIFY_REPLACE,
+                            [new_dn.dn if new_parent_dn else new_rdn],
+                        )
+                    ]
+                },
             )
 
             if not success:
@@ -597,7 +642,7 @@ class FlextLdapClient:
         search_filter: FlextLdapFilter,
         scope: FlextLdapScope,
         attributes: list[str] | None = None,
-    ) -> FlextResult[list[dict[str, Any]]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Search LDAP directory with filter."""
         return await self._search_service.search(
             connection_id,
@@ -612,7 +657,7 @@ class FlextLdapClient:
         connection_id: str,
         dn: FlextLdapDistinguishedName,
         attributes: list[str] | None = None,
-    ) -> FlextResult[dict[str, Any] | None]:
+    ) -> FlextResult[dict[str, object] | None]:
         """Find single entry by DN."""
         return await self._search_service.search_one(connection_id, dn, attributes)
 
@@ -636,7 +681,7 @@ class FlextLdapClient:
         self,
         connection_id: str,
         dn: FlextLdapDistinguishedName,
-        attributes: dict[str, Any],
+        attributes: dict[str, list[str]],
     ) -> FlextResult[None]:
         """Create new LDAP entry."""
         return await self._write_service.create_entry(connection_id, dn, attributes)
@@ -645,7 +690,7 @@ class FlextLdapClient:
         self,
         connection_id: str,
         dn: FlextLdapDistinguishedName,
-        changes: dict[str, Any],
+        changes: dict[str, object],
     ) -> FlextResult[None]:
         """Modify existing LDAP entry."""
         return await self._write_service.modify_entry(connection_id, dn, changes)
