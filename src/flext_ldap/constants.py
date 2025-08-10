@@ -712,6 +712,29 @@ class FlextLdapValidationConstants:
 
 
 # =============================================================================
+# BACKWARD-COMPATIBILITY SHIMS
+# =============================================================================
+
+
+class FlextLdapSchemaDiscoveryConstants:
+    """Compatibility constants for schema discovery.
+
+    Provides minimal attributes referenced by infrastructure code,
+    mapping to consolidated observability constants.
+    """
+
+    class Discovery:
+        SCHEMA_CACHE_TTL: int = FlextLdapObservabilityConstants.SCHEMA_CACHE_TTL
+        SCHEMA_REFRESH_INTERVAL: int = (
+            FlextLdapObservabilityConstants.SCHEMA_REFRESH_INTERVAL
+        )
+        MAX_SCHEMA_ENTRIES: int = FlextLdapObservabilityConstants.MAX_SCHEMA_ENTRIES
+        MAX_DISCOVERY_HISTORY: int = (
+            FlextLdapObservabilityConstants.MAX_DISCOVERY_HISTORY
+        )
+
+
+# =============================================================================
 # CONVENIENCE EXPORTS - Module-level Aliases
 # =============================================================================
 

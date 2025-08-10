@@ -206,7 +206,7 @@ class FlextLdapSchemaValidator(FlextLdapSchemaService):
         """
         # This is a synchronous compatibility method
         # Real implementations should integrate with async validation
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(True)
 
 
 class FlextLdapGroupRepository(FlextLdapRepository):
@@ -288,5 +288,5 @@ class FlextLdapGroupRepository(FlextLdapRepository):
         result = await self.modify_entry(connection_id, group_dn, changes)
         # Convert FlextResult[None] to FlextResult[object]
         if result.is_success:
-            return FlextResult.ok(data=True)  # None -> object (success indicator)
+            return FlextResult.ok(True)  # None -> object (success indicator)
         return FlextResult.fail(result.error or "Failed to add member to group")

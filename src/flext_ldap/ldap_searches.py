@@ -762,9 +762,20 @@ async def get_search_operations() -> FlextResult[FlextLdapSearchOperations]:
     try:
         container = get_flext_container()
 
-        # Get dependencies from container
-        connection = container.resolve(FlextLdapConnectionProtocol)
-        repository = container.resolve(FlextLdapRepositoryProtocol)
+        # Get dependencies from container using typed accessors
+        connection_result = container.get_typed(
+            "FlextLdapConnectionProtocol", FlextLdapConnectionProtocol
+        )
+        if connection_result.is_failure:
+            return FlextResult.fail(connection_result.error or "Connection not found")
+        connection = connection_result.unwrap()
+
+        repository_result = container.get_typed(
+            "FlextLdapRepositoryProtocol", FlextLdapRepositoryProtocol
+        )
+        if repository_result.is_failure:
+            return FlextResult.fail(repository_result.error or "Repository not found")
+        repository = repository_result.unwrap()
 
         operations = create_search_operations(connection, repository)
         return FlextResult.ok(operations)

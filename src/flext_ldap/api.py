@@ -310,7 +310,7 @@ class FlextLdapApi:
                     extra={"session_id": session_id},
                 )
                 # Convert FlextResult[None] to FlextResult[bool] for compatibility
-                return FlextResult.ok(data=True)
+                return FlextResult.ok(True)
             return FlextResult.fail(result.error or "Disconnect failed")
 
         except (RuntimeError, ValueError, TypeError) as e:
@@ -384,7 +384,7 @@ class FlextLdapApi:
         filter_expr: str,
         attributes: list[str] | None,
         scope: str,
-    ) -> FlextResult[list[dict[str, Any]]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Execute LDAP search with proper base DN handling - Railway-Oriented."""
         # Railway-Oriented Programming - consolidate validation pipeline
         validation_result = await self._validate_search_parameters(
@@ -457,7 +457,7 @@ class FlextLdapApi:
         }
         scope_enum = scope_map.get(scope, FlextLdapScope.SUB)
 
-        return FlextResult.ok(data=(connection_id, base_dn_obj, filter_obj, scope_enum))
+        return FlextResult.ok((connection_id, base_dn_obj, filter_obj, scope_enum))
 
     def _convert_to_domain_entities(
         self,
@@ -696,7 +696,7 @@ class FlextLdapApi:
             if result.is_success:
                 dn_str = str(dn_obj)
                 logger.info("User updated", extra={"user_dn": dn_str})
-                return FlextResult.ok(data=True)
+                return FlextResult.ok(True)
 
             return FlextResult.fail(result.error or "Update failed")
 
@@ -758,7 +758,7 @@ class FlextLdapApi:
             if result.is_success:
                 dn_str = str(dn_obj)
                 logger.info("User deleted", extra={"user_dn": dn_str})
-                return FlextResult.ok(data=True)
+                return FlextResult.ok(True)
 
             return FlextResult.fail(result.error or "Delete failed")
 
@@ -952,7 +952,7 @@ class FlextLdapApi:
 
             if result.is_success:
                 logger.debug("Added entry: %s", dn)
-                return FlextResult.ok(data=True)
+                return FlextResult.ok(True)
 
             return FlextResult.fail(f"Failed to add entry: {result.error}")
 
@@ -1025,7 +1025,7 @@ class FlextLdapApi:
 
                 if not modifications:
                     logger.debug("No changes needed for entry: %s", normalized_dn)
-                    return FlextResult.ok(data=True)
+                    return FlextResult.ok(True)
 
                 # Apply modifications
                 return await self.modify_entry(session_id, normalized_dn, modifications)
@@ -1316,7 +1316,7 @@ class FlextLdapApi:
             )
             if modifications:
                 return await self.modify_entry(session_id, normalized_dn, modifications)
-            return FlextResult.ok(data=True)  # No changes needed
+            return FlextResult.ok(True)  # No changes needed
         # Entry doesn't exist - add it
         return await self.add_entry(session_id, normalized_dn, attributes)
 
@@ -1442,7 +1442,7 @@ class FlextLdapApi:
 
             if result.is_success:
                 logger.debug("Modified entry with operation %s: %s", operation_type, dn)
-                return FlextResult.ok(data=True)
+                return FlextResult.ok(True)
 
             return FlextResult.fail(f"Failed to modify entry: {result.error}")
 
@@ -1516,7 +1516,7 @@ class FlextLdapApi:
                         else 0,
                     },
                 )
-                return FlextResult.ok(data=True)
+                return FlextResult.ok(True)
             logger.error(
                 "Schema addition failed: %s",
                 result.error,
@@ -1534,7 +1534,7 @@ class FlextLdapApi:
     def process_ldap_entries_for_analytics(
         self,
         entries: list[FlextLdapEntry],
-        processing_options: dict[str, Any] | None = None,
+        processing_options: dict[str, object] | None = None,
     ) -> FlextResult[list[FlextLdapEntry]]:
         """Process LDAP entries for analytics using generic LDAP patterns.
 
@@ -1595,8 +1595,8 @@ class FlextLdapApi:
     def validate_ldap_data_quality(
         self,
         entries: list[FlextLdapEntry],
-        validation_rules: dict[str, Any] | None = None,
-    ) -> FlextResult[dict[str, Any]]:
+        validation_rules: dict[str, object] | None = None,
+    ) -> FlextResult[dict[str, object]]:
         """Validate LDAP data quality using generic LDAP standards.
 
         Generic functionality for validating LDAP data quality that eliminates

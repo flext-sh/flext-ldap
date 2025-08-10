@@ -16,7 +16,6 @@ from flext_core import FlextResult, get_logger
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-from flext_ldap.domain.exceptions import FlextLdapUserError
 from flext_ldap.domain.repositories import (
     FlextLdapConnectionRepository,
     FlextLdapUserRepository,
@@ -49,7 +48,8 @@ class FlextLdapConnectionRepositoryImpl(FlextLdapConnectionRepository):
             return FlextResult.ok(connection)
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to save connection: {e}"
-            raise FlextLdapUserError(msg) from e
+            logger.exception("%s", msg)
+            return FlextResult.fail(msg)
 
     async def find_by_id(
         self,
@@ -61,7 +61,8 @@ class FlextLdapConnectionRepositoryImpl(FlextLdapConnectionRepository):
             return FlextResult.ok(connection)
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to find connection: {e}"
-            raise ValueError(msg) from e
+            logger.exception("%s", msg)
+            return FlextResult.fail(msg)
 
     async def find_all(self) -> FlextResult[object]:
         """Find all connections."""
@@ -70,20 +71,22 @@ class FlextLdapConnectionRepositoryImpl(FlextLdapConnectionRepository):
             return FlextResult.ok(connections)
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to find connections: {e}"
-            raise FlextLdapUserError(msg) from e
+            logger.exception("%s", msg)
+            return FlextResult.fail(msg)
 
     async def delete(self, connection: FlextLdapConnection) -> FlextResult[object]:
         """Delete connection."""
         try:
             if connection.id in self._connections:
                 del self._connections[connection.id]
-                return FlextResult.ok(data=True)
+                return FlextResult.ok(True)
             return FlextResult.ok(
                 data=False,
             )  # Item not found, but operation didn't fail
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to delete connection: {e}"
-            raise FlextLdapUserError(msg) from e
+            logger.exception("%s", msg)
+            return FlextResult.fail(msg)
 
     async def get_by_server(self, server_url: str) -> list[FlextLdapConnection]:
         """Get connections by server URL."""
@@ -95,7 +98,8 @@ class FlextLdapConnectionRepositoryImpl(FlextLdapConnectionRepository):
             ]
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to get connections by server: {e}"
-            raise ValueError(msg) from e
+            logger.exception("%s", msg)
+            return []
 
     async def get_active(self) -> list[FlextLdapConnection]:
         """Get all active connections."""
@@ -103,7 +107,8 @@ class FlextLdapConnectionRepositoryImpl(FlextLdapConnectionRepository):
             return list(self._connections.values())
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to get active connections: {e}"
-            raise ValueError(msg) from e
+            logger.exception("%s", msg)
+            return []
 
     async def close_all(self) -> None:
         """Close all connections."""
@@ -111,7 +116,8 @@ class FlextLdapConnectionRepositoryImpl(FlextLdapConnectionRepository):
             self._connections.clear()
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to close connections: {e}"
-            raise ValueError(msg) from e
+            logger.exception("%s", msg)
+            # Best-effort cleanup; do not raise exceptions from repository layer
 
 
 class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
@@ -144,7 +150,11 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                     return FlextResult.ok(user)
                 return FlextResult.fail(f"LDAP modify failed: {modify_result.error}")
             # Add new user - type-safe conversion
-            attributes: FlextTypes.Core.JsonDict = dict(user.attributes)
+            # LDAP add requires dict[str, list[str]]
+            attributes: dict[str, list[str]] = {}
+            for k, val in dict(user.attributes).items():
+                # user.attributes é dict[str, list[str]]
+                attributes[k] = [str(v) for v in val]
             add_result: FlextResult[None] = await self.ldap_client.add(
                 dn=user.dn,
                 object_classes=user.object_classes,
@@ -157,7 +167,8 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to save user {user.dn if user else 'unknown'}: {e}"
-            raise FlextLdapUserError(msg) from e
+            logger.exception("%s", msg)
+            return FlextResult.fail(msg)
 
     async def find_by_id(
         self,
@@ -174,9 +185,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             )
 
             # Use LDAP client to search
-            search_result: FlextResult[
-                list[FlextTypes.Core.JsonDict]
-            ] = await self.ldap_client.search(
+            search_result = await self.ldap_client.search(
                 base_dn="",  # Will use configured base DN
                 search_filter=search_filter,
                 attributes=["*"],  # Get all attributes
@@ -196,7 +205,8 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to find user by ID {user_id}: {e}"
-            raise ValueError(msg) from e
+            logger.exception("%s", msg)
+            return FlextResult.fail(msg)
 
     async def find_by_dn(
         self,
@@ -208,9 +218,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 return FlextResult.fail("Distinguished name cannot be empty")
 
             # Use LDAP client to search for entry by DN
-            get_result: FlextResult[
-                list[FlextTypes.Core.JsonDict]
-            ] = await self.ldap_client.search(
+            get_result = await self.ldap_client.search(
                 base_dn=dn.strip(),
                 search_filter="(objectClass=*)",
                 attributes=["*"],
@@ -227,7 +235,8 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to find user by DN {dn}: {e}"
-            raise ValueError(msg) from e
+            logger.exception("%s", msg)
+            return FlextResult.fail(msg)
 
     async def find_all(self) -> FlextResult[object]:
         """Find all users."""
@@ -235,10 +244,12 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             return FlextResult.ok([])
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to find users: {e}"
-            raise FlextLdapUserError(msg) from e
+            logger.exception("%s", msg)
+            return FlextResult.fail(msg)
 
     async def _prepare_user_deletion(
-        self, user: FlextLdapUser,
+        self,
+        user: FlextLdapUser,
     ) -> FlextResult[tuple[str, FlextLdapDistinguishedName]]:
         """Prepare user deletion using Railway-Oriented Programming."""
         # Validate user and DN
@@ -248,7 +259,9 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
         # Establish connection - this is a repository pattern limitation
         # The repository should receive connection_id or manage connection internally
         connection_result = await self.ldap_client.connect(
-            "ldap://localhost:389", None, None,
+            "ldap://localhost:389",
+            None,
+            None,
         )
         if not connection_result.is_success:
             return FlextResult.fail(f"Connection failed: {connection_result.error}")
@@ -283,17 +296,19 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 
             # Execute deletion operation
             delete_result = await self.ldap_client.delete_entry(
-                connection_id=connection_id, dn=dn_obj,
+                connection_id=connection_id,
+                dn=dn_obj,
             )
 
             if delete_result.is_success:
-                return FlextResult.ok(data=True)
+                return FlextResult.ok(True)
 
             return FlextResult.fail(f"LDAP delete failed: {delete_result.error}")
 
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to delete user {user.dn if user else 'unknown'}: {e}"
-            raise FlextLdapUserError(msg) from e
+            logger.exception("%s", msg)
+            return FlextResult.fail(msg)
 
     async def get_by_dn(self, dn: FlextLdapDistinguishedName) -> FlextLdapUser | None:
         """Get user by distinguished name."""
@@ -324,7 +339,8 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to get user by DN {dn.value if dn else 'unknown'}: {e}"
-            raise ValueError(msg) from e
+            logger.exception("%s", msg)
+            return None
 
     async def get_by_uid(self, uid: str) -> FlextLdapUser | None:
         """Get user by UID."""
@@ -335,9 +351,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             # Search for user with specific UID
             search_filter = f"(uid={uid.strip()})"
 
-            search_result: FlextResult[
-                list[FlextTypes.Core.JsonDict]
-            ] = await self.ldap_client.search(
+            search_result = await self.ldap_client.search(
                 base_dn="",  # Will use configured base DN
                 search_filter=search_filter,
                 attributes=["*"],
@@ -362,7 +376,8 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to get user by UID {uid}: {e}"
-            raise ValueError(msg) from e
+            logger.exception("%s", msg)
+            return None
 
     def _validate_search_parameters(
         self,
@@ -388,9 +403,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             self._validate_search_parameters(base_dn, filter_string)
 
             # Use LDAP client to perform search
-            search_result: FlextResult[
-                list[FlextTypes.Core.JsonDict]
-            ] = await self.ldap_client.search(
+            search_result = await self.ldap_client.search(
                 base_dn=base_dn.value,
                 search_filter=filter_string.strip(),
                 attributes=attributes or ["*"],
@@ -414,7 +427,8 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to search users: {e}"
-            raise ValueError(msg) from e
+            logger.exception("%s", msg)
+            return []
 
     async def exists(self, dn: FlextLdapDistinguishedName) -> bool:
         """Check if user exists."""
@@ -429,4 +443,5 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
         except (RuntimeError, ValueError, TypeError) as e:
             dn_value = dn.value if dn else "unknown"
             msg = f"Failed to check user existence for DN {dn_value}: {e}"
-            raise ValueError(msg) from e
+            logger.exception("%s", msg)
+            return False

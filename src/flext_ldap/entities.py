@@ -537,7 +537,7 @@ class FlextLdapUser(FlextDomainEntity):
     department: str | None = None
     title: str | None = None
     object_classes: list[str] = Field(default_factory=lambda: ["inetOrgPerson"])
-    attributes: dict[str, str] = Field(default_factory=dict)
+    attributes: dict[str, list[str]] = Field(default_factory=dict)
     status: FlextEntityStatus = FlextLdapEntityStatus.ACTIVE
 
     def validate_domain_rules(self) -> FlextResult[None]:
@@ -591,7 +591,10 @@ class FlextLdapUser(FlextDomainEntity):
 
     def get_attribute(self, name: str) -> str | None:
         """Get an attribute by name."""
-        return self.attributes.get(name)
+        values = self.attributes.get(name)
+        if isinstance(values, list) and values:
+            return values[0]
+        return None
 
     def has_attribute(self, name: str) -> bool:
         """Check if user has a specific attribute."""
