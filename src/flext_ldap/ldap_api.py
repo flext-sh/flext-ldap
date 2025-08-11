@@ -17,7 +17,7 @@ This module provides backward compatibility during the SOLID refactoring transit
 All functionality has been consolidated into the canonical api.py with modern SOLID architecture.
 
 The new implementation uses FlextLdapClient (SOLID-compliant) instead of the legacy
-FlextLdapSimpleClient, providing better separation of concerns and dependency injection.
+FlextLdapClient, providing better separation of concerns and dependency injection.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

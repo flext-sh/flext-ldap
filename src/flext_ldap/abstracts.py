@@ -26,7 +26,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING
 
 from flext_core import FlextDomainService, FlextRepository, FlextResult
@@ -322,7 +322,7 @@ class FlextLdapRepository(FlextRepository[dict[str, object]]):
 # =============================================================================
 
 
-class FlextLdapService(FlextDomainService[object]):
+class FlextLdapService(FlextDomainService[object], metaclass=ABCMeta):
     """CENTRALIZED LDAP Domain Service extending flext-core FlextDomainService.
 
     🎯 CONSOLIDATION: Single source replacing all duplicated service interfaces.
@@ -465,7 +465,7 @@ class FlextLdapService(FlextDomainService[object]):
         """
 
 
-class FlextLdapConnectionService(FlextLdapService):
+class FlextLdapConnectionService(FlextLdapService, metaclass=ABCMeta):
     """LDAP Connection Management Service - Specialized from FlextLdapService."""
 
     def execute(self) -> FlextResult[object]:
@@ -480,7 +480,7 @@ class FlextLdapConnectionService(FlextLdapService):
         return FlextResult.fail("Connection service execute method not implemented")
 
 
-class FlextLdapUserService(FlextLdapService):
+class FlextLdapUserService(FlextLdapService, metaclass=ABCMeta):
     """LDAP User Management Service - Specialized from FlextLdapService."""
 
     def execute(self) -> FlextResult[object]:
@@ -495,7 +495,7 @@ class FlextLdapUserService(FlextLdapService):
         return FlextResult.fail("User service execute method not implemented")
 
 
-class FlextLdapGroupService(FlextLdapService):
+class FlextLdapGroupService(FlextLdapService, metaclass=ABCMeta):
     """LDAP Group Management Service - Specialized from FlextLdapService."""
 
     def execute(self) -> FlextResult[object]:
@@ -510,7 +510,7 @@ class FlextLdapGroupService(FlextLdapService):
         return FlextResult.fail("Group service execute method not implemented")
 
 
-class FlextLdapSchemaService(FlextLdapService):
+class FlextLdapSchemaService(FlextLdapService, metaclass=ABCMeta):
     """LDAP Schema Validation Service - Specialized from FlextLdapService."""
 
     def execute(self) -> FlextResult[object]:
@@ -525,7 +525,7 @@ class FlextLdapSchemaService(FlextLdapService):
         return FlextResult.fail("Schema service execute method not implemented")
 
 
-class FlextLdapMigrationService(FlextLdapService):
+class FlextLdapMigrationService(FlextLdapService, metaclass=ABCMeta):
     """LDAP Migration Service - Specialized from FlextLdapService."""
 
     def execute(self) -> FlextResult[object]:

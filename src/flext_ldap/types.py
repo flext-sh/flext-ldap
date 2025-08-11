@@ -54,7 +54,7 @@ class FlextLdapDataType(Enum):
     IP_ADDRESS = "ip_address"
     MAC_ADDRESS = "mac_address"
     CERTIFICATE = "certificate"
-    PASSWORD_DATA_TYPE = "password_field"
+    PASSWORD_DATA_TYPE = "password_field"  # noqa: S105 - symbolic enum label, not credential
     UNKNOWN = "unknown"
 
 
@@ -94,6 +94,10 @@ class FlextLdapUri(FlextValue):
             return FlextResult.fail(validation_errors[0])
 
         return FlextResult.ok(None)
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Required by FlextValue: delegate to domain rules."""
+        return self.validate_domain_rules()
 
     def _collect_uri_validation_errors(self) -> list[str]:
         """Collect all URI validation errors."""
@@ -169,4 +173,4 @@ DistinguishedName = FlextLdapDistinguishedName  # Now from value_objects.py
 FlextLdapFilterValue = FlextLdapFilter  # Legacy alias
 
 # Export legacy name used in old converters.py
-FlextSimpleConverter = None  # Will be imported from infrastructure
+FlextSimpleConverter: object | None = None  # Will be imported from infrastructure

@@ -21,27 +21,28 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import cast
 
-# ✅ CORRECT: Import by root from flext-core (not submodules)
-from flext_core import FlextResult, get_flext_container, get_logger
+from flext_core import FlextIdGenerator, FlextResult, get_flext_container, get_logger
 
-# ✅ CORRECT: Use consolidated foundation modules
-from .constants import (
+from flext_ldap.constants import (
     FlextLdapAttributeConstants,
     FlextLdapObjectClassConstants,
 )
-from .models import (
+from flext_ldap.models import (
     FlextLdapDistinguishedName,
     FlextLdapEntry,
     FlextLdapEntryCreated,
     FlextLdapFilter,
     FlextLdapSearchConfig,
 )
-from .protocols import FlextLdapConnectionProtocol, FlextLdapRepositoryProtocol
+from flext_ldap.protocols import (
+    FlextLdapConnectionProtocol,
+    FlextLdapRepositoryProtocol,
+)
 
 logger = get_logger(__name__)
 
@@ -125,7 +126,9 @@ class FlextLdapEntryOperations:
             return FlextResult.fail(f"Entry already exists: {entry.dn.value}")
 
         # Prepare entry data for persistence
-        entry_data = self._entry_to_ldap_attributes(entry)
+        # Normalize entry data to dict[str, object]
+        entry_data_dict = self._entry_to_ldap_attributes(entry)
+        entry_data: dict[str, object] = dict(entry_data_dict)
 
         # Create entry via repository
         create_result = await self._repository.create_entry(
@@ -138,9 +141,8 @@ class FlextLdapEntryOperations:
                 f"Failed to create entry in LDAP: {create_result.error}"
             )
 
-        # Update entry timestamps
-        entry.created_at = datetime.now(UTC)
-        entry.modified_at = datetime.now(UTC)
+        # Update entity timestamp via flext-core convention
+        entry.updated_at = datetime.now(UTC)
 
         # Publish domain events if enabled
         if publish_events:
@@ -189,14 +191,13 @@ class FlextLdapEntryOperations:
 
         # Create entry
         ou_entry = FlextLdapEntry(
+            id=FlextIdGenerator.generate_id(),
             dn=ou_dn,
             object_classes=[
                 FlextLdapObjectClassConstants.TOP,
                 FlextLdapObjectClassConstants.ORGANIZATIONAL_UNIT,
             ],
             attributes=attributes,
-            created_at=datetime.now(UTC),
-            modified_at=datetime.now(UTC),
         )
 
         return await self.create_entry(connection_id, ou_entry)
@@ -244,7 +245,7 @@ class FlextLdapEntryOperations:
                     publish_events=publish_events,
                 )
 
-                if result.is_success:
+                if result.is_success and result.data is not None:
                     created_entries.append(result.data)
                 else:
                     error_msg = (
@@ -315,7 +316,7 @@ class FlextLdapEntryOperations:
         modify_result = await self._repository.modify_entry(
             connection_id=connection_id,
             entry_dn=entry_dn.value,
-            modifications=modifications,
+            modifications=cast("dict[str, object]", modifications),
             operation=operation,
         )
 
@@ -381,7 +382,7 @@ class FlextLdapEntryOperations:
 
         if values is None:
             # Remove entire attribute
-            modifications = {attribute_name: []}
+            modifications: dict[str, list[str]] = {attribute_name: []}
         else:
             modifications = {attribute_name: values}
 
@@ -457,7 +458,9 @@ class FlextLdapEntryOperations:
         )
 
         # Execute search via repository
-        search_result = await self._repository.search_entries(connection_id, config)
+        search_result = await self._repository.search_entries(
+            connection_id, cast("dict[str, object]", config.model_dump())
+        )
         if search_result.is_failure:
             return FlextResult.fail(f"Failed to get entry: {search_result.error}")
 
@@ -467,7 +470,7 @@ class FlextLdapEntryOperations:
             return FlextResult.ok(None)
 
         # Convert first result to entry
-        entry_data = search_result.data[0]
+        entry_data = cast("dict[str, object]", search_result.data[0])
         entry_result = self._convert_entry_data(entry_data)
         if entry_result.is_failure:
             return entry_result
@@ -702,7 +705,7 @@ class FlextLdapEntryOperations:
         self,
         connection_id: str,
         entry_dn: FlextLdapDistinguishedName,
-    ) -> FlextResult[bool]:
+    ) -> FlextResult[list[dict[str, object]]] | FlextResult[bool]:
         """Check if entry exists in directory."""
         config = FlextLdapSearchConfig(
             base_dn=entry_dn,
@@ -711,7 +714,9 @@ class FlextLdapEntryOperations:
             attributes=[],  # No attributes needed for existence check
         )
 
-        result = await self._repository.search_entries(connection_id, config)
+        result = await self._repository.search_entries(
+            connection_id, cast("dict[str, object]", config.model_dump())
+        )
         if result.is_failure:
             return result
 
@@ -721,7 +726,7 @@ class FlextLdapEntryOperations:
         self,
         connection_id: str,
         entry_dn: FlextLdapDistinguishedName,
-    ) -> FlextResult[bool]:
+    ) -> FlextResult[list[dict[str, object]]] | FlextResult[bool]:
         """Check if entry has child entries."""
         # Search for immediate children
         config = FlextLdapSearchConfig(
@@ -731,7 +736,9 @@ class FlextLdapEntryOperations:
             attributes=[],  # No attributes needed
         )
 
-        result = await self._repository.search_entries(connection_id, config)
+        result = await self._repository.search_entries(
+            connection_id, cast("dict[str, object]", config.model_dump())
+        )
         if result.is_failure:
             return result
 
@@ -754,7 +761,9 @@ class FlextLdapEntryOperations:
             attributes=[],  # Only need DNs
         )
 
-        search_result = await self._repository.search_entries(connection_id, config)
+        search_result = await self._repository.search_entries(
+            connection_id, cast("dict[str, object]", config.model_dump())
+        )
         if search_result.is_failure:
             return FlextResult.fail(
                 f"Failed to get child entries: {search_result.error}"
@@ -784,14 +793,15 @@ class FlextLdapEntryOperations:
 
         return FlextResult.ok(None)
 
-    def _entry_to_ldap_attributes(self, entry: FlextLdapEntry) -> dict[str, list[str]]:
+    @staticmethod
+    def _entry_to_ldap_attributes(entry: FlextLdapEntry) -> dict[str, list[str]]:
         """Convert entry entity to LDAP attributes."""
         # This would return the entry's attributes dictionary
         # In a real implementation, this might include additional transformation
         return entry.attributes
 
+    @staticmethod
     def _convert_entry_data(
-        self,
         entry_data: dict[str, object],
     ) -> FlextResult[FlextLdapEntry]:
         """Convert raw entry data to FlextLdapEntry object."""
@@ -817,11 +827,10 @@ class FlextLdapEntryOperations:
 
             # Create entry
             entry = FlextLdapEntry(
+                id=FlextIdGenerator.generate_id(),
                 dn=dn,
                 object_classes=object_classes,
                 attributes=attributes,
-                created_at=datetime.now(UTC),
-                modified_at=datetime.now(UTC),
             )
 
             return FlextResult.ok(entry)
@@ -829,7 +838,8 @@ class FlextLdapEntryOperations:
         except Exception as e:
             return FlextResult.fail(f"Error converting entry data: {e}")
 
-    async def _publish_entry_created_event(self, entry: FlextLdapEntry) -> None:
+    @staticmethod
+    async def _publish_entry_created_event(entry: FlextLdapEntry) -> None:
         """Publish domain event for entry creation."""
         try:
             event = FlextLdapEntryCreated(
@@ -886,10 +896,20 @@ async def get_entry_operations() -> FlextResult[FlextLdapEntryOperations]:
     """
     try:
         container = get_flext_container()
+        # Get dependencies from container using typed accessors
+        connection_result = container.get_typed(
+            "FlextLdapConnectionProtocol", FlextLdapConnectionProtocol
+        )
+        if connection_result.is_failure:
+            return FlextResult.fail(connection_result.error or "Connection not found")
+        connection = connection_result.unwrap()
 
-        # Get dependencies from container
-        connection = container.resolve(FlextLdapConnectionProtocol)
-        repository = container.resolve(FlextLdapRepositoryProtocol)
+        repository_result = container.get_typed(
+            "FlextLdapRepositoryProtocol", FlextLdapRepositoryProtocol
+        )
+        if repository_result.is_failure:
+            return FlextResult.fail(repository_result.error or "Repository not found")
+        repository = repository_result.unwrap()
 
         operations = create_entry_operations(connection, repository)
         return FlextResult.ok(operations)

@@ -21,16 +21,13 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-# ✅ CORRECT: Import by root from flext-core (not submodules)
 from flext_core import FlextResult, get_flext_container, get_logger
 
-# ✅ CORRECT: Use consolidated foundation modules
 from .constants import FlextLdapAttributeConstants, FlextLdapObjectClassConstants
 from .models import (
     FlextLdapCreateGroupRequest,
@@ -113,7 +110,8 @@ class FlextLdapGroupOperations:
             connection_id, request
         )
         if validation_result.is_failure:
-            return validation_result
+            # Propagate failure for FlextLdapGroup return type
+            return cast("FlextResult[FlextLdapGroup]", validation_result)
 
         # Create and validate group entity
         group_result = await self._create_and_validate_group_entity(request)
@@ -121,11 +119,14 @@ class FlextLdapGroupOperations:
             return group_result
 
         group = group_result.data
+        if group is None:
+            return FlextResult.fail("Group result data should not be None")
 
         # Persist group to LDAP
         persistence_result = await self._persist_group_to_ldap(connection_id, group)
         if persistence_result.is_failure:
-            return persistence_result
+            # Propagate failure for FlextLdapGroup return type
+            return cast("FlextResult[FlextLdapGroup]", persistence_result)
 
         logger.info(f"Successfully created group: {request.dn.value}")
         return FlextResult.ok(group)
@@ -201,15 +202,22 @@ class FlextLdapGroupOperations:
             return FlextResult.fail(f"Invalid search config: {config_validation.error}")
 
         # Execute search via repository
-        search_result = await self._repository.search_entries(connection_id, config)
+        # Convert config to raw dict for repository
+        search_payload = cast("dict[str, object]", config.model_dump())
+        search_result = await self._repository.search_entries(
+            connection_id, search_payload
+        )
         if search_result.is_failure:
-            return search_result
+            # Propagate failure for FlextLdapSearchResult return type
+            return cast("FlextResult[FlextLdapSearchResult]", search_result)
+        # Ensure entries data is iterable
+        raw_data = cast("list[dict[str, object]]", search_result.data or [])
 
         # Convert LDAP entries to Group entities
         groups: list[FlextLdapGroup] = []
-        for entry_data in search_result.data:
+        for entry_data in raw_data:
             group_result = self._ldap_attributes_to_group(entry_data)
-            if group_result.is_success:
+            if group_result.is_success and group_result.data is not None:
                 groups.append(group_result.data)
 
         # Create search result
@@ -265,7 +273,7 @@ class FlextLdapGroupOperations:
         if search_result.is_failure:
             return FlextResult.fail(f"Error searching for group: {search_result.error}")
 
-        groups = search_result.data.entries
+        groups = search_result.data.entries if search_result.data else []
         if not groups:
             logger.debug(f"Group not found: {cn}")
             return FlextResult.ok(None)
@@ -313,7 +321,8 @@ class FlextLdapGroupOperations:
             return
 
         # Stream results one by one
-        for group in search_result.data.entries:
+        entries = search_result.data.entries if search_result.data else []
+        for group in entries:
             yield FlextResult.ok(group)
 
     # =========================================================================
@@ -363,7 +372,7 @@ class FlextLdapGroupOperations:
             member_attr = FlextLdapAttributeConstants.MEMBER  # Default
 
         # Add member via repository
-        modification_data = {
+        modification_data: dict[str, object] = {
             member_attr: [member_dn.value],
         }
 
@@ -663,7 +672,7 @@ class FlextLdapGroupOperations:
         self,
         connection_id: str,
         group_dn: FlextLdapDistinguishedName,
-    ) -> FlextResult[bool]:
+    ) -> FlextResult[list[dict[str, object]]] | FlextResult[bool]:
         """Check if group exists in directory."""
         config = FlextLdapSearchConfig(
             base_dn=group_dn,
@@ -699,8 +708,8 @@ class FlextLdapGroupOperations:
 
         return FlextResult.ok(groups[0])
 
+    @staticmethod
     def _create_group_entity_from_request(
-        self,
         request: FlextLdapCreateGroupRequest,
     ) -> FlextResult[FlextLdapGroup]:
         """Create group entity from creation request."""
@@ -758,14 +767,15 @@ class FlextLdapGroupOperations:
         except Exception as e:
             return FlextResult.fail(f"Error creating group entity: {e}")
 
-    def _group_to_ldap_attributes(self, group: FlextLdapGroup) -> dict[str, list[str]]:
+    @staticmethod
+    def _group_to_ldap_attributes(group: FlextLdapGroup) -> dict[str, list[str]]:
         """Convert group entity to LDAP attributes."""
         # This would return the group's attributes dictionary
         # In a real implementation, this might include additional transformation
         return group.attributes
 
+    @staticmethod
     def _ldap_attributes_to_group(
-        self,
         entry_data: dict[str, object],
     ) -> FlextResult[FlextLdapGroup]:
         """Convert LDAP entry data to group entity."""

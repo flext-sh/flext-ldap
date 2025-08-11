@@ -18,10 +18,13 @@ from typing import TYPE_CHECKING, Protocol, cast
 from urllib.parse import urlparse
 
 from flext_core import FlextResult, get_logger
+from flext_core.config_models import create_ldap_config
 from pydantic import SecretStr
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
+    from collections.abc import Awaitable
+
+    from flext_core import FlextTypes
 
 from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
 from flext_ldap.errors import (
@@ -31,7 +34,7 @@ from flext_ldap.errors import (
     FlextLdapProtocol,
     FlextLdapTimeoutError,
 )
-from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient, LdapAuthConfig
+from flext_ldap.ldap_infrastructure import FlextLdapClient
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -109,7 +112,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
     def __init__(self) -> None:
         """Initialize FLEXT LDAP directory service."""
         logger.debug("Initializing FlextLdapDirectoryService")
-        self._ldap_client: FlextLdapSimpleClient = FlextLdapSimpleClient()
+        self._ldap_client: FlextLdapClient = FlextLdapClient()
         self._auth_config: FlextLdapAuthConfig | None = None
         self._connection_id: str | None = None
         logger.trace("FlextLdapDirectoryService initialized with default client")
@@ -211,8 +214,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         )
         return FlextResult.ok(DirectoryOperationResult.SUCCESS)
 
+    @staticmethod
     def _create_connection_config(
-        self,
         server_url: str,
     ) -> FlextResult[FlextLdapConnectionConfig]:
         """Create connection configuration from server URL - Single Responsibility."""
@@ -231,10 +234,12 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             },
         )
 
-        config = FlextLdapConnectionConfig(
-            host=host,
-            port=port,
-            use_ssl=use_ssl,
+        base = create_ldap_config(host=host, port=port)
+        config = FlextLdapConnectionConfig.model_validate(
+            {
+                **base.model_dump(),
+                "use_ssl": use_ssl,
+            }
         )
         logger.trace("Created connection config", extra={"config": config.__dict__})
         return FlextResult.ok(config)
@@ -244,13 +249,15 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         config: FlextLdapConnectionConfig,
     ) -> FlextResult[bool]:
         """Establish LDAP connection using config - Single Responsibility."""
-        self._ldap_client = FlextLdapSimpleClient(None)
+        self._ldap_client = FlextLdapClient(None)
         logger.debug("Created new LDAP client")
 
         logger.trace("Attempting LDAP connection")
-        server_url = (
-            f"{'ldaps' if config.use_ssl else 'ldap'}://{config.host}:{config.port}"
-        )
+        config_dict = config.model_dump()
+        scheme = "ldaps" if bool(config_dict.get("use_ssl", False)) else "ldap"
+        host = str(config_dict.get("host", "localhost"))
+        port = int(config_dict.get("port", 389))
+        server_url = f"{scheme}://{host}:{port}"
         connection_result = await self._ldap_client.connect(server_url, None, None)
         if not connection_result.is_success:
             logger.error(
@@ -264,8 +271,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             return FlextResult.fail(f"Connection failed: {connection_result.error}")
 
         logger.debug("LDAP connection established successfully")
-        # Save connection ID for later use in disconnect
-        self._connection_id = connection_result.data
+        # Save a logical connection id (legacy compatibility)
+        self._connection_id = self._ldap_client.last_server_url or server_url
         return FlextResult.ok(DirectoryOperationResult.SUCCESS)
 
     def _handle_authentication(
@@ -291,15 +298,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 self._auth_config = auth_config
             else:
                 logger.trace("Attempting authentication in sync context")
-                # Convert FlextLdapAuthConfig to LdapAuthConfig for compatibility
-                ldap_auth_config = LdapAuthConfig(
-                    bind_dn=auth_config.bind_dn,
-                    password=auth_config.bind_password.get_secret_value()
-                    if auth_config.bind_password
-                    else None,
-                )
                 auth_result = loop.run_until_complete(
-                    self._ldap_client.connect_with_auth(ldap_auth_config),
+                    self._ldap_client.connect_with_auth(auth_config),
                 )
                 if not auth_result.is_success:
                     logger.error(
@@ -471,8 +471,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         raw_data = raw_result.data or []
         return self._convert_search_results_to_directory_protocol(raw_data)
 
+    @staticmethod
     def _convert_search_results_to_protocol(
-        self,
         raw_results: list[FlextTypes.Core.JsonDict],
         base_dn: str,
         search_filter: str,
@@ -530,6 +530,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
         Returns:
             FlextResult indicating success or failure
+            :param _connection_id:
 
         """
         try:
@@ -679,8 +680,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             logger.exception("LDAP search operation failed", exc_info=e)
             return FlextResult.fail(f"Search error: {e}")
 
+    @staticmethod
     def _convert_search_results_to_directory_protocol(
-        self,
         raw_results: list[FlextTypes.Core.JsonDict],
     ) -> FlextResult[list[FlextLdapDirectoryEntryProtocol]]:
         """Convert raw search results to directory protocol format."""
@@ -757,8 +758,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             )
             return validation_error.to_bool_result()
 
+    @staticmethod
     def _extract_object_classes(
-        self,
         attributes: FlextTypes.Core.JsonDict,
     ) -> tuple[list[str], FlextTypes.Core.JsonDict]:
         """Extract objectClass from attributes following SOLID Single Responsibility.
@@ -790,7 +791,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
     def _execute_async_operation(
         self,
-        operation_func: Callable[..., object],  # Generic callable for flexibility
+        operation_func: Callable[..., Awaitable[object]],
         *args: object,
     ) -> object:
         """Execute async operation with proper event loop handling.
@@ -804,8 +805,11 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 # We're in an async context, use thread executor
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Type annotation for future
+                    async def _runner() -> object:
+                        return await operation_func(*args)
+
                     future: concurrent.futures.Future[object] = executor.submit(
-                        lambda: asyncio.run(operation_func(*args)),
+                        lambda: asyncio.run(_runner()),
                     )
                     raw_result = future.result(timeout=30)
                     # Only convert search results - other operations return their
@@ -822,7 +826,10 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                     return raw_result
             except RuntimeError:
                 # No running loop, we can use asyncio.run directly
-                return asyncio.run(operation_func(*args))
+                async def _runner2() -> object:
+                    return await operation_func(*args)
+
+                return asyncio.run(_runner2())
         except Exception as e:
             logger.exception("Async operation failed", exc_info=e)
             return FlextResult.fail(f"Operation error: {e}")
@@ -889,7 +896,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
         return self._handle_modify_result(modify_result)
 
-    def _handle_modify_result(self, modify_result: object) -> FlextResult[bool]:
+    @staticmethod
+    def _handle_modify_result(modify_result: object) -> FlextResult[bool]:
         """Handle the result of modify operation."""
         if hasattr(modify_result, "is_success") and not modify_result.is_success:
             error_msg = getattr(modify_result, "error", "Unknown error")
@@ -949,7 +957,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
         return self._handle_delete_result(delete_result)
 
-    def _handle_delete_result(self, delete_result: object) -> FlextResult[bool]:
+    @staticmethod
+    def _handle_delete_result(delete_result: object) -> FlextResult[bool]:
         """Handle the result of delete operation."""
         if hasattr(delete_result, "is_success") and not delete_result.is_success:
             error_msg = getattr(delete_result, "error", "Unknown error")

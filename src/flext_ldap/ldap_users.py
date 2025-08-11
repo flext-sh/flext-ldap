@@ -21,17 +21,14 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-
 from __future__ import annotations
 
 import re
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, cast
 
-# ✅ CORRECT: Import by root from flext-core (not submodules)
 from flext_core import FlextIdGenerator, FlextResult, get_flext_container, get_logger
 
-# ✅ CORRECT: Use consolidated foundation modules
 from .constants import FlextLdapAttributeConstants
 from .models import (
     FlextLdapCreateUserRequest,
@@ -131,7 +128,9 @@ class FlextLdapUserOperations:
         # Persist user to LDAP
         persistence_result = await self._persist_user_to_ldap(connection_id, user)
         if persistence_result.is_failure:
-            return FlextResult.fail(persistence_result.error or "Failed to persist user")
+            return FlextResult.fail(
+                persistence_result.error or "Failed to persist user"
+            )
 
         logger.info(f"Successfully created user: {request.dn.value}")
         return FlextResult.ok(user)
@@ -226,7 +225,10 @@ class FlextLdapUserOperations:
             return FlextResult.fail(f"Invalid search config: {config_validation.error}")
 
         # Execute search via repository
-        search_result = await self._repository.search_entries(connection_id, config)
+        search_payload = cast("dict[str, object]", config.model_dump())
+        search_result = await self._repository.search_entries(
+            connection_id, search_payload
+        )
         if search_result.is_failure:
             return FlextResult.fail(search_result.error or "Search failed")
 
@@ -245,7 +247,7 @@ class FlextLdapUserOperations:
                 id=FlextIdGenerator.generate_entity_id(),  # Required by FlextEntity
                 dn=user.dn,
                 object_classes=user.object_classes,
-                attributes=user.attributes
+                attributes=user.attributes,
             )
             entries.append(entry)
 
@@ -307,13 +309,17 @@ class FlextLdapUserOperations:
             first_entry = search_result.data.entries[0]
             user_data: dict[str, object] = {
                 "dn": first_entry.dn.value,
-                "attributes": first_entry.attributes
+                "attributes": first_entry.attributes,
             }
             user_result = self._ldap_attributes_to_user(user_data)
             if user_result.is_success:
                 logger.debug(f"Found user by UID: {uid}")
-                return FlextResult.ok(user_result.data)  # Wrap in FlextResult[FlextLdapUser | None]
-            return FlextResult.fail(f"Error converting entry to user: {user_result.error}")
+                return FlextResult.ok(
+                    user_result.data
+                )  # Wrap in FlextResult[FlextLdapUser | None]
+            return FlextResult.fail(
+                f"Error converting entry to user: {user_result.error}"
+            )
 
         logger.debug(f"User not found: {uid}")
         return FlextResult.ok(None)
@@ -363,13 +369,15 @@ class FlextLdapUserOperations:
                 # Convert entry back to user
                 user_data: dict[str, object] = {
                     "dn": entry.dn.value,
-                    "attributes": entry.attributes
+                    "attributes": entry.attributes,
                 }
                 user_result = self._ldap_attributes_to_user(user_data)
                 if user_result.is_success:
                     yield user_result
                 else:
-                    yield FlextResult.fail(f"Error converting entry to user: {user_result.error}")
+                    yield FlextResult.fail(
+                        f"Error converting entry to user: {user_result.error}"
+                    )
 
     # =========================================================================
     # USER UPDATE OPERATIONS - Modification and maintenance
@@ -407,7 +415,7 @@ class FlextLdapUserOperations:
         result = await self._repository.modify_entry(
             connection_id=connection_id,
             entry_dn=user_dn.value,
-            modifications=update_data,
+            modifications=cast("dict[str, object]", update_data),
             operation="replace",
         )
 
@@ -444,7 +452,7 @@ class FlextLdapUserOperations:
         result = await self._repository.modify_entry(
             connection_id=connection_id,
             entry_dn=user_dn.value,
-            modifications=modification_data,
+            modifications=cast("dict[str, object]", modification_data),
             operation="replace",
         )
 
@@ -518,14 +526,15 @@ class FlextLdapUserOperations:
             size_limit=1,
         )
 
-        result = await self._repository.search_entries(connection_id, config)
+        exists_payload = cast("dict[str, object]", config.model_dump())
+        result = await self._repository.search_entries(connection_id, exists_payload)
         if result.is_failure:
             return FlextResult.fail(result.error or "Search failed")
 
         return FlextResult.ok(result.data is not None and len(result.data) > 0)
 
+    @staticmethod
     def _create_user_entity_from_request(
-        self,
         request: FlextLdapCreateUserRequest,
     ) -> FlextResult[FlextLdapUser]:
         """Create user entity from creation request."""
@@ -563,14 +572,15 @@ class FlextLdapUserOperations:
         except Exception as e:
             return FlextResult.fail(f"Error creating user entity: {e}")
 
-    def _user_to_ldap_attributes(self, user: FlextLdapUser) -> dict[str, list[str]]:
+    @staticmethod
+    def _user_to_ldap_attributes(user: FlextLdapUser) -> dict[str, list[str]]:
         """Convert user entity to LDAP attributes."""
         # This would return the user's attributes dictionary
         # In a real implementation, this might include additional transformation
         return user.attributes
 
+    @staticmethod
     def _ldap_attributes_to_user(
-        self,
         entry_data: dict[str, object],
     ) -> FlextResult[FlextLdapUser]:
         """Convert LDAP entry data to user entity."""
@@ -640,11 +650,11 @@ class FlextLdapUserOperations:
     ) -> FlextResult[None]:
         """Validate user creation preconditions."""
         # Check if user already exists
-        exists_check = await self._check_user_exists(
-            connection_id, request.dn.value
-        )
+        exists_check = await self._check_user_exists(connection_id, request.dn.value)
         if exists_check.is_failure:
-            return FlextResult.fail(f"Could not check user existence: {exists_check.error}")
+            return FlextResult.fail(
+                f"Could not check user existence: {exists_check.error}"
+            )
 
         if exists_check.data:
             return FlextResult.fail(f"User already exists: {request.dn.value}")
@@ -658,9 +668,13 @@ class FlextLdapUserOperations:
     ) -> FlextResult[None]:
         """Persist user entity to LDAP directory."""
         # Convert user to LDAP entry data
-        entry_data = {
+        # Normalize to dict[str, object] for repository protocol
+        normalized_attributes: dict[str, list[str]] = {
+            k: [str(v) for v in vals] for k, vals in user.attributes.items()
+        }
+        entry_data: dict[str, object] = {
             "dn": user.dn.value,
-            "attributes": user.attributes
+            "attributes": normalized_attributes,
         }
 
         # Create entry via repository
@@ -715,9 +729,13 @@ async def get_user_operations() -> FlextResult[FlextLdapUserOperations]:
         repository_result = container.get("ldap_repository")
 
         if connection_result.is_failure:
-            return FlextResult.fail(f"Could not resolve LDAP connection: {connection_result.error}")
+            return FlextResult.fail(
+                f"Could not resolve LDAP connection: {connection_result.error}"
+            )
         if repository_result.is_failure:
-            return FlextResult.fail(f"Could not resolve LDAP repository: {repository_result.error}")
+            return FlextResult.fail(
+                f"Could not resolve LDAP repository: {repository_result.error}"
+            )
 
         # Type cast for protocol compatibility
         connection = cast("FlextLdapConnectionProtocol", connection_result.data)

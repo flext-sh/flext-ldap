@@ -82,7 +82,7 @@ class FlextLdapEntry(FlextDomainEntity):
     Attributes:
         dn: Distinguished Name uniquely identifying this entry in the directory
         object_classes: LDAP object classes defining entry schema and capabilities
-        attributes: Directory attributes as name-value pairs (multi-valued)
+        attributes: Directory attributes as name-value pairs (multivalued)
         status: Entity lifecycle status from flext-core (ACTIVE, INACTIVE, etc.)
 
     Business Rules:
@@ -201,7 +201,7 @@ class FlextLdapEntry(FlextDomainEntity):
         """Add attribute value(s) to LDAP entry with multi-value support.
 
         Adds one or more values to the specified LDAP attribute, supporting
-        both single values and multi-valued attributes. Prevents duplicate
+        both single values and multivalued attributes. Prevents duplicate
         values within the same attribute.
 
         Args:
@@ -229,7 +229,7 @@ class FlextLdapEntry(FlextDomainEntity):
         """Remove LDAP attribute or specific value with granular control.
 
         Provides flexible attribute removal supporting both complete attribute
-        deletion and selective value removal from multi-valued attributes.
+        deletion and selective value removal from multivalued attributes.
 
         Args:
             name: LDAP attribute name to remove or modify
@@ -270,7 +270,7 @@ class FlextLdapEntry(FlextDomainEntity):
         """Retrieve first value from LDAP attribute for single-valued access.
 
         Convenience method for accessing attributes expected to contain only
-        one value, returning the first value from multi-valued attributes.
+        one value, returning the first value from multivalued attributes.
 
         Args:
             name: LDAP attribute name to retrieve
@@ -286,7 +286,7 @@ class FlextLdapEntry(FlextDomainEntity):
         """Check presence of LDAP attribute or specific attribute value.
 
         Provides flexible attribute checking supporting both attribute existence
-        and specific value presence within multi-valued attributes.
+        and specific value presence within multivalued attributes.
 
         Args:
             name: LDAP attribute name to check
@@ -562,11 +562,15 @@ class FlextLdapUser(FlextDomainEntity):
             return FlextResult.fail("User email must be valid format")
         return FlextResult.ok(None)
 
-    def add_attribute(self, name: str, value: str) -> FlextLdapUser:
+    def add_attribute(self, name: str, value: str | list[str]) -> FlextLdapUser:
         """Add an attribute to the user."""
         entity_data = self.model_dump()
         new_attributes = entity_data["attributes"].copy()
-        new_attributes[name] = value
+        # Attributes must be dict[str, list[str]]
+        if isinstance(value, list):
+            new_attributes[name] = [str(v) for v in value]
+        else:
+            new_attributes[name] = [str(value)]
         entity_data.update(
             {
                 "attributes": new_attributes,

@@ -14,8 +14,8 @@ import pytest
 
 from flext_ldap.application.ldap_service import FlextLdapService
 from flext_ldap.ldap_infrastructure import (
+    FlextLdapClient,
     FlextLdapConnectionConfig,
-    FlextLdapSimpleClient,
 )
 from flext_ldap.values import FlextLdapCreateUserRequest
 
@@ -37,9 +37,9 @@ class TestRealLdapOperations:
     @pytest.fixture
     async def ldap_client(
         self, ldap_config: FlextLdapConnectionConfig
-    ) -> FlextLdapSimpleClient:
+    ) -> FlextLdapClient:
         """Real LDAP client for testing."""
-        client = FlextLdapSimpleClient(ldap_config)
+        client = FlextLdapClient(ldap_config)
         yield client
         # Cleanup
         client.disconnect()
@@ -131,7 +131,7 @@ class TestRealLdapOperations:
             assert "Not connected to LDAP server" in delete_result.error
 
     async def test_ldap_client_basic_operations(
-        self, ldap_client: FlextLdapSimpleClient
+        self, ldap_client: FlextLdapClient
     ) -> None:
         """Test basic LDAP client operations."""
         # Test that client is initialized

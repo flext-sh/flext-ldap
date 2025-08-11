@@ -10,14 +10,14 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Protocol
+from urllib.parse import parse_qs, urlparse
+
+from flext_core import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core.typings import FlextTypes
-from urllib.parse import parse_qs, urlparse
-
-from flext_core import get_logger
+    from flext_core import FlextTypes
 
 logger = get_logger(__name__)
 

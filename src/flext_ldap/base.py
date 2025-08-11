@@ -18,11 +18,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from flext_core import FlextContainer, FlextDomainService, FlextIdGenerator, FlextResult
-from flext_core.protocols import FlextRepository
+from flext_core import (
+    FlextContainer,
+    FlextDomainService,
+    FlextIdGenerator,
+    FlextRepository,
+    FlextResult,
+)
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
+    from flext_core import FlextTypes
 
 
 class FlextLdapRepository(FlextRepository[dict[str, object]]):
@@ -64,26 +69,49 @@ class FlextLdapRepository(FlextRepository[dict[str, object]]):
         )
         return FlextResult.ok(data)
 
-    def save(self, entity: dict[str, object]) -> FlextResult[dict[str, object]]:
+    def save(
+        self, entity: dict[str, object] | object
+    ) -> FlextResult[dict[str, object]]:
         """Save entity with validation."""
         try:
-            entity_id = str(entity.get("id") or FlextIdGenerator.generate_id())
+            # Normalize entity to dict for storage
+            if isinstance(entity, dict):
+                entity_dict: dict[str, object] = entity
+            elif hasattr(entity, "model_dump"):
+                # Pydantic model
+                entity_dict = entity.model_dump()
+            else:
+                # Fallback to __dict__ snapshot
+                entity_dict = dict(getattr(entity, "__dict__", {}))
+
+            entity_id = str(entity_dict.get("id") or FlextIdGenerator.generate_id())
 
             # Use flext-core validation if available
             # Optional domain validation hook (dictionary-based)
-            validate = entity.get("validate_domain_rules")
-            if callable(validate):
-                validation_result = validate()
-                if validation_result is not None and getattr(
-                    validation_result, "is_failure", False
+            # Support entities exposing validate_domain_rules as method
+            validate_method = None
+            if hasattr(entity, "validate_domain_rules"):
+                validate_method = entity.validate_domain_rules
+            elif isinstance(entity_dict.get("validate_domain_rules"), object):
+                validate_method = entity_dict.get("validate_domain_rules")
+            if callable(validate_method):
+                try:
+                    validate_result = validate_method()
+                except Exception as e:
+                    return FlextResult.fail(str(e))
+                if validate_result is not None and getattr(
+                    validate_result, "is_failure", False
                 ):
                     return FlextResult.fail(
-                        getattr(validation_result, "error", "Validation failed")
+                        getattr(validate_result, "error", "Validation failed"),
                     )
 
-            self._storage[entity_id] = entity
-            typed_entity: dict[str, object] = entity
-            return FlextResult.ok(typed_entity)
+            # Store original object if it looks like an entity (has identity);
+            # this keeps equality semantics expected by tests
+            to_store: object = entity if hasattr(entity, "id") else entity_dict
+            self._storage[entity_id] = to_store
+            # Return dict view for consistency with repository type parameter
+            return FlextResult.ok(entity_dict)
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Save failed: {e}")
 
@@ -151,7 +179,8 @@ class FlextLdapRepository(FlextRepository[dict[str, object]]):
         """Async find entities matching conditions."""
         return self._find_where_sync(**conditions)
 
-    def _validate_entity(self, entity: object) -> FlextResult[None]:
+    @staticmethod
+    def _validate_entity(entity: object) -> FlextResult[None]:
         """Validate entity using flext-core validation chain."""
         try:
             # Use flext-core validation if available
@@ -369,8 +398,8 @@ class FlextLdapDomainService(FlextDomainService[None]):
         return FlextResult.ok(None)
 
     # PRIVATE HELPER METHODS
+    @staticmethod
     def _apply_updates(
-        self,
         entity: object,
         updates: FlextTypes.Core.JsonDict,
     ) -> object:

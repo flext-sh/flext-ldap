@@ -17963,7 +17963,7 @@
             [358, 360]
           ]
         },
-        "FlextLdapSimpleClient.__init__": {
+        "FlextLdapClient.__init__": {
           "executed_lines": [374, 382, 383, 384, 385, 386, 387, 388],
           "summary": {
             "covered_lines": 8,
@@ -17982,7 +17982,7 @@
           "executed_branches": [],
           "missing_branches": []
         },
-        "FlextLdapSimpleClient.connect": {
+        "FlextLdapClient.connect": {
           "executed_lines": [],
           "summary": {
             "covered_lines": 0,
@@ -18009,7 +18009,7 @@
             [427, 437]
           ]
         },
-        "FlextLdapSimpleClient.connect_with_auth": {
+        "FlextLdapClient.connect_with_auth": {
           "executed_lines": [],
           "summary": {
             "covered_lines": 0,
@@ -18040,7 +18040,7 @@
             [498, 501]
           ]
         },
-        "FlextLdapSimpleClient.search": {
+        "FlextLdapClient.search": {
           "executed_lines": [],
           "summary": {
             "covered_lines": 0,
@@ -18076,7 +18076,7 @@
             [617, 618]
           ]
         },
-        "FlextLdapSimpleClient.add": {
+        "FlextLdapClient.add": {
           "executed_lines": [],
           "summary": {
             "covered_lines": 0,
@@ -18105,7 +18105,7 @@
             [696, 705]
           ]
         },
-        "FlextLdapSimpleClient.modify": {
+        "FlextLdapClient.modify": {
           "executed_lines": [],
           "summary": {
             "covered_lines": 0,
@@ -18134,7 +18134,7 @@
             [754, 763]
           ]
         },
-        "FlextLdapSimpleClient.delete": {
+        "FlextLdapClient.delete": {
           "executed_lines": [],
           "summary": {
             "covered_lines": 0,
@@ -18161,7 +18161,7 @@
             [790, 799]
           ]
         },
-        "FlextLdapSimpleClient.disconnect": {
+        "FlextLdapClient.disconnect": {
           "executed_lines": [],
           "summary": {
             "covered_lines": 0,
@@ -18187,7 +18187,7 @@
             [822, 825]
           ]
         },
-        "FlextLdapSimpleClient.is_connected": {
+        "FlextLdapClient.is_connected": {
           "executed_lines": [],
           "summary": {
             "covered_lines": 0,
@@ -18206,7 +18206,7 @@
           "executed_branches": [],
           "missing_branches": []
         },
-        "FlextLdapSimpleClient.get_server_info": {
+        "FlextLdapClient.get_server_info": {
           "executed_lines": [],
           "summary": {
             "covered_lines": 0,
@@ -18228,7 +18228,7 @@
             [839, 842]
           ]
         },
-        "FlextLdapSimpleClient.get_entry": {
+        "FlextLdapClient.get_entry": {
           "executed_lines": [],
           "summary": {
             "covered_lines": 0,
@@ -18252,7 +18252,7 @@
             [864, 867]
           ]
         },
-        "FlextLdapSimpleClient.delete_entry": {
+        "FlextLdapClient.delete_entry": {
           "executed_lines": [],
           "summary": {
             "covered_lines": 0,
@@ -18503,7 +18503,7 @@
             [358, 360]
           ]
         },
-        "FlextLdapSimpleClient": {
+        "FlextLdapClient": {
           "executed_lines": [374, 382, 383, 384, 385, 386, 387, 388],
           "summary": {
             "covered_lines": 8,

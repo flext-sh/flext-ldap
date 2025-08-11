@@ -22,12 +22,9 @@ from typing import TYPE_CHECKING
 from flext_core import FlextIdGenerator, FlextResult, get_logger
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
-# Constants imported from centralized module
-
-if TYPE_CHECKING:
     from uuid import UUID
+
+    from flext_core import FlextTypes
 
 logger = get_logger(__name__)
 
@@ -187,7 +184,8 @@ class FlextLdapErrorEvent:
         signature_text = "|".join(signature_components)
         return hashlib.sha256(signature_text.encode()).hexdigest()
 
-    def _normalize_error_message(self, message: str) -> str:
+    @staticmethod
+    def _normalize_error_message(message: str) -> str:
         """Normalize error message for pattern matching."""
         # Remove specific values like IPs, ports, DNs to find patterns
 

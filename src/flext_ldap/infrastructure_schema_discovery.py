@@ -21,11 +21,9 @@ from uuid import UUID
 from flext_core import FlextIdGenerator, FlextResult, get_logger
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
-
-if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from flext_core import FlextTypes
 
     from flext_ldap.entities import FlextLdapConnection
 
@@ -673,7 +671,8 @@ class FlextLdapSchemaDiscoveryService:
                 self._cache_schema(cache_key, discovery_result)
 
             self._discovery_history.append(discovery_result)
-            if len(self._discovery_history) > 1000:
+            max_history = 1000
+            if len(self._discovery_history) > max_history:
                 self._discovery_history.pop(0)
 
             logger.info(
@@ -804,7 +803,8 @@ class FlextLdapSchemaDiscoveryService:
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
-    def _create_validation_result(self) -> ValidationResult:
+    @staticmethod
+    def _create_validation_result() -> ValidationResult:
         """Create initial validation result structure."""
         return ValidationResult(
             is_valid=True,
@@ -815,8 +815,8 @@ class FlextLdapSchemaDiscoveryService:
             schema_violations=[],
         )
 
+    @staticmethod
     def _collect_object_class_attributes(
-        self,
         object_classes: list[str],
         schema: FlextLdapSchemaDiscoveryResult,
         validation_result: ValidationResult,
@@ -843,8 +843,8 @@ class FlextLdapSchemaDiscoveryService:
 
         return all_must_attrs, all_may_attrs
 
+    @staticmethod
     def _validate_required_attributes(
-        self,
         all_must_attrs: set[str],
         attributes: FlextTypes.Core.JsonDict,
         validation_result: ValidationResult,
@@ -856,8 +856,8 @@ class FlextLdapSchemaDiscoveryService:
                 validation_result["missing_required"].append(must_attr)
                 validation_result["is_valid"] = False
 
+    @staticmethod
     def _validate_unknown_attributes(
-        self,
         all_must_attrs: set[str],
         all_may_attrs: set[str],
         attributes: FlextTypes.Core.JsonDict,
@@ -870,8 +870,8 @@ class FlextLdapSchemaDiscoveryService:
                 validation_result["unknown_attributes"].append(attr_name)
                 validation_result["warnings"].append(f"Unknown attribute: {attr_name}")
 
+    @staticmethod
     def _validate_single_value_constraints(
-        self,
         schema: FlextLdapSchemaDiscoveryResult,
         attributes: FlextTypes.Core.JsonDict,
         validation_result: ValidationResult,
@@ -951,7 +951,8 @@ class FlextLdapSchemaDiscoveryService:
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
-    def _extract_server_info(self, connection: FlextLdapConnection) -> dict[str, str]:
+    @staticmethod
+    def _extract_server_info(connection: FlextLdapConnection) -> dict[str, str]:
         """Extract server information from connection."""
         server_info = {
             "vendor": "Unknown LDAP Server",
@@ -968,8 +969,8 @@ class FlextLdapSchemaDiscoveryService:
 
         return server_info
 
+    @staticmethod
     def _extract_schema_from_connection(
-        self,
         connection: FlextLdapConnection,
     ) -> tuple[
         dict[str, FlextLdapSchemaObjectClass],
@@ -1074,7 +1075,8 @@ class FlextLdapSchemaDiscoveryService:
                 discovery_errors=[f"Schema discovery failed: {e}"],
             )
 
-    def _generate_cache_key(self, connection: FlextLdapConnection) -> str:
+    @staticmethod
+    def _generate_cache_key(connection: FlextLdapConnection) -> str:
         """Generate cache key for connection."""
         if hasattr(connection, "server"):
             return f"schema_{getattr(connection.server, 'host', 'unknown')}"
@@ -1332,7 +1334,8 @@ class FlextLdapSchemaDiscoveryService:
         for oc_def in definition_list:
             self._process_object_class_definition(oc_def, object_classes)
 
-    def _normalize_to_list(self, definitions: object) -> list[object]:
+    @staticmethod
+    def _normalize_to_list(definitions: object) -> list[object]:
         """Normalize object class definitions to list format."""
         return definitions if isinstance(definitions, list) else [definitions]
 
@@ -1402,8 +1405,8 @@ class FlextLdapSchemaDiscoveryService:
             logger.warning("Error parsing server attributes: %s", e)
             return self._get_standard_attributes()
 
+    @staticmethod
     def _parse_server_schema_items(
-        self,
         schema_data: list[FlextTypes.Core.JsonDict],
         item_type: str,
         count_key: str,
@@ -1482,8 +1485,8 @@ class FlextLdapSchemaDiscoveryService:
         if parsed_attr:
             attributes[parsed_attr.primary_name] = parsed_attr
 
+    @staticmethod
     def _parse_object_class_definition(
-        self,
         definition: str,
     ) -> FlextLdapSchemaObjectClass | None:
         """Parse a single object class definition string."""
@@ -1523,8 +1526,8 @@ class FlextLdapSchemaDiscoveryService:
             )
             return None
 
+    @staticmethod
     def _parse_attribute_definition(
-        self,
         definition: str,
     ) -> FlextLdapSchemaAttribute | None:
         """Parse a single attribute definition string."""
@@ -1557,7 +1560,8 @@ class FlextLdapSchemaDiscoveryService:
             )
             return None
 
-    def _get_standard_object_classes(self) -> dict[str, FlextLdapSchemaObjectClass]:
+    @staticmethod
+    def _get_standard_object_classes() -> dict[str, FlextLdapSchemaObjectClass]:
         """Get RFC-compliant standard object classes (not fallback, but standards)."""
         logger.trace("Using RFC-compliant standard object classes")
         return {
@@ -1599,7 +1603,7 @@ class FlextLdapSchemaDiscoveryService:
                     "telexNumber",
                     "teletexTerminalIdentifier",
                     "telephoneNumber",
-                    "internationaliSDNNumber",
+                    "internationalSDNNumber",
                     "facsimileTelephoneNumber",
                     "street",
                     "postOfficeBox",
@@ -1638,7 +1642,8 @@ class FlextLdapSchemaDiscoveryService:
             ),
         }
 
-    def _get_standard_attributes(self) -> dict[str, FlextLdapSchemaAttribute]:
+    @staticmethod
+    def _get_standard_attributes() -> dict[str, FlextLdapSchemaAttribute]:
         """Get RFC-compliant standard attributes (not fallback, but standards)."""
         logger.trace("Using RFC-compliant standard attributes")
         return {

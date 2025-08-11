@@ -26,6 +26,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import warnings
+from abc import ABCMeta
 from typing import TYPE_CHECKING
 
 from flext_core import FlextResult
@@ -65,7 +66,7 @@ warnings.warn(
 )
 
 
-class FlextLdapConnectionManager(FlextLdapConnectionService):
+class FlextLdapConnectionManager(FlextLdapConnectionService, metaclass=ABCMeta):
     """Compatibility facade for FlextLdapConnectionManager.
 
     ⚠️ DEPRECATED: Use FlextLdapConnectionService from flext_ldap.abstracts instead.
@@ -108,7 +109,7 @@ class FlextLdapConnectionManager(FlextLdapConnectionService):
         return FlextResult.fail(result.error or "Connection test failed")
 
 
-class FlextLdapDirectoryRepository(FlextLdapRepository):
+class FlextLdapDirectoryRepository(FlextLdapRepository, metaclass=ABCMeta):
     """Compatibility facade for FlextLdapDirectoryRepository.
 
     ⚠️ DEPRECATED: Use FlextLdapRepository from flext_ldap.abstracts instead.
@@ -134,7 +135,7 @@ class FlextLdapDirectoryRepository(FlextLdapRepository):
         )
 
 
-class FlextLdapSchemaValidator(FlextLdapSchemaService):
+class FlextLdapSchemaValidator(FlextLdapSchemaService, metaclass=ABCMeta):
     """Compatibility facade for FlextLdapSchemaValidator.
 
     ⚠️ DEPRECATED: Use FlextLdapSchemaService from flext_ldap.abstracts instead.
@@ -148,8 +149,9 @@ class FlextLdapSchemaValidator(FlextLdapSchemaService):
         NEW: FlextLdapSchemaService from flext_ldap.abstracts
     """
 
-    def __init__(self) -> None:
+    def __init__(self, /, **data: object) -> None:
         """Initialize compatibility facade with deprecation warning."""
+        super().__init__(**data)
         warnings.warn(
             "🚨 DEPRECATED CLASS: FlextLdapSchemaValidator is deprecated.\n"
             "✅ USE INSTEAD: FlextLdapSchemaService from flext_ldap.abstracts\n"
@@ -159,11 +161,12 @@ class FlextLdapSchemaValidator(FlextLdapSchemaService):
             stacklevel=2,
         )
 
-    def validate_entry(self, _entry: FlextLdapEntry) -> FlextResult[object]:
+    @staticmethod
+    def validate_entry(_entry: FlextLdapEntry) -> FlextResult[object]:
         """Validate LDAP entry against schema - compatibility method.
 
         Args:
-            entry: LDAP entry to validate
+            _entry: LDAP entry to validate
 
         Returns:
             FlextResult indicating validation result
@@ -175,7 +178,8 @@ class FlextLdapSchemaValidator(FlextLdapSchemaService):
             "Schema validation not implemented - use async validate_entry_schema",
         )
 
-    def get_required_attributes(self, _object_class: str) -> list[str]:
+    @staticmethod
+    def get_required_attributes(_object_class: str) -> list[str]:
         """Get required attributes for object class - compatibility method.
 
         Args:
@@ -183,22 +187,23 @@ class FlextLdapSchemaValidator(FlextLdapSchemaService):
 
         Returns:
             List of required attribute names
+            :param _object_class:
 
         """
         # This is a synchronous compatibility method
         # Real implementations should integrate with async get_schema
         return []
 
+    @staticmethod
     def validate_attribute_syntax(
-        self,
         _attribute_name: str,
         _value: str,
     ) -> FlextResult[object]:
         """Validate attribute value syntax - compatibility method.
 
         Args:
-            attribute_name: Name of the attribute
-            value: Value to validate
+            _attribute_name: Name of the attribute
+            _value: Value to validate
 
         Returns:
             FlextResult indicating validation result
@@ -206,10 +211,10 @@ class FlextLdapSchemaValidator(FlextLdapSchemaService):
         """
         # This is a synchronous compatibility method
         # Real implementations should integrate with async validation
-        return FlextResult.ok(True)
+        return FlextResult.ok(data=True)
 
 
-class FlextLdapGroupRepository(FlextLdapRepository):
+class FlextLdapGroupRepository(FlextLdapRepository, metaclass=ABCMeta):
     """Compatibility facade for FlextLdapGroupRepository.
 
     ⚠️ DEPRECATED: Use FlextLdapRepository from flext_ldap.abstracts instead.
@@ -288,5 +293,5 @@ class FlextLdapGroupRepository(FlextLdapRepository):
         result = await self.modify_entry(connection_id, group_dn, changes)
         # Convert FlextResult[None] to FlextResult[object]
         if result.is_success:
-            return FlextResult.ok(True)  # None -> object (success indicator)
+            return FlextResult.ok(data=True)  # None -> object (success indicator)
         return FlextResult.fail(result.error or "Failed to add member to group")

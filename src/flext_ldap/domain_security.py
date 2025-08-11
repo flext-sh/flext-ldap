@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 from flext_core import FlextEntity, FlextResult
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
+    from flext_core import FlextTypes
 
 # Constants imported from centralized module
 
@@ -145,7 +145,8 @@ class FlextLdapCertificateValidationContext(FlextEntity):
 
     def model_post_init(self, __context: object, /) -> None:
         """Post-initialization validation."""
-        if self.port <= 0 or self.port > 65535:
+        max_tcp_port = 65535
+        if self.port <= 0 or self.port > max_tcp_port:
             min_port = 1
             max_port = 65535
             msg = f"Port must be between {min_port} and {max_port}"
@@ -161,7 +162,8 @@ class FlextLdapCertificateValidationContext(FlextEntity):
             return FlextResult.fail(
                 "Certificate validation context must have a hostname",
             )
-        if self.port <= 0 or self.port > 65535:
+        max_tcp_port = 65535
+        if self.port <= 0 or self.port > max_tcp_port:
             min_port = 1
             max_port = 65535
             return FlextResult.fail(f"Port must be between {min_port} and {max_port}")

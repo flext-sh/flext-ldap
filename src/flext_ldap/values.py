@@ -13,6 +13,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from abc import ABCMeta
+
 from flext_core import (
     FlextResult,
     FlextValueObject,
@@ -28,7 +30,7 @@ from flext_ldap.types import (
 # Import consolidated value objects - ELIMINATES ALL DUPLICATIONS
 from flext_ldap.value_objects import (
     FlextLdapCreateUserRequest,
-    FlextLdapDistinguishedName,
+    FlextLdapDistinguishedName as _FlextLdapDistinguishedName,
     FlextLdapFilter as FlextLdapFilterValue,  # Alias for compatibility
 )
 
@@ -37,7 +39,7 @@ logger = get_logger(__name__)
 # ADDITIONAL VALUE OBJECTS - Only unique ones not in types.py
 
 
-class FlextLdapObjectClass(FlextValueObject):
+class FlextLdapObjectClass(FlextValueObject, metaclass=ABCMeta):
     """LDAP object class value object."""
 
     name: str = Field(..., description="Object class name")
@@ -70,7 +72,7 @@ class FlextLdapObjectClass(FlextValueObject):
         return self.name
 
 
-class FlextLdapAttributesValue(FlextValueObject):
+class FlextLdapAttributesValue(FlextValueObject, metaclass=ABCMeta):
     """LDAP attributes value object."""
 
     attributes: dict[str, list[str]] = Field(
@@ -122,7 +124,7 @@ class FlextLdapAttributesValue(FlextValueObject):
         return FlextLdapAttributesValue(attributes=new_attrs)
 
 
-class FlextLdapConnectionInfo(FlextValueObject):
+class FlextLdapConnectionInfo(FlextValueObject, metaclass=ABCMeta):
     """LDAP connection information value object."""
 
     server_uri: FlextLdapUri
@@ -230,7 +232,8 @@ class FlextLdapExtendedEntry(FlextValueObject):
         # Default for unrecognized types
         return "other"
 
-    def validate_domain_rules(self) -> FlextResult[None]:
+    # Bridge abstract method name difference: flext-core expects validate_business_rules
+    def validate_business_rules(self) -> FlextResult[None]:
         """Validate domain rules for LDAP extended entry."""
         if not self.dn:
             return FlextResult.fail("LDAP entry must have a distinguished name")
@@ -247,6 +250,7 @@ LDAPConnectionInfo = FlextLdapConnectionInfo
 ExtendedLDAPEntry = FlextLdapExtendedEntry
 LDAPEntry = FlextLdapExtendedEntry  # Default entry type
 FlextLdapFilter = FlextLdapFilterValue  # Use comprehensive filter implementation
+FlextLdapDistinguishedName = _FlextLdapDistinguishedName
 
 # PUBLIC API EXPORTS
 __all__ = [

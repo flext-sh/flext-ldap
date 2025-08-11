@@ -1,9 +1,7 @@
-"""FLEXT-LDAP - Enterprise LDAP Directory Services Library.
+"""FLEXT-LDAP package public API.
 
-🏗️ CLEAN ARCHITECTURE | DDD | RAILWAY-ORIENTED PROGRAMMING
-
-Enterprise-grade LDAP operations library implementing docs/patterns/foundation.md
-patterns with type-safe operations and comprehensive error handling.
+Exports primary entry points and legacy compatibility symbols while
+internals are consolidated under SOLID patterns and flext-core.
 
 PUBLIC API - PRODUCTION GRADE:
     FlextLdapApi: Primary interface following flext-core patterns
@@ -44,7 +42,7 @@ from flext_core import FlextLDAPConfig
 
 # ✅ PRIMARY PUBLIC API - PRODUCTION GRADE
 from flext_ldap.api import FlextLdapApi, get_ldap_api
-from flext_ldap.application.ldap_service import FlextLdapService
+from flext_ldap.abstracts import FlextLdapService
 
 # ✅ CONFIGURATION - ENTERPRISE PATTERNS
 from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
@@ -53,7 +51,7 @@ from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
 from flext_ldap.entities import FlextLdapEntry, FlextLdapGroup, FlextLdapUser
 
 # ✅ INFRASTRUCTURE - FOR ADVANCED USAGE
-from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
+from flext_ldap.infrastructure_ldap_client import FlextLdapClient
 
 # ✅ VALIDATION UTILITIES - PUBLIC API
 from flext_ldap.utils import (
@@ -71,6 +69,9 @@ from flext_ldap.values import (
     FlextLdapFilterValue,
     FlextLdapScopeEnum,
 )
+
+# ✅ LEGACY CONSTANTS - TEST COMPATIBILITY
+from flext_ldap.constants import FlextLdapConstants
 
 # ✅ BACKWARD COMPATIBILITY - SIMPLE ALIASES
 LDAPEntry = FlextLdapExtendedEntry
@@ -126,6 +127,7 @@ def __getattr__(name: str) -> object:
 __all__ = [
     "FlextLDAPConfig",
     "FlextLdapApi",
+    "FlextLdapConstants",
     "FlextLdapConnectionConfig",
     "FlextLdapCreateUserRequest",
     "FlextLdapDistinguishedName",
@@ -136,7 +138,7 @@ __all__ = [
     "FlextLdapScopeEnum",
     "FlextLdapService",
     "FlextLdapSettings",
-    "FlextLdapSimpleClient",
+    "FlextLdapClient",
     "FlextLdapUser",
     "LDAPEntry",
     "LDAPFilter",
