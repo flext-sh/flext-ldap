@@ -24,7 +24,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 # ✅ CORRECT: Import by root from flext-core (not submodules)
 from flext_core import (
@@ -36,9 +36,8 @@ from flext_core import (
 
 if TYPE_CHECKING:
     from contextlib import AbstractAsyncContextManager
-    from typing import Any
 
-    JsonDict = dict[str, Any]
+    JsonDict = dict[str, object]
 
 logger = get_logger(__name__)
 
@@ -101,6 +100,7 @@ class FlextLdapConnectionProtocol(Protocol):
         self,
         host: str,
         port: int = 389,
+        *,
         use_ssl: bool = False,
         bind_dn: str | None = None,
         bind_password: str | None = None,
@@ -176,11 +176,9 @@ class FlextLdapSearchProtocol(Protocol):
         connection: object,
         base_dn: str,
         search_filter: str,
+        *,
         attributes: list[str] | None = None,
         scope: str = "SUBTREE",
-        size_limit: int = 1000,
-        time_limit: int = 30,
-        **kwargs: object,
     ) -> FlextResult[list[JsonDict]]:
         """Search LDAP entries with advanced filtering and pagination.
 
@@ -190,9 +188,6 @@ class FlextLdapSearchProtocol(Protocol):
             search_filter: LDAP search filter (RFC 4515 compliant)
             attributes: Attributes to retrieve (None for all)
             scope: Search scope (BASE, ONELEVEL, SUBTREE)
-            size_limit: Maximum number of results
-            time_limit: Search timeout in seconds
-            **kwargs: Additional search parameters
 
         Returns:
             FlextResult containing list of LDAP entries
@@ -344,19 +339,16 @@ class FlextLdapPoolProtocol(Protocol):
         connection_id: str,
         host: str,
         port: int,
-        use_ssl: bool,
-        timeout: int,
-        pool_size: int,
-    ) -> FlextResult[Any]:
+        *,
+        options: JsonDict | None = None,
+    ) -> FlextResult[object]:
         """Create connection via pool.
 
         Args:
             connection_id: Unique connection identifier
             host: LDAP server hostname
             port: LDAP server port
-            use_ssl: Whether to use SSL/TLS
-            timeout: Connection timeout
-            pool_size: Pool size configuration
+            options: Additional options (e.g., use_ssl, timeout_seconds, pool_size)
 
         Returns:
             FlextResult containing connection or error
@@ -367,6 +359,7 @@ class FlextLdapPoolProtocol(Protocol):
     async def close_connection(
         self,
         connection_id: str,
+        *,
         force: bool = False,
     ) -> FlextResult[None]:
         """Close connection in pool.

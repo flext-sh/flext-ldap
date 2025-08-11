@@ -13,10 +13,7 @@ from typing import TYPE_CHECKING
 
 from flext_core import FlextResult, get_logger
 
-if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
-from flext_ldap.domain.repositories import (
+from flext_ldap.domain_repositories import (
     FlextLdapConnectionRepository,
     FlextLdapUserRepository,
 )
@@ -26,9 +23,12 @@ from flext_ldap.value_objects import FlextLdapDistinguishedName
 if TYPE_CHECKING:
     from uuid import UUID
 
+    from flext_core import FlextTypes
+
     from flext_ldap.ldap_infrastructure import (
-        FlextLdapSimpleClient as FlextLdapInfrastructureClient,
+        FlextLdapClient as FlextLdapInfrastructureClient,
     )
+
 
 logger = get_logger(__name__)
 
@@ -79,9 +79,9 @@ class FlextLdapConnectionRepositoryImpl(FlextLdapConnectionRepository):
         try:
             if connection.id in self._connections:
                 del self._connections[connection.id]
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
             return FlextResult.ok(
-                data=False,
+                data=False
             )  # Item not found, but operation didn't fail
         except (RuntimeError, ValueError, TypeError) as e:
             msg = f"Failed to delete connection: {e}"
@@ -238,7 +238,8 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             logger.exception("%s", msg)
             return FlextResult.fail(msg)
 
-    async def find_all(self) -> FlextResult[object]:
+    @staticmethod
+    async def find_all() -> FlextResult[object]:
         """Find all users."""
         try:
             return FlextResult.ok([])
@@ -301,7 +302,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             )
 
             if delete_result.is_success:
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
 
             return FlextResult.fail(f"LDAP delete failed: {delete_result.error}")
 
@@ -316,25 +317,20 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             if not dn or not dn.value:
                 return None
 
-            # Use the find_by_dn method which has real implementation
             result = await self.find_by_dn(dn.value)
-
-            if result.is_success:
-                data = result.data
-                # Type-safe conversion: only return if data is appropriate type
-                if data is None:
-                    return None
-                # Type-safe check: verify data has expected FlextLdapUser attributes
-                if hasattr(data, "dn") and hasattr(data, "attributes"):
-                    # Runtime type assertion: we expect FlextLdapUser from find_by_dn
-                    if isinstance(data, FlextLdapUser):
-                        return data
-                    logger.warning("Expected FlextLdapUser but got %s", type(data))
-                    return None
+            if not result.is_success:
+                logger.warning(
+                    "Failed to get user by DN %s: %s", dn.value, result.error
+                )
                 return None
-            # Log error but return None for compatibility
-            msg = f"Failed to get user by DN {dn.value}: {result.error}"
-            logger.warning(msg)
+
+            data = result.data
+            if data is None:
+                return None
+            if isinstance(data, FlextLdapUser):
+                return data
+
+            logger.warning("Expected FlextLdapUser but got %s", type(data))
             return None
 
         except (RuntimeError, ValueError, TypeError) as e:
@@ -361,9 +357,6 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             if search_result.is_success:
                 entries = search_result.data or []
                 if entries:
-                    # Convert first entry to FlextLdapUser - we know it's
-                    # list["FlextTypes.Core.JsonDict"] from type annotation
-                    entries[0]  # This is guaranteed to be "FlextTypes.Core.JsonDict"
                     # Convert dict to FlextLdapUser - this is the expected case
                     logger.info("Converting LDAP response dict to FlextLdapUser")
                     # For now, return None - proper conversion would need implementation
@@ -379,8 +372,8 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             logger.exception("%s", msg)
             return None
 
+    @staticmethod
     def _validate_search_parameters(
-        self,
         base_dn: FlextLdapDistinguishedName,
         filter_string: str,
     ) -> None:

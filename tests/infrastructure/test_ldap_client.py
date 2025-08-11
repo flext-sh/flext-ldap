@@ -1,6 +1,6 @@
 """FLEXT-LDAP Infrastructure Client Tests - Protocol Implementation Validation.
 
-Enterprise-grade test suite for FlextLdapSimpleClient infrastructure layer,
+Enterprise-grade test suite for FlextLdapClient infrastructure layer,
 validating LDAP protocol implementation, connection management, and
 infrastructure-level operations with proper error handling.
 
@@ -35,8 +35,8 @@ from flext_core import FlextResult
 
 from flext_ldap.config import FlextLdapAuthConfig
 from flext_ldap.ldap_infrastructure import (
+    FlextLdapClient,
     FlextLdapConnectionConfig,
-    FlextLdapSimpleClient,
 )
 
 
@@ -49,7 +49,7 @@ class TestOperationResult:
 
 
 class TestFlextLdapSimpleClient:
-    """Test suite for FlextLdapSimpleClient infrastructure implementation.
+    """Test suite for FlextLdapClient infrastructure implementation.
 
     Comprehensive testing of the LDAP infrastructure client covering
     initialization, configuration, connection management, and protocol
@@ -67,7 +67,7 @@ class TestFlextLdapSimpleClient:
         and correctly sets up internal state including connection manager,
         data converter, and configuration handling.
         """
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
         assert client._current_connection is None
         assert client._connection_manager is not None
         assert client._converter is not None
@@ -84,7 +84,7 @@ class TestFlextLdapSimpleClient:
             port=389,
             use_ssl=False,
         )
-        client = FlextLdapSimpleClient(config)
+        client = FlextLdapClient(config)
         assert client._config == config
 
     def test_is_connected_false(self) -> None:
@@ -93,7 +93,7 @@ class TestFlextLdapSimpleClient:
         Validates that connection status correctly returns False when
         no active LDAP connection has been established.
         """
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
         assert not client.is_connected()
 
     def test_connect_success(self) -> None:
@@ -105,8 +105,8 @@ class TestFlextLdapSimpleClient:
         )
 
         # Mock the connection manager to return success
-        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
-            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
+        with patch.object(FlextLdapClient, "__init__", return_value=None):
+            client = FlextLdapClient.__new__(FlextLdapClient)
             client._config = config
             client._connection_manager = MagicMock()
             client._converter = MagicMock()
@@ -132,8 +132,8 @@ class TestFlextLdapSimpleClient:
             use_ssl=False,
         )
 
-        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
-            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
+        with patch.object(FlextLdapClient, "__init__", return_value=None):
+            client = FlextLdapClient.__new__(FlextLdapClient)
             client._config = None
             client._connection_manager = MagicMock()
             client._converter = MagicMock()
@@ -151,7 +151,7 @@ class TestFlextLdapSimpleClient:
 
     def test_connect_no_config(self) -> None:
         """Test connect with no configuration."""
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
         result = client.connect()  # sync call
 
         assert result.is_failure
@@ -160,8 +160,8 @@ class TestFlextLdapSimpleClient:
     @pytest.mark.asyncio
     async def test_search_success(self) -> None:
         """Test successful LDAP search."""
-        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
-            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
+        with patch.object(FlextLdapClient, "__init__", return_value=None):
+            client = FlextLdapClient.__new__(FlextLdapClient)
             client._converter = MagicMock()
 
             # Mock connected state
@@ -191,7 +191,7 @@ class TestFlextLdapSimpleClient:
     @pytest.mark.asyncio
     async def test_search_not_connected(self) -> None:
         """Test search when not connected."""
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
         result = await client.search("dc=example,dc=com", "(cn=test)")
 
         assert result.is_failure
@@ -200,8 +200,8 @@ class TestFlextLdapSimpleClient:
     @pytest.mark.asyncio
     async def test_search_failure(self) -> None:
         """Test search failure."""
-        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
-            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
+        with patch.object(FlextLdapClient, "__init__", return_value=None):
+            client = FlextLdapClient.__new__(FlextLdapClient)
 
             # Mock connected state with search failure
             mock_connection = MagicMock()
@@ -219,8 +219,8 @@ class TestFlextLdapSimpleClient:
     @pytest.mark.asyncio
     async def test_add_success(self) -> None:
         """Test successful LDAP add operation."""
-        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
-            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
+        with patch.object(FlextLdapClient, "__init__", return_value=None):
+            client = FlextLdapClient.__new__(FlextLdapClient)
             client._converter = MagicMock()
 
             # Mock connected state
@@ -244,7 +244,7 @@ class TestFlextLdapSimpleClient:
     @pytest.mark.asyncio
     async def test_add_not_connected(self) -> None:
         """Test add when not connected."""
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
         result = await client.add(
             "cn=test,dc=example,dc=com", ["person"], {"cn": "test"}
         )
@@ -255,8 +255,8 @@ class TestFlextLdapSimpleClient:
     @pytest.mark.asyncio
     async def test_modify_success(self) -> None:
         """Test successful LDAP modify operation."""
-        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
-            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
+        with patch.object(FlextLdapClient, "__init__", return_value=None):
+            client = FlextLdapClient.__new__(FlextLdapClient)
             client._converter = MagicMock()
 
             # Mock connected state
@@ -278,8 +278,8 @@ class TestFlextLdapSimpleClient:
     @pytest.mark.asyncio
     async def test_delete_success(self) -> None:
         """Test successful LDAP delete operation."""
-        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
-            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
+        with patch.object(FlextLdapClient, "__init__", return_value=None):
+            client = FlextLdapClient.__new__(FlextLdapClient)
 
             # Mock connected state
             mock_connection = MagicMock()
@@ -297,8 +297,8 @@ class TestFlextLdapSimpleClient:
     @pytest.mark.asyncio
     async def test_disconnect_success(self) -> None:
         """Test successful disconnect."""
-        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
-            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
+        with patch.object(FlextLdapClient, "__init__", return_value=None):
+            client = FlextLdapClient.__new__(FlextLdapClient)
             client._connection_manager = MagicMock()
 
             # Mock connected state
@@ -319,15 +319,15 @@ class TestFlextLdapSimpleClient:
     @pytest.mark.asyncio
     async def test_disconnect_not_connected(self) -> None:
         """Test disconnect when not connected."""
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
         result = client.disconnect()  # sync call
 
         assert result.success  # Should succeed even if not connected
 
     def test_is_connected_with_connection(self) -> None:
         """Test is_connected returns True when connected."""
-        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
-            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
+        with patch.object(FlextLdapClient, "__init__", return_value=None):
+            client = FlextLdapClient.__new__(FlextLdapClient)
 
             # Mock connected state
             mock_connection = MagicMock()
@@ -338,8 +338,8 @@ class TestFlextLdapSimpleClient:
 
     def test_is_connected_with_closed_connection(self) -> None:
         """Test is_connected returns False when connection is closed."""
-        with patch.object(FlextLdapSimpleClient, "__init__", return_value=None):
-            client = FlextLdapSimpleClient.__new__(FlextLdapSimpleClient)
+        with patch.object(FlextLdapClient, "__init__", return_value=None):
+            client = FlextLdapClient.__new__(FlextLdapClient)
 
             # Mock closed connection
             mock_connection = MagicMock()
@@ -391,7 +391,7 @@ class TestFactoryFunctions:
             "ldap://localhost", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "REDACTED_LDAP_BIND_PASSWORD"
         )
 
-        assert isinstance(client, FlextLdapSimpleClient)
+        assert isinstance(client, FlextLdapClient)
         assert client._config is not None
         assert client._config.server == "localhost"
         assert client._config.port == 389
@@ -410,17 +410,17 @@ class TestFactoryFunctions:
 
 
 class TestFlextLdapSimpleClientAuth:
-    """Test suite for FlextLdapSimpleClient authentication methods."""
+    """Test suite for FlextLdapClient authentication methods."""
 
     @pytest.fixture
-    def ldap_client(self) -> FlextLdapSimpleClient:
+    def ldap_client(self) -> FlextLdapClient:
         """Create LDAP client instance for testing."""
         config = FlextLdapConnectionConfig(
             host="localhost",
             port=389,
             use_ssl=False,
         )
-        return FlextLdapSimpleClient(config)
+        return FlextLdapClient(config)
 
     @pytest.fixture
     def auth_config(self) -> FlextLdapAuthConfig:
@@ -434,7 +434,7 @@ class TestFlextLdapSimpleClientAuth:
     @pytest.mark.asyncio
     async def test_connect_with_auth_success(
         self,
-        ldap_client: FlextLdapSimpleClient,
+        ldap_client: FlextLdapClient,
         auth_config: FlextLdapAuthConfig,
     ) -> None:
         """Test successful authentication."""
@@ -459,7 +459,7 @@ class TestFlextLdapSimpleClientAuth:
         auth_config: FlextLdapAuthConfig,
     ) -> None:
         """Test authentication without connection config."""
-        client = FlextLdapSimpleClient()  # No config
+        client = FlextLdapClient()  # No config
 
         result = await client.connect_with_auth(auth_config)
 
@@ -469,7 +469,7 @@ class TestFlextLdapSimpleClientAuth:
     @pytest.mark.asyncio
     async def test_connect_with_auth_connection_failure(
         self,
-        ldap_client: FlextLdapSimpleClient,
+        ldap_client: FlextLdapClient,
         auth_config: FlextLdapAuthConfig,
     ) -> None:
         """Test authentication with connection failure."""
@@ -486,7 +486,7 @@ class TestFlextLdapSimpleClientAuth:
     @pytest.mark.asyncio
     async def test_connect_with_auth_ldap_exception(
         self,
-        ldap_client: FlextLdapSimpleClient,
+        ldap_client: FlextLdapClient,
         auth_config: FlextLdapAuthConfig,
     ) -> None:
         """Test authentication with LDAP exception."""
@@ -505,7 +505,7 @@ class TestFlextLdapSimpleClientAuth:
     @pytest.mark.asyncio
     async def test_connect_with_auth_runtime_error(
         self,
-        ldap_client: FlextLdapSimpleClient,
+        ldap_client: FlextLdapClient,
         auth_config: FlextLdapAuthConfig,
     ) -> None:
         """Test authentication with runtime error."""

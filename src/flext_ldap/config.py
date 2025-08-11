@@ -43,7 +43,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import cast
 
 from flext_core import (
     FlextBaseConfigModel,
@@ -96,12 +96,6 @@ class FlextLdapConnectionConfig(FlextLDAPConfig):
     enable_connection_pooling: bool = Field(default=True)
     project_specific_timeout: int | None = Field(default=None)
 
-    # Compatibility field for initialization (maps to timeout field)
-    timeout_seconds: int = Field(
-        default=30,
-        description="Connection timeout in seconds (compatibility field)",
-    )
-
     @field_validator("host")
     @classmethod
     def validate_host(cls, v: str) -> str:
@@ -111,27 +105,16 @@ class FlextLdapConnectionConfig(FlextLDAPConfig):
             raise ValueError(msg)
         return v.strip()
 
-    @field_validator("timeout_seconds")
-    @classmethod
-    def validate_timeout_seconds(cls, v: int) -> int:
-        """Validate timeout_seconds and sync with timeout field."""
-        return v
-
-    # Compatibility properties for legacy code (read-only)
-    @property
-    def server(self) -> str:
-        """Compatibility property - maps to host."""
-        return self.host
-
     def with_server(self, server: str) -> FlextLdapConnectionConfig:
         """Create new instance with updated server (immutable pattern)."""
         return self.model_copy(update={"host": server})
 
     def with_timeout(self, timeout: int) -> FlextLdapConnectionConfig:
         """Create new instance with updated timeout (immutable pattern)."""
-        return self.model_copy(update={"timeout": timeout, "timeout_seconds": timeout})
+        return self.model_copy(update={"timeout": timeout})
 
-    def validate_domain_rules(self) -> FlextResult[None]:
+    @staticmethod
+    def validate_domain_rules() -> FlextResult[None]:
         """Validate connection domain rules."""
         return FlextResult.ok(None)
 
@@ -143,11 +126,13 @@ type Version = str
 # Specialized configuration classes extending FlextLDAPConfig
 
 
-class FlextLdapAuthConfig(FlextLDAPConfig):
+class FlextLdapAuthConfig(FlextBaseConfigModel):
     """LDAP authentication configuration with specialized validation."""
 
-    # Override base defaults to match test expectations - maintain base class
-    # type compatibility
+    # Include server and search_base for callers that expect them here
+    server: str = Field(default="", description="LDAP server host (compat)")
+    search_base: str = Field(default="", description="LDAP base DN (compat)")
+
     bind_dn: str | None = Field(
         default="",
         description="LDAP bind DN for authentication",
@@ -234,7 +219,8 @@ class FlextLdapSearchConfig(FlextBaseConfigModel):
             raise ValueError(msg)
         return v
 
-    def validate_domain_rules(self) -> FlextResult[None]:
+    @staticmethod
+    def validate_domain_rules() -> FlextResult[None]:
         """Validate search domain rules."""
         return FlextResult.ok(None)
 
@@ -254,7 +240,8 @@ class FlextLdapOperationConfig(FlextLDAPConfig):
     )
     batch_size: int = Field(default=100, ge=1, description="Batch operation size")
 
-    def validate_domain_rules(self) -> FlextResult[None]:
+    @staticmethod
+    def validate_domain_rules() -> FlextResult[None]:
         """Validate operation domain rules."""
         return FlextResult.ok(None)
 
@@ -312,12 +299,13 @@ class FlextLdapLoggingConfig(FlextLDAPConfig):
         description="Enable structured logging",
     )
 
-    def validate_domain_rules(self) -> FlextResult[None]:
+    @staticmethod
+    def validate_domain_rules() -> FlextResult[None]:
         """Validate logging domain rules."""
         return FlextResult.ok(None)
 
 
-class FlextLdapSettings(FlextLDAPConfig):
+class FlextLdapSettings(FlextBaseConfigModel):
     """FLEXT-LDAP operational settings with project identification and monitoring.
 
     Primary configuration class for FLEXT-LDAP operations, extending flext-core
@@ -364,12 +352,14 @@ class FlextLdapSettings(FlextLDAPConfig):
 
     # Composite configuration objects for specialized settings
     connection: FlextLdapConnectionConfig = Field(
-        default_factory=FlextLdapConnectionConfig,
+        default_factory=lambda: FlextLdapConnectionConfig.model_validate(
+            create_ldap_config().model_dump()
+        )
     )
     auth: FlextLdapAuthConfig = Field(default_factory=FlextLdapAuthConfig)
     search: FlextLdapSearchConfig = Field(default_factory=FlextLdapSearchConfig)
 
-    def to_ldap_client_config(self) -> dict[str, Any]:
+    def to_ldap_client_config(self) -> dict[str, object]:
         """Convert configuration to LDAP client library format.
 
         Transforms the FlextLdapSettings configuration into the dictionary
@@ -388,12 +378,19 @@ class FlextLdapSettings(FlextLDAPConfig):
         logger.debug("Converting FLEXT LDAP settings to client config format")
 
         # Combine configuration from composite objects
+        # Safely derive connection fields via core dict API
+        conn_dict = (
+            self.connection.to_ldap_dict()
+            if hasattr(self.connection, "to_ldap_dict")
+            else {}
+        )
+
         client_config = {
-            # Connection settings - use server for backward compatibility
-            "server": self.connection.server,
-            "port": self.connection.port,
-            "use_ssl": self.connection.use_ssl,
-            "timeout": self.connection.timeout_seconds,
+            # Connection settings
+            "server": conn_dict.get("host", "localhost"),
+            "port": conn_dict.get("port", 389),
+            "use_ssl": bool(conn_dict.get("use_ssl", False)),
+            "timeout": conn_dict.get("timeout", 30),
             # Authentication settings
             "bind_dn": self.auth.bind_dn,
             "bind_password": self.auth.bind_password.get_secret_value()
@@ -477,9 +474,28 @@ def create_development_config(**overrides: object) -> FlextLdapSettings:
         bind_password=cast("str | None", filtered_overrides.get("bind_password")),
     )
 
-    # Create project settings with base config
+    # Create project settings with composed configs
     config = FlextLdapSettings(
-        **base_config.model_dump(),
+        connection=FlextLdapConnectionConfig.model_validate(base_config.model_dump()),
+        auth=FlextLdapAuthConfig(
+            bind_dn=cast("str | None", filtered_overrides.get("bind_dn", "")),
+            bind_password=(
+                SecretStr(cast("str", filtered_overrides.get("bind_password")))
+                if filtered_overrides.get("bind_password") is not None
+                else SecretStr("")
+            ),
+        ),
+        search=FlextLdapSearchConfig(
+            host=cast("str", filtered_overrides.get("host", "localhost")),
+            port=cast("int", filtered_overrides.get("port", 389)),
+            base_dn=cast("str", filtered_overrides.get("base_dn", "dc=example,dc=com")),
+            bind_dn=cast("str | None", filtered_overrides.get("bind_dn", "")),
+            bind_password=(
+                SecretStr(cast("str", filtered_overrides.get("bind_password")))
+                if filtered_overrides.get("bind_password") is not None
+                else SecretStr("")
+            ),
+        ),
         enable_debug_mode=True,
         enable_performance_monitoring=True,
     )

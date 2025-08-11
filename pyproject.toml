@@ -62,6 +62,7 @@ flext-ldap = "flext_ldap.cli:main"
 [tool.ruff]
 extend = "../.ruff-shared.toml"
 lint.isort.known-first-party = ["flext_ldap"]
+
 [tool.mypy]
 # Strict mode - enables all recommended checks
 strict = true

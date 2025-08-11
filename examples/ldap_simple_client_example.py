@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Example usage of FlextLdapSimpleClient.
+"""Example usage of FlextLdapClient.
 
 This example demonstrates how to use the minimal LDAP infrastructure client
 following Clean Architecture principles.
@@ -14,13 +14,13 @@ from __future__ import annotations
 import asyncio
 
 from flext_ldap.config import FlextLdapConnectionConfig
-from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
+from flext_ldap.ldap_infrastructure import FlextLdapClient
 
 
 async def main() -> None:
     """Demonstrate LDAP client usage."""
     # Create client instance
-    client = FlextLdapSimpleClient()
+    client = FlextLdapClient()
 
     # Example 1: Single server connection
     single_config = FlextLdapConnectionConfig(
@@ -51,7 +51,7 @@ async def main() -> None:
         await client.disconnect()
 
     # Example 2: Connection pool - Simplified for demo
-    # Note: Pool functionality integrated in FlextLdapSimpleClient
+    # Note: Pool functionality integrated in FlextLdapClient
     print("✅ Pool functionality integrated in client")
 
     # Example 3: LDAP operations

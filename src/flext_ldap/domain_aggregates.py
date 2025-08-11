@@ -95,7 +95,8 @@ class FlextLdapDirectory(FlextEntity):
     object_classes: list[str]
     attributes: dict[str, str]
 
-    def validate_entry(self, entry: FlextLdapEntry) -> bool:
+    @staticmethod
+    def validate_entry(entry: FlextLdapEntry) -> bool:
         """Validate entry against directory schema.
 
         Args:
@@ -108,7 +109,8 @@ class FlextLdapDirectory(FlextEntity):
         # Basic validation - can be extended with schema rules
         return bool(entry.dn and entry.attributes)
 
-    def get_required_attributes(self, object_class: str) -> list[str]:
+    @staticmethod
+    def get_required_attributes(object_class: str) -> list[str]:
         """Get required attributes for object class.
 
         Args:

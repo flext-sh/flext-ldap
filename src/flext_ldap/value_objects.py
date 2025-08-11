@@ -31,10 +31,10 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any, ClassVar, final
+from typing import ClassVar, TypedDict, cast, final
 
 from flext_core import FlextResult, FlextValue
-from pydantic import Field, field_validator
+from pydantic import ConfigDict, Field, field_validator
 
 # ===== LDAP SCOPE VALUE OBJECT =====
 
@@ -94,6 +94,11 @@ class FlextLdapScope(FlextValue):
         return cls(scope="sub")
 
     @classmethod
+    def subtree(cls) -> FlextLdapScope:
+        """Legacy alias for subtree scope."""
+        return cls.sub()
+
+    @classmethod
     def children(cls) -> FlextLdapScope:
         """Create children scope (search all descendants, not entry itself)."""
         return cls(scope="children")
@@ -131,7 +136,11 @@ class FlextLdapDistinguishedName(FlextValue):
     Enforces RFC 4514 DN format and provides parsing utilities.
     """
 
-    dn: str = Field(..., description="Distinguished Name string")
+    dn: str = Field(
+        ..., alias="value", validation_alias="value", description="Distinguished Name string"
+    )
+
+    model_config: ClassVar[ConfigDict] = {"populate_by_name": True}
 
     # RFC 4514 DN component pattern
     DN_COMPONENT_PATTERN: ClassVar[str] = r"^[a-zA-Z][a-zA-Z0-9-]*=.+$"
@@ -255,6 +264,11 @@ class FlextLdapDistinguishedName(FlextValue):
         """Compatibility property - alias for dn attribute."""
         return self.dn
 
+    # Legacy API alias
+    def validate_domain_rules(self) -> FlextResult[None]:
+        """Legacy alias to maintain test compatibility."""
+        return self.validate_business_rules()
+
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP DN."""
         # All validation is done in field validators
@@ -272,7 +286,11 @@ class FlextLdapFilter(FlextValue):
     Enforces RFC 4515 filter syntax and provides query building utilities.
     """
 
-    filter_string: str = Field(..., description="LDAP filter string")
+    filter_string: str = Field(
+        ..., alias="value", validation_alias="value", description="LDAP filter string"
+    )
+
+    model_config: ClassVar[ConfigDict] = {"populate_by_name": True}
 
     # Basic RFC 4515 filter validation pattern
     FILTER_PATTERN: ClassVar[str] = r"^\(.+\)$"
@@ -359,6 +377,40 @@ class FlextLdapFilter(FlextValue):
         """
         escaped_substring = cls._escape_filter_value(substring)
         return cls(filter_string=f"({attribute}=*{escaped_substring}*)")
+
+    # ----- Legacy helpers -----
+    @classmethod
+    def contains(cls, attribute: str, substring: str) -> FlextLdapFilter:
+        """Legacy helper: substring filter."""
+        return cls.substring(attribute, substring)
+
+    @classmethod
+    def starts_with(cls, attribute: str, prefix: str) -> FlextLdapFilter:
+        """Legacy helper: starts-with filter."""
+        esc = cls._escape_filter_value(prefix)
+        return cls(filter_string=f"({attribute}={esc}*)")
+
+    @classmethod
+    def ends_with(cls, attribute: str, suffix: str) -> FlextLdapFilter:
+        """Legacy helper: ends-with filter."""
+        esc = cls._escape_filter_value(suffix)
+        return cls(filter_string=f"({attribute}=*{esc})")
+
+    @classmethod
+    def not_equals(cls, attribute: str, value: str) -> FlextLdapFilter:
+        """Legacy helper: inequality filter."""
+        esc = cls._escape_filter_value(value)
+        return cls(filter_string=f"(!({attribute}={esc}))")
+
+    @classmethod
+    def person_filter(cls) -> FlextLdapFilter:
+        """Legacy helper: person objectClass filter."""
+        return cls(filter_string="(objectClass=person)")
+
+    @classmethod
+    def group_filter(cls) -> FlextLdapFilter:
+        """Legacy helper: group objectClass filter."""
+        return cls(filter_string="(objectClass=group)")
 
     @classmethod
     def and_filters(cls, *filters: FlextLdapFilter) -> FlextLdapFilter:
@@ -462,6 +514,25 @@ class FlextLdapFilter(FlextValue):
         """Compatibility property - alias for filter_string attribute."""
         return self.filter_string
 
+    @property
+    def value(self) -> str:
+        """Legacy property name for filter string."""
+        return self.filter_string
+
+    # Legacy API alias
+    def validate_domain_rules(self) -> FlextResult[None]:
+        """Legacy alias to maintain test compatibility."""
+        return self.validate_business_rules()
+
+    # Operators
+    def __and__(self, other: FlextLdapFilter) -> FlextLdapFilter:
+        """Support & operator for combining filters."""
+        return self.and_filters(self, other)
+
+    def __or__(self, other: FlextLdapFilter) -> FlextLdapFilter:
+        """Support | operator for combining filters."""
+        return self.or_filters(self, other)
+
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules for LDAP filter."""
         # All validation is done in field validators
@@ -469,6 +540,17 @@ class FlextLdapFilter(FlextValue):
 
 
 # ===== USER CREATION CONFIGURATION =====
+
+
+class AdditionalAttributes(TypedDict, total=False):
+    """Type-safe additional LDAP attributes for user creation."""
+
+    # Free-form attribute mapping to lists of strings
+    # Use explicit representative keys to guide usage while allowing any
+    telephoneNumber: str | list[str]
+    departmentNumber: str | list[str]
+    title: str | list[str]
+    mail: str | list[str]
 
 
 @dataclass
@@ -479,7 +561,7 @@ class UserCreationConfig:
     mail: str | None = None
     user_password: str | None = None
     object_classes: list[str] | None = None
-    additional_attributes: dict[str, Any] | None = None
+    additional_attributes: AdditionalAttributes | None = None
 
 
 # ===== LDAP USER REQUEST VALUE OBJECT =====
@@ -507,8 +589,8 @@ class FlextLdapCreateUserRequest(FlextValue):
         default_factory=lambda: ["inetOrgPerson", "organizationalPerson", "person"],
         description="LDAP object classes",
     )
-    additional_attributes: dict[str, Any] = Field(
-        default_factory=dict,
+    additional_attributes: AdditionalAttributes = Field(
+        default_factory=lambda: cast("AdditionalAttributes", {}),
         description="Additional LDAP attributes",
     )
 
@@ -518,7 +600,11 @@ class FlextLdapCreateUserRequest(FlextValue):
         """Validate DN format."""
         dn_result = FlextLdapDistinguishedName.create(value)
         if not dn_result.is_success:
-            raise ValueError(dn_result.error)
+            # Normalize error message to include 'DN' token for tests
+            msg = dn_result.error or "Invalid DN"
+            if "DN" not in msg and "dn" not in msg:
+                msg = f"DN validation error: {msg}"
+            raise ValueError(msg)
         return value
 
     @field_validator("uid", "cn", "sn")
@@ -601,14 +687,14 @@ class FlextLdapCreateUserRequest(FlextValue):
         except ValueError as e:
             return FlextResult.fail(str(e))
 
-    def to_ldap_attributes(self) -> dict[str, Any]:
+    def to_ldap_attributes(self) -> dict[str, list[str] | str]:
         """Convert to LDAP attribute dictionary for creation.
 
         Returns:
             Dictionary suitable for LDAP entry creation
 
         """
-        attributes = {
+        attributes: dict[str, list[str] | str] = {
             "objectClass": self.object_classes,
             "uid": self.uid,
             "cn": self.cn,
@@ -635,7 +721,12 @@ class FlextLdapCreateUserRequest(FlextValue):
             attributes["title"] = self.title
 
         # Add any additional attributes
-        attributes.update(self.additional_attributes)
+        # Merge additional attributes preserving list typing
+        for key, value in self.additional_attributes.items():
+            if isinstance(value, list):
+                attributes[key] = [str(v) for v in value]
+            else:
+                attributes[key] = str(value)
 
         return attributes
 

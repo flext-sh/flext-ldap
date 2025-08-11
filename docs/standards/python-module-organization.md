@@ -191,12 +191,12 @@ class FlextLdapService:
 
 ```python
 from flext_ldap.infrastructure.repositories import FlextLdapUserRepositoryImpl
-from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
+from flext_ldap.ldap_infrastructure import FlextLdapClient
 
 class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
     """Concrete LDAP user repository implementation."""
 
-    def __init__(self, ldap_client: FlextLdapSimpleClient):
+    def __init__(self, ldap_client: FlextLdapClient):
         self._ldap_client = ldap_client
 
     async def save(self, user: FlextLdapUser) -> FlextResult[FlextLdapUser]:
@@ -335,7 +335,7 @@ class FlextLdapUser(FlextEntity):
 
 ```python
 # Consolidated infrastructure (main LDAP client)
-├── ldap_infrastructure.py      # 🚀 FlextLdapSimpleClient + Converters
+├── ldap_infrastructure.py      # 🚀 FlextLdapClient + Converters
 ├── services.py                 # 🚀 Service layer (legacy compatibility)
 └── utils.py                    # 🚀 LDAP utility functions
 ```
@@ -345,9 +345,9 @@ class FlextLdapUser(FlextEntity):
 **Infrastructure Pattern**:
 
 ```python
-from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient, FlextLdapConverter
+from flext_ldap.ldap_infrastructure import FlextLdapClient, FlextLdapConverter
 
-class FlextLdapSimpleClient:
+class FlextLdapClient:
     """Consolidated LDAP client with flext-core integration."""
 
     def __init__(self, config: FlextLdapConnectionConfig):
@@ -474,7 +474,7 @@ All LDAP-specific exports use the `FlextLdap` prefix for clear namespace separat
 ```python
 # Core API classes
 FlextLdapApi                # Main API entry point
-FlextLdapSimpleClient       # Infrastructure LDAP client
+FlextLdapClient       # Infrastructure LDAP client
 FlextLdapSettings          # Configuration class
 FlextLdapConnectionConfig  # Connection configuration
 
@@ -1517,7 +1517,7 @@ __all__: list[str] = [
     "FlextLdapSettings",
 
     # Infrastructure (advanced usage)
-    "FlextLdapSimpleClient"
+    "FlextLdapClient"
 ]
 ```
 

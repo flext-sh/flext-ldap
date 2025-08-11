@@ -8,15 +8,18 @@ from __future__ import annotations
 import os
 import time
 from contextlib import asynccontextmanager
+from functools import lru_cache
 from typing import TYPE_CHECKING
 
 import docker
 import pytest
 
-from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
+from flext_ldap.constants import FlextLdapScope
+from flext_ldap.infrastructure.ldap_client import FlextLdapClient
+from flext_ldap.value_objects import FlextLdapDistinguishedName, FlextLdapFilter
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
+    from collections.abc import AsyncGenerator, Generator
 
     from docker.client import DockerClient
     from docker.models.containers import Container
@@ -110,8 +113,8 @@ class OpenLDAPContainerManager:
     def _wait_for_container_ready(self, timeout: int = 30) -> None:
         """Wait for OpenLDAP container to be ready to accept connections."""
         if not self.container:
-            msg = "No container to wait for"
-            raise RuntimeError(msg)
+            no_container_msg = "No container to wait for"
+            raise RuntimeError(no_container_msg)
 
         start_time = time.time()
         while time.time() - start_time < timeout:
@@ -119,8 +122,10 @@ class OpenLDAPContainerManager:
                 # Check if container is still running
                 self.container.reload()
                 if self.container.status != "running":
-                    msg: str = f"Container failed to start: {self.container.status}"
-                    self._raise_container_error(msg)
+                    start_fail_msg: str = (
+                        f"Container failed to start: {self.container.status}"
+                    )
+                    self._raise_container_error(start_fail_msg)
 
                 # Try to connect to LDAP port
                 exec_result = self.container.exec_run(
@@ -151,8 +156,10 @@ class OpenLDAPContainerManager:
 
             time.sleep(1)
 
-        msg: str = f"OpenLDAP container failed to become ready within {timeout} seconds"
-        raise RuntimeError(msg)
+        timeout_msg: str = (
+            f"OpenLDAP container failed to become ready within {timeout} seconds"
+        )
+        raise RuntimeError(timeout_msg)
 
     def is_container_running(self) -> bool:
         """Check if the OpenLDAP container is running."""
@@ -176,24 +183,22 @@ class OpenLDAPContainerManager:
             return f"Failed to get logs: {e}"
 
 
-# Global container manager instance
-_container_manager: OpenLDAPContainerManager | None = None
+# Container manager accessor without module-level mutable global
+@lru_cache(maxsize=1)
+def _get_container_manager() -> OpenLDAPContainerManager:
+    return OpenLDAPContainerManager()
 
 
 @pytest.fixture(scope="session")
-def docker_openldap_container() -> Container:
+def docker_openldap_container() -> Generator[Container]:
     """Session-scoped fixture that provides OpenLDAP Docker container.
 
     This fixture starts an OpenLDAP container at the beginning of the test session
     and stops it at the end. The container is shared across all tests.
     """
-    global _container_manager
-
-    if _container_manager is None:
-        _container_manager = OpenLDAPContainerManager()
-
+    manager = _get_container_manager()
     # Start container
-    container = _container_manager.start_container()
+    container = manager.start_container()
 
     # Set environment variables for tests
     for key, value in TEST_ENV_VARS.items():
@@ -202,7 +207,7 @@ def docker_openldap_container() -> Container:
     yield container
 
     # Cleanup
-    _container_manager.stop_container()
+    manager.stop_container()
 
     # Clean up environment variables
     for key in TEST_ENV_VARS:
@@ -222,15 +227,15 @@ def ldap_test_config(docker_openldap_container: Container) -> dict[str, object]:
 
 
 async def _cleanup_ldap_entries_under_dn(
-    client: FlextLdapSimpleClient, connection_id: str, dn: str
+    client: FlextLdapClient, connection_id: str, dn: str
 ) -> None:
     """Helper function to cleanup LDAP entries under a DN - reduces nested control flow."""
     # Try to delete all entries under the specified DN
     search_result = await client.search(
         connection_id,
-        dn,
-        "(objectClass=*)",
-        scope="subtree",
+        FlextLdapDistinguishedName(dn=dn),
+        FlextLdapFilter(filter_string="(objectClass=*)"),
+        scope=FlextLdapScope.SUB,
     )
 
     # Early return if search failed or no data
@@ -241,7 +246,9 @@ async def _cleanup_ldap_entries_under_dn(
     for entry in search_result.data:
         entry_dn = entry.get("dn", "")
         if entry_dn and entry_dn != dn:
-            await client.delete_entry(connection_id, entry_dn)
+            await client.delete_entry(
+                connection_id, FlextLdapDistinguishedName(dn=str(entry_dn))
+            )
 
 
 @pytest.fixture
@@ -254,17 +261,17 @@ async def clean_ldap_container(
     by removing any test entries that might have been left behind.
     """
 
-    client = FlextLdapSimpleClient()
+    client = FlextLdapClient()
 
     # Connect to LDAP
     connect_result = await client.connect(
-        ldap_test_config["server_url"],
-        ldap_test_config["bind_dn"],
-        ldap_test_config["password"],
+        str(ldap_test_config["server_url"]),
+        str(ldap_test_config["bind_dn"]),
+        str(ldap_test_config["password"]),
     )
 
     if connect_result.success:
-        connection_id = connect_result.data
+        connection_id = str(connect_result.data)
 
         try:
             # Clean up test entries
@@ -284,7 +291,7 @@ async def clean_ldap_container(
 
 @asynccontextmanager
 async def temporary_ldap_entry(
-    client: object,
+    client: FlextLdapClient,
     connection_id: str,
     dn: str,
     attributes: dict[str, list[str]],
@@ -292,7 +299,9 @@ async def temporary_ldap_entry(
     """Context manager for temporary LDAP entries that are auto-cleaned."""
     try:
         # Create entry
-        result = await client.add_entry(connection_id, dn, attributes)
+        result = await client.create_entry(
+            connection_id, FlextLdapDistinguishedName(dn=dn), attributes
+        )
         if not result.success:
             msg: str = f"Failed to create temporary entry {dn}: {result.error}"
             raise RuntimeError(msg)
@@ -304,7 +313,7 @@ async def temporary_ldap_entry(
         import contextlib
 
         with contextlib.suppress(RuntimeError, ValueError, TypeError):
-            await client.delete_entry(connection_id, dn)
+            await client.delete_entry(connection_id, FlextLdapDistinguishedName(dn=dn))
 
 
 # Mark integration tests

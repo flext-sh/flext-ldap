@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 from flext_core import FlextIdGenerator, FlextResult, get_logger
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
+    from flext_core import FlextTypes
 
 from flext_ldap.entities import FlextLdapConnection
 
@@ -113,7 +113,7 @@ class FlextLdapSecurityEvent:
         Args:
             data: FlextLdapSecurityEventData object (required)
 
-        REFACTORED: Eliminated dual initialization anti-pattern.
+        REFACTORED: Eliminated dual initialization antipattern.
         All event creation now uses type-safe FlextLdapSecurityEventData.
 
         """
@@ -271,8 +271,8 @@ class FlextLdapSecurityEventLogger:
             return FlextResult.fail(error_msg)
 
     # Factory method using Parameter Object pattern for better maintainability
+    @staticmethod
     def _create_event_data_from_params(
-        self,
         event_type: FlextLdapSecurityEventType,
         **event_params: object,
     ) -> FlextLdapSecurityEventData:
@@ -424,7 +424,8 @@ class FlextLdapSecurityEventLogger:
             **event_params,  # Pass all additional parameters through
         )
 
-    def _calculate_risk_score(self, event: FlextLdapSecurityEvent) -> float:
+    @staticmethod
+    def _calculate_risk_score(event: FlextLdapSecurityEvent) -> float:
         """Calculate risk score for a security event."""
         base_score = 0.0
 
@@ -457,7 +458,8 @@ class FlextLdapSecurityEventLogger:
 
         return min(base_score, 1.0)
 
-    def _get_compliance_flags(self, event: FlextLdapSecurityEvent) -> list[str]:
+    @staticmethod
+    def _get_compliance_flags(event: FlextLdapSecurityEvent) -> list[str]:
         """Get compliance flags for a security event."""
         flags = []
 

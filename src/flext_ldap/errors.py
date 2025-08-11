@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, ClassVar, TypeVar
 from flext_core import FlextResult, get_logger
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
+    from flext_core import FlextTypes
 
 T = TypeVar("T")
 

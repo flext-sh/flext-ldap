@@ -6,8 +6,8 @@ import asyncio
 import pytest
 
 from flext_ldap.ldap_infrastructure import (
+    FlextLdapClient,
     FlextLdapConnectionConfig,
-    FlextLdapSimpleClient,
 )
 
 
@@ -25,7 +25,7 @@ def test_ldap_integration_with_docker_container(
         timeout_seconds=30,
     )
 
-    client = FlextLdapSimpleClient(config)
+    client = FlextLdapClient(config)
 
     # Test connection
     result = client.connect()

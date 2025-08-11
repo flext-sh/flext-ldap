@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from flext_ldap.ldap_infrastructure import FlextLdapSimpleClient
+from flext_ldap.ldap_infrastructure import FlextLdapClient
 
 
 class TestLDAPClient:
@@ -16,7 +16,7 @@ class TestLDAPClient:
     def test_client_import(self) -> None:
         """Test that LDAPClient can be imported."""
 
-        assert FlextLdapSimpleClient is not None
+        assert FlextLdapClient is not None
 
     @pytest.mark.unit
     def test_client_instantiation_with_settings(self) -> None:
@@ -28,7 +28,7 @@ class TestLDAPClient:
             host="localhost", port=389, use_ssl=False, timeout_seconds=30
         )
 
-        client = FlextLdapSimpleClient(config)
+        client = FlextLdapClient(config)
         assert client is not None
         assert not client.is_connected()
 
@@ -36,7 +36,7 @@ class TestLDAPClient:
     def test_client_instantiation_without_config(self) -> None:
         """Test that LDAPClient can be instantiated without config."""
 
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
         assert client is not None
         assert not client.is_connected()
 
@@ -44,7 +44,7 @@ class TestLDAPClient:
     def test_get_server_info_disconnected(self) -> None:
         """Test get_server_info when disconnected."""
 
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
         info = client.get_server_info()
         expected_info = {"status": "disconnected"}
         if info != expected_info:
@@ -57,7 +57,7 @@ class TestLDAPClient:
         from flext_core import FlextResult
 
         # Create real client instance and mock its methods directly
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
 
         # Mock connect method to return success
         client.connect = Mock(return_value=FlextResult.ok(True))
@@ -84,7 +84,7 @@ class TestLDAPClient:
         from flext_core import FlextResult
 
         # Create real client instance and mock its methods directly
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
 
         # Mock connect method to return failure result
         client.connect = Mock(return_value=FlextResult.fail("Connection failed"))
@@ -113,7 +113,7 @@ class TestLDAPClient:
         from flext_core import FlextResult
 
         # Create real client instance and mock its methods directly
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
 
         # Mock connect method to return success
         client.connect = Mock(return_value=FlextResult.ok(True))
@@ -150,7 +150,7 @@ class TestLDAPClient:
         from flext_core import FlextResult
 
         # Create real client instance and mock its methods directly
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
 
         # Mock connect method to return success
         client.connect = Mock(return_value=FlextResult.ok(True))
@@ -177,7 +177,7 @@ class TestLDAPClient:
     def test_ping_disconnected(self) -> None:
         """Test connection status when disconnected."""
 
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
         # Test that client starts disconnected
         result = client.is_connected()
 
@@ -192,7 +192,7 @@ class TestLDAPClient:
         from flext_core import FlextResult
 
         # Create real client instance and mock its methods directly
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
 
         # Mock search results with proper FlextResult structure
         search_results = [
@@ -245,7 +245,7 @@ class TestLDAPClient:
 
         from flext_core import FlextResult
 
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
 
         # Mock is_connected to return False (not connected state)
         client.is_connected = Mock(return_value=False)
@@ -272,7 +272,7 @@ class TestLDAPClient:
         from flext_core import FlextResult
 
         # Create real client instance and mock its methods directly
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
 
         # Mock connect method to return success
         client.connect = Mock(return_value=FlextResult.ok(True))
@@ -311,7 +311,7 @@ class TestLDAPClient:
 
         from flext_core import FlextResult
 
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
 
         # Mock is_connected to return False (not connected state)
         client.is_connected = Mock(return_value=False)
@@ -332,9 +332,9 @@ class TestLDAPClient:
 
     def test_context_manager(self) -> None:
         """Test context manager functionality - currently not implemented."""
-        # Context manager not implemented yet in FlextLdapSimpleClient
+        # Context manager not implemented yet in FlextLdapClient
         # This test is placeholder for future implementation
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
 
         # Test that client can be created
         assert client is not None
@@ -345,7 +345,7 @@ class TestLDAPClient:
         """Test transaction context manager."""
 
         with patch(
-            "flext_ldap.ldap_infrastructure.FlextLdapSimpleClient",
+            "flext_ldap.ldap_infrastructure.FlextLdapClient",
         ) as mock_infra_client:
             mock_instance = AsyncMock()
             mock_instance.connect.return_value = MagicMock(
@@ -354,7 +354,7 @@ class TestLDAPClient:
             )
             mock_infra_client.return_value = mock_instance
 
-            client = FlextLdapSimpleClient()
+            client = FlextLdapClient()
             client.connect()
 
             # Transaction context manager not implemented yet
@@ -366,7 +366,7 @@ class TestLDAPClient:
         from unittest.mock import MagicMock, Mock
 
         # Create real client instance and mock its methods directly
-        client = FlextLdapSimpleClient()
+        client = FlextLdapClient()
 
         # Mock is_connected to return True (connected state)
         client.is_connected = Mock(return_value=True)

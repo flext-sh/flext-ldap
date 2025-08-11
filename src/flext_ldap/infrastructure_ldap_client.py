@@ -24,7 +24,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-import warnings
+from contextlib import suppress
 from typing import Literal, Protocol, runtime_checkable
 
 import ldap3
@@ -37,8 +37,6 @@ from ldap3 import ALL, Server
 from ldap3.core.exceptions import LDAPException
 
 from flext_ldap.constants import FlextLdapScope
-
-# Import consolidated value objects
 from flext_ldap.value_objects import (
     FlextLdapDistinguishedName,
     FlextLdapFilter,
@@ -51,10 +49,22 @@ logger = get_logger(__name__)
 class LDAP3ConnectionProtocol(Protocol):
     """Typed subset of ldap3.Connection used by this module."""
 
-    def unbind(self) -> bool | None: ...
-    def add(self, dn: str, attributes: dict[str, list[str]]) -> bool: ...
-    def modify(self, dn: str, changes: dict[str, object]) -> bool: ...
-    def delete(self, dn: str) -> bool: ...
+    def unbind(self) -> bool | None:
+        """Unbind the connection."""
+        ...
+
+    def add(self, dn: str, attributes: dict[str, list[str]]) -> bool:
+        """Add an entry."""
+        ...
+
+    def modify(self, dn: str, changes: dict[str, object]) -> bool:
+        """Modify an entry."""
+        ...
+
+    def delete(self, dn: str) -> bool:
+        """Delete an entry."""
+        ...
+
     def search(
         self,
         *,
@@ -62,13 +72,19 @@ class LDAP3ConnectionProtocol(Protocol):
         search_filter: str,
         search_scope: Literal["BASE", "LEVEL", "SUBTREE"],
         attributes: object,
-    ) -> bool: ...
+    ) -> bool:
+        """Execute a search operation."""
+        ...
 
     @property
-    def entries(self) -> list[object]: ...
+    def entries(self) -> list[object]:
+        """Search result entries."""
+        ...
 
     @property
-    def last_error(self) -> str | None: ...
+    def last_error(self) -> str | None:
+        """Last error string provided by the underlying library."""
+        ...
 
 
 # ===== CONNECTION MANAGEMENT SERVICE =====
@@ -147,11 +163,8 @@ class LdapConnectionService:
 
             connection = self._connections.pop(connection_id)
             if connection is not None:
-                try:
+                with suppress(Exception):
                     connection.unbind()
-                except Exception:
-                    # Best-effort unbind; ignore typing of external lib
-                    pass
 
             logger.info(
                 "LDAP connection closed",
@@ -172,18 +185,18 @@ class LdapConnectionService:
         """
         try:
             if connection_id not in self._connections:
-                return FlextResult.ok(False)
+                return FlextResult.ok(data=False)
 
             connection = self._connections[connection_id]
 
             # Test connection with whoami operation
             try:
                 connection.extend.standard.who_am_i()  # type: ignore[attr-defined]
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
             except LDAPException:
                 # Connection is dead, remove it
                 self._connections.pop(connection_id, None)
-                return FlextResult.ok(False)
+                return FlextResult.ok(data=False)
 
         except Exception as e:
             error_msg = f"Error checking connection status: {e}"
@@ -220,8 +233,9 @@ class LdapSearchService:
 
         logger.info("LDAP search service initialized")
 
+    @staticmethod
     def _map_scope_to_ldap3(
-        self, scope: FlextLdapScope
+        scope: FlextLdapScope
     ) -> Literal["BASE", "LEVEL", "SUBTREE"]:
         """Map FlextLdapScope to ldap3 constants."""
         scope_mapping: dict[str, Literal["BASE", "LEVEL", "SUBTREE"]] = {
@@ -711,26 +725,6 @@ class FlextLdapClient:
     ) -> FlextResult[None]:
         """Move/rename LDAP entry."""
         return await self._write_service.move_entry(connection_id, old_dn, new_dn)
-
-
-# ===== BACKWARD COMPATIBILITY ALIAS =====
-# For gradual migration
-
-
-class FlextLdapSimpleClient(FlextLdapClient):
-    """Backward compatibility alias for FlextLdapClient.
-
-    This maintains API compatibility during the SOLID refactoring.
-    """
-
-    def __init__(self, container: FlextContainer | None = None) -> None:
-        """Initialize with backward compatibility."""
-        warnings.warn(
-            "FlextLdapSimpleClient is deprecated. Use FlextLdapClient instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(container)
 
 
 # ===== FACTORY FUNCTION =====

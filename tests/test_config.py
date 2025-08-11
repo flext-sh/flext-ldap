@@ -7,6 +7,7 @@ import pytest
 from flext_core import FlextLogLevel
 from pydantic import ValidationError
 
+from flext_ldap import FlextLdapConstants
 from flext_ldap.config import (
     FlextLdapAuthConfig,
     FlextLdapConnectionConfig,
@@ -17,7 +18,6 @@ from flext_ldap.config import (
     FlextLdapSettings,
     create_development_config,
 )
-from flext_ldap.constants_consolidated import FlextLdapAttributeConstants
 
 # Constants
 HTTP_OK = 200

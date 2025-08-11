@@ -15,8 +15,7 @@ from typing import TYPE_CHECKING
 from flext_core import FlextDomainService, FlextResult, get_flext_container
 
 if TYPE_CHECKING:
-    from flext_core import FlextContainer
-    from flext_core.typings import TAnyDict
+    from flext_core import FlextContainer, FlextTypes
 
 
 class FlextLdapBaseService(FlextDomainService[None]):
@@ -26,8 +25,9 @@ class FlextLdapBaseService(FlextDomainService[None]):
     error handling, and observability integration using FLEXT core patterns.
     """
 
-    def __init__(self, container: FlextContainer | None = None) -> None:
+    def __init__(self, /, container: FlextContainer | None = None, **data: object) -> None:
         """Initialize LDAP base service with dependency injection."""
+        super().__init__(**data)
         self._container = container or get_flext_container()
         self._is_running = False
 
@@ -55,10 +55,10 @@ class FlextLdapBaseService(FlextDomainService[None]):
         except Exception as e:
             return FlextResult.fail(f"Failed to stop LDAP service: {e}")
 
-    def health_check(self) -> FlextResult[TAnyDict]:
+    def health_check(self) -> FlextResult[FlextTypes.Core.JsonDict]:
         """Perform LDAP service health check."""
         try:
-            health_info: TAnyDict = {
+            health_info: FlextTypes.Core.JsonDict = {
                 "service": "flext-ldap",
                 "status": "running" if self._is_running else "stopped",
                 "version": "0.9.0",

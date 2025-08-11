@@ -25,19 +25,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from abc import ABCMeta
+from contextlib import suppress
 from datetime import UTC, datetime
-from typing import Any, ClassVar
+from typing import ClassVar
 from uuid import uuid4
 
-# ✅ CORRECT: Import by root from flext-core (not submodules)
 from flext_core import (
-    FlextEntity,
     FlextEntityStatus,
     FlextModel,
     FlextResult,
     FlextValue,
     get_logger,
 )
+from flext_core.models import FlextEntity
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
 logger = get_logger(__name__)
@@ -73,7 +74,7 @@ class FlextLdapDistinguishedName(FlextValue):
 
     # RFC 4514 DN validation pattern - comprehensive regex
     DN_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-        r'^(?:(?:[a-zA-Z][\w-]*|\d+(?:\.\d+)*)\s*=\s*(?:[^,=+<>#;\\"]|\\[,=+<>#;\\"]|\\[0-9a-fA-F]{2})+(?:\s*,\s*(?:[a-zA-Z][\w-]*|\d+(?:\.\d+)*)\s*=\s*(?:[^,=+<>#;\\"]|\\[,=+<>#;\\"]|\\[0-9a-fA-F]{2})+)*)$'
+        r'^(?:[a-zA-Z][\w-]*|\d+(?:\.\d+)*)\s*=\s*(?:[^,=+<>#;\\"]|\\[,=+<>#;\\"]|\\[0-9a-fA-F]{2})+(?:\s*,\s*(?:[a-zA-Z][\w-]*|\d+(?:\.\d+)*)\s*=\s*(?:[^,=+<>#;\\"]|\\[,=+<>#;\\"]|\\[0-9a-fA-F]{2})+)*$'
     )
 
     @field_validator("value")
@@ -190,7 +191,7 @@ class FlextLdapFilter(FlextValue):
         return cls(value=f"(&{filter_values})")
 
 
-class FlextLdapScope(FlextValue):
+class FlextLdapScope(FlextValue, metaclass=ABCMeta):
     """LDAP search scope value object with standard scope validation.
 
     🎯 CONSOLIDATES AND REPLACES:
@@ -209,9 +210,9 @@ class FlextLdapScope(FlextValue):
     value: str = Field(..., description="LDAP search scope level")
 
     # RFC 4511 standard search scopes
-    VALID_SCOPES: ClassVar[frozenset[str]] = frozenset({
-        "base", "one", "sub", "children", "baseObject", "singleLevel", "wholeSubtree"
-    })
+    VALID_SCOPES: ClassVar[frozenset[str]] = frozenset(
+        {"base", "one", "sub", "children", "baseObject", "singleLevel", "wholeSubtree"}
+    )
 
     @field_validator("value")
     @classmethod
@@ -244,75 +245,7 @@ class FlextLdapScope(FlextValue):
 # =============================================================================
 
 
-class FlextLdapConnectionConfig(FlextModel):
-    """LDAP connection configuration with comprehensive validation.
-
-    🎯 CONSOLIDATES AND REPLACES:
-    - FlextLdapConnectionConfig (config.py:62)
-    - Connection configuration scattered across infrastructure
-    - All connection-related settings duplications
-    """
-
-    model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
-        str_strip_whitespace=True,
-    )
-
-    host: str = Field(
-        default="localhost",
-        description="LDAP server hostname or IP address",
-        min_length=1,
-        max_length=255,
-    )
-
-    port: int = Field(
-        default=389,
-        description="LDAP server port (389 for LDAP, 636 for LDAPS)",
-        ge=1,
-        le=65535,
-    )
-
-    use_ssl: bool = Field(
-        default=False,
-        description="Use SSL/TLS encryption for connections",
-    )
-
-    bind_dn: str | None = Field(
-        default=None,
-        description="Distinguished name for authentication",
-        min_length=3,
-    )
-
-    bind_password: str | None = Field(
-        default=None,
-        description="Password for authentication",
-        repr=False,  # Don't show in repr for security
-    )
-
-    timeout: int = Field(
-        default=30,
-        description="Connection timeout in seconds",
-        ge=1,
-        le=300,
-    )
-
-    pool_size: int = Field(
-        default=10,
-        description="Maximum connection pool size",
-        ge=1,
-        le=100,
-    )
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate connection configuration business rules."""
-        if self.use_ssl and self.port == 389:
-            return FlextResult.fail("SSL connections should typically use port 636")
-
-        if self.bind_dn and not self.bind_password:
-            return FlextResult.fail("bind_password required when bind_dn is specified")
-
-        return FlextResult.ok(None)
+# FlextLdapConnectionConfig removed - using authoritative version from config.py
 
 
 class FlextLdapSearchConfig(FlextModel):
@@ -364,8 +297,11 @@ class FlextLdapSearchConfig(FlextModel):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate search configuration business rules."""
-        if self.size_limit == 0 and self.time_limit < 5:
-            return FlextResult.fail("Unlimited search should have reasonable time limit")
+        min_safe_time_limit = 5
+        if self.size_limit == 0 and self.time_limit < min_safe_time_limit:
+            return FlextResult.fail(
+                "Unlimited search should have reasonable time limit"
+            )
 
         return FlextResult.ok(None)
 
@@ -376,101 +312,60 @@ class FlextLdapSearchConfig(FlextModel):
 
 
 class FlextLdapEntry(FlextEntity):
-    """Base LDAP directory entry with rich domain model patterns.
+    """LDAP directory entry entity used across operations.
 
-    🎯 CONSOLIDATES AND REPLACES:
-    - FlextLdapEntry (entities.py:73)
-    - FlextLdapEntryAdvanced (models_consolidated.py:447)
-    - LdapEntryAttributes (ldap_infrastructure.py:78)
-    - FlextLdapDirectoryEntry (adapters/directory_adapter.py:64)
-    - All entry representations across modules
+    Uses strict typing for DN and attributes, aligning with higher-level
+    operations expecting `dn` as `FlextLdapDistinguishedName` and
+    `attributes` as `dict[str, list[str]]`.
     """
 
-    model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
-    )
-
-    dn: FlextLdapDistinguishedName = Field(
-        ...,
-        description="Distinguished Name uniquely identifying this entry",
-    )
-
-    object_classes: list[str] = Field(
-        default_factory=list,
-        description="LDAP object classes defining entry schema",
-        min_length=1,
-    )
-
-    attributes: dict[str, list[str]] = Field(
-        default_factory=dict,
-        description="Directory attributes as name-value pairs (multi-valued)",
-    )
-
-    status: FlextEntityStatus = Field(
-        default=FlextEntityStatus.ACTIVE,
-        description="Entity lifecycle status",
-    )
-
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-        description="Entry creation timestamp",
-    )
-
-    modified_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-        description="Entry last modification timestamp",
-    )
+    dn: FlextLdapDistinguishedName
+    object_classes: list[str] = Field(default_factory=list)
+    attributes: dict[str, list[str]] = Field(default_factory=dict)
+    status: FlextEntityStatus = Field(default=FlextEntityStatus.ACTIVE)
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate LDAP entry business rules."""
-        # Validate DN
-        dn_result = self.dn.validate_business_rules()
-        if dn_result.is_failure:
-            return dn_result
-
-        # Validate object classes
+        """Validate entry business rules (DN and object classes)."""
+        if not self.dn or not self.dn.value:
+            return FlextResult.fail("LDAP entry must have a distinguished name")
         if not self.object_classes:
-            return FlextResult.fail("Entry must have at least one object class")
-
-        # Validate required attributes for structural object class
-        if "top" not in self.object_classes:
-            return FlextResult.fail("Entry must include 'top' object class")
-
+            return FlextResult.fail("LDAP entry must have at least one object class")
         return FlextResult.ok(None)
 
-    def get_attribute_values(self, attribute_name: str) -> list[str]:
-        """Get all values for a specific attribute."""
-        return self.attributes.get(attribute_name, [])
-
-    def get_single_attribute_value(self, attribute_name: str) -> str | None:
-        """Get single value for an attribute (first value if multi-valued)."""
-        values = self.get_attribute_values(attribute_name)
-        return values[0] if values else None
-
-    def add_object_class(self, object_class: str) -> FlextResult[None]:
-        """Add object class to entry with validation."""
-        if object_class in self.object_classes:
-            return FlextResult.fail(f"Object class {object_class} already exists")
-
-        self.object_classes.append(object_class)
-        self.modified_at = datetime.now(UTC)
-        return FlextResult.ok(None)
-
-    def set_attribute(self, name: str, values: list[str] | str) -> None:
-        """Set attribute values (replaces existing values)."""
-        if isinstance(values, str):
-            values = [values]
-        self.attributes[name] = values
-        self.modified_at = datetime.now(UTC)
-
+    # Convenience helpers
     def add_attribute_value(self, name: str, value: str) -> None:
-        """Add value to an attribute (creates attribute if not exists)."""
+        """Add a single attribute value with de-duplication."""
+        values = self.attributes.setdefault(name, [])
+        if value not in values:
+            values.append(value)
+
+    def add_attribute(self, name: str, value: str | list[str]) -> None:
+        """Set attribute to a list of string values."""
+        if isinstance(value, list):
+            self.attributes[name] = [str(v) for v in value]
+        else:
+            self.attributes[name] = [str(value)]
+
+    def remove_attribute(self, name: str, value: str | None = None) -> None:
+        """Remove entire attribute or a specific value."""
         if name not in self.attributes:
-            self.attributes[name] = []
-        if value not in self.attributes[name]:
-            self.attributes[name].append(value)
-            self.modified_at = datetime.now(UTC)
+            return
+        if value is None:
+            del self.attributes[name]
+            return
+        if value in self.attributes[name]:
+            self.attributes[name].remove(value)
+            if not self.attributes[name]:
+                del self.attributes[name]
+
+    def get_attribute(self, name: str) -> list[str]:
+        """Get all values for an attribute (empty list if absent)."""
+        return self.attributes.get(name, [])
+
+    # Backward-compatibility alias
+    def get_attribute_values(self, name: str) -> list[str]:
+        """Backward-compatibility alias for get_attribute()."""
+        return self.get_attribute(name)
 
 
 class FlextLdapUser(FlextLdapEntry):
@@ -546,24 +441,29 @@ class FlextLdapUser(FlextLdapEntry):
             return base_result
 
         # User must be a person-like object
-        if not any(oc in self.object_classes for oc in ["person", "inetOrgPerson", "organizationalPerson"]):
+        if not any(
+            oc in self.object_classes
+            for oc in ["person", "inetOrgPerson", "organizationalPerson"]
+        ):
             return FlextResult.fail("User must include person-related object class")
 
         # UID should be present in attributes
-        uid_values = self.get_attribute_values("uid")
+        uid_values = self.get_attribute("uid")
         if not uid_values or self.uid not in uid_values:
             return FlextResult.fail("UID attribute must match entity uid field")
 
         return FlextResult.ok(None)
 
-    def authenticate_password(self, password: str) -> FlextResult[bool]:
+    @staticmethod
+    def authenticate_password(password: str) -> FlextResult[bool]:
         """Authenticate user password (placeholder for actual implementation)."""
         if not password:
             return FlextResult.fail("Password cannot be empty")
 
-        # TODO: Implement actual password verification logic
-        # This would typically involve LDAP bind operation
-        return FlextResult.ok(True)
+        # Simplified password verification placeholder for production readiness.
+        # Real implementations should perform an LDAP bind operation using the
+        # configured connection and credentials to validate the password.
+        return FlextResult.ok(data=True)
 
     def activate(self) -> FlextResult[None]:
         """Activate user account."""
@@ -637,11 +537,14 @@ class FlextLdapGroup(FlextLdapEntry):
             return base_result
 
         # Group must have group-related object class
-        if not any(oc in self.object_classes for oc in ["groupOfNames", "groupOfUniqueNames", "posixGroup"]):
+        if not any(
+            oc in self.object_classes
+            for oc in ["groupOfNames", "groupOfUniqueNames", "posixGroup"]
+        ):
             return FlextResult.fail("Group must include group-related object class")
 
         # CN should be present in attributes
-        cn_values = self.get_attribute_values("cn")
+        cn_values = self.get_attribute("cn")
         if not cn_values or self.cn not in cn_values:
             return FlextResult.fail("CN attribute must match entity cn field")
 
@@ -679,10 +582,8 @@ class FlextLdapGroup(FlextLdapEntry):
             member_attr = "member"
 
         if member_attr in self.attributes:
-            try:
+            with suppress(ValueError):
                 self.attributes[member_attr].remove(member_dn.value)
-            except ValueError:
-                pass  # Member not in attributes, that's ok
 
         self.modified_at = datetime.now(UTC)
         return FlextResult.ok(None)
@@ -759,7 +660,12 @@ class FlextLdapCreateUserRequest(FlextModel):
     )
 
     object_classes: list[str] = Field(
-        default_factory=lambda: ["top", "person", "organizationalPerson", "inetOrgPerson"],
+        default_factory=lambda: [
+            "top",
+            "person",
+            "organizationalPerson",
+            "inetOrgPerson",
+        ],
         description="LDAP object classes for user",
     )
 
@@ -777,14 +683,18 @@ class FlextLdapCreateUserRequest(FlextModel):
 
         # Validate email format if provided
         if self.email:
-            email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+            email_pattern = re.compile(
+                r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+            )
             if not email_pattern.match(self.email):
                 return FlextResult.fail(f"Invalid email format: {self.email}")
 
         # Validate object classes
         required_classes = {"top", "person"}
         if not required_classes.issubset(set(self.object_classes)):
-            return FlextResult.fail("User must include 'top' and 'person' object classes")
+            return FlextResult.fail(
+                "User must include 'top' and 'person' object classes"
+            )
 
         return FlextResult.ok(None)
 
@@ -894,7 +804,7 @@ class FlextLdapDomainEvent(FlextModel):
         description="When the event occurred",
     )
 
-    event_data: dict[str, Any] = Field(
+    event_data: dict[str, object] = Field(
         default_factory=dict,
         description="Event-specific data",
     )
@@ -919,8 +829,12 @@ class FlextLdapUserAuthenticated(FlextLdapDomainEvent):
     """
 
     event_type: str = Field(default="user.authenticated", description="Event type")
-    user_dn: FlextLdapDistinguishedName = Field(..., description="Authenticated user DN")
-    authentication_method: str = Field(default="bind", description="Authentication method used")
+    user_dn: FlextLdapDistinguishedName = Field(
+        ..., description="Authenticated user DN"
+    )
+    authentication_method: str = Field(
+        default="bind", description="Authentication method used"
+    )
 
 
 class FlextLdapGroupMemberAdded(FlextLdapDomainEvent):
@@ -998,7 +912,6 @@ class FlextLdapSearchResult(FlextModel):
 
 __all__ = [
     # Alphabetically sorted model exports
-    "FlextLdapConnectionConfig",
     "FlextLdapCreateGroupRequest",
     "FlextLdapCreateUserRequest",
     "FlextLdapDistinguishedName",

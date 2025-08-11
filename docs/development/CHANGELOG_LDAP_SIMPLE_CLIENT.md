@@ -1,4 +1,4 @@
-# Changelog: FlextLdapSimpleClient Corrections
+# Changelog: FlextLdapClient Corrections
 
 ## Version 0.9.0 - 2025-08-07
 
@@ -105,7 +105,7 @@ config = LdapConnectionConfig(
 )
 
 # Conectar
-client = FlextLdapSimpleClient()
+client = FlextLdapClient()
 result = await client.connect(config)
 
 # Operações

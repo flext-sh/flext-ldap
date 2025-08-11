@@ -34,7 +34,7 @@ Example:
 
 Dependencies:
     - flext-core: Foundation patterns and dependency injection
-    - FlextLdapSimpleClient: Infrastructure LDAP protocol implementation
+    - FlextLdapClient: Infrastructure LDAP protocol implementation
     - Domain entities: Rich business objects for LDAP data representation
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -46,34 +46,31 @@ from __future__ import annotations
 
 import hashlib
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
 from flext_core import (
     FlextContainer,
     FlextIdGenerator,
-    FlextLDAPConfig,
     FlextResult,
     get_flext_container,
     get_logger,
 )
 
-from flext_ldap.config import (
-    FlextLdapSettings,
-)
+from flext_ldap.config import FlextLdapSettings
 from flext_ldap.constants import FlextLdapScope
 from flext_ldap.entities import (
     FlextLdapEntry,
     FlextLdapGroup,
     FlextLdapUser,
 )
-from flext_ldap.infrastructure.ldap_client import FlextLdapClient
+from flext_ldap.infrastructure_ldap_client import FlextLdapClient
 from flext_ldap.value_objects import FlextLdapDistinguishedName, FlextLdapFilter
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
-    from flext_core.typings import FlextTypes
+    from flext_core import FlextTypes
 
     from flext_ldap.values import FlextLdapCreateUserRequest
 
@@ -310,7 +307,7 @@ class FlextLdapApi:
                     extra={"session_id": session_id},
                 )
                 # Convert FlextResult[None] to FlextResult[bool] for compatibility
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
             return FlextResult.fail(result.error or "Disconnect failed")
 
         except (RuntimeError, ValueError, TypeError) as e:
@@ -518,9 +515,9 @@ class FlextLdapApi:
     def _build_user_attributes(
         self,
         user_request: FlextLdapCreateUserRequest,
-    ) -> FlextTypes.Core.JsonDict:
+    ) -> dict[str, list[str]]:
         """Build LDAP attributes from user request."""
-        attributes: FlextTypes.Core.JsonDict = {
+        attributes: dict[str, list[str]] = {
             "objectClass": ["inetOrgPerson", "person", "organizationalPerson"],
             "uid": [user_request.uid],
             "cn": [user_request.cn],
@@ -540,16 +537,10 @@ class FlextLdapApi:
 
     def _format_attributes_for_entity(
         self,
-        attributes: FlextTypes.Core.JsonDict,
-    ) -> dict[str, str]:
-        """Format attributes for domain entity creation."""
-        formatted_attrs: dict[str, str] = {}
-        for key, value in attributes.items():
-            if isinstance(value, list) and value:
-                formatted_attrs[key] = str(value[0])
-            else:
-                formatted_attrs[key] = str(value)
-        return formatted_attrs
+        attributes: dict[str, list[str]],
+    ) -> dict[str, list[str]]:
+        """Normalize attributes as dict[str, list[str]] for entities."""
+        return {key: [str(v) for v in value] for key, value in attributes.items()}
 
     def _validate_user_creation_preconditions(
         self,
@@ -603,7 +594,6 @@ class FlextLdapApi:
                 return FlextResult.fail(f"User creation failed: {result.error}")
 
             # Create domain entity using helper method
-            formatted_attrs = self._format_attributes_for_entity(attributes)
             user = FlextLdapUser(
                 id=FlextIdGenerator.generate_id(),
                 dn=user_request.dn,
@@ -619,7 +609,7 @@ class FlextLdapApi:
                     if isinstance(attributes["objectClass"], list)
                     else []
                 ),
-                attributes=formatted_attrs,
+                attributes=attributes,
             )
 
             logger.info("User created", extra={"user_dn": user_request.dn})
@@ -632,8 +622,8 @@ class FlextLdapApi:
         self,
         session_id: str,
         user_dn: str | FlextLdapDistinguishedName,
-        updates: FlextTypes.Core.JsonDict,
-    ) -> FlextResult[tuple[str, FlextLdapDistinguishedName, FlextTypes.Core.JsonDict]]:
+        updates: dict[str, object],
+    ) -> FlextResult[tuple[str, FlextLdapDistinguishedName, dict[str, object]]]:
         """Validate preconditions for user update using Railway-Oriented Programming."""
         # Validate session exists
         if session_id not in self._connections:
@@ -654,15 +644,15 @@ class FlextLdapApi:
         if dn_result.data is None:
             return FlextResult.fail("Failed to create DN object")
 
-        # Convert updates to LDAP modify format
-        modifications: FlextTypes.Core.JsonDict = {}
+        # Convert updates to high-level change format expected by client
+        changes: dict[str, object] = {}
         for attr, value in updates.items():
             if isinstance(value, list):
-                modifications[attr] = [(3, value)]  # MODIFY_REPLACE
+                changes[attr] = [str(v) for v in value]
             else:
-                modifications[attr] = [(3, [str(value)])]  # MODIFY_REPLACE
+                changes[attr] = [str(value)]
 
-        return FlextResult.ok((connection_id, dn_result.data, modifications))
+        return FlextResult.ok((connection_id, dn_result.data, changes))
 
     async def update_user(
         self,
@@ -696,7 +686,7 @@ class FlextLdapApi:
             if result.is_success:
                 dn_str = str(dn_obj)
                 logger.info("User updated", extra={"user_dn": dn_str})
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
 
             return FlextResult.fail(result.error or "Update failed")
 
@@ -758,7 +748,7 @@ class FlextLdapApi:
             if result.is_success:
                 dn_str = str(dn_obj)
                 logger.info("User deleted", extra={"user_dn": dn_str})
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
 
             return FlextResult.fail(result.error or "Delete failed")
 
@@ -816,10 +806,18 @@ class FlextLdapApi:
             if dn_result.data is None:
                 return FlextResult.fail("Failed to create DN object")
 
+            # Normalize attributes to dict[str, list[str]]
+            normalized_group_attrs: dict[str, list[str]] = {}
+            for k, v in attributes.items():
+                if isinstance(v, list):
+                    normalized_group_attrs[k] = [str(x) for x in v]
+                else:
+                    normalized_group_attrs[k] = [str(v)]
+
             result = await self._client.create_entry(
                 connection_id,
                 dn_result.data,
-                attributes,
+                normalized_group_attrs,
             )
 
             if not result.is_success:
@@ -844,13 +842,13 @@ class FlextLdapApi:
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Group creation error: {e}")
 
-    def health(self) -> FlextResult[dict[str, Any]]:
+    def health(self) -> FlextResult[dict[str, object]]:
         """Health check with connection status following flext-core patterns."""
         try:
             # Check container registration status
             container_status = self._container.get("ldap_api")
 
-            health_data = {
+            health_data: dict[str, object] = {
                 "status": "healthy",
                 "service": "flext-ldap-api",
                 "version": "0.9.0",
@@ -907,7 +905,11 @@ class FlextLdapApi:
         if dn_result.data is None:
             return FlextResult.fail("Failed to create DN object")
 
-        return FlextResult.ok((connection_id, dn_result.data, dict(attributes)))
+        # Ensure attributes are dict[str, list[str]]
+        normalized: dict[str, list[str]] = {
+            k: [str(v) for v in vals] for k, vals in attributes.items()
+        }
+        return FlextResult.ok((connection_id, dn_result.data, normalized))
 
     async def add_entry(
         self,
@@ -952,7 +954,7 @@ class FlextLdapApi:
 
             if result.is_success:
                 logger.debug("Added entry: %s", dn)
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
 
             return FlextResult.fail(f"Failed to add entry: {result.error}")
 
@@ -1025,10 +1027,12 @@ class FlextLdapApi:
 
                 if not modifications:
                     logger.debug("No changes needed for entry: %s", normalized_dn)
-                    return FlextResult.ok(True)
+                    return FlextResult.ok(data=True)
 
                 # Apply modifications
-                return await self.modify_entry(session_id, normalized_dn, modifications)
+                return await self.modify_entry(
+                    session_id, normalized_dn, cast("dict[str, object]", modifications)
+                )
             # Force add mode
             return await self.add_entry(session_id, normalized_dn, attributes)
 
@@ -1128,7 +1132,7 @@ class FlextLdapApi:
         session_id: str,
         entries: list[tuple[str, dict[str, list[str]]]],
         base_dn: str | None = None,
-    ) -> FlextResult[list[dict[str, Any]]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Batch merge multiple entries with single subtree search optimization.
 
         This method:
@@ -1258,7 +1262,7 @@ class FlextLdapApi:
         entries: list[tuple[str, dict[str, list[str]]]],
         _target_dns: dict[str, str],
         existing_map: dict[str, dict[str, list[str]]],
-    ) -> list[dict[str, Any]]:
+    ) -> list[dict[str, object]]:
         """Process each entry for batch merge."""
         results = []
         for dn, attributes in entries:
@@ -1305,7 +1309,7 @@ class FlextLdapApi:
         normalized_dn: str,
         attributes: dict[str, list[str]],
         existing_attrs: dict[str, list[str]] | None,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[bool]:
         """Process a single entry for merge operation."""
         if existing_attrs is not None:
             # Entry exists - calculate modifications and apply if needed
@@ -1315,8 +1319,12 @@ class FlextLdapApi:
                 attributes,
             )
             if modifications:
-                return await self.modify_entry(session_id, normalized_dn, modifications)
-            return FlextResult.ok(True)  # No changes needed
+                return await self.modify_entry(
+                    session_id,
+                    normalized_dn,
+                    cast("dict[str, object]", modifications),
+                )
+            return FlextResult.ok(data=True)  # No changes needed
         # Entry doesn't exist - add it
         return await self.add_entry(session_id, normalized_dn, attributes)
 
@@ -1370,10 +1378,8 @@ class FlextLdapApi:
         self,
         session_id: str,
         dn: str,
-        attributes: dict[str, list[str]],
-    ) -> FlextResult[
-        tuple[str, FlextLdapDistinguishedName, dict[str, list[tuple[int, list[str]]]]]
-    ]:
+        attributes: dict[str, object],
+    ) -> FlextResult[tuple[str, FlextLdapDistinguishedName, dict[str, object]]]:
         """Validate preconditions for modify entry using Railway-Oriented Programming."""
         # Validate session exists
         if session_id not in self._connections:
@@ -1389,20 +1395,21 @@ class FlextLdapApi:
         if dn_result.data is None:
             return FlextResult.fail("Failed to create DN object")
 
-        # Convert to modifications format
-        modifications = {}
+        # Convert to high-level change format expected by client
+        changes: dict[str, object] = {}
         for attr, values in attributes.items():
-            modifications[attr] = [
-                (3, values if isinstance(values, list) else [str(values)]),
-            ]
+            if isinstance(values, list):
+                changes[attr] = [str(v) for v in values]
+            else:
+                changes[attr] = [str(values)]
 
-        return FlextResult.ok((connection_id, dn_result.data, modifications))
+        return FlextResult.ok((connection_id, dn_result.data, changes))
 
     async def modify_entry(
         self,
         session_id: str,
         dn: str,
-        attributes: dict[str, list[str]],
+        attributes: dict[str, object],
         *,
         operation_type: str = "MODIFY_REPLACE",
     ) -> FlextResult[bool]:
@@ -1442,7 +1449,7 @@ class FlextLdapApi:
 
             if result.is_success:
                 logger.debug("Modified entry with operation %s: %s", operation_type, dn)
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
 
             return FlextResult.fail(f"Failed to modify entry: {result.error}")
 
@@ -1499,7 +1506,7 @@ class FlextLdapApi:
             result = await self.modify_entry(
                 session_id=session_id,
                 dn=schema_dn,
-                attributes=modifications,
+                attributes=cast("dict[str, object]", modifications),
                 operation_type="MODIFY_ADD",
             )
 
@@ -1516,7 +1523,7 @@ class FlextLdapApi:
                         else 0,
                     },
                 )
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
             logger.error(
                 "Schema addition failed: %s",
                 result.error,
@@ -1562,7 +1569,10 @@ class FlextLdapApi:
 
                     # Apply filters if specified
                     if "object_class_filter" in options:
-                        required_classes = options["object_class_filter"]
+                        raw_required_classes = options["object_class_filter"]
+                        required_classes: list[str] = cast(
+                            "list[str]", raw_required_classes
+                        )
                         if not any(
                             entry.has_object_class(obj_class)
                             for obj_class in required_classes
@@ -1571,7 +1581,8 @@ class FlextLdapApi:
 
                     # Apply DN filters if specified
                     if "base_dn_filter" in options:
-                        base_dn = options["base_dn_filter"]
+                        raw_base_dn = options["base_dn_filter"]
+                        base_dn: str = cast("str", raw_base_dn)
                         if not str(entry.dn).lower().endswith(base_dn.lower()):
                             continue
 
@@ -1619,10 +1630,11 @@ class FlextLdapApi:
             valid_entries = 0
             missing_required_attributes = 0
 
-            required_attributes = rules.get(
+            raw_required = rules.get(
                 "required_attributes",
                 ["cn", "objectClass"],
             )
+            required_attributes: list[str] = cast("list[str]", raw_required)
 
             for entry in entries:
                 try:
@@ -1644,18 +1656,19 @@ class FlextLdapApi:
                     logger.debug("Entry validation error for %s: %s", entry.dn, e)
 
             # Calculate quality score
-            quality_score = (
+            quality_score: float = (
                 (valid_entries / total_entries) if total_entries > 0 else 0.0
             )
 
-            quality_metrics = {
+            raw_threshold = rules.get("min_quality_threshold", 0.8)
+            threshold: float = cast("float", raw_threshold)
+            quality_metrics: dict[str, object] = {
                 "total_entries": total_entries,
                 "valid_dns": valid_dns,
                 "valid_entries": valid_entries,
                 "missing_required_attributes": missing_required_attributes,
                 "quality_score": round(quality_score, 3),
-                "validation_passed": quality_score
-                >= rules.get("min_quality_threshold", 0.8),
+                "validation_passed": quality_score >= threshold,
             }
 
             logger.info(
@@ -1675,7 +1688,7 @@ class FlextLdapApi:
 
 
 # Factory function for easy instantiation
-def get_ldap_api(config: FlextLDAPConfig | None = None) -> FlextLdapApi:
+def get_ldap_api(config: object | None = None) -> FlextLdapApi:
     """Get or create LDAP API instance with dependency injection."""
     container = get_flext_container()
 
@@ -1687,9 +1700,15 @@ def get_ldap_api(config: FlextLDAPConfig | None = None) -> FlextLdapApi:
     # Create new instance with proper config conversion
     settings_config = None
     if config:
-        # Convert FlextLDAPConfig to FlextLdapSettings
-        settings_config = FlextLdapSettings(**config.model_dump())
+        try:
+            # Convert config-like object to FlextLdapSettings if possible
+            model_dump = getattr(config, "model_dump", None)
+            if callable(model_dump):
+                settings_config = FlextLdapSettings(**model_dump())
+        except Exception:
+            settings_config = None
     return FlextLdapApi(settings_config)
 
-
 __all__ = ["FlextLdapApi", "get_ldap_api"]
+
+

@@ -21,26 +21,23 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-# ✅ CORRECT: Import by root from flext-core (not submodules)
-from flext_core import FlextResult, get_flext_container, get_logger
+from flext_core import FlextIdGenerator, FlextResult, get_flext_container, get_logger
 
-# ✅ CORRECT: Use consolidated foundation modules
 from .constants import (
     FlextLdapAttributeConstants,
     FlextLdapConnectionConstants,
     FlextLdapObjectClassConstants,
-    FlextLdapScope,
 )
 from .models import (
     FlextLdapDistinguishedName,
     FlextLdapEntry,
     FlextLdapFilter,
+    FlextLdapScope,
     FlextLdapSearchConfig,
     FlextLdapSearchResult,
 )
@@ -126,18 +123,23 @@ class FlextLdapSearchOperations:
         start_time = datetime.now(UTC)
 
         # Execute search via repository
-        search_result = await self._repository.search_entries(connection_id, config)
+        repo_config = config.model_dump()
+        search_result = await self._repository.search_entries(
+            connection_id,
+            repo_config,
+        )
         if search_result.is_failure:
-            return search_result
+            return FlextResult.fail(search_result.error or "Search failed")
 
         # Calculate execution time
         execution_time = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
 
         # Convert raw entries to FlextLdapEntry objects
         entries: list[FlextLdapEntry] = []
-        for entry_data in search_result.data:
+        raw_entries = search_result.data or []
+        for entry_data in raw_entries:
             entry_result = self._convert_entry_data(entry_data)
-            if entry_result.is_success:
+            if entry_result.is_success and entry_result.data is not None:
                 entries.append(entry_result.data)
             else:
                 logger.warning(f"Failed to convert entry: {entry_result.error}")
@@ -192,7 +194,7 @@ class FlextLdapSearchOperations:
                 f"Single entry search failed: {search_result.error}"
             )
 
-        entries = search_result.data.entries
+        entries = search_result.data.entries if search_result.data else []
         if not entries:
             logger.debug(f"No entry found for: {base_dn.value}")
             return FlextResult.ok(None)
@@ -246,7 +248,9 @@ class FlextLdapSearchOperations:
         config = FlextLdapSearchConfig(
             base_dn=base_dn,
             filter=filter_obj,
-            scope=scope if isinstance(scope, FlextLdapScope) else FlextLdapScope.subtree(),
+            scope=scope
+            if isinstance(scope, FlextLdapScope)
+            else FlextLdapScope.subtree(),
             size_limit=FlextLdapConnectionConstants.DEFAULT_SIZE_LIMIT,
         )
 
@@ -303,7 +307,7 @@ class FlextLdapSearchOperations:
             page_data = page_result.data
 
             # If no results, we're done
-            if not page_data.entries:
+            if page_data is None or not page_data.entries:
                 logger.debug(
                     f"Paged search completed: {total_processed} total entries processed"
                 )
@@ -333,7 +337,8 @@ class FlextLdapSearchOperations:
         *,
         operator: str = "AND",
         scope: FlextLdapScope | None = None,
-    ) -> FlextResult[FlextLdapSearchResult]:
+    ) -> FlextResult[Any] | FlextResult[FlextLdapFilter] | FlextResult[
+        FlextLdapSearchResult]:
         """Search with multiple filters combined with logical operator.
 
         🎯 CONSOLIDATES multi-filter search patterns across modules.
@@ -371,6 +376,10 @@ class FlextLdapSearchOperations:
         if combined_filter_result.is_failure:
             return combined_filter_result
 
+        if combined_filter_result.is_failure or combined_filter_result.data is None:
+            return FlextResult.fail(
+                combined_filter_result.error or "Failed to combine filters",
+            )
         combined_filter = combined_filter_result.data
 
         # Create search config with combined filter
@@ -462,15 +471,12 @@ class FlextLdapSearchOperations:
         )
 
         # Build filters for user search
-        filters: list[FlextLdapFilter] = []
+        filters: list[FlextLdapFilter] = [FlextLdapFilter.create_equality(
+            FlextLdapAttributeConstants.OBJECT_CLASS,
+            FlextLdapObjectClassConstants.PERSON,
+        )]
 
         # Base user object class filter
-        filters.append(
-            FlextLdapFilter.create_equality(
-                FlextLdapAttributeConstants.OBJECT_CLASS,
-                FlextLdapObjectClassConstants.PERSON,
-            )
-        )
 
         # Name pattern filter
         if name_pattern:
@@ -612,7 +618,7 @@ class FlextLdapSearchOperations:
         if search_result.is_failure:
             return FlextResult.fail(f"Count search failed: {search_result.error}")
 
-        count = len(search_result.data.entries)
+        count = len(search_result.data.entries) if search_result.data else 0
         logger.debug(f"Entry count result: {count}")
         return FlextResult.ok(count)
 
@@ -652,8 +658,8 @@ class FlextLdapSearchOperations:
     # PRIVATE HELPER METHODS - Internal operation support
     # =========================================================================
 
+    @staticmethod
     def _convert_entry_data(
-        self,
         entry_data: dict[str, object],
     ) -> FlextResult[FlextLdapEntry]:
         """Convert raw entry data to FlextLdapEntry object."""
@@ -679,6 +685,7 @@ class FlextLdapSearchOperations:
 
             # Create entry
             entry = FlextLdapEntry(
+                id=FlextIdGenerator.generate_id(),
                 dn=dn,
                 object_classes=object_classes,
                 attributes=attributes,
@@ -691,8 +698,8 @@ class FlextLdapSearchOperations:
         except Exception as e:
             return FlextResult.fail(f"Error converting entry data: {e}")
 
+    @staticmethod
     def _combine_filters(
-        self,
         filters: list[FlextLdapFilter],
         operator: str,
     ) -> FlextResult[FlextLdapFilter]:

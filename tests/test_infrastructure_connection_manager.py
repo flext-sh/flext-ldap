@@ -108,7 +108,7 @@ class TestConnectionCreation:
     and FlextResult pattern usage with comprehensive mocking for reliability.
     """
 
-    @patch("flext_ldap.infrastructure.connection_manager.FlextLdapSimpleClient")
+    @patch("flext_ldap.infrastructure.connection_manager.FlextLdapClient")
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapConnectionConfig")
     async def test_successful_connection_creation(
         self, mock_config_class: Mock, mock_client_class: Mock
@@ -143,7 +143,7 @@ class TestConnectionCreation:
         # Validate connection test was performed
         mock_client.connect.assert_called_once()
 
-    @patch("flext_ldap.infrastructure.connection_manager.FlextLdapSimpleClient")
+    @patch("flext_ldap.infrastructure.connection_manager.FlextLdapClient")
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapConnectionConfig")
     async def test_connection_creation_with_ssl(
         self, mock_config_class: Mock, mock_client_class: Mock
@@ -172,7 +172,7 @@ class TestConnectionCreation:
             host="ldaps.example.com", port=636, use_ssl=True
         )
 
-    @patch("flext_ldap.infrastructure.connection_manager.FlextLdapSimpleClient")
+    @patch("flext_ldap.infrastructure.connection_manager.FlextLdapClient")
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapConnectionConfig")
     async def test_connection_creation_failure_on_connect(
         self, mock_config_class: Mock, mock_client_class: Mock
@@ -199,7 +199,7 @@ class TestConnectionCreation:
         # Ensure connection test was attempted
         mock_client.connect.assert_called_once()
 
-    @patch("flext_ldap.infrastructure.connection_manager.FlextLdapSimpleClient")
+    @patch("flext_ldap.infrastructure.connection_manager.FlextLdapClient")
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapConnectionConfig")
     async def test_connection_creation_exception_handling(
         self, mock_config_class: Mock, mock_client_class: Mock
@@ -216,7 +216,7 @@ class TestConnectionCreation:
         assert not result.is_success
         assert "Failed to create LDAP connection: Invalid configuration" in result.error
 
-    @patch("flext_ldap.infrastructure.connection_manager.FlextLdapSimpleClient")
+    @patch("flext_ldap.infrastructure.connection_manager.FlextLdapClient")
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapConnectionConfig")
     async def test_connection_creation_client_instantiation_error(
         self, mock_config_class: Mock, mock_client_class: Mock
@@ -416,7 +416,7 @@ class TestFlextResultPatternCompliance:
     the FlextResult pattern for consistent error handling and type safety.
     """
 
-    @patch("flext_ldap.infrastructure.connection_manager.FlextLdapSimpleClient")
+    @patch("flext_ldap.infrastructure.connection_manager.FlextLdapClient")
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapConnectionConfig")
     async def test_create_connection_returns_flext_result(
         self, mock_config_class: Mock, mock_client_class: Mock
@@ -515,7 +515,7 @@ class TestEdgeCasesAndErrorScenarios:
         manager3 = FlextLDAPConnectionManager(host=long_hostname, port=389)
         assert manager3.host == long_hostname
 
-    @patch("flext_ldap.infrastructure.connection_manager.FlextLdapSimpleClient")
+    @patch("flext_ldap.infrastructure.connection_manager.FlextLdapClient")
     @patch("flext_ldap.infrastructure.connection_manager.FlextLdapConnectionConfig")
     async def test_multiple_exception_types_in_connection_creation(
         self, mock_config_class: Mock, mock_client_class: Mock

@@ -33,7 +33,6 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import ClassVar, Final
 
-# ✅ CORRECT: Import by root from flext-core (not submodules)
 from flext_core.constants import FlextConstants
 
 # =============================================================================
@@ -418,6 +417,19 @@ class FlextLdapFilterConstants:
     EMPTY_GROUPS: Final[str] = "(&(objectClass=groupOfNames)(!(member=*)))"
 
 
+class FlextLdapConverterConstants:
+    """Converter-related constants used by tests and converters.
+
+    Provides standard lengths for LDAP generalized time formats produced
+    by converters and utilities. Centralized here to avoid duplication.
+    """
+
+    # Generalized time with seconds: YYYYMMDDHHMMSSZ -> 15 characters
+    LDAP_TIME_FORMAT_LONG: Final[int] = 15
+    # Truncated generalized time without seconds: YYYYMMDDHHMMZ -> 13 characters
+    LDAP_TIME_FORMAT_SHORT: Final[int] = 13
+
+
 # =============================================================================
 # DN (DISTINGUISHED NAME) CONSTANTS - RFC 4514 Compliance
 # =============================================================================
@@ -724,6 +736,8 @@ class FlextLdapSchemaDiscoveryConstants:
     """
 
     class Discovery:
+        """Compatibility container for discovery settings."""
+
         SCHEMA_CACHE_TTL: int = FlextLdapObservabilityConstants.SCHEMA_CACHE_TTL
         SCHEMA_REFRESH_INTERVAL: int = (
             FlextLdapObservabilityConstants.SCHEMA_REFRESH_INTERVAL
@@ -767,3 +781,19 @@ SCOPE_CHILDREN = FlextLdapScope.CHILDREN
 # Connection type aliases
 LDAP = FlextLdapConnectionType.LDAP
 LDAPS = FlextLdapConnectionType.LDAPS
+
+
+# Legacy umbrella for tests expecting FlextLdapConstants
+class FlextLdapConstants:
+    """Legacy constants wrapper mapping to consolidated definitions.
+
+    Provides expected attributes used by tests; values delegated to
+    consolidated constants above.
+    """
+
+    DEFAULT_TIMEOUT_SECONDS: int = FlextLdapConnectionConstants.DEFAULT_CONNECT_TIMEOUT
+    MAX_TIMEOUT_SECONDS: int = FlextLdapConnectionConstants.MAX_TIME_LIMIT
+    DEFAULT_POOL_SIZE: int = FlextLdapConnectionConstants.DEFAULT_POOL_SIZE
+    MAX_POOL_SIZE: int = FlextLdapConnectionConstants.MAX_PAGE_SIZE // 10
+    DEFAULT_PAGE_SIZE: int = FlextLdapConnectionConstants.DEFAULT_PAGE_SIZE
+    MAX_PAGE_SIZE: int = FlextLdapConnectionConstants.MAX_PAGE_SIZE

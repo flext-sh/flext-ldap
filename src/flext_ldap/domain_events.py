@@ -12,15 +12,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from abc import ABCMeta
 from typing import TYPE_CHECKING
 
 from flext_core import FlextResult, FlextValueObject
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
+    from flext_core import FlextTypes
 
 
-class FlextLdapConnectionEstablished(FlextValueObject):
+class FlextLdapConnectionEstablished(FlextValueObject, metaclass=ABCMeta):
     """Event raised when LDAP connection is established."""
 
     aggregate_id: str
@@ -43,7 +44,7 @@ class FlextLdapConnectionEstablished(FlextValueObject):
         return FlextResult.ok(None)
 
 
-class FlextLdapConnectionLost(FlextValueObject):
+class FlextLdapConnectionLost(FlextValueObject, metaclass=ABCMeta):
     """Event raised when LDAP connection is lost."""
 
     aggregate_id: str
@@ -59,7 +60,7 @@ class FlextLdapConnectionLost(FlextValueObject):
         return FlextResult.ok(None)
 
 
-class FlextLdapEntryCreated(FlextValueObject):
+class FlextLdapEntryCreated(FlextValueObject, metaclass=ABCMeta):
     """Event raised when LDAP entry is created."""
 
     aggregate_id: str
@@ -78,7 +79,7 @@ class FlextLdapEntryCreated(FlextValueObject):
         return FlextResult.ok(None)
 
 
-class FlextLdapEntryModified(FlextValueObject):
+class FlextLdapEntryModified(FlextValueObject, metaclass=ABCMeta):
     """Event raised when LDAP entry is modified."""
 
     aggregate_id: str
@@ -97,7 +98,7 @@ class FlextLdapEntryModified(FlextValueObject):
         return FlextResult.ok(None)
 
 
-class FlextLdapEntryDeleted(FlextValueObject):
+class FlextLdapEntryDeleted(FlextValueObject, metaclass=ABCMeta):
     """Event raised when LDAP entry is deleted."""
 
     aggregate_id: str
@@ -116,7 +117,7 @@ class FlextLdapEntryDeleted(FlextValueObject):
 
 
 # Base event class to eliminate code duplication - DRY Principle
-class FlextLdapDomainEventBase(FlextValueObject):
+class FlextLdapDomainEventBase(FlextValueObject, metaclass=ABCMeta):
     """Base class for LDAP domain events - eliminates code duplication."""
 
     aggregate_id: str
@@ -136,7 +137,7 @@ class FlextLdapDomainEventBase(FlextValueObject):
         return FlextResult.ok(None)
 
 
-class FlextLdapUserAuthenticated(FlextLdapDomainEventBase):
+class FlextLdapUserAuthenticated(FlextLdapDomainEventBase, metaclass=ABCMeta):
     """Event raised when user authenticates successfully."""
 
     user_dn: str
@@ -153,7 +154,7 @@ class FlextLdapUserAuthenticated(FlextLdapDomainEventBase):
         return FlextResult.ok(None)
 
 
-class FlextLdapAuthenticationFailed(FlextLdapDomainEventBase):
+class FlextLdapAuthenticationFailed(FlextLdapDomainEventBase, metaclass=ABCMeta):
     """Event raised when authentication fails."""
 
     user_dn: str
@@ -171,7 +172,7 @@ class FlextLdapAuthenticationFailed(FlextLdapDomainEventBase):
         return FlextResult.ok(None)
 
 
-class FlextLdapGroupMemberAdded(FlextLdapDomainEventBase):
+class FlextLdapGroupMemberAdded(FlextLdapDomainEventBase, metaclass=ABCMeta):
     """Event raised when member is added to group."""
 
     group_dn: str
@@ -186,7 +187,7 @@ class FlextLdapGroupMemberAdded(FlextLdapDomainEventBase):
         return FlextResult.ok(None)
 
 
-class FlextLdapGroupMemberRemoved(FlextLdapDomainEventBase):
+class FlextLdapGroupMemberRemoved(FlextLdapDomainEventBase, metaclass=ABCMeta):
     """Event raised when member is removed from group."""
 
     group_dn: str
