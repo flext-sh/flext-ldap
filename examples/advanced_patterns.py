@@ -310,7 +310,7 @@ async def demonstrate_performance_patterns() -> None:
 
 
 async def main() -> None:
-    """Main demonstration function."""
+    """Run the main demonstration function."""
     print("🚀 FLEXT-LDAP Advanced Patterns")
     print("=" * 50)
     print("Enterprise-grade patterns and best practices\n")

@@ -14,17 +14,21 @@ import asyncio
 import concurrent.futures
 from abc import ABC, abstractmethod
 from asyncio import AbstractEventLoop
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import TYPE_CHECKING, ParamSpec, Protocol, TypeVar, cast
 from urllib.parse import urlparse
 
-from flext_core import FlextResult, get_logger
-from flext_core.config_models import create_ldap_config
+from flext_core import FlextResult, create_ldap_config, get_logger
 from pydantic import SecretStr
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable
 
     from flext_core import FlextTypes
+
+    from flext_ldap.ldap_types import (
+        TLdapDn,
+        TLdapUri,
+    )
 
 from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
 from flext_ldap.errors import (
@@ -38,6 +42,9 @@ from flext_ldap.ldap_infrastructure import FlextLdapClient
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 logger = get_logger(__name__)
 
@@ -78,9 +85,9 @@ class FlextLdapDirectoryServiceInterface(ABC):
     @abstractmethod
     async def connect(
         self,
-        server_url: str,
+        server_url: TLdapUri,
         *,
-        bind_dn: str | None = None,
+        bind_dn: TLdapDn | None = None,
         password: str | None = None,
     ) -> FlextResult[bool]:
         """Connect to directory service."""
@@ -144,11 +151,9 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             },
         )
         try:
-            # Consolidated connection pipeline - Railway Oriented Programming
-            return await self._execute_connection_pipeline(
-                server_url,
-                bind_dn,
-                password,
+            # Consolidated connection pipeline - execute async flow synchronously
+            return asyncio.run(
+                self._execute_connection_pipeline(server_url, bind_dn, password),
             )
 
         except (ConnectionError, OSError) as e:
@@ -239,7 +244,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             {
                 **base.model_dump(),
                 "use_ssl": use_ssl,
-            }
+            },
         )
         logger.trace("Created connection config", extra={"config": config.__dict__})
         return FlextResult.ok(config)
@@ -258,6 +263,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         host = str(config_dict.get("host", "localhost"))
         port = int(config_dict.get("port", 389))
         server_url = f"{scheme}://{host}:{port}"
+        # Use the async connect method
         connection_result = await self._ldap_client.connect(server_url, None, None)
         if not connection_result.is_success:
             logger.error(
@@ -272,7 +278,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
         logger.debug("LDAP connection established successfully")
         # Save a logical connection id (legacy compatibility)
-        self._connection_id = self._ldap_client.last_server_url or server_url
+        self._connection_id = server_url
         return FlextResult.ok(DirectoryOperationResult.SUCCESS)
 
     def _handle_authentication(
@@ -298,8 +304,15 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 self._auth_config = auth_config
             else:
                 logger.trace("Attempting authentication in sync context")
+                # Extract auth config values properly
+                server_uri = getattr(auth_config, "server", "")
+                bind_dn_val = getattr(auth_config, "bind_dn", "")
+                bind_password_val = ""
+                if hasattr(auth_config, "bind_password") and auth_config.bind_password:
+                    bind_password_val = auth_config.bind_password.get_secret_value()
+
                 auth_result = loop.run_until_complete(
-                    self._ldap_client.connect_with_auth(auth_config),
+                    self._ldap_client.connect(server_uri, bind_dn_val, bind_password_val),
                 )
                 if not auth_result.is_success:
                     logger.error(
@@ -439,30 +452,61 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     future = executor.submit(
                         asyncio.run,
-                        self._ldap_client.search(base_dn, search_filter, attributes),
+                        self._ldap_client.search(base_dn, search_filter, "subtree", attributes),
                     )
                     raw_result = future.result(timeout=30)
-                    return self._convert_raw_search_result(raw_result)
+                    # Cast LdapSearchResult to dict[str, object] for type compatibility
+                    if raw_result.is_success and raw_result.data:
+                        casted_data = cast("list[dict[str, object]]", raw_result.data)
+                        casted_result = FlextResult.ok(casted_data)
+                        return self._convert_raw_search_result(casted_result)
+                    # Cast for type compatibility even on failure
+                    casted_result = cast("FlextResult[list[dict[str, object]]]", raw_result)
+                    return self._convert_raw_search_result(casted_result)
             else:
                 logger.trace("Using event loop for search")
                 raw_result = loop.run_until_complete(
-                    self._ldap_client.search(base_dn, search_filter, attributes),
+                    self._ldap_client.search(
+                        base_dn,
+                        search_filter,
+                        "subtree",
+                        attributes,
+                    ),
                 )
-                return self._convert_raw_search_result(raw_result)
+                # Cast LdapSearchResult to dict[str, object] for type compatibility
+                if raw_result.is_success and raw_result.data:
+                    casted_data = cast("list[dict[str, object]]", raw_result.data)
+                    casted_result = FlextResult.ok(casted_data)
+                    return self._convert_raw_search_result(casted_result)
+                # Cast for type compatibility even on failure
+                casted_result = cast("FlextResult[list[dict[str, object]]]", raw_result)
+                return self._convert_raw_search_result(casted_result)
         except RuntimeError:
             logger.trace("No event loop, using asyncio.run for search")
             # No event loop, create new one
             raw_result = asyncio.run(
-                self._ldap_client.search(base_dn, search_filter, attributes),
+                self._ldap_client.search(
+                    base_dn,
+                    search_filter,
+                    "subtree",
+                    attributes,
+                ),
             )
-            return self._convert_raw_search_result(raw_result)
+            # Cast LdapSearchResult to dict[str, object] for type compatibility
+            if raw_result.is_success and raw_result.data:
+                casted_data = cast("list[dict[str, object]]", raw_result.data)
+                casted_result = FlextResult.ok(casted_data)
+                return self._convert_raw_search_result(casted_result)
+            # Cast for type compatibility even on failure
+            casted_result = cast("FlextResult[list[dict[str, object]]]", raw_result)
+            return self._convert_raw_search_result(casted_result)
         except Exception as e:
             logger.exception("Search operation failed", exc_info=e)
             return FlextResult.fail(f"Search error: {e}")
 
     def _convert_raw_search_result(
         self,
-        raw_result: FlextResult[list[FlextTypes.Core.JsonDict]],
+        raw_result: FlextResult[list[dict[str, object]]],
     ) -> FlextResult[list[FlextLdapDirectoryEntryProtocol]]:
         """Convert raw search result to protocol format."""
         if raw_result.is_failure:
@@ -538,7 +582,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             if not self._connection_id:
                 return FlextResult.fail("No active connection to disconnect")
 
-            disconnect_result = await self._ldap_client.disconnect(self._connection_id)
+            # Use the standard disconnect method
+            disconnect_result = await self._ldap_client.disconnect()
             if disconnect_result.is_success:
                 self._connection_id = None
                 return FlextResult.ok(DirectoryOperationResult.SUCCESS)
@@ -649,7 +694,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         base_dn: str,
         search_filter: str,
         actual_attributes: list[str],
-    ) -> FlextResult[list[FlextTypes.Core.JsonDict]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Perform LDAP search operation with proper async handling."""
         try:
             loop = asyncio.get_event_loop()
@@ -660,22 +705,44 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                         self._ldap_client.search(
                             base_dn,
                             search_filter,
+                            "subtree",
                             actual_attributes,
                         ),
                     )
-                    return future.result(timeout=30)
+                    result = future.result(timeout=30)
+                    # Cast LdapSearchResult to dict[str, object] for type compatibility
+                    if result.is_success and result.data:
+                        casted_data = cast("list[dict[str, object]]", result.data)
+                        return FlextResult.ok(casted_data)
+                    return FlextResult.fail(result.error or "Search failed")
             else:
-                return loop.run_until_complete(
+                result = loop.run_until_complete(
                     self._ldap_client.search(
                         base_dn,
                         search_filter,
+                        "subtree",
                         actual_attributes,
                     ),
                 )
+                # Cast LdapSearchResult to dict[str, object] for type compatibility
+                if result.is_success and result.data:
+                    casted_data = cast("list[dict[str, object]]", result.data)
+                    return FlextResult.ok(casted_data)
+                return FlextResult.fail(result.error or "Search failed")
         except RuntimeError:
-            return asyncio.run(
-                self._ldap_client.search(base_dn, search_filter, actual_attributes),
+            result = asyncio.run(
+                self._ldap_client.search(
+                    base_dn,
+                    search_filter,
+                    "subtree",
+                    actual_attributes,
+                ),
             )
+            # Cast LdapSearchResult to dict[str, object] for type compatibility
+            if result.is_success and result.data:
+                casted_data = cast("list[dict[str, object]]", result.data)
+                return FlextResult.ok(casted_data)
+            return FlextResult.fail(result.error or "Search failed")
         except Exception as e:
             logger.exception("LDAP search operation failed", exc_info=e)
             return FlextResult.fail(f"Search error: {e}")
@@ -718,12 +785,11 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             # REALMENTE usar os parâmetros dn e attributes!
             object_classes, clean_attributes = self._extract_object_classes(attributes)
 
-            # Execute REAL add with REAL parameters
-            add_result = self._execute_async_operation(
-                self._ldap_client.add,
-                dn,
-                object_classes,
-                clean_attributes,
+            # Use the correct async add_entry method
+            ldap_attributes = {k: [v] for k, v in clean_attributes.items()}
+            ldap_attributes["objectClass"] = object_classes
+            add_result = asyncio.run(
+                self._ldap_client.add_entry(dn, ldap_attributes),
             )
 
             if hasattr(add_result, "is_success") and not add_result.is_success:
@@ -761,7 +827,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
     @staticmethod
     def _extract_object_classes(
         attributes: FlextTypes.Core.JsonDict,
-    ) -> tuple[list[str], FlextTypes.Core.JsonDict]:
+    ) -> tuple[list[str], dict[str, str]]:
         """Extract objectClass from attributes following SOLID Single Responsibility.
 
         Args:
@@ -771,8 +837,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             Tuple of (object_classes, clean_attributes)
 
         """
-        object_classes = []
-        clean_attributes = {}
+        object_classes: list[str] = []
+        clean_attributes: dict[str, str] = {}
 
         for attr_name, attr_value in attributes.items():
             if attr_name.lower() == "objectclass":
@@ -780,8 +846,12 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                     object_classes = [str(v) for v in attr_value]
                 else:
                     object_classes = [str(attr_value)]
+            elif isinstance(attr_value, list):
+                clean_attributes[attr_name] = (
+                    str(attr_value[0]) if attr_value else ""
+                )
             else:
-                clean_attributes[attr_name] = attr_value
+                clean_attributes[attr_name] = str(attr_value)
 
         # Ensure we have objectClass
         if not object_classes:
@@ -791,9 +861,10 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
     def _execute_async_operation(
         self,
-        operation_func: Callable[..., Awaitable[object]],
-        *args: object,
-    ) -> object:
+        operation_func: Callable[P, Awaitable[R]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> R | FlextResult[list[FlextTypes.Core.JsonDict]] | FlextResult[list[FlextLdapDirectoryEntryProtocol]]:
         """Execute async operation with proper event loop handling.
 
         Following DRY principle - centralized async execution pattern.
@@ -805,10 +876,12 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 # We're in an async context, use thread executor
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Type annotation for future
-                    async def _runner() -> object:
-                        return await operation_func(*args)
+                    async def _runner() -> R:
+                        return await operation_func(*args, **kwargs)
 
-                    future: concurrent.futures.Future[object] = executor.submit(
+                    future: concurrent.futures.Future[
+                        R | FlextResult[list[FlextTypes.Core.JsonDict]] | FlextResult[list[FlextLdapDirectoryEntryProtocol]]
+                    ] = executor.submit(
                         lambda: asyncio.run(_runner()),
                     )
                     raw_result = future.result(timeout=30)
@@ -826,8 +899,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                     return raw_result
             except RuntimeError:
                 # No running loop, we can use asyncio.run directly
-                async def _runner2() -> object:
-                    return await operation_func(*args)
+                async def _runner2() -> R:
+                    return await operation_func(*args, **kwargs)
 
                 return asyncio.run(_runner2())
         except Exception as e:
@@ -883,15 +956,13 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
     def _execute_modify_entry_pipeline(
         self,
         dn: str,
-        changes: FlextTypes.Core.JsonDict,
+        changes: dict[str, object],
     ) -> FlextResult[bool]:
         """Execute modify entry pipeline with consolidated error handling."""
-        # REALMENTE usar os parâmetros dn e changes!
-        # Execute REAL modify with REAL parameters using DRY helper
-        modify_result = self._execute_async_operation(
-            self._ldap_client.modify,
-            dn,
-            changes,
+        # Use the correct async modify_entry method
+        ldap_changes = {k: [str(v)] if not isinstance(v, list) else [str(x) for x in v] for k, v in changes.items()}
+        modify_result = asyncio.run(
+            self._ldap_client.modify_entry(dn, ldap_changes),
         )
 
         return self._handle_modify_result(modify_result)
@@ -951,9 +1022,10 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
     def _execute_delete_entry_pipeline(self, dn: str) -> FlextResult[bool]:
         """Execute delete entry pipeline with consolidated error handling."""
-        # REALMENTE usar o parâmetro dn!
-        # Execute REAL delete with REAL dn parameter using DRY helper
-        delete_result = self._execute_async_operation(self._ldap_client.delete, dn)
+        # Use the correct async delete_entry method
+        delete_result = asyncio.run(
+            self._ldap_client.delete_entry(dn),
+        )
 
         return self._handle_delete_result(delete_result)
 

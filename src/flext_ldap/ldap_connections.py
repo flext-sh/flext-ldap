@@ -35,11 +35,11 @@ from flext_ldap.constants import (
     FlextLdapConnectionConstants,
     FlextLdapProtocolConstants,
 )
-from flext_ldap.protocols import FlextLdapConnectionProtocol, FlextLdapPoolProtocol
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
+    from flext_ldap.protocols import FlextLdapConnectionProtocol, FlextLdapPoolProtocol
     from flext_ldap.value_objects import FlextLdapDistinguishedName
 
 logger = get_logger(__name__)
@@ -86,8 +86,8 @@ class FlextLdapConnectionOperations:
         config: FlextLdapConnectionConfig,
         *,
         connection_id: str | None = None,
-        validate_certificate: bool = True,  # noqa: ARG002
-        connect_timeout: int | None = None,  # noqa: ARG002
+        validate_certificate: bool = True,
+        connect_timeout: int | None = None,
     ) -> FlextResult[str]:
         """Create new LDAP connection with comprehensive validation.
 
@@ -112,10 +112,10 @@ class FlextLdapConnectionOperations:
         logger.debug(f"Creating LDAP connection: {connection_id}")
 
         # Validate configuration business rules
-        config_validation = config.validate_business_rules()
-        if config_validation.is_failure:
+        br_result = config.validate_business_rules()
+        if hasattr(br_result, "is_failure") and br_result.is_failure:
             return FlextResult.fail(
-                f"Invalid connection config: {config_validation.error}"
+                f"Invalid connection config: {br_result.error}",
             )
 
         # Build connection URL
@@ -126,18 +126,17 @@ class FlextLdapConnectionOperations:
         # Create connection via pool
         create_result = await self._pool.create_connection(
             connection_id=connection_id,
-            host=config.host,
+            host=config.server,  # FlextLDAPConfig uses 'server'
             port=config.port,
             options={
                 "use_ssl": config.use_ssl,
                 "timeout_seconds": config.timeout,
-                "pool_size": config.pool_size,
             },
         )
 
         if create_result.is_failure:
             return FlextResult.fail(
-                f"Failed to create connection: {create_result.error}"
+                f"Failed to create connection: {create_result.error}",
             )
 
         # Store connection reference - type cast for protocol compatibility
@@ -152,8 +151,8 @@ class FlextLdapConnectionOperations:
         config: FlextLdapConnectionConfig,
         *,
         connection_id: str | None = None,
-        tls_version: str = "TLSv1.2",  # noqa: ARG002
-        cipher_suites: str | None = None,  # noqa: ARG002
+        tls_version: str = "TLSv1.2",
+        cipher_suites: str | None = None,
     ) -> FlextResult[str]:
         """Create secure LDAP connection with TLS/SSL.
 
@@ -174,17 +173,19 @@ class FlextLdapConnectionOperations:
 
         logger.debug(f"Creating secure LDAP connection: {connection_id}")
 
-        # Force SSL configuration
-        secure_config = FlextLdapConnectionConfig(
-            host=config.host,
-            port=config.port
-            if config.use_ssl
-            else FlextLdapConnectionConstants.DEFAULT_SSL_PORT,
-            use_ssl=True,
-            bind_dn=config.bind_dn,
-            bind_password=config.bind_password,
-            timeout=config.timeout,
-            pool_size=config.pool_size,
+        # Force SSL configuration using model_validate
+        secure_config = FlextLdapConnectionConfig.model_validate(
+            {
+                **config.model_dump(),
+                "use_ssl": True,
+                "port": (
+                    config.port
+                    if config.use_ssl
+                    else FlextLdapConnectionConstants.DEFAULT_SSL_PORT
+                ),
+                "search_base": config.search_base,
+                "search_filter": config.search_filter,
+            },
         )
 
         # Create connection with SSL validation
@@ -221,7 +222,7 @@ class FlextLdapConnectionOperations:
 
         """
         logger.debug(
-            f"Authenticating connection {connection_id} with DN: {bind_dn.value}"
+            f"Authenticating connection {connection_id} with DN: {bind_dn.value}",
         )
 
         # Get connection from pool
@@ -243,7 +244,7 @@ class FlextLdapConnectionOperations:
 
         if bind_result.is_failure:
             logger.warning(
-                f"Authentication failed for connection {connection_id}: {bind_result.error}"
+                f"Authentication failed for connection {connection_id}: {bind_result.error}",
             )
             return FlextResult.fail(f"Authentication failed: {bind_result.error}")
 
@@ -317,7 +318,7 @@ class FlextLdapConnectionOperations:
             health_result = await connection.test_health()
             if health_result.is_failure:
                 return FlextResult.fail(
-                    f"Connection health check failed: {health_result.error}"
+                    f"Connection health check failed: {health_result.error}",
                 )
 
             # Measure response time
@@ -336,11 +337,11 @@ class FlextLdapConnectionOperations:
             }
 
             logger.debug(
-                f"Connection test completed for {connection_id}: {response_time:.2f}ms"
+                f"Connection test completed for {connection_id}: {response_time:.2f}ms",
             )
             return FlextResult.ok(diagnostics)
 
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, ValueError, TypeError) as e:
             logger.exception(f"Connection test failed for {connection_id}")
             return FlextResult.fail(f"Connection test error: {e}")
 
@@ -358,7 +359,7 @@ class FlextLdapConnectionOperations:
 
         """
         logger.debug(
-            f"Getting connection statistics for: {connection_id or 'all connections'}"
+            f"Getting connection statistics for: {connection_id or 'all connections'}",
         )
 
         try:
@@ -376,7 +377,7 @@ class FlextLdapConnectionOperations:
                     {
                         "connection_id": connection_id,
                         "statistics": stats_result.data,
-                    }
+                    },
                 )
             # Get stats for all connections
             all_stats = {
@@ -392,7 +393,7 @@ class FlextLdapConnectionOperations:
 
             return FlextResult.ok(all_stats)
 
-        except Exception as e:
+        except (RuntimeError, AttributeError, TypeError, ValueError) as e:
             logger.exception("Failed to get connection statistics")
             return FlextResult.fail(f"Statistics error: {e}")
 
@@ -438,18 +439,20 @@ class FlextLdapConnectionOperations:
                     yield FlextResult.fail("Connection ID not available after creation")
                     return
                 auth_result = await self.authenticate_connection(
-                    connection_id, bind_dn, bind_password
+                    connection_id,
+                    bind_dn,
+                    bind_password,
                 )
                 if auth_result.is_failure:
                     yield FlextResult.fail(
-                        f"Authentication failed: {auth_result.error}"
+                        f"Authentication failed: {auth_result.error}",
                     )
                     return
 
             logger.debug(f"Connection context established: {connection_id}")
             yield FlextResult.ok(cast("str", connection_id))
 
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, RuntimeError, AttributeError) as e:
             logger.exception("Connection context error")
             yield FlextResult.fail(f"Connection context error: {e}")
         finally:
@@ -458,7 +461,7 @@ class FlextLdapConnectionOperations:
                 cleanup_result = await self.close_connection(connection_id)
                 if cleanup_result.is_failure:
                     logger.warning(
-                        f"Failed to cleanup connection {connection_id}: {cleanup_result.error}"
+                        f"Failed to cleanup connection {connection_id}: {cleanup_result.error}",
                     )
 
     async def close_connection(
@@ -490,7 +493,7 @@ class FlextLdapConnectionOperations:
             close_result = await self._pool.close_connection(connection_id, force=force)
             if close_result.is_failure:
                 return FlextResult.fail(
-                    f"Failed to close connection: {close_result.error}"
+                    f"Failed to close connection: {close_result.error}",
                 )
 
             # Remove from active connections
@@ -499,7 +502,7 @@ class FlextLdapConnectionOperations:
             logger.info(f"Successfully closed connection: {connection_id}")
             return FlextResult.ok(None)
 
-        except Exception as e:
+        except (ConnectionError, OSError, RuntimeError, AttributeError) as e:
             logger.exception(f"Error closing connection {connection_id}")
             return FlextResult.fail(f"Connection close error: {e}")
 
@@ -541,27 +544,26 @@ class FlextLdapConnectionOperations:
     def _build_connection_url(
         config: FlextLdapConnectionConfig,
     ) -> FlextResult[str]:
-        """Build LDAP connection URL from configuration."""
+        """Build connection URL from configuration."""
         try:
             # Determine protocol prefix
             if config.use_ssl:
-                prefix = FlextLdapProtocolConstants.LDAPS_URL_PREFIX
-                default_port = FlextLdapConnectionConstants.DEFAULT_SSL_PORT
+                prefix = "ldaps://"
+            elif config.use_tls:
+                prefix = "ldap://"
             else:
-                prefix = FlextLdapProtocolConstants.LDAP_URL_PREFIX
-                default_port = FlextLdapConnectionConstants.DEFAULT_PORT
+                prefix = "ldap://"
 
-            # Build URL
-            if config.port != default_port:
-                connection_url = f"{prefix}{config.host}:{config.port}"
+            # Build URL with port
+            if config.port not in {389, 636}:
+                connection_url = f"{prefix}{config.server}:{config.port}"
             else:
-                connection_url = f"{prefix}{config.host}"
+                connection_url = f"{prefix}{config.server}"
 
-            logger.debug(f"Built connection URL: {connection_url}")
             return FlextResult.ok(connection_url)
 
-        except Exception as e:
-            return FlextResult.fail(f"Error building connection URL: {e}")
+        except (TypeError, ValueError, AttributeError) as e:
+            return FlextResult.fail(f"Failed to build connection URL: {e}")
 
     @staticmethod
     async def _validate_connection_config(
@@ -570,7 +572,8 @@ class FlextLdapConnectionOperations:
         """Validate connection configuration."""
         # Basic validation is handled by Pydantic in the config model
         # Additional business rule validation can be added here
-        return config.validate_business_rules()
+        validation_result = config.validate_business_rules()
+        return validation_result.is_success
 
 
 # =============================================================================
@@ -603,7 +606,7 @@ class FlextLdapConnectionPoolOperations:
 
             return FlextResult.ok(cast("dict[str, object]", status))
 
-        except Exception as e:
+        except (RuntimeError, AttributeError, TypeError, ValueError) as e:
             return FlextResult.fail(f"Pool status error: {e}")
 
     async def reset_pool(self) -> FlextResult[None]:
@@ -619,7 +622,7 @@ class FlextLdapConnectionPoolOperations:
             logger.info("Successfully reset connection pool")
             return FlextResult.ok(None)
 
-        except Exception as e:
+        except (ConnectionError, OSError, RuntimeError, AttributeError) as e:
             logger.exception("Pool reset error")
             return FlextResult.fail(f"Pool reset error: {e}")
 
@@ -647,26 +650,24 @@ def create_connection_operations(
 
 
 async def get_connection_operations() -> FlextResult[FlextLdapConnectionOperations]:
-    """Get connection operations from DI container.
-
-    🎯 FLEXT-CORE INTEGRATION for container-based dependency resolution.
-
-    Returns:
-        FlextResult containing connection operations instance or error
-
-    """
+    """Get connection operations instance with proper dependency injection."""
     try:
         container = get_flext_container()
 
         # Get pool from container
-        pool = container.resolve(FlextLdapPoolProtocol)
+        pool_res = container.get("FlextLdapPoolProtocol")
+        if pool_res.is_failure:
+            return FlextResult.fail(pool_res.error or "Pool not found")
 
-        operations = create_connection_operations(pool)
+        pool = cast("FlextLdapPoolProtocol", pool_res.unwrap())
+
+        # Create operations instance
+        operations = FlextLdapConnectionOperations(pool)
         return FlextResult.ok(operations)
 
-    except Exception as e:
+    except (RuntimeError, AttributeError, TypeError, ValueError) as e:
         return FlextResult.fail(
-            f"Failed to create connection operations from container: {e}"
+            f"Failed to create connection operations from container: {e}",
         )
 
 

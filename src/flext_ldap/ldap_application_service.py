@@ -385,7 +385,7 @@ class FlextLdapApplicationService:
         try:
             # Use provided parameters or defaults
             search_base = base_dn or self._get_search_base_dn(
-                expected="dc=example,dc=com"
+                expected="dc=example,dc=com",
             )
             search_filter = filter_expr or "(objectClass=person)"
 

@@ -11,11 +11,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 from flext_core import FlextResult, FlextValue
 
-from flext_ldap.constants import FlextLdapConstants, FlextLdapScope
+from flext_ldap.constants import (
+    FlextLdapAttributeConstants,
+    FlextLdapObjectClassConstants,
+    FlextLdapScope,
+)
 from flext_ldap.value_objects import FlextLdapDistinguishedName
 
 
@@ -124,7 +127,7 @@ class FlextLdapCreateGroupRequest(FlextValue):
         """Create group request with validation."""
         try:
             if object_classes is None:
-                object_classes = [FlextLdapConstants.ObjectClasses.GROUP_OF_NAMES]
+                object_classes = [FlextLdapObjectClassConstants.GROUP_OF_NAMES]
 
             instance = cls(
                 dn=dn.strip(),
@@ -141,17 +144,17 @@ class FlextLdapCreateGroupRequest(FlextValue):
         except Exception as e:
             return FlextResult.fail(f"Failed to create group request: {e}")
 
-    def to_ldap_attributes(self) -> dict[str, Any]:
+    def to_ldap_attributes(self) -> dict[str, object]:
         """Convert to LDAP attributes dictionary."""
-        attributes = {
-            FlextLdapConstants.Attributes.OBJECT_CLASS: self.object_classes or [],
-            FlextLdapConstants.Attributes.COMMON_NAME: self.cn,
+        attributes: dict[str, object] = {
+            FlextLdapAttributeConstants.OBJECT_CLASS: self.object_classes or [],
+            FlextLdapAttributeConstants.COMMON_NAME: self.cn,
         }
 
         if self.description:
-            attributes[FlextLdapConstants.Attributes.DESCRIPTION] = self.description
+            attributes[FlextLdapAttributeConstants.DESCRIPTION] = self.description
 
         if self.members:
-            attributes[FlextLdapConstants.Attributes.MEMBER] = self.members
+            attributes[FlextLdapAttributeConstants.MEMBER] = self.members
 
         return attributes

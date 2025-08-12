@@ -26,7 +26,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import warnings
-from abc import ABCMeta
+from abc import ABC
 from typing import TYPE_CHECKING
 
 from flext_core import FlextResult
@@ -66,7 +66,7 @@ warnings.warn(
 )
 
 
-class FlextLdapConnectionManager(FlextLdapConnectionService, metaclass=ABCMeta):
+class FlextLdapConnectionManager(FlextLdapConnectionService, ABC):
     """Compatibility facade for FlextLdapConnectionManager.
 
     ⚠️ DEPRECATED: Use FlextLdapConnectionService from flext_ldap.abstracts instead.
@@ -109,7 +109,7 @@ class FlextLdapConnectionManager(FlextLdapConnectionService, metaclass=ABCMeta):
         return FlextResult.fail(result.error or "Connection test failed")
 
 
-class FlextLdapDirectoryRepository(FlextLdapRepository, metaclass=ABCMeta):
+class FlextLdapDirectoryRepository(FlextLdapRepository, ABC):
     """Compatibility facade for FlextLdapDirectoryRepository.
 
     ⚠️ DEPRECATED: Use FlextLdapRepository from flext_ldap.abstracts instead.
@@ -135,7 +135,7 @@ class FlextLdapDirectoryRepository(FlextLdapRepository, metaclass=ABCMeta):
         )
 
 
-class FlextLdapSchemaValidator(FlextLdapSchemaService, metaclass=ABCMeta):
+class FlextLdapSchemaValidator(FlextLdapSchemaService, ABC):
     """Compatibility facade for FlextLdapSchemaValidator.
 
     ⚠️ DEPRECATED: Use FlextLdapSchemaService from flext_ldap.abstracts instead.
@@ -214,7 +214,7 @@ class FlextLdapSchemaValidator(FlextLdapSchemaService, metaclass=ABCMeta):
         return FlextResult.ok(data=True)
 
 
-class FlextLdapGroupRepository(FlextLdapRepository, metaclass=ABCMeta):
+class FlextLdapGroupRepository(FlextLdapRepository, ABC):
     """Compatibility facade for FlextLdapGroupRepository.
 
     ⚠️ DEPRECATED: Use FlextLdapRepository from flext_ldap.abstracts instead.

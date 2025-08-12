@@ -786,7 +786,7 @@ class FlextLdapSchemaDiscoveryService:
             # Type-safe iteration - ensure items is iterable
             if not hasattr(items, "__iter__"):
                 return FlextResult.fail(
-                    f"Schema collection for {item_type} is not iterable"
+                    f"Schema collection for {item_type} is not iterable",
                 )
 
             for item in items:

@@ -35,7 +35,38 @@ from flext_ldap.value_objects import (
 
 logger = get_logger(__name__)
 
-# CENTRALIZED ENUMS - Single source of truth
+# =============================================================================
+# LDAP DOMAIN TYPE SYSTEM - Following Foundation Patterns
+# =============================================================================
+
+# Core LDAP data types - specific to LDAP domain
+type TLdapDn = str  # Distinguished Name
+type TLdapFilter = str  # LDAP search filter
+type TLdapAttribute = str  # LDAP attribute name
+type TLdapAttributeValue = str | bytes | list[str] | list[bytes]  # LDAP attribute value
+type TLdapAttributes = dict[str, TLdapAttributeValue]  # LDAP attributes dict
+type TLdapObjectClass = str  # LDAP object class name
+type TLdapScope = str  # LDAP search scope
+type TLdapUri = str  # LDAP server URI
+
+# LDAP operation types
+type TLdapOperationType = str  # Operation type (search, add, modify, delete)
+type TLdapEntryData = dict[str, str | bytes | list[str] | list[bytes] | int | bool]  # Generic LDAP entry data
+type TLdapSearchResult = list[dict[str, object]]  # Search results (generic object type for compatibility)
+
+# Connection and session types
+type TLdapConnectionId = str  # Connection identifier
+type TLdapSessionId = str  # Session identifier
+type TLdapBindDn = str | None  # Bind DN (may be None for anonymous)
+
+# Complex LDAP types
+type TLdapModification = dict[str, str | list[str]]  # LDAP modify operation data
+type TLdapSearchParams = dict[str, str | int | bool | list[str]]  # Search parameters
+type TLdapConnectionConfig = dict[str, str | int | bool]  # Connection configuration
+
+# =============================================================================
+# LDAP ENUMS - CENTRALIZED SINGLE SOURCE OF TRUTH
+# =============================================================================
 
 
 class FlextLdapDataType(Enum):
@@ -54,7 +85,7 @@ class FlextLdapDataType(Enum):
     IP_ADDRESS = "ip_address"
     MAC_ADDRESS = "mac_address"
     CERTIFICATE = "certificate"
-    PASSWORD_DATA_TYPE = "password_field"  # noqa: S105 - symbolic enum label, not credential
+    PASSWORD_DATA_TYPE = "password_field"
     UNKNOWN = "unknown"
 
 
@@ -72,10 +103,8 @@ class FlextLdapScopeEnum(StrEnum):
 
 # CENTRALIZED VALUE OBJECTS - Following foundation patterns
 
-
 # FlextLdapDistinguishedName: CONSOLIDATED to value_objects.py (RFC 4514 compliant)
 # Import from: from flext_ldap.value_objects import FlextLdapDistinguishedName
-
 
 # FlextLdapFilterValue: CONSOLIDATED to value_objects.py (RFC 4515 compliant)
 # Import from: from flext_ldap.value_objects import FlextLdapFilter
@@ -174,3 +203,36 @@ FlextLdapFilterValue = FlextLdapFilter  # Legacy alias
 
 # Export legacy name used in old converters.py
 FlextSimpleConverter: object | None = None  # Will be imported from infrastructure
+
+__all__ = [
+    "CreateUserRequest",
+    "DistinguishedName",
+    # Enums and Value Objects
+    "FlextLdapDataType",
+    "FlextLdapFilterValue",
+    "FlextLdapScopeEnum",
+    "FlextLdapUri",
+    "FlextSimpleConverter",
+    "LDAPFilter",
+    # Aliases for legacy compatibility
+    "LDAPScope",
+    "LDAPUri",
+    "TLdapAttribute",
+    "TLdapAttributeValue",
+    "TLdapAttributes",
+    "TLdapBindDn",
+    "TLdapConnectionConfig",
+    "TLdapConnectionId",
+    # Type aliases
+    "TLdapDn",
+    "TLdapEntryData",
+    "TLdapFilter",
+    "TLdapModification",
+    "TLdapObjectClass",
+    "TLdapOperationType",
+    "TLdapScope",
+    "TLdapSearchParams",
+    "TLdapSearchResult",
+    "TLdapSessionId",
+    "TLdapUri",
+]

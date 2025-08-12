@@ -33,7 +33,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import ClassVar, Final
 
-from flext_core.constants import FlextConstants
+from flext_core import FlextConstants
 
 # =============================================================================
 # PROTOCOL CONSTANTS - RFC 4510-4519 LDAP Standards
@@ -234,7 +234,7 @@ class FlextLdapAttributeConstants:
     # Person Attributes (RFC 4519)
     USER_ID: Final[str] = "uid"
     MAIL: Final[str] = "mail"
-    USER_PASSWORD: Final[str] = "userPassword"  # noqa: S105
+    USER_PASSWORD: Final[str] = "userPassword"
     TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
     FACSIMILE_TELEPHONE_NUMBER: Final[str] = "facsimileTelephoneNumber"
     MOBILE: Final[str] = "mobile"
@@ -287,7 +287,7 @@ class FlextLdapAttributeConstants:
     # 389 Directory Server
     NS_UNIQUE_ID: Final[str] = "nsUniqueId"
     NS_ACCOUNT_LOCK: Final[str] = "nsAccountLock"
-    PASSWORD_EXPIRY_TIME: Final[str] = "passwordExpiryTime"  # noqa: S105
+    PASSWORD_EXPIRY_TIME: Final[str] = "passwordExpiryTime"
 
     @classmethod
     def get_person_attributes(cls) -> list[str]:
@@ -450,7 +450,7 @@ class FlextLdapDnConstants:
 
     # Special Characters requiring escaping (RFC 4514)
     ESCAPE_CHARS: Final[frozenset[str]] = frozenset(
-        {",", "=", "+", "<", ">", "#", ";", "\\", '"', " "}
+        {",", "=", "+", "<", ">", "#", ";", "\\", '"', " "},
     )
 
     # Hex escape pattern
@@ -545,7 +545,7 @@ class FlextLdapErrorConstants:
 
     # Error Categories for systematic handling
     CONNECTION_ERRORS: Final[frozenset[int]] = frozenset(
-        [UNAVAILABLE, BUSY, OPERATIONS_ERROR]
+        [UNAVAILABLE, BUSY, OPERATIONS_ERROR],
     )
     AUTHENTICATION_ERRORS: Final[frozenset[int]] = frozenset(
         [
@@ -553,10 +553,10 @@ class FlextLdapErrorConstants:
             INVALID_CREDENTIALS,
             AUTH_METHOD_NOT_SUPPORTED,
             STRONGER_AUTH_REQUIRED,
-        ]
+        ],
     )
     AUTHORIZATION_ERRORS: Final[frozenset[int]] = frozenset(
-        [INSUFFICIENT_ACCESS_RIGHTS, CONFIDENTIALITY_REQUIRED]
+        [INSUFFICIENT_ACCESS_RIGHTS, CONFIDENTIALITY_REQUIRED],
     )
     DATA_ERRORS: Final[frozenset[int]] = frozenset(
         [
@@ -565,7 +565,7 @@ class FlextLdapErrorConstants:
             NAMING_VIOLATION,
             OBJECT_CLASS_VIOLATION,
             ENTRY_ALREADY_EXISTS,
-        ]
+        ],
     )
 
     # Error Messages

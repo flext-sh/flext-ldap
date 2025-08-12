@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import uuid
 from contextlib import suppress
-from typing import Literal, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, cast, runtime_checkable
 
 import ldap3
 from flext_core import (
@@ -41,6 +41,12 @@ from flext_ldap.value_objects import (
     FlextLdapDistinguishedName,
     FlextLdapFilter,
 )
+
+if TYPE_CHECKING:
+    from flext_ldap.ldap_types import (
+        TLdapConnectionId,
+        TLdapSearchResult,
+    )
 
 logger = get_logger(__name__)
 
@@ -133,8 +139,8 @@ class LdapConnectionService:
             else:
                 connection = ldap3.Connection(server, auto_bind=True)
 
-            # Store connection
-            self._connections[connection_id] = connection  # type: ignore[assignment]
+            # Store connection - cast to protocol type for compatibility
+            self._connections[connection_id] = cast("LDAP3ConnectionProtocol", connection)
 
             logger.info(
                 "LDAP connection established",
@@ -189,9 +195,9 @@ class LdapConnectionService:
 
             connection = self._connections[connection_id]
 
-            # Test connection with whoami operation
+            # Test connection with whoami operation - cast to access ldap3 methods
             try:
-                connection.extend.standard.who_am_i()  # type: ignore[attr-defined]
+                cast("ldap3.Connection", connection).extend.standard.who_am_i()
                 return FlextResult.ok(data=True)
             except LDAPException:
                 # Connection is dead, remove it
@@ -204,7 +210,8 @@ class LdapConnectionService:
             return FlextResult.fail(error_msg)
 
     def _get_connection(
-        self, connection_id: str
+        self,
+        connection_id: TLdapConnectionId,
     ) -> FlextResult[LDAP3ConnectionProtocol]:
         """Internal method to get connection object."""
         if connection_id not in self._connections:
@@ -235,7 +242,7 @@ class LdapSearchService:
 
     @staticmethod
     def _map_scope_to_ldap3(
-        scope: FlextLdapScope
+        scope: FlextLdapScope,
     ) -> Literal["BASE", "LEVEL", "SUBTREE"]:
         """Map FlextLdapScope to ldap3 constants."""
         scope_mapping: dict[str, Literal["BASE", "LEVEL", "SUBTREE"]] = {
@@ -248,12 +255,12 @@ class LdapSearchService:
 
     async def search(
         self,
-        connection_id: str,
+        connection_id: TLdapConnectionId,
         base_dn: FlextLdapDistinguishedName,
         search_filter: FlextLdapFilter,
         scope: FlextLdapScope,
         attributes: list[str] | None = None,
-    ) -> FlextResult[list[dict[str, object]]]:
+    ) -> FlextResult[TLdapSearchResult]:
         """Search LDAP directory with filter.
 
         Implements LdapSearchProtocol.search()
@@ -286,29 +293,22 @@ class LdapSearchService:
                 error_msg = f"LDAP search failed: {connection.last_error}"
                 return FlextResult.fail(error_msg)
 
-            # Convert entries to dictionaries
-            entries = []
+            # Convert entries to dictionaries compatible with TLdapSearchResult
+            entries: TLdapSearchResult = []
             for entry in connection.entries:
                 dn_value = getattr(entry, "entry_dn", "")
                 entry_dict: dict[str, object] = {
                     "dn": str(dn_value),
-                    "attributes": {},
                 }
-
-                # Type-safe attributes dict for indexed assignment
-                attributes_dict = entry_dict["attributes"]
-                if not isinstance(attributes_dict, dict):
-                    attributes_dict = {}
-                    entry_dict["attributes"] = attributes_dict
 
                 # Convert attributes
                 for attr_name in getattr(entry, "entry_attributes", []):
                     attr_values = getattr(entry, attr_name, None)
                     if attr_values:
                         if hasattr(attr_values, "values"):
-                            attributes_dict[attr_name] = attr_values.values
+                            entry_dict[attr_name] = attr_values.values
                         else:
-                            attributes_dict[attr_name] = [str(attr_values)]
+                            entry_dict[attr_name] = [str(attr_values)]
 
                 entries.append(entry_dict)
 
@@ -356,7 +356,8 @@ class LdapSearchService:
             return FlextResult.fail(search_result.error or "Search failed")
 
         entries = search_result.data
-        return FlextResult.ok(entries[0] if entries else None)
+        result_entry = entries[0] if entries else None
+        return FlextResult.ok(result_entry)
 
     async def count_entries(
         self,
@@ -477,7 +478,7 @@ class LdapWriteService:
                         attr_value if isinstance(attr_value, list) else [attr_value]
                     )
                     modifications[attr_name] = [
-                        (ldap3.MODIFY_REPLACE, [str(v) for v in list_value])
+                        (ldap3.MODIFY_REPLACE, [str(v) for v in list_value]),
                     ]
 
             # Execute modify operation
@@ -580,8 +581,8 @@ class LdapWriteService:
                         (
                             ldap3.MODIFY_REPLACE,
                             [new_dn.dn if new_parent_dn else new_rdn],
-                        )
-                    ]
+                        ),
+                    ],
                 },
             )
 
@@ -658,13 +659,16 @@ class FlextLdapClient:
         attributes: list[str] | None = None,
     ) -> FlextResult[list[dict[str, object]]]:
         """Search LDAP directory with filter."""
-        return await self._search_service.search(
+        result = await self._search_service.search(
             connection_id,
             base_dn,
             search_filter,
             scope,
             attributes,
         )
+        if result.is_success:
+            return FlextResult.ok(result.data or [])
+        return FlextResult.fail(result.error or "Search failed")
 
     async def search_one(
         self,

@@ -52,7 +52,7 @@ async def demonstrate_configuration() -> None:
     # 2. Authentication configuration
     auth_config = FlextLdapAuthConfig(
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-        bind_password="secret",
+        bind_password="secret",  # noqa: S105
         use_anonymous_bind=False,
     )
 
@@ -92,7 +92,7 @@ async def demonstrate_api_usage() -> None:
         connection_result = await api.connect(
             server_url="ldap://mock.example.com:389",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            password="secret",
+            password="secret",  # noqa: S105
             session_id="demo_session",
         )
 
@@ -157,7 +157,7 @@ async def demonstrate_error_handling() -> None:
     # 2. Authentication errors
     invalid_auth = FlextLdapAuthConfig(
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-        bind_password="",  # Missing password
+        bind_password="",  # noqa: S105  # Missing password
         use_anonymous_bind=False,
     )
 
@@ -211,7 +211,7 @@ async def demonstrate_logging_integration() -> None:
 
 
 async def main() -> None:
-    """Main demonstration function."""
+    """Run the main demonstration function."""
     print("🎯 FLEXT-LDAP Library Demonstration")
     print("=" * 50)
     print("This example shows key features of the flext-ldap library")

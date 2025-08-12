@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from flext_ldap.values import FlextLdapDistinguishedName
 
 
-class FlextLdapConnectionRepository(metaclass=ABCMeta):
+class FlextLdapConnectionRepository(ABC):
     """Repository for LDAP connections."""
 
     @abstractmethod
@@ -36,7 +36,7 @@ class FlextLdapConnectionRepository(metaclass=ABCMeta):
         ...
 
 
-class FlextLdapUserRepository(metaclass=ABCMeta):
+class FlextLdapUserRepository(ABC):
     """Repository for LDAP users."""
 
     @abstractmethod

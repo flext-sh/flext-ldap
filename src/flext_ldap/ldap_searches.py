@@ -24,16 +24,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, cast
 
 from flext_core import FlextIdGenerator, FlextResult, get_flext_container, get_logger
 
-from .constants import (
+from flext_ldap.constants import (
     FlextLdapAttributeConstants,
     FlextLdapConnectionConstants,
     FlextLdapObjectClassConstants,
 )
-from .models import (
+from flext_ldap.models import (
     FlextLdapDistinguishedName,
     FlextLdapEntry,
     FlextLdapFilter,
@@ -41,10 +41,14 @@ from .models import (
     FlextLdapSearchConfig,
     FlextLdapSearchResult,
 )
-from .protocols import FlextLdapConnectionProtocol, FlextLdapRepositoryProtocol
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
+
+    from flext_ldap.protocols import (
+        FlextLdapConnectionProtocol,
+        FlextLdapRepositoryProtocol,
+    )
 
 logger = get_logger(__name__)
 
@@ -153,7 +157,7 @@ class FlextLdapSearchOperations:
         )
 
         logger.debug(
-            f"Search completed: found {len(entries)} entries in {execution_time}ms"
+            f"Search completed: found {len(entries)} entries in {execution_time}ms",
         )
         return FlextResult.ok(result)
 
@@ -191,7 +195,7 @@ class FlextLdapSearchOperations:
         search_result = await self.search_entries(connection_id, config)
         if search_result.is_failure:
             return FlextResult.fail(
-                f"Single entry search failed: {search_result.error}"
+                f"Single entry search failed: {search_result.error}",
             )
 
         entries = search_result.data.entries if search_result.data else []
@@ -236,12 +240,12 @@ class FlextLdapSearchOperations:
         # Create appropriate filter based on match type
         if exact_match:
             filter_obj = FlextLdapFilter.create_equality(
-                attribute_name, attribute_value
+                attribute_name, attribute_value,
             )
         else:
             # Create wildcard filter
             filter_obj = FlextLdapFilter(
-                value=f"({attribute_name}=*{attribute_value}*)"
+                value=f"({attribute_name}=*{attribute_value}*)",
             )
 
         # Create search config
@@ -309,7 +313,7 @@ class FlextLdapSearchOperations:
             # If no results, we're done
             if page_data is None or not page_data.entries:
                 logger.debug(
-                    f"Paged search completed: {total_processed} total entries processed"
+                    f"Paged search completed: {total_processed} total entries processed",
                 )
                 break
 
@@ -321,7 +325,7 @@ class FlextLdapSearchOperations:
             # Check if we got fewer results than requested (last page)
             if len(page_data.entries) < page_size:
                 logger.debug(
-                    f"Paged search completed: reached end with {total_processed} total entries"
+                    f"Paged search completed: reached end with {total_processed} total entries",
                 )
                 break
 
@@ -337,8 +341,7 @@ class FlextLdapSearchOperations:
         *,
         operator: str = "AND",
         scope: FlextLdapScope | None = None,
-    ) -> FlextResult[Any] | FlextResult[FlextLdapFilter] | FlextResult[
-        FlextLdapSearchResult]:
+    ) -> FlextResult[FlextLdapSearchResult]:
         """Search with multiple filters combined with logical operator.
 
         🎯 CONSOLIDATES multi-filter search patterns across modules.
@@ -355,12 +358,12 @@ class FlextLdapSearchOperations:
 
         """
         logger.debug(
-            f"Multi-filter search with {len(filters)} filters using {operator}"
+            f"Multi-filter search with {len(filters)} filters using {operator}",
         )
 
         if not filters:
             return FlextResult.fail(
-                "At least one filter is required for multi-filter search"
+                "At least one filter is required for multi-filter search",
             )
 
         # Validate all filters
@@ -368,14 +371,11 @@ class FlextLdapSearchOperations:
             filter_validation = filter_obj.validate_business_rules()
             if filter_validation.is_failure:
                 return FlextResult.fail(
-                    f"Invalid filter {i + 1}: {filter_validation.error}"
+                    f"Invalid filter {i + 1}: {filter_validation.error}",
                 )
 
         # Create combined filter based on operator
         combined_filter_result = self._combine_filters(filters, operator)
-        if combined_filter_result.is_failure:
-            return combined_filter_result
-
         if combined_filter_result.is_failure or combined_filter_result.data is None:
             return FlextResult.fail(
                 combined_filter_result.error or "Failed to combine filters",
@@ -418,7 +418,7 @@ class FlextLdapSearchOperations:
 
         # Create base object class filter
         object_class_filter = FlextLdapFilter.create_equality(
-            FlextLdapAttributeConstants.OBJECT_CLASS, object_class
+            FlextLdapAttributeConstants.OBJECT_CLASS, object_class,
         )
 
         # Combine with additional filters if provided
@@ -467,28 +467,30 @@ class FlextLdapSearchOperations:
 
         """
         logger.debug(
-            f"Searching users with patterns: name={name_pattern}, email={email_pattern}"
+            f"Searching users with patterns: name={name_pattern}, email={email_pattern}",
         )
 
         # Build filters for user search
-        filters: list[FlextLdapFilter] = [FlextLdapFilter.create_equality(
-            FlextLdapAttributeConstants.OBJECT_CLASS,
-            FlextLdapObjectClassConstants.PERSON,
-        )]
+        filters: list[FlextLdapFilter] = [
+            FlextLdapFilter.create_equality(
+                FlextLdapAttributeConstants.OBJECT_CLASS,
+                FlextLdapObjectClassConstants.PERSON,
+            ),
+        ]
 
         # Base user object class filter
 
         # Name pattern filter
         if name_pattern:
             name_filter = FlextLdapFilter(
-                value=f"({FlextLdapAttributeConstants.COMMON_NAME}=*{name_pattern}*)"
+                value=f"({FlextLdapAttributeConstants.COMMON_NAME}=*{name_pattern}*)",
             )
             filters.append(name_filter)
 
         # Email pattern filter
         if email_pattern:
             email_filter = FlextLdapFilter(
-                value=f"({FlextLdapAttributeConstants.MAIL}=*{email_pattern}*)"
+                value=f"({FlextLdapAttributeConstants.MAIL}=*{email_pattern}*)",
             )
             filters.append(email_filter)
 
@@ -539,8 +541,8 @@ class FlextLdapSearchOperations:
         if group_type:
             filters.append(
                 FlextLdapFilter.create_equality(
-                    FlextLdapAttributeConstants.OBJECT_CLASS, group_type
-                )
+                    FlextLdapAttributeConstants.OBJECT_CLASS, group_type,
+                ),
             )
         else:
             # Default to groupOfNames
@@ -548,13 +550,13 @@ class FlextLdapSearchOperations:
                 FlextLdapFilter.create_equality(
                     FlextLdapAttributeConstants.OBJECT_CLASS,
                     FlextLdapObjectClassConstants.GROUP_OF_NAMES,
-                )
+                ),
             )
 
         # Name pattern filter
         if name_pattern:
             name_filter = FlextLdapFilter(
-                value=f"({FlextLdapAttributeConstants.COMMON_NAME}=*{name_pattern}*)"
+                value=f"({FlextLdapAttributeConstants.COMMON_NAME}=*{name_pattern}*)",
             )
             filters.append(name_filter)
 
@@ -563,12 +565,12 @@ class FlextLdapSearchOperations:
             if has_members:
                 # Groups with members
                 member_filter = FlextLdapFilter.create_presence(
-                    FlextLdapAttributeConstants.MEMBER
+                    FlextLdapAttributeConstants.MEMBER,
                 )
             else:
                 # Groups without members
                 member_filter = FlextLdapFilter(
-                    value=f"(!({FlextLdapAttributeConstants.MEMBER}=*))"
+                    value=f"(!({FlextLdapAttributeConstants.MEMBER}=*))",
                 )
             filters.append(member_filter)
 
@@ -678,7 +680,7 @@ class FlextLdapSearchOperations:
 
             # Extract object classes
             object_classes = attributes.get(
-                FlextLdapAttributeConstants.OBJECT_CLASS, []
+                FlextLdapAttributeConstants.OBJECT_CLASS, [],
             )
             if not isinstance(object_classes, list):
                 object_classes = []
@@ -689,8 +691,6 @@ class FlextLdapSearchOperations:
                 dn=dn,
                 object_classes=object_classes,
                 attributes=attributes,
-                created_at=datetime.now(UTC),
-                modified_at=datetime.now(UTC),
             )
 
             return FlextResult.ok(entry)
@@ -769,27 +769,23 @@ async def get_search_operations() -> FlextResult[FlextLdapSearchOperations]:
     try:
         container = get_flext_container()
 
-        # Get dependencies from container using typed accessors
-        connection_result = container.get_typed(
-            "FlextLdapConnectionProtocol", FlextLdapConnectionProtocol
-        )
-        if connection_result.is_failure:
-            return FlextResult.fail(connection_result.error or "Connection not found")
-        connection = connection_result.unwrap()
+        # Resolve dependencies using string keys to avoid abstract type issues
+        connection_res = container.get("FlextLdapConnectionProtocol")
+        if connection_res.is_failure:
+            return FlextResult.fail(connection_res.error or "Connection not found")
+        connection = cast("FlextLdapConnectionProtocol", connection_res.unwrap())
 
-        repository_result = container.get_typed(
-            "FlextLdapRepositoryProtocol", FlextLdapRepositoryProtocol
-        )
-        if repository_result.is_failure:
-            return FlextResult.fail(repository_result.error or "Repository not found")
-        repository = repository_result.unwrap()
+        repository_res = container.get("FlextLdapRepositoryProtocol")
+        if repository_res.is_failure:
+            return FlextResult.fail(repository_res.error or "Repository not found")
+        repository = cast("FlextLdapRepositoryProtocol", repository_res.unwrap())
 
         operations = create_search_operations(connection, repository)
         return FlextResult.ok(operations)
 
     except Exception as e:
         return FlextResult.fail(
-            f"Failed to create search operations from container: {e}"
+            f"Failed to create search operations from container: {e}",
         )
 
 

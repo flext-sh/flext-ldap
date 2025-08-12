@@ -14,9 +14,9 @@ from typing import TYPE_CHECKING
 import docker
 import pytest
 
-from flext_ldap.constants import FlextLdapScope
-from flext_ldap.infrastructure.ldap_client import FlextLdapClient
-from flext_ldap.value_objects import FlextLdapDistinguishedName, FlextLdapFilter
+from flext_ldap.ldap_config import FlextLdapScope
+from flext_ldap.ldap_infrastructure import FlextLdapClient
+from flext_ldap.ldap_models import FlextLdapDistinguishedName, FlextLdapFilter
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Generator
@@ -46,6 +46,7 @@ class OpenLDAPContainerManager:
     """Manages OpenLDAP Docker container for testing."""
 
     def __init__(self) -> None:
+        """Initialize the container manager."""
         self.client: DockerClient = docker.from_env()
         self.container: Container | None = None
 
@@ -216,7 +217,7 @@ def docker_openldap_container() -> Generator[Container]:
 
 @pytest.fixture
 def ldap_test_config(docker_openldap_container: Container) -> dict[str, object]:
-    """Provides LDAP test configuration for individual tests."""
+    """Provide LDAP test configuration for individual tests."""
     return {
         "server_url": TEST_ENV_VARS["LDAP_TEST_SERVER"],
         "bind_dn": TEST_ENV_VARS["LDAP_TEST_BIND_DN"],
@@ -229,7 +230,7 @@ def ldap_test_config(docker_openldap_container: Container) -> dict[str, object]:
 async def _cleanup_ldap_entries_under_dn(
     client: FlextLdapClient, connection_id: str, dn: str
 ) -> None:
-    """Helper function to cleanup LDAP entries under a DN - reduces nested control flow."""
+    """Clean up LDAP entries under a DN to reduce nested control flow."""
     # Try to delete all entries under the specified DN
     search_result = await client.search(
         connection_id,
@@ -255,12 +256,11 @@ async def _cleanup_ldap_entries_under_dn(
 async def clean_ldap_container(
     ldap_test_config: dict[str, object],
 ) -> dict[str, object]:
-    """Provides a clean LDAP container by removing test entries.
+    """Provide a clean LDAP container by removing test entries.
 
     This fixture ensures each test starts with a clean LDAP directory
     by removing any test entries that might have been left behind.
     """
-
     client = FlextLdapClient()
 
     # Connect to LDAP

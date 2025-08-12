@@ -1,22 +1,18 @@
-"""
-Teste simples de integração Docker LDAP compartilhado
-"""
+"""Teste simples de integração Docker LDAP compartilhado."""
 
 import asyncio
 
 import pytest
 
-from flext_ldap.ldap_infrastructure import (
-    FlextLdapClient,
-    FlextLdapConnectionConfig,
-)
+from flext_ldap.ldap_config import FlextLdapConnectionConfig
+from flext_ldap.ldap_infrastructure import FlextLdapClient
 
 
 @pytest.mark.integration
 def test_docker_ldap_connection_shared(
     docker_openldap_container: object, ldap_test_config: object
 ) -> None:
-    """Test shared Docker LDAP container connection"""
+    """Test shared Docker LDAP container connection."""
     # Docker container info logging removed for production
 
     # Extract connection details from ldap_test_config

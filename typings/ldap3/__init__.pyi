@@ -12,7 +12,7 @@ MODIFY_DELETE: int
 MODIFY_REPLACE: int
 
 # Exceptions
-class LDAPException(Exception): ...  # noqa: N818
+class LDAPException(Exception): ...
 
 # Classes
 class Server:

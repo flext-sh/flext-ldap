@@ -31,7 +31,6 @@ class TestFlextLdapConstants:
     @pytest.mark.unit
     def test_constants_values(self) -> None:
         """Test that constants have expected values."""
-
         if FlextLdapConstants.DEFAULT_TIMEOUT_SECONDS != 30:
             raise AssertionError(
                 f"Expected {30}, got {FlextLdapConstants.DEFAULT_TIMEOUT_SECONDS}"
@@ -55,7 +54,6 @@ class TestFlextLdapConnectionConfig:
     @pytest.mark.unit
     def test_connection_config_defaults(self) -> None:
         """Test FlextLdapConnectionConfig with default values."""
-
         config = FlextLdapConnectionConfig()
         if config.host != "localhost":
             raise AssertionError(f"Expected {'localhost'}, got {config.host}")
@@ -73,7 +71,6 @@ class TestFlextLdapConnectionConfig:
     @pytest.mark.unit
     def test_connection_config_custom(self) -> None:
         """Test FlextLdapConnectionConfig with custom values."""
-
         config = FlextLdapConnectionConfig(
             host="test.example.com",
             port=636,
@@ -98,7 +95,6 @@ class TestFlextLdapConnectionConfig:
     @pytest.mark.unit
     def test_server_validation_valid(self) -> None:
         """Test server validation with valid values."""
-
         config = FlextLdapConnectionConfig(host="localhost")
         if config.host != "localhost":
             expected_host = "localhost"
@@ -107,7 +103,6 @@ class TestFlextLdapConnectionConfig:
     @pytest.mark.unit
     def test_server_validation_invalid(self) -> None:
         """Test server validation with invalid values."""
-
         with pytest.raises(ValueError, match="Host cannot be empty"):
             FlextLdapConnectionConfig(host="")
 
@@ -117,7 +112,6 @@ class TestFlextLdapConnectionConfig:
     @pytest.mark.unit
     def test_port_validation_valid(self) -> None:
         """Test port validation with valid values."""
-
         config = FlextLdapConnectionConfig(port=636)
         if config.port != 636:
             raise AssertionError(f"Expected {636}, got {config.port}")
@@ -125,7 +119,6 @@ class TestFlextLdapConnectionConfig:
     @pytest.mark.unit
     def test_port_validation_invalid(self) -> None:
         """Test port validation with invalid values."""
-
         with pytest.raises(ValidationError):
             FlextLdapConnectionConfig(port=0)
 
@@ -135,7 +128,6 @@ class TestFlextLdapConnectionConfig:
     @pytest.mark.unit
     def test_domain_rules_validation_success(self) -> None:
         """Test domain rules validation with valid config."""
-
         config = FlextLdapConnectionConfig(
             host="localhost",
             port=389,
@@ -148,7 +140,6 @@ class TestFlextLdapConnectionConfig:
     @pytest.mark.unit
     def test_domain_rules_validation_failures(self) -> None:
         """Test domain rules validation with invalid configs."""
-
         # Note: Domain validation for server would be caught by field validator
         # This test primarily verifies the method exists and works with valid config
         config = FlextLdapConnectionConfig()
@@ -162,7 +153,6 @@ class TestFlextLdapAuthConfig:
     @pytest.mark.unit
     def test_auth_config_defaults(self) -> None:
         """Test FlextLdapAuthConfig with default values."""
-
         config = FlextLdapAuthConfig()
         if config.bind_dn != "":
             raise AssertionError(f"Expected {''}, got {config.bind_dn}")
@@ -175,7 +165,6 @@ class TestFlextLdapAuthConfig:
     @pytest.mark.unit
     def test_auth_config_custom(self) -> None:
         """Test FlextLdapAuthConfig with custom values."""
-
         config = FlextLdapAuthConfig(
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=org",
             bind_password="secret",
@@ -196,7 +185,6 @@ class TestFlextLdapAuthConfig:
     @pytest.mark.unit
     def test_bind_dn_validation(self) -> None:
         """Test bind DN validation."""
-
         config = FlextLdapAuthConfig(bind_dn="  cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=org  ")
         expected_dn = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=org"  # Should be stripped
         if config.bind_dn != expected_dn:
@@ -205,7 +193,6 @@ class TestFlextLdapAuthConfig:
     @pytest.mark.unit
     def test_domain_rules_validation_anonymous_bind(self) -> None:
         """Test domain rules validation for anonymous bind."""
-
         config = FlextLdapAuthConfig(use_anonymous_bind=True)
         # Should not raise even without bind_dn/password
         config.validate_domain_rules()
@@ -213,7 +200,6 @@ class TestFlextLdapAuthConfig:
     @pytest.mark.unit
     def test_domain_rules_validation_bind_dn_required(self) -> None:
         """Test domain rules validation when bind DN is required."""
-
         config = FlextLdapAuthConfig(use_anonymous_bind=False, bind_dn="")
         result = config.validate_domain_rules()
         assert not result.success
@@ -222,7 +208,6 @@ class TestFlextLdapAuthConfig:
     @pytest.mark.unit
     def test_domain_rules_validation_password_required(self) -> None:
         """Test domain rules validation when password is required."""
-
         config = FlextLdapAuthConfig(
             use_anonymous_bind=False,
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=org",
@@ -239,7 +224,6 @@ class TestFlextLdapSearchConfig:
     @pytest.mark.unit
     def test_search_config_defaults(self) -> None:
         """Test FlextLdapSearchConfig with default values."""
-
         config = FlextLdapSearchConfig()
         if config.base_dn != "":
             raise AssertionError(f"Expected {''}, got {config.base_dn}")
@@ -260,7 +244,6 @@ class TestFlextLdapSearchConfig:
     @pytest.mark.unit
     def test_search_config_custom(self) -> None:
         """Test FlextLdapSearchConfig with custom values."""
-
         config = FlextLdapSearchConfig(
             base_dn="ou=users,dc=example,dc=org",
             default_search_scope="onelevel",
@@ -290,7 +273,6 @@ class TestFlextLdapSearchConfig:
     @pytest.mark.unit
     def test_search_domain_rules_validation_success(self) -> None:
         """Test search domain rules validation with valid config."""
-
         config = FlextLdapSearchConfig(
             size_limit=1000,
             time_limit=30,
@@ -302,7 +284,6 @@ class TestFlextLdapSearchConfig:
     @pytest.mark.unit
     def test_search_domain_rules_validation_failures(self) -> None:
         """Test search domain rules validation with invalid configs."""
-
         # Test valid configuration - domain validation passes
         config = FlextLdapSearchConfig()
         # Should not raise with valid default configuration
@@ -318,7 +299,6 @@ class TestFlextLdapOperationConfig:
     @pytest.mark.unit
     def test_operation_config_defaults(self) -> None:
         """Test FlextLdapOperationConfig with default values."""
-
         config = FlextLdapOperationConfig()
         if config.max_retries != EXPECTED_DATA_COUNT:
             raise AssertionError(f"Expected {3}, got {config.max_retries}")
@@ -330,7 +310,6 @@ class TestFlextLdapOperationConfig:
     @pytest.mark.unit
     def test_operation_config_custom(self) -> None:
         """Test FlextLdapOperationConfig with custom values."""
-
         config = FlextLdapOperationConfig(
             max_retries=5,
             retry_delay=2.5,
@@ -348,7 +327,6 @@ class TestFlextLdapOperationConfig:
     @pytest.mark.unit
     def test_operation_domain_rules_validation_success(self) -> None:
         """Test operation domain rules validation with valid config."""
-
         config = FlextLdapOperationConfig(
             max_retries=3,
             retry_delay=1.0,
@@ -360,7 +338,6 @@ class TestFlextLdapOperationConfig:
     @pytest.mark.unit
     def test_operation_domain_rules_validation_failures(self) -> None:
         """Test operation domain rules validation with invalid configs."""
-
         # Test valid configuration - domain validation passes
         config = FlextLdapOperationConfig()
         # Should not raise with valid default configuration
@@ -376,7 +353,6 @@ class TestFlextLdapSecurityConfig:
     @pytest.mark.unit
     def test_security_config_defaults(self) -> None:
         """Test FlextLdapSecurityConfig with default values."""
-
         config = FlextLdapSecurityConfig()
         if config.tls_validation != "strict":
             raise AssertionError(f"Expected {'strict'}, got {config.tls_validation}")
@@ -390,7 +366,6 @@ class TestFlextLdapSecurityConfig:
     @pytest.mark.unit
     def test_security_config_custom(self) -> None:
         """Test FlextLdapSecurityConfig with custom values."""
-
         config = FlextLdapSecurityConfig(
             tls_validation="permissive",
             ca_cert_file="/path/to/ca.crt",
@@ -417,7 +392,6 @@ class TestFlextLdapSecurityConfig:
     @pytest.mark.unit
     def test_security_domain_rules_validation_success(self) -> None:
         """Test security domain rules validation with valid config."""
-
         config = FlextLdapSecurityConfig(
             tls_validation="strict",
             client_cert_file="/path/to/client.crt",
@@ -429,7 +403,6 @@ class TestFlextLdapSecurityConfig:
     @pytest.mark.unit
     def test_security_domain_rules_validation_failures(self) -> None:
         """Test security domain rules validation with invalid configs."""
-
         # Test client cert without key
         config = FlextLdapSecurityConfig(client_cert_file="/path/to/client.crt")
         result = config.validate_domain_rules()
@@ -449,7 +422,6 @@ class TestFlextLdapLoggingConfig:
     @pytest.mark.unit
     def test_logging_config_defaults(self) -> None:
         """Test FlextLdapLoggingConfig with default values."""
-
         # Clear any FLEXT related environment variables that might affect defaults
         env_vars_to_clear = [key for key in os.environ if key.startswith("FLEXT_")]
 
@@ -480,7 +452,6 @@ class TestFlextLdapLoggingConfig:
     @pytest.mark.unit
     def test_logging_config_custom(self) -> None:
         """Test FlextLdapLoggingConfig with custom values."""
-
         config = FlextLdapLoggingConfig(
             log_level=FlextLogLevel.DEBUG,
         )
@@ -513,7 +484,6 @@ class TestFlextLdapLoggingConfig:
     @pytest.mark.unit
     def test_log_level_normalization(self) -> None:
         """Test log level normalization."""
-
         # Test string normalization
         config = FlextLdapLoggingConfig(log_level=FlextLogLevel.DEBUG)
         if config.log_level != FlextLogLevel.DEBUG:
@@ -528,13 +498,11 @@ class TestFlextLdapSettings:
     @pytest.mark.unit
     def test_settings_import(self) -> None:
         """Test that FlextLdapSettings can be imported."""
-
         assert FlextLdapSettings is not None
 
     @pytest.mark.unit
     def test_settings_instantiation_defaults(self) -> None:
         """Test that FlextLdapSettings can be instantiated with defaults."""
-
         # Clear any FLEXT_LDAP environment variables to ensure clean defaults
         env_vars_to_clear = [key for key in os.environ if key.startswith("FLEXT_LDAP_")]
 
@@ -675,7 +643,6 @@ class TestDevelopmentConfig:
     @pytest.mark.unit
     def test_create_development_config(self) -> None:
         """Test creating development configuration."""
-
         config = create_development_config()
         assert config is not None
         # Function currently returns default settings, not the development overrides

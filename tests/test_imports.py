@@ -18,7 +18,6 @@ class TestImports:
     @pytest.mark.unit
     def test_main_imports(self) -> None:
         """Test main package imports (backward compatibility)."""
-
         # These should work via backward compatibility aliases
         assert LDAPClient is not None
         assert LDAPEntry is not None
