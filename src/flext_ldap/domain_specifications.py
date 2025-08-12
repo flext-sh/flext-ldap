@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from flext_core import get_logger
 
@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     )
 
 
-class FlextLdapSpecification[T](ABC):
+class FlextLdapSpecification(ABC, Generic[T]):  # noqa: UP046
     """Base specification pattern for domain objects."""
 
     @abstractmethod

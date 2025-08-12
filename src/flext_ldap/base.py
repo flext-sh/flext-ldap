@@ -46,8 +46,13 @@ class FlextLdapRepository(FlextRepository[dict[str, object]]):
     def find_by_id(self, entity_id: str) -> FlextResult[dict[str, object] | None]:
         """Find entity by ID from storage."""
         entity = self._storage.get(entity_id)
-        # Storage values are dict[str, object]
-        return FlextResult.ok(entity if isinstance(entity, dict) else None)
+        if entity is None:
+            return FlextResult.fail(f"Entity not found: {entity_id}")
+        # Storage values may be dict or entity; ensure type compatibility
+        if isinstance(entity, dict):
+            return FlextResult.ok(entity)
+        # For non-dict objects, convert to dict representation
+        return FlextResult.ok({"data": entity})
 
     def find_all(self) -> FlextResult[list[dict[str, object]]]:
         """Find all entities in storage."""
@@ -70,7 +75,7 @@ class FlextLdapRepository(FlextRepository[dict[str, object]]):
         return FlextResult.ok(data)
 
     def save(
-        self, entity: dict[str, object] | object
+        self, entity: dict[str, object] | object,
     ) -> FlextResult[dict[str, object]]:
         """Save entity with validation."""
         try:
@@ -100,7 +105,7 @@ class FlextLdapRepository(FlextRepository[dict[str, object]]):
                 except Exception as e:
                     return FlextResult.fail(str(e))
                 if validate_result is not None and getattr(
-                    validate_result, "is_failure", False
+                    validate_result, "is_failure", False,
                 ):
                     return FlextResult.fail(
                         getattr(validate_result, "error", "Validation failed"),
@@ -225,7 +230,7 @@ class FlextLdapDomainService(FlextDomainService[None]):
             return FlextResult.fail(f"Failed to get entity: {e}")
 
     def create_entity(
-        self, entity: dict[str, object]
+        self, entity: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Create with validation chain and event publishing."""
         try:

@@ -14,7 +14,6 @@ import warnings
 
 def test_new_solid_imports() -> None:
     """Test that new SOLID classes can be imported."""
-
     # Test new SOLID client
 
     # Test value objects
@@ -26,7 +25,6 @@ def test_new_solid_imports() -> None:
 
 def test_backward_compatibility() -> None:
     """Test that backward compatibility works with warnings."""
-
     # Capture deprecation warnings
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
@@ -40,7 +38,6 @@ def test_backward_compatibility() -> None:
 
 def test_solid_principles() -> None:
     """Test that SOLID principles are implemented."""
-
     from flext_ldap.ldap_client import (
         FlextLdapClient,
         LdapConnectionService,
@@ -61,7 +58,6 @@ def test_solid_principles() -> None:
 
 def test_value_objects() -> None:
     """Test that value objects work correctly."""
-
     from flext_ldap.value_objects import (
         FlextLdapCreateUserRequest,
         FlextLdapDistinguishedName,
@@ -97,7 +93,6 @@ def test_value_objects() -> None:
 
 async def test_client_interface() -> None:
     """Test that client interface methods exist."""
-
     from flext_ldap.ldap_client import FlextLdapClient
 
     client = FlextLdapClient()
@@ -114,7 +109,6 @@ async def test_client_interface() -> None:
 
 def main() -> None:
     """Run all tests."""
-
     try:
         test_new_solid_imports()
         test_backward_compatibility()

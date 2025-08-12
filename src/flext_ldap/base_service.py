@@ -40,7 +40,7 @@ class FlextLdapBaseService(FlextDomainService[None]):
             # Initialize LDAP service components
             self._is_running = True
             return FlextResult.ok(None)
-        except Exception as e:
+        except (RuntimeError, AttributeError, TypeError, ValueError) as e:
             return FlextResult.fail(f"Failed to start LDAP service: {e}")
 
     def stop(self) -> FlextResult[None]:
@@ -52,7 +52,7 @@ class FlextLdapBaseService(FlextDomainService[None]):
             # Cleanup LDAP connections and resources
             self._is_running = False
             return FlextResult.ok(None)
-        except Exception as e:
+        except (RuntimeError, AttributeError, TypeError, ValueError) as e:
             return FlextResult.fail(f"Failed to stop LDAP service: {e}")
 
     def health_check(self) -> FlextResult[FlextTypes.Core.JsonDict]:
@@ -65,7 +65,7 @@ class FlextLdapBaseService(FlextDomainService[None]):
                 "dependencies": {"flext_core": "healthy", "ldap3": "available"},
             }
             return FlextResult.ok(health_info)
-        except Exception as e:
+        except (RuntimeError, AttributeError, TypeError, ValueError) as e:
             return FlextResult.fail(f"Health check failed: {e}")
 
     @property

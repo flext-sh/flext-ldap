@@ -392,7 +392,7 @@ class FlextLdapApi:
         )
         if validation_result.is_failure:
             return FlextResult.fail(
-                validation_result.error or "Search validation failed"
+                validation_result.error or "Search validation failed",
             )
 
         # Type-safe unpacking - validation_result.data is guaranteed to exist
@@ -680,7 +680,7 @@ class FlextLdapApi:
 
             # Execute update operation
             result = await self._client.modify_entry(
-                connection_id, dn_obj, modifications
+                connection_id, dn_obj, modifications,
             )
 
             if result.is_success:
@@ -1031,7 +1031,7 @@ class FlextLdapApi:
 
                 # Apply modifications
                 return await self.modify_entry(
-                    session_id, normalized_dn, cast("dict[str, object]", modifications)
+                    session_id, normalized_dn, cast("dict[str, object]", modifications),
                 )
             # Force add mode
             return await self.add_entry(session_id, normalized_dn, attributes)
@@ -1444,7 +1444,7 @@ class FlextLdapApi:
 
             # Execute modify operation
             result = await self._client.modify_entry(
-                connection_id, dn_obj, modifications
+                connection_id, dn_obj, modifications,
             )
 
             if result.is_success:
@@ -1571,7 +1571,7 @@ class FlextLdapApi:
                     if "object_class_filter" in options:
                         raw_required_classes = options["object_class_filter"]
                         required_classes: list[str] = cast(
-                            "list[str]", raw_required_classes
+                            "list[str]", raw_required_classes,
                         )
                         if not any(
                             entry.has_object_class(obj_class)
@@ -1709,6 +1709,5 @@ def get_ldap_api(config: object | None = None) -> FlextLdapApi:
             settings_config = None
     return FlextLdapApi(settings_config)
 
+
 __all__ = ["FlextLdapApi", "get_ldap_api"]
-
-

@@ -4,7 +4,7 @@ Integration tests for flext_ldap.converters to increase coverage.
 """
 
 from flext_ldap.constants import FlextLdapConverterConstants
-from flext_ldap.types import FlextLdapDataType
+from flext_ldap.ldap_types import FlextLdapDataType
 
 
 class TestFlextLdapConverterConstants:

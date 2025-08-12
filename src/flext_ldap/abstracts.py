@@ -26,19 +26,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 from flext_core import FlextDomainService, FlextRepository, FlextResult
 
-from flext_ldap.types import FlextLdapScopeEnum
+from flext_ldap.ldap_types import FlextLdapScopeEnum
 from flext_ldap.value_objects import FlextLdapDistinguishedName, FlextLdapFilter
 
 if TYPE_CHECKING:
-    from flext_ldap.domain.models import FlextLdapCreateGroupRequest
-    from flext_ldap.value_objects import (
-        FlextLdapCreateUserRequest,
-    )
+    # Use correct local modules to enable typing analysis (no missing stubs)
+    from flext_ldap.domain_models import FlextLdapCreateGroupRequest
+    from flext_ldap.value_objects import FlextLdapCreateUserRequest
 
 
 # =============================================================================
@@ -161,11 +160,15 @@ class FlextLdapRepository(FlextRepository[dict[str, object]]):
         if dn_result.is_failure or dn_result.data is None:
             return FlextResult.fail(dn_result.error or "Failed to get DN object")
 
-        return await self.create_entry(
-            connection_id,
-            dn_result.data,
-            user_request.to_ldap_attributes(),
-        )
+        # Ensure attributes are dict[str, list[str]]
+        attrs_any = user_request.to_ldap_attributes()
+        attributes: dict[str, list[str]] = {}
+        for k, v in attrs_any.items():
+            if isinstance(v, list):
+                attributes[k] = [str(x) for x in v]
+            else:
+                attributes[k] = [str(v)]
+        return await self.create_entry(connection_id, dn_result.data, attributes)
 
     async def find_user_by_uid(
         self,
@@ -226,11 +229,16 @@ class FlextLdapRepository(FlextRepository[dict[str, object]]):
         if dn_result.data is None:
             return FlextResult.fail("Failed to create DN object")
 
-        return await self.create_entry(
-            connection_id,
-            dn_result.data,
-            group_request.to_ldap_attributes(),
-        )
+        # Ensure attributes are dict[str, list[str]]
+        attrs_any = group_request.to_ldap_attributes()
+        attributes: dict[str, list[str]] = {}
+        for key, value in attrs_any.items():
+            if isinstance(value, list):
+                attributes[key] = [str(x) for x in value]
+            else:
+                attributes[key] = [str(value)]
+
+        return await self.create_entry(connection_id, dn_result.data, attributes)
 
     async def find_group_by_cn(
         self,
@@ -322,7 +330,7 @@ class FlextLdapRepository(FlextRepository[dict[str, object]]):
 # =============================================================================
 
 
-class FlextLdapService(FlextDomainService[object], metaclass=ABCMeta):
+class FlextLdapService(FlextDomainService[object], ABC):
     """CENTRALIZED LDAP Domain Service extending flext-core FlextDomainService.
 
     🎯 CONSOLIDATION: Single source replacing all duplicated service interfaces.
@@ -465,7 +473,7 @@ class FlextLdapService(FlextDomainService[object], metaclass=ABCMeta):
         """
 
 
-class FlextLdapConnectionService(FlextLdapService, metaclass=ABCMeta):
+class FlextLdapConnectionService(FlextLdapService, ABC):
     """LDAP Connection Management Service - Specialized from FlextLdapService."""
 
     def execute(self) -> FlextResult[object]:
@@ -480,8 +488,63 @@ class FlextLdapConnectionService(FlextLdapService, metaclass=ABCMeta):
         return FlextResult.fail("Connection service execute method not implemented")
 
 
-class FlextLdapUserService(FlextLdapService, metaclass=ABCMeta):
+class FlextLdapSearchService(FlextLdapService, ABC):
+    """LDAP Search Service - Specialized from FlextLdapService."""
+
+    @abstractmethod
+    async def search(
+        self,
+        connection: object,
+        base_dn: str,
+        filter_string: str,
+        attributes: list[str] | None = None,
+        scope: str = "sub",
+    ) -> FlextResult[object]:
+        """Search entries."""
+
+    @abstractmethod
+    async def search_users(
+        self,
+        connection: object,
+        base_dn: str,
+        filter_string: str | None = None,
+    ) -> FlextResult[object]:
+        """Search user entries only."""
+
+
+class FlextLdapUserService(FlextLdapService, ABC):
     """LDAP User Management Service - Specialized from FlextLdapService."""
+
+    # Explicit abstract API required by domain tests
+    @abstractmethod
+    async def create_user(
+        self,
+        connection: object,  # Legacy signature per tests
+        dn: str,
+        attributes: dict[str, list[str]],
+    ) -> FlextResult[object]:
+        """Create a user entry."""
+
+    @abstractmethod
+    async def get_user(self, connection: object, dn: str) -> FlextResult[object]:
+        """Get a user entry."""
+
+    @abstractmethod
+    async def update_user(
+        self,
+        connection: object,
+        dn: str,
+        modifications: dict[str, list[str]],
+    ) -> FlextResult[object]:
+        """Update a user entry."""
+
+    @abstractmethod
+    async def delete_user(self, connection: object, dn: str) -> FlextResult[object]:
+        """Delete a user entry."""
+
+    @abstractmethod
+    def list_users(self) -> set[str]:
+        """List user identifiers (minimal contract for tests)."""
 
     def execute(self) -> FlextResult[object]:
         """Execute user management operation.
@@ -495,7 +558,7 @@ class FlextLdapUserService(FlextLdapService, metaclass=ABCMeta):
         return FlextResult.fail("User service execute method not implemented")
 
 
-class FlextLdapGroupService(FlextLdapService, metaclass=ABCMeta):
+class FlextLdapGroupService(FlextLdapService, ABC):
     """LDAP Group Management Service - Specialized from FlextLdapService."""
 
     def execute(self) -> FlextResult[object]:
@@ -510,7 +573,7 @@ class FlextLdapGroupService(FlextLdapService, metaclass=ABCMeta):
         return FlextResult.fail("Group service execute method not implemented")
 
 
-class FlextLdapSchemaService(FlextLdapService, metaclass=ABCMeta):
+class FlextLdapSchemaService(FlextLdapService, ABC):
     """LDAP Schema Validation Service - Specialized from FlextLdapService."""
 
     def execute(self) -> FlextResult[object]:
@@ -525,7 +588,7 @@ class FlextLdapSchemaService(FlextLdapService, metaclass=ABCMeta):
         return FlextResult.fail("Schema service execute method not implemented")
 
 
-class FlextLdapMigrationService(FlextLdapService, metaclass=ABCMeta):
+class FlextLdapMigrationService(FlextLdapService, ABC):
     """LDAP Migration Service - Specialized from FlextLdapService."""
 
     def execute(self) -> FlextResult[object]:

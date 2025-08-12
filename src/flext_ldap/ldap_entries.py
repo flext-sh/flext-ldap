@@ -24,7 +24,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from flext_core import FlextIdGenerator, FlextResult, get_flext_container, get_logger
 
@@ -37,12 +37,19 @@ from flext_ldap.models import (
     FlextLdapEntry,
     FlextLdapEntryCreated,
     FlextLdapFilter,
+    FlextLdapScope,
     FlextLdapSearchConfig,
 )
 from flext_ldap.protocols import (
     FlextLdapConnectionProtocol,
     FlextLdapRepositoryProtocol,
 )
+
+if TYPE_CHECKING:
+    from flext_ldap.protocols import (
+        FlextLdapConnectionProtocol,
+        FlextLdapRepositoryProtocol,
+    )
 
 logger = get_logger(__name__)
 
@@ -119,7 +126,7 @@ class FlextLdapEntryOperations:
         exists_result = await self._check_entry_exists(connection_id, entry.dn)
         if exists_result.is_failure:
             return FlextResult.fail(
-                f"Error checking entry existence: {exists_result.error}"
+                f"Error checking entry existence: {exists_result.error}",
             )
 
         if exists_result.data:
@@ -138,7 +145,7 @@ class FlextLdapEntryOperations:
 
         if create_result.is_failure:
             return FlextResult.fail(
-                f"Failed to create entry in LDAP: {create_result.error}"
+                f"Failed to create entry in LDAP: {create_result.error}",
             )
 
         # Update entity timestamp via flext-core convention
@@ -265,7 +272,7 @@ class FlextLdapEntryOperations:
             logger.warning(error_summary)
 
         logger.info(
-            f"Bulk creation completed: {len(created_entries)} entries created, {len(errors)} errors"
+            f"Bulk creation completed: {len(created_entries)} entries created, {len(errors)} errors",
         )
         return FlextResult.ok(created_entries)
 
@@ -306,7 +313,7 @@ class FlextLdapEntryOperations:
         exists_result = await self._check_entry_exists(connection_id, entry_dn)
         if exists_result.is_failure:
             return FlextResult.fail(
-                f"Error checking entry existence: {exists_result.error}"
+                f"Error checking entry existence: {exists_result.error}",
             )
 
         if not exists_result.data:
@@ -346,7 +353,7 @@ class FlextLdapEntryOperations:
 
         """
         logger.debug(
-            f"Adding values to attribute {attribute_name} on entry {entry_dn.value}"
+            f"Adding values to attribute {attribute_name} on entry {entry_dn.value}",
         )
 
         modifications = {attribute_name: values}
@@ -377,7 +384,7 @@ class FlextLdapEntryOperations:
 
         """
         logger.debug(
-            f"Removing values from attribute {attribute_name} on entry {entry_dn.value}"
+            f"Removing values from attribute {attribute_name} on entry {entry_dn.value}",
         )
 
         if values is None:
@@ -413,7 +420,7 @@ class FlextLdapEntryOperations:
 
         """
         logger.debug(
-            f"Replacing values of attribute {attribute_name} on entry {entry_dn.value}"
+            f"Replacing values of attribute {attribute_name} on entry {entry_dn.value}",
         )
 
         modifications = {attribute_name: values}
@@ -459,7 +466,8 @@ class FlextLdapEntryOperations:
 
         # Execute search via repository
         search_result = await self._repository.search_entries(
-            connection_id, cast("dict[str, object]", config.model_dump())
+            connection_id,
+            cast("dict[str, object]", config.model_dump()),
         )
         if search_result.is_failure:
             return FlextResult.fail(f"Failed to get entry: {search_result.error}")
@@ -470,10 +478,10 @@ class FlextLdapEntryOperations:
             return FlextResult.ok(None)
 
         # Convert first result to entry
-        entry_data = cast("dict[str, object]", search_result.data[0])
+        entry_data = search_result.data[0]
         entry_result = self._convert_entry_data(entry_data)
         if entry_result.is_failure:
-            return entry_result
+            return FlextResult.fail(entry_result.error or "Entry conversion failed")
 
         logger.debug(f"Successfully retrieved entry: {entry_dn.value}")
         return FlextResult.ok(entry_result.data)
@@ -496,7 +504,7 @@ class FlextLdapEntryOperations:
 
         """
         logger.debug(
-            f"Getting attributes {attribute_names} from entry {entry_dn.value}"
+            f"Getting attributes {attribute_names} from entry {entry_dn.value}",
         )
 
         # Get entry with specific attributes
@@ -508,7 +516,7 @@ class FlextLdapEntryOperations:
 
         if entry_result.is_failure:
             return FlextResult.fail(
-                f"Failed to get entry attributes: {entry_result.error}"
+                f"Failed to get entry attributes: {entry_result.error}",
             )
 
         if entry_result.data is None:
@@ -554,14 +562,19 @@ class FlextLdapEntryOperations:
 
         # Perform pre-deletion validations
         validation_result = await self._validate_delete_preconditions(
-            connection_id, entry_dn, recursive, force
+            connection_id=connection_id,
+            entry_dn=entry_dn,
+            recursive=recursive,
+            force=force,
         )
         if validation_result.is_failure:
             return validation_result
 
         # Execute deletion strategy
         deletion_result = await self._execute_deletion_strategy(
-            connection_id, entry_dn, recursive
+            connection_id=connection_id,
+            entry_dn=entry_dn,
+            recursive=recursive,
         )
         if deletion_result.is_failure:
             return deletion_result
@@ -592,7 +605,7 @@ class FlextLdapEntryOperations:
 
         """
         logger.debug(
-            f"Bulk deleting {len(entry_dns)} entries in batches of {batch_size}"
+            f"Bulk deleting {len(entry_dns)} entries in batches of {batch_size}",
         )
 
         if not entry_dns:
@@ -632,7 +645,7 @@ class FlextLdapEntryOperations:
             logger.warning(error_summary)
 
         logger.info(
-            f"Bulk deletion completed: {len(deleted_entries)} entries deleted, {len(errors)} errors"
+            f"Bulk deletion completed: {len(deleted_entries)} entries deleted, {len(errors)} errors",
         )
         return FlextResult.ok(deleted_entries)
 
@@ -656,7 +669,7 @@ class FlextLdapEntryOperations:
         exists_result = await self._check_entry_exists(connection_id, entry_dn)
         if exists_result.is_failure:
             return FlextResult.fail(
-                f"Error checking entry existence: {exists_result.error}"
+                f"Error checking entry existence: {exists_result.error}",
             )
 
         if not exists_result.data:
@@ -665,16 +678,17 @@ class FlextLdapEntryOperations:
         # Check for child entries if not recursive
         if not recursive:
             has_children_result = await self._check_has_children(
-                connection_id, entry_dn
+                connection_id,
+                entry_dn,
             )
             if has_children_result.is_failure:
                 return FlextResult.fail(
-                    f"Error checking for child entries: {has_children_result.error}"
+                    f"Error checking for child entries: {has_children_result.error}",
                 )
 
             if has_children_result.data:
                 return FlextResult.fail(
-                    f"Entry has child entries. Use recursive=True or remove children first: {entry_dn.value}"
+                    f"Entry has child entries. Use recursive=True or remove children first: {entry_dn.value}",
                 )
 
         return FlextResult.ok(None)
@@ -705,45 +719,67 @@ class FlextLdapEntryOperations:
         self,
         connection_id: str,
         entry_dn: FlextLdapDistinguishedName,
-    ) -> FlextResult[list[dict[str, object]]] | FlextResult[bool]:
-        """Check if entry exists in directory."""
-        config = FlextLdapSearchConfig(
-            base_dn=entry_dn,
-            filter=FlextLdapFilter(value="(objectClass=*)"),
-            size_limit=1,
-            attributes=[],  # No attributes needed for existence check
-        )
+    ) -> FlextResult[list[dict[str, object]]]:
+        """Check if entry exists."""
+        try:
+            # Create search config
+            config = FlextLdapSearchConfig(
+                base_dn=entry_dn,
+                filter=FlextLdapFilter.create_presence(
+                    FlextLdapAttributeConstants.OBJECT_CLASS,
+                ),
+                scope=FlextLdapScope.base(),
+                attributes=[FlextLdapAttributeConstants.OBJECT_CLASS],
+            )
 
-        result = await self._repository.search_entries(
-            connection_id, cast("dict[str, object]", config.model_dump())
-        )
-        if result.is_failure:
-            return result
+            search_result = await self._repository.search_entries(
+                connection_id,
+                config.model_dump(),
+            )
 
-        return FlextResult.ok(len(result.data) > 0)
+            if search_result.is_failure:
+                return FlextResult.fail(f"Search failed: {search_result.error}")
+
+            if search_result.data is None:
+                return FlextResult.ok([])
+
+            return FlextResult.ok(search_result.data)
+
+        except Exception as e:
+            return FlextResult.fail(f"Failed to check entry existence: {e}")
 
     async def _check_has_children(
         self,
         connection_id: str,
         entry_dn: FlextLdapDistinguishedName,
-    ) -> FlextResult[list[dict[str, object]]] | FlextResult[bool]:
-        """Check if entry has child entries."""
-        # Search for immediate children
-        config = FlextLdapSearchConfig(
-            base_dn=entry_dn,
-            filter=FlextLdapFilter(value="(objectClass=*)"),
-            size_limit=1,
-            attributes=[],  # No attributes needed
-        )
+    ) -> FlextResult[list[dict[str, object]]]:
+        """Check if entry has children."""
+        try:
+            # Create search config
+            config = FlextLdapSearchConfig(
+                base_dn=entry_dn,
+                filter=FlextLdapFilter.create_presence(
+                    FlextLdapAttributeConstants.OBJECT_CLASS,
+                ),
+                scope=FlextLdapScope.one_level(),
+                attributes=[FlextLdapAttributeConstants.OBJECT_CLASS],
+            )
 
-        result = await self._repository.search_entries(
-            connection_id, cast("dict[str, object]", config.model_dump())
-        )
-        if result.is_failure:
-            return result
+            search_result = await self._repository.search_entries(
+                connection_id,
+                config.model_dump(),
+            )
 
-        # If we get more than 1 result (the entry itself + children), it has children
-        return FlextResult.ok(len(result.data) > 1)
+            if search_result.is_failure:
+                return FlextResult.fail(f"Search failed: {search_result.error}")
+
+            if search_result.data is None:
+                return FlextResult.ok([])
+
+            return FlextResult.ok(search_result.data)
+
+        except Exception as e:
+            return FlextResult.fail(f"Failed to check children: {e}")
 
     async def _delete_entry_recursive(
         self,
@@ -751,47 +787,36 @@ class FlextLdapEntryOperations:
         entry_dn: FlextLdapDistinguishedName,
     ) -> FlextResult[None]:
         """Delete entry and all its children recursively."""
-        logger.debug(f"Recursively deleting entry: {entry_dn.value}")
-
-        # Get all child entries
-        config = FlextLdapSearchConfig(
-            base_dn=entry_dn,
-            filter=FlextLdapFilter(value="(objectClass=*)"),
-            size_limit=0,  # Get all children
-            attributes=[],  # Only need DNs
-        )
-
-        search_result = await self._repository.search_entries(
-            connection_id, cast("dict[str, object]", config.model_dump())
-        )
-        if search_result.is_failure:
-            return FlextResult.fail(
-                f"Failed to get child entries: {search_result.error}"
-            )
-
-        # Sort DNs by depth (deepest first) for proper deletion order
-        entry_dns = [
-            FlextLdapDistinguishedName(value=entry_data["dn"])
-            for entry_data in search_result.data
-            if isinstance(entry_data.get("dn"), str)
-        ]
-
-        # Sort by DN depth (number of components) in descending order
-        entry_dns.sort(key=lambda dn: len(dn.value.split(",")), reverse=True)
-
-        # Delete entries in order (children first, then parent)
-        for dn in entry_dns:
-            delete_result = await self._repository.delete_entry(
-                connection_id=connection_id,
-                entry_dn=dn.value,
-            )
-
-            if delete_result.is_failure:
+        try:
+            # First delete all children
+            children_result = await self._check_has_children(connection_id, entry_dn)
+            if children_result.is_failure:
                 return FlextResult.fail(
-                    f"Failed to delete child entry {dn.value}: {delete_result.error}"
+                    f"Failed to check children: {children_result.error}",
                 )
 
-        return FlextResult.ok(None)
+            if children_result.data:
+                for child_data in children_result.data:
+                    if isinstance(child_data, dict):
+                        child_dn_value = child_data.get("distinguished_name")
+                        if isinstance(child_dn_value, str):
+                            child_dn = FlextLdapDistinguishedName(value=child_dn_value)
+                            await self._delete_entry_recursive(connection_id, child_dn)
+
+            # Then delete the entry itself
+            delete_result = await self._repository.delete_entry(
+                connection_id,
+                entry_dn.value,
+            )
+            if delete_result.is_failure:
+                return FlextResult.fail(
+                    f"Failed to delete entry: {delete_result.error}",
+                )
+
+            return FlextResult.ok(None)
+
+        except Exception as e:
+            return FlextResult.fail(f"Failed to delete entry recursively: {e}")
 
     @staticmethod
     def _entry_to_ldap_attributes(entry: FlextLdapEntry) -> dict[str, list[str]]:
@@ -820,7 +845,8 @@ class FlextLdapEntryOperations:
 
             # Extract object classes
             object_classes = attributes.get(
-                FlextLdapAttributeConstants.OBJECT_CLASS, []
+                FlextLdapAttributeConstants.OBJECT_CLASS,
+                [],
             )
             if not isinstance(object_classes, list):
                 object_classes = []
@@ -840,19 +866,19 @@ class FlextLdapEntryOperations:
 
     @staticmethod
     async def _publish_entry_created_event(entry: FlextLdapEntry) -> None:
-        """Publish domain event for entry creation."""
+        """Publish entry created domain event."""
         try:
             event = FlextLdapEntryCreated(
-                aggregate_id=entry.dn.value,
+                aggregate_id=entry.id,
                 entry_dn=entry.dn,
                 event_data={
-                    "object_classes": entry.object_classes,
-                    "attributes_count": len(entry.attributes),
+                    "entry_type": "ldap_entry",
+                    "created_at": entry.created_at.isoformat()
+                    if entry.created_at
+                    else None,
                 },
             )
-
-            # In a real implementation, this would publish to an event bus
-            logger.debug(f"Published entry created event: {event.event_id}")
+            logger.debug(f"Entry created event: {event.event_type}")
 
         except Exception as e:
             logger.warning(f"Failed to publish entry created event: {e}")
@@ -886,37 +912,28 @@ def create_entry_operations(
 
 
 async def get_entry_operations() -> FlextResult[FlextLdapEntryOperations]:
-    """Get entry operations from DI container.
-
-    🎯 FLEXT-CORE INTEGRATION for container-based dependency resolution.
-
-    Returns:
-        FlextResult containing entry operations instance or error
-
-    """
+    """Get entry operations instance with proper dependency injection."""
     try:
         container = get_flext_container()
-        # Get dependencies from container using typed accessors
-        connection_result = container.get_typed(
-            "FlextLdapConnectionProtocol", FlextLdapConnectionProtocol
-        )
-        if connection_result.is_failure:
-            return FlextResult.fail(connection_result.error or "Connection not found")
-        connection = connection_result.unwrap()
 
-        repository_result = container.get_typed(
-            "FlextLdapRepositoryProtocol", FlextLdapRepositoryProtocol
-        )
-        if repository_result.is_failure:
-            return FlextResult.fail(repository_result.error or "Repository not found")
-        repository = repository_result.unwrap()
+        connection_res = container.get("FlextLdapConnectionProtocol")
+        if connection_res.is_failure:
+            return FlextResult.fail(connection_res.error or "Connection not found")
+        connection = cast("FlextLdapConnectionProtocol", connection_res.unwrap())
 
-        operations = create_entry_operations(connection, repository)
+        repository_res = container.get("FlextLdapRepositoryProtocol")
+        if repository_res.is_failure:
+            return FlextResult.fail(repository_res.error or "Repository not found")
+        repository = cast("FlextLdapRepositoryProtocol", repository_res.unwrap())
+
+        operations = FlextLdapEntryOperations(
+            connection=connection,
+            repository=repository,
+        )
         return FlextResult.ok(operations)
-
     except Exception as e:
         return FlextResult.fail(
-            f"Failed to create entry operations from container: {e}"
+            f"Failed to create entry operations from container: {e}",
         )
 
 

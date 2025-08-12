@@ -27,7 +27,7 @@ async def main() -> None:
         host="localhost",
         port=389,
         bind_dn="cn=admin,dc=example,dc=com",
-        bind_password="admin",
+        bind_password="admin",  # noqa: S105
         use_ssl=False,
         timeout_seconds=10,
     )
@@ -59,7 +59,7 @@ async def main() -> None:
         host="localhost",
         port=389,
         bind_dn="cn=admin,dc=example,dc=com",
-        bind_password="admin",
+        bind_password="admin",  # noqa: S105
         use_ssl=False,
     )
 

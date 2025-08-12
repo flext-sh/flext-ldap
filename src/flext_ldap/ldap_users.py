@@ -29,8 +29,8 @@ from typing import TYPE_CHECKING, cast
 
 from flext_core import FlextIdGenerator, FlextResult, get_flext_container, get_logger
 
-from .constants import FlextLdapAttributeConstants
-from .models import (
+from flext_ldap.constants import FlextLdapAttributeConstants
+from flext_ldap.models import (
     FlextLdapCreateUserRequest,
     FlextLdapDistinguishedName,
     FlextLdapEntry,
@@ -43,7 +43,10 @@ from .models import (
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
-    from .protocols import FlextLdapConnectionProtocol, FlextLdapRepositoryProtocol
+    from flext_ldap.protocols import (
+        FlextLdapConnectionProtocol,
+        FlextLdapRepositoryProtocol,
+    )
 
 logger = get_logger(__name__)
 
@@ -110,7 +113,7 @@ class FlextLdapUserOperations:
 
         # Validate user creation preconditions
         validation_result = await self._validate_user_creation_preconditions(
-            connection_id, request
+            connection_id, request,
         )
         if validation_result.is_failure:
             return FlextResult.fail(validation_result.error or "Validation failed")
@@ -129,7 +132,7 @@ class FlextLdapUserOperations:
         persistence_result = await self._persist_user_to_ldap(connection_id, user)
         if persistence_result.is_failure:
             return FlextResult.fail(
-                persistence_result.error or "Failed to persist user"
+                persistence_result.error or "Failed to persist user",
             )
 
         logger.info(f"Successfully created user: {request.dn.value}")
@@ -192,7 +195,7 @@ class FlextLdapUserOperations:
             logger.warning(error_summary)
 
         logger.info(
-            f"Bulk creation completed: {len(created_users)} users created, {len(errors)} errors"
+            f"Bulk creation completed: {len(created_users)} users created, {len(errors)} errors",
         )
         return FlextResult.ok(created_users)
 
@@ -227,7 +230,7 @@ class FlextLdapUserOperations:
         # Execute search via repository
         search_payload = cast("dict[str, object]", config.model_dump())
         search_result = await self._repository.search_entries(
-            connection_id, search_payload
+            connection_id, search_payload,
         )
         if search_result.is_failure:
             return FlextResult.fail(search_result.error or "Search failed")
@@ -284,7 +287,7 @@ class FlextLdapUserOperations:
 
         # Create optimized search filter for UID
         filter_obj = FlextLdapFilter.create_equality(
-            FlextLdapAttributeConstants.USER_ID, uid
+            FlextLdapAttributeConstants.USER_ID, uid,
         )
 
         search_config = FlextLdapSearchConfig(
@@ -315,10 +318,10 @@ class FlextLdapUserOperations:
             if user_result.is_success:
                 logger.debug(f"Found user by UID: {uid}")
                 return FlextResult.ok(
-                    user_result.data
+                    user_result.data,
                 )  # Wrap in FlextResult[FlextLdapUser | None]
             return FlextResult.fail(
-                f"Error converting entry to user: {user_result.error}"
+                f"Error converting entry to user: {user_result.error}",
             )
 
         logger.debug(f"User not found: {uid}")
@@ -347,7 +350,7 @@ class FlextLdapUserOperations:
 
         # Create wildcard search for email domain
         filter_obj = FlextLdapFilter(
-            value=f"({FlextLdapAttributeConstants.MAIL}=*@{domain})"
+            value=f"({FlextLdapAttributeConstants.MAIL}=*@{domain})",
         )
 
         search_config = FlextLdapSearchConfig(
@@ -359,7 +362,7 @@ class FlextLdapUserOperations:
         search_result = await self.search_users(connection_id, search_config)
         if search_result.is_failure:
             yield FlextResult.fail(
-                f"Error searching users by domain: {search_result.error}"
+                f"Error searching users by domain: {search_result.error}",
             )
             return
 
@@ -376,7 +379,7 @@ class FlextLdapUserOperations:
                     yield user_result
                 else:
                     yield FlextResult.fail(
-                        f"Error converting entry to user: {user_result.error}"
+                        f"Error converting entry to user: {user_result.error}",
                     )
 
     # =========================================================================
@@ -491,7 +494,7 @@ class FlextLdapUserOperations:
             exists_result = await self._check_user_exists(connection_id, user_dn.value)
             if exists_result.is_failure:
                 return FlextResult.fail(
-                    f"Error checking user existence: {exists_result.error}"
+                    f"Error checking user existence: {exists_result.error}",
                 )
 
             if not exists_result.data:
@@ -563,8 +566,6 @@ class FlextLdapUserOperations:
                 email=request.email,
                 display_name=request.cn,
                 is_active=True,
-                created_at=datetime.now(UTC),
-                modified_at=datetime.now(UTC),
             )
 
             return FlextResult.ok(user)
@@ -610,7 +611,7 @@ class FlextLdapUserOperations:
             )
 
             display_name_values = attributes.get(
-                FlextLdapAttributeConstants.DISPLAY_NAME, []
+                FlextLdapAttributeConstants.DISPLAY_NAME, [],
             )
             display_name = (
                 display_name_values[0]
@@ -619,7 +620,7 @@ class FlextLdapUserOperations:
             )
 
             object_classes = attributes.get(
-                FlextLdapAttributeConstants.OBJECT_CLASS, []
+                FlextLdapAttributeConstants.OBJECT_CLASS, [],
             )
             if not isinstance(object_classes, list):
                 object_classes = []
@@ -634,8 +635,6 @@ class FlextLdapUserOperations:
                 object_classes=object_classes,
                 attributes=attributes,
                 is_active=True,  # Would be determined by directory-specific logic
-                created_at=datetime.now(UTC),
-                modified_at=datetime.now(UTC),
             )
 
             return FlextResult.ok(user)
@@ -653,7 +652,7 @@ class FlextLdapUserOperations:
         exists_check = await self._check_user_exists(connection_id, request.dn.value)
         if exists_check.is_failure:
             return FlextResult.fail(
-                f"Could not check user existence: {exists_check.error}"
+                f"Could not check user existence: {exists_check.error}",
             )
 
         if exists_check.data:
@@ -730,11 +729,11 @@ async def get_user_operations() -> FlextResult[FlextLdapUserOperations]:
 
         if connection_result.is_failure:
             return FlextResult.fail(
-                f"Could not resolve LDAP connection: {connection_result.error}"
+                f"Could not resolve LDAP connection: {connection_result.error}",
             )
         if repository_result.is_failure:
             return FlextResult.fail(
-                f"Could not resolve LDAP repository: {repository_result.error}"
+                f"Could not resolve LDAP repository: {repository_result.error}",
             )
 
         # Type cast for protocol compatibility

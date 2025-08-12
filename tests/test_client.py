@@ -15,7 +15,6 @@ class TestLDAPClient:
     @pytest.mark.unit
     def test_client_import(self) -> None:
         """Test that LDAPClient can be imported."""
-
         assert FlextLdapClient is not None
 
     @pytest.mark.unit
@@ -35,7 +34,6 @@ class TestLDAPClient:
     @pytest.mark.unit
     def test_client_instantiation_without_config(self) -> None:
         """Test that LDAPClient can be instantiated without config."""
-
         client = FlextLdapClient()
         assert client is not None
         assert not client.is_connected()
@@ -43,7 +41,6 @@ class TestLDAPClient:
     @pytest.mark.unit
     def test_get_server_info_disconnected(self) -> None:
         """Test get_server_info when disconnected."""
-
         client = FlextLdapClient()
         info = client.get_server_info()
         expected_info = {"status": "disconnected"}
@@ -176,7 +173,6 @@ class TestLDAPClient:
 
     def test_ping_disconnected(self) -> None:
         """Test connection status when disconnected."""
-
         client = FlextLdapClient()
         # Test that client starts disconnected
         result = client.is_connected()
@@ -343,7 +339,6 @@ class TestLDAPClient:
 
     def test_transaction_context_manager(self) -> None:
         """Test transaction context manager."""
-
         with patch(
             "flext_ldap.ldap_infrastructure.FlextLdapClient",
         ) as mock_infra_client:

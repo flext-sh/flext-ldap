@@ -23,24 +23,31 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextResult, get_flext_container, get_logger
+from flext_core import FlextIdGenerator, FlextResult, get_flext_container, get_logger
 
-from .constants import FlextLdapAttributeConstants, FlextLdapObjectClassConstants
-from .models import (
+from flext_ldap.constants import (
+    FlextLdapAttributeConstants,
+    FlextLdapObjectClassConstants,
+)
+from flext_ldap.models import (
     FlextLdapCreateGroupRequest,
     FlextLdapDistinguishedName,
+    FlextLdapEntry,  # for typing cast in search result
     FlextLdapFilter,
     FlextLdapGroup,
     FlextLdapSearchConfig,
     FlextLdapSearchResult,
 )
-from .protocols import FlextLdapConnectionProtocol, FlextLdapRepositoryProtocol
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
+
+    from flext_ldap.protocols import (
+        FlextLdapConnectionProtocol,
+        FlextLdapRepositoryProtocol,
+    )
 
 logger = get_logger(__name__)
 
@@ -107,7 +114,8 @@ class FlextLdapGroupOperations:
 
         # Validate group creation preconditions
         validation_result = await self._validate_group_creation_preconditions(
-            connection_id, request
+            connection_id,
+            request,
         )
         if validation_result.is_failure:
             # Propagate failure for FlextLdapGroup return type
@@ -205,13 +213,14 @@ class FlextLdapGroupOperations:
         # Convert config to raw dict for repository
         search_payload = cast("dict[str, object]", config.model_dump())
         search_result = await self._repository.search_entries(
-            connection_id, search_payload
+            connection_id,
+            search_payload,
         )
         if search_result.is_failure:
             # Propagate failure for FlextLdapSearchResult return type
             return cast("FlextResult[FlextLdapSearchResult]", search_result)
         # Ensure entries data is iterable
-        raw_data = cast("list[dict[str, object]]", search_result.data or [])
+        raw_data = search_result.data or []
 
         # Convert LDAP entries to Group entities
         groups: list[FlextLdapGroup] = []
@@ -222,7 +231,7 @@ class FlextLdapGroupOperations:
 
         # Create search result
         result = FlextLdapSearchResult(
-            entries=groups,
+            entries=cast("list[FlextLdapEntry]", groups),
             total_count=len(groups),
             page_size=config.size_limit,
             search_time_ms=0,  # Would be measured in real implementation
@@ -254,7 +263,8 @@ class FlextLdapGroupOperations:
 
         # Create optimized search filter for CN
         filter_obj = FlextLdapFilter.create_equality(
-            FlextLdapAttributeConstants.COMMON_NAME, cn
+            FlextLdapAttributeConstants.COMMON_NAME,
+            cn,
         )
 
         search_config = FlextLdapSearchConfig(
@@ -279,7 +289,7 @@ class FlextLdapGroupOperations:
             return FlextResult.ok(None)
 
         logger.debug(f"Found group by CN: {cn}")
-        return FlextResult.ok(groups[0])
+        return FlextResult.ok(cast("FlextLdapGroup | None", groups[0]))
 
     async def find_groups_by_type(
         self,
@@ -304,7 +314,8 @@ class FlextLdapGroupOperations:
 
         # Create search filter for group type
         filter_obj = FlextLdapFilter.create_equality(
-            FlextLdapAttributeConstants.OBJECT_CLASS, group_type
+            FlextLdapAttributeConstants.OBJECT_CLASS,
+            group_type,
         )
 
         search_config = FlextLdapSearchConfig(
@@ -316,14 +327,14 @@ class FlextLdapGroupOperations:
         search_result = await self.search_groups(connection_id, search_config)
         if search_result.is_failure:
             yield FlextResult.fail(
-                f"Error searching groups by type: {search_result.error}"
+                f"Error searching groups by type: {search_result.error}",
             )
             return
 
         # Stream results one by one
         entries = search_result.data.entries if search_result.data else []
         for group in entries:
-            yield FlextResult.ok(group)
+            yield FlextResult.ok(cast("FlextLdapGroup", group))
 
     # =========================================================================
     # GROUP MEMBERSHIP OPERATIONS - Member management
@@ -387,7 +398,7 @@ class FlextLdapGroupOperations:
             return FlextResult.fail(f"Failed to add member to group: {result.error}")
 
         logger.info(
-            f"Successfully added member {member_dn.value} to group {group_dn.value}"
+            f"Successfully added member {member_dn.value} to group {group_dn.value}",
         )
         return FlextResult.ok(None)
 
@@ -432,9 +443,7 @@ class FlextLdapGroupOperations:
             member_attr = FlextLdapAttributeConstants.MEMBER  # Default
 
         # Remove member via repository
-        modification_data = {
-            member_attr: [member_dn.value],
-        }
+        modification_data: dict[str, object] = {member_attr: [member_dn.value]}
 
         result = await self._repository.modify_entry(
             connection_id=connection_id,
@@ -445,11 +454,11 @@ class FlextLdapGroupOperations:
 
         if result.is_failure:
             return FlextResult.fail(
-                f"Failed to remove member from group: {result.error}"
+                f"Failed to remove member from group: {result.error}",
             )
 
         logger.info(
-            f"Successfully removed member {member_dn.value} from group {group_dn.value}"
+            f"Successfully removed member {member_dn.value} from group {group_dn.value}",
         )
         return FlextResult.ok(None)
 
@@ -517,7 +526,9 @@ class FlextLdapGroupOperations:
 
             for member_dn in batch:
                 result = await self.add_member_to_group(
-                    connection_id, group_dn, member_dn
+                    connection_id,
+                    group_dn,
+                    member_dn,
                 )
 
                 if result.is_success:
@@ -531,7 +542,7 @@ class FlextLdapGroupOperations:
 
                     if fail_fast:
                         return FlextResult.fail(
-                            f"Bulk member addition failed: {result.error}"
+                            f"Bulk member addition failed: {result.error}",
                         )
 
         if errors:
@@ -542,7 +553,7 @@ class FlextLdapGroupOperations:
             logger.warning(error_summary)
 
         logger.info(
-            f"Bulk addition completed: {len(added_members)} members added, {len(errors)} errors"
+            f"Bulk addition completed: {len(added_members)} members added, {len(errors)} errors",
         )
         return FlextResult.ok(added_members)
 
@@ -575,7 +586,7 @@ class FlextLdapGroupOperations:
             exists_result = await self._check_group_exists(connection_id, group_dn)
             if exists_result.is_failure:
                 return FlextResult.fail(
-                    f"Error checking group existence: {exists_result.error}"
+                    f"Error checking group existence: {exists_result.error}",
                 )
 
             if not exists_result.data:
@@ -585,7 +596,7 @@ class FlextLdapGroupOperations:
             members_result = await self.get_group_members(connection_id, group_dn)
             if members_result.is_success and members_result.data:
                 return FlextResult.fail(
-                    f"Cannot delete group with {len(members_result.data)} members. Remove members first or use force=True"
+                    f"Cannot delete group with {len(members_result.data)} members. Remove members first or use force=True",
                 )
 
         # Delete via repository
@@ -614,14 +625,14 @@ class FlextLdapGroupOperations:
         validation_result = request.validate_business_rules()
         if validation_result.is_failure:
             return FlextResult.fail(
-                f"Invalid group creation request: {validation_result.error}"
+                f"Invalid group creation request: {validation_result.error}",
             )
 
         # Check if group already exists
         exists_result = await self._check_group_exists(connection_id, request.dn)
         if exists_result.is_failure:
             return FlextResult.fail(
-                f"Error checking group existence: {exists_result.error}"
+                f"Error checking group existence: {exists_result.error}",
             )
 
         if exists_result.data:
@@ -640,12 +651,14 @@ class FlextLdapGroupOperations:
             return group_result
 
         group = group_result.data
+        if group is None:
+            return FlextResult.fail("Failed to create group entity")
 
         # Validate group business rules
         group_validation = group.validate_business_rules()
         if group_validation.is_failure:
             return FlextResult.fail(
-                f"Group validation failed: {group_validation.error}"
+                f"Group validation failed: {group_validation.error}",
             )
 
         return FlextResult.ok(group)
@@ -658,12 +671,12 @@ class FlextLdapGroupOperations:
         """Persist group to LDAP repository."""
         create_result = await self._repository.create_entry(
             connection_id=connection_id,
-            entry_data=self._group_to_ldap_attributes(group),
+            entry_data=cast("dict[str, object]", self._group_to_ldap_attributes(group)),
         )
 
         if create_result.is_failure:
             return FlextResult.fail(
-                f"Failed to create group in LDAP: {create_result.error}"
+                f"Failed to create group in LDAP: {create_result.error}",
             )
 
         return FlextResult.ok(None)
@@ -680,11 +693,14 @@ class FlextLdapGroupOperations:
             size_limit=1,
         )
 
-        result = await self._repository.search_entries(connection_id, config)
+        result = await self._repository.search_entries(
+            connection_id,
+            cast("dict[str, object]", config.model_dump()),
+        )
         if result.is_failure:
             return result
 
-        return FlextResult.ok(len(result.data) > 0)
+        return FlextResult.ok(len(result.data or []) > 0)
 
     async def _get_group_by_dn(
         self,
@@ -702,11 +718,12 @@ class FlextLdapGroupOperations:
         if search_result.is_failure:
             return FlextResult.fail(f"Error searching for group: {search_result.error}")
 
+        if search_result.data is None:
+            return FlextResult.ok(None)
         groups = search_result.data.entries
         if not groups:
             return FlextResult.ok(None)
-
-        return FlextResult.ok(groups[0])
+        return FlextResult.ok(cast("FlextLdapGroup | None", groups[0]))
 
     @staticmethod
     def _create_group_entity_from_request(
@@ -722,7 +739,7 @@ class FlextLdapGroupOperations:
 
             if request.description:
                 attributes[FlextLdapAttributeConstants.DESCRIPTION] = [
-                    request.description
+                    request.description,
                 ]
 
             # Add initial members if provided
@@ -751,6 +768,7 @@ class FlextLdapGroupOperations:
 
             # Create group entity
             group = FlextLdapGroup(
+                id=FlextIdGenerator.generate_entity_id(),
                 dn=request.dn,
                 cn=request.cn,
                 description=request.description,
@@ -758,8 +776,6 @@ class FlextLdapGroupOperations:
                 attributes=attributes,
                 members=request.initial_members,
                 group_type=group_type,
-                created_at=datetime.now(UTC),
-                modified_at=datetime.now(UTC),
             )
 
             return FlextResult.ok(group)
@@ -798,7 +814,8 @@ class FlextLdapGroupOperations:
                 return FlextResult.fail("Missing CN in group entry")
 
             description_values = attributes.get(
-                FlextLdapAttributeConstants.DESCRIPTION, []
+                FlextLdapAttributeConstants.DESCRIPTION,
+                [],
             )
             description = (
                 description_values[0]
@@ -807,7 +824,8 @@ class FlextLdapGroupOperations:
             )
 
             object_classes = attributes.get(
-                FlextLdapAttributeConstants.OBJECT_CLASS, []
+                FlextLdapAttributeConstants.OBJECT_CLASS,
+                [],
             )
             if not isinstance(object_classes, list):
                 object_classes = []
@@ -816,7 +834,8 @@ class FlextLdapGroupOperations:
             members: list[FlextLdapDistinguishedName] = []
             member_values = attributes.get(FlextLdapAttributeConstants.MEMBER, [])
             unique_member_values = attributes.get(
-                FlextLdapAttributeConstants.UNIQUE_MEMBER, []
+                FlextLdapAttributeConstants.UNIQUE_MEMBER,
+                [],
             )
 
             # Use appropriate member attribute
@@ -839,6 +858,7 @@ class FlextLdapGroupOperations:
 
             # Create group entity
             group = FlextLdapGroup(
+                id=FlextIdGenerator.generate_entity_id(),
                 dn=dn,
                 cn=cn,
                 description=description,
@@ -846,8 +866,6 @@ class FlextLdapGroupOperations:
                 attributes=attributes,
                 members=members,
                 group_type=group_type,
-                created_at=datetime.now(UTC),
-                modified_at=datetime.now(UTC),
             )
 
             return FlextResult.ok(group)
@@ -884,38 +902,28 @@ def create_group_operations(
 
 
 async def get_group_operations() -> FlextResult[FlextLdapGroupOperations]:
-    """Get group operations from DI container.
-
-    🎯 FLEXT-CORE INTEGRATION for container-based dependency resolution.
-
-    Returns:
-        FlextResult containing group operations instance or error
-
-    """
+    """Get group operations instance with proper dependency injection."""
     try:
         container = get_flext_container()
 
-        # Get dependencies from container using typed accessors
-        connection_result = container.get_typed(
-            "FlextLdapConnectionProtocol", FlextLdapConnectionProtocol
-        )
-        if connection_result.is_failure:
-            return FlextResult.fail(connection_result.error or "Connection not found")
-        connection = connection_result.unwrap()
+        connection_res = container.get("FlextLdapConnectionProtocol")
+        if connection_res.is_failure:
+            return FlextResult.fail(connection_res.error or "Connection not found")
+        connection = cast("FlextLdapConnectionProtocol", connection_res.unwrap())
 
-        repository_result = container.get_typed(
-            "FlextLdapRepositoryProtocol", FlextLdapRepositoryProtocol
-        )
-        if repository_result.is_failure:
-            return FlextResult.fail(repository_result.error or "Repository not found")
-        repository = repository_result.unwrap()
+        repository_res = container.get("FlextLdapRepositoryProtocol")
+        if repository_res.is_failure:
+            return FlextResult.fail(repository_res.error or "Repository not found")
+        repository = cast("FlextLdapRepositoryProtocol", repository_res.unwrap())
 
-        operations = create_group_operations(connection, repository)
+        operations = FlextLdapGroupOperations(
+            connection=connection,
+            repository=repository,
+        )
         return FlextResult.ok(operations)
-
     except Exception as e:
         return FlextResult.fail(
-            f"Failed to create group operations from container: {e}"
+            f"Failed to create group operations from container: {e}",
         )
 
 

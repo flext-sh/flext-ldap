@@ -13,16 +13,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from abc import ABCMeta
-
-from flext_core import (
-    FlextResult,
-    FlextValueObject,
-    get_logger,
-)
+from flext_core import FlextResult, FlextValue, get_logger
 from pydantic import Field, field_validator
 
-from flext_ldap.types import (
+from flext_ldap.ldap_types import (
     FlextLdapScopeEnum,
     FlextLdapUri,
 )
@@ -39,7 +33,7 @@ logger = get_logger(__name__)
 # ADDITIONAL VALUE OBJECTS - Only unique ones not in types.py
 
 
-class FlextLdapObjectClass(FlextValueObject, metaclass=ABCMeta):
+class FlextLdapObjectClass(FlextValue):
     """LDAP object class value object."""
 
     name: str = Field(..., description="Object class name")
@@ -72,7 +66,7 @@ class FlextLdapObjectClass(FlextValueObject, metaclass=ABCMeta):
         return self.name
 
 
-class FlextLdapAttributesValue(FlextValueObject, metaclass=ABCMeta):
+class FlextLdapAttributesValue(FlextValue):
     """LDAP attributes value object."""
 
     attributes: dict[str, list[str]] = Field(
@@ -89,6 +83,10 @@ class FlextLdapAttributesValue(FlextValueObject, metaclass=ABCMeta):
                 return FlextResult.fail(
                     f"Attribute '{name}' must have at least one value",
                 )
+        return FlextResult.ok(None)
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules as required by flext-core base."""
         return FlextResult.ok(None)
 
     def get_single_value(self, name: str) -> str | None:
@@ -110,7 +108,8 @@ class FlextLdapAttributesValue(FlextValueObject, metaclass=ABCMeta):
         if name not in new_attrs:
             new_attrs[name] = []
         new_attrs[name] += [value]
-        return FlextLdapAttributesValue(attributes=new_attrs)
+        # Create new instance via model_copy to satisfy abstract requirements
+        return self.model_copy(update={"attributes": new_attrs})
 
     def remove_value(self, name: str, value: str) -> FlextLdapAttributesValue:
         """Remove value from attribute."""
@@ -121,10 +120,10 @@ class FlextLdapAttributesValue(FlextValueObject, metaclass=ABCMeta):
                 new_attrs[name] = new_values
             else:
                 del new_attrs[name]
-        return FlextLdapAttributesValue(attributes=new_attrs)
+        return self.model_copy(update={"attributes": new_attrs})
 
 
-class FlextLdapConnectionInfo(FlextValueObject, metaclass=ABCMeta):
+class FlextLdapConnectionInfo(FlextValue):
     """LDAP connection information value object."""
 
     server_uri: FlextLdapUri
@@ -149,7 +148,7 @@ class FlextLdapConnectionInfo(FlextValueObject, metaclass=ABCMeta):
         return f"{self.server_uri} ({auth_status}, {security})"
 
 
-class FlextLdapExtendedEntry(FlextValueObject):
+class FlextLdapExtendedEntry(FlextValue):
     """Extended LDAP entry value object with rich domain operations."""
 
     dn: str = Field(..., description="Distinguished Name")

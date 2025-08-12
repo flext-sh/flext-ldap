@@ -145,7 +145,7 @@ async def run_examples_with_docker() -> None:
 
 
 async def main() -> None:
-    """Main execution function."""
+    """Run the main execution function."""
     # Start container
     if not start_openldap_container():
         return

@@ -13,6 +13,7 @@ Uses MAXIMUM Docker container functionality for real LDAP operations.
 import asyncio
 import subprocess
 import time
+from pathlib import Path
 
 from flext_core import get_logger
 
@@ -76,7 +77,7 @@ class DockerLDAPContainer:
         self._setup_directory_structure()
 
     def _setup_directory_structure(self) -> None:
-        """Setup LDAP directory structure."""
+        """Set up LDAP directory structure."""
         print("🏗️  Setting up directory structure...")
 
         # Create LDIF content
@@ -420,7 +421,7 @@ async def perform_delete_operations(ldap_service, session_id) -> None:
 
 
 async def main() -> None:
-    """Main execution function."""
+    """Run the main execution function."""
     container = DockerLDAPContainer()
 
     try:

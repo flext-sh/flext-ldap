@@ -153,7 +153,7 @@ async def demonstrate_connection_handling() -> None:
     result = await service.connect(
         server_url="ldap://localhost:3389",
         bind_dn="cn=admin,dc=example,dc=com",
-        password="admin",
+        password="admin"
     )
 
     if result.is_failure:
@@ -203,7 +203,7 @@ def print_library_info() -> None:
 
 
 async def main() -> None:
-    """Main example function."""
+    """Run the main example function."""
     print_library_info()
 
     try:

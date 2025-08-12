@@ -25,23 +25,31 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from abc import ABCMeta
+from abc import ABC
 from contextlib import suppress
 from datetime import UTC, datetime
+from enum import Enum
 from typing import ClassVar
 from uuid import uuid4
 
 from flext_core import (
-    FlextEntityStatus,
+    FlextEntity,
     FlextModel,
     FlextResult,
     FlextValue,
     get_logger,
 )
-from flext_core.models import FlextEntity
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
 logger = get_logger(__name__)
+
+
+# Simple entity status enum since FlextEntityStatus doesn't exist in flext-core
+class FlextEntityStatus(Enum):
+    """Entity status enumeration."""
+
+    ACTIVE = "active"
+    INACTIVE = "inactive"
 
 # =============================================================================
 # CORE VALUE OBJECTS - Foundation LDAP patterns
@@ -74,7 +82,7 @@ class FlextLdapDistinguishedName(FlextValue):
 
     # RFC 4514 DN validation pattern - comprehensive regex
     DN_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-        r'^(?:[a-zA-Z][\w-]*|\d+(?:\.\d+)*)\s*=\s*(?:[^,=+<>#;\\"]|\\[,=+<>#;\\"]|\\[0-9a-fA-F]{2})+(?:\s*,\s*(?:[a-zA-Z][\w-]*|\d+(?:\.\d+)*)\s*=\s*(?:[^,=+<>#;\\"]|\\[,=+<>#;\\"]|\\[0-9a-fA-F]{2})+)*$'
+        r'^(?:[a-zA-Z][\w-]*|\d+(?:\.\d+)*)\s*=\s*(?:[^,=+<>#;\\"]|\\[,=+<>#;\\"]|\\[0-9a-fA-F]{2})+(?:\s*,\s*(?:[a-zA-Z][\w-]*|\d+(?:\.\d+)*)\s*=\s*(?:[^,=+<>#;\\"]|\\[,=+<>#;\\"]|\\[0-9a-fA-F]{2})+)*$',
     )
 
     @field_validator("value")
@@ -145,7 +153,7 @@ class FlextLdapFilter(FlextValue):
 
     # RFC 4515 basic filter validation
     FILTER_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-        r"^\s*\(\s*(?:[&|!]?\s*\([^)]+\)|[a-zA-Z][\w-]*\s*[=~<>]=?\s*[^)]*)\s*\)\s*$"
+        r"^\s*\(\s*(?:[&|!]?\s*\([^)]+\)|[a-zA-Z][\w-]*\s*[=~<>]=?\s*[^)]*)\s*\)\s*$",
     )
 
     @field_validator("value")
@@ -191,7 +199,7 @@ class FlextLdapFilter(FlextValue):
         return cls(value=f"(&{filter_values})")
 
 
-class FlextLdapScope(FlextValue, metaclass=ABCMeta):
+class FlextLdapScope(FlextValue, ABC):
     """LDAP search scope value object with standard scope validation.
 
     🎯 CONSOLIDATES AND REPLACES:
@@ -211,7 +219,7 @@ class FlextLdapScope(FlextValue, metaclass=ABCMeta):
 
     # RFC 4511 standard search scopes
     VALID_SCOPES: ClassVar[frozenset[str]] = frozenset(
-        {"base", "one", "sub", "children", "baseObject", "singleLevel", "wholeSubtree"}
+        {"base", "one", "sub", "children", "baseObject", "singleLevel", "wholeSubtree"},
     )
 
     @field_validator("value")
@@ -300,7 +308,7 @@ class FlextLdapSearchConfig(FlextModel):
         min_safe_time_limit = 5
         if self.size_limit == 0 and self.time_limit < min_safe_time_limit:
             return FlextResult.fail(
-                "Unlimited search should have reasonable time limit"
+                "Unlimited search should have reasonable time limit",
             )
 
         return FlextResult.ok(None)
@@ -684,7 +692,7 @@ class FlextLdapCreateUserRequest(FlextModel):
         # Validate email format if provided
         if self.email:
             email_pattern = re.compile(
-                r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
             )
             if not email_pattern.match(self.email):
                 return FlextResult.fail(f"Invalid email format: {self.email}")
@@ -693,7 +701,7 @@ class FlextLdapCreateUserRequest(FlextModel):
         required_classes = {"top", "person"}
         if not required_classes.issubset(set(self.object_classes)):
             return FlextResult.fail(
-                "User must include 'top' and 'person' object classes"
+                "User must include 'top' and 'person' object classes",
             )
 
         return FlextResult.ok(None)
@@ -830,10 +838,10 @@ class FlextLdapUserAuthenticated(FlextLdapDomainEvent):
 
     event_type: str = Field(default="user.authenticated", description="Event type")
     user_dn: FlextLdapDistinguishedName = Field(
-        ..., description="Authenticated user DN"
+        ..., description="Authenticated user DN",
     )
     authentication_method: str = Field(
-        default="bind", description="Authentication method used"
+        default="bind", description="Authentication method used",
     )
 
 

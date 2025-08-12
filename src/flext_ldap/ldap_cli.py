@@ -1,58 +1,55 @@
 #!/usr/bin/env python3
-"""Modern FLEXT LDAP CLI using flext-cli framework.
+"""FLEXT-LDAP CLI - Consolidated Command-Line Interface.
 
-Enterprise-grade command-line interface for LDAP operations.
-Built with flext-cli framework for consistency and rich terminal output.
+🎯 CONSOLIDATES FROM cli.py (35,205 bytes) INTO SINGLE PEP8 MODULE
+
+This module provides a comprehensive command-line interface for LDAP operations
+using the flext-cli framework for consistency and rich terminal output.
+
+Enterprise-grade CLI featuring connection testing, directory searches,
+user management, and comprehensive LDAP operations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, ParamSpec, TypeVar, cast
+from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
 import click
-from flext_core import FlextResult, get_logger
+from flext_core import FlextLDAPConfig, FlextResult, get_logger
 from pydantic import SecretStr
 from rich.console import Console
 from rich.table import Table
-
-from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
-from flext_ldap.constants import FlextLdapScope
-from flext_ldap.infrastructure_ldap_client import FlextLdapClient
-from flext_ldap.values import (
-    ExtendedLDAPEntry,
-    FlextLdapDistinguishedName,
-    FlextLdapFilter,
-)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from flext_core import FlextTypes
 
-    from flext_ldap.entities import FlextLdapUser
+    from flext_ldap.ldap_infrastructure import FlextLdapClient
 
 logger = get_logger(__name__)
 
 # Rich console for beautiful output
 console = Console()
 
-# Constants - DRY principle to eliminate magic numbers and boolean smells
+# Constants - DRY principle to eliminate magic numbers
 MAX_DISPLAY_VALUES = 3
 
 # =============================================================================
-# REFACTORING: Decorator Pattern - Eliminate Click Option Duplication
+# TYPE DEFINITIONS
 # =============================================================================
-
 
 P = ParamSpec("P")
 R = TypeVar("R")
+
+# =============================================================================
+# DECORATORS AND PATTERNS
+# =============================================================================
 
 
 def ldap_connection_options[**P, R](func: Callable[P, R]) -> Callable[P, R]:
@@ -70,7 +67,11 @@ def ldap_connection_options[**P, R](func: Callable[P, R]) -> Callable[P, R]:
     )
 
 
-# Boolean operation constants to eliminate FBT smells - SOLID DRY Principle
+# =============================================================================
+# OPERATION RESULT CONSTANTS
+# =============================================================================
+
+
 class SSLMode:
     """SSL connection mode constants - eliminates boolean parameters."""
 
@@ -92,18 +93,16 @@ class AuthenticationRequired:
     NOT_REQUIRED = False
 
 
-class PasswordSpecialChars:
-    """Password special characters requirement - eliminates boolean parameters."""
-
-    REQUIRED = True
-    NOT_REQUIRED = False
-
-
 class LDAPOperationOutcome:
     """LDAP operation outcome constants - eliminates boolean parameters."""
 
     SUCCESS = True
     FAILURE = False
+
+
+# =============================================================================
+# PARAMETER OBJECTS
+# =============================================================================
 
 
 @dataclass
@@ -185,7 +184,7 @@ class LDAPConnectionTestParams:
         return cls(
             server=server,
             port=port,
-            use_ssl=bool(options.get("use_ssl")),
+            use_ssl=bool(options.get("ssl")),
             bind_dn=str(options.get("bind_dn")) if options.get("bind_dn") else None,
             bind_password=str(options.get("bind_password"))
             if options.get("bind_password")
@@ -223,7 +222,24 @@ class LDAPUserParams:
         )
 
 
-# Base handler class to eliminate code duplication
+# =============================================================================
+# LDAP ENTRY CLASSES
+# =============================================================================
+
+
+@dataclass
+class ExtendedLDAPEntry:
+    """Extended LDAP entry with structured attributes."""
+
+    dn: str
+    attributes: dict[str, list[str]]
+
+
+# =============================================================================
+# BASE HANDLER CLASS
+# =============================================================================
+
+
 class BaseLDAPHandler:
     """Base handler class providing common LDAP operations.
 
@@ -237,69 +253,77 @@ class BaseLDAPHandler:
         port: int = 389,
         *,
         use_ssl: bool = SSLMode.DISABLED,
-    ) -> FlextLdapConnectionConfig:
+    ) -> FlextLDAPConfig | None:
         """Create LDAP connection configuration."""
-        # Build directly using our flexible connection config accepting aliases
-        return FlextLdapConnectionConfig(
-            host=server,
-            port=port,
-            use_ssl=bool(use_ssl),
-            timeout_seconds=30,
-            bind_dn="",
-            bind_password="",
-            search_base="",
-        )
+        try:
+            from flext_ldap.ldap_config import FlextLdapConnectionConfig
+
+            return FlextLdapConnectionConfig(
+                server=server,
+                port=port,
+                use_ssl=bool(use_ssl),
+                timeout=30,
+                bind_dn="",
+                bind_password="",
+                search_base="",
+            )
+        except Exception as e:
+            logger.exception(f"Failed to create connection config: {e}")
+            return None
 
     @staticmethod
     def _create_auth_config(
         bind_dn: str | None,
         bind_password: str | None,
-    ) -> FlextLdapAuthConfig | None:
+    ) -> object | None:
         """Create authentication configuration if credentials provided."""
         if bind_dn:
-            return FlextLdapAuthConfig(
-                server="",
-                search_base="",
-                bind_dn=bind_dn,
-                bind_password=SecretStr(bind_password or "") if bind_password else None,
-            )
+            try:
+                from flext_ldap.ldap_config import FlextLdapAuthConfig
+
+                return FlextLdapAuthConfig(
+                    server="",
+                    search_base="",
+                    bind_dn=bind_dn,
+                    bind_password=SecretStr(bind_password or "") if bind_password else None,
+                )
+            except Exception as e:
+                logger.exception(f"Failed to create auth config: {e}")
+                return None
         return None
 
     @staticmethod
     async def _execute_with_client(
         client: FlextLdapClient,
-        operation: Callable[[FlextLdapClient, str], object],
+        operation: Callable[[FlextLdapClient, str], FlextResult[object]],
     ) -> FlextResult[object]:
         """Execute operation with client lifecycle management."""
         try:
-            # client.connect on the legacy facade is synchronous; handle both sync/async
-            connect_result_or_coro = client.connect("ldap://localhost:389")
-            if hasattr(connect_result_or_coro, "__await__"):
-                connect_id_result: FlextResult[str] = await connect_result_or_coro
-            else:
-                connect_id_result = cast("FlextResult[str]", connect_result_or_coro)
-            if connect_id_result.is_failure:
-                return FlextResult.fail(f"Connection failed: {connect_id_result.error}")
+            # Connect to LDAP server
+            connect_result = await client.connect("ldap://localhost:389", None, None)
+            if not connect_result.is_success:
+                return FlextResult.fail(f"Connection failed: {connect_result.error}")
 
             try:
-                connection_id = connect_id_result.data or ""
+                connection_id = "default_connection"
                 op_result = operation(client, connection_id)
                 if hasattr(op_result, "__await__"):
                     result = await op_result
                     return result if isinstance(result, FlextResult) else FlextResult.ok(result)
                 return op_result if isinstance(op_result, FlextResult) else FlextResult.ok(op_result)
             finally:
-                if connect_id_result.is_success and connect_id_result.data:
-                    # disconnect() may be synchronous or async in legacy facade
-                    disconnect_result = client.disconnect(connect_id_result.data)
-                    if hasattr(disconnect_result, "__await__"):
-                        await disconnect_result
+                # Disconnect from LDAP server
+                await client.disconnect()
 
         except Exception as e:
             return FlextResult.fail(f"Operation error: {e}")
 
 
-# Command handlers using flext-cli patterns with DRY principles
+# =============================================================================
+# CONNECTION HANDLER
+# =============================================================================
+
+
 class LDAPConnectionHandler(BaseLDAPHandler):
     """Handler for LDAP connection operations."""
 
@@ -322,21 +346,26 @@ class LDAPConnectionHandler(BaseLDAPHandler):
         params: LDAPConnectionTestParams,
     ) -> FlextResult[str]:
         """Execute connection test pipeline with consolidated error handling."""
-        cls._create_connection_config(
-            params.server,
-            params.port,
-            use_ssl=params.use_ssl,
-        )
-        cls._create_auth_config(params.bind_dn, params.bind_password)
-        client = FlextLdapClient(None)
+        try:
+            from flext_ldap.ldap_infrastructure import FlextLdapClient
 
-        def test_operation(
-            user_ldap_client: FlextLdapClient, connection_id: str,
-        ) -> FlextResult[object]:
-            return cls._perform_connection_test_operation(user_ldap_client, params)
+            cls._create_connection_config(
+                params.server,
+                params.port,
+                use_ssl=params.use_ssl,
+            )
+            cls._create_auth_config(params.bind_dn, params.bind_password)
+            client = FlextLdapClient()
 
-        result = await cls._execute_with_client(client, test_operation)
-        return cls._handle_connection_test_result(result)
+            def test_operation(
+                user_ldap_client: FlextLdapClient, connection_id: str,
+            ) -> FlextResult[object]:
+                return cls._perform_connection_test_operation(user_ldap_client, params)
+
+            result = await cls._execute_with_client(client, test_operation)
+            return cls._handle_connection_test_result(result)
+        except Exception as e:
+            return FlextResult.fail(f"Connection test failed: {e}")
 
     @classmethod
     def _perform_connection_test_operation(
@@ -346,8 +375,6 @@ class LDAPConnectionHandler(BaseLDAPHandler):
     ) -> FlextResult[object]:
         """Perform connection test operation with proper validation."""
         # Connection test - if we got here, connection was successful
-        # (connection_id would be needed for is_connected check in new API)
-
         protocol = "ldaps" if params.use_ssl else "ldap"
         message = (
             f"Successfully connected to {protocol}://{params.server}:{params.port}"
@@ -360,10 +387,14 @@ class LDAPConnectionHandler(BaseLDAPHandler):
         result: FlextResult[object],
     ) -> FlextResult[str]:
         """Handle the result of connection test operation."""
-        # Cast back to expected return type
         if result.is_success:
             return FlextResult.ok(str(result.data))
         return FlextResult.fail(result.error or "Connection test failed")
+
+
+# =============================================================================
+# SEARCH HANDLER
+# =============================================================================
 
 
 class LDAPSearchHandler(BaseLDAPHandler):
@@ -414,29 +445,51 @@ class LDAPSearchHandler(BaseLDAPHandler):
         params: LDAPSearchParams,
     ) -> FlextResult[object]:
         """Execute LDAP search operation."""
-        dn_res = FlextLdapDistinguishedName.create(params.base_dn)
-        if not dn_res.is_success or dn_res.data is None:
-            return FlextResult.fail(f"Invalid base DN: {dn_res.error}")
-        filt_res = FlextLdapFilter.create(params.filter_str)
-        if not filt_res.is_success or filt_res.data is None:
-            return FlextResult.fail(f"Invalid filter: {filt_res.error}")
-        scope = FlextLdapScope.SUB
-        search_result = asyncio.run(
-            client.search(
-                connection_id,
-                dn_res.data,
-                filt_res.data,
-                scope,
-                attributes=["*"],
-            ),
-        )
+        try:
+            from flext_ldap.ldap_operations import FlextLdapSearchOperations
 
-        if search_result.is_success:
-            raw_entries = search_result.data or []
-            entries = cls._convert_search_results(raw_entries, params.limit)
-            return FlextResult.ok(entries)
+            search_ops = FlextLdapSearchOperations()
 
-        return FlextResult.fail(f"Search failed: {search_result.error}")
+            async def perform_search() -> FlextResult[list[object]]:
+                search_result = await search_ops.search_entries(
+                    connection_id=connection_id,
+                    base_dn=params.base_dn,
+                    search_filter=params.filter_str,
+                    scope="subtree",
+                    attributes=["*"],
+                    size_limit=params.limit,
+                )
+                if search_result.is_success:
+                    # Convert FlextLdapEntry list to list[object]
+                    entries_as_objects: list[object] = search_result.data or []
+                    return FlextResult.ok(entries_as_objects)
+                return FlextResult.fail(search_result.error or "Search failed")
+
+            search_result = asyncio.run(perform_search())
+
+            if search_result.is_success:
+                # Convert search results to ExtendedLDAPEntry format
+                entries_data = search_result.data or []
+                raw_entries = []
+                for entry in entries_data:
+                    if hasattr(entry, "dn") and hasattr(entry, "attributes"):
+                        raw_entries.append({
+                            "dn": entry.dn,
+                            "attributes": entry.attributes,
+                        })
+                    else:
+                        # Fallback for object type entries
+                        raw_entries.append({
+                            "dn": str(getattr(entry, "dn", "unknown")),
+                            "attributes": getattr(entry, "attributes", {}),
+                        })
+
+                entries = cls._convert_search_results(raw_entries, params.limit)
+                return FlextResult.ok(entries)
+
+            return FlextResult.fail(f"Search failed: {search_result.error}")
+        except Exception as e:
+            return FlextResult.fail(f"Search operation failed: {e}")
 
     @classmethod
     def search_entries(
@@ -445,6 +498,8 @@ class LDAPSearchHandler(BaseLDAPHandler):
     ) -> FlextResult[object | None] | FlextResult[object]:
         """Search LDAP entries using base handler patterns."""
         try:
+            from flext_ldap.ldap_infrastructure import FlextLdapClient
+
             cls._create_connection_config(
                 params.server,
                 params.port,
@@ -458,7 +513,7 @@ class LDAPSearchHandler(BaseLDAPHandler):
                     extra={"bind_dn": params.bind_dn},
                 )
 
-            search_ldap_client = FlextLdapClient(None)
+            search_ldap_client = FlextLdapClient()
 
             def search_operation(
                 operation_ldap_client: FlextLdapClient, connection_id: str,
@@ -467,7 +522,7 @@ class LDAPSearchHandler(BaseLDAPHandler):
                     operation_ldap_client, connection_id, params,
                 )
 
-            # In pytest-asyncio context, avoid nested asyncio.run
+            # Handle async execution
             try:
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
@@ -482,7 +537,7 @@ class LDAPSearchHandler(BaseLDAPHandler):
                 result = asyncio.run(
                     cls._execute_with_client(search_ldap_client, search_operation),
                 )
-            # Cast back to expected return type
+
             if result.is_success and isinstance(result.data, list):
                 return FlextResult.ok(result.data)
             if result.is_success:
@@ -493,6 +548,11 @@ class LDAPSearchHandler(BaseLDAPHandler):
             return FlextResult.fail(f"Search error: {e}")
 
 
+# =============================================================================
+# USER HANDLER
+# =============================================================================
+
+
 class LDAPUserHandler(BaseLDAPHandler):
     """Handler for LDAP user operations using base patterns."""
 
@@ -500,36 +560,42 @@ class LDAPUserHandler(BaseLDAPHandler):
     def get_user_info(cls, uid: str, server: str | None = None) -> FlextResult[object]:
         """Get user information using base handler patterns."""
         try:
+            from flext_ldap.ldap_infrastructure import FlextLdapClient
+
             server = server or "localhost"
             cls._create_connection_config(server)
-            client = FlextLdapClient(None)
+            client = FlextLdapClient()
 
             async def user_lookup_operation(
                 user_ldap_client: FlextLdapClient,
                 connection_id: str,
             ) -> FlextResult[object]:
-                # REAL search for user by uid
-                dn_res = FlextLdapDistinguishedName.create("dc=example,dc=com")
-                if not dn_res.is_success or dn_res.data is None:
-                    return FlextResult.fail(f"Invalid base DN: {dn_res.error}")
-                filt_res = FlextLdapFilter.create(f"(uid={uid})")
-                if not filt_res.is_success or filt_res.data is None:
-                    return FlextResult.fail("Invalid filter")
-                scope = FlextLdapScope.SUB
-                search_result = await user_ldap_client.search(
-                    connection_id,
-                    dn_res.data,
-                    filt_res.data,
-                    scope,
-                    attributes=["uid", "cn", "sn", "mail", "dn"],
-                )
+                try:
+                    from flext_ldap.ldap_operations import FlextLdapSearchOperations
 
-                if search_result.is_success and search_result.data:
-                    # Return first matching user
-                    user_data = search_result.data[0]
-                    return FlextResult.ok(user_data)
+                    search_ops = FlextLdapSearchOperations()
+                    search_result = await search_ops.search_users(
+                        connection_id=connection_id,
+                        base_dn="dc=example,dc=com",
+                        filter_criteria={"uid": uid},
+                        size_limit=1,
+                    )
 
-                return FlextResult.fail(f"User {uid} not found")
+                    if search_result.is_success and search_result.data:
+                        # Return first matching user
+                        user = search_result.data[0]
+                        user_data = {
+                            "uid": user.uid,
+                            "cn": user.cn,
+                            "sn": user.sn,
+                            "dn": user.dn,
+                            "mail": getattr(user, "mail", None),
+                        }
+                        return FlextResult.ok(user_data)
+
+                    return FlextResult.fail(f"User {uid} not found")
+                except Exception as e:
+                    return FlextResult.fail(f"User search error: {e}")
 
             try:
                 loop = asyncio.get_event_loop()
@@ -552,55 +618,53 @@ class LDAPUserHandler(BaseLDAPHandler):
     def create_user(cls, params: LDAPUserParams) -> FlextResult[object]:
         """Create a new user using base handler patterns."""
         try:
+            from flext_ldap.ldap_infrastructure import FlextLdapClient
+
             server = params.server or "localhost"
             cls._create_connection_config(server)
-            client = FlextLdapClient(None)
+            client = FlextLdapClient()
 
             async def user_creation_operation(
                 user_ldap_client: FlextLdapClient,
                 connection_id: str,
             ) -> FlextResult[object]:
-                # REAL user creation
-                user_dn = f"cn={params.uid},{params.base_dn}"
-                object_classes = ["person", "organizationalPerson", "inetOrgPerson"]
-                # Type-safe attributes dictionary for FlextLdapClient.add
-                # Attributes must be dict[str, list[str]] for create_entry
-                attributes: dict[str, list[str]] = {
-                    "uid": [params.uid],
-                    "cn": [params.cn],
-                    "sn": [params.sn],
-                }
+                try:
+                    from flext_ldap.ldap_models import FlextLdapCreateUserRequest
+                    from flext_ldap.ldap_operations import FlextLdapUserOperations
 
-                if params.mail:
-                    attributes["mail"] = [params.mail]
+                    # Create user request
+                    user_dn = f"cn={params.uid},{params.base_dn}"
+                    user_request = FlextLdapCreateUserRequest(
+                        dn=user_dn,
+                        uid=params.uid,
+                        cn=params.cn,
+                        sn=params.sn,
+                        object_classes=["person", "organizationalPerson", "inetOrgPerson"],
+                        given_name=None,
+                        mail=params.mail,
+                        user_password=None,
+                        additional_attributes={},
+                    )
 
-                # Create FlextLdapDistinguishedName object
-                dn_result = FlextLdapDistinguishedName.create(user_dn)
-                if not dn_result.is_success:
-                    return FlextResult.fail(f"Invalid DN: {dn_result.error}")
-                if dn_result.data is None:
-                    return FlextResult.fail("Failed to create DN object")
+                    user_ops = FlextLdapUserOperations()
+                    create_result = await user_ops.create_user(
+                        connection_id=connection_id,
+                        user_request=user_request,
+                    )
 
-                # Add objectClass to attributes
-                attributes["objectClass"] = object_classes
+                    if create_result.is_success:
+                        created_user = {
+                            "uid": params.uid,
+                            "cn": params.cn,
+                            "sn": params.sn,
+                            "dn": user_dn,
+                            "mail": params.mail,
+                        }
+                        return FlextResult.ok(created_user)
 
-                add_result = await user_ldap_client.create_entry(
-                    connection_id,
-                    dn_result.data,
-                    attributes,
-                )
-
-                if add_result.is_success:
-                    created_user = {
-                        "uid": params.uid,
-                        "cn": params.cn,
-                        "sn": params.sn,
-                        "dn": user_dn,
-                        "mail": params.mail,
-                    }
-                    return FlextResult.ok(created_user)
-
-                return FlextResult.fail(f"User creation failed: {add_result.error}")
+                    return FlextResult.fail(f"User creation failed: {create_result.error}")
+                except Exception as e:
+                    return FlextResult.fail(f"User creation error: {e}")
 
             try:
                 loop = asyncio.get_event_loop()
@@ -640,20 +704,25 @@ class LDAPUserHandler(BaseLDAPHandler):
         limit: int,
     ) -> FlextResult[list[object]]:
         """Execute user listing pipeline with consolidated error handling."""
-        server = server or "localhost"
-        cls._create_connection_config(server)
-        client = FlextLdapClient(None)
+        try:
+            from flext_ldap.ldap_infrastructure import FlextLdapClient
 
-        async def user_listing_operation(
-            user_ldap_client: FlextLdapClient,
-            connection_id: str,
-        ) -> FlextResult[object]:
-            return await cls._perform_user_search_operation(
-                user_ldap_client, connection_id, limit,
-            )
+            server = server or "localhost"
+            cls._create_connection_config(server)
+            client = FlextLdapClient()
 
-        result = await cls._execute_with_client(client, user_listing_operation)
-        return cls._handle_user_listing_result(result)
+            async def user_listing_operation(
+                user_ldap_client: FlextLdapClient,
+                connection_id: str,
+            ) -> FlextResult[object]:
+                return await cls._perform_user_search_operation(
+                    user_ldap_client, connection_id, limit,
+                )
+
+            result = await cls._execute_with_client(client, user_listing_operation)
+            return cls._handle_user_listing_result(result)
+        except Exception as e:
+            return FlextResult.fail(f"User listing pipeline failed: {e}")
 
     @classmethod
     async def _perform_user_search_operation(
@@ -663,30 +732,34 @@ class LDAPUserHandler(BaseLDAPHandler):
         limit: int,
     ) -> FlextResult[object]:
         """Perform user search operation with proper filtering."""
-        dn_res = FlextLdapDistinguishedName.create("dc=example,dc=com")
-        if not dn_res.is_success or dn_res.data is None:
-            return FlextResult.fail(f"Invalid base DN: {dn_res.error}")
-        filt_res = FlextLdapFilter.create("(objectClass=person)")
-        if not filt_res.is_success or filt_res.data is None:
-            return FlextResult.fail("Invalid filter")
-        scope = FlextLdapScope.SUB
-        search_result = await client.search(
-            connection_id,
-            dn_res.data,
-            filt_res.data,
-            scope,
-            attributes=["uid", "cn", "mail", "sn"],
-        )
+        try:
+            from flext_ldap.ldap_operations import FlextLdapSearchOperations
 
-        if search_result.is_success:
-            users = search_result.data or []
-            # Limit results as requested - explicit type cast for variance
-            limited_users = users[:limit]
-            # Cast each item to object for FlextResult compatibility
-            users_as_objects: list[object] = list(limited_users)
-            return FlextResult.ok(users_as_objects)
+            search_ops = FlextLdapSearchOperations()
+            search_result = await search_ops.search_users(
+                connection_id=connection_id,
+                base_dn="dc=example,dc=com",
+                filter_criteria={},  # No filter - get all users
+                size_limit=limit,
+            )
 
-        return FlextResult.fail(f"User listing failed: {search_result.error}")
+            if search_result.is_success:
+                users = search_result.data or []
+                # Convert to list of objects
+                users_as_objects: list[object] = [
+                    {
+                        "uid": user.uid,
+                        "cn": user.cn,
+                        "sn": user.sn,
+                        "mail": getattr(user, "mail", None),
+                    }
+                    for user in users
+                ]
+                return FlextResult.ok(users_as_objects)
+
+            return FlextResult.fail(f"User listing failed: {search_result.error}")
+        except Exception as e:
+            return FlextResult.fail(f"User search operation failed: {e}")
 
     @classmethod
     def _handle_user_listing_result(
@@ -694,7 +767,6 @@ class LDAPUserHandler(BaseLDAPHandler):
         result: FlextResult[object],
     ) -> FlextResult[list[object]]:
         """Handle the result of user listing operation."""
-        # Cast back to expected return type
         if result.is_success and isinstance(result.data, list):
             return FlextResult.ok(result.data)
         if result.is_success:
@@ -702,7 +774,11 @@ class LDAPUserHandler(BaseLDAPHandler):
         return FlextResult.fail(result.error or "User listing operation failed")
 
 
-# Display functions using Rich
+# =============================================================================
+# DISPLAY FUNCTIONS
+# =============================================================================
+
+
 def display_connection_success(message: str) -> None:
     """Display connection success message."""
     console.print(f"✅ {message}", style="bold green")
@@ -734,19 +810,19 @@ def display_search_results(entries: list[ExtendedLDAPEntry]) -> None:
         console.print(table)
 
 
-def display_user_info(user: FlextLdapUser) -> None:
+def display_user_info(user: object) -> None:
     """Display user information in formatted table."""
-    console.print(f"✅ Found user: {user.cn}", style="bold green")
+    console.print(f"✅ Found user: {getattr(user, 'cn', 'Unknown')}", style="bold green")
 
     # Create user info table
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Property", style="cyan")
     table.add_column("Value", style="white")
 
-    table.add_row("UID", user.uid)
-    table.add_row("Common Name", user.cn)
-    table.add_row("Surname", user.sn)
-    table.add_row("Distinguished Name", user.dn)
+    table.add_row("UID", getattr(user, "uid", "N/A"))
+    table.add_row("Common Name", getattr(user, "cn", "N/A"))
+    table.add_row("Surname", getattr(user, "sn", "N/A"))
+    table.add_row("Distinguished Name", getattr(user, "dn", "N/A"))
     if hasattr(user, "mail") and user.mail:
         table.add_row("Email", user.mail)
 
@@ -782,7 +858,11 @@ def display_users_list(users: list[object]) -> None:
         console.print("[blue]Info: No users found[/blue]")
 
 
-# Click CLI commands
+# =============================================================================
+# CLICK CLI COMMANDS
+# =============================================================================
+
+
 @click.group(name="flext-ldap")
 @click.version_option(version="0.9.0", prog_name="FLEXT LDAP")
 @click.help_option("--help", "-h")
@@ -807,13 +887,13 @@ def test(
     bind_dn: str | None,
     bind_password: str | None,
 ) -> None:
-    """Test connection to LDAP server.
+    r"""Test connection to LDAP server.
 
     Verifies connectivity and authentication to the specified LDAP server.
 
     Example:
         flext-ldap test ldap.example.com --port 389
-        flext-ldap test ldaps.example.com --port 636 --ssl \
+        flext-ldap test ldaps.example.com --port 636 --ssl \\
             --bind-dn "cn=admin,dc=example,dc=com" --bind-password secret
 
     """
@@ -821,7 +901,7 @@ def test(
     params = LDAPConnectionTestParams.from_args(
         server,
         port,
-        use_ssl=ssl,
+        ssl=ssl,
         bind_dn=bind_dn,
         bind_password=bind_password,
     )
@@ -856,14 +936,14 @@ def search(
     filter_str: str,
     **kwargs: object,
 ) -> None:
-    """Search LDAP directory entries.
+    r"""Search LDAP directory entries.
 
     Performs LDAP search operations with customizable filters and displays results
     in a formatted table.
 
     Example:
         flext-ldap search ldap.example.com "dc=example,dc=com"
-        flext-ldap search ldap.example.com "ou=users,dc=example,dc=com" \
+        flext-ldap search ldap.example.com "ou=users,dc=example,dc=com" \\
             --filter "(objectClass=person)"
 
     """
@@ -874,9 +954,7 @@ def search(
         filter_str,
         **kwargs,
     )
-    result_entries = LDAPSearchHandler.search_entries(
-        params,
-    )
+    result_entries = LDAPSearchHandler.search_entries(params)
     if result_entries.is_success:
         data_list = result_entries.data if isinstance(result_entries.data, list) else []
         display_search_results(data_list)
@@ -900,7 +978,7 @@ def user_info(uid: str, server: str | None) -> None:
     """
     result = LDAPUserHandler.get_user_info(uid, server)
     if result.is_success and result.data:
-        # Handle user data (dict or FlextLdapUser object)
+        # Handle user data (dict or object)
         user = result.data
         if isinstance(user, dict):
             console.print(
@@ -913,7 +991,11 @@ def user_info(uid: str, server: str | None) -> None:
             table.add_row("UID", str(user.get("uid", "N/A")))
             table.add_row("Common Name", str(user.get("cn", "N/A")))
             table.add_row("Distinguished Name", str(user.get("dn", "N/A")))
+            if user.get("mail"):
+                table.add_row("Email", str(user.get("mail")))
             console.print(table)
+        else:
+            display_user_info(user)
     else:
         console.print(
             f"❌ User lookup failed for {uid}: {result.error}",
@@ -1005,6 +1087,11 @@ def version() -> None:
     console.print("Built on FLEXT Framework with Clean Architecture", style="dim")
 
 
+# =============================================================================
+# MAIN CLI ENTRY POINT
+# =============================================================================
+
+
 def main() -> None:
     """Main CLI entry point."""
     try:
@@ -1012,11 +1099,11 @@ def main() -> None:
         cli()
 
     except KeyboardInterrupt:
-        console.print("[i] Operation cancelled by user", style="blue")  # Fix RUF001
-        raise SystemExit(0) from None  # Fix B904
+        console.print("[i] Operation cancelled by user", style="blue")
+        raise SystemExit(0) from None
     except Exception as e:
         console.print(f"❌ Unexpected error: {e}", style="bold red")
-        raise SystemExit(1) from e  # Fix B904
+        raise SystemExit(1) from e
 
 
 if __name__ == "__main__":

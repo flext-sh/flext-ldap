@@ -111,10 +111,10 @@ class FlextLdapNotFoundError(FlextNotFoundError):
     def __init__(
         self,
         message: str = "LDAP entity not found",
-        **kwargs: object,
+        error_code: str | None = None,
     ) -> None:
         """Initialize LDAP not found error with context."""
-        super().__init__(f"LDAP not found: {message}", **kwargs)
+        super().__init__(f"LDAP not found: {message}", error_code)
 
 
 class FlextLdapDuplicateError(FlextAlreadyExistsError):
@@ -123,10 +123,10 @@ class FlextLdapDuplicateError(FlextAlreadyExistsError):
     def __init__(
         self,
         message: str = "LDAP entity already exists",
-        **kwargs: object,
+        error_code: str | None = None,
     ) -> None:
         """Initialize LDAP duplicate error with context."""
-        super().__init__(f"LDAP duplicate: {message}", **kwargs)
+        super().__init__(f"LDAP duplicate: {message}", error_code)
 
 
 # Backward compatibility aliases

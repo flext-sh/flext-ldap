@@ -33,11 +33,8 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from flext_core import FlextResult
 
-from flext_ldap.config import FlextLdapAuthConfig
-from flext_ldap.ldap_infrastructure import (
-    FlextLdapClient,
-    FlextLdapConnectionConfig,
-)
+from flext_ldap.ldap_config import FlextLdapAuthConfig, FlextLdapConnectionConfig
+from flext_ldap.ldap_infrastructure import FlextLdapClient
 
 
 # FBT smell elimination constants - SOLID DRY Principle

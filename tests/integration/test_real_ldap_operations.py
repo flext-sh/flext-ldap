@@ -12,12 +12,10 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldap.application.ldap_service import FlextLdapService
-from flext_ldap.ldap_infrastructure import (
-    FlextLdapClient,
-    FlextLdapConnectionConfig,
-)
-from flext_ldap.values import FlextLdapCreateUserRequest
+from flext_ldap.ldap_config import FlextLdapConnectionConfig
+from flext_ldap.ldap_infrastructure import FlextLdapClient
+from flext_ldap.ldap_models import FlextLdapCreateUserRequest
+from flext_ldap.ldap_services import FlextLdapService
 
 
 @pytest.mark.integration

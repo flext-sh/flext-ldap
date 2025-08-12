@@ -10,8 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult
-from flext_core.config_models import create_ldap_config
+from flext_core import FlextResult, create_ldap_config
 
 from flext_ldap.config import FlextLdapConnectionConfig
 from flext_ldap.ldap_infrastructure import FlextLdapClient
@@ -44,7 +43,7 @@ class FlextLDAPConnectionManager:
             # Create configuration for the client
 
             base = create_ldap_config(host=self.host, port=self.port)
-            config = FlextLdapConnectionConfig.model_validate({
+            FlextLdapConnectionConfig.model_validate({
                 **base.model_dump(),
                 "use_ssl": self.use_ssl,
             })
@@ -52,7 +51,9 @@ class FlextLDAPConnectionManager:
             client = FlextLdapClient(None)
 
             # Test connection - using new async API
-            connect_result = client.connect(config)
+            scheme = "ldaps" if self.use_ssl else "ldap"
+            server_uri = f"{scheme}://{self.host}:{self.port}"
+            connect_result = await client.connect(server_uri)
             if not connect_result.is_success:
                 return FlextResult.fail(
                     f"Connection test failed: {connect_result.error}",
@@ -65,7 +66,7 @@ class FlextLDAPConnectionManager:
 
     @staticmethod
     async def close_connection(
-        connection: FlextLdapClient | object
+        connection: FlextLdapClient | object,
     ) -> FlextResult[None]:
         """Close LDAP connection.
 
@@ -96,7 +97,7 @@ class FlextLDAPConnectionManager:
 
     @staticmethod
     async def validate_connection(
-        connection: FlextLdapClient
+        connection: FlextLdapClient,
     ) -> FlextResult[bool]:
         """Validate LDAP connection is still active.
 
@@ -108,8 +109,8 @@ class FlextLDAPConnectionManager:
 
         """
         try:
-            # Delegate to connection object
-            is_connected: bool = bool(connection.is_connected())
+            # Check if client has _is_connected attribute
+            is_connected: bool = bool(getattr(connection, "_is_connected", False))
             return FlextResult.ok(is_connected)
         except (ValueError, TypeError, OSError) as e:
             return FlextResult.fail(f"Failed to validate LDAP connection: {e}")

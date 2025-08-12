@@ -16,7 +16,9 @@ from __future__ import annotations
 import warnings
 
 # CLEAN CONSOLIDATION: Direct imports from application layer
-from flext_ldap.abstracts import FlextLdapService
+from flext_ldap.ldap_application_service import (
+    FlextLdapApplicationService as FlextLdapService,
+)
 
 # BACKWARD COMPATIBILITY: Legacy aliases with deprecation warnings
 
@@ -36,7 +38,7 @@ def __getattr__(name: str) -> object:
         warnings.warn(
             f"🚨 DEPRECATED SERVICE: {name} is deprecated.\n"
             f"✅ MODERN SOLUTION: Use FlextLdapService from application layer\n"
-            f"💡 Import: from flext_ldap.abstracts import FlextLdapService\n"
+            f"💡 Import: from flext_ldap.application import FlextLdapService\n"
             f"🏗️ This wrapper layer adds no value and will be removed in v1.0.0",
             DeprecationWarning,
             stacklevel=2,
