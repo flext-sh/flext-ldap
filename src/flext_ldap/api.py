@@ -1017,23 +1017,7 @@ def create_ldap_api(
 # BACKWARD COMPATIBILITY AND LEGACY SUPPORT
 # =============================================================================
 
-# Import required types for backward compatibility
-try:
-    from flext_ldap.config import FlextLdapSettings
-    from flext_ldap.models import (
-        FlextLdapCreateUserRequest,
-        FlextLdapEntry,
-        FlextLdapGroup,
-        FlextLdapUser,
-    )
-except ImportError as e:
-    # Handle import errors gracefully during module loading
-    logger.warning(f"Failed to import consolidated modules: {e}")
-    FlextLdapSettings = None  # type: ignore[misc,assignment]
-    FlextLdapCreateUserRequest = None  # type: ignore[misc,assignment]
-    FlextLdapEntry = None  # type: ignore[misc,assignment]
-    FlextLdapGroup = None  # type: ignore[misc,assignment]
-    FlextLdapUser = None  # type: ignore[misc,assignment]
+# Import required types for backward compatibility - canonical mandatory
 
 # Export all public symbols
 __all__ = [
