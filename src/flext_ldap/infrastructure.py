@@ -23,8 +23,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ssl
+from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 from flext_core import FlextResult, get_logger
@@ -139,8 +140,8 @@ class FlextLdapClient:
             conn = self._connection
             if isinstance(conn, Connection):
                 try:
-                    # ldap3's unbind is untyped; wrap to satisfy mypy
-                    unbind_fn = conn.unbind
+                    # ldap3's unbind is untyped; cast to a callable for mypy
+                    unbind_fn: Callable[[], Any] = conn.unbind  # type: ignore[assignment]
                     unbind_fn()
                 except Exception as e:
                     # Ensure state is cleared even if unbind fails
@@ -329,8 +330,8 @@ class FlextLdapClient:
             )
 
         # Positional legacy form (connection_id, dn, filter)
-        REQUIRED_POSITIONAL = 3
-        if len(args) >= REQUIRED_POSITIONAL and isinstance(args[0], str):
+        required_positional = 3
+        if len(args) >= required_positional and isinstance(args[0], str):
             connection_id = str(args[0])
             base_dn_obj = args[1]
             filter_obj = args[2]
@@ -357,11 +358,11 @@ class FlextLdapClient:
             )
 
         # Positional modern form (base_dn, search_filter, [scope])
-        MIN_POSITIONAL = 2
-        if len(args) >= MIN_POSITIONAL:
+        min_positional = 2
+        if len(args) >= min_positional:
             base_dn = str(args[0])
             search_filter = str(args[1])
-            scope = str(args[2]) if len(args) >= MIN_POSITIONAL + 1 else "subtree"
+            scope = str(args[2]) if len(args) >= min_positional + 1 else "subtree"
             attributes = kwargs.get("attributes")
             size_limit_obj3 = kwargs.get("size_limit", 1000)
             time_limit_obj3 = kwargs.get("time_limit", 30)
@@ -485,10 +486,10 @@ class FlextLdapClient:
         try:
             conn = self._connection
             # conn type is guarded above; do not duplicate unreachable return
-            SINGLE_ARG = 1
-            if len(args) == SINGLE_ARG:
+            single_arg = 1
+            if len(args) == single_arg:
                 dn_val = str(args[0])
-            elif len(args) >= SINGLE_ARG + 1:
+            elif len(args) >= single_arg + 1:
                 dn_obj = args[1]
                 dn_val = str(getattr(dn_obj, "value", dn_obj))
             else:
