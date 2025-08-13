@@ -23,11 +23,12 @@ async def main() -> None:
     client = FlextLdapClient()
 
     # Example 1: Single server connection
+    import os
     single_config = FlextLdapConnectionConfig(
         host="localhost",
         port=389,
         bind_dn="cn=admin,dc=example,dc=com",
-        bind_password="admin",
+        bind_password=os.getenv("LDAP_TEST_PASSWORD", ""),
         use_ssl=False,
         timeout_seconds=10,
     )
@@ -59,7 +60,7 @@ async def main() -> None:
         host="localhost",
         port=389,
         bind_dn="cn=admin,dc=example,dc=com",
-        bind_password="admin",
+        bind_password=os.getenv("LDAP_TEST_PASSWORD", ""),
         use_ssl=False,
     )
 
