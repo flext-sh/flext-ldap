@@ -37,7 +37,7 @@ class TestLdapE2EOperations:
         connection_result = await api.connect(
             server_uri="ldap://localhost:3389",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-            bind_password="REDACTED_LDAP_BIND_PASSWORD123"
+            bind_password="REDACTED_LDAP_BIND_PASSWORD123",
         )
 
         # For now, just test that the API methods exist and return results
@@ -73,7 +73,7 @@ class TestLdapE2EOperations:
         search_result = await api.search(
             session=None,  # No active session
             base_dn="dc=flext,dc=local",
-            search_filter="(objectClass=person)"
+            search_filter="(objectClass=person)",
         )
 
         # Should handle missing session gracefully
@@ -89,7 +89,9 @@ class TestLdapE2EOperations:
         # Note: Actual implementation would require real LDAP server
 
         # Test that API has group-related methods
-        assert hasattr(api, "create_group") or callable(getattr(api, "create_group", None))
+        assert hasattr(api, "create_group") or callable(
+            getattr(api, "create_group", None),
+        )
 
         # Verify API is properly initialized
         assert api is not None
@@ -100,9 +102,7 @@ class TestLdapE2EOperations:
         api = get_ldap_api()
 
         # Test connection to non-existent server
-        result = await api.connect(
-            server_uri="ldap://nonexistent.server.test:389"
-        )
+        result = await api.connect(server_uri="ldap://nonexistent.server.test:389")
 
         # Should fail gracefully
         assert not result.is_success

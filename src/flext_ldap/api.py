@@ -33,6 +33,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
@@ -62,13 +63,6 @@ from flext_ldap.models import (
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
-
-    from flext_ldap.types import (
-        TLdapDn,
-        TLdapFilter,
-        TLdapSessionId,
-        TLdapUri,
-    )
 
 
 logger = get_logger(__name__)
@@ -141,10 +135,10 @@ class FlextLdapApi:
     @asynccontextmanager
     async def connection(
         self,
-        server_uri: TLdapUri,
-        bind_dn: TLdapDn | None = None,
+        server_uri: str,
+        bind_dn: str | None = None,
         bind_password: str | None = None,
-    ) -> AsyncIterator[TLdapSessionId]:
+    ) -> AsyncIterator[str]:
         """Async context manager for LDAP connections.
 
         Args:
@@ -204,14 +198,14 @@ class FlextLdapApi:
 
     async def search(  # noqa: C901, PLR0913
         self,
-        base_dn: TLdapDn = "",
-        search_filter: TLdapFilter = "(objectClass=*)",
+        base_dn: str = "",
+        search_filter: str = "(objectClass=*)",
         scope: str = "subtree",
         attributes: list[str] | None = None,
         size_limit: int = 1000,
         time_limit: int = 30,
-        session: TLdapSessionId | None = None,
-        session_id: TLdapSessionId | None = None,
+        session: str | None = None,
+        session_id: str | None = None,
     ) -> FlextResult[list[FlextLdapEntry]]:
         """Perform LDAP search operation.
 
@@ -232,7 +226,7 @@ class FlextLdapApi:
         """
         try:
             # Support both 'session' and 'session_id' for backward compatibility
-            session_identifier: TLdapSessionId | None = session_id or session
+            session_identifier: str | None = session_id or session
             # Validate inputs
             dn_validation = FlextLdapDistinguishedName(
                 value=base_dn,
@@ -785,7 +779,9 @@ class FlextLdapApi:
     # flext-ldif INTEGRATION
     # =============================================================================
 
-    async def import_ldif_string(self, session_id: str, ldif_content: str) -> FlextResult[int]:
+    async def import_ldif_string(
+        self, session_id: str, ldif_content: str,
+    ) -> FlextResult[int]:
         """Import LDIF content into the connected LDAP server.
 
         Parses entries using flext-ldif and creates them via real LDAP operations.
@@ -817,7 +813,9 @@ class FlextLdapApi:
 
         return FlextResult.ok(imported)
 
-    async def import_ldif_file(self, session_id: str, file_path: str) -> FlextResult[int]:
+    async def import_ldif_file(
+        self, session_id: str, file_path: str,
+    ) -> FlextResult[int]:
         """Import LDIF entries from a file path using flext-ldif."""
         _ = session_id
         ldif_api = FlextLdifAPI()
@@ -876,7 +874,11 @@ class FlextLdapApi:
                     for k, v in (e.attributes or {}).items()
                 }
                 ldif_entries.append(
-                    _LdifEntry(id=f"ldif_{len(ldif_entries)}", dn=dn, attributes=_LdifAttributes(attributes=attrs)),
+                    _LdifEntry(
+                        id=f"ldif_{len(ldif_entries)}",
+                        dn=dn,
+                        attributes=_LdifAttributes(attributes=attrs),
+                    ),
                 )
             except Exception as exc:
                 return FlextResult.fail(f"Failed to transform entry to LDIF: {exc!s}")

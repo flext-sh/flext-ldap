@@ -27,9 +27,13 @@ License: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ParamSpec, Protocol, TypeVar, runtime_checkable
-
-from flext_ldap.typings import FlextTypes
+from typing import (
+    TYPE_CHECKING,
+    ParamSpec,
+    Protocol,
+    TypeVar,
+    runtime_checkable,
+)
 
 if TYPE_CHECKING:
     from flext_core import FlextResult
@@ -38,45 +42,50 @@ if TYPE_CHECKING:
 # LDAP DOMAIN TYPES - Extending flext-core base types
 # =============================================================================
 
-# Core LDAP value types (LDAP-specific)
 type LdapAttributeValue = str | bytes | list[str] | list[bytes]
 type LdapAttributeDict = dict[str, LdapAttributeValue]
 type LdapSearchResult = dict[str, LdapAttributeValue]
 
-# Public type aliases for common LDAP concepts (extending core types)
-TLdapDn = FlextTypes.Core.EntityId  # Use core entity ID for DN
-TLdapUri = FlextTypes.Core.ConnectionString  # Use core connection string
-TLdapFilter = str  # LDAP-specific filter syntax
-TLdapSessionId = FlextTypes.Service.RequestId  # Use core request ID
-TLdapScope = str  # LDAP-specific scope ("base", "one", "sub")
-TLdapConnectionId = FlextTypes.Service.CorrelationId  # Use core correlation ID
+# Public type aliases for common LDAP concepts
+type TLdapDn = str
+type TLdapUri = str
+type TLdapFilter = str
+type TLdapSessionId = str
+type TLdapScope = str
+type TLdapConnectionId = str
 
-# Derived types that reference the core ones
-TLdapAttributeValue = LdapAttributeValue
-TLdapAttributes = LdapAttributeDict
-TLdapEntryData = LdapSearchResult
-TLdapSearchResult = list[LdapSearchResult] | list[FlextTypes.Core.AnyDict]
+type TLdapAttributeValue = LdapAttributeValue
+type TLdapAttributes = LdapAttributeDict
+type TLdapEntryData = LdapSearchResult
+type TLdapSearchResult = list[LdapSearchResult] | list[dict[str, object]]
 
-# Infrastructure types (extending core types)
-LdapConnectionConfig = FlextTypes.Service.Configuration  # Use core config directly
-SecurityEventData = FlextTypes.Core.AnyDict  # Use core dict directly
-ErrorPatternData = FlextTypes.Core.AnyDict  # Use core dict directly
-SchemaData = FlextTypes.Core.AnyDict  # Use core dict directly
+# Infrastructure types
+type LdapConnectionConfig = dict[str, object]
+type SecurityEventData = dict[str, object]
+type ErrorPatternData = dict[str, object]
+type SchemaData = dict[str, object]
 
-# Service layer types (extending core service types)
-DirectoryAuthConfig = FlextTypes.Service.Configuration
-ConnectionConfig = FlextTypes.Service.Configuration
-UserRequest = FlextTypes.CQRS.Message
-SearchResult = FlextTypes.Core.AnyDict
+# Service layer types
+type DirectoryAuthConfig = dict[str, object]
+type ConnectionConfig = dict[str, object]
+type UserRequest = dict[str, object]
+type SearchResult = dict[str, object]
 
 P = ParamSpec("P")
 R = TypeVar("R")
 T = TypeVar("T")
 
 # Extended types for advanced features (using core types)
-JsonDict = FlextTypes.Core.JsonDict  # Use core JSON dict directly
-FlextTypesCore = FlextTypes.Core.AnyDict  # Reference to core types
-AsyncCallable = FlextTypes.Core.AnyCallable  # Use core callable directly
+type JsonDict = dict[str, object]
+type FlextTypesCore = dict[str, object]
+
+
+class AsyncCallable(Protocol):
+    """Callable protocol without explicit Any to satisfy strict mypy."""
+
+    def __call__(self, *args: object, **kwargs: object) -> None:  # pragma: no cover
+        ...
+
 
 # =============================================================================
 # PROTOCOL DEFINITIONS

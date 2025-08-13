@@ -37,10 +37,10 @@ class DockerLDAPContainer:
 
         # Stop and remove existing container
         subprocess.run(
-            ["docker", "stop", self.container_name], capture_output=True, check=False
+            ["docker", "stop", self.container_name], capture_output=True, check=False,
         )
         subprocess.run(
-            ["docker", "rm", self.container_name], capture_output=True, check=False
+            ["docker", "rm", self.container_name], capture_output=True, check=False,
         )
 
         # Start new container
@@ -122,10 +122,10 @@ description: Container for groups
         """Stop and remove container."""
         print("🛑 Stopping Docker container...")
         subprocess.run(
-            ["docker", "stop", self.container_name], check=False, capture_output=True
+            ["docker", "stop", self.container_name], check=False, capture_output=True,
         )
         subprocess.run(
-            ["docker", "rm", self.container_name], check=False, capture_output=True
+            ["docker", "rm", self.container_name], check=False, capture_output=True,
         )
         print("✅ Container stopped and removed")
 
@@ -199,7 +199,7 @@ async def perform_create_groups(ldap_service, session_id) -> None:
         print(f"   Creating group: {group_data['cn']}")
 
         result = await ldap_service.create_group(
-            session_id, group_data["dn"], group_data["cn"], group_data["description"]
+            session_id, group_data["dn"], group_data["cn"], group_data["description"],
         )
 
         if result.success:
@@ -383,7 +383,7 @@ async def perform_delete_operations(ldap_service, session_id) -> None:
     print(f"   Deleting user: {user_to_delete}")
 
     result = await ldap_service.delete_user(
-        session_id=session_id, user_dn=user_to_delete
+        session_id=session_id, user_dn=user_to_delete,
     )
 
     if result.success:

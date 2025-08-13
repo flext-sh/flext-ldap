@@ -44,7 +44,7 @@ async def demonstrate_configuration() -> None:
 
     # 1. Basic connection configuration
     connection_config = FlextLdapConnectionConfig(
-        server="ldap.example.com", port=389, use_ssl=False, timeout_seconds=30
+        server="ldap.example.com", port=389, use_ssl=False, timeout_seconds=30,
     )
 
     print(f"✅ Connection config: {connection_config.server}:{connection_config.port}")
@@ -169,7 +169,7 @@ async def demonstrate_error_handling() -> None:
     api = FlextLdapApi()
     try:
         connection_result = await api.connect(
-            server_url="ldap://nonexistent.server:389", session_id="error_test"
+            server_url="ldap://nonexistent.server:389", session_id="error_test",
         )
 
         if not connection_result.success:

@@ -116,7 +116,7 @@ platform = "linux"
 explicit_package_bases = true
 namespace_packages = true
 mypy_path = ["src"]
-files = ["src", "tests"]
+files = ["src"]
 
 # Plugins
 plugins = ["pydantic.mypy"]
@@ -174,6 +174,7 @@ minversion = "8.0"
 asyncio_mode = "auto"
 addopts = ["-ra", "--strict-markers", "--strict-config", "--maxfail=1", "--tb=short"]
 testpaths = ["tests"]
+pythonpath = ["src"]
 markers = [
     "unit: Unit tests",
     "integration: Integration tests",

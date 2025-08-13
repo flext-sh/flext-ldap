@@ -1,21 +1,8 @@
-"""FLEXT-LDAP Operations - REFACTORED VERSION - Zero Code Duplication.
+"""FLEXT-LDAP Operations.
 
-This module consolidates operation patterns. Shebang removed to avoid Ruff EXE001
-since this is not an executable script entry point.
-
-FLEXT-LDAP Operations - REFACTORED VERSION - Zero Code Duplication.
-
-🎯 METODOLOGIA REFATORAÇÃO APLICADA:
-- Eliminação de padrões duplicados de inicialização container/generator
-- Consolidação de validation patterns em helpers reutilizáveis
-- Reutilização de exception handling patterns
-- Consolidação de logging patterns
-- Zero código paralelo novo - TUDO por refatoração
-
-CONSOLIDATION: 1,139 lines → Refactored with zero duplication patterns
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Conjunto de operações de alto nível para gerenciar conexões, buscas, entradas,
+usuários e grupos no LDAP, seguindo SOLID + Clean Architecture. Todas as
+operações retornam FlextResult para manuseio uniforme de erros.
 """
 
 from __future__ import annotations
@@ -193,7 +180,9 @@ class FlextLdapConnectionOperations(FlextLdapOperationsBase):
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
             error_msg = self._handle_exception_with_context(
-                "close connection", e, connection_id,
+                "close connection",
+                e,
+                connection_id,
             )
             return FlextResult.fail(error_msg)
 
@@ -278,7 +267,9 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
             error_msg = self._handle_exception_with_context(
-                "search operation", e, connection_id,
+                "search operation",
+                e,
+                connection_id,
             )
             return FlextResult.fail(error_msg)
 
@@ -324,7 +315,9 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
             error_msg = self._handle_exception_with_context(
-                "user search", e, connection_id,
+                "user search",
+                e,
+                connection_id,
             )
             return FlextResult.fail(error_msg)
 
@@ -370,7 +363,9 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
             error_msg = self._handle_exception_with_context(
-                "group search", e, connection_id,
+                "group search",
+                e,
+                connection_id,
             )
             return FlextResult.fail(error_msg)
 
@@ -426,7 +421,8 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
         )
 
     def _convert_entries_to_users(
-        self, entries: list[FlextLdapEntry],
+        self,
+        entries: list[FlextLdapEntry],
     ) -> list[FlextLdapUser]:
         """Convert entries to users - REUSABLE HELPER."""
         users: list[FlextLdapUser] = []
@@ -440,7 +436,8 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
         return users
 
     def _convert_entries_to_groups(
-        self, entries: list[FlextLdapEntry],
+        self,
+        entries: list[FlextLdapEntry],
     ) -> list[FlextLdapGroup]:
         """Convert entries to groups - REUSABLE HELPER."""
         groups: list[FlextLdapGroup] = []
@@ -510,7 +507,9 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
             error_msg = self._handle_exception_with_context(
-                "create entry", e, connection_id,
+                "create entry",
+                e,
+                connection_id,
             )
             return FlextResult.fail(error_msg)
 
@@ -543,7 +542,9 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
             error_msg = self._handle_exception_with_context(
-                "modify entry", e, connection_id,
+                "modify entry",
+                e,
+                connection_id,
             )
             return FlextResult.fail(error_msg)
 
@@ -567,7 +568,9 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
             error_msg = self._handle_exception_with_context(
-                "delete entry", e, connection_id,
+                "delete entry",
+                e,
+                connection_id,
             )
             return FlextResult.fail(error_msg)
 
@@ -632,7 +635,9 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
             error_msg = self._handle_exception_with_context(
-                "create user", e, connection_id,
+                "create user",
+                e,
+                connection_id,
             )
             return FlextResult.fail(error_msg)
 
@@ -665,21 +670,26 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
         return await self._entry_ops.modify_entry(connection_id, user_dn, modifications)
 
     async def activate_user(
-        self, connection_id: str, user_dn: str,
+        self,
+        connection_id: str,
+        user_dn: str,
     ) -> FlextResult[None]:
         """Activate user account - REFACTORED."""
         modifications: dict[str, object] = {"accountStatus": ["active"]}
         return await self._entry_ops.modify_entry(connection_id, user_dn, modifications)
 
     async def deactivate_user(
-        self, connection_id: str, user_dn: str,
+        self,
+        connection_id: str,
+        user_dn: str,
     ) -> FlextResult[None]:
         """Deactivate user account - REFACTORED."""
         modifications: dict[str, object] = {"accountStatus": ["inactive"]}
         return await self._entry_ops.modify_entry(connection_id, user_dn, modifications)
 
     def _build_user_attributes(
-        self, user_request: FlextLdapCreateUserRequest,
+        self,
+        user_request: FlextLdapCreateUserRequest,
     ) -> dict[str, object]:
         """Build user attributes from request - REUSABLE HELPER."""
         attributes: dict[str, object] = {
@@ -776,7 +786,9 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
             error_msg = self._handle_exception_with_context(
-                "create group", e, connection_id,
+                "create group",
+                e,
+                connection_id,
             )
             return FlextResult.fail(error_msg)
 
@@ -806,7 +818,9 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
             error_msg = self._handle_exception_with_context(
-                "add group member", e, connection_id,
+                "add group member",
+                e,
+                connection_id,
             )
             return FlextResult.fail(error_msg)
 
@@ -829,7 +843,9 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
             error_msg = self._handle_exception_with_context(
-                "remove group member", e, connection_id,
+                "remove group member",
+                e,
+                connection_id,
             )
             return FlextResult.fail(error_msg)
 
@@ -860,7 +876,9 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
             error_msg = self._handle_exception_with_context(
-                "get group members", e, connection_id,
+                "get group members",
+                e,
+                connection_id,
             )
             return FlextResult.fail(error_msg)
 
@@ -873,7 +891,9 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         """Update group description - REFACTORED."""
         modifications: dict[str, object] = {"description": [description]}
         return await self._entry_ops.modify_entry(
-            connection_id, group_dn, modifications,
+            connection_id,
+            group_dn,
+            modifications,
         )
 
     def _prepare_group_members(self, initial_members: list[str] | None) -> list[str]:

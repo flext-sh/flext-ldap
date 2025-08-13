@@ -283,13 +283,29 @@ class FlextLdapApplicationService:
 
                     # Extract user attributes with safe defaults
                     cn_raw = user_attrs.get("cn", [])
-                    cn_value = cn_raw[0] if isinstance(cn_raw, list) and cn_raw else str(cn_raw) if cn_raw else ""
+                    cn_value = (
+                        cn_raw[0]
+                        if isinstance(cn_raw, list) and cn_raw
+                        else str(cn_raw)
+                        if cn_raw
+                        else ""
+                    )
 
                     sn_raw = user_attrs.get("sn", [])
-                    sn_value = sn_raw[0] if isinstance(sn_raw, list) and sn_raw else str(sn_raw) if sn_raw else ""
+                    sn_value = (
+                        sn_raw[0]
+                        if isinstance(sn_raw, list) and sn_raw
+                        else str(sn_raw)
+                        if sn_raw
+                        else ""
+                    )
 
                     mail_raw = user_attrs.get("mail", [])
-                    mail_value = mail_raw[0] if isinstance(mail_raw, list) and mail_raw else (str(mail_raw) if mail_raw else None)
+                    mail_value = (
+                        mail_raw[0]
+                        if isinstance(mail_raw, list) and mail_raw
+                        else (str(mail_raw) if mail_raw else None)
+                    )
 
                     user = FlextLdapUser(
                         id=FlextIdGenerator.generate_id(),

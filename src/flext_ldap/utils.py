@@ -74,6 +74,7 @@ class FlextLdapUtils:
 # EXPORTS
 # =============================================================================
 
+
 # Backward-compatible functional API expected by imports/tests
 def flext_ldap_validate_dn(dn: str) -> bool:
     """Validate Distinguished Name format."""

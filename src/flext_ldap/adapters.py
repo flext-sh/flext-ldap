@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
 from flext_core import FlextResult, create_ldap_config, get_logger
+from flext_ldap.typings import FlextTypes
 
 from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
 from flext_ldap.exceptions import (
@@ -34,13 +35,9 @@ from flext_ldap.types import (
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
-    from flext_core import FlextTypes
-
     from flext_ldap.types import (
         P,
         R,
-        TLdapDn,
-        TLdapUri,
     )
 
 logger = get_logger(__name__)
@@ -87,9 +84,9 @@ class FlextLdapDirectoryServiceInterface(ABC):
     @abstractmethod
     async def connect(
         self,
-        server_url: TLdapUri,
+        server_url: str,
         *,
-        bind_dn: TLdapDn | None = None,
+        bind_dn: str | None = None,
         password: str | None = None,
     ) -> FlextResult[bool]:
         """Connect to directory service."""
@@ -154,7 +151,9 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         )
         try:
             # Execute the async pipeline directly (we are already async)
-            return await self._execute_connection_pipeline(server_url, bind_dn, password)
+            return await self._execute_connection_pipeline(
+                server_url, bind_dn, password,
+            )
 
         except (ConnectionError, OSError) as e:
             return FlextResult.fail(f"Directory connection failed: {e}")

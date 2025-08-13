@@ -120,7 +120,7 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLdapApi) -> None:
                     print(f"     - Attributes: {entry.attributes}")
                 else:
                     print(
-                        f"   ❌ Missing: {ou_dn} - {search_result.error if search_result.is_failure else 'No results'}"
+                        f"   ❌ Missing: {ou_dn} - {search_result.error if search_result.is_failure else 'No results'}",
                     )
 
             print("✅ LDAP directory structure verification completed")
@@ -185,14 +185,14 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
                     base_dn="dc=flext,dc=local",
                     filter_expr="(objectClass=*)",
                     attributes=[
-                        "objectClass"
+                        "objectClass",
                     ],  # dn is always returned, don't request it as attribute
                     scope="subtree",
                 )
 
                 if wildcard_result.success and wildcard_result.data:
                     print(
-                        f"   ✅ Directory contains {len(wildcard_result.data)} total entries"
+                        f"   ✅ Directory contains {len(wildcard_result.data)} total entries",
                     )
                     print("   📝 Sample entries:")
                     for i, entry in enumerate(wildcard_result.data[:5]):  # Show first 5
@@ -209,7 +209,7 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
 
 
 async def _perform_user_search_validation(
-    ldap_service: FlextLdapApi, session_id: str
+    ldap_service: FlextLdapApi, session_id: str,
 ) -> None:
     """Perform REAL user search validation with different filters."""
     print("   🔍 VALIDATING SEARCH FUNCTIONALITY...")
@@ -260,7 +260,7 @@ async def _perform_user_search_validation(
         print(f"     - objectClass: {entry.attributes.get('objectClass', [])}")
     else:
         print(
-            f"   ❌ Base search failed: {base_result.error if base_result.is_failure else 'No data'}"
+            f"   ❌ Base search failed: {base_result.error if base_result.is_failure else 'No data'}",
         )
 
     print("   ✅ REAL search functionality validation completed")
@@ -300,7 +300,7 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
                 for group_entry in search_result.data:
                     cn = group_entry.attributes.get("cn", ["N/A"])[0]
                     desc = group_entry.attributes.get(
-                        "description", ["No description"]
+                        "description", ["No description"],
                     )[0]
                     print(f"     - {cn}: {desc} ({group_entry.dn})")
 
@@ -321,7 +321,7 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
 
                 if alt_result.success and alt_result.data:
                     print(
-                        f"   ✅ Found {len(alt_result.data)} groups with alternative object classes"
+                        f"   ✅ Found {len(alt_result.data)} groups with alternative object classes",
                     )
                 else:
                     print("   ℹ️  No groups with common object classes found")
@@ -335,7 +335,7 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
 
 
 async def _perform_group_search_validation(
-    ldap_service: FlextLdapApi, session_id: str
+    ldap_service: FlextLdapApi, session_id: str,
 ) -> None:
     """Perform REAL group search validation with different patterns."""
     print("   🔍 VALIDATING GROUP SEARCH FUNCTIONALITY...")
@@ -384,7 +384,7 @@ async def _perform_group_search_validation(
             base_dn="ou=groups,dc=flext,dc=local",
             filter_expr="(objectClass=*)",
             attributes=[
-                "objectClass"
+                "objectClass",
             ],  # dn is always returned, don't request it as attribute
             scope=scope,
         )

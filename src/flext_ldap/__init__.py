@@ -16,6 +16,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldap.api import FlextLdapApi, get_ldap_api
+from flext_ldap.constants import FlextLdapScope as _ConstantsLdapScope
+from flext_ldap.constants import (
+    FlextLdapProtocolConstants,
+    FlextLdapConnectionConstants,
+    FlextLdapAttributeConstants,
+    FlextLdapObjectClassConstants,
+)
 
 from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
 
@@ -23,7 +30,6 @@ from flext_ldap.models import (
     FlextLdapCreateUserRequest,
     FlextLdapDistinguishedName,
     FlextLdapEntry,
-    LDAPScope as FlextLdapScope,
     FlextLdapFilter,
     FlextLdapGroup,
     FlextLdapUser,
@@ -57,6 +63,11 @@ __all__ = [
     "FlextLdapCreateUserRequest",
     "FlextLdapDistinguishedName",
     "FlextLdapScope",
+    # Constants (selective export)
+    "FlextLdapProtocolConstants",
+    "FlextLdapConnectionConstants",
+    "FlextLdapAttributeConstants",
+    "FlextLdapObjectClassConstants",
     "FlextLdapFilter",
     # Services
     "FlextLdapService",
@@ -71,3 +82,6 @@ __all__ = [
     "flext_ldap_validate_attribute_value",
     "flext_ldap_sanitize_attribute_name",
 ]
+
+# Backward-compat exposed scope
+FlextLdapScope = _ConstantsLdapScope
