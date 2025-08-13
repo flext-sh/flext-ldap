@@ -139,8 +139,8 @@ class FlextLdapClient:
             if isinstance(conn, Connection):
                 try:
                     # Provide local typed callable for ldap3 unbind
-                    _unbind = cast("Callable[[], None]", conn.unbind)
-                    _unbind()
+                    unbind = cast("Callable[[], None]", conn.unbind)
+                    unbind()
                 except Exception as e:
                     # Ensure state is cleared even if unbind fails
                     logger.warning("LDAP unbind failed: %s", e)
@@ -303,7 +303,7 @@ class FlextLdapClient:
             return FlextResult.fail(f"Search failed: {e!s}")
 
     async def search(
-        self, *args: object, **kwargs: object
+        self, *args: object, **kwargs: object,
     ) -> FlextResult[list[LdapSearchResult]]:
         """Flexible search supporting legacy and modern signatures.
 
