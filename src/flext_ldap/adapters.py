@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
 from flext_core import FlextResult, create_ldap_config, get_logger
-from flext_ldap.typings import FlextTypes
 
 from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
 from flext_ldap.exceptions import (
@@ -39,6 +38,7 @@ if TYPE_CHECKING:
         P,
         R,
     )
+    from flext_ldap.typings import FlextTypes
 
 logger = get_logger(__name__)
 

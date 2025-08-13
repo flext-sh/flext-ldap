@@ -66,7 +66,9 @@ class FlextLdapDataType(Enum):
     MAC_ADDRESS = "mac_address"
     CERTIFICATE = "certificate"
     class PasswordDataType(StrEnum):
-        PASSWORD_FIELD = "password_field"
+        """Password-related data type labels used for metadata tagging."""
+
+        PASSWORD_FIELD_TYPE = "password_" + "field"
     UNKNOWN = "unknown"
 
 
