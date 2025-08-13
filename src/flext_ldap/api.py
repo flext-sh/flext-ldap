@@ -27,7 +27,7 @@ from flext_core import (
     get_logger,
 )
 from flext_ldif.api import FlextLdifAPI
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
 from flext_ldap.exceptions import FlextLdapConnectionError
@@ -78,8 +78,9 @@ class SearchParameters(BaseModel):
         description="Search timeout in seconds"
     )
 
-    @validator("search_filter")
-    def validate_filter(self, v: str) -> str:
+    @field_validator("search_filter")
+    @classmethod
+    def validate_filter(cls, v: str) -> str:
         """Validate search filter format."""
         if not v or not v.strip():
             msg = "Search filter cannot be empty"
@@ -100,8 +101,9 @@ class ConnectionParameters(BaseModel):
         description="Connection timeout"
     )
 
-    @validator("server_uri")
-    def validate_uri(self, v: str) -> str:
+    @field_validator("server_uri")
+    @classmethod
+    def validate_uri(cls, v: str) -> str:
         """Validate server URI format."""
         if not v or not v.strip():
             msg = "Server URI cannot be empty"
@@ -121,16 +123,18 @@ class GroupCreationParameters(BaseModel):
     description: str | None = Field(default=None, description="Group description")
     members: list[str] = Field(default_factory=list, description="Initial members")
 
-    @validator("dn")
-    def validate_dn(self, v: str) -> str:
+    @field_validator("dn")
+    @classmethod
+    def validate_dn(cls, v: str) -> str:
         """Validate DN format."""
         if not v or not v.strip():
             msg = "DN cannot be empty"
             raise ValueError(msg)
         return v.strip()
 
-    @validator("cn")
-    def validate_cn(self, v: str) -> str:
+    @field_validator("cn")
+    @classmethod
+    def validate_cn(cls, v: str) -> str:
         """Validate common name."""
         if not v or not v.strip():
             msg = "Common name cannot be empty"
@@ -152,8 +156,9 @@ class ExportParameters(BaseModel):
         description="Include operational attributes"
     )
 
-    @validator("base_dn")
-    def validate_base_dn(self, v: str) -> str:
+    @field_validator("base_dn")
+    @classmethod
+    def validate_base_dn(cls, v: str) -> str:
         """Validate base DN."""
         if not v or not v.strip():
             msg = "Base DN cannot be empty"
@@ -679,7 +684,7 @@ class FlextLdapApi:
 
     async def search(
         self,
-        session_id: str,
+        session_id: str | None = None,
         base_dn: str = "",
         search_filter: str = "(objectClass=*)",
         scope: str = "subtree",
@@ -710,7 +715,9 @@ class FlextLdapApi:
             size_limit=size_limit,
             time_limit=time_limit,
         )
-        return await self._search_service.perform_search(session_id, params)
+        # Allow tests to pass None for session to exercise graceful failure
+        effective_session = session_id or ""
+        return await self._search_service.perform_search(effective_session, params)
 
     # Entry Operations
 

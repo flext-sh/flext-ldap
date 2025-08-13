@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 from flext_core import FlextResult, get_logger
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from flext_ldap.constants import FlextLdapConnectionConstants
 from flext_ldap.infrastructure import FlextLdapClient
@@ -51,8 +51,9 @@ class DirectoryEntry(BaseModel):
         description="Entry attributes"
     )
 
-    @validator("dn")
-    def validate_dn(self, v: str) -> str:
+    @field_validator("dn")
+    @classmethod
+    def validate_dn(cls, v: str) -> str:
         """Validate DN format."""
         if not v or not v.strip():
             msg = "DN cannot be empty"
@@ -82,10 +83,16 @@ class OperationResult(BaseModel):
     data: object | None = Field(default=None, description="Operation result data")
     error_message: str | None = Field(default=None, description="Error message if failed")
 
-    @validator("error_message")
-    def validate_error_message(self, v: str | None, values: dict[str, object]) -> str | None:
+    @field_validator("error_message")
+    @classmethod
+    def validate_error_message(cls, v: str | None, info: object) -> str | None:
         """Ensure error message is provided when success is False."""
-        if not values.get("success", False) and not v:
+        try:
+            values = getattr(info, "data", {})  # pydantic v2 provides ValidationInfo
+            success_val = bool(values.get("success", False)) if isinstance(values, dict) else True
+        except Exception:
+            success_val = True
+        if not success_val and not v:
             return "Unknown operation error"
         return v
 
