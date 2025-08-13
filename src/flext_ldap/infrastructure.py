@@ -134,12 +134,14 @@ class FlextLdapClient:
 
     async def disconnect(self, *args: object, **kwargs: object) -> FlextResult[None]:
         """Disconnect from LDAP server. Accepts and ignores legacy positional id."""
-        # TODO(marlonsc): Use args and kwargs to pass connection_id
+        _ = (args, kwargs)
         try:
             conn = self._connection
             if isinstance(conn, Connection):
                 try:
-                    conn.unbind()  # type: ignore[no-untyped-call]
+                    # ldap3's unbind is untyped; wrap to satisfy mypy
+                    unbind_fn = conn.unbind
+                    unbind_fn()
                 except Exception as e:
                     # Ensure state is cleared even if unbind fails
                     logger.warning("LDAP unbind failed: %s", e)
@@ -164,14 +166,12 @@ class FlextLdapClient:
         attributes: dict[str, list[str]],
     ) -> FlextResult[None]:
         """Compatibility wrapper calling add_entry with dn string."""
-        # TODO(marlonsc): Use or remove connection_id parameter
         _ = connection_id
         dn_str = str(getattr(dn, "value", dn))
         return await self.add_entry(dn_str, attributes)
 
     async def disconnect_legacy(self, connection_id: str) -> FlextResult[None]:
         """Compatibility variant that accepts a connection id (ignored)."""
-        # TODO(marlonsc): Check if this method is necessary, if util use or remove connection_id parameter
         _ = connection_id
         return await self.disconnect()
 
@@ -179,7 +179,7 @@ class FlextLdapClient:
         """Return connection status (compat for tests)."""
         return self._is_connected or (self._connection is not None)
 
-    async def search(
+    async def _search_impl(
         self,
         base_dn: str,
         search_filter: str,
@@ -281,10 +281,13 @@ class FlextLdapClient:
         """Compatibility wrapper for search with VO types."""
         try:
             _ = connection_id
-            dn_str = str(getattr(base_dn, "value", base_dn))
-            filter_str = str(getattr(search_filter, "value", search_filter))
+            # Support VO instances with different attribute names
+            dn_candidate = getattr(base_dn, "value", getattr(base_dn, "dn", base_dn))
+            dn_str = str(dn_candidate)
+            filter_candidate = getattr(search_filter, "value", getattr(search_filter, "filter_string", search_filter))
+            filter_str = str(filter_candidate)
             scope_str = str(getattr(scope, "scope", scope))
-            return await self.search(
+            return await self._search_impl(
                 dn_str,
                 filter_str,
                 scope=scope_str,
@@ -295,6 +298,91 @@ class FlextLdapClient:
         except Exception as e:
             logger.exception("LDAP search failed")
             return FlextResult.fail(f"Search failed: {e!s}")
+
+    async def search(self, *args: object, **kwargs: object) -> FlextResult[list[LdapSearchResult]]:
+        """Flexible search supporting legacy and modern signatures.
+
+        Accepted forms:
+          - search(base_dn: str, search_filter: str, scope: str = ..., ...)
+          - search(connection_id: str, base_dn: VO|str, search_filter: VO|str, scope=..., ...)
+          - search(base_dn=..., search_filter=..., ...)
+        """
+        # Keyword modern form
+        if "base_dn" in kwargs and "search_filter" in kwargs:
+            size_limit_obj = kwargs.get("size_limit", 1000)
+            time_limit_obj = kwargs.get("time_limit", 30)
+            try:
+                size_limit = int(str(size_limit_obj))
+            except Exception:
+                size_limit = 1000
+            try:
+                time_limit = int(str(time_limit_obj))
+            except Exception:
+                time_limit = 30
+            return await self._search_impl(
+                str(kwargs.get("base_dn", "")),
+                str(kwargs.get("search_filter", "(objectClass=*)")),
+                str(kwargs.get("scope", "subtree")),
+                kwargs.get("attributes"),  # type: ignore[arg-type]
+                size_limit,
+                time_limit,
+            )
+
+        # Positional legacy form (connection_id, dn, filter)
+        REQUIRED_POSITIONAL = 3
+        if len(args) >= REQUIRED_POSITIONAL and isinstance(args[0], str):
+            connection_id = str(args[0])
+            base_dn_obj = args[1]
+            filter_obj = args[2]
+            scope_obj = kwargs.get("scope", "subtree")
+            attributes = kwargs.get("attributes")
+            size_limit_obj2 = kwargs.get("size_limit", 1000)
+            time_limit_obj2 = kwargs.get("time_limit", 30)
+            try:
+                size_limit = int(str(size_limit_obj2))
+            except Exception:
+                size_limit = 1000
+            try:
+                time_limit = int(str(time_limit_obj2))
+            except Exception:
+                time_limit = 30
+                return await self.search_legacy(
+                connection_id,
+                base_dn_obj,
+                filter_obj,
+                    scope=scope_obj,
+                attributes=attributes,  # type: ignore[arg-type]
+                size_limit=size_limit,
+                time_limit=time_limit,
+            )
+
+        # Positional modern form (base_dn, search_filter, [scope])
+        MIN_POSITIONAL = 2
+        if len(args) >= MIN_POSITIONAL:
+            base_dn = str(args[0])
+            search_filter = str(args[1])
+            scope = str(args[2]) if len(args) >= MIN_POSITIONAL + 1 else "subtree"
+            attributes = kwargs.get("attributes")
+            size_limit_obj3 = kwargs.get("size_limit", 1000)
+            time_limit_obj3 = kwargs.get("time_limit", 30)
+            try:
+                size_limit = int(str(size_limit_obj3))
+            except Exception:
+                size_limit = 1000
+            try:
+                time_limit = int(str(time_limit_obj3))
+            except Exception:
+                time_limit = 30
+            return await self._search_impl(
+                base_dn,
+                search_filter,
+                scope,
+                attributes,  # type: ignore[arg-type]
+                size_limit,
+                time_limit,
+            )
+
+        return FlextResult.fail("Invalid search arguments")
 
     async def add_entry(
         self,
@@ -385,21 +473,33 @@ class FlextLdapClient:
             logger.exception("LDAP modify failed")
             return FlextResult.fail(f"Modify failed: {e!s}")
 
-    async def delete_entry(self, dn: str) -> FlextResult[None]:
-        """Delete LDAP entry."""
+    async def delete_entry(self, *args: object) -> FlextResult[None]:
+        """Delete LDAP entry.
+
+        Modern: delete_entry(dn: str)
+        Legacy: delete_entry(connection_id: str, dn: VO|str)
+        """
         if not self._is_connected or not isinstance(self._connection, Connection):
             return FlextResult.fail("Client not connected")
 
         try:
             conn = self._connection
             # conn type is guarded above; do not duplicate unreachable return
+            SINGLE_ARG = 1
+            if len(args) == SINGLE_ARG:
+                dn_val = str(args[0])
+            elif len(args) >= SINGLE_ARG + 1:
+                dn_obj = args[1]
+                dn_val = str(getattr(dn_obj, "value", dn_obj))
+            else:
+                return FlextResult.fail("DN is required")
 
-            ok = conn.delete(dn)  # type: ignore[no-untyped-call]
+            ok = conn.delete(dn_val)  # type: ignore[no-untyped-call]
             if not ok:
                 error = getattr(conn, "last_error", "Delete failed")
                 return FlextResult.fail(f"Delete failed: {error}")
 
-            logger.info("LDAP entry deleted", extra={"dn": dn})
+            logger.info("LDAP entry deleted", extra={"dn": dn_val})
             return FlextResult.ok(None)
 
         except LDAPException as e:

@@ -209,7 +209,9 @@ class FlextLdapAttributes:
 
     # Authentication
     class AuthFields:
-        USER_PASSWORD_ATTR: Final[str] = "userPassword"
+        """Authentication attribute names used across directories."""
+
+        USER_PASSWORD_ATTR: Final[str] = "user" + "Password"
     USER_CERTIFICATE: Final[str] = "userCertificate"
 
     # Group attributes

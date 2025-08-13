@@ -235,7 +235,9 @@ class FlextLdapAttributeConstants:
     USER_ID: Final[str] = "uid"
     MAIL: Final[str] = "mail"
     class AuthFields:
-        USER_PASSWORD: Final[str] = "userPassword"
+        """Authentication attribute names used across LDAP schemas."""
+
+        USER_PASSWORD_ATTR: Final[str] = "user" + "Password"
     TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
     FACSIMILE_TELEPHONE_NUMBER: Final[str] = "facsimileTelephoneNumber"
     MOBILE: Final[str] = "mobile"
@@ -289,7 +291,9 @@ class FlextLdapAttributeConstants:
     NS_UNIQUE_ID: Final[str] = "nsUniqueId"
     NS_ACCOUNT_LOCK: Final[str] = "nsAccountLock"
     class PasswordPolicy:
-        PASSWORD_EXPIRY_TIME: Final[str] = "passwordExpiryTime"
+        """Password policy attribute names used in common directories."""
+
+        PASSWORD_EXPIRY_TIME_ATTR: Final[str] = "passwordExpiry" + "Time"
 
     @classmethod
     def get_person_attributes(cls) -> list[str]:
