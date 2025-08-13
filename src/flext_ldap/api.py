@@ -755,6 +755,44 @@ class FlextLdapApi:
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"User deletion error: {e}")
 
+    async def delete_entry(
+        self,
+        session_id: str,
+        dn: str | FlextLdapDistinguishedName,
+    ) -> FlextResult[bool]:
+        """Delete a generic LDAP entry.
+
+        This provides a high-level, generic delete operation complementing
+        delete_user(), enabling callers to remove any entry by DN using the
+        same SOLID, Railway-Oriented patterns used across this API.
+        """
+        try:
+            # Validate session exists
+            if session_id not in self._connections:
+                return FlextResult.fail(f"Session {session_id} not found")
+
+            # Normalize and validate DN
+            dn_str = str(dn) if isinstance(dn, FlextLdapDistinguishedName) else dn
+            dn_result = FlextLdapDistinguishedName.create(dn_str)
+            if not dn_result.is_success:
+                return FlextResult.fail(dn_result.error or "Invalid DN")
+            if dn_result.data is None:
+                return FlextResult.fail("Failed to create DN object")
+
+            # Execute deletion operation
+            connection_id = self._connections[session_id]
+            result = await self._client.delete_entry(connection_id, dn_result.data)
+
+            if result.is_success:
+                logger.info("Entry deleted", extra={"dn": dn_str})
+                # Convert FlextResult[None] to FlextResult[bool]
+                return FlextResult.ok(data=True)
+
+            return FlextResult.fail(result.error or "Delete failed")
+
+        except (RuntimeError, ValueError, TypeError) as e:
+            return FlextResult.fail(f"Entry deletion error: {e}")
+
     async def create_group(
         self,
         session_id: str,
