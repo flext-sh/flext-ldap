@@ -41,7 +41,7 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def ldap_session(
-    server_url: str, bind_dn: str | None = None, password: str | None = None
+    server_url: str, bind_dn: str | None = None, password: str | None = None,
 ) -> AsyncIterator[tuple[FlextLdapApi, str]]:
     """Enterprise LDAP session context manager.
 
@@ -77,7 +77,7 @@ async def ldap_session(
 
     except Exception as e:
         logger.exception(
-            "LDAP session failed", extra={"error": str(e), "session_id": session_id}
+            "LDAP session failed", extra={"error": str(e), "session_id": session_id},
         )
         raise
     finally:
@@ -205,7 +205,7 @@ async def demonstrate_async_patterns() -> None:
             )
 
             print(
-                f"✅ Concurrent searches: {successful_searches}/{len(tasks)} successful"
+                f"✅ Concurrent searches: {successful_searches}/{len(tasks)} successful",
             )
 
     except Exception as e:
@@ -222,7 +222,7 @@ async def demonstrate_error_recovery() -> None:
     FAILURE_ATTEMPTS = 2
 
     async def attempt_operation_with_retry(
-        operation_name: str, max_retries: int = 3
+        operation_name: str, max_retries: int = 3,
     ) -> str | None:
         """Retry pattern for LDAP operations."""
         for attempt in range(max_retries):

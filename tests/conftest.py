@@ -233,7 +233,7 @@ def ldap_test_config(docker_openldap_container: Container) -> dict[str, object]:
 
 
 async def _cleanup_ldap_entries_under_dn(
-    client: FlextLdapClient, connection_id: str, dn: str
+    client: FlextLdapClient, connection_id: str, dn: str,
 ) -> None:
     """Clean up LDAP entries under a DN to reduce nested control flow."""
     # Try to delete all entries under the specified DN
@@ -253,7 +253,7 @@ async def _cleanup_ldap_entries_under_dn(
         entry_dn = entry.get("dn", "")
         if entry_dn and entry_dn != dn:
             await client.delete_entry(
-                connection_id, FlextLdapDistinguishedName(dn=str(entry_dn))
+                connection_id, FlextLdapDistinguishedName(dn=str(entry_dn)),
             )
 
 
@@ -305,7 +305,7 @@ async def temporary_ldap_entry(
     try:
         # Create entry
         result = await client.create_entry(
-            connection_id, FlextLdapDistinguishedName(dn=dn), attributes
+            connection_id, FlextLdapDistinguishedName(dn=dn), attributes,
         )
         if not result.success:
             msg: str = f"Failed to create temporary entry {dn}: {result.error}"
@@ -331,7 +331,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 def pytest_collection_modifyitems(
-    config: pytest.Config, items: list[pytest.Item]
+    config: pytest.Config, items: list[pytest.Item],
 ) -> None:
     """Automatically mark integration tests based on file path."""
     for item in items:

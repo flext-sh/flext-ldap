@@ -55,7 +55,7 @@ class TestFlextLdapConverter:
         converter = FlextLdapConverter()
 
         result = converter.convert_to_dn(
-            "test@example.com", "ou=users,dc=example,dc=com"
+            "test@example.com", "ou=users,dc=example,dc=com",
         )
         assert "test" in result
         assert "ou=users,dc=example,dc=com" in result
@@ -117,7 +117,7 @@ class TestFlextLdapClient:
         client = FlextLdapClient()
 
         result = await client.search(
-            base_dn="dc=example,dc=com", search_filter="(objectClass=person)"
+            base_dn="dc=example,dc=com", search_filter="(objectClass=person)",
         )
         assert not result.is_success
         assert (
@@ -162,7 +162,7 @@ class TestFlextLdapClient:
 
         # Then search
         result = await client.search(
-            base_dn="dc=example,dc=com", search_filter="(objectClass=person)"
+            base_dn="dc=example,dc=com", search_filter="(objectClass=person)",
         )
 
         assert result.is_success
@@ -175,7 +175,7 @@ class TestFlextLdapClient:
 
     @patch("flext_ldap.infrastructure.Connection")
     def test_is_connected_after_mock_connection(
-        self, mock_connection_class: Mock
+        self, mock_connection_class: Mock,
     ) -> None:
         """Test connection status after mocked connection."""
         # Setup mock

@@ -48,9 +48,7 @@ class TestFlextLDAPConnectionManager:
     async def test_get_connection_basic(self) -> None:
         """Test basic connection acquisition."""
         manager = FlextLDAPConnectionManager()
-        result = await manager.get_connection(
-            "test-conn-1", "ldap://example.com"
-        )
+        result = await manager.get_connection("test-conn-1", "ldap://example.com")
         assert result.is_success
         assert result.data is not None
 

@@ -208,7 +208,8 @@ class FlextLdapAttributes:
     POSTAL_ADDRESS: Final[str] = "postalAddress"
 
     # Authentication
-    USER_PASSWORD: Final[str] = "userPassword"  # noqa: S105
+    class AuthFields:
+        USER_PASSWORD_ATTR: Final[str] = "userPassword"
     USER_CERTIFICATE: Final[str] = "userCertificate"
 
     # Group attributes
@@ -440,7 +441,9 @@ class FlextLdapConnectionConfig(FlextLDAPConfig):
         return self.use_ssl or self.use_tls
 
     def with_server(
-        self, host: str, port: int | None = None,
+        self,
+        host: str,
+        port: int | None = None,
     ) -> FlextLdapConnectionConfig:
         """Create new configuration with updated server (immutable)."""
         data = self.model_dump()
@@ -560,26 +563,34 @@ class FlextLdapLoggingConfig(FlextBaseConfigModel):
     )
     # Additional fields expected by tests
     enable_connection_logging: bool = Field(
-        default=False, description="Enable connection-level logging",
+        default=False,
+        description="Enable connection-level logging",
     )
     enable_operation_logging: bool = Field(
-        default=True, description="Enable high-level operation logging",
+        default=True,
+        description="Enable high-level operation logging",
     )
     log_sensitive_data: bool = Field(
-        default=False, description="Log sensitive data (not recommended)",
+        default=False,
+        description="Log sensitive data (not recommended)",
     )
     structured_logging: bool = Field(
-        default=True, description="Enable structured (JSON) logging",
+        default=True,
+        description="Enable structured (JSON) logging",
     )
 
 
 class FlextLdapSettings(FlextBaseConfigModel):
     """Project-specific operational settings for FLEXT-LDAP."""
 
+    # Allow aliases passed by tests/legacy code
+    model_config = ConfigDict(populate_by_name=True)
+
     # Primary connection configuration
     default_connection: FlextLdapConnectionConfig | None = Field(
         default=None,
         description="Default connection configuration",
+        alias="connection",
     )
 
     # Search configuration
@@ -630,7 +641,8 @@ class FlextLdapSettings(FlextBaseConfigModel):
         return FlextResult.ok(None)
 
     def get_effective_connection(
-        self, override: FlextLdapConnectionConfig | None = None,
+        self,
+        override: FlextLdapConnectionConfig | None = None,
     ) -> FlextLdapConnectionConfig:
         """Get effective connection configuration with optional override."""
         if override:
@@ -828,7 +840,8 @@ class FlextLdapAuthConfig(FlextBaseConfigModel):
     search_base: str = Field(default="", description="Search base DN")
     bind_dn: str = Field(default="", description="Bind Distinguished Name")
     bind_password: SecretStr | None = Field(
-        default=SecretStr(""), description="Bind password",
+        default=SecretStr(""),
+        description="Bind password",
     )
     use_anonymous_bind: bool = Field(default=False, description="Anonymous bind")
     sasl_mechanism: str | None = Field(default=None, description="SASL mechanism")

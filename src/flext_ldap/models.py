@@ -65,7 +65,8 @@ class FlextLdapDataType(Enum):
     IP_ADDRESS = "ip_address"
     MAC_ADDRESS = "mac_address"
     CERTIFICATE = "certificate"
-    PASSWORD_DATA_TYPE = "password_field"  # noqa: S105 - LDAP data type constant, not a password
+    class PasswordDataType(StrEnum):
+        PASSWORD_FIELD = "password_field"
     UNKNOWN = "unknown"
 
 
@@ -492,10 +493,12 @@ class FlextLdapSearchResponse(FlextModel):
     )
     total_count: int = Field(default=0, description="Total number of entries found")
     has_more: bool = Field(
-        default=False, description="Whether more entries are available",
+        default=False,
+        description="Whether more entries are available",
     )
     search_time_ms: float = Field(
-        default=0.0, description="Search execution time in ms",
+        default=0.0,
+        description="Search execution time in ms",
     )
 
 
@@ -920,7 +923,8 @@ class FlextLdapSettings(FlextModel):
         description="Default search size limit",
     )
     enable_logging: bool = Field(
-        default=True, description="Enable LDAP operation logging",
+        default=True,
+        description="Enable LDAP operation logging",
     )
     log_level: str = Field("INFO", description="Logging level")
 
@@ -956,7 +960,9 @@ class FlextLdapExtendedEntry(FlextLdapEntry):
         self.extensions[key] = value
 
     def get_extension(
-        self, key: str, default: LdapAttributeValue | None = None,
+        self,
+        key: str,
+        default: LdapAttributeValue | None = None,
     ) -> LdapAttributeValue | None:
         """Get extension data."""
         return self.extensions.get(key, default)

@@ -1,11 +1,6 @@
-"""FLEXT-LDAP Domain - Consolidated Domain Layer (DDD).
+"""FLEXT-LDAP Domain (DDD).
 
-🎯 CONSOLIDATES ALL domain_*.py FILES INTO SINGLE PEP8 MODULE
-
-This module provides domain-driven design patterns for FLEXT-LDAP.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Especificações de domínio simples para validação e regras de negócio.
 """
 
 from __future__ import annotations

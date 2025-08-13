@@ -32,7 +32,6 @@ if TYPE_CHECKING:
     from flext_ldap.types import (
         TLdapAttributes,
         TLdapAttributeValue,
-        TLdapDn,
         TLdapEntryData,
         TLdapSearchResult,
     )
@@ -42,7 +41,7 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-def is_ldap_dn(value: object) -> TypeGuard[TLdapDn]:
+def is_ldap_dn(value: object) -> TypeGuard[str]:
     """Type guard for LDAP Distinguished Name.
 
     Args:
@@ -224,7 +223,7 @@ def ensure_string_list(value: str | list[str]) -> list[str]:
     return [str(item) for item in value] if isinstance(value, list) else [str(value)]
 
 
-def ensure_ldap_dn(value: object) -> TLdapDn:
+def ensure_ldap_dn(value: object) -> str:
     """Ensure value is a valid LDAP DN.
 
     Args:

@@ -154,7 +154,7 @@ async def demonstrate_connection_handling() -> None:
     result = await service.connect(
         server_url="ldap://localhost:3389",
         bind_dn="cn=admin,dc=example,dc=com",
-        password="admin"
+        password="admin",
     )
 
     if result.is_failure:

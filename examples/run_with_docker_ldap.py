@@ -113,12 +113,8 @@ def start_openldap_container() -> bool:
 def stop_openldap_container() -> None:
     """Stop and remove OpenLDAP container."""
     try:
-        subprocess.run(
-            ["docker", "stop", "flext-ldap-example"],
-            check=False)
-        subprocess.run(
-            ["docker", "rm", "flext-ldap-example"],
-            check=False)
+        subprocess.run(["docker", "stop", "flext-ldap-example"], check=False)
+        subprocess.run(["docker", "rm", "flext-ldap-example"], check=False)
     except (RuntimeError, ValueError, TypeError):
         pass
 
@@ -132,7 +128,7 @@ async def run_examples_with_docker() -> None:
             "LDAP_TEST_BIND_DN": "cn=admin,dc=flext,dc=local",
             "LDAP_TEST_PASSWORD": "admin123",
             "LDAP_TEST_BASE_DN": "dc=flext,dc=local",
-        }
+        },
     )
 
     # Run the integrated example
@@ -167,9 +163,7 @@ async def main() -> None:
 if __name__ == "__main__":
     # Check if Docker is available
     try:
-        subprocess.run(
-            ["docker", "--version"],
-            check=True, capture_output=True)
+        subprocess.run(["docker", "--version"], check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         sys.exit(1)
 

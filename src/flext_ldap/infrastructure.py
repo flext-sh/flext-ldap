@@ -38,7 +38,7 @@ from ldap3 import (
     Server,
 )
 
-try:  # Some ldap3 builds do not expose SUBORDINATES
+try:  # Some ldap3 builds may not expose SUBORDINATES
     from ldap3 import SUBORDINATES as LDAP_SUBORDINATES  # type: ignore[attr-defined]
 except Exception:  # pragma: no cover - compatibility fallback
     LDAP_SUBORDINATES = SUBTREE
@@ -46,12 +46,8 @@ from ldap3.core.exceptions import LDAPException
 
 if TYPE_CHECKING:
     from flext_ldap.types import (
-        ErrorPatternData,
         LdapAttributeDict,
-        LdapConnectionConfig,
         LdapSearchResult,
-        SchemaData,
-        SecurityEventData,
     )
 
 logger = get_logger(__name__)
@@ -68,7 +64,7 @@ Connection = Ldap3Connection
 class FlextLdapClient:
     """Primary LDAP client for infrastructure operations."""
 
-    def __init__(self, config: LdapConnectionConfig | None = None) -> None:
+    def __init__(self, config: object | None = None) -> None:
         """Initialize LDAP client with configuration."""
         self._config = config
         self._connection: object | None = None
@@ -136,8 +132,9 @@ class FlextLdapClient:
             logger.exception("LDAP connection failed")
             return FlextResult.fail(f"Connection failed: {e!s}")
 
-    async def disconnect(self) -> FlextResult[None]:
-        """Disconnect from LDAP server."""
+    async def disconnect(self, *args: object, **kwargs: object) -> FlextResult[None]:
+        """Disconnect from LDAP server. Accepts and ignores legacy positional id."""
+        # TODO(marlonsc): Use args and kwargs to pass connection_id
         try:
             conn = self._connection
             if isinstance(conn, Connection):
@@ -151,16 +148,38 @@ class FlextLdapClient:
 
             logger.info("LDAP client disconnected")
             return FlextResult.ok(None)
-
         except (ConnectionError, OSError, RuntimeError) as e:
             logger.exception("LDAP disconnection failed")
             return FlextResult.fail(f"Disconnection failed: {e!s}")
+
+    # -------------------------------------------------------------------------
+    # Backward-compat facade methods expected by legacy/tests
+
+    # -------------------------------------------------------------------------
+
+    async def create_entry(
+        self,
+        connection_id: str,  # ignored for backward-compat
+        dn: object,
+        attributes: dict[str, list[str]],
+    ) -> FlextResult[None]:
+        """Compatibility wrapper calling add_entry with dn string."""
+        # TODO(marlonsc): Use or remove connection_id parameter
+        _ = connection_id
+        dn_str = str(getattr(dn, "value", dn))
+        return await self.add_entry(dn_str, attributes)
+
+    async def disconnect_legacy(self, connection_id: str) -> FlextResult[None]:
+        """Compatibility variant that accepts a connection id (ignored)."""
+        # TODO(marlonsc): Check if this method is necessary, if util use or remove connection_id parameter
+        _ = connection_id
+        return await self.disconnect()
 
     def is_connected(self) -> bool:
         """Return connection status (compat for tests)."""
         return self._is_connected or (self._connection is not None)
 
-    async def search(  # noqa: PLR0912
+    async def search(
         self,
         base_dn: str,
         search_filter: str,
@@ -175,17 +194,16 @@ class FlextLdapClient:
 
         try:
             conn = self._connection
-            if not isinstance(conn, Connection):
-                return FlextResult.fail("Invalid connection type")
+            # conn type is guarded above; do not duplicate unreachable return
 
             # Map scope string to ldap3 constant
             normalized_scope = (scope or "subtree").lower()
             ldap_scope: object | str = SUBTREE  # Default scope
-            if normalized_scope in {"base"}:
+            if normalized_scope == "base":
                 ldap_scope = BASE
             elif normalized_scope in {"one", "onelevel"}:
                 ldap_scope = LEVEL
-            elif normalized_scope in {"children"}:
+            elif normalized_scope == "children":
                 ldap_scope = LDAP_SUBORDINATES
             else:
                 ldap_scope = SUBTREE
@@ -227,7 +245,7 @@ class FlextLdapClient:
                                 ]
                                 for k, val in attributes_dict.items()
                             },  # type: ignore[dict-item]
-                        }
+                        },
                     )
                 except Exception as e:
                     logger.debug("Failed to parse LDAP entry: %s", e)
@@ -244,18 +262,37 @@ class FlextLdapClient:
             )
 
             return FlextResult.ok(results)
-
-        except LDAPException as e:
+        except Exception as e:
             logger.exception("LDAP search failed")
             return FlextResult.fail(f"Search failed: {e!s}")
-        except (
-            ConnectionError,
-            TimeoutError,
-            OSError,
-            TypeError,
-            ValueError,
-            AttributeError,
-        ) as e:
+
+    # Legacy signature for tests expecting connection_id and VO types
+    async def search_legacy(
+        self,
+        connection_id: str,  # ignored
+        base_dn: object,
+        search_filter: object,
+        *,
+        scope: object = "subtree",
+        attributes: list[str] | None = None,
+        size_limit: int = 1000,
+        time_limit: int = 30,
+    ) -> FlextResult[list[LdapSearchResult]]:
+        """Compatibility wrapper for search with VO types."""
+        try:
+            _ = connection_id
+            dn_str = str(getattr(base_dn, "value", base_dn))
+            filter_str = str(getattr(search_filter, "value", search_filter))
+            scope_str = str(getattr(scope, "scope", scope))
+            return await self.search(
+                dn_str,
+                filter_str,
+                scope=scope_str,
+                attributes=attributes,
+                size_limit=size_limit,
+                time_limit=time_limit,
+            )
+        except Exception as e:
             logger.exception("LDAP search failed")
             return FlextResult.fail(f"Search failed: {e!s}")
 
@@ -270,8 +307,7 @@ class FlextLdapClient:
 
         try:
             conn = self._connection
-            if not isinstance(conn, Connection):
-                return FlextResult.fail("Invalid connection type")
+            # conn type is guarded above; do not duplicate unreachable return
 
             # Ensure values are list[str]
             normalized_attrs: dict[str, list[str]] = {
@@ -315,15 +351,12 @@ class FlextLdapClient:
 
         try:
             conn = self._connection
-            if not isinstance(conn, Connection):
-                return FlextResult.fail("Invalid connection type")
-            # Build ldap3 modifications dict
             mods = {
                 attr: [
                     (
                         MODIFY_REPLACE,
                         [str(v) for v in (vals if isinstance(vals, list) else [vals])],
-                    )
+                    ),
                 ]
                 for attr, vals in modifications.items()
             }
@@ -359,8 +392,7 @@ class FlextLdapClient:
 
         try:
             conn = self._connection
-            if not isinstance(conn, Connection):
-                return FlextResult.fail("Invalid connection type")
+            # conn type is guarded above; do not duplicate unreachable return
 
             ok = conn.delete(dn)  # type: ignore[no-untyped-call]
             if not ok:
@@ -480,7 +512,7 @@ class FlextLdapCertificateValidationService:
         """
         try:
             _ = cert_data
-            # Implementation pending: certificate validation logic
+            # TODO(marlonsc): Implement certificate validation logic
             logger.debug("Certificate validated", extra={"hostname": hostname})
             return FlextResult.ok(None)
 
@@ -509,12 +541,12 @@ class FlextLdapSchemaDiscoveryService:
     def __init__(self, client: FlextLdapClient) -> None:
         """Initialize schema discovery service."""
         self._client = client
-        self._cached_schema: SchemaData = {}
+        self._cached_schema: dict[str, object] = {}
 
     async def discover_schema(
         self,
         base_dn: str = "",
-    ) -> FlextResult[SchemaData]:
+    ) -> FlextResult[dict[str, object]]:
         """Discover LDAP schema information.
 
         Args:
@@ -526,7 +558,7 @@ class FlextLdapSchemaDiscoveryService:
         """
         try:
             _ = base_dn
-            # Implementation pending: schema discovery logic
+            # TODO: Implementation pending: schema discovery logic
             schema_result = await self._client.search(
                 base_dn="cn=schema",
                 search_filter="(objectClass=subschema)",
@@ -539,7 +571,7 @@ class FlextLdapSchemaDiscoveryService:
                     f"Schema discovery failed: {schema_result.error}",
                 )
 
-            schema_info = {
+            schema_info: dict[str, object] = {
                 "object_classes": [],
                 "attribute_types": [],
                 "syntaxes": [],
@@ -547,17 +579,25 @@ class FlextLdapSchemaDiscoveryService:
             }
 
             # Cache schema for future use
-            self._cached_schema = schema_info  # type: ignore[assignment]
+            self._cached_schema = schema_info
 
+            object_class_list = schema_info.get("object_classes", [])
+            attribute_type_list = schema_info.get("attribute_types", [])
+            object_class_count = len(
+                object_class_list if isinstance(object_class_list, list) else [],
+            )
+            attribute_count = len(
+                attribute_type_list if isinstance(attribute_type_list, list) else [],
+            )
             logger.info(
                 "LDAP schema discovered",
                 extra={
-                    "object_class_count": len(schema_info["object_classes"]),
-                    "attribute_count": len(schema_info["attribute_types"]),
+                    "object_class_count": object_class_count,
+                    "attribute_count": attribute_count,
                 },
             )
 
-            return FlextResult.ok(schema_info)  # type: ignore[arg-type]
+            return FlextResult.ok(schema_info)
 
         except (
             ConnectionError,
@@ -577,7 +617,7 @@ class FlextLdapSchemaDiscoveryService:
     ) -> FlextResult[None]:
         """Validate entry against discovered schema."""
         try:
-            # Implementation pending: schema validation logic
+            # TODO: Implementation pending: schema validation logic
             logger.debug(
                 "Entry validated against schema",
                 extra={
@@ -603,7 +643,7 @@ class FlextLdapSecurityEventLogger:
 
     def __init__(self) -> None:
         """Initialize security event logger."""
-        self._events: list[SecurityEventData] = []
+        self._events: list[dict[str, object]] = []
 
     def log_authentication_attempt(
         self,
@@ -674,7 +714,7 @@ class FlextLdapSecurityEventLogger:
         start_time: datetime | None = None,
         end_time: datetime | None = None,
         event_type: str | None = None,
-    ) -> list[SecurityEventData]:
+    ) -> list[dict[str, object]]:
         """Get security events with optional filtering."""
         _ = start_time
         _ = end_time
@@ -682,10 +722,12 @@ class FlextLdapSecurityEventLogger:
 
         if event_type:
             filtered_events = [
-                e for e in filtered_events if e.get("event_type") == event_type
+                e
+                for e in filtered_events
+                if isinstance(e, dict) and e.get("event_type") == event_type
             ]
 
-        # Time filtering would be implemented here
+        # TODO: Time filtering would be implemented here
 
         return filtered_events
 
@@ -700,18 +742,18 @@ class FlextLdapErrorCorrelationService:
 
     def __init__(self) -> None:
         """Initialize error correlation service."""
-        self._error_patterns: list[ErrorPatternData] = []
-        self._error_history: list[ErrorPatternData] = []
+        self._error_patterns: list[dict[str, object]] = []
+        self._error_history: list[dict[str, object]] = []
 
     def correlate_error(
         self,
         error_message: str,
         operation: str,
-        context: ErrorPatternData | None = None,
-    ) -> FlextResult[ErrorPatternData]:
+        context: dict[str, object] | None = None,
+    ) -> FlextResult[dict[str, object]]:
         """Correlate error with known patterns."""
         try:
-            error_info = {
+            error_info: dict[str, object] = {
                 "error_message": error_message,
                 "operation": operation,
                 "context": context or {},
@@ -720,19 +762,19 @@ class FlextLdapErrorCorrelationService:
             }
 
             # Add to error history
-            self._error_history.append(error_info)  # type: ignore[arg-type]
+            self._error_history.append(error_info)
 
             # Look for patterns
             pattern_matches = self._find_error_patterns(error_message, operation)
 
-            correlation_result = {
+            correlation_result: dict[str, object] = {
                 "error_info": error_info,
                 "pattern_matches": pattern_matches,
                 "suggested_actions": self._get_suggested_actions(pattern_matches),
             }
 
             logger.warning("LDAP error correlated", extra=correlation_result)
-            return FlextResult.ok(correlation_result)  # type: ignore[arg-type]
+            return FlextResult.ok(correlation_result)
 
         except (TypeError, ValueError, AttributeError, RuntimeError) as e:
             logger.exception("Error correlation failed")
@@ -742,10 +784,10 @@ class FlextLdapErrorCorrelationService:
         self,
         error_message: str,
         operation: str,
-    ) -> list[ErrorPatternData]:
+    ) -> list[dict[str, object]]:
         """Find matching error patterns."""
         _ = operation
-        # Simulate pattern matching
+        # TODO: Create correct logic for pattern matching
         patterns = []
 
         if "authentication" in error_message.lower():
@@ -770,7 +812,7 @@ class FlextLdapErrorCorrelationService:
 
     def _get_suggested_actions(
         self,
-        pattern_matches: list[ErrorPatternData],
+        pattern_matches: list[dict[str, object]],
     ) -> list[str]:
         """Get suggested actions based on patterns."""
         actions: list[str] = []
@@ -810,7 +852,7 @@ class FlextLdapConnectionRepositoryImpl:
         server_uri: str,
         bind_dn: str | None = None,
         bind_password: str | None = None,
-    ) -> FlextResult[LdapConnectionConfig]:
+    ) -> FlextResult[dict[str, object]]:
         """Test LDAP connection."""
         try:
             # Create temporary client for testing
@@ -996,9 +1038,9 @@ class FlextLdapInfrastructure:
             logger.exception("Client creation failed")
             return FlextResult.fail("Client creation failed")
 
-    async def perform_health_check(self) -> FlextResult[LdapConnectionConfig]:
+    async def perform_health_check(self) -> FlextResult[dict[str, object]]:
         """Perform infrastructure health check."""
-        health_status = {
+        health_status: dict[str, object] = {
             "connection_manager": "healthy",
             "certificate_validator": "healthy",
             "security_logger": "healthy",
