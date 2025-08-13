@@ -65,10 +65,12 @@ class FlextLdapDataType(Enum):
     IP_ADDRESS = "ip_address"
     MAC_ADDRESS = "mac_address"
     CERTIFICATE = "certificate"
+
     class PasswordDataType(StrEnum):
         """Password-related data type labels used for metadata tagging."""
 
         PASSWORD_FIELD_TYPE = "password_" + "field"
+
     UNKNOWN = "unknown"
 
 

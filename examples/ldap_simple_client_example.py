@@ -24,6 +24,7 @@ async def main() -> None:
 
     # Example 1: Single server connection
     import os
+
     single_config = FlextLdapConnectionConfig(
         host="localhost",
         port=389,

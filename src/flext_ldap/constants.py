@@ -234,10 +234,12 @@ class FlextLdapAttributeConstants:
     # Person Attributes (RFC 4519)
     USER_ID: Final[str] = "uid"
     MAIL: Final[str] = "mail"
+
     class AuthFields:
         """Authentication attribute names used across LDAP schemas."""
 
         USER_PASSWORD_ATTR: Final[str] = "user" + "Password"
+
     TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
     FACSIMILE_TELEPHONE_NUMBER: Final[str] = "facsimileTelephoneNumber"
     MOBILE: Final[str] = "mobile"
@@ -290,6 +292,7 @@ class FlextLdapAttributeConstants:
     # 389 Directory Server
     NS_UNIQUE_ID: Final[str] = "nsUniqueId"
     NS_ACCOUNT_LOCK: Final[str] = "nsAccountLock"
+
     class PasswordPolicy:
         """Password policy attribute names used in common directories."""
 

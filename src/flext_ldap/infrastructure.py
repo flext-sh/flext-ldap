@@ -136,7 +136,8 @@ class FlextLdapClient:
         _ = (args, kwargs)
         try:
             conn = self._connection
-            if isinstance(conn, Connection):
+            # Use interface check to support patched/mocked connections in tests
+            if conn is not None and hasattr(conn, "unbind"):
                 try:
                     # Provide local typed callable for ldap3 unbind
                     unbind = cast("Callable[[], None]", conn.unbind)
@@ -188,7 +189,9 @@ class FlextLdapClient:
         time_limit: int = 30,
     ) -> FlextResult[list[LdapSearchResult]]:
         """Perform LDAP search operation."""
-        if not self._is_connected or not isinstance(self._connection, Connection):
+        if not self._is_connected or not (
+            self._connection is not None and hasattr(self._connection, "search")
+        ):
             return FlextResult.fail("Client not connected")
 
         try:
@@ -303,7 +306,9 @@ class FlextLdapClient:
             return FlextResult.fail(f"Search failed: {e!s}")
 
     async def search(
-        self, *args: object, **kwargs: object,
+        self,
+        *args: object,
+        **kwargs: object,
     ) -> FlextResult[list[LdapSearchResult]]:
         """Flexible search supporting legacy and modern signatures.
 
@@ -395,7 +400,9 @@ class FlextLdapClient:
         attributes: dict[str, list[str]],
     ) -> FlextResult[None]:
         """Add new LDAP entry."""
-        if not self._is_connected or not isinstance(self._connection, Connection):
+        if not self._is_connected or not (
+            self._connection is not None and hasattr(self._connection, "add")
+        ):
             return FlextResult.fail("Client not connected")
 
         try:
@@ -408,7 +415,7 @@ class FlextLdapClient:
                 for k, vals in attributes.items()
             }
 
-            ok = conn.add(dn, attributes=normalized_attrs)  # type: ignore[no-untyped-call]
+            ok = conn.add(dn, attributes=normalized_attrs)
             if not ok:
                 error = getattr(conn, "last_error", "Add failed")
                 return FlextResult.fail(f"Add failed: {error}")
@@ -439,7 +446,9 @@ class FlextLdapClient:
         modifications: dict[str, list[str]],
     ) -> FlextResult[None]:
         """Modify existing LDAP entry."""
-        if not self._is_connected or not isinstance(self._connection, Connection):
+        if not self._is_connected or not (
+            self._connection is not None and hasattr(self._connection, "modify")
+        ):
             return FlextResult.fail("Client not connected")
 
         try:
@@ -453,7 +462,7 @@ class FlextLdapClient:
                 ]
                 for attr, vals in modifications.items()
             }
-            ok = conn.modify(dn, changes=mods)  # type: ignore[no-untyped-call]
+            ok = conn.modify(dn, changes=mods)
             if not ok:
                 error = getattr(conn, "last_error", "Modify failed")
                 return FlextResult.fail(f"Modify failed: {error}")
@@ -484,7 +493,9 @@ class FlextLdapClient:
         Modern: delete_entry(dn: str)
         Legacy: delete_entry(connection_id: str, dn: VO|str)
         """
-        if not self._is_connected or not isinstance(self._connection, Connection):
+        if not self._is_connected or not (
+            self._connection is not None and hasattr(self._connection, "delete")
+        ):
             return FlextResult.fail("Client not connected")
 
         try:
@@ -499,7 +510,7 @@ class FlextLdapClient:
             else:
                 return FlextResult.fail("DN is required")
 
-            ok = conn.delete(dn_val)  # type: ignore[no-untyped-call]
+            ok = conn.delete(dn_val)
             if not ok:
                 error = getattr(conn, "last_error", "Delete failed")
                 return FlextResult.fail(f"Delete failed: {error}")

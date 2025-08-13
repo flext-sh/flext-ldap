@@ -102,19 +102,19 @@ Create `.vscode/settings.json`:
 
 ```json
 {
-    "python.defaultInterpreterPath": "./.venv/bin/python",
-    "python.linting.enabled": true,
-    "python.linting.ruffEnabled": true,
-    "python.linting.mypyEnabled": true,
-    "python.formatting.provider": "ruff",
-    "python.testing.pytestEnabled": true,
-    "python.testing.pytestArgs": ["tests", "--cov=src", "--cov-report=html"],
-    "files.exclude": {
-        "**/__pycache__": true,
-        "**/.pytest_cache": true,
-        "**/.mypy_cache": true,
-        "**/.ruff_cache": true
-    }
+  "python.defaultInterpreterPath": "./.venv/bin/python",
+  "python.linting.enabled": true,
+  "python.linting.ruffEnabled": true,
+  "python.linting.mypyEnabled": true,
+  "python.formatting.provider": "ruff",
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["tests", "--cov=src", "--cov-report=html"],
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    "**/.ruff_cache": true
+  }
 }
 ```
 

@@ -208,7 +208,8 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
 
 
 async def _perform_user_search_validation(
-    ldap_service: FlextLdapApi, session_id: str,
+    ldap_service: FlextLdapApi,
+    session_id: str,
 ) -> None:
     """Perform REAL user search validation with different filters."""
     print("   🔍 VALIDATING SEARCH FUNCTIONALITY...")
@@ -299,7 +300,8 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
                 for group_entry in search_result.data:
                     cn = group_entry.attributes.get("cn", ["N/A"])[0]
                     desc = group_entry.attributes.get(
-                        "description", ["No description"],
+                        "description",
+                        ["No description"],
                     )[0]
                     print(f"     - {cn}: {desc} ({group_entry.dn})")
 
@@ -334,7 +336,8 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
 
 
 async def _perform_group_search_validation(
-    ldap_service: FlextLdapApi, session_id: str,
+    ldap_service: FlextLdapApi,
+    session_id: str,
 ) -> None:
     """Perform REAL group search validation with different patterns."""
     print("   🔍 VALIDATING GROUP SEARCH FUNCTIONALITY...")
