@@ -18,7 +18,7 @@ This guide will help you set up a complete development environment for FLEXT-LDA
 
 ### FLEXT Workspace
 
-FLEXT-LDAP is part of the FLEXT ecosystem and requires the complete workspace:
+FLEXT-LDAP requires the complete workspace:
 
 ```bash
 # Clone FLEXT ecosystem repository
