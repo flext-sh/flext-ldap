@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# ruff: noqa: S106
 """Example usage of FlextLdapClient.
 
 This example demonstrates how to use the minimal LDAP infrastructure client

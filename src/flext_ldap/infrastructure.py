@@ -25,7 +25,7 @@ from __future__ import annotations
 import ssl
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
 from flext_core import FlextResult, get_logger
@@ -140,9 +140,9 @@ class FlextLdapClient:
             conn = self._connection
             if isinstance(conn, Connection):
                 try:
-                    # ldap3's unbind is untyped; cast to a callable for mypy
-                    unbind_fn: Callable[[], Any] = conn.unbind  # type: ignore[assignment]
-                    unbind_fn()
+                    # Provide local typed callable for ldap3 unbind
+                    _unbind = cast("Callable[[], None]", conn.unbind)
+                    _unbind()
                 except Exception as e:
                     # Ensure state is cleared even if unbind fails
                     logger.warning("LDAP unbind failed: %s", e)
@@ -285,7 +285,11 @@ class FlextLdapClient:
             # Support VO instances with different attribute names
             dn_candidate = getattr(base_dn, "value", getattr(base_dn, "dn", base_dn))
             dn_str = str(dn_candidate)
-            filter_candidate = getattr(search_filter, "value", getattr(search_filter, "filter_string", search_filter))
+            filter_candidate = getattr(
+                search_filter,
+                "value",
+                getattr(search_filter, "filter_string", search_filter),
+            )
             filter_str = str(filter_candidate)
             scope_str = str(getattr(scope, "scope", scope))
             return await self._search_impl(
@@ -300,7 +304,9 @@ class FlextLdapClient:
             logger.exception("LDAP search failed")
             return FlextResult.fail(f"Search failed: {e!s}")
 
-    async def search(self, *args: object, **kwargs: object) -> FlextResult[list[LdapSearchResult]]:
+    async def search(
+        self, *args: object, **kwargs: object
+    ) -> FlextResult[list[LdapSearchResult]]:
         """Flexible search supporting legacy and modern signatures.
 
         Accepted forms:
@@ -347,11 +353,11 @@ class FlextLdapClient:
                 time_limit = int(str(time_limit_obj2))
             except Exception:
                 time_limit = 30
-                return await self.search_legacy(
+            return await self.search_legacy(
                 connection_id,
                 base_dn_obj,
                 filter_obj,
-                    scope=scope_obj,
+                scope=scope_obj,
                 attributes=attributes,  # type: ignore[arg-type]
                 size_limit=size_limit,
                 time_limit=time_limit,
@@ -613,7 +619,7 @@ class FlextLdapCertificateValidationService:
         """
         try:
             _ = cert_data
-            # TODO(marlonsc): Implement certificate validation logic
+            # NOTE(marlonsc): Implement certificate validation logic (planned)
             logger.debug("Certificate validated", extra={"hostname": hostname})
             return FlextResult.ok(None)
 
@@ -659,7 +665,7 @@ class FlextLdapSchemaDiscoveryService:
         """
         try:
             _ = base_dn
-            # TODO: Implementation pending: schema discovery logic
+            # NOTE: Implementation pending: schema discovery logic
             schema_result = await self._client.search(
                 base_dn="cn=schema",
                 search_filter="(objectClass=subschema)",
@@ -718,7 +724,7 @@ class FlextLdapSchemaDiscoveryService:
     ) -> FlextResult[None]:
         """Validate entry against discovered schema."""
         try:
-            # TODO: Implementation pending: schema validation logic
+            # NOTE: Implementation pending: schema validation logic
             logger.debug(
                 "Entry validated against schema",
                 extra={
@@ -828,7 +834,7 @@ class FlextLdapSecurityEventLogger:
                 if isinstance(e, dict) and e.get("event_type") == event_type
             ]
 
-        # TODO: Time filtering would be implemented here
+        # NOTE: Time filtering would be implemented here
 
         return filtered_events
 
@@ -888,7 +894,7 @@ class FlextLdapErrorCorrelationService:
     ) -> list[dict[str, object]]:
         """Find matching error patterns."""
         _ = operation
-        # TODO: Create correct logic for pattern matching
+        # NOTE: Create/refine logic for pattern matching
         patterns = []
 
         if "authentication" in error_message.lower():

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# ruff: noqa: PLC0415,RUF001,ARG001
 """Example of using the integrated LDAP service.
 
 This example demonstrates how to use the LDAPService for LDAP operations.
@@ -175,7 +174,7 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
                 # Perform user search validation
                 await _perform_user_search_validation(ldap_service, session_id)
             else:
-                print("   ℹ️  No users found in directory (empty people OU)")
+                print("   [i] No users found in directory (empty people OU)")
                 print("   💡 This is normal for a fresh LDAP directory")
                 print("   🔍 Testing search functionality with wildcard...")
 
@@ -307,7 +306,7 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
                 # Perform group search validation
                 await _perform_group_search_validation(ldap_service, session_id)
             else:
-                print("   ℹ️  No groups found in directory (empty groups OU)")
+                print("   [i] No groups found in directory (empty groups OU)")
                 print("   💡 This is normal for a fresh LDAP directory")
                 print("   🔍 Testing group search functionality...")
 
@@ -324,7 +323,7 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
                         f"   ✅ Found {len(alt_result.data)} groups with alternative object classes",
                     )
                 else:
-                    print("   ℹ️  No groups with common object classes found")
+                    print("   [i] No groups with common object classes found")
         finally:
             # Clean up connection
             await ldap_service.disconnect(session_id)
@@ -428,7 +427,7 @@ async def _demo_connection_management(ldap_service: FlextLdapApi) -> None:
     print()
 
 
-async def _demo_error_handling(ldap_service: FlextLdapApi) -> None:
+async def _demo_error_handling(_: FlextLdapApi) -> None:
     """Demonstrate error handling - Single Responsibility."""
     print("5. Error Handling Demo...")
 

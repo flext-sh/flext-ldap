@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# ruff: noqa: ARG001,S106
 """Basic Usage Example for FLEXT LDAP.
 
 This example demonstrates the main functionality of the FLEXT LDAP library
@@ -13,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
+import os
 
 from flext_ldap import FlextLdapApi
 from flext_ldap.values import FlextLdapCreateUserRequest
@@ -50,7 +50,7 @@ async def _initialize_ldap_service() -> FlextLdapApi:
     return service
 
 
-async def _demo_create_primary_user(service: FlextLdapApi) -> None:
+async def _demo_create_primary_user(_service: FlextLdapApi) -> None:
     """Create primary test user - Single Responsibility."""
     print("2. Creating a test user...")
     user_request = FlextLdapCreateUserRequest(
@@ -67,7 +67,7 @@ async def _demo_create_primary_user(service: FlextLdapApi) -> None:
     print()
 
 
-async def _demo_search_user(service: FlextLdapApi) -> None:
+async def _demo_search_user(_service: FlextLdapApi) -> None:
     """Search for user - Single Responsibility."""
     print("3. Searching for the user...")
     # Simplified for compatibility - would normally use search() with session
@@ -76,7 +76,7 @@ async def _demo_search_user(service: FlextLdapApi) -> None:
     print()
 
 
-async def _demo_update_user(service: FlextLdapApi) -> None:
+async def _demo_update_user(_service: FlextLdapApi) -> None:
     """Update user information - Single Responsibility."""
     print("4. Updating user email...")
     # Split long line for readability
@@ -87,7 +87,7 @@ async def _demo_update_user(service: FlextLdapApi) -> None:
     print()
 
 
-async def _demo_list_users(service: FlextLdapApi, context: str) -> None:
+async def _demo_list_users(_service: FlextLdapApi, context: str) -> None:
     """List all users with context - Single Responsibility."""
     print(f"5. Listing all users {context}...")
     # Simplified for compatibility - would normally use search() with session
@@ -96,7 +96,7 @@ async def _demo_list_users(service: FlextLdapApi, context: str) -> None:
     print()
 
 
-async def _demo_create_additional_users(service: FlextLdapApi) -> None:
+async def _demo_create_additional_users(_service: FlextLdapApi) -> None:
     """Create additional test users - Single Responsibility."""
     print("6. Creating additional test users...")
     # Split long lines for readability
@@ -124,7 +124,7 @@ async def _demo_create_additional_users(service: FlextLdapApi) -> None:
     print()
 
 
-async def _demo_delete_user(service: FlextLdapApi) -> None:
+async def _demo_delete_user(_service: FlextLdapApi) -> None:
     """Delete user demonstration - Single Responsibility."""
     print("8. Deleting user bob...")
     # Simplified for compatibility - would normally use delete_user() with session
@@ -133,7 +133,7 @@ async def _demo_delete_user(service: FlextLdapApi) -> None:
     print()
 
 
-async def _demo_error_handling(service: FlextLdapApi) -> None:
+async def _demo_error_handling(_service: FlextLdapApi) -> None:
     """Demonstrate error handling - Single Responsibility."""
     print("10. Demonstrating error handling...")
     # Simplified for compatibility - would normally use proper error handling
@@ -154,7 +154,7 @@ async def demonstrate_connection_handling() -> None:
     result = await service.connect(
         server_url="ldap://localhost:3389",
         bind_dn="cn=admin,dc=example,dc=com",
-        password="admin",
+        password=os.getenv("LDAP_TEST_PASSWORD", ""),
     )
 
     if result.is_failure:

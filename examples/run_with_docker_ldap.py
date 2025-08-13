@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# ruff: noqa: S602,S607
 """Example of running FLEXT-LDAP examples with Docker OpenLDAP container.
 
 This script automatically starts an OpenLDAP container and runs examples against it.
@@ -15,6 +14,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -28,56 +28,53 @@ def start_openldap_container() -> bool:
     """Start OpenLDAP container for testing."""
     try:
         # Stop any existing container
+        docker_path = shutil.which("docker") or "docker"
         subprocess.run(
-            ["docker", "stop", "flext-ldap-example", "2>/dev/null"],
+            [docker_path, "stop", "flext-ldap-example"],
             check=False,
-            shell=True,
         )
         subprocess.run(
-            ["docker", "rm", "flext-ldap-example", "2>/dev/null"],
+            [docker_path, "rm", "flext-ldap-example"],
             check=False,
-            shell=True,
         )
 
         # Start new container
-        subprocess.run(
-            [
-                "docker",
-                "run",
-                "-d",
-                "--name",
-                "flext-ldap-example",
-                "-p",
-                "3389:389",
-                "-e",
-                "LDAP_ORGANISATION=FLEXT Example Org",
-                "-e",
-                "LDAP_DOMAIN=flext.local",
-                "-e",
-                "LDAP_ADMIN_PASSWORD=admin123",
-                "-e",
-                "LDAP_CONFIG_PASSWORD=config123",
-                "-e",
-                "LDAP_READONLY_USER=false",
-                "-e",
-                "LDAP_RFC2307BIS_SCHEMA=true",
-                "-e",
-                "LDAP_BACKEND=mdb",
-                "-e",
-                "LDAP_TLS=false",
-                "-e",
-                "LDAP_REMOVE_CONFIG_AFTER_SETUP=true",
-                "osixia/openldap:1.5.0",
-            ],
-            check=True,
-        )
+        cmd = [
+            docker_path,
+            "run",
+            "-d",
+            "--name",
+            "flext-ldap-example",
+            "-p",
+            "3389:389",
+            "-e",
+            "LDAP_ORGANISATION=FLEXT Example Org",
+            "-e",
+            "LDAP_DOMAIN=flext.local",
+            "-e",
+            "LDAP_ADMIN_PASSWORD=admin123",
+            "-e",
+            "LDAP_CONFIG_PASSWORD=config123",
+            "-e",
+            "LDAP_READONLY_USER=false",
+            "-e",
+            "LDAP_RFC2307BIS_SCHEMA=true",
+            "-e",
+            "LDAP_BACKEND=mdb",
+            "-e",
+            "LDAP_TLS=false",
+            "-e",
+            "LDAP_REMOVE_CONFIG_AFTER_SETUP=true",
+            "osixia/openldap:1.5.0",
+        ]
+        subprocess.run(cmd, check=True)
 
         # Wait for container to be ready
         for _attempt in range(30):
             try:
                 result = subprocess.run(
                     [
-                        "docker",
+                        docker_path,
                         "exec",
                         "flext-ldap-example",
                         "ldapsearch",
@@ -113,8 +110,9 @@ def start_openldap_container() -> bool:
 def stop_openldap_container() -> None:
     """Stop and remove OpenLDAP container."""
     try:
-        subprocess.run(["docker", "stop", "flext-ldap-example"], check=False)
-        subprocess.run(["docker", "rm", "flext-ldap-example"], check=False)
+        docker_path = shutil.which("docker") or "docker"
+        subprocess.run([docker_path, "stop", "flext-ldap-example"], check=False)
+        subprocess.run([docker_path, "rm", "flext-ldap-example"], check=False)
     except (RuntimeError, ValueError, TypeError):
         pass
 
@@ -163,7 +161,8 @@ async def main() -> None:
 if __name__ == "__main__":
     # Check if Docker is available
     try:
-        subprocess.run(["docker", "--version"], check=True, capture_output=True)
+        docker_path = shutil.which("docker") or "docker"
+        subprocess.run([docker_path, "--version"], check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         sys.exit(1)
 
