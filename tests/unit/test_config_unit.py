@@ -1,4 +1,9 @@
-"""Unit tests for FLEXT LDAP configuration."""
+"""Unit tests for FLEXT LDAP configuration.
+
+Renamed module to avoid import file mismatch with tests/test_config.py
+in the same package. Keep distinct module name to prevent pytest cache
+collisions.
+"""
 
 from __future__ import annotations
 
