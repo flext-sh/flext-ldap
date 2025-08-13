@@ -2,10 +2,6 @@
 
 **Type**: Infrastructure Library | **Status**: Production-Ready | **Dependencies**: flext-core, flext-cli, flext-ldif, ldap3
 
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
-[![FLEXT Framework](https://img.shields.io/badge/FLEXT-Core%20Integration-blue.svg)]()
-[![Clean Architecture](https://img.shields.io/badge/architecture-Clean%20%2B%20DDD-green.svg)]()
-
 LDAP operations library built with Clean Architecture patterns, providing directory services functionality with type-safe error handling through FlextResult patterns.
 
 ---
@@ -285,5 +281,3 @@ MIT License - See [LICENSE](LICENSE) file for details.
 - **[flext-observability](../flext-observability)**: Monitoring and observability
 
 ---
-
-_Part of the FLEXT ecosystem - Data integration platform_
