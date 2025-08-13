@@ -61,6 +61,7 @@ def start_openldap_container() -> bool:
         from os import getenv
 
         from ldap3 import ALL, Connection, Server
+
         server = Server("localhost", port=389, get_info=ALL)
         for _attempt in range(30):
             try:

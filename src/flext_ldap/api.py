@@ -27,7 +27,7 @@ from flext_core import (
     get_logger,
 )
 from flext_ldif.api import FlextLdifAPI
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
 from flext_ldap.exceptions import FlextLdapConnectionError
@@ -58,24 +58,24 @@ class SearchParameters(BaseModel):
     base_dn: str = Field(default="", description="Search base DN")
     search_filter: str = Field(
         default="(objectClass=*)",
-        description="LDAP search filter"
+        description="LDAP search filter",
     )
     scope: str = Field(default="subtree", description="Search scope")
     attributes: list[str] | None = Field(
         default=None,
-        description="Attributes to retrieve"
+        description="Attributes to retrieve",
     )
     size_limit: int = Field(
         default=1000,
         ge=1,
         le=10000,
-        description="Maximum entries to return"
+        description="Maximum entries to return",
     )
     time_limit: int = Field(
         default=30,
         ge=1,
         le=300,
-        description="Search timeout in seconds"
+        description="Search timeout in seconds",
     )
 
     @field_validator("search_filter")
@@ -98,7 +98,7 @@ class ConnectionParameters(BaseModel):
         default=30,
         ge=1,
         le=300,
-        description="Connection timeout"
+        description="Connection timeout",
     )
 
     @field_validator("server_uri")
@@ -149,11 +149,11 @@ class ExportParameters(BaseModel):
     base_dn: str = Field(..., description="Export base DN")
     search_filter: str = Field(
         default="(objectClass=*)",
-        description="Export filter"
+        description="Export filter",
     )
     include_operational: bool = Field(
         default=False,
-        description="Include operational attributes"
+        description="Include operational attributes",
     )
 
     @field_validator("base_dn")
@@ -175,7 +175,7 @@ class SearchServiceInterface:
     async def perform_search(
         self,
         session_id: str,
-        params: SearchParameters
+        params: SearchParameters,
     ) -> FlextResult[list[FlextLdapEntry]]:
         """Perform search operation."""
         raise NotImplementedError
@@ -186,7 +186,7 @@ class ConnectionServiceInterface:
 
     async def establish_connection(
         self,
-        params: ConnectionParameters
+        params: ConnectionParameters,
     ) -> FlextResult[str]:
         """Establish connection and return session ID."""
         raise NotImplementedError
@@ -201,16 +201,14 @@ class EntryServiceInterface:
 
     async def create_user_entry(
         self,
-        session_id: str,
-        request: FlextLdapCreateUserRequest
+        request: FlextLdapCreateUserRequest,
     ) -> FlextResult[FlextLdapUser]:
         """Create user entry."""
         raise NotImplementedError
 
     async def create_group_entry(
         self,
-        session_id: str,
-        params: GroupCreationParameters
+        params: GroupCreationParameters,
     ) -> FlextResult[FlextLdapGroup]:
         """Create group entry."""
         raise NotImplementedError
@@ -221,8 +219,7 @@ class ExportServiceInterface:
 
     async def export_to_ldif(
         self,
-        session_id: str,
-        params: ExportParameters
+        params: ExportParameters,
     ) -> FlextResult[str]:
         """Export search results to LDIF."""
         raise NotImplementedError
@@ -242,7 +239,7 @@ class FlextLdapSearchService(SearchServiceInterface):
     async def perform_search(
         self,
         session_id: str,
-        params: SearchParameters
+        params: SearchParameters,
     ) -> FlextResult[list[FlextLdapEntry]]:
         """Perform LDAP search with comprehensive validation."""
         try:
@@ -289,18 +286,26 @@ class FlextLdapSearchService(SearchServiceInterface):
         raw_list = raw_data if isinstance(raw_data, list) else []
         for raw_entry in raw_list:
             try:
-                if hasattr(raw_entry, "entry_dn") and hasattr(raw_entry, "entry_attributes_as_dict"):
+                if hasattr(raw_entry, "entry_dn") and hasattr(
+                    raw_entry,
+                    "entry_attributes_as_dict",
+                ):
                     entry = FlextLdapEntry(
                         id=str(uuid.uuid4()),
                         dn=raw_entry.entry_dn,
-                        attributes=self._normalize_attributes(raw_entry.entry_attributes_as_dict)
+                        attributes=self._normalize_attributes(
+                            raw_entry.entry_attributes_as_dict,
+                        ),
                     )
                     entries.append(entry)
             except Exception as e:
                 logger.warning(f"Failed to convert entry: {e}")
         return entries
 
-    def _normalize_attributes(self, raw_attributes: dict[str, object]) -> dict[str, object]:
+    def _normalize_attributes(
+        self,
+        raw_attributes: dict[str, object],
+    ) -> dict[str, object]:
         """Normalize attributes to consistent format."""
         normalized: dict[str, object] = {}
         for key, value in raw_attributes.items():
@@ -322,7 +327,7 @@ class FlextLdapConnectionService(ConnectionServiceInterface):
 
     async def establish_connection(
         self,
-        params: ConnectionParameters
+        params: ConnectionParameters,
     ) -> FlextResult[str]:
         """Establish LDAP connection and return session ID."""
         try:
@@ -379,8 +384,7 @@ class FlextLdapEntryService(EntryServiceInterface):
 
     async def create_user_entry(
         self,
-        session_id: str,
-        request: FlextLdapCreateUserRequest
+        request: FlextLdapCreateUserRequest,
     ) -> FlextResult[FlextLdapUser]:
         """Create user entry with comprehensive validation."""
         try:
@@ -402,7 +406,7 @@ class FlextLdapEntryService(EntryServiceInterface):
             # Add entry
             add_result = await self._client.add_entry(
                 dn=request.dn,
-                attributes=attributes
+                attributes=attributes,
             )
 
             if add_result.is_success:
@@ -424,8 +428,7 @@ class FlextLdapEntryService(EntryServiceInterface):
 
     async def create_group_entry(
         self,
-        session_id: str,
-        params: GroupCreationParameters
+        params: GroupCreationParameters,
     ) -> FlextResult[FlextLdapGroup]:
         """Create group entry with validation."""
         try:
@@ -447,7 +450,7 @@ class FlextLdapEntryService(EntryServiceInterface):
             # Add entry
             add_result = await self._client.add_entry(
                 dn=params.dn,
-                attributes=attributes
+                attributes=attributes,
             )
 
             if add_result.is_success:
@@ -497,8 +500,7 @@ class FlextLdapExportService(ExportServiceInterface):
 
     async def export_to_ldif(
         self,
-        session_id: str,
-        params: ExportParameters
+        params: ExportParameters,
     ) -> FlextResult[str]:
         """Export search results to LDIF format."""
         try:
@@ -510,7 +512,9 @@ class FlextLdapExportService(ExportServiceInterface):
             )
 
             if not search_result.is_success:
-                return FlextResult.fail(f"Search for export failed: {search_result.error}")
+                return FlextResult.fail(
+                    f"Search for export failed: {search_result.error}",
+                )
 
             # Convert to LDIF format
             ldif_content = self._convert_to_ldif(search_result.data)
@@ -561,12 +565,12 @@ class FlextLdapExportService(ExportServiceInterface):
 
     def _is_valid_ldap_entry(self, entry: object) -> bool:
         """Check if entry has required LDAP structure."""
-        return (
-            hasattr(entry, "entry_dn") and
-            hasattr(entry, "entry_attributes_as_dict")
-        )
+        return hasattr(entry, "entry_dn") and hasattr(entry, "entry_attributes_as_dict")
 
-    def _convert_attributes_to_ldif_lines(self, attributes: dict[str, object]) -> list[str]:
+    def _convert_attributes_to_ldif_lines(
+        self,
+        attributes: dict[str, object],
+    ) -> list[str]:
         """Convert attributes to LDIF attribute lines."""
         lines: list[str] = []
         for attr_name, attr_values in attributes.items():
@@ -613,7 +617,8 @@ class FlextLdapApi:
         server_uri: str,
         bind_dn: str | None = None,
         bind_password: str | None = None,
-        timeout: int = 30,
+        *,
+        connection_timeout: int = 30,
     ) -> FlextResult[str]:
         """Establish LDAP connection.
 
@@ -621,18 +626,24 @@ class FlextLdapApi:
             server_uri: LDAP server URI
             bind_dn: Bind DN for authentication
             bind_password: Bind password
-            timeout: Connection timeout in seconds
+            connection_timeout: Connection timeout in seconds
 
         Returns:
             FlextResult containing session ID or error
 
         """
-        params = ConnectionParameters(
-            server_uri=server_uri,
-            bind_dn=bind_dn,
-            bind_password=bind_password,
-            timeout=timeout,
-        )
+        try:
+            params = ConnectionParameters(
+                server_uri=server_uri,
+                bind_dn=bind_dn,
+                bind_password=bind_password,
+                timeout=connection_timeout,
+            )
+        except ValidationError as e:  # Gracefully propagate validation failures
+            return FlextResult.fail(
+                f"Invalid connection parameters: {e.errors()[0]['msg'] if e.errors() else str(e)}",
+            )
+
         return await self._connection_service.establish_connection(params)
 
     async def disconnect(self, session_id: str) -> FlextResult[bool]:
@@ -685,6 +696,7 @@ class FlextLdapApi:
     async def search(
         self,
         session_id: str | None = None,
+        session: str | None = None,
         base_dn: str = "",
         search_filter: str = "(objectClass=*)",
         scope: str = "subtree",
@@ -696,6 +708,7 @@ class FlextLdapApi:
 
         Args:
             session_id: Session ID from connection
+            session: Alternative session parameter for backward compatibility
             base_dn: Search base DN
             search_filter: LDAP search filter
             scope: Search scope (base, onelevel, subtree)
@@ -715,28 +728,27 @@ class FlextLdapApi:
             size_limit=size_limit,
             time_limit=time_limit,
         )
+        # Support both parameter names for backward compatibility
         # Allow tests to pass None for session to exercise graceful failure
-        effective_session = session_id or ""
+        effective_session = (session_id or session) or ""
         return await self._search_service.perform_search(effective_session, params)
 
     # Entry Operations
 
     async def create_user(
         self,
-        session_id: str,  # noqa: ARG002
         user_request: FlextLdapCreateUserRequest,
     ) -> FlextResult[FlextLdapUser]:
         """Create user entry.
 
         Args:
-            session_id: Session ID from connection
             user_request: User creation request
 
         Returns:
             FlextResult containing created user or error
 
         """
-        return await self._entry_service.create_user_entry(session_id, user_request)
+        return await self._entry_service.create_user_entry(user_request)
 
     async def create_group(
         self,
@@ -759,13 +771,17 @@ class FlextLdapApi:
             FlextResult containing created group or error
 
         """
+        # Validate session ID
+        if not session_id or not session_id.strip():
+            return FlextResult.fail("Session ID is required for group creation")
+
         params = GroupCreationParameters(
             dn=dn,
             cn=cn,
             description=description,
             members=members or [],
         )
-        return await self._entry_service.create_group_entry(session_id, params)
+        return await self._entry_service.create_group_entry(params)
 
     # Export Operations
 
@@ -775,6 +791,7 @@ class FlextLdapApi:
         output_file: Path,
         base_dn: str,
         search_filter: str = "(objectClass=*)",
+        *,
         include_operational: bool = False,
     ) -> FlextResult[str]:
         """Export search results to LDIF file.
@@ -790,13 +807,17 @@ class FlextLdapApi:
             FlextResult containing output file path or error
 
         """
+        # Validate session ID
+        if not session_id or not session_id.strip():
+            return FlextResult.fail("Session ID is required for export operations")
+
         params = ExportParameters(
             output_file=output_file,
             base_dn=base_dn,
             search_filter=search_filter,
             include_operational=include_operational,
         )
-        return await self._export_service.export_to_ldif(session_id, params)
+        return await self._export_service.export_to_ldif(params)
 
 
 # ==================== GLOBAL API INSTANCE ====================
@@ -815,7 +836,7 @@ def get_ldap_api(config: FlextLdapSettings | None = None) -> FlextLdapApi:
         Global FlextLdapApi instance
 
     """
-    global _global_ldap_api
+    global _global_ldap_api  # noqa: PLW0603
     if _global_ldap_api is None:
         _global_ldap_api = FlextLdapApi(config)
     return _global_ldap_api
@@ -823,8 +844,7 @@ def get_ldap_api(config: FlextLdapSettings | None = None) -> FlextLdapApi:
 
 def create_ldap_api(
     server_uri: str,
-    bind_dn: str | None = None,
-    bind_password: str | None = None,
+    *,
     use_ssl: bool = False,
     timeout: int = 30,
 ) -> FlextLdapApi:
@@ -832,8 +852,6 @@ def create_ldap_api(
 
     Args:
         server_uri: LDAP server URI
-        bind_dn: Bind DN for authentication
-        bind_password: Bind password
         use_ssl: Use SSL/TLS encryption
         timeout: Connection timeout
 

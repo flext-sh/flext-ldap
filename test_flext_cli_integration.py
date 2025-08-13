@@ -46,7 +46,8 @@ class FlextLdapCLI:
     @cli_enhanced
     @cli_validate_inputs
     async def list_users(
-        self, base_dn: str = "ou=users,dc=example,dc=com",
+        self,
+        base_dn: str = "ou=users,dc=example,dc=com",
     ) -> FlextResult[dict[str, Any]]:
         """Listar usuários LDAP usando flext-cli."""
         try:
@@ -93,7 +94,10 @@ class FlextLdapCLI:
     @cli_enhanced
     @cli_validate_inputs
     async def create_user(
-        self, username: str, full_name: str, email: str,
+        self,
+        username: str,
+        full_name: str,
+        email: str,
     ) -> FlextResult[dict[str, Any]]:
         """Criar usuário LDAP usando flext-cli."""
         try:
@@ -142,7 +146,9 @@ class FlextLdapCLI:
             return FlextResult.fail(f"Erro ao criar usuário: {e}")
 
     def format_and_display(
-        self, data: Any, format_type: OutputFormat = OutputFormat.JSON,
+        self,
+        data: Any,
+        format_type: OutputFormat = OutputFormat.JSON,
     ) -> None:
         """Formatar e exibir dados usando flext-cli."""
         cli_format_output(data, format_type, indent=2)

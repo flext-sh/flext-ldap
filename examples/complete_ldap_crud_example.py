@@ -63,8 +63,10 @@ class DockerLDAPContainer:
                 environment=env,
             )
         except Exception as e:
+
             def _raise_start_error(message: str) -> None:
                 raise RuntimeError(message)
+
             _raise_start_error(f"Failed to start container: {e}")
 
         print(f"✅ Container started: {self.container_name}")
@@ -85,8 +87,10 @@ class DockerLDAPContainer:
             except Exception:
                 time.sleep(1)
         else:
+
             def _raise_ready_error(message: str) -> None:
                 raise RuntimeError(message)
+
             _raise_ready_error("LDAP service did not become ready in time")
 
         # Create organizational units via LDAP
@@ -155,6 +159,7 @@ async def demonstrate_complete_crud_operations() -> None:
             # Handle via helper to satisfy linter rules
             def _handle_conn_err() -> None:
                 logger.error("Connection failed")
+
             _handle_conn_err()
             return
 
@@ -208,7 +213,10 @@ async def perform_create_groups(ldap_service: FlextLdapApi, session_id: str) -> 
         print(f"   Creating group: {group_data['cn']}")
 
         result = await ldap_service.create_group(
-            session_id, group_data["dn"], group_data["cn"], group_data["description"],
+            session_id,
+            group_data["dn"],
+            group_data["cn"],
+            group_data["description"],
         )
 
         if result.success:
@@ -327,7 +335,10 @@ async def perform_read_operations(ldap_service: FlextLdapApi, session_id: str) -
     print("✅ READ operations completed")
 
 
-async def perform_update_operations(ldap_service: FlextLdapApi, session_id: str) -> None:
+async def perform_update_operations(
+    ldap_service: FlextLdapApi,
+    session_id: str,
+) -> None:
     """Perform UPDATE operations."""
     print("\n🔄 === UPDATE OPERATIONS ===")
 
@@ -383,7 +394,10 @@ async def perform_update_operations(ldap_service: FlextLdapApi, session_id: str)
     print("✅ UPDATE operations completed")
 
 
-async def perform_delete_operations(ldap_service: FlextLdapApi, session_id: str) -> None:
+async def perform_delete_operations(
+    ldap_service: FlextLdapApi,
+    session_id: str,
+) -> None:
     """Perform DELETE operations."""
     print("\n🗑️  === DELETE OPERATIONS ===")
 
@@ -392,7 +406,8 @@ async def perform_delete_operations(ldap_service: FlextLdapApi, session_id: str)
     print(f"   Deleting user: {user_to_delete}")
 
     result = await ldap_service.delete_user(
-        session_id=session_id, user_dn=user_to_delete,
+        session_id=session_id,
+        user_dn=user_to_delete,
     )
 
     if result.success:

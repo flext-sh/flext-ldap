@@ -31,7 +31,7 @@ from flext_ldap.adapters import (
     FlextLdapDirectoryServiceInterface,
 )
 from flext_ldap.api import FlextLdapApi
-from flext_ldap.models import FlextLdapUser
+from flext_ldap.models import FlextLdapCreateUserRequest, FlextLdapUser
 from flext_ldap.types import (
     FlextLdapDirectoryConnectionProtocol,
     FlextLdapDirectoryEntryProtocol,
@@ -207,7 +207,7 @@ class FlextLdapApplicationService:
             logger.exception(error_msg)
             return FlextResult.fail(error_msg)
 
-    async def create_user(self, request: object) -> FlextResult[object]:
+    async def create_user(self, request: FlextLdapCreateUserRequest) -> FlextResult[FlextLdapUser]:
         """Create a new user using real LDAP infrastructure.
 
         No fallbacks or memory storage - uses real LDAP API.
@@ -223,7 +223,9 @@ class FlextLdapApplicationService:
                 return FlextResult.fail("No session ID available for operation")
 
             # Use real FlextLdapApi for user creation
-            result = await self._api.create_user(self._session_id, request)  # type: ignore[arg-type]
+            # Type assertion for MyPy - request is guaranteed to be correct type by method signature
+            user_request = request  # type: FlextLdapCreateUserRequest
+            result = await self._api.create_user(user_request)
 
             if result.is_success:
                 logger.info(
@@ -233,7 +235,7 @@ class FlextLdapApplicationService:
                         "dn": getattr(request, "dn", "unknown"),
                     },
                 )
-                return result  # type: ignore[return-value]
+                return result
 
             logger.error(
                 "Failed to create user",
@@ -242,7 +244,7 @@ class FlextLdapApplicationService:
                     "error": result.error,
                 },
             )
-            return result  # type: ignore[return-value]
+            return result
 
         except Exception as e:
             error_msg = f"User creation error: {e}"

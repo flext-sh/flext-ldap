@@ -48,7 +48,7 @@ class DirectoryEntry(BaseModel):
     dn: str = Field(..., description="Distinguished name")
     attributes: dict[str, list[str]] = Field(
         default_factory=dict,
-        description="Entry attributes"
+        description="Entry attributes",
     )
 
     @field_validator("dn")
@@ -71,7 +71,7 @@ class ConnectionConfig(BaseModel):
         default=FlextLdapConnectionConstants.DEFAULT_TIMEOUT,
         ge=1,
         le=300,
-        description="Connection timeout"
+        description="Connection timeout",
     )
     use_ssl: bool = Field(default=False, description="Use SSL/TLS")
 
@@ -81,7 +81,10 @@ class OperationResult(BaseModel):
 
     success: bool = Field(..., description="Operation success status")
     data: object | None = Field(default=None, description="Operation result data")
-    error_message: str | None = Field(default=None, description="Error message if failed")
+    error_message: str | None = Field(
+        default=None,
+        description="Error message if failed",
+    )
 
     @field_validator("error_message")
     @classmethod
@@ -89,7 +92,9 @@ class OperationResult(BaseModel):
         """Ensure error message is provided when success is False."""
         try:
             values = getattr(info, "data", {})  # pydantic v2 provides ValidationInfo
-            success_val = bool(values.get("success", False)) if isinstance(values, dict) else True
+            success_val = (
+                bool(values.get("success", False)) if isinstance(values, dict) else True
+            )
         except Exception:
             success_val = True
         if not success_val and not v:
@@ -137,7 +142,11 @@ class EntryServiceInterface(ABC):
         """Add directory entry."""
 
     @abstractmethod
-    async def modify_entry(self, dn: str, modifications: dict[str, object]) -> OperationResult:
+    async def modify_entry(
+        self,
+        dn: str,
+        modifications: dict[str, object],
+    ) -> OperationResult:
         """Modify directory entry."""
 
     @abstractmethod
@@ -155,7 +164,7 @@ class OperationExecutor:
         self,
         operation_type: str,
         validation_func: Callable[[], str | None],
-        operation_func: Callable[[], Coroutine[object, object, OperationResult]]
+        operation_func: Callable[[], Coroutine[object, object, OperationResult]],
     ) -> OperationResult:
         """Generic operation executor to eliminate code duplication."""
         try:
@@ -167,11 +176,11 @@ class OperationExecutor:
             # Execute operation
             return await operation_func()
 
-        except Exception as e:
-            logger.exception(f"{operation_type.title()} operation failed: {e}")
+        except Exception:
+            logger.exception(f"{operation_type.title()} operation failed")
             return OperationResult(
                 success=False,
-                error_message=f"{operation_type.title()} error: {e}"
+                error_message=f"{operation_type.title()} operation failed",
             )
 
 
@@ -189,7 +198,7 @@ class FlextLdapConnectionService(ConnectionServiceInterface, OperationExecutor):
         return await self.execute_operation(
             operation_type="connection",
             validation_func=lambda: self._validate_config(config),
-            operation_func=lambda: self._perform_connection(config)
+            operation_func=lambda: self._perform_connection(config),
         )
 
     async def terminate_connection(self) -> OperationResult:
@@ -198,7 +207,7 @@ class FlextLdapConnectionService(ConnectionServiceInterface, OperationExecutor):
             if not self.is_connected():
                 return OperationResult(
                     success=False,
-                    error_message="No active connection to terminate"
+                    error_message="No active connection to terminate",
                 )
 
             disconnect_result = await self._ldap_client.disconnect()
@@ -209,20 +218,19 @@ class FlextLdapConnectionService(ConnectionServiceInterface, OperationExecutor):
 
             return OperationResult(
                 success=False,
-                error_message=f"Disconnect failed: {disconnect_result.error}"
+                error_message=f"Disconnect failed: {disconnect_result.error}",
             )
 
-        except Exception as e:
-            logger.exception(f"Connection termination failed: {e}")
+        except Exception:
+            logger.exception("Connection termination failed")
             return OperationResult(
                 success=False,
-                error_message=f"Termination error: {e}"
+                error_message="Connection termination failed",
             )
 
     def is_connected(self) -> bool:
         """Check if connection is active."""
         return self._connection_id is not None
-
 
     def _validate_config(self, config: ConnectionConfig) -> str | None:
         """Validate connection configuration."""
@@ -231,7 +239,9 @@ class FlextLdapConnectionService(ConnectionServiceInterface, OperationExecutor):
         if not parsed.hostname:
             return "Invalid server URI: missing hostname"
 
-        if parsed.port and not (1 <= parsed.port <= 65535):
+        # RFC 1700 port range validation
+        max_port_number = 65535
+        if parsed.port and not (1 <= parsed.port <= max_port_number):
             return f"Invalid port: {parsed.port}"
 
         return None
@@ -252,13 +262,13 @@ class FlextLdapConnectionService(ConnectionServiceInterface, OperationExecutor):
 
             return OperationResult(
                 success=False,
-                error_message=f"LDAP connection failed: {connect_result.error}"
+                error_message=f"LDAP connection failed: {connect_result.error}",
             )
 
         except Exception as e:
             return OperationResult(
                 success=False,
-                error_message=f"Connection error: {e}"
+                error_message=f"Connection error: {e}",
             )
 
 
@@ -286,11 +296,11 @@ class FlextLdapSearchService(SearchServiceInterface):
             # Perform search operation
             return await self._perform_search(base_dn, search_filter, attributes)
 
-        except Exception as e:
-            logger.exception(f"Search operation failed: {e}")
+        except Exception:
+            logger.exception("Search operation failed")
             return OperationResult(
                 success=False,
-                error_message=f"Search error: {e}"
+                error_message="Search operation failed",
             )
 
     def _validate_search_params(self, base_dn: str, search_filter: str) -> str | None:
@@ -325,33 +335,44 @@ class FlextLdapSearchService(SearchServiceInterface):
 
             return OperationResult(
                 success=False,
-                error_message=f"Search failed: {search_result.error}"
+                error_message=f"Search failed: {search_result.error}",
             )
 
         except Exception as e:
             return OperationResult(
                 success=False,
-                error_message=f"Search execution error: {e}"
+                error_message=f"Search execution error: {e}",
             )
 
-    def _convert_search_results(self, raw_results: list[object] | None) -> list[DirectoryEntry]:
+    def _convert_search_results(
+        self,
+        raw_results: list[object] | None,
+    ) -> list[DirectoryEntry]:
         """Convert raw search results to DirectoryEntry models."""
         entries: list[DirectoryEntry] = []
         if not raw_results:
             return entries
         for raw_entry in raw_results:
             try:
-                if hasattr(raw_entry, "entry_dn") and hasattr(raw_entry, "entry_attributes_as_dict"):
+                if hasattr(raw_entry, "entry_dn") and hasattr(
+                    raw_entry,
+                    "entry_attributes_as_dict",
+                ):
                     entry = DirectoryEntry(
                         dn=raw_entry.entry_dn,
-                        attributes=self._normalize_attributes(raw_entry.entry_attributes_as_dict)
+                        attributes=self._normalize_attributes(
+                            raw_entry.entry_attributes_as_dict,
+                        ),
                     )
                     entries.append(entry)
             except Exception as e:
                 logger.warning(f"Failed to convert search result: {e}")
         return entries
 
-    def _normalize_attributes(self, raw_attributes: dict[str, object]) -> dict[str, list[str]]:
+    def _normalize_attributes(
+        self,
+        raw_attributes: dict[str, object],
+    ) -> dict[str, list[str]]:
         """Normalize attributes to consistent format."""
         normalized = {}
         for key, value in raw_attributes.items():
@@ -375,15 +396,19 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
         return await self.execute_operation(
             operation_type="add entry",
             validation_func=lambda: self._validate_entry(entry),
-            operation_func=lambda: self._perform_add_entry(entry)
+            operation_func=lambda: self._perform_add_entry(entry),
         )
 
-    async def modify_entry(self, dn: str, modifications: dict[str, object]) -> OperationResult:
+    async def modify_entry(
+        self,
+        dn: str,
+        modifications: dict[str, object],
+    ) -> OperationResult:
         """Modify directory entry with validation."""
         return await self.execute_operation(
             operation_type="modify entry",
             validation_func=lambda: self._validate_modify_params(dn, modifications),
-            operation_func=lambda: self._perform_modify_entry(dn, modifications)
+            operation_func=lambda: self._perform_modify_entry(dn, modifications),
         )
 
     async def delete_entry(self, dn: str) -> OperationResult:
@@ -391,7 +416,7 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
         return await self.execute_operation(
             operation_type="delete entry",
             validation_func=lambda: self._validate_dn_param(dn),
-            operation_func=lambda: self._perform_delete_entry(dn)
+            operation_func=lambda: self._perform_delete_entry(dn),
         )
 
     def _validate_entry(self, entry: DirectoryEntry) -> str | None:
@@ -407,7 +432,11 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
 
         return None
 
-    def _validate_modify_params(self, dn: str, modifications: dict[str, object]) -> str | None:
+    def _validate_modify_params(
+        self,
+        dn: str,
+        modifications: dict[str, object],
+    ) -> str | None:
         """Validate modify operation parameters."""
         if not dn or not dn.strip():
             return "DN cannot be empty"
@@ -428,7 +457,7 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
         try:
             add_result = await self._ldap_client.add_entry(
                 dn=entry.dn,
-                attributes=entry.attributes
+                attributes=entry.attributes,
             )
 
             if add_result.is_success:
@@ -436,16 +465,20 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
 
             return OperationResult(
                 success=False,
-                error_message=f"Add entry failed: {add_result.error}"
+                error_message=f"Add entry failed: {add_result.error}",
             )
 
         except Exception as e:
             return OperationResult(
                 success=False,
-                error_message=f"Add entry execution error: {e}"
+                error_message=f"Add entry execution error: {e}",
             )
 
-    async def _perform_modify_entry(self, dn: str, modifications: dict[str, object]) -> OperationResult:
+    async def _perform_modify_entry(
+        self,
+        dn: str,
+        modifications: dict[str, object],
+    ) -> OperationResult:
         """Perform the actual modify entry operation."""
         try:
             # Convert modifications to expected format
@@ -458,7 +491,7 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
 
             modify_result = await self._ldap_client.modify_entry(
                 dn=dn,
-                modifications=ldap_modifications
+                modifications=ldap_modifications,
             )
 
             if modify_result.is_success:
@@ -466,13 +499,13 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
 
             return OperationResult(
                 success=False,
-                error_message=f"Modify entry failed: {modify_result.error}"
+                error_message=f"Modify entry failed: {modify_result.error}",
             )
 
         except Exception as e:
             return OperationResult(
                 success=False,
-                error_message=f"Modify entry execution error: {e}"
+                error_message=f"Modify entry execution error: {e}",
             )
 
     async def _perform_delete_entry(self, dn: str) -> OperationResult:
@@ -485,15 +518,14 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
 
             return OperationResult(
                 success=False,
-                error_message=f"Delete entry failed: {delete_result.error}"
+                error_message=f"Delete entry failed: {delete_result.error}",
             )
 
         except Exception as e:
             return OperationResult(
                 success=False,
-                error_message=f"Delete entry execution error: {e}"
+                error_message=f"Delete entry execution error: {e}",
             )
-
 
 
 # ==================== FACADE/ADAPTER ====================
@@ -577,13 +609,13 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             result = await self._connection_service.establish_connection(config)
 
             if result.success:
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
 
             return FlextResult.fail(result.error_message or "Connection failed")
 
-        except Exception as e:
-            logger.exception(f"Directory service connection failed: {e}")
-            return FlextResult.fail(f"Connection error: {e}")
+        except Exception:
+            logger.exception("Directory service connection failed")
+            return FlextResult.fail("Directory service connection failed")
 
     def search_users(
         self,
@@ -594,12 +626,13 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         """Search for users using specialized search service."""
         try:
             # Use asyncio.run for sync interface compatibility
-            result = asyncio.run(
+            # Note: Suppressing FBT003 - bool positional is needed for asyncio.run
+            result = asyncio.run(  # noqa: FBT003
                 self._search_service.search_entries(
                     base_dn=base_dn or FlextLdapConnectionConstants.DEFAULT_BASE_DN,
                     search_filter=search_filter,
                     attributes=attributes,
-                )
+                ),
             )
 
             if result.success and result.data:
@@ -610,7 +643,10 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                     if hasattr(entry, "dn") and hasattr(entry, "attributes"):
                         protocol_entry = FlextLdapDirectoryEntry(
                             dn=entry.dn,
-                            attributes={k: v[0] if len(v) == 1 else v for k, v in entry.attributes.items()}
+                            attributes={
+                                k: v[0] if len(v) == 1 else v
+                                for k, v in entry.attributes.items()
+                            },
                         )
                         protocol_entries.append(protocol_entry)
 
@@ -618,9 +654,9 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
             return FlextResult.fail(result.error_message or "Search failed")
 
-        except Exception as e:
-            logger.exception(f"User search failed: {e}")
-            return FlextResult.fail(f"Search error: {e}")
+        except Exception:
+            logger.exception("User search failed")
+            return FlextResult.fail("User search failed")
 
 
 class FlextLdapDirectoryAdapter(FlextLdapDirectoryAdapterInterface):

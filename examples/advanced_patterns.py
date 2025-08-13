@@ -40,7 +40,9 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def ldap_session(
-    server_url: str, bind_dn: str | None = None, password: str | None = None,
+    server_url: str,
+    bind_dn: str | None = None,
+    password: str | None = None,
 ) -> AsyncIterator[tuple[FlextLdapApi, str]]:
     """Enterprise LDAP session context manager.
 
@@ -79,7 +81,8 @@ async def ldap_session(
 
     except Exception as e:
         logger.exception(
-            "LDAP session failed", extra={"error": str(e), "session_id": session_id},
+            "LDAP session failed",
+            extra={"error": str(e), "session_id": session_id},
         )
         raise
     finally:
@@ -224,12 +227,15 @@ async def demonstrate_error_recovery() -> None:
     failure_attempts = 2
 
     async def attempt_operation_with_retry(
-        operation_name: str, max_retries: int = 3,
+        operation_name: str,
+        max_retries: int = 3,
     ) -> str | None:
         """Retry pattern for LDAP operations."""
+
         def _simulate_failure(op_name: str) -> None:
             msg: str = f"Simulated failure for {op_name}"
             raise ConnectionError(msg)
+
         for attempt in range(max_retries):
             try:
                 logger.debug(
