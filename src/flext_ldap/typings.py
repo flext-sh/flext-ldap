@@ -13,12 +13,10 @@ from flext_core.typings import E, F, FlextTypes as CoreFlextTypes, U, V
 from flext_ldap.types import (
     LdapAttributeDict,
     LdapAttributeValue,
-    LdapEntry,
     LdapSearchResult,
-    LdapUser,
-    T,
     P,
     R,
+    T,
 )
 
 
@@ -27,17 +25,15 @@ class FlextTypes(CoreFlextTypes):
 
 
 __all__ = [
-    "FlextTypes",
-    "U",
-    "V",
     "E",
     "F",
+    "FlextTypes",
     "LdapAttributeDict",
     "LdapAttributeValue",
-    "LdapEntry",
     "LdapSearchResult",
-    "LdapUser",
-    "T",
     "P",
     "R",
+    "T",
+    "U",
+    "V",
 ]

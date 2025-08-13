@@ -15,7 +15,6 @@ import concurrent.futures
 from abc import ABC, abstractmethod
 from asyncio import AbstractEventLoop
 from typing import TYPE_CHECKING, cast
-from flext_ldap.typings import FlextTypes
 from urllib.parse import urlparse
 
 from flext_core import FlextResult, create_ldap_config, get_logger
@@ -31,6 +30,9 @@ from flext_ldap.types import (
     FlextLdapDirectoryConnectionProtocol,
     FlextLdapDirectoryEntryProtocol,
 )
+
+if TYPE_CHECKING:
+    from flext_ldap.typings import FlextTypes
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable

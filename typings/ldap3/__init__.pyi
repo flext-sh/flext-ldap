@@ -3,6 +3,7 @@ ALL: int
 SUBTREE: int
 LEVEL: int
 BASE: int
+SUBORDINATES: int
 MOCK_SYNC: str
 SIMPLE: str
 
@@ -12,7 +13,7 @@ MODIFY_DELETE: int
 MODIFY_REPLACE: int
 
 # Exceptions
-class LdapException(Exception): ...
+class LdapError(Exception): ...
 
 # Classes
 class Server:

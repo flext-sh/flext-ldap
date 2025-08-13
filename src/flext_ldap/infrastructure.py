@@ -23,29 +23,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ssl
-from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
 from flext_core import FlextResult, get_logger
-from ldap3 import (
-    ALL_ATTRIBUTES,
-    BASE,
-    LEVEL,
-    MODIFY_REPLACE,
-    SUBTREE,
-    Connection as Ldap3Connection,
-    Server,
-)
-
-try:  # Some ldap3 builds may not expose SUBORDINATES
-    from ldap3 import SUBORDINATES as LDAP_SUBORDINATES  # type: ignore[attr-defined]
-except Exception:  # pragma: no cover - compatibility fallback
-    LDAP_SUBORDINATES = SUBTREE
+from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, MODIFY_REPLACE, SUBTREE, Connection as Ldap3Connection, Server
 from ldap3.core.exceptions import LDAPException
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from flext_ldap.types import (
         LdapAttributeDict,
         LdapSearchResult,
