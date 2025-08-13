@@ -21,8 +21,7 @@ import docker
 from flext_core import get_logger
 from ldap3 import ALL, Connection, Server
 
-from flext_ldap import FlextLdapApi
-from flext_ldap.values import FlextLdapCreateUserRequest
+from flext_ldap import FlextLdapApi, FlextLdapCreateUserRequest
 
 logger = get_logger(__name__)
 

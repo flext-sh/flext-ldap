@@ -27,10 +27,10 @@ from flext_core import get_logger
 
 from flext_ldap import (
     FlextLdapApi,
-    FlextLdapSearchConfig,
-    FlextLdapSettings,
+    FlextLdapDistinguishedName,
 )
-from flext_ldap.values import FlextLdapDistinguishedName, FlextLdapFilterValue
+from flext_ldap.config import FlextLdapSearchConfig, FlextLdapSettings
+from flext_ldap.models import FlextLdapFilterValue
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -102,7 +102,7 @@ async def demonstrate_value_objects() -> None:
     try:
         # 1. Distinguished Names
         dn = FlextLdapDistinguishedName(value="cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com")
-        validation_result = dn.validate_domain_rules()
+        validation_result = dn.validate_business_rules()
 
         print(f"✅ DN validation: {'PASS' if validation_result.success else 'FAIL'}")
         print(f"   DN: {dn.value}")

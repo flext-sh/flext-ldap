@@ -11,7 +11,7 @@ from uuid import uuid4
 import pytest
 
 from flext_ldap.api import FlextLdapApi, get_ldap_api
-from flext_ldap.config import FlextLdapConnectionConfig
+from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
 from flext_ldap.models import FlextLdapCreateUserRequest, FlextLdapGroup, FlextLdapUser
 
 
@@ -33,10 +33,11 @@ class TestFlextLdapApiIntegration:
     def test_api_with_config(self) -> None:
         """Test API initialization with custom configuration."""
         config = FlextLdapConnectionConfig(
-            host="test.example.com",
+            server="test.example.com",
             port=389,
         )
-        api = FlextLdapApi(config=config)
+        settings = FlextLdapSettings(default_connection=config)
+        api = FlextLdapApi(config=settings)
         assert api is not None
 
     @pytest.mark.asyncio

@@ -26,6 +26,7 @@ class TestFlextLdapDistinguishedName:
         """Test DN factory method with valid input."""
         result = FlextLdapDistinguishedName.create("cn=test,dc=example,dc=com")
         assert result.is_success
+        assert result.data is not None
         assert result.data.value == "cn=test,dc=example,dc=com"
 
     def test_dn_factory_method_with_empty_string(self) -> None:
@@ -58,6 +59,7 @@ class TestFlextLdapFilter:
         """Test filter factory method with valid input."""
         result = FlextLdapFilter.create("(objectClass=person)")
         assert result.is_success
+        assert result.data is not None
         assert result.data.value == "(objectClass=person)"
 
     def test_filter_complex_filter(self) -> None:
@@ -121,8 +123,7 @@ class TestFlextLdapUser:
             uid="test",
             cn="Test User",
             sn="User",
-            locked=True,
-        )
+        ).lock_account()
         unlocked_user = user.unlock_account()
         assert unlocked_user.is_active()
 

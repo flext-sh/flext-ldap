@@ -29,7 +29,7 @@ class TestLdapE2EOperations:
 
         # Test configuration
         FlextLdapConnectionConfig(
-            host="localhost",
+            server="localhost",
             port=3389,  # Test port for Docker LDAP server
         )
 
@@ -113,10 +113,10 @@ class TestLdapE2EOperations:
         """Test API configuration integration."""
         # Test with custom configuration
         FlextLdapConnectionConfig(
-            host="test.ldap.server",
+            server="test.ldap.server",
             port=636,
             use_ssl=True,
-            timeout_seconds=60,
+            timeout=60,
         )
 
         # Create API with configuration

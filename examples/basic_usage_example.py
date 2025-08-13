@@ -14,8 +14,7 @@ from __future__ import annotations
 import asyncio
 import os
 
-from flext_ldap import FlextLdapApi
-from flext_ldap.values import FlextLdapCreateUserRequest
+from flext_ldap import FlextLdapApi, FlextLdapCreateUserRequest
 
 
 async def demonstrate_basic_operations() -> None:
