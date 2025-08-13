@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: TRY301,S603,S607,S108,ANN001,RUF001
 """Complete LDAP CRUD Operations Example with Docker Container.
 
 This example demonstrates COMPLETE LDAP functionality:
@@ -139,7 +140,7 @@ async def demonstrate_complete_crud_operations() -> None:
     # Connection parameters
     server_url = "ldap://localhost:3389"
     bind_dn = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-    password = "REDACTED_LDAP_BIND_PASSWORD123"
+    password = "REDACTED_LDAP_BIND_PASSWORD123"  # noqa: S105 - Example password for documentation
 
     try:
         # Connect to LDAP

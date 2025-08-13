@@ -1,61 +1,120 @@
-"""FLEXT LDAP Domain - PEP8 compliant domain layer.
+"""FLEXT-LDAP Domain - Consolidated Domain Layer (DDD).
 
-Consolidates all LDAP domain components into a single, well-organized module
-following PEP8 naming standards and flext-core domain patterns. This module
-provides the domain layer implementation for LDAP operations.
+🎯 CONSOLIDATES ALL domain_*.py FILES INTO SINGLE PEP8 MODULE
 
-Originally consolidated from:
-- domain_models.py: Domain models and value objects
-- domain_entities.py: Domain entities and aggregates
-- domain_events.py: Domain events and event handlers
-- domain_exceptions.py: Domain-specific exceptions
-- domain_interfaces.py: Domain service interfaces
-- domain_ports.py: Domain ports for Clean Architecture
-- domain_repositories.py: Repository abstractions
-- domain_security.py: Domain security patterns
-- domain_specifications.py: Domain specifications and rules
+This module provides domain-driven design patterns for FLEXT-LDAP.
 
-Architecture:
-    - Extends flext-core domain patterns for consistency
-    - Implements Domain-Driven Design (DDD) patterns
-    - Provides Clean Architecture domain layer
-    - Follows SOLID principles and domain modeling
-
-Key Features:
-    - Domain entities with rich business logic
-    - Value objects with immutability
-    - Domain events for cross-aggregate communication
-    - Specifications for business rules
-    - Repository abstractions for data access
-    - Domain services for complex operations
-
-Copyright (c) 2025 FLEXT Contributors
+Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from flext_core import get_logger
+from abc import ABC, abstractmethod
 
-logger = get_logger(__name__)
+MIN_PASSWORD_LENGTH = 6
 
-# All domain classes are properly imported from their respective modules below
-# No need for local fallback classes
 
-# Domain Models
+class FlextLdapSpecification(ABC):
+    """Base specification for LDAP domain validation."""
 
-# Domain Entities
+    @abstractmethod
+    def is_satisfied_by(self, candidate: object) -> bool:
+        """Check if specification is satisfied."""
+        ...
 
-# Domain Events
 
-# Domain Exceptions
+class FlextLdapUserSpecification(FlextLdapSpecification):
+    """Specification for LDAP user validation."""
 
-# Domain Interfaces
+    def is_satisfied_by(self, candidate: object) -> bool:
+        """Check if candidate is valid LDAP user."""
+        return hasattr(candidate, "uid") and hasattr(candidate, "dn")
 
-# Domain Ports
 
-# Domain Repositories
+class FlextLdapGroupSpecification(FlextLdapSpecification):
+    """Specification for LDAP group validation."""
 
-# Domain Security
+    def is_satisfied_by(self, candidate: object) -> bool:
+        """Check if candidate is valid LDAP group."""
+        return hasattr(candidate, "cn") and hasattr(candidate, "members")
 
-# Domain Specifications
+
+class FlextLdapDistinguishedNameSpecification(FlextLdapSpecification):
+    """Specification for DN validation."""
+
+    def is_satisfied_by(self, candidate: object) -> bool:
+        """Check if candidate is valid DN."""
+        if not isinstance(candidate, str):
+            return False
+        return "=" in candidate and "," in candidate
+
+
+class FlextLdapActiveUserSpecification(FlextLdapSpecification):
+    """Specification for active user validation."""
+
+    def is_satisfied_by(self, candidate: object) -> bool:
+        """Check if user is active."""
+        return hasattr(candidate, "is_active") and candidate.is_active()
+
+
+class FlextLdapValidPasswordSpecification(FlextLdapSpecification):
+    """Specification for password validation."""
+
+    def is_satisfied_by(self, candidate: object) -> bool:
+        """Check if password is valid."""
+        if not isinstance(candidate, str):
+            return False
+        return len(candidate) >= MIN_PASSWORD_LENGTH
+
+
+class FlextLdapEntrySpecification(FlextLdapSpecification):
+    """Specification for LDAP entry validation."""
+
+    def is_satisfied_by(self, candidate: object) -> bool:
+        """Check if candidate is valid LDAP entry."""
+        return hasattr(candidate, "dn") and hasattr(candidate, "object_classes")
+
+
+class FlextLdapValidEntrySpecification(FlextLdapSpecification):
+    """Specification for valid entry validation."""
+
+    def is_satisfied_by(self, candidate: object) -> bool:
+        """Check if entry is valid."""
+        return (
+            hasattr(candidate, "validate_domain_rules")
+            and candidate.validate_domain_rules().is_success
+        )
+
+
+class FlextLdapFilterSpecification(FlextLdapSpecification):
+    """Specification for LDAP filter validation."""
+
+    def is_satisfied_by(self, candidate: object) -> bool:
+        """Check if filter is valid."""
+        if not isinstance(candidate, str):
+            return False
+        return candidate.startswith("(") and candidate.endswith(")")
+
+
+class FlextLdapNonEmptyGroupSpecification(FlextLdapSpecification):
+    """Specification for non-empty group validation."""
+
+    def is_satisfied_by(self, candidate: object) -> bool:
+        """Check if group is not empty."""
+        return hasattr(candidate, "members") and len(candidate.members) > 0
+
+
+# Export all domain classes
+__all__ = [
+    "FlextLdapActiveUserSpecification",
+    "FlextLdapDistinguishedNameSpecification",
+    "FlextLdapEntrySpecification",
+    "FlextLdapFilterSpecification",
+    "FlextLdapGroupSpecification",
+    "FlextLdapNonEmptyGroupSpecification",
+    "FlextLdapSpecification",
+    "FlextLdapUserSpecification",
+    "FlextLdapValidEntrySpecification",
+    "FlextLdapValidPasswordSpecification",
+]

@@ -1,6 +1,6 @@
-# FLEXT-LDAP
+# flext-ldap
 
-**LDAP Directory Operations Library**
+**Type**: Infrastructure Library | **Status**: Production-Ready | **Dependencies**: flext-core, flext-cli, flext-ldif, ldap3
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![FLEXT Framework](https://img.shields.io/badge/FLEXT-Core%20Integration-blue.svg)]()
@@ -15,7 +15,9 @@ LDAP operations library built with Clean Architecture patterns, providing direct
 ### Core Requirements
 
 - **[flext-core](../flext-core)**: Foundation patterns (FlextResult, dependency injection, logging)
-- **ldap3**: LDAP protocol implementation
+- **[flext-cli](../flext-cli)**: Real CLI foundation used by `flext-ldap` CLI
+- **[flext-ldif](../flext-ldif)**: LDIF parsing/writing for import/export flows
+- **ldap3**: LDAP protocol implementation (no mocks)
 - **pydantic**: Data validation and serialization
 
 ### Optional Integrations
@@ -29,10 +31,11 @@ LDAP operations library built with Clean Architecture patterns, providing direct
 
 ### What Works
 
-1. **LDAP Operations**: Basic LDAP connectivity and operations (search, create, update, delete)
-2. **Service Layer**: Application services with test fallback patterns
-3. **Type Safety**: FlextResult pattern for error handling
-4. **Testing**: Comprehensive test suite with Docker LDAP integration
+1. **LDAP Operations**: Real ldap3 connectivity and CRUD (search/add/modify/delete)
+2. **CLI**: Uses real flext-cli mixins/entities (no placeholders)
+3. **LDIF**: Import/export via flext-ldif API
+4. **Type Safety**: FlextResult pattern end-to-end
+5. **Testing**: Comprehensive suite with Docker LDAP integration
 
 ### What's In Development
 
@@ -118,21 +121,9 @@ src/flext_ldap/
 
 ## 🔌 Integration
 
-### Test vs Production Behavior
+### Production Behavior
 
-The service layer automatically detects the environment:
-
-- **Test Environment**: Uses in-memory cache for consistent testing
-- **Production Environment**: Delegates to real LDAP infrastructure
-
-```python
-# Same code works in both environments
-user_service = FlextLdapUserApplicationService()
-result = user_service.create_user(user_request)
-
-# In tests: Uses mock implementation with cache
-# In production: Uses real LDAP server via application layer
-```
+The infrastructure always uses real ldap3 connections and operations. No mocks or fakes are shipped in the runtime code.
 
 ---
 

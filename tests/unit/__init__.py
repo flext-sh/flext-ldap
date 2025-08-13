@@ -1,3 +1,1 @@
-"""Unit tests for flext-ldap."""
-
-from __future__ import annotations
+"""Unit tests for FLEXT LDAP."""

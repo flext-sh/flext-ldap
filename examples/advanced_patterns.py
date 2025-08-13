@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: TRY301, N806
 """Advanced FLEXT-LDAP Patterns Example.
 
 This example demonstrates advanced usage patterns:

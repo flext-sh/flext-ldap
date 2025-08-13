@@ -46,7 +46,7 @@ src/flext_ldap/
 
 All source code follows enterprise-grade standards:
 
-- **Type Safety**: 100% type annotation coverage with strict MyPy compliance
+- **Type Safety**: MyPy strict mode adoption; aiming for full coverage
 - **Error Handling**: Railway-oriented programming with FlextResult pattern
 - **Documentation**: Comprehensive docstrings with business context
 - **Testing**: 95%+ test coverage requirement

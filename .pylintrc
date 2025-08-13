@@ -1,5 +1,0 @@
-# This file is only for ldap3 import issues
-# All other settings are in pyproject.toml
-
-[MASTER]
-ignored-modules=ldap3,ldap3.core.exceptions

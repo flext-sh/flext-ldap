@@ -1,3 +1,4 @@
+# ruff: noqa: N818
 # Constants
 ALL: int
 SUBTREE: int

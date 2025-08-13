@@ -1,61 +1,73 @@
-"""FLEXT LDAP Exceptions - PEP8 compliant exception hierarchy.
+"""FLEXT-LDAP Exceptions - Consolidated Exception Handling.
 
-Consolidates all LDAP exceptions into a single, well-organized module following
-PEP8 naming standards and flext-core exception patterns. This module provides
-a comprehensive exception hierarchy for LDAP operations.
+🎯 CONSOLIDATES FROM errors.py INTO SINGLE PEP8 MODULE
 
-Originally consolidated from:
-- ldap_exceptions.py: Primary LDAP exception classes
-- errors.py: Generic error handling patterns
-- domain_exceptions.py: Domain-specific exceptions
+This module provides comprehensive exception handling for FLEXT-LDAP
+operations with type-safe error handling and detailed error information.
 
-Architecture:
-    - Extends flext-core exception patterns for consistency
-    - Implements hierarchical exception design
-    - Provides LDAP-specific error handling
-    - Follows Clean Architecture error patterns
-
-Key Features:
-    - FlextLdapError: Base exception for all LDAP operations
-    - Specific exception types for different error categories
-    - Integration with FlextResult pattern
-    - Structured error information and context
-
-Copyright (c) 2025 FLEXT Contributors
+Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from flext_core import FlextError, get_logger
+from flext_core import FlextError as FlextException
 
-logger = get_logger(__name__)
-
-
-# PEP8 Compliant exception hierarchy (consolidated implementation)
-class FlextLdapError(FlextError):
-    """Base exception for LDAP operations."""
+# =============================================================================
+# LDAP DOMAIN EXCEPTIONS - TYPE-SAFE ERROR HIERARCHY
+# =============================================================================
 
 
-class FlextLdapConnectionError(FlextLdapError):
-    """LDAP connection error."""
+class FlextLdapException(FlextException):
+    """Base exception for all FLEXT-LDAP errors."""
 
 
-class FlextLdapAuthenticationError(FlextLdapError):
-    """LDAP authentication error."""
+class FlextLdapConnectionError(FlextLdapException):
+    """LDAP connection related errors."""
 
 
-class FlextLdapValidationError(FlextLdapError):
-    """LDAP validation error."""
+class FlextLdapAuthenticationError(FlextLdapException):
+    """LDAP authentication errors."""
 
 
-class FlextLdapConfigurationError(FlextLdapError):
-    """LDAP configuration error."""
+class FlextLdapSearchError(FlextLdapException):
+    """LDAP search operation errors."""
 
 
-class FlextLdapTimeoutError(FlextLdapError):
-    """LDAP timeout error."""
+class FlextLdapValidationError(FlextLdapException):
+    """LDAP data validation errors."""
 
 
-class FlextLdapNotFoundError(FlextLdapError):
-    """LDAP resource not found error."""
+class FlextLdapUserError(FlextLdapException):
+    """LDAP user-specific errors."""
+
+
+class FlextLdapGroupError(FlextLdapException):
+    """LDAP group-specific errors."""
+
+
+class FlextLdapOperationError(FlextLdapException):
+    """LDAP operation errors (add, modify, delete)."""
+
+
+class FlextLdapConfigurationError(FlextLdapException):
+    """LDAP configuration and settings errors."""
+
+
+class FlextLdapTypeError(FlextLdapException):
+    """LDAP type validation and conversion errors."""
+
+
+# Export all exception classes
+__all__ = [
+    "FlextLdapAuthenticationError",
+    "FlextLdapConfigurationError",
+    "FlextLdapConnectionError",
+    "FlextLdapException",
+    "FlextLdapGroupError",
+    "FlextLdapOperationError",
+    "FlextLdapSearchError",
+    "FlextLdapTypeError",
+    "FlextLdapUserError",
+    "FlextLdapValidationError",
+]
