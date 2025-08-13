@@ -10,7 +10,16 @@ from flext_core.typings import E, F, FlextTypes as CoreFlextTypes, U, V
 
 # Re-export LDAP domain-specific types for a single import point
 # Note: P, R, T are imported from flext_ldap.types to avoid conflicts
-from flext_ldap.types import *  # noqa: F403
+from flext_ldap.types import (
+    LdapAttributeDict,
+    LdapAttributeValue,
+    LdapEntry,
+    LdapSearchResult,
+    LdapUser,
+    T,
+    P,
+    R,
+)
 
 
 class FlextTypes(CoreFlextTypes):
@@ -23,5 +32,12 @@ __all__ = [
     "V",
     "E",
     "F",
-    # T, P, R are defined in flext_ldap.types and imported via *
-] + [name for name in dir() if not name.startswith("_")]
+    "LdapAttributeDict",
+    "LdapAttributeValue",
+    "LdapEntry",
+    "LdapSearchResult",
+    "LdapUser",
+    "T",
+    "P",
+    "R",
+]

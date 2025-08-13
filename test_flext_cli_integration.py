@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# ruff: noqa: EXE001
 """Exemplo de uso da biblioteca flext-cli integrada com flext-ldap.
 
 Este script demonstra como usar a biblioteca flext-cli real para criar

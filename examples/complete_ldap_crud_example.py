@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# ruff: noqa: TRY301,S603,S607,S108,ANN001,RUF001
 """Complete LDAP CRUD Operations Example with Docker Container.
 
 This example demonstrates COMPLETE LDAP functionality:
@@ -12,6 +11,7 @@ Uses MAXIMUM Docker container functionality for real LDAP operations.
 """
 
 import asyncio
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -36,16 +36,17 @@ class DockerLDAPContainer:
         print("🐳 Starting Docker LDAP container...")
 
         # Stop and remove existing container
+        docker_path = shutil.which("docker") or "docker"
         subprocess.run(
-            ["docker", "stop", self.container_name], capture_output=True, check=False,
+            [docker_path, "stop", self.container_name], capture_output=True, check=False,
         )
         subprocess.run(
-            ["docker", "rm", self.container_name], capture_output=True, check=False,
+            [docker_path, "rm", self.container_name], capture_output=True, check=False,
         )
 
         # Start new container
         cmd = [
-            "docker",
+            docker_path,
             "run",
             "-d",
             "--name",
@@ -66,7 +67,9 @@ class DockerLDAPContainer:
         result = subprocess.run(cmd, check=False, capture_output=True, text=True)
         if result.returncode != 0:
             msg = f"Failed to start container: {result.stderr}"
-            raise RuntimeError(msg)
+            def _raise_start_error(message: str) -> None:
+                raise RuntimeError(message)
+            _raise_start_error(msg)
 
         print(f"✅ Container started: {self.container_name}")
 
@@ -93,14 +96,18 @@ ou: groups
 description: Container for groups
 """
 
-        # Write LDIF to temp file
-        ldif_path = Path("/tmp/setup_directory.ldif")
+        # Write LDIF to temp file in a safe temporary directory
+        from tempfile import gettempdir
+
+        tmp_dir = Path(gettempdir())
+        ldif_path = tmp_dir / "flext_ldap_setup_directory.ldif"
         with ldif_path.open("w", encoding="utf-8") as f:
             f.write(ldif_content)
 
         # Add entries to LDAP
+        ldapadd_path = shutil.which("ldapadd") or "ldapadd"
         cmd = [
-            "ldapadd",
+            ldapadd_path,
             "-x",
             "-H",
             f"ldap://localhost:{self.port}",
@@ -109,7 +116,7 @@ description: Container for groups
             "-w",
             "REDACTED_LDAP_BIND_PASSWORD123",
             "-f",
-            "/tmp/setup_directory.ldif",
+            str(ldif_path),
         ]
 
         result = subprocess.run(cmd, check=False, capture_output=True, text=True)
@@ -121,11 +128,12 @@ description: Container for groups
     def stop_container(self) -> None:
         """Stop and remove container."""
         print("🛑 Stopping Docker container...")
+        docker_path = shutil.which("docker") or "docker"
         subprocess.run(
-            ["docker", "stop", self.container_name], check=False, capture_output=True,
+            [docker_path, "stop", self.container_name], check=False, capture_output=True,
         )
         subprocess.run(
-            ["docker", "rm", self.container_name], check=False, capture_output=True,
+            [docker_path, "rm", self.container_name], check=False, capture_output=True,
         )
         print("✅ Container stopped and removed")
 
@@ -147,7 +155,9 @@ async def demonstrate_complete_crud_operations() -> None:
         connection_result = await ldap_service.connect(server_url, bind_dn, password)
         if connection_result.is_failure:
             msg = f"Connection failed: {connection_result.error}"
-            raise RuntimeError(msg)
+            def _raise_connect_error(message: str) -> None:
+                raise RuntimeError(message)
+            _raise_connect_error(msg)
 
         session_id = connection_result.data
         print(f"✅ Connected to LDAP server: {session_id}")
@@ -177,7 +187,7 @@ async def demonstrate_complete_crud_operations() -> None:
         raise
 
 
-async def perform_create_groups(ldap_service, session_id) -> None:
+async def perform_create_groups(ldap_service: FlextLdapApi, session_id: str) -> None:
     """Perform CREATE operations for groups."""
     print("\n🔨 === CREATE GROUPS ===")
 
@@ -210,7 +220,7 @@ async def perform_create_groups(ldap_service, session_id) -> None:
     print("✅ CREATE groups completed")
 
 
-async def perform_create_users(ldap_service, session_id) -> None:
+async def perform_create_users(ldap_service: FlextLdapApi, session_id: str) -> None:
     """Perform CREATE operations for users."""
     print("\n🔨 === CREATE USERS ===")
 
@@ -259,7 +269,7 @@ async def perform_create_users(ldap_service, session_id) -> None:
     print(f"✅ CREATE users completed - Created {len(created_users)} users")
 
 
-async def perform_read_operations(ldap_service, session_id) -> None:
+async def perform_read_operations(ldap_service: FlextLdapApi, session_id: str) -> None:
     """Perform READ/SEARCH operations."""
     print("\n🔍 === READ/SEARCH OPERATIONS ===")
 
@@ -295,7 +305,7 @@ async def perform_read_operations(ldap_service, session_id) -> None:
     if eng_result.success and eng_result.data:
         print(f"   ✅ Found {len(eng_result.data)} Engineer users")
     else:
-        print("   ℹ️  No Engineer users found (expected if CREATE failed)")
+        print("   [i] No Engineer users found (expected if CREATE failed)")
 
     # Search for groups
     print("   Searching for all groups...")
@@ -313,12 +323,12 @@ async def perform_read_operations(ldap_service, session_id) -> None:
             desc = group.attributes.get("description", ["N/A"])[0]
             print(f"     - {cn}: {desc}")
     else:
-        print("   ℹ️  No groups found")
+        print("   [i] No groups found")
 
     print("✅ READ operations completed")
 
 
-async def perform_update_operations(ldap_service, session_id) -> None:
+async def perform_update_operations(ldap_service: FlextLdapApi, session_id: str) -> None:
     """Perform UPDATE operations."""
     print("\n🔄 === UPDATE OPERATIONS ===")
 
@@ -374,7 +384,7 @@ async def perform_update_operations(ldap_service, session_id) -> None:
     print("✅ UPDATE operations completed")
 
 
-async def perform_delete_operations(ldap_service, session_id) -> None:
+async def perform_delete_operations(ldap_service: FlextLdapApi, session_id: str) -> None:
     """Perform DELETE operations."""
     print("\n🗑️  === DELETE OPERATIONS ===")
 

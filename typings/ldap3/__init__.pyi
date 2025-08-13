@@ -1,4 +1,3 @@
-# ruff: noqa: N818
 # Constants
 ALL: int
 SUBTREE: int
@@ -13,7 +12,7 @@ MODIFY_DELETE: int
 MODIFY_REPLACE: int
 
 # Exceptions
-class LDAPException(Exception): ...
+class LdapException(Exception): ...
 
 # Classes
 class Server:

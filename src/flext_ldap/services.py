@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import warnings
 from typing import TYPE_CHECKING
+from flext_ldap.typings import FlextTypes
 
 from flext_core import (
     FlextDomainService,
@@ -39,8 +40,6 @@ from flext_ldap.types import (
 
 if TYPE_CHECKING:
     from flext_core import FlextContainer
-
-    from flext_ldap.typings import FlextTypes
 
 
 logger = get_logger(__name__)

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# ruff: noqa: TRY301, N806
 """Advanced FLEXT-LDAP Patterns Example.
 
 This example demonstrates advanced usage patterns:
@@ -50,6 +49,9 @@ async def ldap_session(
     api = FlextLdapApi()
     session_id = f"session_{id(api)}"
 
+    def _raise_conn_error(message: str) -> None:
+        raise ConnectionError(message)
+
     logger.info(
         "Establishing LDAP session",
         extra={
@@ -70,7 +72,7 @@ async def ldap_session(
 
         if not connection_result.success:
             msg: str = f"Failed to connect: {connection_result.error}"
-            raise ConnectionError(msg)
+            _raise_conn_error(msg)
 
         logger.info("LDAP session established", extra={"session_id": session_id})
         yield api, session_id
@@ -219,12 +221,15 @@ async def demonstrate_error_recovery() -> None:
     print("=" * 40)
 
     # Constants for retry logic
-    FAILURE_ATTEMPTS = 2
+    failure_attempts = 2
 
     async def attempt_operation_with_retry(
         operation_name: str, max_retries: int = 3,
     ) -> str | None:
         """Retry pattern for LDAP operations."""
+        def _simulate_failure(op_name: str) -> None:
+            msg: str = f"Simulated failure for {op_name}"
+            raise ConnectionError(msg)
         for attempt in range(max_retries):
             try:
                 logger.debug(
@@ -233,9 +238,8 @@ async def demonstrate_error_recovery() -> None:
                 )
 
                 # Simulate operation (would be real LDAP operation)
-                if attempt < FAILURE_ATTEMPTS:  # Fail first 2 attempts
-                    msg: str = f"Simulated failure for {operation_name}"
-                    raise ConnectionError(msg)
+                if attempt < failure_attempts:  # Fail first attempts
+                    _simulate_failure(operation_name)
 
                 logger.info(
                     f"Operation {operation_name} succeeded",
