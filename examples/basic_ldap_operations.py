@@ -52,7 +52,7 @@ async def demonstrate_configuration() -> None:
     # 2. Authentication configuration
     auth_config = FlextLdapAuthConfig(
         bind_dn="cn=admin,dc=example,dc=com",
-        bind_password="secret",  # noqa: S105
+        bind_password="secret",  # noqa: S106 - Example password for documentation
         use_anonymous_bind=False,
     )
 
@@ -92,7 +92,7 @@ async def demonstrate_api_usage() -> None:
         connection_result = await api.connect(
             server_url="ldap://mock.example.com:389",
             bind_dn="cn=admin,dc=example,dc=com",
-            password="secret",  # noqa: S105
+            password="secret",  # noqa: S106 - Example password for documentation
             session_id="demo_session",
         )
 
@@ -157,7 +157,7 @@ async def demonstrate_error_handling() -> None:
     # 2. Authentication errors
     invalid_auth = FlextLdapAuthConfig(
         bind_dn="cn=admin,dc=example,dc=com",
-        bind_password="",  # noqa: S105  # Missing password
+        bind_password="",  # Missing password
         use_anonymous_bind=False,
     )
 

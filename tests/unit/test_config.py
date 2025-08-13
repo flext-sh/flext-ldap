@@ -1,0 +1,307 @@
+"""Unit tests for FLEXT LDAP configuration."""
+
+from __future__ import annotations
+
+import os
+from unittest.mock import patch
+
+import pytest
+from flext_core import FlextLogLevel
+from pydantic import ValidationError
+
+from flext_ldap.config import (
+    FlextLdapAuthConfig,
+    FlextLdapConnectionConfig,
+    FlextLdapConstants,
+    FlextLdapLoggingConfig,
+    FlextLdapSearchConfig,
+    FlextLdapSettings,
+)
+
+# Constants
+HTTP_OK = 200
+EXPECTED_BULK_SIZE = 2
+EXPECTED_DATA_COUNT = 3
+
+
+class TestFlextLdapConstants:
+    """Test FlextLdapConstants."""
+
+    def test_constants_values(self) -> None:
+        """Test that constants have expected values."""
+        assert FlextLdapConstants.DEFAULT_TIMEOUT_SECONDS == 30
+        assert FlextLdapConstants.MAX_TIMEOUT_SECONDS == 300
+        assert FlextLdapConstants.DEFAULT_POOL_SIZE == 10
+        assert FlextLdapConstants.MAX_POOL_SIZE == 100
+        assert FlextLdapConstants.DEFAULT_PAGE_SIZE == 1000
+        assert FlextLdapConstants.MAX_PAGE_SIZE == 10000
+
+
+class TestFlextLdapConnectionConfig:
+    """Test FlextLdapConnectionConfig functionality."""
+
+    def test_connection_config_defaults(self) -> None:
+        """Test FlextLdapConnectionConfig with default values."""
+        config = FlextLdapConnectionConfig()
+        assert config.host == "localhost"
+        assert config.port == 389
+        assert config.use_ssl is False
+        assert config.timeout_seconds == 30
+        assert config.pool_size == 10
+        assert config.enable_connection_pooling is True
+
+    def test_connection_config_custom(self) -> None:
+        """Test FlextLdapConnectionConfig with custom values."""
+        config = FlextLdapConnectionConfig(
+            host="test.example.com",
+            port=636,
+            use_ssl=True,
+            timeout_seconds=60,
+            pool_size=20,
+            enable_connection_pooling=False,
+        )
+        assert config.host == "test.example.com"
+        assert config.port == 636
+        assert config.use_ssl is True
+        assert config.timeout_seconds == 60
+        assert config.pool_size == 20
+        assert config.enable_connection_pooling is False
+
+    def test_server_validation_valid(self) -> None:
+        """Test server validation with valid values."""
+        config = FlextLdapConnectionConfig(host="localhost")
+        assert config.host == "localhost"
+
+    def test_server_validation_invalid(self) -> None:
+        """Test server validation with invalid values."""
+        with pytest.raises(ValueError, match="Host cannot be empty"):
+            FlextLdapConnectionConfig(host="")
+
+        with pytest.raises(ValueError, match="Host cannot be empty"):
+            FlextLdapConnectionConfig(host="   ")
+
+    def test_port_validation_valid(self) -> None:
+        """Test port validation with valid values."""
+        config = FlextLdapConnectionConfig(port=636)
+        assert config.port == 636
+
+    def test_port_validation_invalid(self) -> None:
+        """Test port validation with invalid values."""
+        with pytest.raises(ValidationError):
+            FlextLdapConnectionConfig(port=0)
+
+        with pytest.raises(ValidationError):
+            FlextLdapConnectionConfig(port=65536)
+
+    def test_domain_rules_validation_success(self) -> None:
+        """Test domain rules validation with valid config."""
+        config = FlextLdapConnectionConfig(
+            host="localhost",
+            port=389,
+            timeout_seconds=30,
+            pool_size=10,
+        )
+        # Should not raise
+        config.validate_domain_rules()
+
+
+class TestFlextLdapAuthConfig:
+    """Test FlextLdapAuthConfig functionality."""
+
+    def test_auth_config_defaults(self) -> None:
+        """Test FlextLdapAuthConfig with default values."""
+        config = FlextLdapAuthConfig()
+        assert config.bind_dn == ""
+        assert config.bind_password is not None
+        assert config.bind_password.get_secret_value() == ""
+        assert config.use_anonymous_bind is False
+        assert config.sasl_mechanism is None
+
+    def test_auth_config_custom(self) -> None:
+        """Test FlextLdapAuthConfig with custom values."""
+        config = FlextLdapAuthConfig(
+            bind_dn="cn=admin,dc=example,dc=org",
+            bind_password="secret",
+            use_anonymous_bind=True,
+            sasl_mechanism="EXTERNAL",
+        )
+        assert config.bind_dn == "cn=admin,dc=example,dc=org"
+        assert config.bind_password is not None
+        assert config.bind_password.get_secret_value() == "secret"
+        assert config.use_anonymous_bind is True
+        assert config.sasl_mechanism == "EXTERNAL"
+
+    def test_bind_dn_validation(self) -> None:
+        """Test bind DN validation."""
+        config = FlextLdapAuthConfig(bind_dn="  cn=admin,dc=example,dc=org  ")
+        expected_dn = "cn=admin,dc=example,dc=org"  # Should be stripped
+        assert config.bind_dn == expected_dn
+
+    def test_domain_rules_validation_anonymous_bind(self) -> None:
+        """Test domain rules validation for anonymous bind."""
+        config = FlextLdapAuthConfig(use_anonymous_bind=True)
+        # Should not raise even without bind_dn/password
+        config.validate_domain_rules()
+
+    def test_domain_rules_validation_bind_dn_required(self) -> None:
+        """Test domain rules validation when bind DN is required."""
+        config = FlextLdapAuthConfig(use_anonymous_bind=False, bind_dn="")
+        result = config.validate_domain_rules()
+        assert not result.success
+        assert "bind dn" in result.error.lower()
+
+    def test_domain_rules_validation_password_required(self) -> None:
+        """Test domain rules validation when password is required."""
+        config = FlextLdapAuthConfig(
+            use_anonymous_bind=False,
+            bind_dn="cn=admin,dc=example,dc=org",
+            bind_password="",
+        )
+        result = config.validate_domain_rules()
+        assert not result.success
+        assert "Bind password is required" in (result.error or "")
+
+
+class TestFlextLdapSearchConfig:
+    """Test FlextLdapSearchConfig functionality."""
+
+    def test_search_config_defaults(self) -> None:
+        """Test FlextLdapSearchConfig with default values."""
+        config = FlextLdapSearchConfig()
+        assert config.default_scope.value == "subtree"
+        assert config.default_size_limit == 1000
+        assert config.default_time_limit == 30
+        assert config.default_page_size == 1000
+        assert config.enable_referral_following is False
+        assert config.max_referral_hops == 5
+
+    def test_search_config_custom(self) -> None:
+        """Test FlextLdapSearchConfig with custom values."""
+        from flext_ldap.config import FlextLdapScope
+
+        config = FlextLdapSearchConfig(
+            default_scope=FlextLdapScope.ONELEVEL,
+            default_size_limit=500,
+            default_time_limit=60,
+            default_page_size=100,
+            enable_referral_following=True,
+            max_referral_hops=10,
+        )
+        assert config.default_scope == FlextLdapScope.ONELEVEL
+        assert config.default_size_limit == 500
+        assert config.default_time_limit == 60
+        assert config.default_page_size == 100
+        assert config.enable_referral_following is True
+        assert config.max_referral_hops == 10
+
+
+class TestFlextLdapLoggingConfig:
+    """Test FlextLdapLoggingConfig functionality."""
+
+    def test_logging_config_defaults(self) -> None:
+        """Test FlextLdapLoggingConfig with default values."""
+        # Clear any FLEXT related environment variables that might affect defaults
+        env_vars_to_clear = [key for key in os.environ if key.startswith("FLEXT_")]
+
+        with patch.dict(os.environ, dict.fromkeys(env_vars_to_clear, ""), clear=False):
+            # Remove the cleared vars completely
+            for var in env_vars_to_clear:
+                if var in os.environ:
+                    del os.environ[var]
+
+            config = FlextLdapLoggingConfig()
+            assert config.log_level == FlextLogLevel.INFO
+            assert config.enable_connection_logging is False
+            assert config.enable_operation_logging is True
+            assert config.log_sensitive_data is False
+            assert config.structured_logging is True
+
+    def test_logging_config_custom(self) -> None:
+        """Test FlextLdapLoggingConfig with custom values."""
+        config = FlextLdapLoggingConfig(
+            log_level=FlextLogLevel.DEBUG,
+        )
+        # Update attributes after creation since they have defaults
+        config = config.model_copy(
+            update={
+                "enable_connection_logging": True,
+                "enable_operation_logging": False,
+                "log_sensitive_data": True,
+                "structured_logging": False,
+            },
+        )
+        assert config.log_level == FlextLogLevel.DEBUG
+        assert config.enable_connection_logging is True
+        assert config.enable_operation_logging is False
+        assert config.log_sensitive_data is True
+        assert config.structured_logging is False
+
+
+class TestFlextLdapSettings:
+    """Test FlextLdapSettings functionality."""
+
+    def test_settings_import(self) -> None:
+        """Test that FlextLdapSettings can be imported."""
+        assert FlextLdapSettings is not None
+
+    def test_settings_instantiation_defaults(self) -> None:
+        """Test that FlextLdapSettings can be instantiated with defaults."""
+        # Clear any FLEXT_LDAP environment variables to ensure clean defaults
+        env_vars_to_clear = [key for key in os.environ if key.startswith("FLEXT_LDAP_")]
+
+        with patch.dict(os.environ, dict.fromkeys(env_vars_to_clear, ""), clear=False):
+            # Remove the cleared vars completely
+            for var in env_vars_to_clear:
+                if var in os.environ:
+                    del os.environ[var]
+
+            settings = FlextLdapSettings()
+            assert settings is not None
+            assert settings.default_connection is None
+            assert settings.enable_debug_mode is False
+            assert settings.enable_caching is False
+
+    def test_settings_custom_values(self) -> None:
+        """Test FlextLdapSettings with custom values."""
+        connection_config = FlextLdapConnectionConfig(
+            server="custom.ldap.com",
+            port=636,
+            use_ssl=True,
+        )
+
+        settings = FlextLdapSettings()
+        # Update other fields using model_copy
+        settings = settings.model_copy(
+            update={
+                "default_connection": connection_config,
+                "enable_debug_mode": True,
+                "enable_caching": True,
+                "cache_ttl": 600,
+            },
+        )
+
+        assert settings.default_connection is not None
+        assert settings.default_connection.server == "custom.ldap.com"
+        assert settings.default_connection.port == 636
+        assert settings.default_connection.use_ssl is True
+        assert settings.enable_debug_mode is True
+        assert settings.enable_caching is True
+        assert settings.cache_ttl == 600
+
+    def test_get_effective_connection(self) -> None:
+        """Test getting effective connection configuration."""
+        settings = FlextLdapSettings()
+
+        # Test with no default connection
+        effective = settings.get_effective_connection()
+        assert effective is not None
+        assert isinstance(effective, FlextLdapConnectionConfig)
+
+        # Test with override
+        override_config = FlextLdapConnectionConfig(
+            server="override.ldap.com",
+            port=636,
+        )
+        effective = settings.get_effective_connection(override=override_config)
+        assert effective.server == "override.ldap.com"
+        assert effective.port == 636

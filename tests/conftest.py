@@ -11,12 +11,15 @@ from contextlib import asynccontextmanager
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
-import docker
+try:
+    import docker  # type: ignore[import-not-found]
+except Exception:  # pragma: no cover - docker may be unavailable in CI
+    docker = None  # type: ignore[assignment]
 import pytest
 
-from flext_ldap.ldap_config import FlextLdapScope
-from flext_ldap.ldap_infrastructure import FlextLdapClient
-from flext_ldap.ldap_models import FlextLdapDistinguishedName, FlextLdapFilter
+from flext_ldap.constants import FlextLdapScope
+from flext_ldap.infrastructure import FlextLdapClient
+from flext_ldap.models import FlextLdapDistinguishedName, FlextLdapFilter
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Generator
@@ -197,6 +200,8 @@ def docker_openldap_container() -> Generator[Container]:
     This fixture starts an OpenLDAP container at the beginning of the test session
     and stops it at the end. The container is shared across all tests.
     """
+    if docker is None:
+        pytest.skip("Docker not installed; skipping integration container fixture")
     manager = _get_container_manager()
     # Start container
     container = manager.start_container()

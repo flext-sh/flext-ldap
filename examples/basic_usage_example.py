@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: ARG001,S106
 """Basic Usage Example for FLEXT LDAP.
 
 This example demonstrates the main functionality of the FLEXT LDAP library

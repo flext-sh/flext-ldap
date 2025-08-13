@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: S106
 """Example usage of FlextLdapClient.
 
 This example demonstrates how to use the minimal LDAP infrastructure client
@@ -27,7 +28,7 @@ async def main() -> None:
         host="localhost",
         port=389,
         bind_dn="cn=admin,dc=example,dc=com",
-        bind_password="admin",  # noqa: S105
+        bind_password="admin",
         use_ssl=False,
         timeout_seconds=10,
     )
@@ -59,7 +60,7 @@ async def main() -> None:
         host="localhost",
         port=389,
         bind_dn="cn=admin,dc=example,dc=com",
-        bind_password="admin",  # noqa: S105
+        bind_password="admin",
         use_ssl=False,
     )
 

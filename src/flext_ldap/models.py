@@ -1,39 +1,35 @@
-"""LDAP Domain Models - CONSOLIDATED SINGLE SOURCE OF TRUTH.
+"""FLEXT-LDAP Models - Consolidated Models, Entities and Value Objects.
 
-🎯 ELIMINATES MASSIVE DUPLICATIONS - Centralized LDAP domain models
-Following advanced Python 3.13 + flext-core patterns with zero duplication.
+This module provides comprehensive LDAP domain modeling using advanced Python 3.13
+features, flext-core foundation patterns, and Domain-Driven Design principles.
 
-CONSOLIDATES AND REPLACES (single source of truth):
-- entities.py: FlextLdapEntry, FlextLdapUser, FlextLdapGroup (3+ core entities)
-- value_objects.py: FlextLdapDistinguishedName, FlextLdapFilter, etc. (10+ value objects)
-- domain/models.py: Domain request/response models (8+ classes)
-- domain/events.py: Domain events scattered across modules (6+ event types)
-- config.py: Configuration models (7+ config classes)
-- All model duplications across 15+ files
+All models extend flext-core foundation classes providing consistent behavior
+across the FLEXT ecosystem with built-in validation, audit trails, and lifecycle
+management.
 
-This module provides COMPREHENSIVE model consolidation using:
-- Advanced Python 3.13 features (type statements, Final annotations)
-- Pydantic v2 extensive validation (ConfigDict, field_validator, computed_field)
-- flext-core foundation patterns (FlextEntity, FlextValue, FlextModel)
-- Domain-Driven Design principles (entities, value objects, domain events)
-- Railway-oriented programming with FlextResult[T]
+Architecture:
+- Domain Entities: Rich business objects with identity and behavior
+- Value Objects: Immutable data structures without identity
+- Domain Events: Business event modeling for cross-aggregate communication
+- Request/Response Models: API contract definitions
+- Configuration Models: System configuration objects
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
 import re
-from abc import ABC
-from contextlib import suppress
 from datetime import UTC, datetime
-from enum import Enum
-from typing import ClassVar
-from uuid import uuid4
+from enum import Enum, StrEnum
+from typing import TYPE_CHECKING, ClassVar, final
+from urllib.parse import urlparse
 
 from flext_core import (
-    FlextEntity,
+    FlextDomainEntity,
+    FlextEntityStatus,
     FlextModel,
     FlextResult,
     FlextValue,
@@ -41,29 +37,65 @@ from flext_core import (
 )
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
+if TYPE_CHECKING:
+    from flext_ldap.types import LdapAttributeDict, LdapAttributeValue, LdapSearchResult
+
+MIN_PASSWORD_LENGTH = 6
+
 logger = get_logger(__name__)
 
-
-# Simple entity status enum since FlextEntityStatus doesn't exist in flext-core
-class FlextEntityStatus(Enum):
-    """Entity status enumeration."""
-
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-
 # =============================================================================
-# CORE VALUE OBJECTS - Foundation LDAP patterns
+# ENUMS AND TYPE DEFINITIONS
 # =============================================================================
 
 
+class FlextLdapDataType(Enum):
+    """LDAP data types with intelligent detection."""
+
+    STRING = "string"
+    INTEGER = "integer"
+    BOOLEAN = "boolean"
+    BINARY = "binary"
+    DATETIME = "datetime"
+    DN = "dn"
+    EMAIL = "email"
+    PHONE = "phone"
+    UUID = "uuid"
+    URL = "url"
+    IP_ADDRESS = "ip_address"
+    MAC_ADDRESS = "mac_address"
+    CERTIFICATE = "certificate"
+    PASSWORD_DATA_TYPE = "password_field"  # noqa: S105 - LDAP data type constant, not a password
+    UNKNOWN = "unknown"
+
+
+class FlextLdapScopeEnum(StrEnum):
+    """LDAP search scope enumeration with legacy compatibility."""
+
+    BASE = "base"
+    ONE_LEVEL = "onelevel"
+    SUBTREE = "subtree"
+
+    # Legacy mappings for backward compatibility
+    ONE = "onelevel"
+    SUB = "subtree"
+
+
+# Legacy compatibility aliases
+FlextLdapEntityStatus = FlextEntityStatus
+LDAPScope = FlextLdapScopeEnum
+
+
+# =============================================================================
+# VALUE OBJECTS - Immutable Domain Values
+# =============================================================================
+
+
+@final
 class FlextLdapDistinguishedName(FlextValue):
     """Distinguished Name value object with RFC 4514 compliance validation.
 
-    🎯 CONSOLIDATES AND REPLACES:
-    - FlextLdapDistinguishedName (value_objects.py:127)
-    - FlextLdapDistinguishedNameAdvanced (models_consolidated.py:135)
-    - DN validation scattered across multiple modules
-    - All DN handling in entities, value objects, domain models
+    Consolidates DN handling from multiple modules into single implementation.
     """
 
     model_config = ConfigDict(
@@ -98,44 +130,107 @@ class FlextLdapDistinguishedName(FlextValue):
         """Validate DN business rules."""
         if not self.value or self.value.isspace():
             return FlextResult.fail("DN cannot be empty or whitespace")
-
-        # Additional business validation can be added here
         return FlextResult.ok(None)
 
     @computed_field
     def parent_dn(self) -> str | None:
         """Get parent DN by removing the leftmost RDN."""
-        return self._get_parent_dn_value()
+        parts = self.value.split(",", 1)
+        return parts[1].strip() if len(parts) > 1 else None
 
     @computed_field
     def rdn(self) -> str:
         """Get the Relative Distinguished Name (leftmost component)."""
         return self.value.split(",", 1)[0].strip()
 
-    def _get_parent_dn_value(self) -> str | None:
-        """Get parent DN value (helper method)."""
-        parts = self.value.split(",", 1)
-        return parts[1].strip() if len(parts) > 1 else None
+    def is_descendant_of(self, parent_dn: str | FlextLdapDistinguishedName) -> bool:
+        """Check if this DN is a descendant of the given parent DN."""
+        parent_str = (
+            parent_dn.value
+            if isinstance(parent_dn, FlextLdapDistinguishedName)
+            else parent_dn
+        )
+        return self.value.lower().endswith(parent_str.lower())
 
-    def is_child_of(self, parent_dn: FlextLdapDistinguishedName) -> bool:
-        """Check if this DN is a direct child of the parent DN."""
-        parent_value = self._get_parent_dn_value()
-        return parent_value == parent_dn.value if parent_value else False
+    @classmethod
+    def create(cls, value: str) -> FlextResult[FlextLdapDistinguishedName]:
+        """Create DN from string with validation."""
+        try:
+            dn = cls(value=value)
+            return FlextResult.ok(dn)
+        except Exception as e:
+            return FlextResult.fail(str(e))
 
-    def is_descendant_of(self, ancestor_dn: FlextLdapDistinguishedName) -> bool:
-        """Check if this DN is a descendant of the ancestor DN."""
-        return self.value.endswith(f",{ancestor_dn.value}")
+
+@final
+class FlextLdapScope(FlextValue):
+    """LDAP search scope value object."""
+
+    scope: str = Field(..., description="LDAP search scope")
+
+    # Valid LDAP scopes per RFC 4511
+    VALID_SCOPES: ClassVar[set[str]] = {
+        "base",
+        "one",
+        "sub",
+        "children",
+        "onelevel",
+        "subtree",
+    }
+
+    @field_validator("scope")
+    @classmethod
+    def validate_scope(cls, value: str) -> str:
+        """Validate LDAP scope value."""
+        normalized = value.lower()
+        if normalized not in cls.VALID_SCOPES:
+            msg = f"Invalid LDAP scope: {value}. Must be one of {cls.VALID_SCOPES}"
+            raise ValueError(msg)
+        return normalized
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules."""
+        return FlextResult.ok(None)
+
+    @classmethod
+    def create(cls, scope: str) -> FlextResult[FlextLdapScope]:
+        """Create scope value object with validation."""
+        try:
+            scope_obj = cls(scope=scope)
+            return FlextResult.ok(scope_obj)
+        except ValueError as e:
+            return FlextResult.fail(str(e))
+
+    @classmethod
+    def base(cls) -> FlextLdapScope:
+        """Create base scope (search only the entry itself)."""
+        return cls(scope="base")
+
+    @classmethod
+    def one(cls) -> FlextLdapScope:
+        """Create one-level scope (search direct children only)."""
+        return cls(scope="one")
+
+    @classmethod
+    def sub(cls) -> FlextLdapScope:
+        """Create subtree scope (search entry and all descendants)."""
+        return cls(scope="sub")
 
 
+@final
 class FlextLdapFilter(FlextValue):
-    """LDAP search filter value object with RFC 4515 compliance validation.
+    """LDAP filter value object with RFC 4515 compliance."""
 
-    🎯 CONSOLIDATES AND REPLACES:
-    - FlextLdapFilter (value_objects.py:268)
-    - FlextLdapFilterAdvanced (models_consolidated.py:299)
-    - Filter validation logic scattered across utils and domain
-    - All filter handling across search operations
-    """
+    @classmethod
+    def create(cls, value: str) -> FlextResult[FlextLdapFilter]:
+        """Create filter from string with validation."""
+        try:
+            filter_obj = cls(value=value)
+            return FlextResult.ok(filter_obj)
+        except Exception as e:
+            return FlextResult.fail(str(e))
+
+    """LDAP filter value object with RFC 4515 compliance."""
 
     model_config = ConfigDict(
         extra="forbid",
@@ -146,792 +241,779 @@ class FlextLdapFilter(FlextValue):
 
     value: str = Field(
         ...,
-        description="RFC 4515 compliant LDAP search filter",
-        min_length=3,  # Minimum: "(a=b)"
-        max_length=4096,  # LDAP practical limit
+        description="RFC 4515 compliant LDAP filter",
+        min_length=1,
+        max_length=4096,  # Reasonable filter size limit
     )
 
-    # RFC 4515 basic filter validation
+    # Basic LDAP filter validation pattern
     FILTER_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-        r"^\s*\(\s*(?:[&|!]?\s*\([^)]+\)|[a-zA-Z][\w-]*\s*[=~<>]=?\s*[^)]*)\s*\)\s*$",
+        r"^\([&|!]?[\w\s\-=><~:*().,]+\)$",
     )
 
     @field_validator("value")
     @classmethod
     def validate_filter_format(cls, v: str) -> str:
-        """Validate filter format using RFC 4515 basic compliance."""
+        """Validate basic LDAP filter format."""
         if not v.startswith("(") or not v.endswith(")"):
-            msg = f"Filter must be enclosed in parentheses: {v!r}"
+            msg = f"LDAP filter must be enclosed in parentheses: {v!r}"
             raise ValueError(msg)
         return v
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate filter business rules."""
-        # Check for balanced parentheses
-        balance = 0
-        for char in self.value:
-            if char == "(":
-                balance += 1
-            elif char == ")":
-                balance -= 1
-            if balance < 0:
-                return FlextResult.fail("Unbalanced parentheses in filter")
-
-        if balance != 0:
-            return FlextResult.fail("Unbalanced parentheses in filter")
-
+        if not self.value or self.value.isspace():
+            return FlextResult.fail("Filter cannot be empty or whitespace")
         return FlextResult.ok(None)
 
-    @classmethod
-    def create_equality(cls, attribute: str, value: str) -> FlextLdapFilter:
-        """Create equality filter: (attr=value)."""
-        return cls(value=f"({attribute}={value})")
 
-    @classmethod
-    def create_presence(cls, attribute: str) -> FlextLdapFilter:
-        """Create presence filter: (attr=*)."""
-        return cls(value=f"({attribute}=*)")
+@final
+class FlextLdapUri(FlextValue):
+    """LDAP URI value object with RFC 4516 compliance."""
 
-    @classmethod
-    def create_and(cls, *filters: FlextLdapFilter) -> FlextLdapFilter:
-        """Create AND filter: (&(filter1)(filter2)...)."""
-        filter_values = "".join(f.value for f in filters)
-        return cls(value=f"(&{filter_values})")
-
-
-class FlextLdapScope(FlextValue, ABC):
-    """LDAP search scope value object with standard scope validation.
-
-    🎯 CONSOLIDATES AND REPLACES:
-    - FlextLdapScope (value_objects.py:43)
-    - Search scope handling scattered across search operations
-    - Scope validation logic in multiple modules
-    """
-
-    model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
-        str_strip_whitespace=True,
-        frozen=True,
-    )
-
-    value: str = Field(..., description="LDAP search scope level")
-
-    # RFC 4511 standard search scopes
-    VALID_SCOPES: ClassVar[frozenset[str]] = frozenset(
-        {"base", "one", "sub", "children", "baseObject", "singleLevel", "wholeSubtree"},
-    )
+    value: str = Field(..., description="LDAP URI string")
 
     @field_validator("value")
     @classmethod
-    def validate_scope(cls, v: str) -> str:
-        """Validate scope against LDAP standard values."""
-        normalized = v.lower()
-        if normalized not in cls.VALID_SCOPES:
-            msg = f"Invalid LDAP scope: {v}. Must be one of {cls.VALID_SCOPES}"
+    def validate_uri_format(cls, v: str) -> str:
+        """Validate LDAP URI format."""
+        parsed = urlparse(v)
+        if parsed.scheme not in {"ldap", "ldaps"}:
+            msg = f"LDAP URI must use ldap:// or ldaps:// scheme: {v!r}"
             raise ValueError(msg)
-        return normalized
-
-    @classmethod
-    def base(cls) -> FlextLdapScope:
-        """Create base scope (search only the entry itself)."""
-        return cls(value="base")
-
-    @classmethod
-    def one_level(cls) -> FlextLdapScope:
-        """Create one-level scope (search direct children only)."""
-        return cls(value="one")
-
-    @classmethod
-    def subtree(cls) -> FlextLdapScope:
-        """Create subtree scope (search entry and all descendants)."""
-        return cls(value="sub")
-
-
-# =============================================================================
-# CONFIGURATION MODELS - Centralized configuration patterns
-# =============================================================================
-
-
-# FlextLdapConnectionConfig removed - using authoritative version from config.py
-
-
-class FlextLdapSearchConfig(FlextModel):
-    """LDAP search operation configuration with validation.
-
-    🎯 CONSOLIDATES AND REPLACES:
-    - Search configuration scattered across search operations
-    - Operation config duplications in domain/application layers
-    """
-
-    model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
-    )
-
-    base_dn: FlextLdapDistinguishedName = Field(
-        ...,
-        description="Base DN for search operation",
-    )
-
-    filter: FlextLdapFilter = Field(
-        ...,
-        description="Search filter",
-    )
-
-    scope: FlextLdapScope = Field(
-        default_factory=FlextLdapScope.subtree,
-        description="Search scope level",
-    )
-
-    attributes: list[str] | None = Field(
-        default=None,
-        description="Attributes to retrieve (None for all)",
-    )
-
-    size_limit: int = Field(
-        default=1000,
-        description="Maximum number of results",
-        ge=0,
-        le=10000,
-    )
-
-    time_limit: int = Field(
-        default=30,
-        description="Search timeout in seconds",
-        ge=1,
-        le=300,
-    )
+        return v
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate search configuration business rules."""
-        min_safe_time_limit = 5
-        if self.size_limit == 0 and self.time_limit < min_safe_time_limit:
-            return FlextResult.fail(
-                "Unlimited search should have reasonable time limit",
-            )
-
+        """Validate URI business rules."""
         return FlextResult.ok(None)
-
-
-# =============================================================================
-# CORE ENTITIES - Rich domain objects
-# =============================================================================
-
-
-class FlextLdapEntry(FlextEntity):
-    """LDAP directory entry entity used across operations.
-
-    Uses strict typing for DN and attributes, aligning with higher-level
-    operations expecting `dn` as `FlextLdapDistinguishedName` and
-    `attributes` as `dict[str, list[str]]`.
-    """
-
-    dn: FlextLdapDistinguishedName
-    object_classes: list[str] = Field(default_factory=list)
-    attributes: dict[str, list[str]] = Field(default_factory=dict)
-    status: FlextEntityStatus = Field(default=FlextEntityStatus.ACTIVE)
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate entry business rules (DN and object classes)."""
-        if not self.dn or not self.dn.value:
-            return FlextResult.fail("LDAP entry must have a distinguished name")
-        if not self.object_classes:
-            return FlextResult.fail("LDAP entry must have at least one object class")
-        return FlextResult.ok(None)
-
-    # Convenience helpers
-    def add_attribute_value(self, name: str, value: str) -> None:
-        """Add a single attribute value with de-duplication."""
-        values = self.attributes.setdefault(name, [])
-        if value not in values:
-            values.append(value)
-
-    def add_attribute(self, name: str, value: str | list[str]) -> None:
-        """Set attribute to a list of string values."""
-        if isinstance(value, list):
-            self.attributes[name] = [str(v) for v in value]
-        else:
-            self.attributes[name] = [str(value)]
-
-    def remove_attribute(self, name: str, value: str | None = None) -> None:
-        """Remove entire attribute or a specific value."""
-        if name not in self.attributes:
-            return
-        if value is None:
-            del self.attributes[name]
-            return
-        if value in self.attributes[name]:
-            self.attributes[name].remove(value)
-            if not self.attributes[name]:
-                del self.attributes[name]
-
-    def get_attribute(self, name: str) -> list[str]:
-        """Get all values for an attribute (empty list if absent)."""
-        return self.attributes.get(name, [])
-
-    # Backward-compatibility alias
-    def get_attribute_values(self, name: str) -> list[str]:
-        """Backward-compatibility alias for get_attribute()."""
-        return self.get_attribute(name)
-
-
-class FlextLdapUser(FlextLdapEntry):
-    """LDAP user entity with authentication and profile capabilities.
-
-    🎯 CONSOLIDATES AND REPLACES:
-    - FlextLdapUser (entities.py:495)
-    - FlextLdapUserAdvanced (models_consolidated.py:611)
-    - User entity patterns scattered across domain layer
-    - All user-specific business logic duplications
-    """
-
-    model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
-    )
-
-    uid: str = Field(
-        ...,
-        description="User identifier (username)",
-        min_length=1,
-        max_length=64,
-        pattern=r"^[a-zA-Z0-9._-]+$",
-    )
-
-    email: str | None = Field(
-        default=None,
-        description="User email address",
-        max_length=320,  # RFC 5321 limit
-    )
-
-    display_name: str | None = Field(
-        default=None,
-        description="User display name",
-        max_length=256,
-    )
-
-    is_active: bool = Field(
-        default=True,
-        description="User account active status",
-    )
-
-    last_login: datetime | None = Field(
-        default=None,
-        description="Last successful login timestamp",
-    )
-
-    password_changed: datetime | None = Field(
-        default=None,
-        description="Last password change timestamp",
-    )
-
-    @field_validator("email")
-    @classmethod
-    def validate_email_format(cls, v: str | None) -> str | None:
-        """Validate email format if provided."""
-        if v is None:
-            return v
-
-        # Basic email regex validation
-        email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-        if not email_pattern.match(v):
-            msg = f"Invalid email format: {v}"
-            raise ValueError(msg)
-
-        return v.lower()
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate user-specific business rules."""
-        # Call parent validation
-        base_result = super().validate_business_rules()
-        if base_result.is_failure:
-            return base_result
-
-        # User must be a person-like object
-        if not any(
-            oc in self.object_classes
-            for oc in ["person", "inetOrgPerson", "organizationalPerson"]
-        ):
-            return FlextResult.fail("User must include person-related object class")
-
-        # UID should be present in attributes
-        uid_values = self.get_attribute("uid")
-        if not uid_values or self.uid not in uid_values:
-            return FlextResult.fail("UID attribute must match entity uid field")
-
-        return FlextResult.ok(None)
-
-    @staticmethod
-    def authenticate_password(password: str) -> FlextResult[bool]:
-        """Authenticate user password (placeholder for actual implementation)."""
-        if not password:
-            return FlextResult.fail("Password cannot be empty")
-
-        # Simplified password verification placeholder for production readiness.
-        # Real implementations should perform an LDAP bind operation using the
-        # configured connection and credentials to validate the password.
-        return FlextResult.ok(data=True)
-
-    def activate(self) -> FlextResult[None]:
-        """Activate user account."""
-        if self.is_active:
-            return FlextResult.fail("User is already active")
-
-        self.is_active = True
-        self.status = FlextEntityStatus.ACTIVE
-        self.modified_at = datetime.now(UTC)
-        return FlextResult.ok(None)
-
-    def deactivate(self) -> FlextResult[None]:
-        """Deactivate user account."""
-        if not self.is_active:
-            return FlextResult.fail("User is already inactive")
-
-        self.is_active = False
-        self.status = FlextEntityStatus.INACTIVE
-        self.modified_at = datetime.now(UTC)
-        return FlextResult.ok(None)
-
-    def record_login(self) -> None:
-        """Record successful login."""
-        self.last_login = datetime.now(UTC)
-        self.modified_at = datetime.now(UTC)
-
-
-class FlextLdapGroup(FlextLdapEntry):
-    """LDAP group entity with membership management capabilities.
-
-    🎯 CONSOLIDATES AND REPLACES:
-    - FlextLdapGroup (entities.py:644)
-    - FlextLdapGroupAdvanced (models_consolidated.py:711)
-    - Group entity patterns scattered across domain layer
-    - All group-specific business logic duplications
-    """
-
-    model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
-    )
-
-    cn: str = Field(
-        ...,
-        description="Group common name",
-        min_length=1,
-        max_length=128,
-    )
-
-    description: str | None = Field(
-        default=None,
-        description="Group description",
-        max_length=1024,
-    )
-
-    members: list[FlextLdapDistinguishedName] = Field(
-        default_factory=list,
-        description="Group member DNs",
-    )
-
-    group_type: str = Field(
-        default="groupOfNames",
-        description="LDAP group type object class",
-    )
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate group-specific business rules."""
-        # Call parent validation
-        base_result = super().validate_business_rules()
-        if base_result.is_failure:
-            return base_result
-
-        # Group must have group-related object class
-        if not any(
-            oc in self.object_classes
-            for oc in ["groupOfNames", "groupOfUniqueNames", "posixGroup"]
-        ):
-            return FlextResult.fail("Group must include group-related object class")
-
-        # CN should be present in attributes
-        cn_values = self.get_attribute("cn")
-        if not cn_values or self.cn not in cn_values:
-            return FlextResult.fail("CN attribute must match entity cn field")
-
-        return FlextResult.ok(None)
-
-    def add_member(self, member_dn: FlextLdapDistinguishedName) -> FlextResult[None]:
-        """Add member to group."""
-        if member_dn in self.members:
-            return FlextResult.fail(f"Member {member_dn.value} already in group")
-
-        self.members.append(member_dn)
-
-        # Update attributes based on group type
-        if self.group_type == "groupOfNames":
-            self.add_attribute_value("member", member_dn.value)
-        elif self.group_type == "groupOfUniqueNames":
-            self.add_attribute_value("uniqueMember", member_dn.value)
-
-        self.modified_at = datetime.now(UTC)
-        return FlextResult.ok(None)
-
-    def remove_member(self, member_dn: FlextLdapDistinguishedName) -> FlextResult[None]:
-        """Remove member from group."""
-        if member_dn not in self.members:
-            return FlextResult.fail(f"Member {member_dn.value} not in group")
-
-        self.members.remove(member_dn)
-
-        # Update attributes based on group type
-        if self.group_type == "groupOfNames":
-            member_attr = "member"
-        elif self.group_type == "groupOfUniqueNames":
-            member_attr = "uniqueMember"
-        else:
-            member_attr = "member"
-
-        if member_attr in self.attributes:
-            with suppress(ValueError):
-                self.attributes[member_attr].remove(member_dn.value)
-
-        self.modified_at = datetime.now(UTC)
-        return FlextResult.ok(None)
-
-    def is_member(self, member_dn: FlextLdapDistinguishedName) -> bool:
-        """Check if DN is a member of this group."""
-        return member_dn in self.members
 
     @computed_field
-    def member_count(self) -> int:
-        """Get current member count."""
-        return len(self.members)
+    def scheme(self) -> str:
+        """Get URI scheme."""
+        return urlparse(self.value).scheme
+
+    @computed_field
+    def hostname(self) -> str | None:
+        """Get URI hostname."""
+        return urlparse(self.value).hostname
+
+    @computed_field
+    def port(self) -> int | None:
+        """Get URI port."""
+        return urlparse(self.value).port
+
+
+class FlextLdapObjectClass(FlextValue):
+    """LDAP object class value object."""
+
+    name: str = Field(..., description="Object class name")
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        """Validate object class name."""
+        if not v or not isinstance(v, str):
+            msg = "Object class name must be a non-empty string"
+            raise ValueError(msg)
+
+        if not v.replace("-", "").replace("_", "").isalnum():
+            msg = "Object class name contains invalid characters"
+            raise ValueError(msg)
+
+        return v
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules."""
+        if not self.name or not self.name.strip():
+            return FlextResult.fail("Object class name cannot be empty")
+        return FlextResult.ok(None)
+
+    def __str__(self) -> str:
+        """Return object class name."""
+        return self.name
+
+
+class FlextLdapAttributesValue(FlextValue):
+    """LDAP attributes value object."""
+
+    attributes: dict[str, object] = Field(
+        default_factory=dict,
+        description="LDAP attributes as name-value pairs",
+    )
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for LDAP attributes."""
+        for name, values in self.attributes.items():
+            if not name or not name.strip():
+                return FlextResult.fail("Attribute name cannot be empty")
+            if not values:
+                return FlextResult.fail(
+                    f"Attribute '{name}' must have at least one value",
+                )
+        return FlextResult.ok(None)
+
+    def get_single_value(self, name: str) -> str | None:
+        """Get single value for attribute."""
+        raw = self.attributes.get(name)
+        if raw is None:
+            return None
+        if isinstance(raw, list):
+            return str(raw[0]) if raw else None
+        return str(raw)
+
+    def get_values(self, name: str) -> list[str]:
+        """Get all values for attribute."""
+        raw = self.attributes.get(name)
+        if raw is None:
+            return []
+        if isinstance(raw, list):
+            return [str(x) for x in raw]
+        return [str(raw)]
 
 
 # =============================================================================
-# REQUEST/RESPONSE MODELS - API contracts
+# REQUEST/RESPONSE MODELS
 # =============================================================================
 
 
 class FlextLdapCreateUserRequest(FlextModel):
-    """Request model for user creation operations.
+    """Request model for creating LDAP users."""
 
-    🎯 CONSOLIDATES AND REPLACES:
-    - FlextLdapCreateUserRequest (value_objects.py:489)
-    - FlextLdapCreateUserRequestAdvanced (models_consolidated.py:807)
-    - FlextLdapUserCreateData (domain/models.py:23)
-    - User creation requests scattered across application layer
-    """
-
-    model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
-        str_strip_whitespace=True,
-    )
-
-    dn: FlextLdapDistinguishedName = Field(
-        ...,
-        description="Distinguished Name for new user",
-    )
-
-    uid: str = Field(
-        ...,
-        description="User identifier",
-        min_length=1,
-        max_length=64,
-        pattern=r"^[a-zA-Z0-9._-]+$",
-    )
-
-    cn: str = Field(
-        ...,
-        description="Common name",
-        min_length=1,
-        max_length=128,
-    )
-
-    sn: str = Field(
-        ...,
-        description="Surname",
-        min_length=1,
-        max_length=128,
-    )
-
-    email: str | None = Field(
-        default=None,
-        description="Email address",
-        max_length=320,
-    )
-
-    password: str | None = Field(
-        default=None,
-        description="Initial password",
-        repr=False,
-        min_length=8,
-    )
-
+    dn: str = Field(..., description="Distinguished Name for the user")
+    uid: str = Field(..., description="User ID")
+    cn: str = Field(..., description="Common name")
+    sn: str = Field(..., description="Surname")
+    given_name: str | None = Field(None, description="Given name")
+    mail: str | None = Field(None, description="Email address")
+    user_password: str | None = Field(None, description="User password")
     object_classes: list[str] = Field(
-        default_factory=lambda: [
-            "top",
-            "person",
-            "organizationalPerson",
-            "inetOrgPerson",
-        ],
-        description="LDAP object classes for user",
+        default_factory=lambda: ["inetOrgPerson", "person", "top"],
+        description="LDAP object classes",
     )
-
     additional_attributes: dict[str, list[str]] = Field(
         default_factory=dict,
         description="Additional LDAP attributes",
     )
 
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate user creation request business rules."""
-        # Validate DN
-        dn_result = self.dn.validate_business_rules()
-        if dn_result.is_failure:
-            return dn_result
+    @field_validator("dn")
+    @classmethod
+    def validate_dn(cls, v: str) -> str:
+        """Validate DN format."""
+        try:
+            FlextLdapDistinguishedName(value=v)
+            return v
+        except ValueError as e:
+            msg = f"Invalid DN format: {e}"
+            raise ValueError(msg) from e
 
-        # Validate email format if provided
-        if self.email:
-            email_pattern = re.compile(
-                r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
-            )
-            if not email_pattern.match(self.email):
-                return FlextResult.fail(f"Invalid email format: {self.email}")
+    @field_validator("mail")
+    @classmethod
+    def validate_email(cls, v: str | None) -> str | None:
+        """Validate email format if provided."""
+        if v and "@" not in v:
+            msg = f"Invalid email format: {v}"
+            raise ValueError(msg)
+        return v
 
-        # Validate object classes
-        required_classes = {"top", "person"}
-        if not required_classes.issubset(set(self.object_classes)):
-            return FlextResult.fail(
-                "User must include 'top' and 'person' object classes",
-            )
+    def to_ldap_attributes(self) -> dict[str, str | list[str]]:
+        """Convert request to LDAP attribute dictionary.
 
-        return FlextResult.ok(None)
+        Tests expect scalar strings for simple attributes like uid/cn/sn.
+        """
+        attrs: dict[str, str | list[str]] = {
+            "uid": self.uid,
+            "cn": self.cn,
+            "sn": self.sn,
+            "objectClass": list(self.object_classes),
+        }
+        if self.mail:
+            attrs["mail"] = self.mail
+        for k, v in self.additional_attributes.items():
+            attrs[k] = list(v)
+        return attrs
 
 
-class FlextLdapCreateGroupRequest(FlextModel):
-    """Request model for group creation operations.
+class FlextLdapSearchRequest(FlextModel):
+    """Request model for LDAP searches."""
 
-    🎯 CONSOLIDATES AND REPLACES:
-    - FlextLdapCreateGroupRequest (domain/models.py:82)
-    - FlextLdapCreateGroupRequestAdvanced (models_consolidated.py:955)
-    - Group creation requests scattered across application layer
+    base_dn: str = Field(..., description="Base DN for search")
+    scope: FlextLdapScopeEnum = Field(
+        FlextLdapScopeEnum.SUBTREE,
+        description="Search scope",
+    )
+    filter_str: str = Field(
+        "(objectClass=*)",
+        description="LDAP search filter",
+    )
+    attributes: list[str] | None = Field(
+        None,
+        description="Attributes to retrieve (None for all)",
+    )
+    size_limit: int = Field(
+        1000,
+        description="Maximum number of entries to return",
+        gt=0,
+        le=10000,
+    )
+    time_limit: int = Field(
+        30,
+        description="Search time limit in seconds",
+        gt=0,
+        le=300,
+    )
+
+    @field_validator("base_dn")
+    @classmethod
+    def validate_base_dn(cls, v: str) -> str:
+        """Validate base DN format."""
+        try:
+            FlextLdapDistinguishedName(value=v)
+            return v
+        except ValueError as e:
+            msg = f"Invalid base DN format: {e}"
+            raise ValueError(msg) from e
+
+    @field_validator("filter_str")
+    @classmethod
+    def validate_filter(cls, v: str) -> str:
+        """Validate filter format."""
+        if not v.startswith("(") or not v.endswith(")"):
+            msg = "LDAP filter must be enclosed in parentheses"
+            raise ValueError(msg)
+        return v
+
+
+class FlextLdapSearchResponse(FlextModel):
+    """Response model for LDAP searches."""
+
+    entries: list[LdapSearchResult] = Field(
+        default_factory=list,
+        description="Search result entries",
+    )
+    total_count: int = Field(default=0, description="Total number of entries found")
+    has_more: bool = Field(
+        default=False, description="Whether more entries are available",
+    )
+    search_time_ms: float = Field(
+        default=0.0, description="Search execution time in ms",
+    )
+
+
+# =============================================================================
+# DOMAIN ENTITIES - Rich Business Objects
+# =============================================================================
+
+
+class FlextLdapEntry(FlextDomainEntity):
+    """Base LDAP directory entry implementing rich domain model patterns.
+
+    Represents a generic LDAP directory entry with comprehensive business logic
+    for attribute management, object class validation, and domain rule enforcement.
     """
 
-    model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
-        str_strip_whitespace=True,
-    )
-
-    dn: FlextLdapDistinguishedName = Field(
-        ...,
-        description="Distinguished Name for new group",
-    )
-
-    cn: str = Field(
-        ...,
-        description="Group common name",
-        min_length=1,
-        max_length=128,
-    )
-
-    description: str | None = Field(
-        default=None,
-        description="Group description",
-        max_length=1024,
-    )
-
+    dn: str = Field(..., description="Distinguished Name")
     object_classes: list[str] = Field(
-        default_factory=lambda: ["top", "groupOfNames"],
-        description="LDAP object classes for group",
-    )
-
-    initial_members: list[FlextLdapDistinguishedName] = Field(
         default_factory=list,
-        description="Initial group members",
+        description="LDAP object classes",
     )
-
-    additional_attributes: dict[str, list[str]] = Field(
+    attributes: dict[str, object] = Field(
         default_factory=dict,
-        description="Additional LDAP attributes",
+        description="LDAP attributes as name-value pairs",
+    )
+    status: FlextEntityStatus = Field(
+        FlextEntityStatus.ACTIVE,
+        description="Entity status",
     )
 
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate group creation request business rules."""
-        # Validate DN
-        dn_result = self.dn.validate_business_rules()
-        if dn_result.is_failure:
-            return dn_result
+    @field_validator("dn")
+    @classmethod
+    def validate_dn_format(cls, v: str) -> str:
+        """Validate DN format."""
+        try:
+            FlextLdapDistinguishedName(value=v)
+            return v
+        except ValueError as e:
+            msg = f"Invalid DN format: {e}"
+            raise ValueError(msg) from e
 
-        # Validate object classes
-        if "top" not in self.object_classes:
-            return FlextResult.fail("Group must include 'top' object class")
+    def validate_domain_rules(self) -> FlextResult[None]:
+        """Validate entry domain rules."""
+        if not self.object_classes:
+            return FlextResult.fail("Entry must have at least one object class")
 
-        # Validate group type
-        group_classes = {"groupOfNames", "groupOfUniqueNames", "posixGroup"}
-        if not any(gc in self.object_classes for gc in group_classes):
-            return FlextResult.fail("Group must include a group-type object class")
+        if not self.dn or not self.dn.strip():
+            return FlextResult.fail("Entry must have a valid DN")
 
         return FlextResult.ok(None)
 
+    @field_validator("attributes", mode="before")
+    @classmethod
+    def _coerce_attributes(cls, v: object) -> dict[str, object] | object:
+        """Normalize mapping: lists -> list[str], scalars -> str (preserve scalar)."""
+        if v is None:
+            return {}
+        if isinstance(v, dict):
+            normalized: dict[str, object] = {}
+            for key, value in v.items():
+                if isinstance(value, list):
+                    normalized[key] = [str(item) for item in value]
+                else:
+                    normalized[key] = str(value)
+            return normalized
+        return v
+
+    def add_object_class(self, object_class: str) -> FlextResult[None]:
+        """Add object class to entry."""
+        if object_class in self.object_classes:
+            return FlextResult.fail(f"Object class '{object_class}' already exists")
+
+        self.object_classes.append(object_class)
+        return FlextResult.ok(None)
+
+    def get_attribute_values(self, name: str) -> list[str]:
+        """Get attribute values by name, always as list[str]."""
+        raw = self.attributes.get(name)
+        if raw is None:
+            return []
+        if isinstance(raw, list):
+            return [str(x) for x in raw]
+        return [str(raw)]
+
+    def get_single_attribute_value(self, name: str) -> str | None:
+        """Get single attribute value."""
+        values = self.get_attribute_values(name)
+        return values[0] if values else None
+
+    # Convenience API expected by tests
+    def get_attribute(self, name: str) -> str | None:
+        return self.get_single_attribute_value(name)
+
+    def has_attribute(self, name: str) -> bool:
+        return bool(self.get_attribute_values(name))
+
+    def set_attribute(self, name: str, values: list[str] | str) -> None:
+        """Set attribute value(s); accepts scalar string or list[str]."""
+        if isinstance(values, list):
+            self.attributes[name] = [str(v) for v in values]
+        else:
+            self.attributes[name] = str(values)
+
+    def add_attribute_value(self, name: str, value: str) -> None:
+        """Add value to attribute, promoting scalar to list if needed."""
+        if name not in self.attributes:
+            self.attributes[name] = [value]
+            return
+        current = self.attributes[name]
+        if isinstance(current, list):
+            if value not in current:
+                current.append(value)
+        elif current != value:
+            self.attributes[name] = [str(current), value]
+
+    @classmethod
+    def _normalize_attributes(cls, attrs: dict[str, object]) -> dict[str, object]:
+        """Normalize input attributes: cast lists to list[str], keep scalars as str."""
+        normalized: dict[str, object] = {}
+        for k, v in attrs.items():
+            if isinstance(v, list):
+                normalized[k] = [str(x) for x in v]
+            elif v is None:
+                normalized[k] = []
+            else:
+                normalized[k] = str(v)
+        return normalized
+
+    # Do not override __init__; rely on field validators for normalization
+
+    def is_descendant_of(self, parent_dn: str) -> bool:
+        """Check if entry is descendant of parent DN."""
+        dn_obj = FlextLdapDistinguishedName(value=self.dn)
+        return dn_obj.is_descendant_of(parent_dn)
+
+    @computed_field
+    def rdn(self) -> str:
+        """Get Relative Distinguished Name."""
+        return self.dn.split(",", 1)[0].strip()
+
+    @computed_field
+    def parent_dn(self) -> str | None:
+        """Get parent DN."""
+        parts = self.dn.split(",", 1)
+        return parts[1].strip() if len(parts) > 1 else None
+
+
+class FlextLdapUser(FlextLdapEntry):
+    """LDAP user entity with user-specific business logic."""
+
+    # User-specific fields with sensible defaults
+    uid: str | None = Field(None, description="User ID")
+    cn: str | None = Field(None, description="Common Name")
+    sn: str | None = Field(None, description="Surname")
+    given_name: str | None = Field(None, description="Given Name")
+    mail: str | None = Field(None, description="Email Address")
+
+    def model_post_init(self, __context: object, /) -> None:
+        """Finalize initialization with defaults and derived fields."""
+        if not self.object_classes:
+            self.object_classes = ["inetOrgPerson", "person", "top"]
+        # Extract user attributes from LDAP attributes
+        self._extract_user_attributes()
+
+    def _extract_user_attributes(self) -> None:
+        """Extract user-specific attributes from LDAP attributes."""
+        if self.attributes:
+            self.uid = self.get_single_attribute_value("uid")
+            self.cn = self.get_single_attribute_value("cn")
+            self.sn = self.get_single_attribute_value("sn")
+            self.given_name = self.get_single_attribute_value("givenName")
+            self.mail = self.get_single_attribute_value("mail")
+
+    def validate_domain_rules(self) -> FlextResult[None]:
+        """Validate user-specific domain rules."""
+        # Call parent validation first
+        parent_result = super().validate_domain_rules()
+        if not parent_result.is_success:
+            return parent_result
+
+        # User-specific validations
+        if not self.uid and not self.get_single_attribute_value("uid"):
+            return FlextResult.fail("User must have a UID")
+
+        if not self.cn and not self.get_single_attribute_value("cn"):
+            return FlextResult.fail("User must have a Common Name")
+
+        # Validate required object classes for users
+        required_classes = ["person"]
+        for req_class in required_classes:
+            if req_class not in self.object_classes:
+                return FlextResult.fail(f"User must have object class '{req_class}'")
+
+        return FlextResult.ok(None)
+
+    def set_password(self, password: str) -> FlextResult[None]:
+        """Set user password."""
+        if not password or len(password) < MIN_PASSWORD_LENGTH:
+            return FlextResult.fail("Password must be at least 6 characters")
+
+        self.set_attribute("userPassword", [password])
+        return FlextResult.ok(None)
+
+    def set_email(self, email: str) -> FlextResult[None]:
+        """Set user email with validation."""
+        if "@" not in email:
+            return FlextResult.fail("Invalid email format")
+
+        self.mail = email
+        self.set_attribute("mail", [email])
+        return FlextResult.ok(None)
+
+    def is_active(self) -> bool:
+        """Check if user is active."""
+        return self.status == FlextEntityStatus.ACTIVE
+
+    # Methods expected by tests for immutability operations
+    def lock_account(self) -> FlextLdapUser:
+        """Return a new instance with locked flag set."""
+        new_user = self.model_copy(deep=True)
+        new_user.set_attribute("locked", ["true"])
+        # Locked accounts should not be active
+        new_user.status = FlextEntityStatus.INACTIVE
+        return new_user
+
+    def unlock_account(self) -> FlextLdapUser:
+        """Return a new instance with locked flag removed."""
+        new_user = self.model_copy(deep=True)
+        if "locked" in new_user.attributes:
+            del new_user.attributes["locked"]
+        # Unlocking restores active status
+        new_user.status = FlextEntityStatus.ACTIVE
+        return new_user
+
+    def activate(self) -> None:
+        """Activate user account."""
+        self.status = FlextEntityStatus.ACTIVE
+
+    def deactivate(self) -> None:
+        """Deactivate user account."""
+        self.status = FlextEntityStatus.INACTIVE
+
+
+class FlextLdapGroup(FlextLdapEntry):
+    """LDAP group entity with group-specific business logic."""
+
+    # Group-specific fields
+    cn: str | None = Field(None, description="Common Name")
+    description: str | None = Field(None, description="Group Description")
+    members: list[str] = Field(default_factory=list, description="Group Members")
+
+    def model_post_init(self, __context: object, /) -> None:
+        """Finalize initialization with defaults and derived fields."""
+        if not self.object_classes:
+            self.object_classes = ["groupOfNames", "top"]
+        # Extract group attributes
+        self._extract_group_attributes()
+
+    def _extract_group_attributes(self) -> None:
+        """Extract group-specific attributes from LDAP attributes."""
+        if self.attributes:
+            self.cn = self.get_single_attribute_value("cn")
+            self.description = self.get_single_attribute_value("description")
+            self.members = self.get_attribute_values("member")
+
+    def validate_domain_rules(self) -> FlextResult[None]:
+        """Validate group-specific domain rules."""
+        # Call parent validation first
+        parent_result = super().validate_domain_rules()
+        if not parent_result.is_success:
+            return parent_result
+
+        # Group-specific validations
+        if not self.cn and not self.get_single_attribute_value("cn"):
+            return FlextResult.fail("Group must have a Common Name")
+
+        # Validate required object classes for groups
+        required_classes = ["groupOfNames"]
+        for req_class in required_classes:
+            if req_class not in self.object_classes:
+                return FlextResult.fail(f"Group must have object class '{req_class}'")
+
+        return FlextResult.ok(None)
+
+    def add_member(self, member_dn: str) -> FlextLdapGroup:
+        """Add member and return new group instance (immutably)."""
+        FlextLdapDistinguishedName(value=member_dn)
+        if member_dn in self.members:
+            return self
+        new_group = self.model_copy(deep=True)
+        new_group.members.append(member_dn)
+        new_group.add_attribute_value("member", member_dn)
+        return new_group
+
+    def remove_member(self, member_dn: str) -> FlextLdapGroup:
+        """Remove member and return new group instance (immutably)."""
+        if member_dn not in self.members:
+            return self
+        new_group = self.model_copy(deep=True)
+        if member_dn in new_group.members:
+            new_group.members.remove(member_dn)
+        current_members = new_group.get_attribute_values("member")
+        if member_dn in current_members:
+            current_members.remove(member_dn)
+            new_group.set_attribute("member", current_members)
+        return new_group
+
+    def has_member(self, member_dn: str) -> bool:
+        """Check if DN is a member of this group."""
+        return member_dn in self.members
+
+    def get_member_count(self) -> int:
+        """Get number of members in group."""
+        return len(self.members)
+
+    def is_empty(self) -> bool:
+        """Check if group has no members."""
+        return len(self.members) == 0
+
+
+class FlextLdapConnection(FlextDomainEntity):
+    """LDAP connection entity managing connection state."""
+
+    server_uri: str = Field(..., description="LDAP server URI")
+    bind_dn: str | None = Field(None, description="Bind DN for authentication")
+    is_connected: bool = Field(default=False, description="Connection status")
+    connection_time: datetime | None = Field(None, description="Connection timestamp")
+    last_activity: datetime | None = Field(None, description="Last activity timestamp")
+
+    def validate_domain_rules(self) -> FlextResult[None]:
+        """Validate connection domain rules."""
+        try:
+            FlextLdapUri(value=self.server_uri)
+        except ValueError as e:
+            return FlextResult.fail(f"Invalid server URI: {e}")
+
+        if self.bind_dn:
+            try:
+                FlextLdapDistinguishedName(value=self.bind_dn)
+            except ValueError as e:
+                return FlextResult.fail(f"Invalid bind DN: {e}")
+
+        return FlextResult.ok(None)
+
+    def connect(self) -> FlextResult[None]:
+        """Mark connection as established."""
+        self.is_connected = True
+        self.connection_time = datetime.now(UTC)
+        self.last_activity = self.connection_time
+        return FlextResult.ok(None)
+
+    def disconnect(self) -> None:
+        """Mark connection as closed."""
+        self.is_connected = False
+
+    def update_activity(self) -> None:
+        """Update last activity timestamp."""
+        self.last_activity = datetime.now(UTC)
+
+    def get_connection_duration(self) -> float | None:
+        """Get connection duration in seconds."""
+        if not self.connection_time or not self.is_connected:
+            return None
+
+        current_time = self.last_activity or datetime.now(UTC)
+        return (current_time - self.connection_time).total_seconds()
+
 
 # =============================================================================
-# DOMAIN EVENTS - Event sourcing patterns
+# CONFIGURATION MODELS
 # =============================================================================
 
 
-class FlextLdapDomainEvent(FlextModel):
-    """Base domain event for LDAP operations.
+class FlextLdapConnectionConfig(FlextModel):
+    """LDAP connection configuration model."""
 
-    🎯 CONSOLIDATES AND REPLACES:
-    - FlextLdapDomainEventBase (domain/events.py)
-    - Event patterns scattered across domain layer
-    """
+    server_uri: str = Field(..., description="LDAP server URI")
+    bind_dn: str | None = Field(default=None, description="Bind DN for authentication")
+    bind_password: str | None = Field(default=None, description="Bind password")
+    use_tls: bool = Field(default=False, description="Use TLS encryption")
+    validate_cert: bool = Field(default=True, description="Validate server certificate")
+    timeout: int = Field(default=30, description="Connection timeout in seconds")
+    pool_size: int = Field(default=10, description="Connection pool size")
 
-    model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
+    @field_validator("server_uri")
+    @classmethod
+    def validate_server_uri(cls, v: str) -> str:
+        """Validate server URI format."""
+        try:
+            FlextLdapUri(value=v)
+            return v
+        except ValueError as e:
+            msg = f"Invalid server URI: {e}"
+            raise ValueError(msg) from e
+
+    @field_validator("bind_dn")
+    @classmethod
+    def validate_bind_dn(cls, v: str | None) -> str | None:
+        """Validate bind DN format if provided."""
+        if v:
+            try:
+                FlextLdapDistinguishedName(value=v)
+                return v
+            except ValueError as e:
+                msg = f"Invalid bind DN: {e}"
+                raise ValueError(msg) from e
+        return v
+
+
+class FlextLdapSettings(FlextModel):
+    """FLEXT-LDAP global settings model."""
+
+    default_connection: FlextLdapConnectionConfig | None = Field(
+        None,
+        description="Default connection configuration",
     )
-
-    event_id: str = Field(
-        default_factory=lambda: str(uuid4()),
-        description="Unique event identifier",
+    search_time_limit: int = Field(
+        30,
+        description="Default search time limit in seconds",
     )
-
-    event_type: str = Field(
-        ...,
-        description="Type of domain event",
+    search_size_limit: int = Field(
+        1000,
+        description="Default search size limit",
     )
-
-    aggregate_id: str = Field(
-        ...,
-        description="ID of the aggregate that generated the event",
+    enable_logging: bool = Field(
+        default=True, description="Enable LDAP operation logging",
     )
+    log_level: str = Field("INFO", description="Logging level")
 
-    occurred_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-        description="When the event occurred",
-    )
+    @field_validator("log_level")
+    @classmethod
+    def validate_log_level(cls, v: str) -> str:
+        """Validate log level."""
+        valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        if v.upper() not in valid_levels:
+            msg = f"Invalid log level: {v}. Must be one of {valid_levels}"
+            raise ValueError(msg)
+        return v.upper()
 
-    event_data: dict[str, object] = Field(
+
+# =============================================================================
+# EXTENDED ENTRY MODELS
+# =============================================================================
+
+
+class FlextLdapExtendedEntry(FlextLdapEntry):
+    """Extended LDAP entry with additional metadata and functionality."""
+
+    source_server: str | None = Field(None, description="Source LDAP server")
+    last_modified: datetime | None = Field(None, description="Last modification time")
+    schema_version: str | None = Field(None, description="Schema version")
+    extensions: LdapAttributeDict = Field(
         default_factory=dict,
-        description="Event-specific data",
+        description="Extended attributes and metadata",
     )
 
+    def add_extension(self, key: str, value: LdapAttributeValue) -> None:
+        """Add extension data."""
+        self.extensions[key] = value
 
-class FlextLdapEntryCreated(FlextLdapDomainEvent):
-    """Event fired when LDAP entry is created.
+    def get_extension(
+        self, key: str, default: LdapAttributeValue | None = None,
+    ) -> LdapAttributeValue | None:
+        """Get extension data."""
+        return self.extensions.get(key, default)
 
-    🎯 CONSOLIDATES AND REPLACES:
-    - FlextLdapEntryCreated (domain/events.py:62)
-    """
+    def has_extension(self, key: str) -> bool:
+        """Check if extension exists."""
+        return key in self.extensions
 
-    event_type: str = Field(default="entry.created", description="Event type")
-    entry_dn: FlextLdapDistinguishedName = Field(..., description="Created entry DN")
-
-
-class FlextLdapUserAuthenticated(FlextLdapDomainEvent):
-    """Event fired when user authenticates successfully.
-
-    🎯 CONSOLIDATES AND REPLACES:
-    - FlextLdapUserAuthenticated (domain/events.py:139)
-    """
-
-    event_type: str = Field(default="user.authenticated", description="Event type")
-    user_dn: FlextLdapDistinguishedName = Field(
-        ..., description="Authenticated user DN",
-    )
-    authentication_method: str = Field(
-        default="bind", description="Authentication method used",
-    )
-
-
-class FlextLdapGroupMemberAdded(FlextLdapDomainEvent):
-    """Event fired when member is added to group.
-
-    🎯 CONSOLIDATES AND REPLACES:
-    - FlextLdapGroupMemberAdded (domain/events.py:174)
-    """
-
-    event_type: str = Field(default="group.member_added", description="Event type")
-    group_dn: FlextLdapDistinguishedName = Field(..., description="Group DN")
-    member_dn: FlextLdapDistinguishedName = Field(..., description="Added member DN")
+    def update_last_modified(self) -> None:
+        """Update last modified timestamp."""
+        self.last_modified = datetime.now(UTC)
 
 
 # =============================================================================
-# SEARCH RESULT MODELS - Operation results
+# BACKWARD COMPATIBILITY ALIASES
 # =============================================================================
 
+# Legacy aliases for backward compatibility
+LDAPEntry = FlextLdapExtendedEntry
+LDAPFilter = FlextLdapFilter
+FlextLdapFilterValue = FlextLdapFilter  # Common alias used in codebase
+CreateUserRequest = FlextLdapCreateUserRequest
+LDAPUser = FlextLdapUser
+LDAPGroup = FlextLdapGroup
 
-class FlextLdapSearchResult(FlextModel):
-    """Search operation result with pagination support.
-
-    🎯 CONSOLIDATES AND REPLACES:
-    - Search result models scattered across application layer
-    - Pagination patterns duplicated across search operations
-    """
-
-    model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
-    )
-
-    entries: list[FlextLdapEntry] = Field(
-        default_factory=list,
-        description="Found LDAP entries",
-    )
-
-    total_count: int = Field(
-        default=0,
-        description="Total entries matching criteria",
-        ge=0,
-    )
-
-    page_size: int = Field(
-        default=100,
-        description="Requested page size",
-        ge=1,
-    )
-
-    page_token: str | None = Field(
-        default=None,
-        description="Token for next page (if available)",
-    )
-
-    search_time_ms: int = Field(
-        default=0,
-        description="Search execution time in milliseconds",
-        ge=0,
-    )
-
-    @computed_field
-    def has_more_results(self) -> bool:
-        """Check if there are more results available."""
-        return self.page_token is not None
-
-    @computed_field
-    def entry_count(self) -> int:
-        """Get count of entries in current page."""
-        return len(self.entries)
-
-
-# =============================================================================
-# CONSOLIDATED EXPORTS - SINGLE SOURCE OF TRUTH
-# =============================================================================
-
+# Export commonly used symbols for convenience
 __all__ = [
-    # Alphabetically sorted model exports
-    "FlextLdapCreateGroupRequest",
+    "CreateUserRequest",
+    "FlextLdapAttributesValue",
+    "FlextLdapConnection",
+    # Configuration Models
+    "FlextLdapConnectionConfig",
+    # Request/Response Models
     "FlextLdapCreateUserRequest",
+    # Enums
+    "FlextLdapDataType",
+    # Value Objects
     "FlextLdapDistinguishedName",
-    "FlextLdapDomainEvent",
+    "FlextLdapEntityStatus",
+    # Domain Entities
     "FlextLdapEntry",
-    "FlextLdapEntryCreated",
+    "FlextLdapExtendedEntry",
     "FlextLdapFilter",
+    "FlextLdapFilterValue",
     "FlextLdapGroup",
-    "FlextLdapGroupMemberAdded",
+    "FlextLdapObjectClass",
     "FlextLdapScope",
-    "FlextLdapSearchConfig",
-    "FlextLdapSearchResult",
+    "FlextLdapScopeEnum",
+    "FlextLdapSearchRequest",
+    "FlextLdapSearchResponse",
+    "FlextLdapSettings",
+    "FlextLdapUri",
     "FlextLdapUser",
-    "FlextLdapUserAuthenticated",
+    # Legacy Aliases
+    "LDAPEntry",
+    "LDAPFilter",
+    "LDAPGroup",
+    "LDAPScope",
+    "LDAPUser",
 ]

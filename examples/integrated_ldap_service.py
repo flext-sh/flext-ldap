@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: PLC0415,RUF001,ARG001
 """Example of using the integrated LDAP service.
 
 This example demonstrates how to use the LDAPService for LDAP operations.
@@ -83,7 +84,7 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLdapApi) -> None:
 
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
     bind_dn = os.getenv("LDAP_TEST_BIND_DN", "cn=admin,dc=example,dc=com")
-    password = os.getenv("LDAP_TEST_PASSWORD", "admin")  # noqa: S105
+    password = os.getenv("LDAP_TEST_PASSWORD", "admin")
 
     try:
         connection_result = await ldap_service.connect(server_url, bind_dn, password)
@@ -143,7 +144,7 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
 
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
     bind_dn = os.getenv("LDAP_TEST_BIND_DN", "cn=admin,dc=example,dc=com")
-    password = os.getenv("LDAP_TEST_PASSWORD", "admin")  # noqa: S105
+    password = os.getenv("LDAP_TEST_PASSWORD", "admin")
 
     # Use proper connection management
     try:
@@ -274,7 +275,7 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
 
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
     bind_dn = os.getenv("LDAP_TEST_BIND_DN", "cn=admin,dc=example,dc=com")
-    password = os.getenv("LDAP_TEST_PASSWORD", "admin")  # noqa: S105
+    password = os.getenv("LDAP_TEST_PASSWORD", "admin")
 
     try:
         connection_result = await ldap_service.connect(server_url, bind_dn, password)
@@ -405,7 +406,7 @@ async def _demo_connection_management(ldap_service: FlextLdapApi) -> None:
 
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
     bind_dn = os.getenv("LDAP_TEST_BIND_DN", "cn=admin,dc=example,dc=com")
-    password = os.getenv("LDAP_TEST_PASSWORD", "admin")  # noqa: S105
+    password = os.getenv("LDAP_TEST_PASSWORD", "admin")
 
     # Demonstrate connection using the API's connect method
     try:

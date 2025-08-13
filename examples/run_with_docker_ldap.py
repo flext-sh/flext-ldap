@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: S602,S607
 """Example of running FLEXT-LDAP examples with Docker OpenLDAP container.
 
 This script automatically starts an OpenLDAP container and runs examples against it.
@@ -112,8 +113,12 @@ def start_openldap_container() -> bool:
 def stop_openldap_container() -> None:
     """Stop and remove OpenLDAP container."""
     try:
-        subprocess.run(["docker", "stop", "flext-ldap-example"], check=False)
-        subprocess.run(["docker", "rm", "flext-ldap-example"], check=False)
+        subprocess.run(
+            ["docker", "stop", "flext-ldap-example"],
+            check=False)
+        subprocess.run(
+            ["docker", "rm", "flext-ldap-example"],
+            check=False)
     except (RuntimeError, ValueError, TypeError):
         pass
 
@@ -162,7 +167,9 @@ async def main() -> None:
 if __name__ == "__main__":
     # Check if Docker is available
     try:
-        subprocess.run(["docker", "--version"], check=True, capture_output=True)
+        subprocess.run(
+            ["docker", "--version"],
+            check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         sys.exit(1)
 

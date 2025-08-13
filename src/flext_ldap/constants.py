@@ -234,7 +234,7 @@ class FlextLdapAttributeConstants:
     # Person Attributes (RFC 4519)
     USER_ID: Final[str] = "uid"
     MAIL: Final[str] = "mail"
-    USER_PASSWORD: Final[str] = "userPassword"
+    USER_PASSWORD: Final[str] = "userPassword"  # noqa: S105 - LDAP attribute name, not actual password
     TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
     FACSIMILE_TELEPHONE_NUMBER: Final[str] = "facsimileTelephoneNumber"
     MOBILE: Final[str] = "mobile"
@@ -287,7 +287,7 @@ class FlextLdapAttributeConstants:
     # 389 Directory Server
     NS_UNIQUE_ID: Final[str] = "nsUniqueId"
     NS_ACCOUNT_LOCK: Final[str] = "nsAccountLock"
-    PASSWORD_EXPIRY_TIME: Final[str] = "passwordExpiryTime"
+    PASSWORD_EXPIRY_TIME: Final[str] = "passwordExpiryTime"  # noqa: S105 - LDAP attribute name constant, not a secret
 
     @classmethod
     def get_person_attributes(cls) -> list[str]:
