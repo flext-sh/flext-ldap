@@ -92,6 +92,7 @@ class TestFlextLdapClient:
 
         result = await client.connect("ldap://invalid.server.test")
         assert not result.is_success
+        assert result.error is not None
         assert "connection" in result.error.lower() or "failed" in result.error.lower()
 
     @pytest.mark.asyncio
@@ -109,7 +110,7 @@ class TestFlextLdapClient:
 
         result = await client.disconnect()
         # Should handle gracefully
-        assert result.is_success or "not connected" in result.error.lower()
+        assert result.is_success or (result.error and "not connected" in result.error.lower())
 
     @pytest.mark.asyncio
     async def test_search_without_connection(self) -> None:
@@ -120,6 +121,7 @@ class TestFlextLdapClient:
             base_dn="dc=example,dc=com", search_filter="(objectClass=person)",
         )
         assert not result.is_success
+        assert result.error is not None
         assert (
             "not connected" in result.error.lower()
             or "connection" in result.error.lower()
@@ -127,7 +129,7 @@ class TestFlextLdapClient:
 
     @patch("flext_ldap.infrastructure.Connection")
     @pytest.mark.asyncio
-    async def test_connect_success_mock(self, mock_connection_class: Mock) -> None:
+    async def test_connect_success_mock(self, mock_connection_class: Mock) -> None:  # type: ignore[misc]
         """Test successful connection with mocked LDAP library."""
         # Setup mock
         mock_connection = Mock()
@@ -146,7 +148,7 @@ class TestFlextLdapClient:
 
     @patch("flext_ldap.infrastructure.Connection")
     @pytest.mark.asyncio
-    async def test_search_success_mock(self, mock_connection_class: Mock) -> None:
+    async def test_search_success_mock(self, mock_connection_class: Mock) -> None:  # type: ignore[misc]
         """Test successful search with mocked LDAP library."""
         # Setup mock
         mock_connection = Mock()
@@ -174,7 +176,7 @@ class TestFlextLdapClient:
         assert not client.is_connected()
 
     @patch("flext_ldap.infrastructure.Connection")
-    def test_is_connected_after_mock_connection(
+    def test_is_connected_after_mock_connection(  # type: ignore[misc]
         self, mock_connection_class: Mock,
     ) -> None:
         """Test connection status after mocked connection."""
@@ -203,8 +205,8 @@ class TestInfrastructureErrorHandling:
         result = await client.connect("")
         assert not result.is_success
 
-        result = await client.search("", "")
-        assert not result.is_success
+        search_result = await client.search("", "")
+        assert not search_result.is_success
 
     def test_converter_handles_invalid_input(self) -> None:
         """Test that converter handles invalid input gracefully."""

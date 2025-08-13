@@ -873,72 +873,7 @@ class FlextLdapConnection(FlextDomainEntity):
 # =============================================================================
 
 
-class FlextLdapConnectionConfig(FlextModel):
-    """LDAP connection configuration model."""
-
-    server_uri: str = Field(..., description="LDAP server URI")
-    bind_dn: str | None = Field(default=None, description="Bind DN for authentication")
-    bind_password: str | None = Field(default=None, description="Bind password")
-    use_tls: bool = Field(default=False, description="Use TLS encryption")
-    validate_cert: bool = Field(default=True, description="Validate server certificate")
-    timeout: int = Field(default=30, description="Connection timeout in seconds")
-    pool_size: int = Field(default=10, description="Connection pool size")
-
-    @field_validator("server_uri")
-    @classmethod
-    def validate_server_uri(cls, v: str) -> str:
-        """Validate server URI format."""
-        try:
-            FlextLdapUri(value=v)
-            return v
-        except ValueError as e:
-            msg = f"Invalid server URI: {e}"
-            raise ValueError(msg) from e
-
-    @field_validator("bind_dn")
-    @classmethod
-    def validate_bind_dn(cls, v: str | None) -> str | None:
-        """Validate bind DN format if provided."""
-        if v:
-            try:
-                FlextLdapDistinguishedName(value=v)
-                return v
-            except ValueError as e:
-                msg = f"Invalid bind DN: {e}"
-                raise ValueError(msg) from e
-        return v
-
-
-class FlextLdapSettings(FlextModel):
-    """FLEXT-LDAP global settings model."""
-
-    default_connection: FlextLdapConnectionConfig | None = Field(
-        None,
-        description="Default connection configuration",
-    )
-    search_time_limit: int = Field(
-        30,
-        description="Default search time limit in seconds",
-    )
-    search_size_limit: int = Field(
-        1000,
-        description="Default search size limit",
-    )
-    enable_logging: bool = Field(
-        default=True,
-        description="Enable LDAP operation logging",
-    )
-    log_level: str = Field("INFO", description="Logging level")
-
-    @field_validator("log_level")
-    @classmethod
-    def validate_log_level(cls, v: str) -> str:
-        """Validate log level."""
-        valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
-        if v.upper() not in valid_levels:
-            msg = f"Invalid log level: {v}. Must be one of {valid_levels}"
-            raise ValueError(msg)
-        return v.upper()
+# Configuration classes are provided by flext_ldap.config module
 
 
 # =============================================================================
@@ -995,8 +930,6 @@ __all__ = [
     "CreateUserRequest",
     "FlextLdapAttributesValue",
     "FlextLdapConnection",
-    # Configuration Models
-    "FlextLdapConnectionConfig",
     # Request/Response Models
     "FlextLdapCreateUserRequest",
     # Enums
@@ -1015,7 +948,6 @@ __all__ = [
     "FlextLdapScopeEnum",
     "FlextLdapSearchRequest",
     "FlextLdapSearchResponse",
-    "FlextLdapSettings",
     "FlextLdapUri",
     "FlextLdapUser",
     # Legacy Aliases

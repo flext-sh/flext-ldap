@@ -14,7 +14,7 @@ from __future__ import annotations
 import asyncio
 
 from flext_ldap.config import FlextLdapConnectionConfig
-from flext_ldap.ldap_infrastructure import FlextLdapClient
+from flext_ldap.infrastructure import FlextLdapClient
 
 
 async def main() -> None:

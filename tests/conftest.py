@@ -7,12 +7,12 @@ from __future__ import annotations
 
 import os
 import time
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
 try:
-    import docker  # type: ignore[import-not-found]
+    import docker
 except Exception:  # pragma: no cover - docker may be unavailable in CI
     docker = None  # type: ignore[assignment]
 import pytest
@@ -103,8 +103,6 @@ class OpenLDAPContainerManager:
                 raise
         except (RuntimeError, ValueError, TypeError):
             # Try to force remove by name if getting by ID fails
-            from contextlib import suppress
-
             with suppress(RuntimeError, ValueError, TypeError, docker.errors.APIError):
                 self.client.api.remove_container(OPENLDAP_CONTAINER_NAME, force=True)
 
@@ -239,8 +237,8 @@ async def _cleanup_ldap_entries_under_dn(
     # Try to delete all entries under the specified DN
     search_result = await client.search(
         connection_id,
-        FlextLdapDistinguishedName(dn=dn),
-        FlextLdapFilter(filter_string="(objectClass=*)"),
+        FlextLdapDistinguishedName(value=dn),
+        FlextLdapFilter(value="(objectClass=*)"),
         scope=FlextLdapScope.SUB,
     )
 
@@ -253,7 +251,7 @@ async def _cleanup_ldap_entries_under_dn(
         entry_dn = entry.get("dn", "")
         if entry_dn and entry_dn != dn:
             await client.delete_entry(
-                connection_id, FlextLdapDistinguishedName(dn=str(entry_dn)),
+                connection_id, FlextLdapDistinguishedName(value=str(entry_dn)),
             )
 
 
@@ -305,7 +303,7 @@ async def temporary_ldap_entry(
     try:
         # Create entry
         result = await client.create_entry(
-            connection_id, FlextLdapDistinguishedName(dn=dn), attributes,
+            connection_id, FlextLdapDistinguishedName(value=dn), attributes,
         )
         if not result.success:
             msg: str = f"Failed to create temporary entry {dn}: {result.error}"
@@ -315,10 +313,8 @@ async def temporary_ldap_entry(
 
     finally:
         # Auto-cleanup
-        import contextlib
-
-        with contextlib.suppress(RuntimeError, ValueError, TypeError):
-            await client.delete_entry(connection_id, FlextLdapDistinguishedName(dn=dn))
+        with suppress(RuntimeError, ValueError, TypeError):
+            await client.delete_entry(connection_id, FlextLdapDistinguishedName(value=dn))
 
 
 # Mark integration tests

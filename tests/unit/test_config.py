@@ -7,13 +7,14 @@ from unittest.mock import patch
 
 import pytest
 from flext_core import FlextLogLevel
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 
 from flext_ldap.config import (
     FlextLdapAuthConfig,
     FlextLdapConnectionConfig,
     FlextLdapConstants,
     FlextLdapLoggingConfig,
+    FlextLdapScope,
     FlextLdapSearchConfig,
     FlextLdapSettings,
 )
@@ -43,42 +44,42 @@ class TestFlextLdapConnectionConfig:
     def test_connection_config_defaults(self) -> None:
         """Test FlextLdapConnectionConfig with default values."""
         config = FlextLdapConnectionConfig()
-        assert config.host == "localhost"
+        assert config.server == "localhost"
         assert config.port == 389
         assert config.use_ssl is False
-        assert config.timeout_seconds == 30
+        assert config.timeout == 30
         assert config.pool_size == 10
         assert config.enable_connection_pooling is True
 
     def test_connection_config_custom(self) -> None:
         """Test FlextLdapConnectionConfig with custom values."""
         config = FlextLdapConnectionConfig(
-            host="test.example.com",
+            server="test.example.com",
             port=636,
             use_ssl=True,
-            timeout_seconds=60,
+            timeout=60,
             pool_size=20,
             enable_connection_pooling=False,
         )
-        assert config.host == "test.example.com"
+        assert config.server == "test.example.com"
         assert config.port == 636
         assert config.use_ssl is True
-        assert config.timeout_seconds == 60
+        assert config.timeout == 60
         assert config.pool_size == 20
         assert config.enable_connection_pooling is False
 
     def test_server_validation_valid(self) -> None:
         """Test server validation with valid values."""
-        config = FlextLdapConnectionConfig(host="localhost")
-        assert config.host == "localhost"
+        config = FlextLdapConnectionConfig(server="localhost")
+        assert config.server == "localhost"
 
     def test_server_validation_invalid(self) -> None:
         """Test server validation with invalid values."""
         with pytest.raises(ValueError, match="Host cannot be empty"):
-            FlextLdapConnectionConfig(host="")
+            FlextLdapConnectionConfig(server="")
 
         with pytest.raises(ValueError, match="Host cannot be empty"):
-            FlextLdapConnectionConfig(host="   ")
+            FlextLdapConnectionConfig(server="   ")
 
     def test_port_validation_valid(self) -> None:
         """Test port validation with valid values."""
@@ -96,9 +97,9 @@ class TestFlextLdapConnectionConfig:
     def test_domain_rules_validation_success(self) -> None:
         """Test domain rules validation with valid config."""
         config = FlextLdapConnectionConfig(
-            host="localhost",
+            server="localhost",
             port=389,
-            timeout_seconds=30,
+            timeout=30,
             pool_size=10,
         )
         # Should not raise
@@ -121,7 +122,7 @@ class TestFlextLdapAuthConfig:
         """Test FlextLdapAuthConfig with custom values."""
         config = FlextLdapAuthConfig(
             bind_dn="cn=admin,dc=example,dc=org",
-            bind_password="secret",
+            bind_password=SecretStr("secret"),
             use_anonymous_bind=True,
             sasl_mechanism="EXTERNAL",
         )
@@ -148,6 +149,7 @@ class TestFlextLdapAuthConfig:
         config = FlextLdapAuthConfig(use_anonymous_bind=False, bind_dn="")
         result = config.validate_domain_rules()
         assert not result.success
+        assert result.error is not None
         assert "bind dn" in result.error.lower()
 
     def test_domain_rules_validation_password_required(self) -> None:
@@ -155,7 +157,7 @@ class TestFlextLdapAuthConfig:
         config = FlextLdapAuthConfig(
             use_anonymous_bind=False,
             bind_dn="cn=admin,dc=example,dc=org",
-            bind_password="",
+            bind_password=SecretStr(""),
         )
         result = config.validate_domain_rules()
         assert not result.success
@@ -177,8 +179,6 @@ class TestFlextLdapSearchConfig:
 
     def test_search_config_custom(self) -> None:
         """Test FlextLdapSearchConfig with custom values."""
-        from flext_ldap.config import FlextLdapScope
-
         config = FlextLdapSearchConfig(
             default_scope=FlextLdapScope.ONELEVEL,
             default_size_limit=500,

@@ -58,5 +58,5 @@ class TestFlextLdapSettings:
             port=389,
             use_ssl=False,
         )
-        settings = FlextLdapSettings(connection=conn_config)
-        assert settings.connection == conn_config
+        settings = FlextLdapSettings(default_connection=conn_config)
+        assert settings.default_connection == conn_config
