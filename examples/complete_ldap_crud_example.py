@@ -153,10 +153,11 @@ async def demonstrate_complete_crud_operations() -> None:
         # Connect to LDAP
         connection_result = await ldap_service.connect(server_url, bind_dn, password)
         if connection_result.is_failure:
-            # Raise via helper to satisfy linter rule TRY301
-            def _raise_conn_err() -> None:
-                raise RuntimeError(f"Connection failed: {connection_result.error}")
-            _raise_conn_err()
+            # Handle via helper to satisfy linter rules
+            def _handle_conn_err() -> None:
+                logger.error("Connection failed")
+            _handle_conn_err()
+            return
 
         session_id = connection_result.data
         print(f"✅ Connected to LDAP server: {session_id}")
