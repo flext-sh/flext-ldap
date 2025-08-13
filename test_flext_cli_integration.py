@@ -20,7 +20,15 @@ from flext_cli import (
 )
 
 # Importar do flext-ldap
-from flext_ldap import FlextLdapCreateUserRequest, get_ldap_api
+from flext_ldap import get_ldap_api
+
+try:
+    # Newer API
+    from flext_ldap import FlextLdapCreateUserRequest  # type: ignore[attr-defined]
+except Exception:  # pragma: no cover - legacy alias
+    from flext_ldap import (
+        FlextLdapCreateUser as FlextLdapCreateUserRequest,  # type: ignore[attr-defined]
+    )
 
 
 class FlextLdapCLI:

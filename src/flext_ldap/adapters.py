@@ -32,15 +32,13 @@ from flext_ldap.types import (
 )
 
 if TYPE_CHECKING:
-    from flext_ldap.typings import FlextTypes
-
-if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
     from flext_ldap.types import (
         P,
         R,
     )
+    from flext_ldap.typings import FlextTypes
 
 logger = get_logger(__name__)
 
