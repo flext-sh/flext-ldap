@@ -15,6 +15,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib.metadata
+
 from flext_ldap.api import FlextLdapApi, get_ldap_api
 from flext_ldap.constants import FlextLdapScope as _ConstantsLdapScope
 from flext_ldap.constants import (
@@ -48,8 +50,16 @@ from flext_ldap.utils import (
     flext_ldap_sanitize_attribute_name,
 )
 
+# Version info
+try:
+    __version__ = importlib.metadata.version("flext-ldap")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "0.9.0"
+
+__version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
+
 # Public API
-__all__ = [
+__all__: list[str] = [
     # Core API
     "FlextLdapApi",
     "get_ldap_api",
@@ -81,6 +91,9 @@ __all__ = [
     "flext_ldap_validate_attribute_name",
     "flext_ldap_validate_attribute_value",
     "flext_ldap_sanitize_attribute_name",
+    # Metadata
+    "__version__",
+    "__version_info__",
 ]
 
 # Backward-compat exposed scope
