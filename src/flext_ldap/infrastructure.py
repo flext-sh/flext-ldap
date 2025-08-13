@@ -27,8 +27,17 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
+import ldap3
 from flext_core import FlextResult, get_logger
-from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, MODIFY_REPLACE, SUBTREE, Connection as Ldap3Connection, Server
+from ldap3 import (
+    ALL_ATTRIBUTES,
+    BASE,
+    LEVEL,
+    MODIFY_REPLACE,
+    SUBTREE,
+    Connection as Ldap3Connection,
+    Server,
+)
 from ldap3.core.exceptions import LDAPException
 
 if TYPE_CHECKING:
@@ -40,6 +49,7 @@ if TYPE_CHECKING:
     )
 
 logger = get_logger(__name__)
+LDAP_SUBORDINATES = getattr(ldap3, "SUBORDINATES", SUBTREE)
 
 
 # Alias to real ldap3.Connection to preserve test patch path
@@ -202,7 +212,7 @@ class FlextLdapClient:
             ok = conn.search(
                 search_base=base_dn,
                 search_filter=search_filter,
-                search_scope=ldap_scope,  # type: ignore[arg-type]
+                search_scope=ldap_scope,  # ldap3 is untyped; runtime-validated above
                 attributes=attrs,
                 size_limit=size_limit,
                 time_limit=time_limit,

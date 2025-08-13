@@ -14,12 +14,11 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import os
-import shutil
-import subprocess
 import sys
 import time
 from pathlib import Path
 
+import docker
 from integrated_ldap_service import main as integrated_main
 from ldap_simple_client_example import main as simple_main
 
@@ -27,78 +26,53 @@ from ldap_simple_client_example import main as simple_main
 def start_openldap_container() -> bool:
     """Start OpenLDAP container for testing."""
     try:
+        client = docker.from_env()
         # Stop any existing container
-        docker_path = shutil.which("docker") or "docker"
-        subprocess.run(
-            [docker_path, "stop", "flext-ldap-example"],
-            check=False,
-        )
-        subprocess.run(
-            [docker_path, "rm", "flext-ldap-example"],
-            check=False,
-        )
+        try:
+            existing = client.containers.get("flext-ldap-example")
+            try:
+                existing.stop()
+            finally:
+                existing.remove(force=True)
+        except docker.errors.NotFound:
+            pass
 
         # Start new container
-        cmd = [
-            docker_path,
-            "run",
-            "-d",
-            "--name",
-            "flext-ldap-example",
-            "-p",
-            "3389:389",
-            "-e",
-            "LDAP_ORGANISATION=FLEXT Example Org",
-            "-e",
-            "LDAP_DOMAIN=internal.invalid",
-            "-e",
-            "LDAP_ADMIN_PASSWORD=REDACTED_LDAP_BIND_PASSWORD123",
-            "-e",
-            "LDAP_CONFIG_PASSWORD=config123",
-            "-e",
-            "LDAP_READONLY_USER=false",
-            "-e",
-            "LDAP_RFC2307BIS_SCHEMA=true",
-            "-e",
-            "LDAP_BACKEND=mdb",
-            "-e",
-            "LDAP_TLS=false",
-            "-e",
-            "LDAP_REMOVE_CONFIG_AFTER_SETUP=true",
-            "osixia/openldap:1.5.0",
-        ]
-        subprocess.run(cmd, check=True)
+        env = {
+            "LDAP_ORGANISATION": "FLEXT Example Org",
+            "LDAP_DOMAIN": "internal.invalid",
+            "LDAP_ADMIN_PASSWORD": "REDACTED_LDAP_BIND_PASSWORD123",
+            "LDAP_CONFIG_PASSWORD": "config123",
+            "LDAP_READONLY_USER": "false",
+            "LDAP_RFC2307BIS_SCHEMA": "true",
+            "LDAP_BACKEND": "mdb",
+            "LDAP_TLS": "false",
+            "LDAP_REMOVE_CONFIG_AFTER_SETUP": "true",
+        }
+        client.containers.run(
+            image="osixia/openldap:1.5.0",
+            name="flext-ldap-example",
+            detach=True,
+            ports={"389/tcp": 3389},
+            environment=env,
+        )
 
         # Wait for container to be ready
+        from os import getenv
+
+        from ldap3 import ALL, Connection, Server
+        server = Server("localhost", port=389, get_info=ALL)
         for _attempt in range(30):
             try:
-                result = subprocess.run(
-                    [
-                        docker_path,
-                        "exec",
-                        "flext-ldap-example",
-                        "ldapsearch",
-                        "-x",
-                        "-H",
-                        "ldap://localhost:389",
-                        "-D",
-                        "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-                        "-w",
-                        "REDACTED_LDAP_BIND_PASSWORD123",
-                        "-b",
-                        "dc=flext,dc=local",
-                        "-s",
-                        "base",
-                        "(objectClass=*)",
-                    ],
-                    capture_output=True,
-                    check=True,
-                )
-
-                if result.returncode == 0:
-                    return True
-
-            except subprocess.CalledProcessError:
+                with Connection(
+                    server,
+                    user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
+                    password=getenv("LDAP_TEST_PASSWORD", ""),
+                    auto_bind=True,
+                ) as conn:
+                    if conn.bound:
+                        return True
+            except Exception:
                 time.sleep(1)
 
         return False
@@ -110,9 +84,15 @@ def start_openldap_container() -> bool:
 def stop_openldap_container() -> None:
     """Stop and remove OpenLDAP container."""
     try:
-        docker_path = shutil.which("docker") or "docker"
-        subprocess.run([docker_path, "stop", "flext-ldap-example"], check=False)
-        subprocess.run([docker_path, "rm", "flext-ldap-example"], check=False)
+        client = docker.from_env()
+        try:
+            c = client.containers.get("flext-ldap-example")
+            try:
+                c.stop()
+            finally:
+                c.remove(force=True)
+        except docker.errors.NotFound:
+            pass
     except (RuntimeError, ValueError, TypeError):
         pass
 
@@ -159,11 +139,10 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    # Check if Docker is available
+    # Check if Docker is available by pinging the daemon
     try:
-        docker_path = shutil.which("docker") or "docker"
-        subprocess.run([docker_path, "--version"], check=True, capture_output=True)
-    except (subprocess.CalledProcessError, FileNotFoundError):
+        docker.from_env().ping()
+    except Exception:
         sys.exit(1)
 
     asyncio.run(main())

@@ -17,7 +17,7 @@ from asyncio import AbstractEventLoop
 from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
-from flext_core import FlextResult, create_ldap_config, get_logger
+from flext_core import FlextResult, get_logger
 
 from flext_ldap.config import FlextLdapAuthConfig, FlextLdapConnectionConfig
 from flext_ldap.exceptions import (
@@ -221,11 +221,14 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             },
         )
 
-        base = create_ldap_config(host=host, port=port)
+        # Build config directly without flext_core helper for compatibility
         config = FlextLdapConnectionConfig.model_validate(
             {
-                **base.model_dump(),
+                "server": host,
+                "host": host,
+                "port": port,
                 "use_ssl": use_ssl,
+                "timeout_seconds": 30,
             },
         )
         logger.trace("Created connection config", extra={"config": config.__dict__})
