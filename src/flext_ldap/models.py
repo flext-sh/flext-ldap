@@ -92,6 +92,73 @@ LDAPScope = FlextLdapScopeEnum
 
 
 # =============================================================================
+# HELPER CLASSES - Complexity Reduction and Code Reuse
+# =============================================================================
+
+
+class LdapAttributeProcessor:
+    """Helper class for attribute processing - REDUCES COMPLEXITY in models."""
+
+    @staticmethod
+    def coerce_attribute_value(value: object) -> str | list[str]:
+        """Normalize attribute value to str or list[str]."""
+        if isinstance(value, list):
+            return [str(item) for item in value]
+        return str(value)
+
+    @staticmethod
+    def normalize_attributes(attrs: dict[str, object]) -> dict[str, object]:
+        """Normalize mapping: lists -> list[str], scalars -> str."""
+        if not isinstance(attrs, dict) or not attrs:
+            return {}
+
+        # Optimized with dictionary comprehension for better performance
+        return {
+            key: LdapAttributeProcessor.coerce_attribute_value(value)
+            for key, value in attrs.items()
+        }
+
+
+class LdapDomainValidator:
+    """Helper class for domain validation - ELIMINATES DUPLICATION."""
+
+    @staticmethod
+    def validate_common_name(
+        cn_field: str | None,
+        attributes: dict[str, object],
+        entity_type: str,
+    ) -> FlextResult[None]:
+        """Validate common name requirement for users and groups."""
+        if not cn_field and not LdapDomainValidator._get_attribute_value(attributes, "cn"):
+            return FlextResult.fail(f"{entity_type} must have a Common Name")
+        return FlextResult.ok(None)
+
+    @staticmethod
+    def validate_required_object_classes(
+        object_classes: list[str],
+        required_classes: list[str],
+        entity_type: str,
+    ) -> FlextResult[None]:
+        """Validate required object classes for entities."""
+        for req_class in required_classes:
+            if req_class not in object_classes:
+                return FlextResult.fail(
+                    f"{entity_type} must have object class '{req_class}'",
+                )
+        return FlextResult.ok(None)
+
+    @staticmethod
+    def _get_attribute_value(attributes: dict[str, object], name: str) -> str | None:
+        """Helper to get single attribute value."""
+        raw = attributes.get(name)
+        if raw is None:
+            return None
+        if isinstance(raw, list):
+            return str(raw[0]) if raw else None
+        return str(raw)
+
+
+# =============================================================================
 # VALUE OBJECTS - Immutable Domain Values
 # =============================================================================
 
@@ -226,17 +293,6 @@ class FlextLdapScope(FlextValue):
 class FlextLdapFilter(FlextValue):
     """LDAP filter value object with RFC 4515 compliance."""
 
-    @classmethod
-    def create(cls, value: str) -> FlextResult[FlextLdapFilter]:
-        """Create filter from string with validation."""
-        try:
-            filter_obj = cls(value=value)
-            return FlextResult.ok(filter_obj)
-        except Exception as e:
-            return FlextResult.fail(str(e))
-
-    """LDAP filter value object with RFC 4515 compliance."""
-
     model_config = ConfigDict(
         extra="forbid",
         validate_assignment=True,
@@ -270,6 +326,15 @@ class FlextLdapFilter(FlextValue):
         if not self.value or self.value.isspace():
             return FlextResult.fail("Filter cannot be empty or whitespace")
         return FlextResult.ok(None)
+
+    @classmethod
+    def create(cls, value: str) -> FlextResult[FlextLdapFilter]:
+        """Create filter from string with validation."""
+        try:
+            filter_obj = cls(value=value)
+            return FlextResult.ok(filter_obj)
+        except Exception as e:
+            return FlextResult.fail(str(e))
 
 
 @final
@@ -556,17 +621,11 @@ class FlextLdapEntry(FlextDomainEntity):
     @field_validator("attributes", mode="before")
     @classmethod
     def _coerce_attributes(cls, v: object) -> dict[str, object] | object:
-        """Normalize mapping: lists -> list[str], scalars -> str (preserve scalar)."""
+        """Normalize mapping using LdapAttributeProcessor - REDUCED COMPLEXITY."""
         if v is None:
             return {}
         if isinstance(v, dict):
-            normalized: dict[str, object] = {}
-            for key, value in v.items():
-                if isinstance(value, list):
-                    normalized[key] = [str(item) for item in value]
-                else:
-                    normalized[key] = str(value)
-            return normalized
+            return LdapAttributeProcessor.normalize_attributes(v)
         return v
 
     def add_object_class(self, object_class: str) -> FlextResult[None]:
@@ -619,15 +678,15 @@ class FlextLdapEntry(FlextDomainEntity):
 
     @classmethod
     def _normalize_attributes(cls, attrs: dict[str, object]) -> dict[str, object]:
-        """Normalize input attributes: cast lists to list[str], keep scalars as str."""
-        normalized: dict[str, object] = {}
-        for k, v in attrs.items():
-            if isinstance(v, list):
-                normalized[k] = [str(x) for x in v]
-            elif v is None:
+        """Normalize input attributes using LdapAttributeProcessor - REDUCED COMPLEXITY."""
+        if not attrs:
+            return {}
+
+        normalized = LdapAttributeProcessor.normalize_attributes(attrs)
+        # Handle special case for None values
+        for k, v in normalized.items():
+            if v is None:
                 normalized[k] = []
-            else:
-                normalized[k] = str(v)
         return normalized
 
     # Do not override __init__; rely on field validators for normalization
@@ -676,7 +735,7 @@ class FlextLdapUser(FlextLdapEntry):
             self.mail = self.get_single_attribute_value("mail")
 
     def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate user-specific domain rules."""
+        """Validate user-specific domain rules using LdapDomainValidator."""
         # Call parent validation first
         parent_result = super().validate_domain_rules()
         if not parent_result.is_success:
@@ -686,16 +745,17 @@ class FlextLdapUser(FlextLdapEntry):
         if not self.uid and not self.get_single_attribute_value("uid"):
             return FlextResult.fail("User must have a UID")
 
-        if not self.cn and not self.get_single_attribute_value("cn"):
-            return FlextResult.fail("User must have a Common Name")
+        # Use helper for common name validation - REDUCES DUPLICATION
+        cn_result = LdapDomainValidator.validate_common_name(
+            self.cn, self.attributes, "User",
+        )
+        if not cn_result.is_success:
+            return cn_result
 
-        # Validate required object classes for users
-        required_classes = ["person"]
-        for req_class in required_classes:
-            if req_class not in self.object_classes:
-                return FlextResult.fail(f"User must have object class '{req_class}'")
-
-        return FlextResult.ok(None)
+        # Use helper for object class validation - REDUCES DUPLICATION
+        return LdapDomainValidator.validate_required_object_classes(
+            self.object_classes, ["person"], "User",
+        )
 
     def set_password(self, password: str) -> FlextResult[None]:
         """Set user password."""
@@ -768,23 +828,23 @@ class FlextLdapGroup(FlextLdapEntry):
             self.members = self.get_attribute_values("member")
 
     def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate group-specific domain rules."""
+        """Validate group-specific domain rules using LdapDomainValidator."""
         # Call parent validation first
         parent_result = super().validate_domain_rules()
         if not parent_result.is_success:
             return parent_result
 
-        # Group-specific validations
-        if not self.cn and not self.get_single_attribute_value("cn"):
-            return FlextResult.fail("Group must have a Common Name")
+        # Use helper for common name validation - REDUCES DUPLICATION
+        cn_result = LdapDomainValidator.validate_common_name(
+            self.cn, self.attributes, "Group",
+        )
+        if not cn_result.is_success:
+            return cn_result
 
-        # Validate required object classes for groups
-        required_classes = ["groupOfNames"]
-        for req_class in required_classes:
-            if req_class not in self.object_classes:
-                return FlextResult.fail(f"Group must have object class '{req_class}'")
-
-        return FlextResult.ok(None)
+        # Use helper for object class validation - REDUCES DUPLICATION
+        return LdapDomainValidator.validate_required_object_classes(
+            self.object_classes, ["groupOfNames"], "Group",
+        )
 
     def add_member(self, member_dn: str) -> FlextLdapGroup:
         """Add member and return new group instance (immutably)."""
@@ -879,6 +939,304 @@ class FlextLdapConnection(FlextDomainEntity):
 
 
 # =============================================================================
+# BUILDER PATTERNS - ADVANCED ENTRY CONSTRUCTION
+# =============================================================================
+
+
+class FlextLdapEntryBuilder:
+    """Builder pattern for constructing complex LDAP entries with fluent API."""
+
+    def __init__(self) -> None:
+        """Initialize builder with default values."""
+        self._dn: str = ""
+        self._object_classes: list[str] = []
+        self._attributes: dict[str, object] = {}
+        self._status = FlextEntityStatus.ACTIVE
+
+    def dn(self, distinguished_name: str) -> FlextLdapEntryBuilder:
+        """Set the Distinguished Name."""
+        self._dn = distinguished_name
+        return self
+
+    def object_class(self, object_class: str) -> FlextLdapEntryBuilder:
+        """Add an object class."""
+        if object_class not in self._object_classes:
+            self._object_classes.append(object_class)
+        return self
+
+    def object_classes(self, *object_classes: str) -> FlextLdapEntryBuilder:
+        """Add multiple object classes."""
+        for oc in object_classes:
+            self.object_class(oc)
+        return self
+
+    def attribute(self, name: str, value: str | list[str]) -> FlextLdapEntryBuilder:
+        """Set an attribute value."""
+        self._attributes[name] = value
+        return self
+
+    def multi_valued_attribute(self, name: str, *values: str) -> FlextLdapEntryBuilder:
+        """Set a multi-valued attribute."""
+        self._attributes[name] = list(values)
+        return self
+
+    def status(self, status: FlextEntityStatus) -> FlextLdapEntryBuilder:
+        """Set entity status."""
+        self._status = status
+        return self
+
+    def build(self) -> FlextResult[FlextLdapEntry]:
+        """Build the LDAP entry with validation."""
+        try:
+            entry = FlextLdapEntry(
+                dn=self._dn,
+                object_classes=self._object_classes,
+                attributes=self._attributes,
+                status=self._status,
+            )
+
+            # Validate domain rules
+            validation_result = entry.validate_domain_rules()
+            if not validation_result.is_success:
+                return FlextResult.fail(f"Entry validation failed: {validation_result.error}")
+
+            return FlextResult.ok(entry)
+
+        except Exception as e:
+            return FlextResult.fail(f"Entry construction failed: {e}")
+
+
+class FlextLdapUserBuilder(FlextLdapEntryBuilder):
+    """Specialized builder for LDAP users with user-specific methods."""
+
+    def __init__(self) -> None:
+        """Initialize user builder with default user object classes."""
+        super().__init__()
+        self.object_classes("inetOrgPerson", "person", "top")
+        self._uid: str | None = None
+        self._cn: str | None = None
+        self._sn: str | None = None
+        self._given_name: str | None = None
+        self._mail: str | None = None
+
+    def uid(self, user_id: str) -> FlextLdapUserBuilder:
+        """Set user ID."""
+        self._uid = user_id
+        self.attribute("uid", user_id)
+        return self
+
+    def common_name(self, common_name: str) -> FlextLdapUserBuilder:
+        """Set common name."""
+        self._cn = common_name
+        self.attribute("cn", common_name)
+        return self
+
+    def surname(self, surname: str) -> FlextLdapUserBuilder:
+        """Set surname."""
+        self._sn = surname
+        self.attribute("sn", surname)
+        return self
+
+    def given_name(self, given_name: str) -> FlextLdapUserBuilder:
+        """Set given name."""
+        self._given_name = given_name
+        self.attribute("givenName", given_name)
+        return self
+
+    def email(self, email_address: str) -> FlextLdapUserBuilder:
+        """Set email address with validation."""
+        if "@" not in email_address:
+            msg = f"Invalid email format: {email_address}"
+            raise ValueError(msg)
+        self._mail = email_address
+        self.attribute("mail", email_address)
+        return self
+
+    def password(self, password: str) -> FlextLdapUserBuilder:
+        """Set user password."""
+        if len(password) < MIN_PASSWORD_LENGTH:
+            msg = f"Password must be at least {MIN_PASSWORD_LENGTH} characters"
+            raise ValueError(msg)
+        self.attribute("userPassword", password)
+        return self
+
+    def build_user(self) -> FlextResult[FlextLdapUser]:
+        """Build specialized LDAP user with validation."""
+        try:
+            user = FlextLdapUser(
+                dn=self._dn,
+                object_classes=self._object_classes,
+                attributes=self._attributes,
+                status=self._status,
+                uid=self._uid,
+                cn=self._cn,
+                sn=self._sn,
+                given_name=self._given_name,
+                mail=self._mail,
+            )
+
+            # Validate domain rules
+            validation_result = user.validate_domain_rules()
+            if not validation_result.is_success:
+                return FlextResult.fail(f"User validation failed: {validation_result.error}")
+
+            return FlextResult.ok(user)
+
+        except Exception as e:
+            return FlextResult.fail(f"User construction failed: {e}")
+
+
+class FlextLdapGroupBuilder(FlextLdapEntryBuilder):
+    """Specialized builder for LDAP groups with group-specific methods."""
+
+    def __init__(self) -> None:
+        """Initialize group builder with default group object classes."""
+        super().__init__()
+        self.object_classes("groupOfNames", "top")
+        self._cn: str | None = None
+        self._description: str | None = None
+        self._members: list[str] = []
+
+    def common_name(self, common_name: str) -> FlextLdapGroupBuilder:
+        """Set group common name."""
+        self._cn = common_name
+        self.attribute("cn", common_name)
+        return self
+
+    def description(self, description: str) -> FlextLdapGroupBuilder:
+        """Set group description."""
+        self._description = description
+        self.attribute("description", description)
+        return self
+
+    def member(self, member_dn: str) -> FlextLdapGroupBuilder:
+        """Add a group member."""
+        # Validate member DN
+        try:
+            FlextLdapDistinguishedName(value=member_dn)
+        except ValueError as e:
+            msg = f"Invalid member DN: {e}"
+            raise ValueError(msg) from e
+
+        if member_dn not in self._members:
+            self._members.append(member_dn)
+        return self
+
+    def members(self, *member_dns: str) -> FlextLdapGroupBuilder:
+        """Add multiple group members."""
+        for member_dn in member_dns:
+            self.member(member_dn)
+        return self
+
+    def build_group(self) -> FlextResult[FlextLdapGroup]:
+        """Build specialized LDAP group with validation."""
+        try:
+            # Ensure group has at least one member (required by groupOfNames)
+            if not self._members:
+                self._members = ["cn=dummy"]
+
+            # Set member attribute
+            self.attribute("member", self._members)
+
+            group = FlextLdapGroup(
+                dn=self._dn,
+                object_classes=self._object_classes,
+                attributes=self._attributes,
+                status=self._status,
+                cn=self._cn,
+                description=self._description,
+                members=self._members,
+            )
+
+            # Validate domain rules
+            validation_result = group.validate_domain_rules()
+            if not validation_result.is_success:
+                return FlextResult.fail(f"Group validation failed: {validation_result.error}")
+
+            return FlextResult.ok(group)
+
+        except Exception as e:
+            return FlextResult.fail(f"Group construction failed: {e}")
+
+
+# =============================================================================
+# FACTORY PATTERNS - CENTRALIZED ENTRY CREATION
+# =============================================================================
+
+
+class FlextLdapEntryFactory:
+    """Factory pattern for creating LDAP entries with standard configurations."""
+
+    @staticmethod
+    def create_user_entry(
+        dn: str,
+        uid: str,
+        common_name: str,
+        surname: str,
+        email: str | None = None,
+    ) -> FlextResult[FlextLdapUser]:
+        """Create a standard user entry with required attributes."""
+        try:
+            builder = FlextLdapUserBuilder()
+            builder.dn(dn)
+            builder.uid(uid)
+            builder.common_name(common_name)
+            builder.surname(surname)
+
+            if email:
+                builder.email(email)
+
+            return builder.build_user()
+
+        except Exception as e:
+            return FlextResult.fail(f"User creation failed: {e}")
+
+    @staticmethod
+    def create_group_entry(
+        dn: str,
+        common_name: str,
+        description: str | None = None,
+        members: list[str] | None = None,
+    ) -> FlextResult[FlextLdapGroup]:
+        """Create a standard group entry with optional members."""
+        try:
+            builder = FlextLdapGroupBuilder()
+            builder.dn(dn)
+            builder.common_name(common_name)
+
+            if description:
+                builder.description(description)
+
+            if members:
+                builder.members(*members)
+
+            return builder.build_group()
+
+        except Exception as e:
+            return FlextResult.fail(f"Group creation failed: {e}")
+
+    @staticmethod
+    def create_organizational_unit(
+        dn: str,
+        ou_name: str,
+        description: str | None = None,
+    ) -> FlextResult[FlextLdapEntry]:
+        """Create an organizational unit entry."""
+        try:
+            builder = FlextLdapEntryBuilder()
+            builder.dn(dn).object_classes("organizationalUnit", "top")
+            builder.attribute("ou", ou_name)
+
+            if description:
+                builder.attribute("description", description)
+
+            return builder.build()
+
+        except Exception as e:
+            return FlextResult.fail(f"OU creation failed: {e}")
+
+
+# =============================================================================
 # EXTENDED ENTRY MODELS
 # =============================================================================
 
@@ -932,19 +1290,18 @@ __all__ = [
     "CreateUserRequest",
     "FlextLdapAttributesValue",
     "FlextLdapConnection",
-    # Request/Response Models
     "FlextLdapCreateUserRequest",
-    # Enums
     "FlextLdapDataType",
-    # Value Objects
     "FlextLdapDistinguishedName",
     "FlextLdapEntityStatus",
-    # Domain Entities
     "FlextLdapEntry",
+    "FlextLdapEntryBuilder",
+    "FlextLdapEntryFactory",
     "FlextLdapExtendedEntry",
     "FlextLdapFilter",
     "FlextLdapFilterValue",
     "FlextLdapGroup",
+    "FlextLdapGroupBuilder",
     "FlextLdapObjectClass",
     "FlextLdapScope",
     "FlextLdapScopeEnum",
@@ -952,7 +1309,7 @@ __all__ = [
     "FlextLdapSearchResponse",
     "FlextLdapUri",
     "FlextLdapUser",
-    # Legacy Aliases
+    "FlextLdapUserBuilder",
     "LDAPEntry",
     "LDAPFilter",
     "LDAPGroup",

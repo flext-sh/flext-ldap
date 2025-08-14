@@ -1,14 +1,10 @@
 """Unit tests for FLEXT LDAP configuration.
 
-Renamed module to avoid import file mismatch with tests/test_config.py
-in the same package. Keep distinct module name to prevent pytest cache
-collisions.
+Tests all configuration classes with real behavior, no mocks or patches.
+Tests use actual validation and configuration patterns from the refactored API.
 """
 
 from __future__ import annotations
-
-import os
-from unittest.mock import patch
 
 import pytest
 from flext_core import FlextLogLevel
@@ -22,6 +18,9 @@ from flext_ldap.config import (
     FlextLdapScope,
     FlextLdapSearchConfig,
     FlextLdapSettings,
+    create_development_config,
+    create_production_config,
+    create_test_config,
 )
 
 # Constants
@@ -205,21 +204,12 @@ class TestFlextLdapLoggingConfig:
 
     def test_logging_config_defaults(self) -> None:
         """Test FlextLdapLoggingConfig with default values."""
-        # Clear any FLEXT related environment variables that might affect defaults
-        env_vars_to_clear = [key for key in os.environ if key.startswith("FLEXT_")]
-
-        with patch.dict(os.environ, dict.fromkeys(env_vars_to_clear, ""), clear=False):
-            # Remove the cleared vars completely
-            for var in env_vars_to_clear:
-                if var in os.environ:
-                    del os.environ[var]
-
-            config = FlextLdapLoggingConfig()
-            assert config.log_level == FlextLogLevel.INFO
-            assert config.enable_connection_logging is False
-            assert config.enable_operation_logging is True
-            assert config.log_sensitive_data is False
-            assert config.structured_logging is True
+        config = FlextLdapLoggingConfig()
+        assert config.log_level == FlextLogLevel.INFO
+        assert config.enable_connection_logging is False
+        assert config.enable_operation_logging is True
+        assert config.log_sensitive_data is False
+        assert config.structured_logging is True
 
     def test_logging_config_custom(self) -> None:
         """Test FlextLdapLoggingConfig with custom values."""
@@ -251,20 +241,11 @@ class TestFlextLdapSettings:
 
     def test_settings_instantiation_defaults(self) -> None:
         """Test that FlextLdapSettings can be instantiated with defaults."""
-        # Clear any FLEXT_LDAP environment variables to ensure clean defaults
-        env_vars_to_clear = [key for key in os.environ if key.startswith("FLEXT_LDAP_")]
-
-        with patch.dict(os.environ, dict.fromkeys(env_vars_to_clear, ""), clear=False):
-            # Remove the cleared vars completely
-            for var in env_vars_to_clear:
-                if var in os.environ:
-                    del os.environ[var]
-
-            settings = FlextLdapSettings()
-            assert settings is not None
-            assert settings.default_connection is None
-            assert settings.enable_debug_mode is False
-            assert settings.enable_caching is False
+        settings = FlextLdapSettings()
+        assert settings is not None
+        assert settings.default_connection is None
+        assert settings.enable_debug_mode is False
+        assert settings.enable_caching is False
 
     def test_settings_custom_values(self) -> None:
         """Test FlextLdapSettings with custom values."""
@@ -310,3 +291,143 @@ class TestFlextLdapSettings:
         effective = settings.get_effective_connection(override=override_config)
         assert effective.server == "override.ldap.com"
         assert effective.port == 636
+
+
+class TestFlextLdapConfigFactories:
+    """Test configuration factory functions."""
+
+    def test_create_development_config(self) -> None:
+        """Test development configuration factory."""
+        config = create_development_config()
+        assert config is not None
+        assert isinstance(config, FlextLdapSettings)
+        assert config.enable_debug_mode is True
+
+    def test_create_production_config(self) -> None:
+        """Test production configuration factory."""
+        config = create_production_config("ldap.production.com")
+        assert config is not None
+        assert isinstance(config, FlextLdapSettings)
+        assert config.enable_debug_mode is False
+        assert config.default_connection is not None
+        assert config.default_connection.server == "ldap.production.com"
+        assert config.default_connection.port == 636  # Default SSL port
+        assert config.default_connection.use_ssl is True
+
+    def test_create_test_config(self) -> None:
+        """Test test configuration factory."""
+        config = create_test_config()
+        assert config is not None
+        assert isinstance(config, FlextLdapSettings)
+        assert config.enable_debug_mode is False  # Test config should be quiet
+        assert config.enable_test_mode is False  # Default mock disabled
+
+        # Test with mock enabled
+        config_with_mock = create_test_config(enable_mock=True)
+        assert config_with_mock.enable_test_mode is True
+
+    def test_factory_functions_return_different_instances(self) -> None:
+        """Test that factory functions return independent instances."""
+        dev_config = create_development_config()
+        prod_config = create_production_config("ldap.prod.com")
+        test_config = create_test_config()
+
+        # Should be different instances
+        assert dev_config is not prod_config
+        assert dev_config is not test_config
+        assert prod_config is not test_config
+
+        # Should have different debug modes
+        assert dev_config.enable_debug_mode is True
+        assert prod_config.enable_debug_mode is False
+        assert test_config.enable_debug_mode is False  # Test config should be quiet
+
+
+class TestFlextLdapConfigIntegration:
+    """Test configuration integration with real validation behavior."""
+
+    def test_connection_config_full_validation(self) -> None:
+        """Test connection configuration with comprehensive validation."""
+        # Test complete valid configuration
+        config = FlextLdapConnectionConfig(
+            server="ldap.example.com",
+            port=636,
+            use_ssl=True,
+            timeout=60,
+            pool_size=20,
+        )
+
+        # Should validate successfully
+        config.validate_domain_rules()
+
+        # Verify all fields
+        assert config.server == "ldap.example.com"
+        assert config.port == 636
+        assert config.use_ssl is True
+        assert config.timeout == 60
+        assert config.pool_size == 20
+
+    def test_auth_config_full_validation(self) -> None:
+        """Test authentication configuration with comprehensive validation."""
+        # Test complete valid auth config
+        config = FlextLdapAuthConfig(
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+            bind_password=SecretStr("secure_password"),
+            use_anonymous_bind=False,
+            sasl_mechanism=None,
+        )
+
+        # Should validate successfully
+        result = config.validate_domain_rules()
+        assert result.success
+
+    def test_search_config_limits_validation(self) -> None:
+        """Test search configuration with realistic limits."""
+        config = FlextLdapSearchConfig(
+            default_scope=FlextLdapScope.SUBTREE,
+            default_size_limit=5000,
+            default_time_limit=120,
+            default_page_size=500,
+        )
+
+        # All values should be within reasonable bounds
+        assert config.default_scope == FlextLdapScope.SUBTREE
+        assert config.default_size_limit == 5000
+        assert config.default_time_limit == 120
+        assert config.default_page_size == 500
+
+    def test_integrated_settings_workflow(self) -> None:
+        """Test complete settings configuration workflow."""
+        # Create connection config
+        conn_config = FlextLdapConnectionConfig(
+            server="production.ldap.com",
+            port=636,
+            use_ssl=True,
+        )
+
+        # Create auth config
+        auth_config = FlextLdapAuthConfig(
+            bind_dn="cn=service,dc=company,dc=com",
+            bind_password=SecretStr("service_password"),
+        )
+
+        # Create logging config
+        log_config = FlextLdapLoggingConfig(
+            log_level=FlextLogLevel.WARNING,
+        )
+
+        # Create complete settings
+        settings = FlextLdapSettings()
+        settings = settings.model_copy(update={
+            "default_connection": conn_config,
+            "default_auth": auth_config,
+            "logging": log_config,
+            "enable_caching": True,
+            "cache_ttl": 3600,
+        })
+
+        # Verify integrated configuration
+        assert settings.default_connection is not None
+        assert settings.default_connection.server == "production.ldap.com"
+        assert settings.enable_caching is True
+        assert settings.cache_ttl == 3600

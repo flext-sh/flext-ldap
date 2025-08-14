@@ -26,6 +26,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from flext_ldap.constants import FlextLdapConnectionConstants
 from flext_ldap.infrastructure import FlextLdapClient
+from flext_ldap.utils import FlextLdapValidationHelpers
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Coroutine
@@ -54,11 +55,8 @@ class DirectoryEntry(BaseModel):
     @field_validator("dn")
     @classmethod
     def validate_dn(cls, v: str) -> str:
-        """Validate DN format."""
-        if not v or not v.strip():
-            msg = "DN cannot be empty"
-            raise ValueError(msg)
-        return v.strip()
+        """Validate DN format using centralized helper."""
+        return FlextLdapValidationHelpers.validate_dn_field(v)
 
 
 class ConnectionConfig(BaseModel):
@@ -374,13 +372,11 @@ class FlextLdapSearchService(SearchServiceInterface):
         raw_attributes: dict[str, object],
     ) -> dict[str, list[str]]:
         """Normalize attributes to consistent format."""
-        normalized = {}
-        for key, value in raw_attributes.items():
-            if isinstance(value, list):
-                normalized[key] = [str(v) for v in value]
-            else:
-                normalized[key] = [str(value)]
-        return normalized
+        # Optimized with dictionary comprehension for better performance
+        return {
+            key: [str(v) for v in value] if isinstance(value, list) else [str(value)]
+            for key, value in raw_attributes.items()
+        }
 
 
 class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
@@ -481,13 +477,11 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
     ) -> OperationResult:
         """Perform the actual modify entry operation."""
         try:
-            # Convert modifications to expected format
-            ldap_modifications: dict[str, list[str]] = {}
-            for key, value in modifications.items():
-                if isinstance(value, list):
-                    ldap_modifications[key] = [str(v) for v in value]
-                else:
-                    ldap_modifications[key] = [str(value)]
+            # Convert modifications to expected format - optimized with dict comprehension
+            ldap_modifications: dict[str, list[str]] = {
+                key: [str(v) for v in value] if isinstance(value, list) else [str(value)]
+                for key, value in modifications.items()
+            }
 
             modify_result = await self._ldap_client.modify_entry(
                 dn=dn,
@@ -537,12 +531,11 @@ class FlextLdapDirectoryEntry:
     def __init__(self, dn: str, attributes: FlextTypes.Core.JsonDict) -> None:
         """Initialize directory entry."""
         self.dn = dn
-        self.attributes: dict[str, list[str]] = {}
-        for key, value in attributes.items():
-            if isinstance(value, list):
-                self.attributes[key] = [str(v) for v in value]
-            else:
-                self.attributes[key] = [str(value)]
+        # Optimized attribute initialization with dict comprehension
+        self.attributes: dict[str, list[str]] = {
+            key: [str(v) for v in value] if isinstance(value, list) else [str(value)]
+            for key, value in attributes.items()
+        }
 
     def get_attribute_values(self, name: str) -> list[str]:
         """Get attribute values by name."""
@@ -627,7 +620,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         try:
             # Use asyncio.run for sync interface compatibility
             # Note: Suppressing FBT003 - bool positional is needed for asyncio.run
-            result = asyncio.run(  # noqa: FBT003
+            result = asyncio.run(
                 self._search_service.search_entries(
                     base_dn=base_dn or FlextLdapConnectionConstants.DEFAULT_BASE_DN,
                     search_filter=search_filter,
@@ -636,20 +629,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             )
 
             if result.success and result.data:
-                # Convert DirectoryEntry models to protocol-compatible entries
-                protocol_entries: list[FlextLdapDirectoryEntryProtocol] = []
-                entries_data = result.data if isinstance(result.data, list) else []
-                for entry in entries_data:
-                    if hasattr(entry, "dn") and hasattr(entry, "attributes"):
-                        protocol_entry = FlextLdapDirectoryEntry(
-                            dn=entry.dn,
-                            attributes={
-                                k: v[0] if len(v) == 1 else v
-                                for k, v in entry.attributes.items()
-                            },
-                        )
-                        protocol_entries.append(protocol_entry)
-
+                protocol_entries = self._convert_entries_to_protocol(result.data)
                 return FlextResult.ok(protocol_entries)
 
             return FlextResult.fail(result.error_message or "Search failed")
@@ -657,6 +637,31 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         except Exception:
             logger.exception("User search failed")
             return FlextResult.fail("User search failed")
+
+    def _convert_entries_to_protocol(
+        self,
+        entries_data: object,
+    ) -> list[FlextLdapDirectoryEntryProtocol]:
+        """Convert DirectoryEntry models to protocol-compatible entries."""
+        protocol_entries: list[FlextLdapDirectoryEntryProtocol] = []
+        entries_list = entries_data if isinstance(entries_data, list) else []
+
+        for entry in entries_list:
+            if hasattr(entry, "dn") and hasattr(entry, "attributes"):
+                protocol_entry = FlextLdapDirectoryEntry(
+                    dn=entry.dn,
+                    attributes=self._normalize_entry_attributes(entry.attributes),
+                )
+                protocol_entries.append(protocol_entry)
+
+        return protocol_entries
+
+    def _normalize_entry_attributes(self, attributes: dict[str, object]) -> dict[str, object]:
+        """Normalize entry attributes for protocol compatibility."""
+        return {
+            k: v[0] if isinstance(v, list) and len(v) == 1 else v
+            for k, v in attributes.items()
+        }
 
 
 class FlextLdapDirectoryAdapter(FlextLdapDirectoryAdapterInterface):

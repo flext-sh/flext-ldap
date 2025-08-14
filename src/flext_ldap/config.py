@@ -36,61 +36,13 @@ from flext_core import (
 )
 from pydantic import ConfigDict, Field, SecretStr, field_validator
 
+from flext_ldap.constants import FlextLdapProtocolConstants
+
 logger = get_logger(__name__)
 
 # =============================================================================
 # PROTOCOL CONSTANTS - RFC 4510-4519 LDAP Standards
 # =============================================================================
-
-
-class FlextLdapProtocolConstants:
-    """Core LDAP protocol constants from RFCs 4510-4519."""
-
-    # LDAP Protocol Versions (RFC 4511)
-    LDAP_VERSION_2: Final[int] = 2
-    LDAP_VERSION_3: Final[int] = 3
-    DEFAULT_LDAP_VERSION: Final[int] = LDAP_VERSION_3
-
-    # Standard Ports (RFC 4511)
-    DEFAULT_LDAP_PORT: Final[int] = 389
-    DEFAULT_LDAPS_PORT: Final[int] = 636
-    DEFAULT_GLOBAL_CATALOG_PORT: Final[int] = 3268
-    DEFAULT_GLOBAL_CATALOG_SSL_PORT: Final[int] = 3269
-
-    # Protocol URLs
-    LDAP_URL_PREFIX: Final[str] = "ldap://"
-    LDAPS_URL_PREFIX: Final[str] = "ldaps://"
-    LDAPI_URL_PREFIX: Final[str] = "ldapi://"
-
-    # Authentication Methods (RFC 4513)
-    AUTH_SIMPLE: Final[str] = "simple"
-    AUTH_SASL: Final[str] = "SASL"
-    AUTH_ANONYMOUS: Final[str] = "anonymous"
-
-    # SASL Mechanisms
-    SASL_PLAIN: Final[str] = "PLAIN"
-    SASL_DIGEST_MD5: Final[str] = "DIGEST-MD5"
-    SASL_GSSAPI: Final[str] = "GSSAPI"
-    SASL_EXTERNAL: Final[str] = "EXTERNAL"
-
-    # Connection Security
-    SECURITY_TLS: Final[str] = "TLS"
-    SECURITY_SSL: Final[str] = "SSL"
-    SECURITY_START_TLS: Final[str] = "START_TLS"
-
-    # Message Types (RFC 4511)
-    MSG_BIND_REQUEST: Final[int] = 0
-    MSG_BIND_RESPONSE: Final[int] = 1
-    MSG_UNBIND_REQUEST: Final[int] = 2
-    MSG_SEARCH_REQUEST: Final[int] = 3
-    MSG_SEARCH_RESULT_ENTRY: Final[int] = 4
-    MSG_SEARCH_RESULT_DONE: Final[int] = 5
-    MSG_MODIFY_REQUEST: Final[int] = 6
-    MSG_MODIFY_RESPONSE: Final[int] = 7
-    MSG_ADD_REQUEST: Final[int] = 8
-    MSG_ADD_RESPONSE: Final[int] = 9
-    MSG_DELETE_REQUEST: Final[int] = 10
-    MSG_DELETE_RESPONSE: Final[int] = 11
 
 
 class FlextLdapScope(StrEnum):
@@ -849,11 +801,12 @@ class FlextLdapAuthConfig(FlextBaseConfigModel):
     use_anonymous_bind: bool = Field(default=False, description="Anonymous bind")
     sasl_mechanism: str | None = Field(default=None, description="SASL mechanism")
 
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-        validate_assignment = True
+    # Pydantic v2 configuration using ConfigDict
+    model_config = ConfigDict(
+        extra="forbid",
+        validate_assignment=True,
+        str_strip_whitespace=True,
+    )
 
     @field_validator("bind_dn")
     @classmethod

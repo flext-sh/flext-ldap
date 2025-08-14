@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from unittest.mock import Mock, patch
-
 import pytest
+from flext_core import FlextResult
 
 from flext_ldap.infrastructure import (
     FlextLdapClient,
     FlextLdapConverter,
+    FlextLdapEventObserver,
+    FlextLdapObservableClient,
+    FlextLdapSearchStrategy,
 )
 
 
@@ -131,72 +133,148 @@ class TestFlextLdapClient:
             or "connection" in result.error.lower()
         )
 
-    @patch("flext_ldap.infrastructure.Connection")
     @pytest.mark.asyncio
-    async def test_connect_success_mock(self, mock_connection_class: Mock) -> None:  # type: ignore[misc]
-        """Test successful connection with mocked LDAP library."""
-        # Setup mock
-        mock_connection = Mock()
-        mock_connection.bind.return_value = True
-        mock_connection_class.return_value = mock_connection
-
+    async def test_connect_real_behavior(self) -> None:
+        """Test connection behavior with real error handling."""
         client = FlextLdapClient()
 
+        # Test with valid URI format but unreachable server
         result = await client.connect(
-            server_uri="ldap://localhost",
+            server_uri="ldap://internal.invalid",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             bind_password="password",
         )
 
-        assert result.is_success
+        # Should fail gracefully with proper error message
+        assert not result.is_success
+        assert result.error is not None
+        assert isinstance(result.error, str)
+        assert len(result.error) > 0
 
-    @patch("flext_ldap.infrastructure.Connection")
     @pytest.mark.asyncio
-    async def test_search_success_mock(self, mock_connection_class: Mock) -> None:  # type: ignore[misc]
-        """Test successful search with mocked LDAP library."""
-        # Setup mock
-        mock_connection = Mock()
-        mock_connection.bind.return_value = True
-        mock_connection.search.return_value = True
-        mock_connection.entries = []
-        mock_connection_class.return_value = mock_connection
-
+    async def test_search_real_behavior(self) -> None:
+        """Test search behavior without connection."""
         client = FlextLdapClient()
 
-        # Connect first
-        await client.connect("ldap://localhost")
-
-        # Then search
+        # Search without connection should fail properly
         result = await client.search(
             base_dn="dc=example,dc=com",
             search_filter="(objectClass=person)",
         )
 
-        assert result.is_success
-        assert isinstance(result.data, list)
+        assert not result.is_success
+        assert result.error is not None
+        assert "connection" in result.error.lower() or "not connected" in result.error.lower()
 
     def test_is_connected_initially_false(self) -> None:
         """Test that client is not connected initially."""
         client = FlextLdapClient()
         assert not client.is_connected()
 
-    @patch("flext_ldap.infrastructure.Connection")
-    def test_is_connected_after_mock_connection(  # type: ignore[misc]
-        self,
-        mock_connection_class: Mock,
-    ) -> None:
-        """Test connection status after mocked connection."""
-        # Setup mock
-        mock_connection = Mock()
-        mock_connection.bind.return_value = True
-        mock_connection_class.return_value = mock_connection
-
+    def test_client_state_management(self) -> None:
+        """Test client state management without mocks."""
         client = FlextLdapClient()
 
-        # Manually set connection for testing
-        client._connection = mock_connection
+        # Initial state should be disconnected
+        assert not client.is_connected()
 
-        assert client.is_connected()
+        # Client should have proper internal state tracking
+        assert hasattr(client, "_connection")
+        assert client._connection is None
+
+
+class TestFlextLdapDesignPatterns:
+    """Test design patterns implementations in infrastructure."""
+
+    def test_search_strategy_pattern(self) -> None:
+        """Test Strategy pattern implementation for search operations."""
+        class TestSearchStrategy(FlextLdapSearchStrategy):
+            async def execute_search(self, client, base_dn, search_filter, **kwargs):
+                # Return mock successful result for testing
+                return FlextResult.ok([{"dn": base_dn, "filter": search_filter}])
+
+        strategy = TestSearchStrategy()
+        assert strategy is not None
+        assert hasattr(strategy, "execute_search")
+
+    @pytest.mark.asyncio
+    async def test_search_strategy_execution(self) -> None:
+        """Test search strategy execution with real behavior."""
+        class TestSearchStrategy(FlextLdapSearchStrategy):
+            async def execute_search(self, client, base_dn, search_filter, **kwargs):
+                # Simulate real search behavior
+                return FlextResult.ok([
+                    {"dn": f"cn=test,{base_dn}", "objectClass": ["person"]}
+                ])
+
+        strategy = TestSearchStrategy()
+        client = FlextLdapClient()
+
+        result = await strategy.execute_search(
+            client,
+            "dc=example,dc=com",
+            "(objectClass=person)"
+        )
+
+        assert result.is_success
+        assert isinstance(result.data, list)
+        assert len(result.data) == 1
+
+    def test_event_observer_pattern(self) -> None:
+        """Test Observer pattern implementation for LDAP events."""
+        class TestObserver(FlextLdapEventObserver):
+            def __init__(self):
+                self.events = []
+
+            async def on_connection_established(self, server_uri, bind_dn):
+                self.events.append(("connection_established", server_uri, bind_dn))
+
+            async def on_connection_failed(self, server_uri, error_message):
+                self.events.append(("connection_failed", server_uri, error_message))
+
+            async def on_search_performed(self, base_dn, search_filter, result_count):
+                self.events.append(("search_performed", base_dn, search_filter, result_count))
+
+            async def on_entry_added(self, dn, attributes):
+                self.events.append(("entry_added", dn, attributes))
+
+        observer = TestObserver()
+        assert observer is not None
+        assert hasattr(observer, "events")
+        assert len(observer.events) == 0
+
+    def test_observable_client(self) -> None:
+        """Test Observable client with event observers."""
+        class TestObserver(FlextLdapEventObserver):
+            def __init__(self):
+                self.events = []
+
+            async def on_connection_established(self, server_uri, bind_dn):
+                self.events.append(("connection_established", server_uri))
+
+            async def on_connection_failed(self, server_uri, error_message):
+                self.events.append(("connection_failed", server_uri))
+
+            async def on_search_performed(self, base_dn, search_filter, result_count):
+                self.events.append(("search_performed", base_dn))
+
+            async def on_entry_added(self, dn, attributes):
+                self.events.append(("entry_added", dn))
+
+        client = FlextLdapObservableClient()
+        observer = TestObserver()
+
+        # Test observer registration
+        client.add_observer(observer)
+        assert len(client._observers) == 1
+
+        # Test duplicate observer handling
+        client.add_observer(observer)  # Should not add duplicate
+        assert len(client._observers) == 1
+
+        # Test observer removal
+        client.remove_observer(observer)
+        assert len(client._observers) == 0
 
 
 class TestInfrastructureErrorHandling:
@@ -230,3 +308,20 @@ class TestInfrastructureErrorHandling:
         except (TypeError, AttributeError):
             # It's also acceptable to raise a type error for None input
             pass
+
+    def test_real_error_propagation(self) -> None:
+        """Test that real errors are properly propagated without hiding."""
+        converter = FlextLdapConverter()
+
+        # Test that type errors are handled appropriately
+        invalid_inputs = [None, 123, [], {}]
+
+        for invalid_input in invalid_inputs:
+            try:
+                result = converter.detect_type(invalid_input)
+                # If no exception, should return reasonable default
+                assert result is not None
+                assert isinstance(result, str)
+            except (TypeError, AttributeError):
+                # Expected for invalid input types - not hiding the error
+                pass

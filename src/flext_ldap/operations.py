@@ -425,30 +425,30 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
         entries: list[FlextLdapEntry],
     ) -> list[FlextLdapUser]:
         """Convert entries to users - REUSABLE HELPER."""
-        users: list[FlextLdapUser] = []
-        for entry in entries:
-            user = FlextLdapUser(
+        # Optimized with list comprehension for better performance
+        return [
+            FlextLdapUser(
                 dn=entry.dn,
                 object_classes=entry.object_classes,
                 attributes=entry.attributes,
             )
-            users.append(user)
-        return users
+            for entry in entries
+        ]
 
     def _convert_entries_to_groups(
         self,
         entries: list[FlextLdapEntry],
     ) -> list[FlextLdapGroup]:
         """Convert entries to groups - REUSABLE HELPER."""
-        groups: list[FlextLdapGroup] = []
-        for entry in entries:
-            group = FlextLdapGroup(
+        # Optimized with list comprehension for better performance
+        return [
+            FlextLdapGroup(
                 dn=entry.dn,
                 object_classes=entry.object_classes,
                 attributes=entry.attributes,
             )
-            groups.append(group)
-        return groups
+            for entry in entries
+        ]
 
 
 # =============================================================================
@@ -950,7 +950,35 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         member_dn: str,
         action: str,
     ) -> FlextResult[None]:
-        """Modify group membership (add/remove) - CONSOLIDATE MEMBERSHIP OPERATIONS."""
+        """Modify group membership (add/remove) - REFACTORED for lower complexity."""
+        # Step 1: Get current group membership
+        group_result = await self._get_group_membership(connection_id, group_dn)
+        if group_result.is_failure:
+            return FlextResult.fail(group_result.error or "Failed to get group")
+
+        # Step 2: Extract members from group data
+        if not hasattr(group_result.data, "get_attribute_values"):
+            return FlextResult.fail("Invalid group data format")
+
+        current_members = group_result.data.get_attribute_values("member")
+        updated_members_result = self._calculate_updated_members(
+            current_members or [], member_dn, action,
+        )
+        if updated_members_result.is_failure:
+            return FlextResult.fail(updated_members_result.error or "Failed to calculate members")
+
+        # Step 3: Apply the membership change - ensure data is not None
+        if updated_members_result.data is None:
+            return FlextResult.fail("No updated members data")
+
+        return await self._apply_membership_change(
+            connection_id, group_dn, updated_members_result.data, action, member_dn,
+        )
+
+    async def _get_group_membership(
+        self, connection_id: str, group_dn: str,
+    ) -> FlextResult[object]:
+        """Get current group membership data."""
         search_ops = FlextLdapSearchOperations()
         group_result = await search_ops.get_entry_by_dn(
             connection_id=connection_id,
@@ -964,20 +992,49 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         if group_result.data is None:
             return FlextResult.fail("Group data not found")
 
-        current_members = group_result.data.get_attribute_values("member")
+        return FlextResult.ok(group_result.data)
 
+    def _calculate_updated_members(
+        self, current_members: list[str], member_dn: str, action: str,
+    ) -> FlextResult[list[str]]:
+        """Calculate updated member list based on action."""
         if action == "add":
-            if member_dn in current_members:
-                return FlextResult.fail(f"Member already exists in group: {member_dn}")
-            updated_members = [*current_members, member_dn]
-        else:  # remove
-            if member_dn not in current_members:
-                return FlextResult.fail(f"Member not found in group: {member_dn}")
-            updated_members = [m for m in current_members if m != member_dn]
-            # Add dummy member if none left
-            if not updated_members:
-                updated_members = ["cn=dummy,ou=temp,dc=example,dc=com"]
+            return self._handle_add_member(current_members, member_dn)
+        if action == "remove":
+            return self._handle_remove_member(current_members, member_dn)
+        return FlextResult.fail(f"Invalid action: {action}")
 
+    def _handle_add_member(
+        self, current_members: list[str], member_dn: str,
+    ) -> FlextResult[list[str]]:
+        """Handle adding a member to the group."""
+        if member_dn in current_members:
+            return FlextResult.fail(f"Member already exists in group: {member_dn}")
+        return FlextResult.ok([*current_members, member_dn])
+
+    def _handle_remove_member(
+        self, current_members: list[str], member_dn: str,
+    ) -> FlextResult[list[str]]:
+        """Handle removing a member from the group."""
+        if member_dn not in current_members:
+            return FlextResult.fail(f"Member not found in group: {member_dn}")
+
+        updated_members = [m for m in current_members if m != member_dn]
+        # Add dummy member if none left (LDAP groupOfNames requirement)
+        if not updated_members:
+            updated_members = ["cn=dummy,ou=temp,dc=example,dc=com"]
+
+        return FlextResult.ok(updated_members)
+
+    async def _apply_membership_change(
+        self,
+        connection_id: str,
+        group_dn: str,
+        updated_members: list[str],
+        action: str,
+        member_dn: str,
+    ) -> FlextResult[None]:
+        """Apply the membership change to LDAP."""
         modifications: dict[str, object] = {"member": updated_members}
         modify_result = await self._entry_ops.modify_entry(
             connection_id=connection_id,

@@ -16,8 +16,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, ParamSpec, TypeVar, cast
 
 import click
-from flext_cli import FlextCliEntity
-from flext_core import FlextResult, get_logger
+from flext_cli.foundation import FlextCliEntity
+from flext_core import FlextResult, get_flext_container, get_logger
 from rich.console import Console
 from rich.table import Table
 
@@ -154,11 +154,49 @@ class LDAPSearchParams:
 
 
 # =============================================================================
+# UTILITY FUNCTIONS
+# =============================================================================
+
+
+def _generate_cli_id(fallback: str = "") -> str:
+    """Generate ID using container or UUID fallback for CLI usage."""
+    container = get_flext_container()
+    id_generator = container.get("FlextIdGenerator").unwrap_or(None)
+    if id_generator and hasattr(id_generator, "generate"):
+        return str(id_generator.generate())
+    return fallback or str(uuid.uuid4())
+
+
+# =============================================================================
+# BASE CLASS FOR FLEXT LDAP CLI COMMANDS
+# =============================================================================
+
+
+class FlextLdapCliBase(FlextCliEntity):
+    """Base class for FLEXT LDAP CLI commands with shared functionality."""
+
+    def __init__(self, command_id: str, name: str) -> None:
+        """Initialize base CLI command."""
+        # Adapt to new FlextCliEntity signature: set minimal required fields
+        super().__init__(name=name, description="")
+        self._container = get_flext_container()
+        # Keep legacy fields for compatibility
+        self.command_id = command_id
+
+    def _generate_id(self, fallback: str = "") -> str:
+        """Generate ID using container or UUID fallback - consistent with operations.py."""
+        id_generator = self._container.get("FlextIdGenerator").unwrap_or(None)
+        if id_generator and hasattr(id_generator, "generate"):
+            return str(id_generator.generate())
+        return fallback or str(uuid.uuid4())
+
+
+# =============================================================================
 # REFACTORED COMMAND CLASSES - ZERO DUPLICATION
 # =============================================================================
 
 
-class FlextLdapTestCommand(FlextCliEntity):
+class FlextLdapTestCommand(FlextLdapCliBase):
     """LDAP connection test - REFACTORED with zero duplication."""
 
     def __init__(
@@ -175,7 +213,7 @@ class FlextLdapTestCommand(FlextCliEntity):
             params: Strongly typed connection parameters.
 
         """
-        super().__init__(id=command_id, command_line="ldap-command")
+        super().__init__(command_id, name)
         self.name = name
         self.params = params
 
@@ -225,7 +263,7 @@ class FlextLdapTestCommand(FlextCliEntity):
             return FlextResult.fail(str(e))
 
 
-class FlextLdapSearchCommand(FlextCliEntity):
+class FlextLdapSearchCommand(FlextLdapCliBase):
     """LDAP search - REFACTORED with zero duplication."""
 
     def __init__(self, command_id: str, name: str, params: LDAPSearchParams) -> None:
@@ -237,7 +275,7 @@ class FlextLdapSearchCommand(FlextCliEntity):
             params: Strongly typed search parameters.
 
         """
-        super().__init__(id=command_id, command_line="ldap-command")
+        super().__init__(command_id, name)
         self.name = name
         self.params = params
 
@@ -266,102 +304,152 @@ class FlextLdapSearchCommand(FlextCliEntity):
             protocol = "ldaps" if self.params.use_ssl else "ldap"
             uri = f"{protocol}://{self.params.server}:{self.params.port}"
 
-            # Connect using REFACTORED async helper - NO DUPLICATION
-            connect_result = cast(
-                "FlextResult[object]",
-                _execute_async_operation(client.connect(uri)),
-            )
-
-            if connect_result.is_failure:
-                self.flext_cli_print_error(f"Connection failed: {connect_result.error}")  # type: ignore[attr-defined]
-                return FlextResult.fail(connect_result.error or "Connection failed")
-
-            try:
-                # Connected successfully; proceed to search
-                # Validate and create DN and filter objects
-                dn_result = FlextLdapDistinguishedName.create(self.params.base_dn)
-                if dn_result.is_failure or dn_result.data is None:
-                    return FlextResult.fail(f"Invalid base DN: {dn_result.error}")
-
-                filter_result = FlextLdapFilter.create(self.params.filter_str)
-                if filter_result.is_failure or filter_result.data is None:
-                    return FlextResult.fail(f"Invalid filter: {filter_result.error}")
-
-                # Execute search using REFACTORED async helper - NO DUPLICATION
-                scope = FlextLdapScope.SUB
-                search_result = cast(
-                    "FlextResult[object]",
-                    _execute_async_operation(
-                        client.search(
-                            str(dn_result.data),
-                            str(filter_result.data),
-                            str(scope),
-                            attributes=["*"],
-                        ),
-                    ),
-                )
-
-                if search_result.is_success and search_result.data:
-                    entries = (
-                        search_result.data[: self.params.limit]
-                        if isinstance(search_result.data, list)
-                        else [search_result.data]
-                    )
-                    self.flext_cli_print_success(f"Found {len(entries)} entries")  # type: ignore[attr-defined]
-
-                    # Display results using Rich tables
-                    self._display_search_results(entries)
-
-                    return FlextResult.ok({"entries": entries, "count": len(entries)})
-                self.flext_cli_print_warning("No entries found")  # type: ignore[attr-defined]
-                return FlextResult.ok({"entries": [], "count": 0})
-
-            finally:
-                # Always disconnect
-                _execute_async_operation(client.disconnect())
+            # Perform the search operation
+            return self._perform_search_operation(client, uri)
 
         except Exception as e:
             self.flext_cli_print_error(f"Search error: {e}")  # type: ignore[attr-defined]
             return FlextResult.fail(str(e))
 
+    def _perform_search_operation(
+        self,
+        client: FlextLdapClient,
+        uri: str,
+    ) -> FlextResult[object]:
+        """Perform the complete search operation with connection management."""
+        # Connect using REFACTORED async helper - NO DUPLICATION
+        connect_result = cast(
+            "FlextResult[object]",
+            _execute_async_operation(client.connect(uri)),
+        )
+
+        if connect_result.is_failure:
+            self.flext_cli_print_error(f"Connection failed: {connect_result.error}")  # type: ignore[attr-defined]
+            return FlextResult.fail(connect_result.error or "Connection failed")
+
+        try:
+            # Validate parameters
+            validation_result = self._validate_search_parameters()
+            if validation_result.is_failure:
+                return FlextResult.fail(validation_result.error or "Validation failed")
+
+            # Execute search - ensure validation_result.data is not None
+            validated_data = validation_result.data
+            if validated_data is None:
+                return FlextResult.fail("No validation data available")
+            return self._execute_search_with_client(client, validated_data)
+
+        finally:
+            # Always disconnect
+            _execute_async_operation(client.disconnect())
+
+    def _validate_search_parameters(self) -> FlextResult[dict[str, object]]:
+        """Validate search parameters and return validated objects."""
+        # Validate and create DN and filter objects
+        dn_result = FlextLdapDistinguishedName.create(self.params.base_dn)
+        if dn_result.is_failure or dn_result.data is None:
+            return FlextResult.fail(f"Invalid base DN: {dn_result.error}")
+
+        filter_result = FlextLdapFilter.create(self.params.filter_str)
+        if filter_result.is_failure or filter_result.data is None:
+            return FlextResult.fail(f"Invalid filter: {filter_result.error}")
+
+        return FlextResult.ok({
+            "dn": dn_result.data,
+            "filter": filter_result.data,
+        })
+
+    def _execute_search_with_client(
+        self,
+        client: FlextLdapClient,
+        validated_params: dict[str, object],
+    ) -> FlextResult[object]:
+        """Execute the search operation with validated parameters."""
+        scope = FlextLdapScope.SUB
+        search_result = cast(
+            "FlextResult[object]",
+            _execute_async_operation(
+                client.search(
+                    str(validated_params["dn"]),
+                    str(validated_params["filter"]),
+                    str(scope),
+                    attributes=["*"],
+                ),
+            ),
+        )
+
+        return self._process_search_results(search_result)
+
+    def _process_search_results(self, search_result: FlextResult[object]) -> FlextResult[object]:
+        """Process and display search results."""
+        if search_result.is_success and search_result.data:
+            entries = (
+                search_result.data[: self.params.limit]
+                if isinstance(search_result.data, list)
+                else [search_result.data]
+            )
+            self.flext_cli_print_success(f"Found {len(entries)} entries")  # type: ignore[attr-defined]
+
+            # Display results using Rich tables
+            self._display_search_results(entries)
+
+            return FlextResult.ok({"entries": entries, "count": len(entries)})
+
+        self.flext_cli_print_warning("No entries found")  # type: ignore[attr-defined]
+        return FlextResult.ok({"entries": [], "count": 0})
+
     def _display_search_results(self, entries: list[object]) -> None:
-        """Display search results using Rich formatting."""
+        """Display search results using Rich formatting - REFACTORED to reduce complexity."""
         for i, entry in enumerate(entries, 1):
-            console.print(f"\n[bold cyan]Entry {i}:[/bold cyan]")
+            self._display_single_entry(i, entry)
 
-            # Handle both dict and object entries
-            if isinstance(entry, dict):
-                dn = entry.get("dn", "Unknown DN")
-                attributes = entry.get("attributes", {})
-            else:
-                dn = getattr(entry, "dn", "Unknown DN")
-                attributes = getattr(entry, "attributes", {})
+    def _display_single_entry(self, entry_number: int, entry: object) -> None:
+        """Display a single entry with DN and attributes table."""
+        console.print(f"\n[bold cyan]Entry {entry_number}:[/bold cyan]")
 
-            console.print(f"[yellow]DN:[/yellow] {dn}")
+        dn, attributes = self._extract_entry_data(entry)
+        console.print(f"[yellow]DN:[/yellow] {dn}")
 
-            if attributes:
-                table = Table(show_header=True, header_style="bold magenta")
-                table.add_column("Attribute", style="cyan")
-                table.add_column("Values", style="white")
+        if attributes:
+            self._display_entry_attributes(attributes)
 
-                max_inline_values = 3
-                for attr_name, attr_values in attributes.items():
-                    if isinstance(attr_values, list):
-                        # Show first 3 values, indicate if there are more
-                        display_values = attr_values[:max_inline_values]
-                        if len(attr_values) > max_inline_values:
-                            remaining = len(attr_values) - max_inline_values
-                            display_values.append(f"... and {remaining} more")
-                        values_str = "\n".join(str(v) for v in display_values)
-                    else:
-                        values_str = str(attr_values)
+    def _extract_entry_data(self, entry: object) -> tuple[str, dict[str, object]]:
+        """Extract DN and attributes from entry object."""
+        if isinstance(entry, dict):
+            dn = entry.get("dn", "Unknown DN")
+            attributes = entry.get("attributes", {})
+        else:
+            dn = getattr(entry, "dn", "Unknown DN")
+            attributes = getattr(entry, "attributes", {})
+        return str(dn), attributes
 
-                    table.add_row(attr_name, values_str)
+    def _display_entry_attributes(self, attributes: dict[str, object]) -> None:
+        """Display attributes in a Rich table with value truncation."""
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Attribute", style="cyan")
+        table.add_column("Values", style="white")
 
-                console.print(table)
+        for attr_name, attr_values in attributes.items():
+            formatted_values = self._format_attribute_values(attr_values)
+            table.add_row(attr_name, formatted_values)
+
+        console.print(table)
+
+    def _format_attribute_values(self, attr_values: object) -> str:
+        """Format attribute values with truncation for display."""
+        max_inline_values = 3
+
+        if isinstance(attr_values, list):
+            display_values = attr_values[:max_inline_values]
+            if len(attr_values) > max_inline_values:
+                remaining = len(attr_values) - max_inline_values
+                display_values.append(f"... and {remaining} more")
+            return "\n".join(str(v) for v in display_values)
+
+        return str(attr_values)
 
 
-class FlextLdapUserInfoCommand(FlextCliEntity):
+class FlextLdapUserInfoCommand(FlextLdapCliBase):
     """LDAP user info - REFACTORED with zero duplication."""
 
     def __init__(
@@ -380,7 +468,7 @@ class FlextLdapUserInfoCommand(FlextCliEntity):
             server: Optional server URL.
 
         """
-        super().__init__(id=command_id, command_line="ldap-command")
+        super().__init__(command_id, name)
         self.name = name
         self.uid = uid
         self.server = server or "localhost"
@@ -393,70 +481,98 @@ class FlextLdapUserInfoCommand(FlextCliEntity):
         return FlextResult.ok(None)
 
     def execute(self) -> FlextResult[object]:
-        """Execute user lookup - REFACTORED async handling."""
+        """Execute user lookup - REFACTORED to reduce returns."""
         self.flext_cli_print_info(f"Looking up user: {self.uid}")  # type: ignore[attr-defined]
 
         try:
             client = FlextLdapClient(None)
             uri = f"ldap://{self.server}:389"
 
-            # Connect using REFACTORED async helper - NO DUPLICATION
-            connect_result = cast(
-                "FlextResult[object]",
-                _execute_async_operation(client.connect(uri)),
-            )
-
-            if connect_result.is_failure:
-                self.flext_cli_print_error(f"Connection failed: {connect_result.error}")  # type: ignore[attr-defined]
-                return FlextResult.fail(connect_result.error or "Connection failed")
-
-            try:
-                # Connected successfully; proceed to lookup
-                # Search for user by UID
-                dn_result = FlextLdapDistinguishedName.create("dc=example,dc=com")
-                if dn_result.is_failure or dn_result.data is None:
-                    return FlextResult.fail(f"Invalid base DN: {dn_result.error}")
-
-                filter_result = FlextLdapFilter.create(f"(uid={self.uid})")
-                if filter_result.is_failure or filter_result.data is None:
-                    return FlextResult.fail("Invalid filter")
-
-                # Execute search using REFACTORED async helper - NO DUPLICATION
-                scope = FlextLdapScope.SUB
-                search_result = cast(
-                    "FlextResult[object]",
-                    _execute_async_operation(
-                        client.search(
-                            str(dn_result.data),
-                            str(filter_result.data),
-                            str(scope),
-                            attributes=["uid", "cn", "sn", "mail", "dn"],
-                        ),
-                    ),
-                )
-
-                if search_result.is_success and search_result.data:
-                    user_data = (
-                        search_result.data[0]
-                        if isinstance(search_result.data, list)
-                        else search_result.data
-                    )
-                    self.flext_cli_print_success(f"Found user: {self.uid}")  # type: ignore[attr-defined]
-
-                    # Display user information
-                    self._display_user_info(user_data)
-
-                    return FlextResult.ok(user_data)
-                self.flext_cli_print_warning(f"User {self.uid} not found")  # type: ignore[attr-defined]
-                return FlextResult.fail(f"User {self.uid} not found")
-
-            finally:
-                # Always disconnect
-                _execute_async_operation(client.disconnect())
+            # Perform connection and search operations
+            return self._perform_user_lookup(client, uri)
 
         except Exception as e:
             self.flext_cli_print_error(f"User lookup error: {e}")  # type: ignore[attr-defined]
             return FlextResult.fail(str(e))
+
+    def _perform_user_lookup(self, client: FlextLdapClient, uri: str) -> FlextResult[object]:
+        """Perform the complete user lookup operation."""
+        # Connect using REFACTORED async helper - NO DUPLICATION
+        connect_result = cast(
+            "FlextResult[object]",
+            _execute_async_operation(client.connect(uri)),
+        )
+
+        if connect_result.is_failure:
+            self.flext_cli_print_error(f"Connection failed: {connect_result.error}")  # type: ignore[attr-defined]
+            return FlextResult.fail(connect_result.error or "Connection failed")
+
+        try:
+            return self._search_for_user(client)
+        finally:
+            # Always disconnect
+            _execute_async_operation(client.disconnect())
+
+    def _search_for_user(self, client: FlextLdapClient) -> FlextResult[object]:
+        """Search for user and return results."""
+        # Validate search parameters
+        validation_result = self._prepare_search_parameters()
+        if validation_result.is_failure:
+            return FlextResult.fail(validation_result.error or "Validation failed")
+
+        # Execute search operation
+        search_result = self._execute_user_search(client, validation_result.data)
+
+        return self._process_user_search_results(search_result)
+
+    def _prepare_search_parameters(self) -> FlextResult[dict[str, object]]:
+        """Prepare and validate search parameters."""
+        dn_result = FlextLdapDistinguishedName.create("dc=example,dc=com")
+        if dn_result.is_failure or dn_result.data is None:
+            return FlextResult.fail(f"Invalid base DN: {dn_result.error}")
+
+        filter_result = FlextLdapFilter.create(f"(uid={self.uid})")
+        if filter_result.is_failure or filter_result.data is None:
+            return FlextResult.fail("Invalid filter")
+
+        return FlextResult.ok({
+            "dn": dn_result.data,
+            "filter": filter_result.data,
+        })
+
+    def _execute_user_search(self, client: FlextLdapClient, params: object) -> object:
+        """Execute the user search operation."""
+        if not isinstance(params, dict):
+            return {"success": False, "error": "Invalid search parameters"}
+
+        scope = FlextLdapScope.SUB
+        return _execute_async_operation(
+            client.search(
+                str(params["dn"]),
+                str(params["filter"]),
+                str(scope),
+                attributes=["uid", "cn", "sn", "mail", "dn"],
+            ),
+        )
+
+    def _process_user_search_results(self, search_result: object) -> FlextResult[object]:
+        """Process search results and display user information."""
+        # Type check for FlextResult pattern
+        if (hasattr(search_result, "is_success") and hasattr(search_result, "data")
+            and search_result.is_success and search_result.data):
+            user_data = (
+                search_result.data[0]
+                if isinstance(search_result.data, list)
+                else search_result.data
+            )
+            self.flext_cli_print_success(f"Found user: {self.uid}")  # type: ignore[attr-defined]
+
+            # Display user information
+            self._display_user_info(user_data)
+            return FlextResult.ok(user_data)
+
+        self.flext_cli_print_warning(f"User {self.uid} not found")  # type: ignore[attr-defined]
+        return FlextResult.fail(f"User {self.uid} not found")
 
     def _display_user_info(self, user: object) -> None:
         """Display user information using Rich formatting."""
@@ -569,7 +685,7 @@ def test(
     )
 
     command = FlextLdapTestCommand(
-        command_id=str(uuid.uuid4()),
+        command_id=_generate_cli_id(),
         name="ldap-test",
         params=params,
     )
@@ -619,7 +735,7 @@ def search(
     )
 
     command = FlextLdapSearchCommand(
-        command_id=str(uuid.uuid4()),
+        command_id=_generate_cli_id(),
         name="ldap-search",
         params=params,
     )
@@ -641,7 +757,7 @@ def user_info(uid: str, server: str | None) -> None:
 
     """
     command = FlextLdapUserInfoCommand(
-        command_id=str(uuid.uuid4()),
+        command_id=_generate_cli_id(),
         name="user-info",
         uid=uid,
         server=server,
