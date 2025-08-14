@@ -41,7 +41,11 @@ from flext_ldap.services import FlextLdapService
 
 from flext_ldap.infrastructure import FlextLdapClient
 
-from flext_ldap.exceptions import FlextLdapException, FlextLdapUserError
+from flext_ldap.exceptions import (
+    FlextLdapException,
+    FlextLdapExceptionFactory,
+    FlextLdapUserError,
+)
 
 from flext_ldap.utils import (
     flext_ldap_validate_dn,
@@ -85,6 +89,7 @@ __all__: list[str] = [
     "FlextLdapClient",
     # Exceptions
     "FlextLdapException",
+    "FlextLdapExceptionFactory",
     "FlextLdapUserError",
     # Utilities
     "flext_ldap_validate_dn",

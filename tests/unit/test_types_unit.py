@@ -6,12 +6,14 @@ from flext_ldap.types import (
     FlextLdapConnectionProtocol,
     FlextLdapDirectoryEntryProtocol,
     LdapAttributeDict,
+    LdapAttributeDict as TypesLdapAttributeDict,
     LdapAttributeValue,
     LdapSearchResult,
     TLdapDn,
     TLdapFilter,
     TLdapUri,
 )
+from flext_ldap.utils import LdapAttributeDict as UtilsLdapAttributeDict
 
 
 class TestLdapTypes:
@@ -97,12 +99,6 @@ class TestTypeCompatibility:
 
     def test_ldap_types_are_importable(self) -> None:
         """Test all LDAP types can be imported successfully."""
-        from flext_ldap.types import (
-            LdapAttributeDict,
-            LdapAttributeValue,
-            LdapSearchResult,
-        )
-
         # All types should be importable without errors
         assert LdapAttributeDict is not None
         assert LdapAttributeValue is not None
@@ -110,9 +106,6 @@ class TestTypeCompatibility:
 
     def test_backwards_compatibility(self) -> None:
         """Test backwards compatibility with utils module."""
-        from flext_ldap.types import LdapAttributeDict as TypesLdapAttributeDict
-        from flext_ldap.utils import LdapAttributeDict as UtilsLdapAttributeDict
-
         # Should be the same type
         # Note: This is more for documentation than actual type checking
         assert UtilsLdapAttributeDict is not None
