@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
 try:  # pragma: no cover - environment dependent
-    from pyasn1.codec.ber import encoder as _ber_encoder
+    from pyasn1.codec.ber import encoder as _ber_encoder  # type: ignore[import-untyped]
 
     if hasattr(_ber_encoder, "TAG_MAP") and not hasattr(_ber_encoder, "tagMap"):
         _ber_encoder.tagMap = _ber_encoder.TAG_MAP
@@ -18,7 +18,7 @@ try:  # pragma: no cover - environment dependent
 except Exception:  # pragma: no cover - best effort only
     pass
 
-import ldap3 as _ldap3
+import ldap3 as _ldap3  # type: ignore[import-untyped]
 from flext_core import FlextResult, get_logger
 from ldap3 import (
     ALL_ATTRIBUTES,
@@ -29,7 +29,7 @@ from ldap3 import (
     Connection as Ldap3Connection,
     Server,
 )
-from ldap3.core.exceptions import LDAPException
+from ldap3.core.exceptions import LDAPException  # type: ignore[import-untyped]
 
 from flext_ldap.constants import (
     FlextLdapDefaultValues,

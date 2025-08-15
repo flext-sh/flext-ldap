@@ -13,7 +13,7 @@ from flext_core import (
     get_flext_container,
     get_logger,
 )
-from flext_ldif.api import FlextLdifAPI
+from flext_ldif.api import FlextLdifAPI  # type: ignore[import-not-found]
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings

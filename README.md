@@ -1,191 +1,78 @@
 # flext-ldap
 
-**Type**: Infrastructure Library | **Status**: Production-Ready | **Dependencies**: flext-core, flext-cli, flext-ldif, ldap3
+**Tipo**: Biblioteca de Infraestrutura | **Status**: Em desenvolvimento ativo | **Dependências**: flext-core, ldap3, pydantic, click, rich, structlog
 
-LDAP operations library built with Clean Architecture patterns, providing directory services functionality with type-safe error handling through FlextResult patterns.
-
----
-
-## 🏗️ Dependencies
-
-### Core Requirements
-
-- **[flext-core](../flext-core)**: Foundation patterns (FlextResult, dependency injection, logging)
-- **[flext-cli](../flext-cli)**: Real CLI foundation used by `flext-ldap` CLI
-- **[flext-ldif](../flext-ldif)**: LDIF parsing/writing for import/export flows
-- **ldap3**: LDAP protocol implementation (no mocks)
-- **pydantic**: Data validation and serialization
-
-### Optional Integrations
-
-- **[flext-observability](../flext-observability)**: Structured logging and metrics (when available)
-- **Singer ecosystem**: Data pipeline integration (planned)
+Biblioteca de operações LDAP com Clean Architecture e DDD, oferecendo serviços de diretório com tratamento de erros tipo-safe via FlextResult.
 
 ---
 
-## 🎯 Current Status
+## 🚀 Instalação
 
-### What Works
-
-1. **LDAP Operations**: Real ldap3 connectivity and CRUD (search/add/modify/delete)
-2. **CLI**: Uses real flext-cli mixins/entities (no placeholders)
-3. **LDIF**: Import/export via flext-ldif API
-4. **Type Safety**: FlextResult pattern end-to-end
-5. **Testing**: Comprehensive suite with Docker LDAP integration
-
-### What's In Development
-
-- Singer ecosystem integration (flext-tap-ldap, flext-target-ldap)
-- Authentication service integration
-- Performance optimizations and connection pooling
-
----
-
-## 🚀 Installation
-
-### Prerequisites
-
+Pré-requisitos:
 - Python 3.13+
-- Poetry for dependency management
-- LDAP server access (or Docker for testing)
+- Poetry
+- Acesso a um servidor LDAP (ou Docker para desenvolvimento)
 
-### Setup
-
+Configuração:
 ```bash
-# Clone and install
 git clone <repository-url>
 cd flext-ldap
-
-# Install dependencies
 poetry install
-
-# Setup development environment
 make setup
 ```
 
-### Basic Usage
+## 🔧 Uso básico (assíncrono)
 
 ```python
-from flext_ldap.services import FlextLdapUserApplicationService
-from flext_ldap.values import FlextLdapCreateUserRequest
+import asyncio
+from flext_ldap.services import FlextLdapService
+from flext_ldap.models import FlextLdapCreateUserRequest
 
-# Initialize service
-user_service = FlextLdapUserApplicationService()
+async def main() -> None:
+    service = FlextLdapService()
+    ok = await service.connect(
+        server_url="ldap://localhost:3389",
+        bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        bind_password="REDACTED_LDAP_BIND_PASSWORD",
+    )
+    if ok.is_failure:
+        raise SystemExit(f"Falha na conexão: {ok.error}")
 
-# Create user request
-user_request = FlextLdapCreateUserRequest(
-    dn="cn=jane.doe,ou=users,dc=example,dc=com",
-    uid="jane.doe",
-    cn="Jane Doe",
-    sn="Doe",
-    mail="jane.doe@example.com"
-)
+    req = FlextLdapCreateUserRequest(
+        dn="cn=jane.doe,ou=users,dc=example,dc=com",
+        uid="jane.doe",
+        cn="Jane",
+        sn="Doe",
+        mail="jane.doe@example.com",
+    )
+    created = await service.create_user(req)
+    print(created)
 
-# Create user (test environment uses mock implementation)
-result = user_service.create_user(user_request)
-if result.success:
-    print(f"Created user: {result.data.dn}")
-else:
-    print(f"Error: {result.error}")
+asyncio.run(main())
 ```
 
----
+Observação: a API de serviços é assíncrona (conforme `src/flext_ldap/services.py`).
 
-## 🏛️ Architecture
-
-### Current Structure
+## 🏛️ Estrutura real do projeto
 
 ```
 src/flext_ldap/
-├── entities.py          # Domain entities (FlextLdapUser, FlextLdapGroup, etc.)
-├── values.py           # Value objects (DN, Filter, CreateUserRequest)
-├── services.py         # Service layer with test fallback patterns
-├── application/        # Application services (core LDAP operations)
-├── infrastructure/     # Infrastructure implementations
-├── config.py          # Configuration management
-└── api.py             # Main API entry point
+├── api.py                  # API de alto nível
+├── services.py             # Serviços de aplicação (assíncronos)
+├── adapters.py             # Adapters/ports para operações de diretório
+├── operations.py           # Operações LDAP de baixo nível
+├── models.py               # Entidades/Value Objects (pydantic)
+├── config.py               # Configuração e validação
+├── constants.py | types.py | utils.py | exceptions.py
+└── cli.py                  # CLI (entrypoint: flext-ldap)
 ```
 
-### Key Patterns
+Padrões-chave: FlextResult, FlextDomainService, Clean Architecture, DDD.
 
-- **FlextResult Pattern**: Type-safe error handling for all operations
-- **Test Fallback Pattern**: Services automatically detect test vs production environment
-- **Clean Architecture**: Clear separation between domain, application, and infrastructure
-- **Domain-Driven Design**: Rich domain entities with business logic
-
----
-
-## 🔌 Integration
-
-### Production Behavior
-
-The infrastructure always uses real ldap3 connections and operations. No mocks or fakes are shipped in the runtime code.
-
----
-
-## 🛠️ Development
-
-### Quality Commands
+## ⚙️ Configuração por ambiente
 
 ```bash
-# Setup development environment
-make setup
-
-# Run tests
-make test              # Run test suite (22 tests currently passing)
-make test-unit         # Unit tests only
-make test-integration  # Integration tests with Docker LDAP
-
-# Code quality
-make lint             # Code linting
-make type-check       # Type checking
-make format           # Code formatting
-make validate         # All checks combined
-```
-
-### Test Environment
-
-The project includes Docker-based LDAP testing:
-
-```bash
-# Tests automatically manage Docker LDAP container
-make test-integration
-
-# Manual LDAP container for development
-docker run -d --name test-ldap -p 3389:389 osixia/openldap:1.5.0
-```
-
----
-
-## 📊 Current State
-
-### What's Working
-
-- **Service Layer**: 22 tests passing across 4 main service classes
-- **LDAP Operations**: Basic LDAP connectivity and CRUD operations
-- **Type Safety**: FlextResult pattern for error handling
-- **Test Infrastructure**: Docker-based LDAP testing environment
-
-### What's In Progress
-
-- **Production LDAP Integration**: Application layer connects to real LDAP servers
-- **Performance Optimization**: Connection pooling and async operations
-- **Singer Integration**: Data pipeline components (planned)
-
-### Known Limitations
-
-- Some infrastructure components are not fully implemented
-- Production deployments require additional configuration
-- Performance characteristics are not yet benchmarked
-
----
-
-## 🔧 Configuration
-
-### Environment Variables
-
-```bash
-# Basic LDAP Configuration
+# Configuração básica LDAP
 FLEXT_LDAP_HOST=localhost
 FLEXT_LDAP_PORT=389
 FLEXT_LDAP_USE_SSL=false
@@ -193,91 +80,33 @@ FLEXT_LDAP_BASE_DN=dc=example,dc=com
 FLEXT_LDAP_BIND_DN=cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
 FLEXT_LDAP_BIND_PASSWORD=REDACTED_LDAP_BIND_PASSWORD
 
-# Optional Settings
+# Opções
 FLEXT_LDAP_TIMEOUT=30
 FLEXT_LOG_LEVEL=INFO
 ```
 
-### Configuration Classes
+## 📦 Dependências principais
 
-```python
-from flext_ldap.config import FlextLdapSettings
+- `ldap3` (operações LDAP reais)
+- `pydantic` e `pydantic-settings`
+- `click` e `rich` (CLI/UX)
+- `structlog` (observabilidade)
+- Integrações locais opcionais: `flext-core`, `flext-ldif`
 
-# Load configuration with validation
-settings = FlextLdapSettings()
-print(f"Server: {settings.server}")
-print(f"Port: {settings.port}")
-```
-
----
-
-## 📈 Development Status
-
-### Version: 0.9.0 (Current)
-
-**Completed:**
-
-- ✅ Service layer with test fallback patterns (22 tests passing)
-- ✅ Domain entities and value objects
-- ✅ Basic LDAP infrastructure
-- ✅ FlextResult error handling
-- ✅ Docker-based testing
-
-**In Progress:**
-
-- 🔄 Production LDAP integration (application layer)
-- 🔄 Performance optimization
-- 🔄 Documentation improvements
-
-**Planned:**
-
-- 📋 Singer ecosystem integration
-- 📋 Authentication service integration
-- 📋 Connection pooling and caching
-- 📋 Performance benchmarking
-
----
-
-## 🤝 Contributing
-
-### Development Standards
-
-- **Clean Architecture**: Follow established patterns
-- **Type Safety**: All code must pass MyPy type checking
-- **Testing**: Maintain test coverage and ensure all tests pass
-- **Code Quality**: Follow linting rules (make lint)
-
-### Development Workflow
+## 🧪 Desenvolvimento
 
 ```bash
-# Setup development environment
-make setup
-
-# Make changes and run quality checks
-make validate
-
-# Ensure tests pass
-make test
+make lint         # Lint
+make type-check   # MyPy estrito
+make test         # Testes
+make validate     # Pipeline completo
 ```
 
-### Pull Request Requirements
+## 📄 Licença
 
-- All tests must pass (currently 22/22 passing)
-- Code must pass linting and type checking
-- Clear description of changes
-- Update documentation if needed
+MIT License — veja `LICENSE`.
 
----
+## 🔗 Projetos relacionados
 
-## 📄 License
-
-MIT License - See [LICENSE](LICENSE) file for details.
-
----
-
-## 🔗 Related Projects
-
-- **[flext-core](../flext-core)**: Foundation library with core patterns
-- **[flext-observability](../flext-observability)**: Monitoring and observability
-
----
+- `../flext-core`
+- `../flext-ldif`
