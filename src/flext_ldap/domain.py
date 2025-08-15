@@ -35,8 +35,10 @@ from flext_core import (
 )
 
 from flext_ldap.constants import (
+    FlextLdapDefaultValues,
     FlextLdapObjectClassConstants,
     FlextLdapValidationConstants,
+    FlextLdapValidationMessages,
 )
 
 if TYPE_CHECKING:
@@ -79,7 +81,7 @@ class FlextLdapDomainSpecification(ABC):
 
     def get_validation_error(self, candidate: object) -> str:
         """Get descriptive validation error message."""
-        return f"Specification '{self.name}' failed for: {type(candidate).__name__}"
+        return FlextLdapValidationMessages.SPECIFICATION_FAILED.format(name=self.name, type=type(candidate).__name__)
 
 
 class FlextLdapUserSpecification(FlextLdapDomainSpecification):
@@ -87,8 +89,8 @@ class FlextLdapUserSpecification(FlextLdapDomainSpecification):
 
     def __init__(self) -> None:
         super().__init__(
-            name="ValidLdapUser",
-            description="Validates LDAP user entity business rules",
+            name=FlextLdapDefaultValues.VALID_LDAP_USER_NAME,
+            description=FlextLdapDefaultValues.VALID_LDAP_USER_DESCRIPTION,
         )
 
     def is_satisfied_by(self, candidate: object) -> bool:
@@ -833,7 +835,9 @@ class FlextLdapDomainFactory:
         if result.is_failure:
             return FlextResult.fail(result.error or "User creation failed")
         created = result.unwrap()
-        from flext_ldap.models import FlextLdapUser as _User  # late import to avoid cycles
+        from flext_ldap.models import (
+            FlextLdapUser as _User,  # late import to avoid cycles
+        )
         if isinstance(created, _User):
             return FlextResult.ok(created)
         return FlextResult.fail("User creation returned invalid type")
@@ -896,7 +900,9 @@ class FlextLdapDomainFactory:
         if result.is_failure:
             return FlextResult.fail(result.error or "Group creation failed")
         created = result.unwrap()
-        from flext_ldap.models import FlextLdapGroup as _Group  # late import to avoid cycles
+        from flext_ldap.models import (
+            FlextLdapGroup as _Group,  # late import to avoid cycles
+        )
         if isinstance(created, _Group):
             return FlextResult.ok(created)
         return FlextResult.fail("Group creation returned invalid type")

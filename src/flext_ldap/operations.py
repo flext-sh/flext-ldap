@@ -12,6 +12,7 @@ from datetime import UTC, datetime
 
 from flext_core import FlextResult, get_flext_container, get_logger
 
+from flext_ldap.constants import FlextLdapValidationMessages
 from flext_ldap.models import (
     FlextLdapCreateUserRequest,
     FlextLdapDistinguishedName,
@@ -47,8 +48,8 @@ class FlextLdapOperationsBase:
         """Validate DN and return error if invalid - REUSABLE VALIDATION."""
         dn_validation = FlextLdapDistinguishedName(value=dn).validate_business_rules()
         if not dn_validation.is_success:
-            error_msg = dn_validation.error or "Unknown validation error"
-            return FlextResult.fail(f"Invalid {context}: {error_msg}")
+            error_msg = dn_validation.error or FlextLdapValidationMessages.UNKNOWN_VALIDATION_ERROR
+            return FlextResult.fail(FlextLdapValidationMessages.INVALID_DN_WITH_CONTEXT.format(context=context, error=error_msg))
         return FlextResult.ok(None)
 
     def _validate_filter_or_fail(self, search_filter: str) -> FlextResult[None]:
@@ -57,16 +58,16 @@ class FlextLdapOperationsBase:
             value=search_filter,
         ).validate_business_rules()
         if not filter_validation.is_success:
-            error_msg = filter_validation.error or "Unknown validation error"
-            return FlextResult.fail(f"Invalid search filter: {error_msg}")
+            error_msg = filter_validation.error or FlextLdapValidationMessages.UNKNOWN_VALIDATION_ERROR
+            return FlextResult.fail(FlextLdapValidationMessages.INVALID_SEARCH_FILTER.format(error=error_msg))
         return FlextResult.ok(None)
 
     def _validate_uri_or_fail(self, server_uri: str) -> FlextResult[None]:
         """Validate server URI and return error if invalid - REUSABLE VALIDATION."""
         uri_validation = FlextLdapUri(value=server_uri).validate_business_rules()
         if not uri_validation.is_success:
-            error_msg = uri_validation.error or "Unknown validation error"
-            return FlextResult.fail(f"Invalid server URI: {error_msg}")
+            error_msg = uri_validation.error or FlextLdapValidationMessages.UNKNOWN_VALIDATION_ERROR
+            return FlextResult.fail(FlextLdapValidationMessages.INVALID_SERVER_URI.format(error=error_msg))
         return FlextResult.ok(None)
 
     def _handle_exception_with_context(

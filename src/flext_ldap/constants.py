@@ -733,6 +733,277 @@ class FlextLdapValidationConstants:
 
 
 # =============================================================================
+# VALIDATION AND ERROR MESSAGES - Centralized String Constants
+# =============================================================================
+
+
+class FlextLdapValidationMessages:
+    """Validation and error message constants for consistent error handling.
+
+    🎯 CONSOLIDATES AND REPLACES:
+    - Hardcoded validation messages scattered across config.py, api.py, operations.py
+    - Error message strings duplicated in multiple exception handling contexts
+    - Session validation messages repeated throughout service layers
+    """
+
+    # Connection validation messages
+    HOST_CANNOT_BE_EMPTY: Final[str] = "Host cannot be empty"
+    PORT_RANGE_ERROR: Final[str] = "Port must be between 1 and {max_port}, got {port}"
+    CONNECTION_FAILED: Final[str] = "Connection failed"
+    CONNECTION_FAILED_WITH_ERROR: Final[str] = "Connection failed: {error}"
+    CONNECTION_FAILED_INVALID_SCHEME: Final[str] = "Connection failed: invalid URI scheme"
+    CONNECTION_FAILED_INVALID_HOST: Final[str] = "Connection failed: invalid host"
+
+    # Authentication validation messages
+    BIND_FAILED: Final[str] = "Bind failed"
+    AUTHENTICATION_FAILED: Final[str] = "LDAP authentication failed"
+    FAILED_TO_CONNECT: Final[str] = "Failed to connect to LDAP server: {error}"
+
+    # DN validation messages
+    INVALID_DN_FORMAT: Final[str] = "Invalid DN format"
+    INVALID_DN_ERROR: Final[str] = "Invalid DN: {error}"
+    DN_VALIDATION_FAILED: Final[str] = "DN validation failed"
+
+    # Filter validation messages
+    INVALID_SEARCH_FILTER: Final[str] = "Invalid search filter: {error}"
+    FILTER_VALIDATION_FAILED: Final[str] = "Filter validation failed"
+
+    # URI validation messages
+    INVALID_SERVER_URI: Final[str] = "Invalid server URI: {error}"
+    URI_VALIDATION_FAILED: Final[str] = "URI validation failed"
+
+    # Session validation messages
+    SESSION_ID_REQUIRED: Final[str] = "Session ID is required"
+    SESSION_ID_REQUIRED_FOR_OPERATION: Final[str] = "Session ID is required for {operation}"
+    UNKNOWN_SESSION: Final[str] = "Unknown session: {session_id}"
+
+    # Search operation messages
+    SEARCH_FAILED: Final[str] = "Search failed"
+    SEARCH_FAILED_WITH_ERROR: Final[str] = "Search failed: {error}"
+    SEARCH_FOR_EXPORT_FAILED: Final[str] = "Search for export failed: {error}"
+
+    # Entry operation messages
+    ADD_FAILED: Final[str] = "Add failed"
+    MODIFY_FAILED: Final[str] = "Modify failed"
+    DELETE_FAILED: Final[str] = "Delete failed"
+    ENTRY_CREATION_ERROR: Final[str] = "Entry creation error: {error}"
+
+    # User operation messages
+    USER_CREATION_FAILED: Final[str] = "User creation failed: {error}"
+    UID_REQUIRED: Final[str] = "UID is required"
+    COMMON_NAME_REQUIRED: Final[str] = "Common name is required"
+    SURNAME_REQUIRED: Final[str] = "Surname is required"
+
+    # Group operation messages
+    GROUP_CREATION_FAILED: Final[str] = "Group creation failed: {error}"
+
+    # Export operation messages
+    OUTPUT_FILE_REQUIRED: Final[str] = "Output file is required for export operations"
+    BASE_DN_REQUIRED: Final[str] = "Base DN is required for export operations"
+    LDIF_EXPORT_FAILED: Final[str] = "LDIF export failed"
+    EXPORT_ERROR: Final[str] = "Export error: {error}"
+
+    # Import operation messages
+    LDIF_FILE_NOT_FOUND: Final[str] = "LDIF file not found: {file_path}"
+    LDIF_PARSE_FAILED: Final[str] = "Failed to parse LDIF file: {error}"
+    LDIF_IMPORT_ERROR: Final[str] = "LDIF import error: {error}"
+
+    # Generic validation messages
+    UNKNOWN_VALIDATION_ERROR: Final[str] = "Unknown validation error"
+    VALIDATION_FAILED_FOR_FIELD: Final[str] = "Validation failed for {field}: {error}"
+    ATTRIBUTES_CANNOT_BE_EMPTY: Final[str] = "Attributes cannot be empty"
+
+    # Field validation messages used by utils.py
+    FIELD_CANNOT_BE_EMPTY: Final[str] = "{field_name} cannot be empty"
+    DN_FIELD_NAME: Final[str] = "DN"
+    SEARCH_FILTER_FIELD_NAME: Final[str] = "Search filter"
+    COMMON_NAME_FIELD_NAME: Final[str] = "Common name"
+    FILE_PATH_FIELD_NAME: Final[str] = "File path"
+    URI_FIELD_NAME: Final[str] = "URI"
+    BASE_DN_FIELD_NAME: Final[str] = "Base DN"
+    INVALID_URI_SCHEME: Final[str] = "Invalid URI scheme"
+    CONNECTION_FAILED_WITH_CONTEXT: Final[str] = "Connection failed with context: {context}"
+    VALIDATION_FAILED: Final[str] = "Validation failed for {field}"
+    ENTRY_MUST_HAVE_OBJECT_CLASS: Final[str] = "Entry must have at least one object class"
+
+    # Operation context messages
+    OPERATION_FAILED: Final[str] = "Operation failed: {error}"
+    FAILED_TO_OPERATION: Final[str] = "Failed to {operation}: {error}"
+
+    # File operation messages
+    FAILED_TO_WRITE_FILE: Final[str] = "Failed to write file {file_path}: {error}"
+
+    # Infrastructure error messages
+    LDAP_CONNECTION_FAILED: Final[str] = "LDAP connection failed"
+    CONNECTION_FAILED_GENERIC: Final[str] = "Connection failed: {error}"
+
+    # Operations error messages
+    INVALID_DN_WITH_CONTEXT: Final[str] = "Invalid {context}: {error}"
+
+    # Service error messages
+    SERVICE_ALREADY_RUNNING: Final[str] = "Service is already running"
+    SERVICE_NOT_RUNNING: Final[str] = "Service is not running"
+    FAILED_TO_START_SERVICE: Final[str] = "Failed to start LDAP service: {error}"
+    FAILED_TO_STOP_SERVICE: Final[str] = "Failed to stop LDAP service: {error}"
+    HEALTH_CHECK_FAILED: Final[str] = "Health check failed: {error}"
+
+    # Domain validation messages
+    SPECIFICATION_FAILED: Final[str] = "Specification '{name}' failed for: {type}"
+    INVALID_USER_MISSING_ATTRIBUTES: Final[str] = "User must have uid and dn attributes"
+
+    # CLI parameter messages
+    PASSWORD_FIELD_TYPE: Final[str] = "password_field"  # nosec B105 - Field type definition, not a password
+    FAILED_TO_READ_FILE: Final[str] = "Failed to read file {file_path}: {error}"
+
+    # Configuration validation messages
+    CONFIGURATION_ERROR: Final[str] = "Configuration error in {key}: {error}"
+    MAX_POOL_SIZE_ERROR: Final[str] = "max_pool_size ({value}) must be >= 1"
+    CACHE_TTL_POSITIVE: Final[str] = "Cache TTL must be positive when caching is enabled"
+    DEFAULT_CONNECTION_MUST_SPECIFY_SERVER: Final[str] = "Default connection must specify a server"
+
+    # Disconnection messages
+    DISCONNECT_FAILED: Final[str] = "Disconnect failed: {error}"
+    TERMINATION_ERROR: Final[str] = "Termination error: {error}"
+
+
+class FlextLdapOperationMessages:
+    """Operation status and logging message constants.
+
+    🎯 CONSOLIDATES AND REPLACES:
+    - Status messages scattered across operation logging
+    - Success/failure messages duplicated in service layers
+    - Connection lifecycle messages repeated throughout infrastructure
+    """
+
+    # Connection lifecycle messages
+    CONNECTION_CREATED: Final[str] = "connection created"
+    CONNECTION_CLOSED: Final[str] = "connection closed"
+    CONNECTION_ESTABLISHED: Final[str] = "Connection established: {session_id}"
+    CONNECTION_TERMINATED: Final[str] = "Connection terminated: {session_id}"
+
+    # Search operation messages
+    LDAP_SEARCH_COMPLETED: Final[str] = "LDAP search completed"
+    USER_SEARCH_COMPLETED: Final[str] = "user search"
+    GROUP_SEARCH_COMPLETED: Final[str] = "group search"
+    SEARCH_OPERATION_FAILED: Final[str] = "Search operation failed"
+
+    # Entry operation messages
+    ENTRY_CREATED: Final[str] = "entry created"
+    USER_ENTRY_CREATED: Final[str] = "Successfully created user entry: {dn}"
+    GROUP_ENTRY_CREATED: Final[str] = "Successfully created group entry: {dn}"
+    ENTRY_MODIFIED: Final[str] = "Successfully modified entry: {dn}"
+    ENTRY_DELETED: Final[str] = "Successfully deleted entry: {dn}"
+
+    # Service initialization messages
+    SEARCH_SERVICE_INITIALIZED: Final[str] = "FlextLdapSearchService initialized"
+    CONNECTION_SERVICE_INITIALIZED: Final[str] = "FlextLdapConnectionService initialized"
+    ENTRY_SERVICE_INITIALIZED: Final[str] = "FlextLdapEntryService initialized"
+    EXPORT_SERVICE_INITIALIZED: Final[str] = "FlextLdapExportService initialized"
+    API_INITIALIZED: Final[str] = "FlextLdapApi initialized with specialized services"
+
+    # Export operation messages
+    EXPORT_COMPLETED: Final[str] = "LDIF export completed successfully"
+    IMPORT_COMPLETED: Final[str] = "LDIF import completed: {count} entries processed"
+
+    # Error context messages
+    OPERATION_EXCEPTION: Final[str] = "{operation} operation failed"
+    CONNECTION_ESTABLISHMENT_FAILED: Final[str] = "Connection establishment failed"
+    CONNECTION_TERMINATION_FAILED: Final[str] = "Connection termination failed"
+    SEARCH_OPERATION_EXCEPTION: Final[str] = "Search operation failed"
+    USER_CREATION_EXCEPTION: Final[str] = "User creation failed"
+    GROUP_CREATION_EXCEPTION: Final[str] = "Group creation failed"
+    ENTRY_MODIFICATION_EXCEPTION: Final[str] = "Entry modification failed"
+
+    # Context and debugging messages used by exceptions.py
+    OPERATION_CONTEXT: Final[str] = "Operation: {operation}"
+    LDAP_CODE_CONTEXT: Final[str] = "LDAP Code: {ldap_code}"
+    CONTEXT_INFO: Final[str] = "Context: {key}={value}"
+
+    # Connection context keys
+    SERVER_URI_KEY: Final[str] = "server_uri"
+    TIMEOUT_KEY: Final[str] = "timeout"
+    RETRY_COUNT_KEY: Final[str] = "retry_count"
+    CONNECTION_OPERATION: Final[str] = "connection"
+
+
+class FlextLdapDefaultValues:
+    """Default values used throughout the LDAP library.
+
+    🎯 CONSOLIDATES AND REPLACES:
+    - Hardcoded default values scattered across API classes
+    - Repeated default filter and encoding values
+    - Default object class combinations used in multiple contexts
+    """
+
+    # Search defaults
+    DEFAULT_SEARCH_FILTER: Final[str] = "(objectClass=*)"
+    DEFAULT_SEARCH_SCOPE: Final[str] = "subtree"
+    DEFAULT_SEARCH_BASE: Final[str] = ""
+
+    # Encoding defaults
+    DEFAULT_ENCODING: Final[str] = "utf-8"
+    DEFAULT_LDIF_ENCODING: Final[str] = "utf-8"
+
+    # Object class defaults
+    DEFAULT_USER_OBJECT_CLASSES: Final[list[str]] = ["inetOrgPerson", "organizationalPerson", "person", "top"]
+    DEFAULT_GROUP_OBJECT_CLASSES: Final[list[str]] = ["groupOfNames", "top"]
+    DEFAULT_OU_OBJECT_CLASSES: Final[list[str]] = ["organizationalUnit", "top"]
+
+    # Attribute defaults
+    DEFAULT_USER_ATTRIBUTES: Final[list[str]] = ["uid", "cn", "sn", "givenName", "mail", "objectClass"]
+    DEFAULT_GROUP_ATTRIBUTES: Final[list[str]] = ["cn", "description", "member", "objectClass"]
+    DEFAULT_ALL_ATTRIBUTES: Final[str] = "*"
+    DEFAULT_OPERATIONAL_ATTRIBUTES: Final[str] = "+"
+
+    # Session and connection defaults
+    SESSION_PREFIX: Final[str] = "ldap_session_"
+    DUMMY_MEMBER_DN: Final[str] = "cn=dummy"
+    REDACTED_VALUE: Final[str] = "[REDACTED]"
+
+    # File operation defaults
+    LDIF_FILE_EXTENSION: Final[str] = ".ldif"
+    DEFAULT_LDIF_LINE_SEPARATOR: Final[str] = "\n"
+    LDIF_ENTRY_SEPARATOR: Final[str] = ""
+
+    # Time and size defaults
+    DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
+    DEFAULT_CONNECTION_TIMEOUT: Final[int] = 30
+    DEFAULT_SIZE_LIMIT: Final[int] = 1000
+    DEFAULT_TIME_LIMIT: Final[int] = 30
+
+    # Field type defaults
+    STRING_FIELD_TYPE: Final[str] = "string"
+    INTEGER_FIELD_TYPE: Final[str] = "integer"
+    BOOLEAN_FIELD_TYPE: Final[str] = "boolean"
+    BINARY_FIELD_TYPE: Final[str] = "binary"
+    DATETIME_FIELD_TYPE: Final[str] = "datetime"
+    DN_FIELD_TYPE: Final[str] = "dn"
+    EMAIL_FIELD_TYPE: Final[str] = "email"
+    PHONE_FIELD_TYPE: Final[str] = "phone"
+    UUID_FIELD_TYPE: Final[str] = "uuid"
+    URL_FIELD_TYPE: Final[str] = "url"
+    IP_ADDRESS_FIELD_TYPE: Final[str] = "ip_address"
+    MAC_ADDRESS_FIELD_TYPE: Final[str] = "mac_address"
+    CERTIFICATE_FIELD_TYPE: Final[str] = "certificate"
+
+    # Service information defaults
+    DEFAULT_SERVICE_NAME: Final[str] = "flext-ldap"
+    DEFAULT_SERVICE_VERSION: Final[str] = "0.9.0"
+    SERVICE_STATUS_RUNNING: Final[str] = "running"
+    SERVICE_STATUS_STOPPED: Final[str] = "stopped"
+    DEPENDENCY_FLEXT_CORE: Final[str] = "healthy"
+    DEPENDENCY_LDAP3: Final[str] = "available"
+
+    # Schema and infrastructure defaults
+    DEFAULT_SCHEME_LDAPS: Final[str] = "ldaps"
+    DEFAULT_SCHEME_LDAP: Final[str] = "ldap"
+
+    # Domain specification defaults
+    VALID_LDAP_USER_NAME: Final[str] = "ValidLdapUser"
+    VALID_LDAP_USER_DESCRIPTION: Final[str] = "Validates LDAP user entity business rules"
+
+
+# =============================================================================
 # BACKWARD-COMPATIBILITY SHIMS
 # =============================================================================
 
@@ -806,3 +1077,50 @@ class FlextLdapConstants:
     MAX_POOL_SIZE: int = FlextLdapConnectionConstants.MAX_PAGE_SIZE // 10
     DEFAULT_PAGE_SIZE: int = FlextLdapConnectionConstants.DEFAULT_PAGE_SIZE
     MAX_PAGE_SIZE: int = FlextLdapConnectionConstants.MAX_PAGE_SIZE
+
+
+# =============================================================================
+# MODULE EXPORTS - All constant classes available for import
+# =============================================================================
+
+__all__ = [
+    # Core constant classes (consolidated from audit)
+    "FlextLdapAttributeConstants",
+    "FlextLdapConnectionConstants",
+    "FlextLdapConnectionType",
+    "FlextLdapConverterConstants",
+    "FlextLdapDefaultValues",
+    "FlextLdapFilterConstants",
+    "FlextLdapObjectClassConstants",
+    "FlextLdapObservabilityConstants",
+    "FlextLdapOperationMessages",
+    "FlextLdapScope",
+    "FlextLdapDnConstants",
+    "FlextLdapErrorConstants",
+
+    # Compatibility and legacy
+    "FlextLdapConstants",
+    "FlextLdapSchemaDiscoveryConstants",
+
+    # Convenient module-level aliases for frequent usage
+    "DEFAULT_PORT",
+    "DEFAULT_SSL_PORT",
+    "DEFAULT_PAGE_SIZE",
+    "DEFAULT_SIZE_LIMIT",
+    "OBJECT_CLASS",
+    "COMMON_NAME",
+    "USER_ID",
+    "MAIL",
+    "SURNAME",
+    "GIVEN_NAME",
+    "PERSON",
+    "INET_ORG_PERSON",
+    "ORGANIZATIONAL_PERSON",
+    "GROUP_OF_NAMES",
+    "SCOPE_BASE",
+    "SCOPE_ONE",
+    "SCOPE_SUB",
+    "SCOPE_CHILDREN",
+    "LDAP",
+    "LDAPS",
+]

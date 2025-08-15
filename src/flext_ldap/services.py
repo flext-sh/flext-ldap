@@ -31,6 +31,7 @@ from flext_ldap.adapters import (
     FlextLdapDirectoryServiceInterface,
 )
 from flext_ldap.api import FlextLdapApi
+from flext_ldap.constants import FlextLdapDefaultValues, FlextLdapValidationMessages
 from flext_ldap.models import FlextLdapCreateUserRequest, FlextLdapUser
 from flext_ldap.types import (
     FlextLdapDirectoryConnectionProtocol,
@@ -77,38 +78,38 @@ class FlextLdapBaseService(FlextDomainService[None]):
         """Start LDAP service with proper initialization."""
         try:
             if self._is_running:
-                return FlextResult.fail("Service is already running")
+                return FlextResult.fail(FlextLdapValidationMessages.SERVICE_ALREADY_RUNNING)
 
             # Initialize LDAP service components
             self._is_running = True
             return FlextResult.ok(None)
         except Exception as e:
-            return FlextResult.fail(f"Failed to start LDAP service: {e}")
+            return FlextResult.fail(FlextLdapValidationMessages.FAILED_TO_START_SERVICE.format(error=str(e)))
 
     def stop(self) -> FlextResult[None]:
         """Stop LDAP service with proper cleanup."""
         try:
             if not self._is_running:
-                return FlextResult.fail("Service is not running")
+                return FlextResult.fail(FlextLdapValidationMessages.SERVICE_NOT_RUNNING)
 
             # Cleanup LDAP connections and resources
             self._is_running = False
             return FlextResult.ok(None)
         except Exception as e:
-            return FlextResult.fail(f"Failed to stop LDAP service: {e}")
+            return FlextResult.fail(FlextLdapValidationMessages.FAILED_TO_STOP_SERVICE.format(error=str(e)))
 
     def health_check(self) -> FlextResult[FlextTypes.Core.JsonDict]:
         """Perform LDAP service health check."""
         try:
             health_info: FlextTypes.Core.JsonDict = {
-                "service": "flext-ldap",
-                "status": "running" if self._is_running else "stopped",
-                "version": "0.9.0",
-                "dependencies": {"flext_core": "healthy", "ldap3": "available"},
+                "service": FlextLdapDefaultValues.DEFAULT_SERVICE_NAME,
+                "status": FlextLdapDefaultValues.SERVICE_STATUS_RUNNING if self._is_running else FlextLdapDefaultValues.SERVICE_STATUS_STOPPED,
+                "version": FlextLdapDefaultValues.DEFAULT_SERVICE_VERSION,
+                "dependencies": {"flext_core": FlextLdapDefaultValues.DEPENDENCY_FLEXT_CORE, "ldap3": FlextLdapDefaultValues.DEPENDENCY_LDAP3},
             }
             return FlextResult.ok(health_info)
         except Exception as e:
-            return FlextResult.fail(f"Health check failed: {e}")
+            return FlextResult.fail(FlextLdapValidationMessages.HEALTH_CHECK_FAILED.format(error=str(e)))
 
     @property
     def container(self) -> FlextContainer:
