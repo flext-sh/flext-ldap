@@ -1,23 +1,4 @@
-"""FLEXT-LDAP Models - Consolidated Models, Entities and Value Objects.
-
-This module provides comprehensive LDAP domain modeling using advanced Python 3.13
-features, flext-core foundation patterns, and Domain-Driven Design principles.
-
-All models extend flext-core foundation classes providing consistent behavior
-across the FLEXT ecosystem with built-in validation, audit trails, and lifecycle
-management.
-
-Architecture:
-- Domain Entities: Rich business objects with identity and behavior
-- Value Objects: Immutable data structures without identity
-- Domain Events: Business event modeling for cross-aggregate communication
-- Request/Response Models: API contract definitions
-- Configuration Models: System configuration objects
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""FLEXT-LDAP Models."""
 
 from __future__ import annotations
 
@@ -37,6 +18,8 @@ from flext_core import (
 )
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
+from flext_ldap.constants import FlextLdapDefaultValues
+
 if TYPE_CHECKING:
     from flext_ldap.types import LdapAttributeDict, LdapAttributeValue, LdapSearchResult
 
@@ -50,32 +33,28 @@ logger = get_logger(__name__)
 
 
 class FlextLdapDataType(Enum):
-    """LDAP data types with intelligent detection."""
 
-    STRING = "string"
-    INTEGER = "integer"
-    BOOLEAN = "boolean"
-    BINARY = "binary"
-    DATETIME = "datetime"
-    DN = "dn"
-    EMAIL = "email"
-    PHONE = "phone"
-    UUID = "uuid"
-    URL = "url"
-    IP_ADDRESS = "ip_address"
-    MAC_ADDRESS = "mac_address"
-    CERTIFICATE = "certificate"
+    STRING = FlextLdapDefaultValues.STRING_FIELD_TYPE
+    INTEGER = FlextLdapDefaultValues.INTEGER_FIELD_TYPE
+    BOOLEAN = FlextLdapDefaultValues.BOOLEAN_FIELD_TYPE
+    BINARY = FlextLdapDefaultValues.BINARY_FIELD_TYPE
+    DATETIME = FlextLdapDefaultValues.DATETIME_FIELD_TYPE
+    DN = FlextLdapDefaultValues.DN_FIELD_TYPE
+    EMAIL = FlextLdapDefaultValues.EMAIL_FIELD_TYPE
+    PHONE = FlextLdapDefaultValues.PHONE_FIELD_TYPE
+    UUID = FlextLdapDefaultValues.UUID_FIELD_TYPE
+    URL = FlextLdapDefaultValues.URL_FIELD_TYPE
+    IP_ADDRESS = FlextLdapDefaultValues.IP_ADDRESS_FIELD_TYPE
+    MAC_ADDRESS = FlextLdapDefaultValues.MAC_ADDRESS_FIELD_TYPE
+    CERTIFICATE = FlextLdapDefaultValues.CERTIFICATE_FIELD_TYPE
 
     class PasswordDataType(StrEnum):
-        """Password-related data type labels used for metadata tagging."""
-
-        PASSWORD_FIELD_TYPE = "password_" + "field"
+        PASSWORD_FIELD_TYPE = "password_field"  # nosec B105 - Field type constant, not actual password
 
     UNKNOWN = "unknown"
 
 
 class FlextLdapScopeEnum(StrEnum):
-    """LDAP search scope enumeration with legacy compatibility."""
 
     BASE = "base"
     ONE_LEVEL = "onelevel"
@@ -97,7 +76,6 @@ LDAPScope = FlextLdapScopeEnum
 
 
 class LdapAttributeProcessor:
-    """Helper class for attribute processing - REDUCES COMPLEXITY in models."""
 
     @staticmethod
     def coerce_attribute_value(value: object) -> str | list[str]:

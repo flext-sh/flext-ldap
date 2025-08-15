@@ -1,11 +1,4 @@
-"""Modern FLEXT LDAP CLI using flext-cli framework - REFACTORED VERSION.
-
-ENTERPRISE-GRADE CLI with ZERO CODE DUPLICATION through refactoring.
-Eliminates padrões duplicados através de reutilização de código existente.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""FLEXT LDAP CLI."""
 
 from __future__ import annotations
 
@@ -21,7 +14,7 @@ from flext_core import FlextResult, get_flext_container, get_logger
 from rich.console import Console
 from rich.table import Table
 
-from flext_ldap.constants import FlextLdapScope
+from flext_ldap.constants import FlextLdapDefaultValues, FlextLdapScope
 from flext_ldap.infrastructure import FlextLdapClient
 from flext_ldap.models import FlextLdapDistinguishedName, FlextLdapFilter
 
@@ -38,7 +31,6 @@ console = Console()
 
 
 def _safe_int_from_kwargs(kwargs: dict[str, object], key: str, default: int) -> int:
-    """Safe int conversion from kwargs - REUSABLE HELPER."""
     value = kwargs.get(key, default)
     if isinstance(value, int):
         return value
@@ -123,7 +115,7 @@ class LDAPSearchParams:
 
     server: str
     base_dn: str
-    filter_str: str = "(objectClass=*)"
+    filter_str: str = FlextLdapDefaultValues.DEFAULT_SEARCH_FILTER
     port: int = 389
     use_ssl: bool = False
     bind_dn: str | None = None
@@ -178,7 +170,7 @@ class FlextLdapCliBase(FlextCliEntity):
     def __init__(self, command_id: str, name: str) -> None:
         """Initialize base CLI command."""
         # Adapt to new FlextCliEntity signature: set minimal required fields
-        super().__init__(name=name, description="")
+        super().__init__(id=command_id, name=name, description="")
         self._container = get_flext_container()
         # Keep legacy fields for compatibility
         self.command_id = command_id

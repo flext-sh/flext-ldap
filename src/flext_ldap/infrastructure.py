@@ -1,24 +1,4 @@
-"""FLEXT-LDAP Infrastructure - Consolidated Infrastructure Layer.
-
-🎯 CONSOLIDATES 8+ MAJOR INFRASTRUCTURE FILES INTO SINGLE PEP8 MODULE:
-- infrastructure_schema_discovery.py (66,669 bytes) - LDAP schema discovery
-- infrastructure_ldap_client.py (24,884 bytes) - LDAP client implementation
-- infrastructure_certificate_validator.py (23,774 bytes) - Certificate validation
-- infrastructure_repositories.py (20,957 bytes) - Data access repositories
-- infrastructure_security_event_logger.py (20,287 bytes) - Security event logging
-- infrastructure_error_correlation.py (19,304 bytes) - Error correlation
-- infrastructure_connection_manager.py (3,886 bytes) - Connection management
-- ldap_infrastructure.py (26,019 bytes) - Legacy infrastructure
-
-TOTAL CONSOLIDATION: 205,780+ bytes → ldap_infrastructure.py (PEP8 organized)
-
-This module provides comprehensive LDAP infrastructure implementations
-following Clean Architecture patterns with dependency injection and
-enterprise-grade security, monitoring, and data access patterns.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""FLEXT-LDAP Infrastructure."""
 
 from __future__ import annotations
 
@@ -28,20 +8,13 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 
-"""Compatibility shims for third-party deprecations (pyasn1).
-
-We proactively alias deprecated attribute names used by ldap3 to their
-modern equivalents to avoid DeprecationWarnings originating from pyasn1.
-This fixes the root cause in our import path without silencing warnings
-globally and without forking third-party packages.
-"""
 try:  # pragma: no cover - environment dependent
-    from pyasn1.codec.ber import encoder as _ber_encoder  # type: ignore
+    from pyasn1.codec.ber import encoder as _ber_encoder
 
     if hasattr(_ber_encoder, "TAG_MAP") and not hasattr(_ber_encoder, "tagMap"):
-        setattr(_ber_encoder, "tagMap", getattr(_ber_encoder, "TAG_MAP"))
+        _ber_encoder.tagMap = _ber_encoder.TAG_MAP
     if hasattr(_ber_encoder, "TYPE_MAP") and not hasattr(_ber_encoder, "typeMap"):
-        setattr(_ber_encoder, "typeMap", getattr(_ber_encoder, "TYPE_MAP"))
+        _ber_encoder.typeMap = _ber_encoder.TYPE_MAP
 except Exception:  # pragma: no cover - best effort only
     pass
 
@@ -57,6 +30,12 @@ from ldap3 import (
     Server,
 )
 from ldap3.core.exceptions import LDAPException
+
+from flext_ldap.constants import (
+    FlextLdapDefaultValues,
+    FlextLdapOperationMessages,
+    FlextLdapValidationMessages,
+)
 
 LDAP3_AVAILABLE = True
 
@@ -159,11 +138,11 @@ class FlextLdapClient:
             return await self._perform_connection_sequence(server_uri, bind_dn, bind_password)
 
         except LDAPException as e:
-            logger.exception("LDAP connection failed")
-            return FlextResult.fail(f"Connection failed: {e!s}")
+            logger.exception(FlextLdapValidationMessages.LDAP_CONNECTION_FAILED)
+            return FlextResult.fail(FlextLdapValidationMessages.CONNECTION_FAILED_GENERIC.format(error=str(e)))
         except (ConnectionError, TimeoutError, OSError, TypeError, ValueError) as e:
-            logger.exception("LDAP connection failed")
-            return FlextResult.fail(f"Connection failed: {e!s}")
+            logger.exception(FlextLdapValidationMessages.LDAP_CONNECTION_FAILED)
+            return FlextResult.fail(FlextLdapValidationMessages.CONNECTION_FAILED_GENERIC.format(error=str(e)))
 
     async def _perform_connection_sequence(
         self, server_uri: str, bind_dn: str | None, bind_password: str | None,
@@ -178,7 +157,7 @@ class FlextLdapClient:
         parsed = urlparse(server_uri)
         host = parsed.hostname or ""
         port = parsed.port
-        use_ssl = parsed.scheme == "ldaps"
+        use_ssl = parsed.scheme == FlextLdapDefaultValues.DEFAULT_SCHEME_LDAPS
 
         connection_result = self._create_ldap_connection(
             host=host,
@@ -188,7 +167,7 @@ class FlextLdapClient:
             bind_password=bind_password,
         )
         if connection_result.is_failure:
-            return FlextResult.fail(connection_result.error or "Connection failed")
+            return FlextResult.fail(connection_result.error or FlextLdapValidationMessages.CONNECTION_FAILED)
 
         # Step 3: Establish connection state
         conn = connection_result.data
@@ -196,7 +175,7 @@ class FlextLdapClient:
         self._is_connected = True
 
         logger.info(
-            "LDAP client connected",
+            FlextLdapOperationMessages.CONNECTION_ESTABLISHED.format(session_id=server_uri),
             extra={
                 "server_uri": server_uri,
                 "authenticated": bind_dn is not None,
@@ -207,12 +186,12 @@ class FlextLdapClient:
     def _validate_connection_uri(self, server_uri: str) -> FlextResult[None]:
         """Validate the server URI format and scheme."""
         parsed = urlparse(server_uri)
-        if parsed.scheme not in {"ldap", "ldaps"}:
-            return FlextResult.fail("Connection failed: invalid URI scheme")
+        if parsed.scheme not in {FlextLdapDefaultValues.DEFAULT_SCHEME_LDAP, FlextLdapDefaultValues.DEFAULT_SCHEME_LDAPS}:
+            return FlextResult.fail(FlextLdapValidationMessages.CONNECTION_FAILED_INVALID_SCHEME)
 
         host = parsed.hostname or ""
         if not host:
-            return FlextResult.fail("Connection failed: invalid host")
+            return FlextResult.fail(FlextLdapValidationMessages.CONNECTION_FAILED_INVALID_HOST)
 
         return FlextResult.ok(None)
 

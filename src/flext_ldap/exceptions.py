@@ -1,21 +1,4 @@
-"""FLEXT-LDAP Exceptions - Professional Exception Hierarchy.
-
-🎯 PROFESSIONAL EXCEPTION HANDLING WITH DOMAIN CONTEXT
-
-This module provides comprehensive exception handling for FLEXT-LDAP
-operations with type-safe error handling, detailed error information,
-and proper exception hierarchies following enterprise patterns.
-
-Architecture:
-- Base Exception: FlextLdapException inherits from FlextError
-- Domain Exceptions: Specific error types for different operations
-- Context Preservation: Rich error information with LDAP context
-- Recovery Patterns: Structured error handling for resilient operations
-- Error Factory: Centralized exception creation with consistent formatting
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""FLEXT-LDAP Exceptions."""
 
 from __future__ import annotations
 
@@ -23,17 +6,14 @@ from typing import ClassVar
 
 from flext_core import FlextError as FlextException
 
+from flext_ldap.constants import FlextLdapOperationMessages
+
 # =============================================================================
 # LDAP DOMAIN EXCEPTIONS - PROFESSIONAL TYPE-SAFE HIERARCHY
 # =============================================================================
 
 
 class FlextLdapException(FlextException):
-    """Base exception for all FLEXT-LDAP errors.
-
-    Provides enhanced error context and categorization for LDAP operations.
-    All LDAP-specific exceptions inherit from this base class.
-    """
 
     def __init__(
         self,
@@ -43,33 +23,23 @@ class FlextLdapException(FlextException):
         ldap_context: dict[str, object] | None = None,
         operation: str | None = None,
     ) -> None:
-        """Initialize LDAP exception with enhanced context.
-
-        Args:
-            message: Human-readable error message
-            ldap_result_code: LDAP result code (RFC 4511)
-            ldap_context: Additional context (DN, filter, etc.)
-            operation: LDAP operation that failed
-
-        """
         super().__init__(message)
         self.ldap_result_code = ldap_result_code
         self.ldap_context = ldap_context or {}
         self.operation = operation
 
     def __str__(self) -> str:
-        """Format exception with LDAP context."""
         parts = [super().__str__()]
 
         if self.operation:
-            parts.append(f"Operation: {self.operation}")
+            parts.append(FlextLdapOperationMessages.OPERATION_CONTEXT.format(operation=self.operation))
 
         if self.ldap_result_code:
-            parts.append(f"LDAP Code: {self.ldap_result_code}")
+            parts.append(FlextLdapOperationMessages.LDAP_CODE_CONTEXT.format(code=self.ldap_result_code))
 
         if self.ldap_context:
             context_str = ", ".join(f"{k}={v}" for k, v in self.ldap_context.items())
-            parts.append(f"Context: {context_str}")
+            parts.append(FlextLdapOperationMessages.CONTEXT_INFO.format(context=context_str))
 
         return " | ".join(parts)
 
@@ -105,13 +75,13 @@ class FlextLdapConnectionError(FlextLdapException):
         """
         context: dict[str, object] = {}
         if server_uri:
-            context["server_uri"] = server_uri
+            context[FlextLdapOperationMessages.SERVER_URI_KEY] = server_uri
         if timeout:
-            context["timeout"] = str(timeout)
+            context[FlextLdapOperationMessages.TIMEOUT_KEY] = str(timeout)
         if retry_count is not None:
-            context["retry_count"] = str(retry_count)
+            context[FlextLdapOperationMessages.RETRY_COUNT_KEY] = str(retry_count)
 
-        super().__init__(message, ldap_context=context, operation="connection")
+        super().__init__(message, ldap_context=context, operation=FlextLdapOperationMessages.CONNECTION_OPERATION)
 
 
 class FlextLdapAuthenticationError(FlextLdapException):

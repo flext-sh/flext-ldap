@@ -1,14 +1,4 @@
-"""FLEXT-LDAP Utils - Consolidated Utilities and Protocols.
-
-🎯 CONSOLIDATES 2 FILES INTO SINGLE PEP8 MODULE:
-- utils.py (9,399 bytes) - LDAP utilities and helper functions
-- protocols.py (25,959 bytes) - Type protocols and interfaces
-
-This module provides utility functions and protocol definitions for FLEXT-LDAP.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""FLEXT-LDAP Utils."""
 
 from __future__ import annotations
 
@@ -21,11 +11,11 @@ import re
 from typing import ClassVar
 from urllib.parse import urlparse
 
+from flext_ldap.constants import FlextLdapValidationMessages
 from flext_ldap.types import LdapAttributeDict as UtilsLdapAttributeDict
 
 
 class FlextLdapPerformanceHelpers:
-    """Performance optimization helpers for common operations."""
 
     # Simple cache for frequently accessed configurations
     _config_cache: ClassVar[dict[str, object]] = {}
@@ -33,12 +23,10 @@ class FlextLdapPerformanceHelpers:
 
     @classmethod
     def cache_config(cls, key: str, config: object) -> None:
-        """Cache configuration objects for reuse."""
         cls._config_cache[key] = config
 
     @classmethod
     def get_cached_config(cls, key: str) -> object | None:
-        """Retrieve cached configuration."""
         return cls._config_cache.get(key)
 
     @classmethod
@@ -49,25 +37,21 @@ class FlextLdapPerformanceHelpers:
         *,
         result: bool,
     ) -> None:
-        """Cache validation results for repeated calls."""
         cache_key = f"{validation_type}:{value}"
         cls._validation_cache[cache_key] = result
 
     @classmethod
     def get_cached_validation(cls, value: str, validation_type: str) -> bool | None:
-        """Get cached validation result."""
         cache_key = f"{validation_type}:{value}"
         return cls._validation_cache.get(cache_key)
 
     @classmethod
     def clear_cache(cls) -> None:
-        """Clear all caches."""
         cls._config_cache.clear()
         cls._validation_cache.clear()
 
     @staticmethod
     def optimize_attribute_processing(attributes: dict[str, object]) -> dict[str, object]:
-        """Optimize attribute processing with pre-allocation."""
         if not attributes:
             return {}
 
@@ -163,46 +147,46 @@ class FlextLdapValidationHelpers:
     def validate_non_empty_string(value: str, field_name: str) -> str:
         """Standard validation for non-empty string fields."""
         if not value or not value.strip():
-            msg = f"{field_name} cannot be empty"
+            msg = FlextLdapValidationMessages.FIELD_CANNOT_BE_EMPTY.format(field=field_name)
             raise ValueError(msg)
         return value.strip()
 
     @staticmethod
     def validate_dn_field(value: str) -> str:
         """Standard DN validation for Pydantic models."""
-        return FlextLdapValidationHelpers.validate_non_empty_string(value, "DN")
+        return FlextLdapValidationHelpers.validate_non_empty_string(value, FlextLdapValidationMessages.DN_FIELD_NAME)
 
     @staticmethod
     def validate_filter_field(value: str) -> str:
         """Standard filter validation for Pydantic models."""
-        return FlextLdapValidationHelpers.validate_non_empty_string(value, "Search filter")
+        return FlextLdapValidationHelpers.validate_non_empty_string(value, FlextLdapValidationMessages.SEARCH_FILTER_FIELD_NAME)
 
     @staticmethod
     def validate_cn_field(value: str) -> str:
         """Standard common name validation for Pydantic models."""
-        return FlextLdapValidationHelpers.validate_non_empty_string(value, "Common name")
+        return FlextLdapValidationHelpers.validate_non_empty_string(value, FlextLdapValidationMessages.COMMON_NAME_FIELD_NAME)
 
     @staticmethod
     def validate_file_path_field(value: str) -> str:
         """Standard file path validation for Pydantic models."""
-        return FlextLdapValidationHelpers.validate_non_empty_string(value, "File path")
+        return FlextLdapValidationHelpers.validate_non_empty_string(value, FlextLdapValidationMessages.FILE_PATH_FIELD_NAME)
 
     @staticmethod
     def validate_uri_field(value: str) -> str:
         """Standard URI validation for Pydantic models."""
-        validated = FlextLdapValidationHelpers.validate_non_empty_string(value, "URI")
+        validated = FlextLdapValidationHelpers.validate_non_empty_string(value, FlextLdapValidationMessages.URI_FIELD_NAME)
         parsed = urlparse(validated)
         if parsed.scheme not in {"ldap", "ldaps"}:
-            msg = "URI must use ldap:// or ldaps:// scheme"
+            msg = FlextLdapValidationMessages.INVALID_URI_SCHEME
             raise ValueError(msg)
         return validated
 
     @staticmethod
     def validate_base_dn_field(value: str) -> str:
         """Standard base DN validation for Pydantic models."""
-        validated = FlextLdapValidationHelpers.validate_non_empty_string(value, "Base DN")
+        validated = FlextLdapValidationHelpers.validate_non_empty_string(value, FlextLdapValidationMessages.BASE_DN_FIELD_NAME)
         if not FlextLdapUtils.validate_dn(validated):
-            msg = "Invalid DN format"
+            msg = FlextLdapValidationMessages.INVALID_DN_FORMAT
             raise ValueError(msg)
         return validated
 
@@ -218,9 +202,9 @@ class FlextLdapErrorHelpers:
     @staticmethod
     def connection_failed_error(error: str | None = None, context: str = "") -> str:
         """Standard connection failure error message."""
-        base_msg = "Connection failed"
+        base_msg = FlextLdapValidationMessages.CONNECTION_FAILED
         if context:
-            base_msg = f"{context} connection failed"
+            base_msg = FlextLdapValidationMessages.CONNECTION_FAILED_WITH_CONTEXT.format(context=context)
         if error:
             return f"{base_msg}: {error}"
         return base_msg
@@ -228,7 +212,7 @@ class FlextLdapErrorHelpers:
     @staticmethod
     def operation_failed_error(operation: str, error: str | None = None) -> str:
         """Standard operation failure error message."""
-        base_msg = f"{operation.title()} operation failed"
+        base_msg = FlextLdapValidationMessages.OPERATION_FAILED.format(operation=operation.title())
         if error:
             return f"{base_msg}: {error}"
         return base_msg
@@ -236,7 +220,7 @@ class FlextLdapErrorHelpers:
     @staticmethod
     def validation_failed_error(field: str, reason: str | None = None) -> str:
         """Standard validation failure error message."""
-        base_msg = f"{field} validation failed"
+        base_msg: str = FlextLdapValidationMessages.VALIDATION_FAILED.format(field=field)
         if reason:
             return f"{base_msg}: {reason}"
         return base_msg

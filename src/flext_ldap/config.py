@@ -1,26 +1,4 @@
-"""FLEXT-LDAP Configuration - Consolidated Configuration Management and Constants.
-
-🎯 CONSOLIDATES 2 MAJOR FILES INTO SINGLE PEP8 MODULE:
-- config.py (22,490 bytes) - Enterprise settings and connection management
-- constants.py (29,623 bytes) - LDAP protocol constants and operational defaults
-
-TOTAL CONSOLIDATION: 52,113 bytes → ldap_config.py (PEP8 organized)
-
-This module provides comprehensive configuration management and constants for
-FLEXT-LDAP operations, extending flext-core centralized configuration patterns
-with project-specific settings and LDAP protocol constants.
-
-Architecture:
-- Configuration Classes: Connection settings and operational parameters
-- Protocol Constants: RFC-compliant LDAP protocol definitions
-- Default Values: Centralized operational defaults
-- Validation: Type-safe configuration with business rule validation
-- Environment Support: Environment variable configuration
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""FLEXT-LDAP Configuration."""
 
 from __future__ import annotations
 
@@ -46,7 +24,6 @@ logger = get_logger(__name__)
 
 
 class FlextLdapScope(StrEnum):
-    """LDAP search scope enumeration (RFC 4511)."""
 
     BASE = "base"
     ONE_LEVEL = "onelevel"
@@ -61,7 +38,6 @@ class FlextLdapScope(StrEnum):
 
 
 class FlextLdapOperationResult(StrEnum):
-    """LDAP operation result codes (RFC 4511)."""
 
     SUCCESS = "0"
     OPERATIONS_ERROR = "1"
