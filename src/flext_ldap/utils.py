@@ -147,7 +147,7 @@ class FlextLdapValidationHelpers:
     def validate_non_empty_string(value: str, field_name: str) -> str:
         """Standard validation for non-empty string fields."""
         if not value or not value.strip():
-            msg = FlextLdapValidationMessages.FIELD_CANNOT_BE_EMPTY.format(field=field_name)
+            msg = FlextLdapValidationMessages.FIELD_CANNOT_BE_EMPTY.format(field_name=field_name)
             raise ValueError(msg)
         return value.strip()
 

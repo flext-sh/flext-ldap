@@ -9,7 +9,14 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, ParamSpec, TypeVar, cast
 
 import click
-from flext_cli.foundation import FlextCliEntity
+if TYPE_CHECKING:
+    from flext_cli.domain.entities import CLICommand as FlextCliEntity  # type: ignore[import-not-found]
+else:
+    try:
+        from flext_cli.domain.entities import CLICommand as FlextCliEntity
+    except ImportError:
+        # Fallback for when flext-cli is not available
+        from flext_core import FlextEntity as FlextCliEntity
 from flext_core import FlextResult, get_flext_container, get_logger
 from rich.console import Console
 from rich.table import Table
@@ -164,7 +171,7 @@ def _generate_cli_id(fallback: str = "") -> str:
 # =============================================================================
 
 
-class FlextLdapCliBase(FlextCliEntity):
+class FlextLdapCliBase(FlextCliEntity):  # type: ignore[misc, no-any-unimported]
     """Base class for FLEXT LDAP CLI commands with shared functionality."""
 
     def __init__(self, command_id: str, name: str) -> None:
@@ -222,7 +229,7 @@ class FlextLdapTestCommand(FlextLdapCliBase):
 
     def execute(self) -> FlextResult[object]:
         """Execute LDAP connection test - REFACTORED async handling."""
-        self.flext_cli_print_info(  # type: ignore[attr-defined]  # type: ignore[attr-defined]
+        self.flext_cli_print_info(
             f"Testing connection to {self.params.server}:{self.params.port}",
         )
 
@@ -238,7 +245,7 @@ class FlextLdapTestCommand(FlextLdapCliBase):
             )
 
             if connect_result.is_success:
-                self.flext_cli_print_success(f"Successfully connected to {uri}")  # type: ignore[attr-defined]
+                self.flext_cli_print_success(f"Successfully connected to {uri}")
                 # Always disconnect regardless of connect_result.data presence
                 _execute_async_operation(client.disconnect())
                 return FlextResult.ok(
@@ -247,11 +254,11 @@ class FlextLdapTestCommand(FlextLdapCliBase):
                         "protocol": protocol,
                     },
                 )
-            self.flext_cli_print_error(f"Connection failed: {connect_result.error}")  # type: ignore[attr-defined]
+            self.flext_cli_print_error(f"Connection failed: {connect_result.error}")
             return FlextResult.fail(connect_result.error or "Connection failed")
 
         except Exception as e:
-            self.flext_cli_print_error(f"Connection error: {e}")  # type: ignore[attr-defined]
+            self.flext_cli_print_error(f"Connection error: {e}")
             return FlextResult.fail(str(e))
 
 
@@ -287,7 +294,7 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
 
     def execute(self) -> FlextResult[object]:
         """Execute LDAP search - REFACTORED async handling."""
-        self.flext_cli_print_info(  # type: ignore[attr-defined]
+        self.flext_cli_print_info(
             f"Searching {self.params.base_dn} on {self.params.server}:{self.params.port}",
         )
 
@@ -300,7 +307,7 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
             return self._perform_search_operation(client, uri)
 
         except Exception as e:
-            self.flext_cli_print_error(f"Search error: {e}")  # type: ignore[attr-defined]
+            self.flext_cli_print_error(f"Search error: {e}")
             return FlextResult.fail(str(e))
 
     def _perform_search_operation(
@@ -316,7 +323,7 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
         )
 
         if connect_result.is_failure:
-            self.flext_cli_print_error(f"Connection failed: {connect_result.error}")  # type: ignore[attr-defined]
+            self.flext_cli_print_error(f"Connection failed: {connect_result.error}")
             return FlextResult.fail(connect_result.error or "Connection failed")
 
         try:
@@ -380,14 +387,14 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
                 if isinstance(search_result.data, list)
                 else [search_result.data]
             )
-            self.flext_cli_print_success(f"Found {len(entries)} entries")  # type: ignore[attr-defined]
+            self.flext_cli_print_success(f"Found {len(entries)} entries")
 
             # Display results using Rich tables
             self._display_search_results(entries)
 
             return FlextResult.ok({"entries": entries, "count": len(entries)})
 
-        self.flext_cli_print_warning("No entries found")  # type: ignore[attr-defined]
+        self.flext_cli_print_warning("No entries found")
         return FlextResult.ok({"entries": [], "count": 0})
 
     def _display_search_results(self, entries: list[object]) -> None:
@@ -474,7 +481,7 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
 
     def execute(self) -> FlextResult[object]:
         """Execute user lookup - REFACTORED to reduce returns."""
-        self.flext_cli_print_info(f"Looking up user: {self.uid}")  # type: ignore[attr-defined]
+        self.flext_cli_print_info(f"Looking up user: {self.uid}")
 
         try:
             client = FlextLdapClient(None)
@@ -484,7 +491,7 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
             return self._perform_user_lookup(client, uri)
 
         except Exception as e:
-            self.flext_cli_print_error(f"User lookup error: {e}")  # type: ignore[attr-defined]
+            self.flext_cli_print_error(f"User lookup error: {e}")
             return FlextResult.fail(str(e))
 
     def _perform_user_lookup(self, client: FlextLdapClient, uri: str) -> FlextResult[object]:
@@ -496,7 +503,7 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
         )
 
         if connect_result.is_failure:
-            self.flext_cli_print_error(f"Connection failed: {connect_result.error}")  # type: ignore[attr-defined]
+            self.flext_cli_print_error(f"Connection failed: {connect_result.error}")
             return FlextResult.fail(connect_result.error or "Connection failed")
 
         try:
@@ -557,13 +564,13 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
                 if isinstance(search_result.data, list)
                 else search_result.data
             )
-            self.flext_cli_print_success(f"Found user: {self.uid}")  # type: ignore[attr-defined]
+            self.flext_cli_print_success(f"Found user: {self.uid}")
 
             # Display user information
             self._display_user_info(user_data)
             return FlextResult.ok(user_data)
 
-        self.flext_cli_print_warning(f"User {self.uid} not found")  # type: ignore[attr-defined]
+        self.flext_cli_print_warning(f"User {self.uid} not found")
         return FlextResult.fail(f"User {self.uid} not found")
 
     def _display_user_info(self, user: object) -> None:

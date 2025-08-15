@@ -1,17 +1,4 @@
-"""FLEXT LDAP - Enterprise LDAP Directory Integration Library.
-
-Clean Architecture implementation for LDAP operations with SOLID principles.
-Built on flext-core foundation for consistent error handling and service management.
-
-Example:
-    >>> from flext_ldap import FlextLdapApi, FlextLdapCreateUserRequest
-    >>> api = FlextLdapApi()
-    >>> # Use api for LDAP operations
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
-
-"""
+"""Enterprise LDAP directory integration library."""
 
 from __future__ import annotations
 
