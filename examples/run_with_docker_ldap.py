@@ -78,8 +78,8 @@ def start_openldap_container() -> bool:
 
         return False
 
-    except (RuntimeError, ValueError, TypeError) as e:
-        logger.exception("Failed to start OpenLDAP container: %s", e)
+    except (RuntimeError, ValueError, TypeError):
+        logger.exception("Failed to start OpenLDAP container")
         return False
 
 
@@ -116,15 +116,15 @@ async def run_examples_with_docker() -> None:
         sys.path.insert(0, str(Path(__file__).parent))
         integrated_module = importlib.import_module("integrated_ldap_service")
         await integrated_module.main()
-    except Exception as e:
-        logger.exception("Integrated example failed: %s", e)
+    except Exception:
+        logger.exception("Integrated example failed")
 
     # Run the simple client example (best-effort)
     try:
         simple_module = importlib.import_module("ldap_simple_client_example")
         await simple_module.main()
-    except Exception as e:
-        logger.exception("Simple client example failed: %s", e)
+    except Exception:
+        logger.exception("Simple client example failed")
 
 
 async def main() -> None:

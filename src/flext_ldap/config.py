@@ -48,27 +48,32 @@ __all__ = [
 try:
     from pydantic import SecretStr
 
-    class FlextLdapConnectionConfigCompat(FlextLdapConnectionConfig):  # type: ignore[misc]
-        def __init__(self, *args: object, **kwargs: object) -> None:  # noqa: D401
+    class FlextLdapConnectionConfigCompat(FlextLdapConnectionConfig):
+        """Compatibility subclass that accepts plain string passwords.
+
+        Converts ``bind_password`` to ``SecretStr`` at initialization while
+        preserving the public API by exposing a plain string when the attribute
+        is accessed, for legacy tests/tools that compare it directly to a string.
+        """
+
+        def __init__(self, *args: object, **kwargs: object) -> None:
             password = kwargs.get("bind_password")
             if isinstance(password, str):
                 kwargs["bind_password"] = SecretStr(password)
             super().__init__(*args, **kwargs)  # type: ignore[arg-type]
 
-        def __getattribute__(self, name: str) -> object:  # noqa: D401, ANN204
+        def __getattribute__(self, name: str) -> object:
+            """Expose plain string for ``bind_password`` when accessed."""
             if name == "bind_password":
                 value = super().__getattribute__(name)
-                try:
-                    # When consumers read .bind_password, expose plain string
-                    if isinstance(value, SecretStr):  # type: ignore[arg-type]
-                        return value.get_secret_value()
-                except Exception:
-                    return value
+                # When consumers read .bind_password, expose plain string
+                if isinstance(value, SecretStr):
+                    return value.get_secret_value()
                 return value
             return super().__getattribute__(name)
 
-    # Re-export compat alias for consumers that import from config
-    FlextLdapConnectionConfig = FlextLdapConnectionConfigCompat  # type: ignore[assignment]
+    # Export compat alias for consumers that import from config
+    __all__ += ["FlextLdapConnectionConfigCompat"]
 except Exception:
     # If anything goes wrong, keep the original class; tests will reveal issues
     import logging

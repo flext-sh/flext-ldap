@@ -47,7 +47,7 @@ class DockerLDAPContainer:
                 existing.remove(force=True)
         except docker.errors.NotFound:  # type: ignore[attribute-defined-outside-init]
             logging.getLogger(__name__).debug(
-                "No existing container to stop", exc_info=True
+                "No existing container to stop", exc_info=True,
             )
 
         # Start new container with required environment
@@ -134,7 +134,7 @@ class DockerLDAPContainer:
                 c.remove(force=True)
         except docker.errors.NotFound:  # type: ignore[attribute-defined-outside-init]
             logging.getLogger(__name__).debug(
-                "Container not found when stopping", exc_info=True
+                "Container not found when stopping", exc_info=True,
             )
         print("✅ Container stopped and removed")
 
@@ -154,7 +154,7 @@ async def demonstrate_complete_crud_operations() -> None:
     try:
         # Connect to LDAP
         connection_result = await ldap_service.connect(
-            server_uri=server_url, bind_dn=bind_dn, bind_password=password
+            server_uri=server_url, bind_dn=bind_dn, bind_password=password,
         )
         if connection_result.is_failure:
             # Handle via helper to satisfy linter rules
@@ -372,7 +372,7 @@ async def perform_update_operations(
             for k, v in user_update["updates"].items()
         }
         result = await ldap_service.modify_entry(
-            session_id=session_id, dn=user_update["dn"], modifications=mods
+            session_id=session_id, dn=user_update["dn"], modifications=mods,
         )
 
         if result.success:

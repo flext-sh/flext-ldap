@@ -10,8 +10,9 @@ import os
 import time
 from contextlib import asynccontextmanager, suppress
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
+docker: object | None
 try:
     docker = importlib.import_module("docker")
 except Exception:  # pragma: no cover - docker may be unavailable in CI
@@ -24,8 +25,8 @@ from flext_ldap.models import FlextLdapDistinguishedName, FlextLdapFilter
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Generator
-    DockerClient = Any
-    Container = Any
+
+    from docker.models.containers import Container  # type: ignore[import-not-found]
 
 # OpenLDAP Container Configuration
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"
@@ -53,10 +54,11 @@ class OpenLDAPContainerManager:
         if docker is None:
             msg = "Docker not available"
             raise RuntimeError(msg)
-        self.client = docker.from_env()  # type: ignore[no-any-unimported]
-        self.container: Any | None = None
+        # docker is a module at runtime; typing is provided via TYPE_CHECKING
+        self.client = importlib.import_module("docker").from_env()
+        self.container: object | None = None
 
-    def start_container(self) -> Container:
+    def start_container(self) -> object:
         """Start OpenLDAP container with proper configuration."""
         # Stop and remove existing container if it exists
         self.stop_container()
@@ -96,11 +98,8 @@ class OpenLDAPContainerManager:
                 existing.stop(timeout=5)
             existing.remove(force=True)
         except Exception as e:
-            # Handle conflicts (409) - another process is already removing
             if getattr(e, "status_code", None) == 409:
-                # Container removal already in progress - that's fine
                 return
-            # Re-raise other API errors
             raise
         except (RuntimeError, ValueError, TypeError):
             # Try to force remove by name if getting by ID fails
@@ -170,8 +169,10 @@ class OpenLDAPContainerManager:
             return False
 
         try:
+            # Best-effort typing without docker stubs at runtime
             self.container.reload()
-            return self.container.status == "running"
+            status = str(getattr(self.container, "status", ""))
+            return bool(status == "running")
         except (RuntimeError, ValueError, TypeError):
             return False
 
@@ -181,7 +182,8 @@ class OpenLDAPContainerManager:
             return "No container running"
 
         try:
-            return self.container.logs().decode()
+            logs_bytes = self.container.logs()
+            return str(logs_bytes.decode())
         except (RuntimeError, ValueError, TypeError) as e:
             return f"Failed to get logs: {e}"
 
