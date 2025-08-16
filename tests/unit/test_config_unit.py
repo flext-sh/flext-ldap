@@ -15,7 +15,9 @@ from flext_ldap.config import (
     FlextLdapConnectionConfig,
     FlextLdapConstants,
     FlextLdapLoggingConfig,
-    FlextLdapScope,
+)
+from flext_ldap.models import (
+    FlextLdapScopeEnum,
     FlextLdapSearchConfig,
     FlextLdapSettings,
     create_development_config,
@@ -107,7 +109,7 @@ class TestFlextLdapConnectionConfig:
             pool_size=10,
         )
         # Should not raise
-        config.validate_domain_rules()
+        config.validate_business_rules()
 
 
 class TestFlextLdapAuthConfig:
@@ -146,12 +148,12 @@ class TestFlextLdapAuthConfig:
         """Test domain rules validation for anonymous bind."""
         config = FlextLdapAuthConfig(use_anonymous_bind=True)
         # Should not raise even without bind_dn/password
-        config.validate_domain_rules()
+        config.validate_business_rules()
 
     def test_domain_rules_validation_bind_dn_required(self) -> None:
         """Test domain rules validation when bind DN is required."""
         config = FlextLdapAuthConfig(use_anonymous_bind=False, bind_dn="")
-        result = config.validate_domain_rules()
+        result = config.validate_business_rules()
         assert not result.success
         assert result.error is not None
         assert "bind dn" in result.error.lower()
@@ -163,7 +165,7 @@ class TestFlextLdapAuthConfig:
             bind_dn="cn=admin,dc=example,dc=org",
             bind_password=SecretStr(""),
         )
-        result = config.validate_domain_rules()
+        result = config.validate_business_rules()
         assert not result.success
         assert "Bind password is required" in (result.error or "")
 
@@ -184,14 +186,14 @@ class TestFlextLdapSearchConfig:
     def test_search_config_custom(self) -> None:
         """Test FlextLdapSearchConfig with custom values."""
         config = FlextLdapSearchConfig(
-            default_scope=FlextLdapScope.ONELEVEL,
+            default_scope=FlextLdapScopeEnum.ONE,
             default_size_limit=500,
             default_time_limit=60,
             default_page_size=100,
             enable_referral_following=True,
             max_referral_hops=10,
         )
-        assert config.default_scope == FlextLdapScope.ONELEVEL
+        assert config.default_scope == FlextLdapScopeEnum.ONE
         assert config.default_size_limit == 500
         assert config.default_time_limit == 60
         assert config.default_page_size == 100
@@ -378,20 +380,20 @@ class TestFlextLdapConfigIntegration:
         )
 
         # Should validate successfully
-        result = config.validate_domain_rules()
+        result = config.validate_business_rules()
         assert result.success
 
     def test_search_config_limits_validation(self) -> None:
         """Test search configuration with realistic limits."""
         config = FlextLdapSearchConfig(
-            default_scope=FlextLdapScope.SUBTREE,
+            default_scope=FlextLdapScopeEnum.SUBTREE,
             default_size_limit=5000,
             default_time_limit=120,
             default_page_size=500,
         )
 
         # All values should be within reasonable bounds
-        assert config.default_scope == FlextLdapScope.SUBTREE
+        assert config.default_scope == FlextLdapScopeEnum.SUBTREE
         assert config.default_size_limit == 5000
         assert config.default_time_limit == 120
         assert config.default_page_size == 500

@@ -270,6 +270,7 @@ types-toml = ">=0.10.8.20240310"
 types-requests = ">=2.32.4"
 types-redis = ">=4.6.0"
 types-psutil = ">=7.0.0"
+types-docker = "^7.1.0.20250809"
 
 [tool.poetry.group.security.dependencies]
 bandit = ">=1.8.0"

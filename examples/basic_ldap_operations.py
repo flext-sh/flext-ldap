@@ -26,9 +26,10 @@ import asyncio
 import os
 
 from flext_core import get_logger
+from pydantic import SecretStr
 
-from flext_ldap import (
-    FlextLdapApi,
+from flext_ldap import FlextLdapApi
+from flext_ldap.config import (
     FlextLdapAuthConfig,
     FlextLdapConnectionConfig,
     create_development_config,
@@ -43,33 +44,22 @@ async def demonstrate_configuration() -> None:
     print("=" * 40)
 
     # 1. Basic connection configuration
-    connection_config = FlextLdapConnectionConfig(
-        server="ldap.example.com",
-        port=389,
-        use_ssl=False,
-        timeout_seconds=30,
-    )
+    connection_config = FlextLdapConnectionConfig(server="ldap.example.com", port=389, use_ssl=False, timeout=30)
 
     print(f"✅ Connection config: {connection_config.server}:{connection_config.port}")
 
     # 2. Authentication configuration
-    auth_config = FlextLdapAuthConfig(
-        bind_dn="cn=admin,dc=example,dc=com",
-        bind_password="secret",  # noqa: S106 - Example password for documentation
-        use_anonymous_bind=False,
-    )
+    auth_config = FlextLdapAuthConfig(bind_dn="cn=admin,dc=example,dc=com", bind_password=SecretStr("secret"), use_anonymous_bind=False)
 
     print(f"✅ Auth config: {auth_config.bind_dn}")
 
     # 3. Development configuration
-    dev_config = create_development_config()
-    # Split long line for readability
-    dev_info = f"{dev_config.project_name} v{dev_config.project_version}"
-    print(f"✅ Development config: {dev_info}")
+    _dev_config = create_development_config()
+    print("✅ Development config created")
 
     # 4. Configuration validation
     conn_validation = connection_config.validate_domain_rules()
-    auth_validation = auth_config.validate_domain_rules()
+    auth_validation = auth_config.validate_business_rules()
 
     # Split long line for readability
     conn_status = "PASS" if conn_validation.success else "FAIL"
@@ -78,10 +68,8 @@ async def demonstrate_configuration() -> None:
     auth_status = "PASS" if auth_validation.success else "FAIL"
     print(f"✅ Auth validation: {auth_status}")
 
-    return connection_config, auth_config
 
-
-async def demonstrate_api_usage() -> None:
+async def demonstrate_api_usage() -> FlextLdapApi:
     """Demonstrate API usage patterns."""
     print("\n🚀 API Usage Patterns")
     print("=" * 40)
@@ -93,10 +81,9 @@ async def demonstrate_api_usage() -> None:
     # 2. Connect (using mock server for demo)
     try:
         connection_result = await api.connect(
-            server_url="ldap://mock.example.com:389",
+            server_uri="ldap://mock.example.com:389",
             bind_dn="cn=admin,dc=example,dc=com",
-            password="secret",  # noqa: S106 - Example password for documentation
-            session_id="demo_session",
+            bind_password="secret",  # noqa: S106 - Example password for documentation
         )
 
         if connection_result.success:
@@ -123,7 +110,7 @@ async def demonstrate_search_operations(api: FlextLdapApi) -> None:
         search_result = await api.search(
             session_id=session_id,
             base_dn="dc=example,dc=com",
-            filter_expr="(objectClass=person)",
+            search_filter="(objectClass=person)",
             attributes=["cn", "mail", "uid"],
             scope="subtree",
         )
@@ -148,33 +135,23 @@ async def demonstrate_error_handling() -> None:
     print("=" * 40)
 
     # 1. Configuration validation errors
-    invalid_config = FlextLdapConnectionConfig(
-        server="",  # Invalid empty server
-        port=70000,  # Invalid port
-    )
+    invalid_config = FlextLdapConnectionConfig(server="", port=70000)
 
     validation_result = invalid_config.validate_domain_rules()
     if not validation_result.success:
         print(f"✅ Caught configuration error: {validation_result.error}")
 
     # 2. Authentication errors
-    invalid_auth = FlextLdapAuthConfig(
-        bind_dn="cn=admin,dc=example,dc=com",
-        bind_password="",  # Missing password
-        use_anonymous_bind=False,
-    )
+    invalid_auth = FlextLdapAuthConfig(bind_dn="cn=admin,dc=example,dc=com", bind_password=SecretStr(""), use_anonymous_bind=False)
 
-    auth_validation = invalid_auth.validate_domain_rules()
+    auth_validation = invalid_auth.validate_business_rules()
     if not auth_validation.success:
         print(f"✅ Caught authentication error: {auth_validation.error}")
 
     # 3. Connection errors (simulated)
     api = FlextLdapApi()
     try:
-        connection_result = await api.connect(
-            server_url="ldap://nonexistent.server:389",
-            session_id="error_test",
-        )
+        connection_result = await api.connect(server_uri="ldap://nonexistent.server:389")
 
         if not connection_result.success:
             print(f"✅ Caught connection error: {connection_result.error}")
@@ -223,7 +200,7 @@ async def main() -> None:
 
     try:
         # 1. Configuration management
-        _connection_config, _auth_config = await demonstrate_configuration()
+        await demonstrate_configuration()
 
         # 2. API usage
         api = await demonstrate_api_usage()

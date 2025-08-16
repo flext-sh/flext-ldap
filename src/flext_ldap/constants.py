@@ -105,7 +105,7 @@ class FlextLdapScope(StrEnum):
     SUB = "subtree"  # Search entire subtree (base + all descendants)
     CHILDREN = "children"  # Search all descendants but not base entry
 
-    # Legacy aliases for backward compatibility
+    # Convenience aliases for testing
     ONELEVEL = ONE
     SUBTREE = SUB
 
@@ -852,7 +852,7 @@ class FlextLdapValidationMessages:
     INVALID_USER_MISSING_ATTRIBUTES: Final[str] = "User must have uid and dn attributes"
 
     # CLI parameter messages
-    PASSWORD_FIELD_TYPE: Final[str] = "password_field"  # nosec B105 - Field type definition, not a password
+    PASSWORD_FIELD_TYPE: Final[str] = "password_field"  # noqa: S105 - field type constant only
     FAILED_TO_READ_FILE: Final[str] = "Failed to read file {file_path}: {error}"
 
     # Configuration validation messages
@@ -1004,19 +1004,19 @@ class FlextLdapDefaultValues:
 
 
 # =============================================================================
-# BACKWARD-COMPATIBILITY SHIMS
+# TESTING CONVENIENCE SHIMS
 # =============================================================================
 
 
 class FlextLdapSchemaDiscoveryConstants:
-    """Compatibility constants for schema discovery.
+    """Testing convenience constants for schema discovery.
 
     Provides minimal attributes referenced by infrastructure code,
     mapping to consolidated observability constants.
     """
 
     class Discovery:
-        """Compatibility container for discovery settings."""
+        """Testing convenience container for discovery settings."""
 
         SCHEMA_CACHE_TTL: int = FlextLdapObservabilityConstants.SCHEMA_CACHE_TTL
         SCHEMA_REFRESH_INTERVAL: int = (
@@ -1052,7 +1052,7 @@ INET_ORG_PERSON = FlextLdapObjectClassConstants.INET_ORG_PERSON
 ORGANIZATIONAL_PERSON = FlextLdapObjectClassConstants.ORGANIZATIONAL_PERSON
 GROUP_OF_NAMES = FlextLdapObjectClassConstants.GROUP_OF_NAMES
 
-# Scope aliases (for backward compatibility)
+# Scope aliases (for testing convenience)
 SCOPE_BASE = FlextLdapScope.BASE
 SCOPE_ONE = FlextLdapScope.ONE
 SCOPE_SUB = FlextLdapScope.SUB
@@ -1063,9 +1063,9 @@ LDAP = FlextLdapConnectionType.LDAP
 LDAPS = FlextLdapConnectionType.LDAPS
 
 
-# Legacy umbrella for tests expecting FlextLdapConstants
+# Convenience umbrella for tests expecting FlextLdapConstants
 class FlextLdapConstants:
-    """Legacy constants wrapper mapping to consolidated definitions.
+    """Convenience constants wrapper mapping to consolidated definitions.
 
     Provides expected attributes used by tests; values delegated to
     consolidated constants above.
@@ -1084,43 +1084,41 @@ class FlextLdapConstants:
 # =============================================================================
 
 __all__ = [
+    "COMMON_NAME",
+    "DEFAULT_PAGE_SIZE",
+    # Convenient module-level aliases for frequent usage
+    "DEFAULT_PORT",
+    "DEFAULT_SIZE_LIMIT",
+    "DEFAULT_SSL_PORT",
+    "GIVEN_NAME",
+    "GROUP_OF_NAMES",
+    "INET_ORG_PERSON",
+    "LDAP",
+    "LDAPS",
+    "MAIL",
+    "OBJECT_CLASS",
+    "ORGANIZATIONAL_PERSON",
+    "PERSON",
+    "SCOPE_BASE",
+    "SCOPE_CHILDREN",
+    "SCOPE_ONE",
+    "SCOPE_SUB",
+    "SURNAME",
+    "USER_ID",
     # Core constant classes (consolidated from audit)
     "FlextLdapAttributeConstants",
     "FlextLdapConnectionConstants",
     "FlextLdapConnectionType",
+    # Testing convenience and transitional
+    "FlextLdapConstants",
     "FlextLdapConverterConstants",
     "FlextLdapDefaultValues",
+    "FlextLdapDnConstants",
+    "FlextLdapErrorConstants",
     "FlextLdapFilterConstants",
     "FlextLdapObjectClassConstants",
     "FlextLdapObservabilityConstants",
     "FlextLdapOperationMessages",
-    "FlextLdapScope",
-    "FlextLdapDnConstants",
-    "FlextLdapErrorConstants",
-
-    # Compatibility and legacy
-    "FlextLdapConstants",
     "FlextLdapSchemaDiscoveryConstants",
-
-    # Convenient module-level aliases for frequent usage
-    "DEFAULT_PORT",
-    "DEFAULT_SSL_PORT",
-    "DEFAULT_PAGE_SIZE",
-    "DEFAULT_SIZE_LIMIT",
-    "OBJECT_CLASS",
-    "COMMON_NAME",
-    "USER_ID",
-    "MAIL",
-    "SURNAME",
-    "GIVEN_NAME",
-    "PERSON",
-    "INET_ORG_PERSON",
-    "ORGANIZATIONAL_PERSON",
-    "GROUP_OF_NAMES",
-    "SCOPE_BASE",
-    "SCOPE_ONE",
-    "SCOPE_SUB",
-    "SCOPE_CHILDREN",
-    "LDAP",
-    "LDAPS",
+    "FlextLdapScope",
 ]

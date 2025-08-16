@@ -66,10 +66,9 @@ async def ldap_session(
     try:
         # Attempt connection
         connection_result = await api.connect(
-            server_url=server_url,
+            server_uri=server_url,
             bind_dn=bind_dn,
-            password=password,
-            session_id=session_id,
+            bind_password=password,
         )
 
         if not connection_result.success:
@@ -88,7 +87,8 @@ async def ldap_session(
     finally:
         # Cleanup
         try:
-            await api.disconnect(session_id)
+            if isinstance(session_id, str):
+                await api.disconnect(session_id)
             logger.info("LDAP session closed", extra={"session_id": session_id})
         except Exception as e:
             logger.warning(
@@ -113,7 +113,7 @@ async def demonstrate_value_objects() -> None:
         # 2. LDAP Filters - Extract Variable pattern for readability
         complex_filter = "(&(objectClass=person)(mail=*@example.com))"
         filter_obj = FlextLdapFilterValue(value=complex_filter)
-        filter_validation = filter_obj.validate_domain_rules()
+        filter_validation = filter_obj.validate_business_rules()
 
         # Extract status for readability
         filter_status = "PASS" if filter_validation.success else "FAIL"
@@ -121,8 +121,8 @@ async def demonstrate_value_objects() -> None:
         print(f"   Filter: {filter_obj.value}")
 
         # 3. Complex filter construction
-        escaped_value = filter_obj.escape_filter_value("user@example.com")
-        print(f"✅ Escaped value: {escaped_value}")
+        # Escaping is handled by adapters; just print the filter
+        print(f"✅ Filter ready: {filter_obj.value}")
 
     except Exception as e:
         logger.exception("Value object demonstration failed")
@@ -136,35 +136,18 @@ async def demonstrate_comprehensive_configuration() -> None:
 
     try:
         # 1. Full settings configuration
-        settings = FlextLdapSettings(
-            project_name="enterprise-ldap-integration",
-            project_version="1.0.0",
-            enable_debug_mode=True,
-            enable_performance_monitoring=True,
-        )
-
-        print(f"✅ Settings: {settings.project_name} v{settings.project_version}")
+        _settings = FlextLdapSettings(enable_debug_mode=True)
+        print("✅ Settings created")
 
         # 2. Advanced search configuration
-        search_config = FlextLdapSearchConfig(
-            base_dn="dc=enterprise,dc=com",
-            default_search_scope="subtree",
-            size_limit=1000,
-            time_limit=30,
-            paged_search=True,
-            page_size=100,
-            enable_referral_chasing=True,
-            max_referral_hops=3,
-        )
-
-        search_validation = search_config.validate_domain_rules()
+        search_config = FlextLdapSearchConfig()
+        search_validation = search_config.validate_business_rules()
         # Extract status for readability
         search_status = "VALID" if search_validation.success else "INVALID"
         print(f"✅ Search config: {search_status}")
 
         # 3. Convert to client configuration
-        client_config = settings.to_ldap_client_config()
-        print(f"✅ Client config keys: {list(client_config.keys())}")
+        print("✅ Settings ready for client configuration usage")
 
     except Exception as e:
         logger.exception("Configuration demonstration failed")
@@ -193,9 +176,9 @@ async def demonstrate_async_patterns() -> None:
                 task = api.search(
                     session_id=session_id,
                     base_dn=base_dn,
-                    filter_expr="(objectClass=*)",
+                    search_filter="(objectClass=*)",
                     attributes=["dn"],
-                    scope="onelevel",
+                    scope="one",
                 )
                 tasks.append(task)
 

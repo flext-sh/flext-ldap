@@ -189,7 +189,13 @@ class TestFlextLdapDesignPatterns:
     def test_search_strategy_pattern(self) -> None:
         """Test Strategy pattern implementation for search operations."""
         class TestSearchStrategy(FlextLdapSearchStrategy):
-            async def execute_search(self, client, base_dn, search_filter, **kwargs):
+            async def execute_search(
+                self,
+                client: FlextLdapClient,  # noqa: ARG002
+                base_dn: str,
+                search_filter: str,
+                **kwargs: object,  # noqa: ARG002
+            ) -> FlextResult[list[dict[str, str | bytes | list[str] | list[bytes]]]]:
                 # Return mock successful result for testing
                 return FlextResult.ok([{"dn": base_dn, "filter": search_filter}])
 
@@ -201,10 +207,16 @@ class TestFlextLdapDesignPatterns:
     async def test_search_strategy_execution(self) -> None:
         """Test search strategy execution with real behavior."""
         class TestSearchStrategy(FlextLdapSearchStrategy):
-            async def execute_search(self, client, base_dn, search_filter, **kwargs):
+            async def execute_search(
+                self,
+                client: FlextLdapClient,  # noqa: ARG002
+                base_dn: str,
+                search_filter: str,  # noqa: ARG002
+                **kwargs: object,  # noqa: ARG002
+            ) -> FlextResult[list[dict[str, str | bytes | list[str] | list[bytes]]]]:
                 # Simulate real search behavior
                 return FlextResult.ok([
-                    {"dn": f"cn=test,{base_dn}", "objectClass": ["person"]}
+                    {"dn": f"cn=test,{base_dn}", "objectClass": ["person"]},
                 ])
 
         strategy = TestSearchStrategy()
@@ -213,7 +225,7 @@ class TestFlextLdapDesignPatterns:
         result = await strategy.execute_search(
             client,
             "dc=example,dc=com",
-            "(objectClass=person)"
+            "(objectClass=person)",
         )
 
         assert result.is_success
@@ -223,19 +235,19 @@ class TestFlextLdapDesignPatterns:
     def test_event_observer_pattern(self) -> None:
         """Test Observer pattern implementation for LDAP events."""
         class TestObserver(FlextLdapEventObserver):
-            def __init__(self):
-                self.events = []
+            def __init__(self) -> None:
+                self.events: list[tuple[str, object, object | None]] = []
 
-            async def on_connection_established(self, server_uri, bind_dn):
+            async def on_connection_established(self, server_uri: str, bind_dn: str | None) -> None:
                 self.events.append(("connection_established", server_uri, bind_dn))
 
-            async def on_connection_failed(self, server_uri, error_message):
+            async def on_connection_failed(self, server_uri: str, error_message: str) -> None:
                 self.events.append(("connection_failed", server_uri, error_message))
 
-            async def on_search_performed(self, base_dn, search_filter, result_count):
-                self.events.append(("search_performed", base_dn, search_filter, result_count))
+            async def on_search_performed(self, base_dn: str, search_filter: str, result_count: int) -> None:
+                self.events.append(("search_performed", base_dn, search_filter, int(result_count)))  # type: ignore[arg-type]
 
-            async def on_entry_added(self, dn, attributes):
+            async def on_entry_added(self, dn: str, attributes: dict[str, list[str]]) -> None:
                 self.events.append(("entry_added", dn, attributes))
 
         observer = TestObserver()
@@ -246,19 +258,19 @@ class TestFlextLdapDesignPatterns:
     def test_observable_client(self) -> None:
         """Test Observable client with event observers."""
         class TestObserver(FlextLdapEventObserver):
-            def __init__(self):
-                self.events = []
+            def __init__(self) -> None:
+                self.events: list[tuple[str, object]] = []
 
-            async def on_connection_established(self, server_uri, bind_dn):
+            async def on_connection_established(self, server_uri: str, bind_dn: str | None) -> None:  # noqa: ARG002
                 self.events.append(("connection_established", server_uri))
 
-            async def on_connection_failed(self, server_uri, error_message):
+            async def on_connection_failed(self, server_uri: str, error_message: str) -> None:  # noqa: ARG002
                 self.events.append(("connection_failed", server_uri))
 
-            async def on_search_performed(self, base_dn, search_filter, result_count):
+            async def on_search_performed(self, base_dn: str, search_filter: str, result_count: int) -> None:  # noqa: ARG002
                 self.events.append(("search_performed", base_dn))
 
-            async def on_entry_added(self, dn, attributes):
+            async def on_entry_added(self, dn: str, attributes: dict[str, list[str]]) -> None:  # noqa: ARG002
                 self.events.append(("entry_added", dn))
 
         client = FlextLdapObservableClient()
@@ -314,7 +326,7 @@ class TestInfrastructureErrorHandling:
         converter = FlextLdapConverter()
 
         # Test that type errors are handled appropriately
-        invalid_inputs = [None, 123, [], {}]
+        invalid_inputs: list[object] = [None, 123, [], {}]
 
         for invalid_input in invalid_inputs:
             try:

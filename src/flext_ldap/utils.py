@@ -16,6 +16,7 @@ from flext_ldap.types import LdapAttributeDict as UtilsLdapAttributeDict
 
 
 class FlextLdapPerformanceHelpers:
+    """Performance helpers for caching and micro-optimizations."""
 
     # Simple cache for frequently accessed configurations
     _config_cache: ClassVar[dict[str, object]] = {}
@@ -231,7 +232,7 @@ class FlextLdapErrorHelpers:
 # =============================================================================
 
 
-# Backward-compatible functional API expected by imports/tests
+# Testing convenience functional API expected by imports/tests
 def flext_ldap_validate_dn(dn: str) -> bool:
     """Validate Distinguished Name format."""
     return FlextLdapUtils.validate_dn(dn)
@@ -252,7 +253,7 @@ def flext_ldap_sanitize_attribute_name(name: str) -> str:
     return FlextLdapUtils.sanitize_attribute_name(name)
 
 
-# Backward-compat alias with the exact expected export name
+# Testing convenience alias with the exact expected export name
 LdapAttributeDict = UtilsLdapAttributeDict
 
 __all__ = [
@@ -260,7 +261,7 @@ __all__ = [
     "FlextLdapPerformanceHelpers",
     "FlextLdapUtils",
     "FlextLdapValidationHelpers",
-    # Backward-compat type alias
+    # Testing convenience type alias
     "LdapAttributeDict",
     "UtilsLdapAttributeDict",
     "flext_ldap_sanitize_attribute_name",

@@ -19,14 +19,6 @@ from __future__ import annotations
 import asyncio
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
-from urllib.parse import urlparse
-
-from flext_core import FlextResult, get_logger
-from pydantic import BaseModel, Field, field_validator
-
-from flext_ldap.constants import FlextLdapConnectionConstants
-from flext_ldap.infrastructure import FlextLdapClient
-from flext_ldap.utils import FlextLdapValidationHelpers
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Coroutine
@@ -36,6 +28,14 @@ if TYPE_CHECKING:
     from flext_ldap.types import (
         FlextLdapDirectoryEntryProtocol,
     )
+from urllib.parse import urlparse
+
+from flext_core import FlextResult, get_logger
+from pydantic import BaseModel, Field, field_validator
+
+from flext_ldap.constants import FlextLdapConnectionConstants
+from flext_ldap.infrastructure import FlextLdapClient
+from flext_ldap.utils import FlextLdapValidationHelpers
 
 logger = get_logger(__name__)
 

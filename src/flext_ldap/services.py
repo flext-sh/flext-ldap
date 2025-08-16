@@ -17,6 +17,7 @@ import warnings
 from typing import TYPE_CHECKING
 
 from flext_core import (
+    FlextContainer,
     FlextDomainService,
     FlextIdGenerator,
     FlextResult,
@@ -39,9 +40,7 @@ from flext_ldap.types import (
 )
 
 if TYPE_CHECKING:
-    from flext_core import FlextContainer
     from flext_core.typings import FlextTypes
-
 
 logger = get_logger(__name__)
 
@@ -364,7 +363,7 @@ FlextLdapDirectoryAdapter = _FlextLdapDirectoryAdapter
 
 
 # =============================================================================
-# LEGACY SERVICE CONSOLIDATION
+# CONVENIENCE SERVICE CONSOLIDATION
 # =============================================================================
 
 
@@ -373,13 +372,13 @@ class FlextLdapService(FlextLdapApplicationService):
 
 
 # =============================================================================
-# BACKWARD COMPATIBILITY AND DEPRECATION WARNINGS
+# TESTING CONVENIENCE AND TRANSITIONAL WARNINGS
 # =============================================================================
 
 
 def __getattr__(name: str) -> object:
-    """Provide backward compatibility for legacy service classes."""
-    legacy_services = {
+    """Provide testing convenience for transitional service classes."""
+    convenience_services = {
         "FlextLdapUserApplicationService": FlextLdapService,
         "FlextLdapUserService": FlextLdapService,
         "FlextLdapGroupService": FlextLdapService,
@@ -388,26 +387,26 @@ def __getattr__(name: str) -> object:
         "FlextLdapConnectionService": FlextLdapService,
     }
 
-    if name in legacy_services:
+    if name in convenience_services:
         warnings.warn(
-            f"🚨 DEPRECATED SERVICE: {name} is deprecated.\n"
+            f"🚨 TRANSITIONAL SERVICE: {name} is transitional.\n"
             f"✅ MODERN SOLUTION: Use FlextLdapService from application layer\n"
             f"💡 Import: from flext_ldap.services import FlextLdapService\n"
             f"🏗️ This wrapper layer adds no value and will be removed in v1.0.0",
-            DeprecationWarning,
+            UserWarning,
             stacklevel=2,
         )
-        return legacy_services[name]
+        return convenience_services[name]
 
     msg = f"module 'flext_ldap.ldap_services' has no attribute '{name}'"
     raise AttributeError(msg)
 
 
 # =============================================================================
-# BACKWARD COMPATIBILITY ALIASES
+# TESTING CONVENIENCE ALIASES
 # =============================================================================
 
-# Backward compatibility aliases (re-exported from adapters/types)
+# Testing convenience aliases (re-exported from adapters/types)
 DirectoryConnectionProtocol = FlextLdapDirectoryConnectionProtocol
 DirectoryEntryProtocol = FlextLdapDirectoryEntryProtocol
 DirectoryServiceInterface = FlextLdapDirectoryServiceInterface
@@ -419,7 +418,7 @@ DirectoryAdapterInterface = FlextLdapDirectoryAdapterInterface
 
 __all__ = [
     "DirectoryAdapterInterface",
-    # Backward compatibility aliases
+    # Testing convenience aliases
     "DirectoryConnectionProtocol",
     "DirectoryEntryProtocol",
     "DirectoryServiceInterface",

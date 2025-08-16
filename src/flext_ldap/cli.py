@@ -9,14 +9,11 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, ParamSpec, TypeVar, cast
 
 import click
+from flext_core import FlextEntity as FlextCliEntity
+
 if TYPE_CHECKING:
-    from flext_cli.domain.entities import CLICommand as FlextCliEntity  # type: ignore[import-not-found]
-else:
-    try:
-        from flext_cli.domain.entities import CLICommand as FlextCliEntity
-    except ImportError:
-        # Fallback for when flext-cli is not available
-        from flext_core import FlextEntity as FlextCliEntity
+    from collections.abc import Callable
+
 from flext_core import FlextResult, get_flext_container, get_logger
 from rich.console import Console
 from rich.table import Table
@@ -24,9 +21,6 @@ from rich.table import Table
 from flext_ldap.constants import FlextLdapDefaultValues, FlextLdapScope
 from flext_ldap.infrastructure import FlextLdapClient
 from flext_ldap.models import FlextLdapDistinguishedName, FlextLdapFilter
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 logger = get_logger(__name__)
 console = Console()
@@ -171,15 +165,30 @@ def _generate_cli_id(fallback: str = "") -> str:
 # =============================================================================
 
 
-class FlextLdapCliBase(FlextCliEntity):  # type: ignore[misc, no-any-unimported]
+class _CliPrintMixin:  # Minimal shim without external dependency
+    def flext_cli_print_info(self, message: str) -> None:
+        _ = message
+
+    def flext_cli_print_success(self, message: str) -> None:
+        _ = message
+
+    def flext_cli_print_error(self, message: str) -> None:
+        _ = message
+
+    def flext_cli_print_warning(self, message: str) -> None:
+        _ = message
+
+
+class FlextLdapCliBase(FlextCliEntity, _CliPrintMixin):
     """Base class for FLEXT LDAP CLI commands with shared functionality."""
 
     def __init__(self, command_id: str, name: str) -> None:
         """Initialize base CLI command."""
-        # Adapt to new FlextCliEntity signature: set minimal required fields
-        super().__init__(id=command_id, name=name, description="")
+        # Minimal initialization compatible with flext-core FlextEntity
+        super().__init__(id=command_id)
+        self._name = name
         self._container = get_flext_container()
-        # Keep legacy fields for compatibility
+        # Keep convenience fields for testing
         self.command_id = command_id
 
     def _generate_id(self, fallback: str = "") -> str:
@@ -332,11 +341,8 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
             if validation_result.is_failure:
                 return FlextResult.fail(validation_result.error or "Validation failed")
 
-            # Execute search - ensure validation_result.data is not None
-            validated_data = validation_result.data
-            if validated_data is None:
-                return FlextResult.fail("No validation data available")
-            return self._execute_search_with_client(client, validated_data)
+            # Execute search with validated data
+            return self._execute_search_with_client(client, validation_result.data)
 
         finally:
             # Always disconnect

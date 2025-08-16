@@ -13,6 +13,7 @@ while preserving behavior.
 """
 
 import asyncio
+import logging
 import os
 import time
 from typing import Final
@@ -44,8 +45,10 @@ class DockerLDAPContainer:
                 existing.stop()
             finally:
                 existing.remove(force=True)
-        except docker.errors.NotFound:
-            pass
+        except docker.errors.NotFound:  # type: ignore[attribute-defined-outside-init]
+            logging.getLogger(__name__).debug(
+                "No existing container to stop", exc_info=True
+            )
 
         # Start new container with required environment
         env = {
@@ -62,12 +65,9 @@ class DockerLDAPContainer:
                 ports={"389/tcp": self.port},
                 environment=env,
             )
-        except Exception as e:
-
-            def _raise_start_error(message: str) -> None:
-                raise RuntimeError(message)
-
-            _raise_start_error(f"Failed to start container: {e}")
+        except docker.errors.APIError:  # type: ignore[attribute-defined-outside-init]
+            logging.getLogger(__name__).exception("Failed to start container")
+            raise
 
         print(f"✅ Container started: {self.container_name}")
 
@@ -87,11 +87,8 @@ class DockerLDAPContainer:
             except Exception:
                 time.sleep(1)
         else:
-
-            def _raise_ready_error(message: str) -> None:
-                raise RuntimeError(message)
-
-            _raise_ready_error("LDAP service did not become ready in time")
+            msg = "LDAP service did not become ready in time"
+            raise RuntimeError(msg)
 
         # Create organizational units via LDAP
         self._setup_directory_structure()
@@ -135,8 +132,10 @@ class DockerLDAPContainer:
                 c.stop()
             finally:
                 c.remove(force=True)
-        except docker.errors.NotFound:
-            pass
+        except docker.errors.NotFound:  # type: ignore[attribute-defined-outside-init]
+            logging.getLogger(__name__).debug(
+                "Container not found when stopping", exc_info=True
+            )
         print("✅ Container stopped and removed")
 
 
@@ -154,7 +153,9 @@ async def demonstrate_complete_crud_operations() -> None:
 
     try:
         # Connect to LDAP
-        connection_result = await ldap_service.connect(server_url, bind_dn, password)
+        connection_result = await ldap_service.connect(
+            server_uri=server_url, bind_dn=bind_dn, bind_password=password
+        )
         if connection_result.is_failure:
             # Handle via helper to satisfy linter rules
             def _handle_conn_err() -> None:
@@ -285,17 +286,17 @@ async def perform_read_operations(ldap_service: FlextLdapApi, session_id: str) -
     users_result = await ldap_service.search(
         session_id=session_id,
         base_dn="ou=people,dc=flext,dc=local",
-        filter_expr="(objectClass=inetOrgPerson)",
+        search_filter="(objectClass=inetOrgPerson)",
         attributes=["uid", "cn", "mail", "title"],
     )
 
     if users_result.success and users_result.data:
         print(f"   ✅ Found {len(users_result.data)} users:")
         for user in users_result.data:
-            uid = user.attributes.get("uid", ["N/A"])[0]
-            cn = user.attributes.get("cn", ["N/A"])[0]
-            mail = user.attributes.get("mail", ["N/A"])[0]
-            title = user.attributes.get("title", ["N/A"])[0]
+            uid = user.get_single_attribute_value("uid") or "N/A"
+            cn = user.get_single_attribute_value("cn") or "N/A"
+            mail = user.get_single_attribute_value("mail") or "N/A"
+            title = user.get_single_attribute_value("title") or "N/A"
             print(f"     - {uid}: {cn} ({mail}) - {title}")
     else:
         print("   ❌ No users found or search failed")
@@ -305,7 +306,7 @@ async def perform_read_operations(ldap_service: FlextLdapApi, session_id: str) -
     eng_result = await ldap_service.search(
         session_id=session_id,
         base_dn="ou=people,dc=flext,dc=local",
-        filter_expr="(title=*Engineer*)",
+        search_filter="(title=*Engineer*)",
         attributes=["uid", "cn", "title"],
     )
 
@@ -319,15 +320,15 @@ async def perform_read_operations(ldap_service: FlextLdapApi, session_id: str) -
     groups_result = await ldap_service.search(
         session_id=session_id,
         base_dn="ou=groups,dc=flext,dc=local",
-        filter_expr="(objectClass=groupOfNames)",
+        search_filter="(objectClass=groupOfNames)",
         attributes=["cn", "description"],
     )
 
     if groups_result.success and groups_result.data:
         print(f"   ✅ Found {len(groups_result.data)} groups:")
         for group in groups_result.data:
-            cn = group.attributes.get("cn", ["N/A"])[0]
-            desc = group.attributes.get("description", ["N/A"])[0]
+            cn = group.get_single_attribute_value("cn") or "N/A"
+            desc = group.get_single_attribute_value("description") or "N/A"
             print(f"     - {cn}: {desc}")
     else:
         print("   [i] No groups found")
@@ -364,10 +365,14 @@ async def perform_update_operations(
         uid = user_update["dn"].split(",")[0].replace("cn=", "")
         print(f"   Updating user: {uid}")
 
-        result = await ldap_service.update_user(
-            session_id=session_id,
-            user_dn=user_update["dn"],
-            updates=user_update["updates"],
+        mods = {
+            k: [str(v)]
+            if isinstance(v, str)
+            else [str(x) for x in v]  # normalize list[str]
+            for k, v in user_update["updates"].items()
+        }
+        result = await ldap_service.modify_entry(
+            session_id=session_id, dn=user_update["dn"], modifications=mods
         )
 
         if result.success:
@@ -377,15 +382,15 @@ async def perform_update_operations(
             verify_result = await ldap_service.search(
                 session_id=session_id,
                 base_dn=user_update["dn"],
-                filter_expr="(objectClass=*)",
+                search_filter="(objectClass=*)",
                 scope="base",
                 attributes=["mail", "title"],
             )
 
             if verify_result.success and verify_result.data:
                 entry = verify_result.data[0]
-                mail = entry.attributes.get("mail", ["N/A"])[0]
-                title = entry.attributes.get("title", ["N/A"])[0]
+                mail = entry.get_single_attribute_value("mail") or "N/A"
+                title = entry.get_single_attribute_value("title") or "N/A"
                 print(f"     Verified: mail={mail}, title={title}")
 
         else:
@@ -405,10 +410,8 @@ async def perform_delete_operations(
     user_to_delete = "cn=bob.wilson,ou=people,dc=flext,dc=local"
     print(f"   Deleting user: {user_to_delete}")
 
-    result = await ldap_service.delete_user(
-        session_id=session_id,
-        user_dn=user_to_delete,
-    )
+    # Use direct delete by DN
+    result = await ldap_service.delete_entry(user_to_delete)
 
     if result.success:
         print(f"   ✅ Deleted user: {user_to_delete}")
@@ -417,7 +420,7 @@ async def perform_delete_operations(
         verify_result = await ldap_service.search(
             session_id=session_id,
             base_dn=user_to_delete,
-            filter_expr="(objectClass=*)",
+            search_filter="(objectClass=*)",
             scope="base",
         )
 
@@ -434,7 +437,7 @@ async def perform_delete_operations(
     final_count_result = await ldap_service.search(
         session_id=session_id,
         base_dn="ou=people,dc=flext,dc=local",
-        filter_expr="(objectClass=inetOrgPerson)",
+        search_filter="(objectClass=inetOrgPerson)",
         attributes=["uid"],
     )
 

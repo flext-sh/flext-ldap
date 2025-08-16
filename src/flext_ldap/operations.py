@@ -488,7 +488,7 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
                 attributes=attributes,
             )
 
-            validation_result = entry.validate_domain_rules()
+            validation_result = entry.validate_business_rules()
             if not validation_result.is_success:
                 return FlextResult.fail(
                     f"Entry validation failed: {validation_result.error}",
@@ -617,7 +617,7 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
             # Use REFACTORED user creation - NO DUPLICATION
             user = self._build_user_entity(user_request, attributes)
 
-            validation_result = user.validate_domain_rules()
+            validation_result = user.validate_business_rules()
             if not validation_result.is_success:
                 return FlextResult.fail(
                     f"User validation failed: {validation_result.error}",
@@ -767,7 +767,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
             # Use REFACTORED group creation - NO DUPLICATION
             group = self._build_group_entity(dn, cn, description, members, attributes)
 
-            validation_result = group.validate_domain_rules()
+            validation_result = group.validate_business_rules()
             if not validation_result.is_success:
                 return FlextResult.fail(
                     f"Group validation failed: {validation_result.error}",
@@ -867,8 +867,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
             if not group_result.is_success:
                 return FlextResult.fail(f"Failed to get group: {group_result.error}")
 
-            if group_result.data is None:
-                return FlextResult.fail("Group data not found")
+            # At this point data is guaranteed by is_success above
 
             members = group_result.data.get_attribute_values("member")
             real_members = self._filter_dummy_members(members)
@@ -968,12 +967,9 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         if updated_members_result.is_failure:
             return FlextResult.fail(updated_members_result.error or "Failed to calculate members")
 
-        # Step 3: Apply the membership change - ensure data is not None
-        if updated_members_result.data is None:
-            return FlextResult.fail("No updated members data")
-
+        updated_members = updated_members_result.data
         return await self._apply_membership_change(
-            connection_id, group_dn, updated_members_result.data, action, member_dn,
+            connection_id, group_dn, updated_members, action, member_dn,
         )
 
     async def _get_group_membership(
@@ -989,9 +985,6 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
 
         if not group_result.is_success:
             return FlextResult.fail(f"Failed to get group: {group_result.error}")
-
-        if group_result.data is None:
-            return FlextResult.fail("Group data not found")
 
         return FlextResult.ok(group_result.data)
 
