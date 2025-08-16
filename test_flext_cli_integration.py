@@ -147,7 +147,7 @@ class FlextLdapCLI:
 
     def format_and_display(
         self,
-        data: Any,
+        data: dict[str, object] | list[object] | object,
         format_type: OutputFormat = OutputFormat.JSON,
     ) -> None:
         """Formatar e exibir dados usando flext-cli."""

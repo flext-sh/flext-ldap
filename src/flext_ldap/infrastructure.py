@@ -5,20 +5,22 @@ from __future__ import annotations
 import ssl
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, cast
+from typing import cast
 from urllib.parse import urlparse
 
 try:  # pragma: no cover - environment dependent
-    from pyasn1.codec.ber import encoder as _ber_encoder  # type: ignore[import-untyped]
+    from pyasn1.codec.ber import encoder as _ber_encoder
 
     if hasattr(_ber_encoder, "TAG_MAP") and not hasattr(_ber_encoder, "tagMap"):
         _ber_encoder.tagMap = _ber_encoder.TAG_MAP
     if hasattr(_ber_encoder, "TYPE_MAP") and not hasattr(_ber_encoder, "typeMap"):
         _ber_encoder.typeMap = _ber_encoder.TYPE_MAP
-except Exception:  # pragma: no cover - best effort only
-    pass
+except Exception as _e:  # pragma: no cover - best effort only
+    _ = _e
 
-import ldap3 as _ldap3  # type: ignore[import-untyped]
+from typing import TYPE_CHECKING  # must be before local imports (ruff E402)
+
+import ldap3 as _ldap3
 from flext_core import FlextResult, get_logger
 from ldap3 import (
     ALL_ATTRIBUTES,
@@ -29,7 +31,7 @@ from ldap3 import (
     Connection as Ldap3Connection,
     Server,
 )
-from ldap3.core.exceptions import LDAPException  # type: ignore[import-untyped]
+from ldap3.core.exceptions import LDAPException
 
 from flext_ldap.constants import (
     FlextLdapDefaultValues,
@@ -39,14 +41,10 @@ from flext_ldap.constants import (
 
 LDAP3_AVAILABLE = True
 
-
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_ldap.types import (
-        LdapAttributeDict,
-        LdapSearchResult,
-    )
+    from flext_ldap.types import LdapAttributeDict, LdapSearchResult
 
 logger = get_logger(__name__)
 # Resolve SUBORDINATES variant safely (default to SUBTREE if not provided)
@@ -67,8 +65,8 @@ Connection = Ldap3Connection
 # =============================================================================
 
 
-class LegacySearchParameters:
-    """Parameter object for legacy search operations to reduce parameter count."""
+class ConvenienceSearchParameters:
+    """Parameter object for transitional search operations to reduce parameter count."""
 
     def __init__(
         self,
@@ -81,7 +79,7 @@ class LegacySearchParameters:
         size_limit: int = 1000,
         time_limit: int = 30,
     ) -> None:
-        """Initialize legacy search parameters.
+        """Initialize transitional search parameters.
 
         Args:
             connection_id: Connection identifier (ignored for compatibility)
@@ -224,7 +222,7 @@ class FlextLdapClient:
         return FlextResult.ok(conn)
 
     async def disconnect(self, *args: object, **kwargs: object) -> FlextResult[None]:
-        """Disconnect from LDAP server. Accepts and ignores legacy positional id."""
+        """Disconnect from LDAP server. Accepts and ignores transitional positional id."""
         _ = (args, kwargs)
         try:
             conn = self._connection
@@ -247,13 +245,13 @@ class FlextLdapClient:
             return FlextResult.fail(f"Disconnection failed: {e!s}")
 
     # -------------------------------------------------------------------------
-    # Backward-compat facade methods expected by legacy/tests
+    # Testing convenience facade methods expected by transitional/tests
 
     # -------------------------------------------------------------------------
 
     async def create_entry(
         self,
-        connection_id: str,  # ignored for backward-compat
+        connection_id: str,  # ignored for testing convenience
         dn: object,
         attributes: dict[str, list[str]],
     ) -> FlextResult[None]:
@@ -262,13 +260,13 @@ class FlextLdapClient:
         dn_str = str(getattr(dn, "value", dn))
         return await self.add_entry(dn_str, attributes)
 
-    async def disconnect_legacy(self, connection_id: str) -> FlextResult[None]:
+    async def disconnect_convenience(self, connection_id: str) -> FlextResult[None]:
         """Compatibility variant that accepts a connection id (ignored)."""
         _ = connection_id
         return await self.disconnect()
 
     def is_connected(self) -> bool:
-        """Return connection status (compat for tests)."""
+        """Return connection status (convenience for tests)."""
         return self._is_connected or (self._connection is not None)
 
     async def _search_impl(
@@ -418,8 +416,8 @@ class FlextLdapClient:
             },
         )
 
-    # Legacy signature for tests expecting connection_id and VO types
-    async def search_legacy(
+    # Convenience signature for tests expecting connection_id and VO types
+    async def search_convenience(
         self,
         connection_id: str,  # ignored
         base_dn: object,
@@ -432,7 +430,7 @@ class FlextLdapClient:
     ) -> FlextResult[list[LdapSearchResult]]:
         """Compatibility wrapper for search with VO types - REFACTORED with parameter object."""
         # Create parameter object from individual parameters
-        params = LegacySearchParameters(
+        params = ConvenienceSearchParameters(
             connection_id=connection_id,
             base_dn=base_dn,
             search_filter=search_filter,
@@ -441,13 +439,13 @@ class FlextLdapClient:
             size_limit=size_limit,
             time_limit=time_limit,
         )
-        return await self._execute_legacy_search(params)
+        return await self._execute_convenience_search(params)
 
-    async def _execute_legacy_search(
+    async def _execute_convenience_search(
         self,
-        params: LegacySearchParameters,
+        params: ConvenienceSearchParameters,
     ) -> FlextResult[list[LdapSearchResult]]:
-        """Execute legacy search operation with parameter object."""
+        """Execute transitional search operation with parameter object."""
         try:
             _ = params.connection_id  # Ignored for compatibility
 
@@ -491,7 +489,7 @@ class FlextLdapClient:
         *args: object,
         **kwargs: object,
     ) -> FlextResult[list[LdapSearchResult]]:
-        """Flexible search supporting legacy and modern signatures - REFACTORED to reduce complexity.
+        """Flexible search supporting transitional and modern signatures - REFACTORED to reduce complexity.
 
         Accepted forms:
           - search(base_dn: str, search_filter: str, scope: str = ..., ...)
@@ -503,8 +501,8 @@ class FlextLdapClient:
             if self._is_keyword_search(kwargs):
                 return await self._handle_keyword_search(kwargs)
 
-            if self._is_legacy_positional_search(args):
-                return await self._handle_legacy_positional_search(args, kwargs)
+            if self._is_convenience_positional_search(args):
+                return await self._handle_convenience_positional_search(args, kwargs)
 
             if self._is_modern_positional_search(args):
                 return await self._handle_modern_positional_search(args, kwargs)
@@ -519,8 +517,8 @@ class FlextLdapClient:
         """Check if this is a keyword-based search."""
         return "base_dn" in kwargs and "search_filter" in kwargs
 
-    def _is_legacy_positional_search(self, args: tuple[object, ...]) -> bool:
-        """Check if this is a legacy positional search (connection_id, dn, filter)."""
+    def _is_convenience_positional_search(self, args: tuple[object, ...]) -> bool:
+        """Check if this is a transitional positional search (connection_id, dn, filter)."""
         required_positional = 3
         return len(args) >= required_positional and isinstance(args[0], str)
 
@@ -541,23 +539,23 @@ class FlextLdapClient:
             int(search_params["time_limit"]) if isinstance(search_params["time_limit"], int) else 30,
         )
 
-    async def _handle_legacy_positional_search(
+    async def _handle_convenience_positional_search(
         self, args: tuple[object, ...], kwargs: dict[str, object],
     ) -> FlextResult[list[LdapSearchResult]]:
-        """Handle legacy positional search (connection_id, dn, filter)."""
+        """Handle transitional positional search (connection_id, dn, filter)."""
         connection_id = str(args[0])
         base_dn_obj = args[1]
         filter_obj = args[2]
 
-        legacy_params = self._extract_legacy_search_params(kwargs)
-        return await self.search_legacy(
+        convenience_params = self._extract_convenience_search_params(kwargs)
+        return await self.search_convenience(
             connection_id,
             base_dn_obj,
             filter_obj,
-            scope=legacy_params["scope"],
-            attributes=legacy_params["attributes"],  # type: ignore[arg-type]
-            size_limit=int(legacy_params["size_limit"]) if isinstance(legacy_params["size_limit"], int) else 1000,
-            time_limit=int(legacy_params["time_limit"]) if isinstance(legacy_params["time_limit"], int) else 30,
+            scope=convenience_params["scope"],
+            attributes=convenience_params["attributes"],  # type: ignore[arg-type]
+            size_limit=int(convenience_params["size_limit"]) if isinstance(convenience_params["size_limit"], int) else 1000,
+            time_limit=int(convenience_params["time_limit"]) if isinstance(convenience_params["time_limit"], int) else 30,
         )
 
     async def _handle_modern_positional_search(
@@ -589,8 +587,8 @@ class FlextLdapClient:
             "time_limit": self._safe_int_conversion(kwargs.get("time_limit", 30), 30),
         }
 
-    def _extract_legacy_search_params(self, kwargs: dict[str, object]) -> dict[str, object]:
-        """Extract parameters for legacy positional search."""
+    def _extract_convenience_search_params(self, kwargs: dict[str, object]) -> dict[str, object]:
+        """Extract parameters for transitional positional search."""
         return {
             "scope": kwargs.get("scope", "subtree"),
             "attributes": kwargs.get("attributes"),
@@ -710,7 +708,7 @@ class FlextLdapClient:
         """Delete LDAP entry - REFACTORED to reduce returns.
 
         Modern: delete_entry(dn: str)
-        Legacy: delete_entry(connection_id: str, dn: VO|str)
+        Convenience: delete_entry(connection_id: str, dn: VO|str)
         """
         try:
             # Validate connection state
@@ -724,8 +722,6 @@ class FlextLdapClient:
                 return FlextResult.fail(dn_result.error or "Failed to extract DN")
 
             # Perform deletion operation
-            if dn_result.data is None:
-                return FlextResult.fail("No DN data available")
             return await self._perform_delete_operation(str(dn_result.data))
 
         except LDAPException as e:
@@ -1313,8 +1309,6 @@ class FlextLdapUserRepositoryImpl:
 
             # Save to LDAP
             dn = str(user_data.get("dn"))
-            if attributes_result.data is None:
-                return FlextResult.fail("No attributes data available")
             return await self._client.add_entry(dn, attributes_result.data)
 
         except (
@@ -1815,7 +1809,7 @@ class FlextLdapStrategyContext:
 
 
 # =============================================================================
-# EXPORTS AND BACKWARD COMPATIBILITY
+# EXPORTS AND TESTING CONVENIENCE
 # =============================================================================
 
 # =============================================================================

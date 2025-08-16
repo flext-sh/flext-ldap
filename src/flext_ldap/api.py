@@ -2,18 +2,31 @@
 
 from __future__ import annotations
 
+import asyncio
 import uuid
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING
 from urllib.parse import urlparse
+from uuid import uuid4 as _uuid4
 
 from flext_core import (
     FlextResult,
     get_flext_container,
     get_logger,
 )
-from flext_ldif.api import FlextLdifAPI  # type: ignore[import-not-found]
+
+# Optional LDIF support (guard import for environments without flext-ldif)
+try:  # pragma: no cover - optional dependency
+    from flext_ldif.api import FlextLdifAPI
+    _LDIF_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    _LDIF_AVAILABLE = False
+    # Type hint for FlextLdifAPI when not available
+    FlextLdifAPI = None  # type: ignore[assignment,misc]
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
@@ -30,9 +43,6 @@ from flext_ldap.utils import (
     FlextLdapValidationHelpers,
     flext_ldap_validate_dn,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
 
 logger = get_logger(__name__)
 
@@ -58,6 +68,7 @@ class FlextLdapSearchParams(BaseModel):
 
 
 class FlextLdapExportParams(BaseModel):
+    """Parameters for exporting search results to an LDIF file."""
 
     session_id: str = Field(..., description="Session ID from connection")
     output_file: str = Field(..., description="Output LDIF file path")
@@ -73,6 +84,7 @@ class FlextLdapExportParams(BaseModel):
 
 
 class SearchParameters(BaseModel):
+    """Parameters for a simple LDAP search operation."""
 
     base_dn: str = Field(default="", description="Search base DN")
     search_filter: str = Field(
@@ -104,6 +116,7 @@ class SearchParameters(BaseModel):
 
 
 class ConnectionParameters(BaseModel):
+    """Parameters required to establish an LDAP connection."""
 
     server_uri: str = Field(..., description="LDAP server URI")
     bind_dn: str | None = Field(default=None, description="Bind DN")
@@ -122,6 +135,7 @@ class ConnectionParameters(BaseModel):
 
 
 class GroupCreationParameters(BaseModel):
+    """Parameters required to create an LDAP group entry."""
 
     dn: str = Field(..., description="Group distinguished name")
     cn: str = Field(..., description="Group common name")
@@ -140,6 +154,7 @@ class GroupCreationParameters(BaseModel):
 
 
 class ExportParameters(BaseModel):
+    """Export configuration used by the export service layer."""
 
     output_file: Path = Field(..., description="Output LDIF file path")
     base_dn: str = Field(..., description="Export base DN")
@@ -162,6 +177,7 @@ class ExportParameters(BaseModel):
 
 
 class SearchServiceInterface:
+    """Interface for search-related operations."""
 
     async def perform_search(
         self,
@@ -172,6 +188,7 @@ class SearchServiceInterface:
 
 
 class ConnectionServiceInterface:
+    """Interface for connection lifecycle operations."""
 
     async def establish_connection(
         self,
@@ -184,6 +201,7 @@ class ConnectionServiceInterface:
 
 
 class EntryServiceInterface:
+    """Interface for LDAP entry management operations."""
 
     async def create_user_entry(
         self,
@@ -199,6 +217,7 @@ class EntryServiceInterface:
 
 
 class ExportServiceInterface:
+    """Interface for exporting search results to LDIF."""
 
     async def export_to_ldif(
         self,
@@ -211,6 +230,7 @@ class ExportServiceInterface:
 
 
 class FlextLdapSearchService(SearchServiceInterface):
+    """Concrete implementation of LDAP search functionality."""
 
     def __init__(self, client: FlextLdapClient) -> None:
         self._client = client
@@ -267,7 +287,6 @@ class FlextLdapSearchService(SearchServiceInterface):
                     raw_entry,
                     "entry_attributes_as_dict",
                 ):
-                    from uuid import uuid4 as _uuid4
                     entry = FlextLdapEntry(
                         id=str(_uuid4()),
                         dn=raw_entry.entry_dn,
@@ -294,6 +313,7 @@ class FlextLdapSearchService(SearchServiceInterface):
 
 
 class FlextLdapConnectionService(ConnectionServiceInterface):
+    """Manage LDAP connections and in-memory session tracking."""
 
     def __init__(self, client: FlextLdapClient) -> None:
         self._client = client
@@ -343,12 +363,11 @@ class FlextLdapConnectionService(ConnectionServiceInterface):
             return FlextResult.fail(f"Termination error: {e}")
 
     def _generate_session_id(self) -> str:
-        from uuid import uuid4 as _uuid4
-
         return f"ldap_session_{str(_uuid4()).replace('-', '')[:12]}"
 
 
 class FlextLdapEntryService(EntryServiceInterface):
+    """Create and manage LDAP user/group entries via the client."""
 
     def __init__(self, client: FlextLdapClient) -> None:
         self._client = client
@@ -381,7 +400,6 @@ class FlextLdapEntryService(EntryServiceInterface):
             )
 
             if add_result.is_success:
-                from uuid import uuid4 as _uuid4
                 user = FlextLdapUser(
                     id=str(_uuid4()),
                     dn=request.dn,
@@ -425,7 +443,6 @@ class FlextLdapEntryService(EntryServiceInterface):
             )
 
             if add_result.is_success:
-                from uuid import uuid4 as _uuid4
                 group = FlextLdapGroup(
                     id=str(_uuid4()),
                     dn=params.dn,
@@ -461,10 +478,11 @@ class FlextLdapEntryService(EntryServiceInterface):
 
 
 class FlextLdapExportService(ExportServiceInterface):
+    """Export search results to an LDIF file using flext-ldif when available."""
 
     def __init__(self, client: FlextLdapClient) -> None:
         self._client = client
-        self._ldif_api = FlextLdifAPI()
+        self._ldif_api = FlextLdifAPI() if FlextLdifAPI is not None else None
         logger.debug("FlextLdapExportService initialized")
 
     async def export_to_ldif(
@@ -549,6 +567,7 @@ class FlextLdapExportService(ExportServiceInterface):
 
 
 class FlextLdapApi:
+    """High-level LDAP API facade that composes low-level services."""
 
     def __init__(self, config: FlextLdapSettings | None = None) -> None:
         self._config = config or FlextLdapSettings()
@@ -609,8 +628,8 @@ class FlextLdapApi:
             msg = f"Connection failed: {connect_result.error}"
             raise FlextLdapConnectionError(msg)
 
-        session_id = connect_result.data
-        if session_id is None:
+        session_id = connect_result.data or ""
+        if not session_id:
             msg = "Failed to get session ID"
             raise FlextLdapConnectionError(msg)
 
@@ -625,7 +644,7 @@ class FlextLdapApi:
         self,
         params: SearchParameters | None = None,
         *,
-        # Backward compatibility parameters
+        # Testing convenience parameters
         session_id: str | None = None,
         base_dn: str = "",
         search_filter: str = "(objectClass=*)",
@@ -650,9 +669,9 @@ class FlextLdapApi:
                 time_limit=time_limit,
             )
 
-        # Support legacy session parameter
-        legacy_session = options.get("session")
-        effective_session = session_id or legacy_session or ""
+        # Support transitional session parameter
+        transitional_session = options.get("session")
+        effective_session = session_id or transitional_session or ""
         return await self._search_service.perform_search(str(effective_session), params)
 
     # Entry Operations
@@ -712,6 +731,7 @@ class FlextLdapApi:
             # Create FlextLdapEntry from the added entry (convert to expected type)
             entry_attributes: dict[str, object] = dict(validated_attributes)
             created_entry = FlextLdapEntry(
+                id=str(_uuid4()),
                 dn=dn,
                 attributes=entry_attributes,
             )
@@ -723,13 +743,24 @@ class FlextLdapApi:
             logger.exception(f"Error creating entry {dn}")
             return FlextResult.fail(f"Entry creation error: {e}")
 
+    async def delete_entry(self, dn: str) -> FlextResult[None]:
+        """Delete an LDAP entry by DN using the underlying client.
+
+        Exposto para uso por examples e testes de alto nível.
+        """
+        try:
+            return await self._client.delete_entry(dn)
+        except Exception as e:
+            logger.exception("Entry deletion failed")
+            return FlextResult.fail(f"Delete entry error: {e}")
+
     # Export Operations
 
     async def export_search_to_ldif(
         self,
         params: FlextLdapExportParams | None = None,
         *,
-        # Backward compatibility parameters
+        # Testing convenience parameters
         session_id: str | None = None,
         output_file: str | Path | None = None,
         base_dn: str | None = None,
@@ -768,19 +799,23 @@ class FlextLdapApi:
         ldif_file_path: str,
     ) -> FlextResult[int]:
         try:
-            from pathlib import Path
             ldif_path = Path(ldif_file_path)
+
+            if not session_id or not session_id.strip():
+                return FlextResult.fail("Session ID is required for LDIF import")
 
             if not ldif_path.exists():
                 return FlextResult.fail(f"LDIF file not found: {ldif_file_path}")
 
             # Read LDIF file and apply each entry
-            from flext_ldif.api import FlextLdifAPI
+            if not _LDIF_AVAILABLE:
+                return FlextResult.fail("LDIF support is unavailable (flext-ldif not installed)")
+
+            # FlextLdifAPI is guaranteed to be available here due to _LDIF_AVAILABLE check
             ldif_api = FlextLdifAPI()
 
             # Parse LDIF file
-            with open(ldif_path, encoding="utf-8") as f:
-                content = f.read()
+            content = await asyncio.to_thread(ldif_path.read_text, encoding="utf-8")
 
             parse_result = ldif_api.parse(content)
             if not parse_result.success:
@@ -823,6 +858,8 @@ class FlextLdapApi:
         modifications: dict[str, list[str] | str],
     ) -> FlextResult[bool]:
         try:
+            if not session_id or not session_id.strip():
+                return FlextResult.fail("Session ID is required for modify operations")
             if not dn:
                 return FlextResult.fail("DN is required for modify operations")
 
@@ -843,7 +880,7 @@ class FlextLdapApi:
             result = await self._client.modify_entry(dn, client_modifications)
             # Convert FlextResult[None] to FlextResult[bool]
             if result.is_success:
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
             return FlextResult.fail(result.error or "Modify operation failed")
 
         except Exception as e:
@@ -858,6 +895,11 @@ _global_ldap_api: FlextLdapApi | None = None
 
 
 def get_ldap_api(config: FlextLdapSettings | None = None) -> FlextLdapApi:
+    """Return a process-wide singleton instance of FlextLdapApi.
+
+    This convenience function mirrors existing public API patterns used by
+    tests and examples across the repository.
+    """
     global _global_ldap_api  # noqa: PLW0603
     if _global_ldap_api is None:
         _global_ldap_api = FlextLdapApi(config)
@@ -870,6 +912,7 @@ def create_ldap_api(
     use_ssl: bool = False,
     timeout: int = 30,
 ) -> FlextLdapApi:
+    """Create a configured FlextLdapApi instance for the given server URI."""
     # Parse server URI
     parsed = urlparse(server_uri)
     port = parsed.port or (636 if use_ssl else 389)

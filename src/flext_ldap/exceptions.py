@@ -14,6 +14,7 @@ from flext_ldap.constants import FlextLdapOperationMessages
 
 
 class FlextLdapException(FlextException):
+    """Base exception for FLEXT-LDAP with optional LDAP context and codes."""
 
     def __init__(
         self,
@@ -23,12 +24,14 @@ class FlextLdapException(FlextException):
         ldap_context: dict[str, object] | None = None,
         operation: str | None = None,
     ) -> None:
+        """Initialize exception with optional LDAP context details."""
         super().__init__(message)
         self.ldap_result_code = ldap_result_code
         self.ldap_context = ldap_context or {}
         self.operation = operation
 
     def __str__(self) -> str:
+        """Format exception string including LDAP context metadata."""
         parts = [super().__str__()]
 
         if self.operation:

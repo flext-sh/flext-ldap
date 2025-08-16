@@ -13,28 +13,21 @@ from __future__ import annotations
 
 import asyncio
 
-from flext_ldap.config import FlextLdapConnectionConfig
 from flext_ldap.infrastructure import FlextLdapClient
 
 
 async def main() -> None:
-    """Demonstrate LDAP client usage."""
-    # Create client instance
+    """Demonstrate LDAP client usage."""    # Create client instance
     client = FlextLdapClient()
 
     # Example 1: Single server connection
-    import os
+    import os  # noqa: PLC0415
 
-    single_config = FlextLdapConnectionConfig(
-        host="localhost",
-        port=389,
+    result = await client.connect(
+        server_uri=os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389"),
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         bind_password=os.getenv("LDAP_TEST_PASSWORD", ""),
-        use_ssl=False,
-        timeout_seconds=10,
     )
-
-    result = client.connect(single_config)
     if result.success:
         print("✅ Connected successfully")
 
@@ -57,41 +50,35 @@ async def main() -> None:
     print("✅ Pool functionality integrated in client")
 
     # Example 3: LDAP operations
-    test_config = FlextLdapConnectionConfig(
-        host="localhost",
-        port=389,
+    op_result = await client.connect(
+        server_uri=os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389"),
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         bind_password=os.getenv("LDAP_TEST_PASSWORD", ""),
-        use_ssl=False,
     )
-
-    op_result = client.connect(test_config)
     if op_result.success:
         print("✅ Connected for operations")
 
         # Add entry
-        add_result = await client.add(
+        add_result = await client.add_entry(
             dn="cn=testuser,dc=example,dc=com",
-            object_classes=["top", "person", "organizationalPerson"],
             attributes={
-                "cn": "testuser",
-                "sn": "Test",
-                "mail": "test@example.com",
+                "objectClass": ["top", "person", "organizationalPerson"],
+                "cn": ["testuser"],
+                "sn": ["Test"],
+                "mail": ["test@example.com"],
             },
         )
 
         if add_result.success:
             # Modify entry
-            modify_result = await client.modify(
+            modify_result = await client.modify_entry(
                 dn="cn=testuser,dc=example,dc=com",
-                changes={"mail": "updated@example.com"},
+                modifications={"mail": ["updated@example.com"]},
             )
 
             if modify_result.success:
                 # Delete entry
-                delete_result = await client.delete(
-                    dn="cn=testuser,dc=example,dc=com",
-                )
+                delete_result = await client.delete_entry("cn=testuser,dc=example,dc=com")
 
                 if delete_result.success:
                     print("✅ Entry lifecycle completed")

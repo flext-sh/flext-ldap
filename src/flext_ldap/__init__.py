@@ -88,5 +88,5 @@ __all__: list[str] = [
     "__version_info__",
 ]
 
-# Backward-compat exposed scope
+# Testing convenience exposed scope
 FlextLdapScope = _ConstantsLdapScope

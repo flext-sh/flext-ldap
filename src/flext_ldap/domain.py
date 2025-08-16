@@ -835,8 +835,9 @@ class FlextLdapDomainFactory:
         if result.is_failure:
             return FlextResult.fail(result.error or "User creation failed")
         created = result.unwrap()
-        from flext_ldap.models import (
-            FlextLdapUser as _User,  # late import to avoid cycles
+        # Late import kept to avoid circular dependency; ruff allow
+        from flext_ldap.models import (  # noqa: PLC0415
+            FlextLdapUser as _User,
         )
         if isinstance(created, _User):
             return FlextResult.ok(created)
@@ -900,8 +901,9 @@ class FlextLdapDomainFactory:
         if result.is_failure:
             return FlextResult.fail(result.error or "Group creation failed")
         created = result.unwrap()
-        from flext_ldap.models import (
-            FlextLdapGroup as _Group,  # late import to avoid cycles
+        # Late import kept to avoid circular dependency; ruff allow
+        from flext_ldap.models import (  # noqa: PLC0415
+            FlextLdapGroup as _Group,
         )
         if isinstance(created, _Group):
             return FlextResult.ok(created)

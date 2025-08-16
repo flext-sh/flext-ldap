@@ -151,9 +151,9 @@ async def demonstrate_connection_handling() -> None:
     # Test connection to non-existent server (will fail gracefully)
     print("1. Testing connection to non-existent LDAP server...")
     result = await service.connect(
-        server_url="ldap://localhost:3389",
+        server_uri="ldap://localhost:3389",
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-        password=os.getenv("LDAP_TEST_PASSWORD", ""),
+        bind_password=os.getenv("LDAP_TEST_PASSWORD", ""),
     )
 
     if result.is_failure:

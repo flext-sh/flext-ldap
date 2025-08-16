@@ -45,25 +45,27 @@ async def _initialize_ldap_service() -> FlextLdapApi:
     print("1. Initializing LDAP integration service...")
 
     # Check if we're running with Docker environment variables
-    import os
+    import os  # noqa: PLC0415
 
     if os.getenv("LDAP_TEST_SERVER"):
-        from urllib.parse import urlparse
+        from urllib.parse import urlparse  # noqa: PLC0415
 
-        from flext_ldap.config import FlextLdapSettings
+        from flext_ldap.config import (  # noqa: PLC0415
+            FlextLdapConnectionConfig,
+            FlextLdapSettings,
+        )
 
         server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
         parsed = urlparse(server_url)
 
         # Create configuration using environment variables
-        config = FlextLdapSettings(
-            host=parsed.hostname or "localhost",
+        conn = FlextLdapConnectionConfig(
+            server=parsed.hostname or "localhost",
             port=parsed.port or 389,
             use_ssl=parsed.scheme == "ldaps",
-            bind_dn=os.getenv("LDAP_TEST_BIND_DN", ""),
-            base_dn=os.getenv("LDAP_TEST_BASE_DN", ""),
+            timeout=30,
         )
-        service = FlextLdapApi(config)
+        service = FlextLdapApi(FlextLdapSettings(default_connection=conn))
         print(f"   Service initialized with Docker config: {server_url}")
     else:
         service = FlextLdapApi()
@@ -79,7 +81,7 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLdapApi) -> None:
     print("🔍 VERIFYING LDAP DIRECTORY STRUCTURE...")
 
     # Get connection parameters from environment
-    import os
+    import os  # noqa: PLC0415
 
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
     bind_dn = os.getenv("LDAP_TEST_BIND_DN", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
@@ -108,7 +110,7 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLdapApi) -> None:
                 search_result = await ldap_service.search(
                     session_id=session_id,
                     base_dn=ou_dn,
-                    filter_expr="(objectClass=organizationalUnit)",
+                    search_filter="(objectClass=organizationalUnit)",
                     scope="base",
                     attributes=["ou", "description", "objectClass"],
                 )
@@ -139,7 +141,7 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
     # Focus on search operations which don't require special authentication
 
     # Get connection parameters from environment
-    import os
+    import os  # noqa: PLC0415
 
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
     bind_dn = os.getenv("LDAP_TEST_BIND_DN", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
@@ -160,15 +162,15 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
             search_result = await ldap_service.search(
                 session_id=session_id,
                 base_dn="ou=people,dc=flext,dc=local",
-                filter_expr="(objectClass=person)",
+                search_filter="(objectClass=person)",
                 attributes=["uid", "cn", "sn", "mail", "objectClass"],
             )
 
             if search_result.success and search_result.data:
                 print(f"   ✅ Found {len(search_result.data)} users:")
                 for user_entry in search_result.data:
-                    uid = user_entry.attributes.get("uid", ["N/A"])[0]
-                    cn = user_entry.attributes.get("cn", ["N/A"])[0]
+                    uid = user_entry.get_single_attribute_value("uid") or "N/A"
+                    cn = user_entry.get_single_attribute_value("cn") or "N/A"
                     print(f"     - {uid}: {cn} ({user_entry.dn})")
 
                 # Perform user search validation
@@ -182,7 +184,7 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
                 wildcard_result = await ldap_service.search(
                     session_id=session_id,
                     base_dn="dc=flext,dc=local",
-                    filter_expr="(objectClass=*)",
+                    search_filter="(objectClass=*)",
                     attributes=[
                         "objectClass",
                     ],  # dn is always returned, don't request it as attribute
@@ -219,7 +221,7 @@ async def _perform_user_search_validation(
     search_result = await ldap_service.search(
         session_id=session_id,
         base_dn="dc=flext,dc=local",
-        filter_expr="(objectClass=inetOrgPerson)",
+        search_filter="(objectClass=inetOrgPerson)",
         attributes=["uid", "cn", "mail", "objectClass"],
         scope="subtree",
     )
@@ -234,7 +236,7 @@ async def _perform_user_search_validation(
     compound_result = await ldap_service.search(
         session_id=session_id,
         base_dn="dc=flext,dc=local",
-        filter_expr="(&(objectClass=person)(uid=*))",
+        search_filter="(&(objectClass=person)(uid=*))",
         attributes=["uid", "cn"],
         scope="subtree",
     )
@@ -249,7 +251,7 @@ async def _perform_user_search_validation(
     base_result = await ldap_service.search(
         session_id=session_id,
         base_dn="dc=flext,dc=local",
-        filter_expr="(objectClass=*)",
+        search_filter="(objectClass=*)",
         attributes=["dc", "objectClass"],
         scope="base",
     )
@@ -271,7 +273,7 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
     print("3. Group Search Operations Demo...")
 
     # Get connection parameters from environment
-    import os
+    import os  # noqa: PLC0415
 
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
     bind_dn = os.getenv("LDAP_TEST_BIND_DN", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
@@ -291,18 +293,15 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
             search_result = await ldap_service.search(
                 session_id=session_id,
                 base_dn="ou=groups,dc=flext,dc=local",
-                filter_expr="(objectClass=groupOfNames)",
+                search_filter="(objectClass=groupOfNames)",
                 attributes=["cn", "description", "member", "objectClass"],
             )
 
             if search_result.success and search_result.data:
                 print(f"   ✅ Found {len(search_result.data)} groups:")
                 for group_entry in search_result.data:
-                    cn = group_entry.attributes.get("cn", ["N/A"])[0]
-                    desc = group_entry.attributes.get(
-                        "description",
-                        ["No description"],
-                    )[0]
+                    cn = group_entry.get_single_attribute_value("cn") or "N/A"
+                    desc = group_entry.get_single_attribute_value("description") or "No description"
                     print(f"     - {cn}: {desc} ({group_entry.dn})")
 
                 # Perform group search validation
@@ -316,7 +315,7 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
                 alt_result = await ldap_service.search(
                     session_id=session_id,
                     base_dn="ou=groups,dc=flext,dc=local",
-                    filter_expr="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
+                    search_filter="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
                     attributes=["cn", "objectClass"],
                 )
 
@@ -347,7 +346,7 @@ async def _perform_group_search_validation(
     all_groups_result = await ldap_service.search(
         session_id=session_id,
         base_dn="dc=flext,dc=local",
-        filter_expr="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
+        search_filter="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
         attributes=["cn", "description", "objectClass"],
         scope="subtree",
     )
@@ -355,8 +354,8 @@ async def _perform_group_search_validation(
     if all_groups_result.success:
         print(f"   ✅ Found {len(all_groups_result.data)} groups of all types")
         for group_entry in all_groups_result.data:
-            cn = group_entry.attributes.get("cn", ["Unknown"])[0]
-            obj_classes = group_entry.attributes.get("objectClass", [])
+            cn = group_entry.get_single_attribute_value("cn") or "Unknown"
+            obj_classes = group_entry.get_attribute_values("objectClass")
             print(f"     - {cn}: {obj_classes}")
     else:
         print(f"   ❌ Group search failed: {all_groups_result.error}")
@@ -366,7 +365,7 @@ async def _perform_group_search_validation(
     wildcard_result = await ldap_service.search(
         session_id=session_id,
         base_dn="ou=groups,dc=flext,dc=local",
-        filter_expr="(cn=*)",
+        search_filter="(cn=*)",
         attributes=["cn", "objectClass"],
         scope="one",
     )
@@ -384,7 +383,7 @@ async def _perform_group_search_validation(
         scope_result = await ldap_service.search(
             session_id=session_id,
             base_dn="ou=groups,dc=flext,dc=local",
-            filter_expr="(objectClass=*)",
+            search_filter="(objectClass=*)",
             attributes=[
                 "objectClass",
             ],  # dn is always returned, don't request it as attribute
@@ -404,7 +403,7 @@ async def _demo_connection_management(ldap_service: FlextLdapApi) -> None:
     print("4. Connection Management Demo...")
 
     # Get connection parameters from environment
-    import os
+    import os  # noqa: PLC0415
 
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
     bind_dn = os.getenv("LDAP_TEST_BIND_DN", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")

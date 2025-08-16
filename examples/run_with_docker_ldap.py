@@ -12,15 +12,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
-import contextlib
+import importlib
+import logging
 import os
 import sys
 import time
 from pathlib import Path
 
 import docker
-from integrated_ldap_service import main as integrated_main
-from ldap_simple_client_example import main as simple_main
+
+logger = logging.getLogger(__name__)
 
 
 def start_openldap_container() -> bool:
@@ -35,7 +36,7 @@ def start_openldap_container() -> bool:
             finally:
                 existing.remove(force=True)
         except docker.errors.NotFound:
-            pass
+            logger.debug("No existing container to stop", exc_info=True)
 
         # Start new container
         env = {
@@ -58,14 +59,13 @@ def start_openldap_container() -> bool:
         )
 
         # Wait for container to be ready
-        from os import getenv
+        from os import getenv  # noqa: PLC0415
 
-        from ldap3 import ALL, Connection, Server
-
-        server = Server("localhost", port=389, get_info=ALL)
+        ldap3 = importlib.import_module("ldap3")
+        server = ldap3.Server("localhost", port=389, get_info=ldap3.ALL)
         for _attempt in range(30):
             try:
-                with Connection(
+                with ldap3.Connection(
                     server,
                     user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
                     password=getenv("LDAP_TEST_PASSWORD", ""),
@@ -78,7 +78,8 @@ def start_openldap_container() -> bool:
 
         return False
 
-    except (RuntimeError, ValueError, TypeError):
+    except (RuntimeError, ValueError, TypeError) as e:
+        logger.exception("Failed to start OpenLDAP container: %s", e)
         return False
 
 
@@ -93,9 +94,9 @@ def stop_openldap_container() -> None:
             finally:
                 c.remove(force=True)
         except docker.errors.NotFound:
-            pass
-    except (RuntimeError, ValueError, TypeError):
-        pass
+            logger.debug("Container not found when stopping", exc_info=True)
+    except (RuntimeError, ValueError, TypeError) as e:
+        logger.warning("Failed to stop container: %s", e)
 
 
 async def run_examples_with_docker() -> None:
@@ -110,18 +111,20 @@ async def run_examples_with_docker() -> None:
         },
     )
 
-    # Run the integrated example
+    # Run the integrated example (best-effort)
     try:
         sys.path.insert(0, str(Path(__file__).parent))
+        integrated_module = importlib.import_module("integrated_ldap_service")
+        await integrated_module.main()
+    except Exception as e:
+        logger.exception("Integrated example failed: %s", e)
 
-        await integrated_main()
-
-    except (RuntimeError, ValueError, TypeError):
-        pass
-
-    # Run the simple client example
-    with contextlib.suppress(RuntimeError, ValueError, TypeError):
-        await simple_main()
+    # Run the simple client example (best-effort)
+    try:
+        simple_module = importlib.import_module("ldap_simple_client_example")
+        await simple_module.main()
+    except Exception as e:
+        logger.exception("Simple client example failed: %s", e)
 
 
 async def main() -> None:
