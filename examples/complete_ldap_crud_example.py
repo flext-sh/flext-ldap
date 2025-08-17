@@ -31,112 +31,114 @@ class DockerLDAPContainer:
     """Manages Docker LDAP container for testing."""
 
     def __init__(self) -> None:
-      self.container_name = "flext-ldap-crud-test"
-      self.port: Final[int] = 3389
-      self._client = docker.from_env()
+        self.container_name = "flext-ldap-crud-test"
+        self.port: Final[int] = 3389
+        self._client = docker.from_env()
 
     def start_container(self) -> None:
-      """Start Docker LDAP container."""
-      print("🐳 Starting Docker LDAP container...")
-      # Stop/remove existing container if present
-      try:
-          existing = self._client.containers.get(self.container_name)
-          try:
-              existing.stop()
-          finally:
-              existing.remove(force=True)
-      except docker.errors.NotFound:
-          logging.getLogger(__name__).debug(
-              "No existing container to stop", exc_info=True,
-          )
+        """Start Docker LDAP container."""
+        print("🐳 Starting Docker LDAP container...")
+        # Stop/remove existing container if present
+        try:
+            existing = self._client.containers.get(self.container_name)
+            try:
+                existing.stop()
+            finally:
+                existing.remove(force=True)
+        except docker.errors.NotFound:
+            logging.getLogger(__name__).debug(
+                "No existing container to stop",
+                exc_info=True,
+            )
 
-      # Start new container with required environment
-      env = {
-          "LDAP_ORGANISATION": "FLEXT",
-          "LDAP_DOMAIN": "flext.local",
-          "LDAP_ADMIN_PASSWORD": "admin123",
-          "LDAP_TLS": "false",
-      }
-      try:
-          self._client.containers.run(
-              image="osixia/openldap:1.5.0",
-              name=self.container_name,
-              detach=True,
-              ports={"389/tcp": self.port},
-              environment=env,
-          )
-      except docker.errors.APIError:
-          logging.getLogger(__name__).exception("Failed to start container")
-          raise
+        # Start new container with required environment
+        env = {
+            "LDAP_ORGANISATION": "FLEXT",
+            "LDAP_DOMAIN": "flext.local",
+            "LDAP_ADMIN_PASSWORD": "admin123",
+            "LDAP_TLS": "false",
+        }
+        try:
+            self._client.containers.run(
+                image="osixia/openldap:1.5.0",
+                name=self.container_name,
+                detach=True,
+                ports={"389/tcp": self.port},
+                environment=env,
+            )
+        except docker.errors.APIError:
+            logging.getLogger(__name__).exception("Failed to start container")
+            raise
 
-      print(f"✅ Container started: {self.container_name}")
+        print(f"✅ Container started: {self.container_name}")
 
-      # Wait for LDAP to be ready (bind loop)
-      print("⏳ Waiting for LDAP service to be ready...")
-      server = Server("localhost", port=self.port, get_info=ALL)
-      for _ in range(60):
-          try:
-              with Connection(
-                  server,
-                  user="cn=admin,dc=flext,dc=local",
-                  password=os.getenv("LDAP_TEST_PASSWORD", ""),
-                  auto_bind=True,
-              ) as conn:
-                  if conn.bound:
-                      break
-          except Exception:
-              time.sleep(1)
-      else:
-          msg = "LDAP service did not become ready in time"
-          raise RuntimeError(msg)
+        # Wait for LDAP to be ready (bind loop)
+        print("⏳ Waiting for LDAP service to be ready...")
+        server = Server("localhost", port=self.port, get_info=ALL)
+        for _ in range(60):
+            try:
+                with Connection(
+                    server,
+                    user="cn=admin,dc=flext,dc=local",
+                    password=os.getenv("LDAP_TEST_PASSWORD", ""),
+                    auto_bind=True,
+                ) as conn:
+                    if conn.bound:
+                        break
+            except Exception:
+                time.sleep(1)
+        else:
+            msg = "LDAP service did not become ready in time"
+            raise RuntimeError(msg)
 
-      # Create organizational units via LDAP
-      self._setup_directory_structure()
+        # Create organizational units via LDAP
+        self._setup_directory_structure()
 
     def _setup_directory_structure(self) -> None:
-      """Set up LDAP directory structure."""
-      print("🏗️  Setting up directory structure...")
-      server = Server("localhost", port=self.port, get_info=ALL)
-      with Connection(
-          server,
-          user="cn=admin,dc=flext,dc=local",
-          password=os.getenv("LDAP_TEST_PASSWORD", ""),
-          auto_bind=True,
-      ) as conn:
-          # Create ou=people
-          conn.add(
-              dn="ou=people,dc=flext,dc=local",
-              object_class=["top", "organizationalUnit"],
-              attributes={
-                  "ou": "people",
-                  "description": "Container for user accounts",
-              },
-          )
-          # Create ou=groups
-          conn.add(
-              dn="ou=groups,dc=flext,dc=local",
-              object_class=["top", "organizationalUnit"],
-              attributes={
-                  "ou": "groups",
-                  "description": "Container for groups",
-              },
-          )
-          print("✅ Directory structure ensured (ou=people, ou=groups)")
+        """Set up LDAP directory structure."""
+        print("🏗️  Setting up directory structure...")
+        server = Server("localhost", port=self.port, get_info=ALL)
+        with Connection(
+            server,
+            user="cn=admin,dc=flext,dc=local",
+            password=os.getenv("LDAP_TEST_PASSWORD", ""),
+            auto_bind=True,
+        ) as conn:
+            # Create ou=people
+            conn.add(
+                dn="ou=people,dc=flext,dc=local",
+                object_class=["top", "organizationalUnit"],
+                attributes={
+                    "ou": "people",
+                    "description": "Container for user accounts",
+                },
+            )
+            # Create ou=groups
+            conn.add(
+                dn="ou=groups,dc=flext,dc=local",
+                object_class=["top", "organizationalUnit"],
+                attributes={
+                    "ou": "groups",
+                    "description": "Container for groups",
+                },
+            )
+            print("✅ Directory structure ensured (ou=people, ou=groups)")
 
     def stop_container(self) -> None:
-      """Stop and remove container."""
-      print("🛑 Stopping Docker container...")
-      try:
-          c = self._client.containers.get(self.container_name)
-          try:
-              c.stop()
-          finally:
-              c.remove(force=True)
-      except docker.errors.NotFound:
-          logging.getLogger(__name__).debug(
-              "Container not found when stopping", exc_info=True,
-          )
-      print("✅ Container stopped and removed")
+        """Stop and remove container."""
+        print("🛑 Stopping Docker container...")
+        try:
+            c = self._client.containers.get(self.container_name)
+            try:
+                c.stop()
+            finally:
+                c.remove(force=True)
+        except docker.errors.NotFound:
+            logging.getLogger(__name__).debug(
+                "Container not found when stopping",
+                exc_info=True,
+            )
+        print("✅ Container stopped and removed")
 
 
 async def demonstrate_complete_crud_operations() -> None:
@@ -152,44 +154,46 @@ async def demonstrate_complete_crud_operations() -> None:
     password = os.getenv("LDAP_TEST_PASSWORD", "")
 
     try:
-      # Connect to LDAP
-      connection_result = await ldap_service.connect(
-          server_uri=server_url, bind_dn=bind_dn, bind_password=password,
-      )
-      if connection_result.is_failure:
-          # Handle via helper to satisfy linter rules
-          def _handle_conn_err() -> None:
-              logger.error("Connection failed")
+        # Connect to LDAP
+        connection_result = await ldap_service.connect(
+            server_uri=server_url,
+            bind_dn=bind_dn,
+            bind_password=password,
+        )
+        if connection_result.is_failure:
+            # Handle via helper to satisfy linter rules
+            def _handle_conn_err() -> None:
+                logger.error("Connection failed")
 
-          _handle_conn_err()
-          return
+            _handle_conn_err()
+            return
 
-      session_id = connection_result.data
-      print(f"✅ Connected to LDAP server: {session_id}")
+        session_id = connection_result.data
+        print(f"✅ Connected to LDAP server: {session_id}")
 
-      try:
-          # === CREATE OPERATIONS (GROUPS FIRST) ===
-          await perform_create_groups(ldap_service, session_id)
+        try:
+            # === CREATE OPERATIONS (GROUPS FIRST) ===
+            await perform_create_groups(ldap_service, session_id)
 
-          # === CREATE OPERATIONS (USERS) ===
-          await perform_create_users(ldap_service, session_id)
+            # === CREATE OPERATIONS (USERS) ===
+            await perform_create_users(ldap_service, session_id)
 
-          # === READ OPERATIONS ===
-          await perform_read_operations(ldap_service, session_id)
+            # === READ OPERATIONS ===
+            await perform_read_operations(ldap_service, session_id)
 
-          # === UPDATE OPERATIONS ===
-          await perform_update_operations(ldap_service, session_id)
+            # === UPDATE OPERATIONS ===
+            await perform_update_operations(ldap_service, session_id)
 
-          # === DELETE OPERATIONS ===
-          await perform_delete_operations(ldap_service, session_id)
+            # === DELETE OPERATIONS ===
+            await perform_delete_operations(ldap_service, session_id)
 
-      finally:
-          # Clean up connection
-          await ldap_service.disconnect(session_id)
+        finally:
+            # Clean up connection
+            await ldap_service.disconnect(session_id)
 
     except Exception as e:
-      print(f"❌ CRUD operations failed: {e}")
-      raise
+        print(f"❌ CRUD operations failed: {e}")
+        raise
 
 
 async def perform_create_groups(ldap_service: FlextLdapApi, session_id: str) -> None:
@@ -198,92 +202,94 @@ async def perform_create_groups(ldap_service: FlextLdapApi, session_id: str) -> 
 
     # Create groups first
     groups_to_create = [
-      {
-          "dn": "cn=engineers,ou=groups,dc=flext,dc=local",
-          "cn": "engineers",
-          "description": "Engineering team",
-      },
-      {
-          "dn": "cn=marketing,ou=groups,dc=flext,dc=local",
-          "cn": "marketing",
-          "description": "Marketing team",
-      },
+        {
+            "dn": "cn=engineers,ou=groups,dc=flext,dc=local",
+            "cn": "engineers",
+            "description": "Engineering team",
+        },
+        {
+            "dn": "cn=marketing,ou=groups,dc=flext,dc=local",
+            "cn": "marketing",
+            "description": "Marketing team",
+        },
     ]
 
     for group_data in groups_to_create:
-      print(f"   Creating group: {group_data['cn']}")
+        print(f"   Creating group: {group_data['cn']}")
 
-      result = await ldap_service.create_group(
-          session_id,
-          group_data["dn"],
-          group_data["cn"],
-          group_data["description"],
-      )
+        result = await ldap_service.create_group(
+            session_id,
+            group_data["dn"],
+            group_data["cn"],
+            group_data["description"],
+        )
 
-      if result.success:
-          print(f"   ✅ Created group: {group_data['cn']}")
-      else:
-          print(f"   ❌ Failed to create group {group_data['cn']}: {result.error}")
+        if result.success:
+            print(f"   ✅ Created group: {group_data['cn']}")
+        else:
+            print(f"   ❌ Failed to create group {group_data['cn']}: {result.error}")
 
     print("✅ CREATE groups completed")
 
 
-async def perform_create_users(ldap_service: FlextLdapApi, session_id: str) -> None:
+async def perform_create_users(ldap_service: FlextLdapApi, _session_id: str) -> None:
     """Perform CREATE operations for users."""
     print("\n🔨 === CREATE USERS ===")
 
     # Create multiple users
     users_to_create = [
-      {
-          "dn": "cn=john.doe,ou=people,dc=flext,dc=local",
-          "uid": "john.doe",
-          "cn": "John Doe",
-          "sn": "Doe",
-          "mail": "john.doe@flext.local",
-          "title": "Software Engineer",
-      },
-      {
-          "dn": "cn=jane.smith,ou=people,dc=flext,dc=local",
-          "uid": "jane.smith",
-          "cn": "Jane Smith",
-          "sn": "Smith",
-          "mail": "jane.smith@flext.local",
-          "title": "Marketing Specialist",
-      },
-      {
-          "dn": "cn=bob.wilson,ou=people,dc=flext,dc=local",
-          "uid": "bob.wilson",
-          "cn": "Bob Wilson",
-          "sn": "Wilson",
-          "mail": "bob.wilson@flext.local",
-          "title": "Senior Engineer",
-      },
+        {
+            "dn": "cn=john.doe,ou=people,dc=flext,dc=local",
+            "uid": "john.doe",
+            "cn": "John Doe",
+            "sn": "Doe",
+            "mail": "john.doe@flext.local",
+            "title": "Software Engineer",
+        },
+        {
+            "dn": "cn=jane.smith,ou=people,dc=flext,dc=local",
+            "uid": "jane.smith",
+            "cn": "Jane Smith",
+            "sn": "Smith",
+            "mail": "jane.smith@flext.local",
+            "title": "Marketing Specialist",
+        },
+        {
+            "dn": "cn=bob.wilson,ou=people,dc=flext,dc=local",
+            "uid": "bob.wilson",
+            "cn": "Bob Wilson",
+            "sn": "Wilson",
+            "mail": "bob.wilson@flext.local",
+            "title": "Senior Engineer",
+        },
     ]
 
     created_users: list[str] = []
 
     for user_data in users_to_create:
-      print(f"   Creating user: {user_data['uid']}")
+        print(f"   Creating user: {user_data['uid']}")
 
-      attributes: dict[str, list[str]] = {
-          "objectClass": ["inetOrgPerson", "person", "top"],
-          "uid": [str(user_data["uid"])],
-          "cn": [str(user_data["cn"])],
-          "sn": [str(user_data["sn"])],
-          "mail": [str(user_data["mail"])],
-          "title": [str(user_data["title"])],
-      }
+        attributes: dict[str, list[str]] = {
+            "objectClass": ["inetOrgPerson", "person", "top"],
+            "uid": [str(user_data["uid"])],
+            "cn": [str(user_data["cn"])],
+            "sn": [str(user_data["sn"])],
+            "mail": [str(user_data["mail"])],
+            "title": [str(user_data["title"])],
+        }
 
-      create_result = await ldap_service.create_entry(
-          dn=str(user_data["dn"]),
-          attributes=attributes,
-      )
+        create_result = await ldap_service.create_entry(
+            dn=str(user_data["dn"]),
+            attributes=attributes,
+        )
 
-      if create_result.success:
-          print(f"   ✅ Created user: {user_data['uid']}")
-          created_users.append(str(user_data["uid"]))
-      else:
-          print(f"   ❌ Failed to create user {user_data['uid']}: {create_result.error}")
+        if create_result.success:
+            print(f"   ✅ Created user: {user_data['uid']}")
+            created_users.append(str(user_data["uid"]))
+        else:
+            print(
+                f"   ❌ Failed to create user {user_data['uid']}: {create_result.error}"
+            )
 
     print(f"✅ CREATE users completed - Created {len(created_users)} users")
 
@@ -295,54 +301,54 @@ async def perform_read_operations(ldap_service: FlextLdapApi, session_id: str) -
     # Search for all users
     print("   Searching for all users...")
     users_result = await ldap_service.search(
-      session_id=session_id,
-      base_dn="ou=people,dc=flext,dc=local",
-      search_filter="(objectClass=inetOrgPerson)",
-      attributes=["uid", "cn", "mail", "title"],
+        session_id=session_id,
+        base_dn="ou=people,dc=flext,dc=local",
+        search_filter="(objectClass=inetOrgPerson)",
+        attributes=["uid", "cn", "mail", "title"],
     )
 
     if users_result.success and users_result.data:
-      print(f"   ✅ Found {len(users_result.data)} users:")
-      for user in users_result.data:
-          uid = user.get_single_attribute_value("uid") or "N/A"
-          cn = user.get_single_attribute_value("cn") or "N/A"
-          mail = user.get_single_attribute_value("mail") or "N/A"
-          title = user.get_single_attribute_value("title") or "N/A"
-          print(f"     - {uid}: {cn} ({mail}) - {title}")
+        print(f"   ✅ Found {len(users_result.data)} users:")
+        for user in users_result.data:
+            uid = user.get_single_attribute_value("uid") or "N/A"
+            cn = user.get_single_attribute_value("cn") or "N/A"
+            mail = user.get_single_attribute_value("mail") or "N/A"
+            title = user.get_single_attribute_value("title") or "N/A"
+            print(f"     - {uid}: {cn} ({mail}) - {title}")
     else:
-      print("   ❌ No users found or search failed")
+        print("   ❌ No users found or search failed")
 
     # Search by title containing "Engineer"
     print("   Searching for Engineer users...")
     eng_result = await ldap_service.search(
-      session_id=session_id,
-      base_dn="ou=people,dc=flext,dc=local",
-      search_filter="(title=*Engineer*)",
-      attributes=["uid", "cn", "title"],
+        session_id=session_id,
+        base_dn="ou=people,dc=flext,dc=local",
+        search_filter="(title=*Engineer*)",
+        attributes=["uid", "cn", "title"],
     )
 
     if eng_result.success and eng_result.data:
-      print(f"   ✅ Found {len(eng_result.data)} Engineer users")
+        print(f"   ✅ Found {len(eng_result.data)} Engineer users")
     else:
-      print("   [i] No Engineer users found (expected if CREATE failed)")
+        print("   [i] No Engineer users found (expected if CREATE failed)")
 
     # Search for groups
     print("   Searching for all groups...")
     groups_result = await ldap_service.search(
-      session_id=session_id,
-      base_dn="ou=groups,dc=flext,dc=local",
-      search_filter="(objectClass=groupOfNames)",
-      attributes=["cn", "description"],
+        session_id=session_id,
+        base_dn="ou=groups,dc=flext,dc=local",
+        search_filter="(objectClass=groupOfNames)",
+        attributes=["cn", "description"],
     )
 
     if groups_result.success and groups_result.data:
-      print(f"   ✅ Found {len(groups_result.data)} groups:")
-      for group in groups_result.data:
-          cn = group.get_single_attribute_value("cn") or "N/A"
-          desc = group.get_single_attribute_value("description") or "N/A"
-          print(f"     - {cn}: {desc}")
+        print(f"   ✅ Found {len(groups_result.data)} groups:")
+        for group in groups_result.data:
+            cn = group.get_single_attribute_value("cn") or "N/A"
+            desc = group.get_single_attribute_value("description") or "N/A"
+            print(f"     - {cn}: {desc}")
     else:
-      print("   [i] No groups found")
+        print("   [i] No groups found")
 
     print("✅ READ operations completed")
 
@@ -356,51 +362,53 @@ async def perform_update_operations(
 
     # Update user attributes
     users_to_update = [
-      {
-          "dn": "cn=john.doe,ou=people,dc=flext,dc=local",
-          "updates": {
-              "mail": "john.doe.updated@flext.local",
-              "title": "Senior Software Engineer",
-          },
-      },
-      {
-          "dn": "cn=jane.smith,ou=people,dc=flext,dc=local",
-          "updates": {
-              "mail": "jane.smith.updated@flext.local",
-              "title": "Marketing Manager",
-          },
-      },
+        {
+            "dn": "cn=john.doe,ou=people,dc=flext,dc=local",
+            "updates": {
+                "mail": "john.doe.updated@flext.local",
+                "title": "Senior Software Engineer",
+            },
+        },
+        {
+            "dn": "cn=jane.smith,ou=people,dc=flext,dc=local",
+            "updates": {
+                "mail": "jane.smith.updated@flext.local",
+                "title": "Marketing Manager",
+            },
+        },
     ]
 
     for user_update in users_to_update:
-      dn = str(user_update["dn"])
-      uid = dn.split(",", maxsplit=1)[0].replace("cn=", "")
-      print(f"   Updating user: {uid}")
+        dn = str(user_update["dn"])
+        uid = dn.split(",", maxsplit=1)[0].replace("cn=", "")
+        print(f"   Updating user: {uid}")
 
-      raw_updates = dict(user_update["updates"])  # ensure Mapping[str, str]
-      mods: dict[str, list[str]] = {str(k): [str(v)] for k, v in raw_updates.items()}
-      result = await ldap_service.modify_entry(session_id=session_id, dn=dn, modifications=mods)
+        raw_updates = dict(user_update["updates"])  # ensure Mapping[str, str]
+        mods: dict[str, list[str]] = {str(k): [str(v)] for k, v in raw_updates.items()}
+        result = await ldap_service.modify_entry(
+            session_id=session_id, dn=dn, modifications=mods
+        )
 
-      if result.success:
-          print(f"   ✅ Updated user: {uid}")
+        if result.success:
+            print(f"   ✅ Updated user: {uid}")
 
-          # Verify update by searching
-          verify_result = await ldap_service.search(
-              session_id=session_id,
-              base_dn=dn,
-              search_filter="(objectClass=*)",
-              scope="base",
-              attributes=["mail", "title"],
-          )
+            # Verify update by searching
+            verify_result = await ldap_service.search(
+                session_id=session_id,
+                base_dn=dn,
+                search_filter="(objectClass=*)",
+                scope="base",
+                attributes=["mail", "title"],
+            )
 
-          if verify_result.success and verify_result.data:
-              entry = verify_result.data[0]
-              mail = entry.get_single_attribute_value("mail") or "N/A"
-              title = entry.get_single_attribute_value("title") or "N/A"
-              print(f"     Verified: mail={mail}, title={title}")
+            if verify_result.success and verify_result.data:
+                entry = verify_result.data[0]
+                mail = entry.get_single_attribute_value("mail") or "N/A"
+                title = entry.get_single_attribute_value("title") or "N/A"
+                print(f"     Verified: mail={mail}, title={title}")
 
-      else:
-          print(f"   ❌ Failed to update user {uid}: {result.error}")
+        else:
+            print(f"   ❌ Failed to update user {uid}: {result.error}")
 
     print("✅ UPDATE operations completed")
 
@@ -420,36 +428,36 @@ async def perform_delete_operations(
     result = await ldap_service.delete_entry(user_to_delete)
 
     if result.success:
-      print(f"   ✅ Deleted user: {user_to_delete}")
+        print(f"   ✅ Deleted user: {user_to_delete}")
 
-      # Verify deletion
-      verify_result = await ldap_service.search(
-          session_id=session_id,
-          base_dn=user_to_delete,
-          search_filter="(objectClass=*)",
-          scope="base",
-      )
+        # Verify deletion
+        verify_result = await ldap_service.search(
+            session_id=session_id,
+            base_dn=user_to_delete,
+            search_filter="(objectClass=*)",
+            scope="base",
+        )
 
-      if verify_result.is_failure or not verify_result.data:
-          print("   ✅ Verified: User no longer exists")
-      else:
-          print("   ⚠️  User still exists after deletion")
+        if verify_result.is_failure or not verify_result.data:
+            print("   ✅ Verified: User no longer exists")
+        else:
+            print("   ⚠️  User still exists after deletion")
 
     else:
-      print(f"   ❌ Failed to delete user: {result.error}")
+        print(f"   ❌ Failed to delete user: {result.error}")
 
     # Final count verification
     print("   Final user count verification...")
     final_count_result = await ldap_service.search(
-      session_id=session_id,
-      base_dn="ou=people,dc=flext,dc=local",
-      search_filter="(objectClass=inetOrgPerson)",
-      attributes=["uid"],
+        session_id=session_id,
+        base_dn="ou=people,dc=flext,dc=local",
+        search_filter="(objectClass=inetOrgPerson)",
+        attributes=["uid"],
     )
 
     if final_count_result.success:
-      remaining_users = len(final_count_result.data) if final_count_result.data else 0
-      print(f"   ✅ Final user count: {remaining_users} users remaining")
+        remaining_users = len(final_count_result.data) if final_count_result.data else 0
+        print(f"   ✅ Final user count: {remaining_users} users remaining")
 
     print("✅ DELETE operations completed")
 
@@ -459,23 +467,23 @@ async def main() -> None:
     container = DockerLDAPContainer()
 
     try:
-      # Start Docker container
-      container.start_container()
+        # Start Docker container
+        container.start_container()
 
-      # Perform complete CRUD operations
-      await demonstrate_complete_crud_operations()
+        # Perform complete CRUD operations
+        await demonstrate_complete_crud_operations()
 
-      print("\n🎉 === COMPLETE CRUD OPERATIONS SUCCESSFUL ===")
-      print("✅ All LDAP operations validated with Docker container")
-      print("✅ MAXIMUM Docker container usage achieved")
-      print("✅ COMPLETE functionality tested: CREATE, READ, UPDATE, DELETE")
+        print("\n🎉 === COMPLETE CRUD OPERATIONS SUCCESSFUL ===")
+        print("✅ All LDAP operations validated with Docker container")
+        print("✅ MAXIMUM Docker container usage achieved")
+        print("✅ COMPLETE functionality tested: CREATE, READ, UPDATE, DELETE")
 
     except Exception as e:
-      print(f"\n❌ CRUD operations failed: {e}")
-      raise
+        print(f"\n❌ CRUD operations failed: {e}")
+        raise
     finally:
-      # Always clean up container
-      container.stop_container()
+        # Always clean up container
+        container.stop_container()
 
 
 if __name__ == "__main__":

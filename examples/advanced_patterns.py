@@ -50,49 +50,49 @@ async def ldap_session(
     session_id = f"session_{id(api)}"
 
     def _raise_conn_error(message: str) -> None:
-      raise ConnectionError(message)
+        raise ConnectionError(message)
 
     logger.info(
-      "Establishing LDAP session",
-      extra={
-          "server_url": server_url,
-          "session_id": session_id,
-          "has_auth": bool(bind_dn),
-      },
+        "Establishing LDAP session",
+        extra={
+            "server_url": server_url,
+            "session_id": session_id,
+            "has_auth": bool(bind_dn),
+        },
     )
 
     try:
-      # Attempt connection
-      connection_result = await api.connect(
-          server_uri=server_url,
-          bind_dn=bind_dn,
-          bind_password=password,
-      )
+        # Attempt connection
+        connection_result = await api.connect(
+            server_uri=server_url,
+            bind_dn=bind_dn,
+            bind_password=password,
+        )
 
-      if not connection_result.success:
-          msg: str = f"Failed to connect: {connection_result.error}"
-          _raise_conn_error(msg)
+        if not connection_result.success:
+            msg: str = f"Failed to connect: {connection_result.error}"
+            _raise_conn_error(msg)
 
-      logger.info("LDAP session established", extra={"session_id": session_id})
-      yield api, session_id
+        logger.info("LDAP session established", extra={"session_id": session_id})
+        yield api, session_id
 
     except Exception as e:
-      logger.exception(
-          "LDAP session failed",
-          extra={"error": str(e), "session_id": session_id},
-      )
-      raise
+        logger.exception(
+            "LDAP session failed",
+            extra={"error": str(e), "session_id": session_id},
+        )
+        raise
     finally:
-      # Cleanup
-      try:
-          if isinstance(session_id, str):
-              await api.disconnect(session_id)
-          logger.info("LDAP session closed", extra={"session_id": session_id})
-      except Exception as e:
-          logger.warning(
-              "Session cleanup failed",
-              extra={"error": str(e), "session_id": session_id},
-          )
+        # Cleanup
+        try:
+            if isinstance(session_id, str):
+                await api.disconnect(session_id)
+            logger.info("LDAP session closed", extra={"session_id": session_id})
+        except Exception as e:
+            logger.warning(
+                "Session cleanup failed",
+                extra={"error": str(e), "session_id": session_id},
+            )
 
 
 async def demonstrate_value_objects() -> None:
@@ -101,30 +101,30 @@ async def demonstrate_value_objects() -> None:
     print("=" * 40)
 
     try:
-      # 1. Distinguished Names
-      dn = FlextLdapDistinguishedName(value="cn=admin,ou=users,dc=example,dc=com")
-      validation_result = dn.validate_business_rules()
+        # 1. Distinguished Names
+        dn = FlextLdapDistinguishedName(value="cn=admin,ou=users,dc=example,dc=com")
+        validation_result = dn.validate_business_rules()
 
-      print(f"✅ DN validation: {'PASS' if validation_result.success else 'FAIL'}")
-      print(f"   DN: {dn.value}")
+        print(f"✅ DN validation: {'PASS' if validation_result.success else 'FAIL'}")
+        print(f"   DN: {dn.value}")
 
-      # 2. LDAP Filters - Extract Variable pattern for readability
-      complex_filter = "(&(objectClass=person)(mail=*@example.com))"
-      filter_obj = FlextLdapFilterValue(value=complex_filter)
-      filter_validation = filter_obj.validate_business_rules()
+        # 2. LDAP Filters - Extract Variable pattern for readability
+        complex_filter = "(&(objectClass=person)(mail=*@example.com))"
+        filter_obj = FlextLdapFilterValue(value=complex_filter)
+        filter_validation = filter_obj.validate_business_rules()
 
-      # Extract status for readability
-      filter_status = "PASS" if filter_validation.success else "FAIL"
-      print(f"✅ Filter validation: {filter_status}")
-      print(f"   Filter: {filter_obj.value}")
+        # Extract status for readability
+        filter_status = "PASS" if filter_validation.success else "FAIL"
+        print(f"✅ Filter validation: {filter_status}")
+        print(f"   Filter: {filter_obj.value}")
 
-      # 3. Complex filter construction
-      # Escaping is handled by adapters; just print the filter
-      print(f"✅ Filter ready: {filter_obj.value}")
+        # 3. Complex filter construction
+        # Escaping is handled by adapters; just print the filter
+        print(f"✅ Filter ready: {filter_obj.value}")
 
     except Exception as e:
-      logger.exception("Value object demonstration failed")
-      print(f"❌ Value objects failed: {e}")
+        logger.exception("Value object demonstration failed")
+        print(f"❌ Value objects failed: {e}")
 
 
 async def demonstrate_comprehensive_configuration() -> None:
@@ -133,23 +133,23 @@ async def demonstrate_comprehensive_configuration() -> None:
     print("=" * 40)
 
     try:
-      # 1. Full settings configuration
-      _settings = FlextLdapSettings(enable_debug_mode=True)
-      print("✅ Settings created")
+        # 1. Full settings configuration
+        _settings = FlextLdapSettings(enable_debug_mode=True)
+        print("✅ Settings created")
 
-      # 2. Advanced search configuration
-      search_config = FlextLdapSearchConfig()
-      search_validation = search_config.validate_business_rules()
-      # Extract status for readability
-      search_status = "VALID" if search_validation.success else "INVALID"
-      print(f"✅ Search config: {search_status}")
+        # 2. Advanced search configuration
+        search_config = FlextLdapSearchConfig()
+        search_validation = search_config.validate_business_rules()
+        # Extract status for readability
+        search_status = "VALID" if search_validation.success else "INVALID"
+        print(f"✅ Search config: {search_status}")
 
-      # 3. Convert to client configuration
-      print("✅ Settings ready for client configuration usage")
+        # 3. Convert to client configuration
+        print("✅ Settings ready for client configuration usage")
 
     except Exception as e:
-      logger.exception("Configuration demonstration failed")
-      print(f"❌ Configuration failed: {e}")
+        logger.exception("Configuration demonstration failed")
+        print(f"❌ Configuration failed: {e}")
 
 
 async def demonstrate_async_patterns() -> None:
@@ -158,45 +158,45 @@ async def demonstrate_async_patterns() -> None:
     print("=" * 40)
 
     try:
-      # 1. Context manager usage
-      async with ldap_session("ldap://demo.example.com:389") as (api, session_id):
-          print(f"✅ Session established: {session_id}")
+        # 1. Context manager usage
+        async with ldap_session("ldap://demo.example.com:389") as (api, session_id):
+            print(f"✅ Session established: {session_id}")
 
-          # 2. Concurrent operations (simulated)
-          tasks = []
-          search_bases = [
-              "ou=users,dc=example,dc=com",
-              "ou=groups,dc=example,dc=com",
-              "ou=services,dc=example,dc=com",
-          ]
+            # 2. Concurrent operations (simulated)
+            tasks = []
+            search_bases = [
+                "ou=users,dc=example,dc=com",
+                "ou=groups,dc=example,dc=com",
+                "ou=services,dc=example,dc=com",
+            ]
 
-          for base_dn in search_bases:
-              task = api.search(
-                  session_id=session_id,
-                  base_dn=base_dn,
-                  search_filter="(objectClass=*)",
-                  attributes=["dn"],
-                  scope="one",
-              )
-              tasks.append(task)
+            for base_dn in search_bases:
+                task = api.search(
+                    session_id=session_id,
+                    base_dn=base_dn,
+                    search_filter="(objectClass=*)",
+                    attributes=["dn"],
+                    scope="one",
+                )
+                tasks.append(task)
 
-          # Execute concurrent searches
-          results = await asyncio.gather(*tasks, return_exceptions=True)
+            # Execute concurrent searches
+            results = await asyncio.gather(*tasks, return_exceptions=True)
 
-          successful_searches = sum(
-              1
-              for result in results
-              if not isinstance(result, Exception)
-              and getattr(result, "success", False)
-          )
+            successful_searches = sum(
+                1
+                for result in results
+                if not isinstance(result, Exception)
+                and getattr(result, "success", False)
+            )
 
-          print(
-              f"✅ Concurrent searches: {successful_searches}/{len(tasks)} successful",
-          )
+            print(
+                f"✅ Concurrent searches: {successful_searches}/{len(tasks)} successful",
+            )
 
     except Exception as e:
-      logger.exception("Async patterns demonstration failed")
-      print(f"❌ Async patterns failed: {e}")
+        logger.exception("Async patterns demonstration failed")
+        print(f"❌ Async patterns failed: {e}")
 
 
 async def demonstrate_error_recovery() -> None:
@@ -208,61 +208,61 @@ async def demonstrate_error_recovery() -> None:
     failure_attempts = 2
 
     async def attempt_operation_with_retry(
-      operation_name: str,
-      max_retries: int = 3,
+        operation_name: str,
+        max_retries: int = 3,
     ) -> str | None:
-      """Retry pattern for LDAP operations."""
+        """Retry pattern for LDAP operations."""
 
-      def _simulate_failure(op_name: str) -> None:
-          msg: str = f"Simulated failure for {op_name}"
-          raise ConnectionError(msg)
+        def _simulate_failure(op_name: str) -> None:
+            msg: str = f"Simulated failure for {op_name}"
+            raise ConnectionError(msg)
 
-      for attempt in range(max_retries):
-          try:
-              logger.debug(
-                  f"Attempting {operation_name}",
-                  extra={"attempt": attempt + 1, "max_retries": max_retries},
-              )
+        for attempt in range(max_retries):
+            try:
+                logger.debug(
+                    f"Attempting {operation_name}",
+                    extra={"attempt": attempt + 1, "max_retries": max_retries},
+                )
 
-              # Simulate operation (would be real LDAP operation)
-              if attempt < failure_attempts:  # Fail first attempts
-                  _simulate_failure(operation_name)
+                # Simulate operation (would be real LDAP operation)
+                if attempt < failure_attempts:  # Fail first attempts
+                    _simulate_failure(operation_name)
 
-              logger.info(
-                  f"Operation {operation_name} succeeded",
-                  extra={"attempts_used": attempt + 1},
-              )
-              return f"Success after {attempt + 1} attempts"
+                logger.info(
+                    f"Operation {operation_name} succeeded",
+                    extra={"attempts_used": attempt + 1},
+                )
+                return f"Success after {attempt + 1} attempts"
 
-          except Exception as e:
-              logger.warning(
-                  f"Attempt {attempt + 1} failed",
-                  extra={
-                      "operation": operation_name,
-                      "error": str(e),
-                      "remaining_attempts": max_retries - attempt - 1,
-                  },
-              )
+            except Exception as e:
+                logger.warning(
+                    f"Attempt {attempt + 1} failed",
+                    extra={
+                        "operation": operation_name,
+                        "error": str(e),
+                        "remaining_attempts": max_retries - attempt - 1,
+                    },
+                )
 
-              if attempt == max_retries - 1:
-                  logger.exception(f"All attempts failed for {operation_name}")
-                  raise
+                if attempt == max_retries - 1:
+                    logger.exception(f"All attempts failed for {operation_name}")
+                    raise
 
-              # Exponential backoff
-              await asyncio.sleep(2**attempt)
-      return None
+                # Exponential backoff
+                await asyncio.sleep(2**attempt)
+        return None
 
     try:
-      # 1. Connection retry
-      result1 = await attempt_operation_with_retry("LDAP Connection")
-      print(f"✅ Connection recovery: {result1}")
+        # 1. Connection retry
+        result1 = await attempt_operation_with_retry("LDAP Connection")
+        print(f"✅ Connection recovery: {result1}")
 
-      # 2. Search retry
-      result2 = await attempt_operation_with_retry("LDAP Search")
-      print(f"✅ Search recovery: {result2}")
+        # 2. Search retry
+        result2 = await attempt_operation_with_retry("LDAP Search")
+        print(f"✅ Search recovery: {result2}")
 
     except Exception as e:
-      print(f"❌ Error recovery failed: {e}")
+        print(f"❌ Error recovery failed: {e}")
 
 
 async def demonstrate_performance_patterns() -> None:
@@ -271,34 +271,34 @@ async def demonstrate_performance_patterns() -> None:
     print("=" * 40)
 
     try:
-      # 1. Connection pooling simulation
-      print("✅ Connection pooling: Enabled (simulated)")
+        # 1. Connection pooling simulation
+        print("✅ Connection pooling: Enabled (simulated)")
 
-      # 2. Batch operations
-      batch_operations = [
-          {"type": "search", "base": f"cn=user{i},ou=users,dc=example,dc=com"}
-          for i in range(10)
-      ]
+        # 2. Batch operations
+        batch_operations = [
+            {"type": "search", "base": f"cn=user{i},ou=users,dc=example,dc=com"}
+            for i in range(10)
+        ]
 
-      print(f"✅ Batch operations: {len(batch_operations)} operations prepared")
+        print(f"✅ Batch operations: {len(batch_operations)} operations prepared")
 
-      # 3. Paging simulation
-      page_size = 100
-      total_entries = 1500
-      pages = (total_entries + page_size - 1) // page_size
+        # 3. Paging simulation
+        page_size = 100
+        total_entries = 1500
+        pages = (total_entries + page_size - 1) // page_size
 
-      print(f"✅ Paging strategy: {pages} pages of {page_size} entries")
+        print(f"✅ Paging strategy: {pages} pages of {page_size} entries")
 
-      # 4. Caching simulation
-      cache_hits = 8
-      cache_misses = 2
-      hit_rate = cache_hits / (cache_hits + cache_misses) * 100
+        # 4. Caching simulation
+        cache_hits = 8
+        cache_misses = 2
+        hit_rate = cache_hits / (cache_hits + cache_misses) * 100
 
-      print(f"✅ Cache performance: {hit_rate:.1f}% hit rate")
+        print(f"✅ Cache performance: {hit_rate:.1f}% hit rate")
 
     except Exception as e:
-      logger.exception("Performance demonstration failed")
-      print(f"❌ Performance patterns failed: {e}")
+        logger.exception("Performance demonstration failed")
+        print(f"❌ Performance patterns failed: {e}")
 
 
 async def main() -> None:
@@ -308,31 +308,31 @@ async def main() -> None:
     print("Enterprise-grade patterns and best practices\n")
 
     try:
-      # 1. Value objects
-      await demonstrate_value_objects()
+        # 1. Value objects
+        await demonstrate_value_objects()
 
-      # 2. Comprehensive configuration
-      await demonstrate_comprehensive_configuration()
+        # 2. Comprehensive configuration
+        await demonstrate_comprehensive_configuration()
 
-      # 3. Async patterns
-      await demonstrate_async_patterns()
+        # 3. Async patterns
+        await demonstrate_async_patterns()
 
-      # 4. Error recovery
-      await demonstrate_error_recovery()
+        # 4. Error recovery
+        await demonstrate_error_recovery()
 
-      # 5. Performance patterns
-      await demonstrate_performance_patterns()
+        # 5. Performance patterns
+        await demonstrate_performance_patterns()
 
-      print("\n🎉 Advanced patterns demonstration completed!")
-      print("✅ Enterprise patterns validated")
-      print("✅ Async/await patterns confirmed")
-      print("✅ Error recovery strategies tested")
-      print("✅ Performance optimizations demonstrated")
+        print("\n🎉 Advanced patterns demonstration completed!")
+        print("✅ Enterprise patterns validated")
+        print("✅ Async/await patterns confirmed")
+        print("✅ Error recovery strategies tested")
+        print("✅ Performance optimizations demonstrated")
 
     except Exception as e:
-      print(f"\n❌ Advanced patterns failed: {e}")
-      logger.exception("Advanced patterns demonstration failed")
-      raise
+        print(f"\n❌ Advanced patterns failed: {e}")
+        logger.exception("Advanced patterns demonstration failed")
+        raise
 
 
 if __name__ == "__main__":

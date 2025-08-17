@@ -29,11 +29,11 @@ from __future__ import annotations
 from typing import TypeGuard
 
 from flext_ldap.types import (
-      TLdapAttributes,
-      TLdapAttributeValue,
-      TLdapEntryData,
-      TLdapSearchResult,
-    )
+    TLdapAttributes,
+    TLdapAttributeValue,
+    TLdapEntryData,
+    TLdapSearchResult,
+)
 
 # =============================================================================
 # LDAP DATA TYPE GUARDS - Union Type Resolution
@@ -64,9 +64,9 @@ def is_ldap_attribute_value(value: object) -> TypeGuard[TLdapAttributeValue]:
 
     """
     if isinstance(value, (str, bytes)):
-      return True
+        return True
     if isinstance(value, list):
-      return all(isinstance(item, (str, bytes)) for item in value)
+        return all(isinstance(item, (str, bytes)) for item in value)
     return False
 
 
@@ -81,13 +81,13 @@ def is_ldap_attributes_dict(value: object) -> TypeGuard[TLdapAttributes]:
 
     """
     if not isinstance(value, dict):
-      return False
+        return False
 
     for key, val in value.items():
-      if not isinstance(key, str):
-          return False
-      if not is_ldap_attribute_value(val):
-          return False
+        if not isinstance(key, str):
+            return False
+        if not is_ldap_attribute_value(val):
+            return False
 
     return True
 
@@ -103,15 +103,15 @@ def is_ldap_search_result(value: object) -> TypeGuard[TLdapSearchResult]:
 
     """
     if not isinstance(value, list):
-      return False
+        return False
 
     for item in value:
-      if not isinstance(item, dict):
-          return False
-      if "dn" not in item:
-          return False
-      if not is_ldap_dn(item["dn"]):
-          return False
+        if not isinstance(item, dict):
+            return False
+        if "dn" not in item:
+            return False
+        if not is_ldap_dn(item["dn"]):
+            return False
 
     return True
 
@@ -127,21 +127,21 @@ def is_ldap_entry_data(value: object) -> TypeGuard[TLdapEntryData]:
 
     """
     if not isinstance(value, dict):
-      return False
+        return False
 
     # Must have dn
     if "dn" not in value or not is_ldap_dn(value["dn"]):
-      return False
+        return False
 
     # Check other attributes
     for key, val in value.items():
-      if key == "dn":
-          continue
-      if not isinstance(key, str):
-          return False
-      # Entry data can contain various types
-      if not isinstance(val, (str, bytes, list, int, bool)):
-          return False
+        if key == "dn":
+            continue
+        if not isinstance(key, str):
+            return False
+        # Entry data can contain various types
+        if not isinstance(val, (str, bytes, list, int, bool)):
+            return False
 
     return True
 
@@ -162,9 +162,9 @@ def is_connection_result(value: object) -> TypeGuard[dict[str, object]]:
 
     """
     return (
-      isinstance(value, dict)
-      and "status" in value
-      and isinstance(value["status"], str)
+        isinstance(value, dict)
+        and "status" in value
+        and isinstance(value["status"], str)
     )
 
 
@@ -215,9 +215,9 @@ def ensure_string_list(value: str | list[str]) -> list[str]:
 
     """
     if isinstance(value, str):
-      return [value]
+        return [value]
     if is_string_list(value):
-      return value
+        return value
     # Fallback: convert each item to string
     return [str(item) for item in value] if isinstance(value, list) else [str(value)]
 
@@ -236,11 +236,11 @@ def ensure_ldap_dn(value: object) -> str:
 
     """
     if is_ldap_dn(value):
-      return value
+        return value
 
     str_value = str(value)
     if "=" in str_value:
-      return str_value
+        return str_value
 
     msg = f"Cannot convert {value!r} to valid LDAP DN"
     raise ValueError(msg)

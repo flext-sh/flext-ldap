@@ -111,24 +111,24 @@ class FlextLdapScope(StrEnum):
 
     @classmethod
     def get_ldap3_scope(cls, scope: FlextLdapScope) -> int:
-      """Convert to ldap3 library scope constants."""
-      scope_mapping = {
-          cls.BASE: 0,  # ldap3.BASE
-          cls.ONE: 1,  # ldap3.LEVEL
-          cls.SUB: 2,  # ldap3.SUBTREE
-          cls.CHILDREN: 3,  # ldap3.SUBORDINATES
-      }
-      return scope_mapping.get(scope, 2)  # Default to subtree
+        """Convert to ldap3 library scope constants."""
+        scope_mapping = {
+            cls.BASE: 0,  # ldap3.BASE
+            cls.ONE: 1,  # ldap3.LEVEL
+            cls.SUB: 2,  # ldap3.SUBTREE
+            cls.CHILDREN: 3,  # ldap3.SUBORDINATES
+        }
+        return scope_mapping.get(scope, 2)  # Default to subtree
 
     def get_description(self) -> str:
-      """Get human-readable description of scope."""
-      descriptions = {
-          self.BASE: "Search only the base entry itself",
-          self.ONE: "Search immediate children of base entry only",
-          self.SUB: "Search base entry and entire subtree beneath it",
-          self.CHILDREN: "Search all descendants but exclude base entry",
-      }
-      return descriptions.get(self, "Unknown scope")
+        """Get human-readable description of scope."""
+        descriptions = {
+            self.BASE: "Search only the base entry itself",
+            self.ONE: "Search immediate children of base entry only",
+            self.SUB: "Search base entry and entire subtree beneath it",
+            self.CHILDREN: "Search all descendants but exclude base entry",
+        }
+        return descriptions.get(self, "Unknown scope")
 
 
 class FlextLdapConnectionType(StrEnum):
@@ -236,9 +236,9 @@ class FlextLdapAttributeConstants:
     MAIL: Final[str] = "mail"
 
     class AuthFields:
-      """Authentication attribute names used across LDAP schemas."""
+        """Authentication attribute names used across LDAP schemas."""
 
-      USER_PASSWORD_ATTR: Final[str] = "user" + "Password"
+        USER_PASSWORD_ATTR: Final[str] = "user" + "Password"
 
     TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
     FACSIMILE_TELEPHONE_NUMBER: Final[str] = "facsimileTelephoneNumber"
@@ -294,51 +294,51 @@ class FlextLdapAttributeConstants:
     NS_ACCOUNT_LOCK: Final[str] = "nsAccountLock"
 
     class PasswordPolicy:
-      """Password policy attribute names used in common directories."""
+        """Password policy attribute names used in common directories."""
 
-      PASSWORD_EXPIRY_TIME_ATTR: Final[str] = "passwordExpiry" + "Time"
+        PASSWORD_EXPIRY_TIME_ATTR: Final[str] = "passwordExpiry" + "Time"
 
     @classmethod
     def get_person_attributes(cls) -> list[str]:
-      """Get standard person-related attributes."""
-      return [
-          cls.OBJECT_CLASS,
-          cls.COMMON_NAME,
-          cls.SURNAME,
-          cls.GIVEN_NAME,
-          cls.DISPLAY_NAME,
-          cls.USER_ID,
-          cls.MAIL,
-          cls.TELEPHONE_NUMBER,
-          cls.MOBILE,
-          cls.DESCRIPTION,
-          cls.TITLE,
-          cls.EMPLOYEE_NUMBER,
-      ]
+        """Get standard person-related attributes."""
+        return [
+            cls.OBJECT_CLASS,
+            cls.COMMON_NAME,
+            cls.SURNAME,
+            cls.GIVEN_NAME,
+            cls.DISPLAY_NAME,
+            cls.USER_ID,
+            cls.MAIL,
+            cls.TELEPHONE_NUMBER,
+            cls.MOBILE,
+            cls.DESCRIPTION,
+            cls.TITLE,
+            cls.EMPLOYEE_NUMBER,
+        ]
 
     @classmethod
     def get_group_attributes(cls) -> list[str]:
-      """Get standard group-related attributes."""
-      return [
-          cls.OBJECT_CLASS,
-          cls.COMMON_NAME,
-          cls.DESCRIPTION,
-          cls.MEMBER,
-          cls.UNIQUE_MEMBER,
-          cls.OWNER,
-      ]
+        """Get standard group-related attributes."""
+        return [
+            cls.OBJECT_CLASS,
+            cls.COMMON_NAME,
+            cls.DESCRIPTION,
+            cls.MEMBER,
+            cls.UNIQUE_MEMBER,
+            cls.OWNER,
+        ]
 
     @classmethod
     def get_operational_attributes(cls) -> list[str]:
-      """Get standard operational attributes."""
-      return [
-          cls.CREATE_TIMESTAMP,
-          cls.MODIFY_TIMESTAMP,
-          cls.CREATORS_NAME,
-          cls.MODIFIERS_NAME,
-          cls.ENTRY_UUID,
-          cls.ENTRY_CSN,
-      ]
+        """Get standard operational attributes."""
+        return [
+            cls.CREATE_TIMESTAMP,
+            cls.MODIFY_TIMESTAMP,
+            cls.CREATORS_NAME,
+            cls.MODIFIERS_NAME,
+            cls.ENTRY_UUID,
+            cls.ENTRY_CSN,
+        ]
 
 
 class FlextLdapObjectClassConstants:
@@ -459,7 +459,7 @@ class FlextLdapDnConstants:
 
     # Special Characters requiring escaping (RFC 4514)
     ESCAPE_CHARS: Final[frozenset[str]] = frozenset(
-      {",", "=", "+", "<", ">", "#", ";", "\\", '"', " "},
+        {",", "=", "+", "<", ">", "#", ";", "\\", '"', " "},
     )
 
     # Hex escape pattern
@@ -554,67 +554,67 @@ class FlextLdapErrorConstants:
 
     # Error Categories for systematic handling
     CONNECTION_ERRORS: Final[frozenset[int]] = frozenset(
-      [UNAVAILABLE, BUSY, OPERATIONS_ERROR],
+        [UNAVAILABLE, BUSY, OPERATIONS_ERROR],
     )
     AUTHENTICATION_ERRORS: Final[frozenset[int]] = frozenset(
-      [
-          INAPPROPRIATE_AUTHENTICATION,
-          INVALID_CREDENTIALS,
-          AUTH_METHOD_NOT_SUPPORTED,
-          STRONGER_AUTH_REQUIRED,
-      ],
+        [
+            INAPPROPRIATE_AUTHENTICATION,
+            INVALID_CREDENTIALS,
+            AUTH_METHOD_NOT_SUPPORTED,
+            STRONGER_AUTH_REQUIRED,
+        ],
     )
     AUTHORIZATION_ERRORS: Final[frozenset[int]] = frozenset(
-      [INSUFFICIENT_ACCESS_RIGHTS, CONFIDENTIALITY_REQUIRED],
+        [INSUFFICIENT_ACCESS_RIGHTS, CONFIDENTIALITY_REQUIRED],
     )
     DATA_ERRORS: Final[frozenset[int]] = frozenset(
-      [
-          NO_SUCH_OBJECT,
-          INVALID_DN_SYNTAX,
-          NAMING_VIOLATION,
-          OBJECT_CLASS_VIOLATION,
-          ENTRY_ALREADY_EXISTS,
-      ],
+        [
+            NO_SUCH_OBJECT,
+            INVALID_DN_SYNTAX,
+            NAMING_VIOLATION,
+            OBJECT_CLASS_VIOLATION,
+            ENTRY_ALREADY_EXISTS,
+        ],
     )
 
     # Error Messages
     ERROR_MESSAGES: ClassVar[dict[str, str]] = {
-      FLEXT_LDAP_CONNECTION_FAILED: "LDAP connection failed",
-      FLEXT_LDAP_BIND_FAILED: "LDAP bind authentication failed",
-      FLEXT_LDAP_SEARCH_FAILED: "LDAP search operation failed",
-      FLEXT_LDAP_MODIFY_FAILED: "LDAP modify operation failed",
-      FLEXT_LDAP_ADD_FAILED: "LDAP add operation failed",
-      FLEXT_LDAP_DELETE_FAILED: "LDAP delete operation failed",
-      FLEXT_LDAP_INVALID_DN: "Invalid LDAP Distinguished Name",
-      FLEXT_LDAP_INVALID_FILTER: "Invalid LDAP search filter",
-      FLEXT_LDAP_ENTRY_NOT_FOUND: "LDAP entry not found",
-      FLEXT_LDAP_ENTRY_EXISTS: "LDAP entry already exists",
+        FLEXT_LDAP_CONNECTION_FAILED: "LDAP connection failed",
+        FLEXT_LDAP_BIND_FAILED: "LDAP bind authentication failed",
+        FLEXT_LDAP_SEARCH_FAILED: "LDAP search operation failed",
+        FLEXT_LDAP_MODIFY_FAILED: "LDAP modify operation failed",
+        FLEXT_LDAP_ADD_FAILED: "LDAP add operation failed",
+        FLEXT_LDAP_DELETE_FAILED: "LDAP delete operation failed",
+        FLEXT_LDAP_INVALID_DN: "Invalid LDAP Distinguished Name",
+        FLEXT_LDAP_INVALID_FILTER: "Invalid LDAP search filter",
+        FLEXT_LDAP_ENTRY_NOT_FOUND: "LDAP entry not found",
+        FLEXT_LDAP_ENTRY_EXISTS: "LDAP entry already exists",
     }
 
     @classmethod
     def get_error_category(cls, result_code: int) -> str:
-      """Get error category for systematic error handling."""
-      if result_code in cls.CONNECTION_ERRORS:
-          return "CONNECTION"
-      if result_code in cls.AUTHENTICATION_ERRORS:
-          return "AUTHENTICATION"
-      if result_code in cls.AUTHORIZATION_ERRORS:
-          return "AUTHORIZATION"
-      if result_code in cls.DATA_ERRORS:
-          return "DATA"
-      return "OTHER"
+        """Get error category for systematic error handling."""
+        if result_code in cls.CONNECTION_ERRORS:
+            return "CONNECTION"
+        if result_code in cls.AUTHENTICATION_ERRORS:
+            return "AUTHENTICATION"
+        if result_code in cls.AUTHORIZATION_ERRORS:
+            return "AUTHORIZATION"
+        if result_code in cls.DATA_ERRORS:
+            return "DATA"
+        return "OTHER"
 
     @classmethod
     def is_retryable_error(cls, result_code: int) -> bool:
-      """Check if error is potentially retryable."""
-      retryable_errors = {
-          cls.BUSY,
-          cls.UNAVAILABLE,
-          cls.TIME_LIMIT_EXCEEDED,
-          cls.ADMIN_LIMIT_EXCEEDED,
-          cls.OPERATIONS_ERROR,
-      }
-      return result_code in retryable_errors
+        """Check if error is potentially retryable."""
+        retryable_errors = {
+            cls.BUSY,
+            cls.UNAVAILABLE,
+            cls.TIME_LIMIT_EXCEEDED,
+            cls.ADMIN_LIMIT_EXCEEDED,
+            cls.OPERATIONS_ERROR,
+        }
+        return result_code in retryable_errors
 
 
 # =============================================================================
@@ -751,7 +751,9 @@ class FlextLdapValidationMessages:
     PORT_RANGE_ERROR: Final[str] = "Port must be between 1 and {max_port}, got {port}"
     CONNECTION_FAILED: Final[str] = "Connection failed"
     CONNECTION_FAILED_WITH_ERROR: Final[str] = "Connection failed: {error}"
-    CONNECTION_FAILED_INVALID_SCHEME: Final[str] = "Connection failed: invalid URI scheme"
+    CONNECTION_FAILED_INVALID_SCHEME: Final[str] = (
+        "Connection failed: invalid URI scheme"
+    )
     CONNECTION_FAILED_INVALID_HOST: Final[str] = "Connection failed: invalid host"
 
     # Authentication validation messages
@@ -774,7 +776,9 @@ class FlextLdapValidationMessages:
 
     # Session validation messages
     SESSION_ID_REQUIRED: Final[str] = "Session ID is required"
-    SESSION_ID_REQUIRED_FOR_OPERATION: Final[str] = "Session ID is required for {operation}"
+    SESSION_ID_REQUIRED_FOR_OPERATION: Final[str] = (
+        "Session ID is required for {operation}"
+    )
     UNKNOWN_SESSION: Final[str] = "Unknown session: {session_id}"
 
     # Search operation messages
@@ -822,9 +826,13 @@ class FlextLdapValidationMessages:
     URI_FIELD_NAME: Final[str] = "URI"
     BASE_DN_FIELD_NAME: Final[str] = "Base DN"
     INVALID_URI_SCHEME: Final[str] = "Invalid URI scheme"
-    CONNECTION_FAILED_WITH_CONTEXT: Final[str] = "Connection failed with context: {context}"
+    CONNECTION_FAILED_WITH_CONTEXT: Final[str] = (
+        "Connection failed with context: {context}"
+    )
     VALIDATION_FAILED: Final[str] = "Validation failed for {field}"
-    ENTRY_MUST_HAVE_OBJECT_CLASS: Final[str] = "Entry must have at least one object class"
+    ENTRY_MUST_HAVE_OBJECT_CLASS: Final[str] = (
+        "Entry must have at least one object class"
+    )
 
     # Operation context messages
     OPERATION_FAILED: Final[str] = "Operation failed: {error}"
@@ -858,8 +866,12 @@ class FlextLdapValidationMessages:
     # Configuration validation messages
     CONFIGURATION_ERROR: Final[str] = "Configuration error in {key}: {error}"
     MAX_POOL_SIZE_ERROR: Final[str] = "max_pool_size ({value}) must be >= 1"
-    CACHE_TTL_POSITIVE: Final[str] = "Cache TTL must be positive when caching is enabled"
-    DEFAULT_CONNECTION_MUST_SPECIFY_SERVER: Final[str] = "Default connection must specify a server"
+    CACHE_TTL_POSITIVE: Final[str] = (
+        "Cache TTL must be positive when caching is enabled"
+    )
+    DEFAULT_CONNECTION_MUST_SPECIFY_SERVER: Final[str] = (
+        "Default connection must specify a server"
+    )
 
     # Disconnection messages
     DISCONNECT_FAILED: Final[str] = "Disconnect failed: {error}"
@@ -896,7 +908,9 @@ class FlextLdapOperationMessages:
 
     # Service initialization messages
     SEARCH_SERVICE_INITIALIZED: Final[str] = "FlextLdapSearchService initialized"
-    CONNECTION_SERVICE_INITIALIZED: Final[str] = "FlextLdapConnectionService initialized"
+    CONNECTION_SERVICE_INITIALIZED: Final[str] = (
+        "FlextLdapConnectionService initialized"
+    )
     ENTRY_SERVICE_INITIALIZED: Final[str] = "FlextLdapEntryService initialized"
     EXPORT_SERVICE_INITIALIZED: Final[str] = "FlextLdapExportService initialized"
     API_INITIALIZED: Final[str] = "FlextLdapApi initialized with specialized services"
@@ -945,13 +959,30 @@ class FlextLdapDefaultValues:
     DEFAULT_LDIF_ENCODING: Final[str] = "utf-8"
 
     # Object class defaults
-    DEFAULT_USER_OBJECT_CLASSES: Final[list[str]] = ["inetOrgPerson", "organizationalPerson", "person", "top"]
+    DEFAULT_USER_OBJECT_CLASSES: Final[list[str]] = [
+        "inetOrgPerson",
+        "organizationalPerson",
+        "person",
+        "top",
+    ]
     DEFAULT_GROUP_OBJECT_CLASSES: Final[list[str]] = ["groupOfNames", "top"]
     DEFAULT_OU_OBJECT_CLASSES: Final[list[str]] = ["organizationalUnit", "top"]
 
     # Attribute defaults
-    DEFAULT_USER_ATTRIBUTES: Final[list[str]] = ["uid", "cn", "sn", "givenName", "mail", "objectClass"]
-    DEFAULT_GROUP_ATTRIBUTES: Final[list[str]] = ["cn", "description", "member", "objectClass"]
+    DEFAULT_USER_ATTRIBUTES: Final[list[str]] = [
+        "uid",
+        "cn",
+        "sn",
+        "givenName",
+        "mail",
+        "objectClass",
+    ]
+    DEFAULT_GROUP_ATTRIBUTES: Final[list[str]] = [
+        "cn",
+        "description",
+        "member",
+        "objectClass",
+    ]
     DEFAULT_ALL_ATTRIBUTES: Final[str] = "*"
     DEFAULT_OPERATIONAL_ATTRIBUTES: Final[str] = "+"
 
@@ -1000,7 +1031,9 @@ class FlextLdapDefaultValues:
 
     # Domain specification defaults
     VALID_LDAP_USER_NAME: Final[str] = "ValidLdapUser"
-    VALID_LDAP_USER_DESCRIPTION: Final[str] = "Validates LDAP user entity business rules"
+    VALID_LDAP_USER_DESCRIPTION: Final[str] = (
+        "Validates LDAP user entity business rules"
+    )
 
 
 # =============================================================================
@@ -1016,16 +1049,16 @@ class FlextLdapSchemaDiscoveryConstants:
     """
 
     class Discovery:
-      """Testing convenience container for discovery settings."""
+        """Testing convenience container for discovery settings."""
 
-      SCHEMA_CACHE_TTL: int = FlextLdapObservabilityConstants.SCHEMA_CACHE_TTL
-      SCHEMA_REFRESH_INTERVAL: int = (
-          FlextLdapObservabilityConstants.SCHEMA_REFRESH_INTERVAL
-      )
-      MAX_SCHEMA_ENTRIES: int = FlextLdapObservabilityConstants.MAX_SCHEMA_ENTRIES
-      MAX_DISCOVERY_HISTORY: int = (
-          FlextLdapObservabilityConstants.MAX_DISCOVERY_HISTORY
-      )
+        SCHEMA_CACHE_TTL: int = FlextLdapObservabilityConstants.SCHEMA_CACHE_TTL
+        SCHEMA_REFRESH_INTERVAL: int = (
+            FlextLdapObservabilityConstants.SCHEMA_REFRESH_INTERVAL
+        )
+        MAX_SCHEMA_ENTRIES: int = FlextLdapObservabilityConstants.MAX_SCHEMA_ENTRIES
+        MAX_DISCOVERY_HISTORY: int = (
+            FlextLdapObservabilityConstants.MAX_DISCOVERY_HISTORY
+        )
 
 
 # =============================================================================

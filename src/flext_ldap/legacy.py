@@ -30,9 +30,9 @@ from flext_ldap.models import FlextLdapEntry, FlextLdapGroup, FlextLdapUser
 def _deprecation_warning(old_name: str, new_name: str) -> None:
     """Issue a deprecation warning for legacy imports."""
     warnings.warn(
-      f"{old_name} is deprecated, use {new_name} instead",
-      DeprecationWarning,
-      stacklevel=3,
+        f"{old_name} is deprecated, use {new_name} instead",
+        DeprecationWarning,
+        stacklevel=3,
     )
 
 
@@ -117,7 +117,9 @@ def ConnectionError(*args: object, **kwargs: object) -> FlextLdapConnectionError
     return FlextLdapConnectionError(*args, **kwargs)
 
 
-def AuthenticationError(*args: object, **kwargs: object) -> FlextLdapAuthenticationError:  # noqa: N802
+def AuthenticationError(
+    *args: object, **kwargs: object
+) -> FlextLdapAuthenticationError:  # noqa: N802
     """Legacy alias for FlextLdapAuthenticationError."""
     _deprecation_warning("AuthenticationError", "FlextLdapAuthenticationError")
     return FlextLdapAuthenticationError(*args, **kwargs)

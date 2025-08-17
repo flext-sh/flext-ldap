@@ -44,12 +44,18 @@ async def demonstrate_configuration() -> None:
     print("=" * 40)
 
     # 1. Basic connection configuration
-    connection_config = FlextLdapConnectionConfig(server="ldap.example.com", port=389, use_ssl=False, timeout=30)
+    connection_config = FlextLdapConnectionConfig(
+        server="ldap.example.com", port=389, use_ssl=False, timeout=30
+    )
 
     print(f"✅ Connection config: {connection_config.server}:{connection_config.port}")
 
     # 2. Authentication configuration
-    auth_config = FlextLdapAuthConfig(bind_dn="cn=admin,dc=example,dc=com", bind_password=SecretStr("secret"), use_anonymous_bind=False)
+    auth_config = FlextLdapAuthConfig(
+        bind_dn="cn=admin,dc=example,dc=com",
+        bind_password=SecretStr("secret"),
+        use_anonymous_bind=False,
+    )
 
     print(f"✅ Auth config: {auth_config.bind_dn}")
 
@@ -80,19 +86,19 @@ async def demonstrate_api_usage() -> FlextLdapApi:
 
     # 2. Connect (using mock server for demo)
     try:
-      connection_result = await api.connect(
-          server_uri="ldap://mock.example.com:389",
-          bind_dn="cn=admin,dc=example,dc=com",
-          bind_password="secret",  # noqa: S106 - Example password for documentation
-      )
+        connection_result = await api.connect(
+            server_uri="ldap://mock.example.com:389",
+            bind_dn="cn=admin,dc=example,dc=com",
+            bind_password="secret",  # noqa: S106 - Example password for documentation
+        )
 
-      if connection_result.success:
-          print(f"✅ Connected with session: {connection_result.data}")
-      else:
-          print(f"❌ Connection failed: {connection_result.error}")
+        if connection_result.success:
+            print(f"✅ Connected with session: {connection_result.data}")
+        else:
+            print(f"❌ Connection failed: {connection_result.error}")
 
     except Exception as e:
-      print(f"❌ Connection exception: {e}")
+        print(f"❌ Connection exception: {e}")
 
     return api
 
@@ -106,27 +112,27 @@ async def demonstrate_search_operations(api: FlextLdapApi) -> None:
     session_id = "demo_session"
 
     try:
-      # 1. Basic search
-      search_result = await api.search(
-          session_id=session_id,
-          base_dn="dc=example,dc=com",
-          search_filter="(objectClass=person)",
-          attributes=["cn", "mail", "uid"],
-          scope="subtree",
-      )
+        # 1. Basic search
+        search_result = await api.search(
+            session_id=session_id,
+            base_dn="dc=example,dc=com",
+            search_filter="(objectClass=person)",
+            attributes=["cn", "mail", "uid"],
+            scope="subtree",
+        )
 
-      if search_result.success:
-          entries = search_result.data or []
-          print(f"✅ Search completed: {len(entries)} entries found")
+        if search_result.success:
+            entries = search_result.data or []
+            print(f"✅ Search completed: {len(entries)} entries found")
 
-          for entry in entries[:3]:  # Show first 3 entries
-              print(f"  - DN: {getattr(entry, 'dn', 'N/A')}")
+            for entry in entries[:3]:  # Show first 3 entries
+                print(f"  - DN: {getattr(entry, 'dn', 'N/A')}")
 
-      else:
-          print(f"❌ Search failed: {search_result.error}")
+        else:
+            print(f"❌ Search failed: {search_result.error}")
 
     except Exception as e:
-      print(f"❌ Search exception: {e}")
+        print(f"❌ Search exception: {e}")
 
 
 async def demonstrate_error_handling() -> None:
@@ -139,25 +145,31 @@ async def demonstrate_error_handling() -> None:
 
     validation_result = invalid_config.validate_domain_rules()
     if not validation_result.success:
-      print(f"✅ Caught configuration error: {validation_result.error}")
+        print(f"✅ Caught configuration error: {validation_result.error}")
 
     # 2. Authentication errors
-    invalid_auth = FlextLdapAuthConfig(bind_dn="cn=admin,dc=example,dc=com", bind_password=SecretStr(""), use_anonymous_bind=False)
+    invalid_auth = FlextLdapAuthConfig(
+        bind_dn="cn=admin,dc=example,dc=com",
+        bind_password=SecretStr(""),
+        use_anonymous_bind=False,
+    )
 
     auth_validation = invalid_auth.validate_business_rules()
     if not auth_validation.success:
-      print(f"✅ Caught authentication error: {auth_validation.error}")
+        print(f"✅ Caught authentication error: {auth_validation.error}")
 
     # 3. Connection errors (simulated)
     api = FlextLdapApi()
     try:
-      connection_result = await api.connect(server_uri="ldap://nonexistent.server:389")
+        connection_result = await api.connect(
+            server_uri="ldap://nonexistent.server:389"
+        )
 
-      if not connection_result.success:
-          print(f"✅ Caught connection error: {connection_result.error}")
+        if not connection_result.success:
+            print(f"✅ Caught connection error: {connection_result.error}")
 
     except Exception as e:
-      print(f"✅ Caught exception: {type(e).__name__}: {e}")
+        print(f"✅ Caught exception: {type(e).__name__}: {e}")
 
 
 async def demonstrate_logging_integration() -> None:
@@ -175,8 +187,8 @@ async def demonstrate_logging_integration() -> None:
     config = FlextLdapConnectionConfig(server="demo.example.com", port=389)
 
     logger.debug(
-      "Configuration created successfully",
-      extra={"server": config.server, "port": config.port, "ssl": config.use_ssl},
+        "Configuration created successfully",
+        extra={"server": config.server, "port": config.port, "ssl": config.use_ssl},
     )
 
     # Test validation with logging
@@ -184,9 +196,9 @@ async def demonstrate_logging_integration() -> None:
     result = config.validate_domain_rules()
 
     if result.success:
-      logger.info("Configuration validation passed")
+        logger.info("Configuration validation passed")
     else:
-      logger.error("Configuration validation failed", extra={"error": result.error})
+        logger.error("Configuration validation failed", extra={"error": result.error})
 
     print("✅ Check console output for structured logging")
 
@@ -199,31 +211,31 @@ async def main() -> None:
     print("using real code paths and enterprise patterns.\n")
 
     try:
-      # 1. Configuration management
-      await demonstrate_configuration()
+        # 1. Configuration management
+        await demonstrate_configuration()
 
-      # 2. API usage
-      api = await demonstrate_api_usage()
+        # 2. API usage
+        api = await demonstrate_api_usage()
 
-      # 3. Search operations
-      await demonstrate_search_operations(api)
+        # 3. Search operations
+        await demonstrate_search_operations(api)
 
-      # 4. Error handling
-      await demonstrate_error_handling()
+        # 4. Error handling
+        await demonstrate_error_handling()
 
-      # 5. Logging integration
-      await demonstrate_logging_integration()
+        # 5. Logging integration
+        await demonstrate_logging_integration()
 
-      print("\n🎉 Demonstration completed successfully!")
-      print("✅ All flext-ldap core features demonstrated")
-      print("✅ Enterprise patterns validated")
-      print("✅ Error handling verified")
-      print("✅ Logging integration confirmed")
+        print("\n🎉 Demonstration completed successfully!")
+        print("✅ All flext-ldap core features demonstrated")
+        print("✅ Enterprise patterns validated")
+        print("✅ Error handling verified")
+        print("✅ Logging integration confirmed")
 
     except Exception as e:
-      print(f"\n❌ Demonstration failed: {e}")
-      logger.exception("Demonstration failed with exception")
-      raise
+        print(f"\n❌ Demonstration failed: {e}")
+        logger.exception("Demonstration failed with exception")
+        raise
 
 
 if __name__ == "__main__":
