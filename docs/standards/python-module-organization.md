@@ -616,9 +616,8 @@ class CustomLdapIntegration:
 # Import types for annotations without runtime overhead
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from flext_ldap import FlextLdapApi, FlextLdapUser
-    from flext_core import FlextResult
+from flext_ldap import FlextLdapApi, FlextLdapUser
+from flext_core import FlextResult
 
 def process_users(api: 'FlextLdapApi') -> 'FlextResult[List[FlextLdapUser]]':
     """Process users with type safety."""

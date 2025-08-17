@@ -23,7 +23,7 @@ This module provides COMPREHENSIVE constants consolidation using:
 - Error handling with comprehensive LDAP result codes
 - flext-* library integration constants
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2025 Flext. All rights reserved.
 SPDX-License-Identifier: MIT
 
 """
@@ -111,24 +111,24 @@ class FlextLdapScope(StrEnum):
 
     @classmethod
     def get_ldap3_scope(cls, scope: FlextLdapScope) -> int:
-        """Convert to ldap3 library scope constants."""
-        scope_mapping = {
-            cls.BASE: 0,  # ldap3.BASE
-            cls.ONE: 1,  # ldap3.LEVEL
-            cls.SUB: 2,  # ldap3.SUBTREE
-            cls.CHILDREN: 3,  # ldap3.SUBORDINATES
-        }
-        return scope_mapping.get(scope, 2)  # Default to subtree
+      """Convert to ldap3 library scope constants."""
+      scope_mapping = {
+          cls.BASE: 0,  # ldap3.BASE
+          cls.ONE: 1,  # ldap3.LEVEL
+          cls.SUB: 2,  # ldap3.SUBTREE
+          cls.CHILDREN: 3,  # ldap3.SUBORDINATES
+      }
+      return scope_mapping.get(scope, 2)  # Default to subtree
 
     def get_description(self) -> str:
-        """Get human-readable description of scope."""
-        descriptions = {
-            self.BASE: "Search only the base entry itself",
-            self.ONE: "Search immediate children of base entry only",
-            self.SUB: "Search base entry and entire subtree beneath it",
-            self.CHILDREN: "Search all descendants but exclude base entry",
-        }
-        return descriptions.get(self, "Unknown scope")
+      """Get human-readable description of scope."""
+      descriptions = {
+          self.BASE: "Search only the base entry itself",
+          self.ONE: "Search immediate children of base entry only",
+          self.SUB: "Search base entry and entire subtree beneath it",
+          self.CHILDREN: "Search all descendants but exclude base entry",
+      }
+      return descriptions.get(self, "Unknown scope")
 
 
 class FlextLdapConnectionType(StrEnum):
@@ -236,9 +236,9 @@ class FlextLdapAttributeConstants:
     MAIL: Final[str] = "mail"
 
     class AuthFields:
-        """Authentication attribute names used across LDAP schemas."""
+      """Authentication attribute names used across LDAP schemas."""
 
-        USER_PASSWORD_ATTR: Final[str] = "user" + "Password"
+      USER_PASSWORD_ATTR: Final[str] = "user" + "Password"
 
     TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
     FACSIMILE_TELEPHONE_NUMBER: Final[str] = "facsimileTelephoneNumber"
@@ -294,51 +294,51 @@ class FlextLdapAttributeConstants:
     NS_ACCOUNT_LOCK: Final[str] = "nsAccountLock"
 
     class PasswordPolicy:
-        """Password policy attribute names used in common directories."""
+      """Password policy attribute names used in common directories."""
 
-        PASSWORD_EXPIRY_TIME_ATTR: Final[str] = "passwordExpiry" + "Time"
+      PASSWORD_EXPIRY_TIME_ATTR: Final[str] = "passwordExpiry" + "Time"
 
     @classmethod
     def get_person_attributes(cls) -> list[str]:
-        """Get standard person-related attributes."""
-        return [
-            cls.OBJECT_CLASS,
-            cls.COMMON_NAME,
-            cls.SURNAME,
-            cls.GIVEN_NAME,
-            cls.DISPLAY_NAME,
-            cls.USER_ID,
-            cls.MAIL,
-            cls.TELEPHONE_NUMBER,
-            cls.MOBILE,
-            cls.DESCRIPTION,
-            cls.TITLE,
-            cls.EMPLOYEE_NUMBER,
-        ]
+      """Get standard person-related attributes."""
+      return [
+          cls.OBJECT_CLASS,
+          cls.COMMON_NAME,
+          cls.SURNAME,
+          cls.GIVEN_NAME,
+          cls.DISPLAY_NAME,
+          cls.USER_ID,
+          cls.MAIL,
+          cls.TELEPHONE_NUMBER,
+          cls.MOBILE,
+          cls.DESCRIPTION,
+          cls.TITLE,
+          cls.EMPLOYEE_NUMBER,
+      ]
 
     @classmethod
     def get_group_attributes(cls) -> list[str]:
-        """Get standard group-related attributes."""
-        return [
-            cls.OBJECT_CLASS,
-            cls.COMMON_NAME,
-            cls.DESCRIPTION,
-            cls.MEMBER,
-            cls.UNIQUE_MEMBER,
-            cls.OWNER,
-        ]
+      """Get standard group-related attributes."""
+      return [
+          cls.OBJECT_CLASS,
+          cls.COMMON_NAME,
+          cls.DESCRIPTION,
+          cls.MEMBER,
+          cls.UNIQUE_MEMBER,
+          cls.OWNER,
+      ]
 
     @classmethod
     def get_operational_attributes(cls) -> list[str]:
-        """Get standard operational attributes."""
-        return [
-            cls.CREATE_TIMESTAMP,
-            cls.MODIFY_TIMESTAMP,
-            cls.CREATORS_NAME,
-            cls.MODIFIERS_NAME,
-            cls.ENTRY_UUID,
-            cls.ENTRY_CSN,
-        ]
+      """Get standard operational attributes."""
+      return [
+          cls.CREATE_TIMESTAMP,
+          cls.MODIFY_TIMESTAMP,
+          cls.CREATORS_NAME,
+          cls.MODIFIERS_NAME,
+          cls.ENTRY_UUID,
+          cls.ENTRY_CSN,
+      ]
 
 
 class FlextLdapObjectClassConstants:
@@ -459,7 +459,7 @@ class FlextLdapDnConstants:
 
     # Special Characters requiring escaping (RFC 4514)
     ESCAPE_CHARS: Final[frozenset[str]] = frozenset(
-        {",", "=", "+", "<", ">", "#", ";", "\\", '"', " "},
+      {",", "=", "+", "<", ">", "#", ";", "\\", '"', " "},
     )
 
     # Hex escape pattern
@@ -554,67 +554,67 @@ class FlextLdapErrorConstants:
 
     # Error Categories for systematic handling
     CONNECTION_ERRORS: Final[frozenset[int]] = frozenset(
-        [UNAVAILABLE, BUSY, OPERATIONS_ERROR],
+      [UNAVAILABLE, BUSY, OPERATIONS_ERROR],
     )
     AUTHENTICATION_ERRORS: Final[frozenset[int]] = frozenset(
-        [
-            INAPPROPRIATE_AUTHENTICATION,
-            INVALID_CREDENTIALS,
-            AUTH_METHOD_NOT_SUPPORTED,
-            STRONGER_AUTH_REQUIRED,
-        ],
+      [
+          INAPPROPRIATE_AUTHENTICATION,
+          INVALID_CREDENTIALS,
+          AUTH_METHOD_NOT_SUPPORTED,
+          STRONGER_AUTH_REQUIRED,
+      ],
     )
     AUTHORIZATION_ERRORS: Final[frozenset[int]] = frozenset(
-        [INSUFFICIENT_ACCESS_RIGHTS, CONFIDENTIALITY_REQUIRED],
+      [INSUFFICIENT_ACCESS_RIGHTS, CONFIDENTIALITY_REQUIRED],
     )
     DATA_ERRORS: Final[frozenset[int]] = frozenset(
-        [
-            NO_SUCH_OBJECT,
-            INVALID_DN_SYNTAX,
-            NAMING_VIOLATION,
-            OBJECT_CLASS_VIOLATION,
-            ENTRY_ALREADY_EXISTS,
-        ],
+      [
+          NO_SUCH_OBJECT,
+          INVALID_DN_SYNTAX,
+          NAMING_VIOLATION,
+          OBJECT_CLASS_VIOLATION,
+          ENTRY_ALREADY_EXISTS,
+      ],
     )
 
     # Error Messages
     ERROR_MESSAGES: ClassVar[dict[str, str]] = {
-        FLEXT_LDAP_CONNECTION_FAILED: "LDAP connection failed",
-        FLEXT_LDAP_BIND_FAILED: "LDAP bind authentication failed",
-        FLEXT_LDAP_SEARCH_FAILED: "LDAP search operation failed",
-        FLEXT_LDAP_MODIFY_FAILED: "LDAP modify operation failed",
-        FLEXT_LDAP_ADD_FAILED: "LDAP add operation failed",
-        FLEXT_LDAP_DELETE_FAILED: "LDAP delete operation failed",
-        FLEXT_LDAP_INVALID_DN: "Invalid LDAP Distinguished Name",
-        FLEXT_LDAP_INVALID_FILTER: "Invalid LDAP search filter",
-        FLEXT_LDAP_ENTRY_NOT_FOUND: "LDAP entry not found",
-        FLEXT_LDAP_ENTRY_EXISTS: "LDAP entry already exists",
+      FLEXT_LDAP_CONNECTION_FAILED: "LDAP connection failed",
+      FLEXT_LDAP_BIND_FAILED: "LDAP bind authentication failed",
+      FLEXT_LDAP_SEARCH_FAILED: "LDAP search operation failed",
+      FLEXT_LDAP_MODIFY_FAILED: "LDAP modify operation failed",
+      FLEXT_LDAP_ADD_FAILED: "LDAP add operation failed",
+      FLEXT_LDAP_DELETE_FAILED: "LDAP delete operation failed",
+      FLEXT_LDAP_INVALID_DN: "Invalid LDAP Distinguished Name",
+      FLEXT_LDAP_INVALID_FILTER: "Invalid LDAP search filter",
+      FLEXT_LDAP_ENTRY_NOT_FOUND: "LDAP entry not found",
+      FLEXT_LDAP_ENTRY_EXISTS: "LDAP entry already exists",
     }
 
     @classmethod
     def get_error_category(cls, result_code: int) -> str:
-        """Get error category for systematic error handling."""
-        if result_code in cls.CONNECTION_ERRORS:
-            return "CONNECTION"
-        if result_code in cls.AUTHENTICATION_ERRORS:
-            return "AUTHENTICATION"
-        if result_code in cls.AUTHORIZATION_ERRORS:
-            return "AUTHORIZATION"
-        if result_code in cls.DATA_ERRORS:
-            return "DATA"
-        return "OTHER"
+      """Get error category for systematic error handling."""
+      if result_code in cls.CONNECTION_ERRORS:
+          return "CONNECTION"
+      if result_code in cls.AUTHENTICATION_ERRORS:
+          return "AUTHENTICATION"
+      if result_code in cls.AUTHORIZATION_ERRORS:
+          return "AUTHORIZATION"
+      if result_code in cls.DATA_ERRORS:
+          return "DATA"
+      return "OTHER"
 
     @classmethod
     def is_retryable_error(cls, result_code: int) -> bool:
-        """Check if error is potentially retryable."""
-        retryable_errors = {
-            cls.BUSY,
-            cls.UNAVAILABLE,
-            cls.TIME_LIMIT_EXCEEDED,
-            cls.ADMIN_LIMIT_EXCEEDED,
-            cls.OPERATIONS_ERROR,
-        }
-        return result_code in retryable_errors
+      """Check if error is potentially retryable."""
+      retryable_errors = {
+          cls.BUSY,
+          cls.UNAVAILABLE,
+          cls.TIME_LIMIT_EXCEEDED,
+          cls.ADMIN_LIMIT_EXCEEDED,
+          cls.OPERATIONS_ERROR,
+      }
+      return result_code in retryable_errors
 
 
 # =============================================================================
@@ -1016,16 +1016,16 @@ class FlextLdapSchemaDiscoveryConstants:
     """
 
     class Discovery:
-        """Testing convenience container for discovery settings."""
+      """Testing convenience container for discovery settings."""
 
-        SCHEMA_CACHE_TTL: int = FlextLdapObservabilityConstants.SCHEMA_CACHE_TTL
-        SCHEMA_REFRESH_INTERVAL: int = (
-            FlextLdapObservabilityConstants.SCHEMA_REFRESH_INTERVAL
-        )
-        MAX_SCHEMA_ENTRIES: int = FlextLdapObservabilityConstants.MAX_SCHEMA_ENTRIES
-        MAX_DISCOVERY_HISTORY: int = (
-            FlextLdapObservabilityConstants.MAX_DISCOVERY_HISTORY
-        )
+      SCHEMA_CACHE_TTL: int = FlextLdapObservabilityConstants.SCHEMA_CACHE_TTL
+      SCHEMA_REFRESH_INTERVAL: int = (
+          FlextLdapObservabilityConstants.SCHEMA_REFRESH_INTERVAL
+      )
+      MAX_SCHEMA_ENTRIES: int = FlextLdapObservabilityConstants.MAX_SCHEMA_ENTRIES
+      MAX_DISCOVERY_HISTORY: int = (
+          FlextLdapObservabilityConstants.MAX_DISCOVERY_HISTORY
+      )
 
 
 # =============================================================================

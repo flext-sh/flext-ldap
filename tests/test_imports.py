@@ -77,19 +77,19 @@ def test_all_public_api() -> None:
 
     # Core items that should be in __all__
     expected_items = {
-        "FlextLdapApi",
-        "get_ldap_api",
-        "FlextLdapConnectionConfig",
-        "FlextLdapSettings",
-        "FlextLdapEntry",
-        "FlextLdapUser",
-        "FlextLdapGroup",
-        "FlextLdapService",
-        "FlextLdapClient",
-        "FlextLdapException",
-        "FlextLdapUserError",
+      "FlextLdapApi",
+      "get_ldap_api",
+      "FlextLdapConnectionConfig",
+      "FlextLdapSettings",
+      "FlextLdapEntry",
+      "FlextLdapUser",
+      "FlextLdapGroup",
+      "FlextLdapService",
+      "FlextLdapClient",
+      "FlextLdapException",
+      "FlextLdapUserError",
     }
 
     # Check that expected items are in __all__
     for item in expected_items:
-        assert item in all_items, f"'{item}' should be in __all__"
+      assert item in all_items, f"'{item}' should be in __all__"
