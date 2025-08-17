@@ -39,6 +39,7 @@ from flext_ldap.utils import (
     flext_ldap_validate_attribute_name,
     flext_ldap_validate_attribute_value,
     flext_ldap_sanitize_attribute_name,
+    LdapAttributeDict,
 )
 
 # Version info
@@ -83,6 +84,7 @@ __all__: list[str] = [
     "flext_ldap_validate_attribute_name",
     "flext_ldap_validate_attribute_value",
     "flext_ldap_sanitize_attribute_name",
+    "LdapAttributeDict",
     # Metadata
     "__version__",
     "__version_info__",

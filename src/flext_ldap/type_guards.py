@@ -20,20 +20,19 @@ Usage:
     ...     for entry in result.data:
     ...         print(entry["dn"])
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2025 Flext. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeGuard
+from typing import TypeGuard
 
-if TYPE_CHECKING:
-    from flext_ldap.types import (
-        TLdapAttributes,
-        TLdapAttributeValue,
-        TLdapEntryData,
-        TLdapSearchResult,
+from flext_ldap.types import (
+      TLdapAttributes,
+      TLdapAttributeValue,
+      TLdapEntryData,
+      TLdapSearchResult,
     )
 
 # =============================================================================
@@ -45,10 +44,10 @@ def is_ldap_dn(value: object) -> TypeGuard[str]:
     """Type guard for LDAP Distinguished Name.
 
     Args:
-        value: Value to check
+      value: Value to check
 
     Returns:
-        True if value is a valid LDAP DN string
+      True if value is a valid LDAP DN string
 
     """
     return isinstance(value, str) and len(value) > 0 and "=" in value
@@ -58,16 +57,16 @@ def is_ldap_attribute_value(value: object) -> TypeGuard[TLdapAttributeValue]:
     """Type guard for LDAP attribute values.
 
     Args:
-        value: Value to check
+      value: Value to check
 
     Returns:
-        True if value is a valid LDAP attribute value type
+      True if value is a valid LDAP attribute value type
 
     """
     if isinstance(value, (str, bytes)):
-        return True
+      return True
     if isinstance(value, list):
-        return all(isinstance(item, (str, bytes)) for item in value)
+      return all(isinstance(item, (str, bytes)) for item in value)
     return False
 
 
@@ -75,20 +74,20 @@ def is_ldap_attributes_dict(value: object) -> TypeGuard[TLdapAttributes]:
     """Type guard for LDAP attributes dictionary.
 
     Args:
-        value: Value to check
+      value: Value to check
 
     Returns:
-        True if value is a valid LDAP attributes dict
+      True if value is a valid LDAP attributes dict
 
     """
     if not isinstance(value, dict):
-        return False
+      return False
 
     for key, val in value.items():
-        if not isinstance(key, str):
-            return False
-        if not is_ldap_attribute_value(val):
-            return False
+      if not isinstance(key, str):
+          return False
+      if not is_ldap_attribute_value(val):
+          return False
 
     return True
 
@@ -97,22 +96,22 @@ def is_ldap_search_result(value: object) -> TypeGuard[TLdapSearchResult]:
     """Type guard for LDAP search results.
 
     Args:
-        value: Value to check
+      value: Value to check
 
     Returns:
-        True if value is a valid LDAP search result list
+      True if value is a valid LDAP search result list
 
     """
     if not isinstance(value, list):
-        return False
+      return False
 
     for item in value:
-        if not isinstance(item, dict):
-            return False
-        if "dn" not in item:
-            return False
-        if not is_ldap_dn(item["dn"]):
-            return False
+      if not isinstance(item, dict):
+          return False
+      if "dn" not in item:
+          return False
+      if not is_ldap_dn(item["dn"]):
+          return False
 
     return True
 
@@ -121,28 +120,28 @@ def is_ldap_entry_data(value: object) -> TypeGuard[TLdapEntryData]:
     """Type guard for LDAP entry data.
 
     Args:
-        value: Value to check
+      value: Value to check
 
     Returns:
-        True if value is a valid LDAP entry data dict
+      True if value is a valid LDAP entry data dict
 
     """
     if not isinstance(value, dict):
-        return False
+      return False
 
     # Must have dn
     if "dn" not in value or not is_ldap_dn(value["dn"]):
-        return False
+      return False
 
     # Check other attributes
     for key, val in value.items():
-        if key == "dn":
-            continue
-        if not isinstance(key, str):
-            return False
-        # Entry data can contain various types
-        if not isinstance(val, (str, bytes, list, int, bool)):
-            return False
+      if key == "dn":
+          continue
+      if not isinstance(key, str):
+          return False
+      # Entry data can contain various types
+      if not isinstance(val, (str, bytes, list, int, bool)):
+          return False
 
     return True
 
@@ -156,16 +155,16 @@ def is_connection_result(value: object) -> TypeGuard[dict[str, object]]:
     """Type guard for LDAP connection results.
 
     Args:
-        value: Value to check
+      value: Value to check
 
     Returns:
-        True if value is a valid connection result dict
+      True if value is a valid connection result dict
 
     """
     return (
-        isinstance(value, dict)
-        and "status" in value
-        and isinstance(value["status"], str)
+      isinstance(value, dict)
+      and "status" in value
+      and isinstance(value["status"], str)
     )
 
 
@@ -178,10 +177,10 @@ def is_string_list(value: object) -> TypeGuard[list[str]]:
     """Type guard for list of strings.
 
     Args:
-        value: Value to check
+      value: Value to check
 
     Returns:
-        True if value is a list of strings
+      True if value is a list of strings
 
     """
     return isinstance(value, list) and all(isinstance(item, str) for item in value)
@@ -191,10 +190,10 @@ def is_bytes_list(value: object) -> TypeGuard[list[bytes]]:
     """Type guard for list of bytes.
 
     Args:
-        value: Value to check
+      value: Value to check
 
     Returns:
-        True if value is a list of bytes
+      True if value is a list of bytes
 
     """
     return isinstance(value, list) and all(isinstance(item, bytes) for item in value)
@@ -209,16 +208,16 @@ def ensure_string_list(value: str | list[str]) -> list[str]:
     """Ensure value is a list of strings.
 
     Args:
-        value: String or list of strings
+      value: String or list of strings
 
     Returns:
-        List of strings
+      List of strings
 
     """
     if isinstance(value, str):
-        return [value]
+      return [value]
     if is_string_list(value):
-        return value
+      return value
     # Fallback: convert each item to string
     return [str(item) for item in value] if isinstance(value, list) else [str(value)]
 
@@ -227,21 +226,21 @@ def ensure_ldap_dn(value: object) -> str:
     """Ensure value is a valid LDAP DN.
 
     Args:
-        value: Value to convert to DN
+      value: Value to convert to DN
 
     Returns:
-        Valid LDAP DN string
+      Valid LDAP DN string
 
     Raises:
-        ValueError: If value cannot be converted to valid DN
+      ValueError: If value cannot be converted to valid DN
 
     """
     if is_ldap_dn(value):
-        return value
+      return value
 
     str_value = str(value)
     if "=" in str_value:
-        return str_value
+      return str_value
 
     msg = f"Cannot convert {value!r} to valid LDAP DN"
     raise ValueError(msg)
@@ -256,10 +255,10 @@ def has_error_attribute(obj: object) -> TypeGuard[object]:
     """Type guard for objects with error attribute.
 
     Args:
-        obj: Object to check
+      obj: Object to check
 
     Returns:
-        True if object has error attribute
+      True if object has error attribute
 
     """
     return hasattr(obj, "error")
@@ -269,10 +268,10 @@ def has_is_success_attribute(obj: object) -> TypeGuard[object]:
     """Type guard for objects with is_success attribute.
 
     Args:
-        obj: Object to check
+      obj: Object to check
 
     Returns:
-        True if object has is_success attribute
+      True if object has is_success attribute
 
     """
     return hasattr(obj, "is_success")

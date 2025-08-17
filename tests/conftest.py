@@ -10,23 +10,28 @@ import os
 import time
 from contextlib import asynccontextmanager, suppress
 from functools import lru_cache
-from typing import TYPE_CHECKING
+
+import pytest
+
+from flext_ldap import (
+    FlextLdapClient,
+    FlextLdapDistinguishedName,
+    FlextLdapFilter,
+    FlextLdapScope,
+)
 
 docker: object | None
 try:
     docker = importlib.import_module("docker")
 except Exception:  # pragma: no cover - docker may be unavailable in CI
     docker = None
-import pytest
 
-from flext_ldap.constants import FlextLdapScope
-from flext_ldap.infrastructure import FlextLdapClient
-from flext_ldap.models import FlextLdapDistinguishedName, FlextLdapFilter
+
+from collections.abc import AsyncGenerator, Generator
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator, Generator
-
-    from docker.models.containers import Container  # type: ignore[import-not-found]
+    from docker.models.containers import Container
 
 # OpenLDAP Container Configuration
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"
@@ -50,142 +55,142 @@ class OpenLDAPContainerManager:
     """Manages OpenLDAP Docker container for testing."""
 
     def __init__(self) -> None:
-        """Initialize the container manager."""
-        if docker is None:
-            msg = "Docker not available"
-            raise RuntimeError(msg)
-        # docker is a module at runtime; typing is provided via TYPE_CHECKING
-        self.client = importlib.import_module("docker").from_env()
-        self.container: object | None = None
+      """Initialize the container manager."""
+      if docker is None:
+          msg = "Docker not available"
+          raise RuntimeError(msg)
+      # docker is a module at runtime; typing is provided via TYPE_CHECKING
+      self.client = importlib.import_module("docker").from_env()
+      self.container: object | None = None
 
     def start_container(self) -> object:
-        """Start OpenLDAP container with proper configuration."""
-        # Stop and remove existing container if it exists
-        self.stop_container()
+      """Start OpenLDAP container with proper configuration."""
+      # Stop and remove existing container if it exists
+      self.stop_container()
 
-        # Start new container
-        self.container = self.client.containers.run(
-            OPENLDAP_IMAGE,
-            name=OPENLDAP_CONTAINER_NAME,
-            ports={"389/tcp": OPENLDAP_PORT},
-            environment={
-                "LDAP_ORGANISATION": "FLEXT Test Org",
-                "LDAP_DOMAIN": OPENLDAP_DOMAIN,
-                "LDAP_ADMIN_PASSWORD": OPENLDAP_ADMIN_PASSWORD,
-                "LDAP_CONFIG_PASSWORD": "config123",
-                "LDAP_READONLY_USER": "false",
-                "LDAP_RFC2307BIS_SCHEMA": "true",
-                "LDAP_BACKEND": "mdb",
-                "LDAP_TLS": "false",
-                "LDAP_REMOVE_CONFIG_AFTER_SETUP": "true",
-                "LDAP_SSL_HELPER_PREFIX": "ldap",
-            },
-            detach=True,
-            remove=True,  # Automatically remove when stopped
-        )
+      # Start new container
+      self.container = self.client.containers.run(
+          OPENLDAP_IMAGE,
+          name=OPENLDAP_CONTAINER_NAME,
+          ports={"389/tcp": OPENLDAP_PORT},
+          environment={
+              "LDAP_ORGANISATION": "FLEXT Test Org",
+              "LDAP_DOMAIN": OPENLDAP_DOMAIN,
+              "LDAP_ADMIN_PASSWORD": OPENLDAP_ADMIN_PASSWORD,
+              "LDAP_CONFIG_PASSWORD": "config123",
+              "LDAP_READONLY_USER": "false",
+              "LDAP_RFC2307BIS_SCHEMA": "true",
+              "LDAP_BACKEND": "mdb",
+              "LDAP_TLS": "false",
+              "LDAP_REMOVE_CONFIG_AFTER_SETUP": "true",
+              "LDAP_SSL_HELPER_PREFIX": "ldap",
+          },
+          detach=True,
+          remove=True,  # Automatically remove when stopped
+      )
 
-        # Wait for container to be ready
-        self._wait_for_container_ready()
+      # Wait for container to be ready
+      self._wait_for_container_ready()
 
-        return self.container
+      return self.container
 
     def stop_container(self) -> None:
-        """Stop and remove OpenLDAP container."""
-        try:
-            # Try to get existing container by name (handles both running and stopped)
-            existing = self.client.containers.get(OPENLDAP_CONTAINER_NAME)
-            if existing.status in {"running", "created", "paused"}:
-                existing.stop(timeout=5)
-            existing.remove(force=True)
-        except Exception as e:
-            if getattr(e, "status_code", None) == 409:
-                return
-            raise
-        except (RuntimeError, ValueError, TypeError):
-            # Try to force remove by name if getting by ID fails
-            with suppress(RuntimeError, ValueError, TypeError):
-                self.client.api.remove_container(OPENLDAP_CONTAINER_NAME, force=True)
+      """Stop and remove OpenLDAP container."""
+      try:
+          # Try to get existing container by name (handles both running and stopped)
+          existing = self.client.containers.get(OPENLDAP_CONTAINER_NAME)
+          if existing.status in {"running", "created", "paused"}:
+              existing.stop(timeout=5)
+          existing.remove(force=True)
+      except Exception as e:
+          if getattr(e, "status_code", None) == 409:
+              return
+          raise
+      except (RuntimeError, ValueError, TypeError):
+          # Try to force remove by name if getting by ID fails
+          with suppress(RuntimeError, ValueError, TypeError):
+              self.client.api.remove_container(OPENLDAP_CONTAINER_NAME, force=True)
 
-        self.container = None
+      self.container = None
 
     def _raise_container_error(self, msg: str) -> None:
-        """Raise container error with message."""
-        raise RuntimeError(msg)
+      """Raise container error with message."""
+      raise RuntimeError(msg)
 
     def _wait_for_container_ready(self, timeout: int = 30) -> None:
-        """Wait for OpenLDAP container to be ready to accept connections."""
-        if not self.container:
-            no_container_msg = "No container to wait for"
-            raise RuntimeError(no_container_msg)
+      """Wait for OpenLDAP container to be ready to accept connections."""
+      if not self.container:
+          no_container_msg = "No container to wait for"
+          raise RuntimeError(no_container_msg)
 
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            try:
-                # Check if container is still running
-                self.container.reload()
-                if self.container.status != "running":
-                    start_fail_msg: str = (
-                        f"Container failed to start: {self.container.status}"
-                    )
-                    self._raise_container_error(start_fail_msg)
+      start_time = time.time()
+      while time.time() - start_time < timeout:
+          try:
+              # Check if container is still running
+              self.container.reload()
+              if self.container.status != "running":
+                  start_fail_msg: str = (
+                      f"Container failed to start: {self.container.status}"
+                  )
+                  self._raise_container_error(start_fail_msg)
 
-                # Try to connect to LDAP port
-                exec_result = self.container.exec_run(
-                    [
-                        "ldapsearch",
-                        "-x",
-                        "-H",
-                        "ldap://localhost:389",
-                        "-D",
-                        OPENLDAP_ADMIN_DN,
-                        "-w",
-                        OPENLDAP_ADMIN_PASSWORD,
-                        "-b",
-                        OPENLDAP_BASE_DN,
-                        "-s",
-                        "base",
-                        "(objectClass=*)",
-                    ],
-                    demux=True,
-                )
+              # Try to connect to LDAP port
+              exec_result = self.container.exec_run(
+                  [
+                      "ldapsearch",
+                      "-x",
+                      "-H",
+                      "ldap://localhost:389",
+                      "-D",
+                      OPENLDAP_ADMIN_DN,
+                      "-w",
+                      OPENLDAP_ADMIN_PASSWORD,
+                      "-b",
+                      OPENLDAP_BASE_DN,
+                      "-s",
+                      "base",
+                      "(objectClass=*)",
+                  ],
+                  demux=True,
+              )
 
-                if exec_result.exit_code == 0:
-                    # Success! Container is ready
-                    return
+              if exec_result.exit_code == 0:
+                  # Success! Container is ready
+                  return
 
-            except (RuntimeError, ValueError, TypeError):
-                pass  # Continue waiting
+          except (RuntimeError, ValueError, TypeError):
+              pass  # Continue waiting
 
-            time.sleep(1)
+          time.sleep(1)
 
-        timeout_msg: str = (
-            f"OpenLDAP container failed to become ready within {timeout} seconds"
-        )
-        raise RuntimeError(timeout_msg)
+      timeout_msg: str = (
+          f"OpenLDAP container failed to become ready within {timeout} seconds"
+      )
+      raise RuntimeError(timeout_msg)
 
     def is_container_running(self) -> bool:
-        """Check if the OpenLDAP container is running."""
-        if not self.container:
-            return False
+      """Check if the OpenLDAP container is running."""
+      if not self.container:
+          return False
 
-        try:
-            # Best-effort typing without docker stubs at runtime
-            self.container.reload()
-            status = str(getattr(self.container, "status", ""))
-            return bool(status == "running")
-        except (RuntimeError, ValueError, TypeError):
-            return False
+      try:
+          # Best-effort typing without docker stubs at runtime
+          self.container.reload()
+          status = str(getattr(self.container, "status", ""))
+          return bool(status == "running")
+      except (RuntimeError, ValueError, TypeError):
+          return False
 
     def get_logs(self) -> str:
-        """Get container logs for debugging."""
-        if not self.container:
-            return "No container running"
+      """Get container logs for debugging."""
+      if not self.container:
+          return "No container running"
 
-        try:
-            logs_bytes = self.container.logs()
-            return str(logs_bytes.decode())
-        except (RuntimeError, ValueError, TypeError) as e:
-            return f"Failed to get logs: {e}"
+      try:
+          logs_bytes = self.container.logs()
+          return str(logs_bytes.decode())
+      except (RuntimeError, ValueError, TypeError) as e:
+          return f"Failed to get logs: {e}"
 
 
 # Container manager accessor without module-level mutable global
@@ -202,14 +207,14 @@ def docker_openldap_container() -> Generator[Container]:
     and stops it at the end. The container is shared across all tests.
     """
     if docker is None:
-        pytest.skip("Docker not installed; skipping integration container fixture")
+      pytest.skip("Docker not installed; skipping integration container fixture")
     manager = _get_container_manager()
     # Start container
     container = manager.start_container()
 
     # Set environment variables for tests
     for key, value in TEST_ENV_VARS.items():
-        os.environ[key] = value
+      os.environ[key] = value
 
     yield container
 
@@ -218,18 +223,18 @@ def docker_openldap_container() -> Generator[Container]:
 
     # Clean up environment variables
     for key in TEST_ENV_VARS:
-        os.environ.pop(key, None)
+      os.environ.pop(key, None)
 
 
 @pytest.fixture
 def ldap_test_config(docker_openldap_container: Container) -> dict[str, object]:
     """Provide LDAP test configuration for individual tests."""
     return {
-        "server_url": TEST_ENV_VARS["LDAP_TEST_SERVER"],
-        "bind_dn": TEST_ENV_VARS["LDAP_TEST_BIND_DN"],
-        "password": TEST_ENV_VARS["LDAP_TEST_PASSWORD"],
-        "base_dn": TEST_ENV_VARS["LDAP_TEST_BASE_DN"],
-        "container": docker_openldap_container,
+      "server_url": TEST_ENV_VARS["LDAP_TEST_SERVER"],
+      "bind_dn": TEST_ENV_VARS["LDAP_TEST_BIND_DN"],
+      "password": TEST_ENV_VARS["LDAP_TEST_PASSWORD"],
+      "base_dn": TEST_ENV_VARS["LDAP_TEST_BASE_DN"],
+      "container": docker_openldap_container,
     }
 
 
@@ -241,24 +246,24 @@ async def _cleanup_ldap_entries_under_dn(
     """Clean up LDAP entries under a DN to reduce nested control flow."""
     # Try to delete all entries under the specified DN
     search_result = await client.search(
-        connection_id,
-        FlextLdapDistinguishedName(value=dn),
-        FlextLdapFilter(value="(objectClass=*)"),
-        scope=FlextLdapScope.SUB,
+      connection_id,
+      FlextLdapDistinguishedName(value=dn),
+      FlextLdapFilter(value="(objectClass=*)"),
+      scope=FlextLdapScope.SUB,
     )
 
     # Early return if search failed or no data
     if not search_result.success or not search_result.data:
-        return
+      return
 
     # Delete entries (except the OU itself)
     for entry in search_result.data:
-        entry_dn = entry.get("dn", "")
-        if entry_dn and entry_dn != dn:
-            await client.delete_entry(
-                connection_id,
-                FlextLdapDistinguishedName(value=str(entry_dn)),
-            )
+      entry_dn = entry.get("dn", "")
+      if entry_dn and entry_dn != dn:
+          await client.delete_entry(
+              connection_id,
+              FlextLdapDistinguishedName(value=str(entry_dn)),
+          )
 
 
 @pytest.fixture
@@ -274,26 +279,26 @@ async def clean_ldap_container(
 
     # Connect to LDAP
     connect_result = await client.connect(
-        str(ldap_test_config["server_url"]),
-        str(ldap_test_config["bind_dn"]),
-        str(ldap_test_config["password"]),
+      str(ldap_test_config["server_url"]),
+      str(ldap_test_config["bind_dn"]),
+      str(ldap_test_config["password"]),
     )
 
     if connect_result.success:
-        connection_id = str(connect_result.data)
+      connection_id = str(connect_result.data)
 
-        try:
-            # Clean up test entries
-            test_dns = [
-                f"ou=users,{ldap_test_config['base_dn']}",
-                f"ou=groups,{ldap_test_config['base_dn']}",
-            ]
+      try:
+          # Clean up test entries
+          test_dns = [
+              f"ou=users,{ldap_test_config['base_dn']}",
+              f"ou=groups,{ldap_test_config['base_dn']}",
+          ]
 
-            for dn in test_dns:
-                await _cleanup_ldap_entries_under_dn(client, connection_id, dn)
+          for dn in test_dns:
+              await _cleanup_ldap_entries_under_dn(client, connection_id, dn)
 
-        finally:
-            await client.disconnect(connection_id)
+      finally:
+          await client.disconnect(connection_id)
 
     return ldap_test_config
 
@@ -307,33 +312,33 @@ async def temporary_ldap_entry(
 ) -> AsyncGenerator[str]:
     """Context manager for temporary LDAP entries that are auto-cleaned."""
     try:
-        # Create entry
-        result = await client.create_entry(
-            connection_id,
-            FlextLdapDistinguishedName(value=dn),
-            attributes,
-        )
-        if not result.success:
-            msg: str = f"Failed to create temporary entry {dn}: {result.error}"
-            raise RuntimeError(msg)
+      # Create entry
+      result = await client.create_entry(
+          connection_id,
+          FlextLdapDistinguishedName(value=dn),
+          attributes,
+      )
+      if not result.success:
+          msg: str = f"Failed to create temporary entry {dn}: {result.error}"
+          raise RuntimeError(msg)
 
-        yield dn
+      yield dn
 
     finally:
-        # Auto-cleanup
-        with suppress(RuntimeError, ValueError, TypeError):
-            await client.delete_entry(
-                connection_id,
-                FlextLdapDistinguishedName(value=dn),
-            )
+      # Auto-cleanup
+      with suppress(RuntimeError, ValueError, TypeError):
+          await client.delete_entry(
+              connection_id,
+              FlextLdapDistinguishedName(value=dn),
+          )
 
 
 # Mark integration tests
 def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest markers."""
     config.addinivalue_line(
-        "markers",
-        "integration: marks tests as integration tests requiring Docker",
+      "markers",
+      "integration: marks tests as integration tests requiring Docker",
     )
 
 
@@ -343,6 +348,6 @@ def pytest_collection_modifyitems(
 ) -> None:
     """Automatically mark integration tests based on file path."""
     for item in items:
-        # Mark tests in integration directory
-        if "integration" in str(item.fspath):
-            item.add_marker(pytest.mark.integration)
+      # Mark tests in integration directory
+      if "integration" in str(item.fspath):
+          item.add_marker(pytest.mark.integration)

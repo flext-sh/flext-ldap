@@ -27,7 +27,7 @@ __version_info__ = tuple(int(p) if p.isdigit() else p for p in _parts)
 __version_tuple__ = __version_info__
 
 # Fixed metadata
-__copyright__ = "Copyright (c) 2025 FLEXT Team. All rights reserved."
+__copyright__ = "Copyright (c) 2025 Flext. All rights reserved."
 
 # Build information (can be populated by CI/CD)
 __build__ = ""

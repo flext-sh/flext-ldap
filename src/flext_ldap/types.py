@@ -28,15 +28,13 @@ License: MIT
 from __future__ import annotations
 
 from typing import (
-    TYPE_CHECKING,
     ParamSpec,
     Protocol,
     TypeVar,
     runtime_checkable,
 )
 
-if TYPE_CHECKING:
-    from flext_core import FlextResult
+from flext_core import FlextResult
 
 # =============================================================================
 # LDAP DOMAIN TYPES - Extending flext-core base types
@@ -84,7 +82,7 @@ class AsyncCallable(Protocol):
     """Callable protocol without explicit Any to satisfy strict mypy."""
 
     def __call__(self, *args: object, **kwargs: object) -> None:  # pragma: no cover
-        ...
+      ...
 
 
 # =============================================================================
@@ -97,27 +95,27 @@ class FlextLdapConnectionProtocol(Protocol):
     """Protocol for LDAP connection implementations."""
 
     async def connect(
-        self,
-        server_uri: str,
-        bind_dn: str | None = None,
-        bind_password: str | None = None,
+      self,
+      server_uri: str,
+      bind_dn: str | None = None,
+      bind_password: str | None = None,
     ) -> FlextResult[None]:
-        """Connect to LDAP server."""
-        ...
+      """Connect to LDAP server."""
+      ...
 
     async def disconnect(self) -> FlextResult[None]:
-        """Disconnect from LDAP server."""
-        ...
+      """Disconnect from LDAP server."""
+      ...
 
     async def search(
-        self,
-        base_dn: str,
-        search_filter: str,
-        scope: str = "subtree",
-        attributes: list[str] | None = None,
+      self,
+      base_dn: str,
+      search_filter: str,
+      scope: str = "subtree",
+      attributes: list[str] | None = None,
     ) -> FlextResult[list[LdapSearchResult]]:
-        """Perform LDAP search."""
-        ...
+      """Perform LDAP search."""
+      ...
 
 
 @runtime_checkable
@@ -125,16 +123,16 @@ class FlextLdapRepositoryProtocol(Protocol):
     """Protocol for LDAP repository implementations."""
 
     async def find_by_dn(self, dn: str) -> FlextResult[LdapSearchResult | None]:
-        """Find entry by Distinguished Name."""
-        ...
+      """Find entry by Distinguished Name."""
+      ...
 
     async def save(self, entry_data: LdapAttributeDict) -> FlextResult[None]:
-        """Save entry data."""
-        ...
+      """Save entry data."""
+      ...
 
     async def delete(self, dn: str) -> FlextResult[None]:
-        """Delete entry by DN."""
-        ...
+      """Delete entry by DN."""
+      ...
 
 
 @runtime_checkable
@@ -142,12 +140,12 @@ class FlextLdapDirectoryConnectionProtocol(Protocol):
     """Protocol for directory connection implementations."""
 
     def is_connected(self) -> bool:
-        """Check if connection is active."""
-        ...
+      """Check if connection is active."""
+      ...
 
     async def bind(self, dn: str, password: str) -> FlextResult[None]:
-        """Perform LDAP bind operation."""
-        ...
+      """Perform LDAP bind operation."""
+      ...
 
 
 @runtime_checkable
@@ -156,17 +154,17 @@ class FlextLdapDirectoryEntryProtocol(Protocol):
 
     @property
     def dn(self) -> str:
-        """Get Distinguished Name."""
-        ...
+      """Get Distinguished Name."""
+      ...
 
     @property
     def attributes(self) -> dict[str, list[str]]:
-        """Get entry attributes."""
-        ...
+      """Get entry attributes."""
+      ...
 
     def get_attribute_values(self, name: str) -> list[str]:
-        """Get attribute values by name."""
-        ...
+      """Get attribute values by name."""
+      ...
 
 
 # =============================================================================

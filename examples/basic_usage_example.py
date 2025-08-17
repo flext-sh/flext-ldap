@@ -53,11 +53,11 @@ async def _demo_create_primary_user(_service: FlextLdapApi) -> None:
     """Create primary test user - Single Responsibility."""
     print("2. Creating a test user...")
     user_request = FlextLdapCreateUserRequest(
-        dn="cn=johndoe,ou=users,dc=example,dc=com",
-        uid="johndoe",
-        cn="John Doe",
-        sn="Doe",
-        mail="john.doe@example.com",
+      dn="cn=johndoe,ou=users,dc=example,dc=com",
+      uid="johndoe",
+      cn="John Doe",
+      sn="Doe",
+      mail="john.doe@example.com",
     )
 
     # Simplified for compatibility - would normally use proper session management
@@ -100,26 +100,26 @@ async def _demo_create_additional_users(_service: FlextLdapApi) -> None:
     print("6. Creating additional test users...")
     # Split long lines for readability
     additional_users = [
-        {
-            "uid": "alice",
-            "cn": "Alice Smith",
-            "sn": "Smith",
-            "mail": "alice@example.com",
-        },
-        {"uid": "bob", "cn": "Bob Johnson", "sn": "Johnson", "mail": "bob@example.com"},
+      {
+          "uid": "alice",
+          "cn": "Alice Smith",
+          "sn": "Smith",
+          "mail": "alice@example.com",
+      },
+      {"uid": "bob", "cn": "Bob Johnson", "sn": "Johnson", "mail": "bob@example.com"},
     ]
 
     for user_data in additional_users:
-        FlextLdapCreateUserRequest(
-            dn=f"cn={user_data['uid']},ou=users,dc=example,dc=com",
-            uid=user_data["uid"],
-            cn=user_data["cn"],
-            sn=user_data["sn"],
-            mail=user_data["mail"],
-        )
+      FlextLdapCreateUserRequest(
+          dn=f"cn={user_data['uid']},ou=users,dc=example,dc=com",
+          uid=user_data["uid"],
+          cn=user_data["cn"],
+          sn=user_data["sn"],
+          mail=user_data["mail"],
+      )
 
-        # Simplified for compatibility - would normally use create_user() with session
-        print(f"   Would create user: {user_data['uid']}")
+      # Simplified for compatibility - would normally use create_user() with session
+      print(f"   Would create user: {user_data['uid']}")
     print()
 
 
@@ -151,27 +151,27 @@ async def demonstrate_connection_handling() -> None:
     # Test connection to non-existent server (will fail gracefully)
     print("1. Testing connection to non-existent LDAP server...")
     result = await service.connect(
-        server_uri="ldap://localhost:3389",
-        bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-        bind_password=os.getenv("LDAP_TEST_PASSWORD", ""),
+      server_uri="ldap://localhost:3389",
+      bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+      bind_password=os.getenv("LDAP_TEST_PASSWORD", ""),
     )
 
     if result.is_failure:
-        print(f"   Connection failed as expected: {result.error}")
-        print("   Service demonstrates graceful error handling")
+      print(f"   Connection failed as expected: {result.error}")
+      print("   Service demonstrates graceful error handling")
     else:
-        print("   Connection succeeded (unexpected for demo)")
-        session_id = result.data or "unknown"
-        await service.disconnect(session_id)
+      print("   Connection succeeded (unexpected for demo)")
+      session_id = result.data or "unknown"
+      await service.disconnect(session_id)
     print()
 
     # Show that operations still work in memory mode
     print("2. Operations work seamlessly in memory mode...")
     FlextLdapCreateUserRequest(
-        dn="cn=testuser,ou=users,dc=example,dc=com",
-        uid="testuser",
-        cn="Test User",
-        sn="User",
+      dn="cn=testuser,ou=users,dc=example,dc=com",
+      uid="testuser",
+      cn="Test User",
+      sn="User",
     )
 
     # Simplified demonstration - real implementation would use session management
@@ -207,13 +207,13 @@ async def main() -> None:
     print_library_info()
 
     try:
-        await demonstrate_basic_operations()
-        print()
-        await demonstrate_connection_handling()
+      await demonstrate_basic_operations()
+      print()
+      await demonstrate_connection_handling()
 
     except Exception as e:
-        print(f"Unexpected error occurred: {e}")
-        print("This may indicate a configuration or implementation issue.")
+      print(f"Unexpected error occurred: {e}")
+      print("This may indicate a configuration or implementation issue.")
 
     print()
     print("For more advanced usage, see the test files and documentation.")
