@@ -633,7 +633,7 @@ class FlextLdapUserCreatedEvent(FlextLdapBaseUserEvent):
     ) -> FlextLdapUserCreatedEvent:
         """Create user created event."""
         # Type cast to ensure correct return type
-        return cls.create_with_timestamp(user_id, user_dn, created_by)  # type: ignore[return-value]
+        return cls.create_with_timestamp(user_id, user_dn, created_by)
 
 
 class FlextLdapUserDeletedEvent(FlextLdapBaseUserEvent):
@@ -648,7 +648,7 @@ class FlextLdapUserDeletedEvent(FlextLdapBaseUserEvent):
     ) -> FlextLdapUserDeletedEvent:
         """Create user deleted event."""
         # Type cast to ensure correct return type
-        return cls.create_with_timestamp(user_id, user_dn, deleted_by)  # type: ignore[return-value]
+        return cls.create_with_timestamp(user_id, user_dn, deleted_by)
 
 
 class FlextLdapBaseGroupEvent(FlextLdapDomainEvent):
@@ -1029,7 +1029,7 @@ class FlextLdapDomainFactory:
             f"{entity_type} final validation",
         )
 
-    def _execute_operation(  # type: ignore[explicit-any]
+    def _execute_operation(
         self,
         operation: Callable[..., object] | None,
         data: object,
@@ -1043,7 +1043,7 @@ class FlextLdapDomainFactory:
             result = operation(data)
             # Ensure result is FlextResult format
             if hasattr(result, "is_success"):
-                return result  # type: ignore[return-value]
+                return result
             # Wrap non-FlextResult returns
             return FlextResult.ok(result)
         except Exception as e:

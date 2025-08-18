@@ -11,12 +11,13 @@ from urllib.parse import urlparse
 from uuid import uuid4 as _uuid4
 
 from flext_core import (
+    FlextModel,
     FlextResult,
     get_flext_container,
     get_logger,
 )
 from flext_ldif.api import FlextLdifAPI
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import Field, ValidationError, field_validator
 
 from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
 from flext_ldap.constants import FlextLdapDefaultValues
@@ -40,7 +41,7 @@ _LDIF_AVAILABLE = True
 # ==================== PARAMETER MODELS ====================
 
 
-class FlextLdapSearchParams(BaseModel):
+class FlextLdapSearchParams(FlextModel):
     """Parameters for LDAP search operations to reduce parameter count."""
 
     session_id: str | None = Field(
@@ -75,7 +76,7 @@ class FlextLdapSearchParams(BaseModel):
         return FlextLdapValidationHelpers.validate_filter_field(v)
 
 
-class FlextLdapExportParams(BaseModel):
+class FlextLdapExportParams(FlextModel):
     """Parameters for exporting search results to an LDIF file."""
 
     session_id: str = Field(..., description="Session ID from connection")
@@ -97,7 +98,7 @@ class FlextLdapExportParams(BaseModel):
         return FlextLdapValidationHelpers.validate_file_path_field(v)
 
 
-class SearchParameters(BaseModel):
+class SearchParameters(FlextModel):
     """Parameters for a simple LDAP search operation."""
 
     base_dn: str = Field(default="", description="Search base DN")
@@ -129,7 +130,7 @@ class SearchParameters(BaseModel):
         return FlextLdapValidationHelpers.validate_filter_field(v)
 
 
-class ConnectionParameters(BaseModel):
+class ConnectionParameters(FlextModel):
     """Parameters required to establish an LDAP connection."""
 
     server_uri: str = Field(..., description="LDAP server URI")
@@ -148,7 +149,7 @@ class ConnectionParameters(BaseModel):
         return FlextLdapValidationHelpers.validate_uri_field(v)
 
 
-class GroupCreationParameters(BaseModel):
+class GroupCreationParameters(FlextModel):
     """Parameters required to create an LDAP group entry."""
 
     dn: str = Field(..., description="Group distinguished name")
@@ -167,7 +168,7 @@ class GroupCreationParameters(BaseModel):
         return FlextLdapValidationHelpers.validate_cn_field(v)
 
 
-class ExportParameters(BaseModel):
+class ExportParameters(FlextModel):
     """Export configuration used by the export service layer."""
 
     output_file: Path = Field(..., description="Output LDIF file path")

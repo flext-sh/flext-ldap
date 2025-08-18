@@ -18,7 +18,7 @@ import os
 import time
 from pathlib import Path
 
-import docker  # type: ignore[import-untyped]
+import docker
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,7 @@ async def run_examples_with_docker() -> None:
         assert spec
         assert spec.loader
         integrated_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(integrated_module)  # type: ignore[union-attr]
+        spec.loader.exec_module(integrated_module)
         await integrated_module.main()
     except Exception:
         logger.exception("Integrated example failed")
@@ -139,7 +139,7 @@ async def run_examples_with_docker() -> None:
         assert spec
         assert spec.loader
         simple_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(simple_module)  # type: ignore[union-attr]
+        spec.loader.exec_module(simple_module)
         await simple_module.main()
     except Exception:
         logger.exception("Simple client example failed")

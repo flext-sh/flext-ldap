@@ -260,8 +260,13 @@ class TestFlextLdapDesignPatterns:
                 self, base_dn: str, search_filter: str, result_count: int
             ) -> None:
                 self.events.append(
-                    ("search_performed", base_dn, search_filter, int(result_count))
-                )  # type: ignore[arg-type]
+                    (
+                        "search_performed",
+                        base_dn,
+                        search_filter,
+                        int(result_count),
+                    )
+                )
 
             async def on_entry_added(
                 self, dn: str, attributes: dict[str, list[str]]

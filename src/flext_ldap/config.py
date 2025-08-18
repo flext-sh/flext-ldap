@@ -6,7 +6,7 @@ Após a consolidação, as classes e helpers de configuração vivem em
 
 from __future__ import annotations
 
-from .models import (
+from flext_ldap.models import (
     FlextLdapAttributes,
     FlextLdapAuthConfig,
     FlextLdapConnectionConfig,
@@ -60,7 +60,7 @@ try:
             password = kwargs.get("bind_password")
             if isinstance(password, str):
                 kwargs["bind_password"] = SecretStr(password)
-            super().__init__(*args, **kwargs)  # type: ignore[arg-type]
+            super().__init__(*args, **kwargs)
 
         def __getattribute__(self, name: str) -> object:
             """Expose plain string for ``bind_password`` when accessed."""

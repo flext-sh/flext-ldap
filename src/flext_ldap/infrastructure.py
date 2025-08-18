@@ -8,18 +8,7 @@ from datetime import UTC, datetime
 from typing import cast
 from urllib.parse import urlparse
 
-try:  # pragma: no cover - environment dependent
-    from pyasn1.codec.ber import encoder as _ber_encoder  # type: ignore[import-untyped]
-
-    if hasattr(_ber_encoder, "TAG_MAP") and not hasattr(_ber_encoder, "tagMap"):
-        _ber_encoder.tagMap = _ber_encoder.TAG_MAP
-    if hasattr(_ber_encoder, "TYPE_MAP") and not hasattr(_ber_encoder, "typeMap"):
-        _ber_encoder.typeMap = _ber_encoder.TYPE_MAP
-except Exception as _e:  # pragma: no cover - best effort only
-    _ = _e
-
-
-import ldap3 as _ldap3  # type: ignore[import-untyped]
+import ldap3 as _ldap3
 from flext_core import FlextResult, get_logger
 from ldap3 import (
     ALL_ATTRIBUTES,
@@ -30,7 +19,8 @@ from ldap3 import (
     Connection as Ldap3Connection,
     Server,
 )
-from ldap3.core.exceptions import LDAPException  # type: ignore[import-untyped]
+from ldap3.core.exceptions import LDAPException
+from pyasn1.codec.ber import encoder as _ber_encoder
 
 from flext_ldap.constants import (
     FlextLdapDefaultValues,
@@ -41,6 +31,12 @@ from flext_ldap.types import (
     LdapAttributeDict,
     LdapSearchResult,
 )
+
+if hasattr(_ber_encoder, "TAG_MAP") and not hasattr(_ber_encoder, "tagMap"):
+    _ber_encoder.tagMap = _ber_encoder.TAG_MAP
+if hasattr(_ber_encoder, "TYPE_MAP") and not hasattr(_ber_encoder, "typeMap"):
+    _ber_encoder.typeMap = _ber_encoder.TYPE_MAP
+
 
 LDAP3_AVAILABLE = True
 logger = get_logger(__name__)
@@ -304,7 +300,7 @@ class FlextLdapClient:
         # Validate connection
         validation_result = self._validate_search_connection()
         if validation_result.is_failure:
-            return validation_result  # type: ignore[return-value]
+            return validation_result
 
         try:
             # Execute search operation
@@ -347,9 +343,9 @@ class FlextLdapClient:
             return FlextResult.fail("No connection available")
         if not hasattr(conn, "search"):
             # Provide stub search behavior when using placeholder connection
-            conn.entries = []  # type: ignore[attr-defined]
+            conn.entries = []
             return FlextResult.ok([])
-        ok = conn.search(  # type: ignore[attr-defined]
+        ok = conn.search(
             search_base=base_dn,
             search_filter=search_filter,
             search_scope=ldap_scope,  # ldap3 is untyped; runtime-validated above
@@ -404,7 +400,7 @@ class FlextLdapClient:
                 "attributes": {
                     k: [str(v) for v in (val if isinstance(val, list) else [val])]
                     for k, val in attributes_dict.items()
-                },  # type: ignore[dict-item]
+                },
             }
         except Exception as e:
             logger.debug("Failed to parse LDAP entry: %s", e)
@@ -564,7 +560,7 @@ class FlextLdapClient:
             str(search_params["base_dn"]),
             str(search_params["search_filter"]),
             str(search_params["scope"]),
-            search_params["attributes"],  # type: ignore[arg-type]
+            search_params["attributes"],
             int(search_params["size_limit"])
             if isinstance(search_params["size_limit"], int)
             else 1000,
@@ -589,7 +585,7 @@ class FlextLdapClient:
             base_dn_obj,
             filter_obj,
             scope=convenience_params["scope"],
-            attributes=convenience_params["attributes"],  # type: ignore[arg-type]
+            attributes=convenience_params["attributes"],
             size_limit=int(convenience_params["size_limit"])
             if isinstance(convenience_params["size_limit"], int)
             else 1000,
@@ -613,7 +609,7 @@ class FlextLdapClient:
             base_dn,
             search_filter,
             scope,
-            modern_params["attributes"],  # type: ignore[arg-type]
+            modern_params["attributes"],
             int(modern_params["size_limit"])
             if isinstance(modern_params["size_limit"], int)
             else 1000,
@@ -822,7 +818,7 @@ class FlextLdapClient:
         conn = self._connection
         if conn is None:
             return FlextResult.fail("No connection available for delete operation")
-        ok = conn.delete(dn_val)  # type: ignore[attr-defined]
+        ok = conn.delete(dn_val)
 
         if not ok:
             error = getattr(conn, "last_error", "Delete failed")
@@ -1121,7 +1117,7 @@ class FlextLdapSecurityEventLogger:
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
-        self._events.append(event)  # type: ignore[arg-type]
+        self._events.append(event)
         logger.info("LDAP data access", extra=event)
 
     def get_security_events(

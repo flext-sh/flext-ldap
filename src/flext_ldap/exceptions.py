@@ -1,10 +1,20 @@
-"""FLEXT-LDAP Exceptions."""
+"""FLEXT-LDAP Exceptions.
+
+This module provides comprehensive exception hierarchy for FLEXT-LDAP operations.
+Follows FLEXT ecosystem patterns with centralized error handling and FlextResult integration.
+
+Key Features:
+- Type-safe exception hierarchy extending flext-core patterns
+- Contextual error information for LDAP operations
+- Factory methods for consistent error creation
+- Integration with FlextResult pattern for type-safe error handling
+"""
 
 from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core import FlextError as FlextException
+from flext_core import FlextError, get_logger
 
 from flext_ldap.constants import FlextLdapOperationMessages
 
@@ -13,7 +23,10 @@ from flext_ldap.constants import FlextLdapOperationMessages
 # =============================================================================
 
 
-class FlextLdapException(FlextException):
+logger = get_logger(__name__)
+
+
+class FlextLdapException(FlextError):
     """Base exception for FLEXT-LDAP with optional LDAP context and codes."""
 
     def __init__(
@@ -23,12 +36,27 @@ class FlextLdapException(FlextException):
         ldap_result_code: str | None = None,
         ldap_context: dict[str, object] | None = None,
         operation: str | None = None,
+        error_code: str | None = None,
     ) -> None:
-        """Initialize exception with optional LDAP context details."""
-        super().__init__(message)
+        """Initialize exception with optional LDAP context details.
+
+        Args:
+            message: Error message describing the issue
+            ldap_result_code: LDAP server result code
+            ldap_context: Additional context for debugging
+            operation: LDAP operation that failed
+            error_code: Error code for categorization
+
+        """
+        super().__init__(message, error_code=error_code)
         self.ldap_result_code = ldap_result_code
         self.ldap_context = ldap_context or {}
         self.operation = operation
+        logger.debug(f"LDAP exception created: {message}", extra={
+            "operation": operation,
+            "ldap_result_code": ldap_result_code,
+            "context": ldap_context
+        })
 
     def __str__(self) -> str:
         """Format exception string including LDAP context metadata."""
@@ -67,6 +95,9 @@ class FlextLdapConnectionError(FlextLdapException):
 
     Raised when connection establishment, maintenance, or termination fails.
     Includes server connectivity issues, network timeouts, and protocol errors.
+
+    This exception follows FLEXT patterns for type-safe error handling
+    and integrates with FlextResult for railway-oriented programming.
     """
 
     def __init__(
@@ -98,6 +129,7 @@ class FlextLdapConnectionError(FlextLdapException):
             message,
             ldap_context=context,
             operation=FlextLdapOperationMessages.CONNECTION_OPERATION,
+            error_code="LDAP_CONNECTION_ERROR",
         )
 
 
@@ -136,6 +168,7 @@ class FlextLdapAuthenticationError(FlextLdapException):
             ldap_result_code=ldap_result_code,
             ldap_context=context,
             operation="authentication",
+            error_code="LDAP_AUTH_ERROR",
         )
 
 
@@ -183,6 +216,7 @@ class FlextLdapSearchError(FlextLdapException):
             ldap_result_code=ldap_result_code,
             ldap_context=context,
             operation="search",
+            error_code="LDAP_SEARCH_ERROR",
         )
 
 
@@ -221,6 +255,7 @@ class FlextLdapOperationError(FlextLdapException):
             ldap_result_code=ldap_result_code,
             ldap_context=context,
             operation=operation_type or "modify",
+            error_code="LDAP_OPERATION_ERROR",
         )
 
 
@@ -261,7 +296,12 @@ class FlextLdapUserError(FlextLdapException):
         if validation_field:
             context["field"] = validation_field
 
-        super().__init__(message, ldap_context=context, operation="user_management")
+        super().__init__(
+            message,
+            ldap_context=context,
+            operation="user_management",
+            error_code="LDAP_USER_ERROR"
+        )
 
 
 class FlextLdapGroupError(FlextLdapException):
@@ -296,7 +336,12 @@ class FlextLdapGroupError(FlextLdapException):
         if member_dn:
             context["member_dn"] = member_dn
 
-        super().__init__(message, ldap_context=context, operation="group_management")
+        super().__init__(
+            message,
+            ldap_context=context,
+            operation="group_management",
+            error_code="LDAP_GROUP_ERROR"
+        )
 
 
 # =============================================================================
@@ -340,7 +385,12 @@ class FlextLdapValidationError(FlextLdapException):
         if validation_rule:
             context["rule"] = validation_rule
 
-        super().__init__(message, ldap_context=context, operation="validation")
+        super().__init__(
+            message,
+            ldap_context=context,
+            operation="validation",
+            error_code="LDAP_VALIDATION_ERROR"
+        )
 
 
 class FlextLdapConfigurationError(FlextLdapException):
@@ -371,7 +421,12 @@ class FlextLdapConfigurationError(FlextLdapException):
         if config_key:
             context["key"] = config_key
 
-        super().__init__(message, ldap_context=context, operation="configuration")
+        super().__init__(
+            message,
+            ldap_context=context,
+            operation="configuration",
+            error_code="LDAP_CONFIG_ERROR"
+        )
 
 
 class FlextLdapTypeError(FlextLdapException):
@@ -406,7 +461,12 @@ class FlextLdapTypeError(FlextLdapException):
         if attribute_name:
             context["attribute"] = attribute_name
 
-        super().__init__(message, ldap_context=context, operation="type_conversion")
+        super().__init__(
+            message,
+            ldap_context=context,
+            operation="type_conversion",
+            error_code="LDAP_TYPE_ERROR"
+        )
 
 
 # =============================================================================

@@ -64,12 +64,12 @@ def _execute_async_operation(operation: object) -> object:
         try:
             asyncio.get_running_loop()
         except RuntimeError:
-            return asyncio.run(operation)  # type: ignore[arg-type]
+            return asyncio.run(operation)
         # When already inside an event loop, use a thread to avoid nested
         # event loops which crash under asyncio.
 
         with ThreadPoolExecutor(max_workers=1) as executor:
-            future: Future[object] = executor.submit(asyncio.run, operation)  # type: ignore[arg-type]
+            future: Future[object] = executor.submit(asyncio.run, operation)
             return future.result(timeout=60)
     return operation
 

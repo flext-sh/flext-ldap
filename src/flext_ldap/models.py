@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime
 from enum import Enum, StrEnum
-from typing import TYPE_CHECKING, ClassVar, Final, final
+from typing import ClassVar, Final, final
 from urllib.parse import urlparse
 
 from flext_core import (
@@ -22,9 +22,7 @@ from flext_core import (
 from pydantic import ConfigDict, Field, SecretStr, computed_field, field_validator
 
 from flext_ldap.constants import FlextLdapDefaultValues, FlextLdapProtocolConstants
-
-if TYPE_CHECKING:
-    from flext_ldap.types import LdapAttributeDict, LdapAttributeValue, LdapSearchResult
+from flext_ldap.types import LdapAttributeDict, LdapAttributeValue, LdapSearchResult
 
 MIN_PASSWORD_LENGTH = 6
 logger = get_logger(__name__)

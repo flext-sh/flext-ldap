@@ -11,24 +11,15 @@ from typing import Any
 from flext_cli import (
     CLIContext,
     CLIExecutionContext,
-    FlextResult,
     OutputFormat,
     cli_enhanced,
     cli_format_output,
     cli_validate_inputs,
     get_config,
 )
+from flext_core import FlextResult
 
-# Importar do flext-ldap
-from flext_ldap import get_ldap_api
-
-try:
-    # Newer API
-    from flext_ldap import FlextLdapCreateUserRequest  # type: ignore[attr-defined]
-except Exception:  # pragma: no cover - legacy alias
-    from flext_ldap import (
-        FlextLdapCreateUser as FlextLdapCreateUserRequest,  # type: ignore[attr-defined]
-    )
+from flext_ldap import FlextLdapCreateUserRequest, get_ldap_api
 
 
 class FlextLdapCLI:
