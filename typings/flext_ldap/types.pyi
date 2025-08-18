@@ -3,6 +3,9 @@ from typing import ParamSpec, Protocol, TypeVar
 from flext_core import FlextResult
 
 __all__ = [
+    "_P",
+    "_R",
+    "_T",
     "AsyncCallable",
     "ConnectionConfig",
     "DirectoryAuthConfig",
@@ -17,12 +20,9 @@ __all__ = [
     "LdapAttributeValue",
     "LdapConnectionConfig",
     "LdapSearchResult",
-    "P",
-    "R",
     "SchemaData",
     "SearchResult",
     "SecurityEventData",
-    "T",
     "TLdapAttributeValue",
     "TLdapAttributes",
     "TLdapConnectionId",
@@ -57,9 +57,9 @@ type DirectoryAuthConfig = dict[str, object]
 type ConnectionConfig = dict[str, object]
 type UserRequest = dict[str, object]
 type SearchResult = dict[str, object]
-P = ParamSpec("P")
-R = TypeVar("R")
-T = TypeVar("T")
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
+_T = TypeVar("_T")
 type JsonDict = dict[str, object]
 type FlextTypesCore = dict[str, object]
 

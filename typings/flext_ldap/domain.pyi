@@ -1,7 +1,7 @@
 import re
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import ClassVar, Final, TypeVar
+from typing import ClassVar, Final
 
 from _typeshed import Incomplete
 from flext_core import FlextResult
@@ -29,7 +29,6 @@ __all__ = [
     "FlextLdapUserSpecification",
 ]
 
-T = TypeVar("T")
 MIN_PASSWORD_LENGTH: Final[int]
 MAX_PASSWORD_LENGTH: Final[int]
 

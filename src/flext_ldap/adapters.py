@@ -18,20 +18,16 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Coroutine
 from urllib.parse import urlparse
 
-from flext_core import FlextResult, FlextTypes, get_logger
-from pydantic import BaseModel, Field, field_validator
+from flext_core import FlextModel, FlextResult, FlextTypes, get_logger
+from pydantic import Field, field_validator
 
 from flext_ldap.constants import FlextLdapConnectionConstants
 from flext_ldap.infrastructure import FlextLdapClient
+from flext_ldap.types import FlextLdapDirectoryEntryProtocol
 from flext_ldap.utils import FlextLdapValidationHelpers
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Coroutine
-
-    from flext_ldap.types import FlextLdapDirectoryEntryProtocol
 
 logger = get_logger(__name__)
 
@@ -41,7 +37,7 @@ logger = get_logger(__name__)
 # ==================== DOMAIN MODELS ====================
 
 
-class DirectoryEntry(BaseModel):
+class DirectoryEntry(FlextModel):
     """Directory entry domain model with validation."""
 
     dn: str = Field(..., description="Distinguished name")
@@ -57,7 +53,7 @@ class DirectoryEntry(BaseModel):
         return FlextLdapValidationHelpers.validate_dn_field(v)
 
 
-class ConnectionConfig(BaseModel):
+class ConnectionConfig(FlextModel):
     """Connection configuration model."""
 
     server_uri: str = Field(..., description="LDAP server URI")
@@ -72,7 +68,7 @@ class ConnectionConfig(BaseModel):
     use_ssl: bool = Field(default=False, description="Use SSL/TLS")
 
 
-class OperationResult(BaseModel):
+class OperationResult(FlextModel):
     """Operation result model."""
 
     success: bool = Field(..., description="Operation success status")
@@ -325,7 +321,7 @@ class FlextLdapSearchService(SearchServiceInterface):
 
             if search_result.is_success:
                 # Cast to object type for compatibility
-                search_data: list[object] | None = search_result.data  # type: ignore[assignment]
+                search_data: list[object] | None = search_result.data
                 entries = self._convert_search_results(search_data)
                 return OperationResult(success=True, data=entries)
 

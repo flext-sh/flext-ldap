@@ -112,7 +112,7 @@ class LdapDomainValidator:
     ) -> FlextResult[None]: ...
 
 class FlextLdapDistinguishedName(FlextValue):
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
     value: str
     DN_PATTERN: ClassVar[re.Pattern[str]]
     @classmethod
@@ -142,7 +142,7 @@ class FlextLdapScope(FlextValue):
     def sub(cls) -> FlextLdapScope: ...
 
 class FlextLdapFilter(FlextValue):
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
     value: str
     FILTER_PATTERN: ClassVar[re.Pattern[str]]
     @classmethod
@@ -467,7 +467,7 @@ class FlextLdapDefaults:
     DEFAULT_LOG_RESULTS: Final[bool]
 
 class FlextLdapConnectionConfig(FlextLDAPConfig):
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
     server: str
     port: int
     bind_dn: str
@@ -533,7 +533,7 @@ class FlextLdapLoggingConfig(FlextModel):
     structured_logging: bool
 
 class FlextLdapSettings(FlextModel):
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
     default_connection: FlextLdapConnectionConfig | None
     search: FlextLdapSearchConfig
     logging: FlextLdapLoggingConfig
@@ -583,7 +583,7 @@ class FlextLdapAuthConfig(FlextModel):
     bind_password: SecretStr | None
     use_anonymous_bind: bool
     sasl_mechanism: str | None
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
     def validate_business_rules(self) -> FlextResult[None]: ...
 
 def create_development_config(

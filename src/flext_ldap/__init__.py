@@ -13,7 +13,11 @@ from flext_ldap.constants import (
     FlextLdapObjectClassConstants,
 )
 
-from flext_ldap.config import FlextLdapConnectionConfig, FlextLdapSettings
+from flext_ldap.config import (
+    FlextLdapConnectionConfig,
+    FlextLdapSettings,
+    FlextLdapAuthConfig,
+)
 
 from flext_ldap.models import (
     FlextLdapCreateUserRequest,
@@ -32,6 +36,7 @@ from flext_ldap.exceptions import (
     FlextLdapException,
     FlextLdapExceptionFactory,
     FlextLdapUserError,
+    FlextLdapConfigurationError,
 )
 
 from flext_ldap.utils import (
@@ -41,6 +46,8 @@ from flext_ldap.utils import (
     flext_ldap_sanitize_attribute_name,
     LdapAttributeDict,
 )
+
+from flext_ldap.legacy import FlextLdapConfig
 
 # Version info
 try:
@@ -58,6 +65,8 @@ __all__: list[str] = [
     # Configuration
     "FlextLdapConnectionConfig",
     "FlextLdapSettings",
+    "FlextLdapAuthConfig",
+    "FlextLdapConfig",
     # Domain Models
     "FlextLdapEntry",
     "FlextLdapUser",
@@ -79,6 +88,7 @@ __all__: list[str] = [
     "FlextLdapException",
     "FlextLdapExceptionFactory",
     "FlextLdapUserError",
+    "FlextLdapConfigurationError",
     # Utilities
     "flext_ldap_validate_dn",
     "flext_ldap_validate_attribute_name",

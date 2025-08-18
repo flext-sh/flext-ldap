@@ -40,11 +40,6 @@ from flext_ldap.types import (
 )
 
 logger = get_logger(__name__)
-"""
-# Protocols and interfaces are provided by flext_ldap.types and adapters to avoid
-# duplication in this module.
-"""
-
 
 # =============================================================================
 # BASE SERVICE FOUNDATION
@@ -165,7 +160,7 @@ class FlextLdapApplicationService:
 
     def __init__(self, config: object | None = None) -> None:
         """Initialize LDAP service with real infrastructure."""
-        self._api = FlextLdapApi(config)  # type: ignore[arg-type]
+        self._api = FlextLdapApi(config)
         self._session_id: str | None = None
         logger.info("FlextLdapApplicationService initialized with real infrastructure")
 

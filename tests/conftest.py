@@ -28,10 +28,6 @@ except Exception:  # pragma: no cover - docker may be unavailable in CI
 
 
 from collections.abc import AsyncGenerator, Generator
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from docker.models.containers import Container
 
 # OpenLDAP Container Configuration
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"
@@ -200,7 +196,7 @@ def _get_container_manager() -> OpenLDAPContainerManager:
 
 
 @pytest.fixture(scope="session")
-def docker_openldap_container() -> Generator[Container]:
+def docker_openldap_container() -> Generator[object]:
     """Session-scoped fixture that provides OpenLDAP Docker container.
 
     This fixture starts an OpenLDAP container at the beginning of the test session
@@ -227,7 +223,7 @@ def docker_openldap_container() -> Generator[Container]:
 
 
 @pytest.fixture
-def ldap_test_config(docker_openldap_container: Container) -> dict[str, object]:
+def ldap_test_config(docker_openldap_container: object) -> dict[str, object]:
     """Provide LDAP test configuration for individual tests."""
     return {
         "server_url": TEST_ENV_VARS["LDAP_TEST_SERVER"],
