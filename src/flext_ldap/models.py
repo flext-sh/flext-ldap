@@ -114,8 +114,8 @@ class LdapDomainValidator:
             attributes,
             "cn",
         ):
-            return FlextResult.fail(f"{entity_type} must have a Common Name")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail(f"{entity_type} must have a Common Name")
+        return FlextResult[None].ok(None)
 
     @staticmethod
     def validate_required_object_classes(
@@ -126,10 +126,10 @@ class LdapDomainValidator:
         """Validate required object classes for entities."""
         for req_class in required_classes:
             if req_class not in object_classes:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     f"{entity_type} must have object class '{req_class}'",
                 )
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     @staticmethod
     def _get_attribute_value(attributes: dict[str, object], name: str) -> str | None:
@@ -185,8 +185,8 @@ class FlextLdapDistinguishedName(FlextValue):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate DN business rules."""
         if not self.value or self.value.isspace():
-            return FlextResult.fail("DN cannot be empty or whitespace")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("DN cannot be empty or whitespace")
+        return FlextResult[None].ok(None)
 
     @computed_field
     def parent_dn(self) -> str | None:
@@ -213,9 +213,9 @@ class FlextLdapDistinguishedName(FlextValue):
         """Create DN from string with validation."""
         try:
             dn = cls(value=value)
-            return FlextResult.ok(dn)
+            return FlextResult[None].ok(dn)
         except Exception as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[None].fail(str(e))
 
 
 @final
@@ -246,16 +246,16 @@ class FlextLdapScope(FlextValue):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules."""
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     @classmethod
     def create(cls, scope: str) -> FlextResult[FlextLdapScope]:
         """Create scope value object with validation."""
         try:
             scope_obj = cls(scope=scope)
-            return FlextResult.ok(scope_obj)
+            return FlextResult[None].ok(scope_obj)
         except ValueError as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[None].fail(str(e))
 
     @classmethod
     def base(cls) -> FlextLdapScope:
@@ -308,17 +308,17 @@ class FlextLdapFilter(FlextValue):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate filter business rules."""
         if not self.value or self.value.isspace():
-            return FlextResult.fail("Filter cannot be empty or whitespace")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Filter cannot be empty or whitespace")
+        return FlextResult[None].ok(None)
 
     @classmethod
     def create(cls, value: str) -> FlextResult[FlextLdapFilter]:
         """Create filter from string with validation."""
         try:
             filter_obj = cls(value=value)
-            return FlextResult.ok(filter_obj)
+            return FlextResult[None].ok(filter_obj)
         except Exception as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[None].fail(str(e))
 
 
 @final
@@ -339,7 +339,7 @@ class FlextLdapUri(FlextValue):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate URI business rules."""
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     @computed_field
     def scheme(self) -> str:
@@ -379,8 +379,8 @@ class FlextLdapObjectClass(FlextValue):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules."""
         if not self.name or not self.name.strip():
-            return FlextResult.fail("Object class name cannot be empty")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Object class name cannot be empty")
+        return FlextResult[None].ok(None)
 
     def __str__(self) -> str:
         """Return object class name."""
@@ -399,12 +399,12 @@ class FlextLdapAttributesValue(FlextValue):
         """Validate business rules for LDAP attributes."""
         for name, values in self.attributes.items():
             if not name or not name.strip():
-                return FlextResult.fail("Attribute name cannot be empty")
+                return FlextResult[None].fail("Attribute name cannot be empty")
             if not values:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     f"Attribute '{name}' must have at least one value",
                 )
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def get_single_value(self, name: str) -> str | None:
         """Get single value for attribute."""
@@ -600,12 +600,12 @@ class FlextLdapEntry(FlextEntity):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate entry business rules."""
         if not self.object_classes:
-            return FlextResult.fail("Entry must have at least one object class")
+            return FlextResult[None].fail("Entry must have at least one object class")
 
         if not self.dn or not self.dn.strip():
-            return FlextResult.fail("Entry must have a valid DN")
+            return FlextResult[None].fail("Entry must have a valid DN")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     @field_validator("attributes", mode="before")
     @classmethod
@@ -620,10 +620,10 @@ class FlextLdapEntry(FlextEntity):
     def add_object_class(self, object_class: str) -> FlextResult[None]:
         """Add object class to entry."""
         if object_class in self.object_classes:
-            return FlextResult.fail(f"Object class '{object_class}' already exists")
+            return FlextResult[None].fail(f"Object class '{object_class}' already exists")
 
         self.object_classes.append(object_class)
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def get_attribute_values(self, name: str) -> list[str]:
         """Get attribute values by name, always as list[str]."""
@@ -732,7 +732,7 @@ class FlextLdapUser(FlextLdapEntry):
 
         # User-specific validations
         if not self.uid and not self.get_single_attribute_value("uid"):
-            return FlextResult.fail("User must have a UID")
+            return FlextResult[None].fail("User must have a UID")
 
         # Use helper for common name validation - REDUCES DUPLICATION
         cn_result = LdapDomainValidator.validate_common_name(
@@ -753,19 +753,19 @@ class FlextLdapUser(FlextLdapEntry):
     def set_password(self, password: str) -> FlextResult[None]:
         """Set user password."""
         if not password or len(password) < MIN_PASSWORD_LENGTH:
-            return FlextResult.fail("Password must be at least 6 characters")
+            return FlextResult[None].fail("Password must be at least 6 characters")
 
         self.set_attribute("userPassword", [password])
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def set_email(self, email: str) -> FlextResult[None]:
         """Set user email with validation."""
         if "@" not in email:
-            return FlextResult.fail("Invalid email format")
+            return FlextResult[None].fail("Invalid email format")
 
         self.mail = email
         self.set_attribute("mail", [email])
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def is_active(self) -> bool:
         """Check if user is active."""
@@ -893,22 +893,22 @@ class FlextLdapConnection(FlextEntity):
         try:
             FlextLdapUri(value=self.server_uri)
         except ValueError as e:
-            return FlextResult.fail(f"Invalid server URI: {e}")
+            return FlextResult[None].fail(f"Invalid server URI: {e}")
 
         if self.bind_dn:
             try:
                 FlextLdapDistinguishedName(value=self.bind_dn)
             except ValueError as e:
-                return FlextResult.fail(f"Invalid bind DN: {e}")
+                return FlextResult[None].fail(f"Invalid bind DN: {e}")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def connect(self) -> FlextResult[None]:
         """Mark connection as established."""
         self.is_connected = True
         self.connection_time = datetime.now(UTC)
         self.last_activity = self.connection_time
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def disconnect(self) -> None:
         """Mark connection as closed."""
@@ -995,14 +995,14 @@ class FlextLdapEntryBuilder:
             # Validate domain rules
             validation_result = entry.validate_business_rules()
             if not validation_result.is_success:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     f"Entry validation failed: {validation_result.error}",
                 )
 
-            return FlextResult.ok(entry)
+            return FlextResult[None].ok(entry)
 
         except Exception as e:
-            return FlextResult.fail(f"Entry construction failed: {e}")
+            return FlextResult[None].fail(f"Entry construction failed: {e}")
 
 
 class FlextLdapUserBuilder(FlextLdapEntryBuilder):
@@ -1077,14 +1077,14 @@ class FlextLdapUserBuilder(FlextLdapEntryBuilder):
             # Validate domain rules
             validation_result = user.validate_business_rules()
             if not validation_result.is_success:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     f"User validation failed: {validation_result.error}",
                 )
 
-            return FlextResult.ok(user)
+            return FlextResult[None].ok(user)
 
         except Exception as e:
-            return FlextResult.fail(f"User construction failed: {e}")
+            return FlextResult[None].fail(f"User construction failed: {e}")
 
 
 class FlextLdapGroupBuilder(FlextLdapEntryBuilder):
@@ -1152,14 +1152,14 @@ class FlextLdapGroupBuilder(FlextLdapEntryBuilder):
             # Validate domain rules
             validation_result = group.validate_business_rules()
             if not validation_result.is_success:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     f"Group validation failed: {validation_result.error}",
                 )
 
-            return FlextResult.ok(group)
+            return FlextResult[None].ok(group)
 
         except Exception as e:
-            return FlextResult.fail(f"Group construction failed: {e}")
+            return FlextResult[None].fail(f"Group construction failed: {e}")
 
 
 # =============================================================================
@@ -1192,7 +1192,7 @@ class FlextLdapEntryFactory:
             return builder.build_user()
 
         except Exception as e:
-            return FlextResult.fail(f"User creation failed: {e}")
+            return FlextResult[None].fail(f"User creation failed: {e}")
 
     @staticmethod
     def create_group_entry(
@@ -1216,7 +1216,7 @@ class FlextLdapEntryFactory:
             return builder.build_group()
 
         except Exception as e:
-            return FlextResult.fail(f"Group creation failed: {e}")
+            return FlextResult[None].fail(f"Group creation failed: {e}")
 
     @staticmethod
     def create_organizational_unit(
@@ -1236,7 +1236,7 @@ class FlextLdapEntryFactory:
             return builder.build()
 
         except Exception as e:
-            return FlextResult.fail(f"OU creation failed: {e}")
+            return FlextResult[None].fail(f"OU creation failed: {e}")
 
 
 # =============================================================================
@@ -1689,8 +1689,8 @@ class FlextLdapConnectionConfig(FlextLDAPConfig):
     def validate_business_rules(self) -> FlextResult[None]:
         """Basic business rules validation used in tests."""
         if not self.server or not self.server.strip():
-            return FlextResult.fail("Host cannot be empty")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Host cannot be empty")
+        return FlextResult[None].ok(None)
 
     def with_auth(self, bind_dn: str, bind_password: str) -> FlextLdapConnectionConfig:
         """Create new configuration with authentication (immutable)."""
@@ -1851,15 +1851,15 @@ class FlextLdapSettings(FlextModel):
     def validate_configuration(self) -> FlextResult[None]:
         """Validate complete settings configuration."""
         if self.default_connection and not self.default_connection.server:
-            return FlextResult.fail("Default connection must specify a server")
+            return FlextResult[None].fail("Default connection must specify a server")
 
         # Validate cache settings
         if self.enable_caching and self.cache_ttl <= 0:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 "Cache TTL must be positive when caching is enabled",
             )
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def get_effective_connection(
         self,
@@ -1966,12 +1966,12 @@ class FlextLdapAuthConfig(FlextModel):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate authentication rules used in tests."""
         if self.use_anonymous_bind:
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
         if not self.bind_dn:
-            return FlextResult.fail("Bind DN is required")
+            return FlextResult[None].fail("Bind DN is required")
         if not self.bind_password or self.bind_password.get_secret_value() == "":
-            return FlextResult.fail("Bind password is required")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Bind password is required")
+        return FlextResult[None].ok(None)
 
 
 # Export consolidated configuration symbols

@@ -230,12 +230,12 @@ class FlextLdapTestCommand(FlextLdapCliBase):
         """Validate LDAP connection parameters."""
         max_port = 65535
         if not self.params.server or not self.params.server.strip():
-            return FlextResult.fail("Server cannot be empty")
+            return FlextResult[None].fail("Server cannot be empty")
 
         if not (1 <= self.params.port <= max_port):
-            return FlextResult.fail(f"Invalid port: {self.params.port}")
+            return FlextResult[None].fail(f"Invalid port: {self.params.port}")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def execute(self) -> FlextResult[object]:
         """Execute LDAP connection test - REFACTORED async handling."""
@@ -258,18 +258,18 @@ class FlextLdapTestCommand(FlextLdapCliBase):
                 self.flext_cli_print_success(f"Successfully connected to {uri}")
                 # Always disconnect regardless of connect_result.data presence
                 _execute_async_operation(client.disconnect())
-                return FlextResult.ok(
+                return FlextResult[None].ok(
                     {
                         "message": f"Connection successful to {uri}",
                         "protocol": protocol,
                     },
                 )
             self.flext_cli_print_error(f"Connection failed: {connect_result.error}")
-            return FlextResult.fail(connect_result.error or "Connection failed")
+            return FlextResult[None].fail(connect_result.error or "Connection failed")
 
         except Exception as e:
             self.flext_cli_print_error(f"Connection error: {e}")
-            return FlextResult.fail(str(e))
+            return FlextResult[None].fail(str(e))
 
 
 class FlextLdapSearchCommand(FlextLdapCliBase):
@@ -292,15 +292,15 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
         """Validate LDAP search parameters."""
         max_port = 65535
         if not self.params.server or not self.params.server.strip():
-            return FlextResult.fail("Server cannot be empty")
+            return FlextResult[None].fail("Server cannot be empty")
 
         if not self.params.base_dn or not self.params.base_dn.strip():
-            return FlextResult.fail("Base DN cannot be empty")
+            return FlextResult[None].fail("Base DN cannot be empty")
 
         if not (1 <= self.params.port <= max_port):
-            return FlextResult.fail(f"Invalid port: {self.params.port}")
+            return FlextResult[None].fail(f"Invalid port: {self.params.port}")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def execute(self) -> FlextResult[object]:
         """Execute LDAP search - REFACTORED async handling."""
@@ -318,7 +318,7 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
 
         except Exception as e:
             self.flext_cli_print_error(f"Search error: {e}")
-            return FlextResult.fail(str(e))
+            return FlextResult[None].fail(str(e))
 
     def _perform_search_operation(
         self,
@@ -334,13 +334,13 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
 
         if connect_result.is_failure:
             self.flext_cli_print_error(f"Connection failed: {connect_result.error}")
-            return FlextResult.fail(connect_result.error or "Connection failed")
+            return FlextResult[None].fail(connect_result.error or "Connection failed")
 
         try:
             # Validate parameters
             validation_result = self._validate_search_parameters()
             if validation_result.is_failure:
-                return FlextResult.fail(validation_result.error or "Validation failed")
+                return FlextResult[None].fail(validation_result.error or "Validation failed")
 
             # Execute search with validated data
             return self._execute_search_with_client(client, validation_result.data)
@@ -354,13 +354,13 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
         # Validate and create DN and filter objects
         dn_result = FlextLdapDistinguishedName.create(self.params.base_dn)
         if dn_result.is_failure or dn_result.data is None:
-            return FlextResult.fail(f"Invalid base DN: {dn_result.error}")
+            return FlextResult[None].fail(f"Invalid base DN: {dn_result.error}")
 
         filter_result = FlextLdapFilter.create(self.params.filter_str)
         if filter_result.is_failure or filter_result.data is None:
-            return FlextResult.fail(f"Invalid filter: {filter_result.error}")
+            return FlextResult[None].fail(f"Invalid filter: {filter_result.error}")
 
-        return FlextResult.ok(
+        return FlextResult[None].ok(
             {
                 "dn": dn_result.data,
                 "filter": filter_result.data,
@@ -404,10 +404,10 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
             # Display results using Rich tables
             self._display_search_results(entries)
 
-            return FlextResult.ok({"entries": entries, "count": len(entries)})
+            return FlextResult[None].ok({"entries": entries, "count": len(entries)})
 
         self.flext_cli_print_warning("No entries found")
-        return FlextResult.ok({"entries": [], "count": 0})
+        return FlextResult[None].ok({"entries": [], "count": 0})
 
     def _display_search_results(self, entries: list[object]) -> None:
         """Display search results using Rich formatting - REFACTORED to reduce complexity."""
@@ -487,9 +487,9 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate user info parameters."""
         if not self.uid or not self.uid.strip():
-            return FlextResult.fail("UID cannot be empty")
+            return FlextResult[None].fail("UID cannot be empty")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def execute(self) -> FlextResult[object]:
         """Execute user lookup - REFACTORED to reduce returns."""
@@ -504,7 +504,7 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
 
         except Exception as e:
             self.flext_cli_print_error(f"User lookup error: {e}")
-            return FlextResult.fail(str(e))
+            return FlextResult[None].fail(str(e))
 
     def _perform_user_lookup(
         self,
@@ -520,7 +520,7 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
 
         if connect_result.is_failure:
             self.flext_cli_print_error(f"Connection failed: {connect_result.error}")
-            return FlextResult.fail(connect_result.error or "Connection failed")
+            return FlextResult[None].fail(connect_result.error or "Connection failed")
 
         try:
             return self._search_for_user(client)
@@ -533,7 +533,7 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
         # Validate search parameters
         validation_result = self._prepare_search_parameters()
         if validation_result.is_failure:
-            return FlextResult.fail(validation_result.error or "Validation failed")
+            return FlextResult[None].fail(validation_result.error or "Validation failed")
 
         # Execute search operation
         search_result = self._execute_user_search(client, validation_result.data)
@@ -544,13 +544,13 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
         """Prepare and validate search parameters."""
         dn_result = FlextLdapDistinguishedName.create("dc=example,dc=com")
         if dn_result.is_failure or dn_result.data is None:
-            return FlextResult.fail(f"Invalid base DN: {dn_result.error}")
+            return FlextResult[None].fail(f"Invalid base DN: {dn_result.error}")
 
         filter_result = FlextLdapFilter.create(f"(uid={self.uid})")
         if filter_result.is_failure or filter_result.data is None:
-            return FlextResult.fail("Invalid filter")
+            return FlextResult[None].fail("Invalid filter")
 
-        return FlextResult.ok(
+        return FlextResult[None].ok(
             {
                 "dn": dn_result.data,
                 "filter": filter_result.data,
@@ -593,10 +593,10 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
 
             # Display user information
             self._display_user_info(user_data)
-            return FlextResult.ok(user_data)
+            return FlextResult[None].ok(user_data)
 
         self.flext_cli_print_warning(f"User {self.uid} not found")
-        return FlextResult.fail(f"User {self.uid} not found")
+        return FlextResult[None].fail(f"User {self.uid} not found")
 
     def _display_user_info(self, user: object) -> None:
         """Display user information using Rich formatting."""

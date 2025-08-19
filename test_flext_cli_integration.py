@@ -77,10 +77,10 @@ class FlextLdapCLI:
                 "execution_context": execution_context.get_execution_info(),
             }
 
-            return FlextResult.ok(result)
+            return FlextResult[None].ok(result)
 
         except Exception as e:
-            return FlextResult.fail(f"Erro ao listar usuários: {e}")
+            return FlextResult[None].fail(f"Erro ao listar usuários: {e}")
 
     @cli_enhanced
     @cli_validate_inputs
@@ -131,10 +131,10 @@ class FlextLdapCLI:
                 "execution_context": execution_context.get_execution_info(),
             }
 
-            return FlextResult.ok(result)
+            return FlextResult[None].ok(result)
 
         except Exception as e:
-            return FlextResult.fail(f"Erro ao criar usuário: {e}")
+            return FlextResult[None].fail(f"Erro ao criar usuário: {e}")
 
     def format_and_display(
         self,

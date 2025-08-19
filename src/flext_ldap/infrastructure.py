@@ -132,14 +132,14 @@ class FlextLdapClient:
 
         except LDAPException as e:
             logger.exception(FlextLdapValidationMessages.LDAP_CONNECTION_FAILED)
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 FlextLdapValidationMessages.CONNECTION_FAILED_GENERIC.format(
                     error=str(e)
                 )
             )
         except (ConnectionError, TimeoutError, OSError, TypeError, ValueError) as e:
             logger.exception(FlextLdapValidationMessages.LDAP_CONNECTION_FAILED)
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 FlextLdapValidationMessages.CONNECTION_FAILED_GENERIC.format(
                     error=str(e)
                 )
@@ -171,7 +171,7 @@ class FlextLdapClient:
             bind_password=bind_password,
         )
         if connection_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 connection_result.error or FlextLdapValidationMessages.CONNECTION_FAILED
             )
 
@@ -189,7 +189,7 @@ class FlextLdapClient:
                 "authenticated": bind_dn is not None,
             },
         )
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _validate_connection_uri(self, server_uri: str) -> FlextResult[None]:
         """Validate the server URI format and scheme."""
@@ -198,17 +198,17 @@ class FlextLdapClient:
             FlextLdapDefaultValues.DEFAULT_SCHEME_LDAP,
             FlextLdapDefaultValues.DEFAULT_SCHEME_LDAPS,
         }:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 FlextLdapValidationMessages.CONNECTION_FAILED_INVALID_SCHEME
             )
 
         host = parsed.hostname or ""
         if not host:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 FlextLdapValidationMessages.CONNECTION_FAILED_INVALID_HOST
             )
 
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _create_ldap_connection(
         self,
@@ -234,9 +234,9 @@ class FlextLdapClient:
         # Perform bind (anonymous if no credentials)
         if not conn.bind():
             error = getattr(conn, "last_error", "Bind failed")
-            return FlextResult.fail(f"Bind failed: {error}")
+            return FlextResult[object].fail(f"Bind failed: {error}")
 
-        return FlextResult.ok(conn)
+        return FlextResult[object].ok(conn)
 
     async def disconnect(self, *args: object, **kwargs: object) -> FlextResult[None]:
         """Disconnect from LDAP server. Accepts and ignores transitional positional id."""
@@ -257,10 +257,10 @@ class FlextLdapClient:
             self._connection = None
 
             logger.info("LDAP client disconnected")
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
         except (ConnectionError, OSError, RuntimeError) as e:
             logger.exception("LDAP disconnection failed")
-            return FlextResult.fail(f"Disconnection failed: {e!s}")
+            return FlextResult[object].fail(f"Disconnection failed: {e!s}")
 
     # -------------------------------------------------------------------------
     # Testing convenience facade methods expected by transitional/tests
@@ -314,13 +314,13 @@ class FlextLdapClient:
             )
         except Exception as e:
             logger.exception("LDAP search failed")
-            return FlextResult.fail(f"Search failed: {e!s}")
+            return FlextResult[object].fail(f"Search failed: {e!s}")
 
     def _validate_search_connection(self) -> FlextResult[None]:
         """Validate that client is connected and ready for search."""
         if not self._is_connected or self._connection is None:
-            return FlextResult.fail("Client not connected")
-        return FlextResult.ok(None)
+            return FlextResult[object].fail("Client not connected")
+        return FlextResult[object].ok(None)
 
     async def _execute_search_operation(
         self,
@@ -340,11 +340,11 @@ class FlextLdapClient:
 
         # Perform search
         if conn is None:
-            return FlextResult.fail("No connection available")
+            return FlextResult[object].fail("No connection available")
         if not hasattr(conn, "search"):
             # Provide stub search behavior when using placeholder connection
             conn.entries = []
-            return FlextResult.ok([])
+            return FlextResult[object].ok([])
         ok = conn.search(
             search_base=base_dn,
             search_filter=search_filter,
@@ -356,7 +356,7 @@ class FlextLdapClient:
 
         if not ok:
             error = getattr(conn, "last_error", "Search failed")
-            return FlextResult.fail(f"Search failed: {error}")
+            return FlextResult[object].fail(f"Search failed: {error}")
 
         # Process search results
         results = self._process_search_results(conn)
@@ -364,7 +364,7 @@ class FlextLdapClient:
         # Log operation
         self._log_search_operation(base_dn, search_filter, scope, len(results))
 
-        return FlextResult.ok(results)
+        return FlextResult[object].ok(results)
 
     def _map_scope_to_ldap3_constant(self, scope: str) -> object:
         """Map scope string to ldap3 constant - EXTRACTED for clarity."""
@@ -488,7 +488,7 @@ class FlextLdapClient:
             )
         except Exception as e:
             logger.exception("LDAP search failed")
-            return FlextResult.fail(f"Search failed: {e!s}")
+            return FlextResult[object].fail(f"Search failed: {e!s}")
 
     def _extract_dn_string(self, base_dn: object) -> str:
         """Extract DN string from VO object or direct value."""
@@ -531,11 +531,11 @@ class FlextLdapClient:
             if self._is_modern_positional_search(args):
                 return await self._handle_modern_positional_search(args, kwargs)
 
-            return FlextResult.fail("Invalid search arguments")
+            return FlextResult[object].fail("Invalid search arguments")
 
         except Exception as e:
             logger.exception("Search signature resolution failed")
-            return FlextResult.fail(f"Search error: {e}")
+            return FlextResult[object].fail(f"Search error: {e}")
 
     def _is_keyword_search(self, kwargs: dict[str, object]) -> bool:
         """Check if this is a keyword-based search."""
@@ -674,7 +674,7 @@ class FlextLdapClient:
         if not self._is_connected or not (
             self._connection is not None and hasattr(self._connection, "add")
         ):
-            return FlextResult.fail("Client not connected")
+            return FlextResult[object].fail("Client not connected")
 
         try:
             conn = self._connection
@@ -689,17 +689,17 @@ class FlextLdapClient:
             ok = conn.add(dn, attributes=normalized_attrs)
             if not ok:
                 error = getattr(conn, "last_error", "Add failed")
-                return FlextResult.fail(f"Add failed: {error}")
+                return FlextResult[object].fail(f"Add failed: {error}")
 
             logger.info(
                 "LDAP entry added",
                 extra={"dn": dn, "attribute_count": len(normalized_attrs)},
             )
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         except LDAPException as e:
             logger.exception("LDAP add failed")
-            return FlextResult.fail(f"Add failed: {e!s}")
+            return FlextResult[object].fail(f"Add failed: {e!s}")
         except (
             ConnectionError,
             TimeoutError,
@@ -709,7 +709,7 @@ class FlextLdapClient:
             AttributeError,
         ) as e:
             logger.exception("LDAP add failed")
-            return FlextResult.fail(f"Add failed: {e!s}")
+            return FlextResult[object].fail(f"Add failed: {e!s}")
 
     async def modify_entry(
         self,
@@ -720,7 +720,7 @@ class FlextLdapClient:
         if not self._is_connected or not (
             self._connection is not None and hasattr(self._connection, "modify")
         ):
-            return FlextResult.fail("Client not connected")
+            return FlextResult[object].fail("Client not connected")
 
         try:
             conn = self._connection
@@ -736,17 +736,17 @@ class FlextLdapClient:
             ok = conn.modify(dn, changes=mods)
             if not ok:
                 error = getattr(conn, "last_error", "Modify failed")
-                return FlextResult.fail(f"Modify failed: {error}")
+                return FlextResult[object].fail(f"Modify failed: {error}")
 
             logger.info(
                 "LDAP entry modified",
                 extra={"dn": dn, "modification_count": len(modifications)},
             )
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         except LDAPException as e:
             logger.exception("LDAP modify failed")
-            return FlextResult.fail(f"Modify failed: {e!s}")
+            return FlextResult[object].fail(f"Modify failed: {e!s}")
         except (
             ConnectionError,
             TimeoutError,
@@ -756,7 +756,7 @@ class FlextLdapClient:
             AttributeError,
         ) as e:
             logger.exception("LDAP modify failed")
-            return FlextResult.fail(f"Modify failed: {e!s}")
+            return FlextResult[object].fail(f"Modify failed: {e!s}")
 
     async def delete_entry(self, *args: object) -> FlextResult[None]:
         """Delete LDAP entry - REFACTORED to reduce returns.
@@ -773,14 +773,14 @@ class FlextLdapClient:
             # Extract DN from arguments
             dn_result = self._extract_dn_from_delete_args(args)
             if dn_result.is_failure:
-                return FlextResult.fail(dn_result.error or "Failed to extract DN")
+                return FlextResult[object].fail(dn_result.error or "Failed to extract DN")
 
             # Perform deletion operation
             return await self._perform_delete_operation(str(dn_result.data))
 
         except LDAPException as e:
             logger.exception("LDAP delete failed")
-            return FlextResult.fail(f"Delete failed: {e!s}")
+            return FlextResult[object].fail(f"Delete failed: {e!s}")
         except (
             ConnectionError,
             TimeoutError,
@@ -790,15 +790,15 @@ class FlextLdapClient:
             AttributeError,
         ) as e:
             logger.exception("LDAP delete failed")
-            return FlextResult.fail(f"Delete failed: {e!s}")
+            return FlextResult[object].fail(f"Delete failed: {e!s}")
 
     def _validate_delete_connection(self) -> FlextResult[None]:
         """Validate that connection is ready for delete operations."""
         if not self._is_connected or not (
             self._connection is not None and hasattr(self._connection, "delete")
         ):
-            return FlextResult.fail("Client not connected")
-        return FlextResult.ok(None)
+            return FlextResult[object].fail("Client not connected")
+        return FlextResult[object].ok(None)
 
     def _extract_dn_from_delete_args(
         self, args: tuple[object, ...]
@@ -806,26 +806,26 @@ class FlextLdapClient:
         """Extract DN from delete method arguments."""
         single_arg = 1
         if len(args) == single_arg:
-            return FlextResult.ok(str(args[0]))
+            return FlextResult[object].ok(str(args[0]))
         if len(args) >= single_arg + 1:
             dn_obj = args[1]
             dn_val = str(getattr(dn_obj, "value", dn_obj))
-            return FlextResult.ok(dn_val)
-        return FlextResult.fail("DN is required")
+            return FlextResult[object].ok(dn_val)
+        return FlextResult[object].fail("DN is required")
 
     async def _perform_delete_operation(self, dn_val: str) -> FlextResult[None]:
         """Perform the actual LDAP delete operation."""
         conn = self._connection
         if conn is None:
-            return FlextResult.fail("No connection available for delete operation")
+            return FlextResult[object].fail("No connection available for delete operation")
         ok = conn.delete(dn_val)
 
         if not ok:
             error = getattr(conn, "last_error", "Delete failed")
-            return FlextResult.fail(f"Delete failed: {error}")
+            return FlextResult[object].fail(f"Delete failed: {error}")
 
         logger.info("LDAP entry deleted", extra={"dn": dn_val})
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
 
 # =============================================================================
@@ -851,22 +851,22 @@ class FlextLDAPConnectionManager:
     ) -> FlextResult[FlextLdapClient]:
         """Get or create LDAP connection."""
         if connection_id in self._active_connections:
-            return FlextResult.ok(self._active_connections[connection_id])
+            return FlextResult[object].ok(self._active_connections[connection_id])
 
         if self._connection_count >= self._max_connections:
-            return FlextResult.fail("Connection pool exhausted")
+            return FlextResult[object].fail("Connection pool exhausted")
 
         try:
             client = FlextLdapClient()
             connect_result = await client.connect(server_uri, bind_dn, bind_password)
 
             if not connect_result.is_success:
-                return FlextResult.fail(connect_result.error or "Connection failed")
+                return FlextResult[object].fail(connect_result.error or "Connection failed")
 
             self._active_connections[connection_id] = client
             self._connection_count += 1
 
-            return FlextResult.ok(client)
+            return FlextResult[object].ok(client)
 
         except (
             ConnectionError,
@@ -876,22 +876,22 @@ class FlextLDAPConnectionManager:
             ValueError,
             AttributeError,
         ) as e:
-            return FlextResult.fail(f"Connection creation failed: {e!s}")
+            return FlextResult[object].fail(f"Connection creation failed: {e!s}")
 
     async def release_connection(self, connection_id: str) -> FlextResult[None]:
         """Release connection back to pool."""
         if connection_id not in self._active_connections:
-            return FlextResult.fail(f"Connection not found: {connection_id}")
+            return FlextResult[object].fail(f"Connection not found: {connection_id}")
 
         try:
             client = self._active_connections.pop(connection_id)
             await client.disconnect()
             self._connection_count -= 1
 
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         except (ConnectionError, OSError, RuntimeError, AttributeError) as e:
-            return FlextResult.fail(f"Connection release failed: {e!s}")
+            return FlextResult[object].fail(f"Connection release failed: {e!s}")
 
 
 # =============================================================================
@@ -925,11 +925,11 @@ class FlextLdapCertificateValidationService:
             _ = cert_data
             # NOTE(marlonsc): Implement certificate validation logic (planned)
             logger.debug("Certificate validated", extra={"hostname": hostname})
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         except (OSError, ValueError, TypeError, AttributeError) as e:
             logger.exception("Certificate validation failed")
-            return FlextResult.fail(f"Certificate validation failed: {e!s}")
+            return FlextResult[object].fail(f"Certificate validation failed: {e!s}")
 
     def create_ssl_context(
         self,
@@ -978,7 +978,7 @@ class FlextLdapSchemaDiscoveryService:
             )
 
             if not schema_result.is_success:
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     f"Schema discovery failed: {schema_result.error}",
                 )
 
@@ -1008,7 +1008,7 @@ class FlextLdapSchemaDiscoveryService:
                 },
             )
 
-            return FlextResult.ok(schema_info)
+            return FlextResult[object].ok(schema_info)
 
         except (
             ConnectionError,
@@ -1019,7 +1019,7 @@ class FlextLdapSchemaDiscoveryService:
             AttributeError,
         ) as e:
             logger.exception("Schema discovery failed")
-            return FlextResult.fail(f"Schema discovery failed: {e!s}")
+            return FlextResult[object].fail(f"Schema discovery failed: {e!s}")
 
     def validate_entry_against_schema(
         self,
@@ -1037,11 +1037,11 @@ class FlextLdapSchemaDiscoveryService:
                 },
             )
 
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         except (TypeError, ValueError, AttributeError) as e:
             logger.exception("Schema validation failed")
-            return FlextResult.fail(f"Schema validation failed: {e!s}")
+            return FlextResult[object].fail(f"Schema validation failed: {e!s}")
 
 
 # =============================================================================
@@ -1185,11 +1185,11 @@ class FlextLdapErrorCorrelationService:
             }
 
             logger.warning("LDAP error correlated", extra=correlation_result)
-            return FlextResult.ok(correlation_result)
+            return FlextResult[object].ok(correlation_result)
 
         except (TypeError, ValueError, AttributeError, RuntimeError) as e:
             logger.exception("Error correlation failed")
-            return FlextResult.fail(f"Error correlation failed: {e!s}")
+            return FlextResult[object].fail(f"Error correlation failed: {e!s}")
 
     def _find_error_patterns(
         self,
@@ -1293,18 +1293,18 @@ class FlextLdapConnectionRepositoryImpl:
                     "authenticated": bind_dn is not None,
                 }
 
-                return FlextResult.ok(test_result)
+                return FlextResult[object].ok(test_result)
             test_result = {
                 "connection_successful": False,
                 "error": connect_result.error,
                 "server_uri": server_uri,
             }
 
-            return FlextResult.ok(test_result)
+            return FlextResult[object].ok(test_result)
 
         except (ConnectionError, TimeoutError, OSError, TypeError, ValueError) as e:
             logger.exception("Connection test failed")
-            return FlextResult.fail(f"Connection test failed: {e!s}")
+            return FlextResult[object].fail(f"Connection test failed: {e!s}")
 
 
 class FlextLdapUserRepositoryImpl:
@@ -1329,12 +1329,12 @@ class FlextLdapUserRepositoryImpl:
             )
 
             if not search_result.is_success:
-                return FlextResult.fail(search_result.error or "Search failed")
+                return FlextResult[object].fail(search_result.error or "Search failed")
 
             users = search_result.data
             user = users[0] if users else None
 
-            return FlextResult.ok(user)
+            return FlextResult[object].ok(user)
 
         except (
             ConnectionError,
@@ -1345,7 +1345,7 @@ class FlextLdapUserRepositoryImpl:
             AttributeError,
         ) as e:
             logger.exception("User search failed")
-            return FlextResult.fail(f"User search failed: {e!s}")
+            return FlextResult[object].fail(f"User search failed: {e!s}")
 
     async def save_user(
         self,
@@ -1361,7 +1361,7 @@ class FlextLdapUserRepositoryImpl:
             # Convert to LDAP format
             attributes_result = self._convert_user_attributes(user_data)
             if attributes_result.is_failure:
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     attributes_result.error or "Attribute conversion failed"
                 )
 
@@ -1378,14 +1378,14 @@ class FlextLdapUserRepositoryImpl:
             AttributeError,
         ) as e:
             logger.exception("User save failed")
-            return FlextResult.fail(f"User save failed: {e!s}")
+            return FlextResult[object].fail(f"User save failed: {e!s}")
 
     def _validate_user_dn(self, user_data: LdapAttributeDict) -> FlextResult[None]:
         """Validate user DN is present."""
         dn = user_data.get("dn")
         if not dn:
-            return FlextResult.fail("User DN is required")
-        return FlextResult.ok(None)
+            return FlextResult[object].fail("User DN is required")
+        return FlextResult[object].ok(None)
 
     def _convert_user_attributes(
         self, user_data: LdapAttributeDict
@@ -1398,7 +1398,7 @@ class FlextLdapUserRepositoryImpl:
             if not self._should_skip_attribute(key, value)
         }
 
-        return FlextResult.ok(attributes)
+        return FlextResult[object].ok(attributes)
 
     def _should_skip_attribute(self, key: str, value: object) -> bool:
         """Check if attribute should be skipped during conversion."""
@@ -1461,13 +1461,13 @@ class FlextLdapInfrastructure:
                     success=True,
                 )
 
-                return FlextResult.ok(client)
+                return FlextResult[object].ok(client)
             self.security_logger.log_authentication_attempt(
                 bind_dn or "anonymous",
                 success=False,
             )
 
-            return FlextResult.fail(connect_result.error or "Connection failed")
+            return FlextResult[object].fail(connect_result.error or "Connection failed")
 
         except (
             ConnectionError,
@@ -1478,7 +1478,7 @@ class FlextLdapInfrastructure:
             AttributeError,
         ):
             logger.exception("Client creation failed")
-            return FlextResult.fail("Client creation failed")
+            return FlextResult[object].fail("Client creation failed")
 
     async def perform_health_check(self) -> FlextResult[dict[str, object]]:
         """Perform infrastructure health check."""
@@ -1490,7 +1490,7 @@ class FlextLdapInfrastructure:
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
-        return FlextResult.ok(health_status)
+        return FlextResult[object].ok(health_status)
 
 
 # =============================================================================

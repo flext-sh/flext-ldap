@@ -468,12 +468,12 @@ class FlextLdapAuthProvider(AuthProvider):
                         roles=self._extract_roles_from_groups(user_entry.member_of)
                     )
 
-                    return FlextResult.ok(auth_user)
+                    return FlextResult[None].ok(auth_user)
 
-                return FlextResult.fail(\"User details not found\")
+                return FlextResult[None].fail(\"User details not found\")
 
         except Exception as e:
-            return FlextResult.fail(f\"Authentication failed: {str(e)}\")
+            return FlextResult[None].fail(f\"Authentication failed: {str(e)}\")
 
     def _extract_roles_from_groups(self, groups: List[str]) -> List[str]:
         \"\"\"Extract roles from LDAP group memberships.\"\"\"
@@ -509,7 +509,7 @@ class FlextLdapSSOProvider:
         token_data = self._parse_sso_token(token)
 
         if not token_data:
-            return FlextResult.fail(\"Invalid SSO token\")
+            return FlextResult[None].fail(\"Invalid SSO token\")
 
         # Verify user exists in LDAP
         api = get_ldap_api()
@@ -525,7 +525,7 @@ class FlextLdapSSOProvider:
                 # User exists, create AuthUser
                 return self._create_auth_user(user_result.data[0])
             else:
-                return FlextResult.fail(\"User not found in directory\")
+                return FlextResult[None].fail(\"User not found in directory\")
 ```
 
 ---
@@ -572,7 +572,7 @@ async def export_ldap_to_ldif():
             with open(\"directory_export.ldif\", \"w\") as f:
                 f.write(ldif_content)
 
-            return FlextResult.ok(f\"Exported {len(ldif_entries)} entries\")
+            return FlextResult[None].ok(f\"Exported {len(ldif_entries)} entries\")
 
 async def import_ldif_to_ldap(ldif_file_path: str):
     \"\"\"Import LDIF file to LDAP directory.\"\"\"
@@ -625,7 +625,7 @@ class FlextLdapPlugin(FlextPlugin):
         elif operation == \"health_check\":
             return await self._health_check()
         else:
-            return FlextResult.fail(f\"Unknown operation: {operation}\")
+            return FlextResult[None].fail(f\"Unknown operation: {operation}\")
 
     async def _search_users(self, params: dict) -> FlextResult:
         \"\"\"Search users operation.\"\"\"

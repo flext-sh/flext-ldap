@@ -598,13 +598,13 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             result = await self._connection_service.establish_connection(config)
 
             if result.success:
-                return FlextResult.ok(data=True)
+                return FlextResult[None].ok(True)
 
-            return FlextResult.fail(result.error_message or "Connection failed")
+            return FlextResult[None].fail(result.error_message or "Connection failed")
 
         except Exception:
             logger.exception("Directory service connection failed")
-            return FlextResult.fail("Directory service connection failed")
+            return FlextResult[None].fail("Directory service connection failed")
 
     def search_users(
         self,
@@ -626,13 +626,13 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
             if result.success and result.data:
                 protocol_entries = self._convert_entries_to_protocol(result.data)
-                return FlextResult.ok(protocol_entries)
+                return FlextResult[None].ok(protocol_entries)
 
-            return FlextResult.fail(result.error_message or "Search failed")
+            return FlextResult[None].fail(result.error_message or "Search failed")
 
         except Exception:
             logger.exception("User search failed")
-            return FlextResult.fail("User search failed")
+            return FlextResult[None].fail("User search failed")
 
     def _convert_entries_to_protocol(
         self,
