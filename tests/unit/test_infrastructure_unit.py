@@ -201,7 +201,7 @@ class TestFlextLdapDesignPatterns:
                 **kwargs: object,  # noqa: ARG002
             ) -> FlextResult[list[dict[str, str | bytes | list[str] | list[bytes]]]]:
                 # Return mock successful result for testing
-                return FlextResult.ok([{"dn": base_dn, "filter": search_filter}])
+                return FlextResult[None].ok([{"dn": base_dn, "filter": search_filter}])
 
         strategy = TestSearchStrategy()
         assert strategy is not None
@@ -220,7 +220,7 @@ class TestFlextLdapDesignPatterns:
                 **kwargs: object,  # noqa: ARG002
             ) -> FlextResult[list[dict[str, str | bytes | list[str] | list[bytes]]]]:
                 # Simulate real search behavior
-                return FlextResult.ok(
+                return FlextResult[None].ok(
                     [
                         {"dn": f"cn=test,{base_dn}", "objectClass": ["person"]},
                     ]

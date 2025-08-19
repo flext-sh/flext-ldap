@@ -260,7 +260,7 @@ class FlextLdapSearchService(SearchServiceInterface):
             # Validate session
             validation_error = self._validate_session(session_id)
             if validation_error:
-                return FlextResult.fail(validation_error)
+                return FlextResult[None].fail(validation_error)
 
             # Prepare search parameters
             effective_base_dn = params.base_dn or ""
@@ -277,13 +277,13 @@ class FlextLdapSearchService(SearchServiceInterface):
 
             if search_result.is_success:
                 entries = self._convert_raw_results(search_result.data)
-                return FlextResult.ok(entries)
+                return FlextResult[None].ok(entries)
 
-            return FlextResult.fail(f"Search failed: {search_result.error}")
+            return FlextResult[None].fail(f"Search failed: {search_result.error}")
 
         except Exception as e:
             logger.exception("Search operation failed")
-            return FlextResult.fail(f"Search error: {e}")
+            return FlextResult[None].fail(f"Search error: {e}")
 
     def _validate_session(self, session_id: str) -> str | None:
         if not session_id or not session_id.strip():
@@ -351,31 +351,31 @@ class FlextLdapConnectionService(ConnectionServiceInterface):
                 session_id = self._generate_session_id()
                 self._active_sessions[session_id] = params
                 logger.info(f"Connection established: {session_id}")
-                return FlextResult.ok(session_id)
+                return FlextResult[None].ok(session_id)
 
-            return FlextResult.fail(f"Connection failed: {connect_result.error}")
+            return FlextResult[None].fail(f"Connection failed: {connect_result.error}")
 
         except Exception as e:
             logger.exception("Connection establishment failed")
-            return FlextResult.fail(f"Connection error: {e}")
+            return FlextResult[None].fail(f"Connection error: {e}")
 
     async def terminate_connection(self, session_id: str) -> FlextResult[bool]:
         try:
             if session_id not in self._active_sessions:
-                return FlextResult.fail(f"Unknown session: {session_id}")
+                return FlextResult[None].fail(f"Unknown session: {session_id}")
 
             disconnect_result = await self._client.disconnect()
 
             if disconnect_result.is_success:
                 del self._active_sessions[session_id]
                 logger.info(f"Connection terminated: {session_id}")
-                return FlextResult.ok(data=True)
+                return FlextResult[None].ok(True)
 
-            return FlextResult.fail(f"Disconnect failed: {disconnect_result.error}")
+            return FlextResult[None].fail(f"Disconnect failed: {disconnect_result.error}")
 
         except Exception as e:
             logger.exception("Connection termination failed")
-            return FlextResult.fail(f"Termination error: {e}")
+            return FlextResult[None].fail(f"Termination error: {e}")
 
     def _generate_session_id(self) -> str:
         return f"ldap_session_{str(_uuid4()).replace('-', '')[:12]}"
@@ -396,7 +396,7 @@ class FlextLdapEntryService(EntryServiceInterface):
             # Validate request
             validation_error = self._validate_user_request(request)
             if validation_error:
-                return FlextResult.fail(validation_error)
+                return FlextResult[None].fail(validation_error)
 
             # Convert to LDAP attributes
             raw_attributes = request.to_ldap_attributes()
@@ -423,13 +423,13 @@ class FlextLdapEntryService(EntryServiceInterface):
                     sn=request.sn,
                     mail=request.mail,
                 )
-                return FlextResult.ok(user)
+                return FlextResult[None].ok(user)
 
-            return FlextResult.fail(f"User creation failed: {add_result.error}")
+            return FlextResult[None].fail(f"User creation failed: {add_result.error}")
 
         except Exception as e:
             logger.exception("User creation failed")
-            return FlextResult.fail(f"User creation error: {e}")
+            return FlextResult[None].fail(f"User creation error: {e}")
 
     async def create_group_entry(
         self,
@@ -465,13 +465,13 @@ class FlextLdapEntryService(EntryServiceInterface):
                     description=params.description,
                     members=params.members,
                 )
-                return FlextResult.ok(group)
+                return FlextResult[None].ok(group)
 
-            return FlextResult.fail(f"Group creation failed: {add_result.error}")
+            return FlextResult[None].fail(f"Group creation failed: {add_result.error}")
 
         except Exception as e:
             logger.exception("Group creation failed")
-            return FlextResult.fail(f"Group creation error: {e}")
+            return FlextResult[None].fail(f"Group creation error: {e}")
 
     def _validate_user_request(self, request: FlextLdapCreateUserRequest) -> str | None:
         # DN validation
@@ -513,7 +513,7 @@ class FlextLdapExportService(ExportServiceInterface):
             )
 
             if not search_result.is_success:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     f"Search for export failed: {search_result.error}",
                 )
 
@@ -523,11 +523,11 @@ class FlextLdapExportService(ExportServiceInterface):
             # Write to file
             params.output_file.write_text(ldif_content, encoding="utf-8")
 
-            return FlextResult.ok(str(params.output_file))
+            return FlextResult[None].ok(str(params.output_file))
 
         except Exception as e:
             logger.exception("LDIF export failed")
-            return FlextResult.fail(f"Export error: {e}")
+            return FlextResult[None].fail(f"Export error: {e}")
 
     def _convert_to_ldif(self, search_data: object | None) -> str:
         if not search_data:
@@ -622,7 +622,7 @@ class FlextLdapApi:
             )
         except ValidationError as e:  # Gracefully propagate validation failures
             detail = e.errors()[0]["msg"] if e.errors() else str(e)
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Connection failed: invalid connection parameters - {detail}",
             )
 
@@ -711,7 +711,7 @@ class FlextLdapApi:
     ) -> FlextResult[FlextLdapGroup]:
         # Validate session ID
         if not session_id or not session_id.strip():
-            return FlextResult.fail("Session ID is required for group creation")
+            return FlextResult[None].fail("Session ID is required for group creation")
 
         params = GroupCreationParameters(
             dn=dn,
@@ -729,11 +729,11 @@ class FlextLdapApi:
         # Validate DN
         dn_validation = flext_ldap_validate_dn(dn)
         if not dn_validation:
-            return FlextResult.fail(f"Invalid DN: {dn}")
+            return FlextResult[None].fail(f"Invalid DN: {dn}")
 
         # Validate attributes
         if not attributes:
-            return FlextResult.fail("Attributes cannot be empty")
+            return FlextResult[None].fail("Attributes cannot be empty")
 
         # Ensure all attribute values are lists of strings
         validated_attributes: dict[str, list[str]] = {}
@@ -745,7 +745,7 @@ class FlextLdapApi:
             add_result = await self._client.add_entry(dn, validated_attributes)
 
             if add_result.is_failure:
-                return FlextResult.fail(f"Failed to add entry: {add_result.error}")
+                return FlextResult[None].fail(f"Failed to add entry: {add_result.error}")
 
             # Create FlextLdapEntry from the added entry (convert to expected type)
             entry_attributes: dict[str, object] = dict(validated_attributes)
@@ -756,11 +756,11 @@ class FlextLdapApi:
             )
 
             logger.info(f"Successfully created entry: {dn}")
-            return FlextResult.ok(created_entry)
+            return FlextResult[None].ok(created_entry)
 
         except Exception as e:
             logger.exception(f"Error creating entry {dn}")
-            return FlextResult.fail(f"Entry creation error: {e}")
+            return FlextResult[None].fail(f"Entry creation error: {e}")
 
     async def delete_entry(self, dn: str) -> FlextResult[None]:
         """Delete an LDAP entry by DN using the underlying client.
@@ -771,7 +771,7 @@ class FlextLdapApi:
             return await self._client.delete_entry(dn)
         except Exception as e:
             logger.exception("Entry deletion failed")
-            return FlextResult.fail(f"Delete entry error: {e}")
+            return FlextResult[None].fail(f"Delete entry error: {e}")
 
     # Export Operations
 
@@ -789,11 +789,11 @@ class FlextLdapApi:
         # Use provided params or build from individual parameters
         if params is None:
             if not session_id or not session_id.strip():
-                return FlextResult.fail("Session ID is required for export operations")
+                return FlextResult[None].fail("Session ID is required for export operations")
             if not output_file:
-                return FlextResult.fail("Output file is required for export operations")
+                return FlextResult[None].fail("Output file is required for export operations")
             if not base_dn:
-                return FlextResult.fail("Base DN is required for export operations")
+                return FlextResult[None].fail("Base DN is required for export operations")
 
             params = FlextLdapExportParams(
                 session_id=session_id,
@@ -821,14 +821,14 @@ class FlextLdapApi:
             ldif_path = Path(ldif_file_path)
 
             if not session_id or not session_id.strip():
-                return FlextResult.fail("Session ID is required for LDIF import")
+                return FlextResult[None].fail("Session ID is required for LDIF import")
 
             if not ldif_path.exists():
-                return FlextResult.fail(f"LDIF file not found: {ldif_file_path}")
+                return FlextResult[None].fail(f"LDIF file not found: {ldif_file_path}")
 
             # Read LDIF file and apply each entry
             if not _LDIF_AVAILABLE:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     "LDIF support is unavailable (flext-ldif not installed)",
                 )
 
@@ -840,7 +840,7 @@ class FlextLdapApi:
 
             parse_result = ldif_api.parse(content)
             if not parse_result.success:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     f"Failed to parse LDIF file: {parse_result.error}",
                 )
 
@@ -871,11 +871,11 @@ class FlextLdapApi:
                     logger.warning("Failed to process LDIF entry: %s", e)
                     continue
 
-            return FlextResult.ok(processed_count)
+            return FlextResult[None].ok(processed_count)
 
         except Exception as e:
             logger.exception("LDIF import failed")
-            return FlextResult.fail(f"LDIF import error: {e}")
+            return FlextResult[None].fail(f"LDIF import error: {e}")
 
     async def modify_entry(
         self,
@@ -885,12 +885,12 @@ class FlextLdapApi:
     ) -> FlextResult[bool]:
         try:
             if not session_id or not session_id.strip():
-                return FlextResult.fail("Session ID is required for modify operations")
+                return FlextResult[None].fail("Session ID is required for modify operations")
             if not dn:
-                return FlextResult.fail("DN is required for modify operations")
+                return FlextResult[None].fail("DN is required for modify operations")
 
             if not modifications:
-                return FlextResult.fail("Modifications are required")
+                return FlextResult[None].fail("Modifications are required")
 
             # Convert modifications to client format (dict[str, list[str]])
             client_modifications: dict[str, list[str]] = {}
@@ -906,12 +906,12 @@ class FlextLdapApi:
             result = await self._client.modify_entry(dn, client_modifications)
             # Convert FlextResult[None] to FlextResult[bool]
             if result.is_success:
-                return FlextResult.ok(data=True)
-            return FlextResult.fail(result.error or "Modify operation failed")
+                return FlextResult[None].ok(True)
+            return FlextResult[None].fail(result.error or "Modify operation failed")
 
         except Exception as e:
             logger.exception("Entry modification failed")
-            return FlextResult.fail(f"Modify entry error: {e}")
+            return FlextResult[None].fail(f"Modify entry error: {e}")
 
 
 # ==================== GLOBAL API INSTANCE ====================

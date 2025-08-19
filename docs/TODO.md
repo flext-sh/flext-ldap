@@ -118,7 +118,7 @@ self._container: FlextContainer = get_flext_container()
 ```python
 # PATTERN VIOLATION: Catching exceptions without FlextResult chains
 except Exception as e:
-    return FlextResult.fail(error_msg)  # Loses error context
+    return FlextResult[None].fail(error_msg)  # Loses error context
 ```
 
 **Issue**: Error handling doesn't follow FlextResult chaining patterns from flext-core.

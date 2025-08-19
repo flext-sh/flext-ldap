@@ -161,10 +161,10 @@ logger = get_logger(__name__)
 def validate_connection(config):
     if not config.server:
         logger.error("Connection validation failed", extra={"error": "missing_server"})
-        return FlextResult.fail("Server is required")
+        return FlextResult[None].fail("Server is required")
 
     logger.debug("Connection validated", extra={"server": config.server})
-    return FlextResult.ok(data=True)
+    return FlextResult[None].ok(data=True)
 ```
 
 ### Error Correlation

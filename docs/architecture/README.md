@@ -157,12 +157,12 @@ class FlextLdapUserValidator:
     def validate_user_creation(self, user: FlextLdapUser) -> FlextResult[bool]:
         \"\"\"Validate user creation according to business rules.\"\"\"
         if not user.is_valid():
-            return FlextResult.fail(\"User data is invalid\")
+            return FlextResult[None].fail(\"User data is invalid\")
 
         if self._is_duplicate_uid(user.uid):
-            return FlextResult.fail(f\"UID {user.uid} already exists\")
+            return FlextResult[None].fail(f\"UID {user.uid} already exists\")
 
-        return FlextResult.ok(True)
+        return FlextResult[None].ok(True)
 ```
 
 ---
@@ -199,19 +199,19 @@ class FlextLdapService:
         # 2. Domain validation
         validation_result = self._validator.validate_user_creation(user)
         if validation_result.is_failure:
-            return FlextResult.fail(validation_result.error)
+            return FlextResult[None].fail(validation_result.error)
 
         # 3. Persist entity
         save_result = await self._user_repository.save(user)
         if save_result.is_failure:
-            return FlextResult.fail(save_result.error)
+            return FlextResult[None].fail(save_result.error)
 
         # 4. Publish domain event
         await self._event_publisher.publish(
             UserCreatedEvent(user_id=user.id, dn=user.dn)
         )
 
-        return FlextResult.ok(user)
+        return FlextResult[None].ok(user)
 ```
 
 ### Command/Query Handlers (CQRS)
@@ -282,12 +282,12 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
             )
 
             if result.success:
-                return FlextResult.ok(user)
+                return FlextResult[None].ok(user)
             else:
-                return FlextResult.fail(f\"Failed to save user: {result.error}\")
+                return FlextResult[None].fail(f\"Failed to save user: {result.error}\")
 
         except Exception as e:
-            return FlextResult.fail(f\"Infrastructure error: {str(e)}\")
+            return FlextResult[None].fail(f\"Infrastructure error: {str(e)}\")
 
     def _to_ldap_entry(self, user: FlextLdapUser) -> Dict[str, Any]:
         \"\"\"Convert domain entity to LDAP entry format.\"\"\"
@@ -328,12 +328,12 @@ class FlextLdapClient:
 
             if self._connection.bind():
                 connection_id = str(uuid4())
-                return FlextResult.ok(connection_id)
+                return FlextResult[None].ok(connection_id)
             else:
-                return FlextResult.fail(\"LDAP bind failed\")
+                return FlextResult[None].fail(\"LDAP bind failed\")
 
         except LDAPException as e:
-            return FlextResult.fail(f\"LDAP connection error: {str(e)}\")
+            return FlextResult[None].fail(f\"LDAP connection error: {str(e)}\")
 ```
 
 ---
@@ -366,12 +366,12 @@ class FlextLdapUserFactory:
             )
 
             if user.is_valid():
-                return FlextResult.ok(user)
+                return FlextResult[None].ok(user)
             else:
-                return FlextResult.fail(\"Invalid user data from LDAP entry\")
+                return FlextResult[None].fail(\"Invalid user data from LDAP entry\")
 
         except Exception as e:
-            return FlextResult.fail(f\"Factory error: {str(e)}\")
+            return FlextResult[None].fail(f\"Factory error: {str(e)}\")
 ```
 
 ### Service Pattern
@@ -390,12 +390,12 @@ All operations return `FlextResult<T>` for type-safe error handling:
 
 ```python
 # Success case
-result = FlextResult.ok(user)
+result = FlextResult[None].ok(user)
 if result.success:
     user = result.data  # Type: FlextLdapUser
 
 # Failure case
-result = FlextResult.fail(\"User not found\")
+result = FlextResult[None].fail(\"User not found\")
 if result.is_failure:
     error = result.error  # Type: str
 ```

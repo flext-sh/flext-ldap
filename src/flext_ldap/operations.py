@@ -52,12 +52,12 @@ class FlextLdapOperationsBase:
                 dn_validation.error
                 or FlextLdapValidationMessages.UNKNOWN_VALIDATION_ERROR
             )
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 FlextLdapValidationMessages.INVALID_DN_WITH_CONTEXT.format(
                     context=context, error=error_msg
                 )
             )
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _validate_filter_or_fail(self, search_filter: str) -> FlextResult[None]:
         """Validate LDAP filter and return error if invalid - REUSABLE VALIDATION."""
@@ -69,12 +69,12 @@ class FlextLdapOperationsBase:
                 filter_validation.error
                 or FlextLdapValidationMessages.UNKNOWN_VALIDATION_ERROR
             )
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 FlextLdapValidationMessages.INVALID_SEARCH_FILTER.format(
                     error=error_msg
                 )
             )
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _validate_uri_or_fail(self, server_uri: str) -> FlextResult[None]:
         """Validate server URI and return error if invalid - REUSABLE VALIDATION."""
@@ -84,10 +84,10 @@ class FlextLdapOperationsBase:
                 uri_validation.error
                 or FlextLdapValidationMessages.UNKNOWN_VALIDATION_ERROR
             )
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 FlextLdapValidationMessages.INVALID_SERVER_URI.format(error=error_msg)
             )
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _handle_exception_with_context(
         self,
@@ -141,12 +141,12 @@ class FlextLdapConnectionOperations(FlextLdapOperationsBase):
             # Use REFACTORED validation helpers - NO DUPLICATION
             uri_validation = self._validate_uri_or_fail(server_uri)
             if not uri_validation.is_success:
-                return FlextResult.fail(uri_validation.error or "URI validation failed")
+                return FlextResult[object].fail(uri_validation.error or "URI validation failed")
 
             if bind_dn:
                 dn_validation = self._validate_dn_or_fail(bind_dn, "bind DN")
                 if not dn_validation.is_success:
-                    return FlextResult.fail(
+                    return FlextResult[object].fail(
                         dn_validation.error or "DN validation failed",
                     )
 
@@ -170,17 +170,17 @@ class FlextLdapConnectionOperations(FlextLdapOperationsBase):
                 authenticated=bind_dn is not None,
             )
 
-            return FlextResult.ok(connection_id)
+            return FlextResult[object].ok(connection_id)
 
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
             error_msg = self._handle_exception_with_context("create connection", e)
-            return FlextResult.fail(error_msg)
+            return FlextResult[object].fail(error_msg)
 
     async def close_connection(self, connection_id: str) -> FlextResult[None]:
         """Close an LDAP connection - REFACTORED."""
         if connection_id not in self._active_connections:
-            return FlextResult.fail(f"Connection not found: {connection_id}")
+            return FlextResult[object].fail(f"Connection not found: {connection_id}")
 
         try:
             connection_info = self._active_connections.pop(connection_id)
@@ -195,7 +195,7 @@ class FlextLdapConnectionOperations(FlextLdapOperationsBase):
                 ),
             )
 
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
@@ -204,17 +204,17 @@ class FlextLdapConnectionOperations(FlextLdapOperationsBase):
                 e,
                 connection_id,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult[object].fail(error_msg)
 
     def get_connection_info(self, connection_id: str) -> FlextResult[dict[str, object]]:
         """Get connection information - REFACTORED."""
         if connection_id not in self._active_connections:
-            return FlextResult.fail(f"Connection not found: {connection_id}")
+            return FlextResult[object].fail(f"Connection not found: {connection_id}")
 
         connection_info = self._active_connections[connection_id].copy()
         connection_info["connection_id"] = connection_id
         connection_info["active"] = True
-        return FlextResult.ok(connection_info)
+        return FlextResult[object].ok(connection_info)
 
     def list_active_connections(self) -> FlextResult[list[dict[str, object]]]:
         """List all active connections - REFACTORED."""
@@ -224,7 +224,7 @@ class FlextLdapConnectionOperations(FlextLdapOperationsBase):
             info["connection_id"] = conn_id
             info["active"] = True
             connections.append(info)
-        return FlextResult.ok(connections)
+        return FlextResult[object].ok(connections)
 
     def _calculate_duration(self, created_at: object) -> float:
         """Calculate connection duration in seconds - REUSABLE HELPER."""
@@ -256,11 +256,11 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
             # Use REFACTORED validation helpers - NO DUPLICATION
             dn_validation = self._validate_dn_or_fail(base_dn, "base DN")
             if not dn_validation.is_success:
-                return FlextResult.fail(dn_validation.error or "DN validation failed")
+                return FlextResult[object].fail(dn_validation.error or "DN validation failed")
 
             filter_validation = self._validate_filter_or_fail(search_filter)
             if not filter_validation.is_success:
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     filter_validation.error or "Filter validation failed",
                 )
 
@@ -282,7 +282,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
                 },
             )
 
-            return FlextResult.ok(entries)
+            return FlextResult[object].ok(entries)
 
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
@@ -291,7 +291,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
                 e,
                 connection_id,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult[object].fail(error_msg)
 
     async def search_users(
         self,
@@ -316,7 +316,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
             )
 
             if not search_result.is_success:
-                return FlextResult.fail(search_result.error or "User search failed")
+                return FlextResult[object].fail(search_result.error or "User search failed")
 
             # Use REFACTORED conversion - NO DUPLICATION
             users = self._convert_entries_to_users(search_result.data or [])
@@ -330,7 +330,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
                 result_count=len(users),
             )
 
-            return FlextResult.ok(users)
+            return FlextResult[object].ok(users)
 
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
@@ -339,7 +339,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
                 e,
                 connection_id,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult[object].fail(error_msg)
 
     async def search_groups(
         self,
@@ -364,7 +364,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
             )
 
             if not search_result.is_success:
-                return FlextResult.fail(search_result.error or "Group search failed")
+                return FlextResult[object].fail(search_result.error or "Group search failed")
 
             # Use REFACTORED conversion - NO DUPLICATION
             groups = self._convert_entries_to_groups(search_result.data or [])
@@ -378,7 +378,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
                 result_count=len(groups),
             )
 
-            return FlextResult.ok(groups)
+            return FlextResult[object].ok(groups)
 
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
@@ -387,7 +387,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
                 e,
                 connection_id,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult[object].fail(error_msg)
 
     async def get_entry_by_dn(
         self,
@@ -406,12 +406,12 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
         )
 
         if not search_result.is_success:
-            return FlextResult.fail(search_result.error or "Search operation failed")
+            return FlextResult[object].fail(search_result.error or "Search operation failed")
 
         if not search_result.data:
-            return FlextResult.fail(f"Entry not found: {dn}")
+            return FlextResult[object].fail(f"Entry not found: {dn}")
 
-        return FlextResult.ok(search_result.data[0])
+        return FlextResult[object].ok(search_result.data[0])
 
     def _build_user_filter(self, filter_criteria: dict[str, str] | None) -> str:
         """Build user-specific filter - REUSABLE HELPER."""
@@ -491,10 +491,10 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
             # Use REFACTORED validation helpers - NO DUPLICATION
             dn_validation = self._validate_dn_or_fail(dn)
             if not dn_validation.is_success:
-                return FlextResult.fail(dn_validation.error or "DN validation failed")
+                return FlextResult[object].fail(dn_validation.error or "DN validation failed")
 
             if not object_classes:
-                return FlextResult.fail("Entry must have at least one object class")
+                return FlextResult[object].fail("Entry must have at least one object class")
 
             # Use REFACTORED ID generation - NO DUPLICATION
             entry_id = self._generate_id(dn)
@@ -509,7 +509,7 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
 
             validation_result = entry.validate_business_rules()
             if not validation_result.is_success:
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     f"Entry validation failed: {validation_result.error}",
                 )
 
@@ -522,7 +522,7 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
                 attribute_count=len(attributes),
             )
 
-            return FlextResult.ok(entry)
+            return FlextResult[object].ok(entry)
 
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
@@ -531,7 +531,7 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
                 e,
                 connection_id,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult[object].fail(error_msg)
 
     async def modify_entry(
         self,
@@ -544,10 +544,10 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
             # Use REFACTORED validation helpers - NO DUPLICATION
             dn_validation = self._validate_dn_or_fail(dn)
             if not dn_validation.is_success:
-                return FlextResult.fail(dn_validation.error or "DN validation failed")
+                return FlextResult[object].fail(dn_validation.error or "DN validation failed")
 
             if not modifications:
-                return FlextResult.fail("No modifications specified")
+                return FlextResult[object].fail("No modifications specified")
 
             # Use REFACTORED logging - NO DUPLICATION
             self._log_operation_success(
@@ -557,7 +557,7 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
                 modification_count=len(modifications),
             )
 
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
@@ -566,7 +566,7 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
                 e,
                 connection_id,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult[object].fail(error_msg)
 
     async def delete_entry(
         self,
@@ -578,12 +578,12 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
             # Use REFACTORED validation helpers - NO DUPLICATION
             dn_validation = self._validate_dn_or_fail(dn)
             if not dn_validation.is_success:
-                return FlextResult.fail(dn_validation.error or "DN validation failed")
+                return FlextResult[object].fail(dn_validation.error or "DN validation failed")
 
             # Use REFACTORED logging - NO DUPLICATION
             self._log_operation_success("entry deleted", connection_id, entry_dn=dn)
 
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
@@ -592,7 +592,7 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
                 e,
                 connection_id,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult[object].fail(error_msg)
 
 
 # =============================================================================
@@ -629,7 +629,7 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
             )
 
             if not entry_result.is_success:
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     f"Failed to create user entry: {entry_result.error}",
                 )
 
@@ -638,7 +638,7 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
 
             validation_result = user.validate_business_rules()
             if not validation_result.is_success:
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     f"User validation failed: {validation_result.error}",
                 )
 
@@ -650,7 +650,7 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
                 uid=user_request.uid,
             )
 
-            return FlextResult.ok(user)
+            return FlextResult[object].ok(user)
 
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
@@ -659,7 +659,7 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
                 e,
                 connection_id,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult[object].fail(error_msg)
 
     async def update_user_password(
         self,
@@ -669,7 +669,7 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
     ) -> FlextResult[None]:
         """Update user password - REFACTORED with validation."""
         if not new_password or len(new_password) < self.MIN_PASSWORD_LENGTH:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Password must be at least {self.MIN_PASSWORD_LENGTH} characters",
             )
 
@@ -684,7 +684,7 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
     ) -> FlextResult[None]:
         """Update user email address - REFACTORED with validation."""
         if "@" not in email:
-            return FlextResult.fail("Invalid email format")
+            return FlextResult[object].fail("Invalid email format")
 
         modifications: dict[str, object] = {"mail": [email]}
         return await self._entry_ops.modify_entry(connection_id, user_dn, modifications)
@@ -779,7 +779,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
             )
 
             if not entry_result.is_success:
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     f"Failed to create group entry: {entry_result.error}",
                 )
 
@@ -788,7 +788,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
 
             validation_result = group.validate_business_rules()
             if not validation_result.is_success:
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     f"Group validation failed: {validation_result.error}",
                 )
 
@@ -801,7 +801,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
                 member_count=len(members),
             )
 
-            return FlextResult.ok(group)
+            return FlextResult[object].ok(group)
 
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
@@ -810,7 +810,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
                 e,
                 connection_id,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult[object].fail(error_msg)
 
     async def add_group_member(
         self,
@@ -823,7 +823,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
             # Use REFACTORED validation helpers - NO DUPLICATION
             member_validation = self._validate_dn_or_fail(member_dn, "member DN")
             if not member_validation.is_success:
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     member_validation.error or "Member validation failed",
                 )
 
@@ -842,7 +842,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
                 e,
                 connection_id,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult[object].fail(error_msg)
 
     async def remove_group_member(
         self,
@@ -867,7 +867,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
                 e,
                 connection_id,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult[object].fail(error_msg)
 
     async def get_group_members(
         self,
@@ -884,13 +884,13 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
             )
 
             if not group_result.is_success:
-                return FlextResult.fail(f"Failed to get group: {group_result.error}")
+                return FlextResult[object].fail(f"Failed to get group: {group_result.error}")
 
             # At this point data is guaranteed by is_success above
 
             members = group_result.data.get_attribute_values("member")
             real_members = self._filter_dummy_members(members)
-            return FlextResult.ok(real_members)
+            return FlextResult[object].ok(real_members)
 
         except Exception as e:
             # Use REFACTORED exception handling - NO DUPLICATION
@@ -899,7 +899,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
                 e,
                 connection_id,
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult[object].fail(error_msg)
 
     async def update_group_description(
         self,
@@ -973,11 +973,11 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         # Step 1: Get current group membership
         group_result = await self._get_group_membership(connection_id, group_dn)
         if group_result.is_failure:
-            return FlextResult.fail(group_result.error or "Failed to get group")
+            return FlextResult[object].fail(group_result.error or "Failed to get group")
 
         # Step 2: Extract members from group data
         if not hasattr(group_result.data, "get_attribute_values"):
-            return FlextResult.fail("Invalid group data format")
+            return FlextResult[object].fail("Invalid group data format")
 
         current_members = group_result.data.get_attribute_values("member")
         updated_members_result = self._calculate_updated_members(
@@ -986,7 +986,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
             action,
         )
         if updated_members_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 updated_members_result.error or "Failed to calculate members"
             )
 
@@ -1013,9 +1013,9 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         )
 
         if not group_result.is_success:
-            return FlextResult.fail(f"Failed to get group: {group_result.error}")
+            return FlextResult[object].fail(f"Failed to get group: {group_result.error}")
 
-        return FlextResult.ok(group_result.data)
+        return FlextResult[object].ok(group_result.data)
 
     def _calculate_updated_members(
         self,
@@ -1028,7 +1028,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
             return self._handle_add_member(current_members, member_dn)
         if action == "remove":
             return self._handle_remove_member(current_members, member_dn)
-        return FlextResult.fail(f"Invalid action: {action}")
+        return FlextResult[object].fail(f"Invalid action: {action}")
 
     def _handle_add_member(
         self,
@@ -1037,8 +1037,8 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
     ) -> FlextResult[list[str]]:
         """Handle adding a member to the group."""
         if member_dn in current_members:
-            return FlextResult.fail(f"Member already exists in group: {member_dn}")
-        return FlextResult.ok([*current_members, member_dn])
+            return FlextResult[object].fail(f"Member already exists in group: {member_dn}")
+        return FlextResult[object].ok([*current_members, member_dn])
 
     def _handle_remove_member(
         self,
@@ -1047,14 +1047,14 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
     ) -> FlextResult[list[str]]:
         """Handle removing a member from the group."""
         if member_dn not in current_members:
-            return FlextResult.fail(f"Member not found in group: {member_dn}")
+            return FlextResult[object].fail(f"Member not found in group: {member_dn}")
 
         updated_members = [m for m in current_members if m != member_dn]
         # Add dummy member if none left (LDAP groupOfNames requirement)
         if not updated_members:
             updated_members = ["cn=dummy,ou=temp,dc=example,dc=com"]
 
-        return FlextResult.ok(updated_members)
+        return FlextResult[object].ok(updated_members)
 
     async def _apply_membership_change(
         self,
@@ -1131,10 +1131,10 @@ class FlextLdapOperations(FlextLdapOperationsBase):
         )
 
         if not search_result.is_success:
-            return FlextResult.fail(search_result.error or "Search operation failed")
+            return FlextResult[object].fail(search_result.error or "Search operation failed")
 
         first_entry = search_result.data[0] if search_result.data else None
-        return FlextResult.ok(first_entry)
+        return FlextResult[object].ok(first_entry)
 
     async def cleanup_connection(self, connection_id: str) -> None:
         """Clean up connection resources - REFACTORED."""

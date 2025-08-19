@@ -68,15 +68,15 @@ class FlextLdapBaseService(FlextDomainService[None]):
         """Start LDAP service with proper initialization."""
         try:
             if self._is_running:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     FlextLdapValidationMessages.SERVICE_ALREADY_RUNNING
                 )
 
             # Initialize LDAP service components
             self._is_running = True
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
         except Exception as e:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdapValidationMessages.FAILED_TO_START_SERVICE.format(error=str(e))
             )
 
@@ -84,13 +84,13 @@ class FlextLdapBaseService(FlextDomainService[None]):
         """Stop LDAP service with proper cleanup."""
         try:
             if not self._is_running:
-                return FlextResult.fail(FlextLdapValidationMessages.SERVICE_NOT_RUNNING)
+                return FlextResult[None].fail(FlextLdapValidationMessages.SERVICE_NOT_RUNNING)
 
             # Cleanup LDAP connections and resources
             self._is_running = False
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
         except Exception as e:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdapValidationMessages.FAILED_TO_STOP_SERVICE.format(error=str(e))
             )
 
@@ -108,9 +108,9 @@ class FlextLdapBaseService(FlextDomainService[None]):
                     "ldap3": FlextLdapDefaultValues.DEPENDENCY_LDAP3,
                 },
             }
-            return FlextResult.ok(health_info)
+            return FlextResult[None].ok(health_info)
         except Exception as e:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 FlextLdapValidationMessages.HEALTH_CHECK_FAILED.format(error=str(e))
             )
 
@@ -180,36 +180,36 @@ class FlextLdapApplicationService:
         try:
             connect_result = await self._api.connect(server_url, bind_dn, bind_password)
             if connect_result.is_failure or connect_result.data is None:
-                return FlextResult.fail(connect_result.error or "Connection failed")
+                return FlextResult[None].fail(connect_result.error or "Connection failed")
             self._session_id = connect_result.data
             logger.info("Successfully connected to LDAP server")
-            return FlextResult.ok(data=True)
+            return FlextResult[None].ok(True)
 
         except Exception as e:
             error_msg = f"Connection error: {e}"
             logger.exception(error_msg)
-            return FlextResult.fail(error_msg)
+            return FlextResult[None].fail(error_msg)
 
     async def disconnect(self) -> FlextResult[bool]:
         """Disconnect from LDAP server using real infrastructure."""
         if not self.is_connected():
-            return FlextResult.ok(data=True)
+            return FlextResult[None].ok(True)
 
         logger.info("Disconnecting from LDAP server")
         try:
             if self._session_id is None:
-                return FlextResult.fail("No session ID available for disconnection")
+                return FlextResult[None].fail("No session ID available for disconnection")
             result = await self._api.disconnect(self._session_id)
             if result.is_success:
                 self._session_id = None
                 logger.info("Successfully disconnected from LDAP server")
-                return FlextResult.ok(data=True)
-            return FlextResult.fail(result.error or "Disconnect failed")
+                return FlextResult[None].ok(True)
+            return FlextResult[None].fail(result.error or "Disconnect failed")
 
         except Exception as e:
             error_msg = f"Disconnect error: {e}"
             logger.exception(error_msg)
-            return FlextResult.fail(error_msg)
+            return FlextResult[None].fail(error_msg)
 
     async def create_user(
         self, request: FlextLdapCreateUserRequest
@@ -221,12 +221,12 @@ class FlextLdapApplicationService:
         logger.info("Creating user", extra={"uid": getattr(request, "uid", "unknown")})
 
         if not self.is_connected():
-            return FlextResult.fail("Not connected to LDAP server")
+            return FlextResult[None].fail("Not connected to LDAP server")
 
         try:
             # Session ID guaranteed by is_connected() check above
             if self._session_id is None:
-                return FlextResult.fail("No session ID available for operation")
+                return FlextResult[None].fail("No session ID available for operation")
 
             # Use real FlextLdapApi for user creation
             # Type assertion for MyPy - request is guaranteed to be correct type by method signature
@@ -258,7 +258,7 @@ class FlextLdapApplicationService:
                 error_msg,
                 extra={"uid": getattr(request, "uid", "unknown")},
             )
-            return FlextResult.fail(error_msg)
+            return FlextResult[None].fail(error_msg)
 
     async def find_user_by_uid(self, uid: str) -> FlextResult[object | None]:
         """Find user by UID using real LDAP search.
@@ -268,12 +268,12 @@ class FlextLdapApplicationService:
         logger.info("Finding user by UID", extra={"uid": uid})
 
         if not self.is_connected():
-            return FlextResult.fail("Not connected to LDAP server")
+            return FlextResult[None].fail("Not connected to LDAP server")
 
         try:
             # Session ID guaranteed by is_connected() check above
             if self._session_id is None:
-                return FlextResult.fail("No session ID available for operation")
+                return FlextResult[None].fail("No session ID available for operation")
 
             # Use real FlextLdapApi for user search
             search_result = await self._api.search(
@@ -326,15 +326,15 @@ class FlextLdapApplicationService:
                     )
 
                     logger.info("User found successfully", extra={"uid": uid})
-                    return FlextResult.ok(user)
+                    return FlextResult[None].ok(user)
 
             logger.info("User not found", extra={"uid": uid})
-            return FlextResult.fail(f"User with UID {uid} not found")
+            return FlextResult[None].fail(f"User with UID {uid} not found")
 
         except Exception as e:
             error_msg = f"User search error: {e}"
             logger.exception(error_msg, extra={"uid": uid})
-            return FlextResult.fail(error_msg)
+            return FlextResult[None].fail(error_msg)
 
     def _get_search_base_dn(self, expected: str | None = None) -> str:
         """Get base DN for LDAP searches.

@@ -103,11 +103,11 @@ class FlextLdapUser(FlextEntity):
     def activate(self) -> FlextResult[None]:
         """Business logic for user activation."""
         if self.is_active:
-            return FlextResult.fail("User already active")
+            return FlextResult[None].fail("User already active")
 
         self.is_active = True
         self.add_domain_event(UserActivatedEvent(user_id=self.id))
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 class FlextLdapDistinguishedName(FlextValueObject):
     """Distinguished Name value object with RFC 4514 validation."""
@@ -211,9 +211,9 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
                 attributes=entry_data
             )
 
-            return FlextResult.ok(user) if result.success else FlextResult.fail(result.error)
+            return FlextResult[None].ok(user) if result.success else FlextResult[None].fail(result.error)
         except Exception as e:
-            return FlextResult.fail(f"Infrastructure error: {str(e)}")
+            return FlextResult[None].fail(f"Infrastructure error: {str(e)}")
 ```
 
 ### **Interface Adapters Layer**
@@ -319,7 +319,7 @@ class FlextLdapUser(FlextEntity):
     def change_email(self, new_email: str) -> FlextResult[None]:
         """Email change with validation."""
         if not "@" in new_email:
-            return FlextResult.fail("Invalid email format")
+            return FlextResult[None].fail("Invalid email format")
 
         old_email = self.mail
         self.mail = new_email
@@ -328,7 +328,7 @@ class FlextLdapUser(FlextEntity):
             old_email=old_email,
             new_email=new_email
         ))
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 ```
 
 ### **Infrastructure Integration Layer**
@@ -373,9 +373,9 @@ class FlextLdapClient:
                 for entry in raw_results
             ]
 
-            return FlextResult.ok(converted_results)
+            return FlextResult[None].ok(converted_results)
         except Exception as e:
-            return FlextResult.fail(f"Search error: {str(e)}")
+            return FlextResult[None].fail(f"Search error: {str(e)}")
 ```
 
 ### **Patterns & Utilities Layer**
@@ -410,7 +410,7 @@ class AuthenticatedLdapService(FlextLdapService, FlextLdapAuthMixin):
         """Search with authentication validation."""
         auth_result = await self.validate_session(session_id)
         if auth_result.is_failure:
-            return FlextResult.fail("Authentication required")
+            return FlextResult[None].fail("Authentication required")
 
         return await self.search(session_id, base_dn, filter_expr)
 ```
@@ -679,11 +679,11 @@ class FlextLdapUser(FlextEntity):
     def activate(self) -> FlextResult[None]:
         """Business operation with domain rules."""
         if self.is_active:
-            return FlextResult.fail("User already active")
+            return FlextResult[None].fail("User already active")
 
         # Apply business rule
         if not self.mail:
-            return FlextResult.fail("Email required for activation")
+            return FlextResult[None].fail("Email required for activation")
 
         self.is_active = True
         self.add_domain_event(UserActivatedEvent(
@@ -692,16 +692,16 @@ class FlextLdapUser(FlextEntity):
             timestamp=datetime.utcnow()
         ))
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def change_password(self, old_password: str, new_password: str) -> FlextResult[None]:
         """Password change with domain validation."""
         # Domain validation logic
         if len(new_password) < 8:
-            return FlextResult.fail("Password must be at least 8 characters")
+            return FlextResult[None].fail("Password must be at least 8 characters")
 
         if new_password == old_password:
-            return FlextResult.fail("New password must be different")
+            return FlextResult[None].fail("New password must be different")
 
         # Business logic for password change
         self.add_domain_event(PasswordChangedEvent(
@@ -709,7 +709,7 @@ class FlextLdapUser(FlextEntity):
             user_dn=self.dn.value
         ))
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 ```
 
 #### **Value Objects with Validation**
@@ -799,10 +799,10 @@ class FlextLdapUserAggregate(FlextAggregateRoot):
     def add_to_group(self, group_dn: str) -> FlextResult[None]:
         """Add user to group with business rules."""
         if not self.user.is_active:
-            return FlextResult.fail("Cannot add inactive user to group")
+            return FlextResult[None].fail("Cannot add inactive user to group")
 
         if group_dn in self.group_memberships:
-            return FlextResult.fail("User already member of group")
+            return FlextResult[None].fail("User already member of group")
 
         self.group_memberships.append(group_dn)
         self.add_domain_event(UserAddedToGroupEvent(
@@ -811,12 +811,12 @@ class FlextLdapUserAggregate(FlextAggregateRoot):
             group_dn=group_dn
         ))
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def remove_from_group(self, group_dn: str) -> FlextResult[None]:
         """Remove user from group with business rules."""
         if group_dn not in self.group_memberships:
-            return FlextResult.fail("User not member of group")
+            return FlextResult[None].fail("User not member of group")
 
         self.group_memberships.remove(group_dn)
         self.add_domain_event(UserRemovedFromGroupEvent(
@@ -825,7 +825,7 @@ class FlextLdapUserAggregate(FlextAggregateRoot):
             group_dn=group_dn
         ))
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 ```
 
 ---
@@ -865,7 +865,7 @@ def validate_user_data(data: dict) -> FlextResult[dict]:
     if data.get('mail') and '@' not in data['mail']:
         errors.append("Invalid email format")
 
-    return FlextResult.fail(errors) if errors else FlextResult.ok(data)
+    return FlextResult[None].fail(errors) if errors else FlextResult[None].ok(data)
 
 def create_user_request(data: dict) -> FlextLdapCreateUserRequest:
     """Create user request from validated data."""
@@ -913,9 +913,9 @@ async def bulk_user_creation(user_data_list: List[dict]) -> FlextResult[List[Fle
                 errors.append(f"User {user_data.get('uid', 'unknown')}: {result.error}")
 
     if errors:
-        return FlextResult.fail(f"Errors in bulk creation: {'; '.join(errors)}")
+        return FlextResult[None].fail(f"Errors in bulk creation: {'; '.join(errors)}")
 
-    return FlextResult.ok(results)
+    return FlextResult[None].ok(results)
 
 async def create_user_pipeline_with_session(
     api: FlextLdapApi,
