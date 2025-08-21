@@ -48,7 +48,11 @@ class FlextLdapOperationsBase:
 
     def _generate_id(self) -> str:
         """Generate ID using container ID generator or UUID."""
-        if self._id_generator and hasattr(self._id_generator, "generate") and callable(self._id_generator.generate):
+        if (
+            self._id_generator
+            and hasattr(self._id_generator, "generate")
+            and callable(self._id_generator.generate)
+        ):
             generator_method = self._id_generator.generate
             return str(generator_method())
         return str(uuid.uuid4())
@@ -136,7 +140,7 @@ class FlextLdapConnectionOperations(FlextLdapOperationsBase):
     def __init__(self) -> None:
         """Initialize connection operations - USES REFACTORED BASE."""
         super().__init__()
-        self._active_connections: dict[str, dict[str, object]] = {}
+        self._active_connections: dict[str, FlextTypes.Core.Dict] = {}
 
     async def create_connection(
         self,
@@ -217,19 +221,19 @@ class FlextLdapConnectionOperations(FlextLdapOperationsBase):
             )
             return FlextResult[None].fail(error_msg)
 
-    def get_connection_info(self, connection_id: str) -> FlextResult[dict[str, object]]:
+    def get_connection_info(self, connection_id: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Get connection information - REFACTORED."""
         if connection_id not in self._active_connections:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Connection not found: {connection_id}"
             )
 
         connection_info = self._active_connections[connection_id].copy()
         connection_info["connection_id"] = connection_id
         connection_info["active"] = True
-        return FlextResult[dict[str, object]].ok(connection_info)
+        return FlextResult[FlextTypes.Core.Dict].ok(connection_info)
 
-    def list_active_connections(self) -> FlextResult[list[dict[str, object]]]:
+    def list_active_connections(self) -> FlextResult[list[FlextTypes.Core.Dict]]:
         """List all active connections - REFACTORED."""
         connections = []
         for conn_id, conn_info in self._active_connections.items():
@@ -237,7 +241,7 @@ class FlextLdapConnectionOperations(FlextLdapOperationsBase):
             info["connection_id"] = conn_id
             info["active"] = True
             connections.append(info)
-        return FlextResult[list[dict[str, object]]].ok(connections)
+        return FlextResult[list[FlextTypes.Core.Dict]].ok(connections)
 
     def _calculate_duration(self, created_at: object) -> float:
         """Calculate connection duration in seconds - REUSABLE HELPER."""
@@ -471,26 +475,41 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
         users = []
         for entry in entries:
             # Extract required fields with type safety
-            uid = FlextLdapUtilities.safe_str_attribute(entry.attributes, "uid") or "unknown"
-            cn = FlextLdapUtilities.safe_str_attribute(entry.attributes, "cn") or "unknown"
-            sn = FlextLdapUtilities.safe_str_attribute(entry.attributes, "sn") or "unknown"
-            given_name = FlextLdapUtilities.safe_str_attribute(entry.attributes, "givenName")
+            uid = (
+                FlextLdapUtilities.safe_str_attribute(entry.attributes, "uid")
+                or "unknown"
+            )
+            cn = (
+                FlextLdapUtilities.safe_str_attribute(entry.attributes, "cn")
+                or "unknown"
+            )
+            sn = (
+                FlextLdapUtilities.safe_str_attribute(entry.attributes, "sn")
+                or "unknown"
+            )
+            given_name = FlextLdapUtilities.safe_str_attribute(
+                entry.attributes, "givenName"
+            )
             mail = FlextLdapUtilities.safe_str_attribute(entry.attributes, "mail")
-            phone = FlextLdapUtilities.safe_str_attribute(entry.attributes, "telephoneNumber")
+            phone = FlextLdapUtilities.safe_str_attribute(
+                entry.attributes, "telephoneNumber"
+            )
 
-            users.append(FlextLdapUser(
-                id=FlextEntityId(f"user_{uuid.uuid4().hex[:8]}"),
-                dn=entry.dn,
-                uid=uid,
-                cn=cn,
-                sn=sn,
-                given_name=given_name,
-                mail=mail,
-                phone=phone,
-                object_classes=entry.object_classes,
-                attributes=entry.attributes,
-                status=FlextEntityStatus.ACTIVE,
-            ))
+            users.append(
+                FlextLdapUser(
+                    id=FlextEntityId(f"user_{uuid.uuid4().hex[:8]}"),
+                    dn=entry.dn,
+                    uid=uid,
+                    cn=cn,
+                    sn=sn,
+                    given_name=given_name,
+                    mail=mail,
+                    phone=phone,
+                    object_classes=entry.object_classes,
+                    attributes=entry.attributes,
+                    status=FlextEntityStatus.ACTIVE,
+                )
+            )
         return users
 
     def _convert_entries_to_groups(
@@ -501,8 +520,13 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
         groups = []
         for entry in entries:
             # Extract required fields with type safety
-            cn = FlextLdapUtilities.safe_str_attribute(entry.attributes, "cn") or "unknown"
-            description = FlextLdapUtilities.safe_str_attribute(entry.attributes, "description")
+            cn = (
+                FlextLdapUtilities.safe_str_attribute(entry.attributes, "cn")
+                or "unknown"
+            )
+            description = FlextLdapUtilities.safe_str_attribute(
+                entry.attributes, "description"
+            )
 
             # Extract members from attributes
             members_value = entry.attributes.get("member", [])
@@ -513,16 +537,18 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
             else:
                 members = []
 
-            groups.append(FlextLdapGroup(
-                id=FlextEntityId(f"group_{uuid.uuid4().hex[:8]}"),
-                dn=entry.dn,
-                cn=cn,
-                description=description,
-                members=members,
-                object_classes=entry.object_classes,
-                attributes=entry.attributes,
-                status=FlextEntityStatus.ACTIVE,
-            ))
+            groups.append(
+                FlextLdapGroup(
+                    id=FlextEntityId(f"group_{uuid.uuid4().hex[:8]}"),
+                    dn=entry.dn,
+                    cn=cn,
+                    description=description,
+                    members=members,
+                    object_classes=entry.object_classes,
+                    attributes=entry.attributes,
+                    status=FlextEntityStatus.ACTIVE,
+                )
+            )
         return groups
 
 
@@ -539,7 +565,7 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
         connection_id: str,
         dn: str,
         object_classes: list[str],
-        attributes: dict[str, object],
+        attributes: FlextTypes.Core.Dict,
     ) -> FlextResult[FlextLdapEntry]:
         """Create a new LDAP entry - REFACTORED with shared validation."""
         try:
@@ -594,7 +620,7 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
         self,
         connection_id: str,
         dn: str,
-        modifications: dict[str, object],
+        modifications: FlextTypes.Core.Dict,
     ) -> FlextResult[None]:
         """Modify an existing LDAP entry - REFACTORED."""
         try:
@@ -734,7 +760,7 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
                 f"Password must be at least {self.MIN_PASSWORD_LENGTH} characters",
             )
 
-        modifications: dict[str, object] = {"userPassword": [new_password]}
+        modifications: FlextTypes.Core.Dict = {"userPassword": [new_password]}
         return await self._entry_ops.modify_entry(connection_id, user_dn, modifications)
 
     async def update_user_email(
@@ -747,7 +773,7 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
         if "@" not in email:
             return FlextResult[None].fail("Invalid email format")
 
-        modifications: dict[str, object] = {"mail": [email]}
+        modifications: FlextTypes.Core.Dict = {"mail": [email]}
         return await self._entry_ops.modify_entry(connection_id, user_dn, modifications)
 
     async def activate_user(
@@ -756,7 +782,7 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
         user_dn: str,
     ) -> FlextResult[None]:
         """Activate user account - REFACTORED."""
-        modifications: dict[str, object] = {"accountStatus": ["active"]}
+        modifications: FlextTypes.Core.Dict = {"accountStatus": ["active"]}
         return await self._entry_ops.modify_entry(connection_id, user_dn, modifications)
 
     async def deactivate_user(
@@ -765,15 +791,15 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
         user_dn: str,
     ) -> FlextResult[None]:
         """Deactivate user account - REFACTORED."""
-        modifications: dict[str, object] = {"accountStatus": ["inactive"]}
+        modifications: FlextTypes.Core.Dict = {"accountStatus": ["inactive"]}
         return await self._entry_ops.modify_entry(connection_id, user_dn, modifications)
 
     def _build_user_attributes(
         self,
         user_request: FlextLdapCreateUserRequest,
-    ) -> dict[str, object]:
+    ) -> FlextTypes.Core.Dict:
         """Build user attributes from request - REUSABLE HELPER."""
-        attributes: dict[str, object] = {
+        attributes: FlextTypes.Core.Dict = {
             "uid": [user_request.uid],
             "cn": [user_request.cn],
             "sn": [user_request.sn],
@@ -787,7 +813,7 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
     def _build_user_entity(
         self,
         user_request: FlextLdapCreateUserRequest,
-        attributes: dict[str, object],
+        attributes: FlextTypes.Core.Dict,
     ) -> FlextLdapUser:
         """Build user entity - REUSABLE HELPER."""
         user_id_str = self._generate_id()
@@ -973,7 +999,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         description: str,
     ) -> FlextResult[None]:
         """Update group description - REFACTORED."""
-        modifications: dict[str, object] = {"description": [description]}
+        modifications: FlextTypes.Core.Dict = {"description": [description]}
         return await self._entry_ops.modify_entry(
             connection_id,
             group_dn,
@@ -993,9 +1019,9 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         cn: str,
         description: str | None,
         members: list[str],
-    ) -> dict[str, object]:
+    ) -> FlextTypes.Core.Dict:
         """Build group attributes - REUSABLE HELPER."""
-        attributes: dict[str, object] = {
+        attributes: FlextTypes.Core.Dict = {
             "cn": [cn],
             "member": members,
         }
@@ -1009,7 +1035,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         cn: str,
         description: str | None,
         members: list[str],
-        attributes: dict[str, object],
+        attributes: FlextTypes.Core.Dict,
     ) -> FlextLdapGroup:
         """Build group entity - REUSABLE HELPER."""
         group_id_str = self._generate_id()
@@ -1137,7 +1163,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         member_dn: str,
     ) -> FlextResult[None]:
         """Apply the membership change to LDAP."""
-        modifications: dict[str, object] = {"member": updated_members}
+        modifications: FlextTypes.Core.Dict = {"member": updated_members}
         modify_result = await self._entry_ops.modify_entry(
             connection_id=connection_id,
             dn=group_dn,

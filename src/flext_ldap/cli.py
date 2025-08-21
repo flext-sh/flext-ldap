@@ -34,7 +34,7 @@ console = Console()
 # =============================================================================
 
 
-def _safe_int_from_kwargs(kwargs: dict[str, object], key: str, default: int) -> int:
+def _safe_int_from_kwargs(kwargs: FlextTypes.Core.Dict, key: str, default: int) -> int:
     value = kwargs.get(key, default)
     if isinstance(value, int):
         return value
@@ -43,14 +43,14 @@ def _safe_int_from_kwargs(kwargs: dict[str, object], key: str, default: int) -> 
     return default
 
 
-def _safe_str_from_kwargs(kwargs: dict[str, object], key: str) -> str | None:
+def _safe_str_from_kwargs(kwargs: FlextTypes.Core.Dict, key: str) -> str | None:
     """Safe string conversion from kwargs - REUSABLE HELPER."""
     value = kwargs.get(key)
     return str(value) if value is not None else None
 
 
 def _safe_bool_from_kwargs(
-    kwargs: dict[str, object],
+    kwargs: FlextTypes.Core.Dict,
     key: str,
     *,
     default: bool = False,
@@ -375,22 +375,22 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
             # Always disconnect
             _execute_async_operation(client.unbind())
 
-    def _validate_search_parameters(self) -> FlextResult[dict[str, object]]:
+    def _validate_search_parameters(self) -> FlextResult[FlextTypes.Core.Dict]:
         """Validate search parameters and return validated objects."""
         # Validate and create DN and filter objects
         dn_result = FlextLdapDistinguishedName.create(self.params.base_dn)
-        if dn_result.is_failure or dn_result.value is None:
-            return FlextResult[dict[str, object]].fail(
+        if dn_result.is_failure:
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Invalid base DN: {dn_result.error}"
             )
 
         filter_result = FlextLdapFilter.create(self.params.filter_str)
         if filter_result.is_failure or filter_result.value is None:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Invalid filter: {filter_result.error}"
             )
 
-        return FlextResult[dict[str, object]].ok(
+        return FlextResult[FlextTypes.Core.Dict].ok(
             {
                 "dn": dn_result.value,
                 "filter": filter_result.value,
@@ -400,7 +400,7 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
     def _execute_search_with_client(
         self,
         client: FlextLdapClient,
-        validated_params: dict[str, object],
+        validated_params: FlextTypes.Core.Dict,
     ) -> FlextResult[object]:
         """Execute the search operation with validated parameters."""
         # Create proper search request
@@ -459,7 +459,7 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
         if attributes:
             self._display_entry_attributes(attributes)
 
-    def _extract_entry_data(self, entry: object) -> tuple[str, dict[str, object]]:
+    def _extract_entry_data(self, entry: object) -> tuple[str, FlextTypes.Core.Dict]:
         """Extract DN and attributes from entry object."""
         if isinstance(entry, dict):
             dn = entry.get("dn", "Unknown DN")
@@ -469,7 +469,7 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
             attributes = getattr(entry, "attributes", {})
         return str(dn), attributes
 
-    def _display_entry_attributes(self, attributes: dict[str, object]) -> None:
+    def _display_entry_attributes(self, attributes: FlextTypes.Core.Dict) -> None:
         """Display attributes in a Rich table with value truncation."""
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Attribute", style="cyan")
@@ -578,26 +578,28 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
 
         return self._process_user_search_results(search_result)
 
-    def _prepare_search_parameters(self) -> FlextResult[dict[str, object]]:
+    def _prepare_search_parameters(self) -> FlextResult[FlextTypes.Core.Dict]:
         """Prepare and validate search parameters."""
         dn_result = FlextLdapDistinguishedName.create("dc=example,dc=com")
         if dn_result.is_failure or dn_result.value is None:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Invalid base DN: {dn_result.error}"
             )
 
         filter_result = FlextLdapFilter.create(f"(uid={self.uid})")
         if filter_result.is_failure or filter_result.value is None:
-            return FlextResult[dict[str, object]].fail("Invalid filter")
+            return FlextResult[FlextTypes.Core.Dict].fail("Invalid filter")
 
-        return FlextResult[dict[str, object]].ok(
+        return FlextResult[FlextTypes.Core.Dict].ok(
             {
                 "dn": dn_result.value,
                 "filter": filter_result.value,
             }
         )
 
-    def _execute_user_search(self, client: FlextLdapClient, params: object) -> FlextResult[object]:
+    def _execute_user_search(
+        self, client: FlextLdapClient, params: object
+    ) -> FlextResult[object]:
         """Execute the user search operation."""
         if not isinstance(params, dict):
             return FlextResult[object].fail("Invalid search parameters")

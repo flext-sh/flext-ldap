@@ -315,7 +315,9 @@ class TestLdapServiceRealOperations:
         update_attrs_raw_5 = {
             "description": ["Updated group description"],
         }
-        update_attributes_5 = FlextLdapUtilities.create_ldap_attributes(update_attrs_raw_5)
+        update_attributes_5 = FlextLdapUtilities.create_ldap_attributes(
+            update_attrs_raw_5
+        )
         update_result = await ldap_service.update_group(group.dn, update_attributes_5)
         assert update_result.is_success, (
             f"Failed to update group: {update_result.error}"
@@ -522,7 +524,9 @@ class TestLdapErrorHandlingReal:
 
         search_result = await connected_ldap_client.search(invalid_search)
         # Should handle gracefully - either return empty results or proper error
-        assert search_result.is_success or (search_result.error and "noSuchObject" in search_result.error)
+        assert search_result.is_success or (
+            search_result.error and "noSuchObject" in search_result.error
+        )
 
         # Test add with invalid attributes
         invalid_dn = f"cn=invaliduser,ou=nonexistent,{clean_ldap_container['base_dn']}"
@@ -530,7 +534,9 @@ class TestLdapErrorHandlingReal:
             "objectClass": ["nonExistentObjectClass"],  # Invalid object class
             "invalidAttribute": ["value"],
         }
-        invalid_attributes = FlextLdapUtilities.create_ldap_attributes(invalid_attrs_raw)
+        invalid_attributes = FlextLdapUtilities.create_ldap_attributes(
+            invalid_attrs_raw
+        )
 
         add_result = await connected_ldap_client.add(invalid_dn, invalid_attributes)
         # Should fail with appropriate error
@@ -546,9 +552,7 @@ class TestLdapErrorHandlingReal:
         )
         # Should handle gracefully
         assert not delete_result.is_success
-        assert (
-            delete_result.error and (
-                "No such object" in delete_result.error
-                or "does not exist" in delete_result.error.lower()
-            )
+        assert delete_result.error and (
+            "No such object" in delete_result.error
+            or "does not exist" in delete_result.error.lower()
         )

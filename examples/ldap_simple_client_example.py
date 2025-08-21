@@ -87,9 +87,7 @@ async def main() -> None:
                 print("✅ Entry modified")
 
                 # Delete entry
-                delete_result = await client.delete(
-                    dn="cn=testuser,dc=example,dc=com"
-                )
+                delete_result = await client.delete(dn="cn=testuser,dc=example,dc=com")
 
                 if delete_result.is_success:
                     print("✅ Entry lifecycle completed")

@@ -12,9 +12,7 @@ from flext_cli import (
     CLIContext,
     CLIExecutionContext,
     OutputFormat,
-    cli_enhanced,
     cli_format_output,
-    cli_validate_inputs,
     get_config,
 )
 from flext_core import FlextResult
@@ -29,10 +27,8 @@ class FlextLdapCLI:
         self.config = get_config()
         self.ldap_api = get_ldap_api()
         # Create CLI context with available parameters
-        self.context = CLIContext()
+        self.context: CLIContext = CLIContext()
 
-    @cli_enhanced
-    @cli_validate_inputs
     async def list_users(
         self,
         base_dn: str = "ou=users,dc=example,dc=com",
@@ -77,8 +73,6 @@ class FlextLdapCLI:
         except Exception as e:
             return FlextResult[dict[str, Any]].fail(f"Erro ao listar usuários: {e}")
 
-    @cli_enhanced
-    @cli_validate_inputs
     async def create_user(
         self,
         username: str,
@@ -155,7 +149,9 @@ async def main() -> None:
 
     # Teste 2: Criar usuário
 
-    result = await cli.create_user(username="testuser", full_name="Test User", email="test@example.com")
+    result = await cli.create_user(
+        username="testuser", full_name="Test User", email="test@example.com"
+    )
     # Use FlextResult's unwrap_or method for cleaner code
     data = result.unwrap_or({})
     if data:
@@ -165,8 +161,8 @@ async def main() -> None:
 
     config_data = {
         "cli_config": {
-            "debug": cli.context.debug,
-            "verbose": cli.context.verbose,
+            "debug": cli.context.is_debug,
+            "verbose": cli.context.is_verbose,
             "ldap_config": cli.context.config,
         },
         "flext_cli_features": [

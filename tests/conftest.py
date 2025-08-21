@@ -106,7 +106,9 @@ class OpenLDAPContainerManager:
             else:
                 # Try to force remove by name if getting by ID fails
                 with suppress(Exception):
-                    self.client.api.remove_container(OPENLDAP_CONTAINER_NAME, force=True)
+                    self.client.api.remove_container(
+                        OPENLDAP_CONTAINER_NAME, force=True
+                    )
 
         self.container = None
 
@@ -244,7 +246,9 @@ def ldap_test_config(docker_openldap_container: object) -> dict[str, object]:
 
 
 @pytest.fixture
-async def ldap_service(clean_ldap_container: dict[str, object]) -> AsyncGenerator[FlextLdapService]:  # noqa: ARG001
+async def ldap_service(
+    clean_ldap_container: dict[str, object],
+) -> AsyncGenerator[FlextLdapService]:  # noqa: ARG001
     """Provide configured LDAP service for testing."""
     container = get_ldap_container()
     service = FlextLdapService(container)
@@ -302,6 +306,7 @@ async def _cleanup_ldap_entries_under_dn(
 
     # Early return if search failed or no data - use unwrap_or for cleaner code
     from flext_ldap.entities import FlextLdapSearchResponse
+
     empty_response = FlextLdapSearchResponse(entries=[], total_count=0)
     search_data = search_result.unwrap_or(empty_response)
     if not search_data.entries:

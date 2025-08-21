@@ -193,7 +193,9 @@ async def demonstrate_async_patterns() -> None:
                 tasks.append(task)
 
             # Execute concurrent searches with proper typing
-            results: list[Any | BaseException] = await asyncio.gather(*tasks, return_exceptions=True)
+            results: list[Any | BaseException] = await asyncio.gather(
+                *tasks, return_exceptions=True
+            )
 
             successful_searches = sum(
                 1
