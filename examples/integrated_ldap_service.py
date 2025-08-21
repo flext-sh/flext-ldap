@@ -51,21 +51,14 @@ async def _initialize_ldap_service() -> FlextLdapApi:
         from urllib.parse import urlparse  # noqa: PLC0415
 
         from flext_ldap import (  # noqa: PLC0415
-            FlextLdapConnectionConfig,
             FlextLdapSettings,
         )
 
         server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
-        parsed = urlparse(server_url)
+        urlparse(server_url)
 
-        # Create configuration using environment variables
-        conn = FlextLdapConnectionConfig(
-            server=parsed.hostname or "localhost",
-            port=parsed.port or 389,
-            use_ssl=parsed.scheme == "ldaps",
-            timeout=30,
-        )
-        service = FlextLdapApi(FlextLdapSettings(default_connection=conn))
+        # Create service using current API
+        service = FlextLdapApi(FlextLdapSettings())
         print(f"   Service initialized with Docker config: {server_url}")
     else:
         service = FlextLdapApi()
@@ -93,7 +86,7 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLdapApi) -> None:
             print(f"❌ Failed to connect: {connection_result.error}")
             return
 
-        session_id = connection_result.data
+        session_id = connection_result.value
         print(f"✅ Connected with session: {session_id}")
 
         try:
@@ -108,15 +101,14 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLdapApi) -> None:
 
                 # Search for the OU to verify it exists
                 search_result = await ldap_service.search(
-                    session_id=session_id,
                     base_dn=ou_dn,
                     search_filter="(objectClass=organizationalUnit)",
                     scope="base",
                     attributes=["ou", "description", "objectClass"],
                 )
 
-                if search_result.success and search_result.data:
-                    entry = search_result.data[0]
+                if search_result.is_success and search_result.value:
+                    entry = search_result.value[0]
                     print(f"   ✅ Found: {ou_dn}")
                     print(f"     - Attributes: {entry.attributes}")
                 else:
@@ -154,21 +146,20 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
             print(f"   ❌ Connection failed: {connection_result.error}")
             return
 
-        session_id = connection_result.data
+        session_id = connection_result.value
 
         try:
             # Search for existing users in the people OU
             print("   🔍 Searching for existing users in ou=people...")
             search_result = await ldap_service.search(
-                session_id=session_id,
                 base_dn="ou=people,dc=flext,dc=local",
                 search_filter="(objectClass=person)",
                 attributes=["uid", "cn", "sn", "mail", "objectClass"],
             )
 
-            if search_result.success and search_result.data:
-                print(f"   ✅ Found {len(search_result.data)} users:")
-                for user_entry in search_result.data:
+            if search_result.is_success and search_result.value:
+                print(f"   ✅ Found {len(search_result.value)} users:")
+                for user_entry in search_result.value:
                     uid = user_entry.get_single_attribute_value("uid") or "N/A"
                     cn = user_entry.get_single_attribute_value("cn") or "N/A"
                     print(f"     - {uid}: {cn} ({user_entry.dn})")
@@ -182,7 +173,6 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
 
                 # Test wildcard search
                 wildcard_result = await ldap_service.search(
-                    session_id=session_id,
                     base_dn="dc=flext,dc=local",
                     search_filter="(objectClass=*)",
                     attributes=[
@@ -191,12 +181,14 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
                     scope="subtree",
                 )
 
-                if wildcard_result.success and wildcard_result.data:
+                if wildcard_result.is_success and wildcard_result.value:
                     print(
-                        f"   ✅ Directory contains {len(wildcard_result.data)} total entries",
+                        f"   ✅ Directory contains {len(wildcard_result.value)} total entries",
                     )
                     print("   📝 Sample entries:")
-                    for i, entry in enumerate(wildcard_result.data[:5]):  # Show first 5
+                    for i, entry in enumerate(
+                        wildcard_result.value[:5]
+                    ):  # Show first 5
                         print(f"     {i + 1}. {entry.dn}")
                 else:
                     print("   ❌ Failed to search directory")
@@ -219,45 +211,42 @@ async def _perform_user_search_validation(
     # Test 1: Search by object class
     print("   📋 Test 1: Search by objectClass=inetOrgPerson...")
     search_result = await ldap_service.search(
-        session_id=session_id,
         base_dn="dc=flext,dc=local",
         search_filter="(objectClass=inetOrgPerson)",
         attributes=["uid", "cn", "mail", "objectClass"],
         scope="subtree",
     )
 
-    if search_result.success:
-        print(f"   ✅ Found {len(search_result.data)} inetOrgPerson entries")
+    if search_result.is_success:
+        print(f"   ✅ Found {len(search_result.value)} inetOrgPerson entries")
     else:
         print(f"   ❌ Search failed: {search_result.error}")
 
     # Test 2: Search with compound filter
     print("   📋 Test 2: Search with compound filter...")
     compound_result = await ldap_service.search(
-        session_id=session_id,
         base_dn="dc=flext,dc=local",
         search_filter="(&(objectClass=person)(uid=*))",
         attributes=["uid", "cn"],
         scope="subtree",
     )
 
-    if compound_result.success:
-        print(f"   ✅ Compound filter found {len(compound_result.data)} entries")
+    if compound_result.is_success:
+        print(f"   ✅ Compound filter found {len(compound_result.value)} entries")
     else:
         print(f"   ❌ Compound search failed: {compound_result.error}")
 
     # Test 3: Base scope search on root
     print("   📋 Test 3: Base scope search on root DN...")
     base_result = await ldap_service.search(
-        session_id=session_id,
         base_dn="dc=flext,dc=local",
         search_filter="(objectClass=*)",
         attributes=["dc", "objectClass"],
         scope="base",
     )
 
-    if base_result.success and base_result.data:
-        entry = base_result.data[0]
+    if base_result.is_success and base_result.value:
+        entry = base_result.value[0]
         print(f"   ✅ Root entry: {entry.dn}")
         print(f"     - objectClass: {entry.attributes.get('objectClass', [])}")
     else:
@@ -285,21 +274,20 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
             print(f"   ❌ Connection failed: {connection_result.error}")
             return
 
-        session_id = connection_result.data
+        session_id = connection_result.value
 
         try:
             # Search for existing groups in the groups OU
             print("   🔍 Searching for existing groups in ou=groups...")
             search_result = await ldap_service.search(
-                session_id=session_id,
                 base_dn="ou=groups,dc=flext,dc=local",
                 search_filter="(objectClass=groupOfNames)",
                 attributes=["cn", "description", "member", "objectClass"],
             )
 
-            if search_result.success and search_result.data:
-                print(f"   ✅ Found {len(search_result.data)} groups:")
-                for group_entry in search_result.data:
+            if search_result.is_success and search_result.value:
+                print(f"   ✅ Found {len(search_result.value)} groups:")
+                for group_entry in search_result.value:
                     cn = group_entry.get_single_attribute_value("cn") or "N/A"
                     desc = (
                         group_entry.get_single_attribute_value("description")
@@ -316,15 +304,14 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
 
                 # Test alternative group object classes
                 alt_result = await ldap_service.search(
-                    session_id=session_id,
                     base_dn="ou=groups,dc=flext,dc=local",
                     search_filter="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
                     attributes=["cn", "objectClass"],
                 )
 
-                if alt_result.success and alt_result.data:
+                if alt_result.is_success and alt_result.value:
                     print(
-                        f"   ✅ Found {len(alt_result.data)} groups with alternative object classes",
+                        f"   ✅ Found {len(alt_result.value)} groups with alternative object classes",
                     )
                 else:
                     print("   [i] No groups with common object classes found")
@@ -347,16 +334,15 @@ async def _perform_group_search_validation(
     # Test 1: Search for all group types
     print("   📋 Test 1: Search for all group types...")
     all_groups_result = await ldap_service.search(
-        session_id=session_id,
         base_dn="dc=flext,dc=local",
         search_filter="(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames)(objectClass=posixGroup))",
         attributes=["cn", "description", "objectClass"],
         scope="subtree",
     )
 
-    if all_groups_result.success:
-        print(f"   ✅ Found {len(all_groups_result.data)} groups of all types")
-        for group_entry in all_groups_result.data:
+    if all_groups_result.is_success:
+        print(f"   ✅ Found {len(all_groups_result.value)} groups of all types")
+        for group_entry in all_groups_result.value:
             cn = group_entry.get_single_attribute_value("cn") or "Unknown"
             obj_classes = group_entry.get_attribute_values("objectClass")
             print(f"     - {cn}: {obj_classes}")
@@ -366,15 +352,14 @@ async def _perform_group_search_validation(
     # Test 2: Search groups with wildcards
     print("   📋 Test 2: Search groups with wildcard patterns...")
     wildcard_result = await ldap_service.search(
-        session_id=session_id,
         base_dn="ou=groups,dc=flext,dc=local",
         search_filter="(cn=*)",
         attributes=["cn", "objectClass"],
         scope="one",
     )
 
-    if wildcard_result.success:
-        print(f"   ✅ Wildcard search found {len(wildcard_result.data)} entries")
+    if wildcard_result.is_success:
+        print(f"   ✅ Wildcard search found {len(wildcard_result.value)} entries")
     else:
         print(f"   ❌ Wildcard search failed: {wildcard_result.error}")
 
@@ -384,7 +369,6 @@ async def _perform_group_search_validation(
 
     for scope in scopes:
         scope_result = await ldap_service.search(
-            session_id=session_id,
             base_dn="ou=groups,dc=flext,dc=local",
             search_filter="(objectClass=*)",
             attributes=[
@@ -393,8 +377,8 @@ async def _perform_group_search_validation(
             scope=scope,
         )
 
-        if scope_result.success:
-            print(f"   ✅ Scope '{scope}': {len(scope_result.data)} entries")
+        if scope_result.is_success:
+            print(f"   ✅ Scope '{scope}': {len(scope_result.value)} entries")
         else:
             print(f"   ❌ Scope '{scope}' failed: {scope_result.error}")
 
@@ -415,13 +399,13 @@ async def _demo_connection_management(ldap_service: FlextLdapApi) -> None:
     # Demonstrate connection using the API's connect method
     try:
         connection_result = await ldap_service.connect(server_url, bind_dn, password)
-        if connection_result.success:
-            session_id = connection_result.data
+        if connection_result.is_success:
+            session_id = connection_result.value
             print(f"   Connected to LDAP server successfully: {session_id}")
 
             # Disconnect
             disconnect_result = await ldap_service.disconnect(session_id)
-            if disconnect_result.success:
+            if disconnect_result.is_success:
                 print("   Disconnected successfully")
         else:
             print(f"   Connection failed: {connection_result.error}")

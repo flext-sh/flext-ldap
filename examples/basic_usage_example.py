@@ -57,6 +57,8 @@ async def _demo_create_primary_user(_service: FlextLdapApi) -> None:
         uid="johndoe",
         cn="John Doe",
         sn="Doe",
+        given_name="John",
+        phone=None,
         mail="john.doe@example.com",
     )
 
@@ -116,6 +118,8 @@ async def _demo_create_additional_users(_service: FlextLdapApi) -> None:
             cn=user_data["cn"],
             sn=user_data["sn"],
             mail=user_data["mail"],
+            given_name=None,
+            phone=None,
         )
 
         # Simplified for compatibility - would normally use create_user() with session
@@ -161,7 +165,7 @@ async def demonstrate_connection_handling() -> None:
         print("   Service demonstrates graceful error handling")
     else:
         print("   Connection succeeded (unexpected for demo)")
-        session_id = result.data or "unknown"
+        session_id = result.value or "unknown"
         await service.disconnect(session_id)
     print()
 
@@ -172,6 +176,9 @@ async def demonstrate_connection_handling() -> None:
         uid="testuser",
         cn="Test User",
         sn="User",
+        given_name="Test",
+        mail=None,
+        phone=None,
     )
 
     # Simplified demonstration - real implementation would use session management
@@ -193,7 +200,7 @@ def print_library_info() -> None:
     print("Key Features:")
     print("  • Clean Architecture with DDD patterns")
     print("  • Type-safe operations with FlextResult pattern")
-    print("  • Real LDAP server support with in-memory fallback")
+    print("  • Real LDAP server support with robust error handling")
     print("  • Comprehensive error handling and logging")
     print("  • Integration with flext-core for enterprise patterns")
     print()

@@ -1,22 +1,16 @@
-"""Compatibility shim: re-export configuration API from models.
+"""FLEXT-LDAP Configuration - Re-export from configuration module.
 
-Após a consolidação, as classes e helpers de configuração vivem em
-`flext_ldap.models`. Este módulo mantém conveniência reexportando-as.
+This module maintains backward compatibility by re-exporting
+configuration classes from the new configuration module.
 """
 
 from __future__ import annotations
 
-from flext_ldap.models import (
-    FlextLdapAttributes,
+# Re-export everything from configuration module
+from flext_ldap.configuration import (
     FlextLdapAuthConfig,
     FlextLdapConnectionConfig,
-    FlextLdapConstants,
-    FlextLdapDefaults,
     FlextLdapLoggingConfig,
-    FlextLdapObjectClasses,
-    FlextLdapOperationResult,
-    FlextLdapProtocolConstants,
-    FlextLdapScope,
     FlextLdapSearchConfig,
     FlextLdapSettings,
     create_development_config,
@@ -24,60 +18,30 @@ from flext_ldap.models import (
     create_test_config,
 )
 
+# Import scope enum
+from flext_ldap.fields import FlextLdapScopeEnum as FlextLdapScope
+
+# Additional imports from models for backward compatibility
+from flext_ldap.models import (
+    FlextLdapConstants,
+    FlextLdapProtocolConstants,
+    LdapAttributeProcessor,
+)
+
 __all__ = [
-    "FlextLdapAttributes",
+    # Configuration classes
     "FlextLdapAuthConfig",
     "FlextLdapConnectionConfig",
+    # Constants
     "FlextLdapConstants",
-    "FlextLdapDefaults",
     "FlextLdapLoggingConfig",
-    "FlextLdapObjectClasses",
-    "FlextLdapOperationResult",
     "FlextLdapProtocolConstants",
     "FlextLdapScope",
     "FlextLdapSearchConfig",
     "FlextLdapSettings",
+    # Factory functions
+    "LdapAttributeProcessor",
     "create_development_config",
     "create_production_config",
     "create_test_config",
 ]
-
-# Compatibility adapter: allow plain string passwords with libraries that
-# construct configs from non-SecretStr sources (e.g., external CLIs/tests).
-# This preserves strict SecretStr internally while accepting str at init.
-try:
-    from pydantic import SecretStr
-
-    class FlextLdapConnectionConfigCompat(FlextLdapConnectionConfig):
-        """Compatibility subclass that accepts plain string passwords.
-
-        Converts ``bind_password`` to ``SecretStr`` at initialization while
-        preserving the public API by exposing a plain string when the attribute
-        is accessed, for legacy tests/tools that compare it directly to a string.
-        """
-
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            password = kwargs.get("bind_password")
-            if isinstance(password, str):
-                kwargs["bind_password"] = SecretStr(password)
-            super().__init__(*args, **kwargs)
-
-        def __getattribute__(self, name: str) -> object:
-            """Expose plain string for ``bind_password`` when accessed."""
-            if name == "bind_password":
-                value = super().__getattribute__(name)
-                # When consumers read .bind_password, expose plain string
-                if isinstance(value, SecretStr):
-                    return value.get_secret_value()
-                return value
-            return super().__getattribute__(name)
-
-    # Export compat alias for consumers that import from config
-    __all__ += ["FlextLdapConnectionConfigCompat"]
-except Exception:
-    # If anything goes wrong, keep the original class; tests will reveal issues
-    import logging
-
-    logging.getLogger(__name__).debug(
-        "Compat layer for FlextLdapConnectionConfig not applied",
-    )

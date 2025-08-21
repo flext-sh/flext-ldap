@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import ParamSpec, TypeVar, cast
+from typing import ParamSpec, TypeVar, cast, override
 
 import click
 from flext_core import (
     FlextEntity as FlextCliEntity,
+    FlextEntityId,
     FlextResult,
     get_flext_container,
     get_logger,
@@ -19,7 +20,8 @@ from flext_core import (
 from rich.console import Console
 from rich.table import Table
 
-from flext_ldap.constants import FlextLdapDefaultValues, FlextLdapScope
+from flext_ldap.constants import FlextLdapDefaultValues
+from flext_ldap.entities import FlextLdapSearchRequest
 from flext_ldap.infrastructure import FlextLdapClient
 from flext_ldap.models import FlextLdapDistinguishedName, FlextLdapFilter
 
@@ -64,12 +66,16 @@ def _execute_async_operation(operation: object) -> object:
         try:
             asyncio.get_running_loop()
         except RuntimeError:
-            return asyncio.run(operation)
+            return asyncio.run(cast("Coroutine[object, object, object]", operation))
         # When already inside an event loop, use a thread to avoid nested
         # event loops which crash under asyncio.
 
+        def run_in_new_loop() -> object:
+            """Run operation in new event loop."""
+            return asyncio.run(cast("Coroutine[object, object, object]", operation))
+
         with ThreadPoolExecutor(max_workers=1) as executor:
-            future: Future[object] = executor.submit(asyncio.run, operation)
+            future: Future[object] = executor.submit(run_in_new_loop)
             return future.result(timeout=60)
     return operation
 
@@ -152,13 +158,18 @@ class LDAPSearchParams:
 # =============================================================================
 
 
-def _generate_cli_id(fallback: str = "") -> str:
-    """Generate ID using container or UUID fallback for CLI usage."""
+def _generate_cli_id() -> str:
+    """Generate ID using container ID generator or UUID for CLI usage."""
     container = get_flext_container()
-    id_generator = container.get("FlextIdGenerator").unwrap_or(None)
-    if id_generator and hasattr(id_generator, "generate"):
-        return str(id_generator.generate())
-    return fallback or str(uuid.uuid4())
+    id_generator_result = container.get("FlextIdGenerator")
+
+    if id_generator_result.is_success:
+        id_generator = id_generator_result.value
+        if id_generator and hasattr(id_generator, "generate"):
+            generated_id = getattr(id_generator, "generate", uuid.uuid4)()
+            return str(generated_id)
+
+    return str(uuid.uuid4())
 
 
 # =============================================================================
@@ -186,18 +197,23 @@ class FlextLdapCliBase(FlextCliEntity, _CliPrintMixin):
     def __init__(self, command_id: str, name: str) -> None:
         """Initialize base CLI command."""
         # Minimal initialization compatible with flext-core FlextEntity
-        super().__init__(id=command_id)
+        super().__init__(id=FlextEntityId(command_id))
         self._name = name
         self._container = get_flext_container()
         # Keep convenience fields for testing
         self.command_id = command_id
 
-    def _generate_id(self, fallback: str = "") -> str:
-        """Generate ID using container or UUID fallback - consistent with operations.py."""
-        id_generator = self._container.get("FlextIdGenerator").unwrap_or(None)
-        if id_generator and hasattr(id_generator, "generate"):
-            return str(id_generator.generate())
-        return fallback or str(uuid.uuid4())
+    def _generate_id(self) -> str:
+        """Generate ID using container ID generator or UUID - consistent with operations.py."""
+        id_generator_result = self._container.get("FlextIdGenerator")
+
+        if id_generator_result.is_success:
+            id_generator = id_generator_result.value
+            if id_generator and hasattr(id_generator, "generate"):
+                generated_id = getattr(id_generator, "generate", uuid.uuid4)()
+                return str(generated_id)
+
+        return str(uuid.uuid4())
 
 
 # =============================================================================
@@ -226,6 +242,7 @@ class FlextLdapTestCommand(FlextLdapCliBase):
         self.name = name
         self.params = params
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate LDAP connection parameters."""
         max_port = 65535
@@ -244,32 +261,34 @@ class FlextLdapTestCommand(FlextLdapCliBase):
         )
 
         try:
-            client = FlextLdapClient(None)
+            client = FlextLdapClient()
             protocol = "ldaps" if self.params.use_ssl else "ldap"
             uri = f"{protocol}://{self.params.server}:{self.params.port}"
 
             # Use REFACTORED async helper - NO DUPLICATION
+            bind_dn = self.params.bind_dn or "cn=anonymous"
+            bind_password = self.params.bind_password or ""
             connect_result = cast(
                 "FlextResult[object]",
-                _execute_async_operation(client.connect(uri)),
+                _execute_async_operation(client.connect(uri, bind_dn, bind_password)),
             )
 
             if connect_result.is_success:
                 self.flext_cli_print_success(f"Successfully connected to {uri}")
-                # Always disconnect regardless of connect_result.data presence
-                _execute_async_operation(client.disconnect())
-                return FlextResult[None].ok(
+                # Always disconnect regardless of connect_result.value presence
+                _execute_async_operation(client.unbind())
+                return FlextResult[object].ok(
                     {
                         "message": f"Connection successful to {uri}",
                         "protocol": protocol,
                     },
                 )
             self.flext_cli_print_error(f"Connection failed: {connect_result.error}")
-            return FlextResult[None].fail(connect_result.error or "Connection failed")
+            return FlextResult[object].fail(connect_result.error or "Connection failed")
 
         except Exception as e:
             self.flext_cli_print_error(f"Connection error: {e}")
-            return FlextResult[None].fail(str(e))
+            return FlextResult[object].fail(str(e))
 
 
 class FlextLdapSearchCommand(FlextLdapCliBase):
@@ -288,6 +307,7 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
         self.name = name
         self.params = params
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate LDAP search parameters."""
         max_port = 65535
@@ -309,7 +329,7 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
         )
 
         try:
-            client = FlextLdapClient(None)
+            client = FlextLdapClient()
             protocol = "ldaps" if self.params.use_ssl else "ldap"
             uri = f"{protocol}://{self.params.server}:{self.params.port}"
 
@@ -318,7 +338,7 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
 
         except Exception as e:
             self.flext_cli_print_error(f"Search error: {e}")
-            return FlextResult[None].fail(str(e))
+            return FlextResult[object].fail(str(e))
 
     def _perform_search_operation(
         self,
@@ -329,41 +349,51 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
         # Connect using REFACTORED async helper - NO DUPLICATION
         connect_result = cast(
             "FlextResult[object]",
-            _execute_async_operation(client.connect(uri)),
+            _execute_async_operation(
+                client.connect(
+                    uri, self.params.bind_dn or "", self.params.bind_password or ""
+                )
+            ),
         )
 
         if connect_result.is_failure:
             self.flext_cli_print_error(f"Connection failed: {connect_result.error}")
-            return FlextResult[None].fail(connect_result.error or "Connection failed")
+            return FlextResult[object].fail(connect_result.error or "Connection failed")
 
         try:
             # Validate parameters
             validation_result = self._validate_search_parameters()
             if validation_result.is_failure:
-                return FlextResult[None].fail(validation_result.error or "Validation failed")
+                return FlextResult[object].fail(
+                    validation_result.error or "Validation failed"
+                )
 
             # Execute search with validated data
-            return self._execute_search_with_client(client, validation_result.data)
+            return self._execute_search_with_client(client, validation_result.value)
 
         finally:
             # Always disconnect
-            _execute_async_operation(client.disconnect())
+            _execute_async_operation(client.unbind())
 
     def _validate_search_parameters(self) -> FlextResult[dict[str, object]]:
         """Validate search parameters and return validated objects."""
         # Validate and create DN and filter objects
         dn_result = FlextLdapDistinguishedName.create(self.params.base_dn)
-        if dn_result.is_failure or dn_result.data is None:
-            return FlextResult[None].fail(f"Invalid base DN: {dn_result.error}")
+        if dn_result.is_failure or dn_result.value is None:
+            return FlextResult[dict[str, object]].fail(
+                f"Invalid base DN: {dn_result.error}"
+            )
 
         filter_result = FlextLdapFilter.create(self.params.filter_str)
-        if filter_result.is_failure or filter_result.data is None:
-            return FlextResult[None].fail(f"Invalid filter: {filter_result.error}")
+        if filter_result.is_failure or filter_result.value is None:
+            return FlextResult[dict[str, object]].fail(
+                f"Invalid filter: {filter_result.error}"
+            )
 
-        return FlextResult[None].ok(
+        return FlextResult[dict[str, object]].ok(
             {
-                "dn": dn_result.data,
-                "filter": filter_result.data,
+                "dn": dn_result.value,
+                "filter": filter_result.value,
             }
         )
 
@@ -373,17 +403,19 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
         validated_params: dict[str, object],
     ) -> FlextResult[object]:
         """Execute the search operation with validated parameters."""
-        scope = FlextLdapScope.SUB
+        # Create proper search request
+        search_request = FlextLdapSearchRequest(
+            base_dn=str(validated_params["dn"]),
+            filter_str=str(validated_params["filter"]),
+            scope="subtree",
+            size_limit=1000,
+            time_limit=30,
+            attributes=["*"],
+        )
+
         search_result = cast(
             "FlextResult[object]",
-            _execute_async_operation(
-                client.search(
-                    str(validated_params["dn"]),
-                    str(validated_params["filter"]),
-                    str(scope),
-                    attributes=["*"],
-                ),
-            ),
+            _execute_async_operation(client.search(search_request)),
         )
 
         return self._process_search_results(search_result)
@@ -393,21 +425,24 @@ class FlextLdapSearchCommand(FlextLdapCliBase):
         search_result: FlextResult[object],
     ) -> FlextResult[object]:
         """Process and display search results."""
-        if search_result.is_success and search_result.data:
+        # Use FlextResult's unwrap_or method for cleaner code
+        entries_data = search_result.unwrap_or([])
+
+        if entries_data:
             entries = (
-                search_result.data[: self.params.limit]
-                if isinstance(search_result.data, list)
-                else [search_result.data]
+                entries_data[: self.params.limit]
+                if isinstance(entries_data, list)
+                else [entries_data]
             )
             self.flext_cli_print_success(f"Found {len(entries)} entries")
 
             # Display results using Rich tables
             self._display_search_results(entries)
 
-            return FlextResult[None].ok({"entries": entries, "count": len(entries)})
+            return FlextResult[object].ok({"entries": entries, "count": len(entries)})
 
         self.flext_cli_print_warning("No entries found")
-        return FlextResult[None].ok({"entries": [], "count": 0})
+        return FlextResult[object].ok({"entries": [], "count": 0})
 
     def _display_search_results(self, entries: list[object]) -> None:
         """Display search results using Rich formatting - REFACTORED to reduce complexity."""
@@ -484,6 +519,7 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
         self.uid = uid
         self.server = server or "localhost"
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate user info parameters."""
         if not self.uid or not self.uid.strip():
@@ -496,7 +532,7 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
         self.flext_cli_print_info(f"Looking up user: {self.uid}")
 
         try:
-            client = FlextLdapClient(None)
+            client = FlextLdapClient()
             uri = f"ldap://{self.server}:389"
 
             # Perform connection and search operations
@@ -504,7 +540,7 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
 
         except Exception as e:
             self.flext_cli_print_error(f"User lookup error: {e}")
-            return FlextResult[None].fail(str(e))
+            return FlextResult[object].fail(str(e))
 
     def _perform_user_lookup(
         self,
@@ -515,45 +551,49 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
         # Connect using REFACTORED async helper - NO DUPLICATION
         connect_result = cast(
             "FlextResult[object]",
-            _execute_async_operation(client.connect(uri)),
+            _execute_async_operation(client.connect(uri, "cn=anonymous", "")),
         )
 
         if connect_result.is_failure:
             self.flext_cli_print_error(f"Connection failed: {connect_result.error}")
-            return FlextResult[None].fail(connect_result.error or "Connection failed")
+            return FlextResult[object].fail(connect_result.error or "Connection failed")
 
         try:
             return self._search_for_user(client)
         finally:
             # Always disconnect
-            _execute_async_operation(client.disconnect())
+            _execute_async_operation(client.unbind())
 
     def _search_for_user(self, client: FlextLdapClient) -> FlextResult[object]:
         """Search for user and return results."""
         # Validate search parameters
         validation_result = self._prepare_search_parameters()
         if validation_result.is_failure:
-            return FlextResult[None].fail(validation_result.error or "Validation failed")
+            return FlextResult[object].fail(
+                validation_result.error or "Validation failed"
+            )
 
         # Execute search operation
-        search_result = self._execute_user_search(client, validation_result.data)
+        search_result = self._execute_user_search(client, validation_result.value)
 
         return self._process_user_search_results(search_result)
 
     def _prepare_search_parameters(self) -> FlextResult[dict[str, object]]:
         """Prepare and validate search parameters."""
         dn_result = FlextLdapDistinguishedName.create("dc=example,dc=com")
-        if dn_result.is_failure or dn_result.data is None:
-            return FlextResult[None].fail(f"Invalid base DN: {dn_result.error}")
+        if dn_result.is_failure or dn_result.value is None:
+            return FlextResult[dict[str, object]].fail(
+                f"Invalid base DN: {dn_result.error}"
+            )
 
         filter_result = FlextLdapFilter.create(f"(uid={self.uid})")
-        if filter_result.is_failure or filter_result.data is None:
-            return FlextResult[None].fail("Invalid filter")
+        if filter_result.is_failure or filter_result.value is None:
+            return FlextResult[dict[str, object]].fail("Invalid filter")
 
-        return FlextResult[None].ok(
+        return FlextResult[dict[str, object]].ok(
             {
-                "dn": dn_result.data,
-                "filter": filter_result.data,
+                "dn": dn_result.value,
+                "filter": filter_result.value,
             }
         )
 
@@ -562,41 +602,38 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
         if not isinstance(params, dict):
             return {"success": False, "error": "Invalid search parameters"}
 
-        scope = FlextLdapScope.SUB
-        return _execute_async_operation(
-            client.search(
-                str(params["dn"]),
-                str(params["filter"]),
-                str(scope),
-                attributes=["uid", "cn", "sn", "mail", "dn"],
-            ),
+        # Create proper search request
+        search_request = FlextLdapSearchRequest(
+            base_dn=str(params["dn"]),
+            filter_str=str(params["filter"]),
+            scope="subtree",
+            attributes=["uid", "cn", "sn", "mail", "dn"],
+            size_limit=1000,
+            time_limit=30,
         )
+
+        return _execute_async_operation(client.search(search_request))
 
     def _process_user_search_results(
         self,
-        search_result: object,
+        search_result: FlextResult[object],
     ) -> FlextResult[object]:
         """Process search results and display user information."""
-        # Type check for FlextResult pattern
-        if (
-            hasattr(search_result, "is_success")
-            and hasattr(search_result, "data")
-            and search_result.is_success
-            and search_result.data
-        ):
+        # Check if search was successful
+        if search_result.is_success and search_result.value:
             user_data = (
-                search_result.data[0]
-                if isinstance(search_result.data, list)
-                else search_result.data
+                search_result.value[0]
+                if isinstance(search_result.value, list)
+                else search_result.value
             )
             self.flext_cli_print_success(f"Found user: {self.uid}")
 
             # Display user information
             self._display_user_info(user_data)
-            return FlextResult[None].ok(user_data)
+            return FlextResult[object].ok(user_data)
 
         self.flext_cli_print_warning(f"User {self.uid} not found")
-        return FlextResult[None].fail(f"User {self.uid} not found")
+        return FlextResult[object].fail(f"User {self.uid} not found")
 
     def _display_user_info(self, user: object) -> None:
         """Display user information using Rich formatting."""

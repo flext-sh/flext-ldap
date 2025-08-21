@@ -168,7 +168,7 @@ async def demonstrate_complete_crud_operations() -> None:
             _handle_conn_err()
             return
 
-        session_id = connection_result.data
+        session_id = connection_result.value
         print(f"✅ Connected to LDAP server: {session_id}")
 
         try:
@@ -218,13 +218,12 @@ async def perform_create_groups(ldap_service: FlextLdapApi, session_id: str) -> 
         print(f"   Creating group: {group_data['cn']}")
 
         result = await ldap_service.create_group(
-            session_id,
-            group_data["dn"],
-            group_data["cn"],
-            group_data["description"],
+            dn=group_data["dn"],
+            cn=group_data["cn"],
+            description=group_data["description"],
         )
 
-        if result.success:
+        if result.is_success:
             print(f"   ✅ Created group: {group_data['cn']}")
         else:
             print(f"   ❌ Failed to create group {group_data['cn']}: {result.error}")
@@ -283,7 +282,7 @@ async def perform_create_users(ldap_service: FlextLdapApi, _session_id: str) -> 
             attributes=attributes,
         )
 
-        if create_result.success:
+        if create_result.is_success:
             print(f"   ✅ Created user: {user_data['uid']}")
             created_users.append(str(user_data["uid"]))
         else:
@@ -301,15 +300,14 @@ async def perform_read_operations(ldap_service: FlextLdapApi, session_id: str) -
     # Search for all users
     print("   Searching for all users...")
     users_result = await ldap_service.search(
-        session_id=session_id,
         base_dn="ou=people,dc=flext,dc=local",
         search_filter="(objectClass=inetOrgPerson)",
         attributes=["uid", "cn", "mail", "title"],
     )
 
-    if users_result.success and users_result.data:
-        print(f"   ✅ Found {len(users_result.data)} users:")
-        for user in users_result.data:
+    if users_result.is_success and users_result.value:
+        print(f"   ✅ Found {len(users_result.value)} users:")
+        for user in users_result.value:
             uid = user.get_single_attribute_value("uid") or "N/A"
             cn = user.get_single_attribute_value("cn") or "N/A"
             mail = user.get_single_attribute_value("mail") or "N/A"
@@ -321,29 +319,27 @@ async def perform_read_operations(ldap_service: FlextLdapApi, session_id: str) -
     # Search by title containing "Engineer"
     print("   Searching for Engineer users...")
     eng_result = await ldap_service.search(
-        session_id=session_id,
         base_dn="ou=people,dc=flext,dc=local",
         search_filter="(title=*Engineer*)",
         attributes=["uid", "cn", "title"],
     )
 
-    if eng_result.success and eng_result.data:
-        print(f"   ✅ Found {len(eng_result.data)} Engineer users")
+    if eng_result.is_success and eng_result.value:
+        print(f"   ✅ Found {len(eng_result.value)} Engineer users")
     else:
         print("   [i] No Engineer users found (expected if CREATE failed)")
 
     # Search for groups
     print("   Searching for all groups...")
     groups_result = await ldap_service.search(
-        session_id=session_id,
         base_dn="ou=groups,dc=flext,dc=local",
         search_filter="(objectClass=groupOfNames)",
         attributes=["cn", "description"],
     )
 
-    if groups_result.success and groups_result.data:
-        print(f"   ✅ Found {len(groups_result.data)} groups:")
-        for group in groups_result.data:
+    if groups_result.is_success and groups_result.value:
+        print(f"   ✅ Found {len(groups_result.value)} groups:")
+        for group in groups_result.value:
             cn = group.get_single_attribute_value("cn") or "N/A"
             desc = group.get_single_attribute_value("description") or "N/A"
             print(f"     - {cn}: {desc}")
@@ -389,20 +385,19 @@ async def perform_update_operations(
             session_id=session_id, dn=dn, modifications=mods
         )
 
-        if result.success:
+        if result.is_success:
             print(f"   ✅ Updated user: {uid}")
 
             # Verify update by searching
             verify_result = await ldap_service.search(
-                session_id=session_id,
                 base_dn=dn,
                 search_filter="(objectClass=*)",
                 scope="base",
                 attributes=["mail", "title"],
             )
 
-            if verify_result.success and verify_result.data:
-                entry = verify_result.data[0]
+            if verify_result.is_success and verify_result.value:
+                entry = verify_result.value[0]
                 mail = entry.get_single_attribute_value("mail") or "N/A"
                 title = entry.get_single_attribute_value("title") or "N/A"
                 print(f"     Verified: mail={mail}, title={title}")
@@ -427,18 +422,17 @@ async def perform_delete_operations(
     # Use direct delete by DN
     result = await ldap_service.delete_entry(user_to_delete)
 
-    if result.success:
+    if result.is_success:
         print(f"   ✅ Deleted user: {user_to_delete}")
 
         # Verify deletion
         verify_result = await ldap_service.search(
-            session_id=session_id,
             base_dn=user_to_delete,
             search_filter="(objectClass=*)",
             scope="base",
         )
 
-        if verify_result.is_failure or not verify_result.data:
+        if verify_result.is_failure or not verify_result.value:
             print("   ✅ Verified: User no longer exists")
         else:
             print("   ⚠️  User still exists after deletion")
@@ -449,14 +443,15 @@ async def perform_delete_operations(
     # Final count verification
     print("   Final user count verification...")
     final_count_result = await ldap_service.search(
-        session_id=session_id,
         base_dn="ou=people,dc=flext,dc=local",
         search_filter="(objectClass=inetOrgPerson)",
         attributes=["uid"],
     )
 
-    if final_count_result.success:
-        remaining_users = len(final_count_result.data) if final_count_result.data else 0
+    if final_count_result.is_success:
+        remaining_users = (
+            len(final_count_result.value) if final_count_result.value else 0
+        )
         print(f"   ✅ Final user count: {remaining_users} users remaining")
 
     print("✅ DELETE operations completed")

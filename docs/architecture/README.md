@@ -392,12 +392,12 @@ All operations return `FlextResult<T>` for type-safe error handling:
 # Success case
 result = FlextResult[None].ok(user)
 if result.success:
-    user = result.data  # Type: FlextLdapUser
+    user = result.data
 
 # Failure case
 result = FlextResult[None].fail(\"User not found\")
 if result.is_failure:
-    error = result.error  # Type: str
+    error = result.error
 ```
 
 ### Dependency Injection

@@ -13,53 +13,59 @@ from __future__ import annotations
 
 import asyncio
 
-from flext_ldap import FlextLdapClient
+import os
+
+from flext_ldap import FlextLdapClient, FlextLdapSearchRequest
 
 
 async def main() -> None:
-    """Demonstrate LDAP client usage."""  # Create client instance
+    """Demonstrate LDAP client usage."""
+    # Create client instance
     client = FlextLdapClient()
 
     # Example 1: Single server connection
-    import os  # noqa: PLC0415
+    server_uri = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
+    bind_dn = "cn=admin,dc=example,dc=com"
+    bind_password = os.getenv("LDAP_TEST_PASSWORD", "")
 
     result = await client.connect(
-        server_uri=os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389"),
-        bind_dn="cn=admin,dc=example,dc=com",
-        bind_password=os.getenv("LDAP_TEST_PASSWORD", ""),
+        uri=server_uri,
+        bind_dn=bind_dn,
+        password=bind_password,
     )
-    if result.success:
+    if result.is_success:
         print("✅ Connected successfully")
 
-        # Example search
-        search_result = await client.search(
+        # Example search using FlextLdapSearchRequest
+        search_request = FlextLdapSearchRequest(
             base_dn="dc=example,dc=com",
-            search_filter="(objectClass=person)",
+            filter_str="(objectClass=person)",
             attributes=["cn", "mail"],
+            scope="subtree",
+            size_limit=1000,
+            time_limit=30,
         )
+        search_result = await client.search(request=search_request)
 
-        if search_result.success:
-            for _entry in search_result.data[:3]:  # Show first 3
-                pass
+        if search_result.is_success:
+            response = search_result.value
+            for entry in response.entries[:3]:  # Show first 3
+                print(f"Entry: {entry.get('dn', 'N/A')}")
 
-        # Disconnect
-        await client.disconnect()
+        # Note: No disconnect method - connection managed automatically
+        print("✅ Search completed")
 
-    # Example 2: Connection pool - Simplified for demo
-    # Note: Pool functionality integrated in FlextLdapClient
-    print("✅ Pool functionality integrated in client")
-
-    # Example 3: LDAP operations
+    # Example 2: LDAP operations
     op_result = await client.connect(
-        server_uri=os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389"),
-        bind_dn="cn=admin,dc=example,dc=com",
-        bind_password=os.getenv("LDAP_TEST_PASSWORD", ""),
+        uri=server_uri,
+        bind_dn=bind_dn,
+        password=bind_password,
     )
-    if op_result.success:
+    if op_result.is_success:
         print("✅ Connected for operations")
 
         # Add entry
-        add_result = await client.add_entry(
+        add_result = await client.add(
             dn="cn=testuser,dc=example,dc=com",
             attributes={
                 "objectClass": ["top", "person", "organizationalPerson"],
@@ -69,26 +75,26 @@ async def main() -> None:
             },
         )
 
-        if add_result.success:
+        if add_result.is_success:
+            print("✅ Entry added")
+            
             # Modify entry
-            modify_result = await client.modify_entry(
+            modify_result = await client.modify(
                 dn="cn=testuser,dc=example,dc=com",
-                modifications={"mail": ["updated@example.com"]},
+                attributes={"mail": ["updated@example.com"]},
             )
 
-            if modify_result.success:
+            if modify_result.is_success:
+                print("✅ Entry modified")
+                
                 # Delete entry
-                delete_result = await client.delete_entry(
-                    "cn=testuser,dc=example,dc=com"
+                delete_result = await client.delete(
+                    dn="cn=testuser,dc=example,dc=com"
                 )
 
-                if delete_result.success:
+                if delete_result.is_success:
                     print("✅ Entry lifecycle completed")
 
-        # Disconnect
-        await client.disconnect()
-
-    # Cleanup - Simple client doesn't require explicit cleanup
     print("✅ Simple client operations completed")
 
 

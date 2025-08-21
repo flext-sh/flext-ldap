@@ -10,7 +10,7 @@ from flext_ldap import (
     FlextLdapCreateUserRequest,
     FlextLdapDistinguishedName,
     FlextLdapEntry,
-    FlextLdapException,
+    FlextLdapError,
     FlextLdapGroup,
     FlextLdapService,
     FlextLdapSettings,
@@ -57,7 +57,7 @@ def test_infrastructure_imports() -> None:
 
 def test_exception_imports() -> None:
     """Test that exception imports work correctly."""
-    assert FlextLdapException is not None
+    assert FlextLdapError is not None
     assert FlextLdapUserError is not None
 
 
@@ -86,7 +86,7 @@ def test_all_public_api() -> None:
         "FlextLdapGroup",
         "FlextLdapService",
         "FlextLdapClient",
-        "FlextLdapException",
+        "FlextLdapError",
         "FlextLdapUserError",
     }
 

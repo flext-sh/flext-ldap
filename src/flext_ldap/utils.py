@@ -8,11 +8,117 @@ import re
 # =============================================================================
 # PERFORMANCE HELPERS - CACHING AND OPTIMIZATION
 # =============================================================================
-from typing import ClassVar
+from typing import ClassVar, TypeVar, cast
 from urllib.parse import urlparse
 
 from flext_ldap.constants import FlextLdapValidationMessages
-from flext_ldap.types import LdapAttributeDict as UtilsLdapAttributeDict
+from flext_ldap.typings import LdapAttributeDict as UtilsLdapAttributeDict
+
+T = TypeVar("T")
+
+
+class FlextLdapUtilities:
+    """FLEXT-LDAP static utility methods for common operations."""
+
+    @staticmethod
+    def is_successful_result(result: object) -> bool:
+        """Check if FlextResult is successful."""
+        return hasattr(result, "is_success") and bool(
+            getattr(result, "is_success", False)
+        )
+
+    @staticmethod
+    def get_result_value(result: object) -> object | None:
+        """Get value from FlextResult if successful, None otherwise.
+
+        DEPRECATED: Use FlextResult.unwrap_or(default) directly instead.
+        This method is kept for backward compatibility.
+        """
+        # Use FlextResult's unwrap_or method for cleaner code
+        if hasattr(result, "unwrap_or"):
+            unwrap_method = result.unwrap_or
+            if callable(unwrap_method):
+                # Type-safe unwrap_or call with proper return type
+                return cast("object | None", unwrap_method(None))
+
+        # Handle non-FlextResult objects using unwrap_or() pattern
+        if hasattr(result, "is_success") and hasattr(result, "value"):
+            # Simulate unwrap_or() behavior manually for non-FlextResult objects
+            is_success = getattr(result, "is_success", False)
+            return getattr(result, "value", None) if is_success else None
+        return None
+
+    @staticmethod
+    def extract_error_message(
+        result: object, default_message: str = "Unknown error"
+    ) -> str:
+        """Extract error message from FlextResult or return default."""
+        if hasattr(result, "error") and hasattr(result, "is_success"):
+            is_success = getattr(result, "is_success", True)
+            if not is_success:
+                error = getattr(result, "error", None)
+                return str(error) if error is not None else default_message
+        return default_message
+
+    @staticmethod
+    def safe_dict_comprehension(source_dict: object) -> dict[str, object]:
+        """Safely convert unknown dict to typed dict with string keys."""
+        if not isinstance(source_dict, dict):
+            return {}
+
+        # Type-safe dict comprehension for LDAP data
+        result: dict[str, object] = {}
+        for key, value in source_dict.items():
+            # Ensure key is string
+            str_key = str(key) if key is not None else ""
+            if str_key:  # Skip empty keys
+                result[str_key] = value
+        return result
+
+    @staticmethod
+    def safe_list_conversion(source_value: object) -> list[str]:
+        """Safely convert unknown value to list of strings for LDAP attributes."""
+        if isinstance(source_value, list):
+            # Type-safe list conversion
+            result: list[str] = []
+            for item in source_value:
+                if item is not None:
+                    str_item = str(item)
+                    if str_item:  # Skip empty strings
+                        result.append(str_item)
+            return result
+        if source_value is not None:
+            # Single value to list
+            str_value = str(source_value)
+            return [str_value] if str_value else []
+        return []
+
+    @staticmethod
+    def safe_entry_attribute_access(entry: object, attribute: str) -> object | None:
+        """Safely access entry attributes with proper typing."""
+        if not hasattr(entry, attribute):
+            return None
+
+        # Type-safe attribute access
+        attr_value = getattr(entry, attribute, None)
+        return attr_value if attr_value is not None else None
+
+    @staticmethod
+    def safe_str_attribute(attributes: dict[str, object], key: str) -> str | None:
+        """Safely extract string attribute from LDAP attributes dict."""
+        value = attributes.get(key)
+        if value is None:
+            return None
+        
+        if isinstance(value, str):
+            return value if value.strip() else None
+        elif isinstance(value, list) and value:
+            # Take first value from list
+            first_val = value[0]
+            return str(first_val).strip() if first_val else None
+        else:
+            # Convert to string
+            return str(value).strip() if value else None
 
 
 class FlextLdapPerformanceHelpers:
@@ -285,6 +391,7 @@ LdapAttributeDict = UtilsLdapAttributeDict
 __all__ = [
     "FlextLdapErrorHelpers",
     "FlextLdapPerformanceHelpers",
+    "FlextLdapUtilities",
     "FlextLdapUtils",
     "FlextLdapValidationHelpers",
     # Testing convenience type alias

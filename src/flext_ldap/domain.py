@@ -19,15 +19,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import random
 import re
+import secrets
 import string
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
-from typing import ClassVar, Final, TypeVar
+from typing import ClassVar, Final, TypeVar, Union, cast
 
-from flext_core import FlextResult, get_logger
+from flext_core import FlextEntityStatus, FlextResult, get_logger
 
 from flext_ldap.constants import (
     FlextLdapDefaultValues,
@@ -323,19 +323,21 @@ class FlextLdapUserManagementService:
         self._password_spec = FlextLdapPasswordSpecification()
         self._email_spec = FlextLdapEmailSpecification()
 
-    def validate_user_creation(self, user_data: dict[str, object]) -> FlextResult[None]:
+    def validate_user_creation(
+        self, user_data: dict[str, object]
+    ) -> FlextResult[object]:
         """Validate user creation business rules - REFACTORED to reduce returns."""
         try:
             # Perform all validations in sequence
             return self._perform_all_user_validations(user_data)
         except Exception as e:
             logger.exception("User validation failed")
-            return FlextResult[None].fail(f"User validation error: {e}")
+            return FlextResult[object].fail(f"User validation error: {e}")
 
     def _perform_all_user_validations(
         self,
         user_data: dict[str, object],
-    ) -> FlextResult[None]:
+    ) -> FlextResult[object]:
         """Perform all user validations and return first failure or success."""
         # Chain all validations - stop at first failure
         validations = [
@@ -350,50 +352,52 @@ class FlextLdapUserManagementService:
             if result.is_failure:
                 return result
 
-        return FlextResult[None].ok(None)
+        return FlextResult[object].ok(None)
 
     def _validate_required_fields(
         self,
         user_data: dict[str, object],
-    ) -> FlextResult[None]:
+    ) -> FlextResult[object]:
         """Validate required user fields."""
         required_fields = ["uid", "cn", "sn", "dn"]
         for field in required_fields:
             if field not in user_data or not user_data[field]:
-                return FlextResult[None].fail(f"Required field missing: {field}")
-        return FlextResult[None].ok(None)
+                return FlextResult[object].fail(f"Required field missing: {field}")
+        return FlextResult[object].ok(None)
 
-    def _validate_dn_field(self, user_data: dict[str, object]) -> FlextResult[None]:
+    def _validate_dn_field(self, user_data: dict[str, object]) -> FlextResult[object]:
         """Validate DN field format."""
         dn = str(user_data["dn"])
         if not self._user_spec._dn_spec.is_satisfied_by(dn):
-            return FlextResult[None].fail(
+            return FlextResult[object].fail(
                 self._user_spec._dn_spec.get_validation_error(dn),
             )
-        return FlextResult[None].ok(None)
+        return FlextResult[object].ok(None)
 
-    def _validate_email_field(self, user_data: dict[str, object]) -> FlextResult[None]:
+    def _validate_email_field(
+        self, user_data: dict[str, object]
+    ) -> FlextResult[object]:
         """Validate email field if provided."""
         if user_data.get("mail"):
             email = str(user_data["mail"])
             if not self._email_spec.is_satisfied_by(email):
-                return FlextResult[None].fail(
+                return FlextResult[object].fail(
                     self._email_spec.get_validation_error(email),
                 )
-        return FlextResult[None].ok(None)
+        return FlextResult[object].ok(None)
 
     def _validate_password_field(
         self,
         user_data: dict[str, object],
-    ) -> FlextResult[None]:
+    ) -> FlextResult[object]:
         """Validate password field if provided."""
         if user_data.get("user_password"):
             password = str(user_data["user_password"])
             if not self._password_spec.is_satisfied_by(password):
-                return FlextResult[None].fail(
+                return FlextResult[object].fail(
                     self._password_spec.get_validation_error(password),
                 )
-        return FlextResult[None].ok(None)
+        return FlextResult[object].ok(None)
 
     def can_delete_user(
         self,
@@ -404,23 +408,26 @@ class FlextLdapUserManagementService:
         try:
             # Business rule: Users cannot delete themselves
             if user.uid == requesting_user.uid:
-                return FlextResult[None].fail("Users cannot delete themselves")
+                return FlextResult[bool].fail("Users cannot delete themselves")
 
             # Business rule: Only active users can perform deletions
             if not self._user_spec._active_spec.is_satisfied_by(requesting_user):
-                return FlextResult[None].fail("Only active users can delete other users")
+                return FlextResult[bool].fail(
+                    "Only active users can delete other users"
+                )
 
-            return FlextResult[None].ok(True)
+            success = True
+            return FlextResult[bool].ok(success)
 
         except Exception as e:
             logger.exception("User deletion check failed")
-            return FlextResult[None].fail(f"User deletion check error: {e}")
+            return FlextResult[bool].fail(f"User deletion check error: {e}")
 
     def generate_username(self, first_name: str, last_name: str) -> FlextResult[str]:
         """Generate username following business rules."""
         try:
             if not first_name or not last_name:
-                return FlextResult[None].fail("First name and last name required")
+                return FlextResult[str].fail("First name and last name required")
 
             # Business rule: username = first initial + last name, lowercase
             username = f"{first_name[0].lower()}{last_name.lower()}"
@@ -429,13 +436,13 @@ class FlextLdapUserManagementService:
             username = re.sub(r"[^a-zA-Z0-9._-]", "", username)
 
             if len(username) < MIN_USERNAME_LENGTH:
-                return FlextResult[None].fail("Generated username too short")
+                return FlextResult[str].fail("Generated username too short")
 
-            return FlextResult[None].ok(username)
+            return FlextResult[str].ok(username)
 
         except Exception as e:
             logger.exception("Username generation failed")
-            return FlextResult[None].fail(f"Username generation error: {e}")
+            return FlextResult[str].fail(f"Username generation error: {e}")
 
 
 class FlextLdapGroupManagementService:
@@ -456,7 +463,7 @@ class FlextLdapGroupManagementService:
         try:
             # Validate group
             if not self._group_spec.is_satisfied_by(group):
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     self._group_spec.get_validation_error(group),
                 )
 
@@ -464,40 +471,43 @@ class FlextLdapGroupManagementService:
             if not allow_inactive:
                 active_spec = FlextLdapActiveUserSpecification()
                 if not active_spec.is_satisfied_by(user):
-                    return FlextResult[None].fail("Only active users can be added to groups")
+                    return FlextResult[bool].fail(
+                        "Only active users can be added to groups"
+                    )
 
             # Business rule: User cannot be added if already a member
-            if group.has_member(user.dn):
-                return FlextResult[None].fail("User is already a member of this group")
+            if user.dn in group.members:
+                return FlextResult[bool].fail("User is already a member of this group")
 
-            return FlextResult[None].ok(True)
+            success = True
+            return FlextResult[bool].ok(success)
 
         except Exception as e:
             logger.exception("Group membership check failed")
-            return FlextResult[None].fail(f"Group membership check error: {e}")
+            return FlextResult[bool].fail(f"Group membership check error: {e}")
 
     def validate_group_creation(
         self,
         group_data: dict[str, object],
-    ) -> FlextResult[None]:
+    ) -> FlextResult[object]:
         """Validate group creation business rules."""
         try:
             # Check required fields
             required_fields = ["cn", "dn"]
             for field in required_fields:
                 if field not in group_data or not group_data[field]:
-                    return FlextResult[None].fail(f"Required field missing: {field}")
+                    return FlextResult[object].fail(f"Required field missing: {field}")
 
             # Validate DN format
             dn = str(group_data["dn"])
             if not self._dn_spec.is_satisfied_by(dn):
-                return FlextResult[None].fail(self._dn_spec.get_validation_error(dn))
+                return FlextResult[object].fail(self._dn_spec.get_validation_error(dn))
 
-            return FlextResult[None].ok(None)
+            return FlextResult[object].ok(None)
 
         except Exception as e:
             logger.exception("Group validation failed")
-            return FlextResult[None].fail(f"Group validation error: {e}")
+            return FlextResult[object].fail(f"Group validation error: {e}")
 
 
 class FlextLdapPasswordService:
@@ -510,24 +520,26 @@ class FlextLdapPasswordService:
         self,
         current_password: str,
         new_password: str,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[object]:
         """Validate password change business rules."""
         try:
             # Validate new password strength
             if not self._password_spec.is_satisfied_by(new_password):
-                return FlextResult[None].fail(
+                return FlextResult[object].fail(
                     self._password_spec.get_validation_error(new_password),
                 )
 
             # Business rule: New password cannot be the same as current
             if current_password == new_password:
-                return FlextResult[None].fail("New password must be different from current")
+                return FlextResult[object].fail(
+                    "New password must be different from current"
+                )
 
-            return FlextResult[None].ok(None)
+            return FlextResult[object].ok(None)
 
         except Exception as e:
             logger.exception("Password validation failed")
-            return FlextResult[None].fail(f"Password validation error: {e}")
+            return FlextResult[object].fail(f"Password validation error: {e}")
 
     def generate_secure_password(self, length: int = 12) -> FlextResult[str]:
         """Generate a secure password following business rules - REFACTORED."""
@@ -535,14 +547,14 @@ class FlextLdapPasswordService:
             # Validate parameters in single check
             validation_error = self._validate_password_length(length)
             if validation_error:
-                return FlextResult[None].fail(validation_error)
+                return FlextResult[str].fail(validation_error)
 
             # Generate password with retry logic
             return self._generate_password_with_retries(length)
 
         except Exception as e:
             logger.exception("Password generation failed")
-            return FlextResult[None].fail(f"Password generation error: {e}")
+            return FlextResult[str].fail(f"Password generation error: {e}")
 
     def _validate_password_length(self, length: int) -> str | None:
         """Validate password length parameters - EXTRACTED METHOD."""
@@ -557,17 +569,17 @@ class FlextLdapPasswordService:
         chars = string.ascii_letters + string.digits + "@$!%*?&"
 
         # Initial attempt
-        password = "".join(random.choices(chars, k=length))  # noqa: S311
+        password = "".join(secrets.choice(chars) for _ in range(length))
         if self._password_spec.is_satisfied_by(password):
-            return FlextResult[None].ok(password)
+            return FlextResult[str].ok(password)
 
         # Retry attempts
         for _ in range(PASSWORD_GENERATION_MAX_RETRIES):
-            password = "".join(random.choices(chars, k=length))  # noqa: S311
+            password = "".join(secrets.choice(chars) for _ in range(length))
             if self._password_spec.is_satisfied_by(password):
-                return FlextResult[None].ok(password)
+                return FlextResult[str].ok(password)
 
-        return FlextResult[None].fail("Could not generate secure password")
+        return FlextResult[str].fail("Could not generate secure password")
 
 
 # =============================================================================
@@ -632,8 +644,13 @@ class FlextLdapUserCreatedEvent(FlextLdapBaseUserEvent):
         created_by: str,
     ) -> FlextLdapUserCreatedEvent:
         """Create user created event."""
-        # Type cast to ensure correct return type
-        return cls.create_with_timestamp(user_id, user_dn, created_by)
+        # Create event instance directly to ensure correct return type
+        return cls(
+            user_id=user_id,
+            user_dn=user_dn,
+            actor=created_by,
+            occurred_at=datetime.now(UTC),
+        )
 
 
 class FlextLdapUserDeletedEvent(FlextLdapBaseUserEvent):
@@ -647,8 +664,13 @@ class FlextLdapUserDeletedEvent(FlextLdapBaseUserEvent):
         deleted_by: str,
     ) -> FlextLdapUserDeletedEvent:
         """Create user deleted event."""
-        # Type cast to ensure correct return type
-        return cls.create_with_timestamp(user_id, user_dn, deleted_by)
+        # Create event instance directly to ensure correct return type
+        return cls(
+            user_id=user_id,
+            user_dn=user_dn,
+            actor=deleted_by,
+            occurred_at=datetime.now(UTC),
+        )
 
 
 class FlextLdapBaseGroupEvent(FlextLdapDomainEvent):
@@ -783,13 +805,15 @@ class UserEntityBuilder:
 
         return FlextLdapUser(
             dn=str(self.params["dn"]),
-            uid=self.builder.safe_str(self.params["uid"]),
-            cn=self.builder.safe_str(self.params["cn"]),
-            sn=self.builder.safe_str(self.params["sn"]),
+            uid=self.builder.safe_str(self.params["uid"]) or "",
+            cn=self.builder.safe_str(self.params["cn"]) or "",
+            sn=self.builder.safe_str(self.params["sn"]) or "",
             given_name=self.builder.safe_str(self.params["given_name"]),
             mail=self.builder.safe_str(self.params["mail"]),
+            phone=self.builder.safe_str(self.params.get("phone")),
             object_classes=self.builder.safe_list(self.params["object_classes"]),
             attributes=self.builder.safe_dict(self.params["attributes"]),
+            status=FlextEntityStatus.ACTIVE,
         )
 
 
@@ -806,11 +830,12 @@ class GroupEntityBuilder:
 
         return FlextLdapGroup(
             dn=str(self.params["dn"]),
-            cn=self.builder.safe_str(self.params["cn"]),
+            cn=self.builder.safe_str(self.params["cn"]) or "",
             description=self.builder.safe_str(self.params["description"]),
             members=self.builder.safe_list(self.params["members"]),
             object_classes=self.builder.safe_list(self.params["object_classes"]),
             attributes=self.builder.safe_dict(self.params["attributes"]),
+            status=FlextEntityStatus.ACTIVE,
         )
 
 
@@ -836,16 +861,18 @@ class FlextLdapDomainFactory:
         result = self._create_entity_from_data(user_data, "User", operations)
         # Narrow the type for the public API
         if result.is_failure:
-            return FlextResult[None].fail(result.error or "User creation failed")
-        created = result.unwrap()
+            return FlextResult[FlextLdapUser].fail(
+                result.error or "User creation failed"
+            )
+        created = result.value
         # Late import kept to avoid circular dependency; ruff allow
         from flext_ldap.models import (  # noqa: PLC0415
             FlextLdapUser as _User,
         )
 
         if isinstance(created, _User):
-            return FlextResult[None].ok(created)
-        return FlextResult[None].fail("User creation returned invalid type")
+            return FlextResult[FlextLdapUser].ok(created)
+        return FlextResult[FlextLdapUser].fail("User creation returned invalid type")
 
     def _extract_user_parameters(
         self,
@@ -890,8 +917,8 @@ class FlextLdapDomainFactory:
         """Validate created user against domain specifications."""
         complete_spec = FlextLdapCompleteUserSpecification()
         if not complete_spec.is_satisfied_by(user):
-            return FlextResult[None].fail(complete_spec.get_validation_error(user))
-        return FlextResult[None].ok(user)
+            return FlextResult[object].fail(complete_spec.get_validation_error(user))
+        return FlextResult[object].ok(user)
 
     def create_group_from_data(
         self,
@@ -906,16 +933,18 @@ class FlextLdapDomainFactory:
         }
         result = self._create_entity_from_data(group_data, "Group", operations)
         if result.is_failure:
-            return FlextResult[None].fail(result.error or "Group creation failed")
-        created = result.unwrap()
+            return FlextResult[FlextLdapGroup].fail(
+                result.error or "Group creation failed"
+            )
+        created = result.value
         # Late import kept to avoid circular dependency; ruff allow
         from flext_ldap.models import (  # noqa: PLC0415
             FlextLdapGroup as _Group,
         )
 
         if isinstance(created, _Group):
-            return FlextResult[None].ok(created)
-        return FlextResult[None].fail("Group creation returned invalid type")
+            return FlextResult[FlextLdapGroup].ok(created)
+        return FlextResult[FlextLdapGroup].fail("Group creation returned invalid type")
 
     def _extract_group_parameters(
         self,
@@ -957,8 +986,8 @@ class FlextLdapDomainFactory:
         """Validate created group against domain specifications."""
         group_spec = FlextLdapGroupSpecification()
         if not group_spec.is_satisfied_by(group):
-            return FlextResult[None].fail(group_spec.get_validation_error(group))
-        return FlextResult[None].ok(group)
+            return FlextResult[object].fail(group_spec.get_validation_error(group))
+        return FlextResult[object].ok(group)
 
     def _create_entity_from_data(
         self,
@@ -982,7 +1011,7 @@ class FlextLdapDomainFactory:
             return self._execute_entity_creation_pipeline(data, entity_type, operations)
         except Exception as e:
             logger.exception(f"{entity_type} creation failed")
-            return FlextResult[None].fail(f"{entity_type} creation error: {e}")
+            return FlextResult[object].fail(f"{entity_type} creation error: {e}")
 
     def _execute_entity_creation_pipeline(
         self,
@@ -998,7 +1027,7 @@ class FlextLdapDomainFactory:
             f"{entity_type} validation",
         )
         if validation_result.is_failure:
-            return FlextResult[None].fail(
+            return FlextResult[object].fail(
                 validation_result.error or f"{entity_type} validation failed",
             )
 
@@ -1012,7 +1041,7 @@ class FlextLdapDomainFactory:
             return extract_result
 
         # Step 3: Create entity
-        entity_params = extract_result.data
+        entity_params = extract_result.value
         create_result = self._execute_operation(
             operations.get("create"),
             entity_params,
@@ -1022,7 +1051,7 @@ class FlextLdapDomainFactory:
             return create_result
 
         # Step 4: Final domain validation
-        entity = create_result.data
+        entity = create_result.value
         return self._execute_operation(
             operations.get("final_validate"),
             entity,
@@ -1031,23 +1060,26 @@ class FlextLdapDomainFactory:
 
     def _execute_operation(
         self,
-        operation: Callable[..., object] | None,
+        operation: Union[Callable[[dict[str, object]], object], Callable[[object], object], None],
         data: object,
         operation_name: str,
     ) -> FlextResult[object]:
         """Execute a single operation with error handling."""
-        if not callable(operation):
-            return FlextResult[None].fail(f"Invalid operation function for {operation_name}")
+        if operation is None:
+            return FlextResult[object].fail(
+                f"Invalid operation function for {operation_name}"
+            )
 
         try:
-            result = operation(data)
+            # Handle both dict and general object data
+            result = operation(data)  # type: ignore[arg-type]
             # Ensure result is FlextResult format
-            if hasattr(result, "is_success"):
-                return result
+            if hasattr(result, "is_success") and hasattr(result, "value"):
+                return cast(FlextResult[object], result)
             # Wrap non-FlextResult returns
-            return FlextResult[None].ok(result)
+            return FlextResult[object].ok(result)
         except Exception as e:
-            return FlextResult[None].fail(f"{operation_name} failed: {e}")
+            return FlextResult[object].fail(f"{operation_name} failed: {e}")
 
 
 # =============================================================================
