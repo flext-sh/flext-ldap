@@ -89,7 +89,9 @@ class FlextLdapService(IFlextLdapFullService):
 
         # Convert to user entity
         user = FlextLdapUser(
-            id=FlextEntityId(f"service_user_{entry.dn.replace(',', '_').replace('=', '_')}"),
+            id=FlextEntityId(
+                f"service_user_{entry.dn.replace(',', '_').replace('=', '_')}"
+            ),
             dn=entry.dn,
             uid=entry.get_single_attribute_value("uid") or "",
             cn=entry.get_single_attribute_value("cn") or "",
@@ -214,7 +216,9 @@ class FlextLdapService(IFlextLdapFullService):
 
         # Convert to group entity
         group = FlextLdapGroup(
-            id=FlextEntityId(f"service_group_{entry.dn.replace(',', '_').replace('=', '_')}"),
+            id=FlextEntityId(
+                f"service_group_{entry.dn.replace(',', '_').replace('=', '_')}"
+            ),
             dn=entry.dn,
             cn=entry.get_single_attribute_value("cn") or "",
             description=entry.get_single_attribute_value("description"),

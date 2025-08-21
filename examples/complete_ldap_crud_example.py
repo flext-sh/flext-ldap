@@ -29,13 +29,18 @@ from flext_ldap.typings import LdapAttributeDict
 logger = get_logger(__name__)
 
 
-def safe_ldap_add(conn: Connection, dn: str, object_class: list[str], attributes: dict[str, Any]) -> bool:
+def safe_ldap_add(
+    conn: Connection, dn: str, object_class: list[str], attributes: dict[str, Any]
+) -> bool:
     """Safely add LDAP entry with type annotations to avoid PyRight Unknown types."""
     from typing import cast
+
     try:
         # Cast to avoid Unknown type from ldap3 library
         add_method = cast("Any", conn.add)
-        result = cast("bool", add_method(dn=dn, object_class=object_class, attributes=attributes))
+        result = cast(
+            "bool", add_method(dn=dn, object_class=object_class, attributes=attributes)
+        )
         return bool(result)
     except Exception as e:
         logger.warning(f"LDAP add failed for {dn}: {e}")
@@ -404,8 +409,11 @@ async def perform_update_operations(
 
         # Convert updates to proper format for update_user with type safety
         from typing import cast
+
         updates_raw = cast("dict[str, Any]", user_update["updates"])
-        updates_dict: LdapAttributeDict = {str(k): str(v) for k, v in updates_raw.items()}
+        updates_dict: LdapAttributeDict = {
+            str(k): str(v) for k, v in updates_raw.items()
+        }
         result = await ldap_service.update_user(dn, updates_dict)
 
         if result.is_success:

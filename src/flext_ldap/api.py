@@ -160,7 +160,9 @@ class FlextLdapApi:
 
             # Create entry
             entry = FlextLdapEntry(
-                id=FlextEntityId(f"api_entry_{str(entry_dn).replace(',', '_').replace('=', '_')}"),
+                id=FlextEntityId(
+                    f"api_entry_{str(entry_dn).replace(',', '_').replace('=', '_')}"
+                ),
                 dn=str(entry_dn),
                 object_classes=object_classes,
                 attributes=dict(entry_data),

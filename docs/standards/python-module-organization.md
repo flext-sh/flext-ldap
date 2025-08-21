@@ -109,7 +109,7 @@ class FlextLdapUser(FlextEntity):
         self.add_domain_event(UserActivatedEvent(user_id=self.id))
         return FlextResult[None].ok(None)
 
-class FlextLdapDistinguishedName(FlextValueObject):
+class FlextLdapDistinguishedName(FlextValue):
     """Distinguished Name value object with RFC 4514 validation."""
     value: str
 
@@ -715,10 +715,10 @@ class FlextLdapUser(FlextEntity):
 #### **Value Objects with Validation**
 
 ```python
-from flext_core import FlextValueObject
+from flext_core import FlextValue
 
 @dataclass(frozen=True)
-class FlextLdapDistinguishedName(FlextValueObject):
+class FlextLdapDistinguishedName(FlextValue):
     """Distinguished Name value object with RFC 4514 validation."""
     value: str
 
@@ -752,7 +752,7 @@ class FlextLdapDistinguishedName(FlextValueObject):
         return self.value.lower().endswith(parent_dn.lower())
 
 @dataclass(frozen=True)
-class FlextLdapFilter(FlextValueObject):
+class FlextLdapFilter(FlextValue):
     """LDAP filter value object with RFC 4515 validation."""
     expression: str
 

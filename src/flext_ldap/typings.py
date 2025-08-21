@@ -28,54 +28,55 @@ License: MIT
 from __future__ import annotations
 
 from typing import (
-    ParamSpec,
     Protocol,
-    TypeVar,
     runtime_checkable,
 )
 
 from flext_core import FlextResult
+from flext_core.typings import (
+    FlextTypes,
+    P,
+    R,
+    T,
+)
 
 # =============================================================================
 # LDAP DOMAIN TYPES - Extending flext-core base types
 # =============================================================================
 
+# Core LDAP value types - domain-specific extensions
 type LdapAttributeValue = str | bytes | list[str] | list[bytes]
 type LdapAttributeDict = dict[str, LdapAttributeValue]
 type LdapSearchResult = dict[str, LdapAttributeValue]
 
-# Public type aliases for common LDAP concepts
-type TLdapDn = str
-type TLdapUri = str
-type TLdapFilter = str
-type TLdapSessionId = str
-type TLdapScope = str
-type TLdapConnectionId = str
+# LDAP-specific type aliases following flext-core patterns
+type TLdapDn = FlextTypes.Core.Id  # Distinguished Name as ID
+type TLdapUri = FlextTypes.Core.ConnectionString  # LDAP URI as connection string
+type TLdapFilter = str  # LDAP search filter (domain-specific)
+type TLdapSessionId = FlextTypes.Service.CorrelationId  # Session tracking
+type TLdapScope = str  # LDAP search scope (subtree, onelevel, base)
+type TLdapConnectionId = FlextTypes.Service.ServiceName  # Connection identifier
 
+# LDAP attribute and entry types
 type TLdapAttributeValue = LdapAttributeValue
 type TLdapAttributes = LdapAttributeDict
 type TLdapEntryData = LdapSearchResult
-type TLdapSearchResult = list[LdapSearchResult] | list[dict[str, object]]
+type TLdapSearchResult = list[LdapSearchResult] | list[FlextTypes.Core.Dict]
 
-# Infrastructure types
-type LdapConnectionConfig = dict[str, object]
-type SecurityEventData = dict[str, object]
-type ErrorPatternData = dict[str, object]
-type SchemaData = dict[str, object]
+# Infrastructure types using flext-core base types
+type LdapConnectionConfig = FlextTypes.Config.Settings
+type SecurityEventData = FlextTypes.Domain.EventData
+type ErrorPatternData = FlextTypes.Core.Data
+type SchemaData = FlextTypes.Core.Data
 
-# Service layer types
-type DirectoryAuthConfig = dict[str, object]
-type ConnectionConfig = dict[str, object]
-type UserRequest = dict[str, object]
-type SearchResult = dict[str, object]
+# Service layer types using flext-core patterns
+type DirectoryAuthConfig = FlextTypes.Auth.Credentials
+type ConnectionConfig = FlextTypes.Config.Settings
+type UserRequest = FlextTypes.Core.Data
+type SearchResult = FlextTypes.Core.Data
 
-P = ParamSpec("P")
-R = TypeVar("R")
-T = TypeVar("T")
-
-# Extended types for advanced features (using core types)
-type JsonDict = dict[str, object]
-type FlextTypesCore = dict[str, object]
+# Use flext-core JsonDict type instead of local definition
+JsonDict = FlextTypes.Core.JsonDict
 
 
 class AsyncCallable(Protocol):
@@ -172,32 +173,17 @@ class FlextLdapDirectoryEntryProtocol(Protocol):
 # =============================================================================
 
 __all__ = [
-    "AsyncCallable",
-    "ConnectionConfig",
-    # Service Types
-    "DirectoryAuthConfig",
-    "ErrorPatternData",
     # Protocols
+    "AsyncCallable",
     "FlextLdapConnectionProtocol",
     "FlextLdapDirectoryConnectionProtocol",
     "FlextLdapDirectoryEntryProtocol",
     "FlextLdapRepositoryProtocol",
-    "FlextTypesCore",
-    "JsonDict",
-    # Core Types
+    # Core LDAP Types (domain-specific)
     "LdapAttributeDict",
     "LdapAttributeValue",
-    # Infrastructure Types
-    "LdapConnectionConfig",
     "LdapSearchResult",
-    # Generic Types
-    "P",
-    "R",
-    "SchemaData",
-    "SearchResult",
-    "SecurityEventData",
-    "T",
-    # Type Aliases
+    # Type Aliases using flext-core base types
     "TLdapAttributeValue",
     "TLdapAttributes",
     "TLdapConnectionId",
@@ -208,5 +194,20 @@ __all__ = [
     "TLdapSearchResult",
     "TLdapSessionId",
     "TLdapUri",
+    # Infrastructure Types (extending flext-core)
+    "LdapConnectionConfig",
+    "SecurityEventData",
+    "ErrorPatternData",
+    "SchemaData",
+    # Service Types (extending flext-core)
+    "DirectoryAuthConfig",
+    "ConnectionConfig",
     "UserRequest",
+    "SearchResult",
+    # Convenience Aliases
+    "JsonDict",
+    # Type Variables from flext-core
+    "P",
+    "R",
+    "T",
 ]

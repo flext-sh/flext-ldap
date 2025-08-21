@@ -98,7 +98,7 @@ class FlextLdapEntry(FlextEntity):
         default_factory=list,
         description="LDAP object classes",
     )
-    attributes: dict[str, object] = Field(
+    attributes: FlextTypes.Core.Dict = Field(
         default_factory=dict,
         description="LDAP attributes as name-value pairs",
     )
@@ -130,7 +130,7 @@ class FlextLdapEntry(FlextEntity):
 
     @field_validator("attributes", mode="before")
     @classmethod
-    def _coerce_attributes(cls, v: object) -> dict[str, object] | object:
+    def _coerce_attributes(cls, v: object) -> FlextTypes.Core.Dict | object:
         """Normalize mapping using LdapAttributeProcessor."""
         if v is None:
             return {}
@@ -345,7 +345,9 @@ class FlextLdapCreateUserRequest(FlextModel):
             attributes["telephoneNumber"] = self.phone
 
         return FlextLdapUser(
-            id=FlextEntityId(f"user_req_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"),
+            id=FlextEntityId(
+                f"user_req_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"
+            ),
             dn=self.dn,
             uid=self.uid,
             cn=self.cn,
