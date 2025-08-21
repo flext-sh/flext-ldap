@@ -11,29 +11,45 @@ from flext_ldap.constants import (
     FlextLdapConnectionConstants,
     FlextLdapAttributeConstants,
     FlextLdapObjectClassConstants,
+    FlextLdapConstants,
 )
 
-from flext_ldap.config import (
-    FlextLdapConnectionConfig,
-    FlextLdapSettings,
+# Import from new configuration module
+from flext_ldap.configuration import (
     FlextLdapAuthConfig,
+    FlextLdapConnectionConfig,
+    FlextLdapLoggingConfig,
+    FlextLdapSearchConfig,
+    FlextLdapSettings,
+    create_development_config,
+    create_production_config,
+    create_test_config,
 )
 
-from flext_ldap.models import (
+# Import field definitions
+from flext_ldap.fields import FlextLdapScopeEnum
+
+# Import from reorganized modules
+from flext_ldap.entities import (
     FlextLdapCreateUserRequest,
-    FlextLdapDistinguishedName,
     FlextLdapEntry,
-    FlextLdapFilter,
     FlextLdapGroup,
     FlextLdapUser,
+    FlextLdapSearchRequest,
+)
+from flext_ldap.value_objects import (
+    FlextLdapDistinguishedName,
+    FlextLdapFilter,
 )
 
 from flext_ldap.services import FlextLdapService
 
 from flext_ldap.infrastructure import FlextLdapClient
 
+from flext_ldap.container import get_ldap_container, reset_ldap_container
+
 from flext_ldap.exceptions import (
-    FlextLdapException,
+    FlextLdapError,
     FlextLdapExceptionFactory,
     FlextLdapUserError,
     FlextLdapConfigurationError,
@@ -44,10 +60,10 @@ from flext_ldap.utils import (
     flext_ldap_validate_attribute_name,
     flext_ldap_validate_attribute_value,
     flext_ldap_sanitize_attribute_name,
-    LdapAttributeDict,
 )
+from flext_ldap.typings import LdapAttributeDict
 
-from flext_ldap.legacy import FlextLdapConfig
+from flext_ldap.config import FlextLdapAuthConfig as FlextLdapConfig
 
 # Version info
 try:
@@ -72,6 +88,7 @@ __all__: list[str] = [
     "FlextLdapUser",
     "FlextLdapGroup",
     "FlextLdapCreateUserRequest",
+    "FlextLdapSearchRequest",
     "FlextLdapDistinguishedName",
     "FlextLdapScope",
     # Constants (selective export)
@@ -79,13 +96,23 @@ __all__: list[str] = [
     "FlextLdapConnectionConstants",
     "FlextLdapAttributeConstants",
     "FlextLdapObjectClassConstants",
+    "FlextLdapConstants",
+    "FlextLdapScopeEnum",
+    "FlextLdapLoggingConfig",
+    "FlextLdapSearchConfig",
+    "create_development_config",
+    "create_production_config",
+    "create_test_config",
     "FlextLdapFilter",
     # Services
     "FlextLdapService",
     # Infrastructure
     "FlextLdapClient",
+    # Container functions
+    "get_ldap_container",
+    "reset_ldap_container",
     # Exceptions
-    "FlextLdapException",
+    "FlextLdapError",
     "FlextLdapExceptionFactory",
     "FlextLdapUserError",
     "FlextLdapConfigurationError",

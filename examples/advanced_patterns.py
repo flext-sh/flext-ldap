@@ -28,8 +28,6 @@ from flext_core import get_logger
 from flext_ldap import (
     FlextLdapApi,
     FlextLdapDistinguishedName,
-    FlextLdapFilterValue,
-    FlextLdapSearchConfig,
     FlextLdapSettings,
 )
 
@@ -39,8 +37,8 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def ldap_session(
     server_url: str,
-    bind_dn: str | None = None,
-    password: str | None = None,
+    bind_dn: str,
+    password: str,
 ) -> AsyncIterator[tuple[FlextLdapApi, str]]:
     """Enterprise LDAP session context manager.
 
@@ -69,7 +67,7 @@ async def ldap_session(
             bind_password=password,
         )
 
-        if not connection_result.success:
+        if not connection_result.is_success:
             msg: str = f"Failed to connect: {connection_result.error}"
             _raise_conn_error(msg)
 
@@ -105,22 +103,24 @@ async def demonstrate_value_objects() -> None:
         dn = FlextLdapDistinguishedName(value="cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com")
         validation_result = dn.validate_business_rules()
 
-        print(f"✅ DN validation: {'PASS' if validation_result.success else 'FAIL'}")
+        print(f"✅ DN validation: {'PASS' if validation_result.is_success else 'FAIL'}")
         print(f"   DN: {dn.value}")
 
-        # 2. LDAP Filters - Extract Variable pattern for readability
+        # 2. LDAP Filters - Using correct FlextLdapFilter class
+        from flext_ldap import FlextLdapFilter
+
         complex_filter = "(&(objectClass=person)(mail=*@example.com))"
-        filter_obj = FlextLdapFilterValue(value=complex_filter)
-        filter_validation = filter_obj.validate_business_rules()
+        filter_result = FlextLdapFilter.create(complex_filter)
 
-        # Extract status for readability
-        filter_status = "PASS" if filter_validation.success else "FAIL"
-        print(f"✅ Filter validation: {filter_status}")
-        print(f"   Filter: {filter_obj.value}")
-
-        # 3. Complex filter construction
-        # Escaping is handled by adapters; just print the filter
-        print(f"✅ Filter ready: {filter_obj.value}")
+        if filter_result.is_success:
+            filter_obj = filter_result.value
+            filter_validation = filter_obj.validate_business_rules()
+            filter_status = "PASS" if filter_validation.is_success else "FAIL"
+            print(f"✅ Filter validation: {filter_status}")
+            print(f"   Filter: {filter_obj.value}")
+            print(f"✅ Filter ready: {filter_obj.value}")
+        else:
+            print(f"❌ Filter creation failed: {filter_result.error}")
 
     except Exception as e:
         logger.exception("Value object demonstration failed")
@@ -137,14 +137,22 @@ async def demonstrate_comprehensive_configuration() -> None:
         _settings = FlextLdapSettings(enable_debug_mode=True)
         print("✅ Settings created")
 
-        # 2. Advanced search configuration
-        search_config = FlextLdapSearchConfig()
-        search_validation = search_config.validate_business_rules()
-        # Extract status for readability
-        search_status = "VALID" if search_validation.success else "INVALID"
-        print(f"✅ Search config: {search_status}")
+        # 2. Create search request using FlextLdapSearchRequest
+        from flext_ldap import FlextLdapSearchRequest
 
-        # 3. Convert to client configuration
+        search_request = FlextLdapSearchRequest(
+            base_dn="dc=example,dc=com",
+            scope="subtree",
+            filter_str="(objectClass=person)",
+            attributes=["cn", "mail"],
+            size_limit=100,
+            time_limit=30,
+        )
+        search_validation = search_request.validate_business_rules()
+        search_status = "VALID" if search_validation.is_success else "INVALID"
+        print(f"✅ Search request: {search_status}")
+
+        # 3. Settings ready for usage
         print("✅ Settings ready for client configuration usage")
 
     except Exception as e:
@@ -159,7 +167,9 @@ async def demonstrate_async_patterns() -> None:
 
     try:
         # 1. Context manager usage
-        async with ldap_session("ldap://demo.example.com:389") as (api, session_id):
+        async with ldap_session(
+            "ldap://demo.example.com:389", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "password"
+        ) as (api, session_id):
             print(f"✅ Session established: {session_id}")
 
             # 2. Concurrent operations (simulated)
@@ -172,7 +182,6 @@ async def demonstrate_async_patterns() -> None:
 
             for base_dn in search_bases:
                 task = api.search(
-                    session_id=session_id,
                     base_dn=base_dn,
                     search_filter="(objectClass=*)",
                     attributes=["dn"],
@@ -187,7 +196,7 @@ async def demonstrate_async_patterns() -> None:
                 1
                 for result in results
                 if not isinstance(result, Exception)
-                and getattr(result, "success", False)
+                and getattr(result, "is_success", False)
             )
 
             print(

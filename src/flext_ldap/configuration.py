@@ -1,0 +1,395 @@
+"""LDAP configuration models following flext-core patterns."""
+
+from __future__ import annotations
+
+from typing import Final, final
+
+from flext_core import FlextConfig, FlextResult, get_logger
+from pydantic import ConfigDict, Field, SecretStr, computed_field, field_validator
+
+from flext_ldap.constants import (
+    FlextLdapConnectionConstants,
+)
+from flext_ldap.fields import FlextLdapScopeEnum
+
+logger = get_logger(__name__)
+
+# Constants
+MAX_PORT: Final[int] = 65535
+
+
+@final
+class FlextLdapAuthConfig(FlextConfig):
+    """LDAP authentication configuration."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        validate_assignment=True,
+        str_strip_whitespace=True,
+    )
+
+    bind_dn: str = Field(
+        ...,
+        description="Distinguished Name for binding",
+        min_length=3,
+    )
+    bind_password: SecretStr = Field(
+        ...,
+        description="Password for binding (secure)",
+    )
+    use_ssl: bool = Field(
+        default=False,
+        description="Use SSL/TLS for connection",
+    )
+    verify_certificates: bool = Field(
+        default=True,
+        description="Verify SSL certificates",
+    )
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate authentication configuration."""
+        if not self.bind_dn.strip():
+            return FlextResult[None].fail("Bind DN cannot be empty")
+
+        if len(self.bind_password.get_secret_value()) < 1:
+            return FlextResult[None].fail("Bind password cannot be empty")
+
+        return FlextResult[None].ok(None)
+
+
+@final
+class FlextLdapConnectionConfig(FlextConfig):
+    """LDAP connection configuration."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        validate_assignment=True,
+        str_strip_whitespace=True,
+    )
+
+    server: str = Field(
+        default="localhost",
+        description="LDAP server hostname or IP",
+        min_length=1,
+    )
+    port: int = Field(
+        default=FlextLdapConnectionConstants.DEFAULT_PORT,
+        description="LDAP server port",
+        gt=0,
+        le=65535,
+    )
+    base_dn: str = Field(
+        default="dc=example,dc=com",
+        description="Base Distinguished Name",
+        min_length=3,
+    )
+    timeout: int = Field(
+        default=FlextLdapConnectionConstants.DEFAULT_TIMEOUT,
+        description="Connection timeout in seconds",
+        gt=0,
+        le=300,
+    )
+
+    # Authentication configuration
+    auth: FlextLdapAuthConfig | None = Field(
+        default=None,
+        description="Authentication configuration",
+    )
+
+    @computed_field
+    def uri(self) -> str:
+        """Generate LDAP URI from server and port."""
+        protocol = "ldaps" if self.auth and self.auth.use_ssl else "ldap"
+        return f"{protocol}://{self.server}:{self.port}"
+
+    @field_validator("server")
+    @classmethod
+    def validate_server(cls, v: str) -> str:
+        """Validate server format."""
+        if not v or not v.strip():
+            msg = "Server cannot be empty"
+            raise ValueError(msg)
+        return v.strip()
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate connection configuration."""
+        if not self.server.strip():
+            return FlextResult[None].fail("Server cannot be empty")
+
+        if self.port <= 0 or self.port > MAX_PORT:
+            return FlextResult[None].fail("Port must be between 1 and 65535")
+
+        if self.auth:
+            auth_validation = self.auth.validate_business_rules()
+            if not auth_validation.is_success:
+                return auth_validation
+
+        return FlextResult[None].ok(None)
+
+
+@final
+class FlextLdapSearchConfig(FlextConfig):
+    """LDAP search operation configuration."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        validate_assignment=True,
+    )
+
+    default_scope: FlextLdapScopeEnum = Field(
+        default=FlextLdapScopeEnum.SUBTREE,
+        description="Default search scope",
+    )
+    size_limit: int = Field(
+        default=1000,
+        description="Maximum search results",
+        gt=0,
+        le=10000,
+    )
+    time_limit: int = Field(
+        default=30,
+        description="Search timeout in seconds",
+        gt=0,
+        le=300,
+    )
+    page_size: int = Field(
+        default=100,
+        description="Paging size for large results",
+        gt=0,
+        le=1000,
+    )
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate search configuration."""
+        if self.size_limit <= 0:
+            return FlextResult[None].fail("Size limit must be positive")
+
+        if self.time_limit <= 0:
+            return FlextResult[None].fail("Time limit must be positive")
+
+        if self.page_size <= 0:
+            return FlextResult[None].fail("Page size must be positive")
+
+        return FlextResult[None].ok(None)
+
+
+@final
+class FlextLdapLoggingConfig(FlextConfig):
+    """LDAP logging configuration."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        validate_assignment=True,
+    )
+
+    enable_debug: bool = Field(
+        default=False,
+        description="Enable debug logging",
+    )
+    log_queries: bool = Field(
+        default=False,
+        description="Log LDAP queries",
+    )
+    log_responses: bool = Field(
+        default=False,
+        description="Log LDAP responses",
+    )
+    structured_logging: bool = Field(
+        default=True,
+        description="Enable structured (JSON) logging",
+    )
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate logging configuration."""
+        return FlextResult[None].ok(None)
+
+
+@final
+class FlextLdapSettings(FlextConfig):
+    """Project-specific operational settings for FLEXT-LDAP."""
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        extra="forbid",
+        validate_assignment=True,
+    )
+
+    # Primary connection configuration
+    default_connection: FlextLdapConnectionConfig | None = Field(
+        default=None,
+        description="Default connection configuration",
+        alias="connection",
+    )
+
+    # Search configuration
+    search: FlextLdapSearchConfig = Field(
+        default_factory=FlextLdapSearchConfig,
+        description="Search operation configuration",
+    )
+
+    # Logging configuration
+    logging: FlextLdapLoggingConfig = Field(
+        default_factory=FlextLdapLoggingConfig,
+        description="Logging configuration",
+    )
+
+    # Performance tuning
+    enable_caching: bool = Field(
+        default=False,
+        description="Enable result caching",
+    )
+    cache_ttl: int = Field(
+        default=300,
+        description="Cache TTL in seconds",
+        gt=0,
+        le=3600,
+    )
+
+    # Development settings
+    enable_debug_mode: bool = Field(
+        default=False,
+        description="Enable debug mode with verbose logging",
+    )
+    enable_test_mode: bool = Field(
+        default=False,
+        description="Enable test mode",
+    )
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate complete settings configuration."""
+        if self.default_connection:
+            if not self.default_connection.server:
+                return FlextResult[None].fail(
+                    "Default connection must specify a server"
+                )
+
+            conn_validation = self.default_connection.validate_business_rules()
+            if not conn_validation.is_success:
+                return conn_validation
+
+        # Validate cache settings
+        if self.enable_caching and self.cache_ttl <= 0:
+            return FlextResult[None].fail(
+                "Cache TTL must be positive when caching is enabled",
+            )
+
+        # Validate sub-configurations
+        search_validation = self.search.validate_business_rules()
+        if not search_validation.is_success:
+            return search_validation
+
+        logging_validation = self.logging.validate_business_rules()
+        if not logging_validation.is_success:
+            return logging_validation
+
+        return FlextResult[None].ok(None)
+
+    def get_effective_connection(
+        self,
+        override: FlextLdapConnectionConfig | None = None,
+    ) -> FlextLdapConnectionConfig:
+        """Get effective connection configuration with optional override."""
+        if override:
+            return override
+
+        if self.default_connection:
+            return self.default_connection
+
+        # Return minimal default configuration
+        return FlextLdapConnectionConfig()
+
+    # Testing convenience: expose `.connection` attribute used by some callers/tests
+    @property
+    def connection(self) -> FlextLdapConnectionConfig | None:
+        """Get connection configuration."""
+        return self.default_connection
+
+    @connection.setter
+    def connection(self, value: FlextLdapConnectionConfig | None) -> None:
+        """Set connection configuration."""
+        self.default_connection = value
+
+    # Back-compat alias used in some tests
+    def validate_domain_rules(self) -> FlextResult[None]:
+        """Validate domain rules (alias for validate_business_rules)."""
+        return self.validate_business_rules()
+
+
+# Factory functions for different environments
+def create_development_config() -> FlextLdapSettings:
+    """Create development configuration."""
+    connection_config = FlextLdapConnectionConfig(
+        server="localhost",
+        port=389,
+        base_dn="dc=dev,dc=local",
+        auth=FlextLdapAuthConfig(
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=dev,dc=local",
+            bind_password=SecretStr("REDACTED_LDAP_BIND_PASSWORD123"),
+            use_ssl=False,
+            verify_certificates=False,
+        ),
+    )
+
+    return FlextLdapSettings(
+        connection=connection_config,
+        logging=FlextLdapLoggingConfig(
+            enable_debug=True,
+            log_queries=True,
+            structured_logging=True,
+        ),
+        enable_debug_mode=True,
+        enable_caching=False,
+    )
+
+
+def create_test_config() -> FlextLdapSettings:
+    """Create test configuration."""
+    connection_config = FlextLdapConnectionConfig(
+        server="localhost",
+        port=3389,
+        base_dn="dc=test,dc=local",
+        auth=FlextLdapAuthConfig(
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=local",
+            bind_password=SecretStr("test123"),
+            use_ssl=False,
+            verify_certificates=False,
+        ),
+    )
+
+    return FlextLdapSettings(
+        connection=connection_config,
+        logging=FlextLdapLoggingConfig(
+            enable_debug=False,
+            log_queries=False,
+            structured_logging=False,
+        ),
+        enable_test_mode=True,
+        enable_caching=False,
+    )
+
+
+def create_production_config() -> FlextLdapSettings:
+    """Create production configuration."""
+    connection_config = FlextLdapConnectionConfig(
+        server="ldap.company.com",
+        port=636,
+        base_dn="dc=company,dc=com",
+        auth=FlextLdapAuthConfig(
+            bind_dn="cn=service,ou=accounts,dc=company,dc=com",
+            bind_password=SecretStr("${LDAP_BIND_PASSWORD}"),
+            use_ssl=True,
+            verify_certificates=True,
+        ),
+    )
+
+    return FlextLdapSettings(
+        connection=connection_config,
+        logging=FlextLdapLoggingConfig(
+            enable_debug=False,
+            log_queries=False,
+            structured_logging=True,
+        ),
+        enable_debug_mode=False,
+        enable_caching=True,
+        cache_ttl=600,
+    )

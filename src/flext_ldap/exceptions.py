@@ -26,7 +26,7 @@ from flext_ldap.constants import FlextLdapOperationMessages
 logger = get_logger(__name__)
 
 
-class FlextLdapException(FlextError):
+class FlextLdapError(FlextError):
     """Base exception for FLEXT-LDAP with optional LDAP context and codes."""
 
     def __init__(
@@ -52,11 +52,14 @@ class FlextLdapException(FlextError):
         self.ldap_result_code = ldap_result_code
         self.ldap_context = ldap_context or {}
         self.operation = operation
-        logger.debug(f"LDAP exception created: {message}", extra={
-            "operation": operation,
-            "ldap_result_code": ldap_result_code,
-            "context": ldap_context
-        })
+        logger.debug(
+            f"LDAP exception created: {message}",
+            extra={
+                "operation": operation,
+                "ldap_result_code": ldap_result_code,
+                "context": ldap_context,
+            },
+        )
 
     def __str__(self) -> str:
         """Format exception string including LDAP context metadata."""
@@ -90,7 +93,7 @@ class FlextLdapException(FlextError):
 # =============================================================================
 
 
-class FlextLdapConnectionError(FlextLdapException):
+class FlextLdapConnectionError(FlextLdapError):
     """LDAP connection related errors.
 
     Raised when connection establishment, maintenance, or termination fails.
@@ -133,7 +136,7 @@ class FlextLdapConnectionError(FlextLdapException):
         )
 
 
-class FlextLdapAuthenticationError(FlextLdapException):
+class FlextLdapAuthenticationError(FlextLdapError):
     """LDAP authentication errors.
 
     Raised when bind operations fail due to invalid credentials,
@@ -177,7 +180,7 @@ class FlextLdapAuthenticationError(FlextLdapException):
 # =============================================================================
 
 
-class FlextLdapSearchError(FlextLdapException):
+class FlextLdapSearchError(FlextLdapError):
     """LDAP search operation errors.
 
     Raised when search operations fail due to invalid filters,
@@ -220,7 +223,7 @@ class FlextLdapSearchError(FlextLdapException):
         )
 
 
-class FlextLdapOperationError(FlextLdapException):
+class FlextLdapOperationError(FlextLdapError):
     """LDAP modify operations errors (add, modify, delete).
 
     Raised when directory modification operations fail due to
@@ -264,7 +267,7 @@ class FlextLdapOperationError(FlextLdapException):
 # =============================================================================
 
 
-class FlextLdapUserError(FlextLdapException):
+class FlextLdapUserError(FlextLdapError):
     """LDAP user-specific errors.
 
     Raised when user operations fail due to user-specific business rules,
@@ -300,11 +303,11 @@ class FlextLdapUserError(FlextLdapException):
             message,
             ldap_context=context,
             operation="user_management",
-            error_code="LDAP_USER_ERROR"
+            error_code="LDAP_USER_ERROR",
         )
 
 
-class FlextLdapGroupError(FlextLdapException):
+class FlextLdapGroupError(FlextLdapError):
     """LDAP group-specific errors.
 
     Raised when group operations fail due to membership issues,
@@ -340,7 +343,7 @@ class FlextLdapGroupError(FlextLdapException):
             message,
             ldap_context=context,
             operation="group_management",
-            error_code="LDAP_GROUP_ERROR"
+            error_code="LDAP_GROUP_ERROR",
         )
 
 
@@ -349,7 +352,7 @@ class FlextLdapGroupError(FlextLdapException):
 # =============================================================================
 
 
-class FlextLdapValidationError(FlextLdapException):
+class FlextLdapValidationError(FlextLdapError):
     """LDAP data validation errors.
 
     Raised when data validation fails for LDAP attributes, DN formats,
@@ -389,11 +392,11 @@ class FlextLdapValidationError(FlextLdapException):
             message,
             ldap_context=context,
             operation="validation",
-            error_code="LDAP_VALIDATION_ERROR"
+            error_code="LDAP_VALIDATION_ERROR",
         )
 
 
-class FlextLdapConfigurationError(FlextLdapException):
+class FlextLdapConfigurationError(FlextLdapError):
     """LDAP configuration and settings errors.
 
     Raised when configuration is invalid, missing required settings,
@@ -425,11 +428,11 @@ class FlextLdapConfigurationError(FlextLdapException):
             message,
             ldap_context=context,
             operation="configuration",
-            error_code="LDAP_CONFIG_ERROR"
+            error_code="LDAP_CONFIG_ERROR",
         )
 
 
-class FlextLdapTypeError(FlextLdapException):
+class FlextLdapTypeError(FlextLdapError):
     """LDAP type validation and conversion errors.
 
     Raised when type conversion fails, attribute types are incompatible,
@@ -465,7 +468,7 @@ class FlextLdapTypeError(FlextLdapException):
             message,
             ldap_context=context,
             operation="type_conversion",
-            error_code="LDAP_TYPE_ERROR"
+            error_code="LDAP_TYPE_ERROR",
         )
 
 
@@ -607,7 +610,7 @@ __all__ = [
     "FlextLdapAuthenticationError",
     "FlextLdapConfigurationError",
     "FlextLdapConnectionError",
-    "FlextLdapException",
+    "FlextLdapError",
     "FlextLdapExceptionFactory",
     "FlextLdapGroupError",
     "FlextLdapOperationError",

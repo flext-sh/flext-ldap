@@ -1,444 +1,459 @@
-"""FLEXT-LDAP Services - Consolidated Service Layer.
-
-This module provides comprehensive LDAP service layer implementations following
-Clean Architecture patterns with dependency injection, domain-driven design,
-and enterprise-grade application services.
-
-All services are built on flext-core foundation patterns with type-safe
-error handling via FlextResult and comprehensive validation.
-
-Copyright (c) 2025 Flext. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""LDAP service layer following Clean Architecture patterns."""
 
 from __future__ import annotations
 
-import warnings
+from typing import override
 
-from flext_core import (
-    FlextContainer,
-    FlextDomainService,
-    FlextIdGenerator,
-    FlextResult,
-    FlextTypes,
-    get_flext_container,
-    get_logger,
-)
+from flext_core import FlextResult, get_logger
 
-from flext_ldap.adapters import (
-    FlextLdapDirectoryAdapter as _FlextLdapDirectoryAdapter,
-    FlextLdapDirectoryAdapterInterface,
-    FlextLdapDirectoryService,
-    FlextLdapDirectoryServiceInterface,
+from flext_ldap.container import FlextLdapContainer, get_ldap_container
+from flext_ldap.entities import (
+    FlextLdapCreateUserRequest,
+    FlextLdapGroup,
+    FlextLdapSearchRequest,
+    FlextLdapSearchResponse,
+    FlextLdapUser,
 )
-from flext_ldap.api import FlextLdapApi
-from flext_ldap.constants import FlextLdapDefaultValues, FlextLdapValidationMessages
-from flext_ldap.models import FlextLdapCreateUserRequest, FlextLdapUser
-from flext_ldap.types import (
-    FlextLdapDirectoryConnectionProtocol,
-    FlextLdapDirectoryEntryProtocol,
+from flext_ldap.interfaces import (
+    IFlextLdapFullService,
+    IFlextLdapGroupService,
+    IFlextLdapUserService,
 )
+from flext_ldap.typings import LdapAttributeDict
+from flext_ldap.value_objects import FlextLdapDistinguishedName
 
 logger = get_logger(__name__)
 
-# =============================================================================
-# BASE SERVICE FOUNDATION
-# =============================================================================
 
+class FlextLdapService(IFlextLdapFullService):
+    """Main LDAP service implementing all operations."""
 
-class FlextLdapBaseService(FlextDomainService[None]):
-    """Base service for all LDAP operations extending FlextDomainService.
+    def __init__(self, container: FlextLdapContainer | None = None) -> None:
+        """Initialize LDAP service with dependency injection."""
+        self._container = container or get_ldap_container()
 
-    Provides common LDAP service functionality including connection management,
-    error handling, and observability integration using FLEXT core patterns.
-    """
+    async def initialize(self) -> FlextResult[None]:
+        """Initialize service and dependencies."""
+        logger.info("LDAP service initializing")
+        return FlextResult[None].ok(None)
 
-    def __init__(
-        self,
-        /,
-        container: FlextContainer | None = None,
-        **data: object,
-    ) -> None:
-        """Initialize LDAP base service with dependency injection."""
-        super().__init__(**data)
-        self._container = container or get_flext_container()
-        self._is_running = False
+    async def cleanup(self) -> FlextResult[None]:
+        """Cleanup service resources."""
+        logger.info("LDAP service cleaning up")
+        return await self._container.cleanup()
 
-    def start(self) -> FlextResult[None]:
-        """Start LDAP service with proper initialization."""
-        try:
-            if self._is_running:
-                return FlextResult[None].fail(
-                    FlextLdapValidationMessages.SERVICE_ALREADY_RUNNING
-                )
+    # User Service Methods
 
-            # Initialize LDAP service components
-            self._is_running = True
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(
-                FlextLdapValidationMessages.FAILED_TO_START_SERVICE.format(error=str(e))
-            )
-
-    def stop(self) -> FlextResult[None]:
-        """Stop LDAP service with proper cleanup."""
-        try:
-            if not self._is_running:
-                return FlextResult[None].fail(FlextLdapValidationMessages.SERVICE_NOT_RUNNING)
-
-            # Cleanup LDAP connections and resources
-            self._is_running = False
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(
-                FlextLdapValidationMessages.FAILED_TO_STOP_SERVICE.format(error=str(e))
-            )
-
-    def health_check(self) -> FlextResult[FlextTypes.Core.JsonDict]:
-        """Perform LDAP service health check."""
-        try:
-            health_info: FlextTypes.Core.JsonDict = {
-                "service": FlextLdapDefaultValues.DEFAULT_SERVICE_NAME,
-                "status": FlextLdapDefaultValues.SERVICE_STATUS_RUNNING
-                if self._is_running
-                else FlextLdapDefaultValues.SERVICE_STATUS_STOPPED,
-                "version": FlextLdapDefaultValues.DEFAULT_SERVICE_VERSION,
-                "dependencies": {
-                    "flext_core": FlextLdapDefaultValues.DEPENDENCY_FLEXT_CORE,
-                    "ldap3": FlextLdapDefaultValues.DEPENDENCY_LDAP3,
-                },
-            }
-            return FlextResult[None].ok(health_info)
-        except Exception as e:
-            return FlextResult[None].fail(
-                FlextLdapValidationMessages.HEALTH_CHECK_FAILED.format(error=str(e))
-            )
-
-    @property
-    def container(self) -> FlextContainer:
-        """Get dependency injection container."""
-        return self._container
-
-    @property
-    def is_running(self) -> bool:
-        """Check if service is running."""
-        return self._is_running
-
-    def execute(self) -> FlextResult[None]:
-        """Execute domain operation - required by FlextDomainService."""
-        return self.health_check().map(lambda _: None)
-
-
-# =============================================================================
-# DIRECTORY SERVICE IMPLEMENTATION
-# =============================================================================
-
-
-class DirectoryOperationResult:
-    """Directory operation result constants - eliminates boolean parameters."""
-
-    SUCCESS = True
-    FAILURE = False
-
-
-"""
-# Directory service implementation lives in flext_ldap.adapters.
-"""
-
-
-# =============================================================================
-# APPLICATION SERVICE IMPLEMENTATION
-# =============================================================================
-
-
-class FlextLdapApplicationService:
-    """Application service implementation for LDAP operations using Clean Architecture.
-
-    Uses FlextLdapApi for real LDAP operations, eliminating all mocks/fallbacks.
-    Follows SOLID principles by delegating to infrastructure layer.
-    """
-
-    def __init__(self, config: object | None = None) -> None:
-        """Initialize LDAP service with real infrastructure."""
-        self._api = FlextLdapApi(config)
-        self._session_id: str | None = None
-        logger.info("FlextLdapApplicationService initialized with real infrastructure")
-
-    def is_connected(self) -> bool:
-        """Check if service is connected to LDAP server."""
-        return self._session_id is not None
-
-    async def connect(
-        self,
-        server_url: str,
-        bind_dn: str,
-        bind_password: str,
-    ) -> FlextResult[bool]:
-        """Connect to LDAP server using persistent API session."""
-        logger.info("Connecting to LDAP server", extra={"server_url": server_url})
-
-        try:
-            connect_result = await self._api.connect(server_url, bind_dn, bind_password)
-            if connect_result.is_failure or connect_result.data is None:
-                return FlextResult[None].fail(connect_result.error or "Connection failed")
-            self._session_id = connect_result.data
-            logger.info("Successfully connected to LDAP server")
-            return FlextResult[None].ok(True)
-
-        except Exception as e:
-            error_msg = f"Connection error: {e}"
-            logger.exception(error_msg)
-            return FlextResult[None].fail(error_msg)
-
-    async def disconnect(self) -> FlextResult[bool]:
-        """Disconnect from LDAP server using real infrastructure."""
-        if not self.is_connected():
-            return FlextResult[None].ok(True)
-
-        logger.info("Disconnecting from LDAP server")
-        try:
-            if self._session_id is None:
-                return FlextResult[None].fail("No session ID available for disconnection")
-            result = await self._api.disconnect(self._session_id)
-            if result.is_success:
-                self._session_id = None
-                logger.info("Successfully disconnected from LDAP server")
-                return FlextResult[None].ok(True)
-            return FlextResult[None].fail(result.error or "Disconnect failed")
-
-        except Exception as e:
-            error_msg = f"Disconnect error: {e}"
-            logger.exception(error_msg)
-            return FlextResult[None].fail(error_msg)
-
+    @override
     async def create_user(
         self, request: FlextLdapCreateUserRequest
     ) -> FlextResult[FlextLdapUser]:
-        """Create a new user using real LDAP infrastructure.
+        """Create new user in LDAP directory."""
+        user_entity = request.to_user_entity()
 
-        No fallbacks or memory storage - uses real LDAP API.
-        """
-        logger.info("Creating user", extra={"uid": getattr(request, "uid", "unknown")})
-
-        if not self.is_connected():
-            return FlextResult[None].fail("Not connected to LDAP server")
-
-        try:
-            # Session ID guaranteed by is_connected() check above
-            if self._session_id is None:
-                return FlextResult[None].fail("No session ID available for operation")
-
-            # Use real FlextLdapApi for user creation
-            # Type assertion for MyPy - request is guaranteed to be correct type by method signature
-            user_request = request  # type: FlextLdapCreateUserRequest
-            result = await self._api.create_user(user_request)
-
-            if result.is_success:
-                logger.info(
-                    "User created successfully",
-                    extra={
-                        "uid": getattr(request, "uid", "unknown"),
-                        "dn": getattr(request, "dn", "unknown"),
-                    },
-                )
-                return result
-
-            logger.error(
-                "Failed to create user",
-                extra={
-                    "uid": getattr(request, "uid", "unknown"),
-                    "error": result.error,
-                },
-            )
-            return result
-
-        except Exception as e:
-            error_msg = f"User creation error: {e}"
-            logger.exception(
-                error_msg,
-                extra={"uid": getattr(request, "uid", "unknown")},
-            )
-            return FlextResult[None].fail(error_msg)
-
-    async def find_user_by_uid(self, uid: str) -> FlextResult[object | None]:
-        """Find user by UID using real LDAP search.
-
-        No fallbacks or memory storage - uses real LDAP API.
-        """
-        logger.info("Finding user by UID", extra={"uid": uid})
-
-        if not self.is_connected():
-            return FlextResult[None].fail("Not connected to LDAP server")
-
-        try:
-            # Session ID guaranteed by is_connected() check above
-            if self._session_id is None:
-                return FlextResult[None].fail("No session ID available for operation")
-
-            # Use real FlextLdapApi for user search
-            search_result = await self._api.search(
-                session_id=self._session_id,
-                base_dn=self._get_search_base_dn(expected="dc=example,dc=com"),
-                search_filter=f"(uid={uid})",
-                attributes=["uid", "cn", "sn", "mail", "dn"],
+        # Validate user business rules
+        validation_result = user_entity.validate_business_rules()
+        if not validation_result.is_success:
+            return FlextResult[FlextLdapUser].fail(
+                f"User validation failed: {validation_result.error}"
             )
 
-            if search_result.is_success and search_result.data:
-                entries = search_result.data
-                if entries:
-                    # Convert first entry to FlextLdapUser
-                    entry = entries[0]
-                    user_attrs = entry.attributes
+        # Save user via repository
+        repository = self._container.get_repository()
+        save_result = await repository.save(user_entity)
 
-                    # Extract user attributes with safe defaults
-                    cn_raw = user_attrs.get("cn", [])
-                    cn_value = (
-                        cn_raw[0]
-                        if isinstance(cn_raw, list) and cn_raw
-                        else str(cn_raw)
-                        if cn_raw
-                        else ""
-                    )
+        if not save_result.is_success:
+            return FlextResult[FlextLdapUser].fail(save_result.error or "Save failed")
 
-                    sn_raw = user_attrs.get("sn", [])
-                    sn_value = (
-                        sn_raw[0]
-                        if isinstance(sn_raw, list) and sn_raw
-                        else str(sn_raw)
-                        if sn_raw
-                        else ""
-                    )
-
-                    mail_raw = user_attrs.get("mail", [])
-                    mail_value = (
-                        mail_raw[0]
-                        if isinstance(mail_raw, list) and mail_raw
-                        else (str(mail_raw) if mail_raw else None)
-                    )
-
-                    user = FlextLdapUser(
-                        id=FlextIdGenerator.generate_id(),
-                        dn=entry.dn,
-                        uid=uid,
-                        cn=cn_value,
-                        sn=sn_value,
-                        mail=mail_value,
-                    )
-
-                    logger.info("User found successfully", extra={"uid": uid})
-                    return FlextResult[None].ok(user)
-
-            logger.info("User not found", extra={"uid": uid})
-            return FlextResult[None].fail(f"User with UID {uid} not found")
-
-        except Exception as e:
-            error_msg = f"User search error: {e}"
-            logger.exception(error_msg, extra={"uid": uid})
-            return FlextResult[None].fail(error_msg)
-
-    def _get_search_base_dn(self, expected: str | None = None) -> str:
-        """Get base DN for LDAP searches.
-
-        For tests and development, fallback to a safe default when configuration
-        is not yet wired. Production should inject configuration explicitly.
-        """
-        try:
-            # Preferred: obtain from settings if available
-            settings = getattr(self, "_settings", None)
-            if settings and getattr(settings, "search", None):
-                base_dn = getattr(settings.search, "base_dn", "")
-                if isinstance(base_dn, str) and base_dn.strip():
-                    return base_dn.strip()
-        except Exception as error:
-            logger.debug(
-                "Falling back to default base DN due to settings access error",
-                exc_info=error,
-            )
-
-        # Test-safe default used across sample data
-        return expected or "dc=example,dc=org"
-
-
-# =============================================================================
-# DIRECTORY ADAPTER
-# =============================================================================
-
-
-# Compatibility alias that exposes adapter from adapters module
-FlextLdapDirectoryAdapter = _FlextLdapDirectoryAdapter
-
-
-# =============================================================================
-# CONVENIENCE SERVICE CONSOLIDATION
-# =============================================================================
-
-
-class FlextLdapService(FlextLdapApplicationService):
-    """Main FLEXT LDAP service - alias for application service."""
-
-
-# =============================================================================
-# TESTING CONVENIENCE AND TRANSITIONAL WARNINGS
-# =============================================================================
-
-
-def __getattr__(name: str) -> object:
-    """Provide testing convenience for transitional service classes."""
-    convenience_services = {
-        "FlextLdapUserApplicationService": FlextLdapService,
-        "FlextLdapUserService": FlextLdapService,
-        "FlextLdapGroupService": FlextLdapService,
-        "FlextLdapOperationService": FlextLdapService,
-        "FlextLdapConnectionApplicationService": FlextLdapService,
-        "FlextLdapConnectionService": FlextLdapService,
-    }
-
-    if name in convenience_services:
-        warnings.warn(
-            f"🚨 TRANSITIONAL SERVICE: {name} is transitional.\n"
-            f"✅ MODERN SOLUTION: Use FlextLdapService from application layer\n"
-            f"💡 Import: from flext_ldap.services import FlextLdapService\n"
-            f"🏗️ This wrapper layer adds no value and will be removed in v1.0.0",
-            UserWarning,
-            stacklevel=2,
+        logger.info(
+            "User created successfully",
+            extra={"dn": user_entity.dn, "uid": user_entity.uid},
         )
-        return convenience_services[name]
+        return FlextResult[FlextLdapUser].ok(user_entity)
 
-    msg = f"module 'flext_ldap.ldap_services' has no attribute '{name}'"
-    raise AttributeError(msg)
+    @override
+    async def get_user(self, dn: str) -> FlextResult[FlextLdapUser | None]:
+        """Get user by distinguished name."""
+        repository = self._container.get_repository()
+        entry_result = await repository.find_by_dn(dn)
+
+        if not entry_result.is_success:
+            return FlextResult[FlextLdapUser | None].fail(
+                entry_result.error or "Entry lookup failed"
+            )
+
+        if not entry_result.value:
+            return FlextResult[FlextLdapUser | None].ok(None)
+
+        entry = entry_result.value
+
+        # Convert to user entity
+        user = FlextLdapUser(
+            dn=entry.dn,
+            uid=entry.get_single_attribute_value("uid") or "",
+            cn=entry.get_single_attribute_value("cn") or "",
+            sn=entry.get_single_attribute_value("sn") or "",
+            given_name=entry.get_single_attribute_value("givenName"),
+            mail=entry.get_single_attribute_value("mail"),
+            phone=entry.get_single_attribute_value("telephoneNumber"),
+            object_classes=entry.object_classes,
+            attributes=entry.attributes,
+            status=entry.status,
+        )
+
+        return FlextResult[FlextLdapUser | None].ok(user)
+
+    @override
+    async def update_user(
+        self, dn: str, attributes: LdapAttributeDict
+    ) -> FlextResult[None]:
+        """Update user attributes."""
+        repository = self._container.get_repository()
+        result = await repository.update(dn, attributes)
+
+        if result.is_success:
+            logger.info("User updated successfully", extra={"dn": dn})
+
+        return result
+
+    @override
+    async def delete_user(self, dn: str) -> FlextResult[None]:
+        """Delete user from directory."""
+        repository = self._container.get_repository()
+        result = await repository.delete(dn)
+
+        if result.is_success:
+            logger.info("User deleted successfully", extra={"dn": dn})
+
+        return result
+
+    @override
+    async def search_users(
+        self,
+        filter_str: str,
+        base_dn: str,
+        scope: str = "subtree",
+    ) -> FlextResult[list[FlextLdapUser]]:
+        """Search users with filter."""
+        search_request = FlextLdapSearchRequest(
+            base_dn=base_dn,
+            scope=scope,
+            filter_str=f"(&(objectClass=inetOrgPerson){filter_str})",
+            attributes=None,
+            size_limit=1000,
+            time_limit=30,
+        )
+
+        repository = self._container.get_repository()
+        search_result = await repository.search(search_request)
+
+        if not search_result.is_success:
+            return FlextResult[list[FlextLdapUser]].fail(
+                search_result.error or "Search failed"
+            )
+
+        users = []
+        for entry_data in search_result.value.entries:
+            entry_dn = entry_data.get("dn")
+            if not entry_dn:
+                continue
+
+            user_result = await self.get_user(str(entry_dn))
+            # Use FlextResult's unwrap_or method for cleaner code
+            user = user_result.unwrap_or(None)
+            if user:
+                users.append(user)
+
+        return FlextResult[list[FlextLdapUser]].ok(users)
+
+    @override
+    async def user_exists(self, dn: str) -> FlextResult[bool]:
+        """Check if user exists."""
+        repository = self._container.get_repository()
+        return await repository.exists(dn)
+
+    # Group Service Methods
+
+    @override
+    async def create_group(self, group: FlextLdapGroup) -> FlextResult[None]:
+        """Create new group in LDAP directory."""
+        # Validate group business rules
+        validation_result = group.validate_business_rules()
+        if not validation_result.is_success:
+            return FlextResult[None].fail(
+                f"Group validation failed: {validation_result.error}"
+            )
+
+        # Save group via repository
+        repository = self._container.get_repository()
+        result = await repository.save(group)
+
+        if result.is_success:
+            logger.info(
+                "Group created successfully", extra={"dn": group.dn, "cn": group.cn}
+            )
+
+        return result
+
+    @override
+    async def get_group(self, dn: str) -> FlextResult[FlextLdapGroup | None]:
+        """Get group by distinguished name."""
+        repository = self._container.get_repository()
+        entry_result = await repository.find_by_dn(dn)
+
+        if not entry_result.is_success:
+            return FlextResult[FlextLdapGroup | None].fail(
+                entry_result.error or "Group lookup failed"
+            )
+
+        if not entry_result.value:
+            return FlextResult[FlextLdapGroup | None].ok(None)
+
+        entry = entry_result.value
+
+        # Convert to group entity
+        group = FlextLdapGroup(
+            dn=entry.dn,
+            cn=entry.get_single_attribute_value("cn") or "",
+            description=entry.get_single_attribute_value("description"),
+            members=entry.get_attribute_values("member"),
+            object_classes=entry.object_classes,
+            attributes=entry.attributes,
+            status=entry.status,
+        )
+
+        return FlextResult[FlextLdapGroup | None].ok(group)
+
+    @override
+    async def update_group(
+        self, dn: str, attributes: LdapAttributeDict
+    ) -> FlextResult[None]:
+        """Update group attributes."""
+        repository = self._container.get_repository()
+        result = await repository.update(dn, attributes)
+
+        if result.is_success:
+            logger.info("Group updated successfully", extra={"dn": dn})
+
+        return result
+
+    @override
+    async def delete_group(self, dn: str) -> FlextResult[None]:
+        """Delete group from directory."""
+        repository = self._container.get_repository()
+        result = await repository.delete(dn)
+
+        if result.is_success:
+            logger.info("Group deleted successfully", extra={"dn": dn})
+
+        return result
+
+    @override
+    async def add_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
+        """Add member to group."""
+        group_repo = self._container.get_group_repository()
+        result = await group_repo.add_member_to_group(group_dn, member_dn)
+
+        if result.is_success:
+            logger.info(
+                "Member added to group",
+                extra={"group_dn": group_dn, "member_dn": member_dn},
+            )
+
+        return result
+
+    @override
+    async def remove_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
+        """Remove member from group."""
+        # Get current members
+        group_repo = self._container.get_group_repository()
+        members_result = await group_repo.get_group_members(group_dn)
+
+        if not members_result.is_success:
+            return FlextResult[None].fail(
+                members_result.error or "Members lookup failed"
+            )
+
+        current_members = members_result.value
+        if member_dn not in current_members:
+            return FlextResult[None].fail("Member not in group")
+
+        # Remove member
+        new_members = [m for m in current_members if m != member_dn]
+        attributes: LdapAttributeDict = {"member": new_members}
+
+        repository = self._container.get_repository()
+        result = await repository.update(group_dn, attributes)
+
+        if result.is_success:
+            logger.info(
+                "Member removed from group",
+                extra={"group_dn": group_dn, "member_dn": member_dn},
+            )
+
+        return result
+
+    @override
+    async def get_members(self, group_dn: str) -> FlextResult[list[str]]:
+        """Get group members."""
+        group_repo = self._container.get_group_repository()
+        return await group_repo.get_group_members(group_dn)
+
+    @override
+    async def group_exists(self, dn: str) -> FlextResult[bool]:
+        """Check if group exists."""
+        repository = self._container.get_repository()
+        return await repository.exists(dn)
+
+    # Validation methods
+
+    @override
+    def validate_dn(self, dn: str) -> FlextResult[None]:
+        """Validate distinguished name format."""
+        dn_result = FlextLdapDistinguishedName.create(dn)
+        if not dn_result.is_success:
+            return FlextResult[None].fail(dn_result.error or "DN validation failed")
+        return FlextResult[None].ok(None)
+
+    @override
+    def validate_filter(self, filter_str: str) -> FlextResult[None]:
+        """Validate LDAP search filter."""
+        if not filter_str.strip():
+            return FlextResult[None].fail("Filter cannot be empty")
+
+        if not (filter_str.startswith("(") and filter_str.endswith(")")):
+            return FlextResult[None].fail("Filter must be enclosed in parentheses")
+
+        return FlextResult[None].ok(None)
+
+    @override
+    def validate_attributes(self, attributes: LdapAttributeDict) -> FlextResult[None]:
+        """Validate attribute dictionary."""
+        if not attributes:
+            return FlextResult[None].fail("Attributes cannot be empty")
+
+        for name in attributes:
+            if not name or not name.strip():
+                return FlextResult[None].fail("Attribute name cannot be empty")
+
+            # Note: value cannot be None due to LdapAttributeDict typing
+
+        return FlextResult[None].ok(None)
+
+    @override
+    def validate_object_classes(self, object_classes: list[str]) -> FlextResult[None]:
+        """Validate object class list."""
+        if not object_classes:
+            return FlextResult[None].fail("Object classes cannot be empty")
+
+        for oc in object_classes:
+            if not oc or not oc.strip():
+                return FlextResult[None].fail("Object class cannot be empty")
+
+        return FlextResult[None].ok(None)
+
+    # Search methods
+
+    async def search(
+        self, request: FlextLdapSearchRequest
+    ) -> FlextResult[FlextLdapSearchResponse]:
+        """Search entries."""
+        repository = self._container.get_repository()
+        return await repository.search(request)
 
 
-# =============================================================================
-# TESTING CONVENIENCE ALIASES
-# =============================================================================
+# Specialized service classes for focused operations
 
-# Testing convenience aliases (re-exported from adapters/types)
-DirectoryConnectionProtocol = FlextLdapDirectoryConnectionProtocol
-DirectoryEntryProtocol = FlextLdapDirectoryEntryProtocol
-DirectoryServiceInterface = FlextLdapDirectoryServiceInterface
-DirectoryAdapterInterface = FlextLdapDirectoryAdapterInterface
 
-# =============================================================================
-# EXPORTS
-# =============================================================================
+class FlextLdapUserService(IFlextLdapUserService):
+    """Specialized service for user operations."""
 
-__all__ = [
-    "DirectoryAdapterInterface",
-    # Testing convenience aliases
-    "DirectoryConnectionProtocol",
-    "DirectoryEntryProtocol",
-    "DirectoryServiceInterface",
-    "FlextLdapApplicationService",
-    # Base service foundation
-    "FlextLdapBaseService",
-    # Adapter implementation
-    "FlextLdapDirectoryAdapter",
-    "FlextLdapDirectoryAdapterInterface",
-    # Protocol definitions
-    "FlextLdapDirectoryConnectionProtocol",
-    "FlextLdapDirectoryEntryProtocol",
-    # Service implementations
-    "FlextLdapDirectoryService",
-    "FlextLdapDirectoryServiceInterface",
-    "FlextLdapService",
-]
+    def __init__(self, main_service: FlextLdapService) -> None:
+        """Initialize with main service."""
+        self._service = main_service
+
+    @override
+    async def create_user(
+        self, request: FlextLdapCreateUserRequest
+    ) -> FlextResult[FlextLdapUser]:
+        """Create new user."""
+        return await self._service.create_user(request)
+
+    @override
+    async def get_user(self, dn: str) -> FlextResult[FlextLdapUser | None]:
+        """Get user by DN."""
+        return await self._service.get_user(dn)
+
+    @override
+    async def update_user(
+        self, dn: str, attributes: LdapAttributeDict
+    ) -> FlextResult[None]:
+        """Update user."""
+        return await self._service.update_user(dn, attributes)
+
+    @override
+    async def delete_user(self, dn: str) -> FlextResult[None]:
+        """Delete user."""
+        return await self._service.delete_user(dn)
+
+    @override
+    async def search_users(
+        self, filter_str: str, base_dn: str, scope: str = "subtree"
+    ) -> FlextResult[list[FlextLdapUser]]:
+        """Search users."""
+        return await self._service.search_users(filter_str, base_dn, scope)
+
+    @override
+    async def user_exists(self, dn: str) -> FlextResult[bool]:
+        """Check if user exists."""
+        return await self._service.user_exists(dn)
+
+
+class FlextLdapGroupService(IFlextLdapGroupService):
+    """Specialized service for group operations."""
+
+    def __init__(self, main_service: FlextLdapService) -> None:
+        """Initialize with main service."""
+        self._service = main_service
+
+    @override
+    async def create_group(self, group: FlextLdapGroup) -> FlextResult[None]:
+        """Create group."""
+        return await self._service.create_group(group)
+
+    @override
+    async def get_group(self, dn: str) -> FlextResult[FlextLdapGroup | None]:
+        """Get group by DN."""
+        return await self._service.get_group(dn)
+
+    @override
+    async def update_group(
+        self, dn: str, attributes: LdapAttributeDict
+    ) -> FlextResult[None]:
+        """Update group."""
+        return await self._service.update_group(dn, attributes)
+
+    @override
+    async def delete_group(self, dn: str) -> FlextResult[None]:
+        """Delete group."""
+        return await self._service.delete_group(dn)
+
+    @override
+    async def add_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
+        """Add member to group."""
+        return await self._service.add_member(group_dn, member_dn)
+
+    @override
+    async def remove_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
+        """Remove member from group."""
+        return await self._service.remove_member(group_dn, member_dn)
+
+    @override
+    async def get_members(self, group_dn: str) -> FlextResult[list[str]]:
+        """Get group members."""
+        return await self._service.get_members(group_dn)
+
+    @override
+    async def group_exists(self, dn: str) -> FlextResult[bool]:
+        """Check if group exists."""
+        return await self._service.group_exists(dn)

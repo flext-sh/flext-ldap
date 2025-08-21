@@ -15,9 +15,9 @@ Architecture:
 
 Usage:
     >>> result = some_ldap_operation()
-    >>> if is_ldap_search_result(result.data):
-    ...     # MyPy now knows result.data is TLdapSearchResult
-    ...     for entry in result.data:
+    >>> if is_ldap_search_result(result.value):
+    ...     # MyPy now knows result.value is TLdapSearchResult
+    ...     for entry in result.value:
     ...         print(entry["dn"])
 
 Copyright (c) 2025 Flext. All rights reserved.
@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from typing import TypeGuard
 
-from flext_ldap.types import (
+from flext_ldap.typings import (
     TLdapAttributes,
     TLdapAttributeValue,
     TLdapEntryData,
@@ -218,7 +218,7 @@ def ensure_string_list(value: str | list[str]) -> list[str]:
         return [value]
     if is_string_list(value):
         return value
-    # Fallback: convert each item to string
+    # Convert each item to string
     return [str(item) for item in value] if isinstance(value, list) else [str(value)]
 
 

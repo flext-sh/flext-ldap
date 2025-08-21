@@ -104,7 +104,11 @@ class TestLdapE2EOperations:
         api = get_ldap_api()
 
         # Test connection to non-existent server
-        result = await api.connect(server_uri="ldap://nonexistent.server.test:389")
+        result = await api.connect(
+            server_uri="ldap://nonexistent.server.test:389",
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=local",
+            bind_password="REDACTED_LDAP_BIND_PASSWORD123",
+        )
 
         # Should fail gracefully
         assert not result.is_success
@@ -114,11 +118,19 @@ class TestLdapE2EOperations:
     def test_api_configuration_integration(self) -> None:
         """Test API configuration integration."""
         # Test with custom configuration
+        from flext_ldap import FlextLdapAuthConfig  # noqa: PLC0415
+
+        auth_config = FlextLdapAuthConfig(
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=local",
+            bind_password="REDACTED_LDAP_BIND_PASSWORD123",
+            use_ssl=True,
+        )
+
         FlextLdapConnectionConfig(
             server="test.ldap.server",
             port=636,
-            use_ssl=True,
             timeout=60,
+            auth=auth_config,
         )
 
         # Create API with configuration
@@ -140,7 +152,9 @@ class TestLdapE2EOperations:
         ]
 
         for uri, _expected_error_type in scenarios:
-            result = await api.connect(server_uri=uri)
+            result = await api.connect(
+                server_uri=uri, bind_dn="cn=test", bind_password="test"
+            )
 
             # Should handle all error types gracefully
             assert hasattr(result, "is_success")
