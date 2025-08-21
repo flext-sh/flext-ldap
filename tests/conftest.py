@@ -11,6 +11,7 @@ import time
 from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, suppress
 from functools import lru_cache
+from typing import Any, cast
 
 import pytest
 
@@ -56,9 +57,9 @@ class OpenLDAPContainerManager:
             raise RuntimeError(msg)
         # docker is a module at runtime; typing is provided via TYPE_CHECKING
         self.client = importlib.import_module("docker").from_env()
-        self.container: object | None = None
+        self.container: Any = None
 
-    def start_container(self) -> object:
+    def start_container(self) -> Any:
         """Start OpenLDAP container with proper configuration."""
         # Stop and remove existing container if it exists
         self.stop_container()
@@ -98,13 +99,14 @@ class OpenLDAPContainerManager:
                 existing.stop(timeout=5)
             existing.remove(force=True)
         except Exception as e:
-            if getattr(e, "status_code", None) == 409:
-                return
-            raise
-        except (RuntimeError, ValueError, TypeError):
-            # Try to force remove by name if getting by ID fails
-            with suppress(RuntimeError, ValueError, TypeError):
-                self.client.api.remove_container(OPENLDAP_CONTAINER_NAME, force=True)
+            # Handle Docker NotFound errors and other Docker API errors
+            if getattr(e, "status_code", None) in {404, 409}:
+                # Container doesn't exist (404) or conflict (409) - ignore
+                pass
+            else:
+                # Try to force remove by name if getting by ID fails
+                with suppress(Exception):
+                    self.client.api.remove_container(OPENLDAP_CONTAINER_NAME, force=True)
 
         self.container = None
 
@@ -122,15 +124,18 @@ class OpenLDAPContainerManager:
         while time.time() - start_time < timeout:
             try:
                 # Check if container is still running
-                self.container.reload()
-                if self.container.status != "running":
+                container = cast("Any", self.container)
+                container.reload()
+                if container.status != "running":
+                    container = cast("Any", self.container)
                     start_fail_msg: str = (
-                        f"Container failed to start: {self.container.status}"
+                        f"Container failed to start: {container.status}"
                     )
                     self._raise_container_error(start_fail_msg)
 
                 # Try to connect to LDAP port
-                exec_result = self.container.exec_run(
+                container = cast("Any", self.container)
+                exec_result = container.exec_run(
                     [
                         "ldapsearch",
                         "-x",
@@ -149,7 +154,7 @@ class OpenLDAPContainerManager:
                     demux=True,
                 )
 
-                if exec_result.exit_code == 0:
+                if cast("Any", exec_result).exit_code == 0:
                     # Success! Container is ready
                     return
 
@@ -170,8 +175,9 @@ class OpenLDAPContainerManager:
 
         try:
             # Best-effort typing without docker stubs at runtime
-            self.container.reload()
-            status = str(getattr(self.container, "status", ""))
+            container = cast("Any", self.container)
+            container.reload()
+            status = str(getattr(container, "status", ""))
             return bool(status == "running")
         except (RuntimeError, ValueError, TypeError):
             return False
@@ -182,8 +188,9 @@ class OpenLDAPContainerManager:
             return "No container running"
 
         try:
-            logs_bytes = self.container.logs()
-            return str(logs_bytes.decode())
+            container = cast("Any", self.container)
+            logs_bytes = container.logs()
+            return str(cast("bytes", logs_bytes).decode())
         except (RuntimeError, ValueError, TypeError) as e:
             return f"Failed to get logs: {e}"
 
@@ -237,7 +244,7 @@ def ldap_test_config(docker_openldap_container: object) -> dict[str, object]:
 
 
 @pytest.fixture
-async def ldap_service(clean_ldap_container: dict[str, object]) -> FlextLdapService:  # noqa: ARG001
+async def ldap_service(clean_ldap_container: dict[str, object]) -> AsyncGenerator[FlextLdapService]:  # noqa: ARG001
     """Provide configured LDAP service for testing."""
     container = get_ldap_container()
     service = FlextLdapService(container)
@@ -256,7 +263,7 @@ async def ldap_service(clean_ldap_container: dict[str, object]) -> FlextLdapServ
 @pytest.fixture
 async def connected_ldap_client(
     clean_ldap_container: dict[str, object],
-) -> FlextLdapClient:
+) -> AsyncGenerator[FlextLdapClient]:
     """Provide connected LDAP client for testing."""
     client = FlextLdapClient()
 
@@ -286,17 +293,22 @@ async def _cleanup_ldap_entries_under_dn(
         base_dn=dn,
         scope="subtree",
         filter_str="(objectClass=*)",
+        attributes=[],  # Get all attributes
         size_limit=1000,
+        time_limit=30,  # 30 seconds timeout
     )
 
     search_result = await client.search(search_request)
 
-    # Early return if search failed or no data
-    if not search_result.is_success or not search_result.data.entries:
+    # Early return if search failed or no data - use unwrap_or for cleaner code
+    from flext_ldap.entities import FlextLdapSearchResponse
+    empty_response = FlextLdapSearchResponse(entries=[], total_count=0)
+    search_data = search_result.unwrap_or(empty_response)
+    if not search_data.entries:
         return
 
     # Delete entries (except the OU itself)
-    for entry_data in search_result.data.entries:
+    for entry_data in search_data.entries:
         entry_dn = entry_data.get("dn", "")
         if entry_dn and entry_dn != dn:
             await client.delete(str(entry_dn))
@@ -341,7 +353,7 @@ async def clean_ldap_container(
 async def temporary_ldap_entry(
     client: FlextLdapClient,
     dn: str,
-    attributes: dict[str, object],
+    attributes: Any,
 ) -> AsyncGenerator[str]:
     """Context manager for temporary LDAP entries that are auto-cleaned."""
     try:

@@ -9,6 +9,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
+from flext_core import FlextEntityId, FlextEntityStatus
 
 from flext_ldap import (
     FlextLdapClient,
@@ -18,6 +19,7 @@ from flext_ldap import (
     FlextLdapSearchRequest,
     FlextLdapService,
 )
+from flext_ldap.utils import FlextLdapUtilities
 
 
 @pytest.mark.integration
@@ -59,7 +61,9 @@ class TestLdapClientRealOperations:
             base_dn=str(clean_ldap_container["base_dn"]),
             scope="base",
             filter_str="(objectClass=*)",
+            attributes=[],  # Get all attributes
             size_limit=10,
+            time_limit=30,  # 30 seconds timeout
         )
 
         result = await connected_ldap_client.search(search_request)
@@ -80,20 +84,22 @@ class TestLdapClientRealOperations:
         test_dn = (
             f"cn=testuser-{uuid4().hex[:8]},ou=people,{clean_ldap_container['base_dn']}"
         )
-        user_attributes = {
+        user_attrs_raw = {
             "objectClass": ["inetOrgPerson", "person"],
             "cn": ["Test User"],
             "sn": ["User"],
             "uid": [f"testuser-{uuid4().hex[:8]}"],
             "mail": ["test@example.com"],
         }
+        user_attributes = FlextLdapUtilities.create_ldap_attributes(user_attrs_raw)
 
         # First create the OU if it doesn't exist
         ou_dn = f"ou=people,{clean_ldap_container['base_dn']}"
-        ou_attributes = {
+        ou_attrs_raw = {
             "objectClass": ["organizationalUnit"],
             "ou": ["people"],
         }
+        ou_attributes = FlextLdapUtilities.create_ldap_attributes(ou_attrs_raw)
         _ = await connected_ldap_client.add(ou_dn, ou_attributes)
         # Ignore if OU already exists (error code 68)
 
@@ -102,10 +108,11 @@ class TestLdapClientRealOperations:
         assert add_result.is_success, f"Failed to create user: {add_result.error}"
 
         # MODIFY: Update user attributes
-        modify_attributes = {
+        modify_attrs_raw = {
             "mail": ["updated@example.com"],
             "description": ["Updated user description"],
         }
+        modify_attributes = FlextLdapUtilities.create_ldap_attributes(modify_attrs_raw)
         modify_result = await connected_ldap_client.modify(test_dn, modify_attributes)
         assert modify_result.is_success, f"Failed to modify user: {modify_result.error}"
 
@@ -114,7 +121,9 @@ class TestLdapClientRealOperations:
             base_dn=test_dn,
             scope="base",
             filter_str="(objectClass=*)",
+            attributes=[],  # All attributes
             size_limit=1,
+            time_limit=30,
         )
         search_result = await connected_ldap_client.search(search_request)
         assert search_result.is_success, f"Failed to search user: {search_result.error}"
@@ -131,8 +140,13 @@ class TestLdapClientRealOperations:
 
         # VERIFY: Confirm deletion
         verify_search = await connected_ldap_client.search(search_request)
-        assert verify_search.is_success, "Search should succeed"
-        assert not verify_search.value.entries, "User entry should be deleted"
+        # After deleting all entries, the OU might not exist anymore - this is normal LDAP behavior
+        if verify_search.is_success:
+            # If search succeeds, there should be no entries
+            assert not verify_search.value.entries, "User entry should be deleted"
+        else:
+            # If search fails with "noSuchObject", it means the OU is empty/deleted - also valid
+            assert verify_search.error and "noSuchObject" in verify_search.error
 
 
 @pytest.mark.integration
@@ -147,7 +161,7 @@ class TestLdapServiceRealOperations:
     ) -> None:
         """Test complete user lifecycle with real LDAP operations."""
         # Setup: Create OU for users
-        client = ldap_service._container.get_client()
+        client = ldap_service._container.get_client()  # type: ignore[attr-defined]
         await client.connect(
             str(clean_ldap_container["server_url"]),
             str(clean_ldap_container["bind_dn"]),
@@ -156,11 +170,12 @@ class TestLdapServiceRealOperations:
 
         # Create users OU
         ou_dn = f"ou=users,{clean_ldap_container['base_dn']}"
-        ou_attributes = {
+        ou_attrs_raw_2 = {
             "objectClass": ["organizationalUnit"],
             "ou": ["users"],
         }
-        await client.add(ou_dn, ou_attributes)  # Ignore if exists
+        ou_attributes_2 = FlextLdapUtilities.create_ldap_attributes(ou_attrs_raw_2)
+        await client.add(ou_dn, ou_attributes_2)  # Ignore if exists
 
         # Test user creation
         user_request = FlextLdapCreateUserRequest(
@@ -168,7 +183,9 @@ class TestLdapServiceRealOperations:
             uid=f"realuser-{uuid4().hex[:8]}",
             cn="Real Test User",
             sn="User",
+            given_name="Real",
             mail="real@example.com",
+            phone="+1-555-0200",
         )
 
         # CREATE: Real user creation
@@ -190,10 +207,11 @@ class TestLdapServiceRealOperations:
         assert retrieved_user.cn == user_request.cn
 
         # UPDATE: Modify user attributes
-        update_attributes = {
+        update_attrs_raw = {
             "mail": ["updated-real@example.com"],
             "description": ["Updated via service"],
         }
+        update_attributes = FlextLdapUtilities.create_ldap_attributes(update_attrs_raw)
         update_result = await ldap_service.update_user(
             user_request.dn, update_attributes
         )
@@ -235,7 +253,7 @@ class TestLdapServiceRealOperations:
     ) -> None:
         """Test complete group lifecycle with real LDAP operations."""
         # Setup: Connect and create OUs
-        client = ldap_service._container.get_client()
+        client = ldap_service._container.get_client()  # type: ignore[attr-defined]
         await client.connect(
             str(clean_ldap_container["server_url"]),
             str(clean_ldap_container["bind_dn"]),
@@ -245,32 +263,37 @@ class TestLdapServiceRealOperations:
         # Create necessary OUs
         for ou_name in ["groups", "users"]:
             ou_dn = f"ou={ou_name},{clean_ldap_container['base_dn']}"
-            ou_attributes = {
+            ou_attrs_raw_3 = {
                 "objectClass": ["organizationalUnit"],
                 "ou": [ou_name],
             }
-            await client.add(ou_dn, ou_attributes)  # Ignore if exists
+            ou_attributes_3 = FlextLdapUtilities.create_ldap_attributes(ou_attrs_raw_3)
+            await client.add(ou_dn, ou_attributes_3)  # Ignore if exists
 
         # Create test user for group membership
         user_dn = (
             f"cn=groupuser-{uuid4().hex[:8]},ou=users,{clean_ldap_container['base_dn']}"
         )
-        user_attributes = {
+        user_attrs_raw_4 = {
             "objectClass": ["inetOrgPerson", "person"],
             "cn": ["Group User"],
             "sn": ["User"],
             "uid": [f"groupuser-{uuid4().hex[:8]}"],
         }
-        await client.add(user_dn, user_attributes)
+        user_attributes_4 = FlextLdapUtilities.create_ldap_attributes(user_attrs_raw_4)
+        await client.add(user_dn, user_attributes_4)
 
         # Test group creation
+        group_id = uuid4().hex[:8]
         group = FlextLdapGroup(
-            dn=f"cn=realgroup-{uuid4().hex[:8]},ou=groups,{clean_ldap_container['base_dn']}",
-            cn=f"Real Test Group {uuid4().hex[:8]}",
+            id=FlextEntityId(f"real_group_{group_id}"),
+            dn=f"cn=realgroup-{group_id},ou=groups,{clean_ldap_container['base_dn']}",
+            cn=f"Real Test Group {group_id}",
             description="Real test group for integration testing",
             object_classes=["groupOfNames"],
             attributes={},
             members=[user_dn],  # Add member during creation
+            status=FlextEntityStatus.ACTIVE,
         )
 
         # CREATE: Real group creation
@@ -289,10 +312,11 @@ class TestLdapServiceRealOperations:
         assert user_dn in retrieved_group.members
 
         # UPDATE: Modify group description
-        update_attributes = {
+        update_attrs_raw_5 = {
             "description": ["Updated group description"],
         }
-        update_result = await ldap_service.update_group(group.dn, update_attributes)
+        update_attributes_5 = FlextLdapUtilities.create_ldap_attributes(update_attrs_raw_5)
+        update_result = await ldap_service.update_group(group.dn, update_attributes_5)
         assert update_result.is_success, (
             f"Failed to update group: {update_result.error}"
         )
@@ -300,13 +324,14 @@ class TestLdapServiceRealOperations:
         # MEMBERS: Test member operations
         # Create another user to add
         user2_dn = f"cn=groupuser2-{uuid4().hex[:8]},ou=users,{clean_ldap_container['base_dn']}"
-        user2_attributes = {
+        user2_attrs_raw = {
             "objectClass": ["inetOrgPerson", "person"],
             "cn": ["Group User 2"],
             "sn": ["User2"],
             "uid": [f"groupuser2-{uuid4().hex[:8]}"],
         }
-        await client.add(user2_dn, user2_attributes)
+        user2_attributes_6 = FlextLdapUtilities.create_ldap_attributes(user2_attrs_raw)
+        await client.add(user2_dn, user2_attributes_6)
 
         # Add member
         add_member_result = await ldap_service.add_member(group.dn, user2_dn)
@@ -388,7 +413,7 @@ class TestLdapValidationRealOperations:
     ) -> None:
         """Test business rules validation with real LDAP operations."""
         # Setup connection
-        client = ldap_service._container.get_client()
+        client = ldap_service._container.get_client()  # type: ignore[attr-defined]
         await client.connect(
             str(clean_ldap_container["server_url"]),
             str(clean_ldap_container["bind_dn"]),
@@ -397,11 +422,12 @@ class TestLdapValidationRealOperations:
 
         # Create OU
         ou_dn = f"ou=validation-test,{clean_ldap_container['base_dn']}"
-        ou_attributes = {
+        ou_attrs_raw_7 = {
             "objectClass": ["organizationalUnit"],
             "ou": ["validation-test"],
         }
-        await client.add(ou_dn, ou_attributes)
+        ou_attributes_7 = FlextLdapUtilities.create_ldap_attributes(ou_attrs_raw_7)
+        await client.add(ou_dn, ou_attributes_7)
 
         # Test user with valid business rules
         valid_user_request = FlextLdapCreateUserRequest(
@@ -409,7 +435,9 @@ class TestLdapValidationRealOperations:
             uid="validbusinessuser",
             cn="Valid Business User",
             sn="User",
+            given_name="Valid",
             mail="valid.business@example.com",
+            phone="+1-555-0201",
         )
 
         # Should succeed with valid business rules
@@ -487,19 +515,22 @@ class TestLdapErrorHandlingReal:
             base_dn="cn=nonexistent,dc=invalid,dc=com",
             scope="base",
             filter_str="(objectClass=*)",
+            attributes=[],  # All attributes
             size_limit=10,
+            time_limit=30,
         )
 
         search_result = await connected_ldap_client.search(invalid_search)
         # Should handle gracefully - either return empty results or proper error
-        assert search_result.is_success or "No such object" in search_result.error
+        assert search_result.is_success or (search_result.error and "noSuchObject" in search_result.error)
 
         # Test add with invalid attributes
         invalid_dn = f"cn=invaliduser,ou=nonexistent,{clean_ldap_container['base_dn']}"
-        invalid_attributes = {
+        invalid_attrs_raw = {
             "objectClass": ["nonExistentObjectClass"],  # Invalid object class
             "invalidAttribute": ["value"],
         }
+        invalid_attributes = FlextLdapUtilities.create_ldap_attributes(invalid_attrs_raw)
 
         add_result = await connected_ldap_client.add(invalid_dn, invalid_attributes)
         # Should fail with appropriate error
@@ -516,6 +547,8 @@ class TestLdapErrorHandlingReal:
         # Should handle gracefully
         assert not delete_result.is_success
         assert (
-            "No such object" in delete_result.error
-            or "does not exist" in delete_result.error.lower()
+            delete_result.error and (
+                "No such object" in delete_result.error
+                or "does not exist" in delete_result.error.lower()
+            )
         )

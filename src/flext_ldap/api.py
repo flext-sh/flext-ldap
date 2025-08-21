@@ -10,7 +10,7 @@ import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from flext_core import FlextEntityStatus, FlextResult, get_logger
+from flext_core import FlextEntityId, FlextEntityStatus, FlextResult, get_logger
 
 from flext_ldap.configuration import FlextLdapSettings
 from flext_ldap.container import get_ldap_container
@@ -160,6 +160,7 @@ class FlextLdapApi:
 
             # Create entry
             entry = FlextLdapEntry(
+                id=FlextEntityId(f"api_entry_{str(entry_dn).replace(',', '_').replace('=', '_')}"),
                 dn=str(entry_dn),
                 object_classes=object_classes,
                 attributes=dict(entry_data),
@@ -213,6 +214,7 @@ class FlextLdapApi:
         """Create group using proper service layer."""
         # Create group entity with required status
         group = FlextLdapGroup(
+            id=FlextEntityId(f"api_group_{dn.replace(',', '_').replace('=', '_')}"),
             dn=dn,
             cn=cn,
             description=description,

@@ -10,7 +10,13 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-from flext_core import FlextEntityId, FlextEntityStatus, FlextResult, get_flext_container, get_logger
+from flext_core import (
+    FlextEntityId,
+    FlextEntityStatus,
+    FlextResult,
+    get_flext_container,
+    get_logger,
+)
 
 from flext_ldap.constants import FlextLdapValidationMessages
 from flext_ldap.models import (
@@ -19,6 +25,7 @@ from flext_ldap.models import (
     FlextLdapGroup,
     FlextLdapUser,
 )
+from flext_ldap.utils import FlextLdapUtilities
 from flext_ldap.value_objects import (
     FlextLdapDistinguishedName,
     FlextLdapFilter,
@@ -41,8 +48,8 @@ class FlextLdapOperationsBase:
 
     def _generate_id(self) -> str:
         """Generate ID using container ID generator or UUID."""
-        if self._id_generator and callable(getattr(self._id_generator, "generate", None)):
-            generator_method = getattr(self._id_generator, "generate")
+        if self._id_generator and hasattr(self._id_generator, "generate") and callable(self._id_generator.generate):
+            generator_method = self._id_generator.generate
             return str(generator_method())
         return str(uuid.uuid4())
 
@@ -460,8 +467,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
     ) -> list[FlextLdapUser]:
         """Convert entries to users - REUSABLE HELPER."""
         # Optimized with list comprehension for better performance
-        from flext_ldap.utils import FlextLdapUtilities
-        
+
         users = []
         for entry in entries:
             # Extract required fields with type safety
@@ -471,8 +477,9 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
             given_name = FlextLdapUtilities.safe_str_attribute(entry.attributes, "givenName")
             mail = FlextLdapUtilities.safe_str_attribute(entry.attributes, "mail")
             phone = FlextLdapUtilities.safe_str_attribute(entry.attributes, "telephoneNumber")
-            
+
             users.append(FlextLdapUser(
+                id=FlextEntityId(f"user_{uuid.uuid4().hex[:8]}"),
                 dn=entry.dn,
                 uid=uid,
                 cn=cn,
@@ -491,14 +498,12 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
         entries: list[FlextLdapEntry],
     ) -> list[FlextLdapGroup]:
         """Convert entries to groups - REUSABLE HELPER."""
-        from flext_ldap.utils import FlextLdapUtilities
-        
         groups = []
         for entry in entries:
             # Extract required fields with type safety
             cn = FlextLdapUtilities.safe_str_attribute(entry.attributes, "cn") or "unknown"
             description = FlextLdapUtilities.safe_str_attribute(entry.attributes, "description")
-            
+
             # Extract members from attributes
             members_value = entry.attributes.get("member", [])
             if isinstance(members_value, list):
@@ -507,8 +512,9 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
                 members = [members_value] if members_value else []
             else:
                 members = []
-            
+
             groups.append(FlextLdapGroup(
+                id=FlextEntityId(f"group_{uuid.uuid4().hex[:8]}"),
                 dn=entry.dn,
                 cn=cn,
                 description=description,
@@ -549,11 +555,9 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
                     "Entry must have at least one object class"
                 )
 
-            # Use REFACTORED ID generation - NO DUPLICATION
-            entry_id = self._generate_id()
-
             # Create entry entity with validation
             entry = FlextLdapEntry(
+                id=FlextEntityId(f"entry_{uuid.uuid4().hex[:8]}"),
                 dn=dn,
                 object_classes=object_classes,
                 attributes=attributes,

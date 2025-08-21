@@ -12,7 +12,10 @@ from typing import ClassVar, TypeVar, cast
 from urllib.parse import urlparse
 
 from flext_ldap.constants import FlextLdapValidationMessages
-from flext_ldap.typings import LdapAttributeDict as UtilsLdapAttributeDict
+from flext_ldap.typings import (
+    LdapAttributeDict as UtilsLdapAttributeDict,
+    LdapAttributeValue,
+)
 
 T = TypeVar("T")
 
@@ -109,16 +112,25 @@ class FlextLdapUtilities:
         value = attributes.get(key)
         if value is None:
             return None
-        
+
         if isinstance(value, str):
             return value if value.strip() else None
-        elif isinstance(value, list) and value:
+        if isinstance(value, list) and value:
             # Take first value from list
             first_val = value[0]
             return str(first_val).strip() if first_val else None
-        else:
-            # Convert to string
-            return str(value).strip() if value else None
+        # Convert to string
+        return str(value).strip() if value else None
+
+    @staticmethod
+    def create_ldap_attributes(attrs: dict[str, list[str]]) -> LdapAttributeDict:
+        """Create LdapAttributeDict from dict with proper typing."""
+        result: LdapAttributeDict = {}
+        for key, value in attrs.items():
+            # Since input is already typed as dict[str, list[str]], value is always list[str]
+            attr_value: LdapAttributeValue = [str(item) for item in value]
+            result[key] = attr_value
+        return result
 
 
 class FlextLdapPerformanceHelpers:

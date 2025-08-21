@@ -19,6 +19,7 @@ import time
 from pathlib import Path
 
 import docker
+from docker import errors as docker_errors
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ def start_openldap_container() -> bool:
                 existing.stop()
             finally:
                 existing.remove(force=True)
-        except docker.errors.NotFound:
+        except docker_errors.NotFound:
             logger.debug("No existing container to stop", exc_info=True)
 
         # Start new container
@@ -92,7 +93,7 @@ def stop_openldap_container() -> None:
                 c.stop()
             finally:
                 c.remove(force=True)
-        except docker.errors.NotFound:
+        except docker_errors.NotFound:
             logger.debug("Container not found when stopping", exc_info=True)
     except (RuntimeError, ValueError, TypeError) as e:
         logger.warning("Failed to stop container: %s", e)

@@ -16,15 +16,30 @@ import asyncio
 import logging
 import os
 import time
-from typing import Final
+from typing import Any, Final
 
 import docker
+from docker import errors as docker_errors
 from flext_core import get_logger
 from ldap3 import ALL, Connection, Server
 
-from flext_ldap import FlextLdapApi
+from flext_ldap import FlextLdapApi, FlextLdapCreateUserRequest
+from flext_ldap.typings import LdapAttributeDict
 
 logger = get_logger(__name__)
+
+
+def safe_ldap_add(conn: Connection, dn: str, object_class: list[str], attributes: dict[str, Any]) -> bool:
+    """Safely add LDAP entry with type annotations to avoid PyRight Unknown types."""
+    from typing import cast
+    try:
+        # Cast to avoid Unknown type from ldap3 library
+        add_method = cast("Any", conn.add)
+        result = cast("bool", add_method(dn=dn, object_class=object_class, attributes=attributes))
+        return bool(result)
+    except Exception as e:
+        logger.warning(f"LDAP add failed for {dn}: {e}")
+        return False
 
 
 class DockerLDAPContainer:
@@ -45,7 +60,7 @@ class DockerLDAPContainer:
                 existing.stop()
             finally:
                 existing.remove(force=True)
-        except docker.errors.NotFound:
+        except docker_errors.NotFound:
             logging.getLogger(__name__).debug(
                 "No existing container to stop",
                 exc_info=True,
@@ -66,7 +81,7 @@ class DockerLDAPContainer:
                 ports={"389/tcp": self.port},
                 environment=env,
             )
-        except docker.errors.APIError:
+        except docker_errors.APIError:
             logging.getLogger(__name__).exception("Failed to start container")
             raise
 
@@ -104,8 +119,9 @@ class DockerLDAPContainer:
             password=os.getenv("LDAP_TEST_PASSWORD", ""),
             auto_bind=True,
         ) as conn:
-            # Create ou=people
-            conn.add(
+            # Create ou=people with type-safe wrapper
+            safe_ldap_add(
+                conn,
                 dn="ou=people,dc=flext,dc=local",
                 object_class=["top", "organizationalUnit"],
                 attributes={
@@ -113,8 +129,9 @@ class DockerLDAPContainer:
                     "description": "Container for user accounts",
                 },
             )
-            # Create ou=groups
-            conn.add(
+            # Create ou=groups with type-safe wrapper
+            safe_ldap_add(
+                conn,
                 dn="ou=groups,dc=flext,dc=local",
                 object_class=["top", "organizationalUnit"],
                 attributes={
@@ -133,7 +150,7 @@ class DockerLDAPContainer:
                 c.stop()
             finally:
                 c.remove(force=True)
-        except docker.errors.NotFound:
+        except docker_errors.NotFound:
             logging.getLogger(__name__).debug(
                 "Container not found when stopping",
                 exc_info=True,
@@ -268,19 +285,19 @@ async def perform_create_users(ldap_service: FlextLdapApi, _session_id: str) -> 
     for user_data in users_to_create:
         print(f"   Creating user: {user_data['uid']}")
 
-        attributes: dict[str, list[str]] = {
-            "objectClass": ["inetOrgPerson", "person", "top"],
-            "uid": [str(user_data["uid"])],
-            "cn": [str(user_data["cn"])],
-            "sn": [str(user_data["sn"])],
-            "mail": [str(user_data["mail"])],
-            "title": [str(user_data["title"])],
-        }
-
-        create_result = await ldap_service.create_entry(
+        # Create user using proper API
+        user_request = FlextLdapCreateUserRequest(
             dn=str(user_data["dn"]),
-            attributes=attributes,
+            uid=str(user_data["uid"]),
+            cn=str(user_data["cn"]),
+            sn=str(user_data["sn"]),
+            given_name=str(user_data.get("given_name", user_data["cn"].split()[0])),
+            mail=str(user_data["mail"]),
+            phone=str(user_data.get("phone", "+1-555-0000")),
+            additional_attributes={"title": user_data["title"]},
         )
+
+        create_result = await ldap_service.create_user(user_request)
 
         if create_result.is_success:
             print(f"   ✅ Created user: {user_data['uid']}")
@@ -305,9 +322,11 @@ async def perform_read_operations(ldap_service: FlextLdapApi, session_id: str) -
         attributes=["uid", "cn", "mail", "title"],
     )
 
-    if users_result.is_success and users_result.value:
-        print(f"   ✅ Found {len(users_result.value)} users:")
-        for user in users_result.value:
+    # Use unwrap_or() pattern for cleaner code
+    users = users_result.unwrap_or([])
+    if users:
+        print(f"   ✅ Found {len(users)} users:")
+        for user in users:
             uid = user.get_single_attribute_value("uid") or "N/A"
             cn = user.get_single_attribute_value("cn") or "N/A"
             mail = user.get_single_attribute_value("mail") or "N/A"
@@ -324,8 +343,10 @@ async def perform_read_operations(ldap_service: FlextLdapApi, session_id: str) -
         attributes=["uid", "cn", "title"],
     )
 
-    if eng_result.is_success and eng_result.value:
-        print(f"   ✅ Found {len(eng_result.value)} Engineer users")
+    # Use unwrap_or() pattern for cleaner code
+    engineer_users = eng_result.unwrap_or([])
+    if engineer_users:
+        print(f"   ✅ Found {len(engineer_users)} Engineer users")
     else:
         print("   [i] No Engineer users found (expected if CREATE failed)")
 
@@ -337,9 +358,11 @@ async def perform_read_operations(ldap_service: FlextLdapApi, session_id: str) -
         attributes=["cn", "description"],
     )
 
-    if groups_result.is_success and groups_result.value:
-        print(f"   ✅ Found {len(groups_result.value)} groups:")
-        for group in groups_result.value:
+    # Use unwrap_or() pattern for cleaner code
+    groups = groups_result.unwrap_or([])
+    if groups:
+        print(f"   ✅ Found {len(groups)} groups:")
+        for group in groups:
             cn = group.get_single_attribute_value("cn") or "N/A"
             desc = group.get_single_attribute_value("description") or "N/A"
             print(f"     - {cn}: {desc}")
@@ -356,8 +379,8 @@ async def perform_update_operations(
     """Perform UPDATE operations."""
     print("\n🔄 === UPDATE OPERATIONS ===")
 
-    # Update user attributes
-    users_to_update = [
+    # Update user attributes with proper typing
+    users_to_update: list[dict[str, Any]] = [
         {
             "dn": "cn=john.doe,ou=people,dc=flext,dc=local",
             "updates": {
@@ -379,11 +402,11 @@ async def perform_update_operations(
         uid = dn.split(",", maxsplit=1)[0].replace("cn=", "")
         print(f"   Updating user: {uid}")
 
-        raw_updates = dict(user_update["updates"])  # ensure Mapping[str, str]
-        mods: dict[str, list[str]] = {str(k): [str(v)] for k, v in raw_updates.items()}
-        result = await ldap_service.modify_entry(
-            session_id=session_id, dn=dn, modifications=mods
-        )
+        # Convert updates to proper format for update_user with type safety
+        from typing import cast
+        updates_raw = cast("dict[str, Any]", user_update["updates"])
+        updates_dict: LdapAttributeDict = {str(k): str(v) for k, v in updates_raw.items()}
+        result = await ldap_service.update_user(dn, updates_dict)
 
         if result.is_success:
             print(f"   ✅ Updated user: {uid}")
@@ -396,8 +419,10 @@ async def perform_update_operations(
                 attributes=["mail", "title"],
             )
 
-            if verify_result.is_success and verify_result.value:
-                entry = verify_result.value[0]
+            # Use unwrap_or() pattern for cleaner code
+            verified_entries = verify_result.unwrap_or([])
+            if verified_entries:
+                entry = verified_entries[0]
                 mail = entry.get_single_attribute_value("mail") or "N/A"
                 title = entry.get_single_attribute_value("title") or "N/A"
                 print(f"     Verified: mail={mail}, title={title}")

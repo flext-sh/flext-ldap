@@ -25,9 +25,9 @@ import string
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
-from typing import ClassVar, Final, TypeVar, Union, cast
+from typing import ClassVar, Final, TypeVar, cast
 
-from flext_core import FlextEntityStatus, FlextResult, get_logger
+from flext_core import FlextEntityId, FlextEntityStatus, FlextResult, get_logger
 
 from flext_ldap.constants import (
     FlextLdapDefaultValues,
@@ -804,6 +804,7 @@ class UserEntityBuilder:
         from flext_ldap.models import FlextLdapUser  # noqa: PLC0415
 
         return FlextLdapUser(
+            id=FlextEntityId(f"user_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"),
             dn=str(self.params["dn"]),
             uid=self.builder.safe_str(self.params["uid"]) or "",
             cn=self.builder.safe_str(self.params["cn"]) or "",
@@ -829,6 +830,7 @@ class GroupEntityBuilder:
         from flext_ldap.models import FlextLdapGroup  # noqa: PLC0415
 
         return FlextLdapGroup(
+            id=FlextEntityId(f"group_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"),
             dn=str(self.params["dn"]),
             cn=self.builder.safe_str(self.params["cn"]) or "",
             description=self.builder.safe_str(self.params["description"]),
@@ -1060,7 +1062,7 @@ class FlextLdapDomainFactory:
 
     def _execute_operation(
         self,
-        operation: Union[Callable[[dict[str, object]], object], Callable[[object], object], None],
+        operation: Callable[[dict[str, object]], object] | Callable[[object], object] | None,
         data: object,
         operation_name: str,
     ) -> FlextResult[object]:
@@ -1075,7 +1077,7 @@ class FlextLdapDomainFactory:
             result = operation(data)  # type: ignore[arg-type]
             # Ensure result is FlextResult format
             if hasattr(result, "is_success") and hasattr(result, "value"):
-                return cast(FlextResult[object], result)
+                return cast("FlextResult[object]", result)
             # Wrap non-FlextResult returns
             return FlextResult[object].ok(result)
         except Exception as e:

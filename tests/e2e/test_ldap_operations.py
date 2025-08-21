@@ -7,6 +7,7 @@ They require a real LDAP server for full integration testing.
 from __future__ import annotations
 
 import pytest
+from pydantic import SecretStr
 
 from flext_ldap import (
     FlextLdapConnectionConfig,
@@ -52,19 +53,21 @@ class TestLdapE2EOperations:
             uid="testuser",
             cn="Test User",
             sn="User",
+            given_name="Test",
             mail="testuser@example.com",
+            phone="+1-555-0300",
         )
 
         # Test user creation request structure
         assert user_request.dn == "cn=testuser,ou=users,dc=flext,dc=local"
         assert user_request.uid == "testuser"
 
-        # Convert to LDAP attributes
-        attributes = user_request.to_ldap_attributes()
-        assert "uid" in attributes
-        assert "cn" in attributes
-        assert "sn" in attributes
-        assert "mail" in attributes
+        # Convert to user entity
+        user_entity = user_request.to_user_entity()
+        assert user_entity.uid == "testuser"
+        assert user_entity.cn == "Test User"
+        assert user_entity.sn == "User"
+        assert user_entity.mail == "testuser@example.com"
 
     @pytest.mark.asyncio
     async def test_search_operations_flow(self) -> None:
@@ -73,7 +76,6 @@ class TestLdapE2EOperations:
 
         # Test search without connection (should fail gracefully)
         search_result = await api.search(
-            session=None,  # No active session
             base_dn="dc=flext,dc=local",
             search_filter="(objectClass=person)",
         )
@@ -122,7 +124,7 @@ class TestLdapE2EOperations:
 
         auth_config = FlextLdapAuthConfig(
             bind_dn="cn=admin,dc=test,dc=local",
-            bind_password="admin123",
+            bind_password=SecretStr("admin123"),
             use_ssl=True,
         )
 
@@ -193,7 +195,9 @@ class TestLdapE2EWithDockerServer:
             uid="e2etest",
             cn="E2E Test User",
             sn="TestUser",
+            given_name="E2E",
             mail="e2etest@example.com",
+            phone="+1-555-0301",
         )
 
         assert user_request.dn == "cn=e2etest,ou=users,dc=flext,dc=local"

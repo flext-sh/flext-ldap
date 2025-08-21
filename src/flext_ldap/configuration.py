@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Final, final
+from typing import Final, final, override
 
 from flext_core import FlextConfig, FlextResult, get_logger
 from pydantic import ConfigDict, Field, SecretStr, computed_field, field_validator
@@ -46,6 +46,7 @@ class FlextLdapAuthConfig(FlextConfig):
         description="Verify SSL certificates",
     )
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate authentication configuration."""
         if not self.bind_dn.strip():
@@ -111,6 +112,7 @@ class FlextLdapConnectionConfig(FlextConfig):
             raise ValueError(msg)
         return v.strip()
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate connection configuration."""
         if not self.server.strip():
@@ -159,6 +161,7 @@ class FlextLdapSearchConfig(FlextConfig):
         le=1000,
     )
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate search configuration."""
         if self.size_limit <= 0:
@@ -199,6 +202,7 @@ class FlextLdapLoggingConfig(FlextConfig):
         description="Enable structured (JSON) logging",
     )
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate logging configuration."""
         return FlextResult[None].ok(None)
@@ -212,6 +216,7 @@ class FlextLdapSettings(FlextConfig):
         populate_by_name=True,
         extra="forbid",
         validate_assignment=True,
+        use_enum_values=True,
     )
 
     # Primary connection configuration
@@ -255,6 +260,7 @@ class FlextLdapSettings(FlextConfig):
         description="Enable test mode",
     )
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate complete settings configuration."""
         if self.default_connection:
@@ -331,7 +337,7 @@ def create_development_config() -> FlextLdapSettings:
     )
 
     return FlextLdapSettings(
-        connection=connection_config,
+        default_connection=connection_config,  # pyright: ignore[reportCallIssue]
         logging=FlextLdapLoggingConfig(
             enable_debug=True,
             log_queries=True,
@@ -357,7 +363,7 @@ def create_test_config() -> FlextLdapSettings:
     )
 
     return FlextLdapSettings(
-        connection=connection_config,
+        default_connection=connection_config,  # pyright: ignore[reportCallIssue]
         logging=FlextLdapLoggingConfig(
             enable_debug=False,
             log_queries=False,
@@ -383,7 +389,7 @@ def create_production_config() -> FlextLdapSettings:
     )
 
     return FlextLdapSettings(
-        connection=connection_config,
+        default_connection=connection_config,  # pyright: ignore[reportCallIssue]
         logging=FlextLdapLoggingConfig(
             enable_debug=False,
             log_queries=False,

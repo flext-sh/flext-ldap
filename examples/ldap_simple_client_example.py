@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
-
 import os
 
 from flext_ldap import FlextLdapClient, FlextLdapSearchRequest
@@ -77,7 +76,7 @@ async def main() -> None:
 
         if add_result.is_success:
             print("✅ Entry added")
-            
+
             # Modify entry
             modify_result = await client.modify(
                 dn="cn=testuser,dc=example,dc=com",
@@ -86,7 +85,7 @@ async def main() -> None:
 
             if modify_result.is_success:
                 print("✅ Entry modified")
-                
+
                 # Delete entry
                 delete_result = await client.delete(
                     dn="cn=testuser,dc=example,dc=com"

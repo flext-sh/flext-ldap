@@ -597,10 +597,10 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
             }
         )
 
-    def _execute_user_search(self, client: FlextLdapClient, params: object) -> object:
+    def _execute_user_search(self, client: FlextLdapClient, params: object) -> FlextResult[object]:
         """Execute the user search operation."""
         if not isinstance(params, dict):
-            return {"success": False, "error": "Invalid search parameters"}
+            return FlextResult[object].fail("Invalid search parameters")
 
         # Create proper search request
         search_request = FlextLdapSearchRequest(
@@ -612,7 +612,8 @@ class FlextLdapUserInfoCommand(FlextLdapCliBase):
             time_limit=30,
         )
 
-        return _execute_async_operation(client.search(search_request))
+        result = _execute_async_operation(client.search(search_request))
+        return cast("FlextResult[object]", result)
 
     def _process_user_search_results(
         self,

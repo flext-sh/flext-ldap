@@ -5,6 +5,18 @@ Tests pure domain logic and business rules without external dependencies.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+from typing import Any
+
+from flext_core import (
+    FlextEntityId,
+    FlextEntityStatus,
+    FlextEventList,
+    FlextMetadata,
+    FlextTimestamp,
+    FlextVersion,
+)
+
 from flext_ldap import (
     FlextLdapCreateUserRequest,
     FlextLdapDistinguishedName,
@@ -63,15 +75,25 @@ class TestFlextLdapDistinguishedName:
 class TestFlextLdapUser:
     """Test LDAP user entity with real business logic."""
 
-    def create_test_user(self, **kwargs: object) -> FlextLdapUser:
-        """Helper to create test user with defaults."""
-        defaults = {
+    def create_test_user(self, **kwargs: Any) -> FlextLdapUser:
+        """Helper to create test user with defaults using Any for kwargs."""
+        defaults: dict[str, Any] = {
+            "id": FlextEntityId("test_user"),
+            "version": FlextVersion(1),
+            "created_at": FlextTimestamp(datetime.now(UTC)),
+            "updated_at": FlextTimestamp(datetime.now(UTC)),
+            "domain_events": FlextEventList([]),
+            "metadata": FlextMetadata({}),
             "dn": "cn=testuser,ou=users,dc=example,dc=com",
             "uid": "testuser",
             "cn": "Test User",
             "sn": "User",
+            "given_name": "Test",
+            "mail": "testuser@example.com",
+            "phone": "+1-555-0123",
             "object_classes": ["inetOrgPerson", "person"],
             "attributes": {},
+            "status": FlextEntityStatus.ACTIVE,
         }
         defaults.update(kwargs)
         return FlextLdapUser(**defaults)
@@ -151,14 +173,22 @@ class TestFlextLdapUser:
 class TestFlextLdapGroup:
     """Test LDAP group entity with real business logic."""
 
-    def create_test_group(self, **kwargs: object) -> FlextLdapGroup:
-        """Helper to create test group with defaults."""
-        defaults = {
+    def create_test_group(self, **kwargs: Any) -> FlextLdapGroup:
+        """Helper to create test group with defaults using Any for kwargs."""
+        defaults: dict[str, Any] = {
+            "id": FlextEntityId("test_group"),
+            "version": FlextVersion(1),
+            "created_at": FlextTimestamp(datetime.now(UTC)),
+            "updated_at": FlextTimestamp(datetime.now(UTC)),
+            "domain_events": FlextEventList([]),
+            "metadata": FlextMetadata({}),
             "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
             "cn": "Test Group",
+            "description": "Test group for unit testing",
             "object_classes": ["groupOfNames"],
             "attributes": {},
             "members": [],
+            "status": FlextEntityStatus.ACTIVE,
         }
         defaults.update(kwargs)
         return FlextLdapGroup(**defaults)
@@ -245,12 +275,19 @@ class TestFlextLdapGroup:
 class TestFlextLdapEntry:
     """Test generic LDAP entry with real attribute handling."""
 
-    def create_test_entry(self, **kwargs: object) -> FlextLdapEntry:
-        """Helper to create test entry with defaults."""
-        defaults = {
+    def create_test_entry(self, **kwargs: Any) -> FlextLdapEntry:
+        """Helper to create test entry with defaults using Any for kwargs."""
+        defaults: dict[str, Any] = {
+            "id": FlextEntityId("test_entry"),
+            "version": FlextVersion(1),
+            "created_at": FlextTimestamp(datetime.now(UTC)),
+            "updated_at": FlextTimestamp(datetime.now(UTC)),
+            "domain_events": FlextEventList([]),
+            "metadata": FlextMetadata({}),
             "dn": "cn=testentry,dc=example,dc=com",
             "object_classes": ["top", "person"],
             "attributes": {"cn": ["test"], "sn": ["entry"]},
+            "status": FlextEntityStatus.ACTIVE,
         }
         defaults.update(kwargs)
         return FlextLdapEntry(**defaults)
@@ -318,6 +355,9 @@ class TestFlextLdapCreateUserRequest:
             uid="newuser",
             cn="New User",
             sn="User",
+            given_name="New",
+            mail="newuser@example.com",
+            phone="+1-555-0100",
         )
 
         assert request.dn == "cn=newuser,ou=users,dc=example,dc=com"
@@ -350,7 +390,9 @@ class TestFlextLdapCreateUserRequest:
             uid="convertuser",
             cn="Convert User",
             sn="User",
+            given_name="Convert",
             mail="convert@example.com",
+            phone="+1-555-0102",
         )
 
         user_entity = request.to_user_entity()
@@ -370,8 +412,9 @@ class TestFlextLdapCreateUserRequest:
             uid="ldapuser",
             cn="LDAP User",
             sn="User",
-            mail="ldap@example.com",
             given_name="LDAP",
+            mail="ldap@example.com",
+            phone="+1-555-0103",
         )
 
         user_entity = request.to_user_entity()
@@ -390,6 +433,9 @@ class TestFlextLdapCreateUserRequest:
             uid="validuser",
             cn="Valid User",
             sn="User",
+            given_name="Valid",
+            mail="validuser@example.com",
+            phone="+1-555-0104",
         )
 
         # Test that valid request creates user entity correctly
@@ -413,21 +459,29 @@ class TestBusinessRulesIntegration:
         """Test business rules that span multiple entities."""
         # Create user
         user = FlextLdapUser(
+            id=FlextEntityId("test_cross_user"),
             dn="cn=crossuser,ou=users,dc=example,dc=com",
             uid="crossuser",
             cn="Cross User",
             sn="User",
+            given_name="Cross",
+            mail="crossuser@example.com",
+            phone="+1-555-0199",
             object_classes=["inetOrgPerson", "person"],
             attributes={},
+            status=FlextEntityStatus.ACTIVE,
         )
 
         # Create group with user as member
         group = FlextLdapGroup(
+            id=FlextEntityId("test_cross_group"),
             dn="cn=crossgroup,ou=groups,dc=example,dc=com",
             cn="Cross Group",
+            description="Cross-validation test group",
             object_classes=["groupOfNames"],
             attributes={},
             members=[user.dn],
+            status=FlextEntityStatus.ACTIVE,
         )
 
         # Both should validate successfully
@@ -446,6 +500,9 @@ class TestBusinessRulesIntegration:
             uid="consistent",
             cn="Consistent User",
             sn="User",
+            given_name="Consistent",
+            mail="consistent@example.com",
+            phone="+1-555-0105",
         )
 
         # Convert to entity
