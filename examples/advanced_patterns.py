@@ -172,8 +172,11 @@ async def demonstrate_async_patterns() -> None:
         ) as (api, session_id):
             print(f"✅ Session established: {session_id}")
 
-            # 2. Concurrent operations (simulated)
-            tasks = []
+            # 2. Concurrent operations (simulated) with proper typing
+            from collections.abc import Awaitable
+            from typing import Any
+
+            tasks: list[Awaitable[Any]] = []
             search_bases = [
                 "ou=users,dc=example,dc=com",
                 "ou=groups,dc=example,dc=com",
@@ -189,13 +192,14 @@ async def demonstrate_async_patterns() -> None:
                 )
                 tasks.append(task)
 
-            # Execute concurrent searches
-            results = await asyncio.gather(*tasks, return_exceptions=True)
+            # Execute concurrent searches with proper typing
+            results: list[Any | BaseException] = await asyncio.gather(*tasks, return_exceptions=True)
 
             successful_searches = sum(
                 1
                 for result in results
                 if not isinstance(result, Exception)
+                and hasattr(result, "is_success")
                 and getattr(result, "is_success", False)
             )
 

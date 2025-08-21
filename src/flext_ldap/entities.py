@@ -345,6 +345,7 @@ class FlextLdapCreateUserRequest(FlextModel):
             attributes["telephoneNumber"] = self.phone
 
         return FlextLdapUser(
+            id=FlextEntityId(f"user_req_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"),
             dn=self.dn,
             uid=self.uid,
             cn=self.cn,

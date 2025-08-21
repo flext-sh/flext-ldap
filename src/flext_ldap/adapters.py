@@ -90,7 +90,7 @@ class OperationResult(FlextModel):
         """Ensure error message is provided when success is False."""
         try:
             # pydantic v2 provides ValidationInfo with data attribute
-            values_raw = getattr(info, "data", {}) if hasattr(info, "data") else {}
+            values_raw = info.data if hasattr(info, "data") else {}
             if isinstance(values_raw, dict) and "success" in values_raw:
                 # Type-safe access to success value using utilities
                 values = FlextLdapUtilities.safe_dict_comprehension(values_raw)
@@ -677,8 +677,13 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 ),
             )
 
-            if result.success and result.data:
-                protocol_entries = self._convert_entries_to_protocol(result.data)
+            # Check if result has unwrap_or method (FlextResult) otherwise use manual extraction
+            if hasattr(result, "unwrap_or"):
+                entries = result.unwrap_or([])
+            else:
+                entries = result.value if hasattr(result, "value") and getattr(result, "success", False) else []
+            if entries:
+                protocol_entries = self._convert_entries_to_protocol(entries)
                 return FlextResult[list[FlextLdapDirectoryEntryProtocol]].ok(
                     protocol_entries
                 )

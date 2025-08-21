@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextEntityStatus, FlextResult, get_logger
+from flext_core import FlextEntityId, FlextEntityStatus, FlextResult, get_logger
 
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.entities import (
@@ -70,6 +70,7 @@ class FlextLdapRepository(IFlextLdapRepository):
 
         # Create entry
         entry = FlextLdapEntry(
+            id=FlextEntityId(f"repo_entry_{dn.replace(',', '_').replace('=', '_')}"),
             dn=dn,
             object_classes=object_classes,
             attributes=dict(entry_data),

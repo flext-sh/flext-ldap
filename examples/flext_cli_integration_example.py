@@ -28,11 +28,8 @@ class FlextLdapCLI:
     def __init__(self) -> None:
         self.config = get_config()
         self.ldap_api = get_ldap_api()
-        self.context = CLIContext(
-            config={"ldap_server": "localhost", "ldap_port": 389},
-            debug=True,
-            verbose=True,
-        )
+        # Create CLI context with available parameters
+        self.context = CLIContext()
 
     @cli_enhanced
     @cli_validate_inputs
@@ -46,8 +43,6 @@ class FlextLdapCLI:
             execution_context = CLIExecutionContext(
                 command_name="list_users",
                 command_args={"base_dn": base_dn},
-                config=self.context.config,
-                debug=True,
             )
 
             # Dados simulados de usuários
@@ -77,10 +72,10 @@ class FlextLdapCLI:
                 "execution_context": execution_context.get_execution_info(),
             }
 
-            return FlextResult[None].ok(result)
+            return FlextResult[dict[str, Any]].ok(result)
 
         except Exception as e:
-            return FlextResult[None].fail(f"Erro ao listar usuários: {e}")
+            return FlextResult[dict[str, Any]].fail(f"Erro ao listar usuários: {e}")
 
     @cli_enhanced
     @cli_validate_inputs
@@ -99,8 +94,6 @@ class FlextLdapCLI:
                     "full_name": full_name,
                     "email": email,
                 },
-                config=self.context.config,
-                debug=True,
             )
 
             # Simulação de criação de usuário
@@ -112,7 +105,9 @@ class FlextLdapCLI:
                 uid=username,
                 cn=full_name,
                 sn=full_name.rsplit(maxsplit=1)[-1] if " " in full_name else full_name,
+                given_name=full_name.split()[0] if " " in full_name else full_name,
                 mail=email,
+                phone="+1-555-0000",  # Default phone
             )
 
             result = {
@@ -131,10 +126,10 @@ class FlextLdapCLI:
                 "execution_context": execution_context.get_execution_info(),
             }
 
-            return FlextResult[None].ok(result)
+            return FlextResult[dict[str, Any]].ok(result)
 
         except Exception as e:
-            return FlextResult[None].fail(f"Erro ao criar usuário: {e}")
+            return FlextResult[dict[str, Any]].fail(f"Erro ao criar usuário: {e}")
 
     def format_and_display(
         self,
@@ -152,15 +147,19 @@ async def main() -> None:
 
     # Teste 1: Listar usuários
 
-    result = await cli.list_users("ou=users,dc=example,dc=com")
-    if result.is_success:
-        cli.format_and_display(result.data, OutputFormat.JSON)
+    result = await cli.list_users(base_dn="ou=users,dc=example,dc=com")
+    # Use FlextResult's unwrap_or method for cleaner code
+    data = result.unwrap_or({})
+    if data:
+        cli.format_and_display(data, OutputFormat.JSON)
 
     # Teste 2: Criar usuário
 
-    result = await cli.create_user("testuser", "Test User", "test@example.com")
-    if result.is_success:
-        cli.format_and_display(result.data, OutputFormat.JSON)
+    result = await cli.create_user(username="testuser", full_name="Test User", email="test@example.com")
+    # Use FlextResult's unwrap_or method for cleaner code
+    data = result.unwrap_or({})
+    if data:
+        cli.format_and_display(data, OutputFormat.JSON)
 
     # Teste 3: Demonstrar configuração
 
