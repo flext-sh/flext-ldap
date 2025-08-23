@@ -9,15 +9,6 @@ from urllib.parse import urlparse
 
 import ldap3
 from flext_core import FlextResult, get_logger
-from ldap3 import (
-    ALL_ATTRIBUTES,
-    BASE,
-    LEVEL,
-    MODIFY_REPLACE,
-    SUBTREE,
-    Connection as Ldap3Connection,
-    Server,
-)
 from ldap3.core.exceptions import LDAPException
 
 from flext_ldap.entities import FlextLdapSearchRequest, FlextLdapSearchResponse
@@ -27,20 +18,18 @@ from flext_ldap.utils import FlextLdapUtilities
 
 logger = get_logger(__name__)
 
-# Resolve SUBORDINATES variant safely (default to SUBTREE if not provided)
-LDAP_SUBORDINATES = getattr(ldap3, "SUBORDINATES", SUBTREE)
-
 # Valid LDAP scope literals for ldap3
 LdapScope = Literal["BASE", "LEVEL", "SUBTREE"]
 
 # Scope mapping - ldap3 constants
 SCOPE_MAP: dict[str, LdapScope] = {
-    "base": cast("LdapScope", BASE),
-    "one": cast("LdapScope", LEVEL),
-    "onelevel": cast("LdapScope", LEVEL),
-    "sub": cast("LdapScope", SUBTREE),
-    "subtree": cast("LdapScope", SUBTREE),
-    "subordinates": cast("LdapScope", LDAP_SUBORDINATES),
+    "base": cast("LdapScope", ldap3.BASE),
+    "ldap3.BASE": cast("LdapScope", ldap3.BASE),
+    "one": cast("LdapScope", ldap3.LEVEL),
+    "onelevel": cast("LdapScope", ldap3.LEVEL),
+    "sub": cast("LdapScope", ldap3.SUBTREE),
+    "subtree": cast("LdapScope", ldap3.SUBTREE),
+    "subordinates": cast("LdapScope", ldap3.SUBTREE),
 }
 
 
@@ -49,8 +38,8 @@ class FlextLdapClient(IFlextLdapClient):
 
     def __init__(self) -> None:
         """Initialize LDAP client."""
-        self._connection: Ldap3Connection | None = None
-        self._server: Server | None = None
+        self._connection: ldap3.Connection | None = None
+        self._server: ldap3.Server | None = None
 
     @override
     async def connect(self, uri: str, bind_dn: str, password: str) -> FlextResult[None]:
@@ -63,7 +52,7 @@ class FlextLdapClient(IFlextLdapClient):
             port = parsed.port or (636 if use_ssl else 389)
 
             # Create server
-            self._server = Server(
+            self._server = ldap3.Server(
                 host=host,
                 port=port,
                 use_ssl=use_ssl,
@@ -72,7 +61,7 @@ class FlextLdapClient(IFlextLdapClient):
             )
 
             # Create connection
-            self._connection = Ldap3Connection(
+            self._connection = ldap3.Connection(
                 self._server,
                 user=bind_dn,
                 password=password,
@@ -84,24 +73,28 @@ class FlextLdapClient(IFlextLdapClient):
                 return FlextResult[None].fail("Failed to bind to LDAP server")
 
             logger.info(
-                "Connected to LDAP server", extra={"uri": uri, "bind_dn": bind_dn},
+                "Connected to LDAP server",
+                extra={"uri": uri, "bind_dn": bind_dn},
             )
             return FlextResult[None].ok(None)
 
         except LDAPException as e:
             logger.exception(
-                "LDAP connection failed", extra={"error": str(e), "uri": uri},
+                "LDAP connection failed",
+                extra={"error": str(e), "uri": uri},
             )
             return FlextResult[None].fail(f"LDAP connection failed: {e}")
         except Exception as e:
             logger.exception(
-                "Unexpected connection error", extra={"error": str(e), "uri": uri},
+                "Unexpected connection error",
+                extra={"error": str(e), "uri": uri},
             )
             return FlextResult[None].fail(f"Connection error: {e}")
 
     @override
     async def search(
-        self, request: FlextLdapSearchRequest,
+        self,
+        request: FlextLdapSearchRequest,
     ) -> FlextResult[FlextLdapSearchResponse]:
         """Perform LDAP search."""
         if not self._connection or not self._connection.bound:
@@ -111,7 +104,9 @@ class FlextLdapClient(IFlextLdapClient):
 
         try:
             # Map scope to ldap3 constant
-            scope: LdapScope = SCOPE_MAP.get(request.scope.lower(), cast("LdapScope", SUBTREE))
+            scope: LdapScope = SCOPE_MAP.get(
+                request.scope.lower(), cast("LdapScope", ldap3.SUBTREE)
+            )
 
             # Use utility to safely handle ldap3 search result
             connection_obj: object = cast("object", self._connection)
@@ -121,27 +116,37 @@ class FlextLdapClient(IFlextLdapClient):
                 search_base=request.base_dn,
                 search_filter=request.filter_str,
                 search_scope=scope,
-                attributes=request.attributes or ALL_ATTRIBUTES,
+                attributes=request.attributes or ldap3.ALL_ATTRIBUTES,
                 size_limit=request.size_limit,
                 time_limit=request.time_limit,
             )
             success: bool = FlextLdapUtilities.safe_ldap3_search_result(search_result)
 
             if not success:
-                error_message: str = FlextLdapUtilities.safe_ldap3_connection_result(connection_obj)
-                return FlextResult[FlextLdapSearchResponse].fail(f"Search failed: {error_message}")
+                error_message: str = FlextLdapUtilities.safe_ldap3_connection_result(
+                    connection_obj
+                )
+                return FlextResult[FlextLdapSearchResponse].fail(
+                    f"Search failed: {error_message}"
+                )
 
             # Convert entries to our format using utilities
             entries: list[LdapSearchResult] = []
-            connection_entries: list[object] = FlextLdapUtilities.safe_ldap3_entries_list(self._connection)
+            connection_entries: list[object] = (
+                FlextLdapUtilities.safe_ldap3_entries_list(self._connection)
+            )
 
             for entry in connection_entries:
                 entry_dn: str = FlextLdapUtilities.safe_ldap3_entry_dn(entry)
                 entry_data: LdapSearchResult = {"dn": entry_dn}
 
-                entry_attributes: list[str] = FlextLdapUtilities.safe_ldap3_entry_attributes_list(entry)
+                entry_attributes: list[str] = (
+                    FlextLdapUtilities.safe_ldap3_entry_attributes_list(entry)
+                )
                 for attr_name in entry_attributes:
-                    attr_values: list[str] = FlextLdapUtilities.safe_ldap3_attribute_values(entry, attr_name)
+                    attr_values: list[str] = (
+                        FlextLdapUtilities.safe_ldap3_attribute_values(entry, attr_name)
+                    )
                     if len(attr_values) == 1:
                         entry_data[attr_name] = attr_values[0]
                     elif attr_values:  # Only add non-empty lists
@@ -203,7 +208,7 @@ class FlextLdapClient(IFlextLdapClient):
             # Convert attributes to modification list
             changes = {}
             for attr_name, attr_value in attributes.items():
-                changes[attr_name] = [(MODIFY_REPLACE, attr_value)]
+                changes[attr_name] = [(ldap3.MODIFY_REPLACE, attr_value)]
 
             success = self._connection.modify(dn, changes)  # type: ignore[no-untyped-call]
             if not success:
@@ -219,7 +224,8 @@ class FlextLdapClient(IFlextLdapClient):
             return FlextResult[None].fail(f"Modify failed: {e}")
         except Exception as e:
             logger.exception(
-                "Unexpected modify error", extra={"error": str(e), "dn": dn},
+                "Unexpected modify error",
+                extra={"error": str(e), "dn": dn},
             )
             return FlextResult[None].fail(f"Modify error: {e}")
 
@@ -244,7 +250,8 @@ class FlextLdapClient(IFlextLdapClient):
             return FlextResult[None].fail(f"Delete failed: {e}")
         except Exception as e:
             logger.exception(
-                "Unexpected delete error", extra={"error": str(e), "dn": dn},
+                "Unexpected delete error",
+                extra={"error": str(e), "dn": dn},
             )
             return FlextResult[None].fail(f"Delete error: {e}")
 
@@ -256,9 +263,13 @@ class FlextLdapClient(IFlextLdapClient):
 
         try:
             # Use utility to safely handle ldap3 rebind result
-            success: bool = FlextLdapUtilities.safe_ldap3_rebind_result(self._connection, dn, password)
+            success: bool = FlextLdapUtilities.safe_ldap3_rebind_result(
+                self._connection, dn, password
+            )
             if not success:
-                error_message: str = FlextLdapUtilities.safe_ldap3_connection_result(self._connection)
+                error_message: str = FlextLdapUtilities.safe_ldap3_connection_result(
+                    self._connection
+                )
                 return FlextResult[None].fail(f"Bind failed: {error_message}")
 
             logger.debug("Bind successful", extra={"dn": dn})

@@ -27,8 +27,13 @@ from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import ClassVar, Final, TypeVar, cast, override
 
-from flext_core import FlextEntityId, FlextEntityStatus, FlextResult, get_logger
-from flext_core.typings import FlextTypes
+from flext_core import (
+    FlextEntityId,
+    FlextEntityStatus,
+    FlextResult,
+    FlextTypes,
+    get_logger,
+)
 
 from flext_ldap.constants import (
     FlextLdapDefaultValues,
@@ -51,7 +56,7 @@ MIN_USERNAME_LENGTH: Final[int] = 2
 PASSWORD_GENERATION_MAX_RETRIES: Final[int] = 3
 SECURE_RANDOM_GENERATION_MIN_RETRIES: Final[int] = 2
 PASSWORD_PATTERN: Final[re.Pattern[str]] = re.compile(
-    r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$",
+    r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;':\",./<>?]).{8,}$",
 )
 
 # =============================================================================
@@ -144,7 +149,7 @@ class FlextLdapGroupSpecification(FlextLdapDomainSpecification):
             FlextLdapObjectClassConstants.TOP,
         ]
 
-        return any(cls in object_classes for cls in required_classes)
+        return all(cls in object_classes for cls in required_classes)
 
     @override
     def get_validation_error(self, candidate: object) -> str:
@@ -248,7 +253,10 @@ class FlextLdapActiveUserSpecification(FlextLdapDomainSpecification):
         # Use strict enum from flext_core
         from flext_core import FlextEntityStatus  # noqa: PLC0415
 
-        return str(status) == str(FlextEntityStatus.ACTIVE)
+        # Compare with enum value, not string representation
+        if isinstance(status, FlextEntityStatus):
+            return status == FlextEntityStatus.ACTIVE
+        return str(status) == FlextEntityStatus.ACTIVE.value
 
     @override
     def get_validation_error(self, candidate: object) -> str:
@@ -350,7 +358,8 @@ class FlextLdapUserManagementService:
         self._email_spec = FlextLdapEmailSpecification()
 
     def validate_user_creation(
-        self, user_data: FlextTypes.Core.Dict,
+        self,
+        user_data: FlextTypes.Core.Dict,
     ) -> FlextResult[object]:
         """Validate user creation business rules - REFACTORED to reduce returns."""
         try:
@@ -391,7 +400,9 @@ class FlextLdapUserManagementService:
                 return FlextResult[object].fail(f"Required field missing: {field}")
         return FlextResult[object].ok(None)
 
-    def _validate_dn_field(self, user_data: FlextTypes.Core.Dict) -> FlextResult[object]:
+    def _validate_dn_field(
+        self, user_data: FlextTypes.Core.Dict
+    ) -> FlextResult[object]:
         """Validate DN field format."""
         dn = str(user_data["dn"])
         if not self._user_spec.dn_spec.is_satisfied_by(dn):
@@ -401,7 +412,8 @@ class FlextLdapUserManagementService:
         return FlextResult[object].ok(None)
 
     def _validate_email_field(
-        self, user_data: FlextTypes.Core.Dict,
+        self,
+        user_data: FlextTypes.Core.Dict,
     ) -> FlextResult[object]:
         """Validate email field if provided."""
         if user_data.get("mail"):
@@ -417,8 +429,10 @@ class FlextLdapUserManagementService:
         user_data: FlextTypes.Core.Dict,
     ) -> FlextResult[object]:
         """Validate password field if provided."""
-        if user_data.get("user_password"):
-            password = str(user_data["user_password"])
+        # Support both common password field names
+        password_value = user_data.get("password") or user_data.get("user_password")
+        if password_value:
+            password = str(password_value)
             if not self._password_spec.is_satisfied_by(password):
                 return FlextResult[object].fail(
                     self._password_spec.get_validation_error(password),
@@ -597,7 +611,7 @@ class FlextLdapPasswordService:
 
     def _generate_password_with_retries(self, length: int) -> FlextResult[str]:
         """Generate password with retry logic - EXTRACTED METHOD."""
-        chars = string.ascii_letters + string.digits + "@$!%*?&"
+        chars = string.ascii_letters + string.digits + "!@#$%^&*()_+-=[]{}|;'\",./<>?"
 
         # Initial attempt
         password = "".join(secrets.choice(chars) for _ in range(length))
@@ -829,6 +843,7 @@ class EntityParameterBuilder:
     def safe_ldap_attributes(value: object) -> LdapAttributeDict:
         """Safely convert value to LdapAttributeDict."""
         from flext_ldap.utils import FlextLdapUtilities  # noqa: PLC0415
+
         return FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(value)
 
 
@@ -1103,7 +1118,9 @@ class FlextLdapDomainFactory:
         # Step 3: Create entity using .value pattern
         entity_params = extract_result.value
         if entity_params is None:
-            return FlextResult[object].fail(f"{entity_type} parameter extraction returned None")
+            return FlextResult[object].fail(
+                f"{entity_type} parameter extraction returned None"
+            )
         create_result = self._execute_operation(
             operations.get("create"),
             entity_params,

@@ -163,7 +163,11 @@ class FlextLdapApi:
                     object_classes = [str(oc_value)]
 
             # Convert to proper LDAP attributes format
-            ldap_attributes = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(typed_entry)
+            ldap_attributes = (
+                FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(
+                    typed_entry
+                )
+            )
 
             # Create entry
             entry = FlextLdapEntry(
@@ -193,7 +197,9 @@ class FlextLdapApi:
         return await self._service.get_user(dn)
 
     async def update_user(
-        self, dn: str, attributes: LdapAttributeDict,
+        self,
+        dn: str,
+        attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update user attributes."""
         return await self._service.update_user(dn, attributes)
@@ -244,7 +250,9 @@ class FlextLdapApi:
         return await self._service.get_group(dn)
 
     async def update_group(
-        self, dn: str, attributes: LdapAttributeDict,
+        self,
+        dn: str,
+        attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update group attributes."""
         return await self._service.update_group(dn, attributes)

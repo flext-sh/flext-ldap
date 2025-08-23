@@ -46,7 +46,8 @@ class FlextLdapService(IFlextLdapFullService):
 
     @override
     async def create_user(
-        self, request: FlextLdapCreateUserRequest,
+        self,
+        request: FlextLdapCreateUserRequest,
     ) -> FlextResult[FlextLdapUser]:
         """Create new user in LDAP directory."""
         user_entity = request.to_user_entity()
@@ -73,7 +74,11 @@ class FlextLdapService(IFlextLdapFullService):
                 "dn": user_entity.dn,
                 "uid": user_entity.uid,
                 "object_classes": user_entity.object_classes,
-                "status": user_entity.status.value if user_entity.status else None,
+                "status": user_entity.status.value
+                if hasattr(user_entity.status, "value") and user_entity.status
+                else str(user_entity.status)
+                if user_entity.status
+                else None,
                 "execution_context": "FlextLdapService.create_user",
             },
         )
@@ -116,7 +121,9 @@ class FlextLdapService(IFlextLdapFullService):
 
     @override
     async def update_user(
-        self, dn: str, attributes: LdapAttributeDict,
+        self,
+        dn: str,
+        attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update user attributes."""
         repository = self._container.get_repository()
@@ -204,7 +211,8 @@ class FlextLdapService(IFlextLdapFullService):
 
         if result.is_success:
             logger.info(
-                "Group created successfully", extra={"dn": group.dn, "cn": group.cn},
+                "Group created successfully",
+                extra={"dn": group.dn, "cn": group.cn},
             )
 
         return result
@@ -243,7 +251,9 @@ class FlextLdapService(IFlextLdapFullService):
 
     @override
     async def update_group(
-        self, dn: str, attributes: LdapAttributeDict,
+        self,
+        dn: str,
+        attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update group attributes."""
         repository = self._container.get_repository()
@@ -385,7 +395,8 @@ class FlextLdapService(IFlextLdapFullService):
     # Search methods
 
     async def search(
-        self, request: FlextLdapSearchRequest,
+        self,
+        request: FlextLdapSearchRequest,
     ) -> FlextResult[FlextLdapSearchResponse]:
         """Search entries."""
         repository = self._container.get_repository()
@@ -404,7 +415,8 @@ class FlextLdapUserService(IFlextLdapUserService):
 
     @override
     async def create_user(
-        self, request: FlextLdapCreateUserRequest,
+        self,
+        request: FlextLdapCreateUserRequest,
     ) -> FlextResult[FlextLdapUser]:
         """Create new user."""
         return await self._service.create_user(request)
@@ -416,7 +428,9 @@ class FlextLdapUserService(IFlextLdapUserService):
 
     @override
     async def update_user(
-        self, dn: str, attributes: LdapAttributeDict,
+        self,
+        dn: str,
+        attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update user."""
         return await self._service.update_user(dn, attributes)
@@ -428,7 +442,10 @@ class FlextLdapUserService(IFlextLdapUserService):
 
     @override
     async def search_users(
-        self, filter_str: str, base_dn: str, scope: str = "subtree",
+        self,
+        filter_str: str,
+        base_dn: str,
+        scope: str = "subtree",
     ) -> FlextResult[list[FlextLdapUser]]:
         """Search users."""
         return await self._service.search_users(filter_str, base_dn, scope)
@@ -458,7 +475,9 @@ class FlextLdapGroupService(IFlextLdapGroupService):
 
     @override
     async def update_group(
-        self, dn: str, attributes: LdapAttributeDict,
+        self,
+        dn: str,
+        attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update group."""
         return await self._service.update_group(dn, attributes)
