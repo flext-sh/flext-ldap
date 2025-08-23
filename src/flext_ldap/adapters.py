@@ -22,9 +22,15 @@ from collections.abc import Callable, Coroutine
 from typing import cast, override
 from urllib.parse import urlparse
 
-from flext_core import FlextModel, FlextResult, get_logger
+from flext_core import (
+    FlextEntityId,
+    FlextEntityStatus,
+    FlextModel,
+    FlextResult,
+    get_logger,
+)
 from flext_core.typings import FlextTypes
-from pydantic import Field, ValidationInfo, field_validator
+from pydantic import Field, field_validator
 
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.constants import FlextLdapConnectionConstants
@@ -140,9 +146,28 @@ class OperationExecutor:
         self,
         operation_type: str,
         validation_func: Callable[[], str | None],
-        operation_func: Callable[[], Coroutine[object, object, FlextResult[str]]],
+        operation_func: Callable[[], Coroutine[object, object, FlextResult[list[FlextLdapEntry]]]],
     ) -> FlextResult[list[FlextLdapEntry]]:
-        """Generic operation executor to eliminate code duplication."""
+        """Generic operation executor for operations returning entry lists."""
+        try:
+            # Validate input
+            validation_error = validation_func()
+            if validation_error:
+                return FlextResult[list[FlextLdapEntry]].fail(validation_error)
+            # Execute operation
+            return await operation_func()
+
+        except Exception:
+            logger.exception(f"{operation_type.title()} operation failed")
+            return FlextResult[list[FlextLdapEntry]].fail(f"{operation_type.title()} operation failed")
+
+    async def execute_string_operation(
+        self,
+        operation_type: str,
+        validation_func: Callable[[], str | None],
+        operation_func: Callable[[], Coroutine[object, object, FlextResult[str]]],
+    ) -> FlextResult[str]:
+        """Generic operation executor for operations returning strings."""
         try:
             # Validate input
             validation_error = validation_func()
@@ -166,7 +191,7 @@ class FlextLdapConnectionService(ConnectionServiceInterface, OperationExecutor):
     @override
     async def establish_connection(self, config: ConnectionConfig) -> FlextResult[str]:
         """Establish LDAP connection with comprehensive error handling."""
-        return await self.execute_operation(
+        return await self.execute_string_operation(
             operation_type="connection",
             validation_func=lambda: self._validate_config(config),
             operation_func=lambda: self._perform_connection(config),
@@ -289,24 +314,25 @@ class FlextLdapSearchService(SearchServiceInterface):
             search_result = await self._ldap_client.search(search_request)
 
             if search_result.is_success:
-                # Extract entries from search response
+                # Since we checked is_success, we can safely use .value
+                # This is the one case where .value is acceptable after explicit success check
                 search_response = search_result.value
                 if search_response:
                     # Convert entries safely for processing
                     raw_entries = cast(
-                        "list[FlextTypes.Core.Dict]", search_response.entries
+                        "list[FlextTypes.Core.Dict]", search_response.entries,
                     )
-                    entries = self._convert_search_results(raw_entries)
+                    entries = self._convert_search_results_to_ldap_entries(raw_entries)
                     return FlextResult[list[FlextLdapEntry]].ok(entries)
                 return FlextResult[list[FlextLdapEntry]].ok([])
 
             return FlextResult[list[FlextLdapEntry]].fail(
-                f"Search failed: {search_result.error}"
+                f"Search failed: {search_result.error}",
             )
 
         except Exception as e:
             return FlextResult[list[FlextLdapEntry]].fail(
-                f"Search execution error: {e}"
+                f"Search execution error: {e}",
             )
 
     def _convert_search_results(
@@ -332,21 +358,50 @@ class FlextLdapSearchService(SearchServiceInterface):
                 logger.warning(f"Failed to convert search result: {e}")
         return entries
 
+    def _convert_search_results_to_ldap_entries(
+        self,
+        raw_results: list[FlextTypes.Core.Dict] | None,
+    ) -> list[FlextLdapEntry]:
+        """Convert raw search results to FlextLdapEntry models."""
+        entries: list[FlextLdapEntry] = []
+        if not raw_results:
+            return entries
+        for raw_entry in raw_results:
+            try:
+                if isinstance(raw_entry, dict) and "dn" in raw_entry:
+                    # Convert to LdapAttributeDict format using type-safe utility
+                    raw_attrs = raw_entry.get("attributes", {})
+                    attributes_dict = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(raw_attrs)
+
+                    entry = FlextLdapEntry(
+                        id=FlextEntityId(str(raw_entry["dn"])),
+                        status=FlextEntityStatus.ACTIVE,
+                        dn=str(raw_entry["dn"]),
+                        attributes=attributes_dict,
+                    )
+                    entries.append(entry)
+            except Exception as e:
+                logger.warning(f"Failed to convert search result to FlextLdapEntry: {e}")
+        return entries
+
     def _normalize_attributes(
         self,
-        raw_attributes: FlextTypes.Core.Dict,
+        raw_attributes: object,
     ) -> dict[str, list[str]]:
         """Normalize attributes to consistent format."""
-        # Optimized with explicit type handling for better performance
+        # Use type-safe conversion utility to handle Unknown types
+        ldap_attrs = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(raw_attributes)
+
+        # Convert to required format (all values as lists of strings)
         normalized: dict[str, list[str]] = {}
-        for key, value in raw_attributes.items():
+        for key, value in ldap_attrs.items():
             if isinstance(value, list):
-                # Type-safe list processing
-                # Use FlextLdapUtilities for type-safe list conversion
-                normalized[key] = FlextLdapUtilities.safe_list_conversion(value)
+                # Use utility for consistent string conversion
+                normalized[key] = FlextLdapUtilities.safe_convert_list_to_strings(list(value))
             else:
-                # Single value converted to list
-                normalized[key] = [str(value)]
+                # Single value converted to list using utility
+                str_value = FlextLdapUtilities.safe_convert_value_to_str(value)
+                normalized[key] = [str_value] if str_value else []
         return normalized
 
 
@@ -361,7 +416,7 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
     @override
     async def add_entry(self, entry: DirectoryEntry) -> FlextResult[str]:
         """Add directory entry with comprehensive validation."""
-        return await self.execute_operation(
+        return await self.execute_string_operation(
             operation_type="add entry",
             validation_func=lambda: self._validate_entry(entry),
             operation_func=lambda: self._perform_add_entry(entry),
@@ -383,7 +438,7 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
     @override
     async def delete_entry(self, dn: str) -> FlextResult[str]:
         """Delete directory entry with validation."""
-        return await self.execute_operation(
+        return await self.execute_string_operation(
             operation_type="delete entry",
             validation_func=lambda: self._validate_dn_param(dn),
             operation_func=lambda: self._perform_delete_entry(dn),
@@ -453,23 +508,12 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
     async def _perform_modify_entry(
         self,
         dn: str,
-        modifications: FlextTypes.Core.Dict,
+        modifications: object,
     ) -> FlextResult[list[FlextLdapEntry]]:
         """Perform the actual modify entry operation."""
         try:
-            # Convert modifications to expected LdapAttributeDict format
-            ldap_modifications: LdapAttributeDict = {}
-            for key, value in modifications.items():
-                if isinstance(value, list):
-                    # Type-safe list processing
-                    # Use FlextLdapUtilities for type-safe list conversion
-                    attr_value: LdapAttributeValue = (
-                        FlextLdapUtilities.safe_list_conversion(value)
-                    )
-                else:
-                    # Single value conversion
-                    attr_value = str(value)
-                ldap_modifications[key] = attr_value
+            # Use type-safe utility to convert modifications to LdapAttributeDict
+            ldap_modifications = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(modifications)
 
             modify_result = await self._ldap_client.modify(
                 dn=dn,
@@ -477,14 +521,16 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
             )
 
             if modify_result.is_success:
-                return FlextResult[str].ok(dn)
+                # Return the modified entry by searching for it
+                search_service = FlextLdapSearchService(self._ldap_client)
+                return await search_service.search_entries(dn, "(objectClass=*)", None)
 
-            return FlextResult[str].fail(
+            return FlextResult[list[FlextLdapEntry]].fail(
                 f"Modify entry failed: {modify_result.error}",
             )
 
         except Exception as e:
-            return FlextResult[str].fail(
+            return FlextResult[list[FlextLdapEntry]].fail(
                 f"Modify entry execution error: {e}",
             )
 
@@ -512,19 +558,22 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
 class FlextLdapDirectoryEntry:
     """Directory entry implementation for protocol compatibility."""
 
-    def __init__(self, dn: str, attributes: FlextTypes.Core.Dict) -> None:
+    def __init__(self, dn: str, attributes: object) -> None:
         """Initialize directory entry."""
         self.dn = dn
-        # Type-safe attribute initialization
+        # Use type-safe utility to convert attributes
+        ldap_attrs = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(attributes)
+
+        # Convert to required format (all values as lists of strings)
         self.attributes: dict[str, list[str]] = {}
-        for key, value in attributes.items():
+        for key, value in ldap_attrs.items():
             if isinstance(value, list):
-                # Type-safe list processing
-                # Use FlextLdapUtilities for type-safe list conversion
-                self.attributes[key] = FlextLdapUtilities.safe_list_conversion(value)
+                # Use utility for consistent string conversion
+                self.attributes[key] = FlextLdapUtilities.safe_convert_list_to_strings(list(value))
             else:
-                # Single value conversion
-                self.attributes[key] = [str(value)]
+                # Single value converted to list using utility
+                str_value = FlextLdapUtilities.safe_convert_value_to_str(value)
+                self.attributes[key] = [str_value] if str_value else []
 
     def get_attribute_values(self, name: str) -> list[str]:
         """Get attribute values by name."""
@@ -591,11 +640,11 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
             result = await self._connection_service.establish_connection(config)
 
-            if result.success:
+            if result.is_success:
                 connected = True
                 return FlextResult[bool].ok(connected)
 
-            return FlextResult[bool].fail(result.error_message or "Connection failed")
+            return FlextResult[bool].fail(result.error or "Connection failed")
 
         except Exception:
             logger.exception("Directory service connection failed")
@@ -620,21 +669,22 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 ),
             )
 
-            # Use FlextResult's unwrap_or method for cleaner code
-            entries = result.unwrap_or([])
-            if entries:
+            # Use explicit success check for cleaner code
+            if result.is_success:
+                # Since we checked is_success, we can safely use .value
+                entries = result.value
                 protocol_entries = self._convert_entries_to_protocol(entries)
                 return FlextResult[list[FlextLdapDirectoryEntryProtocol]].ok(
-                    protocol_entries
+                    protocol_entries,
                 )
 
-            error_msg = result.error_message or "Search failed"
+            error_msg = result.error or "Search failed"
             return FlextResult[list[FlextLdapDirectoryEntryProtocol]].fail(error_msg)
 
         except Exception:
             logger.exception("User search failed")
             return FlextResult[list[FlextLdapDirectoryEntryProtocol]].fail(
-                "User search failed"
+                "User search failed",
             )
 
     def _convert_entries_to_protocol(
@@ -647,23 +697,23 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         if not isinstance(entries_data, list):
             return protocol_entries
 
-        for entry in entries_data:
+        for entry in cast("list[object]", entries_data):
             # Type-safe entry processing using FlextLdapUtilities
             entry_dn_value = FlextLdapUtilities.safe_entry_attribute_access(entry, "dn")
             entry_attrs_value = FlextLdapUtilities.safe_entry_attribute_access(
-                entry, "attributes"
+                entry, "attributes",
             )
 
             if entry_dn_value and entry_attrs_value:
                 entry_dn = str(entry_dn_value)
                 entry_attrs = FlextLdapUtilities.safe_dict_comprehension(
-                    entry_attrs_value
+                    entry_attrs_value,
                 )
 
                 if entry_dn and entry_attrs:
                     protocol_entry = FlextLdapDirectoryEntry(
                         dn=entry_dn,
-                        attributes=self._normalize_entry_attributes(entry_attrs),
+                        attributes=cast("object", self._normalize_entry_attributes(entry_attrs)),
                     )
                     protocol_entries.append(protocol_entry)
 
@@ -671,13 +721,20 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
 
     def _normalize_entry_attributes(
         self,
-        attributes: FlextTypes.Core.Dict,
-    ) -> FlextTypes.Core.Dict:
+        attributes: object,
+    ) -> LdapAttributeDict:
         """Normalize entry attributes for protocol compatibility."""
-        return {
-            k: v[0] if isinstance(v, list) and len(v) == 1 else v
-            for k, v in attributes.items()
-        }
+        # Use type-safe utility to convert external dict
+        safe_attrs: LdapAttributeDict = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(attributes)
+
+        # Return normalized format with explicit typing
+        normalized_attrs: LdapAttributeDict = {}
+        for k, v in safe_attrs.items():
+            if isinstance(v, list) and len(v) == 1:
+                normalized_attrs[k] = v[0]
+            else:
+                normalized_attrs[k] = v
+        return normalized_attrs
 
 
 class FlextLdapDirectoryAdapter(FlextLdapDirectoryAdapterInterface):

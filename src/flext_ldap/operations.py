@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
+from typing import cast
 
 from flext_core import (
     FlextEntityId,
@@ -17,6 +18,7 @@ from flext_core import (
     get_flext_container,
     get_logger,
 )
+from flext_core.typings import FlextTypes
 
 from flext_ldap.constants import FlextLdapValidationMessages
 from flext_ldap.models import (
@@ -25,6 +27,7 @@ from flext_ldap.models import (
     FlextLdapGroup,
     FlextLdapUser,
 )
+from flext_ldap.typings import LdapAttributeDict
 from flext_ldap.utils import FlextLdapUtilities
 from flext_ldap.value_objects import (
     FlextLdapDistinguishedName,
@@ -44,17 +47,17 @@ class FlextLdapOperationsBase:
     def __init__(self) -> None:
         """Initialize shared components - SINGLE POINT OF CONFIGURATION."""
         self._container = get_flext_container()
-        self._id_generator = self._container.get("FlextIdGenerator").unwrap_or(None)
+        # Type-safe container access for ID generator using modern pattern
+        generator_result = self._container.get("FlextIdGenerator")
+        self._id_generator = generator_result.value if generator_result.is_success else None
 
     def _generate_id(self) -> str:
         """Generate ID using container ID generator or UUID."""
-        if (
-            self._id_generator
-            and hasattr(self._id_generator, "generate")
-            and callable(self._id_generator.generate)
-        ):
-            generator_method = self._id_generator.generate
-            return str(generator_method())
+        if self._id_generator and hasattr(self._id_generator, "generate"):
+            # Type-safe generator access - use getattr to avoid attribute warnings
+            generate_func = getattr(self._id_generator, "generate", None)
+            if callable(generate_func):
+                return str(generate_func())
         return str(uuid.uuid4())
 
     def _validate_dn_or_fail(self, dn: str, context: str = "DN") -> FlextResult[None]:
@@ -67,8 +70,8 @@ class FlextLdapOperationsBase:
             )
             return FlextResult[None].fail(
                 FlextLdapValidationMessages.INVALID_DN_WITH_CONTEXT.format(
-                    context=context, error=error_msg
-                )
+                    context=context, error=error_msg,
+                ),
             )
         return FlextResult[None].ok(None)
 
@@ -84,8 +87,8 @@ class FlextLdapOperationsBase:
             )
             return FlextResult[None].fail(
                 FlextLdapValidationMessages.INVALID_SEARCH_FILTER.format(
-                    error=error_msg
-                )
+                    error=error_msg,
+                ),
             )
         return FlextResult[None].ok(None)
 
@@ -97,7 +100,7 @@ class FlextLdapOperationsBase:
         # Basic LDAP URI validation
         if not server_uri.startswith(("ldap://", "ldaps://")):
             return FlextResult[None].fail(
-                "Server URI must start with ldap:// or ldaps://"
+                "Server URI must start with ldap:// or ldaps://",
             )
 
         return FlextResult[None].ok(None)
@@ -155,7 +158,7 @@ class FlextLdapConnectionOperations(FlextLdapOperationsBase):
             uri_validation = self._validate_uri_or_fail(server_uri)
             if not uri_validation.is_success:
                 return FlextResult[str].fail(
-                    uri_validation.error or "URI validation failed"
+                    uri_validation.error or "URI validation failed",
                 )
 
             if bind_dn:
@@ -225,7 +228,7 @@ class FlextLdapConnectionOperations(FlextLdapOperationsBase):
         """Get connection information - REFACTORED."""
         if connection_id not in self._active_connections:
             return FlextResult[FlextTypes.Core.Dict].fail(
-                f"Connection not found: {connection_id}"
+                f"Connection not found: {connection_id}",
             )
 
         connection_info = self._active_connections[connection_id].copy()
@@ -235,9 +238,9 @@ class FlextLdapConnectionOperations(FlextLdapOperationsBase):
 
     def list_active_connections(self) -> FlextResult[list[FlextTypes.Core.Dict]]:
         """List all active connections - REFACTORED."""
-        connections = []
+        connections: list[FlextTypes.Core.Dict] = []
         for conn_id, conn_info in self._active_connections.items():
-            info = conn_info.copy()
+            info: FlextTypes.Core.Dict = conn_info.copy()
             info["connection_id"] = conn_id
             info["active"] = True
             connections.append(info)
@@ -258,7 +261,7 @@ class FlextLdapConnectionOperations(FlextLdapOperationsBase):
 class FlextLdapSearchOperations(FlextLdapOperationsBase):
     """LDAP search and query operations - REFACTORED."""
 
-    async def search_entries(  # noqa: PLR0913
+    async def search_entries(
         self,
         connection_id: str,
         base_dn: str,
@@ -274,7 +277,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
             dn_validation = self._validate_dn_or_fail(base_dn, "base DN")
             if not dn_validation.is_success:
                 return FlextResult[list[FlextLdapEntry]].fail(
-                    dn_validation.error or "DN validation failed"
+                    dn_validation.error or "DN validation failed",
                 )
 
             filter_validation = self._validate_filter_or_fail(search_filter)
@@ -336,11 +339,11 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
 
             if not search_result.is_success:
                 return FlextResult[list[FlextLdapUser]].fail(
-                    search_result.error or "User search failed"
+                    search_result.error or "User search failed",
                 )
 
-            # Use REFACTORED conversion - NO DUPLICATION with unwrap_or pattern
-            users = self._convert_entries_to_users(search_result.unwrap_or([]))
+            # Use REFACTORED conversion with direct value access
+            users = self._convert_entries_to_users(search_result.value)
 
             # Use REFACTORED logging - NO DUPLICATION
             self._log_operation_success(
@@ -386,11 +389,11 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
 
             if not search_result.is_success:
                 return FlextResult[list[FlextLdapGroup]].fail(
-                    search_result.error or "Group search failed"
+                    search_result.error or "Group search failed",
                 )
 
-            # Use REFACTORED conversion - NO DUPLICATION with unwrap_or pattern
-            groups = self._convert_entries_to_groups(search_result.unwrap_or([]))
+            # Use REFACTORED conversion with direct value access
+            groups = self._convert_entries_to_groups(search_result.value)
 
             # Use REFACTORED logging - NO DUPLICATION
             self._log_operation_success(
@@ -430,7 +433,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
 
         if not search_result.is_success:
             return FlextResult[FlextLdapEntry].fail(
-                search_result.error or "Search operation failed"
+                search_result.error or "Search operation failed",
             )
 
         if not search_result.value:
@@ -472,7 +475,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
         """Convert entries to users - REUSABLE HELPER."""
         # Optimized with list comprehension for better performance
 
-        users = []
+        users: list[FlextLdapUser] = []
         for entry in entries:
             # Extract required fields with type safety
             uid = (
@@ -488,11 +491,11 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
                 or "unknown"
             )
             given_name = FlextLdapUtilities.safe_str_attribute(
-                entry.attributes, "givenName"
+                entry.attributes, "givenName",
             )
             mail = FlextLdapUtilities.safe_str_attribute(entry.attributes, "mail")
             phone = FlextLdapUtilities.safe_str_attribute(
-                entry.attributes, "telephoneNumber"
+                entry.attributes, "telephoneNumber",
             )
 
             users.append(
@@ -508,7 +511,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
                     object_classes=entry.object_classes,
                     attributes=entry.attributes,
                     status=FlextEntityStatus.ACTIVE,
-                )
+                ),
             )
         return users
 
@@ -517,7 +520,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
         entries: list[FlextLdapEntry],
     ) -> list[FlextLdapGroup]:
         """Convert entries to groups - REUSABLE HELPER."""
-        groups = []
+        groups: list[FlextLdapGroup] = []
         for entry in entries:
             # Extract required fields with type safety
             cn = (
@@ -525,13 +528,14 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
                 or "unknown"
             )
             description = FlextLdapUtilities.safe_str_attribute(
-                entry.attributes, "description"
+                entry.attributes, "description",
             )
 
             # Extract members from attributes
             members_value = entry.attributes.get("member", [])
             if isinstance(members_value, list):
-                members = [str(m) for m in members_value if m]
+                typed_members_list: list[object] = cast("list[object]", members_value)
+                members = [str(m) for m in typed_members_list if m]
             elif isinstance(members_value, str):
                 members = [members_value] if members_value else []
             else:
@@ -547,7 +551,7 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
                     object_classes=entry.object_classes,
                     attributes=entry.attributes,
                     status=FlextEntityStatus.ACTIVE,
-                )
+                ),
             )
         return groups
 
@@ -565,7 +569,7 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
         connection_id: str,
         dn: str,
         object_classes: list[str],
-        attributes: FlextTypes.Core.Dict,
+        attributes: LdapAttributeDict,
     ) -> FlextResult[FlextLdapEntry]:
         """Create a new LDAP entry - REFACTORED with shared validation."""
         try:
@@ -573,12 +577,12 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
             dn_validation = self._validate_dn_or_fail(dn)
             if not dn_validation.is_success:
                 return FlextResult[FlextLdapEntry].fail(
-                    dn_validation.error or "DN validation failed"
+                    dn_validation.error or "DN validation failed",
                 )
 
             if not object_classes:
                 return FlextResult[FlextLdapEntry].fail(
-                    "Entry must have at least one object class"
+                    "Entry must have at least one object class",
                 )
 
             # Create entry entity with validation
@@ -628,7 +632,7 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
             dn_validation = self._validate_dn_or_fail(dn)
             if not dn_validation.is_success:
                 return FlextResult[None].fail(
-                    dn_validation.error or "DN validation failed"
+                    dn_validation.error or "DN validation failed",
                 )
 
             if not modifications:
@@ -664,7 +668,7 @@ class FlextLdapEntryOperations(FlextLdapOperationsBase):
             dn_validation = self._validate_dn_or_fail(dn)
             if not dn_validation.is_success:
                 return FlextResult[None].fail(
-                    dn_validation.error or "DN validation failed"
+                    dn_validation.error or "DN validation failed",
                 )
 
             # Use REFACTORED logging - NO DUPLICATION
@@ -797,9 +801,9 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
     def _build_user_attributes(
         self,
         user_request: FlextLdapCreateUserRequest,
-    ) -> FlextTypes.Core.Dict:
+    ) -> LdapAttributeDict:
         """Build user attributes from request - REUSABLE HELPER."""
-        attributes: FlextTypes.Core.Dict = {
+        attributes: LdapAttributeDict = {
             "uid": [user_request.uid],
             "cn": [user_request.cn],
             "sn": [user_request.sn],
@@ -813,7 +817,7 @@ class FlextLdapUserOperations(FlextLdapOperationsBase):
     def _build_user_entity(
         self,
         user_request: FlextLdapCreateUserRequest,
-        attributes: FlextTypes.Core.Dict,
+        attributes: LdapAttributeDict,
     ) -> FlextLdapUser:
         """Build user entity - REUSABLE HELPER."""
         user_id_str = self._generate_id()
@@ -974,7 +978,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
 
             if not group_result.is_success:
                 return FlextResult[list[str]].fail(
-                    f"Failed to get group: {group_result.error}"
+                    f"Failed to get group: {group_result.error}",
                 )
 
             # At this point data is guaranteed by is_success above
@@ -1019,9 +1023,9 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         cn: str,
         description: str | None,
         members: list[str],
-    ) -> FlextTypes.Core.Dict:
+    ) -> LdapAttributeDict:
         """Build group attributes - REUSABLE HELPER."""
-        attributes: FlextTypes.Core.Dict = {
+        attributes: LdapAttributeDict = {
             "cn": [cn],
             "member": members,
         }
@@ -1035,7 +1039,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         cn: str,
         description: str | None,
         members: list[str],
-        attributes: FlextTypes.Core.Dict,
+        attributes: LdapAttributeDict,
     ) -> FlextLdapGroup:
         """Build group entity - REUSABLE HELPER."""
         group_id_str = self._generate_id()
@@ -1079,7 +1083,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         )
         if updated_members_result.is_failure:
             return FlextResult[None].fail(
-                updated_members_result.error or "Failed to calculate members"
+                updated_members_result.error or "Failed to calculate members",
             )
 
         updated_members = updated_members_result.value
@@ -1106,7 +1110,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
 
         if not group_result.is_success:
             return FlextResult[FlextLdapEntry].fail(
-                f"Failed to get group: {group_result.error}"
+                f"Failed to get group: {group_result.error}",
             )
 
         return FlextResult[FlextLdapEntry].ok(group_result.value)
@@ -1132,7 +1136,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         """Handle adding a member to the group."""
         if member_dn in current_members:
             return FlextResult[list[str]].fail(
-                f"Member already exists in group: {member_dn}"
+                f"Member already exists in group: {member_dn}",
             )
         return FlextResult[list[str]].ok([*current_members, member_dn])
 
@@ -1144,7 +1148,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsBase):
         """Handle removing a member from the group."""
         if member_dn not in current_members:
             return FlextResult[list[str]].fail(
-                f"Member not found in group: {member_dn}"
+                f"Member not found in group: {member_dn}",
             )
 
         updated_members = [m for m in current_members if m != member_dn]
@@ -1230,7 +1234,7 @@ class FlextLdapOperations(FlextLdapOperationsBase):
 
         if not search_result.is_success:
             return FlextResult[FlextLdapEntry | None].fail(
-                search_result.error or "Search operation failed"
+                search_result.error or "Search operation failed",
             )
 
         first_entry = search_result.value[0] if search_result.value else None

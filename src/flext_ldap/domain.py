@@ -25,9 +25,10 @@ import string
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
-from typing import ClassVar, Final, TypeVar, cast
+from typing import ClassVar, Final, TypeVar, cast, override
 
 from flext_core import FlextEntityId, FlextEntityStatus, FlextResult, get_logger
+from flext_core.typings import FlextTypes
 
 from flext_ldap.constants import (
     FlextLdapDefaultValues,
@@ -36,6 +37,7 @@ from flext_ldap.constants import (
     FlextLdapValidationMessages,
 )
 from flext_ldap.models import FlextLdapGroup, FlextLdapUser
+from flext_ldap.typings import LdapAttributeDict
 
 logger = get_logger(__name__)
 T = TypeVar("T")
@@ -87,6 +89,7 @@ class FlextLdapUserSpecification(FlextLdapDomainSpecification):
             description=FlextLdapDefaultValues.VALID_LDAP_USER_DESCRIPTION,
         )
 
+    @override
     def is_satisfied_by(self, candidate: object) -> bool:
         """Check if candidate is a valid LDAP user."""
         if not hasattr(candidate, "uid") or not hasattr(candidate, "dn"):
@@ -109,6 +112,7 @@ class FlextLdapUserSpecification(FlextLdapDomainSpecification):
 
         return all(cls in object_classes for cls in required_classes)
 
+    @override
     def get_validation_error(self, candidate: object) -> str:
         """Get detailed user validation error."""
         if not hasattr(candidate, "uid"):
@@ -127,6 +131,7 @@ class FlextLdapGroupSpecification(FlextLdapDomainSpecification):
             description="Validates LDAP group entity business rules",
         )
 
+    @override
     def is_satisfied_by(self, candidate: object) -> bool:
         """Check if candidate is a valid LDAP group."""
         if not hasattr(candidate, "cn") or not hasattr(candidate, "dn"):
@@ -141,6 +146,7 @@ class FlextLdapGroupSpecification(FlextLdapDomainSpecification):
 
         return any(cls in object_classes for cls in required_classes)
 
+    @override
     def get_validation_error(self, candidate: object) -> str:
         """Get detailed group validation error."""
         if not hasattr(candidate, "cn"):
@@ -163,6 +169,7 @@ class FlextLdapDistinguishedNameSpecification(FlextLdapDomainSpecification):
             description="Validates RFC 4514 compliant Distinguished Names",
         )
 
+    @override
     def is_satisfied_by(self, candidate: object) -> bool:
         """Check if candidate is a valid DN string."""
         if not isinstance(candidate, str):
@@ -173,6 +180,7 @@ class FlextLdapDistinguishedNameSpecification(FlextLdapDomainSpecification):
 
         return bool(self.DN_PATTERN.match(candidate))
 
+    @override
     def get_validation_error(self, candidate: object) -> str:
         """Get detailed DN validation error."""
         if not isinstance(candidate, str):
@@ -191,6 +199,7 @@ class FlextLdapPasswordSpecification(FlextLdapDomainSpecification):
             description="Validates password strength according to security policy",
         )
 
+    @override
     def is_satisfied_by(self, candidate: object) -> bool:
         """Check if candidate meets password requirements."""
         if not isinstance(candidate, str):
@@ -208,6 +217,7 @@ class FlextLdapPasswordSpecification(FlextLdapDomainSpecification):
 
         return True
 
+    @override
     def get_validation_error(self, candidate: object) -> str:
         """Get detailed password validation error."""
         if not isinstance(candidate, str):
@@ -228,17 +238,19 @@ class FlextLdapActiveUserSpecification(FlextLdapDomainSpecification):
             description="Validates that user account is active and not disabled",
         )
 
+    @override
     def is_satisfied_by(self, candidate: object) -> bool:
         """Check if user account is active."""
         if not hasattr(candidate, "status"):
             return False
 
-        status = candidate.status
+        status = getattr(candidate, "status", None)
         # Use strict enum from flext_core
         from flext_core import FlextEntityStatus  # noqa: PLC0415
 
         return str(status) == str(FlextEntityStatus.ACTIVE)
 
+    @override
     def get_validation_error(self, candidate: object) -> str:
         """Get user status validation error."""
         if not hasattr(candidate, "status"):
@@ -260,6 +272,7 @@ class FlextLdapEmailSpecification(FlextLdapDomainSpecification):
             description="Validates email address format",
         )
 
+    @override
     def is_satisfied_by(self, candidate: object) -> bool:
         """Check if candidate is a valid email address."""
         if not isinstance(candidate, str):
@@ -267,6 +280,7 @@ class FlextLdapEmailSpecification(FlextLdapDomainSpecification):
 
         return bool(self.EMAIL_PATTERN.match(candidate))
 
+    @override
     def get_validation_error(self, candidate: object) -> str:
         """Get email validation error."""
         if not isinstance(candidate, str):
@@ -291,6 +305,17 @@ class FlextLdapCompleteUserSpecification(FlextLdapDomainSpecification):
         self._dn_spec = FlextLdapDistinguishedNameSpecification()
         self._active_spec = FlextLdapActiveUserSpecification()
 
+    @property
+    def dn_spec(self) -> FlextLdapDistinguishedNameSpecification:
+        """Access to DN specification for external validation."""
+        return self._dn_spec
+
+    @property
+    def active_spec(self) -> FlextLdapActiveUserSpecification:
+        """Access to active user specification for external validation."""
+        return self._active_spec
+
+    @override
     def is_satisfied_by(self, candidate: object) -> bool:
         """Check if candidate satisfies all user validation rules."""
         return (
@@ -299,6 +324,7 @@ class FlextLdapCompleteUserSpecification(FlextLdapDomainSpecification):
             and self._active_spec.is_satisfied_by(candidate)
         )
 
+    @override
     def get_validation_error(self, candidate: object) -> str:
         """Get first failing validation error."""
         if not self._user_spec.is_satisfied_by(candidate):
@@ -324,7 +350,7 @@ class FlextLdapUserManagementService:
         self._email_spec = FlextLdapEmailSpecification()
 
     def validate_user_creation(
-        self, user_data: FlextTypes.Core.Dict
+        self, user_data: FlextTypes.Core.Dict,
     ) -> FlextResult[object]:
         """Validate user creation business rules - REFACTORED to reduce returns."""
         try:
@@ -368,14 +394,14 @@ class FlextLdapUserManagementService:
     def _validate_dn_field(self, user_data: FlextTypes.Core.Dict) -> FlextResult[object]:
         """Validate DN field format."""
         dn = str(user_data["dn"])
-        if not self._user_spec._dn_spec.is_satisfied_by(dn):
+        if not self._user_spec.dn_spec.is_satisfied_by(dn):
             return FlextResult[object].fail(
-                self._user_spec._dn_spec.get_validation_error(dn),
+                self._user_spec.dn_spec.get_validation_error(dn),
             )
         return FlextResult[object].ok(None)
 
     def _validate_email_field(
-        self, user_data: FlextTypes.Core.Dict
+        self, user_data: FlextTypes.Core.Dict,
     ) -> FlextResult[object]:
         """Validate email field if provided."""
         if user_data.get("mail"):
@@ -411,9 +437,9 @@ class FlextLdapUserManagementService:
                 return FlextResult[bool].fail("Users cannot delete themselves")
 
             # Business rule: Only active users can perform deletions
-            if not self._user_spec._active_spec.is_satisfied_by(requesting_user):
+            if not self._user_spec.active_spec.is_satisfied_by(requesting_user):
                 return FlextResult[bool].fail(
-                    "Only active users can delete other users"
+                    "Only active users can delete other users",
                 )
 
             success = True
@@ -452,6 +478,11 @@ class FlextLdapGroupManagementService:
         self._group_spec = FlextLdapGroupSpecification()
         self._dn_spec = FlextLdapDistinguishedNameSpecification()
 
+    @property
+    def dn_spec(self) -> FlextLdapDistinguishedNameSpecification:
+        """Access to DN specification for external validation."""
+        return self._dn_spec
+
     def can_add_member(
         self,
         group: FlextLdapGroup,
@@ -472,7 +503,7 @@ class FlextLdapGroupManagementService:
                 active_spec = FlextLdapActiveUserSpecification()
                 if not active_spec.is_satisfied_by(user):
                     return FlextResult[bool].fail(
-                        "Only active users can be added to groups"
+                        "Only active users can be added to groups",
                     )
 
             # Business rule: User cannot be added if already a member
@@ -532,7 +563,7 @@ class FlextLdapPasswordService:
             # Business rule: New password cannot be the same as current
             if current_password == new_password:
                 return FlextResult[object].fail(
-                    "New password must be different from current"
+                    "New password must be different from current",
                 )
 
             return FlextResult[object].ok(None)
@@ -783,13 +814,22 @@ class EntityParameterBuilder:
     def safe_list(value: object, default: list[str] | None = None) -> list[str]:
         """Safely convert value to list or use default."""
         if isinstance(value, list):
-            return [str(item) for item in value]
+            return [str(item) for item in cast("list[object]", value)]
         return default or []
 
     @staticmethod
     def safe_dict(value: object) -> FlextTypes.Core.Dict:
         """Safely convert value to dict or empty dict."""
-        return dict(value) if isinstance(value, dict) else {}
+        if isinstance(value, dict):
+            typed_dict: FlextTypes.Core.Dict = cast("FlextTypes.Core.Dict", value)
+            return dict(typed_dict)
+        return {}
+
+    @staticmethod
+    def safe_ldap_attributes(value: object) -> LdapAttributeDict:
+        """Safely convert value to LdapAttributeDict."""
+        from flext_ldap.utils import FlextLdapUtilities  # noqa: PLC0415
+        return FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(value)
 
 
 class UserEntityBuilder:
@@ -813,7 +853,7 @@ class UserEntityBuilder:
             mail=self.builder.safe_str(self.params["mail"]),
             phone=self.builder.safe_str(self.params.get("phone")),
             object_classes=self.builder.safe_list(self.params["object_classes"]),
-            attributes=self.builder.safe_dict(self.params["attributes"]),
+            attributes=self.builder.safe_ldap_attributes(self.params["attributes"]),
             status=FlextEntityStatus.ACTIVE,
         )
 
@@ -836,7 +876,7 @@ class GroupEntityBuilder:
             description=self.builder.safe_str(self.params["description"]),
             members=self.builder.safe_list(self.params["members"]),
             object_classes=self.builder.safe_list(self.params["object_classes"]),
-            attributes=self.builder.safe_dict(self.params["attributes"]),
+            attributes=self.builder.safe_ldap_attributes(self.params["attributes"]),
             status=FlextEntityStatus.ACTIVE,
         )
 
@@ -864,9 +904,12 @@ class FlextLdapDomainFactory:
         # Narrow the type for the public API
         if result.is_failure:
             return FlextResult[FlextLdapUser].fail(
-                result.error or "User creation failed"
+                result.error or "User creation failed",
             )
+        # Use FlextResult.value for modern type-safe access (success verified above)
         created = result.value
+        if created is None:
+            return FlextResult[FlextLdapUser].fail("User creation returned None")
         # Late import kept to avoid circular dependency; ruff allow
         from flext_ldap.models import (  # noqa: PLC0415
             FlextLdapUser as _User,
@@ -891,13 +934,17 @@ class FlextLdapDomainFactory:
         )
         attributes_raw = user_data.get("attributes", {})
 
-        # Type-safe conversions
-        object_classes = (
-            object_classes_raw
+        # Type-safe conversions with explicit casts
+        object_classes: list[str] = (
+            [str(item) for item in cast("list[object]", object_classes_raw)]
             if isinstance(object_classes_raw, list)
             else ["inetOrgPerson", "person", "top"]
         )
-        attributes = attributes_raw if isinstance(attributes_raw, dict) else {}
+        attributes: dict[str, object] = (
+            cast("dict[str, object]", attributes_raw)
+            if isinstance(attributes_raw, dict)
+            else {}
+        )
 
         return {
             "dn": str(user_data["dn"]),
@@ -936,9 +983,12 @@ class FlextLdapDomainFactory:
         result = self._create_entity_from_data(group_data, "Group", operations)
         if result.is_failure:
             return FlextResult[FlextLdapGroup].fail(
-                result.error or "Group creation failed"
+                result.error or "Group creation failed",
             )
+        # Use FlextResult.value for modern type-safe access (success verified above)
         created = result.value
+        if created is None:
+            return FlextResult[FlextLdapGroup].fail("Group creation returned None")
         # Late import kept to avoid circular dependency; ruff allow
         from flext_ldap.models import (  # noqa: PLC0415
             FlextLdapGroup as _Group,
@@ -961,14 +1011,22 @@ class FlextLdapDomainFactory:
         )
         attributes_raw = group_data.get("attributes", {})
 
-        # Type-safe conversions
-        members = members_raw if isinstance(members_raw, list) else []
-        object_classes = (
-            object_classes_raw
+        # Type-safe conversions with explicit casts
+        members: list[str] = (
+            [str(item) for item in cast("list[object]", members_raw)]
+            if isinstance(members_raw, list)
+            else []
+        )
+        object_classes: list[str] = (
+            [str(item) for item in cast("list[object]", object_classes_raw)]
             if isinstance(object_classes_raw, list)
             else ["groupOfNames", "top"]
         )
-        attributes = attributes_raw if isinstance(attributes_raw, dict) else {}
+        attributes: dict[str, object] = (
+            cast("dict[str, object]", attributes_raw)
+            if isinstance(attributes_raw, dict)
+            else {}
+        )
 
         return {
             "dn": str(group_data["dn"]),
@@ -1042,8 +1100,10 @@ class FlextLdapDomainFactory:
         if extract_result.is_failure:
             return extract_result
 
-        # Step 3: Create entity
+        # Step 3: Create entity using .value pattern
         entity_params = extract_result.value
+        if entity_params is None:
+            return FlextResult[object].fail(f"{entity_type} parameter extraction returned None")
         create_result = self._execute_operation(
             operations.get("create"),
             entity_params,
@@ -1052,8 +1112,10 @@ class FlextLdapDomainFactory:
         if create_result.is_failure:
             return create_result
 
-        # Step 4: Final domain validation
+        # Step 4: Final domain validation using .value pattern
         entity = create_result.value
+        if entity is None:
+            return FlextResult[object].fail(f"{entity_type} creation returned None")
         return self._execute_operation(
             operations.get("final_validate"),
             entity,
@@ -1071,7 +1133,7 @@ class FlextLdapDomainFactory:
         """Execute a single operation with error handling."""
         if operation is None:
             return FlextResult[object].fail(
-                f"Invalid operation function for {operation_name}"
+                f"Invalid operation function for {operation_name}",
             )
 
         try:

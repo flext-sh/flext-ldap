@@ -266,7 +266,7 @@ class FlextLdapSettings(FlextConfig):
         if self.default_connection:
             if not self.default_connection.server:
                 return FlextResult[None].fail(
-                    "Default connection must specify a server"
+                    "Default connection must specify a server",
                 )
 
             conn_validation = self.default_connection.validate_business_rules()
@@ -336,16 +336,18 @@ def create_development_config() -> FlextLdapSettings:
         ),
     )
 
-    return FlextLdapSettings(
-        default_connection=connection_config,  # pyright: ignore[reportCallIssue]
-        logging=FlextLdapLoggingConfig(
+    # Use model_validate to avoid pyright false positives with alias fields
+    config_data: dict[str, object] = {
+        "default_connection": connection_config,
+        "logging": FlextLdapLoggingConfig(
             enable_debug=True,
             log_queries=True,
             structured_logging=True,
         ),
-        enable_debug_mode=True,
-        enable_caching=False,
-    )
+        "enable_debug_mode": True,
+        "enable_caching": False,
+    }
+    return FlextLdapSettings.model_validate(config_data)
 
 
 def create_test_config() -> FlextLdapSettings:
@@ -362,16 +364,18 @@ def create_test_config() -> FlextLdapSettings:
         ),
     )
 
-    return FlextLdapSettings(
-        default_connection=connection_config,  # pyright: ignore[reportCallIssue]
-        logging=FlextLdapLoggingConfig(
+    # Use model_validate to avoid pyright false positives with alias fields
+    config_data: dict[str, object] = {
+        "default_connection": connection_config,
+        "logging": FlextLdapLoggingConfig(
             enable_debug=False,
             log_queries=False,
             structured_logging=False,
         ),
-        enable_test_mode=True,
-        enable_caching=False,
-    )
+        "enable_test_mode": True,
+        "enable_caching": False,
+    }
+    return FlextLdapSettings.model_validate(config_data)
 
 
 def create_production_config() -> FlextLdapSettings:
@@ -388,14 +392,16 @@ def create_production_config() -> FlextLdapSettings:
         ),
     )
 
-    return FlextLdapSettings(
-        default_connection=connection_config,  # pyright: ignore[reportCallIssue]
-        logging=FlextLdapLoggingConfig(
+    # Use model_validate to avoid pyright false positives with alias fields
+    config_data: dict[str, object] = {
+        "default_connection": connection_config,
+        "logging": FlextLdapLoggingConfig(
             enable_debug=False,
             log_queries=False,
             structured_logging=True,
         ),
-        enable_debug_mode=False,
-        enable_caching=True,
-        cache_ttl=600,
-    )
+        "enable_debug_mode": False,
+        "enable_caching": True,
+        "cache_ttl": 600,
+    }
+    return FlextLdapSettings.model_validate(config_data)

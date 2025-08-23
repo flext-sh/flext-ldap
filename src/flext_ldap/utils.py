@@ -27,33 +27,95 @@ class FlextLdapUtilities:
     def is_successful_result(result: object) -> bool:
         """Check if FlextResult is successful."""
         return hasattr(result, "is_success") and bool(
-            getattr(result, "is_success", False)
+            getattr(result, "is_success", False),
         )
 
+    # Note: FlextResult unwrap utilities removed - use modern .value property
+    # with is_success check for type-safe access instead of unwrap_or patterns
+
     @staticmethod
-    def get_result_value(result: object) -> object | None:
-        """Get value from FlextResult if successful, None otherwise.
+    def create_typed_ldap_attributes(
+        attributes: dict[str, object | list[object]],
+    ) -> UtilsLdapAttributeDict:
+        """Create properly typed LDAP attributes dict.
 
-        DEPRECATED: Use FlextResult.unwrap_or(default) directly instead.
-        This method is kept for backward compatibility.
+        Converts generic attribute dict to LDAP-compatible format.
         """
-        # Use FlextResult's unwrap_or method for cleaner code
-        if hasattr(result, "unwrap_or"):
-            unwrap_method = result.unwrap_or
-            if callable(unwrap_method):
-                # Type-safe unwrap_or call with proper return type
-                return cast("object | None", unwrap_method(None))
+        result: UtilsLdapAttributeDict = {}
+        for key, value in attributes.items():
+            if isinstance(value, list):
+                # Convert list of objects to list of strings/bytes
+                converted_list: list[str] = []
+                typed_list: list[object] = cast("list[object]", value)
+                for item in typed_list:
+                    if isinstance(item, (str, bytes)):
+                        converted_list.append(str(item))
+                    else:
+                        converted_list.append(str(item))
+                result[key] = converted_list
+            elif isinstance(value, (str, bytes)):
+                result[key] = value
+            else:
+                # Convert other types to string
+                result[key] = str(value)
+        return result
 
-        # Handle non-FlextResult objects using unwrap_or() pattern
-        if hasattr(result, "is_success") and hasattr(result, "value"):
-            # Simulate unwrap_or() behavior manually for non-FlextResult objects
-            is_success = getattr(result, "is_success", False)
-            return getattr(result, "value", None) if is_success else None
+    @staticmethod
+    def safe_convert_external_dict_to_ldap_attributes(
+        external_dict: object,
+    ) -> UtilsLdapAttributeDict:
+        """Safely convert external dictionary (Unknown type) to typed LDAP attributes.
+
+        Handles Unknown types from external libraries like ldap3.
+        """
+        result: UtilsLdapAttributeDict = {}
+
+        if not isinstance(external_dict, dict):
+            return result
+
+        # Type-safe iteration over Unknown dict
+        typed_dict: dict[str, object] = cast("dict[str, object]", external_dict)
+        for raw_key, raw_value in typed_dict.items():
+            # Key from dict.items() is always string
+            key = str(raw_key)
+            if not key:
+                continue
+
+            # Handle different value types safely
+            if isinstance(raw_value, list):
+                # Convert list values to strings, handling bytes properly
+                str_list: list[str] = []
+                typed_list: list[object] = cast("list[object]", raw_value)
+                for item in typed_list:
+                    if item is not None:
+                        if isinstance(item, bytes):
+                            # Decode bytes to string safely
+                            str_list.append(item.decode("utf-8", errors="replace"))
+                        else:
+                            str_list.append(str(item))
+                if str_list:  # Only add non-empty lists
+                    result[key] = str_list
+            elif raw_value is not None:
+                # Convert single values to string
+                result[key] = str(raw_value)
+
+        return result
+
+    @staticmethod
+    def safe_get_first_value(attributes: dict[str, object], key: str) -> str | None:
+        """Safely get first value from LDAP attribute list."""
+        value = attributes.get(key)
+        if isinstance(value, list) and value:
+            typed_list: list[object] = cast("list[object]", value)
+            first_value: object = typed_list[0]
+            return str(first_value)
+        if isinstance(value, str):
+            return value
         return None
 
     @staticmethod
     def extract_error_message(
-        result: object, default_message: str = "Unknown error"
+        result: object, default_message: str = "Unknown error",
     ) -> str:
         """Extract error message from FlextResult or return default."""
         if hasattr(result, "error") and hasattr(result, "is_success"):
@@ -71,28 +133,40 @@ class FlextLdapUtilities:
 
         # Type-safe dict comprehension for LDAP data
         result: dict[str, object] = {}
-        for key, value in source_dict.items():
-            # Ensure key is string
-            str_key = str(key) if key is not None else ""
+        typed_dict: dict[str, object] = cast("dict[str, object]", source_dict)
+        for key, value in typed_dict.items():
+            # Key from dict.items() is always string
+            str_key = str(key)
             if str_key:  # Skip empty keys
                 result[str_key] = value
+        return result
+
+    @staticmethod
+    def safe_convert_value_to_str(value: object) -> str:
+        """Safely convert any value to string, handling bytes properly."""
+        if isinstance(value, bytes):
+            return value.decode("utf-8", errors="replace")
+        return str(value) if value is not None else ""
+
+    @staticmethod
+    def safe_convert_list_to_strings(values: list[object]) -> list[str]:
+        """Convert list of values to strings, handling bytes and filtering empty."""
+        result: list[str] = []
+        for item in values:
+            if item is not None:
+                str_item = FlextLdapUtilities.safe_convert_value_to_str(item)
+                if str_item:  # Skip empty strings
+                    result.append(str_item)
         return result
 
     @staticmethod
     def safe_list_conversion(source_value: object) -> list[str]:
         """Safely convert unknown value to list of strings for LDAP attributes."""
         if isinstance(source_value, list):
-            # Type-safe list conversion
-            result: list[str] = []
-            for item in source_value:
-                if item is not None:
-                    str_item = str(item)
-                    if str_item:  # Skip empty strings
-                        result.append(str_item)
-            return result
+            typed_list: list[object] = cast("list[object]", source_value)
+            return FlextLdapUtilities.safe_convert_list_to_strings(typed_list)
         if source_value is not None:
-            # Single value to list
-            str_value = str(source_value)
+            str_value = FlextLdapUtilities.safe_convert_value_to_str(source_value)
             return [str_value] if str_value else []
         return []
 
@@ -107,20 +181,46 @@ class FlextLdapUtilities:
         return attr_value if attr_value is not None else None
 
     @staticmethod
-    def safe_str_attribute(attributes: dict[str, object], key: str) -> str | None:
+    def safe_str_attribute(attributes: UtilsLdapAttributeDict, key: str) -> str | None:
         """Safely extract string attribute from LDAP attributes dict."""
         value = attributes.get(key)
         if value is None:
             return None
 
-        if isinstance(value, str):
-            return value if value.strip() else None
+        # Handle direct string/bytes values
+        result = FlextLdapUtilities._extract_string_from_value(value)
+        if result is not None:
+            return result
+
+        # Handle lists - take first item
         if isinstance(value, list) and value:
-            # Take first value from list
-            first_val = value[0]
-            return str(first_val).strip() if first_val else None
-        # Convert to string
-        return str(value).strip() if value else None
+            return FlextLdapUtilities._extract_string_from_value(value[0])
+
+        return None
+
+    @staticmethod
+    def _extract_string_from_value(value: object) -> str | None:
+        """Extract string from a single value (str or bytes).
+
+        Refactored to use flext-core patterns for consistent error handling.
+        """
+        def _safe_extract() -> str | None:
+            if isinstance(value, str):
+                return value if value.strip() else None
+            if isinstance(value, bytes):
+                try:
+                    decoded_str = value.decode("utf-8")
+                    return decoded_str if decoded_str.strip() else None
+                except UnicodeDecodeError:
+                    return None
+            return None
+
+        # Use flext-core safe pattern (modern approach)
+        try:
+            return _safe_extract()
+        except Exception:
+            # Flext-core pattern: fail gracefully instead of raising
+            return None
 
     @staticmethod
     def create_ldap_attributes(attrs: dict[str, list[str]]) -> LdapAttributeDict:
@@ -131,6 +231,70 @@ class FlextLdapUtilities:
             attr_value: LdapAttributeValue = [str(item) for item in value]
             result[key] = attr_value
         return result
+
+    # =============================================================================
+    # LDAP3 UNKNOWN TYPES HANDLERS - Handle External Library Types
+    # =============================================================================
+
+    @staticmethod
+    def safe_ldap3_search_result(ldap3_search_result: object) -> bool:
+        """Safely extract boolean result from ldap3 search operation."""
+        return bool(ldap3_search_result)
+
+    @staticmethod
+    def safe_ldap3_entries_list(connection: object) -> list[object]:
+        """Safely extract entries list from ldap3 connection."""
+        entries: object = getattr(connection, "entries", [])
+        if isinstance(entries, list):
+            return cast("list[object]", entries)
+        return []
+
+    @staticmethod
+    def safe_ldap3_entry_dn(entry: object) -> str:
+        """Safely extract DN from ldap3 entry object."""
+        dn: object = getattr(entry, "entry_dn", None)
+        return str(dn) if dn is not None else ""
+
+    @staticmethod
+    def safe_ldap3_entry_attributes_list(entry: object) -> list[str]:
+        """Safely extract attribute names list from ldap3 entry."""
+        attrs: object = getattr(entry, "entry_attributes", [])
+        if isinstance(attrs, list):
+            typed_attrs: list[object] = cast("list[object]", attrs)
+            return [str(attr) for attr in typed_attrs if attr is not None]
+        return []
+
+    @staticmethod
+    def safe_ldap3_attribute_values(entry: object, attr_name: str) -> list[str]:
+        """Safely extract attribute values from ldap3 entry."""
+        attr_obj: object = getattr(entry, attr_name, None)
+        if attr_obj is None:
+            return []
+
+        values: object = getattr(attr_obj, "values", [])
+        if isinstance(values, list):
+            typed_values: list[object] = cast("list[object]", values)
+            return [str(val) for val in typed_values if val is not None]
+        return []
+
+    @staticmethod
+    def safe_ldap3_connection_result(connection: object) -> str:
+        """Safely extract result message from ldap3 connection."""
+        result: object = getattr(connection, "result", None)
+        return str(result) if result is not None else "Unknown error"
+
+    @staticmethod
+    def safe_ldap3_rebind_result(connection: object, user: str, password: str) -> bool:
+        """Safely execute and extract result from ldap3 rebind operation."""
+        rebind_method: object = getattr(connection, "rebind", None)
+        if rebind_method is None or not callable(rebind_method):
+            return False
+
+        try:
+            rebind_result: object = rebind_method(user=user, password=password)
+            return bool(rebind_result)
+        except Exception:
+            return False
 
 
 class FlextLdapPerformanceHelpers:
@@ -179,7 +343,8 @@ class FlextLdapPerformanceHelpers:
         # Inline attribute coercion for better performance (avoid import)
         def coerce_value(value: object) -> str | list[str]:
             if isinstance(value, list):
-                return [str(item) for item in value]
+                typed_list: list[object] = cast("list[object]", value)
+                return [str(item) for item in typed_list]
             return str(value)
 
         # Pre-allocate dictionary with known size for better performance
@@ -189,7 +354,7 @@ class FlextLdapPerformanceHelpers:
                 key: coerce_value(value)
                 for key, value in attributes.items()
                 if value is not None  # Skip None values early
-            }
+            },
         )
         return result
 
@@ -271,7 +436,7 @@ class FlextLdapValidationHelpers:
         """Standard validation for non-empty string fields."""
         if not value or not value.strip():
             msg = FlextLdapValidationMessages.FIELD_CANNOT_BE_EMPTY.format(
-                field_name=field_name
+                field_name=field_name,
             )
             raise ValueError(msg)
         return value.strip()
@@ -280,35 +445,35 @@ class FlextLdapValidationHelpers:
     def validate_dn_field(value: str) -> str:
         """Standard DN validation for Pydantic models."""
         return FlextLdapValidationHelpers.validate_non_empty_string(
-            value, FlextLdapValidationMessages.DN_FIELD_NAME
+            value, FlextLdapValidationMessages.DN_FIELD_NAME,
         )
 
     @staticmethod
     def validate_filter_field(value: str) -> str:
         """Standard filter validation for Pydantic models."""
         return FlextLdapValidationHelpers.validate_non_empty_string(
-            value, FlextLdapValidationMessages.SEARCH_FILTER_FIELD_NAME
+            value, FlextLdapValidationMessages.SEARCH_FILTER_FIELD_NAME,
         )
 
     @staticmethod
     def validate_cn_field(value: str) -> str:
         """Standard common name validation for Pydantic models."""
         return FlextLdapValidationHelpers.validate_non_empty_string(
-            value, FlextLdapValidationMessages.COMMON_NAME_FIELD_NAME
+            value, FlextLdapValidationMessages.COMMON_NAME_FIELD_NAME,
         )
 
     @staticmethod
     def validate_file_path_field(value: str) -> str:
         """Standard file path validation for Pydantic models."""
         return FlextLdapValidationHelpers.validate_non_empty_string(
-            value, FlextLdapValidationMessages.FILE_PATH_FIELD_NAME
+            value, FlextLdapValidationMessages.FILE_PATH_FIELD_NAME,
         )
 
     @staticmethod
     def validate_uri_field(value: str) -> str:
         """Standard URI validation for Pydantic models."""
         validated = FlextLdapValidationHelpers.validate_non_empty_string(
-            value, FlextLdapValidationMessages.URI_FIELD_NAME
+            value, FlextLdapValidationMessages.URI_FIELD_NAME,
         )
         parsed = urlparse(validated)
         if parsed.scheme not in {"ldap", "ldaps"}:
@@ -320,7 +485,7 @@ class FlextLdapValidationHelpers:
     def validate_base_dn_field(value: str) -> str:
         """Standard base DN validation for Pydantic models."""
         validated = FlextLdapValidationHelpers.validate_non_empty_string(
-            value, FlextLdapValidationMessages.BASE_DN_FIELD_NAME
+            value, FlextLdapValidationMessages.BASE_DN_FIELD_NAME,
         )
         if not FlextLdapUtils.validate_dn(validated):
             msg = FlextLdapValidationMessages.INVALID_DN_FORMAT
@@ -343,7 +508,7 @@ class FlextLdapErrorHelpers:
         if context:
             base_msg = (
                 FlextLdapValidationMessages.CONNECTION_FAILED_WITH_CONTEXT.format(
-                    context=context
+                    context=context,
                 )
             )
         if error:
@@ -354,7 +519,7 @@ class FlextLdapErrorHelpers:
     def operation_failed_error(operation: str, error: str | None = None) -> str:
         """Standard operation failure error message."""
         base_msg = FlextLdapValidationMessages.OPERATION_FAILED.format(
-            operation=operation.title()
+            operation=operation.title(),
         )
         if error:
             return f"{base_msg}: {error}"
@@ -364,11 +529,61 @@ class FlextLdapErrorHelpers:
     def validation_failed_error(field: str, reason: str | None = None) -> str:
         """Standard validation failure error message."""
         base_msg: str = FlextLdapValidationMessages.VALIDATION_FAILED.format(
-            field=field
+            field=field,
         )
         if reason:
             return f"{base_msg}: {reason}"
         return base_msg
+
+    @staticmethod
+    def safe_entry_attribute_access(entry: object, attribute: str) -> object:
+        """Safely access attribute from unknown entry object.
+
+        Used to handle ldap3 Entry objects with unknown types.
+        """
+        if not hasattr(entry, attribute):
+            return None
+        return getattr(entry, attribute, None)
+
+    @staticmethod
+    def safe_dict_comprehension(raw_dict: object) -> dict[str, LdapAttributeValue]:
+        """Safely convert unknown dict to typed LDAP attributes.
+
+        Handles unknown dictionary types from external libraries.
+        """
+        if not isinstance(raw_dict, dict):
+            return {}
+
+        result: dict[str, LdapAttributeValue] = {}
+        typed_dict: dict[str, object] = cast("dict[str, object]", raw_dict)
+        for key, value in typed_dict.items():
+            str_key = str(key)
+            if isinstance(value, list):
+                # Convert list to list of strings
+                typed_list: list[object] = cast("list[object]", value)
+                result[str_key] = [str(item) for item in typed_list]
+            elif isinstance(value, (str, bytes)):
+                result[str_key] = str(value)
+            else:
+                result[str_key] = str(value) if value is not None else ""
+        return result
+
+    @staticmethod
+    def safe_list_access(data: object) -> list[object]:
+        """Safely convert unknown data to list.
+
+        Returns empty list if data is not a list.
+        """
+        if isinstance(data, list):
+            return cast("list[object]", data)
+        return []
+
+    @staticmethod
+    def safe_string_conversion(value: object) -> str:
+        """Safely convert unknown value to string."""
+        if value is None:
+            return ""
+        return str(value)
 
 
 # =============================================================================

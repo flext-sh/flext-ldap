@@ -52,7 +52,7 @@ class IFlextLdapRepository(ABC):
 
     @abstractmethod
     async def search(
-        self, request: FlextLdapSearchRequest
+        self, request: FlextLdapSearchRequest,
     ) -> FlextResult[FlextLdapSearchResponse]:
         """Search entries with criteria."""
         ...
@@ -83,7 +83,7 @@ class IFlextLdapUserService(ABC):
 
     @abstractmethod
     async def create_user(
-        self, request: FlextLdapCreateUserRequest
+        self, request: FlextLdapCreateUserRequest,
     ) -> FlextResult[FlextLdapUser]:
         """Create new user in LDAP directory."""
         ...
@@ -95,7 +95,7 @@ class IFlextLdapUserService(ABC):
 
     @abstractmethod
     async def update_user(
-        self, dn: str, attributes: LdapAttributeDict
+        self, dn: str, attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update user attributes."""
         ...
@@ -136,7 +136,7 @@ class IFlextLdapGroupService(ABC):
 
     @abstractmethod
     async def update_group(
-        self, dn: str, attributes: LdapAttributeDict
+        self, dn: str, attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update group attributes."""
         ...
@@ -235,7 +235,7 @@ class IFlextLdapClient(ABC):
 
     @abstractmethod
     async def search(
-        self, request: FlextLdapSearchRequest
+        self, request: FlextLdapSearchRequest,
     ) -> FlextResult[FlextLdapSearchResponse]:
         """Perform LDAP search."""
         ...
@@ -286,14 +286,14 @@ class IFlextLdapApiSession(ABC):
 
     @abstractmethod
     async def search(
-        self, request: FlextLdapSearchRequest
+        self, request: FlextLdapSearchRequest,
     ) -> FlextResult[FlextLdapSearchResponse]:
         """Search with session."""
         ...
 
     @abstractmethod
     async def create_user(
-        self, request: FlextLdapCreateUserRequest
+        self, request: FlextLdapCreateUserRequest,
     ) -> FlextResult[FlextLdapUser]:
         """Create user with session."""
         ...
@@ -309,7 +309,7 @@ class IFlextLdapEventPublisher(ABC):
 
     @abstractmethod
     async def publish_user_updated(
-        self, dn: str, attributes: LdapAttributeDict
+        self, dn: str, attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Publish user updated event."""
         ...
@@ -344,7 +344,8 @@ class IFlextLdapAuditLogger(ABC):
     async def log_authentication(
         self,
         user_dn: str,
-        success: bool,  # noqa: FBT001
+        *,
+        success: bool,
         client_ip: str | None = None,
     ) -> FlextResult[None]:
         """Log authentication attempt."""
@@ -356,7 +357,8 @@ class IFlextLdapAuditLogger(ABC):
         user_dn: str,
         resource: str,
         action: str,
-        granted: bool,  # noqa: FBT001
+        *,
+        granted: bool,
     ) -> FlextResult[None]:
         """Log authorization decision."""
         ...
@@ -376,7 +378,7 @@ class IFlextLdapReadOnlyService(ABC):
 
     @abstractmethod
     async def search(
-        self, request: FlextLdapSearchRequest
+        self, request: FlextLdapSearchRequest,
     ) -> FlextResult[FlextLdapSearchResponse]:
         """Search entries."""
         ...

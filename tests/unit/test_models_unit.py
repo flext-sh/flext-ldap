@@ -6,8 +6,8 @@ Tests pure domain logic and business rules without external dependencies.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
 
+# No need for cast anymore - using direct construction
 from flext_core import (
     FlextEntityId,
     FlextEntityStatus,
@@ -42,7 +42,9 @@ class TestFlextLdapDistinguishedName:
         for dn_str in valid_dns:
             result = FlextLdapDistinguishedName.create(dn_str)
             assert result.is_success, f"Valid DN should work: {dn_str} - {result.error}"
-            assert result.value.value == dn_str
+            # Use value since we verified is_success
+            dn_obj = result.value
+            assert dn_obj.value == dn_str
 
     def test_dn_validation_rejects_invalid_formats(self) -> None:
         """Test DN validation rejects clearly invalid formats."""
@@ -75,9 +77,9 @@ class TestFlextLdapDistinguishedName:
 class TestFlextLdapUser:
     """Test LDAP user entity with real business logic."""
 
-    def create_test_user(self, **kwargs: Any) -> FlextLdapUser:
+    def create_test_user(self, **kwargs: object) -> FlextLdapUser:
         """Helper to create test user with defaults using Any for kwargs."""
-        defaults: dict[str, Any] = {
+        defaults: dict[str, object] = {
             "id": FlextEntityId("test_user"),
             "version": FlextVersion(1),
             "created_at": FlextTimestamp(datetime.now(UTC)),
@@ -96,7 +98,7 @@ class TestFlextLdapUser:
             "status": FlextEntityStatus.ACTIVE,
         }
         defaults.update(kwargs)
-        return FlextLdapUser(**defaults)
+        return FlextLdapUser(**defaults)  # type: ignore[arg-type] # Test helper with dynamic args
 
     def test_user_creation_with_required_fields(self) -> None:
         """Test user entity creation with required fields."""
@@ -121,6 +123,7 @@ class TestFlextLdapUser:
         invalid_user = self.create_test_user(uid="")
         validation_result = invalid_user.validate_business_rules()
         if not validation_result.is_success:
+            assert validation_result.error is not None
             assert "uid" in validation_result.error.lower()
 
     def test_user_attribute_access_methods(self) -> None:
@@ -173,9 +176,9 @@ class TestFlextLdapUser:
 class TestFlextLdapGroup:
     """Test LDAP group entity with real business logic."""
 
-    def create_test_group(self, **kwargs: Any) -> FlextLdapGroup:
+    def create_test_group(self, **kwargs: object) -> FlextLdapGroup:
         """Helper to create test group with defaults using Any for kwargs."""
-        defaults: dict[str, Any] = {
+        defaults: dict[str, object] = {
             "id": FlextEntityId("test_group"),
             "version": FlextVersion(1),
             "created_at": FlextTimestamp(datetime.now(UTC)),
@@ -191,7 +194,7 @@ class TestFlextLdapGroup:
             "status": FlextEntityStatus.ACTIVE,
         }
         defaults.update(kwargs)
-        return FlextLdapGroup(**defaults)
+        return FlextLdapGroup(**defaults)  # type: ignore[arg-type] # Test helper with dynamic args
 
     def test_group_creation_with_required_fields(self) -> None:
         """Test group entity creation with required fields."""
@@ -216,8 +219,8 @@ class TestFlextLdapGroup:
         validation_result = invalid_group.validate_business_rules()
         if not validation_result.is_success:
             assert (
-                "cn" in validation_result.error.lower()
-                or "name" in validation_result.error.lower()
+                (validation_result.error and "cn" in validation_result.error.lower())
+                or (validation_result.error and "name" in validation_result.error.lower())
             )
 
     def test_group_member_management(self) -> None:
@@ -275,9 +278,9 @@ class TestFlextLdapGroup:
 class TestFlextLdapEntry:
     """Test generic LDAP entry with real attribute handling."""
 
-    def create_test_entry(self, **kwargs: Any) -> FlextLdapEntry:
+    def create_test_entry(self, **kwargs: object) -> FlextLdapEntry:
         """Helper to create test entry with defaults using Any for kwargs."""
-        defaults: dict[str, Any] = {
+        defaults: dict[str, object] = {
             "id": FlextEntityId("test_entry"),
             "version": FlextVersion(1),
             "created_at": FlextTimestamp(datetime.now(UTC)),
@@ -290,7 +293,7 @@ class TestFlextLdapEntry:
             "status": FlextEntityStatus.ACTIVE,
         }
         defaults.update(kwargs)
-        return FlextLdapEntry(**defaults)
+        return FlextLdapEntry(**defaults)  # type: ignore[arg-type] # Test helper with dynamic args
 
     def test_entry_creation_and_attribute_access(self) -> None:
         """Test entry creation and attribute access methods."""
@@ -342,6 +345,7 @@ class TestFlextLdapEntry:
         invalid_entry = self.create_test_entry(object_classes=[])
         validation_result = invalid_entry.validate_business_rules()
         assert not validation_result.is_success
+        assert validation_result.error is not None
         assert "object class" in validation_result.error.lower()
 
 
@@ -520,3 +524,122 @@ class TestBusinessRulesIntegration:
 
         assert request_validation.is_success
         assert entity_validation.is_success
+
+
+class TestRealWorldScenarios:
+    """Test with realistic data patterns from actual LDAP deployments."""
+
+    def test_enterprise_user_patterns(self) -> None:
+        """Test enterprise user creation with realistic corporate data."""
+        # Real-world corporate user patterns
+        realistic_users = [
+            {
+                "dn": "cn=john.smith,ou=employees,ou=people,dc=corp,dc=example,dc=com",
+                "uid": "jsmith",
+                "cn": "John Smith",
+                "sn": "Smith",
+                "given_name": "John",
+                "mail": "john.smith@corp.example.com",
+                "phone": "+1-555-0101",
+                "object_classes": ["inetOrgPerson", "person", "organizationalPerson"],
+                "attributes": {
+                    "employeeNumber": ["E123456"],
+                    "department": ["Engineering"],
+                    "title": ["Senior Software Engineer"],
+                    "manager": ["cn=jane.doe,ou=employees,ou=people,dc=corp,dc=example,dc=com"]
+                }
+            },
+            {
+                "dn": "cn=maria.garcia,ou=contractors,ou=people,dc=corp,dc=example,dc=com",
+                "uid": "mgarcia",
+                "cn": "Maria Garcia",
+                "sn": "Garcia",
+                "given_name": "Maria",
+                "mail": "maria.garcia@external.example.com",
+                "phone": "+1-555-0102",
+                "object_classes": ["inetOrgPerson", "person"],
+                "attributes": {
+                    "employeeType": ["contractor"],
+                    "contractExpiry": ["20251231"],
+                    "department": ["Marketing"]
+                }
+            }
+        ]
+
+        for user_data in realistic_users:
+            # Create user entity with realistic data
+            user = FlextLdapUser(
+                id=FlextEntityId(f"test_{user_data['uid']}"),
+                version=FlextVersion(1),
+                created_at=FlextTimestamp(datetime.now(UTC)),
+                updated_at=FlextTimestamp(datetime.now(UTC)),
+                domain_events=FlextEventList([]),
+                metadata=FlextMetadata({}),
+                status=FlextEntityStatus.ACTIVE,
+                **{k: v for k, v in user_data.items() if k != "attributes"}
+            )
+            user.attributes.update(user_data.get("attributes", {}))
+
+            # Test realistic business rule validation
+            validation_result = user.validate_business_rules()
+            assert validation_result.is_success, (
+                f"Realistic user {user_data['uid']} failed validation: {validation_result.error}"
+            )
+
+            # Test realistic attribute access
+            assert user.mail.endswith(".com")
+            assert len(user.phone) >= 10
+            assert user.sn in user.cn
+            assert user.dn.startswith(f"cn={user.cn.lower().replace(' ', '.')}")
+
+    def test_organizational_group_structures(self) -> None:
+        """Test realistic organizational group hierarchies."""
+        # Real-world organizational structures
+        org_groups = [
+            {
+                "dn": "cn=engineering,ou=departments,dc=corp,dc=example,dc=com",
+                "cn": "Engineering Department",
+                "description": "All engineering staff and contractors",
+                "object_classes": ["groupOfNames", "organizationalGroup"],
+                "members": [
+                    "cn=john.smith,ou=employees,ou=people,dc=corp,dc=example,dc=com",
+                    "cn=alice.johnson,ou=employees,ou=people,dc=corp,dc=example,dc=com",
+                    "cn=bob.wilson,ou=contractors,ou=people,dc=corp,dc=example,dc=com"
+                ]
+            },
+            {
+                "dn": "cn=ldap-admins,ou=security,ou=groups,dc=corp,dc=example,dc=com",
+                "cn": "LDAP Administrators",
+                "description": "Users with LDAP administrative privileges",
+                "object_classes": ["groupOfNames"],
+                "members": [
+                    "cn=admin,ou=system,dc=corp,dc=example,dc=com"
+                ]
+            }
+        ]
+
+        for group_data in org_groups:
+            # Create group with realistic organizational data
+            group = FlextLdapGroup(
+                id=FlextEntityId(f"test_group_{group_data['cn'].lower().replace(' ', '_')}"),
+                version=FlextVersion(1),
+                created_at=FlextTimestamp(datetime.now(UTC)),
+                updated_at=FlextTimestamp(datetime.now(UTC)),
+                domain_events=FlextEventList([]),
+                metadata=FlextMetadata({}),
+                status=FlextEntityStatus.ACTIVE,
+                **group_data
+            )
+
+            # Test realistic group validation
+            validation_result = group.validate_business_rules()
+            assert validation_result.is_success, (
+                f"Realistic group {group_data['cn']} failed validation: {validation_result.error}"
+            )
+
+            # Test organizational patterns
+            assert group.dn.startswith("cn=")
+            assert len(group.members) > 0
+            assert all(member.startswith("cn=") for member in group.members)
+            assert group.description is not None
+            assert len(group.description) > 10

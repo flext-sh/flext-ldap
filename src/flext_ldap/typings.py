@@ -173,17 +173,25 @@ class FlextLdapDirectoryEntryProtocol(Protocol):
 # =============================================================================
 
 __all__ = [
-    # Protocols
     "AsyncCallable",
+    "ConnectionConfig",
+    "DirectoryAuthConfig",
+    "ErrorPatternData",
     "FlextLdapConnectionProtocol",
     "FlextLdapDirectoryConnectionProtocol",
     "FlextLdapDirectoryEntryProtocol",
     "FlextLdapRepositoryProtocol",
-    # Core LDAP Types (domain-specific)
+    "JsonDict",
     "LdapAttributeDict",
     "LdapAttributeValue",
+    "LdapConnectionConfig",
     "LdapSearchResult",
-    # Type Aliases using flext-core base types
+    "P",
+    "R",
+    "SchemaData",
+    "SearchResult",
+    "SecurityEventData",
+    "T",
     "TLdapAttributeValue",
     "TLdapAttributes",
     "TLdapConnectionId",
@@ -194,20 +202,5 @@ __all__ = [
     "TLdapSearchResult",
     "TLdapSessionId",
     "TLdapUri",
-    # Infrastructure Types (extending flext-core)
-    "LdapConnectionConfig",
-    "SecurityEventData",
-    "ErrorPatternData",
-    "SchemaData",
-    # Service Types (extending flext-core)
-    "DirectoryAuthConfig",
-    "ConnectionConfig",
     "UserRequest",
-    "SearchResult",
-    # Convenience Aliases
-    "JsonDict",
-    # Type Variables from flext-core
-    "P",
-    "R",
-    "T",
 ]

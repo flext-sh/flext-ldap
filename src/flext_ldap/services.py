@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextEntityId, FlextResult, get_logger
 
@@ -46,7 +46,7 @@ class FlextLdapService(IFlextLdapFullService):
 
     @override
     async def create_user(
-        self, request: FlextLdapCreateUserRequest
+        self, request: FlextLdapCreateUserRequest,
     ) -> FlextResult[FlextLdapUser]:
         """Create new user in LDAP directory."""
         user_entity = request.to_user_entity()
@@ -55,7 +55,7 @@ class FlextLdapService(IFlextLdapFullService):
         validation_result = user_entity.validate_business_rules()
         if not validation_result.is_success:
             return FlextResult[FlextLdapUser].fail(
-                f"User validation failed: {validation_result.error}"
+                f"User validation failed: {validation_result.error}",
             )
 
         # Save user via repository
@@ -65,9 +65,17 @@ class FlextLdapService(IFlextLdapFullService):
         if not save_result.is_success:
             return FlextResult[FlextLdapUser].fail(save_result.error or "Save failed")
 
+        # Using flext-core logging format with enhanced structured data
         logger.info(
-            "User created successfully",
-            extra={"dn": user_entity.dn, "uid": user_entity.uid},
+            "LDAP user created successfully",
+            extra={
+                "operation": "create_user",
+                "dn": user_entity.dn,
+                "uid": user_entity.uid,
+                "object_classes": user_entity.object_classes,
+                "status": user_entity.status.value if user_entity.status else None,
+                "execution_context": "FlextLdapService.create_user",
+            },
         )
         return FlextResult[FlextLdapUser].ok(user_entity)
 
@@ -79,7 +87,7 @@ class FlextLdapService(IFlextLdapFullService):
 
         if not entry_result.is_success:
             return FlextResult[FlextLdapUser | None].fail(
-                entry_result.error or "Entry lookup failed"
+                entry_result.error or "Entry lookup failed",
             )
 
         if not entry_result.value:
@@ -90,7 +98,7 @@ class FlextLdapService(IFlextLdapFullService):
         # Convert to user entity
         user = FlextLdapUser(
             id=FlextEntityId(
-                f"service_user_{entry.dn.replace(',', '_').replace('=', '_')}"
+                f"service_user_{entry.dn.replace(',', '_').replace('=', '_')}",
             ),
             dn=entry.dn,
             uid=entry.get_single_attribute_value("uid") or "",
@@ -108,7 +116,7 @@ class FlextLdapService(IFlextLdapFullService):
 
     @override
     async def update_user(
-        self, dn: str, attributes: LdapAttributeDict
+        self, dn: str, attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update user attributes."""
         repository = self._container.get_repository()
@@ -120,6 +128,7 @@ class FlextLdapService(IFlextLdapFullService):
         return result
 
     @override
+    # Enhanced logging for user deletion operations
     async def delete_user(self, dn: str) -> FlextResult[None]:
         """Delete user from directory."""
         repository = self._container.get_repository()
@@ -152,20 +161,22 @@ class FlextLdapService(IFlextLdapFullService):
 
         if not search_result.is_success:
             return FlextResult[list[FlextLdapUser]].fail(
-                search_result.error or "Search failed"
+                search_result.error or "Search failed",
             )
 
-        users = []
+        users: list[FlextLdapUser] = []
         for entry_data in search_result.value.entries:
-            entry_dn = entry_data.get("dn")
+            typed_entry_data: dict[str, object] = cast("dict[str, object]", entry_data)
+            entry_dn = typed_entry_data.get("dn")
             if not entry_dn:
                 continue
 
             user_result = await self.get_user(str(entry_dn))
-            # Use FlextResult's unwrap_or method for cleaner code
-            user = user_result.unwrap_or(None)
-            if user:
-                users.append(user)
+            # Use simplified pattern with .value access
+            if user_result.is_success:
+                user = user_result.value
+                if user:
+                    users.append(user)
 
         return FlextResult[list[FlextLdapUser]].ok(users)
 
@@ -184,7 +195,7 @@ class FlextLdapService(IFlextLdapFullService):
         validation_result = group.validate_business_rules()
         if not validation_result.is_success:
             return FlextResult[None].fail(
-                f"Group validation failed: {validation_result.error}"
+                f"Group validation failed: {validation_result.error}",
             )
 
         # Save group via repository
@@ -193,7 +204,7 @@ class FlextLdapService(IFlextLdapFullService):
 
         if result.is_success:
             logger.info(
-                "Group created successfully", extra={"dn": group.dn, "cn": group.cn}
+                "Group created successfully", extra={"dn": group.dn, "cn": group.cn},
             )
 
         return result
@@ -206,7 +217,7 @@ class FlextLdapService(IFlextLdapFullService):
 
         if not entry_result.is_success:
             return FlextResult[FlextLdapGroup | None].fail(
-                entry_result.error or "Group lookup failed"
+                entry_result.error or "Group lookup failed",
             )
 
         if not entry_result.value:
@@ -217,7 +228,7 @@ class FlextLdapService(IFlextLdapFullService):
         # Convert to group entity
         group = FlextLdapGroup(
             id=FlextEntityId(
-                f"service_group_{entry.dn.replace(',', '_').replace('=', '_')}"
+                f"service_group_{entry.dn.replace(',', '_').replace('=', '_')}",
             ),
             dn=entry.dn,
             cn=entry.get_single_attribute_value("cn") or "",
@@ -232,7 +243,7 @@ class FlextLdapService(IFlextLdapFullService):
 
     @override
     async def update_group(
-        self, dn: str, attributes: LdapAttributeDict
+        self, dn: str, attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update group attributes."""
         repository = self._container.get_repository()
@@ -244,6 +255,7 @@ class FlextLdapService(IFlextLdapFullService):
         return result
 
     @override
+    # Enhanced logging for group deletion operations
     async def delete_group(self, dn: str) -> FlextResult[None]:
         """Delete group from directory."""
         repository = self._container.get_repository()
@@ -277,7 +289,7 @@ class FlextLdapService(IFlextLdapFullService):
 
         if not members_result.is_success:
             return FlextResult[None].fail(
-                members_result.error or "Members lookup failed"
+                members_result.error or "Members lookup failed",
             )
 
         current_members = members_result.value
@@ -316,52 +328,64 @@ class FlextLdapService(IFlextLdapFullService):
     @override
     def validate_dn(self, dn: str) -> FlextResult[None]:
         """Validate distinguished name format."""
-        dn_result = FlextLdapDistinguishedName.create(dn)
-        if not dn_result.is_success:
-            return FlextResult[None].fail(dn_result.error or "DN validation failed")
-        return FlextResult[None].ok(None)
+        try:
+            dn_result = FlextLdapDistinguishedName.create(dn)
+            if not dn_result.is_success:
+                return FlextResult[None].fail(dn_result.error or "DN validation failed")
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"DN validation error: {e}")
 
     @override
     def validate_filter(self, filter_str: str) -> FlextResult[None]:
         """Validate LDAP search filter."""
-        if not filter_str.strip():
-            return FlextResult[None].fail("Filter cannot be empty")
+        try:
+            if not filter_str.strip():
+                return FlextResult[None].fail("Filter cannot be empty")
 
-        if not (filter_str.startswith("(") and filter_str.endswith(")")):
-            return FlextResult[None].fail("Filter must be enclosed in parentheses")
+            if not (filter_str.startswith("(") and filter_str.endswith(")")):
+                return FlextResult[None].fail("Filter must be enclosed in parentheses")
 
-        return FlextResult[None].ok(None)
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Filter validation error: {e}")
 
     @override
     def validate_attributes(self, attributes: LdapAttributeDict) -> FlextResult[None]:
         """Validate attribute dictionary."""
-        if not attributes:
-            return FlextResult[None].fail("Attributes cannot be empty")
+        try:
+            if not attributes:
+                return FlextResult[None].fail("Attributes cannot be empty")
 
-        for name in attributes:
-            if not name or not name.strip():
-                return FlextResult[None].fail("Attribute name cannot be empty")
+            for name in attributes:
+                if not name or not name.strip():
+                    return FlextResult[None].fail("Attribute name cannot be empty")
 
-            # Note: value cannot be None due to LdapAttributeDict typing
+                # Note: value cannot be None due to LdapAttributeDict typing
 
-        return FlextResult[None].ok(None)
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Attributes validation error: {e}")
 
     @override
     def validate_object_classes(self, object_classes: list[str]) -> FlextResult[None]:
         """Validate object class list."""
-        if not object_classes:
-            return FlextResult[None].fail("Object classes cannot be empty")
+        try:
+            if not object_classes:
+                return FlextResult[None].fail("Object classes cannot be empty")
 
-        for oc in object_classes:
-            if not oc or not oc.strip():
-                return FlextResult[None].fail("Object class cannot be empty")
+            for oc in object_classes:
+                if not oc or not oc.strip():
+                    return FlextResult[None].fail("Object class cannot be empty")
 
-        return FlextResult[None].ok(None)
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Object classes validation error: {e}")
 
     # Search methods
 
     async def search(
-        self, request: FlextLdapSearchRequest
+        self, request: FlextLdapSearchRequest,
     ) -> FlextResult[FlextLdapSearchResponse]:
         """Search entries."""
         repository = self._container.get_repository()
@@ -380,7 +404,7 @@ class FlextLdapUserService(IFlextLdapUserService):
 
     @override
     async def create_user(
-        self, request: FlextLdapCreateUserRequest
+        self, request: FlextLdapCreateUserRequest,
     ) -> FlextResult[FlextLdapUser]:
         """Create new user."""
         return await self._service.create_user(request)
@@ -392,7 +416,7 @@ class FlextLdapUserService(IFlextLdapUserService):
 
     @override
     async def update_user(
-        self, dn: str, attributes: LdapAttributeDict
+        self, dn: str, attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update user."""
         return await self._service.update_user(dn, attributes)
@@ -404,7 +428,7 @@ class FlextLdapUserService(IFlextLdapUserService):
 
     @override
     async def search_users(
-        self, filter_str: str, base_dn: str, scope: str = "subtree"
+        self, filter_str: str, base_dn: str, scope: str = "subtree",
     ) -> FlextResult[list[FlextLdapUser]]:
         """Search users."""
         return await self._service.search_users(filter_str, base_dn, scope)
@@ -434,7 +458,7 @@ class FlextLdapGroupService(IFlextLdapGroupService):
 
     @override
     async def update_group(
-        self, dn: str, attributes: LdapAttributeDict
+        self, dn: str, attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update group."""
         return await self._service.update_group(dn, attributes)

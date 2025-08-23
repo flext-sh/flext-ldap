@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextEntityId, FlextEntityStatus, FlextResult, get_logger
 
@@ -33,7 +33,7 @@ class FlextLdapRepository(IFlextLdapRepository):
         dn_validation = FlextLdapDistinguishedName.create(dn)
         if not dn_validation.is_success:
             return FlextResult[FlextLdapEntry | None].fail(
-                f"Invalid DN format: {dn_validation.error}"
+                f"Invalid DN format: {dn_validation.error}",
             )
 
         # Search for the specific entry
@@ -58,13 +58,15 @@ class FlextLdapRepository(IFlextLdapRepository):
 
         # Convert search result to entry
         entry_data = search_result.value.entries[0]
+        typed_entry: dict[str, object] = cast("dict[str, object]", entry_data)
 
         # Extract object classes
         object_classes = []
-        if "objectClass" in entry_data:
-            oc_value = entry_data["objectClass"]
+        if "objectClass" in typed_entry:
+            oc_value = typed_entry["objectClass"]
             if isinstance(oc_value, list):
-                object_classes = [str(oc) for oc in oc_value]
+                typed_oc_list: list[object] = cast("list[object]", oc_value)
+                object_classes = [str(oc) for oc in typed_oc_list]
             else:
                 object_classes = [str(oc_value)]
 
@@ -82,13 +84,13 @@ class FlextLdapRepository(IFlextLdapRepository):
 
     @override
     async def search(
-        self, request: FlextLdapSearchRequest
+        self, request: FlextLdapSearchRequest,
     ) -> FlextResult[FlextLdapSearchResponse]:
         """Search entries with criteria."""
         search_result = await self._client.search(request)
         if not search_result.is_success:
             return FlextResult[FlextLdapSearchResponse].fail(
-                search_result.error or "Search failed"
+                search_result.error or "Search failed",
             )
 
         logger.debug(
@@ -108,14 +110,14 @@ class FlextLdapRepository(IFlextLdapRepository):
         validation_result = entry.validate_business_rules()
         if not validation_result.is_success:
             return FlextResult[None].fail(
-                f"Entry validation failed: {validation_result.error}"
+                f"Entry validation failed: {validation_result.error}",
             )
 
         # Check if entry exists
         existing = await self.exists(entry.dn)
         if not existing.is_success:
             return FlextResult[None].fail(
-                f"Could not check if entry exists: {existing.error}"
+                f"Could not check if entry exists: {existing.error}",
             )
 
         # Prepare attributes including object classes
@@ -128,8 +130,8 @@ class FlextLdapRepository(IFlextLdapRepository):
         if entry.object_classes:
             attributes["objectClass"] = entry.object_classes
 
-        # Use unwrap_or() pattern for cleaner conditional
-        if existing.unwrap_or(default=False):
+        # Use value directly since we already checked success
+        if existing.value:
             # Update existing entry
             result = await self._client.modify(entry.dn, attributes)
             if result.is_success:
@@ -163,8 +165,8 @@ class FlextLdapRepository(IFlextLdapRepository):
         if not find_result.is_success:
             return FlextResult[bool].fail(find_result.error or "Find failed")
 
-        # Use unwrap_or() pattern for cleaner null checking
-        return FlextResult[bool].ok(find_result.unwrap_or(None) is not None)
+        # Use success check directly for cleaner code
+        return FlextResult[bool].ok(find_result.is_success)
 
     @override
     async def update(self, dn: str, attributes: LdapAttributeDict) -> FlextResult[None]:
@@ -179,8 +181,8 @@ class FlextLdapRepository(IFlextLdapRepository):
         if not exists_result.is_success:
             return FlextResult[None].fail(exists_result.error or "Exists check failed")
 
-        # Use unwrap_or() pattern for cleaner conditional
-        if not exists_result.unwrap_or(default=False):
+        # Use value directly since we already checked success
+        if not exists_result.value:
             return FlextResult[None].fail(f"Entry does not exist: {dn}")
 
         result = await self._client.modify(dn, attributes)
@@ -201,7 +203,7 @@ class FlextLdapUserRepository:
         self._repo = base_repository
 
     async def find_user_by_uid(
-        self, uid: str, base_dn: str
+        self, uid: str, base_dn: str,
     ) -> FlextResult[FlextLdapEntry | None]:
         """Find user by UID attribute."""
         search_request = FlextLdapSearchRequest(
@@ -216,7 +218,7 @@ class FlextLdapUserRepository:
         search_result = await self._repo.search(search_request)
         if not search_result.is_success:
             return FlextResult[FlextLdapEntry | None].fail(
-                search_result.error or "User search failed"
+                search_result.error or "User search failed",
             )
 
         if not search_result.value.entries:
@@ -224,17 +226,18 @@ class FlextLdapUserRepository:
 
         # Get the first entry and convert to FlextLdapEntry
         entry_data = search_result.value.entries[0]
-        entry_dn = entry_data.get("dn", "")
+        typed_entry_data: dict[str, object] = cast("dict[str, object]", entry_data)
+        entry_dn = typed_entry_data.get("dn", "")
 
         if not entry_dn:
             return FlextResult[FlextLdapEntry | None].fail(
-                "Entry DN not found in search results"
+                "Entry DN not found in search results",
             )
 
         return await self._repo.find_by_dn(str(entry_dn))
 
     async def find_users_by_filter(
-        self, ldap_filter: str, base_dn: str
+        self, ldap_filter: str, base_dn: str,
     ) -> FlextResult[list[FlextLdapEntry]]:
         """Find users by custom LDAP filter."""
         search_request = FlextLdapSearchRequest(
@@ -249,20 +252,22 @@ class FlextLdapUserRepository:
         search_result = await self._repo.search(search_request)
         if not search_result.is_success:
             return FlextResult[list[FlextLdapEntry]].fail(
-                search_result.error or "Users search failed"
+                search_result.error or "Users search failed",
             )
 
-        entries = []
+        entries: list[FlextLdapEntry] = []
         for entry_data in search_result.value.entries:
-            entry_dn = entry_data.get("dn")
+            typed_entry_data_loop: dict[str, object] = cast("dict[str, object]", entry_data)
+            entry_dn = typed_entry_data_loop.get("dn")
             if not entry_dn:
                 continue
 
             find_result = await self._repo.find_by_dn(str(entry_dn))
-            # Use FlextResult's unwrap_or method for cleaner code
-            entry = find_result.unwrap_or(None)
-            if entry:
-                entries.append(entry)
+            # Use simplified pattern with .value access
+            if find_result.is_success:
+                entry = find_result.value
+                if entry:
+                    entries.append(entry)
 
         return FlextResult[list[FlextLdapEntry]].ok(entries)
 
@@ -275,7 +280,7 @@ class FlextLdapGroupRepository:
         self._repo = base_repository
 
     async def find_group_by_cn(
-        self, cn: str, base_dn: str
+        self, cn: str, base_dn: str,
     ) -> FlextResult[FlextLdapEntry | None]:
         """Find group by CN attribute."""
         search_request = FlextLdapSearchRequest(
@@ -290,7 +295,7 @@ class FlextLdapGroupRepository:
         search_result = await self._repo.search(search_request)
         if not search_result.is_success:
             return FlextResult[FlextLdapEntry | None].fail(
-                search_result.error or "Group search failed"
+                search_result.error or "Group search failed",
             )
 
         if not search_result.value.entries:
@@ -298,11 +303,12 @@ class FlextLdapGroupRepository:
 
         # Get the first entry and convert to FlextLdapEntry
         entry_data = search_result.value.entries[0]
-        entry_dn = entry_data.get("dn", "")
+        typed_entry_data: dict[str, object] = cast("dict[str, object]", entry_data)
+        entry_dn = typed_entry_data.get("dn", "")
 
         if not entry_dn:
             return FlextResult[FlextLdapEntry | None].fail(
-                "Entry DN not found in search results"
+                "Entry DN not found in search results",
             )
 
         return await self._repo.find_by_dn(str(entry_dn))
@@ -312,7 +318,7 @@ class FlextLdapGroupRepository:
         entry_result = await self._repo.find_by_dn(group_dn)
         if not entry_result.is_success:
             return FlextResult[list[str]].fail(
-                entry_result.error or "Group lookup failed"
+                entry_result.error or "Group lookup failed",
             )
 
         if not entry_result.value:
@@ -324,14 +330,14 @@ class FlextLdapGroupRepository:
         return FlextResult[list[str]].ok(members)
 
     async def add_member_to_group(
-        self, group_dn: str, member_dn: str
+        self, group_dn: str, member_dn: str,
     ) -> FlextResult[None]:
         """Add member to group."""
         # Get current members
         members_result = await self.get_group_members(group_dn)
         if not members_result.is_success:
             return FlextResult[None].fail(
-                members_result.error or "Members lookup failed"
+                members_result.error or "Members lookup failed",
             )
 
         current_members = members_result.value

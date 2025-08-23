@@ -9,6 +9,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import cast
 
 from flext_core import FlextEntityId, FlextEntityStatus, FlextResult, get_logger
 
@@ -24,6 +25,7 @@ from flext_ldap.entities import (
 from flext_ldap.exceptions import FlextLdapConnectionError
 from flext_ldap.services import FlextLdapService
 from flext_ldap.typings import LdapAttributeDict
+from flext_ldap.utils import FlextLdapUtilities
 
 logger = get_logger(__name__)
 
@@ -101,8 +103,8 @@ class FlextLdapApi:
             msg = f"Connection failed: {connect_result.error}"
             raise FlextLdapConnectionError(msg)
 
-        # Use unwrap_or() pattern for cleaner code
-        session_id = connect_result.unwrap_or("")
+        # Use FlextResult.value for modern type-safe access
+        session_id = connect_result.value
         if not session_id:
             msg = "Failed to get session ID"
             raise FlextLdapConnectionError(msg)
@@ -139,33 +141,38 @@ class FlextLdapApi:
         search_result = await self._service.search(search_request)
         if not search_result.is_success:
             return FlextResult[list[FlextLdapEntry]].fail(
-                search_result.error or "Search failed"
+                search_result.error or "Search failed",
             )
 
         # Convert response entries to FlextLdapEntry objects
-        entries = []
+        entries: list[FlextLdapEntry] = []
         for entry_data in search_result.value.entries:
-            entry_dn = entry_data.get("dn")
+            typed_entry: dict[str, object] = cast("dict[str, object]", entry_data)
+            entry_dn = typed_entry.get("dn")
             if not entry_dn:
                 continue
 
             # Extract object classes
             object_classes = []
-            if "objectClass" in entry_data:
-                oc_value = entry_data["objectClass"]
+            if "objectClass" in typed_entry:
+                oc_value = typed_entry["objectClass"]
                 if isinstance(oc_value, list):
-                    object_classes = [str(oc) for oc in oc_value]
+                    typed_oc_list: list[object] = cast("list[object]", oc_value)
+                    object_classes = [str(oc) for oc in typed_oc_list]
                 else:
                     object_classes = [str(oc_value)]
+
+            # Convert to proper LDAP attributes format
+            ldap_attributes = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(typed_entry)
 
             # Create entry
             entry = FlextLdapEntry(
                 id=FlextEntityId(
-                    f"api_entry_{str(entry_dn).replace(',', '_').replace('=', '_')}"
+                    f"api_entry_{str(entry_dn).replace(',', '_').replace('=', '_')}",
                 ),
                 dn=str(entry_dn),
                 object_classes=object_classes,
-                attributes=dict(entry_data),
+                attributes=ldap_attributes,
                 status=FlextEntityStatus.ACTIVE,
             )
             entries.append(entry)
@@ -186,7 +193,7 @@ class FlextLdapApi:
         return await self._service.get_user(dn)
 
     async def update_user(
-        self, dn: str, attributes: LdapAttributeDict
+        self, dn: str, attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update user attributes."""
         return await self._service.update_user(dn, attributes)
@@ -229,7 +236,7 @@ class FlextLdapApi:
         if create_result.is_success:
             return FlextResult[FlextLdapGroup].ok(group)
         return FlextResult[FlextLdapGroup].fail(
-            create_result.error or "Group creation failed"
+            create_result.error or "Group creation failed",
         )
 
     async def get_group(self, dn: str) -> FlextResult[FlextLdapGroup | None]:
@@ -237,7 +244,7 @@ class FlextLdapApi:
         return await self._service.get_group(dn)
 
     async def update_group(
-        self, dn: str, attributes: LdapAttributeDict
+        self, dn: str, attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update group attributes."""
         return await self._service.update_group(dn, attributes)

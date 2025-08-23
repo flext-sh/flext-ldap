@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from enum import Enum, StrEnum
+from typing import cast
 
 from flext_core import FlextResult, get_logger
 
 from flext_ldap.constants import FlextLdapDefaultValues
+from flext_ldap.typings import LdapAttributeDict
 
 MIN_PASSWORD_LENGTH = 6
 logger = get_logger(__name__)
@@ -62,11 +64,11 @@ class LdapAttributeProcessor:
     def coerce_attribute_value(value: object) -> str | list[str]:
         """Normalize attribute value to str or list[str]."""
         if isinstance(value, list):
-            return [str(item) for item in value]
+            return [str(item) for item in cast("list[object]", value)]
         return str(value)
 
     @staticmethod
-    def normalize_attributes(attrs: dict[str, object]) -> dict[str, object]:
+    def normalize_attributes(attrs: dict[str, object]) -> LdapAttributeDict:
         """Normalize mapping: lists -> list[str], scalars -> str."""
         if not isinstance(attrs, dict) or not attrs:
             return {}
@@ -116,5 +118,6 @@ class LdapDomainValidator:
         if raw is None:
             return None
         if isinstance(raw, list):
-            return str(raw[0]) if raw else None
+            typed_list: list[object] = cast("list[object]", raw)
+            return str(typed_list[0]) if typed_list else None
         return str(raw)
