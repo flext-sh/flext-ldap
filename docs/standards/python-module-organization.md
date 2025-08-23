@@ -1427,7 +1427,7 @@ src/flext_ldap/
 ├── application/             # 🔄 Evolving - application layer
 └── domain/                  # 🚧 Under development - pure domain
 
-# Target module organization (1.0.0)
+# Target module organization (0.9.0)
 src/flext_ldap/
 ├── api.py                    # ✅ Mature - unified API
 ├── domain/                   # ✅ Complete - rich domain model
@@ -1459,7 +1459,7 @@ from flext_ldap.values import FlextLdapDistinguishedName, FlextLdapCreateUserReq
 def __getattr__(name: str) -> Any:
     """Handle legacy imports with deprecation warnings."""
 
-    # Legacy API mappings (deprecated in 0.9.0, removed in 2.0.0)
+    # Legacy API mappings (deprecated in 0.9.0, removed in 0.9.0)
     legacy_api_mappings = {
         "FlextLdapClient": "FlextLdapApi",
         "LDAPClient": "FlextLdapApi",
@@ -1471,13 +1471,13 @@ def __getattr__(name: str) -> Any:
         warnings.warn(
             f"Importing {name} is deprecated since 0.9.0. "
             f"Use 'from flext_ldap import {legacy_api_mappings[name]}' instead. "
-            f"This will be removed in version 2.0.0.",
+            f"This will be removed in version 0.9.0.",
             DeprecationWarning,
             stacklevel=2
         )
         return FlextLdapApi
 
-    # Legacy entity mappings (deprecated in 1.0.0, removed in 2.0.0)
+    # Legacy entity mappings (deprecated in 0.9.0, removed in 0.9.0)
     legacy_entity_mappings = {
         "LDAPUser": FlextLdapUser,
         "LDAPGroup": FlextLdapGroup,
@@ -1487,9 +1487,9 @@ def __getattr__(name: str) -> Any:
 
     if name in legacy_entity_mappings:
         warnings.warn(
-            f"Importing {name} from root is deprecated since 1.0.0. "
+            f"Importing {name} from root is deprecated since 0.9.0. "
             f"Use 'from flext_ldap import Flext{name}' instead. "
-            f"This will be removed in version 2.0.0.",
+            f"This will be removed in version 0.9.0.",
             DeprecationWarning,
             stacklevel=2
         )
@@ -1522,8 +1522,8 @@ __all__: list[str] = [
 
 ---
 
-**Last Updated**: August 3, 2025  
-**Target Audience**: FLEXT-LDAP developers and FLEXT ecosystem contributors  
-**Scope**: Python module organization for LDAP directory services integration  
-**Version**: 0.9.0 → 1.0.0 development guidelines  
+**Last Updated**: August 3, 2025
+**Target Audience**: FLEXT-LDAP developers and FLEXT ecosystem contributors
+**Scope**: Python module organization for LDAP directory services integration
+**Version**: 0.9.0 → 0.9.0 development guidelines
 **Compliance**: FLEXT-Core architectural standards and Clean Architecture principles
