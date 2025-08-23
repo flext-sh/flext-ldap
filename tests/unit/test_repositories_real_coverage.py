@@ -74,7 +74,7 @@ class TestFlextLdapRepositoryRealExecution:
 
         # Execute real find_by_dn code
         test_dn = "cn=test,dc=example,dc=com"
-        result = await repository.find_by_dn(test_dn)
+        await repository.find_by_dn(test_dn)
 
         # Verify real code created correct search request
         assert captured_request is not None

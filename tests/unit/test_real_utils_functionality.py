@@ -5,11 +5,12 @@ These tests execute REAL utils code to increase coverage and validate functional
 
 from __future__ import annotations
 
+from typing import Never
+
 import pytest
 from flext_core import FlextResult
-from urllib.parse import urlparse
 
-# Test real utils functionality  
+# Test real utils functionality
 from flext_ldap.utils import (
     FlextLdapUtilities,
     FlextLdapValidationHelpers,
@@ -23,7 +24,7 @@ class TestRealFlextLdapUtilities:
         """Test is_successful_result with successful FlextResult."""
         # Create a real successful result
         success_result = FlextResult[str].ok("test_value")
-        
+
         # Should detect success correctly
         result = FlextLdapUtilities.is_successful_result(success_result)
         assert result is True
@@ -32,7 +33,7 @@ class TestRealFlextLdapUtilities:
         """Test is_successful_result with failed FlextResult."""
         # Create a real failed result
         failed_result = FlextResult[str].fail("test_error")
-        
+
         # Should detect failure correctly
         result = FlextLdapUtilities.is_successful_result(failed_result)
         assert result is False
@@ -47,21 +48,22 @@ class TestRealFlextLdapUtilities:
             {},
             object(),
         ]
-        
+
         for obj in non_results:
             result = FlextLdapUtilities.is_successful_result(obj)
             assert result is False
 
     def test_is_successful_result_with_mock_success_object(self) -> None:
         """Test is_successful_result with object that has is_success attribute."""
+
         # Create object with is_success attribute
         class MockSuccessObject:
             def __init__(self, is_success: bool) -> None:
                 self.is_success = is_success
-        
+
         success_obj = MockSuccessObject(True)
         failed_obj = MockSuccessObject(False)
-        
+
         assert FlextLdapUtilities.is_successful_result(success_obj) is True
         assert FlextLdapUtilities.is_successful_result(failed_obj) is False
 
@@ -72,9 +74,9 @@ class TestRealFlextLdapUtilities:
             "mail": "john@example.com",
             "sn": "Doe",
         }
-        
+
         result = FlextLdapUtilities.create_typed_ldap_attributes(input_attrs)
-        
+
         # Should keep strings as strings (actual behavior)
         assert isinstance(result, dict)
         assert result["cn"] == "John Doe"  # Single strings stay single
@@ -88,9 +90,9 @@ class TestRealFlextLdapUtilities:
             "mail": ["primary@example.com", "secondary@example.com"],
             "cn": ["John Doe"],
         }
-        
+
         result = FlextLdapUtilities.create_typed_ldap_attributes(input_attrs)
-        
+
         # Should preserve lists, convert items to strings
         assert isinstance(result, dict)
         assert result["objectClass"] == ["person", "inetOrgPerson"]
@@ -106,23 +108,27 @@ class TestRealFlextLdapUtilities:
             "active": True,  # Boolean
             "gidNumbers": [100, 101, 102],  # List of integers
         }
-        
+
         result = FlextLdapUtilities.create_typed_ldap_attributes(input_attrs)
-        
+
         # Should convert properly - lists stay lists, singles stay singles
         assert isinstance(result, dict)
         assert result["cn"] == "John Doe"  # Single string stays single
         assert result["objectClass"] == ["person", "inetOrgPerson"]  # List stays list
         assert result["uidNumber"] == "1001"  # Single value converted to string
         assert result["active"] == "True"  # Single boolean converted to string
-        assert result["gidNumbers"] == ["100", "101", "102"]  # List converted to string list
+        assert result["gidNumbers"] == [
+            "100",
+            "101",
+            "102",
+        ]  # List converted to string list
 
     def test_create_typed_ldap_attributes_with_empty_dict(self) -> None:
         """Test create_typed_ldap_attributes with empty input."""
         input_attrs = {}
-        
+
         result = FlextLdapUtilities.create_typed_ldap_attributes(input_attrs)
-        
+
         # Should return empty dict
         assert isinstance(result, dict)
         assert len(result) == 0
@@ -134,9 +140,9 @@ class TestRealFlextLdapUtilities:
             "emptyAttr": [],
             "mail": ["test@example.com"],
         }
-        
+
         result = FlextLdapUtilities.create_typed_ldap_attributes(input_attrs)
-        
+
         # Should handle empty lists
         assert isinstance(result, dict)
         assert result["cn"] == "John Doe"  # Single string stays single
@@ -150,9 +156,9 @@ class TestRealFlextLdapUtilities:
             "jpegPhoto": b"binary_photo_data",
             "certificates": [b"cert1", b"cert2"],
         }
-        
+
         result = FlextLdapUtilities.create_typed_ldap_attributes(input_attrs)
-        
+
         # Should handle bytes appropriately
         assert isinstance(result, dict)
         assert result["cn"] == "John Doe"  # Single string input -> single string output
@@ -169,13 +175,13 @@ class TestRealFlextLdapValidationHelpers:
         """Test validate_non_empty_string with valid string values."""
         valid_strings = [
             "test",
-            "John Doe", 
+            "John Doe",
             "user@example.com",
             "cn=test,dc=example,dc=com",
             "a",  # Single character
             "   trimmed   ",  # Should be trimmed
         ]
-        
+
         for test_string in valid_strings:
             result = FlextLdapValidationHelpers.validate_non_empty_string(
                 test_string, "test_field"
@@ -190,7 +196,7 @@ class TestRealFlextLdapValidationHelpers:
             "   ",  # Whitespace only
             "\t\n",  # Tabs and newlines
         ]
-        
+
         for empty_string in empty_strings:
             with pytest.raises(ValueError):
                 FlextLdapValidationHelpers.validate_non_empty_string(
@@ -208,9 +214,11 @@ class TestRealFlextLdapValidationHelpers:
             True,
             False,
         ]
-        
+
         for non_string in non_strings:
-            with pytest.raises((AttributeError, ValueError)):  # Different errors for different types
+            with pytest.raises(
+                (AttributeError, ValueError)
+            ):  # Different errors for different types
                 FlextLdapValidationHelpers.validate_non_empty_string(
                     non_string, "test_field"
                 )
@@ -223,7 +231,7 @@ class TestRealFlextLdapValidationHelpers:
             ("   John Doe   ", "John Doe"),
             (" a ", "a"),
         ]
-        
+
         for input_str, expected in test_cases:
             result = FlextLdapValidationHelpers.validate_non_empty_string(
                 input_str, "test_field"
@@ -239,7 +247,7 @@ class TestRealFlextLdapValidationHelpers:
             "dc=root",
             "mail=test@example.com,cn=users,dc=example,dc=com",
         ]
-        
+
         for dn in valid_dns:
             result = FlextLdapValidationHelpers.validate_dn_field(dn)
             assert isinstance(result, str)
@@ -253,7 +261,7 @@ class TestRealFlextLdapValidationHelpers:
             "   ",
             "\t\n",
         ]
-        
+
         for empty_dn in empty_dns:
             with pytest.raises(ValueError):
                 FlextLdapValidationHelpers.validate_dn_field(empty_dn)
@@ -268,7 +276,7 @@ class TestRealFlextLdapValidationHelpers:
             "(mail=*)",
             "objectClass=*",  # Simple filter
         ]
-        
+
         for filter_str in valid_filters:
             result = FlextLdapValidationHelpers.validate_filter_field(filter_str)
             assert isinstance(result, str)
@@ -282,7 +290,7 @@ class TestRealFlextLdapValidationHelpers:
             "   ",
             "\t\n",
         ]
-        
+
         for empty_filter in empty_filters:
             with pytest.raises(ValueError):
                 FlextLdapValidationHelpers.validate_filter_field(empty_filter)
@@ -291,10 +299,10 @@ class TestRealFlextLdapValidationHelpers:
         """Test validate_uri_field with valid URI strings."""
         valid_servers = [
             "ldap://localhost:389",
-            "ldaps://secure.ldap.example.com:636", 
+            "ldaps://secure.ldap.example.com:636",
             "ldap://192.168.1.100:389",
         ]
-        
+
         for server in valid_servers:
             result = FlextLdapValidationHelpers.validate_uri_field(server)
             assert isinstance(result, str)
@@ -308,7 +316,7 @@ class TestRealFlextLdapValidationHelpers:
             "   ",
             "\t\n",
         ]
-        
+
         for empty_server in empty_servers:
             with pytest.raises(ValueError):
                 FlextLdapValidationHelpers.validate_uri_field(empty_server)
@@ -322,7 +330,7 @@ class TestRealFlextLdapValidationHelpers:
             "dc=root",
             "ou=people,dc=test,dc=local",
         ]
-        
+
         for base_dn in valid_base_dns:
             result = FlextLdapValidationHelpers.validate_base_dn_field(base_dn)
             assert isinstance(result, str)
@@ -336,7 +344,7 @@ class TestRealFlextLdapValidationHelpers:
             "   ",
             "\t\n",
         ]
-        
+
         for empty_base_dn in empty_base_dns:
             with pytest.raises(ValueError):
                 FlextLdapValidationHelpers.validate_base_dn_field(empty_base_dn)
@@ -351,7 +359,7 @@ class TestRealFlextLdapValidationHelpers:
             "john@example.com",  # Email as username
             "Jane Doe",  # Space in username
         ]
-        
+
         for username in valid_usernames:
             result = FlextLdapValidationHelpers.validate_cn_field(username)
             assert isinstance(result, str)
@@ -365,7 +373,7 @@ class TestRealFlextLdapValidationHelpers:
             "   ",
             "\t\n",
         ]
-        
+
         for empty_username in empty_usernames:
             with pytest.raises(ValueError):
                 FlextLdapValidationHelpers.validate_cn_field(empty_username)
@@ -379,11 +387,11 @@ class TestRealUtilitiesIntegration:
         # Test with successful FlextResult
         success_result = FlextResult[dict].ok({"test": "data"})
         assert FlextLdapUtilities.is_successful_result(success_result) is True
-        
+
         # Test with failed FlextResult
         error_result = FlextResult[dict].fail("Test error message")
         assert FlextLdapUtilities.is_successful_result(error_result) is False
-        
+
         # Verify FlextResult properties are accessible
         assert success_result.is_success is True
         assert error_result.is_success is False
@@ -399,18 +407,20 @@ class TestRealUtilitiesIntegration:
             (FlextLdapValidationHelpers.validate_base_dn_field, ""),
             (FlextLdapValidationHelpers.validate_cn_field, ""),
         ]
-        
+
         for validator_func, empty_input in test_cases:
             try:
                 validator_func(empty_input)
-                pytest.fail(f"Validator {validator_func.__name__} should have raised ValueError")
+                pytest.fail(
+                    f"Validator {validator_func.__name__} should have raised ValueError"
+                )
             except ValueError as e:
                 error_message = str(e)
                 # Should have informative error message
                 assert len(error_message) > 0
                 # Should contain field information
                 assert any(
-                    word in error_message.lower() 
+                    word in error_message.lower()
                     for word in ["field", "empty", "required", "invalid"]
                 ), f"Error message not informative: {error_message}"
 
@@ -420,7 +430,7 @@ class TestRealUtilitiesIntegration:
         user_attributes = {
             "objectClass": ["person", "inetOrgPerson", "posixAccount"],
             "cn": "John Doe",
-            "sn": "Doe", 
+            "sn": "Doe",
             "givenName": "John",
             "uid": "john.doe",
             "uidNumber": 1001,
@@ -431,29 +441,33 @@ class TestRealUtilitiesIntegration:
             "telephoneNumber": "555-1234",
             "description": "Test user account",
         }
-        
+
         result = FlextLdapUtilities.create_typed_ldap_attributes(user_attributes)
-        
+
         # Verify all attributes are properly converted
         assert isinstance(result, dict)
         assert len(result) == len(user_attributes)
-        
+
         # Verify list attributes remain lists
         assert isinstance(result["objectClass"], list)
         assert result["objectClass"] == ["person", "inetOrgPerson", "posixAccount"]
         assert isinstance(result["mail"], list)
         assert result["mail"] == ["john.doe@example.com", "jdoe@example.com"]
-        
+
         # Verify single values remain as single values (str/bytes)
         assert result["cn"] == "John Doe"
         assert result["uidNumber"] == "1001"  # Converted to string
-        
+
         # Verify proper type handling - lists stay lists, singles stay singles
         list_attrs = ["objectClass", "mail"]
         for attr_name in list_attrs:
-            assert isinstance(result[attr_name], list), f"Attribute {attr_name} should be list"
+            assert isinstance(result[attr_name], list), (
+                f"Attribute {attr_name} should be list"
+            )
             for value in result[attr_name]:
-                assert isinstance(value, str), f"Value {value} in {attr_name} should be string"
+                assert isinstance(value, str), (
+                    f"Value {value} in {attr_name} should be string"
+                )
 
 
 class TestRealUtilitiesErrorHandling:
@@ -463,14 +477,14 @@ class TestRealUtilitiesErrorHandling:
         """Test utilities handle edge cases without crashing."""
         # Test with None input
         try:
-            result = FlextLdapUtilities.create_typed_ldap_attributes(None)
+            FlextLdapUtilities.create_typed_ldap_attributes(None)
             # Should not crash, but may raise AttributeError
         except AttributeError:
             pass  # Expected for None input - 'NoneType' has no attribute 'items'
-        
+
         # Test with non-dict input
         try:
-            result = FlextLdapUtilities.create_typed_ldap_attributes("not a dict")
+            FlextLdapUtilities.create_typed_ldap_attributes("not a dict")
             # Should not crash, but may raise AttributeError
         except (AttributeError, TypeError):
             pass  # Expected for non-dict input
@@ -479,12 +493,12 @@ class TestRealUtilitiesErrorHandling:
         """Test validation helpers provide detailed error information."""
         validators = [
             FlextLdapValidationHelpers.validate_dn_field,
-            FlextLdapValidationHelpers.validate_filter_field, 
+            FlextLdapValidationHelpers.validate_filter_field,
             FlextLdapValidationHelpers.validate_uri_field,
             FlextLdapValidationHelpers.validate_base_dn_field,
             FlextLdapValidationHelpers.validate_cn_field,
         ]
-        
+
         for validator in validators:
             # Test with None
             try:
@@ -492,7 +506,7 @@ class TestRealUtilitiesErrorHandling:
                 pytest.fail(f"{validator.__name__} should reject None")
             except ValueError as e:
                 assert len(str(e)) > 10  # Should have detailed message
-            
+
             # Test with non-string
             try:
                 validator(123)
@@ -502,14 +516,16 @@ class TestRealUtilitiesErrorHandling:
 
     def test_is_successful_result_handles_malformed_objects(self) -> None:
         """Test is_successful_result handles objects with malformed is_success attribute."""
+
         # Test object with is_success property that raises exception
         class MalformedObject:
             @property
-            def is_success(self):
-                raise RuntimeError("Malformed is_success property")
-        
+            def is_success(self) -> Never:
+                msg = "Malformed is_success property"
+                raise RuntimeError(msg)
+
         malformed_obj = MalformedObject()
-        
+
         # Should raise exception when property access fails (current implementation)
         with pytest.raises(RuntimeError, match="Malformed is_success property"):
             FlextLdapUtilities.is_successful_result(malformed_obj)

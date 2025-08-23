@@ -32,7 +32,7 @@ class TestFlextLdapUserSpecification:
             sn="User",
             uid="test.user",
             mail="test@example.com",
-            status=FlextEntityStatus.ACTIVE
+            status=FlextEntityStatus.ACTIVE,
         )
 
         spec = FlextLdapUserSpecification()
@@ -81,7 +81,12 @@ class TestFlextLdapUserManagementService:
         service = FlextLdapUserManagementService()
 
         # Check for common user management methods
-        expected_methods = ["create_user", "update_user", "delete_user", "validate_user"]
+        expected_methods = [
+            "create_user",
+            "update_user",
+            "delete_user",
+            "validate_user",
+        ]
 
         for method_name in expected_methods:
             if hasattr(service, method_name):
@@ -97,7 +102,7 @@ class TestFlextLdapUserManagementService:
             "uid": "test.user",
             "cn": "Test User",
             "sn": "User",
-            "mail": "test@example.com"
+            "mail": "test@example.com",
         }
 
         # If service has create_user method, test it
@@ -121,6 +126,7 @@ class TestDomainLayer:
         """Test that domain layer imports work correctly."""
         # Basic import test
         from flext_ldap.domain import FlextLdapUserSpecification
+
         assert FlextLdapUserSpecification is not None
 
     def test_domain_classes_inherit_correctly(self) -> None:
@@ -136,6 +142,7 @@ class TestDomainLayer:
         # Try to access some domain constants that should exist
         try:
             from flext_ldap.domain import MIN_PASSWORD_LENGTH
+
             assert isinstance(MIN_PASSWORD_LENGTH, int)
             assert MIN_PASSWORD_LENGTH > 0
         except ImportError:

@@ -115,6 +115,7 @@ async def demonstrate_value_objects() -> None:
 
         if filter_result.is_success:
             from flext_ldap.value_objects import FlextLdapFilter as FilterClass
+
             default_filter = FilterClass(value="(objectClass=*)")
             filter_obj = filter_result.unwrap_or(default_filter)
             filter_validation = filter_obj.validate_business_rules()
@@ -191,9 +192,9 @@ async def demonstrate_async_patterns() -> None:
                 tasks.append(task)
 
             # Execute concurrent searches with proper typing
-            results: list[FlextResult[list[FlextLdapEntry]] | BaseException] = await asyncio.gather(
-                *tasks, return_exceptions=True
-            )
+            results: list[
+                FlextResult[list[FlextLdapEntry]] | BaseException
+            ] = await asyncio.gather(*tasks, return_exceptions=True)
 
             successful_searches = sum(
                 1

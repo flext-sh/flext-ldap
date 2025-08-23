@@ -6,6 +6,8 @@ NO MOCKS - tests execute actual business logic and validation rules.
 
 from __future__ import annotations
 
+from typing import Never
+
 from flext_core import FlextEntityId, FlextEntityStatus
 
 from flext_ldap.domain import (
@@ -254,7 +256,8 @@ class TestFlextLdapPasswordSpecificationRealValidation:
 
         # Test error for too short
         error_msg = spec.get_validation_error("short")
-        assert "at least" in error_msg and "characters" in error_msg
+        assert "at least" in error_msg
+        assert "characters" in error_msg
 
         # Test error for too long
         long_password = "a" * 200
@@ -442,14 +445,16 @@ class TestFlextLdapUserManagementServiceRealLogic:
             # Service should handle exceptions gracefully
             pass
 
-    def test_user_management_service_validates_all_field_combinations_real(self) -> None:
+    def test_user_management_service_validates_all_field_combinations_real(
+        self,
+    ) -> None:
         """Test user management service with all field combinations - executes REAL comprehensive validation."""
         service = FlextLdapUserManagementService()
 
         # Test with comprehensive user data
         comprehensive_user_data = {
             "uid": "comprehensive.user",
-            "cn": "Comprehensive User", 
+            "cn": "Comprehensive User",
             "sn": "User",
             "dn": "cn=Comprehensive User,ou=users,dc=example,dc=com",
             "mail": "comprehensive@example.com",
@@ -470,7 +475,7 @@ class TestFlextLdapUserManagementServiceRealLogic:
         # Test validation chain with user missing multiple fields
         incomplete_user_data = {
             "uid": "",  # Invalid UID
-            "cn": "",   # Invalid CN  
+            "cn": "",  # Invalid CN
             # Missing sn and dn completely
         }
 
@@ -525,8 +530,9 @@ class TestFlextLdapPasswordServiceRealGeneration:
         service = FlextLdapPasswordService()
 
         # Override the password generation to force an exception
-        def failing_password_gen(length):
-            raise ValueError("Simulated generation failure")
+        def failing_password_gen(length) -> Never:
+            msg = "Simulated generation failure"
+            raise ValueError(msg)
 
         original_method = service._generate_password_with_retries
         service._generate_password_with_retries = failing_password_gen
@@ -737,9 +743,12 @@ class TestFlextLdapGroupManagementServiceRealLogic:
         # Test nested validation scenarios
         complex_group_data = {
             "cn": "Complex Group",
-            "dn": "cn=complex,ou=groups,dc=example,dc=com", 
+            "dn": "cn=complex,ou=groups,dc=example,dc=com",
             "description": "A complex test group with multiple validation points",
-            "members": ["cn=user1,ou=users,dc=example,dc=com", "cn=user2,ou=users,dc=example,dc=com"],
+            "members": [
+                "cn=user1,ou=users,dc=example,dc=com",
+                "cn=user2,ou=users,dc=example,dc=com",
+            ],
         }
 
         # Execute REAL complex validation

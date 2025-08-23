@@ -130,8 +130,10 @@ async def run_examples_with_docker() -> None:
     # Run the integrated example (best-effort)
     try:
         integrated_path = Path(__file__).parent / "integrated_ldap_service.py"
-        integrated_module: types.ModuleType = _load_module_spec("integrated_ldap_service", integrated_path)
-        main_func = getattr(integrated_module, "main")
+        integrated_module: types.ModuleType = _load_module_spec(
+            "integrated_ldap_service", integrated_path
+        )
+        main_func = integrated_module.main
         await main_func()
     except Exception:
         logger.exception("Integrated example failed")
@@ -139,8 +141,10 @@ async def run_examples_with_docker() -> None:
     # Run the simple client example (best-effort)
     try:
         simple_path = Path(__file__).parent / "ldap_simple_client_example.py"
-        simple_module: types.ModuleType = _load_module_spec("ldap_simple_client_example", simple_path)
-        main_func = getattr(simple_module, "main")
+        simple_module: types.ModuleType = _load_module_spec(
+            "ldap_simple_client_example", simple_path
+        )
+        main_func = simple_module.main
         await main_func()
     except Exception:
         logger.exception("Simple client example failed")

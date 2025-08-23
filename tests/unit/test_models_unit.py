@@ -219,9 +219,8 @@ class TestFlextLdapGroup:
         validation_result = invalid_group.validate_business_rules()
         if not validation_result.is_success:
             assert (
-                (validation_result.error and "cn" in validation_result.error.lower())
-                or (validation_result.error and "name" in validation_result.error.lower())
-            )
+                validation_result.error and "cn" in validation_result.error.lower()
+            ) or (validation_result.error and "name" in validation_result.error.lower())
 
     def test_group_member_management(self) -> None:
         """Test group member management operations."""
@@ -546,8 +545,10 @@ class TestRealWorldScenarios:
                     "employeeNumber": ["E123456"],
                     "department": ["Engineering"],
                     "title": ["Senior Software Engineer"],
-                    "manager": ["cn=jane.doe,ou=employees,ou=people,dc=corp,dc=example,dc=com"]
-                }
+                    "manager": [
+                        "cn=jane.doe,ou=employees,ou=people,dc=corp,dc=example,dc=com"
+                    ],
+                },
             },
             {
                 "dn": "cn=maria.garcia,ou=contractors,ou=people,dc=corp,dc=example,dc=com",
@@ -561,9 +562,9 @@ class TestRealWorldScenarios:
                 "attributes": {
                     "employeeType": ["contractor"],
                     "contractExpiry": ["20251231"],
-                    "department": ["Marketing"]
-                }
-            }
+                    "department": ["Marketing"],
+                },
+            },
         ]
 
         for user_data in realistic_users:
@@ -576,7 +577,7 @@ class TestRealWorldScenarios:
                 domain_events=FlextEventList([]),
                 metadata=FlextMetadata({}),
                 status=FlextEntityStatus.ACTIVE,
-                **{k: v for k, v in user_data.items() if k != "attributes"}
+                **{k: v for k, v in user_data.items() if k != "attributes"},
             )
             user.attributes.update(user_data.get("attributes", {}))
 
@@ -604,31 +605,31 @@ class TestRealWorldScenarios:
                 "members": [
                     "cn=john.smith,ou=employees,ou=people,dc=corp,dc=example,dc=com",
                     "cn=alice.johnson,ou=employees,ou=people,dc=corp,dc=example,dc=com",
-                    "cn=bob.wilson,ou=contractors,ou=people,dc=corp,dc=example,dc=com"
-                ]
+                    "cn=bob.wilson,ou=contractors,ou=people,dc=corp,dc=example,dc=com",
+                ],
             },
             {
                 "dn": "cn=ldap-admins,ou=security,ou=groups,dc=corp,dc=example,dc=com",
                 "cn": "LDAP Administrators",
                 "description": "Users with LDAP administrative privileges",
                 "object_classes": ["groupOfNames"],
-                "members": [
-                    "cn=admin,ou=system,dc=corp,dc=example,dc=com"
-                ]
-            }
+                "members": ["cn=admin,ou=system,dc=corp,dc=example,dc=com"],
+            },
         ]
 
         for group_data in org_groups:
             # Create group with realistic organizational data
             group = FlextLdapGroup(
-                id=FlextEntityId(f"test_group_{group_data['cn'].lower().replace(' ', '_')}"),
+                id=FlextEntityId(
+                    f"test_group_{group_data['cn'].lower().replace(' ', '_')}"
+                ),
                 version=FlextVersion(1),
                 created_at=FlextTimestamp(datetime.now(UTC)),
                 updated_at=FlextTimestamp(datetime.now(UTC)),
                 domain_events=FlextEventList([]),
                 metadata=FlextMetadata({}),
                 status=FlextEntityStatus.ACTIVE,
-                **group_data
+                **group_data,
             )
 
             # Test realistic group validation

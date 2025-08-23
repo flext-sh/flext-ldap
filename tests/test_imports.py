@@ -45,7 +45,7 @@ def test_model_imports() -> None:
         dn="cn=test,ou=users,dc=example,dc=com",
         uid="test_user",
         cn="Test User",
-        sn="User"
+        sn="User",
     )
     assert user_request.uid == "test_user"
     assert user_request.cn == "Test User"
@@ -54,10 +54,7 @@ def test_model_imports() -> None:
 def test_config_imports() -> None:
     """Test that configuration imports work correctly and are instantiable."""
     # Test connection config creation
-    config = FlextLdapConnectionConfig(
-        server="ldap://test.example.com",
-        port=389
-    )
+    config = FlextLdapConnectionConfig(server="ldap://test.example.com", port=389)
     assert config.server == "ldap://test.example.com"
     assert config.port == 389
 

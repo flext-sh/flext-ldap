@@ -49,7 +49,9 @@ class FlextLdapOperationsBase:
         self._container = get_flext_container()
         # Type-safe container access for ID generator using modern pattern
         generator_result = self._container.get("FlextIdGenerator")
-        self._id_generator = generator_result.value if generator_result.is_success else None
+        self._id_generator = (
+            generator_result.value if generator_result.is_success else None
+        )
 
     def _generate_id(self) -> str:
         """Generate ID using container ID generator or UUID."""
@@ -70,7 +72,8 @@ class FlextLdapOperationsBase:
             )
             return FlextResult[None].fail(
                 FlextLdapValidationMessages.INVALID_DN_WITH_CONTEXT.format(
-                    context=context, error=error_msg,
+                    context=context,
+                    error=error_msg,
                 ),
             )
         return FlextResult[None].ok(None)
@@ -224,7 +227,9 @@ class FlextLdapConnectionOperations(FlextLdapOperationsBase):
             )
             return FlextResult[None].fail(error_msg)
 
-    def get_connection_info(self, connection_id: str) -> FlextResult[FlextTypes.Core.Dict]:
+    def get_connection_info(
+        self, connection_id: str
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Get connection information - REFACTORED."""
         if connection_id not in self._active_connections:
             return FlextResult[FlextTypes.Core.Dict].fail(
@@ -491,11 +496,13 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
                 or "unknown"
             )
             given_name = FlextLdapUtilities.safe_str_attribute(
-                entry.attributes, "givenName",
+                entry.attributes,
+                "givenName",
             )
             mail = FlextLdapUtilities.safe_str_attribute(entry.attributes, "mail")
             phone = FlextLdapUtilities.safe_str_attribute(
-                entry.attributes, "telephoneNumber",
+                entry.attributes,
+                "telephoneNumber",
             )
 
             users.append(
@@ -528,7 +535,8 @@ class FlextLdapSearchOperations(FlextLdapOperationsBase):
                 or "unknown"
             )
             description = FlextLdapUtilities.safe_str_attribute(
-                entry.attributes, "description",
+                entry.attributes,
+                "description",
             )
 
             # Extract members from attributes

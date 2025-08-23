@@ -1114,10 +1114,12 @@ class TestRealFlextLdapGroupRepository:
 
         # Mock get_group_members to return existing members
         async def mock_get_group_members(group_dn):
-            return FlextResult[list[str]].ok([
-                "cn=user1,ou=people,dc=example,dc=com",
-                "cn=user2,ou=people,dc=example,dc=com",
-            ])
+            return FlextResult[list[str]].ok(
+                [
+                    "cn=user1,ou=people,dc=example,dc=com",
+                    "cn=user2,ou=people,dc=example,dc=com",
+                ]
+            )
 
         group_repo.get_group_members = mock_get_group_members
 
@@ -1189,6 +1191,6 @@ class TestRealRepositoryErrorHandling:
     def test_repository_error_messages_are_informative(self) -> None:
         """Test repository error messages provide useful information."""
         client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        FlextLdapRepository(client)
 
         # Error messages should be descriptive - tested through other methods

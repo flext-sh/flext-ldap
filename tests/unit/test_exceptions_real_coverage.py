@@ -7,7 +7,7 @@ testing all real functionality without mocks to ensure error handling works corr
 Architecture tested:
 - FlextLdapError: Base exception with LDAP context and codes
 - FlextLdapConnectionError: Connection-specific errors
-- FlextLdapAuthenticationError: Authentication failures  
+- FlextLdapAuthenticationError: Authentication failures
 - FlextLdapSearchError: Search operation failures
 - FlextLdapOperationError: General LDAP operation failures
 - FlextLdapUserError: User management errors
@@ -24,7 +24,6 @@ creation, error context, inheritance hierarchy, and factory methods.
 from __future__ import annotations
 
 import unittest
-from typing import TYPE_CHECKING
 
 from flext_core.exceptions import FlextError
 
@@ -42,9 +41,6 @@ from flext_ldap.exceptions import (
     FlextLdapValidationError,
 )
 
-if TYPE_CHECKING:
-    pass
-
 
 class TestFlextLdapErrorRealCoverage(unittest.TestCase):
     """Test FlextLdapError base exception with real functionality coverage."""
@@ -53,7 +49,7 @@ class TestFlextLdapErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapError creation with basic message."""
         # Execute REAL exception creation
         error = FlextLdapError("Basic LDAP error message")
-        
+
         # Verify REAL exception properties
         assert str(error) == "Basic LDAP error message"
         assert error.message == "Basic LDAP error message"
@@ -67,17 +63,17 @@ class TestFlextLdapErrorRealCoverage(unittest.TestCase):
             "server": "ldap.example.com",
             "port": 389,
             "base_dn": "dc=example,dc=com",
-            "bind_dn": "cn=admin,dc=example,dc=com"
+            "bind_dn": "cn=admin,dc=example,dc=com",
         }
-        
+
         # Execute REAL exception creation with context
         error = FlextLdapError(
             "LDAP operation failed",
             ldap_context=ldap_context,
             ldap_result_code="49",
-            operation="bind"
+            operation="bind",
         )
-        
+
         # Verify REAL context preservation
         assert error.ldap_context == ldap_context
         assert error.ldap_result_code == "49"
@@ -87,11 +83,9 @@ class TestFlextLdapErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapError creation with error code."""
         # Execute REAL exception creation with error code
         error = FlextLdapError(
-            "Authentication failed",
-            error_code="AUTH_FAILED",
-            ldap_result_code="49"
+            "Authentication failed", error_code="AUTH_FAILED", ldap_result_code="49"
         )
-        
+
         # Verify REAL error code handling
         assert error.error_code == "AUTH_FAILED"
         assert error.ldap_result_code == "49"
@@ -100,7 +94,7 @@ class TestFlextLdapErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapError inheritance from FlextError."""
         # Execute REAL inheritance verification
         error = FlextLdapError("Test inheritance")
-        
+
         # Verify REAL inheritance chain
         assert isinstance(error, FlextLdapError)
         assert isinstance(error, FlextError)
@@ -111,7 +105,7 @@ class TestFlextLdapErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapError string representation."""
         # Execute REAL string representation
         error = FlextLdapError("String representation test")
-        
+
         # Verify REAL string methods
         assert str(error) == "String representation test"
         assert repr(error).startswith("FlextLdapError(")
@@ -125,7 +119,7 @@ class TestFlextLdapConnectionErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapConnectionError creation."""
         # Execute REAL connection error creation
         error = FlextLdapConnectionError("Connection failed")
-        
+
         # Verify REAL connection error properties
         assert str(error) == "Connection failed"
         assert isinstance(error, FlextLdapConnectionError)
@@ -138,9 +132,9 @@ class TestFlextLdapConnectionErrorRealCoverage(unittest.TestCase):
             "Failed to connect to LDAP server",
             server_uri="ldap://ldap.example.com:389",
             timeout=30,
-            retry_count=3
+            retry_count=3,
         )
-        
+
         # Verify REAL server context handling
         assert error.ldap_context is not None
         assert error.operation == "connection"
@@ -152,9 +146,9 @@ class TestFlextLdapConnectionErrorRealCoverage(unittest.TestCase):
             "Connection timeout",
             server_uri="ldap://ldap.example.com:389",
             timeout=30,
-            retry_count=3
+            retry_count=3,
         )
-        
+
         # Verify REAL parameter handling
         assert "Connection timeout" in str(error)
         assert isinstance(error, FlextLdapConnectionError)
@@ -168,7 +162,7 @@ class TestFlextLdapAuthenticationErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapAuthenticationError creation."""
         # Execute REAL authentication error creation
         error = FlextLdapAuthenticationError("Authentication failed")
-        
+
         # Verify REAL authentication error properties
         assert str(error) == "Authentication failed"
         assert isinstance(error, FlextLdapAuthenticationError)
@@ -180,9 +174,9 @@ class TestFlextLdapAuthenticationErrorRealCoverage(unittest.TestCase):
         error = FlextLdapAuthenticationError(
             "Invalid credentials provided",
             bind_dn="cn=admin,dc=example,dc=com",
-            ldap_result_code="49"
+            ldap_result_code="49",
         )
-        
+
         # Verify REAL credentials context handling
         assert error.ldap_context is not None
         assert error.ldap_result_code == "49"
@@ -192,15 +186,12 @@ class TestFlextLdapAuthenticationErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapAuthenticationError with all parameters."""
         # Execute REAL authentication error with all parameters
         error1 = FlextLdapAuthenticationError(
-            "Authentication failed",
-            bind_dn="cn=user,dc=example,dc=com"
+            "Authentication failed", bind_dn="cn=user,dc=example,dc=com"
         )
         error2 = FlextLdapAuthenticationError(
-            "Bind failure",
-            bind_dn="cn=admin,dc=example,dc=com",
-            ldap_result_code="49"
+            "Bind failure", bind_dn="cn=admin,dc=example,dc=com", ldap_result_code="49"
         )
-        
+
         # Verify REAL parameter handling
         assert isinstance(error1, FlextLdapAuthenticationError)
         assert isinstance(error2, FlextLdapAuthenticationError)
@@ -214,7 +205,7 @@ class TestFlextLdapSearchErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapSearchError creation."""
         # Execute REAL search error creation
         error = FlextLdapSearchError("Search operation failed")
-        
+
         # Verify REAL search error properties
         assert str(error) == "Search operation failed"
         assert isinstance(error, FlextLdapSearchError)
@@ -227,16 +218,14 @@ class TestFlextLdapSearchErrorRealCoverage(unittest.TestCase):
             "base_dn": "ou=users,dc=example,dc=com",
             "filter": "(objectClass=person)",
             "scope": "subtree",
-            "attributes": ["cn", "mail", "uid"]
+            "attributes": ["cn", "mail", "uid"],
         }
-        
+
         # Execute REAL search error with context
         error = FlextLdapSearchError(
-            "Search filter invalid",
-            ldap_context=search_context,
-            operation="search"
+            "Search filter invalid", ldap_context=search_context, operation="search"
         )
-        
+
         # Verify REAL search context handling
         assert error.ldap_context == search_context
         assert error.operation == "search"
@@ -245,9 +234,13 @@ class TestFlextLdapSearchErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapSearchError with parameters."""
         # Execute REAL search error with parameters
         error1 = FlextLdapSearchError("Invalid filter", search_filter="(invalidFilter")
-        error2 = FlextLdapSearchError("Base DN not found", base_dn="ou=missing,dc=example,dc=com")
-        error3 = FlextLdapSearchError("Search failed", scope="subtree", ldap_result_code="87")
-        
+        error2 = FlextLdapSearchError(
+            "Base DN not found", base_dn="ou=missing,dc=example,dc=com"
+        )
+        error3 = FlextLdapSearchError(
+            "Search failed", scope="subtree", ldap_result_code="87"
+        )
+
         # Verify REAL parameter handling
         assert isinstance(error1, FlextLdapSearchError)
         assert isinstance(error2, FlextLdapSearchError)
@@ -261,7 +254,7 @@ class TestFlextLdapOperationErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapOperationError creation."""
         # Execute REAL operation error creation
         error = FlextLdapOperationError("LDAP operation failed")
-        
+
         # Verify REAL operation error properties
         assert str(error) == "LDAP operation failed"
         assert isinstance(error, FlextLdapOperationError)
@@ -274,17 +267,17 @@ class TestFlextLdapOperationErrorRealCoverage(unittest.TestCase):
             "operation_type": "modify",
             "target_dn": "cn=user,ou=users,dc=example,dc=com",
             "attributes": {"mail": "new@example.com"},
-            "timestamp": "2025-08-23T10:30:00Z"
+            "timestamp": "2025-08-23T10:30:00Z",
         }
-        
+
         # Execute REAL operation error with context
         error = FlextLdapOperationError(
             "Modify operation failed",
             ldap_context=operation_context,
             ldap_result_code="50",
-            operation="modify"
+            operation="modify",
         )
-        
+
         # Verify REAL operation context handling
         assert error.ldap_context == operation_context
         assert error.ldap_result_code == "50"
@@ -293,18 +286,24 @@ class TestFlextLdapOperationErrorRealCoverage(unittest.TestCase):
     def test_operation_error_factory_methods(self) -> None:
         """Test FlextLdapOperationError factory methods."""
         # Execute REAL factory methods
-        error1 = FlextLdapOperationError.for_add_failed("cn=newuser,ou=users,dc=example,dc=com")
-        error2 = FlextLdapOperationError.for_modify_failed("cn=user,ou=users,dc=example,dc=com", "50")
-        error3 = FlextLdapOperationError.for_delete_failed("cn=olduser,ou=users,dc=example,dc=com")
-        
+        error1 = FlextLdapOperationError.for_add_failed(
+            "cn=newuser,ou=users,dc=example,dc=com"
+        )
+        error2 = FlextLdapOperationError.for_modify_failed(
+            "cn=user,ou=users,dc=example,dc=com", "50"
+        )
+        error3 = FlextLdapOperationError.for_delete_failed(
+            "cn=olduser,ou=users,dc=example,dc=com"
+        )
+
         # Verify REAL factory method results
         assert "cn=newuser,ou=users,dc=example,dc=com" in str(error1)
         assert isinstance(error1, FlextLdapOperationError)
-        
+
         assert "cn=user,ou=users,dc=example,dc=com" in str(error2)
         assert "50" in str(error2)
         assert isinstance(error2, FlextLdapOperationError)
-        
+
         assert "cn=olduser,ou=users,dc=example,dc=com" in str(error3)
         assert isinstance(error3, FlextLdapOperationError)
 
@@ -316,7 +315,7 @@ class TestFlextLdapUserErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapUserError creation."""
         # Execute REAL user error creation
         error = FlextLdapUserError("User operation failed")
-        
+
         # Verify REAL user error properties
         assert str(error) == "User operation failed"
         assert isinstance(error, FlextLdapUserError)
@@ -329,16 +328,14 @@ class TestFlextLdapUserErrorRealCoverage(unittest.TestCase):
             "user_dn": "cn=john.doe,ou=users,dc=example,dc=com",
             "uid": "john.doe",
             "cn": "John Doe",
-            "mail": "john.doe@example.com"
+            "mail": "john.doe@example.com",
         }
-        
+
         # Execute REAL user error with context
         error = FlextLdapUserError(
-            "User creation failed",
-            ldap_context=user_context,
-            operation="create_user"
+            "User creation failed", ldap_context=user_context, operation="create_user"
         )
-        
+
         # Verify REAL user context handling
         assert error.ldap_context == user_context
         assert error.operation == "create_user"
@@ -348,15 +345,17 @@ class TestFlextLdapUserErrorRealCoverage(unittest.TestCase):
         # Execute REAL factory methods
         error1 = FlextLdapUserError.for_user_not_found("john.doe")
         error2 = FlextLdapUserError.for_user_exists("jane.smith")
-        error3 = FlextLdapUserError.for_invalid_user_data("missing required field: mail")
-        
+        error3 = FlextLdapUserError.for_invalid_user_data(
+            "missing required field: mail"
+        )
+
         # Verify REAL factory method results
         assert "john.doe" in str(error1)
         assert isinstance(error1, FlextLdapUserError)
-        
+
         assert "jane.smith" in str(error2)
         assert isinstance(error2, FlextLdapUserError)
-        
+
         assert "missing required field: mail" in str(error3)
         assert isinstance(error3, FlextLdapUserError)
 
@@ -368,7 +367,7 @@ class TestFlextLdapGroupErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapGroupError creation."""
         # Execute REAL group error creation
         error = FlextLdapGroupError("Group operation failed")
-        
+
         # Verify REAL group error properties
         assert str(error) == "Group operation failed"
         assert isinstance(error, FlextLdapGroupError)
@@ -381,16 +380,19 @@ class TestFlextLdapGroupErrorRealCoverage(unittest.TestCase):
             "group_dn": "cn=developers,ou=groups,dc=example,dc=com",
             "cn": "developers",
             "description": "Development team",
-            "members": ["cn=john,ou=users,dc=example,dc=com", "cn=jane,ou=users,dc=example,dc=com"]
+            "members": [
+                "cn=john,ou=users,dc=example,dc=com",
+                "cn=jane,ou=users,dc=example,dc=com",
+            ],
         }
-        
+
         # Execute REAL group error with context
         error = FlextLdapGroupError(
             "Group modification failed",
             ldap_context=group_context,
-            operation="modify_group"
+            operation="modify_group",
         )
-        
+
         # Verify REAL group context handling
         assert error.ldap_context == group_context
         assert error.operation == "modify_group"
@@ -400,15 +402,17 @@ class TestFlextLdapGroupErrorRealCoverage(unittest.TestCase):
         # Execute REAL factory methods
         error1 = FlextLdapGroupError.for_group_not_found("admins")
         error2 = FlextLdapGroupError.for_group_exists("developers")
-        error3 = FlextLdapGroupError.for_member_not_in_group("cn=user,ou=users,dc=example,dc=com", "admins")
-        
+        error3 = FlextLdapGroupError.for_member_not_in_group(
+            "cn=user,ou=users,dc=example,dc=com", "admins"
+        )
+
         # Verify REAL factory method results
         assert "admins" in str(error1)
         assert isinstance(error1, FlextLdapGroupError)
-        
+
         assert "developers" in str(error2)
         assert isinstance(error2, FlextLdapGroupError)
-        
+
         assert "cn=user,ou=users,dc=example,dc=com" in str(error3)
         assert "admins" in str(error3)
         assert isinstance(error3, FlextLdapGroupError)
@@ -421,7 +425,7 @@ class TestFlextLdapValidationErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapValidationError creation."""
         # Execute REAL validation error creation
         error = FlextLdapValidationError("Validation failed")
-        
+
         # Verify REAL validation error properties
         assert str(error) == "Validation failed"
         assert isinstance(error, FlextLdapValidationError)
@@ -434,16 +438,16 @@ class TestFlextLdapValidationErrorRealCoverage(unittest.TestCase):
             "field": "mail",
             "value": "invalid-email",
             "expected_format": "RFC 822 email format",
-            "validation_rule": "email_format"
+            "validation_rule": "email_format",
         }
-        
+
         # Execute REAL validation error with context
         error = FlextLdapValidationError(
             "Invalid email format",
             ldap_context=validation_context,
-            operation="validate_user_data"
+            operation="validate_user_data",
         )
-        
+
         # Verify REAL validation context handling
         assert error.ldap_context == validation_context
         assert error.operation == "validate_user_data"
@@ -454,14 +458,14 @@ class TestFlextLdapValidationErrorRealCoverage(unittest.TestCase):
         error1 = FlextLdapValidationError.for_missing_required_field("mail")
         error2 = FlextLdapValidationError.for_invalid_dn_format("invalid-dn-format")
         error3 = FlextLdapValidationError.for_invalid_filter_syntax("(invalid filter")
-        
+
         # Verify REAL factory method results
         assert "mail" in str(error1)
         assert isinstance(error1, FlextLdapValidationError)
-        
+
         assert "invalid-dn-format" in str(error2)
         assert isinstance(error2, FlextLdapValidationError)
-        
+
         assert "(invalid filter" in str(error3)
         assert isinstance(error3, FlextLdapValidationError)
 
@@ -473,7 +477,7 @@ class TestFlextLdapConfigurationErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapConfigurationError creation."""
         # Execute REAL configuration error creation
         error = FlextLdapConfigurationError("Configuration error")
-        
+
         # Verify REAL configuration error properties
         assert str(error) == "Configuration error"
         assert isinstance(error, FlextLdapConfigurationError)
@@ -485,9 +489,9 @@ class TestFlextLdapConfigurationErrorRealCoverage(unittest.TestCase):
         error = FlextLdapConfigurationError(
             "Invalid port configuration",
             config_section="connection",
-            config_key="server_port"
+            config_key="server_port",
         )
-        
+
         # Verify REAL configuration context handling
         assert error.ldap_context is not None
         assert error.operation == "configuration"
@@ -495,13 +499,13 @@ class TestFlextLdapConfigurationErrorRealCoverage(unittest.TestCase):
     def test_configuration_error_with_parameters(self) -> None:
         """Test FlextLdapConfigurationError with all parameters."""
         # Execute REAL configuration error with parameters
-        error1 = FlextLdapConfigurationError("Missing server config", config_key="server")
-        error2 = FlextLdapConfigurationError(
-            "Invalid port value",
-            config_section="connection",
-            config_key="port"
+        error1 = FlextLdapConfigurationError(
+            "Missing server config", config_key="server"
         )
-        
+        error2 = FlextLdapConfigurationError(
+            "Invalid port value", config_section="connection", config_key="port"
+        )
+
         # Verify REAL parameter handling
         assert isinstance(error1, FlextLdapConfigurationError)
         assert isinstance(error2, FlextLdapConfigurationError)
@@ -516,7 +520,7 @@ class TestFlextLdapTypeErrorRealCoverage(unittest.TestCase):
         """Test FlextLdapTypeError creation."""
         # Execute REAL type error creation
         error = FlextLdapTypeError("Type error occurred")
-        
+
         # Verify REAL type error properties
         assert str(error) == "Type error occurred"
         assert isinstance(error, FlextLdapTypeError)
@@ -529,16 +533,16 @@ class TestFlextLdapTypeErrorRealCoverage(unittest.TestCase):
             "expected_type": "str",
             "actual_type": "int",
             "field": "server",
-            "value": 389
+            "value": 389,
         }
-        
+
         # Execute REAL type error with context
         error = FlextLdapTypeError(
             "Expected string, got integer",
             ldap_context=type_context,
-            operation="validate_types"
+            operation="validate_types",
         )
-        
+
         # Verify REAL type context handling
         assert error.ldap_context == type_context
         assert error.operation == "validate_types"
@@ -548,13 +552,13 @@ class TestFlextLdapTypeErrorRealCoverage(unittest.TestCase):
         # Execute REAL factory methods
         error1 = FlextLdapTypeError.for_invalid_type("port", int, str)
         error2 = FlextLdapTypeError.for_none_value("server")
-        
+
         # Verify REAL factory method results
         assert "port" in str(error1)
         assert "int" in str(error1)
         assert "str" in str(error1)
         assert isinstance(error1, FlextLdapTypeError)
-        
+
         assert "server" in str(error2)
         assert isinstance(error2, FlextLdapTypeError)
 
@@ -568,28 +572,32 @@ class TestFlextLdapExceptionFactoryRealCoverage(unittest.TestCase):
         error1 = FlextLdapExceptionFactory.connection_failed("ldap.example.com", 389)
         error2 = FlextLdapExceptionFactory.connection_timeout("ldap.example.com", 30)
         error3 = FlextLdapExceptionFactory.ssl_error("Certificate verification failed")
-        
+
         # Verify REAL factory results
         assert isinstance(error1, FlextLdapConnectionError)
         assert "ldap.example.com" in str(error1)
         assert "389" in str(error1)
-        
+
         assert isinstance(error2, FlextLdapConnectionError)
         assert "30" in str(error2)
-        
+
         assert isinstance(error3, FlextLdapConnectionError)
         assert "Certificate verification failed" in str(error3)
 
     def test_exception_factory_authentication_methods(self) -> None:
         """Test FlextLdapExceptionFactory authentication error creation."""
         # Execute REAL factory authentication methods
-        error1 = FlextLdapExceptionFactory.authentication_failed("cn=admin,dc=example,dc=com")
-        error2 = FlextLdapExceptionFactory.bind_failed("cn=user,dc=example,dc=com", "49")
-        
+        error1 = FlextLdapExceptionFactory.authentication_failed(
+            "cn=admin,dc=example,dc=com"
+        )
+        error2 = FlextLdapExceptionFactory.bind_failed(
+            "cn=user,dc=example,dc=com", "49"
+        )
+
         # Verify REAL factory results
         assert isinstance(error1, FlextLdapAuthenticationError)
         assert "cn=admin,dc=example,dc=com" in str(error1)
-        
+
         assert isinstance(error2, FlextLdapAuthenticationError)
         assert "cn=user,dc=example,dc=com" in str(error2)
         assert "49" in str(error2)
@@ -600,31 +608,37 @@ class TestFlextLdapExceptionFactoryRealCoverage(unittest.TestCase):
         error1 = FlextLdapExceptionFactory.search_failed("ou=users,dc=example,dc=com")
         error2 = FlextLdapExceptionFactory.filter_invalid("(invalidFilter")
         error3 = FlextLdapExceptionFactory.size_limit_exceeded(1000)
-        
+
         # Verify REAL factory results
         assert isinstance(error1, FlextLdapSearchError)
         assert "ou=users,dc=example,dc=com" in str(error1)
-        
+
         assert isinstance(error2, FlextLdapSearchError)
         assert "(invalidFilter" in str(error2)
-        
+
         assert isinstance(error3, FlextLdapSearchError)
         assert "1000" in str(error3)
 
     def test_exception_factory_operation_methods(self) -> None:
         """Test FlextLdapExceptionFactory operation error creation."""
         # Execute REAL factory operation methods
-        error1 = FlextLdapExceptionFactory.add_failed("cn=newuser,ou=users,dc=example,dc=com")
-        error2 = FlextLdapExceptionFactory.modify_failed("cn=user,ou=users,dc=example,dc=com")
-        error3 = FlextLdapExceptionFactory.delete_failed("cn=olduser,ou=users,dc=example,dc=com")
-        
+        error1 = FlextLdapExceptionFactory.add_failed(
+            "cn=newuser,ou=users,dc=example,dc=com"
+        )
+        error2 = FlextLdapExceptionFactory.modify_failed(
+            "cn=user,ou=users,dc=example,dc=com"
+        )
+        error3 = FlextLdapExceptionFactory.delete_failed(
+            "cn=olduser,ou=users,dc=example,dc=com"
+        )
+
         # Verify REAL factory results
         assert isinstance(error1, FlextLdapOperationError)
         assert "cn=newuser,ou=users,dc=example,dc=com" in str(error1)
-        
+
         assert isinstance(error2, FlextLdapOperationError)
         assert "cn=user,ou=users,dc=example,dc=com" in str(error2)
-        
+
         assert isinstance(error3, FlextLdapOperationError)
         assert "cn=olduser,ou=users,dc=example,dc=com" in str(error3)
 
@@ -633,12 +647,12 @@ class TestFlextLdapExceptionFactoryRealCoverage(unittest.TestCase):
         # Execute REAL factory validation methods
         error1 = FlextLdapExceptionFactory.validation_failed("mail", "invalid-email")
         error2 = FlextLdapExceptionFactory.required_field_missing("uid")
-        
+
         # Verify REAL factory results
         assert isinstance(error1, FlextLdapValidationError)
         assert "mail" in str(error1)
         assert "invalid-email" in str(error1)
-        
+
         assert isinstance(error2, FlextLdapValidationError)
         assert "uid" in str(error2)
 
@@ -647,11 +661,11 @@ class TestFlextLdapExceptionFactoryRealCoverage(unittest.TestCase):
         # Execute REAL factory user methods
         error1 = FlextLdapExceptionFactory.user_not_found("john.doe")
         error2 = FlextLdapExceptionFactory.user_already_exists("jane.smith")
-        
+
         # Verify REAL factory results
         assert isinstance(error1, FlextLdapUserError)
         assert "john.doe" in str(error1)
-        
+
         assert isinstance(error2, FlextLdapUserError)
         assert "jane.smith" in str(error2)
 
@@ -660,11 +674,11 @@ class TestFlextLdapExceptionFactoryRealCoverage(unittest.TestCase):
         # Execute REAL factory group methods
         error1 = FlextLdapExceptionFactory.group_not_found("admins")
         error2 = FlextLdapExceptionFactory.group_already_exists("developers")
-        
+
         # Verify REAL factory results
         assert isinstance(error1, FlextLdapGroupError)
         assert "admins" in str(error1)
-        
+
         assert isinstance(error2, FlextLdapGroupError)
         assert "developers" in str(error2)
 
@@ -672,12 +686,14 @@ class TestFlextLdapExceptionFactoryRealCoverage(unittest.TestCase):
         """Test FlextLdapExceptionFactory configuration error creation."""
         # Execute REAL factory configuration methods
         error1 = FlextLdapExceptionFactory.configuration_invalid("server")
-        error2 = FlextLdapExceptionFactory.config_file_not_found("/etc/ldap/config.yaml")
-        
+        error2 = FlextLdapExceptionFactory.config_file_not_found(
+            "/etc/ldap/config.yaml"
+        )
+
         # Verify REAL factory results
         assert isinstance(error1, FlextLdapConfigurationError)
         assert "server" in str(error1)
-        
+
         assert isinstance(error2, FlextLdapConfigurationError)
         assert "/etc/ldap/config.yaml" in str(error2)
 
@@ -699,7 +715,7 @@ class TestExceptionHierarchyRealCoverage(unittest.TestCase):
             FlextLdapConfigurationError("test"),
             FlextLdapTypeError("test"),
         ]
-        
+
         # Verify REAL inheritance for all exception types
         for exception in exceptions:
             assert isinstance(exception, FlextLdapError)
@@ -708,17 +724,18 @@ class TestExceptionHierarchyRealCoverage(unittest.TestCase):
 
     def test_exception_hierarchy_polymorphism(self) -> None:
         """Test exception hierarchy supports polymorphism."""
+
         # Setup REAL polymorphic exception handling
         def handle_ldap_error(error: FlextLdapError) -> str:
             return f"Handled: {type(error).__name__}: {error}"
-        
+
         # Execute REAL polymorphic handling
         errors = [
             FlextLdapConnectionError("Connection failed"),
             FlextLdapAuthenticationError("Auth failed"),
             FlextLdapSearchError("Search failed"),
         ]
-        
+
         # Verify REAL polymorphic behavior
         for error in errors:
             result = handle_ldap_error(error)
@@ -739,13 +756,13 @@ class TestExceptionHierarchyRealCoverage(unittest.TestCase):
             FlextLdapConfigurationError,
             FlextLdapTypeError,
         ]
-        
+
         # Verify REAL class attributes exist
         for exception_class in exceptions_with_defaults:
             # Check if class has default messages or error codes
-            assert hasattr(exception_class, '__name__')
-            assert hasattr(exception_class, '__module__')
-            assert hasattr(exception_class, '__doc__')
+            assert hasattr(exception_class, "__name__")
+            assert hasattr(exception_class, "__module__")
+            assert hasattr(exception_class, "__doc__")
 
 
 if __name__ == "__main__":

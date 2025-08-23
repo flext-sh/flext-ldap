@@ -25,7 +25,7 @@ class TestLdapTypeGuards:
             "uid=john.doe,ou=people,dc=test,dc=local",
             "cn=admin,dc=ldap,dc=server",
             "ou=groups,dc=company,dc=org",
-            "dc=root"
+            "dc=root",
         ]
 
         for dn in valid_dns:
@@ -33,19 +33,12 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_dn_with_invalid_values(self) -> None:
         """Test LDAP DN type guard with invalid values."""
-        invalid_values = [
-            None,
-            123,
-            [],
-            {},
-            "",
-            "invalid dn",
-            "cn=",
-            "=value"
-        ]
+        invalid_values = [None, 123, [], {}, "", "invalid dn", "cn=", "=value"]
 
         for value in invalid_values:
-            assert not is_ldap_dn(value), f"Invalid value should fail DN type guard: {value}"
+            assert not is_ldap_dn(value), (
+                f"Invalid value should fail DN type guard: {value}"
+            )
 
     def test_is_ldap_attribute_value_with_string_values(self) -> None:
         """Test LDAP attribute value type guard with string values."""
@@ -54,7 +47,7 @@ class TestLdapTypeGuards:
             "admin@example.com",
             "",
             "123",
-            "special-chars_$%"
+            "special-chars_$%",
         ]
 
         for value in valid_string_values:
@@ -67,7 +60,7 @@ class TestLdapTypeGuards:
             ["single_value"],
             [],
             ["admin@example.com", "user@test.com"],
-            ["123", "456", "789"]
+            ["123", "456", "789"],
         ]
 
         for value in valid_list_values:
@@ -82,11 +75,13 @@ class TestLdapTypeGuards:
             {"key": "value"},
             [123, 456],  # List with non-string values
             ["valid", 123],  # Mixed list
-            object()
+            object(),
         ]
 
         for value in invalid_values:
-            assert not is_ldap_attribute_value(value), f"Invalid value should fail: {value}"
+            assert not is_ldap_attribute_value(value), (
+                f"Invalid value should fail: {value}"
+            )
 
     def test_is_ldap_attributes_with_valid_attributes(self) -> None:
         """Test LDAP attributes type guard with valid attribute dictionaries."""
@@ -95,11 +90,13 @@ class TestLdapTypeGuards:
             {"mail": "admin@example.com"},
             {"objectClass": ["person", "inetOrgPerson"]},
             {"uid": "john.doe", "mail": ["john@example.com", "john.doe@example.com"]},
-            {}  # Empty dict is valid
+            {},  # Empty dict is valid
         ]
 
         for attrs in valid_attributes:
-            assert is_ldap_attributes_dict(attrs), f"Valid attributes should pass: {attrs}"
+            assert is_ldap_attributes_dict(attrs), (
+                f"Valid attributes should pass: {attrs}"
+            )
 
     def test_is_ldap_attributes_with_invalid_values(self) -> None:
         """Test LDAP attributes type guard with invalid values."""
@@ -111,27 +108,26 @@ class TestLdapTypeGuards:
             {"key": 123},  # Non-string/list value
             {"key": [123, 456]},  # List with non-string values
             {"key": {"nested": "dict"}},  # Nested dict
-            object()
+            object(),
         ]
 
         for value in invalid_values:
-            assert not is_ldap_attributes_dict(value), f"Invalid value should fail attributes guard: {value}"
+            assert not is_ldap_attributes_dict(value), (
+                f"Invalid value should fail attributes guard: {value}"
+            )
 
     def test_is_ldap_entry_data_with_valid_entries(self) -> None:
         """Test LDAP entry data type guard with valid entry data."""
         valid_entries = [
             {
                 "dn": "cn=John Doe,ou=users,dc=example,dc=com",
-                "attributes": {"cn": ["John Doe"], "sn": ["Doe"]}
+                "attributes": {"cn": ["John Doe"], "sn": ["Doe"]},
             },
             {
                 "dn": "uid=admin,dc=test,dc=local",
-                "attributes": {"uid": "admin", "mail": "admin@test.local"}
+                "attributes": {"uid": "admin", "mail": "admin@test.local"},
             },
-            {
-                "dn": "ou=groups,dc=example,dc=com",
-                "attributes": {}
-            }
+            {"dn": "ou=groups,dc=example,dc=com", "attributes": {}},
         ]
 
         for entry in valid_entries:
@@ -148,7 +144,10 @@ class TestLdapTypeGuards:
             {"attributes": {"cn": ["test"]}},  # Missing dn
             {"dn": 123, "attributes": {}},  # Invalid dn type
             {"dn": "", "mail": "test"},  # Empty dn
-            {"dn": "invalid", "data": object()},  # Invalid attribute value type (object)
+            {
+                "dn": "invalid",
+                "data": object(),
+            },  # Invalid attribute value type (object)
         ]
 
         for entry in invalid_entries:
@@ -161,23 +160,25 @@ class TestLdapTypeGuards:
             [
                 {
                     "dn": "cn=John Doe,ou=users,dc=example,dc=com",
-                    "attributes": {"cn": ["John Doe"], "sn": ["Doe"]}
+                    "attributes": {"cn": ["John Doe"], "sn": ["Doe"]},
                 }
             ],
             [
                 {
                     "dn": "uid=user1,ou=people,dc=test,dc=local",
-                    "attributes": {"uid": "user1", "mail": "user1@test.local"}
+                    "attributes": {"uid": "user1", "mail": "user1@test.local"},
                 },
                 {
                     "dn": "uid=user2,ou=people,dc=test,dc=local",
-                    "attributes": {"uid": "user2", "mail": "user2@test.local"}
-                }
-            ]
+                    "attributes": {"uid": "user2", "mail": "user2@test.local"},
+                },
+            ],
         ]
 
         for result in valid_results:
-            assert is_ldap_search_result(result), f"Valid search result should pass: {result}"
+            assert is_ldap_search_result(result), (
+                f"Valid search result should pass: {result}"
+            )
 
     def test_is_ldap_search_result_with_invalid_results(self) -> None:
         """Test LDAP search result type guard with invalid search results."""
@@ -194,7 +195,9 @@ class TestLdapTypeGuards:
         ]
 
         for result in invalid_results:
-            assert not is_ldap_search_result(result), f"Invalid search result should fail: {result}"
+            assert not is_ldap_search_result(result), (
+                f"Invalid search result should fail: {result}"
+            )
 
     def test_type_guard_with_mixed_data_types(self) -> None:
         """Test type guards handle mixed and complex data types correctly."""
@@ -206,7 +209,7 @@ class TestLdapTypeGuards:
             "givenName": "John",
             "mail": ["john.doe@example.com", "jdoe@example.com"],
             "telephoneNumber": ["+1-555-123-4567", "+1-555-987-6543"],
-            "description": "Senior Software Engineer"
+            "description": "Senior Software Engineer",
         }
 
         assert is_ldap_attributes_dict(complex_attrs)
@@ -214,7 +217,7 @@ class TestLdapTypeGuards:
         # Test complex valid entry data
         complex_entry = {
             "dn": "cn=John Doe,ou=engineering,ou=people,dc=company,dc=com",
-            "attributes": complex_attrs
+            "attributes": complex_attrs,
         }
 
         assert is_ldap_entry_data(complex_entry)
@@ -243,7 +246,7 @@ class TestLdapTypeGuards:
         attrs_with_empty_lists: LdapAttributeDict = {
             "cn": [],
             "mail": ["user@example.com"],
-            "description": ""
+            "description": "",
         }
         assert is_ldap_attributes_dict(attrs_with_empty_lists)
 
@@ -253,7 +256,7 @@ class TestLdapTypeGuards:
         user_entry = {
             "dn": "uid=john.doe,ou=people,dc=example,dc=com",
             "cn": "John Doe",
-            "mail": "john.doe@example.com"
+            "mail": "john.doe@example.com",
         }
 
         assert is_ldap_entry_data(user_entry)

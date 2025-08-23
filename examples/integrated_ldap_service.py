@@ -190,9 +190,7 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
                         f"   ✅ Directory contains {len(entries)} total entries",
                     )
                     print("   📝 Sample entries:")
-                    for i, entry in enumerate(
-                        entries[:5]
-                    ):  # Show first 5
+                    for i, entry in enumerate(entries[:5]):  # Show first 5
                         print(f"     {i + 1}. {entry.dn}")
                 else:
                     print("   ❌ Failed to search directory")
@@ -254,7 +252,7 @@ async def _perform_user_search_validation(
     if base_result.is_success and base_result.value:
         entry = base_result.value[0]
         print(f"   ✅ Root entry: {entry.dn}")
-        object_class = entry.attributes.get('objectClass', [])
+        object_class = entry.attributes.get("objectClass", [])
         print(f"     - objectClass: {object_class!r}")
     else:
         print(

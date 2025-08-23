@@ -44,7 +44,8 @@ class FlextLdapSearchProtocol(Protocol):
     """Protocol for LDAP search operations."""
 
     async def search(
-        self, request: FlextLdapSearchRequest,
+        self,
+        request: FlextLdapSearchRequest,
     ) -> FlextResult[FlextLdapSearchResponse]:
         """Perform LDAP search."""
         ...
@@ -63,7 +64,9 @@ class FlextLdapEntryProtocol(Protocol):
         ...
 
     async def update_entry(
-        self, dn: str, attributes: LdapAttributeDict,
+        self,
+        dn: str,
+        attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update LDAP entry."""
         ...
@@ -82,7 +85,8 @@ class FlextLdapUserProtocol(Protocol):
     """Protocol for LDAP user operations."""
 
     async def create_user(
-        self, request: FlextLdapCreateUserRequest,
+        self,
+        request: FlextLdapCreateUserRequest,
     ) -> FlextResult[FlextLdapUser]:
         """Create LDAP user."""
         ...
@@ -92,7 +96,9 @@ class FlextLdapUserProtocol(Protocol):
         ...
 
     async def update_user(
-        self, dn: str, attributes: LdapAttributeDict,
+        self,
+        dn: str,
+        attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update user attributes."""
         ...
@@ -102,7 +108,9 @@ class FlextLdapUserProtocol(Protocol):
         ...
 
     async def search_users(
-        self, filter_str: str, base_dn: str,
+        self,
+        filter_str: str,
+        base_dn: str,
     ) -> FlextResult[list[FlextLdapUser]]:
         """Search for users."""
         ...
@@ -121,13 +129,17 @@ class FlextLdapGroupProtocol(Protocol):
         ...
 
     async def add_member_to_group(
-        self, group_dn: str, member_dn: str,
+        self,
+        group_dn: str,
+        member_dn: str,
     ) -> FlextResult[None]:
         """Add member to group."""
         ...
 
     async def remove_member_from_group(
-        self, group_dn: str, member_dn: str,
+        self,
+        group_dn: str,
+        member_dn: str,
     ) -> FlextResult[None]:
         """Remove member from group."""
         ...
@@ -218,7 +230,8 @@ class FlextLdapClientBase(ABC):
 
     @abstractmethod
     async def search(
-        self, request: FlextLdapSearchRequest,
+        self,
+        request: FlextLdapSearchRequest,
     ) -> FlextResult[FlextLdapSearchResponse]:
         """Perform search operation."""
         ...

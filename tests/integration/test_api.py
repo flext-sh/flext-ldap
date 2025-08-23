@@ -131,7 +131,9 @@ class TestLdapClientRealOperations:
         search_result = await connected_ldap_client.search(search_request)
         assert search_result.is_success, f"Failed to search user: {search_result.error}"
         empty_response = FlextLdapSearchResponse(entries=[], total_count=0)
-        search_data = search_result.value if search_result.is_success else empty_response
+        search_data = (
+            search_result.value if search_result.is_success else empty_response
+        )
         assert search_data.entries, "User entry should exist"
 
         entry_data = search_data.entries[0]
@@ -149,7 +151,9 @@ class TestLdapClientRealOperations:
         if verify_search.is_success:
             # If search succeeds, there should be no entries
             empty_response = FlextLdapSearchResponse(entries=[], total_count=0)
-            verify_data = verify_search.value if verify_search.is_success else empty_response
+            verify_data = (
+                verify_search.value if verify_search.is_success else empty_response
+            )
             assert not verify_data.entries, "User entry should be deleted"
         else:
             # If search fails with "noSuchObject", it means the OU is empty/deleted - also valid
@@ -206,7 +210,7 @@ class TestLdapServiceRealOperations:
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextEntityStatus.ACTIVE
+            status=FlextEntityStatus.ACTIVE,
         )
         created_user = create_result.value if create_result.is_success else default_user
         assert created_user.uid == user_request.uid
@@ -222,7 +226,7 @@ class TestLdapServiceRealOperations:
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextEntityStatus.ACTIVE
+            status=FlextEntityStatus.ACTIVE,
         )
         retrieved_user = get_result.value if get_result.is_success else default_user
         assert retrieved_user is not None
@@ -249,9 +253,11 @@ class TestLdapServiceRealOperations:
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextEntityStatus.ACTIVE
+            status=FlextEntityStatus.ACTIVE,
         )
-        updated_user = updated_get_result.value if updated_get_result.is_success else default_user
+        updated_user = (
+            updated_get_result.value if updated_get_result.is_success else default_user
+        )
         assert updated_user is not None
         assert updated_user.mail == "updated-real@example.com"
 
@@ -278,7 +284,9 @@ class TestLdapServiceRealOperations:
         verify_result = await ldap_service.get_user(user_request.dn)
         assert verify_result.is_success
         default_user_verify: FlextLdapUser | None = None
-        verified_user = verify_result.value if verify_result.is_success else default_user_verify
+        verified_user = (
+            verify_result.value if verify_result.is_success else default_user_verify
+        )
         assert verified_user is None  # Should not exist
 
     @pytest.mark.asyncio
@@ -349,7 +357,7 @@ class TestLdapServiceRealOperations:
             object_classes=["groupOfNames"],
             attributes={},
             members=[],
-            status=FlextEntityStatus.ACTIVE
+            status=FlextEntityStatus.ACTIVE,
         )
         retrieved_group = get_result.value if get_result.is_success else default_group
         assert retrieved_group is not None
@@ -392,7 +400,9 @@ class TestLdapServiceRealOperations:
             f"Failed to get members: {members_result.error}"
         )
         default_members: list[str] = []
-        members_list = members_result.value if members_result.is_success else default_members
+        members_list = (
+            members_result.value if members_result.is_success else default_members
+        )
         assert user2_dn in members_list
         assert user_dn in members_list
 
@@ -406,7 +416,11 @@ class TestLdapServiceRealOperations:
         members_after_remove = await ldap_service.get_members(group.dn)
         assert members_after_remove.is_success
         default_members_after: list[str] = []
-        remaining_members = members_after_remove.value if members_after_remove.is_success else default_members_after
+        remaining_members = (
+            members_after_remove.value
+            if members_after_remove.is_success
+            else default_members_after
+        )
         assert user2_dn not in remaining_members
         assert user_dn in remaining_members  # Original member should remain
 
@@ -420,7 +434,9 @@ class TestLdapServiceRealOperations:
         verify_result = await ldap_service.get_group(group.dn)
         assert verify_result.is_success
         default_group_verify: FlextLdapGroupModel | None = None
-        verified_group = verify_result.value if verify_result.is_success else default_group_verify
+        verified_group = (
+            verify_result.value if verify_result.is_success else default_group_verify
+        )
         assert verified_group is None  # Should not exist
 
         # Cleanup users
@@ -506,7 +522,7 @@ class TestLdapValidationRealOperations:
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextEntityStatus.ACTIVE
+            status=FlextEntityStatus.ACTIVE,
         )
         created_user = create_result.value if create_result.is_success else default_user
         validation_result = created_user.validate_business_rules()
@@ -544,9 +560,8 @@ class TestLdapErrorHandlingReal:
 
         # Should fail gracefully with proper error message
         assert not bad_result.is_success
-        assert (
-            (bad_result.error and "connection" in bad_result.error.lower())
-            or (bad_result.error and "failed" in bad_result.error.lower())
+        assert (bad_result.error and "connection" in bad_result.error.lower()) or (
+            bad_result.error and "failed" in bad_result.error.lower()
         )
 
         # Test connection with wrong credentials
@@ -584,7 +599,8 @@ class TestLdapErrorHandlingReal:
         search_result = await connected_ldap_client.search(invalid_search)
         # Should handle gracefully - either return empty results or proper error
         assert search_result.is_success or (
-            search_result.error and (
+            search_result.error
+            and (
                 "noSuchObject" in search_result.error
                 or "terminated by server" in search_result.error
             )

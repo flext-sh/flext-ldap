@@ -7,13 +7,11 @@ validation, formatting, and business rules to find real bugs and ensure function
 COVERAGE TARGET: cli.py (0% -> 90%+) - 339 missing lines
 """
 
-import asyncio
 from typing import cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
-
 from flext_cli import FlextCliExecutionContext
 from flext_core import FlextResult
 
@@ -24,10 +22,6 @@ from flext_ldap.cli import (
     get_command_service,
     get_formatter_service,
     main,
-    test,
-    search,
-    user_info,
-    version,
 )
 
 
@@ -43,7 +37,7 @@ class TestFlextLdapCliCommandServiceRealCoverage:
         """Test FlextLdapCliCommandService initializes correctly."""
         # Test REAL initialization
         service = FlextLdapCliCommandService()
-        
+
         # Verify REAL initialization components
         assert service._api is not None
         assert service._config is not None
@@ -54,10 +48,10 @@ class TestFlextLdapCliCommandServiceRealCoverage:
         # Setup REAL test scenario
         context = MagicMock(spec=FlextCliExecutionContext)
         context.command_args = {"key": "value"}
-        
+
         # Execute REAL command execution with unknown command
         result = self.service.execute_command("unknown_command", context)
-        
+
         # Verify REAL error handling
         assert result.is_success is False
         assert "Unknown command: unknown_command" in result.error
@@ -71,25 +65,27 @@ class TestFlextLdapCliCommandServiceRealCoverage:
             "port": 389,
             "use_ssl": False,
             "bind_dn": "cn=admin,dc=example,dc=com",
-            "bind_password": "secret"
+            "bind_password": "secret",
         }
-        
+
         # Mock the API connection for controlled testing
-        with patch.object(self.service._api, 'connection') as mock_connection:
+        with patch.object(self.service._api, "connection") as mock_connection:
             # Create proper async context manager mock
             mock_session = MagicMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
             mock_connection.return_value = mock_session
-            
+
             # Execute REAL command execution
             result = self.service.execute_command("test", context)
-        
+
         # Verify REAL success handling
         assert result.is_success is True
-        result_data = cast(dict, result.value)
+        result_data = cast("dict", result.value)
         assert result_data["status"] == "success"
-        assert "Successfully connected to ldap.example.com:389" in result_data["message"]
+        assert (
+            "Successfully connected to ldap.example.com:389" in result_data["message"]
+        )
 
     def test_execute_command_test_command_connection_failure(self) -> None:
         """Test execute_command with test command connection failure."""
@@ -98,20 +94,20 @@ class TestFlextLdapCliCommandServiceRealCoverage:
         context.command_args = {
             "server": "nonexistent.example.com",
             "port": 389,
-            "use_ssl": False
+            "use_ssl": False,
         }
-        
+
         # Mock the API connection to fail
-        with patch.object(self.service._api, 'connection') as mock_connection:
+        with patch.object(self.service._api, "connection") as mock_connection:
             # Create proper async context manager mock
             mock_session = MagicMock()
             mock_session.__aenter__ = AsyncMock(return_value=None)  # Connection failed
             mock_session.__aexit__ = AsyncMock(return_value=None)
             mock_connection.return_value = mock_session
-            
+
             # Execute REAL command execution with failure
             result = self.service.execute_command("test", context)
-        
+
         # Verify REAL failure handling
         assert result.is_success is False
         assert "Connection failed" in result.error
@@ -125,40 +121,41 @@ class TestFlextLdapCliCommandServiceRealCoverage:
             "port": 389,
             "base_dn": "ou=users,dc=example,dc=com",
             "filter": "(objectClass=person)",
-            "attributes": ["cn", "mail"]
+            "attributes": ["cn", "mail"],
         }
-        
+
         # Mock search results
         mock_search_results = [
             {
                 "dn": "cn=user1,ou=users,dc=example,dc=com",
                 "cn": ["User One"],
-                "mail": ["user1@example.com"]
+                "mail": ["user1@example.com"],
             },
             {
-                "dn": "cn=user2,ou=users,dc=example,dc=com", 
+                "dn": "cn=user2,ou=users,dc=example,dc=com",
                 "cn": ["User Two"],
-                "mail": ["user2@example.com"]
-            }
+                "mail": ["user2@example.com"],
+            },
         ]
-        
+
         # Mock the API connection and search
-        with patch.object(self.service._api, 'connection') as mock_connection, \
-             patch.object(self.service._api, 'search') as mock_search:
-            
+        with (
+            patch.object(self.service._api, "connection") as mock_connection,
+            patch.object(self.service._api, "search") as mock_search,
+        ):
             # Setup proper async context manager mock
             mock_session = MagicMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
             mock_connection.return_value = mock_session
             mock_search.return_value = FlextResult.ok(mock_search_results)
-            
+
             # Execute REAL command execution
             result = self.service.execute_command("search", context)
-        
+
         # Verify REAL search success handling
         assert result.is_success is True
-        result_data = cast(dict, result.value)
+        result_data = cast("dict", result.value)
         assert result_data["status"] == "success"
         assert result_data["count"] == 2
         assert len(result_data["results"]) == 2
@@ -171,26 +168,27 @@ class TestFlextLdapCliCommandServiceRealCoverage:
         context.command_args = {
             "server": "ldap.example.com",
             "base_dn": "ou=users,dc=example,dc=com",
-            "filter": "(objectClass=nonexistent)"
+            "filter": "(objectClass=nonexistent)",
         }
-        
+
         # Mock the API connection and empty search
-        with patch.object(self.service._api, 'connection') as mock_connection, \
-             patch.object(self.service._api, 'search') as mock_search:
-            
+        with (
+            patch.object(self.service._api, "connection") as mock_connection,
+            patch.object(self.service._api, "search") as mock_search,
+        ):
             # Setup proper async context manager mock
             mock_session = MagicMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
             mock_connection.return_value = mock_session
             mock_search.return_value = FlextResult.ok([])  # Empty results
-            
+
             # Execute REAL command execution
             result = self.service.execute_command("search", context)
-        
+
         # Verify REAL empty results handling
         assert result.is_success is True
-        result_data = cast(dict, result.value)
+        result_data = cast("dict", result.value)
         assert result_data["status"] == "success"
         assert result_data["count"] == 0
         assert result_data["entries"] == []
@@ -201,34 +199,35 @@ class TestFlextLdapCliCommandServiceRealCoverage:
         context = MagicMock(spec=FlextCliExecutionContext)
         context.command_args = {
             "server": "ldap.example.com",
-            "user_dn": "cn=testuser,ou=users,dc=example,dc=com"
+            "user_dn": "cn=testuser,ou=users,dc=example,dc=com",
         }
-        
+
         # Mock user info result
         mock_user_info = {
             "dn": "cn=testuser,ou=users,dc=example,dc=com",
             "cn": ["Test User"],
             "mail": ["testuser@example.com"],
-            "objectClass": ["person", "inetOrgPerson"]
+            "objectClass": ["person", "inetOrgPerson"],
         }
-        
+
         # Mock the API connection and search
-        with patch.object(self.service._api, 'connection') as mock_connection, \
-             patch.object(self.service._api, 'search') as mock_search:
-            
+        with (
+            patch.object(self.service._api, "connection") as mock_connection,
+            patch.object(self.service._api, "search") as mock_search,
+        ):
             # Setup proper async context manager mock
             mock_session = MagicMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
             mock_connection.return_value = mock_session
             mock_search.return_value = FlextResult.ok([mock_user_info])
-            
+
             # Execute REAL command execution
             result = self.service.execute_command("user_info", context)
-        
+
         # Verify REAL user info success handling
         assert result.is_success is True
-        result_data = cast(dict, result.value)
+        result_data = cast("dict", result.value)
         assert result_data["status"] == "success"
         # User dict might have different structure than mock
         assert "user" in result_data
@@ -239,23 +238,24 @@ class TestFlextLdapCliCommandServiceRealCoverage:
         context = MagicMock(spec=FlextCliExecutionContext)
         context.command_args = {
             "server": "ldap.example.com",
-            "user_dn": "cn=nonexistent,ou=users,dc=example,dc=com"
+            "user_dn": "cn=nonexistent,ou=users,dc=example,dc=com",
         }
-        
+
         # Mock the API connection and empty search
-        with patch.object(self.service._api, 'connection') as mock_connection, \
-             patch.object(self.service._api, 'search') as mock_search:
-            
+        with (
+            patch.object(self.service._api, "connection") as mock_connection,
+            patch.object(self.service._api, "search") as mock_search,
+        ):
             # Setup proper async context manager mock
             mock_session = MagicMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
             mock_connection.return_value = mock_session
             mock_search.return_value = FlextResult.ok([])  # User not found
-            
+
             # Execute REAL command execution
             result = self.service.execute_command("user_info", context)
-        
+
         # Verify REAL user not found handling
         assert result.is_success is False
         assert "not found" in result.error
@@ -264,28 +264,30 @@ class TestFlextLdapCliCommandServiceRealCoverage:
         """Test execute_command retry logic on exceptions."""
         # Setup REAL test scenario
         context = MagicMock(spec=FlextCliExecutionContext)
-        context.command_args = {
-            "server": "ldap.example.com"
-        }
-        
+        context.command_args = {"server": "ldap.example.com"}
+
         # Mock the API connection to raise exception on first attempt, succeed on second
         call_count = 0
+
         def mock_connection_side_effect(*args, **kwargs):
             nonlocal call_count
             call_count += 1
             if call_count == 1:
-                raise ConnectionError("Network timeout")
-            
+                msg = "Network timeout"
+                raise ConnectionError(msg)
+
             # Second attempt succeeds - create proper async context manager
             mock_session = MagicMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
             return mock_session
-        
-        with patch.object(self.service._api, 'connection', side_effect=mock_connection_side_effect):
+
+        with patch.object(
+            self.service._api, "connection", side_effect=mock_connection_side_effect
+        ):
             # Execute REAL command execution with retry
             result = self.service.execute_command("test", context)
-        
+
         # Verify REAL retry logic worked
         assert result.is_success is True
         assert call_count == 2  # First failed, second succeeded
@@ -294,15 +296,17 @@ class TestFlextLdapCliCommandServiceRealCoverage:
         """Test execute_command when max attempts exceeded."""
         # Setup REAL test scenario
         context = MagicMock(spec=FlextCliExecutionContext)
-        context.command_args = {
-            "server": "ldap.example.com"
-        }
-        
+        context.command_args = {"server": "ldap.example.com"}
+
         # Mock the API connection to always raise exception
-        with patch.object(self.service._api, 'connection', side_effect=RuntimeError("Persistent error")):
+        with patch.object(
+            self.service._api,
+            "connection",
+            side_effect=RuntimeError("Persistent error"),
+        ):
             # Execute REAL command execution that exceeds max attempts
             result = self.service.execute_command("test", context)
-        
+
         # Verify REAL max attempts handling
         assert result.is_success is False
         assert "Persistent error" in result.error
@@ -312,10 +316,10 @@ class TestFlextLdapCliCommandServiceRealCoverage:
         # Setup REAL test scenario with empty args
         context = MagicMock(spec=FlextCliExecutionContext)
         context.command_args = None  # Test None args
-        
+
         # Execute REAL command execution
         result = self.service.execute_command("unknown", context)
-        
+
         # Verify REAL empty args handling
         assert result.is_success is False
         assert "Unknown command" in result.error
@@ -329,23 +333,23 @@ class TestFlextLdapCliCommandServiceRealCoverage:
             "port": "389",  # String port
             "use_ssl": "true",  # String boolean
             "bind_dn": None,  # None value
-            "bind_password": None  # None value
+            "bind_password": None,  # None value
         }
-        
+
         # Mock the API connection for controlled testing
-        with patch.object(self.service._api, 'connection') as mock_connection:
+        with patch.object(self.service._api, "connection") as mock_connection:
             # Create proper async context manager mock
             mock_session = MagicMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
             mock_connection.return_value = mock_session
-            
+
             # Execute REAL command execution with type conversion
             result = self.service.execute_command("test", context)
-        
+
         # Verify REAL parameter conversion worked
         assert result.is_success is True
-        
+
         # Verify the connection was called with converted parameters
         mock_connection.assert_called_once()
         call_args = mock_connection.call_args[0]
@@ -366,18 +370,18 @@ class TestFlextLdapCliFormatterServiceRealCoverage:
         """Test FlextLdapCliFormatterService initializes correctly."""
         # Test REAL initialization
         formatter = FlextLdapCliFormatterService()
-        
+
         # Verify REAL initialization components
         assert formatter._container is not None
 
     def test_cli_formatter_service_initialization_with_container(self) -> None:
         """Test FlextLdapCliFormatterService with custom container."""
         from flext_core.container import FlextContainer
-        
+
         # Setup REAL test scenario with custom container
         custom_container = FlextContainer()
         formatter = FlextLdapCliFormatterService(custom_container)
-        
+
         # Verify REAL custom container usage
         assert formatter._container is custom_container
 
@@ -388,13 +392,13 @@ class TestFlextLdapCliFormatterServiceRealCoverage:
             "command": "test",
             "data": {
                 "status": "success",
-                "message": "Successfully connected to ldap.example.com:389"
-            }
+                "message": "Successfully connected to ldap.example.com:389",
+            },
         }
-        
+
         # Execute REAL formatting
         formatted_result = self.formatter.format_output(result_data, "table")
-        
+
         # Verify REAL formatting success
         assert formatted_result.is_success is True
         formatted_output = formatted_result.value
@@ -413,20 +417,20 @@ class TestFlextLdapCliFormatterServiceRealCoverage:
                     {
                         "dn": "cn=user1,ou=users,dc=example,dc=com",
                         "cn": ["User One"],
-                        "mail": ["user1@example.com"]
+                        "mail": ["user1@example.com"],
                     },
                     {
                         "dn": "cn=user2,ou=users,dc=example,dc=com",
                         "cn": ["User Two"],
-                        "mail": ["user2@example.com"]
-                    }
-                ]
-            }
+                        "mail": ["user2@example.com"],
+                    },
+                ],
+            },
         }
-        
+
         # Execute REAL formatting
         formatted_result = self.formatter.format_output(result_data, "table")
-        
+
         # Verify REAL search results formatting
         assert formatted_result.is_success is True
         formatted_output = formatted_result.value
@@ -445,14 +449,14 @@ class TestFlextLdapCliFormatterServiceRealCoverage:
                     "dn": "cn=testuser,ou=users,dc=example,dc=com",
                     "cn": ["Test User"],
                     "mail": ["testuser@example.com"],
-                    "objectClass": ["person", "inetOrgPerson"]
-                }
-            }
+                    "objectClass": ["person", "inetOrgPerson"],
+                },
+            },
         }
-        
+
         # Execute REAL formatting
         formatted_result = self.formatter.format_output(result_data, "table")
-        
+
         # Verify REAL user info formatting
         assert formatted_result.is_success is True
         formatted_output = formatted_result.value
@@ -464,15 +468,12 @@ class TestFlextLdapCliFormatterServiceRealCoverage:
         # Setup REAL test data
         result_data = {
             "command": "test",
-            "data": {
-                "status": "success",
-                "message": "Test completed"
-            }
+            "data": {"status": "success", "message": "Test completed"},
         }
-        
+
         # Execute REAL JSON formatting
         formatted_result = self.formatter.format_output(result_data, "json")
-        
+
         # Verify REAL JSON formatting
         assert formatted_result.is_success is True
         formatted_output = formatted_result.value
@@ -483,15 +484,12 @@ class TestFlextLdapCliFormatterServiceRealCoverage:
         # Setup REAL test data
         result_data = {
             "command": "test",
-            "data": {
-                "status": "success",
-                "message": "Test completed"
-            }
+            "data": {"status": "success", "message": "Test completed"},
         }
-        
+
         # Execute REAL JSON formatting (supported format)
         formatted_result = self.formatter.format_output(result_data, "json")
-        
+
         # Verify REAL JSON formatting
         assert formatted_result.is_success is True
         formatted_output = formatted_result.value
@@ -500,14 +498,11 @@ class TestFlextLdapCliFormatterServiceRealCoverage:
     def test_format_output_unknown_format(self) -> None:
         """Test format_output with unknown output format."""
         # Setup REAL test data
-        result_data = {
-            "command": "test",
-            "data": {"status": "success"}
-        }
-        
+        result_data = {"command": "test", "data": {"status": "success"}}
+
         # Execute REAL formatting with unknown format
         formatted_result = self.formatter.format_output(result_data, "unknown")
-        
+
         # Verify REAL unknown format handling - should fail with error
         assert formatted_result.is_success is False
         assert "Unsupported format" in formatted_result.error
@@ -517,7 +512,7 @@ class TestFlextLdapCliFormatterServiceRealCoverage:
         # Setup REAL test scenario
         # The execute method appears to be a placeholder or integration point
         result = self.formatter.execute()
-        
+
         # Verify REAL execution result
         assert result.is_success is True
         assert isinstance(result.value, str)
@@ -530,7 +525,7 @@ class TestFlextLdapCliFactoryFunctionsRealCoverage:
         """Test get_command_service factory function."""
         # Execute REAL factory function
         service = get_command_service()
-        
+
         # Verify REAL service creation
         assert service is not None
         assert isinstance(service, FlextLdapCliCommandService)
@@ -541,7 +536,7 @@ class TestFlextLdapCliFactoryFunctionsRealCoverage:
         # Execute REAL factory function multiple times
         service1 = get_command_service()
         service2 = get_command_service()
-        
+
         # Verify REAL singleton behavior
         assert service1 is service2
 
@@ -549,7 +544,7 @@ class TestFlextLdapCliFactoryFunctionsRealCoverage:
         """Test get_formatter_service factory function."""
         # Execute REAL factory function
         formatter = get_formatter_service()
-        
+
         # Verify REAL formatter creation
         assert formatter is not None
         assert isinstance(formatter, FlextLdapCliFormatterService)
@@ -559,7 +554,7 @@ class TestFlextLdapCliFactoryFunctionsRealCoverage:
         # Execute REAL factory function multiple times
         formatter1 = get_formatter_service()
         formatter2 = get_formatter_service()
-        
+
         # Verify REAL singleton behavior
         assert formatter1 is formatter2
 
@@ -576,7 +571,7 @@ class TestFlextLdapCliClickCommandsRealCoverage:
         """Test main CLI command shows help correctly."""
         # Execute REAL CLI command
         result = self.runner.invoke(cli, ["--help"])
-        
+
         # Verify REAL help output
         assert result.exit_code == 0
         assert "FLEXT LDAP" in result.output
@@ -586,7 +581,7 @@ class TestFlextLdapCliClickCommandsRealCoverage:
         """Test main CLI command with debug flag."""
         # Execute REAL CLI command with debug
         result = self.runner.invoke(cli, ["--debug", "--help"])
-        
+
         # Verify REAL debug mode handling
         assert result.exit_code == 0
         # Debug mode should still show help but with debug enabled
@@ -595,7 +590,7 @@ class TestFlextLdapCliClickCommandsRealCoverage:
         """Test test command shows help correctly."""
         # Execute REAL test command help
         result = self.runner.invoke(cli, ["test", "--help"])
-        
+
         # Verify REAL test command help
         assert result.exit_code == 0
         assert "server" in result.output.lower()
@@ -605,7 +600,7 @@ class TestFlextLdapCliClickCommandsRealCoverage:
         """Test test command with missing required server argument."""
         # Execute REAL test command without server
         result = self.runner.invoke(cli, ["test"])
-        
+
         # Verify REAL missing argument handling
         assert result.exit_code != 0
         assert "Usage:" in result.output or "Error:" in result.output
@@ -614,7 +609,7 @@ class TestFlextLdapCliClickCommandsRealCoverage:
         """Test search command shows help correctly."""
         # Execute REAL search command help
         result = self.runner.invoke(cli, ["search", "--help"])
-        
+
         # Verify REAL search command help
         assert result.exit_code == 0
         assert "server" in result.output.lower()
@@ -624,7 +619,7 @@ class TestFlextLdapCliClickCommandsRealCoverage:
         """Test user_info command shows help correctly."""
         # Execute REAL user_info command help
         result = self.runner.invoke(cli, ["user-info", "--help"])
-        
+
         # Verify REAL user_info command help
         assert result.exit_code == 0
         assert "uid" in result.output.lower()
@@ -634,7 +629,7 @@ class TestFlextLdapCliClickCommandsRealCoverage:
         """Test version command shows version information."""
         # Execute REAL version command
         result = self.runner.invoke(cli, ["version"])
-        
+
         # Verify REAL version output
         assert result.exit_code == 0
         # Version output should contain some version information
@@ -644,7 +639,7 @@ class TestFlextLdapCliClickCommandsRealCoverage:
         """Test CLI with different output format options."""
         # Test REAL output format options
         formats = ["table", "json", "yaml"]
-        
+
         for fmt in formats:
             result = self.runner.invoke(cli, ["--output", fmt, "--help"])
             # Should accept the format and show help
@@ -665,13 +660,13 @@ class TestFlextLdapCliDisplayFunctionsRealCoverage:
         """Test display functions exist and are callable."""
         # Import the display functions (they're private but we can access them)
         from flext_ldap.cli import (
-            _display_test_result,
+            _display_entry_attributes,
             _display_search_results,
             _display_single_entry,
-            _display_entry_attributes,
+            _display_test_result,
             _display_user_info,
         )
-        
+
         # Verify REAL function existence
         assert callable(_display_test_result)
         assert callable(_display_search_results)
@@ -682,13 +677,13 @@ class TestFlextLdapCliDisplayFunctionsRealCoverage:
     def test_display_test_result_function(self) -> None:
         """Test _display_test_result with real test result data."""
         from flext_ldap.cli import _display_test_result
-        
+
         # Setup REAL test result data
         test_result_data = {
             "status": "success",
-            "message": "Successfully connected to ldap.example.com:389"
+            "message": "Successfully connected to ldap.example.com:389",
         }
-        
+
         # Execute REAL display function
         # Note: This function prints to console, so we can't easily capture output
         # But we can verify it doesn't raise exceptions
@@ -702,7 +697,7 @@ class TestFlextLdapCliDisplayFunctionsRealCoverage:
     def test_display_search_results_function(self) -> None:
         """Test _display_search_results with real search result data."""
         from flext_ldap.cli import _display_search_results
-        
+
         # Setup REAL search result data
         search_result_data = {
             "status": "success",
@@ -711,16 +706,16 @@ class TestFlextLdapCliDisplayFunctionsRealCoverage:
                 {
                     "dn": "cn=user1,ou=users,dc=example,dc=com",
                     "cn": ["User One"],
-                    "mail": ["user1@example.com"]
+                    "mail": ["user1@example.com"],
                 },
                 {
                     "dn": "cn=user2,ou=users,dc=example,dc=com",
                     "cn": ["User Two"],
-                    "mail": ["user2@example.com"]
-                }
-            ]
+                    "mail": ["user2@example.com"],
+                },
+            ],
         }
-        
+
         # Execute REAL display function
         try:
             _display_search_results(search_result_data)
@@ -732,7 +727,7 @@ class TestFlextLdapCliDisplayFunctionsRealCoverage:
     def test_display_user_info_function(self) -> None:
         """Test _display_user_info with real user info data."""
         from flext_ldap.cli import _display_user_info
-        
+
         # Setup REAL user info data
         user_info_data = {
             "status": "success",
@@ -740,10 +735,10 @@ class TestFlextLdapCliDisplayFunctionsRealCoverage:
                 "dn": "cn=testuser,ou=users,dc=example,dc=com",
                 "cn": ["Test User"],
                 "mail": ["testuser@example.com"],
-                "objectClass": ["person", "inetOrgPerson"]
-            }
+                "objectClass": ["person", "inetOrgPerson"],
+            },
         }
-        
+
         # Execute REAL display function
         try:
             _display_user_info(user_info_data)
@@ -755,15 +750,15 @@ class TestFlextLdapCliDisplayFunctionsRealCoverage:
     def test_display_single_entry_function(self) -> None:
         """Test _display_single_entry with real entry data."""
         from flext_ldap.cli import _display_single_entry
-        
+
         # Setup REAL entry data
         entry_data = {
             "dn": "cn=testuser,ou=users,dc=example,dc=com",
             "cn": ["Test User"],
             "mail": ["testuser@example.com"],
-            "objectClass": ["person", "inetOrgPerson"]
+            "objectClass": ["person", "inetOrgPerson"],
         }
-        
+
         # Execute REAL display function
         try:
             _display_single_entry(1, entry_data)
@@ -775,15 +770,15 @@ class TestFlextLdapCliDisplayFunctionsRealCoverage:
     def test_display_entry_attributes_function(self) -> None:
         """Test _display_entry_attributes with real attributes data."""
         from flext_ldap.cli import _display_entry_attributes
-        
+
         # Setup REAL attributes data
         attributes_data = {
             "cn": ["Test User"],
             "mail": ["testuser@example.com", "test.user@example.com"],
             "objectClass": ["person", "inetOrgPerson"],
-            "telephoneNumber": ["+1-555-123-4567"]
+            "telephoneNumber": ["+1-555-123-4567"],
         }
-        
+
         # Execute REAL display function
         try:
             _display_entry_attributes(attributes_data)
@@ -805,31 +800,31 @@ class TestFlextLdapCliIntegrationRealCoverage:
         # Test REAL CLI workflow by checking command structure
         # We can't easily do full integration tests without real LDAP server,
         # but we can verify the CLI structure is sound
-        
+
         # Test help for all commands
         commands = ["test", "search", "user-info", "version"]
-        
+
         for command in commands:
             if command == "version":
                 result = self.runner.invoke(cli, [command])
             else:
                 result = self.runner.invoke(cli, [command, "--help"])
-            
+
             # Each command should have proper help or execute successfully
             assert result.exit_code == 0
 
     def test_cli_error_handling_consistency(self) -> None:
         """Test CLI error handling consistency across commands."""
         # Test REAL error handling by providing invalid arguments
-        
+
         # Test commands with missing required arguments
         error_cases = [
             (["test"], "Missing argument"),  # test requires server
-            (["search"], "Missing argument"),  # search requires server  
+            (["search"], "Missing argument"),  # search requires server
             (["user-info"], "Missing argument"),  # user-info requires server
         ]
-        
-        for cmd_args, expected_error_type in error_cases:
+
+        for cmd_args, _expected_error_type in error_cases:
             result = self.runner.invoke(cli, cmd_args)
             # Should exit with error
             assert result.exit_code != 0

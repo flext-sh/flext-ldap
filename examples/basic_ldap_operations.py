@@ -133,7 +133,9 @@ async def demonstrate_error_handling() -> None:
     # 3. Connection errors (simulated)
     api = FlextLdapApi()
     try:
-        test_password = os.getenv("LDAP_TEST_PASSWORD", "demo_password_not_for_production")
+        test_password = os.getenv(
+            "LDAP_TEST_PASSWORD", "demo_password_not_for_production"
+        )
         connection_result = await api.connect(
             server_uri="ldap://nonexistent.server:389",
             bind_dn="cn=test",
