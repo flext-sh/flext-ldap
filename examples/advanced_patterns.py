@@ -20,14 +20,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable
 from contextlib import asynccontextmanager
 
-from flext_core import get_logger
+from flext_core import FlextResult, get_logger
 
 from flext_ldap import (
     FlextLdapApi,
     FlextLdapDistinguishedName,
+    FlextLdapEntry,
+    FlextLdapFilter,
+    FlextLdapSearchRequest,
     FlextLdapSettings,
 )
 
@@ -107,13 +110,13 @@ async def demonstrate_value_objects() -> None:
         print(f"   DN: {dn.value}")
 
         # 2. LDAP Filters - Using correct FlextLdapFilter class
-        from flext_ldap import FlextLdapFilter
-
         complex_filter = "(&(objectClass=person)(mail=*@example.com))"
         filter_result = FlextLdapFilter.create(complex_filter)
 
         if filter_result.is_success:
-            filter_obj = filter_result.value
+            from flext_ldap.value_objects import FlextLdapFilter as FilterClass
+            default_filter = FilterClass(value="(objectClass=*)")
+            filter_obj = filter_result.unwrap_or(default_filter)
             filter_validation = filter_obj.validate_business_rules()
             filter_status = "PASS" if filter_validation.is_success else "FAIL"
             print(f"✅ Filter validation: {filter_status}")
@@ -138,8 +141,6 @@ async def demonstrate_comprehensive_configuration() -> None:
         print("✅ Settings created")
 
         # 2. Create search request using FlextLdapSearchRequest
-        from flext_ldap import FlextLdapSearchRequest
-
         search_request = FlextLdapSearchRequest(
             base_dn="dc=example,dc=com",
             scope="subtree",
@@ -173,10 +174,7 @@ async def demonstrate_async_patterns() -> None:
             print(f"✅ Session established: {session_id}")
 
             # 2. Concurrent operations (simulated) with proper typing
-            from collections.abc import Awaitable
-            from typing import Any
-
-            tasks: list[Awaitable[Any]] = []
+            tasks: list[Awaitable[FlextResult[list[FlextLdapEntry]]]] = []
             search_bases = [
                 "ou=users,dc=example,dc=com",
                 "ou=groups,dc=example,dc=com",
@@ -193,7 +191,7 @@ async def demonstrate_async_patterns() -> None:
                 tasks.append(task)
 
             # Execute concurrent searches with proper typing
-            results: list[Any | BaseException] = await asyncio.gather(
+            results: list[FlextResult[list[FlextLdapEntry]] | BaseException] = await asyncio.gather(
                 *tasks, return_exceptions=True
             )
 

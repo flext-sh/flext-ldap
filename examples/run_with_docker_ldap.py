@@ -13,15 +13,31 @@ from __future__ import annotations
 
 import asyncio
 import importlib
+import importlib.util
 import logging
 import os
 import time
+import types
 from pathlib import Path
 
 import docker
 from docker import errors as docker_errors
 
 logger = logging.getLogger(__name__)
+
+
+def _load_module_spec(module_name: str, file_path: Path) -> types.ModuleType:
+    """Load a module spec and return the module."""
+    spec = importlib.util.spec_from_file_location(module_name, str(file_path))
+    if not spec:
+        msg = f"Failed to create module spec for {module_name}"
+        raise ImportError(msg)
+    if not spec.loader:
+        msg = f"Module spec has no loader for {module_name}"
+        raise ImportError(msg)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def start_openldap_container() -> bool:
@@ -113,35 +129,19 @@ async def run_examples_with_docker() -> None:
 
     # Run the integrated example (best-effort)
     try:
-        import importlib.util
-
         integrated_path = Path(__file__).parent / "integrated_ldap_service.py"
-        spec = importlib.util.spec_from_file_location(
-            "integrated_ldap_service",
-            str(integrated_path),
-        )
-        assert spec
-        assert spec.loader
-        integrated_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(integrated_module)
-        await integrated_module.main()
+        integrated_module: types.ModuleType = _load_module_spec("integrated_ldap_service", integrated_path)
+        main_func = getattr(integrated_module, "main")
+        await main_func()
     except Exception:
         logger.exception("Integrated example failed")
 
     # Run the simple client example (best-effort)
     try:
-        import importlib.util
-
         simple_path = Path(__file__).parent / "ldap_simple_client_example.py"
-        spec = importlib.util.spec_from_file_location(
-            "ldap_simple_client_example",
-            str(simple_path),
-        )
-        assert spec
-        assert spec.loader
-        simple_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(simple_module)
-        await simple_module.main()
+        simple_module: types.ModuleType = _load_module_spec("ldap_simple_client_example", simple_path)
+        main_func = getattr(simple_module, "main")
+        await main_func()
     except Exception:
         logger.exception("Simple client example failed")
 
@@ -162,10 +162,12 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    # Check if Docker is available by pinging the daemon
+    # Check if Docker is available by listing containers
     try:
-        docker.from_env().ping()
-    except Exception:
-        raise SystemExit(1)
+        docker_client = docker.from_env()
+        # Check connectivity by listing containers
+        _ = docker_client.containers.list()
+    except Exception as e:
+        raise SystemExit(1) from e
 
     asyncio.run(main())

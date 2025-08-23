@@ -29,6 +29,8 @@ from flext_core import get_logger
 
 from flext_ldap import (
     FlextLdapApi,
+    FlextLdapDistinguishedName,
+    FlextLdapFilter,
     FlextLdapSettings,
 )
 
@@ -119,15 +121,11 @@ async def demonstrate_error_handling() -> None:
     print("=" * 40)
 
     # 1. DN validation errors
-    from flext_ldap import FlextLdapDistinguishedName
-
     dn_result = FlextLdapDistinguishedName.create("")
     if not dn_result.is_success:
         print(f"✅ Caught DN validation error: {dn_result.error}")
 
     # 2. Filter validation errors
-    from flext_ldap import FlextLdapFilter
-
     filter_result = FlextLdapFilter.create("invalid-filter-format")
     if not filter_result.is_success:
         print(f"✅ Caught filter error: {filter_result.error}")
@@ -135,10 +133,11 @@ async def demonstrate_error_handling() -> None:
     # 3. Connection errors (simulated)
     api = FlextLdapApi()
     try:
+        test_password = os.getenv("LDAP_TEST_PASSWORD", "demo_password_not_for_production")
         connection_result = await api.connect(
             server_uri="ldap://nonexistent.server:389",
             bind_dn="cn=test",
-            bind_password="test",
+            bind_password=test_password,
         )
 
         if not connection_result.is_success:

@@ -52,7 +52,10 @@ class FlextLdapDistinguishedName(FlextValue):
     @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules for DN."""
-        return FlextResult[None].ok(None)
+        try:
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"DN validation error: {e}")
 
     @property
     def rdn(self) -> str:
@@ -107,7 +110,10 @@ class FlextLdapScope(FlextValue):
     @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules."""
-        return FlextResult[None].ok(None)
+        try:
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Scope validation error: {e}")
 
     @classmethod
     def create(cls, scope: str) -> FlextResult[FlextLdapScope]:
@@ -175,7 +181,10 @@ class FlextLdapFilter(FlextValue):
     @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules for filter."""
-        return FlextResult[None].ok(None)
+        try:
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Filter validation error: {e}")
 
     @classmethod
     def create(cls, value: str) -> FlextResult[FlextLdapFilter]:

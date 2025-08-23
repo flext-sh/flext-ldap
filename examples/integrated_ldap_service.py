@@ -86,6 +86,7 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLdapApi) -> None:
             print(f"❌ Failed to connect: {connection_result.error}")
             return
 
+        # Use .value for modern type-safe access (success verified above)
         session_id = connection_result.value
         print(f"✅ Connected with session: {session_id}")
 
@@ -146,6 +147,7 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
             print(f"   ❌ Connection failed: {connection_result.error}")
             return
 
+        # Use .value for modern type-safe access (success verified above)
         session_id = connection_result.value
 
         try:
@@ -158,8 +160,9 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
             )
 
             if search_result.is_success and search_result.value:
-                print(f"   ✅ Found {len(search_result.value)} users:")
-                for user_entry in search_result.value:
+                entries = search_result.value
+                print(f"   ✅ Found {len(entries)} users:")
+                for user_entry in entries:
                     uid = user_entry.get_single_attribute_value("uid") or "N/A"
                     cn = user_entry.get_single_attribute_value("cn") or "N/A"
                     print(f"     - {uid}: {cn} ({user_entry.dn})")
@@ -182,12 +185,13 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
                 )
 
                 if wildcard_result.is_success and wildcard_result.value:
+                    entries = wildcard_result.value
                     print(
-                        f"   ✅ Directory contains {len(wildcard_result.value)} total entries",
+                        f"   ✅ Directory contains {len(entries)} total entries",
                     )
                     print("   📝 Sample entries:")
                     for i, entry in enumerate(
-                        wildcard_result.value[:5]
+                        entries[:5]
                     ):  # Show first 5
                         print(f"     {i + 1}. {entry.dn}")
                 else:
@@ -203,7 +207,7 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
 
 async def _perform_user_search_validation(
     ldap_service: FlextLdapApi,
-    session_id: str,
+    _session_id: str,
 ) -> None:
     """Perform REAL user search validation with different filters."""
     print("   🔍 VALIDATING SEARCH FUNCTIONALITY...")
@@ -218,7 +222,8 @@ async def _perform_user_search_validation(
     )
 
     if search_result.is_success:
-        print(f"   ✅ Found {len(search_result.value)} inetOrgPerson entries")
+        entries = search_result.value or []
+        print(f"   ✅ Found {len(entries)} inetOrgPerson entries")
     else:
         print(f"   ❌ Search failed: {search_result.error}")
 
@@ -232,7 +237,8 @@ async def _perform_user_search_validation(
     )
 
     if compound_result.is_success:
-        print(f"   ✅ Compound filter found {len(compound_result.value)} entries")
+        entries = compound_result.value or []
+        print(f"   ✅ Compound filter found {len(entries)} entries")
     else:
         print(f"   ❌ Compound search failed: {compound_result.error}")
 
@@ -248,7 +254,8 @@ async def _perform_user_search_validation(
     if base_result.is_success and base_result.value:
         entry = base_result.value[0]
         print(f"   ✅ Root entry: {entry.dn}")
-        print(f"     - objectClass: {entry.attributes.get('objectClass', [])}")
+        object_class = entry.attributes.get('objectClass', [])
+        print(f"     - objectClass: {object_class!r}")
     else:
         print(
             f"   ❌ Base search failed: {base_result.error if base_result.is_failure else 'No data'}",
@@ -274,6 +281,7 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
             print(f"   ❌ Connection failed: {connection_result.error}")
             return
 
+        # Use .value for modern type-safe access (success verified above)
         session_id = connection_result.value
 
         try:
@@ -286,8 +294,9 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
             )
 
             if search_result.is_success and search_result.value:
-                print(f"   ✅ Found {len(search_result.value)} groups:")
-                for group_entry in search_result.value:
+                entries = search_result.value
+                print(f"   ✅ Found {len(entries)} groups:")
+                for group_entry in entries:
                     cn = group_entry.get_single_attribute_value("cn") or "N/A"
                     desc = (
                         group_entry.get_single_attribute_value("description")
@@ -310,8 +319,9 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
                 )
 
                 if alt_result.is_success and alt_result.value:
+                    entries = alt_result.value
                     print(
-                        f"   ✅ Found {len(alt_result.value)} groups with alternative object classes",
+                        f"   ✅ Found {len(entries)} groups with alternative object classes",
                     )
                 else:
                     print("   [i] No groups with common object classes found")
@@ -326,7 +336,7 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
 
 async def _perform_group_search_validation(
     ldap_service: FlextLdapApi,
-    session_id: str,
+    _session_id: str,
 ) -> None:
     """Perform REAL group search validation with different patterns."""
     print("   🔍 VALIDATING GROUP SEARCH FUNCTIONALITY...")
@@ -341,8 +351,9 @@ async def _perform_group_search_validation(
     )
 
     if all_groups_result.is_success:
-        print(f"   ✅ Found {len(all_groups_result.value)} groups of all types")
-        for group_entry in all_groups_result.value:
+        entries = all_groups_result.value or []
+        print(f"   ✅ Found {len(entries)} groups of all types")
+        for group_entry in entries:
             cn = group_entry.get_single_attribute_value("cn") or "Unknown"
             obj_classes = group_entry.get_attribute_values("objectClass")
             print(f"     - {cn}: {obj_classes}")
@@ -359,7 +370,8 @@ async def _perform_group_search_validation(
     )
 
     if wildcard_result.is_success:
-        print(f"   ✅ Wildcard search found {len(wildcard_result.value)} entries")
+        entries = wildcard_result.value or []
+        print(f"   ✅ Wildcard search found {len(entries)} entries")
     else:
         print(f"   ❌ Wildcard search failed: {wildcard_result.error}")
 
@@ -378,7 +390,8 @@ async def _perform_group_search_validation(
         )
 
         if scope_result.is_success:
-            print(f"   ✅ Scope '{scope}': {len(scope_result.value)} entries")
+            entries = scope_result.value or []
+            print(f"   ✅ Scope '{scope}': {len(entries)} entries")
         else:
             print(f"   ❌ Scope '{scope}' failed: {scope_result.error}")
 
@@ -400,6 +413,7 @@ async def _demo_connection_management(ldap_service: FlextLdapApi) -> None:
     try:
         connection_result = await ldap_service.connect(server_url, bind_dn, password)
         if connection_result.is_success:
+            # Use .value for modern type-safe access (success verified above)
             session_id = connection_result.value
             print(f"   Connected to LDAP server successfully: {session_id}")
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import cast, override
 
 from flext_core import (
     FlextEntity,
@@ -12,11 +13,15 @@ from flext_core import (
     FlextResult,
     get_logger,
 )
+from flext_core.typings import FlextTypes
 from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from flext_ldap.fields import LdapAttributeProcessor
-from flext_ldap.typings import LdapAttributeValue, LdapSearchResult
+from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue, LdapSearchResult
 from flext_ldap.value_objects import FlextLdapDistinguishedName
+
+# Type alias for explicit pyright recognition
+DictEntry = dict[str, object]
 
 logger = get_logger(__name__)
 
@@ -72,7 +77,7 @@ class FlextLdapSearchResponse(FlextModel):
     """Response model for LDAP searches."""
 
     entries: list[LdapSearchResult] = Field(
-        default_factory=list,
+        default_factory=lambda: cast("list[LdapSearchResult]", []),
         description="Search result entries",
     )
     total_count: int = Field(default=0, description="Total number of entries found")
@@ -98,7 +103,7 @@ class FlextLdapEntry(FlextEntity):
         default_factory=list,
         description="LDAP object classes",
     )
-    attributes: FlextTypes.Core.Dict = Field(
+    attributes: LdapAttributeDict = Field(
         default_factory=dict,
         description="LDAP attributes as name-value pairs",
     )
@@ -118,6 +123,7 @@ class FlextLdapEntry(FlextEntity):
             msg = f"Invalid DN format: {e}"
             raise ValueError(msg) from e
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate entry business rules."""
         if not self.object_classes:
@@ -130,19 +136,20 @@ class FlextLdapEntry(FlextEntity):
 
     @field_validator("attributes", mode="before")
     @classmethod
-    def _coerce_attributes(cls, v: object) -> FlextTypes.Core.Dict | object:
+    def _coerce_attributes(cls, v: object) -> LdapAttributeDict | object:
         """Normalize mapping using LdapAttributeProcessor."""
         if v is None:
             return {}
         if isinstance(v, dict):
-            return LdapAttributeProcessor.normalize_attributes(v)
+            typed_dict: FlextTypes.Core.Dict = cast("FlextTypes.Core.Dict", v)
+            return LdapAttributeProcessor.normalize_attributes(typed_dict)
         return v
 
     def add_object_class(self, object_class: str) -> FlextResult[None]:
         """Add object class to entry."""
         if object_class in self.object_classes:
             return FlextResult[None].fail(
-                f"Object class '{object_class}' already exists"
+                f"Object class '{object_class}' already exists",
             )
 
         self.object_classes.append(object_class)
@@ -154,7 +161,8 @@ class FlextLdapEntry(FlextEntity):
         if raw is None:
             return []
         if isinstance(raw, list):
-            return [str(x) for x in raw]
+            typed_list: list[object] = cast("list[object]", raw)
+            return [str(x) for x in typed_list]
         return [str(raw)]
 
     def get_single_attribute_value(self, name: str) -> str | None:
@@ -203,6 +211,7 @@ class FlextLdapUser(FlextLdapEntry):
             self.object_classes.append("person")
         return self
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate user-specific business rules."""
         # Call parent validation first
@@ -250,8 +259,11 @@ class FlextLdapGroup(FlextLdapEntry):
         """Ensure group has required object classes."""
         if "groupOfNames" not in self.object_classes:
             self.object_classes.append("groupOfNames")
+        # Sync members to LDAP attributes
+        self._sync_members_to_attributes()
         return self
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate group-specific business rules."""
         # Call parent validation first
@@ -269,6 +281,29 @@ class FlextLdapGroup(FlextLdapEntry):
 
         return FlextResult[None].ok(None)
 
+    def _sync_members_to_attributes(self) -> None:
+        """Sync group members and CN to LDAP attributes.
+
+        The groupOfNames objectClass requires at least one 'member' attribute.
+        This method ensures that the members list and CN are properly reflected in the attributes.
+        """
+        # Sync CN to attributes for proper LDAP storage/retrieval
+        if self.cn:
+            self.attributes["cn"] = [self.cn]
+
+        # Sync description if present
+        if self.description:
+            self.attributes["description"] = [self.description]
+
+        # Sync members
+        if self.members:
+            # Use existing members
+            self.attributes["member"] = self.members.copy()
+        else:
+            # groupOfNames requires at least one member, use a placeholder
+            # This is a common LDAP pattern for empty groups
+            self.attributes["member"] = [f"cn=placeholder,{self.dn}"]
+
     def add_member(self, member_dn: str) -> FlextResult[None]:
         """Add member to group."""
         if member_dn in self.members:
@@ -278,6 +313,8 @@ class FlextLdapGroup(FlextLdapEntry):
             # Validate DN format
             FlextLdapDistinguishedName(value=member_dn)
             self.members.append(member_dn)
+            # Sync changes to LDAP attributes
+            self._sync_members_to_attributes()
             return FlextResult[None].ok(None)
         except ValueError as e:
             return FlextResult[None].fail(f"Invalid member DN: {e}")
@@ -288,6 +325,8 @@ class FlextLdapGroup(FlextLdapEntry):
             return FlextResult[None].fail(f"Member '{member_dn}' not in group")
 
         self.members.remove(member_dn)
+        # Sync changes to LDAP attributes
+        self._sync_members_to_attributes()
         return FlextResult[None].ok(None)
 
     def has_member(self, member_dn: str) -> bool:
@@ -334,7 +373,7 @@ class FlextLdapCreateUserRequest(FlextModel):
                 "uid": self.uid,
                 "cn": self.cn,
                 "sn": self.sn,
-            }
+            },
         )
 
         if self.given_name:
@@ -346,7 +385,7 @@ class FlextLdapCreateUserRequest(FlextModel):
 
         return FlextLdapUser(
             id=FlextEntityId(
-                f"user_req_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"
+                f"user_req_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}",
             ),
             dn=self.dn,
             uid=self.uid,

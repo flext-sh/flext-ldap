@@ -47,9 +47,14 @@ async def main() -> None:
         search_result = await client.search(request=search_request)
 
         if search_result.is_success:
-            response = search_result.value
+            # Use proper type for FlextResult unwrapping
+            from flext_ldap.entities import FlextLdapSearchResponse
+            empty_response = FlextLdapSearchResponse(entries=[], total_count=0)
+            response = search_result.unwrap_or(empty_response)
             for entry in response.entries[:3]:  # Show first 3
-                print(f"Entry: {entry.get('dn', 'N/A')}")
+                dn_value = entry.get("dn", "N/A")
+                dn_str = dn_value.decode() if isinstance(dn_value, bytes) else str(dn_value)
+                print(f"Entry: {dn_str}")
 
         # Note: No disconnect method - connection managed automatically
         print("✅ Search completed")

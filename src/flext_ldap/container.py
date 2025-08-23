@@ -60,7 +60,7 @@ class FlextLdapContainer(FlextContainer):
         validation_result = settings.validate_business_rules()
         if not validation_result.is_success:
             return FlextResult[None].fail(
-                f"Settings validation failed: {validation_result.error}"
+                f"Settings validation failed: {validation_result.error}",
             )
 
         self._settings = settings
@@ -115,7 +115,7 @@ class FlextLdapContainer(FlextContainer):
             # Return default settings if none configured
             self._settings = FlextLdapSettings()
             logger.warning(
-                "Using default settings - consider configuring container explicitly"
+                "Using default settings - consider configuring container explicitly",
             )
 
         return self._settings
@@ -135,12 +135,12 @@ class FlextLdapContainer(FlextContainer):
         return FlextResult[None].ok(None)
 
     def register_repository(
-        self, repository: IFlextLdapRepository
+        self, repository: IFlextLdapRepository,
     ) -> FlextResult[None]:
         """Register custom repository implementation."""
         if not isinstance(repository, FlextLdapRepository):
             return FlextResult[None].fail(
-                "Repository must be instance of FlextLdapRepository"
+                "Repository must be instance of FlextLdapRepository",
             )
 
         self._repository_instance = repository
@@ -197,7 +197,7 @@ def configure_ldap_container(settings: FlextLdapSettings) -> FlextResult[None]:
 
 def reset_ldap_container() -> None:
     """Reset global LDAP container (useful for testing)."""
-    global _ldap_container  # noqa: PLW0602,PLW0603
+    global _ldap_container  # noqa: PLW0603
     if _ldap_container:
         _ldap_container.reset()
         _ldap_container = None

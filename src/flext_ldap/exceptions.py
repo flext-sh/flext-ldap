@@ -12,9 +12,10 @@ Key Features:
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import ClassVar, override
 
-from flext_core import FlextError, get_logger
+from flext_core import get_logger
+from flext_core.exceptions import FlextError
 
 from flext_ldap.constants import FlextLdapOperationMessages
 
@@ -48,7 +49,7 @@ class FlextLdapError(FlextError):
             error_code: Error code for categorization
 
         """
-        super().__init__(message, error_code=error_code)
+        super().__init__(message, error_code=error_code or "LDAP_ERROR")
         self.ldap_result_code = ldap_result_code
         self.ldap_context = ldap_context or {}
         self.operation = operation
@@ -61,6 +62,7 @@ class FlextLdapError(FlextError):
             },
         )
 
+    @override
     def __str__(self) -> str:
         """Format exception string including LDAP context metadata."""
         parts = [super().__str__()]
@@ -68,21 +70,21 @@ class FlextLdapError(FlextError):
         if self.operation:
             parts.append(
                 FlextLdapOperationMessages.OPERATION_CONTEXT.format(
-                    operation=self.operation
-                )
+                    operation=self.operation,
+                ),
             )
 
         if self.ldap_result_code:
             parts.append(
                 FlextLdapOperationMessages.LDAP_CODE_CONTEXT.format(
-                    code=self.ldap_result_code
-                )
+                    code=self.ldap_result_code,
+                ),
             )
 
         if self.ldap_context:
             context_str = ", ".join(f"{k}={v}" for k, v in self.ldap_context.items())
             parts.append(
-                FlextLdapOperationMessages.CONTEXT_INFO.format(context=context_str)
+                FlextLdapOperationMessages.CONTEXT_INFO.format(context=context_str),
             )
 
         return " | ".join(parts)
@@ -561,7 +563,7 @@ class FlextLdapExceptionFactory:
         message = f"User creation failed: {error}"
         if ldap_result_code:
             code_desc = cls.LDAP_RESULT_CODES.get(
-                str(ldap_result_code), str(ldap_result_code)
+                str(ldap_result_code), str(ldap_result_code),
             )
             message = f"{message} (code: {code_desc})"
         return FlextLdapUserError(

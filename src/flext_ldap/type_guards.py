@@ -26,7 +26,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeGuard
+from typing import TypeGuard, cast
 
 from flext_ldap.typings import (
     TLdapAttributes,
@@ -39,6 +39,8 @@ from flext_ldap.typings import (
 # LDAP DATA TYPE GUARDS - Union Type Resolution
 # =============================================================================
 
+# Constants for DN validation
+MIN_DN_PARTS: int = 2
 
 def is_ldap_dn(value: object) -> TypeGuard[str]:
     """Type guard for LDAP Distinguished Name.
@@ -50,7 +52,23 @@ def is_ldap_dn(value: object) -> TypeGuard[str]:
       True if value is a valid LDAP DN string
 
     """
-    return isinstance(value, str) and len(value) > 0 and "=" in value
+    if not isinstance(value, str) or len(value) == 0:
+        return False
+
+    # Must contain '=' and have both attribute name and value
+    if "=" not in value:
+        return False
+
+    # Check for basic DN format: attr=value
+    parts = value.split("=")
+    if len(parts) < MIN_DN_PARTS:
+        return False
+
+    # Must have non-empty attribute name and value
+    attr_name = parts[0].strip()
+    attr_value = "=".join(parts[1:]).strip()
+
+    return len(attr_name) > 0 and len(attr_value) > 0
 
 
 def is_ldap_attribute_value(value: object) -> TypeGuard[TLdapAttributeValue]:
@@ -66,7 +84,8 @@ def is_ldap_attribute_value(value: object) -> TypeGuard[TLdapAttributeValue]:
     if isinstance(value, (str, bytes)):
         return True
     if isinstance(value, list):
-        return all(isinstance(item, (str, bytes)) for item in value)
+        typed_list: list[object] = cast("list[object]", value)
+        return all(isinstance(item, (str, bytes)) for item in typed_list)
     return False
 
 
@@ -83,7 +102,8 @@ def is_ldap_attributes_dict(value: object) -> TypeGuard[TLdapAttributes]:
     if not isinstance(value, dict):
         return False
 
-    for key, val in value.items():
+    typed_dict: dict[object, object] = cast("dict[object, object]", value)
+    for key, val in typed_dict.items():
         if not isinstance(key, str):
             return False
         if not is_ldap_attribute_value(val):
@@ -105,12 +125,14 @@ def is_ldap_search_result(value: object) -> TypeGuard[TLdapSearchResult]:
     if not isinstance(value, list):
         return False
 
-    for item in value:
+    typed_list: list[object] = cast("list[object]", value)
+    for item in typed_list:
         if not isinstance(item, dict):
             return False
         if "dn" not in item:
             return False
-        if not is_ldap_dn(item["dn"]):
+        typed_item: dict[str, object] = cast("dict[str, object]", item)
+        if not is_ldap_dn(typed_item["dn"]):
             return False
 
     return True
@@ -130,17 +152,21 @@ def is_ldap_entry_data(value: object) -> TypeGuard[TLdapEntryData]:
         return False
 
     # Must have dn
-    if "dn" not in value or not is_ldap_dn(value["dn"]):
+    typed_dict: dict[str, object] = cast("dict[str, object]", value)
+    if "dn" not in typed_dict or not is_ldap_dn(typed_dict["dn"]):
         return False
 
     # Check other attributes
-    for key, val in value.items():
+    for key, val in typed_dict.items():
         if key == "dn":
             continue
-        if not isinstance(key, str):
-            return False
-        # Entry data can contain various types
-        if not isinstance(val, (str, bytes, list, int, bool)):
+        # key is already str from dict[str, object] annotation
+        # Entry data can contain various types including nested dicts (like "attributes")
+        if key == "attributes":
+            # Special handling for nested attributes dict
+            if not is_ldap_attributes_dict(val):
+                return False
+        elif not isinstance(val, (str, bytes, list, int, bool, dict)):
             return False
 
     return True
@@ -183,7 +209,10 @@ def is_string_list(value: object) -> TypeGuard[list[str]]:
       True if value is a list of strings
 
     """
-    return isinstance(value, list) and all(isinstance(item, str) for item in value)
+    if not isinstance(value, list):
+        return False
+    typed_list: list[object] = cast("list[object]", value)
+    return all(isinstance(item, str) for item in typed_list)
 
 
 def is_bytes_list(value: object) -> TypeGuard[list[bytes]]:
@@ -196,7 +225,10 @@ def is_bytes_list(value: object) -> TypeGuard[list[bytes]]:
       True if value is a list of bytes
 
     """
-    return isinstance(value, list) and all(isinstance(item, bytes) for item in value)
+    if not isinstance(value, list):
+        return False
+    typed_list: list[object] = cast("list[object]", value)
+    return all(isinstance(item, bytes) for item in typed_list)
 
 
 # =============================================================================
