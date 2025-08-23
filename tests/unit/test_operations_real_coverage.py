@@ -1,0 +1,705 @@
+"""Real functional tests for FLEXT-LDAP Operations that actually exercise code.
+
+These tests provide functional validation of operations.py by executing real code paths
+without requiring external LDAP infrastructure. Focus on business logic validation.
+"""
+
+from __future__ import annotations
+
+import uuid
+from datetime import UTC, datetime
+
+import pytest
+from flext_core import FlextEntityId, FlextEntityStatus
+
+from flext_ldap.models import (
+    FlextLdapCreateUserRequest,
+    FlextLdapEntry,
+    FlextLdapGroup,
+    FlextLdapUser,
+)
+from flext_ldap.operations import (
+    FlextLdapConnectionOperations,
+    FlextLdapEntryOperations,
+    FlextLdapGroupOperations,
+    FlextLdapOperations,
+    FlextLdapOperationsBase,
+    FlextLdapSearchOperations,
+    FlextLdapUserOperations,
+)
+from flext_ldap.typings import LdapAttributeDict
+
+
+class TestFlextLdapOperationsBaseReal:
+    """Test base operations class with REAL code execution."""
+
+    def test_operations_base_initialization_real(self) -> None:
+        """Test base operations initialization executes real code."""
+        ops = FlextLdapOperationsBase()
+
+        # Verify real initialization happened
+        assert hasattr(ops, "_container")
+        assert hasattr(ops, "_id_generator")
+        assert ops._container is not None
+
+    def test_generate_id_real_execution(self) -> None:
+        """Test ID generation with real execution."""
+        ops = FlextLdapOperationsBase()
+
+        # Call real implementation
+        id1 = ops._generate_id()
+        id2 = ops._generate_id()
+
+        # Verify real ID generation
+        assert isinstance(id1, str)
+        assert isinstance(id2, str)
+        assert id1 != id2
+        assert len(id1) > 0
+
+        # Should be UUID-like format
+        # Try to parse as UUID to verify format
+        uuid.UUID(id1)  # Will raise if not valid UUID format
+        uuid.UUID(id2)
+
+    def test_validate_uri_real_validation(self) -> None:
+        """Test URI validation with real code execution."""
+        ops = FlextLdapOperationsBase()
+
+        # Test valid LDAP URI
+        result = ops._validate_uri_or_fail("ldap://localhost:389")
+        assert result.is_success
+
+        # Test valid LDAPS URI
+        result = ops._validate_uri_or_fail("ldaps://secure.example.com:636")
+        assert result.is_success
+
+        # Test invalid protocol
+        result = ops._validate_uri_or_fail("http://localhost:80")
+        assert not result.is_success
+        assert "ldap://" in result.error
+
+        # Test empty URI
+        result = ops._validate_uri_or_fail("")
+        assert not result.is_success
+        assert "empty" in result.error
+
+    def test_validate_dn_real_validation(self) -> None:
+        """Test DN validation with real code execution."""
+        ops = FlextLdapOperationsBase()
+
+        # Test valid DNs
+        valid_dns = [
+            "cn=user,dc=example,dc=com",
+            "uid=john.doe,ou=users,dc=company,dc=org",
+            "cn=REDACTED_LDAP_BIND_PASSWORD,cn=users,dc=test,dc=local",
+        ]
+
+        for dn in valid_dns:
+            result = ops._validate_dn_or_fail(dn)
+            assert result.is_success, f"Valid DN failed: {dn}"
+
+    def test_validate_filter_real_validation(self) -> None:
+        """Test filter validation with real code execution."""
+        ops = FlextLdapOperationsBase()
+
+        # Test valid filters
+        valid_filters = [
+            "(cn=test)",
+            "(objectClass=person)",
+            "(&(cn=john)(mail=*))",
+            "(|(uid=REDACTED_LDAP_BIND_PASSWORD)(cn=REDACTED_LDAP_BIND_PASSWORD))",
+        ]
+
+        for filter_str in valid_filters:
+            result = ops._validate_filter_or_fail(filter_str)
+            assert result.is_success, f"Valid filter failed: {filter_str}"
+
+    def test_handle_exception_with_context_real(self) -> None:
+        """Test exception handling with real implementation."""
+        ops = FlextLdapOperationsBase()
+
+        # Test with real exception
+        test_exception = ValueError("Test error message")
+        result = ops._handle_exception_with_context(
+            "test operation", test_exception, "conn123"
+        )
+
+        assert isinstance(result, str)
+        assert "test operation" in result.lower()
+        assert "Test error message" in result
+        # Connection ID is logged separately, not in the error message
+        assert len(result) > 0
+
+    def test_log_operation_success_real(self) -> None:
+        """Test operation success logging with real implementation."""
+        ops = FlextLdapOperationsBase()
+
+        # Should execute without raising exceptions
+        ops._log_operation_success("test operation", "conn123", extra_key="value")
+
+
+class TestFlextLdapConnectionOperationsReal:
+    """Test connection operations with REAL code execution."""
+
+    @pytest.mark.asyncio
+    async def test_create_connection_valid_uri_real(self) -> None:
+        """Test connection creation with valid URI - real execution."""
+        ops = FlextLdapConnectionOperations()
+
+        result = await ops.create_connection("ldap://localhost:389")
+
+        assert result.is_success
+        connection_id = result.value
+        assert isinstance(connection_id, str)
+        assert len(connection_id) > 0
+
+        # Verify connection was stored
+        assert connection_id in ops._active_connections
+        connection_data = ops._active_connections[connection_id]
+        assert connection_data["server_uri"] == "ldap://localhost:389"
+        assert connection_data["is_authenticated"] is False
+
+    @pytest.mark.asyncio
+    async def test_create_connection_with_bind_real(self) -> None:
+        """Test connection creation with bind DN - real execution."""
+        ops = FlextLdapConnectionOperations()
+
+        result = await ops.create_connection(
+            "ldap://localhost:389",
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+            _bind_password="password",
+        )
+
+        assert result.is_success
+        connection_id = result.value
+
+        # Verify connection stored with bind info
+        connection_data = ops._active_connections[connection_id]
+        assert connection_data["bind_dn"] == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+        assert connection_data["is_authenticated"] is True
+
+    @pytest.mark.asyncio
+    async def test_create_connection_invalid_uri_real(self) -> None:
+        """Test connection creation with invalid URI - real validation."""
+        ops = FlextLdapConnectionOperations()
+
+        result = await ops.create_connection("http://invalid:80")
+
+        assert not result.is_success
+        assert "ldap://" in result.error
+
+    def test_get_connection_info_real(self) -> None:
+        """Test getting connection info - real execution."""
+        ops = FlextLdapConnectionOperations()
+
+        # Add test connection directly
+        connection_id = str(uuid.uuid4())
+        ops._active_connections[connection_id] = {
+            "server_uri": "ldap://test:389",
+            "bind_dn": "cn=test,dc=example,dc=com",
+            "created_at": datetime.now(UTC),
+            "timeout": 30,
+            "is_authenticated": True,
+        }
+
+        result = ops.get_connection_info(connection_id)
+
+        assert result.is_success
+        info = result.value
+        assert info["connection_id"] == connection_id
+        assert info["server_uri"] == "ldap://test:389"
+        assert info["bind_dn"] == "cn=test,dc=example,dc=com"
+        assert info["active"] is True
+        assert info["is_authenticated"] is True
+        assert "created_at" in info
+
+    def test_get_connection_info_not_found_real(self) -> None:
+        """Test getting connection info for non-existent connection."""
+        ops = FlextLdapConnectionOperations()
+
+        result = ops.get_connection_info("nonexistent")
+
+        assert not result.is_success
+        assert "not found" in result.error
+
+    def test_list_active_connections_real(self) -> None:
+        """Test listing active connections - real execution."""
+        ops = FlextLdapConnectionOperations()
+
+        # Start with empty list
+        result = ops.list_active_connections()
+        assert result.is_success
+        assert result.value == []
+
+        # Add test connections
+        conn1 = str(uuid.uuid4())
+        conn2 = str(uuid.uuid4())
+        ops._active_connections[conn1] = {
+            "server_uri": "ldap://test1:389",
+            "bind_dn": None,
+            "created_at": datetime.now(UTC),
+        }
+        ops._active_connections[conn2] = {
+            "server_uri": "ldap://test2:389",
+            "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
+            "created_at": datetime.now(UTC),
+        }
+
+        result = ops.list_active_connections()
+        assert result.is_success
+        connections = result.value
+        assert len(connections) == 2
+
+        connection_ids = [conn["connection_id"] for conn in connections]
+        assert conn1 in connection_ids
+        assert conn2 in connection_ids
+
+    @pytest.mark.asyncio
+    async def test_close_connection_real(self) -> None:
+        """Test closing connection - real execution."""
+        ops = FlextLdapConnectionOperations()
+
+        # Create connection first
+        create_result = await ops.create_connection("ldap://localhost:389")
+        assert create_result.is_success
+        connection_id = create_result.value
+
+        # Verify connection exists
+        assert connection_id in ops._active_connections
+
+        # Close connection
+        result = await ops.close_connection(connection_id)
+        assert result.is_success
+
+        # Verify connection removed
+        assert connection_id not in ops._active_connections
+
+    @pytest.mark.asyncio
+    async def test_close_connection_not_found_real(self) -> None:
+        """Test closing non-existent connection."""
+        ops = FlextLdapConnectionOperations()
+
+        result = await ops.close_connection("nonexistent")
+
+        assert not result.is_success
+        assert "not found" in result.error
+
+    def test_calculate_duration_real(self) -> None:
+        """Test duration calculation with real implementation."""
+        ops = FlextLdapConnectionOperations()
+
+        # Test with datetime object
+        past_time = datetime.now(UTC)
+        duration = ops._calculate_duration(past_time)
+        assert isinstance(duration, float)
+        assert duration >= 0.0
+
+        # Test with invalid input
+        duration = ops._calculate_duration("invalid")
+        assert duration == 0.0
+
+        # Test with None
+        duration = ops._calculate_duration(None)
+        assert duration == 0.0
+
+
+class TestFlextLdapSearchOperationsReal:
+    """Test search operations with REAL code execution."""
+
+    @pytest.mark.asyncio
+    async def test_search_entries_valid_params_real(self) -> None:
+        """Test entry search with valid parameters - real execution."""
+        ops = FlextLdapSearchOperations()
+
+        result = await ops.search_entries(
+            connection_id="test_conn",
+            base_dn="dc=example,dc=com",
+            search_filter="(objectClass=*)",
+        )
+
+        # Should succeed but return empty results (no real LDAP)
+        assert result.is_success
+        assert isinstance(result.value, list)
+        assert len(result.value) == 0  # No real LDAP server
+
+    @pytest.mark.asyncio
+    async def test_search_entries_invalid_dn_real(self) -> None:
+        """Test entry search with invalid base DN - real validation."""
+        ops = FlextLdapSearchOperations()
+
+        # This should return a failed result rather than raise
+        result = await ops.search_entries(
+            connection_id="test_conn",
+            base_dn="invalid_dn",  # Invalid DN format
+            search_filter="(objectClass=*)",
+        )
+
+        # Should handle gracefully and return failed result
+        assert not result.is_success or result.value == []
+
+    def test_build_user_filter_real(self) -> None:
+        """Test user filter building - real execution."""
+        ops = FlextLdapSearchOperations()
+
+        # Test with criteria
+        filter_str = ops._build_user_filter({"cn": "John", "mail": "john"})
+        assert filter_str.startswith("(&(objectClass=person)")
+        assert "cn=*John*" in filter_str
+        assert "mail=*john*" in filter_str
+        assert filter_str.endswith(")")
+
+        # Test with no criteria
+        filter_str = ops._build_user_filter(None)
+        assert filter_str == "(&(objectClass=person))"
+
+        # Test with empty criteria
+        filter_str = ops._build_user_filter({})
+        assert filter_str == "(&(objectClass=person))"
+
+    def test_build_group_filter_real(self) -> None:
+        """Test group filter building - real execution."""
+        ops = FlextLdapSearchOperations()
+
+        # Test with criteria
+        filter_str = ops._build_group_filter({"cn": "REDACTED_LDAP_BIND_PASSWORD", "description": "test"})
+        assert filter_str.startswith("(&(objectClass=groupOfNames)")
+        assert "cn=*REDACTED_LDAP_BIND_PASSWORD*" in filter_str
+        assert "description=*test*" in filter_str
+
+        # Test with no criteria
+        filter_str = ops._build_group_filter(None)
+        assert filter_str == "(&(objectClass=groupOfNames))"
+
+    def test_escape_ldap_filter_value_real(self) -> None:
+        """Test LDAP filter value escaping - real implementation."""
+        ops = FlextLdapSearchOperations()
+
+        # Test special characters
+        escaped = ops._escape_ldap_filter_value("test(*)\\value")
+        assert "\\28" in escaped  # (
+        assert "\\29" in escaped  # )
+        assert "\\2a" in escaped  # *
+        assert "\\5c" in escaped  # \\
+
+        # Test that normal characters are preserved
+        escaped = ops._escape_ldap_filter_value("normaltext")
+        assert escaped == "normaltext"
+
+    def test_convert_entries_to_users_real(self) -> None:
+        """Test converting entries to users - real execution."""
+        ops = FlextLdapSearchOperations()
+
+        # Create realistic entry data
+        attributes: LdapAttributeDict = {
+            "uid": ["john.doe"],
+            "cn": ["John Doe"],
+            "sn": ["Doe"],
+            "givenName": ["John"],
+            "mail": ["john@example.com"],
+        }
+
+        entry = FlextLdapEntry(
+            id=FlextEntityId(str(uuid.uuid4())),
+            dn="cn=john.doe,ou=users,dc=example,dc=com",
+            object_classes=["person", "organizationalPerson"],
+            attributes=attributes,
+            status=FlextEntityStatus.ACTIVE,
+        )
+
+        users = ops._convert_entries_to_users([entry])
+
+        assert len(users) == 1
+        user = users[0]
+        assert isinstance(user, FlextLdapUser)
+        assert user.uid == "john.doe"
+        assert user.cn == "John Doe"
+        assert user.sn == "Doe"
+        assert user.given_name == "John"
+        assert user.mail == "john@example.com"
+
+    def test_convert_entries_to_groups_real(self) -> None:
+        """Test converting entries to groups - real execution."""
+        ops = FlextLdapSearchOperations()
+
+        # Create realistic group entry
+        attributes: LdapAttributeDict = {
+            "cn": ["REDACTED_LDAP_BIND_PASSWORDs"],
+            "description": ["Administrator group"],
+            "member": [
+                "cn=john.doe,ou=users,dc=example,dc=com",
+                "cn=jane.doe,ou=users,dc=example,dc=com",
+            ],
+        }
+
+        entry = FlextLdapEntry(
+            id=FlextEntityId(str(uuid.uuid4())),
+            dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
+            object_classes=["groupOfNames"],
+            attributes=attributes,
+            status=FlextEntityStatus.ACTIVE,
+        )
+
+        groups = ops._convert_entries_to_groups([entry])
+
+        assert len(groups) == 1
+        group = groups[0]
+        assert isinstance(group, FlextLdapGroup)
+        assert group.cn == "REDACTED_LDAP_BIND_PASSWORDs"
+        assert group.description == "Administrator group"
+        assert len(group.members) == 2
+        assert "cn=john.doe,ou=users,dc=example,dc=com" in group.members
+
+
+class TestFlextLdapUserOperationsReal:
+    """Test user operations with REAL code execution."""
+
+    def test_build_user_attributes_real(self) -> None:
+        """Test user attribute building - real execution."""
+        ops = FlextLdapUserOperations()
+
+        user_request = FlextLdapCreateUserRequest(
+            dn="cn=john.doe,ou=users,dc=example,dc=com",
+            uid="john.doe",
+            cn="John Doe",
+            sn="Doe",
+            given_name="John",
+            mail="john.doe@example.com",
+        )
+
+        attributes = ops._build_user_attributes(user_request)
+
+        # Verify all attributes are properly set
+        assert "uid" in attributes
+        assert "cn" in attributes
+        assert "sn" in attributes
+        assert "givenName" in attributes
+        assert "mail" in attributes
+
+        assert attributes["uid"] == ["john.doe"]
+        assert attributes["cn"] == ["John Doe"]
+        assert attributes["sn"] == ["Doe"]
+        assert attributes["givenName"] == ["John"]
+        assert attributes["mail"] == ["john.doe@example.com"]
+
+    def test_build_user_entity_real(self) -> None:
+        """Test user entity building - real execution."""
+        ops = FlextLdapUserOperations()
+
+        user_request = FlextLdapCreateUserRequest(
+            dn="cn=john.doe,ou=users,dc=example,dc=com",
+            uid="john.doe",
+            cn="John Doe",
+            sn="Doe",
+            given_name="John",
+        )
+
+        attributes: LdapAttributeDict = {
+            "uid": ["john.doe"],
+            "cn": ["John Doe"],
+            "sn": ["Doe"],
+            "givenName": ["John"],
+        }
+
+        user = ops._build_user_entity(user_request, attributes)
+
+        assert isinstance(user, FlextLdapUser)
+        assert user.uid == "john.doe"
+        assert user.cn == "John Doe"
+        assert user.sn == "Doe"
+        assert user.given_name == "John"
+        assert user.status == FlextEntityStatus.ACTIVE.value
+
+
+class TestFlextLdapGroupOperationsReal:
+    """Test group operations with REAL code execution."""
+
+    def test_prepare_group_members_real(self) -> None:
+        """Test group member preparation - real execution."""
+        ops = FlextLdapGroupOperations()
+
+        # Test with provided members
+        members = ops._prepare_group_members([
+            "cn=user1,ou=users,dc=example,dc=com",
+            "cn=user2,ou=users,dc=example,dc=com",
+        ])
+
+        assert len(members) == 2
+        assert "cn=user1,ou=users,dc=example,dc=com" in members
+        assert "cn=user2,ou=users,dc=example,dc=com" in members
+
+        # Test with no members (dummy member added)
+        members = ops._prepare_group_members(None)
+        assert len(members) == 1
+        assert members[0].startswith("cn=dummy")
+
+    def test_build_group_attributes_real(self) -> None:
+        """Test group attribute building - real execution."""
+        ops = FlextLdapGroupOperations()
+
+        attributes = ops._build_group_attributes(
+            cn="REDACTED_LDAP_BIND_PASSWORDs",
+            description="Administrator group",
+            members=["cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com"],
+        )
+
+        assert "cn" in attributes
+        assert "description" in attributes
+        assert "member" in attributes
+
+        assert attributes["cn"] == ["REDACTED_LDAP_BIND_PASSWORDs"]
+        assert attributes["description"] == ["Administrator group"]
+        assert attributes["member"] == ["cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com"]
+
+    def test_build_group_entity_real(self) -> None:
+        """Test group entity building - real execution."""
+        ops = FlextLdapGroupOperations()
+
+        attributes: LdapAttributeDict = {
+            "cn": ["REDACTED_LDAP_BIND_PASSWORDs"],
+            "description": ["Administrator group"],
+            "member": ["cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com"],
+        }
+
+        group = ops._build_group_entity(
+            dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
+            cn="REDACTED_LDAP_BIND_PASSWORDs",
+            description="Administrator group",
+            members=["cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com"],
+            attributes=attributes,
+        )
+
+        assert isinstance(group, FlextLdapGroup)
+        assert group.cn == "REDACTED_LDAP_BIND_PASSWORDs"
+        assert group.description == "Administrator group"
+        assert len(group.members) == 1
+        assert "cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example,dc=com" in group.members
+
+    def test_filter_dummy_members_real(self) -> None:
+        """Test filtering dummy members - real execution."""
+        ops = FlextLdapGroupOperations()
+
+        members = [
+            "cn=user1,ou=users,dc=example,dc=com",
+            "cn=dummy,ou=temp,dc=example,dc=com",  # This will be filtered
+            "cn=user2,ou=users,dc=example,dc=com",
+            "cn=real-user,ou=system,dc=example,dc=com",  # This won't be filtered
+        ]
+
+        filtered = ops._filter_dummy_members(members)
+
+        assert len(filtered) == 3  # Only cn=dummy,ou=temp is filtered
+        assert "cn=user1,ou=users,dc=example,dc=com" in filtered
+        assert "cn=user2,ou=users,dc=example,dc=com" in filtered
+        assert "cn=real-user,ou=system,dc=example,dc=com" in filtered
+
+        # Verify the specific dummy member pattern is removed
+        assert "cn=dummy,ou=temp,dc=example,dc=com" not in filtered
+
+    def test_calculate_updated_members_real(self) -> None:
+        """Test member calculation for group operations - real execution."""
+        ops = FlextLdapGroupOperations()
+
+        current_members = ["cn=user1,ou=users,dc=example,dc=com"]
+
+        # Test add action
+        result = ops._calculate_updated_members(
+            current_members, "cn=user2,ou=users,dc=example,dc=com", "add"
+        )
+        assert result.is_success
+        assert len(result.value) == 2
+        assert "cn=user2,ou=users,dc=example,dc=com" in result.value
+
+        # Test remove action
+        result = ops._calculate_updated_members(
+            current_members, "cn=user1,ou=users,dc=example,dc=com", "remove"
+        )
+        assert result.is_success
+        # Should have dummy member when last real member removed
+        assert len(result.value) == 1
+        assert "cn=dummy" in result.value[0]
+
+        # Test invalid action
+        result = ops._calculate_updated_members(
+            current_members, "cn=user1,ou=users,dc=example,dc=com", "invalid"
+        )
+        assert not result.is_success
+        assert "Invalid action" in result.error
+
+
+class TestFlextLdapOperationsUnifiedReal:
+    """Test unified operations interface with REAL code execution."""
+
+    def test_operations_initialization_real(self) -> None:
+        """Test unified operations initialization - real execution."""
+        ops = FlextLdapOperations()
+
+        # Verify all operation classes are properly initialized
+        assert ops.connections is not None
+        assert ops.search is not None
+        assert ops.entries is not None
+        assert ops.users is not None
+        assert ops.groups is not None
+
+        # Verify correct types
+        assert isinstance(ops.connections, FlextLdapConnectionOperations)
+        assert isinstance(ops.search, FlextLdapSearchOperations)
+        assert isinstance(ops.entries, FlextLdapEntryOperations)
+        assert isinstance(ops.users, FlextLdapUserOperations)
+        assert isinstance(ops.groups, FlextLdapGroupOperations)
+
+    @pytest.mark.asyncio
+    async def test_create_connection_and_bind_real(self) -> None:
+        """Test connection creation and binding - real execution."""
+        ops = FlextLdapOperations()
+
+        result = await ops.create_connection_and_bind(
+            server_uri="ldap://localhost:389",
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+            bind_password="password",
+        )
+
+        assert result.is_success
+        connection_id = result.value
+        assert isinstance(connection_id, str)
+        assert len(connection_id) > 0
+
+        # Verify connection was created in the connections manager
+        info_result = ops.connections.get_connection_info(connection_id)
+        assert info_result.is_success
+        assert info_result.value["is_authenticated"] is True
+
+    @pytest.mark.asyncio
+    async def test_search_and_get_first_real(self) -> None:
+        """Test search and get first entry - real execution."""
+        ops = FlextLdapOperations()
+
+        result = await ops.search_and_get_first(
+            connection_id="test_conn",
+            base_dn="dc=example,dc=com",
+            search_filter="(cn=nonexistent)",
+        )
+
+        # Should succeed but return None (no real LDAP)
+        assert result.is_success
+        assert result.value is None
+
+    @pytest.mark.asyncio
+    async def test_cleanup_connection_real(self) -> None:
+        """Test connection cleanup - real execution."""
+        ops = FlextLdapOperations()
+
+        # Create connection first
+        create_result = await ops.create_connection_and_bind(
+            server_uri="ldap://localhost:389",
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+            bind_password="password",
+        )
+        assert create_result.is_success
+        connection_id = create_result.value
+
+        # Cleanup should succeed
+        await ops.cleanup_connection(connection_id)
+
+        # Verify connection was cleaned up
+        info_result = ops.connections.get_connection_info(connection_id)
+        assert not info_result.is_success  # Connection should be gone

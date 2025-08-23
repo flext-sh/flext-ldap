@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 import ldap3
 from flext_core import FlextResult, get_logger
+from ldap3 import BASE, LEVEL, SUBTREE
 from ldap3.core.exceptions import LDAPException
 
 from flext_ldap.entities import FlextLdapSearchRequest, FlextLdapSearchResponse
@@ -23,13 +24,13 @@ LdapScope = Literal["BASE", "LEVEL", "SUBTREE"]
 
 # Scope mapping - ldap3 constants
 SCOPE_MAP: dict[str, LdapScope] = {
-    "base": cast("LdapScope", ldap3.BASE),
-    "ldap3.BASE": cast("LdapScope", ldap3.BASE),
-    "one": cast("LdapScope", ldap3.LEVEL),
-    "onelevel": cast("LdapScope", ldap3.LEVEL),
-    "sub": cast("LdapScope", ldap3.SUBTREE),
-    "subtree": cast("LdapScope", ldap3.SUBTREE),
-    "subordinates": cast("LdapScope", ldap3.SUBTREE),
+    "base": cast("LdapScope", BASE),
+    "ldap3.BASE": cast("LdapScope", BASE),
+    "one": cast("LdapScope", LEVEL),
+    "onelevel": cast("LdapScope", LEVEL),
+    "sub": cast("LdapScope", SUBTREE),
+    "subtree": cast("LdapScope", SUBTREE),
+    "subordinates": cast("LdapScope", SUBTREE),
 }
 
 
