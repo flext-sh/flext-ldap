@@ -166,8 +166,8 @@ class FlextLdapRepository(IFlextLdapRepository):
         if not find_result.is_success:
             return FlextResult[bool].fail(find_result.error or "Find failed")
 
-        # Use success check directly for cleaner code
-        return FlextResult[bool].ok(find_result.is_success)
+        # Check if entry exists (find_result.value is not None)
+        return FlextResult[bool].ok(find_result.value is not None)
 
     @override
     async def update(self, dn: str, attributes: LdapAttributeDict) -> FlextResult[None]:
