@@ -41,7 +41,7 @@ logger = get_logger(__name__)
 # =============================================================================
 
 
-class FlextLdapCliCommandService(FlextCliCommandService):
+class FlextLdapCliCommandService(FlextCliCommandService[object]):
     """Command service for FLEXT LDAP CLI operations.
 
     Extends FlextCliCommandService to provide LDAP-specific
@@ -65,8 +65,8 @@ class FlextLdapCliCommandService(FlextCliCommandService):
         """Execute LDAP command with given arguments - sync wrapper for async operations.
 
         Args:
-            command_name: Command name to execute
-            context: Command execution context
+            command: Command name to execute
+            args: Command arguments dictionary
             **kwargs: Additional execution parameters
 
         Returns:
@@ -77,33 +77,32 @@ class FlextLdapCliCommandService(FlextCliCommandService):
         start_time = time.time()
         max_attempts = 2
 
-        logger.info(f"Executing command: {command_name}")
+        logger.info(f"Executing command: {command}")
 
-        args = context.command_args
         if not args:
             args = {}
 
         for attempt in range(max_attempts):
             try:
-                if command_name == "test":
+                if command == "test":
                     return asyncio.run(self._execute_test_command(args))
-                if command_name == "search":
+                if command == "search":
                     return asyncio.run(self._execute_search_command(args))
-                if command_name == "user_info":
+                if command == "user_info":
                     return asyncio.run(self._execute_user_info_command(args))
                 return FlextResult[object].fail(
-                    f"Unknown command: {command_name}",
+                    f"Unknown command: {command}",
                 )
             except Exception as e:
                 if attempt == max_attempts - 1:  # Last attempt
                     elapsed = time.time() - start_time
                     logger.exception(
-                        f"Command {command_name} failed after {elapsed:.3f}s"
+                        f"Command {command} failed after {elapsed:.3f}s"
                     )
                     return FlextResult[object].fail(str(e))
                 # Retry on next attempt
                 logger.warning(
-                    f"Command {command_name} attempt {attempt + 1} failed, retrying: {e}"
+                    f"Command {command} attempt {attempt + 1} failed, retrying: {e}"
                 )
                 time.sleep(0.1)  # Brief delay before retry
                 continue
@@ -576,7 +575,7 @@ def test(
             command_name="test",
             command_args=args,
         )
-        result = command_service.execute_command("test", context)
+        result = command_service.execute_command("test", context.command_args)
 
         elapsed = time.time() - start_time
         console.print(f"[dim]⏱  Execution time: {elapsed:.2f}s[/dim]")
@@ -667,7 +666,7 @@ def search(
             command_name="search",
             command_args=args,
         )
-        result = command_service.execute_command("search", context)
+        result = command_service.execute_command("search", context.command_args)
 
         elapsed = time.time() - start_time
         console.print(f"[dim]⏱  Execution time: {elapsed:.2f}s[/dim]")
@@ -725,7 +724,7 @@ def user_info(
             command_name="user_info",
             command_args=args,
         )
-        result = command_service.execute_command("user_info", context)
+        result = command_service.execute_command("user_info", context.command_args)
 
         elapsed = time.time() - start_time
         console.print(f"[dim]⏱  Execution time: {elapsed:.2f}s[/dim]")
