@@ -146,7 +146,9 @@ class OperationExecutor:
         self,
         operation_type: str,
         validation_func: Callable[[], str | None],
-        operation_func: Callable[[], Coroutine[object, object, FlextResult[list[FlextLdapEntry]]]],
+        operation_func: Callable[
+            [], Coroutine[object, object, FlextResult[list[FlextLdapEntry]]]
+        ],
     ) -> FlextResult[list[FlextLdapEntry]]:
         """Generic operation executor for operations returning entry lists."""
         try:
@@ -159,7 +161,9 @@ class OperationExecutor:
 
         except Exception:
             logger.exception(f"{operation_type.title()} operation failed")
-            return FlextResult[list[FlextLdapEntry]].fail(f"{operation_type.title()} operation failed")
+            return FlextResult[list[FlextLdapEntry]].fail(
+                f"{operation_type.title()} operation failed"
+            )
 
     async def execute_string_operation(
         self,
@@ -179,6 +183,8 @@ class OperationExecutor:
         except Exception:
             logger.exception(f"{operation_type.title()} operation failed")
             return FlextResult[str].fail(f"{operation_type.title()} operation failed")
+
+
 class FlextLdapConnectionService(ConnectionServiceInterface, OperationExecutor):
     """Professional connection service implementation."""
 
@@ -209,10 +215,13 @@ class FlextLdapConnectionService(ConnectionServiceInterface, OperationExecutor):
                 self._connection_id = None
                 return FlextResult[str].ok("Connection terminated successfully")
 
-            return FlextResult[str].fail(f"Disconnect failed: {disconnect_result.error}")
+            return FlextResult[str].fail(
+                f"Disconnect failed: {disconnect_result.error}"
+            )
         except Exception:
             logger.exception("Connection termination failed")
             return FlextResult[str].fail("Connection termination failed")
+
     @override
     def is_connected(self) -> bool:
         """Check if connection is active."""
@@ -320,7 +329,8 @@ class FlextLdapSearchService(SearchServiceInterface):
                 if search_response:
                     # Convert entries safely for processing
                     raw_entries = cast(
-                        "list[FlextTypes.Core.Dict]", search_response.entries,
+                        "list[FlextTypes.Core.Dict]",
+                        search_response.entries,
                     )
                     entries = self._convert_search_results_to_ldap_entries(raw_entries)
                     return FlextResult[list[FlextLdapEntry]].ok(entries)
@@ -371,7 +381,9 @@ class FlextLdapSearchService(SearchServiceInterface):
                 if isinstance(raw_entry, dict) and "dn" in raw_entry:
                     # Convert to LdapAttributeDict format using type-safe utility
                     raw_attrs = raw_entry.get("attributes", {})
-                    attributes_dict = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(raw_attrs)
+                    attributes_dict = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(
+                        raw_attrs
+                    )
 
                     entry = FlextLdapEntry(
                         id=FlextEntityId(str(raw_entry["dn"])),
@@ -381,7 +393,9 @@ class FlextLdapSearchService(SearchServiceInterface):
                     )
                     entries.append(entry)
             except Exception as e:
-                logger.warning(f"Failed to convert search result to FlextLdapEntry: {e}")
+                logger.warning(
+                    f"Failed to convert search result to FlextLdapEntry: {e}"
+                )
         return entries
 
     def _normalize_attributes(
@@ -390,14 +404,18 @@ class FlextLdapSearchService(SearchServiceInterface):
     ) -> dict[str, list[str]]:
         """Normalize attributes to consistent format."""
         # Use type-safe conversion utility to handle Unknown types
-        ldap_attrs = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(raw_attributes)
+        ldap_attrs = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(
+            raw_attributes
+        )
 
         # Convert to required format (all values as lists of strings)
         normalized: dict[str, list[str]] = {}
         for key, value in ldap_attrs.items():
             if isinstance(value, list):
                 # Use utility for consistent string conversion
-                normalized[key] = FlextLdapUtilities.safe_convert_list_to_strings(list(value))
+                normalized[key] = FlextLdapUtilities.safe_convert_list_to_strings(
+                    list(value)
+                )
             else:
                 # Single value converted to list using utility
                 str_value = FlextLdapUtilities.safe_convert_value_to_str(value)
@@ -513,7 +531,11 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
         """Perform the actual modify entry operation."""
         try:
             # Use type-safe utility to convert modifications to LdapAttributeDict
-            ldap_modifications = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(modifications)
+            ldap_modifications = (
+                FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(
+                    modifications
+                )
+            )
 
             modify_result = await self._ldap_client.modify(
                 dn=dn,
@@ -562,14 +584,18 @@ class FlextLdapDirectoryEntry:
         """Initialize directory entry."""
         self.dn = dn
         # Use type-safe utility to convert attributes
-        ldap_attrs = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(attributes)
+        ldap_attrs = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(
+            attributes
+        )
 
         # Convert to required format (all values as lists of strings)
         self.attributes: dict[str, list[str]] = {}
         for key, value in ldap_attrs.items():
             if isinstance(value, list):
                 # Use utility for consistent string conversion
-                self.attributes[key] = FlextLdapUtilities.safe_convert_list_to_strings(list(value))
+                self.attributes[key] = FlextLdapUtilities.safe_convert_list_to_strings(
+                    list(value)
+                )
             else:
                 # Single value converted to list using utility
                 str_value = FlextLdapUtilities.safe_convert_value_to_str(value)
@@ -701,7 +727,8 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             # Type-safe entry processing using FlextLdapUtilities
             entry_dn_value = FlextLdapUtilities.safe_entry_attribute_access(entry, "dn")
             entry_attrs_value = FlextLdapUtilities.safe_entry_attribute_access(
-                entry, "attributes",
+                entry,
+                "attributes",
             )
 
             if entry_dn_value and entry_attrs_value:
@@ -713,7 +740,9 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 if entry_dn and entry_attrs:
                     protocol_entry = FlextLdapDirectoryEntry(
                         dn=entry_dn,
-                        attributes=cast("object", self._normalize_entry_attributes(entry_attrs)),
+                        attributes=cast(
+                            "object", self._normalize_entry_attributes(entry_attrs)
+                        ),
                     )
                     protocol_entries.append(protocol_entry)
 
@@ -725,7 +754,9 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
     ) -> LdapAttributeDict:
         """Normalize entry attributes for protocol compatibility."""
         # Use type-safe utility to convert external dict
-        safe_attrs: LdapAttributeDict = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(attributes)
+        safe_attrs: LdapAttributeDict = (
+            FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(attributes)
+        )
 
         # Return normalized format with explicit typing
         normalized_attrs: LdapAttributeDict = {}

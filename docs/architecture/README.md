@@ -162,7 +162,7 @@ class FlextLdapUserValidator:
         if self._is_duplicate_uid(user.uid):
             return FlextResult[None].fail(f\"UID {user.uid} already exists\")
 
-        return FlextResult[None].ok(True)
+        return FlextResult[None].ok(data=True)
 ```
 
 ---

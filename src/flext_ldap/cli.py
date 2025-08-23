@@ -14,13 +14,19 @@ from typing import cast, override
 import click
 from flext_cli import (
     FlextCliCommandService,
+    FlextCliExecutionContext,
     FlextCliFormatterService,
+    FormatterFactory,
     create_cli_container,
     get_cli_config,
 )
-from flext_cli.formatters import FormatterFactory
-from flext_core import FlextContainer, FlextResult, get_flext_container, get_logger
-from flext_core.typings import FlextTypes
+from flext_core import (
+    FlextContainer,
+    FlextResult,
+    FlextTypes,
+    get_flext_container,
+    get_logger,
+)
 from rich.console import Console
 from rich.table import Table
 
@@ -35,30 +41,16 @@ logger = get_logger(__name__)
 # =============================================================================
 
 
-class FlextLdapCliCommandService(FlextCliCommandService[FlextTypes.Core.Dict]):
+class FlextLdapCliCommandService(FlextCliCommandService):
     """Command service for FLEXT LDAP CLI operations.
 
     Extends FlextCliCommandService to provide LDAP-specific
     command execution capabilities.
     """
 
-    def __init__(self, container: FlextContainer | None = None) -> None:
+    def __init__(self) -> None:
         """Initialize LDAP CLI command service."""
-        if container is None:
-            container = get_flext_container()
-            # Try to get CLI container, fallback to core container
-            try:
-                cli_container = create_cli_container()
-                if isinstance(cli_container, FlextContainer):
-                    container = cli_container
-            except Exception as e:
-                # Silent fallback to core container - CLI container unavailable
-                logger.debug(f"CLI container fallback: {e}")
-        super().__init__(
-            service_name="flext_ldap_cli",
-            container=container,
-            enable_logging=True,
-        )
+        super().__init__(service_name="flext-ldap-cli")
         self._api = get_ldap_api()
         self._config = get_cli_config()
 
@@ -68,13 +60,13 @@ class FlextLdapCliCommandService(FlextCliCommandService[FlextTypes.Core.Dict]):
         self,
         command: str,
         args: dict[str, object] | None = None,
-        **_kwargs: object,
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        **kwargs: object,
+    ) -> FlextResult[object]:
         """Execute LDAP command with given arguments - sync wrapper for async operations.
 
         Args:
-            command: Command name to execute
-            args: Command arguments
+            command_name: Command name to execute
+            context: Command execution context
             **kwargs: Additional execution parameters
 
         Returns:
@@ -85,45 +77,47 @@ class FlextLdapCliCommandService(FlextCliCommandService[FlextTypes.Core.Dict]):
         start_time = time.time()
         max_attempts = 2
 
-        if self.logger:
-            self.logger.info(f"Executing command: {command}")
+        logger.info(f"Executing command: {command_name}")
 
+        args = context.command_args
         if not args:
             args = {}
 
         for attempt in range(max_attempts):
             try:
-                if command == "test":
+                if command_name == "test":
                     return asyncio.run(self._execute_test_command(args))
-                if command == "search":
+                if command_name == "search":
                     return asyncio.run(self._execute_search_command(args))
-                if command == "user_info":
+                if command_name == "user_info":
                     return asyncio.run(self._execute_user_info_command(args))
-                return FlextResult[FlextTypes.Core.Dict].fail(
-                    f"Unknown command: {command}",
+                return FlextResult[object].fail(
+                    f"Unknown command: {command_name}",
                 )
             except Exception as e:
                 if attempt == max_attempts - 1:  # Last attempt
-                    if self.logger:
-                        elapsed = time.time() - start_time
-                        self.logger.exception(f"Command {command} failed after {elapsed:.3f}s")
-                    return FlextResult[FlextTypes.Core.Dict].fail(str(e))
+                    elapsed = time.time() - start_time
+                    logger.exception(
+                        f"Command {command_name} failed after {elapsed:.3f}s"
+                    )
+                    return FlextResult[object].fail(str(e))
                 # Retry on next attempt
-                if self.logger:
-                    self.logger.warning(f"Command {command} attempt {attempt + 1} failed, retrying: {e}")
+                logger.warning(
+                    f"Command {command_name} attempt {attempt + 1} failed, retrying: {e}"
+                )
                 time.sleep(0.1)  # Brief delay before retry
                 continue
 
         # Should never reach here due to max_attempts logic
-        return FlextResult[FlextTypes.Core.Dict].fail("Unexpected execution path")
+        return FlextResult[object].fail("Unexpected execution path")
 
     # Spinner functionality implemented inline for type safety
     async def _execute_test_command(
-        self, args: dict[str, object],
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        self,
+        args: dict[str, object],
+    ) -> FlextResult[object]:
         """Execute LDAP test command."""
-        if self.logger:
-            self.logger.info("Testing LDAP connection...")
+        logger.info("Testing LDAP connection...")
 
         server = str(args.get("server", ""))
         port_value = args.get("port", 389)
@@ -137,25 +131,27 @@ class FlextLdapCliCommandService(FlextCliCommandService[FlextTypes.Core.Dict]):
         bind_password_str = str(bind_password) if bind_password else ""
 
         try:
-            async with self._api.connection(server_uri, bind_dn_str, bind_password_str) as session:
+            async with self._api.connection(
+                server_uri, bind_dn_str, bind_password_str
+            ) as session:
                 if session:
-                    return FlextResult[FlextTypes.Core.Dict].ok({
+                    return FlextResult[object].ok({
                         "status": "success",
                         "message": f"Successfully connected to {server}:{port}",
                     })
-                return FlextResult[FlextTypes.Core.Dict].fail(
+                return FlextResult[object].fail(
                     "Connection failed",
                 )
         except Exception as e:
-            return FlextResult[FlextTypes.Core.Dict].fail(f"Connection error: {e}")
+            return FlextResult[object].fail(f"Connection error: {e}")
 
     # Spinner functionality implemented inline for type safety
     async def _execute_search_command(
-        self, args: dict[str, object],
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        self,
+        args: dict[str, object],
+    ) -> FlextResult[object]:
         """Execute LDAP search command."""
-        if self.logger:
-            self.logger.info("Searching LDAP directory...")
+        logger.info("Searching LDAP directory...")
 
         server = str(args.get("server", ""))
         port_value = args.get("port", 389)
@@ -173,7 +169,9 @@ class FlextLdapCliCommandService(FlextCliCommandService[FlextTypes.Core.Dict]):
         bind_password_str = str(bind_password) if bind_password else ""
 
         try:
-            async with self._api.connection(server_uri, bind_dn_str, bind_password_str) as connection:
+            async with self._api.connection(
+                server_uri, bind_dn_str, bind_password_str
+            ) as connection:
                 if connection:
                     result = await self._api.search(
                         base_dn=base_dn,
@@ -190,27 +188,27 @@ class FlextLdapCliCommandService(FlextCliCommandService[FlextTypes.Core.Dict]):
                             entry.to_dict() for entry in entries
                         ]
 
-                        return FlextResult[FlextTypes.Core.Dict].ok({
+                        return FlextResult[object].ok({
                             "status": "success",
                             "entries": entry_dicts,
                             "count": len(entry_dicts),
                         })
-                    return FlextResult[FlextTypes.Core.Dict].fail(
+                    return FlextResult[object].fail(
                         result.error or "Search failed",
                     )
-                return FlextResult[FlextTypes.Core.Dict].fail(
+                return FlextResult[object].fail(
                     "Connection failed",
                 )
         except Exception as e:
-            return FlextResult[FlextTypes.Core.Dict].fail(f"Search error: {e}")
+            return FlextResult[object].fail(f"Search error: {e}")
 
     # Spinner functionality implemented inline for type safety
     async def _execute_user_info_command(
-        self, args: dict[str, object],
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        self,
+        args: dict[str, object],
+    ) -> FlextResult[object]:
         """Execute user info command."""
-        if self.logger:
-            self.logger.info("Looking up user information...")
+        logger.info("Looking up user information...")
 
         uid = str(args.get("uid", ""))
         server = str(args.get("server", "localhost"))
@@ -220,7 +218,9 @@ class FlextLdapCliCommandService(FlextCliCommandService[FlextTypes.Core.Dict]):
         bind_password_str = ""  # nosec B105 - empty string default
 
         try:
-            async with self._api.connection(server_uri, bind_dn_str, bind_password_str) as connection:
+            async with self._api.connection(
+                server_uri, bind_dn_str, bind_password_str
+            ) as connection:
                 if connection:
                     result = await self._api.search(
                         base_dn="dc=example,dc=com",
@@ -234,31 +234,26 @@ class FlextLdapCliCommandService(FlextCliCommandService[FlextTypes.Core.Dict]):
                         entries = result.value
                         if entries and isinstance(entries, list) and entries:
                             entry = entries[0]
-                            user_dict = entry.to_dict() if hasattr(entry, "to_dict") else {"dn": str(entry)}
-                            return FlextResult[FlextTypes.Core.Dict].ok({
+                            user_dict = (
+                                entry.to_dict()
+                                if hasattr(entry, "to_dict")
+                                else {"dn": str(entry)}
+                            )
+                            return FlextResult[object].ok({
                                 "status": "success",
                                 "user": user_dict,
                             })
-                        return FlextResult[FlextTypes.Core.Dict].fail(
+                        return FlextResult[object].fail(
                             f"User {uid} not found",
                         )
-                    return FlextResult[FlextTypes.Core.Dict].fail(
+                    return FlextResult[object].fail(
                         "User search failed",
                     )
-                return FlextResult[FlextTypes.Core.Dict].fail(
+                return FlextResult[object].fail(
                     "Connection failed",
                 )
         except Exception as e:
-            return FlextResult[FlextTypes.Core.Dict].fail(f"User lookup error: {e}")
-
-    @override
-    def execute(self) -> FlextResult[FlextTypes.Core.Dict]:
-        """Execute the service operation.
-
-        Implements abstract method from FlextDomainService.
-        Default implementation returns empty dict - use execute_command for specific operations.
-        """
-        return FlextResult[FlextTypes.Core.Dict].ok({})
+            return FlextResult[object].fail(f"User lookup error: {e}")
 
 
 class FlextLdapCliFormatterService(FlextCliFormatterService):
@@ -307,7 +302,9 @@ class FlextLdapCliFormatterService(FlextCliFormatterService):
         """
         # Inline safe execution for type safety
         if self.logger:
-            self.logger.info(f"Formatting output as {format_type or self.default_format}")
+            self.logger.info(
+                f"Formatting output as {format_type or self.default_format}"
+            )
 
         if not format_type:
             format_type = self.default_format
@@ -395,7 +392,9 @@ def _display_test_result(result_data: FlextTypes.Core.Dict) -> None:
 def _display_search_results(result_data: FlextTypes.Core.Dict) -> None:
     """Display search command results."""
     console = Console()
-    entries: list[dict[str, object]] = cast("list[dict[str, object]]", result_data.get("entries", []))
+    entries: list[dict[str, object]] = cast(
+        "list[dict[str, object]]", result_data.get("entries", [])
+    )
     count = result_data.get("count", 0)
 
     console.print(f"[green]Found {count} entries[/green]")
@@ -573,15 +572,19 @@ def test(
 
         console.print(f"[blue]Testing connection to {server}:{port}[/blue]")
 
-        result = command_service.execute_command("test", args)
+        context = FlextCliExecutionContext(
+            command_name="test",
+            command_args=args,
+        )
+        result = command_service.execute_command("test", context)
 
         elapsed = time.time() - start_time
         console.print(f"[dim]⏱  Execution time: {elapsed:.2f}s[/dim]")
 
         if result.is_success:
             data = result.value
-            if data:
-                _display_test_result(data)
+            if data and isinstance(data, dict):
+                _display_test_result(cast("dict[str, object]", data))
         else:
             console.print(f"[red]Test failed: {result.error or 'Unknown error'}[/red]")
     except KeyboardInterrupt:
@@ -660,17 +663,23 @@ def search(
 
         console.print(f"[blue]Searching {base_dn} on {server}:{port}[/blue]")
 
-        result = command_service.execute_command("search", args)
+        context = FlextCliExecutionContext(
+            command_name="search",
+            command_args=args,
+        )
+        result = command_service.execute_command("search", context)
 
         elapsed = time.time() - start_time
         console.print(f"[dim]⏱  Execution time: {elapsed:.2f}s[/dim]")
 
         if result.is_success:
             data = result.value
-            if data:
-                _display_search_results(data)
+            if data and isinstance(data, dict):
+                _display_search_results(cast("dict[str, object]", data))
         else:
-            console.print(f"[red]Search failed: {result.error or 'Unknown error'}[/red]")
+            console.print(
+                f"[red]Search failed: {result.error or 'Unknown error'}[/red]"
+            )
     except KeyboardInterrupt:
         console = Console()
         console.print("\n[yellow]Operation cancelled by user[/yellow]")
@@ -712,17 +721,23 @@ def user_info(
 
         console.print(f"[blue]Looking up user: {uid}[/blue]")
 
-        result = command_service.execute_command("user_info", args)
+        context = FlextCliExecutionContext(
+            command_name="user_info",
+            command_args=args,
+        )
+        result = command_service.execute_command("user_info", context)
 
         elapsed = time.time() - start_time
         console.print(f"[dim]⏱  Execution time: {elapsed:.2f}s[/dim]")
 
         if result.is_success:
             data = result.value
-            if data:
-                _display_user_info(data)
+            if data and isinstance(data, dict):
+                _display_user_info(cast("dict[str, object]", data))
         else:
-            console.print(f"[red]User lookup failed: {result.error or 'Unknown error'}[/red]")
+            console.print(
+                f"[red]User lookup failed: {result.error or 'Unknown error'}[/red]"
+            )
     except KeyboardInterrupt:
         console = Console()
         console.print("\n[yellow]Operation cancelled by user[/yellow]")
