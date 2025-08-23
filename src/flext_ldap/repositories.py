@@ -84,7 +84,8 @@ class FlextLdapRepository(IFlextLdapRepository):
 
     @override
     async def search(
-        self, request: FlextLdapSearchRequest,
+        self,
+        request: FlextLdapSearchRequest,
     ) -> FlextResult[FlextLdapSearchResponse]:
         """Search entries with criteria."""
         search_result = await self._client.search(request)
@@ -203,7 +204,9 @@ class FlextLdapUserRepository:
         self._repo = base_repository
 
     async def find_user_by_uid(
-        self, uid: str, base_dn: str,
+        self,
+        uid: str,
+        base_dn: str,
     ) -> FlextResult[FlextLdapEntry | None]:
         """Find user by UID attribute."""
         search_request = FlextLdapSearchRequest(
@@ -237,7 +240,9 @@ class FlextLdapUserRepository:
         return await self._repo.find_by_dn(str(entry_dn))
 
     async def find_users_by_filter(
-        self, ldap_filter: str, base_dn: str,
+        self,
+        ldap_filter: str,
+        base_dn: str,
     ) -> FlextResult[list[FlextLdapEntry]]:
         """Find users by custom LDAP filter."""
         search_request = FlextLdapSearchRequest(
@@ -257,7 +262,9 @@ class FlextLdapUserRepository:
 
         entries: list[FlextLdapEntry] = []
         for entry_data in search_result.value.entries:
-            typed_entry_data_loop: dict[str, object] = cast("dict[str, object]", entry_data)
+            typed_entry_data_loop: dict[str, object] = cast(
+                "dict[str, object]", entry_data
+            )
             entry_dn = typed_entry_data_loop.get("dn")
             if not entry_dn:
                 continue
@@ -280,7 +287,9 @@ class FlextLdapGroupRepository:
         self._repo = base_repository
 
     async def find_group_by_cn(
-        self, cn: str, base_dn: str,
+        self,
+        cn: str,
+        base_dn: str,
     ) -> FlextResult[FlextLdapEntry | None]:
         """Find group by CN attribute."""
         search_request = FlextLdapSearchRequest(
@@ -330,7 +339,9 @@ class FlextLdapGroupRepository:
         return FlextResult[list[str]].ok(members)
 
     async def add_member_to_group(
-        self, group_dn: str, member_dn: str,
+        self,
+        group_dn: str,
+        member_dn: str,
     ) -> FlextResult[None]:
         """Add member to group."""
         # Get current members

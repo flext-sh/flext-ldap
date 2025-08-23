@@ -563,7 +563,8 @@ class FlextLdapExceptionFactory:
         message = f"User creation failed: {error}"
         if ldap_result_code:
             code_desc = cls.LDAP_RESULT_CODES.get(
-                str(ldap_result_code), str(ldap_result_code),
+                str(ldap_result_code),
+                str(ldap_result_code),
             )
             message = f"{message} (code: {code_desc})"
         return FlextLdapUserError(

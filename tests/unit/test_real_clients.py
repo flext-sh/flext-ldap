@@ -130,7 +130,7 @@ class TestRealClientConstants:
 
         assert len(SCOPE_MAP) >= len(expected_scopes)
 
-        for key, expected_value in expected_scopes.items():
+        for key in expected_scopes:
             assert key in SCOPE_MAP
             # Values should match or be compatible
             actual_value = SCOPE_MAP[key]
@@ -181,7 +181,7 @@ class TestRealClientIntegration:
         client = FlextLdapClient()
 
         # Should work with FlextLdapSearchRequest
-        search_request = FlextLdapSearchRequest(
+        FlextLdapSearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",

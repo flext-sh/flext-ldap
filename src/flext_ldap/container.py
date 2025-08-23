@@ -135,7 +135,8 @@ class FlextLdapContainer(FlextContainer):
         return FlextResult[None].ok(None)
 
     def register_repository(
-        self, repository: IFlextLdapRepository,
+        self,
+        repository: IFlextLdapRepository,
     ) -> FlextResult[None]:
         """Register custom repository implementation."""
         if not isinstance(repository, FlextLdapRepository):

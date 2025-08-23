@@ -34,8 +34,11 @@ class TestFlextLdapApiRealInstantiation:
 
     def test_api_instantiation_with_custom_config_real(self) -> None:
         """Test API instantiation with custom configuration - executes REAL initialization."""
-        from flext_ldap.configuration import FlextLdapConnectionConfig, FlextLdapSearchConfig
-        
+        from flext_ldap.configuration import (
+            FlextLdapConnectionConfig,
+            FlextLdapSearchConfig,
+        )
+
         custom_connection = FlextLdapConnectionConfig(
             server="custom.ldap.server",
             port=636,
@@ -184,7 +187,9 @@ class TestFlextLdapApiRealConnectionManagement:
         api._container.get_client = lambda: mock_client  # type: ignore
 
         # Execute REAL context manager logic
-        async with api.connection("ldap://test.server", "cn=REDACTED_LDAP_BIND_PASSWORD", "password") as session_id:
+        async with api.connection(
+            "ldap://test.server", "cn=REDACTED_LDAP_BIND_PASSWORD", "password"
+        ) as session_id:
             assert isinstance(session_id, str)
             assert session_id.startswith("session_")
 
@@ -250,6 +255,7 @@ class TestFlextLdapApiRealSearchOperations:
             captured_request = request
             # Return empty successful response
             from flext_ldap.entities import FlextLdapSearchResponse
+
             return FlextResult[FlextLdapSearchResponse].ok(
                 FlextLdapSearchResponse(entries=[], total_count=0, has_more=False)
             )
@@ -306,6 +312,7 @@ class TestFlextLdapApiRealSearchOperations:
         # Mock service to return search results
         async def mock_search_with_results(request):
             from flext_ldap.entities import FlextLdapSearchResponse
+
             # Simulate LDAP search results
             mock_entries = [
                 {
@@ -343,14 +350,20 @@ class TestFlextLdapApiRealSearchOperations:
         assert "person" in entry1.object_classes
         assert "inetOrgPerson" in entry1.object_classes
         # Status comparison: handle both string and enum
-        assert str(entry1.status) == str(FlextEntityStatus.ACTIVE) or entry1.status == FlextEntityStatus.ACTIVE.value
+        assert (
+            str(entry1.status) == str(FlextEntityStatus.ACTIVE)
+            or entry1.status == FlextEntityStatus.ACTIVE.value
+        )
 
         # Check second entry
         entry2 = entries[1]
         assert entry2.dn == "cn=anotheruser,ou=users,dc=example,dc=com"
         assert "person" in entry2.object_classes
         # Status comparison: handle both string and enum
-        assert str(entry2.status) == str(FlextEntityStatus.ACTIVE) or entry2.status == FlextEntityStatus.ACTIVE.value
+        assert (
+            str(entry2.status) == str(FlextEntityStatus.ACTIVE)
+            or entry2.status == FlextEntityStatus.ACTIVE.value
+        )
 
     @pytest.mark.asyncio
     async def test_search_handles_entries_without_dn_real(self) -> None:
@@ -360,6 +373,7 @@ class TestFlextLdapApiRealSearchOperations:
         # Mock service to return search results with missing DN
         async def mock_search_with_invalid_entry(request):
             from flext_ldap.entities import FlextLdapSearchResponse
+
             # Entry without DN should be filtered out
             mock_entries = [
                 {
@@ -406,6 +420,7 @@ class TestFlextLdapApiRealSearchOperations:
         # Mock service to return search results with single objectClass string
         async def mock_search_with_single_objectclass(request):
             from flext_ldap.entities import FlextLdapSearchResponse
+
             # Entry with single objectClass string (not list)
             mock_entries = [
                 {
@@ -447,6 +462,7 @@ class TestFlextLdapApiRealUserOperations:
 
         # Mock service response
         from flext_ldap.models import FlextLdapUser
+
         mock_user = FlextLdapUser(
             id=FlextEntityId("test-user"),
             dn="cn=testuser,ou=users,dc=example,dc=com",
@@ -490,6 +506,7 @@ class TestFlextLdapApiRealUserOperations:
 
         # Mock service response
         from flext_ldap.models import FlextLdapUser
+
         mock_user = FlextLdapUser(
             id=FlextEntityId("test-user"),
             dn="cn=testuser,ou=users,dc=example,dc=com",
@@ -536,7 +553,9 @@ class TestFlextLdapApiRealUserOperations:
 
         # Execute REAL update_user logic
         attributes = {"cn": ["Updated User"], "description": ["Updated description"]}
-        result = await api.update_user("cn=testuser,ou=users,dc=example,dc=com", attributes)
+        result = await api.update_user(
+            "cn=testuser,ou=users,dc=example,dc=com", attributes
+        )
 
         # Should succeed
         assert result.is_success
@@ -584,9 +603,7 @@ class TestFlextLdapApiRealUserOperations:
 
         # Execute REAL search_users logic
         result = await api.search_users(
-            "(objectClass=person)",
-            "ou=users,dc=example,dc=com",
-            "onelevel"
+            "(objectClass=person)", "ou=users,dc=example,dc=com", "onelevel"
         )
 
         # Should succeed
@@ -596,7 +613,7 @@ class TestFlextLdapApiRealUserOperations:
         assert captured_params == (
             "(objectClass=person)",
             "ou=users,dc=example,dc=com",
-            "onelevel"
+            "onelevel",
         )
 
 
@@ -635,7 +652,10 @@ class TestFlextLdapApiRealGroupOperations:
         assert created_group.description == "A test group"
         assert created_group.members == ["cn=user1,ou=users,dc=example,dc=com"]
         # Status comparison: handle both string and enum
-        assert str(created_group.status) == str(FlextEntityStatus.ACTIVE) or created_group.status == FlextEntityStatus.ACTIVE.value
+        assert (
+            str(created_group.status) == str(FlextEntityStatus.ACTIVE)
+            or created_group.status == FlextEntityStatus.ACTIVE.value
+        )
 
         # Should have passed group to service
         assert captured_group == created_group
@@ -699,13 +719,18 @@ class TestFlextLdapApiRealGroupOperations:
 
         # Execute REAL update_group logic
         attributes = {"description": ["Updated group description"]}
-        result = await api.update_group("cn=testgroup,ou=groups,dc=example,dc=com", attributes)
+        result = await api.update_group(
+            "cn=testgroup,ou=groups,dc=example,dc=com", attributes
+        )
 
         # Should succeed
         assert result.is_success
 
         # Should have passed parameters to service
-        assert captured_params == ("cn=testgroup,ou=groups,dc=example,dc=com", attributes)
+        assert captured_params == (
+            "cn=testgroup,ou=groups,dc=example,dc=com",
+            attributes,
+        )
 
     @pytest.mark.asyncio
     async def test_delete_group_delegates_to_service_real(self) -> None:
@@ -745,13 +770,19 @@ class TestFlextLdapApiRealGroupOperations:
         api._service.add_member = mock_add_member  # type: ignore
 
         # Execute REAL add_member logic
-        result = await api.add_member("cn=testgroup,ou=groups,dc=example,dc=com", "cn=user,ou=users,dc=example,dc=com")
+        result = await api.add_member(
+            "cn=testgroup,ou=groups,dc=example,dc=com",
+            "cn=user,ou=users,dc=example,dc=com",
+        )
 
         # Should succeed
         assert result.is_success
 
         # Should have passed parameters to service
-        assert captured_params == ("cn=testgroup,ou=groups,dc=example,dc=com", "cn=user,ou=users,dc=example,dc=com")
+        assert captured_params == (
+            "cn=testgroup,ou=groups,dc=example,dc=com",
+            "cn=user,ou=users,dc=example,dc=com",
+        )
 
     @pytest.mark.asyncio
     async def test_remove_member_delegates_to_service_real(self) -> None:
@@ -768,13 +799,19 @@ class TestFlextLdapApiRealGroupOperations:
         api._service.remove_member = mock_remove_member  # type: ignore
 
         # Execute REAL remove_member logic
-        result = await api.remove_member("cn=testgroup,ou=groups,dc=example,dc=com", "cn=user,ou=users,dc=example,dc=com")
+        result = await api.remove_member(
+            "cn=testgroup,ou=groups,dc=example,dc=com",
+            "cn=user,ou=users,dc=example,dc=com",
+        )
 
         # Should succeed
         assert result.is_success
 
         # Should have passed parameters to service
-        assert captured_params == ("cn=testgroup,ou=groups,dc=example,dc=com", "cn=user,ou=users,dc=example,dc=com")
+        assert captured_params == (
+            "cn=testgroup,ou=groups,dc=example,dc=com",
+            "cn=user,ou=users,dc=example,dc=com",
+        )
 
     @pytest.mark.asyncio
     async def test_get_members_delegates_to_service_real(self) -> None:
@@ -895,7 +932,7 @@ class TestFlextLdapApiRealFactoryFunctions:
     def test_get_ldap_api_with_custom_config_real(self) -> None:
         """Test get_ldap_api with custom config - executes REAL factory logic with configuration."""
         from flext_ldap.configuration import FlextLdapConnectionConfig
-        
+
         custom_connection = FlextLdapConnectionConfig(
             server="factory.ldap.server",
             port=389,
@@ -927,7 +964,7 @@ class TestFlextLdapApiRealFactoryFunctions:
     def test_create_ldap_api_with_custom_config_real(self) -> None:
         """Test create_ldap_api with custom config - executes REAL factory logic with configuration."""
         from flext_ldap.configuration import FlextLdapConnectionConfig
-        
+
         custom_connection = FlextLdapConnectionConfig(
             server="create.ldap.server",
             port=636,

@@ -3,7 +3,7 @@
 
 This example demonstrates COMPLETE LDAP functionality using flext-ldap:
 - CREATE users and groups with FlextLdapApi
-- READ/SEARCH operations 
+- READ/SEARCH operations
 - UPDATE user attributes
 - DELETE operations
 
@@ -11,6 +11,7 @@ Uses current flext-ldap API without legacy patterns or direct ldap3 usage.
 """
 
 import asyncio
+import sys
 from typing import Final, cast
 
 from flext_core import FlextResult, get_logger
@@ -35,7 +36,7 @@ ADMIN_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD"
 async def create_sample_users(api: FlextLdapApi) -> None:
     """Create sample users using FlextLdapApi."""
     logger.info("Creating sample users...")
-    
+
     users_to_create = [
         {
             "dn": f"cn=john.doe,{USERS_DN}",
@@ -48,13 +49,13 @@ async def create_sample_users(api: FlextLdapApi) -> None:
         {
             "dn": f"cn=jane.smith,{USERS_DN}",
             "uid": "jane.smith",
-            "cn": "Jane Smith", 
+            "cn": "Jane Smith",
             "sn": "Smith",
             "given_name": "Jane",
             "mail": "jane.smith@example.com",
         },
     ]
-    
+
     for user_data in users_to_create:
         request = FlextLdapCreateUserRequest(
             dn=user_data["dn"],
@@ -65,37 +66,41 @@ async def create_sample_users(api: FlextLdapApi) -> None:
             mail=user_data.get("mail"),
             phone=user_data.get("phone"),
         )
-        create_result: FlextResult[object] = cast("FlextResult[object]", await api.create_user(request))
-        
+        create_result: FlextResult[object] = cast(
+            "FlextResult[object]", await api.create_user(request)
+        )
+
         if create_result.is_success:
             logger.info(f"✅ Created user: {user_data['cn']}")
         else:
-            logger.error(f"❌ Failed to create user {user_data['cn']}: {create_result.error}")
+            logger.error(
+                f"❌ Failed to create user {user_data['cn']}: {create_result.error}"
+            )
 
 
 async def search_users(api: FlextLdapApi) -> None:
     """Search for users using FlextLdapApi."""
     logger.info("Searching for users...")
-    
+
     result = await api.search(
         USERS_DN,
         "(objectClass=inetOrgPerson)",
         attributes=["cn", "mail", "uid"],
         size_limit=1000,
-        time_limit=30
+        time_limit=30,
     )
     typed_result: FlextResult[object] = cast("FlextResult[object]", result)
-    
+
     if typed_result.is_success:
         users = typed_result.value or []
         typed_users: list[object] = cast("list[object]", users)
         logger.info(f"✅ Found {len(typed_users)} users:")
-        
+
         for user in typed_users:
             # Type-safe access to user data from LDAP entry
             if hasattr(user, "get_single_attribute_value"):
-                cn = getattr(user, "get_single_attribute_value")("cn") or "Unknown"
-                mail = getattr(user, "get_single_attribute_value")("mail") or "No email"
+                cn = user.get_single_attribute_value("cn") or "Unknown"
+                mail = user.get_single_attribute_value("mail") or "No email"
                 logger.info(f"  - {cn} ({mail})")
             else:
                 logger.info(f"  - {user}")  # Fallback
@@ -106,13 +111,13 @@ async def search_users(api: FlextLdapApi) -> None:
 async def update_user(api: FlextLdapApi, user_dn: str, new_mail: str) -> None:
     """Update user attributes using FlextLdapApi."""
     logger.info(f"Updating user {user_dn}...")
-    
+
     async with api.connection(LDAP_URI, ADMIN_DN, ADMIN_PASSWORD) as session:
         modify_method = getattr(api, "modify_entry", None)
         if modify_method:
             result = await modify_method(session, user_dn, {"mail": [new_mail]})
             typed_result: FlextResult[object] = cast("FlextResult[object]", result)
-            
+
             if typed_result.is_success:
                 logger.info(f"✅ Updated user email to: {new_mail}")
             else:
@@ -124,13 +129,13 @@ async def update_user(api: FlextLdapApi, user_dn: str, new_mail: str) -> None:
 async def delete_user(api: FlextLdapApi, user_dn: str) -> None:
     """Delete user using FlextLdapApi."""
     logger.info(f"Deleting user {user_dn}...")
-    
+
     async with api.connection(LDAP_URI, ADMIN_DN, ADMIN_PASSWORD) as session:
-        delete_method = getattr(api, "delete_entry", None) 
+        delete_method = getattr(api, "delete_entry", None)
         if delete_method:
             result = await delete_method(session, user_dn)
             typed_result: FlextResult[object] = cast("FlextResult[object]", result)
-            
+
             if typed_result.is_success:
                 logger.info("✅ User deleted successfully")
             else:
@@ -142,34 +147,34 @@ async def delete_user(api: FlextLdapApi, user_dn: str) -> None:
 async def demonstrate_crud_operations() -> None:
     """Demonstrate complete CRUD operations."""
     logger.info("🚀 Starting LDAP CRUD operations demo...")
-    
+
     # Get FlextLdapApi instance
     api = get_ldap_api()
-    
+
     try:
         # CREATE: Add sample users
         await create_sample_users(api)
-        
+
         # READ: Search for users
         await search_users(api)
-        
+
         # UPDATE: Modify a user
         john_dn = f"cn=john.doe,{USERS_DN}"
         await update_user(api, john_dn, "john.doe.updated@example.com")
-        
+
         # READ again to verify update
         await search_users(api)
-        
+
         # DELETE: Remove a user
         await delete_user(api, john_dn)
-        
+
         # Final READ to verify deletion
         await search_users(api)
-        
+
         logger.info("✅ CRUD operations demo completed successfully!")
-        
+
     except Exception as e:
-        logger.error(f"❌ Demo failed: {e}")
+        logger.exception(f"❌ Demo failed: {e}")
         raise
 
 
@@ -181,17 +186,17 @@ def main() -> int:
     logger.info("Base DN: dc=example,dc=com")
     logger.info("Admin DN: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
     logger.info("=" * 50)
-    
+
     try:
         asyncio.run(demonstrate_crud_operations())
     except KeyboardInterrupt:
         logger.info("Demo interrupted by user")
     except Exception as e:
-        logger.error(f"Demo failed: {e}")
+        logger.exception(f"Demo failed: {e}")
         return 1
-    
+
     return 0
 
 
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())

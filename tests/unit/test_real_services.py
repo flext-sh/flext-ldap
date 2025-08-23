@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-# Test real services functionality  
+# Test real services functionality
 from flext_ldap.services import FlextLdapService
 
 
@@ -17,49 +17,48 @@ class TestRealFlextLdapService:
     def test_flext_ldap_service_can_be_instantiated(self) -> None:
         """Test FlextLdapService can be instantiated directly."""
         service = FlextLdapService()
-        
+
         assert isinstance(service, FlextLdapService)
         assert service is not None
 
     def test_flext_ldap_service_has_required_attributes(self) -> None:
         """Test FlextLdapService has required attributes."""
         service = FlextLdapService()
-        
+
         # Should have expected attributes based on service pattern
-        assert hasattr(service, '__init__')
-        
-        # Service should be properly initialized  
+        assert hasattr(service, "__init__")
+
+        # Service should be properly initialized
         assert service is not None
 
     def test_multiple_service_instances_are_independent(self) -> None:
         """Test multiple FlextLdapService instances are independent."""
         service1 = FlextLdapService()
         service2 = FlextLdapService()
-        
+
         # They should be different instances
         assert service1 is not service2
-        
+
         # But should have same type
         assert type(service1) is type(service2)
 
     def test_service_methods_exist_and_callable(self) -> None:
         """Test all expected service methods exist and are callable."""
         service = FlextLdapService()
-        
+
         # Check that the service object exists and can be inspected
-        assert hasattr(service, '__class__')
-        assert service.__class__.__name__ == 'FlextLdapService'
+        assert hasattr(service, "__class__")
+        assert service.__class__.__name__ == "FlextLdapService"
 
     def test_service_provides_async_interface(self) -> None:
         """Test service provides async interface."""
         service = FlextLdapService()
-        
+
         # Check that service methods can be accessed
-        import inspect
-        
+
         # Get all methods of the service
-        methods = [name for name in dir(service) if not name.startswith('_')]
-        
+        methods = [name for name in dir(service) if not name.startswith("_")]
+
         # Service should have some public methods
         assert isinstance(methods, list)
 
@@ -75,17 +74,19 @@ class TestRealFlextLdapService:
     def test_service_supports_introspection(self) -> None:
         """Test service supports introspection properly."""
         service = FlextLdapService()
-        
+
         # Should be able to get method lists
-        methods = [name for name in dir(service) if not name.startswith('_')]
+        methods = [name for name in dir(service) if not name.startswith("_")]
         assert isinstance(methods, list)
-        
+
         # Should be able to inspect types
-        assert hasattr(service, '__class__')
-        assert service.__class__.__name__ == 'FlextLdapService'
-        
+        assert hasattr(service, "__class__")
+        assert service.__class__.__name__ == "FlextLdapService"
+
         # Should have module information
-        assert hasattr(service, '__module__') or hasattr(service.__class__, '__module__')
+        assert hasattr(service, "__module__") or hasattr(
+            service.__class__, "__module__"
+        )
 
 
 class TestRealServiceIntegration:
@@ -94,31 +95,31 @@ class TestRealServiceIntegration:
     def test_service_integrates_with_flext_patterns(self) -> None:
         """Test service properly integrates with FLEXT patterns."""
         service = FlextLdapService()
-        
+
         # Test that service is designed to work with FLEXT patterns
         # We can verify this by checking the service exists and is properly structured
-        assert hasattr(service, '__class__')
-        
+        assert hasattr(service, "__class__")
+
         # The service should be set up correctly
         assert service is not None
 
     def test_service_has_expected_structure(self) -> None:
         """Test service has expected structure."""
         service = FlextLdapService()
-        
+
         # Should have proper class structure
-        assert hasattr(service, '__dict__') or hasattr(service.__class__, '__dict__')
-        
+        assert hasattr(service, "__dict__") or hasattr(service.__class__, "__dict__")
+
         # Should be properly instantiated
         assert service is not None
 
     def test_service_error_handling_structure(self) -> None:
         """Test service has proper error handling structure."""
         service = FlextLdapService()
-        
+
         # Service should exist and be properly structured
         assert service is not None
-        assert hasattr(service, '__class__')
+        assert hasattr(service, "__class__")
 
 
 class TestRealServicePerformance:
@@ -127,15 +128,15 @@ class TestRealServicePerformance:
     def test_service_instantiation_is_fast(self) -> None:
         """Test service instantiation is reasonably fast."""
         import time
-        
+
         start_time = time.time()
-        
+
         # Create multiple service instances
         services = [FlextLdapService() for _ in range(50)]
-        
+
         end_time = time.time()
         elapsed = end_time - start_time
-        
+
         # Should complete in reasonable time (less than 1 second for 50 instances)
         assert elapsed < 1.0, f"Service instantiation took too long: {elapsed:.3f}s"
         assert len(services) == 50
@@ -144,11 +145,11 @@ class TestRealServicePerformance:
         """Test service memory usage is reasonable."""
         # Create service and verify it doesn't consume excessive memory
         service = FlextLdapService()
-        
+
         # Should not have excessive attributes
         attrs = dir(service)
         assert len(attrs) < 100, f"Service has too many attributes: {len(attrs)}"
-        
+
         # Service should be lightweight
         assert service is not None
 
@@ -165,20 +166,21 @@ class TestRealServiceDocumentation:
     def test_service_has_module_information(self) -> None:
         """Test service has proper module information."""
         service = FlextLdapService()
-        
+
         # Should have module information
-        assert hasattr(service.__class__, '__module__')
+        assert hasattr(service.__class__, "__module__")
         module = service.__class__.__module__
-        assert 'flext_ldap' in module
+        assert "flext_ldap" in module
 
     def test_service_supports_help_introspection(self) -> None:
         """Test service supports help() introspection."""
         service = FlextLdapService()
-        
+
         # Should not raise exceptions when help() is called
         try:
             # Get help without actually printing it
             import pydoc
+
             help_text = pydoc.render_doc(service)
             assert isinstance(help_text, str)
             assert len(help_text) > 0

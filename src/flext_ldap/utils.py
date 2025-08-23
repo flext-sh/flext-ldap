@@ -115,7 +115,8 @@ class FlextLdapUtilities:
 
     @staticmethod
     def extract_error_message(
-        result: object, default_message: str = "Unknown error",
+        result: object,
+        default_message: str = "Unknown error",
     ) -> str:
         """Extract error message from FlextResult or return default."""
         if hasattr(result, "error") and hasattr(result, "is_success"):
@@ -204,6 +205,7 @@ class FlextLdapUtilities:
 
         Refactored to use flext-core patterns for consistent error handling.
         """
+
         def _safe_extract() -> str | None:
             if isinstance(value, str):
                 return value if value.strip() else None
@@ -445,35 +447,40 @@ class FlextLdapValidationHelpers:
     def validate_dn_field(value: str) -> str:
         """Standard DN validation for Pydantic models."""
         return FlextLdapValidationHelpers.validate_non_empty_string(
-            value, FlextLdapValidationMessages.DN_FIELD_NAME,
+            value,
+            FlextLdapValidationMessages.DN_FIELD_NAME,
         )
 
     @staticmethod
     def validate_filter_field(value: str) -> str:
         """Standard filter validation for Pydantic models."""
         return FlextLdapValidationHelpers.validate_non_empty_string(
-            value, FlextLdapValidationMessages.SEARCH_FILTER_FIELD_NAME,
+            value,
+            FlextLdapValidationMessages.SEARCH_FILTER_FIELD_NAME,
         )
 
     @staticmethod
     def validate_cn_field(value: str) -> str:
         """Standard common name validation for Pydantic models."""
         return FlextLdapValidationHelpers.validate_non_empty_string(
-            value, FlextLdapValidationMessages.COMMON_NAME_FIELD_NAME,
+            value,
+            FlextLdapValidationMessages.COMMON_NAME_FIELD_NAME,
         )
 
     @staticmethod
     def validate_file_path_field(value: str) -> str:
         """Standard file path validation for Pydantic models."""
         return FlextLdapValidationHelpers.validate_non_empty_string(
-            value, FlextLdapValidationMessages.FILE_PATH_FIELD_NAME,
+            value,
+            FlextLdapValidationMessages.FILE_PATH_FIELD_NAME,
         )
 
     @staticmethod
     def validate_uri_field(value: str) -> str:
         """Standard URI validation for Pydantic models."""
         validated = FlextLdapValidationHelpers.validate_non_empty_string(
-            value, FlextLdapValidationMessages.URI_FIELD_NAME,
+            value,
+            FlextLdapValidationMessages.URI_FIELD_NAME,
         )
         parsed = urlparse(validated)
         if parsed.scheme not in {"ldap", "ldaps"}:
@@ -485,7 +492,8 @@ class FlextLdapValidationHelpers:
     def validate_base_dn_field(value: str) -> str:
         """Standard base DN validation for Pydantic models."""
         validated = FlextLdapValidationHelpers.validate_non_empty_string(
-            value, FlextLdapValidationMessages.BASE_DN_FIELD_NAME,
+            value,
+            FlextLdapValidationMessages.BASE_DN_FIELD_NAME,
         )
         if not FlextLdapUtils.validate_dn(validated):
             msg = FlextLdapValidationMessages.INVALID_DN_FORMAT

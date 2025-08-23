@@ -42,6 +42,7 @@ from flext_ldap.typings import (
 # Constants for DN validation
 MIN_DN_PARTS: int = 2
 
+
 def is_ldap_dn(value: object) -> TypeGuard[str]:
     """Type guard for LDAP Distinguished Name.
 

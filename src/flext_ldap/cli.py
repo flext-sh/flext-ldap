@@ -96,9 +96,7 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
             except Exception as e:
                 if attempt == max_attempts - 1:  # Last attempt
                     elapsed = time.time() - start_time
-                    logger.exception(
-                        f"Command {command} failed after {elapsed:.3f}s"
-                    )
+                    logger.exception(f"Command {command} failed after {elapsed:.3f}s")
                     return FlextResult[object].fail(str(e))
                 # Retry on next attempt
                 logger.warning(
@@ -121,7 +119,7 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
         server = str(args.get("server", ""))
         port_value = args.get("port", 389)
         port = int(port_value) if isinstance(port_value, (int, str)) else 389
-        use_ssl = bool(args.get("use_ssl", False))
+        use_ssl = bool(args.get("use_ssl"))
         bind_dn = args.get("bind_dn")
         bind_password = args.get("bind_password")
 
@@ -134,10 +132,12 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
                 server_uri, bind_dn_str, bind_password_str
             ) as session:
                 if session:
-                    return FlextResult[object].ok({
-                        "status": "success",
-                        "message": f"Successfully connected to {server}:{port}",
-                    })
+                    return FlextResult[object].ok(
+                        {
+                            "status": "success",
+                            "message": f"Successfully connected to {server}:{port}",
+                        }
+                    )
                 return FlextResult[object].fail(
                     "Connection failed",
                 )
@@ -155,7 +155,7 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
         server = str(args.get("server", ""))
         port_value = args.get("port", 389)
         port = int(port_value) if isinstance(port_value, (int, str)) else 389
-        use_ssl = bool(args.get("use_ssl", False))
+        use_ssl = bool(args.get("use_ssl"))
         base_dn = str(args.get("base_dn", ""))
         filter_str = str(args.get("filter_str", "(objectClass=*)"))
         limit_value = args.get("limit", 10)
@@ -187,11 +187,13 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
                             entry.to_dict() for entry in entries
                         ]
 
-                        return FlextResult[object].ok({
-                            "status": "success",
-                            "entries": entry_dicts,
-                            "count": len(entry_dicts),
-                        })
+                        return FlextResult[object].ok(
+                            {
+                                "status": "success",
+                                "entries": entry_dicts,
+                                "count": len(entry_dicts),
+                            }
+                        )
                     return FlextResult[object].fail(
                         result.error or "Search failed",
                     )
@@ -238,10 +240,12 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
                                 if hasattr(entry, "to_dict")
                                 else {"dn": str(entry)}
                             )
-                            return FlextResult[object].ok({
-                                "status": "success",
-                                "user": user_dict,
-                            })
+                            return FlextResult[object].ok(
+                                {
+                                    "status": "success",
+                                    "user": user_dict,
+                                }
+                            )
                         return FlextResult[object].fail(
                             f"User {uid} not found",
                         )

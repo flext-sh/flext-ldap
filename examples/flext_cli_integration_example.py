@@ -99,7 +99,9 @@ class FlextLdapCLI:
                 uid=username,
                 cn=full_name,
                 sn=full_name.rsplit(maxsplit=1)[-1] if " " in full_name else full_name,
-                given_name=full_name.split()[0] if " " in full_name else full_name,
+                given_name=full_name.split(maxsplit=1)[0]
+                if " " in full_name
+                else full_name,
                 mail=email,
                 phone="+1-555-0000",  # Default phone
             )

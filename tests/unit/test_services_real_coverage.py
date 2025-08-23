@@ -79,7 +79,7 @@ class TestFlextLdapServiceRealExecution:
         mock_repository.save = AsyncMock(return_value=FlextResult[None].ok(None))
 
         # Mock logger to avoid execution of buggy logging code
-        with patch("flext_ldap.services.logger.info") as mock_logger_info:
+        with patch("flext_ldap.services.logger.info"):
             # Create user request
             user_request = FlextLdapCreateUserRequest(
                 dn="cn=testuser,ou=users,dc=example,dc=com",

@@ -9,44 +9,39 @@ from __future__ import annotations
 import pytest
 from flext_core import FlextEntityId, FlextEntityStatus, FlextResult
 
-# Test real type guards
-from flext_ldap.type_guards import (
-    MIN_DN_PARTS,
-    ensure_ldap_dn,
-    ensure_string_list,
-    has_error_attribute,
-    has_is_success_attribute,
-    is_bytes_list,
-    is_ldap_attribute_value,
-    is_ldap_attributes_dict,
-    is_ldap_dn,
-    is_ldap_entry_data,
-    is_ldap_search_result,
-    is_string_list,
-)
-
-# Test real domain functionality  
+# Test real domain functionality
 from flext_ldap.domain import (
-    MIN_PASSWORD_LENGTH,
     MAX_PASSWORD_LENGTH,
+    MIN_PASSWORD_LENGTH,
     PASSWORD_PATTERN,
     FlextLdapActiveUserSpecification,
     FlextLdapCompleteUserSpecification,
     FlextLdapDistinguishedNameSpecification,
     FlextLdapEmailSpecification,
-    FlextLdapGroupSpecification,
     FlextLdapPasswordSpecification,
     FlextLdapUserManagementService,
-    FlextLdapUserSpecification,
 )
+from flext_ldap.entities import FlextLdapEntry
 
 # Test real models
 from flext_ldap.models import FlextLdapGroup, FlextLdapUser
-from flext_ldap.entities import FlextLdapEntry
+
+# Test real type guards
+from flext_ldap.type_guards import (
+    MIN_DN_PARTS,
+    ensure_ldap_dn,
+    ensure_string_list,
+    is_bytes_list,
+    is_ldap_attribute_value,
+    is_ldap_attributes_dict,
+    is_ldap_dn,
+    is_string_list,
+)
 
 # Test real utilities if they exist
 try:
     from flext_ldap.utils import FlextLdapUtilities
+
     HAS_UTILITIES = True
 except ImportError:
     HAS_UTILITIES = False
@@ -65,9 +60,9 @@ class TestRealTypeGuards:
             "ou=groups,dc=company,dc=org",
             "dc=root",
             "cn=User With Spaces,ou=users,dc=test,dc=com",
-            "mail=test@example.com,ou=people,dc=example,dc=com"
+            "mail=test@example.com,ou=people,dc=example,dc=com",
         ]
-        
+
         for dn in valid_dns:
             result = is_ldap_dn(dn)
             assert result is True, f"Valid DN failed validation: {dn}"
@@ -79,12 +74,12 @@ class TestRealTypeGuards:
             "",  # Empty string
             "no equals sign",  # No = character
             "cn=",  # Empty value
-            "=value",  # Empty attribute name  
+            "=value",  # Empty attribute name
             "   ",  # Only whitespace
             "cn= ",  # Empty value (just space)
             " =value",  # Empty attribute name (just space)
         ]
-        
+
         for dn in invalid_dns:
             result = is_ldap_dn(dn)
             assert result is False, f"Invalid DN passed validation: {dn}"
@@ -92,7 +87,7 @@ class TestRealTypeGuards:
     def test_is_ldap_dn_with_non_string_values(self) -> None:
         """Test DN type guard rejects non-string values."""
         non_string_values = [None, 123, [], {}, object()]
-        
+
         for value in non_string_values:
             result = is_ldap_dn(value)
             assert result is False, f"Non-string value passed DN validation: {value}"
@@ -108,7 +103,7 @@ class TestRealTypeGuards:
             [],  # Empty list is valid
             "",  # Empty string is valid
         ]
-        
+
         for value in valid_values:
             result = is_ldap_attribute_value(value)
             assert result is True, f"Valid attribute value failed: {value}"
@@ -122,7 +117,7 @@ class TestRealTypeGuards:
             ["mixed", 123, "list"],  # Mixed types not allowed
             object(),
         ]
-        
+
         for value in invalid_values:
             result = is_ldap_attribute_value(value)
             assert result is False, f"Invalid attribute value passed: {value}"
@@ -137,7 +132,7 @@ class TestRealTypeGuards:
             {"uid": "john.doe", "cn": "John Doe", "sn": "Doe"},
             {},  # Empty dict is valid
         ]
-        
+
         for attrs in valid_attributes:
             result = is_ldap_attributes_dict(attrs)
             assert result is True, f"Valid attributes failed: {attrs}"
@@ -182,19 +177,19 @@ class TestRealDomainSpecifications:
     def test_password_specification_real_validation(self) -> None:
         """Test password specification with REAL password validation logic."""
         spec = FlextLdapPasswordSpecification()
-        
+
         # Test real password validation
         assert spec.name == "SecurePassword"
         assert "security policy" in spec.description
-        
+
         # Test minimum length validation
         too_short = "a" * (MIN_PASSWORD_LENGTH - 1)
         assert not spec.is_satisfied_by(too_short)
-        
-        # Test maximum length validation  
+
+        # Test maximum length validation
         too_long = "a" * (MAX_PASSWORD_LENGTH + 1)
         assert not spec.is_satisfied_by(too_long)
-        
+
         # Test non-string rejection
         assert not spec.is_satisfied_by(123)
         assert not spec.is_satisfied_by(None)
@@ -202,16 +197,18 @@ class TestRealDomainSpecifications:
     def test_dn_specification_real_validation(self) -> None:
         """Test DN specification with REAL DN validation."""
         spec = FlextLdapDistinguishedNameSpecification()
-        
+
         assert spec.name == "ValidDistinguishedName"
         assert "RFC 4514" in spec.description
-        
+
         # Test real DN validation using the actual pattern
         valid_dn = "cn=John Doe,ou=users,dc=example,dc=com"
         invalid_dn = "not a dn"
-        
+
         # These use the real validation logic, not mocks
-        assert spec.is_satisfied_by(valid_dn) or not spec.is_satisfied_by(valid_dn)  # Either result is valid
+        assert spec.is_satisfied_by(valid_dn) or not spec.is_satisfied_by(
+            valid_dn
+        )  # Either result is valid
         assert not spec.is_satisfied_by(invalid_dn)
         assert not spec.is_satisfied_by("")
         assert not spec.is_satisfied_by(123)
@@ -219,26 +216,26 @@ class TestRealDomainSpecifications:
     def test_email_specification_real_validation(self) -> None:
         """Test email specification with REAL email pattern matching."""
         spec = FlextLdapEmailSpecification()
-        
+
         assert spec.name == "ValidEmail"
         assert "email address" in spec.description
-        
+
         # Test non-string rejection (this will definitely work)
         assert not spec.is_satisfied_by(123)
         assert not spec.is_satisfied_by(None)
         assert not spec.is_satisfied_by([])
-        
+
         # Test empty string
         assert not spec.is_satisfied_by("")
 
     def test_user_management_service_real_validation(self) -> None:
         """Test user management service with REAL validation logic."""
         service = FlextLdapUserManagementService()
-        
+
         # Test with missing required fields - this will definitely fail
         incomplete_data = {"uid": "test"}  # Missing required fields
         result = service.validate_user_creation(incomplete_data)
-        
+
         assert isinstance(result, FlextResult)
         assert not result.is_success  # Should fail due to missing fields
         assert "Required field missing" in result.error
@@ -246,16 +243,16 @@ class TestRealDomainSpecifications:
     def test_user_management_service_invalid_password(self) -> None:
         """Test user management service with password validation."""
         service = FlextLdapUserManagementService()
-        
+
         # Complete data but with very short password
         data_with_bad_password = {
             "uid": "john.doe",
             "cn": "John Doe",
             "sn": "Doe",
             "dn": "cn=John Doe,ou=users,dc=example,dc=com",
-            "userPassword": "x"  # Too short - should fail if validation is enabled
+            "userPassword": "x",  # Too short - should fail if validation is enabled
         }
-        
+
         result = service.validate_user_creation(data_with_bad_password)
         assert isinstance(result, FlextResult)
         # The result depends on whether password validation is actually enforced
@@ -264,11 +261,11 @@ class TestRealDomainSpecifications:
     def test_complete_user_specification_composition(self) -> None:
         """Test complete user specification has proper composition."""
         spec = FlextLdapCompleteUserSpecification()
-        
+
         assert spec.name == "CompleteUser"
-        assert hasattr(spec, 'dn_spec')
-        assert hasattr(spec, 'active_spec')
-        
+        assert hasattr(spec, "dn_spec")
+        assert hasattr(spec, "active_spec")
+
         # Verify sub-specifications are properly initialized
         assert isinstance(spec.dn_spec, FlextLdapDistinguishedNameSpecification)
         assert isinstance(spec.active_spec, FlextLdapActiveUserSpecification)
@@ -284,12 +281,12 @@ class TestRealModels:
             id=FlextEntityId("test_user_123"),
             dn="cn=John Doe,ou=users,dc=example,dc=com",
             cn="John Doe",
-            sn="Doe", 
+            sn="Doe",
             uid="john.doe",
             mail="john.doe@example.com",
-            status=FlextEntityStatus.ACTIVE
+            status=FlextEntityStatus.ACTIVE,
         )
-        
+
         # Verify the model was created correctly
         assert user.id == FlextEntityId("test_user_123")
         assert user.dn == "cn=John Doe,ou=users,dc=example,dc=com"
@@ -306,9 +303,9 @@ class TestRealModels:
             id=FlextEntityId("test_group_123"),
             dn="cn=REDACTED_LDAP_BIND_PASSWORDistrators,ou=groups,dc=example,dc=com",
             cn="REDACTED_LDAP_BIND_PASSWORDistrators",
-            status=FlextEntityStatus.ACTIVE
+            status=FlextEntityStatus.ACTIVE,
         )
-        
+
         assert group.id == FlextEntityId("test_group_123")
         assert group.dn == "cn=REDACTED_LDAP_BIND_PASSWORDistrators,ou=groups,dc=example,dc=com"
         assert group.cn == "REDACTED_LDAP_BIND_PASSWORDistrators"
@@ -320,9 +317,9 @@ class TestRealModels:
         entry = FlextLdapEntry(
             id=FlextEntityId("test_entry_123"),
             dn="cn=test,dc=example,dc=com",
-            status=FlextEntityStatus.ACTIVE
+            status=FlextEntityStatus.ACTIVE,
         )
-        
+
         assert entry.id == FlextEntityId("test_entry_123")
         assert entry.dn == "cn=test,dc=example,dc=com"
         # Status is stored as string value, not enum
@@ -343,8 +340,9 @@ class TestRealConstants:
     def test_password_pattern_is_compiled_regex(self) -> None:
         """Test password pattern is a compiled regex pattern."""
         import re
+
         assert isinstance(PASSWORD_PATTERN, re.Pattern)
-        
+
         # Test it can be used for matching
         result = PASSWORD_PATTERN.match("test")
         assert result is None or result is not None  # Either outcome is valid
@@ -356,15 +354,15 @@ class TestRealUtilities:
 
     def test_utilities_class_exists(self) -> None:
         """Test that FlextLdapUtilities class exists and has methods."""
-        assert hasattr(FlextLdapUtilities, '__name__')
-        
+        assert hasattr(FlextLdapUtilities, "__name__")
+
         # Check for common utility methods
         expected_methods = [
-            'safe_convert_external_dict_to_ldap_attributes',
-            'safe_convert_list_to_strings', 
-            'safe_convert_value_to_str',
+            "safe_convert_external_dict_to_ldap_attributes",
+            "safe_convert_list_to_strings",
+            "safe_convert_value_to_str",
         ]
-        
+
         for method_name in expected_methods:
             if hasattr(FlextLdapUtilities, method_name):
                 method = getattr(FlextLdapUtilities, method_name)
@@ -377,13 +375,14 @@ class TestRealErrorHandling:
     def test_domain_service_handles_invalid_input_types(self) -> None:
         """Test domain service handles invalid input types gracefully."""
         service = FlextLdapUserManagementService()
-        
+
         # Test with completely wrong input type
         result = service.validate_user_creation("not a dictionary")
         assert isinstance(result, FlextResult)
         assert not result.is_success
         # Check for actual error message content - the service returns specific field errors
-        assert result.error is not None and len(result.error) > 0
+        assert result.error is not None
+        assert len(result.error) > 0
 
     def test_specifications_handle_none_values(self) -> None:
         """Test specifications handle None values correctly."""
@@ -392,7 +391,7 @@ class TestRealErrorHandling:
             FlextLdapEmailSpecification(),
             FlextLdapDistinguishedNameSpecification(),
         ]
-        
+
         for spec in specs:
             # None should always be invalid for these specs
             assert not spec.is_satisfied_by(None)
@@ -403,11 +402,13 @@ class TestRealErrorHandling:
         assert not is_ldap_dn("")
         assert is_ldap_attribute_value("")  # Empty string is valid attribute value
         assert is_ldap_attributes_dict({})  # Empty dict is valid
-        
+
         # Boundary conditions
         assert not is_string_list("string")  # String is not a list
         assert is_string_list([])  # Empty list is valid
-        assert is_bytes_list([])  # Empty list is valid for bytes list (discovered real behavior)
+        assert is_bytes_list(
+            []
+        )  # Empty list is valid for bytes list (discovered real behavior)
 
 
 class TestRealIntegrationPatterns:
@@ -416,19 +417,19 @@ class TestRealIntegrationPatterns:
     def test_complete_user_specification_uses_sub_specs(self) -> None:
         """Test that complete user spec actually uses its sub-specifications."""
         spec = FlextLdapCompleteUserSpecification()
-        
+
         # Access sub-specs to ensure they work
-        dn_spec = spec.dn_spec  
+        dn_spec = spec.dn_spec
         active_spec = spec.active_spec
-        
+
         # Test that sub-specs can be used independently
-        assert dn_spec.is_satisfied_by("cn=test,dc=example,dc=com") in [True, False]
-        
+        assert dn_spec.is_satisfied_by("cn=test,dc=example,dc=com") in {True, False}
+
         # Test with mock object that has required attributes
         class MockUser:
             def __init__(self) -> None:
                 self.status = FlextEntityStatus.ACTIVE
-        
+
         mock_user = MockUser()
         # This tests the actual is_satisfied_by logic
         result = active_spec.is_satisfied_by(mock_user)
@@ -437,13 +438,13 @@ class TestRealIntegrationPatterns:
     def test_user_management_service_validation_chain(self) -> None:
         """Test that user management service validation chain works."""
         service = FlextLdapUserManagementService()
-        
+
         # Test partial validation - each step should be testable
-        assert hasattr(service, '_user_spec')
-        assert hasattr(service, '_password_spec')
-        assert hasattr(service, '_email_spec')
-        
+        assert hasattr(service, "_user_spec")
+        assert hasattr(service, "_password_spec")
+        assert hasattr(service, "_email_spec")
+
         # Verify they are the right types
         assert isinstance(service._user_spec, FlextLdapCompleteUserSpecification)
-        assert isinstance(service._password_spec, FlextLdapPasswordSpecification)  
+        assert isinstance(service._password_spec, FlextLdapPasswordSpecification)
         assert isinstance(service._email_spec, FlextLdapEmailSpecification)
