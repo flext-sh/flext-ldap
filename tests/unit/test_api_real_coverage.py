@@ -11,10 +11,20 @@ from unittest.mock import AsyncMock
 import pytest
 from flext_core import FlextEntityId, FlextEntityStatus, FlextResult
 
-from flext_ldap.api import FlextLdapApi, create_ldap_api, get_ldap_api
-from flext_ldap.configuration import FlextLdapSettings
-from flext_ldap.entities import FlextLdapCreateUserRequest, FlextLdapSearchRequest
-from flext_ldap.exceptions import FlextLdapConnectionError
+from flext_ldap import (
+    FlextLdapApi,
+    FlextLdapConnectionConfig,
+    FlextLdapConnectionError,
+    FlextLdapCreateUserRequest,
+    FlextLdapSearchConfig,
+    FlextLdapSearchRequest,
+    FlextLdapSearchResponse,
+    FlextLdapSettings,
+    create_ldap_api,
+    get_ldap_api,
+)
+from flext_ldap.entities import FlextLdapSearchResponse as FlextLdapSearchResponseEntity
+from flext_ldap.models import FlextLdapUser
 
 
 class TestFlextLdapApiRealInstantiation:
@@ -34,11 +44,6 @@ class TestFlextLdapApiRealInstantiation:
 
     def test_api_instantiation_with_custom_config_real(self) -> None:
         """Test API instantiation with custom configuration - executes REAL initialization."""
-        from flext_ldap.configuration import (
-            FlextLdapConnectionConfig,
-            FlextLdapSearchConfig,
-        )
-
         custom_connection = FlextLdapConnectionConfig(
             server="custom.ldap.server",
             port=636,
@@ -105,7 +110,7 @@ class TestFlextLdapApiRealConnectionManagement:
         # Mock the client to simulate successful connection
         mock_client = AsyncMock()
         mock_client.connect.return_value = FlextResult[None].ok(None)
-        api._container.get_client = lambda: mock_client  # type: ignore
+        api._container.get_client = lambda: mock_client
 
         # Execute REAL connection logic
         result = await api.connect("ldap://test.server", "cn=admin", "password")
@@ -129,7 +134,7 @@ class TestFlextLdapApiRealConnectionManagement:
         # Mock client to simulate connection failure
         mock_client = AsyncMock()
         mock_client.connect.return_value = FlextResult[None].fail("Connection timeout")
-        api._container.get_client = lambda: mock_client  # type: ignore
+        api._container.get_client = lambda: mock_client
 
         # Execute REAL connection logic
         result = await api.connect("ldap://invalid.server", "cn=admin", "password")
@@ -146,7 +151,7 @@ class TestFlextLdapApiRealConnectionManagement:
         # Mock the client to simulate successful disconnection
         mock_client = AsyncMock()
         mock_client.unbind.return_value = FlextResult[None].ok(None)
-        api._container.get_client = lambda: mock_client  # type: ignore
+        api._container.get_client = lambda: mock_client
 
         # Execute REAL disconnection logic
         result = await api.disconnect("session_12345")
@@ -166,7 +171,7 @@ class TestFlextLdapApiRealConnectionManagement:
         # Mock client to simulate disconnection failure
         mock_client = AsyncMock()
         mock_client.unbind.return_value = FlextResult[None].fail("Unbind failed")
-        api._container.get_client = lambda: mock_client  # type: ignore
+        api._container.get_client = lambda: mock_client
 
         # Execute REAL disconnection logic
         result = await api.disconnect("session_12345")
@@ -184,7 +189,7 @@ class TestFlextLdapApiRealConnectionManagement:
         mock_client = AsyncMock()
         mock_client.connect.return_value = FlextResult[None].ok(None)
         mock_client.unbind.return_value = FlextResult[None].ok(None)
-        api._container.get_client = lambda: mock_client  # type: ignore
+        api._container.get_client = lambda: mock_client
 
         # Execute REAL context manager logic
         async with api.connection(
@@ -207,7 +212,7 @@ class TestFlextLdapApiRealConnectionManagement:
         # Mock failed connection
         mock_client = AsyncMock()
         mock_client.connect.return_value = FlextResult[None].fail("Connection failed")
-        api._container.get_client = lambda: mock_client  # type: ignore
+        api._container.get_client = lambda: mock_client
 
         # Execute REAL context manager logic - should raise exception
         with pytest.raises(FlextLdapConnectionError) as exc_info:
@@ -225,7 +230,7 @@ class TestFlextLdapApiRealConnectionManagement:
         # Mock connection that returns success but no session ID (edge case)
         mock_client = AsyncMock()
         mock_client.connect.return_value = FlextResult[None].ok(None)
-        api._container.get_client = lambda: mock_client  # type: ignore
+        api._container.get_client = lambda: mock_client
 
         # Override _generate_session_id to return None (simulate failure)
         api._generate_session_id = lambda: ""  # Empty string simulates failure
@@ -250,17 +255,17 @@ class TestFlextLdapApiRealSearchOperations:
         # Mock service to capture the request
         captured_request = None
 
-        async def mock_search(request):
+        async def mock_search(
+            request: FlextLdapSearchRequest,
+        ) -> FlextResult[FlextLdapSearchResponse]:
             nonlocal captured_request
             captured_request = request
             # Return empty successful response
-            from flext_ldap.entities import FlextLdapSearchResponse
-
             return FlextResult[FlextLdapSearchResponse].ok(
                 FlextLdapSearchResponse(entries=[], total_count=0, has_more=False)
             )
 
-        api._service.search = mock_search  # type: ignore
+        api._service.search = mock_search
 
         # Execute REAL search logic
         result = await api.search(
@@ -292,10 +297,12 @@ class TestFlextLdapApiRealSearchOperations:
         api = FlextLdapApi()
 
         # Mock service to return failure
-        async def mock_search_failure(request):
+        async def mock_search_failure(
+            request: FlextLdapSearchRequest,
+        ) -> FlextResult[FlextLdapSearchResponse]:
             return FlextResult.fail("Search operation failed")
 
-        api._service.search = mock_search_failure  # type: ignore
+        api._service.search = mock_search_failure
 
         # Execute REAL search logic
         result = await api.search("ou=users,dc=example,dc=com")
@@ -311,8 +318,6 @@ class TestFlextLdapApiRealSearchOperations:
 
         # Mock service to return search results
         async def mock_search_with_results(request):
-            from flext_ldap.entities import FlextLdapSearchResponse
-
             # Simulate LDAP search results
             mock_entries = [
                 {
@@ -334,7 +339,7 @@ class TestFlextLdapApiRealSearchOperations:
                 )
             )
 
-        api._service.search = mock_search_with_results  # type: ignore
+        api._service.search = mock_search_with_results
 
         # Execute REAL search logic
         result = await api.search("ou=users,dc=example,dc=com")
@@ -372,7 +377,6 @@ class TestFlextLdapApiRealSearchOperations:
 
         # Mock service to return search results with missing DN
         async def mock_search_with_invalid_entry(request):
-            from flext_ldap.entities import FlextLdapSearchResponse
 
             # Entry without DN should be filtered out
             mock_entries = [
@@ -398,7 +402,7 @@ class TestFlextLdapApiRealSearchOperations:
                 )
             )
 
-        api._service.search = mock_search_with_invalid_entry  # type: ignore
+        api._service.search = mock_search_with_invalid_entry
 
         # Execute REAL search logic
         result = await api.search("ou=users,dc=example,dc=com")
@@ -419,7 +423,6 @@ class TestFlextLdapApiRealSearchOperations:
 
         # Mock service to return search results with single objectClass string
         async def mock_search_with_single_objectclass(request):
-            from flext_ldap.entities import FlextLdapSearchResponse
 
             # Entry with single objectClass string (not list)
             mock_entries = [
@@ -435,7 +438,7 @@ class TestFlextLdapApiRealSearchOperations:
                 )
             )
 
-        api._service.search = mock_search_with_single_objectclass  # type: ignore
+        api._service.search = mock_search_with_single_objectclass
 
         # Execute REAL search logic - should handle single objectClass
         result = await api.search("ou=users,dc=example,dc=com")
@@ -461,7 +464,6 @@ class TestFlextLdapApiRealUserOperations:
         api = FlextLdapApi()
 
         # Mock service response
-        from flext_ldap.models import FlextLdapUser
 
         mock_user = FlextLdapUser(
             id=FlextEntityId("test-user"),
@@ -479,7 +481,7 @@ class TestFlextLdapApiRealUserOperations:
             captured_request = request
             return FlextResult[FlextLdapUser].ok(mock_user)
 
-        api._service.create_user = mock_create_user  # type: ignore
+        api._service.create_user = mock_create_user
 
         # Create user request
         user_request = FlextLdapCreateUserRequest(
@@ -505,7 +507,6 @@ class TestFlextLdapApiRealUserOperations:
         api = FlextLdapApi()
 
         # Mock service response
-        from flext_ldap.models import FlextLdapUser
 
         mock_user = FlextLdapUser(
             id=FlextEntityId("test-user"),
@@ -523,7 +524,7 @@ class TestFlextLdapApiRealUserOperations:
             captured_dn = dn
             return FlextResult[FlextLdapUser | None].ok(mock_user)
 
-        api._service.get_user = mock_get_user  # type: ignore
+        api._service.get_user = mock_get_user
 
         # Execute REAL get_user logic
         result = await api.get_user("cn=testuser,ou=users,dc=example,dc=com")
@@ -549,7 +550,7 @@ class TestFlextLdapApiRealUserOperations:
             captured_attributes = attributes
             return FlextResult[None].ok(None)
 
-        api._service.update_user = mock_update_user  # type: ignore
+        api._service.update_user = mock_update_user
 
         # Execute REAL update_user logic
         attributes = {"cn": ["Updated User"], "description": ["Updated description"]}
@@ -576,7 +577,7 @@ class TestFlextLdapApiRealUserOperations:
             captured_dn = dn
             return FlextResult[None].ok(None)
 
-        api._service.delete_user = mock_delete_user  # type: ignore
+        api._service.delete_user = mock_delete_user
 
         # Execute REAL delete_user logic
         result = await api.delete_user("cn=testuser,ou=users,dc=example,dc=com")
@@ -599,7 +600,7 @@ class TestFlextLdapApiRealUserOperations:
             captured_params = (filter_str, base_dn, scope)
             return FlextResult[list].ok([])
 
-        api._service.search_users = mock_search_users  # type: ignore
+        api._service.search_users = mock_search_users
 
         # Execute REAL search_users logic
         result = await api.search_users(
@@ -632,7 +633,7 @@ class TestFlextLdapApiRealGroupOperations:
             captured_group = group
             return FlextResult[None].ok(None)
 
-        api._service.create_group = mock_create_group  # type: ignore
+        api._service.create_group = mock_create_group
 
         # Execute REAL create_group logic
         result = await api.create_group(
@@ -668,7 +669,7 @@ class TestFlextLdapApiRealGroupOperations:
         async def mock_create_group_failure(group):
             return FlextResult[None].fail("Group creation failed")
 
-        api._service.create_group = mock_create_group_failure  # type: ignore
+        api._service.create_group = mock_create_group_failure
 
         # Execute REAL create_group logic
         result = await api.create_group(
@@ -692,7 +693,7 @@ class TestFlextLdapApiRealGroupOperations:
             captured_dn = dn
             return FlextResult.ok(None)
 
-        api._service.get_group = mock_get_group  # type: ignore
+        api._service.get_group = mock_get_group
 
         # Execute REAL get_group logic
         result = await api.get_group("cn=testgroup,ou=groups,dc=example,dc=com")
@@ -715,7 +716,7 @@ class TestFlextLdapApiRealGroupOperations:
             captured_params = (dn, attributes)
             return FlextResult[None].ok(None)
 
-        api._service.update_group = mock_update_group  # type: ignore
+        api._service.update_group = mock_update_group
 
         # Execute REAL update_group logic
         attributes = {"description": ["Updated group description"]}
@@ -744,7 +745,7 @@ class TestFlextLdapApiRealGroupOperations:
             captured_dn = dn
             return FlextResult[None].ok(None)
 
-        api._service.delete_group = mock_delete_group  # type: ignore
+        api._service.delete_group = mock_delete_group
 
         # Execute REAL delete_group logic
         result = await api.delete_group("cn=testgroup,ou=groups,dc=example,dc=com")
@@ -767,7 +768,7 @@ class TestFlextLdapApiRealGroupOperations:
             captured_params = (group_dn, member_dn)
             return FlextResult[None].ok(None)
 
-        api._service.add_member = mock_add_member  # type: ignore
+        api._service.add_member = mock_add_member
 
         # Execute REAL add_member logic
         result = await api.add_member(
@@ -796,7 +797,7 @@ class TestFlextLdapApiRealGroupOperations:
             captured_params = (group_dn, member_dn)
             return FlextResult[None].ok(None)
 
-        api._service.remove_member = mock_remove_member  # type: ignore
+        api._service.remove_member = mock_remove_member
 
         # Execute REAL remove_member logic
         result = await api.remove_member(
@@ -825,7 +826,7 @@ class TestFlextLdapApiRealGroupOperations:
             captured_dn = group_dn
             return FlextResult[list[str]].ok(["cn=user1,ou=users,dc=example,dc=com"])
 
-        api._service.get_members = mock_get_members  # type: ignore
+        api._service.get_members = mock_get_members
 
         # Execute REAL get_members logic
         result = await api.get_members("cn=testgroup,ou=groups,dc=example,dc=com")
@@ -852,7 +853,7 @@ class TestFlextLdapApiRealValidationMethods:
             captured_dn = dn
             return FlextResult[None].ok(None)
 
-        api._service.validate_dn = mock_validate_dn  # type: ignore
+        api._service.validate_dn = mock_validate_dn
 
         # Execute REAL validate_dn logic
         result = api.validate_dn("cn=testuser,ou=users,dc=example,dc=com")
@@ -874,7 +875,7 @@ class TestFlextLdapApiRealValidationMethods:
             captured_filter = filter_str
             return FlextResult[None].ok(None)
 
-        api._service.validate_filter = mock_validate_filter  # type: ignore
+        api._service.validate_filter = mock_validate_filter
 
         # Execute REAL validate_filter logic
         result = api.validate_filter("(objectClass=person)")
@@ -903,8 +904,8 @@ class TestFlextLdapApiRealEntryOperations:
 
         # Mock repository
         mock_repository = AsyncMock()
-        mock_repository.delete = mock_delete
-        api._container.get_repository = lambda: mock_repository  # type: ignore
+        mock_repository.delete_async = mock_delete
+        api._container.get_repository = lambda: mock_repository
 
         # Execute REAL delete_entry logic
         result = await api.delete_entry("cn=testentry,dc=example,dc=com")
@@ -931,7 +932,6 @@ class TestFlextLdapApiRealFactoryFunctions:
 
     def test_get_ldap_api_with_custom_config_real(self) -> None:
         """Test get_ldap_api with custom config - executes REAL factory logic with configuration."""
-        from flext_ldap.configuration import FlextLdapConnectionConfig
 
         custom_connection = FlextLdapConnectionConfig(
             server="factory.ldap.server",
@@ -963,7 +963,6 @@ class TestFlextLdapApiRealFactoryFunctions:
 
     def test_create_ldap_api_with_custom_config_real(self) -> None:
         """Test create_ldap_api with custom config - executes REAL factory logic with configuration."""
-        from flext_ldap.configuration import FlextLdapConnectionConfig
 
         custom_connection = FlextLdapConnectionConfig(
             server="create.ldap.server",

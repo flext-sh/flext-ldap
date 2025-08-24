@@ -437,13 +437,9 @@ class TestFlextLdapUserManagementServiceRealLogic:
         service = FlextLdapUserManagementService()
 
         # Test with data that could trigger exception handling
-        try:
-            # This should execute exception handling paths
-            result = service.validate_user_creation({})  # Empty data
-            assert not result.is_success
-        except Exception:
-            # Service should handle exceptions gracefully
-            pass
+        # This should execute exception handling paths
+        result = service.validate_user_creation({})  # Empty data
+        assert not result.is_success
 
     def test_user_management_service_validates_all_field_combinations_real(
         self,
@@ -728,13 +724,9 @@ class TestFlextLdapGroupManagementServiceRealLogic:
         service = FlextLdapGroupManagementService()
 
         # Test with invalid group data to trigger exception handling
-        try:
-            # This should execute exception handling paths
-            result = service.validate_group_creation({})  # Empty data
-            assert not result.is_success
-        except Exception:
-            # Service should handle exceptions gracefully
-            pass
+        # This should execute exception handling paths
+        result = service.validate_group_creation({})  # Empty data
+        assert not result.is_success
 
     def test_group_management_service_validates_complex_scenarios_real(self) -> None:
         """Test group management service with complex scenarios - executes REAL complex validation."""

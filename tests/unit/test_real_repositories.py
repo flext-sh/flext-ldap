@@ -5,14 +5,24 @@ These tests execute REAL repository code to increase coverage and validate funct
 
 from __future__ import annotations
 
+import inspect
+import time
+
 import pytest
-from flext_core import FlextResult
+from flext_core import FlextEntityId, FlextEntityStatus, FlextResult
 
+from flext_ldap import repositories as repositories_module
 from flext_ldap.clients import FlextLdapClient
-from flext_ldap.entities import FlextLdapEntry, FlextLdapSearchRequest
-
-# Test real repositories functionality
-from flext_ldap.repositories import FlextLdapRepository
+from flext_ldap.entities import (
+    FlextLdapEntry,
+    FlextLdapSearchRequest,
+    FlextLdapSearchResponse,
+)
+from flext_ldap.repositories import (
+    FlextLdapGroupRepository,
+    FlextLdapRepository,
+    FlextLdapUserRepository,
+)
 
 
 class TestRealFlextLdapRepository:
@@ -82,12 +92,11 @@ class TestRealFlextLdapRepository:
         repository = FlextLdapRepository(client)
 
         # Check that key methods are async (coroutines)
-        import inspect
 
         async_methods = [
             "find_by_dn",
-            "save",
-            "delete",
+            "save_async",
+            "delete_async",
             "exists",
         ]
 
@@ -141,7 +150,6 @@ class TestRealRepositoryIntegration:
         assert hasattr(repository, "__class__")
 
         # Methods should be async and return FlextResult types
-        import inspect
 
         find_signature = inspect.signature(repository.find_by_dn)
 
@@ -167,7 +175,6 @@ class TestRealRepositoryIntegration:
     def test_repository_uses_flext_logger(self) -> None:
         """Test repository uses FLEXT logging."""
         # Repository module should use get_logger
-        from flext_ldap import repositories as repositories_module
 
         # Should have logger defined
         assert hasattr(repositories_module, "logger")
@@ -201,13 +208,9 @@ class TestRealRepositoryErrorHandling:
         mock_client = MockClient()
 
         # Should be able to instantiate (error handling is at method level)
-        try:
-            repository = FlextLdapRepository(mock_client)
-            assert repository is not None
-            assert repository._client is mock_client
-        except Exception:
-            # If it raises during instantiation, that's also valid
-            pass
+        repository = FlextLdapRepository(mock_client)
+        assert repository is not None
+        assert repository._client is mock_client
 
     def test_repository_client_type_validation(self) -> None:
         """Test repository validates client types appropriately."""
@@ -231,7 +234,6 @@ class TestRealRepositoryErrorHandling:
         assert hasattr(repository, "exists")
 
         # Should be async methods
-        import inspect
 
         assert inspect.iscoroutinefunction(repository.find_by_dn)
         assert inspect.iscoroutinefunction(repository.save)
@@ -244,8 +246,6 @@ class TestRealRepositoryPerformance:
 
     def test_repository_instantiation_is_fast(self) -> None:
         """Test repository instantiation is reasonably fast."""
-        import time
-
         start_time = time.time()
 
         # Create multiple repository instances
@@ -318,15 +318,19 @@ class TestRealRepositoryDocumentation:
 class TestRealRepositoryArchitecture:
     """Test REAL repository architecture compliance."""
 
-    def test_repository_implements_interface(self) -> None:
-        """Test repository properly implements IFlextLdapRepository interface."""
+    def test_repository_implements_protocol(self) -> None:
+        """Test repository properly implements flext-core Repository protocol."""
         client = FlextLdapClient()
         repository = FlextLdapRepository(client)
 
-        # Should be instance of interface
-        from flext_ldap.interfaces import IFlextLdapRepository
-
-        assert isinstance(repository, IFlextLdapRepository)
+        # Should have protocol methods (structural typing)
+        assert hasattr(repository, "save_async")
+        assert hasattr(repository, "delete_async")
+        assert hasattr(repository, "get_by_id")
+        assert hasattr(repository, "find_by_dn")
+        assert callable(repository.save_async)
+        assert callable(repository.delete_async)
+        assert callable(repository.get_by_id)
 
     def test_repository_follows_repository_pattern(self) -> None:
         """Test repository follows Repository pattern correctly."""
@@ -378,14 +382,12 @@ class TestRealRepositoryValidation:
         assert hasattr(repository, "find_by_dn")
 
         # Method should exist and be async
-        import inspect
 
         assert inspect.iscoroutinefunction(repository.find_by_dn)
 
     def test_repository_uses_value_objects(self) -> None:
         """Test repository uses value objects for validation."""
         # Repository module should import and use value objects
-        from flext_ldap import repositories as repositories_module
 
         # Should have access to FlextLdapDistinguishedName
         assert hasattr(repositories_module, "FlextLdapDistinguishedName")
@@ -395,7 +397,6 @@ class TestRealRepositoryValidation:
     def test_repository_integrates_with_search_requests(self) -> None:
         """Test repository integrates with search request entities."""
         # Repository should use FlextLdapSearchRequest
-        from flext_ldap import repositories as repositories_module
 
         # Should have access to search request
         assert hasattr(repositories_module, "FlextLdapSearchRequest")
@@ -412,7 +413,6 @@ class TestRealRepositoryIntegrationPatterns:
         repository = FlextLdapRepository(client)
 
         # Should work with FlextResult pattern
-        import inspect
 
         # Method signatures should indicate FlextResult usage
         find_signature = inspect.signature(repository.find_by_dn)
@@ -423,10 +423,8 @@ class TestRealRepositoryIntegrationPatterns:
         client = FlextLdapClient()
         repository = FlextLdapRepository(client)
 
-        # All repository methods should be async
-        async_methods = ["find_by_dn", "save", "delete", "exists"]
-
-        import inspect
+        # All repository async methods should be async
+        async_methods = ["find_by_dn", "save_async", "delete_async", "exists"]
 
         for method_name in async_methods:
             if hasattr(repository, method_name):
@@ -437,8 +435,6 @@ class TestRealRepositoryIntegrationPatterns:
 
     def test_repository_module_structure_is_clean(self) -> None:
         """Test repository module has clean structure."""
-        from flext_ldap import repositories as repositories_module
-
         # Should have main repository class
         assert hasattr(repositories_module, "FlextLdapRepository")
 
@@ -496,8 +492,6 @@ class TestRealFlextLdapRepositoryValidation:
 
     async def test_find_by_dn_handles_empty_search_results(self) -> None:
         """Test find_by_dn handles empty search results."""
-        from flext_ldap.entities import FlextLdapSearchResponse
-
         client = FlextLdapClient()
         repository = FlextLdapRepository(client)
 
@@ -513,8 +507,6 @@ class TestRealFlextLdapRepositoryValidation:
 
     async def test_find_by_dn_creates_entry_from_search_results(self) -> None:
         """Test find_by_dn creates FlextLdapEntry from search results."""
-        from flext_ldap.entities import FlextLdapSearchResponse
-
         client = FlextLdapClient()
         repository = FlextLdapRepository(client)
 
@@ -546,8 +538,6 @@ class TestRealFlextLdapRepositorySearch:
 
     async def test_search_delegates_to_client(self) -> None:
         """Test search method delegates correctly to client."""
-        from flext_ldap.entities import FlextLdapSearchResponse
-
         client = FlextLdapClient()
         repository = FlextLdapRepository(client)
 
@@ -599,8 +589,6 @@ class TestRealFlextLdapRepositorySave:
 
     async def test_save_validates_entry_business_rules(self) -> None:
         """Test save validates entry business rules."""
-        from flext_core import FlextEntityId, FlextEntityStatus
-
         client = FlextLdapClient()
         repository = FlextLdapRepository(client)
 
@@ -613,14 +601,12 @@ class TestRealFlextLdapRepositorySave:
             status=FlextEntityStatus.ACTIVE,
         )
 
-        result = await repository.save(entry)
+        result = await repository.save_async(entry)
         assert not result.is_success
         assert "Entry validation failed" in (result.error or "")
 
     async def test_save_checks_entry_existence(self) -> None:
         """Test save checks if entry exists before save."""
-        from flext_core import FlextEntityId, FlextEntityStatus
-
         client = FlextLdapClient()
         repository = FlextLdapRepository(client)
 
@@ -642,14 +628,12 @@ class TestRealFlextLdapRepositorySave:
         # Mock validate_business_rules to pass
         entry.validate_business_rules = lambda: FlextResult[None].ok(None)
 
-        result = await repository.save(entry)
+        result = await repository.save_async(entry)
         assert not result.is_success
         assert "Could not check if entry exists" in (result.error or "")
 
     async def test_save_updates_existing_entry(self) -> None:
         """Test save updates existing entry via modify."""
-        from flext_core import FlextEntityId, FlextEntityStatus
-
         client = FlextLdapClient()
         repository = FlextLdapRepository(client)
 
@@ -676,13 +660,11 @@ class TestRealFlextLdapRepositorySave:
         # Mock validate_business_rules to pass
         entry.validate_business_rules = lambda: FlextResult[None].ok(None)
 
-        result = await repository.save(entry)
+        result = await repository.save_async(entry)
         assert result.is_success
 
     async def test_save_creates_new_entry(self) -> None:
         """Test save creates new entry via add."""
-        from flext_core import FlextEntityId, FlextEntityStatus
-
         client = FlextLdapClient()
         repository = FlextLdapRepository(client)
 
@@ -709,7 +691,7 @@ class TestRealFlextLdapRepositorySave:
         # Mock validate_business_rules to pass
         entry.validate_business_rules = lambda: FlextResult[None].ok(None)
 
-        result = await repository.save(entry)
+        result = await repository.save_async(entry)
         assert result.is_success
 
 
@@ -722,7 +704,7 @@ class TestRealFlextLdapRepositoryDelete:
         repository = FlextLdapRepository(client)
 
         # Invalid DN should fail validation
-        result = await repository.delete("")
+        result = await repository.delete_async("")
         assert not result.is_success
         assert "Invalid DN format" in (result.error or "")
 
@@ -737,7 +719,7 @@ class TestRealFlextLdapRepositoryDelete:
 
         client.delete = mock_delete
 
-        result = await repository.delete("cn=test,dc=example,dc=com")
+        result = await repository.delete_async("cn=test,dc=example,dc=com")
         assert result.is_success
 
     async def test_delete_handles_client_failure(self) -> None:
@@ -751,7 +733,7 @@ class TestRealFlextLdapRepositoryDelete:
 
         client.delete = mock_delete_failure
 
-        result = await repository.delete("cn=test,dc=example,dc=com")
+        result = await repository.delete_async("cn=test,dc=example,dc=com")
         assert not result.is_success
         assert "Delete failed" in (result.error or "")
 
@@ -766,7 +748,6 @@ class TestRealFlextLdapRepositoryExists:
 
         # Mock find_by_dn to return an entry
         async def mock_find_by_dn_found(dn):
-            from flext_core import FlextEntityId, FlextEntityStatus
 
             entry = FlextLdapEntry(
                 id=FlextEntityId("test"),
@@ -870,8 +851,6 @@ class TestRealFlextLdapUserRepository:
 
     def test_user_repository_can_be_instantiated(self) -> None:
         """Test FlextLdapUserRepository can be instantiated."""
-        from flext_ldap.repositories import FlextLdapUserRepository
-
         client = FlextLdapClient()
         base_repo = FlextLdapRepository(client)
         user_repo = FlextLdapUserRepository(base_repo)
@@ -881,16 +860,11 @@ class TestRealFlextLdapUserRepository:
 
     def test_user_repository_requires_base_repository(self) -> None:
         """Test FlextLdapUserRepository requires base repository."""
-        from flext_ldap.repositories import FlextLdapUserRepository
-
         with pytest.raises(TypeError):
             FlextLdapUserRepository()  # Missing required base_repository
 
     async def test_find_user_by_uid_creates_correct_search_request(self) -> None:
         """Test find_user_by_uid creates correct search request."""
-        from flext_ldap.entities import FlextLdapSearchResponse
-        from flext_ldap.repositories import FlextLdapUserRepository
-
         client = FlextLdapClient()
         base_repo = FlextLdapRepository(client)
         user_repo = FlextLdapUserRepository(base_repo)
@@ -918,8 +892,6 @@ class TestRealFlextLdapUserRepository:
 
     async def test_find_user_by_uid_handles_search_failure(self) -> None:
         """Test find_user_by_uid handles search failures."""
-        from flext_ldap.repositories import FlextLdapUserRepository
-
         client = FlextLdapClient()
         base_repo = FlextLdapRepository(client)
         user_repo = FlextLdapUserRepository(base_repo)
@@ -938,9 +910,6 @@ class TestRealFlextLdapUserRepository:
 
     async def test_find_user_by_uid_handles_missing_dn_in_results(self) -> None:
         """Test find_user_by_uid handles missing DN in search results."""
-        from flext_ldap.entities import FlextLdapSearchResponse
-        from flext_ldap.repositories import FlextLdapUserRepository
-
         client = FlextLdapClient()
         base_repo = FlextLdapRepository(client)
         user_repo = FlextLdapUserRepository(base_repo)
@@ -964,9 +933,6 @@ class TestRealFlextLdapUserRepository:
 
     async def test_find_users_by_filter_creates_correct_search_request(self) -> None:
         """Test find_users_by_filter creates correct search request."""
-        from flext_ldap.entities import FlextLdapSearchResponse
-        from flext_ldap.repositories import FlextLdapUserRepository
-
         client = FlextLdapClient()
         base_repo = FlextLdapRepository(client)
         user_repo = FlextLdapUserRepository(base_repo)
@@ -998,8 +964,6 @@ class TestRealFlextLdapGroupRepository:
 
     def test_group_repository_can_be_instantiated(self) -> None:
         """Test FlextLdapGroupRepository can be instantiated."""
-        from flext_ldap.repositories import FlextLdapGroupRepository
-
         client = FlextLdapClient()
         base_repo = FlextLdapRepository(client)
         group_repo = FlextLdapGroupRepository(base_repo)
@@ -1009,16 +973,11 @@ class TestRealFlextLdapGroupRepository:
 
     def test_group_repository_requires_base_repository(self) -> None:
         """Test FlextLdapGroupRepository requires base repository."""
-        from flext_ldap.repositories import FlextLdapGroupRepository
-
         with pytest.raises(TypeError):
             FlextLdapGroupRepository()  # Missing required base_repository
 
     async def test_find_group_by_cn_creates_correct_search_request(self) -> None:
         """Test find_group_by_cn creates correct search request."""
-        from flext_ldap.entities import FlextLdapSearchResponse
-        from flext_ldap.repositories import FlextLdapGroupRepository
-
         client = FlextLdapClient()
         base_repo = FlextLdapRepository(client)
         group_repo = FlextLdapGroupRepository(base_repo)
@@ -1046,8 +1005,6 @@ class TestRealFlextLdapGroupRepository:
 
     async def test_get_group_members_handles_group_not_found(self) -> None:
         """Test get_group_members handles group not found."""
-        from flext_ldap.repositories import FlextLdapGroupRepository
-
         client = FlextLdapClient()
         base_repo = FlextLdapRepository(client)
         group_repo = FlextLdapGroupRepository(base_repo)
@@ -1066,10 +1023,6 @@ class TestRealFlextLdapGroupRepository:
 
     async def test_get_group_members_extracts_member_attributes(self) -> None:
         """Test get_group_members extracts member attributes correctly."""
-        from flext_core import FlextEntityId, FlextEntityStatus
-
-        from flext_ldap.repositories import FlextLdapGroupRepository
-
         client = FlextLdapClient()
         base_repo = FlextLdapRepository(client)
         group_repo = FlextLdapGroupRepository(base_repo)
@@ -1106,8 +1059,6 @@ class TestRealFlextLdapGroupRepository:
 
     async def test_add_member_to_group_prevents_duplicate_members(self) -> None:
         """Test add_member_to_group prevents adding duplicate members."""
-        from flext_ldap.repositories import FlextLdapGroupRepository
-
         client = FlextLdapClient()
         base_repo = FlextLdapRepository(client)
         group_repo = FlextLdapGroupRepository(base_repo)
@@ -1134,8 +1085,6 @@ class TestRealFlextLdapGroupRepository:
 
     async def test_add_member_to_group_adds_new_member(self) -> None:
         """Test add_member_to_group successfully adds new member."""
-        from flext_ldap.repositories import FlextLdapGroupRepository
-
         client = FlextLdapClient()
         base_repo = FlextLdapRepository(client)
         group_repo = FlextLdapGroupRepository(base_repo)
@@ -1170,7 +1119,7 @@ class TestRealFlextLdapGroupRepository:
         assert "cn=user2,ou=people,dc=example,dc=com" in members
 
 
-class TestRealRepositoryErrorHandling:
+class TestRealRepositoryAdvancedErrorHandling:
     """Test REAL repository error handling patterns."""
 
     async def test_repository_validates_input_parameters(self) -> None:
@@ -1182,7 +1131,7 @@ class TestRealRepositoryErrorHandling:
         result = await repository.find_by_dn("")
         assert not result.is_success
 
-        result = await repository.delete("")
+        result = await repository.delete_async("")
         assert not result.is_success
 
         result = await repository.update("", {})

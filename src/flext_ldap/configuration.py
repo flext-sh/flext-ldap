@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Final, final, override
 
 from flext_core import FlextConfig, FlextResult, get_logger
@@ -11,6 +13,11 @@ from flext_ldap.constants import (
     FlextLdapConnectionConstants,
 )
 from flext_ldap.fields import FlextLdapScopeEnum
+
+try:
+    import yaml
+except ImportError:
+    yaml = None  # type: ignore[assignment]
 
 logger = get_logger(__name__)
 
@@ -304,6 +311,11 @@ class FlextLdapSettings(FlextConfig):
         # Return minimal default configuration
         return FlextLdapConnectionConfig()
 
+    def get_effective_auth_config(self) -> FlextLdapAuthConfig | None:
+        """Get effective authentication configuration."""
+        connection = self.get_effective_connection()
+        return connection.auth
+
     # Testing convenience: expose `.connection` attribute used by some callers/tests
     @property
     def connection(self) -> FlextLdapConnectionConfig | None:
@@ -319,6 +331,112 @@ class FlextLdapSettings(FlextConfig):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules (alias for validate_business_rules)."""
         return self.validate_business_rules()
+
+    @classmethod
+    def from_env(cls) -> FlextLdapSettings:
+        """Create FlextLdapSettings from environment variables.
+
+        Raises:
+            ValueError: If required environment variables are missing.
+
+        """
+        # Error messages as constants
+        host_error = "FLEXT_LDAP_HOST environment variable is required"
+        port_error = "FLEXT_LDAP_PORT environment variable is required"
+        bind_dn_error = "FLEXT_LDAP_BIND_DN environment variable is required"
+        bind_credential_error = "FLEXT_LDAP_BIND_PASSWORD environment variable is required"  # noqa: S105
+        base_dn_error = "FLEXT_LDAP_BASE_DN environment variable is required"
+
+        # Check for required environment variables
+        host_result = cls.get_env_with_validation("FLEXT_LDAP_HOST", required=True)
+        if not host_result.is_success:
+            raise ValueError(host_error)
+
+        port_result = cls.get_env_with_validation("FLEXT_LDAP_PORT", required=True)
+        if not port_result.is_success:
+            raise ValueError(port_error)
+
+        bind_dn_result = cls.get_env_with_validation("FLEXT_LDAP_BIND_DN", required=True)
+        if not bind_dn_result.is_success:
+            raise ValueError(bind_dn_error)
+
+        bind_password_result = cls.get_env_with_validation("FLEXT_LDAP_BIND_PASSWORD", required=True)
+        if not bind_password_result.is_success:
+            raise ValueError(bind_credential_error)
+
+        base_dn_result = cls.get_env_with_validation("FLEXT_LDAP_BASE_DN", required=True)
+        if not base_dn_result.is_success:
+            raise ValueError(base_dn_error)
+
+        # Get optional values
+        use_ssl_result = cls.get_env_with_validation("FLEXT_LDAP_USE_SSL", required=False, default="false")
+        use_ssl = use_ssl_result.value.lower() in {"true", "1", "yes", "on"}
+
+        # Create auth config
+        auth_config = FlextLdapAuthConfig(
+            bind_dn=bind_dn_result.value,
+            bind_password=SecretStr(bind_password_result.value),
+            use_ssl=use_ssl,
+        )
+
+        # Create connection config
+        connection_config = FlextLdapConnectionConfig(
+            server=host_result.value,
+            port=int(port_result.value),
+            base_dn=base_dn_result.value,
+            auth=auth_config,
+        )
+
+        # Create settings using alias field name for Pydantic
+        config_data: dict[str, object] = {
+            "default_connection": connection_config,
+        }
+        return cls.model_validate(config_data)
+
+    @classmethod
+    def from_file(cls, file_path: str) -> FlextLdapSettings:
+        """Create FlextLdapSettings from YAML/JSON file.
+
+        Args:
+            file_path: Path to configuration file
+
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            ValueError: If file format is invalid
+
+        """
+        # Error messages as constants
+        file_not_found_msg = f"Configuration file not found: {file_path}"
+        yaml_import_error_msg = "Failed to parse configuration file: YAML parsing requires PyYAML package"
+        file_read_error_msg = f"Failed to read configuration file: {file_path}"
+
+        # Check if file exists
+        file_path_obj = Path(file_path)
+        if not file_path_obj.exists():
+            raise FileNotFoundError(file_not_found_msg)
+
+        try:
+            with file_path_obj.open(encoding="utf-8") as f:
+                content = f.read()
+
+            # Try to parse as JSON first
+            try:
+                config_dict = json.loads(content)
+            except json.JSONDecodeError:
+                # Try to parse as YAML
+                if yaml is None:
+                    raise ValueError(yaml_import_error_msg) from None
+                try:
+                    config_dict = yaml.safe_load(content)
+                except yaml.YAMLError as e:
+                    yaml_format_error_msg = f"Failed to parse configuration file: Invalid YAML format: {e}"
+                    raise ValueError(yaml_format_error_msg) from e
+        except Exception as e:
+            if isinstance(e, (FileNotFoundError, ValueError)):
+                raise
+            raise ValueError(file_read_error_msg) from e
+
+        return cls.model_validate(config_dict)
 
 
 # Factory functions for different environments

@@ -14,8 +14,7 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from flext_core import get_logger
-from flext_core.exceptions import FlextError
+from flext_core import FlextError, get_logger
 
 from flext_ldap.constants import FlextLdapOperationMessages
 
@@ -77,7 +76,7 @@ class FlextLdapError(FlextError):
         if self.ldap_result_code:
             parts.append(
                 FlextLdapOperationMessages.LDAP_CODE_CONTEXT.format(
-                    code=self.ldap_result_code,
+                    ldap_code=self.ldap_result_code,
                 ),
             )
 
@@ -524,7 +523,7 @@ class FlextLdapExceptionFactory:
         """Create authentication failure exception."""
         message = "LDAP authentication failed"
         if ldap_result_code and ldap_result_code in cls.LDAP_RESULT_CODES:
-            message += f": {cls.LDAP_RESULT_CODES[ldap_result_code]}"
+            message += f": {cls.LDAP_RESULT_CODES[ldap_result_code]} (code: {ldap_result_code})"
 
         return FlextLdapAuthenticationError(
             message,
@@ -564,9 +563,9 @@ class FlextLdapExceptionFactory:
         if ldap_result_code:
             code_desc = cls.LDAP_RESULT_CODES.get(
                 str(ldap_result_code),
-                str(ldap_result_code),
+                "Unknown Error",
             )
-            message = f"{message} (code: {code_desc})"
+            message = f"{message} (code: {ldap_result_code} - {code_desc})"
         return FlextLdapUserError(
             message,
             user_dn=user_dn,

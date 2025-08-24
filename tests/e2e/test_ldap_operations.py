@@ -10,6 +10,7 @@ import pytest
 from pydantic import SecretStr
 
 from flext_ldap import (
+    FlextLdapAuthConfig,
     FlextLdapConnectionConfig,
     FlextLdapCreateUserRequest,
     get_ldap_api,
@@ -120,7 +121,6 @@ class TestLdapE2EOperations:
     def test_api_configuration_integration(self) -> None:
         """Test API configuration integration."""
         # Test with custom configuration
-        from flext_ldap import FlextLdapAuthConfig  # noqa: PLC0415
 
         auth_config = FlextLdapAuthConfig(
             bind_dn="cn=admin,dc=test,dc=local",

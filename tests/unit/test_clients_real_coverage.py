@@ -12,9 +12,13 @@ import ldap3
 import pytest
 from ldap3.core.exceptions import LDAPException
 
-from flext_ldap.clients import SCOPE_MAP, FlextLdapClient
-from flext_ldap.entities import FlextLdapSearchRequest, FlextLdapSearchResponse
-from flext_ldap.typings import LdapAttributeDict
+from flext_ldap import (
+    SCOPE_MAP,
+    FlextLdapClient,
+    FlextLdapSearchRequest,
+    FlextLdapSearchResponse,
+    LdapAttributeDict,
+)
 
 
 class TestFlextLdapClientRealExecution:
@@ -909,7 +913,6 @@ class TestFlextLdapClientIntegrationReal:
             client._connection = mock_connection
 
             # Execute operation that should log
-            import asyncio
 
             asyncio.run(
                 client.add("cn=test,dc=example,dc=com", {"objectClass": ["person"]})

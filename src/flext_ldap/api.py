@@ -62,8 +62,11 @@ class FlextLdapApi:
         if not bind_dn or not bind_password:
             return FlextResult[str].fail("bind_dn and bind_password are required")
 
-        # Get client from container
-        client = self._container.get_client()
+        # Get client from flext-core container
+        client_result = self._container.get("FlextLdapClient")
+        if not client_result.is_success:
+            return FlextResult[str].fail(f"Failed to get LDAP client: {client_result.error}")
+        client = client_result.value
 
         # Connect using real client
         connect_result = await client.connect(server_uri, bind_dn, bind_password)
@@ -81,7 +84,10 @@ class FlextLdapApi:
 
     async def disconnect(self, session_id: str) -> FlextResult[bool]:
         """Disconnect from LDAP server."""
-        client = self._container.get_client()
+        client_result = self._container.get("FlextLdapClient")
+        if not client_result.is_success:
+            return FlextResult[bool].fail(f"Failed to get LDAP client: {client_result.error}")
+        client = client_result.value
         disconnect_result = await client.unbind()
 
         if disconnect_result.is_success:
@@ -277,8 +283,11 @@ class FlextLdapApi:
 
     async def delete_entry(self, dn: str) -> FlextResult[None]:
         """Delete LDAP entry by DN."""
-        repository = self._container.get_repository()
-        return await repository.delete(dn)
+        repository_result = self._container.get("FlextLdapRepository")
+        if not repository_result.is_success:
+            return FlextResult[None].fail(f"Failed to get LDAP repository: {repository_result.error}")
+        repository = repository_result.value
+        return await repository.delete_async(dn)
 
     # Validation Methods
 

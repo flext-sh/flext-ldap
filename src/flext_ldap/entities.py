@@ -11,9 +11,9 @@ from flext_core import (
     FlextEntityStatus,
     FlextModel,
     FlextResult,
+    FlextTypes,
     get_logger,
 )
-from flext_core.typings import FlextTypes
 from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from flext_ldap.fields import LdapAttributeProcessor

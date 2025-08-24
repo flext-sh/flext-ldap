@@ -22,19 +22,19 @@ from flext_ldap.operations import (
     FlextLdapEntryOperations,
     FlextLdapGroupOperations,
     FlextLdapOperations,
-    FlextLdapOperationsBase,
     FlextLdapSearchOperations,
     FlextLdapUserOperations,
 )
 from flext_ldap.typings import LdapAttributeDict
 
 
-class TestFlextLdapOperationsBase:
-    """Test base operations class."""
+class TestFlextLdapOperations:
+    """Test operations class (base class now internal)."""
 
     def test_operations_base_initialization(self) -> None:
         """Test base operations initialization."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         assert ops is not None
         assert hasattr(ops, "_container")
@@ -42,7 +42,8 @@ class TestFlextLdapOperationsBase:
 
     def test_generate_id_with_uuid_fallback(self) -> None:
         """Test ID generation with UUID fallback."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         # Should generate a string ID
         id1 = ops._generate_id()
@@ -55,7 +56,8 @@ class TestFlextLdapOperationsBase:
 
     def test_validate_dn_or_fail_with_valid_dn(self) -> None:
         """Test DN validation with valid DN."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         result = ops._validate_dn_or_fail("cn=test,dc=example,dc=com")
 
@@ -63,7 +65,8 @@ class TestFlextLdapOperationsBase:
 
     def test_validate_dn_or_fail_with_invalid_dn(self) -> None:
         """Test DN validation with invalid DN."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         # This will raise a ValidationError directly from Pydantic
         with pytest.raises(Exception):  # Could be ValidationError from Pydantic
@@ -71,7 +74,8 @@ class TestFlextLdapOperationsBase:
 
     def test_validate_filter_or_fail_with_valid_filter(self) -> None:
         """Test filter validation with valid filter."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         result = ops._validate_filter_or_fail("(cn=test)")
 
@@ -79,7 +83,8 @@ class TestFlextLdapOperationsBase:
 
     def test_validate_filter_or_fail_with_invalid_filter(self) -> None:
         """Test filter validation with invalid filter."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         # This will raise a ValidationError directly from Pydantic
         with pytest.raises(Exception):  # Could be ValidationError from Pydantic
@@ -87,7 +92,8 @@ class TestFlextLdapOperationsBase:
 
     def test_validate_uri_or_fail_with_valid_uri(self) -> None:
         """Test URI validation with valid URI."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         result = ops._validate_uri_or_fail("ldap://localhost:389")
 
@@ -95,7 +101,8 @@ class TestFlextLdapOperationsBase:
 
     def test_validate_uri_or_fail_with_invalid_uri(self) -> None:
         """Test URI validation with invalid URI."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         result = ops._validate_uri_or_fail("invalid://test")
 
@@ -104,7 +111,8 @@ class TestFlextLdapOperationsBase:
 
     def test_validate_uri_or_fail_with_empty_uri(self) -> None:
         """Test URI validation with empty URI."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         result = ops._validate_uri_or_fail("")
 
@@ -113,7 +121,8 @@ class TestFlextLdapOperationsBase:
 
     def test_handle_exception_with_context(self) -> None:
         """Test exception handling with context."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         exception = ValueError("Test error")
         result = ops._handle_exception_with_context(
@@ -126,7 +135,8 @@ class TestFlextLdapOperationsBase:
 
     def test_log_operation_success(self) -> None:
         """Test successful operation logging."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         # Should not raise exception
         try:
@@ -930,7 +940,7 @@ class TestFlextLdapGroupOperations:
         assert "cn=dummy" in result.value[0]
 
 
-class TestFlextLdapOperations:
+class TestFlextLdapOperationsUnified:
     """Test unified LDAP operations interface."""
 
     @pytest.mark.asyncio

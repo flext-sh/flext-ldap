@@ -98,7 +98,7 @@ class TestFlextLdapUser:
             "status": FlextEntityStatus.ACTIVE,
         }
         defaults.update(kwargs)
-        return FlextLdapUser(**defaults)  # type: ignore[arg-type] # Test helper with dynamic args
+        return FlextLdapUser(**defaults)
 
     def test_user_creation_with_required_fields(self) -> None:
         """Test user entity creation with required fields."""
@@ -194,7 +194,7 @@ class TestFlextLdapGroup:
             "status": FlextEntityStatus.ACTIVE,
         }
         defaults.update(kwargs)
-        return FlextLdapGroup(**defaults)  # type: ignore[arg-type] # Test helper with dynamic args
+        return FlextLdapGroup(**defaults)
 
     def test_group_creation_with_required_fields(self) -> None:
         """Test group entity creation with required fields."""
@@ -292,7 +292,7 @@ class TestFlextLdapEntry:
             "status": FlextEntityStatus.ACTIVE,
         }
         defaults.update(kwargs)
-        return FlextLdapEntry(**defaults)  # type: ignore[arg-type] # Test helper with dynamic args
+        return FlextLdapEntry(**defaults)
 
     def test_entry_creation_and_attribute_access(self) -> None:
         """Test entry creation and attribute access methods."""

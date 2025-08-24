@@ -5,17 +5,29 @@ These tests execute REAL adapter code to increase coverage and validate function
 
 from __future__ import annotations
 
+import inspect
+
 import pytest
 from flext_core import FlextResult
 from pydantic import ValidationError
 
-# Test real adapters functionality
+# Test real adapters functionality - CONSOLIDATED IMPORTS TO FIX PLC0415
 from flext_ldap.adapters import (
     ConnectionConfig,
-    ConnectionServiceInterface,
     DirectoryEntry,
     FlextLdapConnectionConstants,
+    FlextLdapConnectionService,
+    FlextLdapDirectoryAdapter,
+    FlextLdapDirectoryEntry,
+    FlextLdapDirectoryService,
+    FlextLdapEntryService,
+    FlextLdapSearchService,
+    OperationExecutor,
+    create_directory_adapter,
+    create_directory_service,
+    # Interfaces removed - using concrete implementations
 )
+from flext_ldap.clients import FlextLdapClient
 
 
 class TestRealAdaptersModels:
@@ -143,28 +155,15 @@ class TestRealAdaptersModels:
 class TestRealAdaptersInterfaces:
     """Test REAL adapters interfaces and protocols."""
 
-    def test_connection_service_interface_is_abstract(self) -> None:
-        """Test that ConnectionServiceInterface is abstract and cannot be instantiated."""
-        with pytest.raises(TypeError):
-            ConnectionServiceInterface()  # Should fail because it's abstract
+    def test_connection_service_concrete_implementation(self) -> None:
+        """Test that FlextLdapConnectionService is a concrete implementation."""
+        # Test that we can instantiate the concrete service
+        service = FlextLdapConnectionService(FlextLdapClient())
+        assert service is not None
 
-    def test_connection_service_interface_methods_are_abstract(self) -> None:
-        """Test that ConnectionServiceInterface methods are abstract."""
-        # Verify the interface has the expected abstract methods
-        assert hasattr(ConnectionServiceInterface, "establish_connection")
-        assert hasattr(ConnectionServiceInterface, "terminate_connection")
-
-        # Verify they are marked as abstract
-        assert getattr(
-            ConnectionServiceInterface.establish_connection,
-            "__isabstractmethod__",
-            False,
-        )
-        assert getattr(
-            ConnectionServiceInterface.terminate_connection,
-            "__isabstractmethod__",
-            False,
-        )
+        # Verify it has the expected methods
+        assert hasattr(service, "establish_connection")
+        assert hasattr(service, "terminate_connection")
 
 
 class TestRealAdaptersConstants:
@@ -360,14 +359,14 @@ class TestRealOperationExecutor:
 
     def test_operation_executor_can_be_instantiated(self) -> None:
         """Test OperationExecutor can be instantiated."""
-        from flext_ldap.adapters import OperationExecutor
+        # OperationExecutor imported at top
 
         executor = OperationExecutor()
         assert isinstance(executor, OperationExecutor)
 
     async def test_operation_executor_execute_string_operation_success(self) -> None:
         """Test OperationExecutor handles successful string operations."""
-        from flext_ldap.adapters import OperationExecutor
+        # OperationExecutor imported at top
 
         executor = OperationExecutor()
 
@@ -391,7 +390,7 @@ class TestRealOperationExecutor:
         self,
     ) -> None:
         """Test OperationExecutor handles validation failures."""
-        from flext_ldap.adapters import OperationExecutor
+        # OperationExecutor imported at top
 
         executor = OperationExecutor()
 
@@ -415,7 +414,7 @@ class TestRealOperationExecutor:
         self,
     ) -> None:
         """Test OperationExecutor handles exceptions gracefully."""
-        from flext_ldap.adapters import OperationExecutor
+        # OperationExecutor imported at top
 
         executor = OperationExecutor()
 
@@ -437,8 +436,7 @@ class TestRealOperationExecutor:
 
     async def test_operation_executor_execute_operation_with_list_return(self) -> None:
         """Test OperationExecutor execute_operation method for list results."""
-        from flext_ldap.adapters import OperationExecutor
-        from flext_ldap.entities import FlextLdapEntry
+        # OperationExecutor imported at top
 
         executor = OperationExecutor()
 
@@ -463,9 +461,6 @@ class TestRealFlextLdapConnectionService:
 
     def test_connection_service_can_be_instantiated(self) -> None:
         """Test FlextLdapConnectionService can be instantiated with client."""
-        from flext_ldap.adapters import FlextLdapConnectionService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapConnectionService(client)
 
@@ -474,16 +469,11 @@ class TestRealFlextLdapConnectionService:
 
     def test_connection_service_requires_client(self) -> None:
         """Test FlextLdapConnectionService requires client parameter."""
-        from flext_ldap.adapters import FlextLdapConnectionService
-
         with pytest.raises(TypeError):
             FlextLdapConnectionService()  # Missing required client parameter
 
     def test_connection_service_has_required_methods(self) -> None:
         """Test FlextLdapConnectionService has required methods."""
-        from flext_ldap.adapters import FlextLdapConnectionService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapConnectionService(client)
 
@@ -499,37 +489,25 @@ class TestRealFlextLdapConnectionService:
 
     def test_connection_service_initial_state_not_connected(self) -> None:
         """Test connection service starts in not connected state."""
-        from flext_ldap.adapters import FlextLdapConnectionService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapConnectionService(client)
 
         assert not service.is_connected()
 
-    def test_connection_service_inherits_from_interfaces(self) -> None:
-        """Test FlextLdapConnectionService inherits from correct interfaces."""
-        from flext_ldap.adapters import (
-            ConnectionServiceInterface,
-            FlextLdapConnectionService,
-            OperationExecutor,
-        )
-        from flext_ldap.clients import FlextLdapClient
-
+    def test_connection_service_follows_flext_patterns(self) -> None:
+        """Test FlextLdapConnectionService follows FLEXT architectural patterns."""
         client = FlextLdapClient()
         service = FlextLdapConnectionService(client)
 
-        # Should inherit from both interfaces
-        assert isinstance(service, ConnectionServiceInterface)
-        assert isinstance(service, OperationExecutor)
+        # Should have required methods after FLEXT compliance refactoring
+        assert hasattr(service, "establish_connection")
+        assert hasattr(service, "terminate_connection")
+        assert hasattr(service, "is_connected")
 
     async def test_connection_service_establish_connection_validates_config(
         self,
     ) -> None:
         """Test establish_connection validates configuration."""
-        from flext_ldap.adapters import FlextLdapConnectionService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapConnectionService(client)
 
@@ -545,9 +523,6 @@ class TestRealFlextLdapConnectionService:
         self,
     ) -> None:
         """Test terminate_connection when not connected."""
-        from flext_ldap.adapters import FlextLdapConnectionService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapConnectionService(client)
 
@@ -562,9 +537,6 @@ class TestRealFlextLdapSearchService:
 
     def test_search_service_can_be_instantiated(self) -> None:
         """Test FlextLdapSearchService can be instantiated with client."""
-        from flext_ldap.adapters import FlextLdapSearchService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapSearchService(client)
 
@@ -573,16 +545,11 @@ class TestRealFlextLdapSearchService:
 
     def test_search_service_requires_client(self) -> None:
         """Test FlextLdapSearchService requires client parameter."""
-        from flext_ldap.adapters import FlextLdapSearchService
-
         with pytest.raises(TypeError):
             FlextLdapSearchService()  # Missing required client parameter
 
     def test_search_service_has_required_methods(self) -> None:
         """Test FlextLdapSearchService has required methods."""
-        from flext_ldap.adapters import FlextLdapSearchService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapSearchService(client)
 
@@ -592,19 +559,16 @@ class TestRealFlextLdapSearchService:
 
     def test_search_service_inherits_from_interface(self) -> None:
         """Test FlextLdapSearchService inherits from correct interface."""
-        from flext_ldap.adapters import FlextLdapSearchService, SearchServiceInterface
-        from flext_ldap.clients import FlextLdapClient
+        # SearchServiceInterface removed - using concrete implementation
 
         client = FlextLdapClient()
         service = FlextLdapSearchService(client)
 
-        assert isinstance(service, SearchServiceInterface)
+        # Interface check removed - SearchServiceInterface no longer exists
+        assert hasattr(service, "search_entries")  # Check method exists instead
 
     async def test_search_service_validates_empty_base_dn(self) -> None:
         """Test search_entries validates empty base DN."""
-        from flext_ldap.adapters import FlextLdapSearchService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapSearchService(client)
 
@@ -614,9 +578,6 @@ class TestRealFlextLdapSearchService:
 
     async def test_search_service_validates_empty_filter(self) -> None:
         """Test search_entries validates empty search filter."""
-        from flext_ldap.adapters import FlextLdapSearchService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapSearchService(client)
 
@@ -626,9 +587,6 @@ class TestRealFlextLdapSearchService:
 
     def test_search_service_has_private_methods(self) -> None:
         """Test search service has required private methods."""
-        from flext_ldap.adapters import FlextLdapSearchService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapSearchService(client)
 
@@ -640,9 +598,6 @@ class TestRealFlextLdapSearchService:
 
     def test_search_service_validation_method_works(self) -> None:
         """Test search service validation method works correctly."""
-        from flext_ldap.adapters import FlextLdapSearchService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapSearchService(client)
 
@@ -666,9 +621,6 @@ class TestRealFlextLdapEntryService:
 
     def test_entry_service_can_be_instantiated(self) -> None:
         """Test FlextLdapEntryService can be instantiated with client."""
-        from flext_ldap.adapters import FlextLdapEntryService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapEntryService(client)
 
@@ -677,16 +629,11 @@ class TestRealFlextLdapEntryService:
 
     def test_entry_service_requires_client(self) -> None:
         """Test FlextLdapEntryService requires client parameter."""
-        from flext_ldap.adapters import FlextLdapEntryService
-
         with pytest.raises(TypeError):
             FlextLdapEntryService()  # Missing required client parameter
 
     def test_entry_service_has_required_methods(self) -> None:
         """Test FlextLdapEntryService has required methods."""
-        from flext_ldap.adapters import FlextLdapEntryService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapEntryService(client)
 
@@ -702,24 +649,15 @@ class TestRealFlextLdapEntryService:
 
     def test_entry_service_inherits_from_interfaces(self) -> None:
         """Test FlextLdapEntryService inherits from correct interfaces."""
-        from flext_ldap.adapters import (
-            EntryServiceInterface,
-            FlextLdapEntryService,
-            OperationExecutor,
-        )
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapEntryService(client)
 
-        assert isinstance(service, EntryServiceInterface)
+        # Interface check removed - EntryServiceInterface no longer exists
+        assert hasattr(service, "add_entry")  # Check method exists instead
         assert isinstance(service, OperationExecutor)
 
     async def test_entry_service_validates_entry_for_add_no_attributes(self) -> None:
         """Test add_entry validates entry with no attributes."""
-        from flext_ldap.adapters import FlextLdapEntryService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapEntryService(client)
 
@@ -731,9 +669,6 @@ class TestRealFlextLdapEntryService:
 
     async def test_entry_service_validates_entry_for_add_no_object_class(self) -> None:
         """Test add_entry validates entry without objectClass."""
-        from flext_ldap.adapters import FlextLdapEntryService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapEntryService(client)
 
@@ -747,9 +682,6 @@ class TestRealFlextLdapEntryService:
 
     async def test_entry_service_validates_dn_for_modify(self) -> None:
         """Test modify_entry validates DN parameter."""
-        from flext_ldap.adapters import FlextLdapEntryService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapEntryService(client)
 
@@ -760,9 +692,6 @@ class TestRealFlextLdapEntryService:
 
     async def test_entry_service_validates_dn_for_delete(self) -> None:
         """Test delete_entry validates DN parameter."""
-        from flext_ldap.adapters import FlextLdapEntryService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapEntryService(client)
 
@@ -773,9 +702,6 @@ class TestRealFlextLdapEntryService:
 
     async def test_entry_service_validates_no_modifications(self) -> None:
         """Test modify_entry validates empty modifications."""
-        from flext_ldap.adapters import FlextLdapEntryService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapEntryService(client)
 
@@ -786,9 +712,6 @@ class TestRealFlextLdapEntryService:
 
     def test_entry_service_has_private_validation_methods(self) -> None:
         """Test entry service has required private validation methods."""
-        from flext_ldap.adapters import FlextLdapEntryService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapEntryService(client)
 
@@ -804,9 +727,6 @@ class TestRealFlextLdapEntryService:
 
     def test_entry_service_validation_methods_work(self) -> None:
         """Test entry service validation methods work correctly."""
-        from flext_ldap.adapters import FlextLdapEntryService
-        from flext_ldap.clients import FlextLdapClient
-
         client = FlextLdapClient()
         service = FlextLdapEntryService(client)
 
@@ -826,7 +746,6 @@ class TestRealFlextLdapDirectoryEntry:
 
     def test_directory_entry_protocol_can_be_instantiated(self) -> None:
         """Test FlextLdapDirectoryEntry can be instantiated."""
-        from flext_ldap.adapters import FlextLdapDirectoryEntry
 
         entry = FlextLdapDirectoryEntry("cn=test,dc=example,dc=com", {})
 
@@ -835,7 +754,6 @@ class TestRealFlextLdapDirectoryEntry:
 
     def test_directory_entry_protocol_handles_attributes(self) -> None:
         """Test FlextLdapDirectoryEntry handles attributes properly."""
-        from flext_ldap.adapters import FlextLdapDirectoryEntry
 
         attributes = {"objectClass": ["person"], "cn": ["Test User"], "sn": ["User"]}
 
@@ -846,7 +764,6 @@ class TestRealFlextLdapDirectoryEntry:
 
     def test_directory_entry_protocol_get_attribute_values(self) -> None:
         """Test get_attribute_values method works."""
-        from flext_ldap.adapters import FlextLdapDirectoryEntry
 
         attributes = {
             "objectClass": ["person"],
@@ -870,7 +787,6 @@ class TestRealFlextLdapDirectoryEntry:
 
     def test_directory_entry_protocol_normalizes_attributes(self) -> None:
         """Test FlextLdapDirectoryEntry normalizes attributes correctly."""
-        from flext_ldap.adapters import FlextLdapDirectoryEntry
 
         # Test with various attribute formats
         mixed_attributes = {
@@ -890,7 +806,6 @@ class TestRealFlextLdapDirectoryEntry:
 
     def test_directory_entry_protocol_handles_empty_attributes(self) -> None:
         """Test FlextLdapDirectoryEntry handles empty/None attributes."""
-        from flext_ldap.adapters import FlextLdapDirectoryEntry
 
         entry = FlextLdapDirectoryEntry("cn=test,dc=example,dc=com", {})
 
@@ -908,8 +823,6 @@ class TestRealFlextLdapDirectoryService:
 
     def test_directory_service_can_be_instantiated(self) -> None:
         """Test FlextLdapDirectoryService can be instantiated."""
-        from flext_ldap.adapters import FlextLdapDirectoryService
-
         service = FlextLdapDirectoryService()
 
         assert isinstance(service, FlextLdapDirectoryService)
@@ -917,8 +830,6 @@ class TestRealFlextLdapDirectoryService:
 
     def test_directory_service_has_required_methods(self) -> None:
         """Test FlextLdapDirectoryService has required methods."""
-        from flext_ldap.adapters import FlextLdapDirectoryService
-
         service = FlextLdapDirectoryService()
 
         # Should have interface methods
@@ -931,19 +842,13 @@ class TestRealFlextLdapDirectoryService:
 
     def test_directory_service_inherits_from_interface(self) -> None:
         """Test FlextLdapDirectoryService inherits from correct interface."""
-        from flext_ldap.adapters import (
-            FlextLdapDirectoryService,
-            FlextLdapDirectoryServiceInterface,
-        )
-
         service = FlextLdapDirectoryService()
 
-        assert isinstance(service, FlextLdapDirectoryServiceInterface)
+        # Interface check removed - FlextLdapDirectoryServiceInterface no longer exists
+        assert hasattr(service, "connect")  # Check method exists instead
 
     def test_directory_service_has_specialized_services(self) -> None:
         """Test FlextLdapDirectoryService creates specialized services."""
-        from flext_ldap.adapters import FlextLdapDirectoryService
-
         service = FlextLdapDirectoryService()
 
         # Should have private service instances
@@ -954,12 +859,9 @@ class TestRealFlextLdapDirectoryService:
 
     def test_directory_service_search_users_method_signature(self) -> None:
         """Test search_users has correct method signature."""
-        from flext_ldap.adapters import FlextLdapDirectoryService
-
         service = FlextLdapDirectoryService()
 
         # Should accept search parameters
-        import inspect
 
         signature = inspect.signature(service.search_users)
 
@@ -971,8 +873,6 @@ class TestRealFlextLdapDirectoryService:
 
     def test_directory_service_has_conversion_methods(self) -> None:
         """Test directory service has required conversion methods."""
-        from flext_ldap.adapters import FlextLdapDirectoryService
-
         service = FlextLdapDirectoryService()
 
         # Should have private conversion methods
@@ -985,8 +885,6 @@ class TestRealFlextLdapDirectoryAdapter:
 
     def test_directory_adapter_can_be_instantiated(self) -> None:
         """Test FlextLdapDirectoryAdapter can be instantiated."""
-        from flext_ldap.adapters import FlextLdapDirectoryAdapter
-
         adapter = FlextLdapDirectoryAdapter()
 
         assert isinstance(adapter, FlextLdapDirectoryAdapter)
@@ -994,8 +892,6 @@ class TestRealFlextLdapDirectoryAdapter:
 
     def test_directory_adapter_has_required_methods(self) -> None:
         """Test FlextLdapDirectoryAdapter has required methods."""
-        from flext_ldap.adapters import FlextLdapDirectoryAdapter
-
         adapter = FlextLdapDirectoryAdapter()
 
         # Should have interface method
@@ -1004,22 +900,13 @@ class TestRealFlextLdapDirectoryAdapter:
 
     def test_directory_adapter_inherits_from_interface(self) -> None:
         """Test FlextLdapDirectoryAdapter inherits from correct interface."""
-        from flext_ldap.adapters import (
-            FlextLdapDirectoryAdapter,
-            FlextLdapDirectoryAdapterInterface,
-        )
-
         adapter = FlextLdapDirectoryAdapter()
 
-        assert isinstance(adapter, FlextLdapDirectoryAdapterInterface)
+        # Interface check removed - FlextLdapDirectoryAdapterInterface no longer exists
+        assert hasattr(adapter, "get_directory_service")  # Check method exists instead
 
     def test_directory_adapter_returns_service(self) -> None:
         """Test get_directory_service returns service instance."""
-        from flext_ldap.adapters import (
-            FlextLdapDirectoryAdapter,
-            FlextLdapDirectoryService,
-        )
-
         adapter = FlextLdapDirectoryAdapter()
 
         service = adapter.get_directory_service()
@@ -1029,8 +916,6 @@ class TestRealFlextLdapDirectoryAdapter:
 
     def test_directory_adapter_has_private_service_instance(self) -> None:
         """Test directory adapter creates private service instance."""
-        from flext_ldap.adapters import FlextLdapDirectoryAdapter
-
         adapter = FlextLdapDirectoryAdapter()
 
         # Should have private service reference
@@ -1047,17 +932,11 @@ class TestRealFactoryFunctions:
 
     def test_create_directory_service_function_exists(self) -> None:
         """Test create_directory_service function exists and is callable."""
-        from flext_ldap.adapters import create_directory_service
 
         assert callable(create_directory_service)
 
     def test_create_directory_service_returns_service(self) -> None:
         """Test create_directory_service returns correct service type."""
-        from flext_ldap.adapters import (
-            FlextLdapDirectoryService,
-            create_directory_service,
-        )
-
         service = create_directory_service()
 
         assert isinstance(service, FlextLdapDirectoryService)
@@ -1065,17 +944,11 @@ class TestRealFactoryFunctions:
 
     def test_create_directory_adapter_function_exists(self) -> None:
         """Test create_directory_adapter function exists and is callable."""
-        from flext_ldap.adapters import create_directory_adapter
 
         assert callable(create_directory_adapter)
 
     def test_create_directory_adapter_returns_adapter(self) -> None:
         """Test create_directory_adapter returns correct adapter type."""
-        from flext_ldap.adapters import (
-            FlextLdapDirectoryAdapter,
-            create_directory_adapter,
-        )
-
         adapter = create_directory_adapter()
 
         assert isinstance(adapter, FlextLdapDirectoryAdapter)
@@ -1083,11 +956,6 @@ class TestRealFactoryFunctions:
 
     def test_factory_functions_create_independent_instances(self) -> None:
         """Test factory functions create independent instances."""
-        from flext_ldap.adapters import (
-            create_directory_adapter,
-            create_directory_service,
-        )
-
         service1 = create_directory_service()
         service2 = create_directory_service()
 

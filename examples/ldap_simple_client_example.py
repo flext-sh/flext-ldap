@@ -33,7 +33,6 @@ async def main() -> None:
         password=bind_password,
     )
     if result.is_success:
-        print("✅ Connected successfully")
 
         # Example search using FlextLdapSearchRequest
         search_request = FlextLdapSearchRequest(
@@ -54,13 +53,11 @@ async def main() -> None:
             response = search_result.unwrap_or(empty_response)
             for entry in response.entries[:3]:  # Show first 3
                 dn_value = entry.get("dn", "N/A")
-                dn_str = (
+                (
                     dn_value.decode() if isinstance(dn_value, bytes) else str(dn_value)
                 )
-                print(f"Entry: {dn_str}")
 
         # Note: No disconnect method - connection managed automatically
-        print("✅ Search completed")
 
     # Example 2: LDAP operations
     op_result = await client.connect(
@@ -69,7 +66,6 @@ async def main() -> None:
         password=bind_password,
     )
     if op_result.is_success:
-        print("✅ Connected for operations")
 
         # Add entry
         add_result = await client.add(
@@ -83,7 +79,6 @@ async def main() -> None:
         )
 
         if add_result.is_success:
-            print("✅ Entry added")
 
             # Modify entry
             modify_result = await client.modify(
@@ -92,15 +87,12 @@ async def main() -> None:
             )
 
             if modify_result.is_success:
-                print("✅ Entry modified")
 
                 # Delete entry
                 delete_result = await client.delete(dn="cn=testuser,dc=example,dc=com")
 
                 if delete_result.is_success:
-                    print("✅ Entry lifecycle completed")
-
-    print("✅ Simple client operations completed")
+                    pass
 
 
 if __name__ == "__main__":

@@ -4,16 +4,15 @@ from __future__ import annotations
 
 import contextlib
 import ssl
-from typing import Literal, cast, override
+from typing import Literal, cast
 from urllib.parse import urlparse
 
 import ldap3
 from flext_core import FlextResult, get_logger
-from ldap3 import BASE, LEVEL, SUBTREE
+from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE
 from ldap3.core.exceptions import LDAPException
 
 from flext_ldap.entities import FlextLdapSearchRequest, FlextLdapSearchResponse
-from flext_ldap.interfaces import IFlextLdapClient
 from flext_ldap.typings import LdapAttributeDict, LdapSearchResult
 from flext_ldap.utils import FlextLdapUtilities
 
@@ -34,7 +33,7 @@ SCOPE_MAP: dict[str, LdapScope] = {
 }
 
 
-class FlextLdapClient(IFlextLdapClient):
+class FlextLdapClient:
     """LDAP client implementation using ldap3 library."""
 
     def __init__(self) -> None:
@@ -42,7 +41,6 @@ class FlextLdapClient(IFlextLdapClient):
         self._connection: ldap3.Connection | None = None
         self._server: ldap3.Server | None = None
 
-    @override
     async def connect(self, uri: str, bind_dn: str, password: str) -> FlextResult[None]:
         """Connect to LDAP server."""
         try:
@@ -92,7 +90,6 @@ class FlextLdapClient(IFlextLdapClient):
             )
             return FlextResult[None].fail(f"Connection error: {e}")
 
-    @override
     async def search(
         self,
         request: FlextLdapSearchRequest,
@@ -117,7 +114,7 @@ class FlextLdapClient(IFlextLdapClient):
                 search_base=request.base_dn,
                 search_filter=request.filter_str,
                 search_scope=scope,
-                attributes=request.attributes or ldap3.ALL_ATTRIBUTES,
+                attributes=request.attributes or ALL_ATTRIBUTES,
                 size_limit=request.size_limit,
                 time_limit=request.time_limit,
             )
@@ -178,7 +175,6 @@ class FlextLdapClient(IFlextLdapClient):
             logger.exception("Unexpected search error", extra={"error": str(e)})
             return FlextResult[FlextLdapSearchResponse].fail(f"Search error: {e}")
 
-    @override
     async def add(self, dn: str, attributes: LdapAttributeDict) -> FlextResult[None]:
         """Add entry to LDAP."""
         if not self._connection or not self._connection.bound:
@@ -199,7 +195,6 @@ class FlextLdapClient(IFlextLdapClient):
             logger.exception("Unexpected add error", extra={"error": str(e), "dn": dn})
             return FlextResult[None].fail(f"Add error: {e}")
 
-    @override
     async def modify(self, dn: str, attributes: LdapAttributeDict) -> FlextResult[None]:
         """Modify LDAP entry."""
         if not self._connection or not self._connection.bound:
@@ -230,7 +225,6 @@ class FlextLdapClient(IFlextLdapClient):
             )
             return FlextResult[None].fail(f"Modify error: {e}")
 
-    @override
     async def delete(self, dn: str) -> FlextResult[None]:
         """Delete LDAP entry."""
         if not self._connection or not self._connection.bound:
@@ -256,7 +250,6 @@ class FlextLdapClient(IFlextLdapClient):
             )
             return FlextResult[None].fail(f"Delete error: {e}")
 
-    @override
     async def bind(self, dn: str, password: str) -> FlextResult[None]:
         """Bind with credentials."""
         if not self._connection:
@@ -283,7 +276,6 @@ class FlextLdapClient(IFlextLdapClient):
             logger.exception("Unexpected bind error", extra={"error": str(e), "dn": dn})
             return FlextResult[None].fail(f"Bind error: {e}")
 
-    @override
     async def unbind(self) -> FlextResult[None]:
         """Unbind from server."""
         if not self._connection:

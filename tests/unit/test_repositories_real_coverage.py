@@ -190,7 +190,7 @@ class TestFlextLdapRepositoryRealExecution:
         # 2. Call repository.exists() - REAL CODE EXECUTION
         # 3. The exists() will fail because no LDAP connection - REAL ERROR HANDLING
 
-        result = await repository.save(entry)
+        result = await repository.save_async(entry)
 
         # Verify real code executed and handled the error appropriately
         assert not result.is_success
@@ -221,7 +221,7 @@ class TestFlextLdapRepositoryRealExecution:
         repository.exists = mock_exists_fail
 
         # Execute real save existence check code
-        result = await repository.save(entry)
+        result = await repository.save_async(entry)
 
         # Verify real existence check code ran
         assert not result.is_success
@@ -261,7 +261,7 @@ class TestFlextLdapRepositoryRealExecution:
         client.add = mock_client_add
 
         # Execute real save creation code
-        result = await repository.save(entry)
+        result = await repository.save_async(entry)
 
         # Verify real creation code ran
         assert result.is_success
@@ -306,7 +306,7 @@ class TestFlextLdapRepositoryRealExecution:
         client.modify = mock_client_modify
 
         # Execute real save update code
-        result = await repository.save(entry)
+        result = await repository.save_async(entry)
 
         # Verify real update code ran
         assert result.is_success
@@ -321,12 +321,12 @@ class TestFlextLdapRepositoryRealExecution:
         repository = FlextLdapRepository(client)
 
         # Execute real DN validation code
-        result = await repository.delete("")
+        result = await repository.delete_async("")
         assert not result.is_success
         assert "Invalid DN format" in (result.error or "")
 
         # Test with invalid DN
-        result = await repository.delete("invalid-format")
+        result = await repository.delete_async("invalid-format")
         assert not result.is_success
         assert "Invalid DN format" in (result.error or "")
 
@@ -347,7 +347,7 @@ class TestFlextLdapRepositoryRealExecution:
 
         # Execute real delete delegation code
         test_dn = "cn=deleteuser,dc=example,dc=com"
-        result = await repository.delete(test_dn)
+        result = await repository.delete_async(test_dn)
 
         # Verify real delegation occurred
         assert result.is_success
@@ -375,12 +375,9 @@ class TestFlextLdapRepositoryRealExecution:
         # Verify real exists logic ran
         assert result.is_success
         assert find_by_dn_called_with == test_dn
-        # The real logic should check if result.is_success, but incorrectly
-        # Current implementation has a bug - it checks result.is_success instead of result.value
-        # This test captures the actual behavior
-        assert (
-            result.value is True
-        )  # Bug in line 169: returns is_success instead of checking value
+        # Mock returned None, so entry does NOT exist
+        # Real implementation: find_result.value is not None -> None is not None -> False
+        assert result.value is False  # Entry doesn't exist (mock returned None)
 
     async def test_update_validates_dn_and_checks_existence_real(self) -> None:
         """Test update validates DN and checks existence - real validation execution."""
@@ -855,7 +852,7 @@ class TestRepositoryErrorHandlingReal:
 
         # Execute operation that triggers logging
         with patch("flext_ldap.repositories.logger") as mock_logger:
-            result = await repository.delete("cn=test,dc=example,dc=com")
+            result = await repository.delete_async("cn=test,dc=example,dc=com")
 
             # Verify logging was called
             assert result.is_success

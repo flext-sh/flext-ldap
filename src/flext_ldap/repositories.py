@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
-from typing import cast, override
+import asyncio
+from typing import cast
 
-from flext_core import FlextEntityId, FlextEntityStatus, FlextResult, get_logger
+from flext_core import (
+    FlextEntityId,
+    FlextEntityStatus,
+    FlextProtocols,
+    FlextResult,
+    get_logger,
+)
 
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.entities import (
@@ -12,21 +19,34 @@ from flext_ldap.entities import (
     FlextLdapSearchRequest,
     FlextLdapSearchResponse,
 )
-from flext_ldap.interfaces import IFlextLdapRepository
 from flext_ldap.typings import LdapAttributeDict
 from flext_ldap.value_objects import FlextLdapDistinguishedName
 
 logger = get_logger(__name__)
 
 
-class FlextLdapRepository(IFlextLdapRepository):
+class FlextLdapRepository(FlextProtocols.Domain.Repository[FlextLdapEntry]):
     """LDAP repository implementation using dependency injection."""
 
     def __init__(self, client: FlextLdapClient) -> None:
         """Initialize repository with LDAP client."""
         self._client = client
 
-    @override
+    # FlextProtocols.Domain.Repository protocol implementation
+    def get_by_id(self, entity_id: str) -> FlextResult[FlextLdapEntry | None]:
+        """Get entity by ID (synchronous wrapper for async find_by_dn)."""
+        try:
+            return asyncio.run(self.find_by_dn(entity_id))
+        except Exception as e:
+            return FlextResult[FlextLdapEntry | None].fail(f"Failed to get by ID: {e}")
+
+    def find_all(self) -> FlextResult[list[FlextLdapEntry]]:
+        """Find all entities - not practical for LDAP, returns error."""
+        return FlextResult[list[FlextLdapEntry]].fail(
+            "find_all not supported for LDAP repositories - use search with filters"
+        )
+
+    # LDAP-specific methods (extend protocol functionality)
     async def find_by_dn(self, dn: str) -> FlextResult[FlextLdapEntry | None]:
         """Find entry by distinguished name."""
         # Validate DN format
@@ -82,7 +102,6 @@ class FlextLdapRepository(IFlextLdapRepository):
         logger.debug("Found entry by DN", extra={"dn": dn})
         return FlextResult[FlextLdapEntry | None].ok(entry)
 
-    @override
     async def search(
         self,
         request: FlextLdapSearchRequest,
@@ -104,8 +123,17 @@ class FlextLdapRepository(IFlextLdapRepository):
         )
         return search_result
 
-    @override
-    async def save(self, entry: FlextLdapEntry) -> FlextResult[None]:
+    def save(self, entity: FlextLdapEntry) -> FlextResult[FlextLdapEntry]:
+        """Save entity (synchronous wrapper for async save_async)."""
+        try:
+            result = asyncio.run(self.save_async(entity))
+            if result.is_success:
+                return FlextResult[FlextLdapEntry].ok(entity)
+            return FlextResult[FlextLdapEntry].fail(result.error or "Save failed")
+        except Exception as e:
+            return FlextResult[FlextLdapEntry].fail(f"Failed to save: {e}")
+
+    async def save_async(self, entry: FlextLdapEntry) -> FlextResult[None]:
         """Save entry to LDAP directory."""
         # Validate entry business rules
         validation_result = entry.validate_business_rules()
@@ -145,8 +173,14 @@ class FlextLdapRepository(IFlextLdapRepository):
 
         return result
 
-    @override
-    async def delete(self, dn: str) -> FlextResult[None]:
+    def delete(self, entity_id: str) -> FlextResult[None]:
+        """Delete entity by ID (synchronous wrapper for async delete_async)."""
+        try:
+            return asyncio.run(self.delete_async(entity_id))
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to delete: {e}")
+
+    async def delete_async(self, dn: str) -> FlextResult[None]:
         """Delete entry from LDAP directory."""
         # Validate DN format
         dn_validation = FlextLdapDistinguishedName.create(dn)
@@ -159,7 +193,6 @@ class FlextLdapRepository(IFlextLdapRepository):
 
         return result
 
-    @override
     async def exists(self, dn: str) -> FlextResult[bool]:
         """Check if entry exists."""
         find_result = await self.find_by_dn(dn)
@@ -169,7 +202,6 @@ class FlextLdapRepository(IFlextLdapRepository):
         # Check if entry exists (find_result.value is not None)
         return FlextResult[bool].ok(find_result.value is not None)
 
-    @override
     async def update(self, dn: str, attributes: LdapAttributeDict) -> FlextResult[None]:
         """Update entry attributes."""
         # Validate DN format

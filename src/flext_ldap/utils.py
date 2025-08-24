@@ -96,8 +96,12 @@ class FlextLdapUtilities:
                 if str_list:  # Only add non-empty lists
                     result[key] = str_list
             elif raw_value is not None:
-                # Convert single values to string
-                result[key] = str(raw_value)
+                # Convert single values to string, handling bytes properly
+                if isinstance(raw_value, bytes):
+                    # Decode bytes to string safely
+                    result[key] = raw_value.decode("utf-8", errors="replace")
+                else:
+                    result[key] = str(raw_value)
 
         return result
 
@@ -260,10 +264,16 @@ class FlextLdapUtilities:
     @staticmethod
     def safe_ldap3_entry_attributes_list(entry: object) -> list[str]:
         """Safely extract attribute names list from ldap3 entry."""
-        attrs: object = getattr(entry, "entry_attributes", [])
-        if isinstance(attrs, list):
-            typed_attrs: list[object] = cast("list[object]", attrs)
-            return [str(attr) for attr in typed_attrs if attr is not None]
+        if entry is None:
+            return []
+
+        attrs_dict: object = getattr(entry, "entry_attributes_as_dict", None)
+        if attrs_dict is None:
+            return []
+
+        if isinstance(attrs_dict, dict):
+            typed_dict: dict[str, object] = cast("dict[str, object]", attrs_dict)
+            return list(typed_dict.keys())
         return []
 
     @staticmethod

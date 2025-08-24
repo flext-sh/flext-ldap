@@ -6,6 +6,7 @@ They test the service layer logic, dependency injection, and business operations
 
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from flext_core import FlextEntityId, FlextEntityStatus, FlextResult
@@ -13,6 +14,7 @@ from flext_core import FlextEntityId, FlextEntityStatus, FlextResult
 from flext_ldap.container import FlextLdapContainer
 from flext_ldap.entities import (
     FlextLdapCreateUserRequest,
+    FlextLdapEntry,
     FlextLdapGroup,
     FlextLdapSearchRequest,
     FlextLdapSearchResponse,
@@ -98,7 +100,7 @@ class TestFlextLdapServiceRealExecution:
             assert result.value.uid == user_request.uid
 
             # Verify repository was called
-            mock_repository.save.assert_called_once()
+            mock_repository.save_async.assert_called_once()
 
     async def test_get_user_real(self) -> None:
         """Test get_user method - real user retrieval logic."""
@@ -109,7 +111,6 @@ class TestFlextLdapServiceRealExecution:
         service = FlextLdapService(mock_container)
 
         # Mock repository to return user entry
-        from flext_ldap.entities import FlextLdapEntry
 
         mock_entry = FlextLdapEntry(
             id=FlextEntityId("user-id"),
@@ -190,7 +191,7 @@ class TestFlextLdapServiceRealExecution:
 
         # Verify real deletion logic
         assert result.is_success
-        mock_repository.delete.assert_called_once_with(test_dn)
+        mock_repository.delete_async.assert_called_once_with(test_dn)
 
     async def test_search_users_real(self) -> None:
         """Test search_users method - real user search logic."""
@@ -317,10 +318,10 @@ class TestFlextLdapServiceRealExecution:
 
         # Verify real group creation logic
         assert result.is_success
-        mock_repository.save.assert_called_once()
+        mock_repository.save_async.assert_called_once()
 
         # Verify the entry passed to repository
-        saved_entry = mock_repository.save.call_args[0][0]
+        saved_entry = mock_repository.save_async.call_args[0][0]
         assert saved_entry.dn == group.dn
         assert "groupOfNames" in saved_entry.object_classes
 
@@ -333,7 +334,6 @@ class TestFlextLdapServiceRealExecution:
         service = FlextLdapService(mock_container)
 
         # Mock repository to return group entry
-        from flext_ldap.entities import FlextLdapEntry
 
         mock_entry = FlextLdapEntry(
             id=FlextEntityId("group-id"),
@@ -395,7 +395,7 @@ class TestFlextLdapServiceRealExecution:
 
         # Verify real deletion logic
         assert result.is_success
-        mock_repository.delete.assert_called_once_with(test_dn)
+        mock_repository.delete_async.assert_called_once_with(test_dn)
 
     async def test_add_member_real(self) -> None:
         """Test add_member method - real member addition logic."""
@@ -805,9 +805,9 @@ class TestFlextLdapServiceIntegrationReal:
         assert cleanup_result.is_success
 
         # Verify all operations were called
-        mock_repository.save.assert_called()
+        mock_repository.save_async.assert_called()
         mock_repository.exists.assert_called()
-        mock_repository.delete.assert_called()
+        mock_repository.delete_async.assert_called()
         mock_container.cleanup.assert_called_once()
 
     def test_error_handling_consistency_real(self) -> None:
@@ -839,7 +839,6 @@ class TestFlextLdapServiceIntegrationReal:
             service = FlextLdapService()
 
             # Execute operation that should log
-            import asyncio
 
             asyncio.run(service.initialize())
 
