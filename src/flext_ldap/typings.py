@@ -29,11 +29,9 @@ from __future__ import annotations
 
 from typing import (
     Protocol,
-    runtime_checkable,
 )
 
-from flext_core import FlextResult
-from flext_core.typings import (
+from flext_core import (
     FlextTypes,
     P,
     R,
@@ -87,85 +85,20 @@ class AsyncCallable(Protocol):
 
 
 # =============================================================================
-# PROTOCOL DEFINITIONS
+# FLEXT-CORE PROTOCOL INTEGRATION - LOCAL PROTOCOLS ELIMINATED
 # =============================================================================
 
+# LOCAL PROTOCOLS ELIMINATED - NOW USING FlextProtocols FROM FLEXT-CORE
+# Per CLAUDE.md: "PROTOCOLS: Define once in flext-core/protocols.py"
 
-@runtime_checkable
-class FlextLdapConnectionProtocol(Protocol):
-    """Protocol for LDAP connection implementations."""
+# Legacy protocols replaced with flext-core patterns:
+# - FlextLdapConnectionProtocol -> Use FlextProtocols.Domain.Service
+# - FlextLdapRepositoryProtocol -> Use FlextProtocols.Domain.Repository[T]
+# - FlextLdapDirectoryConnectionProtocol -> Use FlextProtocols.Domain.Service
+# - FlextLdapDirectoryEntryProtocol -> Use standard Dict protocol
 
-    async def connect(
-        self,
-        server_uri: str,
-        bind_dn: str | None = None,
-        bind_password: str | None = None,
-    ) -> FlextResult[None]:
-        """Connect to LDAP server."""
-        ...
-
-    async def disconnect(self) -> FlextResult[None]:
-        """Disconnect from LDAP server."""
-        ...
-
-    async def search(
-        self,
-        base_dn: str,
-        search_filter: str,
-        scope: str = "subtree",
-        attributes: list[str] | None = None,
-    ) -> FlextResult[list[LdapSearchResult]]:
-        """Perform LDAP search."""
-        ...
-
-
-@runtime_checkable
-class FlextLdapRepositoryProtocol(Protocol):
-    """Protocol for LDAP repository implementations."""
-
-    async def find_by_dn(self, dn: str) -> FlextResult[LdapSearchResult | None]:
-        """Find entry by Distinguished Name."""
-        ...
-
-    async def save(self, entry_data: LdapAttributeDict) -> FlextResult[None]:
-        """Save entry data."""
-        ...
-
-    async def delete(self, dn: str) -> FlextResult[None]:
-        """Delete entry by DN."""
-        ...
-
-
-@runtime_checkable
-class FlextLdapDirectoryConnectionProtocol(Protocol):
-    """Protocol for directory connection implementations."""
-
-    def is_connected(self) -> bool:
-        """Check if connection is active."""
-        ...
-
-    async def bind(self, dn: str, password: str) -> FlextResult[None]:
-        """Perform LDAP bind operation."""
-        ...
-
-
-@runtime_checkable
-class FlextLdapDirectoryEntryProtocol(Protocol):
-    """Protocol for directory entry implementations."""
-
-    @property
-    def dn(self) -> str:
-        """Get Distinguished Name."""
-        ...
-
-    @property
-    def attributes(self) -> dict[str, list[str]]:
-        """Get entry attributes."""
-        ...
-
-    def get_attribute_values(self, name: str) -> list[str]:
-        """Get attribute values by name."""
-        ...
+# Import flext-core protocols for type hints where needed
+# from flext_core import FlextProtocols
 
 
 # =============================================================================
@@ -177,10 +110,7 @@ __all__ = [
     "ConnectionConfig",
     "DirectoryAuthConfig",
     "ErrorPatternData",
-    "FlextLdapConnectionProtocol",
-    "FlextLdapDirectoryConnectionProtocol",
-    "FlextLdapDirectoryEntryProtocol",
-    "FlextLdapRepositoryProtocol",
+    # LOCAL PROTOCOLS REMOVED - USE FlextProtocols FROM FLEXT-CORE
     "JsonDict",
     "LdapAttributeDict",
     "LdapAttributeValue",

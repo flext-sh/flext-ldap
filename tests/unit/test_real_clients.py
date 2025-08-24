@@ -5,8 +5,13 @@ These tests execute REAL client code to increase coverage and validate functiona
 
 from __future__ import annotations
 
+import inspect
+import time
+
+import ldap3
 import pytest
 
+from flext_ldap import clients as clients_module
 from flext_ldap.clients import SCOPE_MAP, FlextLdapClient
 from flext_ldap.entities import FlextLdapSearchRequest
 
@@ -69,7 +74,6 @@ class TestRealFlextLdapClient:
         client = FlextLdapClient()
 
         # Check that key methods are async (coroutines)
-        import inspect
 
         async_methods = [
             "connect",
@@ -138,14 +142,12 @@ class TestRealClientConstants:
 
     def test_ldap_subordinates_mapped_to_subtree(self) -> None:
         """Test subordinates scope is mapped to SUBTREE."""
-        import ldap3
 
         # subordinates should be mapped to SUBTREE in SCOPE_MAP
         assert SCOPE_MAP.get("subordinates") == ldap3.SUBTREE
 
     def test_scope_map_values_are_valid_ldap3_constants(self) -> None:
         """Test SCOPE_MAP values are valid ldap3 constants."""
-        import ldap3
 
         valid_scopes = {ldap3.BASE, ldap3.LEVEL, ldap3.SUBTREE}
         if hasattr(ldap3, "SUBORDINATES"):
@@ -169,7 +171,6 @@ class TestRealClientIntegration:
         assert hasattr(client, "__class__")
 
         # Methods should be async and return FlextResult types
-        import inspect
 
         connect_signature = inspect.signature(client.connect)
 
@@ -197,7 +198,6 @@ class TestRealClientIntegration:
     def test_client_uses_flext_logger(self) -> None:
         """Test client uses FLEXT logging."""
         # Client module should use get_logger
-        from flext_ldap import clients as clients_module
 
         # Should have logger defined
         assert hasattr(clients_module, "logger")
@@ -244,7 +244,6 @@ class TestRealClientErrorHandling:
         assert hasattr(client, "search")
 
         # Methods should be async
-        import inspect
 
         assert inspect.iscoroutinefunction(client.connect)
         assert inspect.iscoroutinefunction(client.search)
@@ -255,7 +254,6 @@ class TestRealClientPerformance:
 
     def test_client_instantiation_is_fast(self) -> None:
         """Test client instantiation is reasonably fast."""
-        import time
 
         start_time = time.time()
 
@@ -332,7 +330,6 @@ class TestRealClientUtilities:
     def test_client_uses_flext_utilities(self) -> None:
         """Test client integrates with FlextLdapUtilities."""
         # Client module should import and use utilities
-        from flext_ldap import clients as clients_module
 
         # Should have access to FlextLdapUtilities
         assert hasattr(clients_module, "FlextLdapUtilities")
@@ -349,7 +346,6 @@ class TestRealClientUtilities:
 
     def test_client_constants_are_properly_imported(self) -> None:
         """Test client imports necessary ldap3 constants."""
-        from flext_ldap import clients as clients_module
 
         # Should have imported necessary ldap3 constants
         expected_imports = ["BASE", "LEVEL", "SUBTREE", "ALL_ATTRIBUTES"]
@@ -364,13 +360,18 @@ class TestRealClientArchitecture:
     """Test REAL client architecture compliance."""
 
     def test_client_implements_interface(self) -> None:
-        """Test client properly implements IFlextLdapClient interface."""
+        """Test client properly implements expected methods."""
         client = FlextLdapClient()
 
-        # Should be instance of interface
-        from flext_ldap.interfaces import IFlextLdapClient
-
-        assert isinstance(client, IFlextLdapClient)
+        # Current architecture uses concrete class directly, not interface-based
+        # Test that client has expected methods (duck typing approach)
+        assert hasattr(client, "connect")
+        assert hasattr(client, "unbind")
+        assert hasattr(client, "search")
+        assert hasattr(client, "is_connected")
+        assert callable(client.connect)
+        assert callable(client.unbind)
+        assert callable(client.search)
 
     def test_client_follows_solid_principles(self) -> None:
         """Test client follows SOLID principles."""
@@ -409,7 +410,6 @@ class TestRealClientArchitecture:
         assert hasattr(client, "unbind")
 
         # These should be async
-        import inspect
 
         assert inspect.iscoroutinefunction(client.connect)
         assert inspect.iscoroutinefunction(client.bind)

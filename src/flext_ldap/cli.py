@@ -41,7 +41,7 @@ logger = get_logger(__name__)
 # =============================================================================
 
 
-class FlextLdapCliCommandService(FlextCliCommandService[object]):
+class FlextLdapCliCommandService(FlextCliCommandService):
     """Command service for FLEXT LDAP CLI operations.
 
     Extends FlextCliCommandService to provide LDAP-specific
@@ -50,7 +50,7 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
 
     def __init__(self) -> None:
         """Initialize LDAP CLI command service."""
-        super().__init__(service_name="flext-ldap-cli")
+        super().__init__()
         self._api = get_ldap_api()
         self._config = get_cli_config()
 
@@ -58,15 +58,15 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
     @override
     def execute_command(
         self,
-        command: str,
-        args: dict[str, object] | None = None,
+        command_name: str,
+        context: FlextCliExecutionContext,
         **kwargs: object,
     ) -> FlextResult[object]:
         """Execute LDAP command with given arguments - sync wrapper for async operations.
 
         Args:
-            command: Command name to execute
-            args: Command arguments dictionary
+            command_name: Command name to execute
+            context: CLI execution context with arguments
             **kwargs: Additional execution parameters
 
         Returns:
@@ -77,30 +77,31 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
         start_time = time.time()
         max_attempts = 2
 
-        logger.info(f"Executing command: {command}")
+        logger.info(f"Executing command: {command_name}")
 
-        if not args:
-            args = {}
+        args = getattr(context, "args", {}) or {}
 
         for attempt in range(max_attempts):
             try:
-                if command == "test":
+                if command_name == "test":
                     return asyncio.run(self._execute_test_command(args))
-                if command == "search":
+                if command_name == "search":
                     return asyncio.run(self._execute_search_command(args))
-                if command == "user_info":
+                if command_name == "user_info":
                     return asyncio.run(self._execute_user_info_command(args))
                 return FlextResult[object].fail(
-                    f"Unknown command: {command}",
+                    f"Unknown command: {command_name}",
                 )
             except Exception as e:
                 if attempt == max_attempts - 1:  # Last attempt
                     elapsed = time.time() - start_time
-                    logger.exception(f"Command {command} failed after {elapsed:.3f}s")
+                    logger.exception(
+                        f"Command {command_name} failed after {elapsed:.3f}s"
+                    )
                     return FlextResult[object].fail(str(e))
                 # Retry on next attempt
                 logger.warning(
-                    f"Command {command} attempt {attempt + 1} failed, retrying: {e}"
+                    f"Command {command_name} attempt {attempt + 1} failed, retrying: {e}"
                 )
                 time.sleep(0.1)  # Brief delay before retry
                 continue
@@ -119,7 +120,12 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
         server = str(args.get("server", ""))
         port_value = args.get("port", 389)
         port = int(port_value) if isinstance(port_value, (int, str)) else 389
-        use_ssl = bool(args.get("use_ssl"))
+        # Proper boolean parsing for CLI arguments
+        use_ssl_value = args.get("use_ssl", False)
+        if isinstance(use_ssl_value, str):
+            use_ssl = use_ssl_value.lower() in {"true", "1", "yes", "on"}
+        else:
+            use_ssl = bool(use_ssl_value)
         bind_dn = args.get("bind_dn")
         bind_password = args.get("bind_password")
 
@@ -132,12 +138,10 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
                 server_uri, bind_dn_str, bind_password_str
             ) as session:
                 if session:
-                    return FlextResult[object].ok(
-                        {
-                            "status": "success",
-                            "message": f"Successfully connected to {server}:{port}",
-                        }
-                    )
+                    return FlextResult[object].ok({
+                        "status": "success",
+                        "message": f"Successfully connected to {server}:{port}",
+                    })
                 return FlextResult[object].fail(
                     "Connection failed",
                 )
@@ -155,7 +159,12 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
         server = str(args.get("server", ""))
         port_value = args.get("port", 389)
         port = int(port_value) if isinstance(port_value, (int, str)) else 389
-        use_ssl = bool(args.get("use_ssl"))
+        # Proper boolean parsing for CLI arguments
+        use_ssl_value = args.get("use_ssl", False)
+        if isinstance(use_ssl_value, str):
+            use_ssl = use_ssl_value.lower() in {"true", "1", "yes", "on"}
+        else:
+            use_ssl = bool(use_ssl_value)
         base_dn = str(args.get("base_dn", ""))
         filter_str = str(args.get("filter_str", "(objectClass=*)"))
         limit_value = args.get("limit", 10)
@@ -187,13 +196,11 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
                             entry.to_dict() for entry in entries
                         ]
 
-                        return FlextResult[object].ok(
-                            {
-                                "status": "success",
-                                "entries": entry_dicts,
-                                "count": len(entry_dicts),
-                            }
-                        )
+                        return FlextResult[object].ok({
+                            "status": "success",
+                            "entries": entry_dicts,
+                            "count": len(entry_dicts),
+                        })
                     return FlextResult[object].fail(
                         result.error or "Search failed",
                     )
@@ -240,12 +247,10 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
                                 if hasattr(entry, "to_dict")
                                 else {"dn": str(entry)}
                             )
-                            return FlextResult[object].ok(
-                                {
-                                    "status": "success",
-                                    "user": user_dict,
-                                }
-                            )
+                            return FlextResult[object].ok({
+                                "status": "success",
+                                "user": user_dict,
+                            })
                         return FlextResult[object].fail(
                             f"User {uid} not found",
                         )
@@ -322,13 +327,15 @@ class FlextLdapCliFormatterService(FlextCliFormatterService):
             console = Console()
             formatter = FormatterFactory.create(format_type)
 
-            # Format the data
-            formatter.format(data, console)
+            # Format the data and capture output
+            with console.capture() as capture:
+                formatter.format(data, console)
+            formatted_output = capture.get()
 
             if self.logger:
                 self.logger.info("Data formatted successfully")
 
-            return FlextResult[str].ok("Data formatted successfully")
+            return FlextResult[str].ok(formatted_output)
         except Exception as e:
             error_msg = f"Formatting failed: {e}"
             if self.logger:
@@ -579,7 +586,7 @@ def test(
             command_name="test",
             command_args=args,
         )
-        result = command_service.execute_command("test", context.command_args)
+        result = command_service.execute_command("test", context)
 
         elapsed = time.time() - start_time
         console.print(f"[dim]⏱  Execution time: {elapsed:.2f}s[/dim]")
@@ -670,7 +677,7 @@ def search(
             command_name="search",
             command_args=args,
         )
-        result = command_service.execute_command("search", context.command_args)
+        result = command_service.execute_command("search", context)
 
         elapsed = time.time() - start_time
         console.print(f"[dim]⏱  Execution time: {elapsed:.2f}s[/dim]")
@@ -728,7 +735,7 @@ def user_info(
             command_name="user_info",
             command_args=args,
         )
-        result = command_service.execute_command("user_info", context.command_args)
+        result = command_service.execute_command("user_info", context)
 
         elapsed = time.time() - start_time
         console.print(f"[dim]⏱  Execution time: {elapsed:.2f}s[/dim]")

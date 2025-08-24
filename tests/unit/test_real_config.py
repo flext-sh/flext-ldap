@@ -5,6 +5,8 @@ These tests execute REAL config code to increase coverage and validate functiona
 
 from __future__ import annotations
 
+import time
+
 import pytest
 from pydantic import ValidationError
 
@@ -212,7 +214,6 @@ class TestRealConfigPerformance:
 
     def test_settings_instantiation_is_fast(self) -> None:
         """Test settings instantiation is reasonably fast."""
-        import time
 
         start_time = time.time()
 
@@ -230,7 +231,6 @@ class TestRealConfigPerformance:
         """Test settings serialization is efficient."""
         settings = FlextLdapSettings()
 
-        import time
 
         start_time = time.time()
 

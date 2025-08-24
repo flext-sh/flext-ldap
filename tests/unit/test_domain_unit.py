@@ -8,6 +8,7 @@ from __future__ import annotations
 from flext_core import FlextEntityId, FlextEntityStatus
 
 from flext_ldap.domain import (
+    MIN_PASSWORD_LENGTH,
     FlextLdapPasswordService,
     FlextLdapUserManagementService,
     FlextLdapUserSpecification,
@@ -125,7 +126,6 @@ class TestDomainLayer:
     def test_domain_imports_work(self) -> None:
         """Test that domain layer imports work correctly."""
         # Basic import test
-        from flext_ldap.domain import FlextLdapUserSpecification
 
         assert FlextLdapUserSpecification is not None
 
@@ -141,7 +141,6 @@ class TestDomainLayer:
         """Test domain constants are accessible."""
         # Try to access some domain constants that should exist
         try:
-            from flext_ldap.domain import MIN_PASSWORD_LENGTH
 
             assert isinstance(MIN_PASSWORD_LENGTH, int)
             assert MIN_PASSWORD_LENGTH > 0

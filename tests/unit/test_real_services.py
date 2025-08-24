@@ -5,6 +5,9 @@ These tests execute REAL service code to increase coverage and validate function
 
 from __future__ import annotations
 
+import pydoc
+import time
+
 import pytest
 
 # Test real services functionality
@@ -127,7 +130,6 @@ class TestRealServicePerformance:
 
     def test_service_instantiation_is_fast(self) -> None:
         """Test service instantiation is reasonably fast."""
-        import time
 
         start_time = time.time()
 
@@ -179,7 +181,6 @@ class TestRealServiceDocumentation:
         # Should not raise exceptions when help() is called
         try:
             # Get help without actually printing it
-            import pydoc
 
             help_text = pydoc.render_doc(service)
             assert isinstance(help_text, str)

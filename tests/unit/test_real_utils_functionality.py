@@ -501,18 +501,14 @@ class TestRealUtilitiesErrorHandling:
 
         for validator in validators:
             # Test with None
-            try:
+            with pytest.raises(ValueError) as exc_info:
                 validator(None)
-                pytest.fail(f"{validator.__name__} should reject None")
-            except ValueError as e:
-                assert len(str(e)) > 10  # Should have detailed message
+            assert len(str(exc_info.value)) > 10  # Should have detailed message
 
             # Test with non-string
-            try:
+            with pytest.raises((ValueError, AttributeError)) as exc_info:
                 validator(123)
-                pytest.fail(f"{validator.__name__} should reject non-string")
-            except (ValueError, AttributeError) as e:
-                assert len(str(e)) > 10  # Should have detailed message
+            assert len(str(exc_info.value)) > 10  # Should have detailed message
 
     def test_is_successful_result_handles_malformed_objects(self) -> None:
         """Test is_successful_result handles objects with malformed is_success attribute."""

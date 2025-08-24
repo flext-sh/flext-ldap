@@ -451,7 +451,7 @@ class TestLdapValidationRealOperations:
     @pytest.mark.asyncio
     async def test_dn_validation_real_ldap(
         self,
-        connected_ldap_client: FlextLdapClient,  # noqa: ARG002
+        connected_ldap_client: FlextLdapClient,
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test DN validation with real LDAP server."""

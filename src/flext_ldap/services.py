@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from typing import cast, override
+from typing import cast
 
-from flext_core import FlextEntityId, FlextResult, get_logger
+from flext_core import FlextContainer, FlextEntityId, FlextResult, get_logger
 
-from flext_ldap.container import FlextLdapContainer, get_ldap_container
+from flext_ldap.container import get_ldap_container
 from flext_ldap.entities import (
     FlextLdapCreateUserRequest,
     FlextLdapGroup,
@@ -14,23 +14,25 @@ from flext_ldap.entities import (
     FlextLdapSearchResponse,
     FlextLdapUser,
 )
-from flext_ldap.interfaces import (
-    IFlextLdapFullService,
-    IFlextLdapGroupService,
-    IFlextLdapUserService,
-)
 from flext_ldap.typings import LdapAttributeDict
 from flext_ldap.value_objects import FlextLdapDistinguishedName
 
 logger = get_logger(__name__)
 
 
-class FlextLdapService(IFlextLdapFullService):
+class FlextLdapService:
     """Main LDAP service implementing all operations."""
 
-    def __init__(self, container: FlextLdapContainer | None = None) -> None:
-        """Initialize LDAP service with dependency injection."""
+    def __init__(self, container: FlextContainer | None = None) -> None:
+        """Initialize LDAP service with flext-core dependency injection."""
         self._container = container or get_ldap_container()
+
+    def _get_repository(self) -> FlextResult[object]:
+        """Get LDAP repository from flext-core container."""
+        repository_result = self._container.get("FlextLdapRepository")
+        if not repository_result.is_success:
+            logger.error(f"Failed to get LDAP repository: {repository_result.error}")
+        return repository_result
 
     async def initialize(self) -> FlextResult[None]:
         """Initialize service and dependencies."""
@@ -44,7 +46,6 @@ class FlextLdapService(IFlextLdapFullService):
 
     # User Service Methods
 
-    @override
     async def create_user(
         self,
         request: FlextLdapCreateUserRequest,
@@ -59,9 +60,12 @@ class FlextLdapService(IFlextLdapFullService):
                 f"User validation failed: {validation_result.error}",
             )
 
-        # Save user via repository
-        repository = self._container.get_repository()
-        save_result = await repository.save(user_entity)
+        # Save user via repository from flext-core container
+        repository_result = self._get_repository()
+        if not repository_result.is_success:
+            return FlextResult[FlextLdapUser].fail(f"Repository access failed: {repository_result.error}")
+        repository = repository_result.value
+        save_result = await repository.save_async(user_entity)
 
         if not save_result.is_success:
             return FlextResult[FlextLdapUser].fail(save_result.error or "Save failed")
@@ -84,10 +88,12 @@ class FlextLdapService(IFlextLdapFullService):
         )
         return FlextResult[FlextLdapUser].ok(user_entity)
 
-    @override
     async def get_user(self, dn: str) -> FlextResult[FlextLdapUser | None]:
         """Get user by distinguished name."""
-        repository = self._container.get_repository()
+        repository_result = self._get_repository()
+        if not repository_result.is_success:
+            return FlextResult[FlextLdapUser | None].fail(f"Repository access failed: {repository_result.error}")
+        repository = repository_result.value
         entry_result = await repository.find_by_dn(dn)
 
         if not entry_result.is_success:
@@ -119,14 +125,16 @@ class FlextLdapService(IFlextLdapFullService):
 
         return FlextResult[FlextLdapUser | None].ok(user)
 
-    @override
     async def update_user(
         self,
         dn: str,
         attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update user attributes."""
-        repository = self._container.get_repository()
+        repository_result = self._get_repository()
+        if not repository_result.is_success:
+            return FlextResult[None].fail(f"Repository access failed: {repository_result.error}")
+        repository = repository_result.value
         result = await repository.update(dn, attributes)
 
         if result.is_success:
@@ -134,19 +142,20 @@ class FlextLdapService(IFlextLdapFullService):
 
         return result
 
-    @override
     # Enhanced logging for user deletion operations
     async def delete_user(self, dn: str) -> FlextResult[None]:
         """Delete user from directory."""
-        repository = self._container.get_repository()
-        result = await repository.delete(dn)
+        repository_result = self._get_repository()
+        if not repository_result.is_success:
+            return FlextResult[None].fail(f"Repository access failed: {repository_result.error}")
+        repository = repository_result.value
+        result = await repository.delete_async(dn)
 
         if result.is_success:
             logger.info("User deleted successfully", extra={"dn": dn})
 
         return result
 
-    @override
     async def search_users(
         self,
         filter_str: str,
@@ -163,7 +172,10 @@ class FlextLdapService(IFlextLdapFullService):
             time_limit=30,
         )
 
-        repository = self._container.get_repository()
+        repository_result = self._get_repository()
+        if not repository_result.is_success:
+            return FlextResult[list[FlextLdapUser]].fail(f"Repository access failed: {repository_result.error}")
+        repository = repository_result.value
         search_result = await repository.search(search_request)
 
         if not search_result.is_success:
@@ -187,15 +199,16 @@ class FlextLdapService(IFlextLdapFullService):
 
         return FlextResult[list[FlextLdapUser]].ok(users)
 
-    @override
     async def user_exists(self, dn: str) -> FlextResult[bool]:
         """Check if user exists."""
-        repository = self._container.get_repository()
+        repository_result = self._get_repository()
+        if not repository_result.is_success:
+            return FlextResult[bool].fail(f"Repository access failed: {repository_result.error}")
+        repository = repository_result.value
         return await repository.exists(dn)
 
     # Group Service Methods
 
-    @override
     async def create_group(self, group: FlextLdapGroup) -> FlextResult[None]:
         """Create new group in LDAP directory."""
         # Validate group business rules
@@ -206,8 +219,11 @@ class FlextLdapService(IFlextLdapFullService):
             )
 
         # Save group via repository
-        repository = self._container.get_repository()
-        result = await repository.save(group)
+        repository_result = self._get_repository()
+        if not repository_result.is_success:
+            return FlextResult[None].fail(f"Repository access failed: {repository_result.error}")
+        repository = repository_result.value
+        result = await repository.save_async(group)
 
         if result.is_success:
             logger.info(
@@ -217,10 +233,12 @@ class FlextLdapService(IFlextLdapFullService):
 
         return result
 
-    @override
     async def get_group(self, dn: str) -> FlextResult[FlextLdapGroup | None]:
         """Get group by distinguished name."""
-        repository = self._container.get_repository()
+        repository_result = self._get_repository()
+        if not repository_result.is_success:
+            return FlextResult[FlextLdapGroup | None].fail(f"Repository access failed: {repository_result.error}")
+        repository = repository_result.value
         entry_result = await repository.find_by_dn(dn)
 
         if not entry_result.is_success:
@@ -249,14 +267,16 @@ class FlextLdapService(IFlextLdapFullService):
 
         return FlextResult[FlextLdapGroup | None].ok(group)
 
-    @override
     async def update_group(
         self,
         dn: str,
         attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update group attributes."""
-        repository = self._container.get_repository()
+        repository_result = self._get_repository()
+        if not repository_result.is_success:
+            return FlextResult[None].fail(f"Repository access failed: {repository_result.error}")
+        repository = repository_result.value
         result = await repository.update(dn, attributes)
 
         if result.is_success:
@@ -264,22 +284,26 @@ class FlextLdapService(IFlextLdapFullService):
 
         return result
 
-    @override
     # Enhanced logging for group deletion operations
     async def delete_group(self, dn: str) -> FlextResult[None]:
         """Delete group from directory."""
-        repository = self._container.get_repository()
-        result = await repository.delete(dn)
+        repository_result = self._get_repository()
+        if not repository_result.is_success:
+            return FlextResult[None].fail(f"Repository access failed: {repository_result.error}")
+        repository = repository_result.value
+        result = await repository.delete_async(dn)
 
         if result.is_success:
             logger.info("Group deleted successfully", extra={"dn": dn})
 
         return result
 
-    @override
     async def add_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
         """Add member to group."""
-        group_repo = self._container.get_group_repository()
+        group_repo_result = self._container.get("FlextLdapGroupRepository")
+        if not group_repo_result.is_success:
+            return FlextResult[None].fail(f"Group repository access failed: {group_repo_result.error}")
+        group_repo = group_repo_result.value
         result = await group_repo.add_member_to_group(group_dn, member_dn)
 
         if result.is_success:
@@ -290,11 +314,13 @@ class FlextLdapService(IFlextLdapFullService):
 
         return result
 
-    @override
     async def remove_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
         """Remove member from group."""
         # Get current members
-        group_repo = self._container.get_group_repository()
+        group_repo_result = self._container.get("FlextLdapGroupRepository")
+        if not group_repo_result.is_success:
+            return FlextResult[None].fail(f"Group repository access failed: {group_repo_result.error}")
+        group_repo = group_repo_result.value
         members_result = await group_repo.get_group_members(group_dn)
 
         if not members_result.is_success:
@@ -310,7 +336,10 @@ class FlextLdapService(IFlextLdapFullService):
         new_members = [m for m in current_members if m != member_dn]
         attributes: LdapAttributeDict = {"member": new_members}
 
-        repository = self._container.get_repository()
+        repository_result = self._get_repository()
+        if not repository_result.is_success:
+            return FlextResult[None].fail(f"Repository access failed: {repository_result.error}")
+        repository = repository_result.value
         result = await repository.update(group_dn, attributes)
 
         if result.is_success:
@@ -321,21 +350,24 @@ class FlextLdapService(IFlextLdapFullService):
 
         return result
 
-    @override
     async def get_members(self, group_dn: str) -> FlextResult[list[str]]:
         """Get group members."""
-        group_repo = self._container.get_group_repository()
+        group_repo_result = self._container.get("FlextLdapGroupRepository")
+        if not group_repo_result.is_success:
+            return FlextResult[list[str]].fail(f"Group repository access failed: {group_repo_result.error}")
+        group_repo = group_repo_result.value
         return await group_repo.get_group_members(group_dn)
 
-    @override
     async def group_exists(self, dn: str) -> FlextResult[bool]:
         """Check if group exists."""
-        repository = self._container.get_repository()
+        repository_result = self._get_repository()
+        if not repository_result.is_success:
+            return FlextResult[bool].fail(f"Repository access failed: {repository_result.error}")
+        repository = repository_result.value
         return await repository.exists(dn)
 
     # Validation methods
 
-    @override
     def validate_dn(self, dn: str) -> FlextResult[None]:
         """Validate distinguished name format."""
         try:
@@ -346,7 +378,6 @@ class FlextLdapService(IFlextLdapFullService):
         except Exception as e:
             return FlextResult[None].fail(f"DN validation error: {e}")
 
-    @override
     def validate_filter(self, filter_str: str) -> FlextResult[None]:
         """Validate LDAP search filter."""
         try:
@@ -360,7 +391,6 @@ class FlextLdapService(IFlextLdapFullService):
         except Exception as e:
             return FlextResult[None].fail(f"Filter validation error: {e}")
 
-    @override
     def validate_attributes(self, attributes: LdapAttributeDict) -> FlextResult[None]:
         """Validate attribute dictionary."""
         try:
@@ -377,7 +407,6 @@ class FlextLdapService(IFlextLdapFullService):
         except Exception as e:
             return FlextResult[None].fail(f"Attributes validation error: {e}")
 
-    @override
     def validate_object_classes(self, object_classes: list[str]) -> FlextResult[None]:
         """Validate object class list."""
         try:
@@ -399,21 +428,23 @@ class FlextLdapService(IFlextLdapFullService):
         request: FlextLdapSearchRequest,
     ) -> FlextResult[FlextLdapSearchResponse]:
         """Search entries."""
-        repository = self._container.get_repository()
+        repository_result = self._get_repository()
+        if not repository_result.is_success:
+            return FlextResult[FlextLdapSearchResponse].fail(f"Repository access failed: {repository_result.error}")
+        repository = repository_result.value
         return await repository.search(request)
 
 
 # Specialized service classes for focused operations
 
 
-class FlextLdapUserService(IFlextLdapUserService):
+class FlextLdapUserService:
     """Specialized service for user operations."""
 
     def __init__(self, main_service: FlextLdapService) -> None:
         """Initialize with main service."""
         self._service = main_service
 
-    @override
     async def create_user(
         self,
         request: FlextLdapCreateUserRequest,
@@ -421,12 +452,10 @@ class FlextLdapUserService(IFlextLdapUserService):
         """Create new user."""
         return await self._service.create_user(request)
 
-    @override
     async def get_user(self, dn: str) -> FlextResult[FlextLdapUser | None]:
         """Get user by DN."""
         return await self._service.get_user(dn)
 
-    @override
     async def update_user(
         self,
         dn: str,
@@ -435,12 +464,10 @@ class FlextLdapUserService(IFlextLdapUserService):
         """Update user."""
         return await self._service.update_user(dn, attributes)
 
-    @override
     async def delete_user(self, dn: str) -> FlextResult[None]:
         """Delete user."""
         return await self._service.delete_user(dn)
 
-    @override
     async def search_users(
         self,
         filter_str: str,
@@ -450,30 +477,26 @@ class FlextLdapUserService(IFlextLdapUserService):
         """Search users."""
         return await self._service.search_users(filter_str, base_dn, scope)
 
-    @override
     async def user_exists(self, dn: str) -> FlextResult[bool]:
         """Check if user exists."""
         return await self._service.user_exists(dn)
 
 
-class FlextLdapGroupService(IFlextLdapGroupService):
+class FlextLdapGroupService:
     """Specialized service for group operations."""
 
     def __init__(self, main_service: FlextLdapService) -> None:
         """Initialize with main service."""
         self._service = main_service
 
-    @override
     async def create_group(self, group: FlextLdapGroup) -> FlextResult[None]:
         """Create group."""
         return await self._service.create_group(group)
 
-    @override
     async def get_group(self, dn: str) -> FlextResult[FlextLdapGroup | None]:
         """Get group by DN."""
         return await self._service.get_group(dn)
 
-    @override
     async def update_group(
         self,
         dn: str,
@@ -482,27 +505,22 @@ class FlextLdapGroupService(IFlextLdapGroupService):
         """Update group."""
         return await self._service.update_group(dn, attributes)
 
-    @override
     async def delete_group(self, dn: str) -> FlextResult[None]:
         """Delete group."""
         return await self._service.delete_group(dn)
 
-    @override
     async def add_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
         """Add member to group."""
         return await self._service.add_member(group_dn, member_dn)
 
-    @override
     async def remove_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
         """Remove member from group."""
         return await self._service.remove_member(group_dn, member_dn)
 
-    @override
     async def get_members(self, group_dn: str) -> FlextResult[list[str]]:
         """Get group members."""
         return await self._service.get_members(group_dn)
 
-    @override
     async def group_exists(self, dn: str) -> FlextResult[bool]:
         """Check if group exists."""
         return await self._service.group_exists(dn)

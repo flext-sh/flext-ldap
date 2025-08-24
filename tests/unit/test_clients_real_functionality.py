@@ -16,8 +16,13 @@ from unittest.mock import Mock
 import ldap3
 from flext_core import FlextResult
 
-from flext_ldap.clients import SCOPE_MAP, FlextLdapClient
-from flext_ldap.entities import FlextLdapSearchRequest, FlextLdapSearchResponse
+from flext_ldap import (
+    SCOPE_MAP,
+    FlextLdapClient,
+    FlextLdapSearchRequest,
+    FlextLdapSearchResponse,
+)
+from flext_ldap.utils import FlextLdapUtilities
 
 
 class TestFlextLdapClientRealFunctionality(unittest.TestCase):
@@ -39,7 +44,7 @@ class TestFlextLdapClientRealFunctionality(unittest.TestCase):
     def test_scope_map_constants_are_valid(self) -> None:
         """Test que SCOPE_MAP contém mapeamentos válidos para ldap3."""
         # Verificar que todas as chaves são strings
-        for key in SCOPE_MAP.keys():
+        for key in SCOPE_MAP:
             assert isinstance(key, str)
 
         # Verificar que todos os valores são constantes ldap3 válidas
@@ -86,8 +91,7 @@ class TestFlextLdapClientRealFunctionality(unittest.TestCase):
 
             def mock_server(*args, **kwargs):
                 parsed_values.update(kwargs)
-                mock_srv = Mock()
-                return mock_srv
+                return Mock()
 
             def mock_connection(server, **kwargs):
                 parsed_values.update(kwargs)
@@ -240,7 +244,7 @@ class TestFlextLdapClientRealFunctionality(unittest.TestCase):
             # Track search calls
             search_calls = []
 
-            def mock_search(**kwargs):
+            def mock_search(**kwargs) -> bool:
                 search_calls.append(kwargs)
                 return True  # Success
 
@@ -511,11 +515,10 @@ class TestFlextLdapClientRealFunctionality(unittest.TestCase):
             self.client._connection = mock_connection
 
             # Mock FlextLdapUtilities methods that will be called
-            from flext_ldap.utils import FlextLdapUtilities
 
             original_methods = {}
 
-            def mock_safe_ldap3_search_result(result):
+            def mock_safe_ldap3_search_result(result) -> bool:
                 return True
 
             def mock_safe_ldap3_entries_list(connection):
@@ -596,7 +599,6 @@ class TestFlextLdapClientErrorHandling(unittest.TestCase):
 
     def test_all_async_methods_return_flext_result(self) -> None:
         """Test que todos os métodos async retornam FlextResult."""
-        import inspect
 
         client = FlextLdapClient()
         async_methods = [
@@ -623,7 +625,6 @@ class TestFlextLdapClientErrorHandling(unittest.TestCase):
 
     def test_methods_have_proper_type_annotations(self) -> None:
         """Test que métodos têm type annotations corretas."""
-        import inspect
 
         client = FlextLdapClient()
         methods_to_check = [
@@ -645,7 +646,7 @@ class TestFlextLdapClientErrorHandling(unittest.TestCase):
 
             # Should have parameter annotations for each parameter
             sig = inspect.signature(method)
-            for param_name, param in sig.parameters.items():
+            for param_name in sig.parameters:
                 if param_name != "self":
                     assert param_name in annotations
 

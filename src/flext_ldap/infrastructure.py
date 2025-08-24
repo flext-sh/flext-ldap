@@ -10,22 +10,17 @@ focused modules (clients, repositories, container).
 
 from __future__ import annotations
 
+# FLEXT-CORE INTEGRATION: Use flext-core protocols instead of local interfaces
+from flext_core import FlextProtocols
+
 # Re-export client implementations
 from flext_ldap.clients import FlextLdapClient
 
 # Re-export container and DI infrastructure
 from flext_ldap.container import (
-    FlextLdapContainer,
     configure_ldap_container,
     get_ldap_container,
     reset_ldap_container,
-)
-
-# Re-export interfaces for type checking
-from flext_ldap.interfaces import (
-    IFlextLdapClient,
-    IFlextLdapConfiguration,
-    IFlextLdapRepository,
 )
 
 # Re-export repository implementations
@@ -35,16 +30,14 @@ from flext_ldap.repositories import (
     FlextLdapUserRepository,
 )
 
-# Client exports
+# Client exports - after FLEXT compliance migration
 __all__ = [
     "FlextLdapClient",
-    "FlextLdapContainer",
+    # FlextLdapContainer eliminated - use get_ldap_container() instead
     "FlextLdapGroupRepository",
     "FlextLdapRepository",
     "FlextLdapUserRepository",
-    "IFlextLdapClient",
-    "IFlextLdapConfiguration",
-    "IFlextLdapRepository",
+    "FlextProtocols",  # Export flext-core protocols instead of local interfaces
     "configure_ldap_container",
     "get_ldap_container",
     "reset_ldap_container",

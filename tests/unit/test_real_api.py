@@ -5,6 +5,9 @@ These tests execute REAL API code to increase coverage and validate functionalit
 
 from __future__ import annotations
 
+import inspect
+import time
+
 import pytest
 
 # Test real API functionality
@@ -173,7 +176,6 @@ class TestRealApiIntegration:
         api = FlextLdapApi()
 
         # Check that key methods are async (coroutines)
-        import inspect
 
         async_methods = [
             "search",
@@ -251,7 +253,6 @@ class TestRealApiPerformance:
 
     def test_api_instantiation_is_fast(self) -> None:
         """Test API instantiation is reasonably fast."""
-        import time
 
         start_time = time.time()
 
@@ -267,7 +268,6 @@ class TestRealApiPerformance:
 
     def test_get_ldap_api_function_is_fast(self) -> None:
         """Test get_ldap_api function access is fast."""
-        import time
 
         start_time = time.time()
 

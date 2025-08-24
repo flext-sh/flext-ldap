@@ -6,6 +6,8 @@ Every test here increases the REAL code coverage.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 from flext_core import FlextEntityId, FlextEntityStatus, FlextResult
 
@@ -339,7 +341,6 @@ class TestRealConstants:
 
     def test_password_pattern_is_compiled_regex(self) -> None:
         """Test password pattern is a compiled regex pattern."""
-        import re
 
         assert isinstance(PASSWORD_PATTERN, re.Pattern)
 

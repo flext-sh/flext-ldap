@@ -10,6 +10,7 @@ OBJETIVO: repositories.py (15% -> 80%+) - 129 linhas não cobertas
 from __future__ import annotations
 
 import asyncio
+import inspect
 import unittest
 from unittest.mock import MagicMock
 
@@ -178,7 +179,7 @@ class TestFlextLdapRepositoryRealFunctionality(unittest.TestCase):
                 attributes={"cn": ["newuser"], "objectClass": ["person"]},
             )
 
-            result = await self.repository.save(entry)
+            result = await self.repository.save_async(entry)
 
             assert isinstance(result, FlextResult)
             # Pode ter falha se validation não passar, mas deve ser FlextResult
@@ -195,13 +196,13 @@ class TestFlextLdapRepositoryRealFunctionality(unittest.TestCase):
             self.mock_client.delete = mock_delete
 
             # Test com DN inválido
-            result = await self.repository.delete("")
+            result = await self.repository.delete_async("")
             assert isinstance(result, FlextResult)
             assert result.is_success is False
             assert "Invalid DN format" in result.error
 
             # Test com DN válido
-            result = await self.repository.delete("cn=test,ou=users,dc=example,dc=com")
+            result = await self.repository.delete_async("cn=test,ou=users,dc=example,dc=com")
             assert isinstance(result, FlextResult)
 
         asyncio.run(run_test())
@@ -330,7 +331,7 @@ class TestFlextLdapUserRepositoryRealFunctionality(unittest.TestCase):
 
         async def mock_find_by_dn(dn: str) -> FlextResult[FlextLdapEntry | None]:
             # Mock para find_by_dn usado internamente
-            user_id = dn.split(",")[0].split("=")[1]  # Extrair uid do DN
+            user_id = dn.split(",", maxsplit=1)[0].split("=")[1]  # Extrair uid do DN
             entry = FlextLdapEntry(
                 id=FlextEntityId(f"test-{user_id}"),
                 dn=dn,
@@ -472,9 +473,9 @@ class TestFlextLdapGroupRepositoryRealFunctionality(unittest.TestCase):
         async def mock_get_group_members(group_dn: str) -> FlextResult[list[str]]:
             if not group_dn or group_dn == "":
                 return FlextResult[list[str]].fail("Invalid group DN")
-            return FlextResult[list[str]].ok([
-                "uid=existinguser,ou=users,dc=example,dc=com"
-            ])
+            return FlextResult[list[str]].ok(
+                ["uid=existinguser,ou=users,dc=example,dc=com"]
+            )
 
         async def mock_update(
             dn: str, attributes: dict[str, object]
@@ -544,7 +545,7 @@ class TestRepositoryIntegrationRealFunctionality(unittest.TestCase):
         methods_to_test = [
             ("find_by_dn", "cn=test,dc=example,dc=com"),
             ("exists", "cn=test,dc=example,dc=com"),
-            ("delete", "cn=test,dc=example,dc=com"),
+            ("delete_async", "cn=test,dc=example,dc=com"),
         ]
 
         async def run_test() -> None:
@@ -558,7 +559,6 @@ class TestRepositoryIntegrationRealFunctionality(unittest.TestCase):
 
     def test_repository_type_safety(self) -> None:
         """Test que repositories mantêm type safety."""
-        import inspect
 
         # Verificar que métodos têm type annotations corretas
         repository_classes = [

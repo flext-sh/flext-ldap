@@ -17,26 +17,25 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
-from abc import ABC, abstractmethod
 from collections.abc import Callable, Coroutine
-from typing import cast, override
+from typing import cast
 from urllib.parse import urlparse
 
+# FLEXT-CORE INTEGRATION: Use protocols instead of ABC
 from flext_core import (
     FlextEntityId,
     FlextEntityStatus,
     FlextModel,
     FlextResult,
+    FlextTypes,
     get_logger,
 )
-from flext_core.typings import FlextTypes
 from pydantic import Field, field_validator
 
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.constants import FlextLdapConnectionConstants
 from flext_ldap.entities import FlextLdapEntry, FlextLdapSearchRequest
 from flext_ldap.typings import (
-    FlextLdapDirectoryEntryProtocol,
     LdapAttributeDict,
     LdapAttributeValue,
 )
@@ -84,56 +83,8 @@ class ConnectionConfig(FlextModel):
 # OperationResult completely removed - using FlextResult pattern throughout
 
 
-# ==================== SERVICE INTERFACES ====================
-
-
-class ConnectionServiceInterface(ABC):
-    """Interface for connection management operations."""
-
-    @abstractmethod
-    async def establish_connection(self, config: ConnectionConfig) -> FlextResult[str]:
-        """Establish LDAP connection."""
-
-    @abstractmethod
-    async def terminate_connection(self) -> FlextResult[str]:
-        """Terminate LDAP connection."""
-
-    @abstractmethod
-    def is_connected(self) -> bool:
-        """Check connection status."""
-
-
-class SearchServiceInterface(ABC):
-    """Interface for search operations."""
-
-    @abstractmethod
-    async def search_entries(
-        self,
-        base_dn: str,
-        search_filter: str,
-        attributes: list[str] | None = None,
-    ) -> FlextResult[list[FlextLdapEntry]]:
-        """Search directory entries."""
-
-
-class EntryServiceInterface(ABC):
-    """Interface for entry manipulation operations."""
-
-    @abstractmethod
-    async def add_entry(self, entry: DirectoryEntry) -> FlextResult[str]:
-        """Add directory entry."""
-
-    @abstractmethod
-    async def modify_entry(
-        self,
-        dn: str,
-        modifications: FlextTypes.Core.Dict,
-    ) -> FlextResult[list[FlextLdapEntry]]:
-        """Modify directory entry."""
-
-    @abstractmethod
-    async def delete_entry(self, dn: str) -> FlextResult[str]:
-        """Delete directory entry."""
+# ==================== FLEXT-CORE INTEGRATION ====================
+# Use flext-core protocols instead of local interfaces - ELIMINATE DUPLICATION
 
 
 # ==================== SERVICE IMPLEMENTATIONS ====================
@@ -185,7 +136,7 @@ class OperationExecutor:
             return FlextResult[str].fail(f"{operation_type.title()} operation failed")
 
 
-class FlextLdapConnectionService(ConnectionServiceInterface, OperationExecutor):
+class FlextLdapConnectionService(OperationExecutor):
     """Professional connection service implementation."""
 
     def __init__(self, ldap_client: FlextLdapClient) -> None:
@@ -194,7 +145,6 @@ class FlextLdapConnectionService(ConnectionServiceInterface, OperationExecutor):
         self._connection_id: str | None = None
         logger.debug("FlextLdapConnectionService initialized")
 
-    @override
     async def establish_connection(self, config: ConnectionConfig) -> FlextResult[str]:
         """Establish LDAP connection with comprehensive error handling."""
         return await self.execute_string_operation(
@@ -203,7 +153,6 @@ class FlextLdapConnectionService(ConnectionServiceInterface, OperationExecutor):
             operation_func=lambda: self._perform_connection(config),
         )
 
-    @override
     async def terminate_connection(self) -> FlextResult[str]:
         """Terminate LDAP connection gracefully."""
         try:
@@ -222,7 +171,6 @@ class FlextLdapConnectionService(ConnectionServiceInterface, OperationExecutor):
             logger.exception("Connection termination failed")
             return FlextResult[str].fail("Connection termination failed")
 
-    @override
     def is_connected(self) -> bool:
         """Check if connection is active."""
         return self._connection_id is not None
@@ -265,7 +213,7 @@ class FlextLdapConnectionService(ConnectionServiceInterface, OperationExecutor):
             )
 
 
-class FlextLdapSearchService(SearchServiceInterface):
+class FlextLdapSearchService:
     """Professional search service implementation."""
 
     def __init__(self, ldap_client: FlextLdapClient) -> None:
@@ -273,7 +221,6 @@ class FlextLdapSearchService(SearchServiceInterface):
         self._ldap_client = ldap_client
         logger.debug("FlextLdapSearchService initialized")
 
-    @override
     async def search_entries(
         self,
         base_dn: str,
@@ -423,7 +370,7 @@ class FlextLdapSearchService(SearchServiceInterface):
         return normalized
 
 
-class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
+class FlextLdapEntryService(OperationExecutor):
     """Professional entry manipulation service implementation."""
 
     def __init__(self, ldap_client: FlextLdapClient) -> None:
@@ -431,7 +378,6 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
         self._ldap_client = ldap_client
         logger.debug("FlextLdapEntryService initialized")
 
-    @override
     async def add_entry(self, entry: DirectoryEntry) -> FlextResult[str]:
         """Add directory entry with comprehensive validation."""
         return await self.execute_string_operation(
@@ -440,7 +386,6 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
             operation_func=lambda: self._perform_add_entry(entry),
         )
 
-    @override
     async def modify_entry(
         self,
         dn: str,
@@ -453,7 +398,6 @@ class FlextLdapEntryService(EntryServiceInterface, OperationExecutor):
             operation_func=lambda: self._perform_modify_entry(dn, modifications),
         )
 
-    @override
     async def delete_entry(self, dn: str) -> FlextResult[str]:
         """Delete directory entry with validation."""
         return await self.execute_string_operation(
@@ -606,38 +550,9 @@ class FlextLdapDirectoryEntry:
         return self.attributes.get(name, [])
 
 
-class FlextLdapDirectoryServiceInterface(ABC):
-    """Abstract interface for directory operations."""
+# FLEXT-CORE MIGRATION: Remove duplicate interfaces, use protocols from flext-core
 
-    @abstractmethod
-    async def connect(
-        self,
-        server_url: str,
-        *,
-        bind_dn: str | None = None,
-        password: str | None = None,
-    ) -> FlextResult[bool]:
-        """Connect to directory service."""
-
-    @abstractmethod
-    def search_users(
-        self,
-        search_filter: str,
-        base_dn: str = "",
-        attributes: list[str] | None = None,
-    ) -> FlextResult[list[FlextLdapDirectoryEntryProtocol]]:
-        """Search for users."""
-
-
-class FlextLdapDirectoryAdapterInterface(ABC):
-    """Abstract interface for directory adapter."""
-
-    @abstractmethod
-    def get_directory_service(self) -> FlextLdapDirectoryServiceInterface:
-        """Get directory service implementation."""
-
-
-class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
+class FlextLdapDirectoryService:  # Direct implementation using flext-core patterns
     """Professional directory service implementation."""
 
     def __init__(self) -> None:
@@ -648,7 +563,6 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         self._entry_service = FlextLdapEntryService(self._ldap_client)
         logger.trace("FlextLdapDirectoryService initialized with specialized services")
 
-    @override
     async def connect(
         self,
         server_url: str,
@@ -676,13 +590,12 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
             logger.exception("Directory service connection failed")
             return FlextResult[bool].fail("Directory service connection failed")
 
-    @override
     def search_users(
         self,
         search_filter: str,
         base_dn: str = "",
         attributes: list[str] | None = None,
-    ) -> FlextResult[list[FlextLdapDirectoryEntryProtocol]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Search for users using specialized search service."""
         try:
             # Use asyncio.run for sync interface compatibility
@@ -700,25 +613,25 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
                 # Since we checked is_success, we can safely use .value
                 entries = result.value
                 protocol_entries = self._convert_entries_to_protocol(entries)
-                return FlextResult[list[FlextLdapDirectoryEntryProtocol]].ok(
+                return FlextResult[list[dict[str, object]]].ok(
                     protocol_entries,
                 )
 
             error_msg = result.error or "Search failed"
-            return FlextResult[list[FlextLdapDirectoryEntryProtocol]].fail(error_msg)
+            return FlextResult[list[dict[str, object]]].fail(error_msg)
 
         except Exception:
             logger.exception("User search failed")
-            return FlextResult[list[FlextLdapDirectoryEntryProtocol]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 "User search failed",
             )
 
     def _convert_entries_to_protocol(
         self,
         entries_data: object,
-    ) -> list[FlextLdapDirectoryEntryProtocol]:
+    ) -> list[dict[str, object]]:
         """Convert DirectoryEntry models to protocol-compatible entries."""
-        protocol_entries: list[FlextLdapDirectoryEntryProtocol] = []
+        protocol_entries: list[dict[str, object]] = []
 
         if not isinstance(entries_data, list):
             return protocol_entries
@@ -768,7 +681,7 @@ class FlextLdapDirectoryService(FlextLdapDirectoryServiceInterface):
         return normalized_attrs
 
 
-class FlextLdapDirectoryAdapter(FlextLdapDirectoryAdapterInterface):
+class FlextLdapDirectoryAdapter:
     """Professional directory adapter implementation."""
 
     def __init__(self) -> None:
@@ -776,8 +689,7 @@ class FlextLdapDirectoryAdapter(FlextLdapDirectoryAdapterInterface):
         self._directory_service = FlextLdapDirectoryService()
         logger.debug("FlextLdapDirectoryAdapter initialized with professional service")
 
-    @override
-    def get_directory_service(self) -> FlextLdapDirectoryServiceInterface:
+    def get_directory_service(self) -> FlextLdapDirectoryService:
         """Get directory service implementation."""
         return self._directory_service
 

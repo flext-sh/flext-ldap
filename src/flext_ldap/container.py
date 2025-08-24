@@ -1,14 +1,11 @@
-"""LDAP dependency injection container extending flext-core patterns."""
+"""LDAP dependency injection using flext-core container - ELIMINATES LOCAL CONTAINER."""
 
 from __future__ import annotations
 
-from typing import Protocol
-
-from flext_core import FlextContainer, FlextResult, get_logger
+from flext_core import FlextContainer, FlextResult, get_flext_container, get_logger
 
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.configuration import FlextLdapSettings
-from flext_ldap.interfaces import IFlextLdapClient, IFlextLdapRepository
 from flext_ldap.repositories import (
     FlextLdapGroupRepository,
     FlextLdapRepository,
@@ -18,188 +15,117 @@ from flext_ldap.repositories import (
 logger = get_logger(__name__)
 
 
-class IFlextLdapContainer(Protocol):
-    """Protocol for LDAP dependency injection container."""
+# =============================================================================
+# FLEXT-CORE INTEGRATION - LOCAL CONTAINER ELIMINATED
+# =============================================================================
 
-    def get_client(self) -> FlextLdapClient:
-        """Get LDAP client instance."""
-        ...
-
-    def get_repository(self) -> FlextLdapRepository:
-        """Get LDAP repository instance."""
-        ...
-
-    def get_user_repository(self) -> FlextLdapUserRepository:
-        """Get user repository instance."""
-        ...
-
-    def get_group_repository(self) -> FlextLdapGroupRepository:
-        """Get group repository instance."""
-        ...
-
-    def configure(self, settings: FlextLdapSettings) -> FlextResult[None]:
-        """Configure container with settings."""
-        ...
+# LOCAL CONTAINER PROTOCOL ELIMINATED - USE FlextProtocols FROM FLEXT-CORE
+# Per CLAUDE.md: "Dependency Injection: Use get_flext_container() from flext-core, NO local containers"
 
 
-class FlextLdapContainer(FlextContainer):
-    """LDAP dependency injection container extending flext-core."""
+# =============================================================================
+# SERVICE REGISTRATION WITH FLEXT-CORE CONTAINER
+# =============================================================================
+
+# Factory functions removed - using direct instantiation with flext-core container.register()
+
+
+def _register_ldap_services(container: FlextContainer) -> FlextResult[None]:
+    """Register LDAP services with flext-core container using proper API."""
+    try:
+        # Register LDAP client instance
+        client = FlextLdapClient()
+        client_result = container.register("FlextLdapClient", client)
+        if not client_result.is_success:
+            return FlextResult[None].fail(f"Failed to register client: {client_result.error}")
+
+        # Register repository with client dependency
+        repository = FlextLdapRepository(client)
+        repo_result = container.register("FlextLdapRepository", repository)
+        if not repo_result.is_success:
+            return FlextResult[None].fail(f"Failed to register repository: {repo_result.error}")
+
+        # Register user repository
+        user_repository = FlextLdapUserRepository(repository)
+        user_repo_result = container.register("FlextLdapUserRepository", user_repository)
+        if not user_repo_result.is_success:
+            return FlextResult[None].fail(f"Failed to register user repository: {user_repo_result.error}")
+
+        # Register group repository
+        group_repository = FlextLdapGroupRepository(repository)
+        group_repo_result = container.register("FlextLdapGroupRepository", group_repository)
+        if not group_repo_result.is_success:
+            return FlextResult[None].fail(f"Failed to register group repository: {group_repo_result.error}")
+
+        logger.info("LDAP services registered with flext-core container")
+        return FlextResult[None].ok(None)
+
+    except Exception as e:
+        logger.exception("Failed to register LDAP services")
+        return FlextResult[None].fail(f"Service registration error: {e}")
+
+
+# =============================================================================
+# FLEXT-CORE CONTAINER INTEGRATION - LOCAL CONTAINER ELIMINATED
+# =============================================================================
+
+class _LdapContainerRegistry:
+    """Registry to track LDAP service registration state."""
 
     def __init__(self) -> None:
-        """Initialize LDAP container."""
-        super().__init__()
-        self._settings: FlextLdapSettings | None = None
-        self._client_instance: FlextLdapClient | None = None
-        self._repository_instance: FlextLdapRepository | None = None
-        self._user_repository_instance: FlextLdapUserRepository | None = None
-        self._group_repository_instance: FlextLdapGroupRepository | None = None
+        self.services_registered = False
 
-    def configure(self, settings: FlextLdapSettings) -> FlextResult[None]:
-        """Configure container with settings."""
-        # Validate settings
-        validation_result = settings.validate_business_rules()
-        if not validation_result.is_success:
-            return FlextResult[None].fail(
-                f"Settings validation failed: {validation_result.error}",
-            )
-
-        self._settings = settings
-
-        # Reset instances to force recreation with new settings
-        self._client_instance = None
-        self._repository_instance = None
-        self._user_repository_instance = None
-        self._group_repository_instance = None
-
-        logger.info("Container configured with new settings")
-        return FlextResult[None].ok(None)
-
-    def get_client(self) -> FlextLdapClient:
-        """Get LDAP client instance (singleton)."""
-        if self._client_instance is None:
-            self._client_instance = FlextLdapClient()
-            logger.debug("Created new LDAP client instance")
-
-        return self._client_instance
-
-    def get_repository(self) -> FlextLdapRepository:
-        """Get LDAP repository instance (singleton)."""
-        if self._repository_instance is None:
-            client = self.get_client()
-            self._repository_instance = FlextLdapRepository(client)
-            logger.debug("Created new LDAP repository instance")
-
-        return self._repository_instance
-
-    def get_user_repository(self) -> FlextLdapUserRepository:
-        """Get user repository instance (singleton)."""
-        if self._user_repository_instance is None:
-            base_repo = self.get_repository()
-            self._user_repository_instance = FlextLdapUserRepository(base_repo)
-            logger.debug("Created new user repository instance")
-
-        return self._user_repository_instance
-
-    def get_group_repository(self) -> FlextLdapGroupRepository:
-        """Get group repository instance (singleton)."""
-        if self._group_repository_instance is None:
-            base_repo = self.get_repository()
-            self._group_repository_instance = FlextLdapGroupRepository(base_repo)
-            logger.debug("Created new group repository instance")
-
-        return self._group_repository_instance
-
-    def get_settings(self) -> FlextLdapSettings:
-        """Get current settings."""
-        if self._settings is None:
-            # Return default settings if none configured
-            self._settings = FlextLdapSettings()
-            logger.warning(
-                "Using default settings - consider configuring container explicitly",
-            )
-
-        return self._settings
-
-    def register_client(self, client: IFlextLdapClient) -> FlextResult[None]:
-        """Register custom client implementation."""
-        if not isinstance(client, FlextLdapClient):
-            return FlextResult[None].fail("Client must be instance of FlextLdapClient")
-
-        self._client_instance = client
-        # Reset dependent instances
-        self._repository_instance = None
-        self._user_repository_instance = None
-        self._group_repository_instance = None
-
-        logger.info("Custom client registered")
-        return FlextResult[None].ok(None)
-
-    def register_repository(
-        self,
-        repository: IFlextLdapRepository,
-    ) -> FlextResult[None]:
-        """Register custom repository implementation."""
-        if not isinstance(repository, FlextLdapRepository):
-            return FlextResult[None].fail(
-                "Repository must be instance of FlextLdapRepository",
-            )
-
-        self._repository_instance = repository
-        # Reset dependent instances
-        self._user_repository_instance = None
-        self._group_repository_instance = None
-
-        logger.info("Custom repository registered")
-        return FlextResult[None].ok(None)
+    def mark_registered(self) -> None:
+        """Mark services as registered."""
+        self.services_registered = True
 
     def reset(self) -> None:
-        """Reset all instances (useful for testing)."""
-        self._client_instance = None
-        self._repository_instance = None
-        self._user_repository_instance = None
-        self._group_repository_instance = None
-        self._settings = None
+        """Reset registration state."""
+        self.services_registered = False
 
-        logger.debug("Container reset - all instances cleared")
-
-    async def cleanup(self) -> FlextResult[None]:
-        """Cleanup resources."""
-        if self._client_instance:
-            try:
-                await self._client_instance.unbind()
-            except Exception as e:
-                logger.exception("Error during client cleanup", extra={"error": str(e)})
-                return FlextResult[None].fail(f"Cleanup failed: {e}")
-
-        self.reset()
-        logger.info("Container cleanup completed")
-        return FlextResult[None].ok(None)
+    def is_registered(self) -> bool:
+        """Check if services are registered."""
+        return self.services_registered
 
 
-# Global container instance
-_ldap_container: FlextLdapContainer | None = None
+_registry = _LdapContainerRegistry()
 
 
-def get_ldap_container() -> FlextLdapContainer:
-    """Get global LDAP container instance."""
-    global _ldap_container  # noqa: PLW0603
-    if _ldap_container is None:
-        _ldap_container = FlextLdapContainer()
-        logger.debug("Created global LDAP container")
+def get_ldap_container() -> FlextContainer:
+    """Get flext-core container with LDAP services registered.
 
-    return _ldap_container
+    CLAUDE.md COMPLIANCE: Uses get_flext_container() instead of local container.
+    """
+    # Get the central flext-core container
+    container = get_flext_container()
+
+    # Register LDAP services once
+    if not _registry.is_registered():
+        registration_result = _register_ldap_services(container)
+        if not registration_result.is_success:
+            logger.error(f"Failed to register LDAP services: {registration_result.error}")
+            error_msg = f"LDAP service registration failed: {registration_result.error}"
+            raise RuntimeError(error_msg)
+        _registry.mark_registered()
+
+    return container
 
 
 def configure_ldap_container(settings: FlextLdapSettings) -> FlextResult[None]:
-    """Configure global LDAP container."""
-    container = get_ldap_container()
-    return container.configure(settings)
+    """Configure LDAP services in flext-core container with settings."""
+    container = get_ldap_container()  # Now returns flext-core container
+
+    # Register settings as a service
+    settings_result = container.register("FlextLdapSettings", settings)
+
+    if settings_result.is_success:
+        logger.info("LDAP container configured with settings using flext-core")
+        return FlextResult[None].ok(None)
+    return FlextResult[None].fail(f"Failed to register settings: {settings_result.error}")
 
 
 def reset_ldap_container() -> None:
-    """Reset global LDAP container (useful for testing)."""
-    global _ldap_container  # noqa: PLW0603
-    if _ldap_container:
-        _ldap_container.reset()
-        _ldap_container = None
-        logger.debug("Global LDAP container reset")
+    """Reset LDAP service registrations in flext-core container."""
+    # Reset registration flag to allow re-registration
+    _registry.reset()
+    logger.debug("LDAP service registration reset - will re-register on next access")

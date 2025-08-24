@@ -23,19 +23,20 @@ from flext_ldap.operations import (
     FlextLdapEntryOperations,
     FlextLdapGroupOperations,
     FlextLdapOperations,
-    FlextLdapOperationsBase,
+    # FlextLdapOperationsBase now internal - use concrete classes
     FlextLdapSearchOperations,
     FlextLdapUserOperations,
 )
 from flext_ldap.typings import LdapAttributeDict
 
 
-class TestFlextLdapOperationsBaseReal:
-    """Test base operations class with REAL code execution."""
+class TestFlextLdapOperationsReal:
+    """Test operations class with REAL code execution (base class now internal)."""
 
     def test_operations_base_initialization_real(self) -> None:
         """Test base operations initialization executes real code."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         # Verify real initialization happened
         assert hasattr(ops, "_container")
@@ -44,7 +45,8 @@ class TestFlextLdapOperationsBaseReal:
 
     def test_generate_id_real_execution(self) -> None:
         """Test ID generation with real execution."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         # Call real implementation
         id1 = ops._generate_id()
@@ -63,7 +65,8 @@ class TestFlextLdapOperationsBaseReal:
 
     def test_validate_uri_real_validation(self) -> None:
         """Test URI validation with real code execution."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         # Test valid LDAP URI
         result = ops._validate_uri_or_fail("ldap://localhost:389")
@@ -85,7 +88,8 @@ class TestFlextLdapOperationsBaseReal:
 
     def test_validate_dn_real_validation(self) -> None:
         """Test DN validation with real code execution."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         # Test valid DNs
         valid_dns = [
@@ -100,7 +104,8 @@ class TestFlextLdapOperationsBaseReal:
 
     def test_validate_filter_real_validation(self) -> None:
         """Test filter validation with real code execution."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         # Test valid filters
         valid_filters = [
@@ -116,7 +121,8 @@ class TestFlextLdapOperationsBaseReal:
 
     def test_handle_exception_with_context_real(self) -> None:
         """Test exception handling with real implementation."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         # Test with real exception
         test_exception = ValueError("Test error message")
@@ -132,7 +138,8 @@ class TestFlextLdapOperationsBaseReal:
 
     def test_log_operation_success_real(self) -> None:
         """Test operation success logging with real implementation."""
-        ops = FlextLdapOperationsBase()
+        # FlextLdapOperationsBase is now internal - use concrete implementation
+        ops = FlextLdapOperations()
 
         # Should execute without raising exceptions
         ops._log_operation_success("test operation", "conn123", extra_key="value")

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import importlib.metadata
 
-from flext_ldap.api import FlextLdapApi, get_ldap_api
+from flext_ldap.api import FlextLdapApi, get_ldap_api, create_ldap_api
 from flext_ldap.constants import FlextLdapScope as _ConstantsLdapScope
 from flext_ldap.constants import (
     FlextLdapProtocolConstants,
@@ -36,6 +36,7 @@ from flext_ldap.entities import (
     FlextLdapGroup,
     FlextLdapUser,
     FlextLdapSearchRequest,
+    FlextLdapSearchResponse,
 )
 from flext_ldap.value_objects import (
     FlextLdapDistinguishedName,
@@ -48,11 +49,32 @@ from flext_ldap.infrastructure import FlextLdapClient
 
 from flext_ldap.container import get_ldap_container, reset_ldap_container
 
+# Import missing exports that tests need
+from flext_ldap.clients import SCOPE_MAP
+from flext_ldap.domain import (
+    EntityParameterBuilder,
+    FlextLdapActiveUserSpecification,
+    FlextLdapCompleteUserSpecification,
+    FlextLdapDistinguishedNameSpecification,
+    FlextLdapDomainFactory,
+    FlextLdapDomainSpecification,
+    FlextLdapEmailSpecification,
+    FlextLdapGroupManagementService,
+    FlextLdapGroupSpecification,
+    FlextLdapPasswordService,
+    FlextLdapPasswordSpecification,
+    FlextLdapUserManagementService,
+    FlextLdapUserSpecification,
+    GroupEntityBuilder,
+    UserEntityBuilder,
+)
+
 from flext_ldap.exceptions import (
     FlextLdapError,
     FlextLdapExceptionFactory,
     FlextLdapUserError,
     FlextLdapConfigurationError,
+    FlextLdapConnectionError,
 )
 
 from flext_ldap.utils import (
@@ -64,6 +86,15 @@ from flext_ldap.utils import (
 from flext_ldap.typings import LdapAttributeDict
 
 from flext_ldap.config import FlextLdapAuthConfig as FlextLdapConfig
+# CLI imports (testing if circular dependency is resolved)
+from flext_ldap.cli import (
+    FlextLdapCliCommandService,
+    FlextLdapCliFormatterService,
+    cli,
+    get_command_service,
+    get_formatter_service,
+    main,
+)
 
 # Version info
 try:
@@ -78,6 +109,7 @@ __all__: list[str] = [
     # Core API
     "FlextLdapApi",
     "get_ldap_api",
+    "create_ldap_api",
     # Configuration
     "FlextLdapConnectionConfig",
     "FlextLdapSettings",
@@ -89,6 +121,7 @@ __all__: list[str] = [
     "FlextLdapGroup",
     "FlextLdapCreateUserRequest",
     "FlextLdapSearchRequest",
+    "FlextLdapSearchResponse",
     "FlextLdapDistinguishedName",
     "FlextLdapScope",
     # Constants (selective export)
@@ -116,6 +149,31 @@ __all__: list[str] = [
     "FlextLdapExceptionFactory",
     "FlextLdapUserError",
     "FlextLdapConfigurationError",
+    "FlextLdapConnectionError",
+    # Missing exports that tests need
+    "SCOPE_MAP",
+    "EntityParameterBuilder",
+    "FlextLdapActiveUserSpecification",
+    "FlextLdapCompleteUserSpecification",
+    "FlextLdapDistinguishedNameSpecification",
+    "FlextLdapDomainFactory",
+    "FlextLdapDomainSpecification",
+    "FlextLdapEmailSpecification",
+    "FlextLdapGroupManagementService",
+    "FlextLdapGroupSpecification",
+    "FlextLdapPasswordService",
+    "FlextLdapPasswordSpecification",
+    "FlextLdapUserManagementService",
+    "FlextLdapUserSpecification",
+    "GroupEntityBuilder",
+    "UserEntityBuilder",
+    # CLI exports (testing if circular dependency is resolved)
+    "FlextLdapCliCommandService",
+    "FlextLdapCliFormatterService",
+    "cli",
+    "get_command_service",
+    "get_formatter_service",
+    "main",
     # Utilities
     "flext_ldap_validate_dn",
     "flext_ldap_validate_attribute_name",

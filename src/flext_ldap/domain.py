@@ -22,14 +22,15 @@ from __future__ import annotations
 import re
 import secrets
 import string
-from abc import ABC, abstractmethod
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import ClassVar, Final, TypeVar, cast, override
 
+# FLEXT-CORE INTEGRATION: Use domain service patterns
 from flext_core import (
     FlextEntityId,
     FlextEntityStatus,
+    FlextEvent,
     FlextResult,
     FlextTypes,
     get_logger,
@@ -64,18 +65,19 @@ PASSWORD_PATTERN: Final[re.Pattern[str]] = re.compile(
 # =============================================================================
 
 
-class FlextLdapDomainSpecification(ABC):
-    """Base specification for LDAP domain validation extending flext-core patterns."""
+# FLEXT-CORE MIGRATION: Use domain service patterns instead of local ABC
+class FlextLdapDomainSpecification:
+    """Domain specification using flext-core patterns - ELIMINATE LOCAL ABC."""
 
     def __init__(self, name: str, description: str = "") -> None:
         """Initialize domain specification with business context."""
         self.name = name
         self.description = description
 
-    @abstractmethod
     def is_satisfied_by(self, candidate: object) -> bool:
-        """Check if specification is satisfied by candidate."""
-        ...
+        """Check if specification is satisfied by candidate - implement in subclasses."""
+        error_msg = "Subclasses must implement is_satisfied_by"
+        raise NotImplementedError(error_msg)
 
     def get_validation_error(self, candidate: object) -> str:
         """Get descriptive validation error message."""
@@ -250,9 +252,6 @@ class FlextLdapActiveUserSpecification(FlextLdapDomainSpecification):
             return False
 
         status = getattr(candidate, "status", None)
-        # Use strict enum from flext_core
-        from flext_core import FlextEntityStatus  # noqa: PLC0415
-
         # Compare with enum value, not string representation
         if isinstance(status, FlextEntityStatus):
             return status == FlextEntityStatus.ACTIVE
@@ -632,53 +631,14 @@ class FlextLdapPasswordService:
 # =============================================================================
 
 
-class FlextLdapDomainEvent:
-    """Base class for LDAP domain events."""
+# =============================================================================
+# FLEXT-CORE DOMAIN EVENTS - ELIMINATES LOCAL BASE CLASSES
+# =============================================================================
 
-    def __init__(
-        self,
-        occurred_at: datetime | None = None,
-        **kwargs: object,
-    ) -> None:
-        """Initialize domain event."""
-        self.occurred_at = occurred_at or datetime.now(UTC)
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+# LOCAL BASE CLASSES ELIMINATED - NOW USING FlextEvent FROM FLEXT-CORE
 
 
-class FlextLdapBaseUserEvent(FlextLdapDomainEvent):
-    """Base class for user-related domain events to eliminate duplication."""
-
-    def __init__(
-        self,
-        user_id: str,
-        user_dn: str,
-        actor: str,
-        occurred_at: datetime | None = None,
-    ) -> None:
-        """Initialize user event with common fields."""
-        super().__init__(occurred_at=occurred_at)
-        self.user_id = user_id
-        self.user_dn = user_dn
-        self.actor = actor
-
-    @classmethod
-    def create_with_timestamp(
-        cls,
-        user_id: str,
-        user_dn: str,
-        actor: str,
-    ) -> FlextLdapDomainEvent:
-        """Create event with current timestamp."""
-        return cls(
-            user_id=user_id,
-            user_dn=user_dn,
-            actor=actor,
-            occurred_at=datetime.now(UTC),
-        )
-
-
-class FlextLdapUserCreatedEvent(FlextLdapBaseUserEvent):
+class FlextLdapUserCreatedEvent(FlextEvent):
     """Domain event fired when a user is created."""
 
     @classmethod
@@ -698,7 +658,7 @@ class FlextLdapUserCreatedEvent(FlextLdapBaseUserEvent):
         )
 
 
-class FlextLdapUserDeletedEvent(FlextLdapBaseUserEvent):
+class FlextLdapUserDeletedEvent(FlextEvent):
     """Domain event fired when a user is deleted."""
 
     @classmethod
@@ -718,35 +678,10 @@ class FlextLdapUserDeletedEvent(FlextLdapBaseUserEvent):
         )
 
 
-class FlextLdapBaseGroupEvent(FlextLdapDomainEvent):
-    """Base class for group-related domain events to eliminate duplication."""
-
-    def __init__(
-        self,
-        group_dn: str,
-        actor: str,
-        occurred_at: datetime | None = None,
-    ) -> None:
-        """Initialize group event with common fields."""
-        super().__init__(occurred_at=occurred_at)
-        self.group_dn = group_dn
-        self.actor = actor
-
-    @classmethod
-    def create_with_timestamp(
-        cls,
-        group_dn: str,
-        actor: str,
-    ) -> FlextLdapDomainEvent:
-        """Create event with current timestamp."""
-        return cls(
-            group_dn=group_dn,
-            actor=actor,
-            occurred_at=datetime.now(UTC),
-        )
+# LOCAL BASE CLASS ELIMINATED - GROUP EVENTS NOW USE FlextEvent
 
 
-class FlextLdapGroupMemberAddedEvent(FlextLdapBaseGroupEvent):
+class FlextLdapGroupMemberAddedEvent(FlextEvent):
     """Domain event fired when a member is added to a group."""
 
     def __init__(
@@ -777,7 +712,7 @@ class FlextLdapGroupMemberAddedEvent(FlextLdapBaseGroupEvent):
         )
 
 
-class FlextLdapPasswordChangedEvent(FlextLdapDomainEvent):
+class FlextLdapPasswordChangedEvent(FlextEvent):
     """Domain event fired when a user's password is changed."""
 
     def __init__(
@@ -856,8 +791,6 @@ class UserEntityBuilder:
 
     def build(self) -> object:
         """Build FlextLdapUser with reduced parameter complexity."""
-        from flext_ldap.models import FlextLdapUser  # noqa: PLC0415
-
         return FlextLdapUser(
             id=FlextEntityId(f"user_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"),
             dn=str(self.params["dn"]),
@@ -882,8 +815,6 @@ class GroupEntityBuilder:
 
     def build(self) -> object:
         """Build FlextLdapGroup with reduced parameter complexity."""
-        from flext_ldap.models import FlextLdapGroup  # noqa: PLC0415
-
         return FlextLdapGroup(
             id=FlextEntityId(f"group_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"),
             dn=str(self.params["dn"]),
@@ -1155,7 +1086,16 @@ class FlextLdapDomainFactory:
 
         try:
             # Handle both dict and general object data
-            result = operation(data)  # type: ignore[arg-type]
+            # Safely cast to expected dict type for operation
+            if isinstance(data, dict):
+                result = operation(data)
+            # Convert object to dict if possible
+            elif hasattr(data, "__dict__"):
+                result = operation(vars(data))
+            else:
+                return FlextResult[object].fail(
+                    f"Cannot convert data to dict for operation {operation_name}"
+                )
             # Ensure result is FlextResult format
             if hasattr(result, "is_success") and hasattr(result, "value"):
                 return cast("FlextResult[object]", result)

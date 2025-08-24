@@ -860,7 +860,7 @@ class FlextLdapValidationMessages:
     INVALID_USER_MISSING_ATTRIBUTES: Final[str] = "User must have uid and dn attributes"
 
     # CLI parameter messages
-    PASSWORD_FIELD_TYPE: Final[str] = "password_field"  # noqa: S105 - field type constant only
+    PASSWORD_FIELD_TYPE: Final[str] = "password_field"  # noqa: S105
     FAILED_TO_READ_FILE: Final[str] = "Failed to read file {file_path}: {error}"
 
     # Configuration validation messages
@@ -931,7 +931,7 @@ class FlextLdapOperationMessages:
     # Context and debugging messages used by exceptions.py
     OPERATION_CONTEXT: Final[str] = "Operation: {operation}"
     LDAP_CODE_CONTEXT: Final[str] = "LDAP Code: {ldap_code}"
-    CONTEXT_INFO: Final[str] = "Context: {key}={value}"
+    CONTEXT_INFO: Final[str] = "Context: {context}"
 
     # Connection context keys
     SERVER_URI_KEY: Final[str] = "server_uri"

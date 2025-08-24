@@ -75,7 +75,7 @@ def start_openldap_container() -> bool:
         )
 
         # Wait for container to be ready
-        from os import getenv  # noqa: PLC0415
+        from os import getenv
 
         ldap3 = importlib.import_module("ldap3")
         server = ldap3.Server("localhost", port=389, get_info=ldap3.ALL)
