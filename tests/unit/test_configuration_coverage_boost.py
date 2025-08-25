@@ -27,7 +27,6 @@ class TestFlextLdapConnectionConfigCoverage:
 
     def test_connection_config_validation_failures(self) -> None:
         """Test validation failures in FlextLdapConnectionConfig."""
-
         # Test invalid server (covers lines 52-58)
         with pytest.raises(ValidationError, match="String should have at least 1 character"):
             FlextLdapConnectionConfig(server="", port=389)
@@ -110,7 +109,6 @@ class TestFlextLdapSearchConfigCoverage:
 
     def test_search_config_validation_branches(self) -> None:
         """Test search config validation edge cases."""
-
         # Test invalid size_limit (covers validation branches)
         with pytest.raises(ValidationError, match="Input should be greater than 0"):
             FlextLdapSearchConfig(size_limit=0)

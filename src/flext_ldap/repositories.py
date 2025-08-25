@@ -1,7 +1,5 @@
 """LDAP repository implementations following Repository pattern."""
 
-from __future__ import annotations
-
 import asyncio
 from typing import cast
 
@@ -13,14 +11,15 @@ from flext_core import (
     get_logger,
 )
 
-from flext_ldap.clients import FlextLdapClient
-from flext_ldap.entities import (
+from .clients import FlextLdapClient
+from .entities import (
     FlextLdapEntry,
     FlextLdapSearchRequest,
     FlextLdapSearchResponse,
 )
-from flext_ldap.typings import LdapAttributeDict
-from flext_ldap.value_objects import FlextLdapDistinguishedName
+from .fields import LdapAttributeProcessor
+from .typings import LdapAttributeDict
+from .value_objects import FlextLdapDistinguishedName
 
 logger = get_logger(__name__)
 
@@ -78,7 +77,7 @@ class FlextLdapRepository(FlextProtocols.Domain.Repository[FlextLdapEntry]):
 
         # Convert search result to entry
         entry_data = search_result.value.entries[0]
-        typed_entry: dict[str, object] = cast("dict[str, object]", entry_data)
+        typed_entry = entry_data
 
         # Extract object classes
         object_classes = []
@@ -95,7 +94,7 @@ class FlextLdapRepository(FlextProtocols.Domain.Repository[FlextLdapEntry]):
             id=FlextEntityId(f"repo_entry_{dn.replace(',', '_').replace('=', '_')}"),
             dn=dn,
             object_classes=object_classes,
-            attributes=dict(entry_data),
+            attributes=LdapAttributeProcessor.normalize_attributes(entry_data),
             status=FlextEntityStatus.ACTIVE,
         )
 
@@ -261,7 +260,7 @@ class FlextLdapUserRepository:
 
         # Get the first entry and convert to FlextLdapEntry
         entry_data = search_result.value.entries[0]
-        typed_entry_data: dict[str, object] = cast("dict[str, object]", entry_data)
+        typed_entry_data = entry_data
         entry_dn = typed_entry_data.get("dn", "")
 
         if not entry_dn:
@@ -294,9 +293,7 @@ class FlextLdapUserRepository:
 
         entries: list[FlextLdapEntry] = []
         for entry_data in search_result.value.entries:
-            typed_entry_data_loop: dict[str, object] = cast(
-                "dict[str, object]", entry_data
-            )
+            typed_entry_data_loop = entry_data
             entry_dn = typed_entry_data_loop.get("dn")
             if not entry_dn:
                 continue
@@ -344,7 +341,7 @@ class FlextLdapGroupRepository:
 
         # Get the first entry and convert to FlextLdapEntry
         entry_data = search_result.value.entries[0]
-        typed_entry_data: dict[str, object] = cast("dict[str, object]", entry_data)
+        typed_entry_data = entry_data
         entry_dn = typed_entry_data.get("dn", "")
 
         if not entry_dn:

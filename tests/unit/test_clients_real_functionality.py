@@ -599,7 +599,6 @@ class TestFlextLdapClientErrorHandling(unittest.TestCase):
 
     def test_all_async_methods_return_flext_result(self) -> None:
         """Test que todos os métodos async retornam FlextResult."""
-
         client = FlextLdapClient()
         async_methods = [
             "connect",
@@ -625,7 +624,6 @@ class TestFlextLdapClientErrorHandling(unittest.TestCase):
 
     def test_methods_have_proper_type_annotations(self) -> None:
         """Test que métodos têm type annotations corretas."""
-
         client = FlextLdapClient()
         methods_to_check = [
             "connect",

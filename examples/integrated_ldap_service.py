@@ -11,10 +11,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
+import os
+from urllib.parse import urlparse
 
 from flext_core import get_logger
 
-from flext_ldap import FlextLdapApi
+from flext_ldap import FlextLdapApi, FlextLdapSettings
 
 logger = get_logger(__name__)
 
@@ -37,14 +39,7 @@ async def main() -> None:
 async def _initialize_ldap_service() -> FlextLdapApi:
     """Initialize LDAP service - Single Responsibility."""
     # Check if we're running with Docker environment variables
-    import os
-
     if os.getenv("LDAP_TEST_SERVER"):
-        from urllib.parse import urlparse
-
-        from flext_ldap import (
-            FlextLdapSettings,
-        )
 
         server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
         urlparse(server_url)
@@ -60,7 +55,6 @@ async def _initialize_ldap_service() -> FlextLdapApi:
 async def _verify_ldap_directory_structure(ldap_service: FlextLdapApi) -> None:
     """Verify LDAP directory structure exists - CRITICAL for operations to work."""
     # Get connection parameters from environment
-    import os
 
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
     bind_dn = os.getenv("LDAP_TEST_BIND_DN", "cn=admin,dc=example,dc=com")
@@ -98,6 +92,7 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLdapApi) -> None:
             await ldap_service.disconnect(session_id)
 
     except Exception:
+        # Continue with next operation
         pass
 
 
@@ -106,8 +101,6 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
     # Focus on search operations which don't require special authentication
 
     # Get connection parameters from environment
-    import os
-
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
     bind_dn = os.getenv("LDAP_TEST_BIND_DN", "cn=admin,dc=example,dc=com")
     password = os.getenv("LDAP_TEST_PASSWORD", "admin")
@@ -157,6 +150,7 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
             await ldap_service.disconnect(session_id)
 
     except Exception:
+        # Continue with next operation
         pass
 
 
@@ -203,8 +197,6 @@ async def _perform_user_search_validation(
 async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
     """Demonstrate group search operations - Single Responsibility."""
     # Get connection parameters from environment
-    import os
-
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
     bind_dn = os.getenv("LDAP_TEST_BIND_DN", "cn=admin,dc=example,dc=com")
     password = os.getenv("LDAP_TEST_PASSWORD", "admin")
@@ -251,6 +243,7 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
             await ldap_service.disconnect(session_id)
 
     except Exception:
+        # Continue with next operation
         pass
 
 
@@ -304,8 +297,6 @@ async def _perform_group_search_validation(
 async def _demo_connection_management(ldap_service: FlextLdapApi) -> None:
     """Demonstrate connection management - Single Responsibility."""
     # Get connection parameters from environment
-    import os
-
     server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
     bind_dn = os.getenv("LDAP_TEST_BIND_DN", "cn=admin,dc=example,dc=com")
     password = os.getenv("LDAP_TEST_PASSWORD", "admin")
@@ -322,6 +313,7 @@ async def _demo_connection_management(ldap_service: FlextLdapApi) -> None:
             if disconnect_result.is_success:
                 pass
     except Exception:
+        # Continue with next operation
         pass
 
 

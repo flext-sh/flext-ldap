@@ -15,6 +15,7 @@ import asyncio
 import os
 
 from flext_ldap import FlextLdapClient, FlextLdapSearchRequest
+from flext_ldap.entities import FlextLdapSearchResponse
 
 
 async def main() -> None:
@@ -47,8 +48,6 @@ async def main() -> None:
 
         if search_result.is_success:
             # Use proper type for FlextResult unwrapping
-            from flext_ldap.entities import FlextLdapSearchResponse
-
             empty_response = FlextLdapSearchResponse(entries=[], total_count=0)
             response = search_result.unwrap_or(empty_response)
             for entry in response.entries[:3]:  # Show first 3

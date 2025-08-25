@@ -17,8 +17,6 @@ Copyright (c) 2025 Flext. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from __future__ import annotations
-
 import re
 import secrets
 import string
@@ -28,22 +26,22 @@ from typing import ClassVar, Final, TypeVar, cast, override
 
 # FLEXT-CORE INTEGRATION: Use domain service patterns
 from flext_core import (
+    FlextDomainService,
     FlextEntityId,
     FlextEntityStatus,
-    FlextEvent,
+    FlextModel,
     FlextResult,
     FlextTypes,
     get_logger,
 )
 
-from flext_ldap.constants import (
+from .constants import (
     FlextLdapDefaultValues,
     FlextLdapObjectClassConstants,
     FlextLdapValidationConstants,
-    FlextLdapValidationMessages,
 )
-from flext_ldap.models import FlextLdapGroup, FlextLdapUser
-from flext_ldap.typings import LdapAttributeDict
+from .models import FlextLdapGroup, FlextLdapUser
+from .typings import LdapAttributeDict
 
 logger = get_logger(__name__)
 T = TypeVar("T")
@@ -81,10 +79,7 @@ class FlextLdapDomainSpecification:
 
     def get_validation_error(self, candidate: object) -> str:
         """Get descriptive validation error message."""
-        return FlextLdapValidationMessages.SPECIFICATION_FAILED.format(
-            name=self.name,
-            type=type(candidate).__name__,
-        )
+        return f"Specification '{self.name}' failed for {type(candidate).__name__}"
 
 
 class FlextLdapUserSpecification(FlextLdapDomainSpecification):
@@ -348,13 +343,21 @@ class FlextLdapCompleteUserSpecification(FlextLdapDomainSpecification):
 # =============================================================================
 
 
-class FlextLdapUserManagementService:
+class FlextLdapUserManagementService(FlextDomainService[FlextResult[FlextLdapUser]]):
     """Domain service for user management business logic."""
 
     def __init__(self) -> None:
+        super().__init__()
         self._user_spec = FlextLdapCompleteUserSpecification()
         self._password_spec = FlextLdapPasswordSpecification()
         self._email_spec = FlextLdapEmailSpecification()
+
+    def execute(self) -> FlextResult[FlextResult[FlextLdapUser]]:
+        """Execute method required by FlextDomainService - placeholder implementation."""
+        from .models import FlextLdapUser  # noqa: PLC0415
+        return FlextResult[FlextResult[FlextLdapUser]].ok(
+            FlextResult[FlextLdapUser].ok(FlextLdapUser())
+        )
 
     def validate_user_creation(
         self,
@@ -484,12 +487,20 @@ class FlextLdapUserManagementService:
             return FlextResult[str].fail(f"Username generation error: {e}")
 
 
-class FlextLdapGroupManagementService:
+class FlextLdapGroupManagementService(FlextDomainService[FlextResult[FlextLdapGroup]]):
     """Domain service for group management business logic."""
 
     def __init__(self) -> None:
+        super().__init__()
         self._group_spec = FlextLdapGroupSpecification()
         self._dn_spec = FlextLdapDistinguishedNameSpecification()
+
+    def execute(self) -> FlextResult[FlextResult[FlextLdapGroup]]:
+        """Execute method required by FlextDomainService - placeholder implementation."""
+        from .models import FlextLdapGroup  # noqa: PLC0415
+        return FlextResult[FlextResult[FlextLdapGroup]].ok(
+            FlextResult[FlextLdapGroup].ok(FlextLdapGroup())
+        )
 
     @property
     def dn_spec(self) -> FlextLdapDistinguishedNameSpecification:
@@ -554,11 +565,18 @@ class FlextLdapGroupManagementService:
             return FlextResult[object].fail(f"Group validation error: {e}")
 
 
-class FlextLdapPasswordService:
+class FlextLdapPasswordService(FlextDomainService[FlextResult[str]]):
     """Domain service for password management business logic."""
 
     def __init__(self) -> None:
+        super().__init__()
         self._password_spec = FlextLdapPasswordSpecification()
+
+    def execute(self) -> FlextResult[FlextResult[str]]:
+        """Execute method required by FlextDomainService - placeholder implementation."""
+        return FlextResult[FlextResult[str]].ok(
+            FlextResult[str].ok("Password service ready")
+        )
 
     def validate_password_change(
         self,
@@ -638,8 +656,13 @@ class FlextLdapPasswordService:
 # LOCAL BASE CLASSES ELIMINATED - NOW USING FlextEvent FROM FLEXT-CORE
 
 
-class FlextLdapUserCreatedEvent(FlextEvent):
+class FlextLdapUserCreatedEvent(FlextModel):
     """Domain event fired when a user is created."""
+
+    user_id: str
+    user_dn: str
+    actor: str
+    occurred_at: datetime
 
     @classmethod
     def create(
@@ -647,7 +670,7 @@ class FlextLdapUserCreatedEvent(FlextEvent):
         user_id: str,
         user_dn: str,
         created_by: str,
-    ) -> FlextLdapUserCreatedEvent:
+    ) -> "FlextLdapUserCreatedEvent":
         """Create user created event."""
         # Create event instance directly to ensure correct return type
         return cls(
@@ -658,8 +681,13 @@ class FlextLdapUserCreatedEvent(FlextEvent):
         )
 
 
-class FlextLdapUserDeletedEvent(FlextEvent):
+class FlextLdapUserDeletedEvent(FlextModel):
     """Domain event fired when a user is deleted."""
+
+    user_id: str
+    user_dn: str
+    actor: str
+    occurred_at: datetime
 
     @classmethod
     def create(
@@ -667,7 +695,7 @@ class FlextLdapUserDeletedEvent(FlextEvent):
         user_id: str,
         user_dn: str,
         deleted_by: str,
-    ) -> FlextLdapUserDeletedEvent:
+    ) -> "FlextLdapUserDeletedEvent":
         """Create user deleted event."""
         # Create event instance directly to ensure correct return type
         return cls(
@@ -681,20 +709,13 @@ class FlextLdapUserDeletedEvent(FlextEvent):
 # LOCAL BASE CLASS ELIMINATED - GROUP EVENTS NOW USE FlextEvent
 
 
-class FlextLdapGroupMemberAddedEvent(FlextEvent):
+class FlextLdapGroupMemberAddedEvent(FlextModel):
     """Domain event fired when a member is added to a group."""
 
-    def __init__(
-        self,
-        group_dn: str,
-        member_dn: str,
-        added_by: str,
-        occurred_at: datetime | None = None,
-    ) -> None:
-        """Initialize group member added event."""
-        super().__init__(group_dn=group_dn, actor=added_by, occurred_at=occurred_at)
-        self.member_dn = member_dn
-        self.added_by = added_by  # Maintain compatibility
+    group_dn: str
+    member_dn: str
+    actor: str
+    occurred_at: datetime
 
     @classmethod
     def create(
@@ -702,41 +723,30 @@ class FlextLdapGroupMemberAddedEvent(FlextEvent):
         group_dn: str,
         member_dn: str,
         added_by: str,
-    ) -> FlextLdapGroupMemberAddedEvent:
+    ) -> "FlextLdapGroupMemberAddedEvent":
         """Create group member added event."""
         return cls(
             group_dn=group_dn,
             member_dn=member_dn,
-            added_by=added_by,
+            actor=added_by,
             occurred_at=datetime.now(UTC),
         )
 
 
-class FlextLdapPasswordChangedEvent(FlextEvent):
+class FlextLdapPasswordChangedEvent(FlextModel):
     """Domain event fired when a user's password is changed."""
 
-    def __init__(
-        self,
-        user_dn: str,
-        changed_by: str,
-        *,
-        is_self_change: bool | None = None,
-        occurred_at: datetime | None = None,
-    ) -> None:
-        """Initialize password changed event."""
-        super().__init__(occurred_at=occurred_at)
-        self.user_dn = user_dn
-        self.changed_by = changed_by
-        self.is_self_change = (
-            is_self_change if is_self_change is not None else (user_dn == changed_by)
-        )
+    user_dn: str
+    changed_by: str
+    is_self_change: bool
+    occurred_at: datetime
 
     @classmethod
     def create(
         cls,
         user_dn: str,
         changed_by: str,
-    ) -> FlextLdapPasswordChangedEvent:
+    ) -> "FlextLdapPasswordChangedEvent":
         """Create password changed event."""
         return cls(
             user_dn=user_dn,
@@ -777,7 +787,7 @@ class EntityParameterBuilder:
     @staticmethod
     def safe_ldap_attributes(value: object) -> LdapAttributeDict:
         """Safely convert value to LdapAttributeDict."""
-        from flext_ldap.utils import FlextLdapUtilities  # noqa: PLC0415
+        from .utils import FlextLdapUtilities  # noqa: PLC0415
 
         return FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(value)
 
@@ -857,7 +867,7 @@ class FlextLdapDomainFactory:
         if created is None:
             return FlextResult[FlextLdapUser].fail("User creation returned None")
         # Late import kept to avoid circular dependency; ruff allow
-        from flext_ldap.models import (  # noqa: PLC0415
+        from .models import (  # noqa: PLC0415
             FlextLdapUser as _User,
         )
 
@@ -936,7 +946,7 @@ class FlextLdapDomainFactory:
         if created is None:
             return FlextResult[FlextLdapGroup].fail("Group creation returned None")
         # Late import kept to avoid circular dependency; ruff allow
-        from flext_ldap.models import (  # noqa: PLC0415
+        from .models import (  # noqa: PLC0415
             FlextLdapGroup as _Group,
         )
 

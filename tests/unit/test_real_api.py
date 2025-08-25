@@ -253,7 +253,6 @@ class TestRealApiPerformance:
 
     def test_api_instantiation_is_fast(self) -> None:
         """Test API instantiation is reasonably fast."""
-
         start_time = time.time()
 
         # Create multiple API instances
@@ -268,7 +267,6 @@ class TestRealApiPerformance:
 
     def test_get_ldap_api_function_is_fast(self) -> None:
         """Test get_ldap_api function access is fast."""
-
         start_time = time.time()
 
         # Access singleton many times

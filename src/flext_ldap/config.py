@@ -6,7 +6,7 @@ configuration classes from the new configuration module.
 
 from __future__ import annotations
 
-from flext_ldap.configuration import (
+from .configuration import (
     FlextLdapAuthConfig,
     FlextLdapConnectionConfig,
     FlextLdapLoggingConfig,
@@ -16,8 +16,8 @@ from flext_ldap.configuration import (
     create_production_config,
     create_test_config,
 )
-from flext_ldap.fields import FlextLdapScopeEnum as FlextLdapScope
-from flext_ldap.models import (
+from .fields import FlextLdapScopeEnum as FlextLdapScope
+from .models import (
     FlextLdapConstants,
     FlextLdapProtocolConstants,
     LdapAttributeProcessor,

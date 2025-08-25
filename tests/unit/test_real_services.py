@@ -130,7 +130,6 @@ class TestRealServicePerformance:
 
     def test_service_instantiation_is_fast(self) -> None:
         """Test service instantiation is reasonably fast."""
-
         start_time = time.time()
 
         # Create multiple service instances

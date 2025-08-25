@@ -746,7 +746,6 @@ class TestRealFlextLdapDirectoryEntry:
 
     def test_directory_entry_protocol_can_be_instantiated(self) -> None:
         """Test FlextLdapDirectoryEntry can be instantiated."""
-
         entry = FlextLdapDirectoryEntry("cn=test,dc=example,dc=com", {})
 
         assert isinstance(entry, FlextLdapDirectoryEntry)
@@ -754,7 +753,6 @@ class TestRealFlextLdapDirectoryEntry:
 
     def test_directory_entry_protocol_handles_attributes(self) -> None:
         """Test FlextLdapDirectoryEntry handles attributes properly."""
-
         attributes = {"objectClass": ["person"], "cn": ["Test User"], "sn": ["User"]}
 
         entry = FlextLdapDirectoryEntry("cn=test,dc=example,dc=com", attributes)
@@ -764,7 +762,6 @@ class TestRealFlextLdapDirectoryEntry:
 
     def test_directory_entry_protocol_get_attribute_values(self) -> None:
         """Test get_attribute_values method works."""
-
         attributes = {
             "objectClass": ["person"],
             "cn": ["Test User"],
@@ -787,7 +784,6 @@ class TestRealFlextLdapDirectoryEntry:
 
     def test_directory_entry_protocol_normalizes_attributes(self) -> None:
         """Test FlextLdapDirectoryEntry normalizes attributes correctly."""
-
         # Test with various attribute formats
         mixed_attributes = {
             "singleValue": "test",
@@ -806,7 +802,6 @@ class TestRealFlextLdapDirectoryEntry:
 
     def test_directory_entry_protocol_handles_empty_attributes(self) -> None:
         """Test FlextLdapDirectoryEntry handles empty/None attributes."""
-
         entry = FlextLdapDirectoryEntry("cn=test,dc=example,dc=com", {})
 
         assert isinstance(entry.attributes, dict)
@@ -932,7 +927,6 @@ class TestRealFactoryFunctions:
 
     def test_create_directory_service_function_exists(self) -> None:
         """Test create_directory_service function exists and is callable."""
-
         assert callable(create_directory_service)
 
     def test_create_directory_service_returns_service(self) -> None:
@@ -944,7 +938,6 @@ class TestRealFactoryFunctions:
 
     def test_create_directory_adapter_function_exists(self) -> None:
         """Test create_directory_adapter function exists and is callable."""
-
         assert callable(create_directory_adapter)
 
     def test_create_directory_adapter_returns_adapter(self) -> None:

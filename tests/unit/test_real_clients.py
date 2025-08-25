@@ -142,13 +142,11 @@ class TestRealClientConstants:
 
     def test_ldap_subordinates_mapped_to_subtree(self) -> None:
         """Test subordinates scope is mapped to SUBTREE."""
-
         # subordinates should be mapped to SUBTREE in SCOPE_MAP
         assert SCOPE_MAP.get("subordinates") == ldap3.SUBTREE
 
     def test_scope_map_values_are_valid_ldap3_constants(self) -> None:
         """Test SCOPE_MAP values are valid ldap3 constants."""
-
         valid_scopes = {ldap3.BASE, ldap3.LEVEL, ldap3.SUBTREE}
         if hasattr(ldap3, "SUBORDINATES"):
             valid_scopes.add(ldap3.SUBORDINATES)
@@ -254,7 +252,6 @@ class TestRealClientPerformance:
 
     def test_client_instantiation_is_fast(self) -> None:
         """Test client instantiation is reasonably fast."""
-
         start_time = time.time()
 
         # Create multiple client instances
@@ -346,7 +343,6 @@ class TestRealClientUtilities:
 
     def test_client_constants_are_properly_imported(self) -> None:
         """Test client imports necessary ldap3 constants."""
-
         # Should have imported necessary ldap3 constants
         expected_imports = ["BASE", "LEVEL", "SUBTREE", "ALL_ATTRIBUTES"]
 

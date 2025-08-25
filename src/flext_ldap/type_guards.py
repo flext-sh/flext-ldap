@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from typing import TypeGuard, cast
 
-from flext_ldap.typings import (
+from .typings import (
     TLdapAttributes,
     TLdapAttributeValue,
     TLdapEntryData,
