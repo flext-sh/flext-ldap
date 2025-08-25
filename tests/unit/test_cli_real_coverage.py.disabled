@@ -137,7 +137,6 @@ class TestFlextLdapCliCommandServiceRealCoverage:
 
         # Mock search results using REAL FlextLdapEntry objects
 
-
         mock_search_results = [
             FlextLdapEntry(
                 id=FlextEntityId("user1"),
@@ -393,7 +392,6 @@ class TestFlextLdapCliFormatterServiceRealCoverage:
 
     def test_cli_formatter_service_initialization_with_container(self) -> None:
         """Test FlextLdapCliFormatterService with custom container."""
-
         # Setup REAL test scenario with custom container
         custom_container = FlextContainer()
         formatter = FlextLdapCliFormatterService(custom_container)
@@ -671,7 +669,6 @@ class TestFlextLdapCliDisplayFunctionsRealCoverage:
 
     def test_display_test_result_function(self) -> None:
         """Test _display_test_result with real test result data."""
-
         # Setup REAL test result data
         test_result_data = {
             "status": "success",
@@ -690,7 +687,6 @@ class TestFlextLdapCliDisplayFunctionsRealCoverage:
 
     def test_display_search_results_function(self) -> None:
         """Test _display_search_results with real search result data."""
-
         # Setup REAL search result data
         search_result_data = {
             "status": "success",
@@ -719,7 +715,6 @@ class TestFlextLdapCliDisplayFunctionsRealCoverage:
 
     def test_display_user_info_function(self) -> None:
         """Test _display_user_info with real user info data."""
-
         # Setup REAL user info data
         user_info_data = {
             "status": "success",
@@ -741,7 +736,6 @@ class TestFlextLdapCliDisplayFunctionsRealCoverage:
 
     def test_display_single_entry_function(self) -> None:
         """Test _display_single_entry with real entry data."""
-
         # Setup REAL entry data
         entry_data = {
             "dn": "cn=testuser,ou=users,dc=example,dc=com",
@@ -760,7 +754,6 @@ class TestFlextLdapCliDisplayFunctionsRealCoverage:
 
     def test_display_entry_attributes_function(self) -> None:
         """Test _display_entry_attributes with real attributes data."""
-
         # Setup REAL attributes data
         attributes_data = {
             "cn": ["Test User"],

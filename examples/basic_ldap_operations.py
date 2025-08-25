@@ -65,6 +65,7 @@ async def demonstrate_api_usage() -> FlextLdapApi:
             pass
 
     except Exception:
+        # Continue demo with available operations
         pass
 
     return api
@@ -90,6 +91,7 @@ async def demonstrate_search_operations(api: FlextLdapApi) -> None:
                 pass
 
     except Exception:
+        # Continue demo with available operations
         pass
 
 
@@ -121,6 +123,7 @@ async def demonstrate_error_handling() -> None:
             pass
 
     except Exception:
+        # Continue demo with available operations
         pass
 
 

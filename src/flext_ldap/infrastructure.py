@@ -8,23 +8,24 @@ while actual implementations follow SOLID principles in
 focused modules (clients, repositories, container).
 """
 
+
+# Re-export client implementations
 from __future__ import annotations
 
 # FLEXT-CORE INTEGRATION: Use flext-core protocols instead of local interfaces
 from flext_core import FlextProtocols
 
-# Re-export client implementations
-from flext_ldap.clients import FlextLdapClient
+from .clients import FlextLdapClient
 
 # Re-export container and DI infrastructure
-from flext_ldap.container import (
+from .container import (
     configure_ldap_container,
     get_ldap_container,
     reset_ldap_container,
 )
 
 # Re-export repository implementations
-from flext_ldap.repositories import (
+from .repositories import (
     FlextLdapGroupRepository,
     FlextLdapRepository,
     FlextLdapUserRepository,

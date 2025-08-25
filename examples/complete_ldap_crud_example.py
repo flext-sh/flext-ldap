@@ -173,8 +173,8 @@ async def demonstrate_crud_operations() -> None:
 
         logger.info("✅ CRUD operations demo completed successfully!")
 
-    except Exception as e:
-        logger.exception(f"❌ Demo failed: {e}")
+    except Exception:
+        logger.exception("❌ Demo failed")
         raise
 
 
@@ -191,8 +191,8 @@ def main() -> int:
         asyncio.run(demonstrate_crud_operations())
     except KeyboardInterrupt:
         logger.info("Demo interrupted by user")
-    except Exception as e:
-        logger.exception(f"Demo failed: {e}")
+    except Exception:
+        logger.exception("Demo failed")
         return 1
 
     return 0

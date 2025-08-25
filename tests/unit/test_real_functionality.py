@@ -341,7 +341,6 @@ class TestRealConstants:
 
     def test_password_pattern_is_compiled_regex(self) -> None:
         """Test password pattern is a compiled regex pattern."""
-
         assert isinstance(PASSWORD_PATTERN, re.Pattern)
 
         # Test it can be used for matching

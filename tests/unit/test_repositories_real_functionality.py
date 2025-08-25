@@ -559,7 +559,6 @@ class TestRepositoryIntegrationRealFunctionality(unittest.TestCase):
 
     def test_repository_type_safety(self) -> None:
         """Test que repositories mantêm type safety."""
-
         # Verificar que métodos têm type annotations corretas
         repository_classes = [
             FlextLdapRepository,

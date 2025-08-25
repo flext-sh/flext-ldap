@@ -259,7 +259,6 @@ class TestFlextLdapContainerRealCoverage(unittest.TestCase):
 
     def test_container_inheritance_from_flext_container(self) -> None:
         """Test FlextLdapContainer properly inherits from FlextContainer."""
-
         # Execute REAL inheritance verification
         assert isinstance(self.container, FlextContainer)
 

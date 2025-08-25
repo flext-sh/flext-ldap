@@ -151,6 +151,7 @@ async def main() -> None:
         await demonstrate_connection_handling()
 
     except Exception:
+        # Graceful handling for demo purposes
         pass
 
 

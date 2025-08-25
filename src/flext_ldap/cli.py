@@ -5,8 +5,6 @@ SPDX-License-Identifier: MIT
 
 """
 
-from __future__ import annotations
-
 import asyncio
 import time
 from typing import cast, override
@@ -17,7 +15,6 @@ from flext_cli import (
     FlextCliExecutionContext,
     FlextCliFormatterService,
     FormatterFactory,
-    create_cli_container,
     get_cli_config,
 )
 from flext_core import (
@@ -277,7 +274,7 @@ class FlextLdapCliFormatterService(FlextCliFormatterService):
             container = get_flext_container()
             # Try to get CLI container, fallback to core container
             try:
-                cli_container = create_cli_container()
+                cli_container = FlextContainer.create_container()
                 if isinstance(cli_container, FlextContainer):
                     container = cli_container
             except Exception as e:
@@ -777,7 +774,7 @@ def main() -> None:
     """Run CLI entry point with proper error handling using flext-cli patterns."""
     try:
         # Initialize CLI with flext-cli patterns
-        _ = create_cli_container()  # Initialize CLI container
+        _ = FlextContainer.create_container()  # Initialize CLI container
         config = get_cli_config()
 
         if config.debug:

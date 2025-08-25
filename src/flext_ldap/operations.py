@@ -5,11 +5,9 @@ usuários e grupos no LDAP, seguindo SOLID + Clean Architecture. Todas as
 operações retornam FlextResult para manuseio uniforme de erros.
 """
 
-from __future__ import annotations
-
 import uuid
 from datetime import UTC, datetime
-from typing import Any, ClassVar, cast
+from typing import ClassVar, cast
 
 from flext_core import (
     FlextDomainService,
@@ -22,16 +20,16 @@ from flext_core import (
 )
 from pydantic import ConfigDict, PrivateAttr
 
-from flext_ldap.constants import FlextLdapValidationMessages
-from flext_ldap.models import (
+from .constants import FlextLdapValidationMessages
+from .models import (
     FlextLdapCreateUserRequest,
     FlextLdapEntry,
     FlextLdapGroup,
     FlextLdapUser,
 )
-from flext_ldap.typings import LdapAttributeDict
-from flext_ldap.utils import FlextLdapUtilities
-from flext_ldap.value_objects import (
+from .typings import LdapAttributeDict
+from .utils import FlextLdapUtilities
+from .value_objects import (
     FlextLdapDistinguishedName,
     FlextLdapFilter,
 )
@@ -43,23 +41,24 @@ logger = get_logger(__name__)
 # =============================================================================
 
 
-class FlextLdapOperationsService(FlextDomainService[FlextResult[Any]]):
+class FlextLdapOperationsService(FlextDomainService[None]):
     """Domain service using flext-core patterns - ELIMINATES local base class."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    # Private attributes for internal state
-    _container: Any = PrivateAttr(default_factory=get_flext_container)
-    _id_generator: Any = PrivateAttr(default=None)
+    # Private attributes for internal state - using object for container
+    _container: object = PrivateAttr(default_factory=get_flext_container)
+    _id_generator: object | None = PrivateAttr(default=None)
 
     def __init__(self, **data: object) -> None:
         """Initialize shared components using flext-core domain service."""
         super().__init__(**data)
-        # Type-safe container access for ID generator using modern pattern
-        generator_result = self._container.get("FlextIdGenerator")
-        self._id_generator = (
-            generator_result.value if generator_result.is_success else None
-        )
+        # Type-safe container access for ID generator using flext-core pattern
+        if hasattr(self._container, "get"):
+            generator_result = self._container.get("FlextIdGenerator")
+            self._id_generator = (
+                generator_result.value if generator_result.is_success else None
+            )
 
     def _generate_id(self) -> str:
         """Generate ID using container ID generator or UUID."""
@@ -70,9 +69,9 @@ class FlextLdapOperationsService(FlextDomainService[FlextResult[Any]]):
                 return str(generate_func())
         return str(uuid.uuid4())
 
-    def execute(self) -> FlextResult[Any]:
+    def execute(self) -> FlextResult[None]:
         """Execute method required by FlextDomainService - placeholder implementation."""
-        return FlextResult[Any].ok(None)
+        return FlextResult[None].ok(None)
 
     def _validate_dn_or_fail(self, dn: str, context: str = "DN") -> FlextResult[None]:
         """Validate DN and return error if invalid - REUSABLE VALIDATION."""
@@ -719,7 +718,7 @@ class FlextLdapUserOperations(FlextLdapOperationsService):
     MIN_PASSWORD_LENGTH: ClassVar[int] = 6
 
     # Private attribute for entry operations
-    _entry_ops: Any = PrivateAttr(default=None)
+    _entry_ops: FlextLdapEntryOperations | None = PrivateAttr(default=None)
 
     def __init__(self, **data: object) -> None:
         """Initialize user operations - USES REFACTORED BASE."""
@@ -737,6 +736,8 @@ class FlextLdapUserOperations(FlextLdapOperationsService):
             attributes = self._build_user_attributes(user_request)
 
             # Create entry using shared operations with standard user object classes
+            if self._entry_ops is None:
+                return FlextResult[FlextLdapUser].fail("Entry operations not available")
             entry_result = await self._entry_ops.create_entry(
                 connection_id=connection_id,
                 dn=user_request.dn,
@@ -790,6 +791,8 @@ class FlextLdapUserOperations(FlextLdapOperationsService):
             )
 
         modifications: FlextTypes.Core.Dict = {"userPassword": [new_password]}
+        if self._entry_ops is None:
+            return FlextResult[None].fail("Entry operations not available")
         return await self._entry_ops.modify_entry(connection_id, user_dn, modifications)
 
     async def update_user_email(
@@ -803,6 +806,8 @@ class FlextLdapUserOperations(FlextLdapOperationsService):
             return FlextResult[None].fail("Invalid email format")
 
         modifications: FlextTypes.Core.Dict = {"mail": [email]}
+        if self._entry_ops is None:
+            return FlextResult[None].fail("Entry operations not available")
         return await self._entry_ops.modify_entry(connection_id, user_dn, modifications)
 
     async def activate_user(
@@ -812,6 +817,8 @@ class FlextLdapUserOperations(FlextLdapOperationsService):
     ) -> FlextResult[None]:
         """Activate user account - REFACTORED."""
         modifications: FlextTypes.Core.Dict = {"accountStatus": ["active"]}
+        if self._entry_ops is None:
+            return FlextResult[None].fail("Entry operations not available")
         return await self._entry_ops.modify_entry(connection_id, user_dn, modifications)
 
     async def deactivate_user(
@@ -821,6 +828,8 @@ class FlextLdapUserOperations(FlextLdapOperationsService):
     ) -> FlextResult[None]:
         """Deactivate user account - REFACTORED."""
         modifications: FlextTypes.Core.Dict = {"accountStatus": ["inactive"]}
+        if self._entry_ops is None:
+            return FlextResult[None].fail("Entry operations not available")
         return await self._entry_ops.modify_entry(connection_id, user_dn, modifications)
 
     def _build_user_attributes(
@@ -870,7 +879,7 @@ class FlextLdapGroupOperations(FlextLdapOperationsService):
     """LDAP group management operations - REFACTORED."""
 
     # Private attribute for entry operations
-    _entry_ops: Any = PrivateAttr(default=None)
+    _entry_ops: FlextLdapEntryOperations | None = PrivateAttr(default=None)
 
     def __init__(self, **data: object) -> None:
         """Initialize group operations - USES REFACTORED BASE."""
@@ -892,6 +901,8 @@ class FlextLdapGroupOperations(FlextLdapOperationsService):
             attributes = self._build_group_attributes(cn, description, members)
 
             # Create entry using shared operations
+            if self._entry_ops is None:
+                return FlextResult[FlextLdapGroup].fail("Entry operations not available")
             entry_result = await self._entry_ops.create_entry(
                 connection_id=connection_id,
                 dn=dn,
@@ -1032,6 +1043,8 @@ class FlextLdapGroupOperations(FlextLdapOperationsService):
     ) -> FlextResult[None]:
         """Update group description - REFACTORED."""
         modifications: FlextTypes.Core.Dict = {"description": [description]}
+        if self._entry_ops is None:
+            return FlextResult[None].fail("Entry operations not available")
         return await self._entry_ops.modify_entry(
             connection_id,
             group_dn,
@@ -1196,6 +1209,8 @@ class FlextLdapGroupOperations(FlextLdapOperationsService):
     ) -> FlextResult[None]:
         """Apply the membership change to LDAP."""
         modifications: FlextTypes.Core.Dict = {"member": updated_members}
+        if self._entry_ops is None:
+            return FlextResult[None].fail("Entry operations not available")
         modify_result = await self._entry_ops.modify_entry(
             connection_id=connection_id,
             dn=group_dn,
@@ -1223,11 +1238,11 @@ class FlextLdapOperations(FlextLdapOperationsService):
     """Unified interface for all LDAP operations - REFACTORED with zero duplication."""
 
     # Private attributes for operation handlers
-    _connections: Any = PrivateAttr(default=None)
-    _search: Any = PrivateAttr(default=None)
-    _entries: Any = PrivateAttr(default=None)
-    _users: Any = PrivateAttr(default=None)
-    _groups: Any = PrivateAttr(default=None)
+    _connections: object | None = PrivateAttr(default=None)
+    _search: object | None = PrivateAttr(default=None)
+    _entries: object | None = PrivateAttr(default=None)
+    _users: object | None = PrivateAttr(default=None)
+    _groups: object | None = PrivateAttr(default=None)
 
     def __init__(self, **data: object) -> None:
         """Initialize all operation handlers - USES REFACTORED BASE."""
@@ -1241,27 +1256,27 @@ class FlextLdapOperations(FlextLdapOperationsService):
     @property
     def connections(self) -> FlextLdapConnectionOperations:
         """Access connections operations."""
-        return self._connections
+        return cast("FlextLdapConnectionOperations", self._connections)
 
     @property
     def search(self) -> FlextLdapSearchOperations:
         """Access search operations."""
-        return self._search
+        return cast("FlextLdapSearchOperations", self._search)
 
     @property
     def entries(self) -> FlextLdapEntryOperations:
         """Access entry operations."""
-        return self._entries
+        return cast("FlextLdapEntryOperations", self._entries)
 
     @property
     def users(self) -> FlextLdapUserOperations:
         """Access user operations."""
-        return self._users
+        return cast("FlextLdapUserOperations", self._users)
 
     @property
     def groups(self) -> FlextLdapGroupOperations:
         """Access group operations."""
-        return self._groups
+        return cast("FlextLdapGroupOperations", self._groups)
 
     async def create_connection_and_bind(
         self,

@@ -23,7 +23,6 @@ from flext_ldap import (
     create_ldap_api,
     get_ldap_api,
 )
-from flext_ldap.entities import FlextLdapSearchResponse as FlextLdapSearchResponseEntity
 from flext_ldap.models import FlextLdapUser
 
 
@@ -932,7 +931,6 @@ class TestFlextLdapApiRealFactoryFunctions:
 
     def test_get_ldap_api_with_custom_config_real(self) -> None:
         """Test get_ldap_api with custom config - executes REAL factory logic with configuration."""
-
         custom_connection = FlextLdapConnectionConfig(
             server="factory.ldap.server",
             port=389,
@@ -963,7 +961,6 @@ class TestFlextLdapApiRealFactoryFunctions:
 
     def test_create_ldap_api_with_custom_config_real(self) -> None:
         """Test create_ldap_api with custom config - executes REAL factory logic with configuration."""
-
         custom_connection = FlextLdapConnectionConfig(
             server="create.ldap.server",
             port=636,

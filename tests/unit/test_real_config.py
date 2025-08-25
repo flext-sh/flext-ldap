@@ -214,7 +214,6 @@ class TestRealConfigPerformance:
 
     def test_settings_instantiation_is_fast(self) -> None:
         """Test settings instantiation is reasonably fast."""
-
         start_time = time.time()
 
         # Create multiple settings instances
@@ -230,7 +229,6 @@ class TestRealConfigPerformance:
     def test_settings_serialization_is_efficient(self) -> None:
         """Test settings serialization is efficient."""
         settings = FlextLdapSettings()
-
 
         start_time = time.time()
 

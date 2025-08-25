@@ -1,25 +1,30 @@
 """Enterprise LDAP directory integration library."""
 
-from __future__ import annotations
 
 import importlib.metadata
 
-from flext_ldap.api import FlextLdapApi, get_ldap_api, create_ldap_api
-from flext_ldap.constants import FlextLdapScope as _ConstantsLdapScope
-from flext_ldap.constants import (
+from .api import FlextLdapApi, get_ldap_api, create_ldap_api
+from .value_objects import FlextLdapScope
+from .constants import (
     FlextLdapProtocolConstants,
     FlextLdapConnectionConstants,
     FlextLdapAttributeConstants,
-    FlextLdapObjectClassConstants,
     FlextLdapConstants,
+    FlextLdapValidationMessages,
+    FlextLdapOperationMessages,
+    FlextLdapValidationConstants,
+    FlextLdapObjectClassConstants,
+    FlextLdapScopeConstants,
 )
+from .connection_config import FlextLdapConnectionConfig
 
-# Import from new configuration module
-from flext_ldap.configuration import (
+# Import from new configuration modules
+from .configuration import (
     FlextLdapAuthConfig,
-    FlextLdapConnectionConfig,
     FlextLdapLoggingConfig,
     FlextLdapSearchConfig,
+)
+from .settings import (
     FlextLdapSettings,
     create_development_config,
     create_production_config,
@@ -27,10 +32,10 @@ from flext_ldap.configuration import (
 )
 
 # Import field definitions
-from flext_ldap.fields import FlextLdapScopeEnum
+from .fields import FlextLdapScopeEnum
 
 # Import from reorganized modules
-from flext_ldap.entities import (
+from .entities import (
     FlextLdapCreateUserRequest,
     FlextLdapEntry,
     FlextLdapGroup,
@@ -38,20 +43,20 @@ from flext_ldap.entities import (
     FlextLdapSearchRequest,
     FlextLdapSearchResponse,
 )
-from flext_ldap.value_objects import (
+from .value_objects import (
     FlextLdapDistinguishedName,
     FlextLdapFilter,
 )
 
-from flext_ldap.services import FlextLdapService
+from .services import FlextLdapService
 
-from flext_ldap.infrastructure import FlextLdapClient
+from .infrastructure import FlextLdapClient
 
-from flext_ldap.container import get_ldap_container, reset_ldap_container
+from .container import get_ldap_container, reset_ldap_container
 
 # Import missing exports that tests need
-from flext_ldap.clients import SCOPE_MAP
-from flext_ldap.domain import (
+from .clients import SCOPE_MAP
+from .domain import (
     EntityParameterBuilder,
     FlextLdapActiveUserSpecification,
     FlextLdapCompleteUserSpecification,
@@ -69,7 +74,7 @@ from flext_ldap.domain import (
     UserEntityBuilder,
 )
 
-from flext_ldap.exceptions import (
+from .exceptions import (
     FlextLdapError,
     FlextLdapExceptionFactory,
     FlextLdapUserError,
@@ -77,24 +82,15 @@ from flext_ldap.exceptions import (
     FlextLdapConnectionError,
 )
 
-from flext_ldap.utils import (
+from .utils import (
     flext_ldap_validate_dn,
     flext_ldap_validate_attribute_name,
     flext_ldap_validate_attribute_value,
     flext_ldap_sanitize_attribute_name,
 )
-from flext_ldap.typings import LdapAttributeDict
+from .typings import LdapAttributeDict
 
-from flext_ldap.config import FlextLdapAuthConfig as FlextLdapConfig
-# CLI imports (testing if circular dependency is resolved)
-from flext_ldap.cli import (
-    FlextLdapCliCommandService,
-    FlextLdapCliFormatterService,
-    cli,
-    get_command_service,
-    get_formatter_service,
-    main,
-)
+from .config import FlextLdapAuthConfig as FlextLdapConfig
 
 # Version info
 try:
@@ -130,6 +126,11 @@ __all__: list[str] = [
     "FlextLdapAttributeConstants",
     "FlextLdapObjectClassConstants",
     "FlextLdapConstants",
+    "FlextLdapValidationMessages",
+    "FlextLdapOperationMessages",
+    "FlextLdapValidationConstants",
+    "FlextLdapObjectClassConstants",
+    "FlextLdapScopeConstants",
     "FlextLdapScopeEnum",
     "FlextLdapLoggingConfig",
     "FlextLdapSearchConfig",
@@ -167,13 +168,6 @@ __all__: list[str] = [
     "FlextLdapUserSpecification",
     "GroupEntityBuilder",
     "UserEntityBuilder",
-    # CLI exports (testing if circular dependency is resolved)
-    "FlextLdapCliCommandService",
-    "FlextLdapCliFormatterService",
-    "cli",
-    "get_command_service",
-    "get_formatter_service",
-    "main",
     # Utilities
     "flext_ldap_validate_dn",
     "flext_ldap_validate_attribute_name",
@@ -186,4 +180,4 @@ __all__: list[str] = [
 ]
 
 # Testing convenience exposed scope
-FlextLdapScope = _ConstantsLdapScope
+# FlextLdapScope is imported directly from value_objects.py above

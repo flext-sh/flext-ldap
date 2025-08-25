@@ -75,8 +75,6 @@ def start_openldap_container() -> bool:
         )
 
         # Wait for container to be ready
-        from os import getenv
-
         ldap3 = importlib.import_module("ldap3")
         server = ldap3.Server("localhost", port=389, get_info=ldap3.ALL)
         for _attempt in range(30):
@@ -84,7 +82,7 @@ def start_openldap_container() -> bool:
                 with ldap3.Connection(
                     server,
                     user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-                    password=getenv("LDAP_TEST_PASSWORD", ""),
+                    password=os.getenv("LDAP_TEST_PASSWORD", ""),
                     auto_bind=True,
                 ) as conn:
                     if conn.bound:

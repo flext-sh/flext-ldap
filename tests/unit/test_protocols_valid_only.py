@@ -50,7 +50,6 @@ class TestValidProtocolDefinitions:
 
     def test_protocols_export_correctly(self) -> None:
         """Test valid protocols are exported from protocols module."""
-
         valid_exports = [
             "FlextLdapConnectionProtocol",
             "FlextLdapSearchProtocol",
@@ -79,7 +78,6 @@ class TestProtocolCompliance:
 
     def test_no_local_abstract_classes_imported(self) -> None:
         """Verify no local abstract classes are imported after refactoring."""
-
         # These should NOT exist after FLEXT refactoring
         forbidden_classes = [
             "FlextLdapOperationsBase",
