@@ -134,6 +134,7 @@ class FlextLdapLoggingConfig(FlextConfig):
         """Validate logging configuration."""
         return FlextResult[None].ok(None)
 
+
 try:
     import yaml
 except ImportError:

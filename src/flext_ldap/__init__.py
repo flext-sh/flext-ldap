@@ -57,7 +57,7 @@ from .container import get_ldap_container, reset_ldap_container
 # Import missing exports that tests need
 from .clients import SCOPE_MAP
 from .domain import (
-    EntityParameterBuilder,
+    FlextLdapEntityParameterBuilder,
     FlextLdapActiveUserSpecification,
     FlextLdapCompleteUserSpecification,
     FlextLdapDistinguishedNameSpecification,
@@ -70,8 +70,8 @@ from .domain import (
     FlextLdapPasswordSpecification,
     FlextLdapUserManagementService,
     FlextLdapUserSpecification,
-    GroupEntityBuilder,
-    UserEntityBuilder,
+    FlextLdapGroupEntityBuilder,
+    FlextLdapUserEntityBuilder,
 )
 
 from .exceptions import (
@@ -153,7 +153,7 @@ __all__: list[str] = [
     "FlextLdapConnectionError",
     # Missing exports that tests need
     "SCOPE_MAP",
-    "EntityParameterBuilder",
+    "FlextLdapEntityParameterBuilder",
     "FlextLdapActiveUserSpecification",
     "FlextLdapCompleteUserSpecification",
     "FlextLdapDistinguishedNameSpecification",
@@ -166,8 +166,8 @@ __all__: list[str] = [
     "FlextLdapPasswordSpecification",
     "FlextLdapUserManagementService",
     "FlextLdapUserSpecification",
-    "GroupEntityBuilder",
-    "UserEntityBuilder",
+    "FlextLdapGroupEntityBuilder",
+    "FlextLdapUserEntityBuilder",
     # Utilities
     "flext_ldap_validate_dn",
     "flext_ldap_validate_attribute_name",

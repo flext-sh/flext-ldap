@@ -6,31 +6,31 @@ internal subclasses for complete backward compatibility.
 
 Examples:
     Connection and directory operations:
-    
+
         from adapters import FlextLdapAdapters
-        
+
         # Create connection service
         connection = FlextLdapAdapters.ConnectionService(config)
-        
-        # Create search service  
+
+        # Create search service
         search = FlextLdapAdapters.SearchService(client)
-        
+
         # Create directory adapter
         adapter = FlextLdapAdapters.DirectoryAdapter(client)
 
     Entry and operation management:
-    
+
         # Entry service for CRUD operations
         entry_service = FlextLdapAdapters.EntryService(client)
-        
+
         # Directory entry handling
         entry = FlextLdapAdapters.DirectoryEntry(dn="cn=user,dc=example,dc=com")
-        
+
         # Operation execution
         executor = FlextLdapAdapters.OperationExecutor(client)
 
     Legacy compatibility:
-    
+
         # All previous classes still work as direct imports
         from adapters import FlextLdapConnectionService, FlextLdapSearchService
         conn_service = FlextLdapConnectionService(config)
@@ -39,7 +39,6 @@ Examples:
 
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Callable, Coroutine
 from typing import cast, override
 from urllib.parse import urlparse
@@ -54,7 +53,6 @@ from pydantic import ConfigDict, Field, field_validator
 
 from .clients import FlextLdapClient
 from .constants import FlextLdapConstants
-from .exceptions import FlextLdapExceptions
 from .models import FlextLdapModels
 from .typings import LdapAttributeDict, LdapSearchResult
 from .utils import FlextLdapUtils
@@ -82,7 +80,7 @@ class FlextLdapAdapters:
 
     Examples:
         Connection management:
-        
+
             config = FlextLdapAdapters.ConnectionConfig(
                 server="ldap://localhost:389",
                 bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
@@ -90,7 +88,7 @@ class FlextLdapAdapters:
             connection = FlextLdapAdapters.ConnectionService(config)
 
         Search operations:
-        
+
             search_service = FlextLdapAdapters.SearchService(client)
             results = await search_service.search_entries(
                 base_dn="dc=example,dc=com",
@@ -98,7 +96,7 @@ class FlextLdapAdapters:
             )
 
         Directory operations:
-        
+
             adapter = FlextLdapAdapters.DirectoryAdapter(client)
             entries = await adapter.get_all_entries("ou=users,dc=example,dc=com")
 
@@ -110,7 +108,7 @@ class FlextLdapAdapters:
 
     class DirectoryEntry(FlextModel):
         """Directory entry model for LDAP operations."""
-        
+
         model_config = ConfigDict(
             extra="forbid",
             validate_assignment=True,
@@ -135,7 +133,7 @@ class FlextLdapAdapters:
 
     class ConnectionConfig(FlextModel):
         """Connection configuration for LDAP operations."""
-        
+
         model_config = ConfigDict(
             extra="forbid",
             validate_assignment=True,
@@ -157,7 +155,7 @@ class FlextLdapAdapters:
         def validate_server(cls, v: str) -> str:
             """Validate server URI format."""
             parsed = urlparse(v)
-            if not parsed.scheme or parsed.scheme not in ["ldap", "ldaps"]:
+            if not parsed.scheme or parsed.scheme not in {"ldap", "ldaps"}:
                 msg = "Server must be a valid LDAP URI (ldap:// or ldaps://)"
                 raise ValueError(msg)
             return v
@@ -166,12 +164,12 @@ class FlextLdapAdapters:
     # OPERATION SERVICES - Specialized operation execution classes
     # =========================================================================
 
-    class OperationExecutor(FlextDomainService[FlextResult[list[FlextLdapModels.Entry]]]):
+    class OperationExecutor(FlextDomainService[list[FlextLdapModels.Entry]]):
         """Base operation executor for LDAP operations with async support."""
 
-        def __init__(self, client: FlextLdapClient) -> None:
+        def __init__(self, client: FlextLdapClient, **data: object) -> None:
             """Initialize with LDAP client."""
-            super().__init__()
+            super().__init__(**data)
             self._client = client
 
         async def execute_async_operation(
@@ -185,12 +183,12 @@ class FlextLdapAdapters:
                 return await operation_func()
             except Exception as e:
                 error_msg = f"Failed to execute {context}: {e}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 return FlextResult[list[FlextLdapModels.Entry]].fail(error_msg)
 
         @override
-        async def execute(self, request: object) -> FlextResult[list[FlextLdapModels.Entry]]:
-            """Execute operation based on request type."""
+        def execute(self) -> FlextResult[list[FlextLdapModels.Entry]]:
+            """Execute operation - required by FlextDomainService."""
             return FlextResult[list[FlextLdapModels.Entry]].fail("Not implemented in base class")
 
     class ConnectionService(OperationExecutor):
@@ -214,11 +212,10 @@ class FlextLdapAdapters:
                         self._config.bind_dn,
                         self._config.bind_password
                     )
-                else:
-                    return await self._client.connect(self._config.server)
+                return await self._client.connect(self._config.server)
             except Exception as e:
                 error_msg = f"Connection test failed: {e}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 return FlextResult[None].fail(error_msg)
 
         async def connect_and_bind(self) -> FlextResult[None]:
@@ -232,15 +229,15 @@ class FlextLdapAdapters:
                     self._config.bind_dn,
                     self._config.bind_password
                 )
-            
+
             return FlextResult[None].ok(None)
 
-    class SearchService(FlextDomainService[FlextResult[list[FlextLdapModels.Entry]]]):
+    class SearchService(FlextDomainService[list[FlextLdapModels.Entry]]):
         """Specialized search service for LDAP search operations."""
 
-        def __init__(self, client: FlextLdapClient) -> None:
+        def __init__(self, client: FlextLdapClient, **data: object) -> None:
             """Initialize with LDAP client."""
-            super().__init__()
+            super().__init__(**data)
             self._client = client
 
         async def search_entries(
@@ -269,61 +266,60 @@ class FlextLdapAdapters:
                     # Convert to FlextLdapEntry objects
                     entries = self._convert_search_results_to_ldap_entries(search_result.value)
                     return FlextResult[list[FlextLdapModels.Entry]].ok(entries)
-                else:
-                    return FlextResult[list[FlextLdapModels.Entry]].fail(search_result.error)
+                return FlextResult[list[FlextLdapModels.Entry]].fail(search_result.error)
 
             except Exception as e:
                 error_msg = f"Search operation failed: {e}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 return FlextResult[list[FlextLdapModels.Entry]].fail(error_msg)
 
         def _validate_search_params(self, base_dn: str, search_filter: str) -> str | None:
             """Validate search parameters."""
             if not FlextLdapUtils.Validation.validate_dn(base_dn):
                 return f"Invalid base DN: {base_dn}"
-            
+
             if not search_filter.startswith("(") or not search_filter.endswith(")"):
                 return f"Invalid filter format: {search_filter}"
-            
+
             return None
 
         def _convert_search_results_to_ldap_entries(
-            self, 
+            self,
             results: list[LdapSearchResult]
         ) -> list[FlextLdapModels.Entry]:
             """Convert search results to FlextLdapEntry objects."""
             entries: list[FlextLdapModels.Entry] = []
-            
+
             for result in results:
                 try:
                     # Extract DN from result
                     dn = result.get("dn", "")
                     if isinstance(dn, list):
                         dn = dn[0] if dn else ""
-                    
+
                     # Convert attributes
                     attributes_dict = FlextLdapUtils.Core.safe_convert_external_dict_to_ldap_attributes(
                         {k: v for k, v in result.items() if k != "dn"}
                     )
-                    
+
                     # Create entry
                     entry = FlextLdapModels.Entry(
                         dn=str(dn),
                         attributes=attributes_dict
                     )
                     entries.append(entry)
-                    
+
                 except Exception as e:
                     logger.warning(
                         f"Failed to convert search result to FlextLdapEntry: {e}"
                     )
                     continue
-            
+
             return entries
 
         @override
-        async def execute(self, request: object) -> FlextResult[list[FlextLdapModels.Entry]]:
-            """Execute search operation."""
+        def execute(self) -> FlextResult[list[FlextLdapModels.Entry]]:
+            """Execute search operation - required by FlextDomainService."""
             return FlextResult[list[FlextLdapModels.Entry]].fail("Use search_entries method")
 
     class EntryService(OperationExecutor):
@@ -337,12 +333,13 @@ class FlextLdapAdapters:
             """Add new LDAP entry."""
             try:
                 # Validate DN parameter
-                validation_func = lambda: self._validate_dn_param(dn)
+                def validation_func():
+                    return self._validate_dn_param(dn)
                 validation_result = await self.execute_async_operation(
                     lambda: self._async_validation_wrapper(validation_func),
                     "DN validation"
                 )
-                
+
                 if not validation_result.is_success:
                     return FlextResult[None].fail(validation_result.error)
 
@@ -357,7 +354,7 @@ class FlextLdapAdapters:
 
             except Exception as e:
                 error_msg = f"Failed to add entry {dn}: {e}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 return FlextResult[None].fail(error_msg)
 
         async def modify_entry(
@@ -367,12 +364,13 @@ class FlextLdapAdapters:
         ) -> FlextResult[None]:
             """Modify existing LDAP entry."""
             try:
-                validation_func = lambda: self._validate_modify_params(dn, modifications)
+                def validation_func():
+                    return self._validate_modify_params(dn, modifications)
                 validation_result = await self.execute_async_operation(
                     lambda: self._async_validation_wrapper(validation_func),
                     "modify parameters validation"
                 )
-                
+
                 if not validation_result.is_success:
                     return FlextResult[None].fail(validation_result.error)
 
@@ -380,18 +378,19 @@ class FlextLdapAdapters:
 
             except Exception as e:
                 error_msg = f"Failed to modify entry {dn}: {e}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 return FlextResult[None].fail(error_msg)
 
         async def delete_entry(self, dn: str) -> FlextResult[None]:
             """Delete LDAP entry."""
             try:
-                validation_func = lambda: self._validate_dn_param(dn)
+                def validation_func():
+                    return self._validate_dn_param(dn)
                 validation_result = await self.execute_async_operation(
                     lambda: self._async_validation_wrapper(validation_func),
                     "DN validation"
                 )
-                
+
                 if not validation_result.is_success:
                     return FlextResult[None].fail(validation_result.error)
 
@@ -399,11 +398,11 @@ class FlextLdapAdapters:
 
             except Exception as e:
                 error_msg = f"Failed to delete entry {dn}: {e}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 return FlextResult[None].fail(error_msg)
 
         async def _async_validation_wrapper(
-            self, 
+            self,
             validation_func: Callable[[], str | None]
         ) -> FlextResult[list[FlextLdapModels.Entry]]:
             """Wrapper to make validation async compatible."""
@@ -413,28 +412,28 @@ class FlextLdapAdapters:
             return FlextResult[list[FlextLdapModels.Entry]].ok([])
 
         def _validate_modify_params(
-            self, 
-            dn: str, 
+            self,
+            dn: str,
             modifications: dict[str, object]
         ) -> str | None:
             """Validate modify operation parameters."""
             dn_error = self._validate_dn_param(dn)
             if dn_error:
                 return dn_error
-            
+
             if not modifications:
                 return "Modifications cannot be empty"
-            
+
             return None
 
         def _validate_dn_param(self, dn: str) -> str | None:
             """Validate DN parameter."""
             if not dn or not dn.strip():
                 return "DN cannot be empty"
-            
+
             if not FlextLdapUtils.Validation.validate_dn(dn):
                 return f"Invalid DN format: {dn}"
-            
+
             return None
 
     # =========================================================================
@@ -448,13 +447,13 @@ class FlextLdapAdapters:
             """Initialize directory entry."""
             self.dn = dn
             self.attributes: dict[str, str | list[str]] = {}
-            
+
             if attributes:
                 # Use type-safe utility to convert attributes
                 ldap_attrs = FlextLdapUtils.Core.safe_convert_external_dict_to_ldap_attributes(
                     attributes
                 )
-                
+
                 # Normalize attributes format
                 for key, value in ldap_attrs.items():
                     if isinstance(value, list):
@@ -477,16 +476,16 @@ class FlextLdapAdapters:
             else:
                 self.attributes[name] = [value]
 
-    class DirectoryService(FlextDomainService[FlextResult[object]]):
+    class DirectoryService(FlextDomainService[object]):
         """High-level directory service for comprehensive LDAP operations."""
 
-        def __init__(self, client: FlextLdapClient) -> None:
+        def __init__(self, client: FlextLdapClient, **data: object) -> None:
             """Initialize with LDAP client."""
-            super().__init__()
+            super().__init__(**data)
             self._client = client
 
         async def get_all_entries(
-            self, 
+            self,
             base_dn: str,
             filter_str: str = "(objectClass=*)"
         ) -> FlextResult[list[dict[str, object]]]:
@@ -502,31 +501,30 @@ class FlextLdapAdapters:
                     # Convert results to protocol format
                     protocol_entries = self._convert_entries_to_protocol(search_result.value)
                     return FlextResult[list[dict[str, object]]].ok(protocol_entries)
-                else:
-                    return FlextResult[list[dict[str, object]]].fail(search_result.error)
+                return FlextResult[list[dict[str, object]]].fail(search_result.error)
 
             except Exception as e:
                 error_msg = f"Failed to get all entries: {e}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 return FlextResult[list[dict[str, object]]].fail(error_msg)
 
         def _convert_entries_to_protocol(
-            self, 
+            self,
             entries: list[LdapSearchResult]
         ) -> list[dict[str, object]]:
             """Convert entries to protocol format."""
             protocol_entries: list[dict[str, object]] = []
-            
+
             for entry in entries:
                 try:
                     # Extract DN
                     dn = entry.get("dn", "")
                     if isinstance(dn, list):
                         dn = dn[0] if dn else ""
-                    
+
                     # Get other attributes
                     entry_attrs = {k: v for k, v in entry.items() if k != "dn"}
-                    
+
                     # Create protocol entry
                     protocol_entry = {
                         "dn": str(dn),
@@ -535,15 +533,15 @@ class FlextLdapAdapters:
                         ),
                     }
                     protocol_entries.append(protocol_entry)
-                    
+
                 except Exception as e:
                     logger.warning(f"Failed to convert entry to protocol format: {e}")
                     continue
-            
+
             return protocol_entries
 
         def _normalize_entry_attributes(
-            self, 
+            self,
             attributes: dict[str, object]
         ) -> dict[str, object]:
             """Normalize entry attributes for protocol compatibility."""
@@ -551,7 +549,7 @@ class FlextLdapAdapters:
             ldap_attrs = (
                 FlextLdapUtils.Core.safe_convert_external_dict_to_ldap_attributes(attributes)
             )
-            
+
             # Return normalized format with explicit typing
             normalized_attrs: dict[str, object] = {}
             for k, v in ldap_attrs.items():
@@ -562,8 +560,8 @@ class FlextLdapAdapters:
             return normalized_attrs
 
         @override
-        async def execute(self, request: object) -> FlextResult[object]:
-            """Execute directory service operation."""
+        def execute(self) -> FlextResult[object]:
+            """Execute directory service operation - required by FlextDomainService."""
             return FlextResult[object].fail("Use specific methods like get_all_entries")
 
     class DirectoryAdapter:
@@ -580,7 +578,7 @@ class FlextLdapAdapters:
             self.directory = FlextLdapAdapters.DirectoryService(client)
 
         async def get_all_entries(
-            self, 
+            self,
             base_dn: str,
             filter_str: str = "(objectClass=*)"
         ) -> FlextResult[list[dict[str, object]]]:
@@ -618,17 +616,16 @@ FlextLdapDirectoryAdapter = FlextLdapAdapters.DirectoryAdapter
 # =============================================================================
 
 __all__ = [
-    # Primary consolidated class
-    "FlextLdapAdapters",
-    
+    "ConnectionConfig",
     # Legacy compatibility classes
     "DirectoryEntry",
-    "ConnectionConfig", 
-    "OperationExecutor",
+    # Primary consolidated class
+    "FlextLdapAdapters",
     "FlextLdapConnectionService",
-    "FlextLdapSearchService",
-    "FlextLdapEntryService",
+    "FlextLdapDirectoryAdapter",
     "FlextLdapDirectoryEntry",
     "FlextLdapDirectoryService",
-    "FlextLdapDirectoryAdapter",
+    "FlextLdapEntryService",
+    "FlextLdapSearchService",
+    "OperationExecutor",
 ]

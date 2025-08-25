@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from docker.models.containers import Container
 
-import click
 import pytest
 
 from flext_ldap import (

@@ -5,15 +5,15 @@ organized as internal classes for complete backward compatibility.
 
 Examples:
     Basic exceptions:
-    
+
         from exceptions import FlextLdapExceptions
-        
+
         # Create connection error
         conn_error = FlextLdapExceptions.ConnectionError(
             "Failed to connect",
             server_uri="ldap://localhost:389"
         )
-        
+
         # Create validation error
         val_error = FlextLdapExceptions.ValidationError(
             "Invalid DN format",
@@ -22,7 +22,7 @@ Examples:
         )
 
     Factory methods:
-    
+
         # Using factory for consistent error creation
         error = FlextLdapExceptions.Factory.connection_failed(
             "ldap://localhost:389",
@@ -31,7 +31,7 @@ Examples:
         )
 
     Legacy compatibility:
-    
+
         # All previous classes still work as direct imports
         from exceptions import FlextLdapConnectionError, FlextLdapValidationError
         conn_error = FlextLdapConnectionError("Failed to connect")
@@ -69,7 +69,7 @@ class FlextLdapExceptions:
 
     Examples:
         Connection and authentication errors:
-        
+
             conn_error = FlextLdapExceptions.ConnectionError(
                 "Failed to connect",
                 server_uri="ldap://localhost:389"
@@ -80,7 +80,7 @@ class FlextLdapExceptions:
             )
 
         Operation and search errors:
-        
+
             search_error = FlextLdapExceptions.SearchError(
                 "Search failed",
                 base_dn="dc=example,dc=com",
@@ -92,7 +92,7 @@ class FlextLdapExceptions:
             )
 
         Domain-specific errors:
-        
+
             user_error = FlextLdapExceptions.UserError(
                 "User validation failed",
                 user_dn="cn=john,dc=example,dc=com",
@@ -104,7 +104,7 @@ class FlextLdapExceptions:
             )
 
         Using factory methods:
-        
+
             error = FlextLdapExceptions.Factory.connection_failed(
                 "ldap://localhost:389",
                 "Connection timeout"
@@ -630,19 +630,18 @@ FlextLdapExceptionFactory = FlextLdapExceptions.Factory
 # =============================================================================
 
 __all__ = [
-    # Primary consolidated class
-    "FlextLdapExceptions",
-
+    "FlextLdapAuthenticationError",
+    "FlextLdapConfigurationError",
+    "FlextLdapConnectionError",
     # Legacy compatibility classes
     "FlextLdapError",
-    "FlextLdapConnectionError",
-    "FlextLdapAuthenticationError",
-    "FlextLdapSearchError",
-    "FlextLdapOperationError",
-    "FlextLdapUserError",
-    "FlextLdapGroupError",
-    "FlextLdapValidationError",
-    "FlextLdapConfigurationError",
-    "FlextLdapTypeError",
     "FlextLdapExceptionFactory",
+    # Primary consolidated class
+    "FlextLdapExceptions",
+    "FlextLdapGroupError",
+    "FlextLdapOperationError",
+    "FlextLdapSearchError",
+    "FlextLdapTypeError",
+    "FlextLdapUserError",
+    "FlextLdapValidationError",
 ]
