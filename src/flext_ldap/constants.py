@@ -437,26 +437,24 @@ USER_ID = FlextLdapConstants.Attributes.USER_ID
 MAIL = FlextLdapConstants.Attributes.MAIL
 
 __all__ = [
-    # Primary consolidated class
-    "FlextLdapConstants",
-
-    # Legacy compatibility aliases
-    "FlextLdapProtocolConstants",
-    "FlextLdapConnectionConstants",
-    "FlextLdapAttributeConstants",
-    "FlextLdapDefaultValues",
-    "FlextLdapValidationConstants",
-    "FlextLdapValidationMessages",
-    "FlextLdapOperationMessages",
-    "FlextLdapObjectClassConstants",
-    "FlextLdapScopeConstants",
-
+    "COMMON_NAME",
+    "DEFAULT_PAGE_SIZE",
     # Convenient module-level aliases
     "DEFAULT_PORT",
     "DEFAULT_SSL_PORT",
-    "DEFAULT_PAGE_SIZE",
-    "OBJECT_CLASS",
-    "COMMON_NAME",
-    "USER_ID",
     "MAIL",
+    "OBJECT_CLASS",
+    "USER_ID",
+    "FlextLdapAttributeConstants",
+    "FlextLdapConnectionConstants",
+    # Primary consolidated class
+    "FlextLdapConstants",
+    "FlextLdapDefaultValues",
+    "FlextLdapObjectClassConstants",
+    "FlextLdapOperationMessages",
+    # Legacy compatibility aliases
+    "FlextLdapProtocolConstants",
+    "FlextLdapScopeConstants",
+    "FlextLdapValidationConstants",
+    "FlextLdapValidationMessages",
 ]

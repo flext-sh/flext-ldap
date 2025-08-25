@@ -42,15 +42,14 @@ Examples:
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from typing import cast, override
 
 from flext_core import (
     FlextEntity,
     FlextEntityId,
-    FlextEntityStatus,
     FlextModel,
     FlextResult,
+    FlextTimestamp,
     get_logger,
 )
 from pydantic import Field, field_validator
@@ -198,11 +197,11 @@ class FlextLdapEntities:
         )
 
         # Entity metadata
-        created_at: datetime = Field(
-            default_factory=lambda: datetime.now(UTC),
+        created_at: FlextTimestamp = Field(
+            default_factory=FlextTimestamp.now,
             description="Creation timestamp",
         )
-        modified_at: datetime | None = Field(
+        modified_at: FlextTimestamp | None = Field(
             None,
             description="Last modification timestamp",
         )
@@ -245,7 +244,7 @@ class FlextLdapEntities:
         def set_attribute(self, name: str, value: LdapAttributeValue) -> None:
             """Set attribute value."""
             self.attributes[name] = value
-            self.modified_at = datetime.now(UTC)
+            self.modified_at = FlextTimestamp.now()
 
     class User(Entry):
         """LDAP user entity with user-specific validation."""
@@ -319,13 +318,13 @@ class FlextLdapEntities:
             """Add member to group."""
             if member_dn not in self.members:
                 self.members.append(member_dn)
-                self.modified_at = datetime.now(UTC)
+                self.modified_at = FlextTimestamp.now()
 
         def remove_member(self, member_dn: str) -> None:
             """Remove member from group."""
             if member_dn in self.members:
                 self.members.remove(member_dn)
-                self.modified_at = datetime.now(UTC)
+                self.modified_at = FlextTimestamp.now()
 
         def has_member(self, member_dn: str) -> bool:
             """Check if DN is a member of this group."""
@@ -382,8 +381,7 @@ class FlextLdapEntities:
                 user_password=self.user_password,
                 object_classes=self.object_classes.copy(),
                 attributes={},
-                id=FlextEntityId.create_new(),
-                status=FlextEntityStatus.ACTIVE,
+                id=FlextEntityId(f"user_{self.uid}"),
             )
 
 
@@ -405,17 +403,15 @@ FlextLdapCreateUserRequest = FlextLdapEntities.CreateUserRequest
 # =============================================================================
 
 __all__ = [
+    # Type alias
+    "DictEntry",
+    "FlextLdapCreateUserRequest",
     # Primary consolidated class
     "FlextLdapEntities",
-
+    "FlextLdapEntry",
+    "FlextLdapGroup",
     # Legacy compatibility classes
     "FlextLdapSearchRequest",
     "FlextLdapSearchResponse",
-    "FlextLdapEntry",
     "FlextLdapUser",
-    "FlextLdapGroup",
-    "FlextLdapCreateUserRequest",
-
-    # Type alias
-    "DictEntry",
 ]

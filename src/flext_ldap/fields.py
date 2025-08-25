@@ -16,7 +16,7 @@ Examples:
 
         # Attribute processing
         normalized = FlextLdapFields.Processors.normalize_attributes(attrs)
-        
+
         # Domain validation
         result = FlextLdapFields.Validators.validate_common_name(cn, attrs, "User")
 
@@ -224,15 +224,13 @@ MIN_PASSWORD_LENGTH = FlextLdapFields.Constants.MIN_PASSWORD_LENGTH
 # =============================================================================
 
 __all__ = [
-    # Primary consolidated class
-    "FlextLdapFields",
-
+    # Legacy constants
+    "MIN_PASSWORD_LENGTH",
     # Legacy compatibility classes
     "FlextLdapDataType",
+    # Primary consolidated class
+    "FlextLdapFields",
     "FlextLdapScopeEnum",
     "LdapAttributeProcessor",
     "LdapDomainValidator",
-
-    # Legacy constants
-    "MIN_PASSWORD_LENGTH",
 ]

@@ -650,6 +650,7 @@ FlextLdapPerformanceHelpers = FlextLdapUtils.Performance
 FlextLdapValidationHelpers = FlextLdapUtils.Validation
 FlextLdapErrorHelpers = FlextLdapUtils.Errors
 
+
 # Additional legacy mapping for the old FlextLdapUtils validation methods
 class _FlextLdapUtilsLegacy:
     """Legacy FlextLdapUtils class mapped to new consolidated structure."""
@@ -690,22 +691,19 @@ def flext_ldap_sanitize_attribute_name(name: str) -> str:
 LdapAttributeDict = UtilsLdapAttributeDict
 
 __all__ = [
-    # Primary consolidated class
-    "FlextLdapUtils",
-
+    "FlextLdapErrorHelpers",
+    "FlextLdapPerformanceHelpers",
     # Legacy compatibility classes
     "FlextLdapUtilities",
-    "FlextLdapPerformanceHelpers",
+    # Primary consolidated class
+    "FlextLdapUtils",
     "FlextLdapValidationHelpers",
-    "FlextLdapErrorHelpers",
-
     # Testing convenience type aliases
     "LdapAttributeDict",
     "UtilsLdapAttributeDict",
-
-    # Functional API for backwards compatibility
-    "flext_ldap_validate_dn",
+    "flext_ldap_sanitize_attribute_name",
     "flext_ldap_validate_attribute_name",
     "flext_ldap_validate_attribute_value",
-    "flext_ldap_sanitize_attribute_name",
+    # Functional API for backwards compatibility
+    "flext_ldap_validate_dn",
 ]

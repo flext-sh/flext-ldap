@@ -317,11 +317,10 @@ FlextLdapFilter = FlextLdapValueObjects.Filter
 # =============================================================================
 
 __all__ = [
-    # Primary consolidated class
-    "FlextLdapValueObjects",
-
     # Legacy compatibility classes
     "FlextLdapDistinguishedName",
-    "FlextLdapScope",
     "FlextLdapFilter",
+    "FlextLdapScope",
+    # Primary consolidated class
+    "FlextLdapValueObjects",
 ]
