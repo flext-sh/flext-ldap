@@ -1143,7 +1143,10 @@ class FlextLdapOperations:
             """Get current group membership data."""
             if self._search_ops is None:
                 return FlextResult[FlextLdapEntry].fail("Search operations not available")
-            group_result = await self._search_ops.get_entry_by_dn(
+            
+            # Type cast to correct interface
+            search_ops = cast(FlextLdapOperations.SearchOperations, self._search_ops)
+            group_result = await search_ops.get_entry_by_dn(
                 connection_id=connection_id,
                 dn=group_dn,
                 attributes=["member"],

@@ -746,7 +746,7 @@ class FlextLdapDomain:
             """Safely convert value to LdapAttributeDict."""
             from .utils import FlextLdapUtilities  # noqa: PLC0415
 
-            return FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(value)
+            return FlextLdapUtilities.safe_dict_comprehension_with_attribute_values(value)
 
     class UserEntityBuilder:
         """Internal builder for FlextLdapUser entities - ELIMINATES DUPLICATION."""
@@ -765,10 +765,9 @@ class FlextLdapDomain:
                 sn=self.builder.safe_str(self.params["sn"]) or "",
                 given_name=self.builder.safe_str(self.params["given_name"]),
                 mail=self.builder.safe_str(self.params["mail"]),
-                phone=self.builder.safe_str(self.params.get("phone")),
+                user_password=self.builder.safe_str(self.params.get("user_password")),
                 object_classes=self.builder.safe_list(self.params["object_classes"]),
                 attributes=self.builder.safe_ldap_attributes(self.params["attributes"]),
-                status=FlextEntityStatus.ACTIVE,
             )
 
     class GroupEntityBuilder:
@@ -788,7 +787,6 @@ class FlextLdapDomain:
                 members=self.builder.safe_list(self.params["members"]),
                 object_classes=self.builder.safe_list(self.params["object_classes"]),
                 attributes=self.builder.safe_ldap_attributes(self.params["attributes"]),
-                status=FlextEntityStatus.ACTIVE,
             )
 
     class DomainFactory:
