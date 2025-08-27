@@ -202,7 +202,9 @@ class TestFlextLdapRepositoryRealFunctionality(unittest.TestCase):
             assert "Invalid DN format" in result.error
 
             # Test com DN válido
-            result = await self.repository.delete_async("cn=test,ou=users,dc=example,dc=com")
+            result = await self.repository.delete_async(
+                "cn=test,ou=users,dc=example,dc=com"
+            )
             assert isinstance(result, FlextResult)
 
         asyncio.run(run_test())

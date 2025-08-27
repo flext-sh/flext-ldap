@@ -236,7 +236,7 @@ class FlextLdapConstants(FlextCoreConstants):
     # VALIDATION CONSTANTS - Messages and Rules
     # =========================================================================
 
-    class Validation:
+    class LdapValidation:
         """Validation constants for LDAP data integrity."""
 
         MAX_FILTER_LENGTH: Final[int] = 8192
@@ -281,7 +281,7 @@ class FlextLdapConstants(FlextCoreConstants):
 
         CONNECTION_OPERATION: Final[str] = "connection"
         LDAP_CODE_CONTEXT: Final[str] = "LDAP Code: {ldap_code}"
-        OPERATION_CONTEXT: Final[str] = "Operation: {0}"
+        OPERATION_CONTEXT: Final[str] = "Operation: {operation}"
         CONTEXT_INFO: Final[str] = "Context: {context}"
 
         # Context dictionary keys
@@ -317,17 +317,17 @@ class FlextLdapConstants(FlextCoreConstants):
     # =========================================================================
 
     @classmethod
-    def flext_ldap_protocol_constants(cls) -> type[Protocol]:  # noqa: N802
+    def flext_ldap_protocol_constants(cls) -> type[Protocol]:
         """Legacy compatibility for FlextLdapProtocolConstants."""
         return cls.Protocol
 
     @classmethod
-    def flext_ldap_connection_constants(cls) -> type[Connection]:  # noqa: N802
+    def flext_ldap_connection_constants(cls) -> type[Connection]:
         """Legacy compatibility for FlextLdapConnectionConstants."""
         return cls.Connection
 
     @classmethod
-    def flext_ldap_attribute_constants(cls) -> type[Attributes]:  # noqa: N802
+    def flext_ldap_attribute_constants(cls) -> type[Attributes]:
         """Legacy compatibility for FlextLdapAttributeConstants."""
         return cls.Attributes
 
@@ -348,9 +348,9 @@ class FlextLdapConstants(FlextCoreConstants):
         return cls.Attributes
 
     @classmethod
-    def get_validation_constants(cls) -> type[Validation]:
+    def get_validation_constants(cls) -> type[LdapValidation]:
         """Get validation constants class."""
-        return cls.Validation
+        return cls.LdapValidation
 
     @classmethod
     def get_validation_messages(cls) -> type[ValidationMessages]:
@@ -421,7 +421,7 @@ FlextLdapProtocolConstants = FlextLdapConstants.Protocol
 FlextLdapConnectionConstants = FlextLdapConstants.Connection
 FlextLdapAttributeConstants = FlextLdapConstants.Attributes
 FlextLdapDefaultValues = FlextLdapConstants.DefaultValues
-FlextLdapValidationConstants = FlextLdapConstants.Validation
+FlextLdapValidationConstants = FlextLdapConstants.LdapValidation
 FlextLdapValidationMessages = FlextLdapConstants.ValidationMessages
 FlextLdapOperationMessages = FlextLdapConstants.Operations
 FlextLdapObjectClassConstants = FlextLdapConstants.ObjectClasses

@@ -1,13 +1,11 @@
 """LDAP configuration models following flext-core patterns."""
 
-
-# Legacy facade imports for backward compatibility
 from typing import Final
 
 from flext_core import get_logger
 
-from .connection_config import FlextLdapConnectionConfig
-from .settings import (
+from flext_ldap.connection_config import FlextLdapConnectionConfig
+from flext_ldap.settings import (
     FlextLdapAuthConfig,
     FlextLdapLoggingConfig,
     FlextLdapSearchConfig,
@@ -16,11 +14,6 @@ from .settings import (
     create_production_config,
     create_test_config,
 )
-
-try:
-    import yaml
-except ImportError:
-    yaml = None  # type: ignore[assignment]
 
 logger = get_logger(__name__)
 

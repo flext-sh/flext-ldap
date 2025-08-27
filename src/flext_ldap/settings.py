@@ -10,9 +10,8 @@ from typing import final, override
 from flext_core import FlextConfig, FlextResult, get_logger
 from pydantic import ConfigDict, Field, SecretStr
 
-# Legacy facade imports - these will work after refactoring
-from .connection_config import FlextLdapConnectionConfig
-from .fields import FlextLdapScopeEnum
+from flext_ldap.connection_config import FlextLdapConnectionConfig
+from flext_ldap.fields import FlextLdapScopeEnum
 
 
 # TEMPORARY: Inline dependencies to avoid circular imports - will be extracted
@@ -278,7 +277,9 @@ class FlextLdapSettings(FlextConfig):
         host_error = "FLEXT_LDAP_HOST environment variable is required"
         port_error = "FLEXT_LDAP_PORT environment variable is required"
         bind_dn_error = "FLEXT_LDAP_BIND_DN environment variable is required"
-        bind_credential_error = "FLEXT_LDAP_BIND_PASSWORD environment variable is required"  # noqa: S105
+        bind_credential_error = (
+            "FLEXT_LDAP_BIND_PASSWORD environment variable is required"  # noqa: S105
+        )
         base_dn_error = "FLEXT_LDAP_BASE_DN environment variable is required"
 
         # Check for required environment variables
@@ -290,20 +291,28 @@ class FlextLdapSettings(FlextConfig):
         if not port_result.is_success:
             raise ValueError(port_error)
 
-        bind_dn_result = cls.get_env_with_validation("FLEXT_LDAP_BIND_DN", required=True)
+        bind_dn_result = cls.get_env_with_validation(
+            "FLEXT_LDAP_BIND_DN", required=True
+        )
         if not bind_dn_result.is_success:
             raise ValueError(bind_dn_error)
 
-        bind_password_result = cls.get_env_with_validation("FLEXT_LDAP_BIND_PASSWORD", required=True)
+        bind_password_result = cls.get_env_with_validation(
+            "FLEXT_LDAP_BIND_PASSWORD", required=True
+        )
         if not bind_password_result.is_success:
             raise ValueError(bind_credential_error)
 
-        base_dn_result = cls.get_env_with_validation("FLEXT_LDAP_BASE_DN", required=True)
+        base_dn_result = cls.get_env_with_validation(
+            "FLEXT_LDAP_BASE_DN", required=True
+        )
         if not base_dn_result.is_success:
             raise ValueError(base_dn_error)
 
         # Get optional values
-        use_ssl_result = cls.get_env_with_validation("FLEXT_LDAP_USE_SSL", required=False, default="false")
+        use_ssl_result = cls.get_env_with_validation(
+            "FLEXT_LDAP_USE_SSL", required=False, default="false"
+        )
         use_ssl = use_ssl_result.value.lower() in {"true", "1", "yes", "on"}
 
         # Create auth config
@@ -340,7 +349,9 @@ class FlextLdapSettings(FlextConfig):
         """
         # Error messages as constants
         file_not_found_msg = f"Configuration file not found: {file_path}"
-        yaml_import_error_msg = "Failed to parse configuration file: YAML parsing requires PyYAML package"
+        yaml_import_error_msg = (
+            "Failed to parse configuration file: YAML parsing requires PyYAML package"
+        )
         file_read_error_msg = f"Failed to read configuration file: {file_path}"
 
         # Check if file exists
@@ -362,7 +373,9 @@ class FlextLdapSettings(FlextConfig):
                 try:
                     config_dict = yaml.safe_load(content)
                 except yaml.YAMLError as e:
-                    yaml_format_error_msg = f"Failed to parse configuration file: Invalid YAML format: {e}"
+                    yaml_format_error_msg = (
+                        f"Failed to parse configuration file: Invalid YAML format: {e}"
+                    )
                     raise ValueError(yaml_format_error_msg) from e
         except Exception as e:
             if isinstance(e, (FileNotFoundError, ValueError)):

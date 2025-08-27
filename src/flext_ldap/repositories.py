@@ -16,15 +16,15 @@ from flext_core import (
     get_logger,
 )
 
-from .clients import FlextLdapClient
-from .entities import (
+from flext_ldap.clients import FlextLdapClient
+from flext_ldap.entities import (
     FlextLdapEntry,
     FlextLdapSearchRequest,
     FlextLdapSearchResponse,
 )
-from .fields import LdapAttributeProcessor
-from .typings import LdapAttributeDict
-from .value_objects import FlextLdapDistinguishedName
+from flext_ldap.fields import LdapAttributeProcessor
+from flext_ldap.typings import LdapAttributeDict
+from flext_ldap.value_objects import FlextLdapDistinguishedName
 
 logger = get_logger(__name__)
 
@@ -56,7 +56,9 @@ class FlextLdapRepositories:
             try:
                 return asyncio.run(self.find_by_dn(entity_id))
             except Exception as e:
-                return FlextResult[FlextLdapEntry | None].fail(f"Failed to get by ID: {e}")
+                return FlextResult[FlextLdapEntry | None].fail(
+                    f"Failed to get by ID: {e}"
+                )
 
         def find_all(self) -> FlextResult[list[FlextLdapEntry]]:
             """Find all entities - not practical for LDAP, returns error."""
@@ -110,10 +112,13 @@ class FlextLdapRepositories:
 
             # Create entry
             entry = FlextLdapEntry(
-                id=FlextEntityId(f"repo_entry_{dn.replace(',', '_').replace('=', '_')}"),
+                id=FlextEntityId(
+                    f"repo_entry_{dn.replace(',', '_').replace('=', '_')}"
+                ),
                 dn=dn,
                 object_classes=object_classes,
                 attributes=LdapAttributeProcessor.normalize_attributes(entry_data),
+                modified_at=None,
             )
 
             logger.debug("Found entry by DN", extra={"dn": dn})
@@ -202,7 +207,9 @@ class FlextLdapRepositories:
             # Validate DN format
             dn_validation = FlextLdapDistinguishedName.create(dn)
             if not dn_validation.is_success:
-                return FlextResult[None].fail(f"Invalid DN format: {dn_validation.error}")
+                return FlextResult[None].fail(
+                    f"Invalid DN format: {dn_validation.error}"
+                )
 
             result = await self._client.delete(dn)
             if result.is_success:
@@ -219,17 +226,23 @@ class FlextLdapRepositories:
             # Check if entry exists (find_result.value is not None)
             return FlextResult[bool].ok(find_result.value is not None)
 
-        async def update(self, dn: str, attributes: LdapAttributeDict) -> FlextResult[None]:
+        async def update(
+            self, dn: str, attributes: LdapAttributeDict
+        ) -> FlextResult[None]:
             """Update entry attributes."""
             # Validate DN format
             dn_validation = FlextLdapDistinguishedName.create(dn)
             if not dn_validation.is_success:
-                return FlextResult[None].fail(f"Invalid DN format: {dn_validation.error}")
+                return FlextResult[None].fail(
+                    f"Invalid DN format: {dn_validation.error}"
+                )
 
             # Verify entry exists
             exists_result = await self.exists(dn)
             if not exists_result.is_success:
-                return FlextResult[None].fail(exists_result.error or "Exists check failed")
+                return FlextResult[None].fail(
+                    exists_result.error or "Exists check failed"
+                )
 
             # Use value directly since we already checked success
             if not exists_result.value:

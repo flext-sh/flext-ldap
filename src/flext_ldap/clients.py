@@ -43,9 +43,9 @@ from flext_core import FlextResult, get_logger
 from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE
 from ldap3.core.exceptions import LDAPException
 
-from .entities import FlextLdapSearchRequest, FlextLdapSearchResponse
-from .typings import LdapAttributeDict, LdapSearchResult
-from .utils import FlextLdapUtils
+from flext_ldap.entities import FlextLdapSearchRequest, FlextLdapSearchResponse
+from flext_ldap.typings import LdapAttributeDict, LdapSearchResult
+from flext_ldap.utils import FlextLdapUtils
 
 logger = get_logger(__name__)
 
@@ -287,7 +287,7 @@ class FlextLdapClient:
 
             # Convert entries to our format using utilities
             entries: list[LdapSearchResult] = []
-            connection_entries: list[object] = (
+            connection_entries: list[dict[str, object]] = (
                 FlextLdapUtils.Ldap3.safe_ldap3_entries_list(self._connection)
             )
 

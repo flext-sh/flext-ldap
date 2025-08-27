@@ -82,10 +82,8 @@ class TestProtocolCompliance:
         forbidden_classes = [
             "FlextLdapOperationsBase",
             "FlextLdapServiceBase",
-            "FlextLdapClientBase",
+            "FlextLdapClientBase"
         ]
 
         for forbidden in forbidden_classes:
-            assert not hasattr(protocols_module, forbidden), (
-                f"{forbidden} should be removed - use flext-core instead"
-            )
+            assert not hasattr(protocols_module, forbidden), f"{forbidden} should be removed - use flext-core instead"

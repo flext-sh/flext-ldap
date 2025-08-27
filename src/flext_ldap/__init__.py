@@ -1,6 +1,5 @@
 """Enterprise LDAP directory integration library."""
 
-
 import importlib.metadata
 
 from .api import FlextLdapApi, get_ldap_api, create_ldap_api
@@ -50,7 +49,7 @@ from .value_objects import (
 
 from .services import FlextLdapService
 
-from .infrastructure import FlextLdapClient
+from .clients import FlextLdapClient
 
 from .container import get_ldap_container, reset_ldap_container
 
@@ -90,7 +89,7 @@ from .utils import (
 )
 from .typings import LdapAttributeDict
 
-from .config import FlextLdapAuthConfig as FlextLdapConfig
+from .configuration import FlextLdapAuthConfig as FlextLdapConfig
 
 # Version info
 try:

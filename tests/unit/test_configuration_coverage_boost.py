@@ -28,17 +28,23 @@ class TestFlextLdapConnectionConfigCoverage:
     def test_connection_config_validation_failures(self) -> None:
         """Test validation failures in FlextLdapConnectionConfig."""
         # Test invalid server (covers lines 52-58)
-        with pytest.raises(ValidationError, match="String should have at least 1 character"):
+        with pytest.raises(
+            ValidationError, match="String should have at least 1 character"
+        ):
             FlextLdapConnectionConfig(server="", port=389)
 
-        with pytest.raises(ValidationError, match="String should have at least 1 character"):
+        with pytest.raises(
+            ValidationError, match="String should have at least 1 character"
+        ):
             FlextLdapConnectionConfig(server="   ", port=389)
 
         # Test invalid port (covers additional validation)
         with pytest.raises(ValidationError, match="Input should be greater than 0"):
             FlextLdapConnectionConfig(server="test.com", port=0)
 
-        with pytest.raises(ValidationError, match="Input should be less than or equal to 65535"):
+        with pytest.raises(
+            ValidationError, match="Input should be less than or equal to 65535"
+        ):
             FlextLdapConnectionConfig(server="test.com", port=70000)
 
     def test_connection_config_from_uri_edge_cases(self) -> None:
@@ -56,25 +62,17 @@ class TestFlextLdapConnectionConfigCoverage:
         # Test URI generation with auth config (current architecture)
 
         auth_ssl = FlextLdapAuthConfig(
-            bind_dn="cn=admin,dc=test",
-            bind_password="password",
-            use_ssl=True
+            bind_dn="cn=admin,dc=test", bind_password="password", use_ssl=True
         )
         config_ssl = FlextLdapConnectionConfig(
-            server="test.com",
-            port=636,
-            auth=auth_ssl
+            server="test.com", port=636, auth=auth_ssl
         )
 
         auth_no_ssl = FlextLdapAuthConfig(
-            bind_dn="cn=admin,dc=test",
-            bind_password="password",
-            use_ssl=False
+            bind_dn="cn=admin,dc=test", bind_password="password", use_ssl=False
         )
         config_no_ssl = FlextLdapConnectionConfig(
-            server="test.com",
-            port=389,
-            auth=auth_no_ssl
+            server="test.com", port=389, auth=auth_no_ssl
         )
 
         # Test URI generation includes SSL protocol based on auth config
@@ -84,9 +82,7 @@ class TestFlextLdapConnectionConfigCoverage:
     def test_connection_config_uri_property(self) -> None:
         """Test URI property generation without auth config."""
         # Test basic URI generation without auth (defaults to ldap://)
-        config = FlextLdapConnectionConfig(
-            server="test.com", port=389
-        )
+        config = FlextLdapConnectionConfig(server="test.com", port=389)
         assert config.uri == "ldap://test.com:389"
 
 
@@ -136,8 +132,11 @@ class TestFlextLdapSettingsCoverage:
     def test_settings_from_env_missing_vars(self) -> None:
         """Test from_env with missing environment variables."""
         # Test missing required environment variables (covers lines 266->277, 268)
-        with patch.dict(os.environ, {}, clear=True), pytest.raises(
-            ValueError, match="FLEXT_LDAP_HOST environment variable is required"
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            pytest.raises(
+                ValueError, match="FLEXT_LDAP_HOST environment variable is required"
+            ),
         ):
             FlextLdapSettings.from_env()
 
@@ -169,7 +168,9 @@ class TestFlextLdapSettingsCoverage:
             assert settings.connection.port == 389
             assert settings.connection.base_dn == "dc=test,dc=com"
             assert settings.connection.auth.bind_dn == "cn=admin,dc=test"
-            assert settings.connection.auth.bind_password.get_secret_value() == "secret123"
+            assert (
+                settings.connection.auth.bind_password.get_secret_value() == "secret123"
+            )
             assert settings.connection.auth.use_ssl is False
 
     def test_settings_from_file_not_found(self) -> None:
@@ -181,7 +182,9 @@ class TestFlextLdapSettingsCoverage:
     def test_settings_from_file_invalid_format(self) -> None:
         """Test from_file with invalid YAML format."""
         # Create a temporary file with invalid YAML (covers lines 311, 316, 321)
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".yaml", delete=False
+        ) as f:
             f.write("invalid: yaml: content:\n  - broken")
             temp_path = f.name
 
@@ -208,7 +211,9 @@ search:
   size_limit: 500
   time_limit: 60
 """
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".yaml", delete=False
+        ) as f:
             f.write(yaml_config)
             temp_path = f.name
 
@@ -219,7 +224,10 @@ search:
             assert settings.connection.base_dn == "dc=yaml,dc=com"
             assert settings.connection.auth.use_ssl is True
             assert settings.connection.auth.bind_dn == "cn=admin,dc=yaml"
-            assert settings.connection.auth.bind_password.get_secret_value() == "yaml_password"
+            assert (
+                settings.connection.auth.bind_password.get_secret_value()
+                == "yaml_password"
+            )
         finally:
             pathlib.Path(temp_path).unlink()
 
@@ -227,8 +235,12 @@ search:
         """Test to_dict method."""
         # Test conversion to dictionary (covers lines 355-378)
 
-        auth_config = FlextLdapAuthConfig(bind_dn="cn=test", bind_password=SecretStr("pass"))
-        connection_config = FlextLdapConnectionConfig(server="test.com", port=389, auth=auth_config)
+        auth_config = FlextLdapAuthConfig(
+            bind_dn="cn=test", bind_password=SecretStr("pass")
+        )
+        connection_config = FlextLdapConnectionConfig(
+            server="test.com", port=389, auth=auth_config
+        )
         search_config = FlextLdapSearchConfig(size_limit=100)
 
         # Use the correct field name for FlextLdapSettings (default_connection)
@@ -244,7 +256,9 @@ search:
         assert "search" in result_dict
 
         # Access connection data (could be under either key due to alias)
-        connection_data = result_dict.get("connection") or result_dict.get("default_connection")
+        connection_data = result_dict.get("connection") or result_dict.get(
+            "default_connection"
+        )
         assert connection_data["server"] == "test.com"
 
     def test_settings_from_dict_method(self) -> None:

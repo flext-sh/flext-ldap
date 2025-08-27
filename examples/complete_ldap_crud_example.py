@@ -30,7 +30,7 @@ BASE_DN: Final[str] = "dc=example,dc=com"
 USERS_DN: Final[str] = f"ou=users,{BASE_DN}"
 GROUPS_DN: Final[str] = f"ou=groups,{BASE_DN}"
 ADMIN_DN: Final[str] = "cn=admin,dc=example,dc=com"
-ADMIN_PASSWORD: Final[str] = "admin"
+ADMIN_PASSWORD: Final[str] = "admin"  # noqa: S105  # Demo password for examples
 
 
 async def create_sample_users(api: FlextLdapApi) -> None:

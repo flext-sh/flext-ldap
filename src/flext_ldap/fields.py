@@ -24,6 +24,7 @@ Examples:
 
         # All previous classes still work as direct imports
         from fields import FlextLdapDataType, LdapAttributeProcessor
+
         data_type = FlextLdapDataType.STRING
 
 """
@@ -35,8 +36,8 @@ from typing import cast
 
 from flext_core import FlextResult, get_logger
 
-from .constants import FlextLdapDefaultValues
-from .typings import LdapAttributeDict
+from flext_ldap.constants import FlextLdapDefaultValues
+from flext_ldap.typings import LdapAttributeDict
 
 logger = get_logger(__name__)
 
@@ -73,7 +74,9 @@ class FlextLdapFields:
         Validation operations::
 
             result = FlextLdapFields.Validators.validate_common_name(cn, attrs, "User")
-            classes_result = FlextLdapFields.Validators.validate_required_object_classes(...)
+            classes_result = (
+                FlextLdapFields.Validators.validate_required_object_classes(...)
+            )
 
     """
 
@@ -182,7 +185,9 @@ class FlextLdapFields:
             return FlextResult[None].ok(None)
 
         @staticmethod
-        def _get_attribute_value(attributes: dict[str, object], name: str) -> str | None:
+        def _get_attribute_value(
+            attributes: dict[str, object], name: str
+        ) -> str | None:
             """Helper to get single attribute value."""
             raw = attributes.get(name)
             if raw is None:
