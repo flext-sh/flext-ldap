@@ -406,7 +406,7 @@ Uses FlextContainer for service orchestration:
 
 ```python
 # Container configuration
-container = get_flext_container()
+container = FlextContainer.get_global()
 container.register(FlextLdapUserRepository, FlextLdapUserRepositoryImpl)
 container.register(FlextLdapUserValidator, FlextLdapUserValidator)
 
@@ -421,7 +421,7 @@ Centralized configuration via FlextLDAPConfig:
 ```python
 # Configuration class
 @dataclass
-class FlextLdapSettings(FlextSettings):
+class FlextLdapSettings(FlextConfig):
     \"\"\"LDAP configuration with validation.\"\"\"
     server_url: str
     port: int = 389

@@ -9,7 +9,6 @@ from __future__ import annotations
 from flext_core import FlextEntityId, FlextEntityStatus
 
 from flext_ldap import (
-    FlextLdapFlextLdapEntityParameterBuilder,
     FlextLdapActiveUserSpecification,
     FlextLdapCompleteUserSpecification,
     FlextLdapDistinguishedNameSpecification,

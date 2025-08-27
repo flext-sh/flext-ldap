@@ -83,7 +83,7 @@ from flext_core import FlextContainer, get_flext_container
 from flext_ldap import FlextLdapService, FlextLdapUserRepository
 
 # Container configuration
-container = get_flext_container()
+container = FlextContainer.get_global()
 
 # Register LDAP services with the container
 container.register_singleton(

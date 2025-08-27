@@ -14,7 +14,7 @@ import asyncio
 import sys
 from typing import Final, cast
 
-from flext_core import FlextResult, get_logger
+from flext_core import FlextConstants, FlextResult, get_logger
 
 from flext_ldap import (
     FlextLdapApi,
@@ -25,7 +25,7 @@ from flext_ldap import (
 logger = get_logger(__name__)
 
 # LDAP connection settings
-LDAP_URI: Final[str] = "ldap://localhost:389"
+LDAP_URI: Final[str] = f"ldap://{FlextConstants.Platform.DEFAULT_HOST}:{FlextConstants.Database.LDAP_DEFAULT_PORT}"
 BASE_DN: Final[str] = "dc=example,dc=com"
 USERS_DN: Final[str] = f"ou=users,{BASE_DN}"
 GROUPS_DN: Final[str] = f"ou=groups,{BASE_DN}"

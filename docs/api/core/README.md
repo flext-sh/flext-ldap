@@ -890,7 +890,7 @@ class FlextLdapCreateGroupRequest:
 ### FlextLdapSettings
 
 ```python
-class FlextLdapSettings(FlextSettings):
+class FlextLdapSettings(FlextConfig):
     \"\"\"FLEXT-LDAP configuration with environment variable support.
 
     All settings can be overridden via environment variables with

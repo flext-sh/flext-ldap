@@ -65,7 +65,7 @@ class FlextLdapExceptions:
         - Open/Closed: Extensible without modification
         - Liskov Substitution: Consistent interface across all exception types
         - Interface Segregation: Organized by exception domain for specific access
-        - Dependency Inversion: Depends on FlextExceptions.Error abstraction
+        - Dependency Inversion: Depends on FlextExceptions abstraction
 
     Examples:
         Connection and authentication errors:
@@ -116,7 +116,7 @@ class FlextLdapExceptions:
     # BASE ERROR CLASS - Foundation for all LDAP exceptions
     # =========================================================================
 
-    class Error(FlextExceptions.Error):
+    class Error(FlextExceptions):
         """Base exception for FLEXT-LDAP with optional LDAP context and codes."""
 
         def __init__(

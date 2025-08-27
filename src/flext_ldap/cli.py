@@ -17,10 +17,10 @@ from flext_cli import (
     get_cli_config,
 )
 from flext_core import (
+    FlextConstants,
     FlextContainer,
     FlextResult,
     FlextTypes,
-    get_flext_container,
     get_logger,
 )
 from rich.console import Console
@@ -132,12 +132,10 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
                 server_uri, bind_dn_str, bind_password_str
             ) as session:
                 if session:
-                    return FlextResult[object].ok(
-                        {
-                            "status": "success",
-                            "message": f"Successfully connected to {server}:{port}",
-                        }
-                    )
+                    return FlextResult[object].ok({
+                        "status": "success",
+                        "message": f"Successfully connected to {server}:{port}",
+                    })
                 return FlextResult[object].fail(
                     "Connection failed",
                 )
@@ -192,13 +190,11 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
                             entry.to_dict() for entry in entries
                         ]
 
-                        return FlextResult[object].ok(
-                            {
-                                "status": "success",
-                                "entries": entry_dicts,
-                                "count": len(entry_dicts),
-                            }
-                        )
+                        return FlextResult[object].ok({
+                            "status": "success",
+                            "entries": entry_dicts,
+                            "count": len(entry_dicts),
+                        })
                     return FlextResult[object].fail(
                         result.error or "Search failed",
                     )
@@ -217,9 +213,9 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
         logger.info("Looking up user information...")
 
         uid = str(args.get("uid", ""))
-        server = str(args.get("server", "localhost"))
+        server = str(args.get("server", FlextConstants.Infrastructure.DEFAULT_HOST))
 
-        server_uri = f"ldap://{server}:389"
+        server_uri = f"ldap://{server}:{FlextConstants.Platform.LDAP_PORT}"
         bind_dn_str = ""
         bind_password_str = ""  # nosec B105 - empty string default
 
@@ -245,12 +241,10 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
                                 if hasattr(entry, "to_dict")
                                 else {"dn": str(entry)}
                             )
-                            return FlextResult[object].ok(
-                                {
-                                    "status": "success",
-                                    "user": user_dict,
-                                }
-                            )
+                            return FlextResult[object].ok({
+                                "status": "success",
+                                "user": user_dict,
+                            })
                         return FlextResult[object].fail(
                             f"User {uid} not found",
                         )
@@ -274,10 +268,10 @@ class FlextLdapCliFormatterService(FlextCliFormatterService):
     def __init__(self, container: FlextContainer | None = None) -> None:
         """Initialize LDAP CLI formatter service."""
         if container is None:
-            container = get_flext_container()
+            container = FlextContainer.get_global()
             # Try to get CLI container, fallback to core container
             try:
-                cli_container = get_flext_container()
+                cli_container = FlextContainer.get_global()
                 if isinstance(cli_container, FlextContainer):
                     container = cli_container
             except Exception as e:
@@ -536,7 +530,7 @@ def cli(
 @click.option(
     "--port",
     "-p",
-    default=389,
+    default=FlextConstants.Platform.LDAP_PORT,
     type=int,
     help="LDAP server port",
 )
@@ -617,7 +611,7 @@ def test(
 @click.option(
     "--port",
     "-p",
-    default=389,
+    default=FlextConstants.Platform.LDAP_PORT,
     type=int,
     help="LDAP server port",
 )
@@ -694,7 +688,7 @@ def search(
 
 @cli.command()
 @click.argument("uid", type=str, required=True)
-@click.option("--server", "-s", default="localhost", help="LDAP server URL")
+@click.option("--server", "-s", default=FlextConstants.Infrastructure.DEFAULT_HOST, help="LDAP server URL")
 # Decorators removed for type safety - functionality implemented inline
 @click.pass_context
 def user_info(
@@ -765,7 +759,7 @@ def main() -> None:
     """Run CLI entry point with proper error handling using flext-cli patterns."""
     try:
         # Initialize CLI with flext-cli patterns
-        _ = get_flext_container()  # Initialize CLI container
+        _ = FlextContainer.get_global()  # Initialize CLI container
         config = get_cli_config()
 
         if config.debug:
