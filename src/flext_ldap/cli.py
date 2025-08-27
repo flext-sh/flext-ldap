@@ -12,7 +12,6 @@ from typing import cast, override
 import click
 from flext_cli import (
     FlextCliCommandService,
-    FlextCliExecutionContext,
     FlextCliFormatterService,
     FormatterFactory,
     get_cli_config,
@@ -38,7 +37,7 @@ logger = get_logger(__name__)
 # =============================================================================
 
 
-class FlextLdapCliCommandService(FlextCliCommandService):
+class FlextLdapCliCommandService(FlextCliCommandService[object]):
     """Command service for FLEXT LDAP CLI operations.
 
     Extends FlextCliCommandService to provide LDAP-specific
@@ -55,15 +54,15 @@ class FlextLdapCliCommandService(FlextCliCommandService):
     @override
     def execute_command(
         self,
-        command_name: str,
-        context: FlextCliExecutionContext,
+        command: str,
+        args: dict[str, object] | None = None,
         **kwargs: object,
     ) -> FlextResult[object]:
         """Execute LDAP command with given arguments - sync wrapper for async operations.
 
         Args:
-            command_name: Command name to execute
-            context: CLI execution context with arguments
+            command: Command name to execute
+            args: Command arguments dictionary
             **kwargs: Additional execution parameters
 
         Returns:
@@ -74,31 +73,29 @@ class FlextLdapCliCommandService(FlextCliCommandService):
         start_time = time.time()
         max_attempts = 2
 
-        logger.info(f"Executing command: {command_name}")
+        logger.info(f"Executing command: {command}")
 
-        args = getattr(context, "args", {}) or {}
+        command_args = args or {}
 
         for attempt in range(max_attempts):
             try:
-                if command_name == "test":
-                    return asyncio.run(self._execute_test_command(args))
-                if command_name == "search":
-                    return asyncio.run(self._execute_search_command(args))
-                if command_name == "user_info":
-                    return asyncio.run(self._execute_user_info_command(args))
+                if command == "test":
+                    return asyncio.run(self._execute_test_command(command_args))
+                if command == "search":
+                    return asyncio.run(self._execute_search_command(command_args))
+                if command == "user_info":
+                    return asyncio.run(self._execute_user_info_command(command_args))
                 return FlextResult[object].fail(
-                    f"Unknown command: {command_name}",
+                    f"Unknown command: {command}",
                 )
             except Exception as e:
                 if attempt == max_attempts - 1:  # Last attempt
                     elapsed = time.time() - start_time
-                    logger.exception(
-                        f"Command {command_name} failed after {elapsed:.3f}s"
-                    )
+                    logger.exception(f"Command {command} failed after {elapsed:.3f}s")
                     return FlextResult[object].fail(str(e))
                 # Retry on next attempt
                 logger.warning(
-                    f"Command {command_name} attempt {attempt + 1} failed, retrying: {e}"
+                    f"Command {command} attempt {attempt + 1} failed, retrying: {e}"
                 )
                 time.sleep(0.1)  # Brief delay before retry
                 continue
@@ -135,10 +132,12 @@ class FlextLdapCliCommandService(FlextCliCommandService):
                 server_uri, bind_dn_str, bind_password_str
             ) as session:
                 if session:
-                    return FlextResult[object].ok({
-                        "status": "success",
-                        "message": f"Successfully connected to {server}:{port}",
-                    })
+                    return FlextResult[object].ok(
+                        {
+                            "status": "success",
+                            "message": f"Successfully connected to {server}:{port}",
+                        }
+                    )
                 return FlextResult[object].fail(
                     "Connection failed",
                 )
@@ -193,11 +192,13 @@ class FlextLdapCliCommandService(FlextCliCommandService):
                             entry.to_dict() for entry in entries
                         ]
 
-                        return FlextResult[object].ok({
-                            "status": "success",
-                            "entries": entry_dicts,
-                            "count": len(entry_dicts),
-                        })
+                        return FlextResult[object].ok(
+                            {
+                                "status": "success",
+                                "entries": entry_dicts,
+                                "count": len(entry_dicts),
+                            }
+                        )
                     return FlextResult[object].fail(
                         result.error or "Search failed",
                     )
@@ -244,10 +245,12 @@ class FlextLdapCliCommandService(FlextCliCommandService):
                                 if hasattr(entry, "to_dict")
                                 else {"dn": str(entry)}
                             )
-                            return FlextResult[object].ok({
-                                "status": "success",
-                                "user": user_dict,
-                            })
+                            return FlextResult[object].ok(
+                                {
+                                    "status": "success",
+                                    "user": user_dict,
+                                }
+                            )
                         return FlextResult[object].fail(
                             f"User {uid} not found",
                         )
@@ -274,7 +277,7 @@ class FlextLdapCliFormatterService(FlextCliFormatterService):
             container = get_flext_container()
             # Try to get CLI container, fallback to core container
             try:
-                cli_container = FlextContainer.create_container()
+                cli_container = get_flext_container()
                 if isinstance(cli_container, FlextContainer):
                     container = cli_container
             except Exception as e:
@@ -579,11 +582,7 @@ def test(
 
         console.print(f"[blue]Testing connection to {server}:{port}[/blue]")
 
-        context = FlextCliExecutionContext(
-            command_name="test",
-            command_args=args,
-        )
-        result = command_service.execute_command("test", context)
+        result = command_service.execute_command("test", args)
 
         elapsed = time.time() - start_time
         console.print(f"[dim]⏱  Execution time: {elapsed:.2f}s[/dim]")
@@ -670,11 +669,7 @@ def search(
 
         console.print(f"[blue]Searching {base_dn} on {server}:{port}[/blue]")
 
-        context = FlextCliExecutionContext(
-            command_name="search",
-            command_args=args,
-        )
-        result = command_service.execute_command("search", context)
+        result = command_service.execute_command("search", args)
 
         elapsed = time.time() - start_time
         console.print(f"[dim]⏱  Execution time: {elapsed:.2f}s[/dim]")
@@ -728,11 +723,7 @@ def user_info(
 
         console.print(f"[blue]Looking up user: {uid}[/blue]")
 
-        context = FlextCliExecutionContext(
-            command_name="user_info",
-            command_args=args,
-        )
-        result = command_service.execute_command("user_info", context)
+        result = command_service.execute_command("user_info", args)
 
         elapsed = time.time() - start_time
         console.print(f"[dim]⏱  Execution time: {elapsed:.2f}s[/dim]")
@@ -774,7 +765,7 @@ def main() -> None:
     """Run CLI entry point with proper error handling using flext-cli patterns."""
     try:
         # Initialize CLI with flext-cli patterns
-        _ = FlextContainer.create_container()  # Initialize CLI container
+        _ = get_flext_container()  # Initialize CLI container
         config = get_cli_config()
 
         if config.debug:

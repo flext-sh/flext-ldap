@@ -26,10 +26,10 @@ Examples:
     Legacy compatibility::
 
         from services import FlextLdapService
+
         service = FlextLdapService()  # Still works with deprecation warning
 
 """
-
 
 # Import current service implementation for compatibility
 from __future__ import annotations
@@ -38,15 +38,17 @@ from typing import cast
 
 from flext_core import FlextContainer, FlextResult, FlextServiceProcessor, get_logger
 
-from .container import get_ldap_container
-from .entities import (
+from flext_ldap.container import get_ldap_container
+from flext_ldap.entities import (
     FlextLdapCreateUserRequest,
     FlextLdapGroup,
     FlextLdapSearchRequest,
     FlextLdapSearchResponse,
     FlextLdapUser,
 )
-from .typings import LdapAttributeDict
+from flext_ldap.repositories import FlextLdapRepositories
+from flext_ldap.typings import LdapAttributeDict
+from flext_ldap.value_objects import FlextLdapDistinguishedName, FlextLdapFilter
 
 logger = get_logger(__name__)
 
@@ -56,7 +58,9 @@ logger = get_logger(__name__)
 # =============================================================================
 
 
-class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[str, object]]):
+class FlextLdapServices(
+    FlextServiceProcessor[dict[str, object], object, dict[str, object]]
+):
     """Single FlextLdapServices class inheriting from FlextServiceProcessor.
 
     Consolidates ALL LDAP services into a single class following FLEXT patterns.
@@ -165,11 +169,12 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
         # Save user via repository from flext-core container
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[FlextLdapUser].fail(f"Repository access failed: {repository_result.error}")
-        
+            return FlextResult[FlextLdapUser].fail(
+                f"Repository access failed: {repository_result.error}"
+            )
+
         # Type cast repository to correct interface
-        from .repositories import FlextLdapRepositories
-        repository = cast(FlextLdapRepositories.Repository, repository_result.value)
+        repository = cast("FlextLdapRepositories.Repository", repository_result.value)
         save_result = await repository.save_async(user_entity)
 
         if not save_result.is_success:
@@ -199,11 +204,12 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
         """
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[FlextLdapUser | None].fail(f"Repository access failed: {repository_result.error}")
-        
+            return FlextResult[FlextLdapUser | None].fail(
+                f"Repository access failed: {repository_result.error}"
+            )
+
         # Type cast repository to correct interface
-        from .repositories import FlextLdapRepositories
-        repository = cast(FlextLdapRepositories.Repository, repository_result.value)
+        repository = cast("FlextLdapRepositories.Repository", repository_result.value)
         entry_result = await repository.find_by_dn(dn)
 
         if not entry_result.is_success:
@@ -221,10 +227,20 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
             dn=entry.dn,
             object_classes=entry.object_classes,
             attributes=entry.attributes,
-            uid=str(entry.get_attribute('uid') or 'unknown'),
-            cn=str(entry.get_attribute('cn')) if entry.get_attribute('cn') else None,
+            uid=str(entry.get_attribute("uid") or "unknown"),
+            cn=str(entry.get_attribute("cn")) if entry.get_attribute("cn") else None,
+            sn=str(entry.get_attribute("sn")) if entry.get_attribute("sn") else None,
+            given_name=str(entry.get_attribute("givenName"))
+            if entry.get_attribute("givenName")
+            else None,
+            mail=str(entry.get_attribute("mail"))
+            if entry.get_attribute("mail")
+            else None,
+            user_password=str(entry.get_attribute("userPassword"))
+            if entry.get_attribute("userPassword")
+            else None,
             created_at=entry.created_at,
-            modified_at=entry.modified_at
+            modified_at=entry.modified_at,
         )
         return FlextResult[FlextLdapUser | None].ok(user_entity)
 
@@ -245,11 +261,12 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
         """
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[FlextLdapUser].fail(f"Repository access failed: {repository_result.error}")
-        
+            return FlextResult[FlextLdapUser].fail(
+                f"Repository access failed: {repository_result.error}"
+            )
+
         # Type cast repository to correct interface
-        from .repositories import FlextLdapRepositories
-        repository = cast(FlextLdapRepositories.Repository, repository_result.value)
+        repository = cast("FlextLdapRepositories.Repository", repository_result.value)
         update_result = await repository.update(dn, updates)
 
         if not update_result.is_success:
@@ -275,17 +292,16 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
         """
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[bool].fail(f"Repository access failed: {repository_result.error}")
-        
+            return FlextResult[bool].fail(
+                f"Repository access failed: {repository_result.error}"
+            )
+
         # Type cast repository to correct interface
-        from .repositories import FlextLdapRepositories
-        repository = cast(FlextLdapRepositories.Repository, repository_result.value)
+        repository = cast("FlextLdapRepositories.Repository", repository_result.value)
         delete_result = await repository.delete_async(dn)
 
         if not delete_result.is_success:
-            return FlextResult[bool].fail(
-                delete_result.error or "User deletion failed"
-            )
+            return FlextResult[bool].fail(delete_result.error or "User deletion failed")
 
         logger.info(
             "LDAP user deleted successfully",
@@ -295,7 +311,8 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
                 "execution_context": "FlextLdapServices.delete_user",
             },
         )
-        return FlextResult[bool].ok(True)
+        success = True
+        return FlextResult[bool].ok(success)
 
     # =========================================================================
     # GROUP OPERATIONS - Consolidated group management
@@ -321,15 +338,18 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
         # Save group via repository
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[FlextLdapGroup].fail(f"Repository access failed: {repository_result.error}")
-        
+            return FlextResult[FlextLdapGroup].fail(
+                f"Repository access failed: {repository_result.error}"
+            )
+
         # Type cast repository to correct interface
-        from .repositories import FlextLdapRepositories
-        repository = cast(FlextLdapRepositories.Repository, repository_result.value)
+        repository = cast("FlextLdapRepositories.Repository", repository_result.value)
         save_result = await repository.save_async(group)
 
         if not save_result.is_success:
-            return FlextResult[FlextLdapGroup].fail(save_result.error or "Group save failed")
+            return FlextResult[FlextLdapGroup].fail(
+                save_result.error or "Group save failed"
+            )
 
         logger.info(
             "LDAP group created successfully",
@@ -342,15 +362,18 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
         )
         return FlextResult[FlextLdapGroup].ok(group)
 
-    async def update_group(self, dn: str, attributes: LdapAttributeDict) -> FlextResult[None]:
+    async def update_group(
+        self, dn: str, attributes: LdapAttributeDict
+    ) -> FlextResult[None]:
         """Update group attributes."""
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[None].fail(f"Repository access failed: {repository_result.error}")
-        
+            return FlextResult[None].fail(
+                f"Repository access failed: {repository_result.error}"
+            )
+
         # Type cast repository to correct interface
-        from .repositories import FlextLdapRepositories
-        repository = cast(FlextLdapRepositories.Repository, repository_result.value)
+        repository = cast("FlextLdapRepositories.Repository", repository_result.value)
         result = await repository.update(dn, attributes)
         if not result.is_success:
             return FlextResult[None].fail(result.error or "Update failed")
@@ -360,11 +383,12 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
         """Delete group by DN."""
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[None].fail(f"Repository access failed: {repository_result.error}")
-        
+            return FlextResult[None].fail(
+                f"Repository access failed: {repository_result.error}"
+            )
+
         # Type cast repository to correct interface
-        from .repositories import FlextLdapRepositories
-        repository = cast(FlextLdapRepositories.Repository, repository_result.value)
+        repository = cast("FlextLdapRepositories.Repository", repository_result.value)
         result = await repository.delete_async(dn)
         if not result.is_success:
             return FlextResult[None].fail(result.error or "Delete failed")
@@ -374,11 +398,14 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
         """Add member to group."""
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[None].fail(f"Repository access failed: {repository_result.error}")
-        
+            return FlextResult[None].fail(
+                f"Repository access failed: {repository_result.error}"
+            )
+
         # Type cast repository to correct interface
-        from .repositories import FlextLdapRepositories
-        base_repository = cast(FlextLdapRepositories.Repository, repository_result.value)
+        base_repository = cast(
+            "FlextLdapRepositories.Repository", repository_result.value
+        )
         group_repository = FlextLdapRepositories.GroupRepository(base_repository)
         result = await group_repository.add_member_to_group(group_dn, member_dn)
         if not result.is_success:
@@ -390,15 +417,20 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
         # Get current members
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[None].fail(f"Repository access failed: {repository_result.error}")
-        
+            return FlextResult[None].fail(
+                f"Repository access failed: {repository_result.error}"
+            )
+
         # Type cast repository to correct interface
-        from .repositories import FlextLdapRepositories
-        base_repository = cast(FlextLdapRepositories.Repository, repository_result.value)
+        base_repository = cast(
+            "FlextLdapRepositories.Repository", repository_result.value
+        )
         group_repository = FlextLdapRepositories.GroupRepository(base_repository)
         members_result = await group_repository.get_group_members(group_dn)
         if not members_result.is_success:
-            return FlextResult[None].fail(f"Failed to get members: {members_result.error}")
+            return FlextResult[None].fail(
+                f"Failed to get members: {members_result.error}"
+            )
 
         current_members = members_result.value
         if member_dn not in current_members:
@@ -416,18 +448,20 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
         """Get group members."""
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[list[str]].fail(f"Repository access failed: {repository_result.error}")
-        
+            return FlextResult[list[str]].fail(
+                f"Repository access failed: {repository_result.error}"
+            )
+
         # Type cast repository to correct interface
-        from .repositories import FlextLdapRepositories
-        base_repository = cast(FlextLdapRepositories.Repository, repository_result.value)
+        base_repository = cast(
+            "FlextLdapRepositories.Repository", repository_result.value
+        )
         group_repository = FlextLdapRepositories.GroupRepository(base_repository)
         return await group_repository.get_group_members(group_dn)
 
     # Validation methods needed by API
     def validate_dn(self, dn: str) -> FlextResult[None]:
         """Validate DN format."""
-        from .value_objects import FlextLdapDistinguishedName
         result = FlextLdapDistinguishedName.create(dn)
         if result.is_success:
             return FlextResult[None].ok(None)
@@ -435,7 +469,6 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
 
     def validate_filter(self, filter_str: str) -> FlextResult[None]:
         """Validate LDAP filter format."""
-        from .value_objects import FlextLdapFilter
         result = FlextLdapFilter.create(filter_str)
         if result.is_success:
             return FlextResult[None].ok(None)
@@ -445,7 +478,9 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
     # SEARCH OPERATIONS - Consolidated search functionality
     # =========================================================================
 
-    async def search(self, request: FlextLdapSearchRequest) -> FlextResult[FlextLdapSearchResponse]:
+    async def search(
+        self, request: FlextLdapSearchRequest
+    ) -> FlextResult[FlextLdapSearchResponse]:
         """Perform LDAP search operation.
 
         Args:
@@ -457,11 +492,12 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
         """
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[FlextLdapSearchResponse].fail(f"Repository access failed: {repository_result.error}")
-        
+            return FlextResult[FlextLdapSearchResponse].fail(
+                f"Repository access failed: {repository_result.error}"
+            )
+
         # Type cast repository to correct interface
-        from .repositories import FlextLdapRepositories
-        repository = cast(FlextLdapRepositories.Repository, repository_result.value)
+        repository = cast("FlextLdapRepositories.Repository", repository_result.value)
         search_result = await repository.search(request)
 
         if not search_result.is_success:
@@ -479,7 +515,9 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
         """User-specific operations with static methods."""
 
         @staticmethod
-        async def create(request: FlextLdapCreateUserRequest) -> FlextResult[FlextLdapUser]:
+        async def create(
+            request: FlextLdapCreateUserRequest,
+        ) -> FlextResult[FlextLdapUser]:
             """Create user using default service instance."""
             service = FlextLdapServices()
             return await service.create_user(request)
@@ -491,7 +529,9 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
             return await service.get_user(dn)
 
         @staticmethod
-        async def update(dn: str, updates: LdapAttributeDict) -> FlextResult[FlextLdapUser]:
+        async def update(
+            dn: str, updates: LdapAttributeDict
+        ) -> FlextResult[FlextLdapUser]:
             """Update user using default service instance."""
             service = FlextLdapServices()
             return await service.update_user(dn, updates)
@@ -515,7 +555,9 @@ class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[st
         """Search-specific operations with static methods."""
 
         @staticmethod
-        async def execute(request: FlextLdapSearchRequest) -> FlextResult[FlextLdapSearchResponse]:
+        async def execute(
+            request: FlextLdapSearchRequest,
+        ) -> FlextResult[FlextLdapSearchResponse]:
             """Execute search using default service instance."""
             service = FlextLdapServices()
             return await service.search(request)

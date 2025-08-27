@@ -27,9 +27,7 @@ class TestExceptionStringRepresentations:
         """Test FlextLdapError __str__ with operation and ldap_result_code."""
         # Covers lines 70-77, 78-86
         error = FlextLdapError(
-            "Base error",
-            operation="test_operation",
-            ldap_result_code="50"
+            "Base error", operation="test_operation", ldap_result_code="50"
         )
         result_str = str(error)
         assert "Base error" in result_str
@@ -40,8 +38,7 @@ class TestExceptionStringRepresentations:
         """Test FlextLdapConnectionError with ldap_result_code."""
         # Covers lines 127, 129, 131
         error = FlextLdapConnectionError(
-            "Connection failed",
-            server_uri="ldap://test.com:389"
+            "Connection failed", server_uri="ldap://test.com:389"
         )
         result_str = str(error)
         assert "Connection failed" in result_str
@@ -52,9 +49,7 @@ class TestExceptionStringRepresentations:
         """Test FlextLdapAuthenticationError string formatting branches."""
         # Covers lines 165-171
         error = FlextLdapAuthenticationError(
-            "Auth failed",
-            bind_dn="cn=user,dc=test",
-            ldap_result_code="49"
+            "Auth failed", bind_dn="cn=user,dc=test", ldap_result_code="49"
         )
         result_str = str(error)
         assert "Auth failed" in result_str
@@ -67,7 +62,7 @@ class TestExceptionStringRepresentations:
             "Search failed",
             base_dn="ou=users,dc=test",
             search_filter="(uid=test)",
-            ldap_result_code="32"
+            ldap_result_code="32",
         )
         result_str = str(error)
         assert "Search failed" in result_str
@@ -81,7 +76,7 @@ class TestExceptionStringRepresentations:
             "Operation failed",
             operation_type="modify",
             target_dn="cn=test,ou=users",
-            ldap_result_code="68"
+            ldap_result_code="68",
         )
         result_str = str(error)
         assert "Operation failed" in result_str
@@ -95,7 +90,7 @@ class TestExceptionStringRepresentations:
             "User error",
             user_dn="cn=test,ou=users",
             uid="testuser",
-            validation_field="mail"
+            validation_field="mail",
         )
         result_str = str(error)
         assert "User error" in result_str
@@ -109,7 +104,7 @@ class TestExceptionStringRepresentations:
             "Validation failed",
             field_name="email",
             field_value="invalid@",
-            validation_rule="email_format"
+            validation_rule="email_format",
         )
         result_str = str(error)
         assert "Validation failed" in result_str
@@ -120,10 +115,7 @@ class TestExceptionStringRepresentations:
         """Test FlextLdapTypeError with type information."""
         # Covers lines 381-393
         error = FlextLdapTypeError(
-            "Type error",
-            expected_type="int",
-            actual_type="str",
-            attribute_name="port"
+            "Type error", expected_type="int", actual_type="str", attribute_name="port"
         )
         result_str = str(error)
         assert "Type error" in result_str
@@ -134,9 +126,7 @@ class TestExceptionStringRepresentations:
         """Test FlextLdapConfigurationError with config section."""
         # Covers lines 423-429
         error = FlextLdapConfigurationError(
-            "Config error",
-            config_key="server",
-            config_section="ldap"
+            "Config error", config_key="server", config_section="ldap"
         )
         result_str = str(error)
         assert "Config error" in result_str

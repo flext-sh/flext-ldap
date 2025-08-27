@@ -13,7 +13,9 @@ class TestFlextLdapUtilitiesCoverage:
     def test_safe_convert_external_dict_with_non_dict(self) -> None:
         """Test safe_convert_external_dict_to_ldap_attributes with non-dict input."""
         # Covers line 74 (return early if not dict)
-        result = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes("not_a_dict")
+        result = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(
+            "not_a_dict"
+        )
         assert result == {}
 
         result2 = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(None)
@@ -23,7 +25,9 @@ class TestFlextLdapUtilitiesCoverage:
         """Test safe_convert with empty keys."""
         # Covers line 82 (continue if empty key)
         test_dict = {"": "value", "   ": "value2", "valid_key": "value3"}
-        result = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(test_dict)
+        result = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(
+            test_dict
+        )
         # Should skip only empty string keys, not whitespace
         assert "valid_key" in result
         assert "" not in result  # Empty string should be filtered
@@ -35,9 +39,11 @@ class TestFlextLdapUtilitiesCoverage:
         test_dict = {
             "bytes_list": [b"byte_value", "string_value", 42],
             "single_bytes": b"single_byte_value",
-            "mixed_list": [b"bytes", "string", None, 123]
+            "mixed_list": [b"bytes", "string", None, 123],
         }
-        result = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(test_dict)
+        result = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(
+            test_dict
+        )
 
         # Should convert bytes to strings
         assert isinstance(result["bytes_list"], list)
@@ -138,13 +144,20 @@ class TestFlextLdapUtilitiesCoverage:
         # Test with mock with entry_attributes_as_dict as non-dict
         mock_with_invalid_attrs = Mock()
         mock_with_invalid_attrs.entry_attributes_as_dict = "not_a_dict"
-        result = FlextLdapUtilities.safe_ldap3_entry_attributes_list(mock_with_invalid_attrs)
+        result = FlextLdapUtilities.safe_ldap3_entry_attributes_list(
+            mock_with_invalid_attrs
+        )
         assert result == []
 
         # Test with valid dict
         mock_with_valid_attrs = Mock()
-        mock_with_valid_attrs.entry_attributes_as_dict = {"attr1": "value1", "attr2": "value2"}
-        result = FlextLdapUtilities.safe_ldap3_entry_attributes_list(mock_with_valid_attrs)
+        mock_with_valid_attrs.entry_attributes_as_dict = {
+            "attr1": "value1",
+            "attr2": "value2",
+        }
+        result = FlextLdapUtilities.safe_ldap3_entry_attributes_list(
+            mock_with_valid_attrs
+        )
         assert "attr1" in result
         assert "attr2" in result
 
@@ -159,12 +172,16 @@ class TestFlextLdapUtilitiesCoverage:
         # Test with mock without entry_attributes_as_dict
         mock_without_attrs = Mock()
         del mock_without_attrs.entry_attributes_as_dict
-        result = FlextLdapUtilities.safe_ldap3_attribute_values(mock_without_attrs, "test_attr")
+        result = FlextLdapUtilities.safe_ldap3_attribute_values(
+            mock_without_attrs, "test_attr"
+        )
         assert result == []
 
         # Test with valid mock but missing attribute
         mock_with_attrs = Mock()
-        result = FlextLdapUtilities.safe_ldap3_attribute_values(mock_with_attrs, "missing_attr")
+        result = FlextLdapUtilities.safe_ldap3_attribute_values(
+            mock_with_attrs, "missing_attr"
+        )
         assert result == []
 
         # Test with mock having attributes with .values
@@ -184,15 +201,21 @@ class TestFlextLdapUtilitiesCoverage:
         mock_with_attr_values.mixed_attr = mixed_attr
 
         # Test string attribute
-        result = FlextLdapUtilities.safe_ldap3_attribute_values(mock_with_attr_values, "string_attr")
+        result = FlextLdapUtilities.safe_ldap3_attribute_values(
+            mock_with_attr_values, "string_attr"
+        )
         assert result == ["simple_string"]
 
         # Test list attribute
-        result = FlextLdapUtilities.safe_ldap3_attribute_values(mock_with_attr_values, "list_attr")
+        result = FlextLdapUtilities.safe_ldap3_attribute_values(
+            mock_with_attr_values, "list_attr"
+        )
         assert result == ["item1", "item2"]
 
         # Test mixed types (None should be filtered out)
-        result = FlextLdapUtilities.safe_ldap3_attribute_values(mock_with_attr_values, "mixed_attr")
+        result = FlextLdapUtilities.safe_ldap3_attribute_values(
+            mock_with_attr_values, "mixed_attr"
+        )
         assert result == ["string", "123"]  # None filtered out
 
     def test_safe_ldap3_rebind_result_variations(self) -> None:
@@ -206,7 +229,9 @@ class TestFlextLdapUtilitiesCoverage:
         # Test with mock connection that raises exception
         mock_connection = Mock()
         mock_connection.rebind.side_effect = Exception("Rebind failed")
-        result = FlextLdapUtilities.safe_ldap3_rebind_result(mock_connection, "dn", "password")
+        result = FlextLdapUtilities.safe_ldap3_rebind_result(
+            mock_connection, "dn", "password"
+        )
         assert result is False
 
     def test_safe_ldap3_server_info_variations(self) -> None:

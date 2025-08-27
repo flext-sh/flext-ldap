@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import unittest
 
-from flext_core.exceptions import FlextError
+from flext_core.exceptions import FlextExceptions.Error
 
 from flext_ldap.exceptions import (
     FlextLdapAuthenticationError,
@@ -53,7 +53,7 @@ class TestFlextLdapErrorRealCoverage(unittest.TestCase):
         # Verify REAL exception properties
         assert str(error) == "[LDAP_ERROR] Basic LDAP error message"
         assert error.message == "Basic LDAP error message"
-        assert isinstance(error, FlextError)
+        assert isinstance(error, FlextExceptions.Error)
         assert isinstance(error, Exception)
 
     def test_flext_ldap_error_with_ldap_context(self) -> None:
@@ -91,13 +91,13 @@ class TestFlextLdapErrorRealCoverage(unittest.TestCase):
         assert error.ldap_result_code == "49"
 
     def test_flext_ldap_error_inheritance_hierarchy(self) -> None:
-        """Test FlextLdapError inheritance from FlextError."""
+        """Test FlextLdapError inheritance from FlextExceptions.Error."""
         # Execute REAL inheritance verification
         error = FlextLdapError("Test inheritance")
 
         # Verify REAL inheritance chain
         assert isinstance(error, FlextLdapError)
-        assert isinstance(error, FlextError)
+        assert isinstance(error, FlextExceptions.Error)
         assert isinstance(error, Exception)
         assert isinstance(error, BaseException)
 
@@ -743,7 +743,7 @@ class TestExceptionHierarchyRealCoverage(unittest.TestCase):
         # Verify REAL inheritance for all exception types
         for exception in exceptions:
             assert isinstance(exception, FlextLdapError)
-            assert isinstance(exception, FlextError)
+            assert isinstance(exception, FlextExceptions.Error)
             assert isinstance(exception, Exception)
 
     def test_exception_hierarchy_polymorphism(self) -> None:

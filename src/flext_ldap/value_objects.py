@@ -9,7 +9,9 @@ Examples:
         from value_objects import FlextLdapValueObjects
 
         # Create DN
-        dn_result = FlextLdapValueObjects.DistinguishedName.create("cn=user,dc=example,dc=com")
+        dn_result = FlextLdapValueObjects.DistinguishedName.create(
+            "cn=user,dc=example,dc=com"
+        )
         dn = dn_result.value
 
         # Check hierarchy
@@ -31,6 +33,7 @@ Examples:
 
         # All previous classes still work as direct imports
         from value_objects import FlextLdapDistinguishedName, FlextLdapFilter
+
         dn = FlextLdapDistinguishedName(value="cn=user,dc=example,dc=com")
 
 """
@@ -67,7 +70,9 @@ class FlextLdapValueObjects:
     Examples:
         Distinguished Name operations::
 
-            dn_result = FlextLdapValueObjects.DistinguishedName.create("cn=user,dc=example,dc=com")
+            dn_result = FlextLdapValueObjects.DistinguishedName.create(
+                "cn=user,dc=example,dc=com"
+            )
             if dn_result.is_success:
                 dn = dn_result.value
                 rdn = dn.rdn
@@ -142,17 +147,17 @@ class FlextLdapValueObjects:
             """Get the Relative Distinguished Name (first component)."""
             return self.value.split(",", 1)[0].strip()
 
-        def is_descendant_of(self, parent_dn: str | FlextLdapValueObjects.DistinguishedName) -> bool:
+        def is_descendant_of(
+            self, parent_dn: str | FlextLdapValueObjects.DistinguishedName
+        ) -> bool:
             """Check if this DN is a descendant of the given parent DN."""
-            parent_str = (
-                parent_dn.value
-                if hasattr(parent_dn, "value")
-                else parent_dn
-            )
+            parent_str = parent_dn if isinstance(parent_dn, str) else parent_dn.value
             return self.value.lower().endswith(parent_str.lower())
 
         @classmethod
-        def create(cls, value: str) -> FlextResult[FlextLdapValueObjects.DistinguishedName]:
+        def create(
+            cls, value: str
+        ) -> FlextResult[FlextLdapValueObjects.DistinguishedName]:
             """Create DN from string with validation."""
             try:
                 dn = cls(value=value)
@@ -203,9 +208,9 @@ class FlextLdapValueObjects:
             """Create scope value object with validation."""
             try:
                 scope_obj = cls(scope=scope)
-                return FlextResult.ok(scope_obj)
+                return FlextResult[FlextLdapValueObjects.Scope].ok(scope_obj)
             except ValueError as e:
-                return FlextResult.fail(str(e))
+                return FlextResult[FlextLdapValueObjects.Scope].fail(str(e))
 
         @classmethod
         def base(cls) -> FlextLdapValueObjects.Scope:
@@ -253,16 +258,24 @@ class FlextLdapValueObjects:
         @classmethod
         def validate_filter_format(cls, value: str) -> str:
             """Validate LDAP filter format."""
-            if not value or not value.strip():
+            from flext_core import FlextUtilities  # noqa: PLC0415
+
+            if not FlextUtilities.TypeGuards.is_non_empty_string(value):
                 msg = "LDAP filter cannot be empty"
                 raise ValueError(msg)
 
-            # Must start and end with parentheses
-            if not (value.startswith("(") and value.endswith(")")):
-                msg = f"LDAP filter must be enclosed in parentheses: {value}"
+            # Clean text using FlextUtilities
+            clean_value = FlextUtilities.TextProcessor.clean_text(value)
+            if not clean_value:
+                msg = "LDAP filter cannot be empty after cleaning"
                 raise ValueError(msg)
 
-            return value.strip()
+            # Must start and end with parentheses
+            if not (clean_value.startswith("(") and clean_value.endswith(")")):
+                msg = f"LDAP filter must be enclosed in parentheses: {clean_value}"
+                raise ValueError(msg)
+
+            return clean_value
 
         @override
         def validate_business_rules(self) -> FlextResult[None]:
@@ -277,9 +290,9 @@ class FlextLdapValueObjects:
             """Create filter from string with validation."""
             try:
                 filter_obj = cls(value=value)
-                return FlextResult.ok(filter_obj)
+                return FlextResult[FlextLdapValueObjects.Filter].ok(filter_obj)
             except Exception as e:
-                return FlextResult.fail(str(e))
+                return FlextResult[FlextLdapValueObjects.Filter].fail(str(e))
 
         @classmethod
         def equals(cls, attribute: str, value: str) -> FlextLdapValueObjects.Filter:
@@ -287,7 +300,9 @@ class FlextLdapValueObjects:
             return cls(value=f"({attribute}={value})")
 
         @classmethod
-        def starts_with(cls, attribute: str, value: str) -> FlextLdapValueObjects.Filter:
+        def starts_with(
+            cls, attribute: str, value: str
+        ) -> FlextLdapValueObjects.Filter:
             """Create starts-with filter."""
             return cls(value=f"({attribute}={value}*)")
 

@@ -91,9 +91,9 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLdapApi) -> None:
             # Clean up connection
             await ldap_service.disconnect(session_id)
 
-    except Exception:
+    except Exception as e:  # noqa: S110  # Demo code - expected to continue
         # Continue with next operation
-        pass
+        logger.debug(f"Demo operation encountered exception: {e}")
 
 
 async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
@@ -149,9 +149,9 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
             # Clean up connection
             await ldap_service.disconnect(session_id)
 
-    except Exception:
+    except Exception as e:  # noqa: S110  # Demo code - expected to continue
         # Continue with next operation
-        pass
+        logger.debug(f"Demo operation encountered exception: {e}")
 
 
 async def _perform_user_search_validation(
@@ -242,9 +242,9 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
             # Clean up connection
             await ldap_service.disconnect(session_id)
 
-    except Exception:
+    except Exception as e:  # noqa: S110  # Demo code - expected to continue
         # Continue with next operation
-        pass
+        logger.debug(f"Demo operation encountered exception: {e}")
 
 
 async def _perform_group_search_validation(
@@ -312,9 +312,9 @@ async def _demo_connection_management(ldap_service: FlextLdapApi) -> None:
             disconnect_result = await ldap_service.disconnect(session_id)
             if disconnect_result.is_success:
                 pass
-    except Exception:
+    except Exception as e:  # noqa: S110  # Demo code - expected to continue
         # Continue with next operation
-        pass
+        logger.debug(f"Demo operation encountered exception: {e}")
 
 
 async def _demo_error_handling(_: FlextLdapApi) -> None:

@@ -13,23 +13,22 @@ from typing import ClassVar, cast
 from flext_core import (
     FlextDomainService,
     FlextEntityId,
-    FlextEntityStatus,
     FlextResult,
     FlextTypes,
     get_logger,
 )
 from pydantic import PrivateAttr
 
-from .constants import FlextLdapValidationMessages
-from .models import (
+from flext_ldap.constants import FlextLdapValidationMessages
+from flext_ldap.models import (
     FlextLdapCreateUserRequest,
     FlextLdapEntry,
     FlextLdapGroup,
     FlextLdapUser,
 )
-from .typings import LdapAttributeDict
-from .utils import FlextLdapUtilities
-from .value_objects import (
+from flext_ldap.typings import LdapAttributeDict
+from flext_ldap.utils import FlextLdapUtils
+from flext_ldap.value_objects import (
     FlextLdapDistinguishedName,
     FlextLdapFilter,
 )
@@ -66,9 +65,13 @@ class FlextLdapOperations:
             """Execute method required by FlextDomainService - CORRECT signature."""
             return FlextResult[None].ok(None)
 
-        def _validate_dn_or_fail(self, dn: str, context: str = "DN") -> FlextResult[None]:
+        def _validate_dn_or_fail(
+            self, dn: str, context: str = "DN"
+        ) -> FlextResult[None]:
             """Validate DN and return error if invalid - REUSABLE VALIDATION."""
-            dn_validation = FlextLdapDistinguishedName(value=dn).validate_business_rules()
+            dn_validation = FlextLdapDistinguishedName(
+                value=dn
+            ).validate_business_rules()
             if not dn_validation.is_success:
                 error_msg = (
                     dn_validation.error
@@ -146,7 +149,9 @@ class FlextLdapOperations:
         """Internal specialized connection operations class."""
 
         # Private attribute for active connections
-        _active_connections: dict[str, FlextTypes.Core.Dict] = PrivateAttr(default_factory=dict)
+        _active_connections: dict[str, FlextTypes.Core.Dict] = PrivateAttr(
+            default_factory=dict
+        )
 
         def __init__(self, **data: object) -> None:
             """Initialize connection operations - USES REFACTORED BASE."""
@@ -479,9 +484,10 @@ class FlextLdapOperations:
             users: list[FlextLdapUser] = []
             for entry in entries:
                 # Extract required fields with type safety using correct utility access
-                from .utils import FlextLdapUtils
                 uid = (
-                    FlextLdapUtils.Attributes.safe_str_attribute(entry.attributes, "uid")
+                    FlextLdapUtils.Attributes.safe_str_attribute(
+                        entry.attributes, "uid"
+                    )
                     or "unknown"
                 )
                 cn = (
@@ -496,7 +502,9 @@ class FlextLdapOperations:
                     entry.attributes,
                     "givenName",
                 )
-                mail = FlextLdapUtils.Attributes.safe_str_attribute(entry.attributes, "mail")
+                mail = FlextLdapUtils.Attributes.safe_str_attribute(
+                    entry.attributes, "mail"
+                )
                 # Note: phone not included as FlextLdapUser doesn't have phone field
 
                 users.append(
@@ -508,8 +516,10 @@ class FlextLdapOperations:
                         sn=sn,
                         given_name=given_name,
                         mail=mail,
+                        user_password=None,
                         object_classes=entry.object_classes,
                         attributes=entry.attributes,
+                        modified_at=None,
                         # Note: no phone field in FlextLdapUser
                         # Note: no status field as FlextEntity already has it
                     ),
@@ -524,7 +534,6 @@ class FlextLdapOperations:
             groups: list[FlextLdapGroup] = []
             for entry in entries:
                 # Extract required fields with type safety using correct utility access
-                from .utils import FlextLdapUtils
                 cn = (
                     FlextLdapUtils.Attributes.safe_str_attribute(entry.attributes, "cn")
                     or "unknown"
@@ -537,7 +546,9 @@ class FlextLdapOperations:
                 # Extract members from attributes
                 members_value = entry.attributes.get("member", [])
                 if isinstance(members_value, list):
-                    typed_members_list: list[object] = cast("list[object]", members_value)
+                    typed_members_list: list[object] = cast(
+                        "list[object]", members_value
+                    )
                     members = [str(m) for m in typed_members_list if m]
                 elif isinstance(members_value, str):
                     members = [members_value] if members_value else []
@@ -553,6 +564,7 @@ class FlextLdapOperations:
                         members=members,
                         object_classes=entry.object_classes,
                         attributes=entry.attributes,
+                        modified_at=None,
                         # Note: no status field as FlextEntity already has it
                     ),
                 )
@@ -588,6 +600,7 @@ class FlextLdapOperations:
                     dn=dn,
                     object_classes=object_classes,
                     attributes=attributes,
+                    modified_at=None,
                     # Note: no status field as FlextEntity already has it
                 )
 
@@ -707,10 +720,12 @@ class FlextLdapOperations:
 
                 # Create entry using shared operations with standard user object classes
                 if self._entry_ops is None:
-                    return FlextResult[FlextLdapUser].fail("Entry operations not available")
-                
+                    return FlextResult[FlextLdapUser].fail(
+                        "Entry operations not available"
+                    )
+
                 # Type cast to correct interface
-                entry_ops = cast(FlextLdapOperations.EntryOperations, self._entry_ops)
+                entry_ops = cast("FlextLdapOperations.EntryOperations", self._entry_ops)
                 entry_result = await entry_ops.create_entry(
                     connection_id=connection_id,
                     dn=user_request.dn,
@@ -766,9 +781,9 @@ class FlextLdapOperations:
             modifications: FlextTypes.Core.Dict = {"userPassword": [new_password]}
             if self._entry_ops is None:
                 return FlextResult[None].fail("Entry operations not available")
-            
+
             # Type cast to correct interface
-            entry_ops = cast(FlextLdapOperations.EntryOperations, self._entry_ops)
+            entry_ops = cast("FlextLdapOperations.EntryOperations", self._entry_ops)
             return await entry_ops.modify_entry(connection_id, user_dn, modifications)
 
         async def update_user_email(
@@ -784,9 +799,9 @@ class FlextLdapOperations:
             modifications: FlextTypes.Core.Dict = {"mail": [email]}
             if self._entry_ops is None:
                 return FlextResult[None].fail("Entry operations not available")
-            
+
             # Type cast to correct interface
-            entry_ops = cast(FlextLdapOperations.EntryOperations, self._entry_ops)
+            entry_ops = cast("FlextLdapOperations.EntryOperations", self._entry_ops)
             return await entry_ops.modify_entry(connection_id, user_dn, modifications)
 
         async def activate_user(
@@ -798,9 +813,9 @@ class FlextLdapOperations:
             modifications: FlextTypes.Core.Dict = {"accountStatus": ["active"]}
             if self._entry_ops is None:
                 return FlextResult[None].fail("Entry operations not available")
-            
+
             # Type cast to correct interface
-            entry_ops = cast(FlextLdapOperations.EntryOperations, self._entry_ops)
+            entry_ops = cast("FlextLdapOperations.EntryOperations", self._entry_ops)
             return await entry_ops.modify_entry(connection_id, user_dn, modifications)
 
         async def deactivate_user(
@@ -812,9 +827,9 @@ class FlextLdapOperations:
             modifications: FlextTypes.Core.Dict = {"accountStatus": ["inactive"]}
             if self._entry_ops is None:
                 return FlextResult[None].fail("Entry operations not available")
-            
+
             # Type cast to correct interface
-            entry_ops = cast(FlextLdapOperations.EntryOperations, self._entry_ops)
+            entry_ops = cast("FlextLdapOperations.EntryOperations", self._entry_ops)
             return await entry_ops.modify_entry(connection_id, user_dn, modifications)
 
         def _build_user_attributes(
@@ -852,6 +867,8 @@ class FlextLdapOperations:
                 sn=user_request.sn,
                 given_name=user_request.given_name,
                 mail=user_request.mail,
+                user_password=user_request.user_password,
+                modified_at=None,
                 # Note: no phone field in FlextLdapUser
                 # Note: no status field as FlextEntity already has it
             )
@@ -885,10 +902,12 @@ class FlextLdapOperations:
 
                 # Create entry using shared operations
                 if self._entry_ops is None:
-                    return FlextResult[FlextLdapGroup].fail("Entry operations not available")
-                
+                    return FlextResult[FlextLdapGroup].fail(
+                        "Entry operations not available"
+                    )
+
                 # Type cast to correct interface
-                entry_ops = cast(FlextLdapOperations.EntryOperations, self._entry_ops)
+                entry_ops = cast("FlextLdapOperations.EntryOperations", self._entry_ops)
                 entry_result = await entry_ops.create_entry(
                     connection_id=connection_id,
                     dn=dn,
@@ -902,7 +921,9 @@ class FlextLdapOperations:
                     )
 
                 # Use REFACTORED group creation - NO DUPLICATION
-                group = self._build_group_entity(dn, cn, description, members, attributes)
+                group = self._build_group_entity(
+                    dn, cn, description, members, attributes
+                )
 
                 validation_result = group.validate_business_rules()
                 if not validation_result.is_success:
@@ -995,10 +1016,14 @@ class FlextLdapOperations:
             """Get all members of a group - REFACTORED."""
             try:
                 if self._search_ops is None:
-                    return FlextResult[list[str]].fail("Search operations not available")
-                
+                    return FlextResult[list[str]].fail(
+                        "Search operations not available"
+                    )
+
                 # Type cast to correct interface
-                search_ops = cast(FlextLdapOperations.SearchOperations, self._search_ops)
+                search_ops = cast(
+                    "FlextLdapOperations.SearchOperations", self._search_ops
+                )
                 group_result = await search_ops.get_entry_by_dn(
                     connection_id=connection_id,
                     dn=group_dn,
@@ -1018,7 +1043,7 @@ class FlextLdapOperations:
                         members = [str(m) for m in member_attr]
                     else:
                         members = [str(member_attr)]
-                
+
                 real_members = self._filter_dummy_members(members)
                 return FlextResult[list[str]].ok(real_members)
 
@@ -1041,16 +1066,18 @@ class FlextLdapOperations:
             modifications: FlextTypes.Core.Dict = {"description": [description]}
             if self._entry_ops is None:
                 return FlextResult[None].fail("Entry operations not available")
-            
+
             # Type cast to correct interface
-            entry_ops = cast(FlextLdapOperations.EntryOperations, self._entry_ops)
+            entry_ops = cast("FlextLdapOperations.EntryOperations", self._entry_ops)
             return await entry_ops.modify_entry(
                 connection_id,
                 group_dn,
                 modifications,
             )
 
-        def _prepare_group_members(self, initial_members: list[str] | None) -> list[str]:
+        def _prepare_group_members(
+            self, initial_members: list[str] | None
+        ) -> list[str]:
             """Prepare group members with dummy member if needed - REUSABLE HELPER."""
             members = initial_members or []
             if not members:
@@ -1091,6 +1118,7 @@ class FlextLdapOperations:
                 cn=cn,
                 description=description,
                 members=members,
+                modified_at=None,
                 # Note: no status field as FlextEntity already has it
             )
 
@@ -1109,15 +1137,26 @@ class FlextLdapOperations:
             # Step 1: Get current group membership
             group_result = await self._get_group_membership(connection_id, group_dn)
             if group_result.is_failure:
-                return FlextResult[None].fail(group_result.error or "Failed to get group")
+                return FlextResult[None].fail(
+                    group_result.error or "Failed to get group"
+                )
 
             # Step 2: Extract members from group data
-            if not hasattr(group_result.value, "get_attribute_values"):
+            if not hasattr(group_result.value, "get_attribute"):
                 return FlextResult[None].fail("Invalid group data format")
 
-            current_members = group_result.value.get_attribute_values("member")
+            current_members = group_result.value.get_attribute("member")
+            # Convert to list[str] for processing
+            if current_members is None:
+                members_list = []
+            elif isinstance(current_members, list):
+                # Handle both list[str] and list[bytes]
+                members_list = [str(item) for item in current_members]
+            else:
+                # Single value - convert to string
+                members_list = [str(current_members)]
             updated_members_result = self._calculate_updated_members(
-                current_members or [],
+                members_list,
                 member_dn,
                 action,
             )
@@ -1142,10 +1181,12 @@ class FlextLdapOperations:
         ) -> FlextResult[FlextLdapEntry]:
             """Get current group membership data."""
             if self._search_ops is None:
-                return FlextResult[FlextLdapEntry].fail("Search operations not available")
-            
+                return FlextResult[FlextLdapEntry].fail(
+                    "Search operations not available"
+                )
+
             # Type cast to correct interface
-            search_ops = cast(FlextLdapOperations.SearchOperations, self._search_ops)
+            search_ops = cast("FlextLdapOperations.SearchOperations", self._search_ops)
             group_result = await search_ops.get_entry_by_dn(
                 connection_id=connection_id,
                 dn=group_dn,
@@ -1214,9 +1255,9 @@ class FlextLdapOperations:
             modifications: FlextTypes.Core.Dict = {"member": updated_members}
             if self._entry_ops is None:
                 return FlextResult[None].fail("Entry operations not available")
-            
+
             # Type cast to correct interface
-            entry_ops = cast(FlextLdapOperations.EntryOperations, self._entry_ops)
+            entry_ops = cast("FlextLdapOperations.EntryOperations", self._entry_ops)
             modify_result = await entry_ops.modify_entry(
                 connection_id=connection_id,
                 dn=group_dn,
@@ -1308,6 +1349,12 @@ class FlextLdapOperations:
 
         first_entry = search_result.value[0] if search_result.value else None
         return FlextResult[FlextLdapEntry | None].ok(first_entry)
+
+    def _validate_dn_or_fail(self, dn: str, context: str = "DN") -> FlextResult[None]:
+        """Delegate to internal validation method for testing purposes."""
+        # Create a temporary service instance to access validation
+        service = self.OperationsService()
+        return service._validate_dn_or_fail(dn, context)
 
     async def cleanup_connection(self, connection_id: str) -> None:
         """Clean up connection resources."""

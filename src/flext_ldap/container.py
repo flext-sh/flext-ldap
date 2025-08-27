@@ -2,9 +2,9 @@
 
 from flext_core import FlextContainer, FlextResult, get_flext_container, get_logger
 
-from .clients import FlextLdapClient
-from .configuration import FlextLdapSettings
-from .repositories import (
+from flext_ldap.clients import FlextLdapClient
+from flext_ldap.configuration import FlextLdapSettings
+from flext_ldap.repositories import (
     FlextLdapGroupRepository,
     FlextLdapRepository,
     FlextLdapUserRepository,
@@ -35,25 +35,37 @@ def _register_ldap_services(container: FlextContainer) -> FlextResult[None]:
         client = FlextLdapClient()
         client_result = container.register("FlextLdapClient", client)
         if not client_result.is_success:
-            return FlextResult[None].fail(f"Failed to register client: {client_result.error}")
+            return FlextResult[None].fail(
+                f"Failed to register client: {client_result.error}"
+            )
 
         # Register repository with client dependency
         repository = FlextLdapRepository(client)
         repo_result = container.register("FlextLdapRepository", repository)
         if not repo_result.is_success:
-            return FlextResult[None].fail(f"Failed to register repository: {repo_result.error}")
+            return FlextResult[None].fail(
+                f"Failed to register repository: {repo_result.error}"
+            )
 
         # Register user repository
         user_repository = FlextLdapUserRepository(repository)
-        user_repo_result = container.register("FlextLdapUserRepository", user_repository)
+        user_repo_result = container.register(
+            "FlextLdapUserRepository", user_repository
+        )
         if not user_repo_result.is_success:
-            return FlextResult[None].fail(f"Failed to register user repository: {user_repo_result.error}")
+            return FlextResult[None].fail(
+                f"Failed to register user repository: {user_repo_result.error}"
+            )
 
         # Register group repository
         group_repository = FlextLdapGroupRepository(repository)
-        group_repo_result = container.register("FlextLdapGroupRepository", group_repository)
+        group_repo_result = container.register(
+            "FlextLdapGroupRepository", group_repository
+        )
         if not group_repo_result.is_success:
-            return FlextResult[None].fail(f"Failed to register group repository: {group_repo_result.error}")
+            return FlextResult[None].fail(
+                f"Failed to register group repository: {group_repo_result.error}"
+            )
 
         logger.info("LDAP services registered with flext-core container")
         return FlextResult[None].ok(None)
@@ -66,6 +78,7 @@ def _register_ldap_services(container: FlextContainer) -> FlextResult[None]:
 # =============================================================================
 # FLEXT-CORE CONTAINER INTEGRATION - LOCAL CONTAINER ELIMINATED
 # =============================================================================
+
 
 class _LdapContainerRegistry:
     """Registry to track LDAP service registration state."""
@@ -101,7 +114,9 @@ def get_ldap_container() -> FlextContainer:
     if not _registry.is_registered():
         registration_result = _register_ldap_services(container)
         if not registration_result.is_success:
-            logger.error(f"Failed to register LDAP services: {registration_result.error}")
+            logger.error(
+                f"Failed to register LDAP services: {registration_result.error}"
+            )
             error_msg = f"LDAP service registration failed: {registration_result.error}"
             raise RuntimeError(error_msg)
         _registry.mark_registered()
@@ -119,7 +134,9 @@ def configure_ldap_container(settings: FlextLdapSettings) -> FlextResult[None]:
     if settings_result.is_success:
         logger.info("LDAP container configured with settings using flext-core")
         return FlextResult[None].ok(None)
-    return FlextResult[None].fail(f"Failed to register settings: {settings_result.error}")
+    return FlextResult[None].fail(
+        f"Failed to register settings: {settings_result.error}"
+    )
 
 
 def reset_ldap_container() -> None:

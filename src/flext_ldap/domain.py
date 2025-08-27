@@ -13,7 +13,6 @@ from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import ClassVar, Final, TypeVar, cast, override
 
-# FLEXT-CORE INTEGRATION: Use domain service patterns
 from flext_core import (
     FlextDomainService,
     FlextEntityId,
@@ -24,13 +23,13 @@ from flext_core import (
     get_logger,
 )
 
-from .constants import (
+from flext_ldap.constants import (
     FlextLdapDefaultValues,
     FlextLdapObjectClassConstants,
     FlextLdapValidationConstants,
 )
-from .models import FlextLdapGroup, FlextLdapUser
-from .typings import LdapAttributeDict
+from flext_ldap.models import FlextLdapGroup, FlextLdapUser
+from flext_ldap.typings import LdapAttributeDict
 
 logger = get_logger(__name__)
 T = TypeVar("T")
@@ -340,7 +339,19 @@ class FlextLdapDomain:
 
         def execute(self) -> FlextResult[FlextLdapUser]:
             """Execute method required by FlextDomainService - CORRECTED signature."""
-            return FlextResult[FlextLdapUser].ok(FlextLdapUser())
+            return FlextResult[FlextLdapUser].ok(
+                FlextLdapUser(
+                    id=FlextEntityId("default_user"),
+                    dn="cn=default,dc=example,dc=com",
+                    uid="default",
+                    cn="Default User",
+                    sn="User",
+                    given_name="Default",
+                    mail="default@example.com",
+                    user_password=None,
+                    modified_at=None,
+                )
+            )
 
         def validate_user_creation(
             self,
@@ -448,17 +459,31 @@ class FlextLdapDomain:
                 logger.exception("User deletion check failed")
                 return FlextResult[bool].fail(f"User deletion check error: {e}")
 
-        def generate_username(self, first_name: str, last_name: str) -> FlextResult[str]:
-            """Generate username following business rules."""
+        def generate_username(
+            self, first_name: str, last_name: str
+        ) -> FlextResult[str]:
+            """Generate username following business rules - USES FLEXT-CORE."""
+            from flext_core import FlextUtilities  # noqa: PLC0415
+
             try:
-                if not first_name or not last_name:
+                # Validate inputs using FlextUtilities
+                if not FlextUtilities.TypeGuards.is_non_empty_string(
+                    first_name
+                ) or not FlextUtilities.TypeGuards.is_non_empty_string(last_name):
                     return FlextResult[str].fail("First name and last name required")
 
-                # Business rule: username = first initial + last name, lowercase
-                username = f"{first_name[0].lower()}{last_name.lower()}"
+                # Clean text using FlextUtilities
+                clean_first = FlextUtilities.TextProcessor.clean_text(first_name)
+                clean_last = FlextUtilities.TextProcessor.clean_text(last_name)
 
-                # Remove invalid characters
-                username = re.sub(r"[^a-zA-Z0-9._-]", "", username)
+                if not clean_first or not clean_last:
+                    return FlextResult[str].fail("Invalid names provided")
+
+                # Business rule: username = first initial + last name, lowercase
+                username = f"{clean_first[0].lower()}{clean_last.lower()}"
+
+                # Slugify using FlextUtilities (removes invalid characters)
+                username = FlextUtilities.TextProcessor.slugify(username)
 
                 if len(username) < MIN_USERNAME_LENGTH:
                     return FlextResult[str].fail("Generated username too short")
@@ -479,7 +504,15 @@ class FlextLdapDomain:
 
         def execute(self) -> FlextResult[FlextLdapGroup]:
             """Execute method required by FlextDomainService - CORRECTED signature."""
-            return FlextResult[FlextLdapGroup].ok(FlextLdapGroup())
+            return FlextResult[FlextLdapGroup].ok(
+                FlextLdapGroup(
+                    id=FlextEntityId("default_group"),
+                    dn="cn=default,dc=example,dc=com",
+                    cn="Default Group",
+                    description="Default group",
+                    modified_at=None,
+                )
+            )
 
         @property
         def dn_spec(self) -> "FlextLdapDomain.DistinguishedNameSpecification":
@@ -511,7 +544,9 @@ class FlextLdapDomain:
 
                 # Business rule: User cannot be added if already a member
                 if user.dn in group.members:
-                    return FlextResult[bool].fail("User is already a member of this group")
+                    return FlextResult[bool].fail(
+                        "User is already a member of this group"
+                    )
 
                 success = True
                 return FlextResult[bool].ok(success)
@@ -530,12 +565,16 @@ class FlextLdapDomain:
                 required_fields = ["cn", "dn"]
                 for field in required_fields:
                     if field not in group_data or not group_data[field]:
-                        return FlextResult[object].fail(f"Required field missing: {field}")
+                        return FlextResult[object].fail(
+                            f"Required field missing: {field}"
+                        )
 
                 # Validate DN format
                 dn = str(group_data["dn"])
                 if not self._dn_spec.is_satisfied_by(dn):
-                    return FlextResult[object].fail(self._dn_spec.get_validation_error(dn))
+                    return FlextResult[object].fail(
+                        self._dn_spec.get_validation_error(dn)
+                    )
 
                 return FlextResult[object].ok(None)
 
@@ -604,7 +643,9 @@ class FlextLdapDomain:
 
         def _generate_password_with_retries(self, length: int) -> FlextResult[str]:
             """Generate password with retry logic - EXTRACTED METHOD."""
-            chars = string.ascii_letters + string.digits + "!@#$%^&*()_+-=[]{}|;'\",./<>?"
+            chars = (
+                string.ascii_letters + string.digits + "!@#$%^&*()_+-=[]{}|;'\",./<>?"
+            )
 
             # Initial attempt
             password = "".join(secrets.choice(chars) for _ in range(length))
@@ -723,14 +764,27 @@ class FlextLdapDomain:
 
         @staticmethod
         def safe_str(value: object) -> str | None:
-            """Safely convert value to string or None."""
-            return str(value) if value else None
+            """Safely convert value to string or None - USES FLEXT-CORE."""
+            from flext_core import FlextUtilities  # noqa: PLC0415
+
+            # Cast to supported type for FlextUtilities
+            safe_value = (
+                value
+                if isinstance(value, (str, int, float, bool, type(None)))
+                else str(value)
+            )
+            result = FlextUtilities.Conversions.safe_str(safe_value)
+            return result or None
 
         @staticmethod
         def safe_list(value: object, default: list[str] | None = None) -> list[str]:
-            """Safely convert value to list or use default."""
-            if isinstance(value, list):
-                return [str(item) for item in cast("list[object]", value)]
+            """Safely convert value to list or use default - USES FLEXT-CORE."""
+            from flext_core import FlextUtilities  # noqa: PLC0415
+
+            if FlextUtilities.TypeGuards.is_list(value):
+                return FlextUtilities.LdapConverters.safe_convert_list_to_strings(
+                    cast("list[object]", value)
+                )
             return default or []
 
         @staticmethod
@@ -744,9 +798,11 @@ class FlextLdapDomain:
         @staticmethod
         def safe_ldap_attributes(value: object) -> LdapAttributeDict:
             """Safely convert value to LdapAttributeDict."""
-            from .utils import FlextLdapUtilities  # noqa: PLC0415
+            from .utilities import FlextLdapUtilities  # noqa: PLC0415
 
-            return FlextLdapUtilities.safe_dict_comprehension_with_attribute_values(value)
+            return FlextLdapUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+                value
+            )  # type: ignore[return-value]
 
     class UserEntityBuilder:
         """Internal builder for FlextLdapUser entities - ELIMINATES DUPLICATION."""
@@ -758,7 +814,9 @@ class FlextLdapDomain:
         def build(self) -> object:
             """Build FlextLdapUser with reduced parameter complexity."""
             return FlextLdapUser(
-                id=FlextEntityId(f"user_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"),
+                id=FlextEntityId(
+                    f"user_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"
+                ),
                 dn=str(self.params["dn"]),
                 uid=self.builder.safe_str(self.params["uid"]) or "",
                 cn=self.builder.safe_str(self.params["cn"]) or "",
@@ -768,6 +826,7 @@ class FlextLdapDomain:
                 user_password=self.builder.safe_str(self.params.get("user_password")),
                 object_classes=self.builder.safe_list(self.params["object_classes"]),
                 attributes=self.builder.safe_ldap_attributes(self.params["attributes"]),
+                modified_at=None,
             )
 
     class GroupEntityBuilder:
@@ -780,13 +839,16 @@ class FlextLdapDomain:
         def build(self) -> object:
             """Build FlextLdapGroup with reduced parameter complexity."""
             return FlextLdapGroup(
-                id=FlextEntityId(f"group_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"),
+                id=FlextEntityId(
+                    f"group_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"
+                ),
                 dn=str(self.params["dn"]),
                 cn=self.builder.safe_str(self.params["cn"]) or "",
                 description=self.builder.safe_str(self.params["description"]),
                 members=self.builder.safe_list(self.params["members"]),
                 object_classes=self.builder.safe_list(self.params["object_classes"]),
                 attributes=self.builder.safe_ldap_attributes(self.params["attributes"]),
+                modified_at=None,
             )
 
     class DomainFactory:
@@ -825,7 +887,9 @@ class FlextLdapDomain:
 
             if isinstance(created, _User):
                 return FlextResult[FlextLdapUser].ok(created)
-            return FlextResult[FlextLdapUser].fail("User creation returned invalid type")
+            return FlextResult[FlextLdapUser].fail(
+                "User creation returned invalid type"
+            )
 
         def _extract_user_parameters(
             self,
@@ -872,7 +936,9 @@ class FlextLdapDomain:
             """Validate created user against domain specifications."""
             complete_spec = FlextLdapDomain.CompleteUserSpecification()
             if not complete_spec.is_satisfied_by(user):
-                return FlextResult[object].fail(complete_spec.get_validation_error(user))
+                return FlextResult[object].fail(
+                    complete_spec.get_validation_error(user)
+                )
             return FlextResult[object].ok(user)
 
         def create_group_from_data(
@@ -902,7 +968,9 @@ class FlextLdapDomain:
 
             if isinstance(created, _Group):
                 return FlextResult[FlextLdapGroup].ok(created)
-            return FlextResult[FlextLdapGroup].fail("Group creation returned invalid type")
+            return FlextResult[FlextLdapGroup].fail(
+                "Group creation returned invalid type"
+            )
 
         def _extract_group_parameters(
             self,
@@ -964,7 +1032,9 @@ class FlextLdapDomain:
             """Template method for entity creation - ELIMINATES CODE DUPLICATION."""
             try:
                 # Execute entity creation pipeline
-                return self._execute_entity_creation_pipeline(data, entity_type, operations)
+                return self._execute_entity_creation_pipeline(
+                    data, entity_type, operations
+                )
             except Exception as e:
                 logger.exception(f"{entity_type} creation failed")
                 return FlextResult[object].fail(f"{entity_type} creation error: {e}")

@@ -141,7 +141,6 @@ class TestDomainLayer:
         """Test domain constants are accessible."""
         # Try to access some domain constants that should exist
         try:
-
             assert isinstance(MIN_PASSWORD_LENGTH, int)
             assert MIN_PASSWORD_LENGTH > 0
         except ImportError:

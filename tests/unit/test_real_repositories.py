@@ -748,7 +748,6 @@ class TestRealFlextLdapRepositoryExists:
 
         # Mock find_by_dn to return an entry
         async def mock_find_by_dn_found(dn):
-
             entry = FlextLdapEntry(
                 id=FlextEntityId("test"),
                 dn=dn,

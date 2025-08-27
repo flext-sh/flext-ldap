@@ -128,7 +128,9 @@ class FlextLdapConnectionConfig(FlextConfig):
         try:
             # Additional validation logic here
             if self.use_ssl and self.verify_ssl and not self.ca_cert_file:
-                logger.warning("SSL verification enabled but no CA certificate file specified")
+                logger.warning(
+                    "SSL verification enabled but no CA certificate file specified"
+                )
 
             return FlextResult[None].ok(None)
         except Exception as e:

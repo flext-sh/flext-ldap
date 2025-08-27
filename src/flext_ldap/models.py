@@ -20,11 +20,11 @@ Examples:
 
         # All previous models still work as direct imports
         from models import FlextLdapUser, FlextLdapSettings
+
         user = FlextLdapUser()
         settings = FlextLdapSettings()
 
 """
-
 
 # Re-export configuration models for compatibility
 from __future__ import annotations

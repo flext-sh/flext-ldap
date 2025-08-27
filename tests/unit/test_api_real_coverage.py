@@ -376,7 +376,6 @@ class TestFlextLdapApiRealSearchOperations:
 
         # Mock service to return search results with missing DN
         async def mock_search_with_invalid_entry(request):
-
             # Entry without DN should be filtered out
             mock_entries = [
                 {
@@ -422,7 +421,6 @@ class TestFlextLdapApiRealSearchOperations:
 
         # Mock service to return search results with single objectClass string
         async def mock_search_with_single_objectclass(request):
-
             # Entry with single objectClass string (not list)
             mock_entries = [
                 {

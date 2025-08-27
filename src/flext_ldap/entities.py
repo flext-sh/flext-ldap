@@ -10,8 +10,7 @@ Examples:
 
         # Create search request
         request = FlextLdapEntities.SearchRequest(
-            base_dn="dc=example,dc=com",
-            filter_str="(uid=john)"
+            base_dn="dc=example,dc=com", filter_str="(uid=john)"
         )
 
         # Process response
@@ -21,21 +20,19 @@ Examples:
 
         # Create user
         user = FlextLdapEntities.User(
-            dn="cn=john,ou=users,dc=example,dc=com",
-            uid="john",
-            cn="John Doe"
+            dn="cn=john,ou=users,dc=example,dc=com", uid="john", cn="John Doe"
         )
 
         # Create group
         group = FlextLdapEntities.Group(
-            dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
-            cn="Administrators"
+            dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com", cn="Administrators"
         )
 
     Legacy compatibility::
 
         # All previous classes still work as direct imports
         from entities import FlextLdapUser, FlextLdapSearchRequest
+
         user = FlextLdapUser(dn="cn=user,dc=example,dc=com", uid="user")
 
 """
@@ -54,8 +51,8 @@ from flext_core import (
 )
 from pydantic import Field, field_validator
 
-from .typings import LdapAttributeDict, LdapAttributeValue, LdapSearchResult
-from .value_objects import FlextLdapDistinguishedName
+from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue, LdapSearchResult
+from flext_ldap.value_objects import FlextLdapDistinguishedName
 
 # Type alias for explicit pyright recognition
 DictEntry = dict[str, object]
@@ -85,29 +82,23 @@ class FlextLdapEntities:
         Search operations::
 
             request = FlextLdapEntities.SearchRequest(
-                base_dn="dc=example,dc=com",
-                filter_str="(uid=john)"
+                base_dn="dc=example,dc=com", filter_str="(uid=john)"
             )
             response = FlextLdapEntities.SearchResponse(entries=[...])
 
         Domain entities::
 
             user = FlextLdapEntities.User(
-                dn="cn=john,ou=users,dc=example,dc=com",
-                uid="john",
-                cn="John Doe"
+                dn="cn=john,ou=users,dc=example,dc=com", uid="john", cn="John Doe"
             )
             group = FlextLdapEntities.Group(
-                dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
-                cn="Administrators"
+                dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com", cn="Administrators"
             )
 
         Request models::
 
             create_request = FlextLdapEntities.CreateUserRequest(
-                dn="cn=newuser,ou=users,dc=example,dc=com",
-                uid="newuser",
-                cn="New User"
+                dn="cn=newuser,ou=users,dc=example,dc=com", uid="newuser", cn="New User"
             )
 
     """
@@ -221,7 +212,9 @@ class FlextLdapEntities:
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate business rules."""
             if not self.object_classes:
-                return FlextResult[None].fail("Entry must have at least one object class")
+                return FlextResult[None].fail(
+                    "Entry must have at least one object class"
+                )
             return FlextResult[None].ok(None)
 
         def get_rdn(self) -> str:
@@ -259,8 +252,10 @@ class FlextLdapEntities:
         @field_validator("mail")
         @classmethod
         def validate_email(cls, v: str | None) -> str | None:
-            """Validate email format."""
-            if v and "@" not in v:
+            """Validate email format - USES FLEXT-CORE."""
+            from flext_core import FlextUtilities  # noqa: PLC0415
+
+            if v and not FlextUtilities.TypeGuards.is_email(v):
                 msg = "Invalid email format"
                 raise ValueError(msg)
             return v
@@ -310,7 +305,9 @@ class FlextLdapEntities:
 
             # Group-specific validations
             if not self.has_object_class("groupOfNames"):
-                return FlextResult[None].fail("Group must have 'groupOfNames' object class")
+                return FlextResult[None].fail(
+                    "Group must have 'groupOfNames' object class"
+                )
 
             return FlextResult[None].ok(None)
 
@@ -345,7 +342,12 @@ class FlextLdapEntities:
         mail: str | None = Field(None, description="Email address")
         user_password: str | None = Field(None, description="User password")
         object_classes: list[str] = Field(
-            default_factory=lambda: ["top", "person", "organizationalPerson", "inetOrgPerson"],
+            default_factory=lambda: [
+                "top",
+                "person",
+                "organizationalPerson",
+                "inetOrgPerson",
+            ],
             description="LDAP object classes",
         )
 
@@ -363,8 +365,10 @@ class FlextLdapEntities:
         @field_validator("mail")
         @classmethod
         def validate_email(cls, v: str | None) -> str | None:
-            """Validate email format."""
-            if v and "@" not in v:
+            """Validate email format - USES FLEXT-CORE."""
+            from flext_core import FlextUtilities  # noqa: PLC0415
+
+            if v and not FlextUtilities.TypeGuards.is_email(v):
                 msg = "Invalid email format"
                 raise ValueError(msg)
             return v
@@ -372,6 +376,7 @@ class FlextLdapEntities:
         def to_user_entity(self) -> FlextLdapEntities.User:
             """Convert request to user entity."""
             return FlextLdapEntities.User(
+                id=FlextEntityId(f"user_{self.uid}"),
                 dn=self.dn,
                 uid=self.uid,
                 cn=self.cn,
@@ -381,7 +386,7 @@ class FlextLdapEntities:
                 user_password=self.user_password,
                 object_classes=self.object_classes.copy(),
                 attributes={},
-                id=FlextEntityId(f"user_{self.uid}"),
+                modified_at=None,
             )
 
 

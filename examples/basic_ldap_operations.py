@@ -58,15 +58,15 @@ async def demonstrate_api_usage() -> FlextLdapApi:
         connection_result = await api.connect(
             server_uri="ldap://demo.example.com:389",
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            bind_password="secret",
+            bind_password="secret",  # noqa: S106  # Demo password for examples
         )
 
         if connection_result.is_success:
             pass
 
-    except Exception:
+    except Exception as e:  # noqa: S110  # Demo code - expected to continue
         # Continue demo with available operations
-        pass
+        logger.debug(f"Connection failed in demo: {e}")
 
     return api
 
@@ -90,9 +90,9 @@ async def demonstrate_search_operations(api: FlextLdapApi) -> None:
             for _entry in entries[:3]:  # Show first 3 entries
                 pass
 
-    except Exception:
+    except Exception as e:  # noqa: S110  # Demo code - expected to continue
         # Continue demo with available operations
-        pass
+        logger.debug(f"Search operation failed in demo: {e}")
 
 
 async def demonstrate_error_handling() -> None:
@@ -122,9 +122,9 @@ async def demonstrate_error_handling() -> None:
         if not connection_result.is_success:
             pass
 
-    except Exception:
+    except Exception as e:  # noqa: S110  # Demo code - expected to continue
         # Continue demo with available operations
-        pass
+        logger.debug(f"Connection test failed in demo: {e}")
 
 
 async def demonstrate_logging_integration() -> None:
