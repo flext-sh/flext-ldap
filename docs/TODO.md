@@ -105,7 +105,7 @@ return data
 **File**: `src/flext_ldap/api.py:49`
 
 ```python
-self._container: FlextContainer = get_flext_container()
+self._container: FlextContainer = FlextContainer.get_global()
 # Container obtained but never used for service resolution
 ```
 

@@ -1,6 +1,6 @@
 """LDAP dependency injection using flext-core container - ELIMINATES LOCAL CONTAINER."""
 
-from flext_core import FlextContainer, FlextResult, get_flext_container, get_logger
+from flext_core import FlextContainer, FlextResult, get_logger
 
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.configuration import FlextLdapSettings
@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 # =============================================================================
 
 # LOCAL CONTAINER PROTOCOL ELIMINATED - USE FlextProtocols FROM FLEXT-CORE
-# Per CLAUDE.md: "Dependency Injection: Use get_flext_container() from flext-core, NO local containers"
+# Per CLAUDE.md: "Dependency Injection: Use FlextContainer.get_global() from flext-core, NO local containers"
 
 
 # =============================================================================
@@ -105,10 +105,10 @@ _registry = _LdapContainerRegistry()
 def get_ldap_container() -> FlextContainer:
     """Get flext-core container with LDAP services registered.
 
-    CLAUDE.md COMPLIANCE: Uses get_flext_container() instead of local container.
+    CLAUDE.md COMPLIANCE: Uses FlextContainer.get_global() instead of local container.
     """
     # Get the central flext-core container
-    container = get_flext_container()
+    container = FlextContainer.get_global()
 
     # Register LDAP services once
     if not _registry.is_registered():
