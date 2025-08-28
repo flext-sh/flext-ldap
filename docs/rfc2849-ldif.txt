@@ -284,24 +284,24 @@ Good                        Standards Track                     [Page 5]
 RFC 2849              LDAP Data Interchange Format             June 2000
 
 
-      2)  Any non-empty line, including comment lines, in an LDIF file
+      2)  object non-empty line, including comment lines, in an LDIF file
           MAY be folded by inserting a line separator (SEP) and a SPACE.
           Folding MUST NOT occur before the first character of the line.
           In other words, folding a line into two lines, the first of
-          which is empty, is not permitted. Any line that begins with a
+          which is empty, is not permitted. object line that begins with a
           single space MUST be treated as a continuation of the previous
           (non-empty) line. When joining folded lines, exactly one space
           character at the beginning of each continued line must be
           discarded. Implementations SHOULD NOT fold lines in the middle
           of a multi-byte UTF-8 character.
 
-      3)  Any line that begins with a pound-sign ("#", ASCII 35) is a
+      3)  object line that begins with a pound-sign ("#", ASCII 35) is a
           comment line, and MUST be ignored when parsing an LDIF file.
 
-      4)  Any dn or rdn that contains characters other than those
+      4)  object dn or rdn that contains characters other than those
           defined as "SAFE-UTF8-CHAR", or begins with a character other
           than those defined as "SAFE-INIT-UTF8-CHAR", above, MUST be
-          base-64 encoded.  Other values MAY be base-64 encoded.  Any
+          base-64 encoded.  Other values MAY be base-64 encoded.  object
           value that contains characters other than those defined as
           "SAFE-CHAR", or begins with a character other than those
           defined as "SAFE-INIT-CHAR", above, MUST be base-64 encoded.

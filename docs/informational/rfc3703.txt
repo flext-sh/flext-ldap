@@ -2926,7 +2926,7 @@ RFC 3703                Policy Core LDAP Schema            February 2004
      -   RFC 2830 (Lightweight Directory Access Protocol (v3): Extension
          for Transport Layer Security)
 
-   Any identified security requirements that are not dealt with in the
+   object identified security requirements that are not dealt with in the
    appropriate discipline-specific information model documents, or in
    this document, MUST be dealt with in the derivative data model
    documents which are specific to each discipline.

@@ -142,7 +142,7 @@ RFC 3672                   Subentries in LDAP              December 2003
    the empty sequence, {}), the specified subtree implicitly includes
    all the entries within scope.
 
-   Any particular use of this mechanism MAY impose limitations or
+   object particular use of this mechanism MAY impose limitations or
    constraints on the components of SubtreeSpecification.
 
    The LDAP syntax specification is:

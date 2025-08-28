@@ -11,7 +11,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import cast
 
-from flext_core import FlextEntityId, FlextResult, get_logger
+from flext_core import FlextResult, get_logger
 
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.configuration import FlextLdapSettings
@@ -205,12 +205,10 @@ class FlextLdapApi:
 
             # Create entry
             entry = FlextLdapEntry(
-                id=FlextEntityId(
-                    f"api_entry_{str(entry_dn).replace(',', '_').replace('=', '_')}",
-                ),
+                id=f"api_entry_{str(entry_dn).replace(',', '_').replace('=', '_')}",
                 dn=str(entry_dn),
                 object_classes=object_classes,
-                attributes=ldap_attributes,  # type: ignore[arg-type]
+                attributes=ldap_attributes,
                 modified_at=None,
             )
             entries.append(entry)
@@ -269,7 +267,7 @@ class FlextLdapApi:
                 # Create user from entry - simplified mapping
                 uid = self._get_entry_attribute(entry, "uid", "unknown")
                 user = FlextLdapUser(
-                    id=FlextEntityId(f"user_{uid}"),
+                    id=f"user_{uid}",
                     dn=self._get_entry_attribute(entry, "dn"),
                     uid=uid,
                     cn=self._get_entry_attribute(entry, "cn"),
@@ -295,7 +293,7 @@ class FlextLdapApi:
         """Create group using proper service layer."""
         # Create group entity with required status
         group = FlextLdapGroup(
-            id=FlextEntityId(f"api_group_{dn.replace(',', '_').replace('=', '_')}"),
+            id=f"api_group_{dn.replace(',', '_').replace('=', '_')}",
             dn=dn,
             cn=cn,
             description=description,
@@ -338,7 +336,7 @@ class FlextLdapApi:
                 cast("list[str]", members_raw) if isinstance(members_raw, list) else []
             )
             group = FlextLdapGroup(
-                id=FlextEntityId(f"group_{cn}"),
+                id=f"group_{cn}",
                 dn=self._get_entry_attribute(entry, "dn"),
                 cn=cn,
                 members=members,

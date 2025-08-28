@@ -361,7 +361,7 @@ class FlextLdapClient:
         filter_expr: str,
         attributes: List[str],
         scope: str = "subtree"
-    ) -> FlextResult[List[Dict[str, Any]]]:
+    ) -> FlextResult[List[Dict[str, object]]]:
         """Search LDAP directory with type conversion."""
         try:
             # LDAP search implementation
@@ -674,7 +674,7 @@ class FlextLdapUser(FlextEntity):
     sn: str
     mail: Optional[str] = None
     is_active: bool = False
-    _domain_events: List[Dict[str, Any]] = field(default_factory=list, init=False)
+    _domain_events: List[Dict[str, object]] = field(default_factory=list, init=False)
 
     def activate(self) -> FlextResult[None]:
         """Business operation with domain rules."""
@@ -788,10 +788,10 @@ class FlextLdapFilter(FlextValue):
 #### **Aggregate Root Pattern**
 
 ```python
-from flext_core import FlextAggregateRoot
+from flext_core import FlextAggregates
 from flext_ldap.domain.entities import FlextLdapUser
 
-class FlextLdapUserAggregate(FlextAggregateRoot):
+class FlextLdapUserAggregate(FlextAggregates):
     """User aggregate managing user lifecycle and group membership."""
     user: FlextLdapUser
     group_memberships: List[str] = field(default_factory=list)
@@ -1448,7 +1448,7 @@ src/flext_ldap/
 from __future__ import annotations
 
 import warnings
-from typing import Any
+object
 
 # Modern imports (primary)
 from flext_ldap.api import FlextLdapApi, get_ldap_api
@@ -1456,7 +1456,7 @@ from flext_ldap.entities import FlextLdapUser, FlextLdapGroup, FlextLdapEntry
 from flext_ldap.values import FlextLdapDistinguishedName, FlextLdapCreateUserRequest
 
 # Legacy import handling with deprecation warnings
-def __getattr__(name: str) -> Any:
+def __getattr__(name: str) -> object:
     """Handle legacy imports with deprecation warnings."""
 
     # Legacy API mappings (deprecated in 0.9.0, removed in 0.9.0)

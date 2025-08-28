@@ -36,9 +36,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-if TYPE_CHECKING:
-    from typing import Any
-
 from flext_core import FlextContainer, FlextResult, FlextServiceProcessor, get_logger
 
 from flext_ldap.container import get_ldap_container

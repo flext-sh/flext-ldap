@@ -43,10 +43,10 @@ from __future__ import annotations
 import re
 from typing import ClassVar, final, override
 
-from flext_core import FlextResult, FlextValue, get_logger
+from flext_core import FlextLogger, FlextModels, FlextResult
 from pydantic import ConfigDict, Field, field_validator
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 # =============================================================================
 # SINGLE FLEXT LDAP VALUE OBJECTS CLASS - Consolidated value object functionality
@@ -97,7 +97,7 @@ class FlextLdapValueObjects:
     # =========================================================================
 
     @final
-    class DistinguishedName(FlextValue):
+    class DistinguishedName(FlextModels.Value):
         """LDAP Distinguished Name value object with RFC 2253 compliance."""
 
         model_config = ConfigDict(
@@ -170,7 +170,7 @@ class FlextLdapValueObjects:
     # =========================================================================
 
     @final
-    class Scope(FlextValue):
+    class Scope(FlextModels.Value):
         """LDAP search scope value object."""
 
         scope: str = Field(..., description="LDAP search scope")
@@ -232,7 +232,7 @@ class FlextLdapValueObjects:
     # =========================================================================
 
     @final
-    class Filter(FlextValue):
+    class Filter(FlextModels.Value):
         """LDAP filter value object with RFC 4515 compliance."""
 
         model_config = ConfigDict(
@@ -258,9 +258,9 @@ class FlextLdapValueObjects:
         @classmethod
         def validate_filter_format(cls, value: str) -> str:
             """Validate LDAP filter format."""
-            from flext_core import FlextUtilities  # noqa: PLC0415
+            from flext_core import FlextUtilities
 
-            if not FlextUtilities.TypeGuards.is_non_empty_string(value):
+            if not FlextUtilities.TypeGuards.is_string_non_empty(value):
                 msg = "LDAP filter cannot be empty"
                 raise ValueError(msg)
 

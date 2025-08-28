@@ -38,24 +38,24 @@ from flext_ldap.typings import LdapAttributeDict
 logger = get_logger(__name__)
 
 
-class FlextLdapUtilities(FlextUtilities):
-    """FlextLdapUtilities extending flext-core FlextUtilities with LDAP-specific functionality.
+class FlextLdapUtilities:
+    """FlextLdapUtilities using flext-core FlextUtilities with LDAP-specific functionality.
 
-    Inherits all generic utility functionality from flext-core FlextUtilities and adds
-    LDAP-specific extensions while avoiding duplication.
+    Uses composition with flext-core FlextUtilities for generic utility functionality
+    and adds LDAP-specific extensions, following modern FLEXT architectural patterns.
 
     LDAP-Specific Extensions:
         - Validation: LDAP attribute name validation, DN validation
         - DnParser: Distinguished Name parsing and manipulation
         - LdapSpecific: LDAP-only operations not in generic utilities
+        - LdapConverters: LDAP-specific data conversion utilities
 
-    Generic Functionality (from flext-core):
-        - Generators: ID, timestamp, correlation ID generation
-        - LdapConverters: Safe LDAP data conversion (already in flext-core)
-        - TextProcessor: Text processing utilities
-        - Performance: Performance tracking and caching
-        - Conversions: Type conversions
-        - Formatters: Data formatting
+    Generic Functionality (via FlextUtilities):
+        - FlextUtilities.Generators: ID, timestamp, correlation ID generation
+        - FlextUtilities.TextProcessor: Text processing utilities
+        - FlextUtilities.Performance: Performance tracking and caching
+        - FlextUtilities.Conversions: Type conversions
+        - FlextUtilities.Formatters: Data formatting
     """
 
     # ==========================================================================
@@ -249,7 +249,7 @@ class FlextLdapUtilities(FlextUtilities):
         def normalize_ldap_attributes(
             raw_attributes: dict[str, object],
         ) -> FlextResult[LdapAttributeDict]:
-            """Normalize raw attributes to LDAP format using flext-core converters.
+            """Normalize raw attributes to LDAP format using flext-core processing.
 
             Args:
                 raw_attributes: Raw attribute dictionary
@@ -259,19 +259,134 @@ class FlextLdapUtilities(FlextUtilities):
 
             """
             try:
-                # Use flext-core LDAP converters (already implemented!)
-                normalized = FlextUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
-                    raw_attributes
-                )
+                if not isinstance(raw_attributes, dict):
+                    return FlextResult[LdapAttributeDict].fail(
+                        "raw_attributes must be a dictionary"
+                    )
 
-                # Cast to correct type (flext-core returns dict[str, str | list[str]], we need LdapAttributeDict)
-                normalized_typed: LdapAttributeDict = normalized  # type: ignore[assignment]
-                return FlextResult[LdapAttributeDict].ok(normalized_typed)
+                # Convert each attribute using flext-core utilities
+                normalized: LdapAttributeDict = {}
+
+                for key, value in raw_attributes.items():
+                    # Validate attribute name using our LDAP-specific validation
+                    attr_validation = FlextLdapUtilities.Validation.validate_attribute_name(key)
+                    if not attr_validation.is_success:
+                        return FlextResult[LdapAttributeDict].fail(
+                            f"Invalid attribute name '{key}': {attr_validation.error}"
+                        )
+
+                    attr_name = attr_validation.value
+
+                    # Convert value to LDAP format
+                    if value is None:
+                        continue  # Skip None values
+                    if isinstance(value, list):
+                        # Convert list values to strings
+                        str_values = []
+                        for item in value:
+                            str_val = FlextUtilities.TextProcessor.safe_string(item)
+                            if str_val:  # Only add non-empty strings
+                                str_values.append(str_val)
+                        if str_values:  # Only add attribute if it has values
+                            normalized[attr_name] = str_values
+                    else:
+                        # Convert single value to string
+                        str_val = FlextUtilities.TextProcessor.safe_string(value)
+                        if str_val:  # Only add non-empty strings
+                            normalized[attr_name] = str_val
+
+                return FlextResult[LdapAttributeDict].ok(normalized)
 
             except Exception as e:
                 return FlextResult[LdapAttributeDict].fail(
                     f"Failed to normalize attributes: {e}"
                 )
+
+    class LdapConverters:
+        """LDAP-specific data conversion utilities using flext-core."""
+
+        @staticmethod
+        def safe_convert_external_dict_to_ldap_attributes(
+            source_dict: object,
+        ) -> dict[str, str | list[str]]:
+            """Convert external dictionary to LDAP attribute format.
+
+            Args:
+                source_dict: External dictionary or object to convert
+
+            Returns:
+                Dictionary with LDAP-compatible attribute values
+
+            """
+            if not isinstance(source_dict, dict):
+                return {}
+
+            result: dict[str, str | list[str]] = {}
+
+            for key, value in source_dict.items():
+                # Validate attribute name
+                attr_validation = FlextLdapUtilities.Validation.validate_attribute_name(
+                    str(key)
+                )
+                if not attr_validation.is_success:
+                    continue  # Skip invalid attribute names
+
+                attr_name = attr_validation.value
+
+                # Convert value to LDAP format
+                if value is None:
+                    continue  # Skip None values
+                if isinstance(value, list):
+                    # Convert list values to strings
+                    str_values = []
+                    for item in value:
+                        str_val = FlextUtilities.TextProcessor.safe_string(item)
+                        if str_val:  # Only add non-empty strings
+                            str_values.append(str_val)
+                    if str_values:  # Only add attribute if it has values
+                        result[attr_name] = str_values
+                else:
+                    # Convert single value to string
+                    str_val = FlextUtilities.TextProcessor.safe_string(value)
+                    if str_val:  # Only add non-empty strings
+                        result[attr_name] = str_val
+
+            return result
+
+        @staticmethod
+        def safe_convert_value_to_str(value: object) -> str:
+            """Convert any value to safe string representation.
+
+            Args:
+                value: Value to convert
+
+            Returns:
+                String representation of the value
+
+            """
+            return FlextUtilities.TextProcessor.safe_string(value)
+
+        @staticmethod
+        def safe_convert_list_to_strings(values: list[object]) -> list[str]:
+            """Convert list of objects to list of strings.
+
+            Args:
+                values: List of values to convert
+
+            Returns:
+                List of string representations
+
+            """
+            if not isinstance(values, list):
+                return []
+
+            result = []
+            for value in values:
+                str_val = FlextUtilities.TextProcessor.safe_string(value)
+                if str_val:  # Only add non-empty strings
+                    result.append(str_val)
+
+            return result
 
 
 # =============================================================================
@@ -297,7 +412,7 @@ class FlextLdapUtilitiesLegacy:
     ) -> dict[str, str | list[str]]:
         """Legacy method redirecting to flext-core implementation."""
         return (
-            FlextUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            FlextLdapUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
                 source_dict
             )
         )

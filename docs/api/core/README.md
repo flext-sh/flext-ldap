@@ -285,7 +285,7 @@ async def update_user(
     self,
     session_id: str,
     user_dn: str,
-    updates: Dict[str, Any]
+    updates: Dict[str, object]
 ) -> FlextResult[bool]:
     \"\"\"Update existing LDAP user.
 
@@ -518,7 +518,7 @@ async def modify_entry(
     self,
     session_id: str,
     dn: str,
-    modifications: Dict[str, Any]
+    modifications: Dict[str, object]
 ) -> FlextResult[bool]:
     \"\"\"Modify existing LDAP entry.
 

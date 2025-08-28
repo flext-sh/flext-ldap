@@ -35,7 +35,7 @@ import warnings
 from typing import TYPE_CHECKING, cast
 
 # Import from flext-core for generic utilities
-from flext_core import FlextUtilities, get_logger
+from flext_core import FlextLogger, FlextUtilities
 
 # Import from our new utilities module for LDAP-specific extensions
 from flext_ldap.utilities import FlextLdapUtilities
@@ -43,7 +43,7 @@ from flext_ldap.utilities import FlextLdapUtilities
 if TYPE_CHECKING:
     from flext_ldap.typings import LdapAttributeDict
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 # Issue deprecation warning
 warnings.warn(
@@ -147,11 +147,9 @@ class FlextLdapUtils:
     def safe_convert_external_dict_to_ldap_attributes(
         source_dict: object,
     ) -> dict[str, str | list[str]]:
-        """Legacy facade - redirect to flext-core implementation."""
-        return (
-            FlextUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
-                source_dict
-            )
+        """Legacy facade - redirect to FlextLdapUtilities implementation."""
+        return FlextLdapUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            source_dict
         )
 
     @staticmethod
@@ -172,8 +170,8 @@ class FlextLdapUtils:
 
         DEPRECATED: Use FlextUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes() instead.
         """
-        # Use FlextUtilities implementation directly - it handles all the edge cases
-        return FlextUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+        # Use FlextLdapUtilities implementation directly - it handles all the edge cases
+        return FlextLdapUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
             attributes
         )  # type: ignore[return-value]  # Compatible conversion
 
@@ -252,19 +250,19 @@ class FlextLdapUtilsAttributes:
     ) -> LdapAttributeDict:
         """Legacy method redirecting to flext-core implementation."""
         # Cast to LdapAttributeDict type (compatible conversion)
-        return FlextUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+        return FlextLdapUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
             attributes
         )  # type: ignore[return-value]
 
     @staticmethod
     def safe_convert_value_to_str(value: object) -> str:
         """Legacy method redirecting to flext-core implementation."""
-        return FlextUtilities.LdapConverters.safe_convert_value_to_str(value)
+        return FlextLdapUtilities.LdapConverters.safe_convert_value_to_str(value)
 
     @staticmethod
     def safe_convert_list_to_strings(values: list[object]) -> list[str]:
         """Legacy method redirecting to flext-core implementation."""
-        return FlextUtilities.LdapConverters.safe_convert_list_to_strings(values)
+        return FlextLdapUtilities.LdapConverters.safe_convert_list_to_strings(values)
 
     @staticmethod
     def safe_str_attribute(
@@ -275,16 +273,16 @@ class FlextLdapUtilsAttributes:
         """Safely extract string attribute from LDAP attributes dict - USES FLEXT-CORE."""
         if not FlextUtilities.TypeGuards.is_dict(
             attributes
-        ) or not FlextUtilities.TypeGuards.is_non_empty_string(attr_name):
+        ) or not FlextUtilities.TypeGuards.is_string_non_empty(attr_name):
             return ""
 
         value = attributes.get(attr_name, "")
         if FlextUtilities.TypeGuards.is_list(value) and value:
             # If it's a list, take the first value using FlextUtilities
             list_value = cast("list[object]", value)
-            return FlextUtilities.Conversions.safe_str(list_value[0])  # type: ignore[arg-type]
+            return FlextUtilities.Conversions.safe_str(list_value[0])
         if value:
-            return FlextUtilities.Conversions.safe_str(value)  # type: ignore[arg-type]
+            return FlextUtilities.Conversions.safe_str(value)
         return ""
 
     class Ldap3:

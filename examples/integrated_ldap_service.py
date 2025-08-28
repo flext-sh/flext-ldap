@@ -40,7 +40,6 @@ async def _initialize_ldap_service() -> FlextLdapApi:
     """Initialize LDAP service - Single Responsibility."""
     # Check if we're running with Docker environment variables
     if os.getenv("LDAP_TEST_SERVER"):
-
         server_url = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
         urlparse(server_url)
 
@@ -91,7 +90,7 @@ async def _verify_ldap_directory_structure(ldap_service: FlextLdapApi) -> None:
             # Clean up connection
             await ldap_service.disconnect(session_id)
 
-    except Exception as e:  # noqa: S110  # Demo code - expected to continue
+    except Exception as e:
         # Continue with next operation
         logger.debug(f"Demo operation encountered exception: {e}")
 
@@ -149,7 +148,7 @@ async def _demo_user_operations(ldap_service: FlextLdapApi) -> None:
             # Clean up connection
             await ldap_service.disconnect(session_id)
 
-    except Exception as e:  # noqa: S110  # Demo code - expected to continue
+    except Exception as e:
         # Continue with next operation
         logger.debug(f"Demo operation encountered exception: {e}")
 
@@ -242,7 +241,7 @@ async def _demo_group_operations(ldap_service: FlextLdapApi) -> None:
             # Clean up connection
             await ldap_service.disconnect(session_id)
 
-    except Exception as e:  # noqa: S110  # Demo code - expected to continue
+    except Exception as e:
         # Continue with next operation
         logger.debug(f"Demo operation encountered exception: {e}")
 
@@ -312,7 +311,7 @@ async def _demo_connection_management(ldap_service: FlextLdapApi) -> None:
             disconnect_result = await ldap_service.disconnect(session_id)
             if disconnect_result.is_success:
                 pass
-    except Exception as e:  # noqa: S110  # Demo code - expected to continue
+    except Exception as e:
         # Continue with next operation
         logger.debug(f"Demo operation encountered exception: {e}")
 

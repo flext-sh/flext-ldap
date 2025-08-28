@@ -278,7 +278,7 @@ class FlextLdapSettings(FlextConfig):
         port_error = "FLEXT_LDAP_PORT environment variable is required"
         bind_dn_error = "FLEXT_LDAP_BIND_DN environment variable is required"
         bind_credential_error = (
-            "FLEXT_LDAP_BIND_PASSWORD environment variable is required"  # noqa: S105
+            "FLEXT_LDAP_BIND_PASSWORD environment variable is required"
         )
         base_dn_error = "FLEXT_LDAP_BASE_DN environment variable is required"
 

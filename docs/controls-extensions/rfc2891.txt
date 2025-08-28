@@ -93,7 +93,7 @@ RFC 2891     LDAP Control Extension for Server Side Sorting  August 2000
    If the orderingRule is omitted, the ordering MatchingRule defined for
    use with this attribute MUST be used.
 
-   Any conformant implementation of this control MUST allow a sort key
+   object conformant implementation of this control MUST allow a sort key
    list with at least one key.
 
 1.2 Response Control

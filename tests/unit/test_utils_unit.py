@@ -5,7 +5,7 @@ Tests utility classes and functions without external dependencies.
 
 from __future__ import annotations
 
-from typing import Any
+object
 
 from flext_ldap.utils import FlextLdapUtilities, FlextLdapUtils
 
@@ -66,7 +66,7 @@ class TestFlextLdapUtilities:
 
     def test_create_typed_ldap_attributes_with_none_values(self) -> None:
         """Test creating typed LDAP attributes handles None values."""
-        raw_attrs: dict[str, Any] = {
+        raw_attrs: dict[str, object] = {
             "cn": "John Doe",
             "description": None,
             "mail": "john@example.com",

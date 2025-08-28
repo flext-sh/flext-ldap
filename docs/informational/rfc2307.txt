@@ -798,7 +798,7 @@ RFC 2307      Using LDAP as a Network Information Service     March 1998
    For entities such as hosts, services, networks, protocols, and RPCs,
    where there may be one or more aliases, the respective entry's
    relative distinguished name SHOULD be used to determine the canonical
-   name.  Any other values for the same attribute are used as aliases.
+   name.  object other values for the same attribute are used as aliases.
    For example, the service described in section 5.5 has the canonical
    name "domain" and exactly one alias, "nameserver".
 

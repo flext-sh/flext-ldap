@@ -289,7 +289,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
         except Exception as e:
             return FlextResult[None].fail(f\"Infrastructure error: {str(e)}\")
 
-    def _to_ldap_entry(self, user: FlextLdapUser) -> Dict[str, Any]:
+    def _to_ldap_entry(self, user: FlextLdapUser) -> Dict[str, object]:
         \"\"\"Convert domain entity to LDAP entry format.\"\"\"
         return {
             \"objectClass\": [\"person\", \"organizationalPerson\", \"inetOrgPerson\"],
@@ -353,7 +353,7 @@ class FlextLdapUserFactory:
     \"\"\"Factory for creating user entities with validation.\"\"\"
 
     @staticmethod
-    def create_from_ldap_entry(entry: Dict[str, Any]) -> FlextResult[FlextLdapUser]:
+    def create_from_ldap_entry(entry: Dict[str, object]) -> FlextResult[FlextLdapUser]:
         \"\"\"Create user entity from LDAP entry data.\"\"\"
         try:
             user = FlextLdapUser(
@@ -483,7 +483,7 @@ class UserModifiedEvent:
     \"\"\"Domain event for user modification.\"\"\"
     user_id: str
     dn: str
-    changes: Dict[str, Any]
+    changes: Dict[str, object]
     timestamp: datetime
 ```
 

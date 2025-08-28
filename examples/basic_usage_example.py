@@ -150,7 +150,7 @@ async def main() -> None:
         await demonstrate_basic_operations()
         await demonstrate_connection_handling()
 
-    except Exception as e:  # noqa: S110  # Demo code - graceful handling
+    except Exception as e:
         # Graceful handling for demo purposes
         print(f"Demo completed with handled exception: {type(e).__name__}")
 
