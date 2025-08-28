@@ -34,7 +34,10 @@ Examples:
 # Import current service implementation for compatibility
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from typing import Any
 
 from flext_core import FlextContainer, FlextResult, FlextServiceProcessor, get_logger
 
@@ -58,9 +61,13 @@ logger = get_logger(__name__)
 # =============================================================================
 
 
-class FlextLdapServices(
-    FlextServiceProcessor[dict[str, object], object, dict[str, object]]
-):
+if TYPE_CHECKING:
+    _ServiceProcessorBase = FlextServiceProcessor[dict[str, object], object, dict[str, object]]
+else:
+    _ServiceProcessorBase = FlextServiceProcessor
+
+
+class FlextLdapServices(_ServiceProcessorBase):
     """Single FlextLdapServices class inheriting from FlextServiceProcessor.
 
     Consolidates ALL LDAP services into a single class following FLEXT patterns.
