@@ -158,7 +158,7 @@ RFC 2926               Conversion of LDAP Schemas         September 2000
 2.0 Mapping SLP Templates to LDAP Schema
 
    We define the following abstract object class as the parent class for
-   all services.  Any specific service type is a subclass of this, with
+   all services.  object specific service type is a subclass of this, with
    its own attributes:
 
 

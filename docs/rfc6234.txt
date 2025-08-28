@@ -203,7 +203,7 @@ RFC 6234                SHAs, HMAC-SHAs, and HKDF               May 2011
    The algorithms specified in this document are called secure because
    it is computationally infeasible to (1) find a message that
    corresponds to a given message digest, or (2) find two different
-   messages that produce the same message digest.  Any change to a
+   messages that produce the same message digest.  object change to a
    message in transit will, with very high probability, result in a
    different message digest.  This will result in a verification failure
    when the Secure Hash Algorithm is used with a digital signature

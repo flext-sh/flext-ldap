@@ -154,7 +154,7 @@ class FlextLdapAdapters:
         @classmethod
         def validate_server(cls, v: str) -> str:
             """Validate server URI format - USES FLEXT-CORE."""
-            from flext_core import FlextUtilities  # noqa: PLC0415
+            from flext_core import FlextUtilities
 
             # Basic URL validation using FlextUtilities
             if not FlextUtilities.TypeGuards.is_url(v):
@@ -323,15 +323,15 @@ class FlextLdapAdapters:
                     dn_str = str(dn) if dn else ""
 
                     # Convert attributes
-                    attributes_dict = FlextLdapUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
-                        {k: v for k, v in result.items() if k != "dn"}
-                    )
+                    attributes_dict = FlextLdapUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes({
+                        k: v for k, v in result.items() if k != "dn"
+                    })
 
                     # Create entry
                     entry = FlextLdapEntry(
                         id=FlextEntityId(f"entry_{hash(dn_str)}"),
                         dn=dn_str,
-                        attributes=attributes_dict,  # type: ignore[arg-type]
+                        attributes=attributes_dict,
                         object_classes=[],
                         modified_at=None,
                     )
@@ -381,7 +381,7 @@ class FlextLdapAdapters:
                     attributes
                 )
 
-                return await self._client.add(dn, ldap_attrs)  # type: ignore[arg-type]
+                return await self._client.add(dn, ldap_attrs)
 
             except Exception as e:
                 error_msg = f"Failed to add entry {dn}: {e}"
@@ -411,7 +411,7 @@ class FlextLdapAdapters:
                 ldap_modifications = FlextLdapUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
                     modifications
                 )
-                return await self._client.modify(dn, ldap_modifications)  # type: ignore[arg-type]
+                return await self._client.modify(dn, ldap_modifications)
 
             except Exception as e:
                 error_msg = f"Failed to modify entry {dn}: {e}"
@@ -580,7 +580,7 @@ class FlextLdapAdapters:
                 FlextLdapAdapters.ConnectionConfig(
                     server="ldap://localhost:389",
                     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-                    bind_password="REDACTED_LDAP_BIND_PASSWORD",  # noqa: S106 # Default test configuration
+                    bind_password="REDACTED_LDAP_BIND_PASSWORD",
                 )
             )
             self.search = FlextLdapAdapters.SearchService(client)

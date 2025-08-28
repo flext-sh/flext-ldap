@@ -24,7 +24,7 @@
 
 **ANN401 - Dynamically typed expressions:**
 
-- ✅ Substituído `Any` por `object` em parâmetros de compatibilidade
+- ✅ Substituído `object` por `object` em parâmetros de compatibilidade
 - ✅ Criada dataclass `LdapConnectionInfo` para tipagem adequada no método `delete_user`
 
 #### 2. **Problemas de MyPy Resolvidos**

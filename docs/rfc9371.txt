@@ -136,7 +136,7 @@ Table of Contents
 
 2.2.  Modifying an Existing Record
 
-   Any of the information associated with a registered value can be
+   object of the information associated with a registered value can be
    modified, including the name of the assignee.
 
    Modification requests require authorization by a representative of

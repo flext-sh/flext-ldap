@@ -78,7 +78,7 @@ class TestFlextLdapUser:
     """Test LDAP user entity with real business logic."""
 
     def create_test_user(self, **kwargs: object) -> FlextLdapUser:
-        """Helper to create test user with defaults using Any for kwargs."""
+        """Helper to create test user with defaults using object for kwargs."""
         defaults: dict[str, object] = {
             "id": FlextEntityId("test_user"),
             "version": FlextVersion(1),
@@ -177,7 +177,7 @@ class TestFlextLdapGroup:
     """Test LDAP group entity with real business logic."""
 
     def create_test_group(self, **kwargs: object) -> FlextLdapGroup:
-        """Helper to create test group with defaults using Any for kwargs."""
+        """Helper to create test group with defaults using object for kwargs."""
         defaults: dict[str, object] = {
             "id": FlextEntityId("test_group"),
             "version": FlextVersion(1),
@@ -278,7 +278,7 @@ class TestFlextLdapEntry:
     """Test generic LDAP entry with real attribute handling."""
 
     def create_test_entry(self, **kwargs: object) -> FlextLdapEntry:
-        """Helper to create test entry with defaults using Any for kwargs."""
+        """Helper to create test entry with defaults using object for kwargs."""
         defaults: dict[str, object] = {
             "id": FlextEntityId("test_entry"),
             "version": FlextVersion(1),

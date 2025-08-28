@@ -39,16 +39,14 @@ Examples:
 
 from __future__ import annotations
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import cast, override
 
 from flext_core import (
     FlextEntity,
-    FlextEntityId,
     FlextModel,
     FlextModels,
     FlextResult,
-    FlextTimestamp,
     get_logger,
 )
 from pydantic import Field, field_validator
@@ -191,7 +189,7 @@ class FlextLdapEntities:
 
         # Entity metadata
         created_at: FlextModels.Timestamp = Field(
-            default_factory=lambda: FlextTimestamp(datetime.now(UTC)),
+            default_factory=lambda: FlextModels.Timestamp(datetime.now(UTC)),
             description="Creation timestamp",
         )
         modified_at: FlextModels.Timestamp | None = Field(
@@ -239,7 +237,7 @@ class FlextLdapEntities:
         def set_attribute(self, name: str, value: LdapAttributeValue) -> None:
             """Set attribute value."""
             self.attributes[name] = value
-            self.modified_at = FlextTimestamp(datetime.now(UTC))
+            self.modified_at = FlextModels.Timestamp(datetime.now(UTC))
 
     class User(Entry):
         """LDAP user entity with user-specific validation."""
@@ -255,11 +253,13 @@ class FlextLdapEntities:
         @classmethod
         def validate_email(cls, v: str | None) -> str | None:
             """Validate email format - USES FLEXT-CORE."""
-            from flext_core import FlextUtilities  # noqa: PLC0415
+            from flext_core import FlextValidation
 
-            if v and not FlextUtilities.TypeGuards.is_email(v):
-                msg = "Invalid email format"
-                raise ValueError(msg)
+            if v:
+                result = FlextValidation.Rules.StringRules.validate_email(v)
+                if not result.is_success:
+                    msg = "Invalid email format"
+                    raise ValueError(msg)
             return v
 
         @override
@@ -317,13 +317,13 @@ class FlextLdapEntities:
             """Add member to group."""
             if member_dn not in self.members:
                 self.members.append(member_dn)
-                self.modified_at = FlextTimestamp(datetime.now(UTC))
+                self.modified_at = FlextModels.Timestamp(datetime.now(UTC))
 
         def remove_member(self, member_dn: str) -> None:
             """Remove member from group."""
             if member_dn in self.members:
                 self.members.remove(member_dn)
-                self.modified_at = FlextTimestamp(datetime.now(UTC))
+                self.modified_at = FlextModels.Timestamp(datetime.now(UTC))
 
         def has_member(self, member_dn: str) -> bool:
             """Check if DN is a member of this group."""
@@ -368,11 +368,13 @@ class FlextLdapEntities:
         @classmethod
         def validate_email(cls, v: str | None) -> str | None:
             """Validate email format - USES FLEXT-CORE."""
-            from flext_core import FlextUtilities  # noqa: PLC0415
+            from flext_core import FlextValidation
 
-            if v and not FlextUtilities.TypeGuards.is_email(v):
-                msg = "Invalid email format"
-                raise ValueError(msg)
+            if v:
+                result = FlextValidation.Rules.StringRules.validate_email(v)
+                if not result.is_success:
+                    msg = "Invalid email format"
+                    raise ValueError(msg)
             return v
 
         def to_user_entity(self) -> FlextLdapEntities.User:

@@ -261,7 +261,7 @@ RFC 2739                Locating a Calendar User            January 2000
    Inside a vCard object, four new properties are defined: "CALURI",
    "CAPURI", "CALADRURI", and "FBURL", as defined above.
 
-   Any vCard can have one or more of these properties, each representing
+   object vCard can have one or more of these properties, each representing
    a calendar or free/busy time that is associated with the user.
 
    One of these properties can be designated as the "default" by adding

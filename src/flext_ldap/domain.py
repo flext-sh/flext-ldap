@@ -463,7 +463,7 @@ class FlextLdapDomain:
             self, first_name: str, last_name: str
         ) -> FlextResult[str]:
             """Generate username following business rules - USES FLEXT-CORE."""
-            from flext_core import FlextUtilities  # noqa: PLC0415
+            from flext_core import FlextUtilities
 
             try:
                 # Validate inputs using FlextUtilities
@@ -769,7 +769,7 @@ class FlextLdapDomain:
         @staticmethod
         def safe_str(value: object) -> str | None:
             """Safely convert value to string or None - USES FLEXT-CORE."""
-            from flext_core import FlextUtilities  # noqa: PLC0415
+            from flext_core import FlextUtilities
 
             # Cast to supported type for FlextUtilities
             safe_value = (
@@ -783,7 +783,7 @@ class FlextLdapDomain:
         @staticmethod
         def safe_list(value: object, default: list[str] | None = None) -> list[str]:
             """Safely convert value to list or use default - USES FLEXT-CORE."""
-            from flext_core import FlextUtilities  # noqa: PLC0415
+            from flext_core import FlextUtilities
 
             if FlextUtilities.TypeGuards.is_list(value):
                 return FlextUtilities.LdapConverters.safe_convert_list_to_strings(
@@ -802,7 +802,7 @@ class FlextLdapDomain:
         @staticmethod
         def safe_ldap_attributes(value: object) -> LdapAttributeDict:
             """Safely convert value to LdapAttributeDict."""
-            from .utilities import FlextLdapUtilities  # noqa: PLC0415
+            from .utilities import FlextLdapUtilities
 
             return FlextLdapUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
                 value
@@ -885,7 +885,7 @@ class FlextLdapDomain:
             if created is None:
                 return FlextResult[FlextLdapUser].fail("User creation returned None")
             # Late import kept to avoid circular dependency; ruff allow
-            from .models import (  # noqa: PLC0415
+            from .models import (
                 FlextLdapUser as _User,
             )
 
@@ -966,7 +966,7 @@ class FlextLdapDomain:
             if created is None:
                 return FlextResult[FlextLdapGroup].fail("Group creation returned None")
             # Late import kept to avoid circular dependency; ruff allow
-            from .models import (  # noqa: PLC0415
+            from .models import (
                 FlextLdapGroup as _Group,
             )
 

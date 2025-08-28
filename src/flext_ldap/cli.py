@@ -215,7 +215,7 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
         uid = str(args.get("uid", ""))
         server = str(args.get("server", FlextConstants.Infrastructure.DEFAULT_HOST))
 
-        server_uri = f"ldap://{server}:{FlextConstants.Platform.LDAP_PORT}"
+        server_uri = f"ldap://{server}:{FlextConstants.LDAP.DEFAULT_LDAP_PORT}"
         bind_dn_str = ""
         bind_password_str = ""  # nosec B105 - empty string default
 
@@ -358,7 +358,7 @@ _formatter_service: FlextLdapCliFormatterService | None = None
 
 def get_command_service() -> FlextLdapCliCommandService:
     """Get or create the global command service."""
-    global _command_service  # noqa: PLW0603
+    global _command_service
     if _command_service is None:
         _command_service = FlextLdapCliCommandService()
     return _command_service
@@ -366,7 +366,7 @@ def get_command_service() -> FlextLdapCliCommandService:
 
 def get_formatter_service() -> FlextLdapCliFormatterService:
     """Get or create the global formatter service."""
-    global _formatter_service  # noqa: PLW0603
+    global _formatter_service
     if _formatter_service is None:
         _formatter_service = FlextLdapCliFormatterService()
     return _formatter_service
@@ -530,7 +530,7 @@ def cli(
 @click.option(
     "--port",
     "-p",
-    default=FlextConstants.Platform.LDAP_PORT,
+    default=FlextConstants.LDAP.DEFAULT_LDAP_PORT,
     type=int,
     help="LDAP server port",
 )
@@ -611,7 +611,7 @@ def test(
 @click.option(
     "--port",
     "-p",
-    default=FlextConstants.Platform.LDAP_PORT,
+    default=FlextConstants.LDAP.DEFAULT_LDAP_PORT,
     type=int,
     help="LDAP server port",
 )
@@ -688,7 +688,12 @@ def search(
 
 @cli.command()
 @click.argument("uid", type=str, required=True)
-@click.option("--server", "-s", default=FlextConstants.Infrastructure.DEFAULT_HOST, help="LDAP server URL")
+@click.option(
+    "--server",
+    "-s",
+    default=FlextConstants.Infrastructure.DEFAULT_HOST,
+    help="LDAP server URL",
+)
 # Decorators removed for type safety - functionality implemented inline
 @click.pass_context
 def user_info(

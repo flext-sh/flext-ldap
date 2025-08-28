@@ -38,7 +38,7 @@ except Exception:  # pragma: no cover - docker may be unavailable in CI
 OPENLDAP_IMAGE = "osixia/openldap:1.5.0"
 OPENLDAP_CONTAINER_NAME = "flext-ldap-test-server"
 OPENLDAP_PORT = 3390  # Use non-standard port to avoid conflicts
-OPENLDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"  # noqa: S105
+OPENLDAP_ADMIN_PASSWORD = "REDACTED_LDAP_BIND_PASSWORD123"
 OPENLDAP_DOMAIN = "internal.invalid"
 OPENLDAP_BASE_DN = f"dc={',dc='.join(OPENLDAP_DOMAIN.split('.'))}"
 OPENLDAP_ADMIN_DN = f"cn=REDACTED_LDAP_BIND_PASSWORD,{OPENLDAP_BASE_DN}"
@@ -249,7 +249,7 @@ def ldap_test_config(docker_openldap_container: object) -> dict[str, object]:
 
 @pytest.fixture
 async def ldap_service(
-    clean_ldap_container: dict[str, object],  # noqa: ARG001
+    clean_ldap_container: dict[str, object],
 ) -> AsyncGenerator[FlextLdapService]:
     """Provide configured LDAP service for testing."""
     container = get_ldap_container()
@@ -390,7 +390,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 def pytest_collection_modifyitems(
-    config: pytest.Config,  # noqa: ARG001
+    config: pytest.Config,
     items: list[pytest.Item],
 ) -> None:
     """Automatically mark integration tests based on file path."""

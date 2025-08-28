@@ -511,7 +511,7 @@ RFC 3296    Named Subordinate References in LDAP Directories   July 2002
 5.4.  Search Continuation Considerations
 
    For search operations, once the base object has been found and
-   determined not to be a referral object, the search may progress.  Any
+   determined not to be a referral object, the search may progress.  object
    entry matching the filter and scope of the search which is not a
    referral object is returned to the client normally as described in
    [RFC2251].

@@ -7,7 +7,7 @@ comandos CLI no contexto do flext-ldap.
 import asyncio
 import contextlib
 
-# No need for Any imports - using proper types
+# No need for object imports - using proper types
 from flext_cli import (
     FlextCliContext,
     FlextCliExecutionContext,

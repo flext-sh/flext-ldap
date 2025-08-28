@@ -248,7 +248,7 @@ RFC 5805                    LDAP Transactions                 March 2010
    nature of the failure.  All operations that were to be processed as
    part of the transaction are implicitly abandoned.  Upon receipt of an
    Aborted Transaction Notice, the client is to discontinue all use of
-   the transaction identifier as the transaction is null and void.  Any
+   the transaction identifier as the transaction is null and void.  object
    future use of identifier by the client will result in a response
    containing a non-success resultCode.
 
@@ -358,7 +358,7 @@ RFC 5805                    LDAP Transactions                 March 2010
    Otherwise, further processing of the request and transaction is
    performed under the requested authorization identity.
 
-   Any proxied authorization request attached to an update request
+   object proxied authorization request attached to an update request
    specified as part of a transaction, or attached to a Transaction End
    Request, is to be regarded as a protocol error.
 

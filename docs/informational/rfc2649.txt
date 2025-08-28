@@ -147,7 +147,7 @@ RFC 2649                LDAP Control and Schema              August 1999
    verifying the signature.  Signature verification can be quite a
    lengthy operation, requiring complex certificate chain traversals.
    This allows a more timely creation of the audit trail by the server.
-   Any LDAP client browsing the directory that retrieves the 'Changes'
+   object LDAP client browsing the directory that retrieves the 'Changes'
    (defined in the following paragraphs) attributes, should verify the
    signature of each value according to the local signature verification
    policies.  Even if the LDAP server verifies the signature contained

@@ -695,7 +695,7 @@ A.1.  LDAP Object Identifier Registration Template
 
    Comments:
 
-   (Any comments that the requester deems relevant to the request.)
+   (object comments that the requester deems relevant to the request.)
 
 A.2.  LDAP Protocol Mechanism Registration Template
 
@@ -715,7 +715,7 @@ A.2.  LDAP Protocol Mechanism Registration Template
 
    Comments:
 
-   (Any comments that the requester deems relevant to the request.)
+   (object comments that the requester deems relevant to the request.)
 
 
 
@@ -748,7 +748,7 @@ A.3.  LDAP Syntax Registration Template
 
    Comments:
 
-   (Any comments that the requester deems relevant to the request.)
+   (object comments that the requester deems relevant to the request.)
 
 A.4.  LDAP Descriptor Registration Template
 
@@ -769,7 +769,7 @@ A.4.  LDAP Descriptor Registration Template
 
    Comments:
 
-   (Any comments that the requester deems relevant to the request.)
+   (object comments that the requester deems relevant to the request.)
 
 
 
@@ -803,7 +803,7 @@ A.5.  LDAP Attribute Description Option Registration Template
 
    Comments:
 
-   (Any comments that the requester deems relevant to the request.)
+   (object comments that the requester deems relevant to the request.)
 
 A.6.  LDAP Message Type Registration Template
 
@@ -817,7 +817,7 @@ A.6.  LDAP Message Type Registration Template
 
    Comments:
 
-   (Any comments that the requester deems relevant to the request.)
+   (object comments that the requester deems relevant to the request.)
 
 A.7.  LDAP Authentication Method Registration Template
 
@@ -835,7 +835,7 @@ A.7.  LDAP Authentication Method Registration Template
 
    Comments:
 
-   (Any comments that the requester deems relevant to the request.)
+   (object comments that the requester deems relevant to the request.)
 
 
 
@@ -858,7 +858,7 @@ A.8.  LDAP Result Code Registration Template
 
    Comments:
 
-   (Any comments that the requester deems relevant to the request.)
+   (object comments that the requester deems relevant to the request.)
 
 A.8.  LDAP Search Scope Registration Template
 
@@ -876,7 +876,7 @@ A.8.  LDAP Search Scope Registration Template
 
    Comments:
 
-   (Any comments that the requester deems relevant to the request.)
+   (object comments that the requester deems relevant to the request.)
 
 
 
@@ -914,7 +914,7 @@ A.9.  LDAP Filter Choice Registration Template
 
    Comments:
 
-   (Any comments that the requester deems relevant to the request.)
+   (object comments that the requester deems relevant to the request.)
 
 A.10.  LDAP ModifyRequest Operation Registration Template
 
@@ -930,7 +930,7 @@ A.10.  LDAP ModifyRequest Operation Registration Template
 
    Comments:
 
-   (Any comments that the requester deems relevant to the request.)
+   (object comments that the requester deems relevant to the request.)
 
 Appendix B.  Changes since RFC 3383
 

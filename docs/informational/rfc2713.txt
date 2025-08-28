@@ -354,7 +354,7 @@ RFC 2713                Schema for Java Objects             October 1999
 
    The Java Remote Method Invocation (RMI) system [RMI] is a mechanism
    that enables an object on one Java virtual machine to invoke methods
-   on an object in another Java virtual machine. Any object whose
+   on an object in another Java virtual machine. object object whose
    methods can be invoked in this way must implement the java.rmi.Remote
    interface.  When such an object is invoked, its arguments are
    marshalled and sent from the local virtual machine to the remote one,
