@@ -84,7 +84,7 @@ class FlextLdapUtils:
 
     # Generic utilities - redirect to flext-core
     Generators = FlextUtilities.Generators
-    LdapConverters = FlextUtilities.LdapConverters  # Already in flext-core!
+    # LdapConverters = FlextUtilities.LdapConverters  # FIXME: Doesn't exist in flext-core
     TextProcessor = FlextUtilities.TextProcessor
     TimeUtils = FlextUtilities.TimeUtils
     Performance = FlextUtilities.Performance

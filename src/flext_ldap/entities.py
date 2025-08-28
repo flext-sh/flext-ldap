@@ -39,12 +39,14 @@ Examples:
 
 from __future__ import annotations
 
+from datetime import datetime, UTC
 from typing import cast, override
 
 from flext_core import (
     FlextEntity,
     FlextEntityId,
     FlextModel,
+    FlextModels,
     FlextResult,
     FlextTimestamp,
     get_logger,
@@ -188,11 +190,11 @@ class FlextLdapEntities:
         )
 
         # Entity metadata
-        created_at: FlextTimestamp = Field(
-            default_factory=FlextTimestamp.now,
+        created_at: FlextModels.Timestamp = Field(
+            default_factory=lambda: FlextTimestamp(datetime.now(UTC)),
             description="Creation timestamp",
         )
-        modified_at: FlextTimestamp | None = Field(
+        modified_at: FlextModels.Timestamp | None = Field(
             None,
             description="Last modification timestamp",
         )
@@ -237,7 +239,7 @@ class FlextLdapEntities:
         def set_attribute(self, name: str, value: LdapAttributeValue) -> None:
             """Set attribute value."""
             self.attributes[name] = value
-            self.modified_at = FlextTimestamp.now()
+            self.modified_at = FlextTimestamp(datetime.now(UTC))
 
     class User(Entry):
         """LDAP user entity with user-specific validation."""
@@ -315,13 +317,13 @@ class FlextLdapEntities:
             """Add member to group."""
             if member_dn not in self.members:
                 self.members.append(member_dn)
-                self.modified_at = FlextTimestamp.now()
+                self.modified_at = FlextTimestamp(datetime.now(UTC))
 
         def remove_member(self, member_dn: str) -> None:
             """Remove member from group."""
             if member_dn in self.members:
                 self.members.remove(member_dn)
-                self.modified_at = FlextTimestamp.now()
+                self.modified_at = FlextTimestamp(datetime.now(UTC))
 
         def has_member(self, member_dn: str) -> bool:
             """Check if DN is a member of this group."""
