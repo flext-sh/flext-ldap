@@ -195,7 +195,7 @@ class TestRealClientIntegration:
 
     def test_client_uses_flext_logger(self) -> None:
         """Test client uses FLEXT logging."""
-        # Client module should use get_logger
+        # Client module should use FlextLogger
 
         # Should have logger defined
         assert hasattr(clients_module, "logger")

@@ -3,10 +3,10 @@
 from pathlib import Path
 from typing import ClassVar
 
-from flext_core import FlextConfig, FlextResult, get_logger
+from flext_core import FlextConfig, FlextLogger, FlextResult
 from pydantic import Field, field_validator
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdapConnectionConfig(FlextConfig):

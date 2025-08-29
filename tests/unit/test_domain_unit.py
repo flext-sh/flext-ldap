@@ -5,7 +5,7 @@ Tests domain services, specifications, and business logic without external depen
 
 from __future__ import annotations
 
-from flext_core import FlextEntityId, FlextEntityStatus
+from flext_core import FlextEntityStatus, FlextModels
 
 from flext_ldap.domain import (
     MIN_PASSWORD_LENGTH,
@@ -27,7 +27,7 @@ class TestFlextLdapUserSpecification:
     def test_user_specification_with_valid_user(self) -> None:
         """Test user specification with valid user."""
         user = FlextLdapUser(
-            id=FlextEntityId("test-user"),
+            id=FlextModels.EntityId("test-user"),
             dn="cn=test,dc=example,dc=com",
             cn="Test User",
             sn="User",

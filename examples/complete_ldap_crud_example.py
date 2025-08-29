@@ -14,7 +14,7 @@ import asyncio
 import sys
 from typing import Final, cast
 
-from flext_core import FlextConstants, FlextResult, get_logger
+from flext_core import FlextConstants, FlextLogger, FlextResult
 
 from flext_ldap import (
     FlextLdapApi,
@@ -22,7 +22,7 @@ from flext_ldap import (
     get_ldap_api,
 )
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 # LDAP connection settings
 LDAP_URI: Final[str] = (

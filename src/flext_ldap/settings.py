@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import final, override
 
-from flext_core import FlextConfig, FlextResult, get_logger
+from flext_core import FlextConfig, FlextLogger, FlextResult
 from pydantic import ConfigDict, Field, SecretStr
 
 from flext_ldap.connection_config import FlextLdapConnectionConfig
@@ -139,7 +139,7 @@ try:
 except ImportError:
     yaml = None  # type: ignore[assignment]
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 @final

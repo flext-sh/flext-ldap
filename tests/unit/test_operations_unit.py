@@ -9,7 +9,7 @@ import uuid
 from datetime import UTC, datetime
 
 import pytest
-from flext_core import FlextEntityId, FlextEntityStatus
+from flext_core import FlextEntityStatus, FlextModels
 
 from flext_ldap.models import (
     FlextLdapCreateUserRequest,
@@ -458,7 +458,7 @@ class TestFlextLdapSearchOperations:
         }
 
         entry = FlextLdapEntry(
-            id=FlextEntityId("test"),
+            id=FlextModels.EntityId("test"),
             dn="cn=john,dc=example,dc=com",
             object_classes=["person"],
             attributes=attributes,
@@ -484,7 +484,7 @@ class TestFlextLdapSearchOperations:
         }
 
         entry = FlextLdapEntry(
-            id=FlextEntityId("test"),
+            id=FlextModels.EntityId("test"),
             dn="cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com",
             object_classes=["groupOfNames"],
             attributes=attributes,

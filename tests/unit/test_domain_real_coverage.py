@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Never
 
-from flext_core import FlextEntityId, FlextEntityStatus
+from flext_core import FlextEntityStatus, FlextModels
 
 from flext_ldap.domain import (
     FlextLdapActiveUserSpecification,
@@ -32,7 +32,7 @@ class TestFlextLdapUserSpecificationRealValidation:
         spec = FlextLdapUserSpecification()
 
         valid_user = FlextLdapUser(
-            id=FlextEntityId("test-user"),
+            id=FlextModels.EntityId("test-user"),
             dn="cn=validuser,ou=users,dc=example,dc=com",
             cn="Valid User",
             sn="User",
@@ -51,7 +51,7 @@ class TestFlextLdapUserSpecificationRealValidation:
 
         # User missing required object classes
         invalid_user = FlextLdapUser(
-            id=FlextEntityId("test-user"),
+            id=FlextModels.EntityId("test-user"),
             dn="cn=invaliduser,ou=users,dc=example,dc=com",
             cn="Invalid User",
             sn="User",
@@ -100,7 +100,7 @@ class TestFlextLdapGroupSpecificationRealValidation:
         spec = FlextLdapGroupSpecification()
 
         valid_group = FlextLdapGroup(
-            id=FlextEntityId("test-group"),
+            id=FlextModels.EntityId("test-group"),
             dn="cn=validgroup,ou=groups,dc=example,dc=com",
             cn="Valid Group",
             object_classes=["groupOfNames", "top"],
@@ -117,7 +117,7 @@ class TestFlextLdapGroupSpecificationRealValidation:
 
         # Group missing required object classes
         invalid_group = FlextLdapGroup(
-            id=FlextEntityId("test-group"),
+            id=FlextModels.EntityId("test-group"),
             dn="cn=invalidgroup,ou=groups,dc=example,dc=com",
             cn="Invalid Group",
             object_classes=["customClass"],  # Missing groupOfNames, top
@@ -273,7 +273,7 @@ class TestFlextLdapActiveUserSpecificationRealValidation:
         spec = FlextLdapActiveUserSpecification()
 
         active_user = FlextLdapUser(
-            id=FlextEntityId("test-user"),
+            id=FlextModels.EntityId("test-user"),
             dn="cn=activeuser,ou=users,dc=example,dc=com",
             cn="Active User",
             sn="User",
@@ -290,7 +290,7 @@ class TestFlextLdapActiveUserSpecificationRealValidation:
         spec = FlextLdapActiveUserSpecification()
 
         inactive_user = FlextLdapUser(
-            id=FlextEntityId("test-user"),
+            id=FlextModels.EntityId("test-user"),
             dn="cn=inactiveuser,ou=users,dc=example,dc=com",
             cn="Inactive User",
             sn="User",
@@ -635,7 +635,7 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
         # Create valid group
         valid_group = FlextLdapGroup(
-            id=FlextEntityId("test-group"),
+            id=FlextModels.EntityId("test-group"),
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="Test Group",
             object_classes=["groupOfNames", "top"],
@@ -645,7 +645,7 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
         # Create valid user
         valid_user = FlextLdapUser(
-            id=FlextEntityId("test-user"),
+            id=FlextModels.EntityId("test-user"),
             dn="cn=testuser,ou=users,dc=example,dc=com",
             cn="Test User",
             sn="User",
@@ -665,7 +665,7 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
         # Create user
         user = FlextLdapUser(
-            id=FlextEntityId("test-user"),
+            id=FlextModels.EntityId("test-user"),
             dn="cn=testuser,ou=users,dc=example,dc=com",
             cn="Test User",
             sn="User",
@@ -676,7 +676,7 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
         # Create group with user already as member
         group = FlextLdapGroup(
-            id=FlextEntityId("test-group"),
+            id=FlextModels.EntityId("test-group"),
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="Test Group",
             object_classes=["groupOfNames", "top"],
@@ -695,7 +695,7 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
         # Create valid group
         valid_group = FlextLdapGroup(
-            id=FlextEntityId("test-group"),
+            id=FlextModels.EntityId("test-group"),
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="Test Group",
             object_classes=["groupOfNames", "top"],
@@ -705,7 +705,7 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
         # Create inactive user
         inactive_user = FlextLdapUser(
-            id=FlextEntityId("test-user"),
+            id=FlextModels.EntityId("test-user"),
             dn="cn=inactiveuser,ou=users,dc=example,dc=com",
             cn="Inactive User",
             sn="User",
@@ -753,7 +753,7 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
         # Create group with edge case members
         group = FlextLdapGroup(
-            id=FlextEntityId("edge-group"),
+            id=FlextModels.EntityId("edge-group"),
             dn="cn=edgegroup,ou=groups,dc=example,dc=com",
             cn="Edge Group",
             object_classes=["groupOfNames", "top"],
@@ -763,7 +763,7 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
         # Create user with edge case attributes
         user = FlextLdapUser(
-            id=FlextEntityId("edge-user"),
+            id=FlextModels.EntityId("edge-user"),
             dn="cn=existing,ou=users,dc=example,dc=com",  # Same DN as existing member
             cn="Edge User",
             sn="User",

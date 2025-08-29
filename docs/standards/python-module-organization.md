@@ -93,7 +93,7 @@ from flext_ldap.domain.entities import FlextLdapUser, FlextLdapGroup
 from flext_ldap.domain.value_objects import FlextLdapDistinguishedName
 from flext_ldap.domain.specifications import FlextLdapUserValidator
 
-class FlextLdapUser(FlextEntity):
+class FlextLdapUser(FlextModels.Entity):
     """Rich LDAP user entity with business logic."""
     dn: FlextLdapDistinguishedName
     uid: str
@@ -109,7 +109,7 @@ class FlextLdapUser(FlextEntity):
         self.add_domain_event(UserActivatedEvent(user_id=self.id))
         return FlextResult[None].ok(None)
 
-class FlextLdapDistinguishedName(FlextValue):
+class FlextLdapDistinguishedName(FlextModels.Value):
     """Distinguished Name value object with RFC 4514 validation."""
     value: str
 
@@ -300,7 +300,7 @@ class FlextLdapSettings(FlextConfig):
 from flext_ldap.entities import FlextLdapUser, FlextLdapGroup
 
 @dataclass
-class FlextLdapUser(FlextEntity):
+class FlextLdapUser(FlextModels.Entity):
     """LDAP user entity with business logic."""
     dn: str
     uid: str
@@ -554,7 +554,7 @@ from flext_core import FlextResult as Result       # Confusing across projects
 ```python
 # ✅ Allowed dependencies (inward flow)
 # API Layer → Application Layer → Domain Layer → flext-core
-from flext_core import FlextResult, FlextContainer, FlextEntity
+from flext_core import FlextResult, FlextContainer, FlextModels.Entity
 from flext_ldap.domain.entities import FlextLdapUser
 from flext_ldap.application.ldap_service import FlextLdapService
 from flext_ldap.api import FlextLdapApi
@@ -653,7 +653,7 @@ def process_users(api: 'FlextLdapApi') -> 'FlextResult[List[FlextLdapUser]]':
 │  infrastructure/adapters/ - External system adapters          │
 ├─────────────────────────────────────────────────────────────────┤
 │                      FLEXT-Core Foundation                     │
-│  FlextResult, FlextContainer, FlextEntity, FlextConfig   │
+│  FlextResult, FlextContainer, FlextModels.Entity, FlextConfig   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -662,11 +662,11 @@ def process_users(api: 'FlextLdapApi') -> 'FlextResult[List[FlextLdapUser]]':
 #### **Rich Domain Entities**
 
 ```python
-from flext_core import FlextEntity, FlextResult
+from flext_core import FlextModels.Entity, FlextResult
 from flext_ldap.domain.value_objects import FlextLdapDistinguishedName
 from flext_ldap.domain.events import UserActivatedEvent
 
-class FlextLdapUser(FlextEntity):
+class FlextLdapUser(FlextModels.Entity):
     """Rich LDAP user entity with business logic."""
     dn: FlextLdapDistinguishedName
     uid: str
@@ -715,10 +715,10 @@ class FlextLdapUser(FlextEntity):
 #### **Value Objects with Validation**
 
 ```python
-from flext_core import FlextValue
+from flext_core import FlextModels.Value
 
 @dataclass(frozen=True)
-class FlextLdapDistinguishedName(FlextValue):
+class FlextLdapDistinguishedName(FlextModels.Value):
     """Distinguished Name value object with RFC 4514 validation."""
     value: str
 
@@ -752,7 +752,7 @@ class FlextLdapDistinguishedName(FlextValue):
         return self.value.lower().endswith(parent_dn.lower())
 
 @dataclass(frozen=True)
-class FlextLdapFilter(FlextValue):
+class FlextLdapFilter(FlextModels.Value):
     """LDAP filter value object with RFC 4515 validation."""
     expression: str
 
@@ -1330,7 +1330,7 @@ class TestLdapPipelines:
 
 ```python
 # ✅ Standard ecosystem imports for LDAP integration
-from flext_core import FlextResult, FlextContainer, get_logger
+from flext_core import FlextResult, FlextContainer, FlextLogger
 from flext_ldap import get_ldap_api, FlextLdapUser, FlextLdapGroup
 from flext_auth import FlextAuthService
 from flext_meltano import FlextMeltanoOrchestrator

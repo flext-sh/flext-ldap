@@ -1,6 +1,6 @@
 """LDAP dependency injection using flext-core container - ELIMINATES LOCAL CONTAINER."""
 
-from flext_core import FlextContainer, FlextResult, get_logger
+from flext_core import FlextContainer, FlextLogger, FlextResult
 
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.configuration import FlextLdapSettings
@@ -10,7 +10,7 @@ from flext_ldap.repositories import (
     FlextLdapUserRepository,
 )
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 # =============================================================================

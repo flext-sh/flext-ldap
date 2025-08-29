@@ -25,7 +25,7 @@ from __future__ import annotations
 import asyncio
 import os
 
-from flext_core import get_logger
+from flext_core import FlextLogger
 
 from flext_ldap import (
     FlextLdapApi,
@@ -34,7 +34,7 @@ from flext_ldap import (
     FlextLdapSettings,
 )
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 async def demonstrate_configuration() -> None:

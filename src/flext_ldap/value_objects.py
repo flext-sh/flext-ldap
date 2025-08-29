@@ -43,10 +43,10 @@ from __future__ import annotations
 import re
 from typing import ClassVar, final, override
 
-from flext_core import FlextLogger, FlextModels, FlextResult
+from flext_core import FlextLogger, FlextModels, FlextResult, FlextUtilities
 from pydantic import ConfigDict, Field, field_validator
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 # =============================================================================
 # SINGLE FLEXT LDAP VALUE OBJECTS CLASS - Consolidated value object functionality
@@ -65,7 +65,7 @@ class FlextLdapValueObjects:
         - Open/Closed: Extensible without modification
         - Liskov Substitution: Consistent interface across all value objects
         - Interface Segregation: Organized by value object type for specific access
-        - Dependency Inversion: Depends on FlextValue abstraction
+        - Dependency Inversion: Depends on FlextModels.Value abstraction
 
     Examples:
         Distinguished Name operations::
@@ -258,8 +258,6 @@ class FlextLdapValueObjects:
         @classmethod
         def validate_filter_format(cls, value: str) -> str:
             """Validate LDAP filter format."""
-            from flext_core import FlextUtilities
-
             if not FlextUtilities.TypeGuards.is_string_non_empty(value):
                 msg = "LDAP filter cannot be empty"
                 raise ValueError(msg)

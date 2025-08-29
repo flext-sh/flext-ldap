@@ -26,13 +26,11 @@ Examples:
 
 """
 
-# Re-export configuration models for compatibility
 from __future__ import annotations
 
-# Import for entity status alias
-from flext_core import FlextEntity, FlextModel
+from flext_core import FlextModel, FlextModels
 
-from .configuration import (
+from flext_ldap.configuration import (
     FlextLdapAuthConfig,
     FlextLdapConnectionConfig,
     FlextLdapLoggingConfig,
@@ -42,17 +40,13 @@ from .configuration import (
     create_production_config,
     create_test_config,
 )
-
-# Re-export constants for compatibility
-from .constants import (
+from flext_ldap.constants import (
     FlextLdapAttributeConstants,
     FlextLdapConnectionConstants,
     FlextLdapConstants,
     FlextLdapProtocolConstants,
 )
-
-# Re-export domain entities for compatibility
-from .entities import (
+from flext_ldap.entities import (
     FlextLdapCreateUserRequest,
     FlextLdapEntry,
     FlextLdapGroup,
@@ -60,24 +54,18 @@ from .entities import (
     FlextLdapSearchResponse,
     FlextLdapUser,
 )
-
-# Re-export field definitions for compatibility
-from .fields import (
+from flext_ldap.fields import (
     FlextLdapDataType,
     FlextLdapScopeEnum,
     LdapAttributeProcessor,
     LdapDomainValidator,
 )
-
-# Re-export type definitions for compatibility
-from .typings import (
+from flext_ldap.typings import (
     LdapAttributeDict,
     LdapAttributeValue,
     LdapSearchResult,
 )
-
-# Re-export value objects for compatibility
-from .value_objects import (
+from flext_ldap.value_objects import (
     FlextLdapDistinguishedName,
     FlextLdapFilter,
     FlextLdapScope,
@@ -156,7 +144,7 @@ class FlextLdapModels(FlextModel):
     # =========================================================================
 
     class Domain:
-        """LDAP domain models extending FlextEntity."""
+        """LDAP domain models extending FlextModels.Entity."""
 
         # Domain entity aliases
         User = FlextLdapUser
@@ -238,7 +226,7 @@ class FlextLdapModels(FlextModel):
 # self-assignments as ruff correctly identifies them as redundant
 
 # Entity status alias - backward compatibility
-FlextLdapEntityStatus = getattr(FlextEntity, "status", None)
+FlextLdapEntityStatus = getattr(FlextModels.Entity, "status", None)
 LDAPScope = FlextLdapScopeEnum
 
 

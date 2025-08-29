@@ -6,7 +6,7 @@ Following CLAUDE.md ANTI-HALLUCINATION protocol - execute REAL code, measure REA
 
 from __future__ import annotations
 
-from flext_core import FlextEntityId, FlextEntityStatus
+from flext_core import FlextEntityStatus, FlextModels
 
 from flext_ldap import (
     EntityParameterBuilder,
@@ -41,7 +41,7 @@ class TestDomainCoverageBoost:
 
         # Test is_satisfied_by method - REAL execution
         valid_user = FlextLdapUser(
-            id=FlextEntityId("test-user"),
+            id=FlextModels.EntityId("test-user"),
             uid="test.user",
             cn="Test User",
             sn="User",
@@ -68,7 +68,7 @@ class TestDomainCoverageBoost:
 
         # Create valid group and test
         valid_group = FlextLdapGroup(
-            id=FlextEntityId("test-group"),
+            id=FlextModels.EntityId("test-group"),
             cn="testgroup",
             dn="cn=testgroup,dc=example,dc=com",
             members=[],
@@ -135,7 +135,7 @@ class TestDomainCoverageBoost:
 
         # Test active user
         active_user = FlextLdapUser(
-            id=FlextEntityId("active"),
+            id=FlextModels.EntityId("active"),
             uid="active.user",
             cn="Active User",
             sn="User",
@@ -148,7 +148,7 @@ class TestDomainCoverageBoost:
 
         # Test inactive user
         inactive_user = FlextLdapUser(
-            id=FlextEntityId("inactive"),
+            id=FlextModels.EntityId("inactive"),
             uid="inactive.user",
             cn="Inactive User",
             sn="User",
@@ -165,7 +165,7 @@ class TestDomainCoverageBoost:
 
         # Create complete user
         complete_user = FlextLdapUser(
-            id=FlextEntityId("complete"),
+            id=FlextModels.EntityId("complete"),
             uid="complete.user",
             cn="Complete User",
             sn="User",
@@ -205,7 +205,7 @@ class TestDomainCoverageBoost:
 
         # Test can_add_member method
         group = FlextLdapGroup(
-            id=FlextEntityId("group1"),
+            id=FlextModels.EntityId("group1"),
             cn="group1",
             dn="cn=group1,dc=example,dc=com",
             members=[],
@@ -213,7 +213,7 @@ class TestDomainCoverageBoost:
         )
 
         user = FlextLdapUser(
-            id=FlextEntityId("user1"),
+            id=FlextModels.EntityId("user1"),
             uid="user1",
             cn="User One",
             sn="One",

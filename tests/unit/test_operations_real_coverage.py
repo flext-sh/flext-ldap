@@ -10,7 +10,7 @@ import uuid
 from datetime import UTC, datetime
 
 import pytest
-from flext_core import FlextEntityId, FlextEntityStatus
+from flext_core import FlextEntityStatus, FlextModels
 
 from flext_ldap.models import (
     FlextLdapCreateUserRequest,
@@ -406,7 +406,7 @@ class TestFlextLdapSearchOperationsReal:
         }
 
         entry = FlextLdapEntry(
-            id=FlextEntityId(str(uuid.uuid4())),
+            id=FlextModels.EntityId(str(uuid.uuid4())),
             dn="cn=john.doe,ou=users,dc=example,dc=com",
             object_classes=["person", "organizationalPerson"],
             attributes=attributes,
@@ -439,7 +439,7 @@ class TestFlextLdapSearchOperationsReal:
         }
 
         entry = FlextLdapEntry(
-            id=FlextEntityId(str(uuid.uuid4())),
+            id=FlextModels.EntityId(str(uuid.uuid4())),
             dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
             object_classes=["groupOfNames"],
             attributes=attributes,
@@ -525,12 +525,10 @@ class TestFlextLdapGroupOperationsReal:
         ops = FlextLdapGroupOperations()
 
         # Test with provided members
-        members = ops._prepare_group_members(
-            [
-                "cn=user1,ou=users,dc=example,dc=com",
-                "cn=user2,ou=users,dc=example,dc=com",
-            ]
-        )
+        members = ops._prepare_group_members([
+            "cn=user1,ou=users,dc=example,dc=com",
+            "cn=user2,ou=users,dc=example,dc=com",
+        ])
 
         assert len(members) == 2
         assert "cn=user1,ou=users,dc=example,dc=com" in members

@@ -56,7 +56,7 @@ All source code follows enterprise-grade standards:
 
 FLEXT-LDAP integrates seamlessly with the broader FLEXT ecosystem:
 
-- **flext-core**: Foundation patterns (FlextResult, FlextContainer, FlextEntity)
+- **flext-core**: Foundation patterns (FlextResult, FlextContainer, FlextModels.Entity)
 - **flext-auth**: Authentication and authorization services
 - **flext-meltano**: Data pipeline orchestration
 - **Singer ecosystem**: Extract-load-transform operations

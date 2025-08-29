@@ -12,10 +12,10 @@ from typing import ClassVar, cast
 
 from flext_core import (
     FlextDomainService,
-    FlextEntityId,
+    FlextLogger,
+    FlextModels,
     FlextResult,
     FlextTypes,
-    get_logger,
 )
 from pydantic import PrivateAttr
 
@@ -33,7 +33,7 @@ from flext_ldap.value_objects import (
     FlextLdapFilter,
 )
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdapOperations:
@@ -509,7 +509,7 @@ class FlextLdapOperations:
 
                 users.append(
                     FlextLdapUser(
-                        id=FlextEntityId(f"user_{uuid.uuid4().hex[:8]}"),
+                        id=FlextModels.EntityId(f"user_{uuid.uuid4().hex[:8]}"),
                         dn=entry.dn,
                         uid=uid,
                         cn=cn,
@@ -521,7 +521,7 @@ class FlextLdapOperations:
                         attributes=entry.attributes,
                         modified_at=None,
                         # Note: no phone field in FlextLdapUser
-                        # Note: no status field as FlextEntity already has it
+                        # Note: no status field as FlextModels.Entity already has it
                     ),
                 )
             return users
@@ -557,7 +557,7 @@ class FlextLdapOperations:
 
                 groups.append(
                     FlextLdapGroup(
-                        id=FlextEntityId(f"group_{uuid.uuid4().hex[:8]}"),
+                        id=FlextModels.EntityId(f"group_{uuid.uuid4().hex[:8]}"),
                         dn=entry.dn,
                         cn=cn,
                         description=description,
@@ -565,7 +565,7 @@ class FlextLdapOperations:
                         object_classes=entry.object_classes,
                         attributes=entry.attributes,
                         modified_at=None,
-                        # Note: no status field as FlextEntity already has it
+                        # Note: no status field as FlextModels.Entity already has it
                     ),
                 )
             return groups
@@ -596,12 +596,12 @@ class FlextLdapOperations:
 
                 # Create entry entity with validation
                 entry = FlextLdapEntry(
-                    id=FlextEntityId(f"entry_{uuid.uuid4().hex[:8]}"),
+                    id=FlextModels.EntityId(f"entry_{uuid.uuid4().hex[:8]}"),
                     dn=dn,
                     object_classes=object_classes,
                     attributes=attributes,
                     modified_at=None,
-                    # Note: no status field as FlextEntity already has it
+                    # Note: no status field as FlextModels.Entity already has it
                 )
 
                 validation_result = entry.validate_business_rules()
@@ -858,7 +858,7 @@ class FlextLdapOperations:
             """Build user entity - REUSABLE HELPER."""
             user_id_str = self._generate_id()
             return FlextLdapUser(
-                id=FlextEntityId(user_id_str),
+                id=FlextModels.EntityId(user_id_str),
                 dn=user_request.dn,
                 object_classes=["inetOrgPerson", "person", "top"],
                 attributes=attributes,
@@ -870,7 +870,7 @@ class FlextLdapOperations:
                 user_password=user_request.user_password,
                 modified_at=None,
                 # Note: no phone field in FlextLdapUser
-                # Note: no status field as FlextEntity already has it
+                # Note: no status field as FlextModels.Entity already has it
             )
 
     class GroupOperations(OperationsService):
@@ -1111,7 +1111,7 @@ class FlextLdapOperations:
             """Build group entity - REUSABLE HELPER."""
             group_id_str = self._generate_id()
             return FlextLdapGroup(
-                id=FlextEntityId(group_id_str),
+                id=FlextModels.EntityId(group_id_str),
                 dn=dn,
                 object_classes=["groupOfNames", "top"],
                 attributes=attributes,
@@ -1119,7 +1119,7 @@ class FlextLdapOperations:
                 description=description,
                 members=members,
                 modified_at=None,
-                # Note: no status field as FlextEntity already has it
+                # Note: no status field as FlextModels.Entity already has it
             )
 
         def _filter_dummy_members(self, members: list[str]) -> list[str]:

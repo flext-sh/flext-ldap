@@ -14,11 +14,11 @@ import asyncio
 import os
 from urllib.parse import urlparse
 
-from flext_core import get_logger
+from flext_core import FlextLogger
 
 from flext_ldap import FlextLdapApi, FlextLdapSettings
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 async def main() -> None:

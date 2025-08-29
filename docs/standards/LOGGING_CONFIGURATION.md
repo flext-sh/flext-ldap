@@ -87,9 +87,9 @@ Output includes:
 ### Context Binding
 
 ```python
-from flext_core import get_logger
+from flext_core import FlextLogger
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 # Operation-specific logger with context
 operation_logger = logger.bind(
@@ -149,10 +149,10 @@ This script:
 ### Logger Creation
 
 ```python
-from flext_core import get_logger
+from flext_core import FlextLogger
 
 # Automatically respects centralized configuration
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 ```
 
 ### FlextResult Integration

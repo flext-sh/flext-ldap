@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextEntityId, FlextEntityStatus
+from flext_core import FlextModels, FlextEntityStatus
 
 from flext_ldap.constants import FlextLdapValidationConstants
     FlextLdapActiveUserSpecification,
@@ -89,7 +89,7 @@ class TestFlextLdapUserSpecification:
 
         # Create valid user
         valid_user = FlextLdapUser(
-            id=FlextEntityId("test-user"),
+            id=FlextModels.EntityId("test-user"),
             uid="john.doe",
             cn="John Doe",
             sn="Doe",
@@ -143,7 +143,7 @@ class TestFlextLdapGroupSpecification:
         spec = FlextLdapGroupSpecification()
 
         valid_group = FlextLdapGroup(
-            id=FlextEntityId("test-group"),
+            id=FlextModels.EntityId("test-group"),
             cn="REDACTED_LDAP_BIND_PASSWORDs",
             dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
             members=["cn=user1,ou=users,dc=example,dc=com"],
@@ -312,7 +312,7 @@ class TestFlextLdapActiveUserSpecification:
         spec = FlextLdapActiveUserSpecification()
 
         active_user = FlextLdapUser(
-            id=FlextEntityId("active-user"),
+            id=FlextModels.EntityId("active-user"),
             uid="active.user",
             cn="Active User",
             sn="User",
@@ -327,7 +327,7 @@ class TestFlextLdapActiveUserSpecification:
         spec = FlextLdapActiveUserSpecification()
 
         inactive_user = FlextLdapUser(
-            id=FlextEntityId("inactive-user"),
+            id=FlextModels.EntityId("inactive-user"),
             uid="inactive.user",
             cn="Inactive User",
             sn="User",
@@ -353,7 +353,7 @@ class TestFlextLdapCompleteUserSpecification:
         spec = FlextLdapCompleteUserSpecification()
 
         complete_user = FlextLdapUser(
-            id=FlextEntityId("complete-user"),
+            id=FlextModels.EntityId("complete-user"),
             uid="complete.user",
             cn="Complete User",
             sn="User",
@@ -372,7 +372,7 @@ class TestFlextLdapCompleteUserSpecification:
 
         # User missing email
         incomplete_user = FlextLdapUser(
-            id=FlextEntityId("incomplete-user"),
+            id=FlextModels.EntityId("incomplete-user"),
             uid="incomplete.user",
             cn="Incomplete User",
             sn="User",
@@ -449,7 +449,7 @@ class TestFlextLdapGroupManagementService:
 
         # Create valid group and user
         group = FlextLdapGroup(
-            id=FlextEntityId("test-group"),
+            id=FlextModels.EntityId("test-group"),
             cn="test-group",
             dn="cn=test-group,ou=groups,dc=example,dc=com",
             members=[],
@@ -458,7 +458,7 @@ class TestFlextLdapGroupManagementService:
         )
 
         user = FlextLdapUser(
-            id=FlextEntityId("test-user"),
+            id=FlextModels.EntityId("test-user"),
             uid="test.user",
             cn="Test User",
             sn="User",
@@ -473,7 +473,7 @@ class TestFlextLdapGroupManagementService:
 
         # Should not be able to add inactive user
         inactive_user = FlextLdapUser(
-            id=FlextEntityId("inactive-user"),
+            id=FlextModels.EntityId("inactive-user"),
             uid="inactive.user",
             cn="Inactive User",
             sn="User",
