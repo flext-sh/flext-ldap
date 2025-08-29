@@ -46,7 +46,7 @@ from typing import ClassVar, final, override
 from flext_core import FlextLogger, FlextModels, FlextResult
 from pydantic import ConfigDict, Field, field_validator
 
-logger = FlextLogger(__name__)
+logger = get_logger(__name__)
 
 # =============================================================================
 # SINGLE FLEXT LDAP VALUE OBJECTS CLASS - Consolidated value object functionality
