@@ -23,7 +23,7 @@ import asyncio
 from collections.abc import AsyncIterator, Awaitable
 from contextlib import asynccontextmanager
 
-from flext_core import FlextResult, get_logger
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldap import (
     FlextLdapApi,
@@ -35,7 +35,7 @@ from flext_ldap import (
 )
 from flext_ldap.value_objects import FlextLdapFilter as FilterClass
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 @asynccontextmanager
@@ -147,7 +147,6 @@ async def demonstrate_async_patterns() -> None:
         async with ldap_session(
             "ldap://demo.example.com:389", "cn=admin,dc=example,dc=com", "password"
         ) as (api, _session_id):
-
             # 2. Concurrent operations (simulated) with proper typing
             tasks: list[Awaitable[FlextResult[list[FlextLdapEntry]]]] = []
             search_bases = [

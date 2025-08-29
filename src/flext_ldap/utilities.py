@@ -31,11 +31,11 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext_core import FlextResult, FlextUtilities, get_logger
+from flext_core import FlextLogger, FlextResult, FlextUtilities
 
 from flext_ldap.typings import LdapAttributeDict
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdapUtilities:
@@ -269,7 +269,9 @@ class FlextLdapUtilities:
 
                 for key, value in raw_attributes.items():
                     # Validate attribute name using our LDAP-specific validation
-                    attr_validation = FlextLdapUtilities.Validation.validate_attribute_name(key)
+                    attr_validation = (
+                        FlextLdapUtilities.Validation.validate_attribute_name(key)
+                    )
                     if not attr_validation.is_success:
                         return FlextResult[LdapAttributeDict].fail(
                             f"Invalid attribute name '{key}': {attr_validation.error}"
@@ -411,10 +413,8 @@ class FlextLdapUtilitiesLegacy:
         source_dict: object,
     ) -> dict[str, str | list[str]]:
         """Legacy method redirecting to flext-core implementation."""
-        return (
-            FlextLdapUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
-                source_dict
-            )
+        return FlextLdapUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            source_dict
         )
 
 

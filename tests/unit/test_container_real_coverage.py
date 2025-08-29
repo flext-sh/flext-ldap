@@ -250,7 +250,7 @@ class TestFlextLdapContainerRealCoverage(unittest.TestCase):
     def test_container_logger_usage(self) -> None:
         """Test container uses proper logging."""
         # Execute REAL logger access
-        # The container should use get_logger(__name__) pattern
+        # The container should use FlextLogger(__name__) pattern
 
         # Verify REAL logging initialization
         # Logger should be accessible through container operations

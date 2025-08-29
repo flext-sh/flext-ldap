@@ -9,7 +9,7 @@ import inspect
 import time
 
 import pytest
-from flext_core import FlextEntityId, FlextEntityStatus, FlextResult
+from flext_core import FlextEntityStatus, FlextModels, FlextResult
 
 from flext_ldap import repositories as repositories_module
 from flext_ldap.clients import FlextLdapClient
@@ -174,7 +174,7 @@ class TestRealRepositoryIntegration:
 
     def test_repository_uses_flext_logger(self) -> None:
         """Test repository uses FLEXT logging."""
-        # Repository module should use get_logger
+        # Repository module should use FlextLogger
 
         # Should have logger defined
         assert hasattr(repositories_module, "logger")
@@ -594,7 +594,7 @@ class TestRealFlextLdapRepositorySave:
 
         # Create an entry that fails business rule validation
         entry = FlextLdapEntry(
-            id=FlextEntityId("test-entry"),
+            id=FlextModels.EntityId("test-entry"),
             dn="cn=test,dc=example,dc=com",
             object_classes=[],  # Empty object classes should fail validation
             attributes={},
@@ -618,7 +618,7 @@ class TestRealFlextLdapRepositorySave:
 
         # Create a valid entry
         entry = FlextLdapEntry(
-            id=FlextEntityId("test-entry"),
+            id=FlextModels.EntityId("test-entry"),
             dn="cn=test,dc=example,dc=com",
             object_classes=["person"],
             attributes={"cn": ["Test"]},
@@ -650,7 +650,7 @@ class TestRealFlextLdapRepositorySave:
 
         # Create a valid entry
         entry = FlextLdapEntry(
-            id=FlextEntityId("test-entry"),
+            id=FlextModels.EntityId("test-entry"),
             dn="cn=test,dc=example,dc=com",
             object_classes=["person"],
             attributes={"cn": ["Test"], "sn": ["User"]},
@@ -681,7 +681,7 @@ class TestRealFlextLdapRepositorySave:
 
         # Create a valid entry
         entry = FlextLdapEntry(
-            id=FlextEntityId("test-entry"),
+            id=FlextModels.EntityId("test-entry"),
             dn="cn=test,dc=example,dc=com",
             object_classes=["person"],
             attributes={"cn": ["Test"], "sn": ["User"]},
@@ -749,7 +749,7 @@ class TestRealFlextLdapRepositoryExists:
         # Mock find_by_dn to return an entry
         async def mock_find_by_dn_found(dn):
             entry = FlextLdapEntry(
-                id=FlextEntityId("test"),
+                id=FlextModels.EntityId("test"),
                 dn=dn,
                 object_classes=["person"],
                 attributes={"cn": ["Test"]},
@@ -1028,7 +1028,7 @@ class TestRealFlextLdapGroupRepository:
 
         # Create mock group entry with members
         group_entry = FlextLdapEntry(
-            id=FlextEntityId("test-group"),
+            id=FlextModels.EntityId("test-group"),
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             object_classes=["groupOfNames"],
             attributes={
@@ -1064,12 +1064,10 @@ class TestRealFlextLdapGroupRepository:
 
         # Mock get_group_members to return existing members
         async def mock_get_group_members(group_dn):
-            return FlextResult[list[str]].ok(
-                [
-                    "cn=user1,ou=people,dc=example,dc=com",
-                    "cn=user2,ou=people,dc=example,dc=com",
-                ]
-            )
+            return FlextResult[list[str]].ok([
+                "cn=user1,ou=people,dc=example,dc=com",
+                "cn=user2,ou=people,dc=example,dc=com",
+            ])
 
         group_repo.get_group_members = mock_get_group_members
 

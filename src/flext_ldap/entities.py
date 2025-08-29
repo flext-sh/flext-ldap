@@ -43,11 +43,10 @@ from datetime import UTC, datetime
 from typing import cast, override
 
 from flext_core import (
-    FlextEntity,
+    FlextLogger,
     FlextModel,
     FlextModels,
     FlextResult,
-    get_logger,
 )
 from pydantic import Field, field_validator
 
@@ -57,7 +56,7 @@ from flext_ldap.value_objects import FlextLdapDistinguishedName
 # Type alias for explicit pyright recognition
 DictEntry = dict[str, object]
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 # =============================================================================
 # SINGLE FLEXT LDAP ENTITIES CLASS - Consolidated entity functionality
@@ -76,7 +75,7 @@ class FlextLdapEntities:
         - Open/Closed: Extensible without modification
         - Liskov Substitution: Consistent interface across all entities
         - Interface Segregation: Organized by entity type for specific access
-        - Dependency Inversion: Depends on FlextEntity/FlextModel abstractions
+        - Dependency Inversion: Depends on FlextModels.Entity/FlextModel abstractions
 
     Examples:
         Search operations::
@@ -174,7 +173,7 @@ class FlextLdapEntities:
     # DOMAIN ENTITIES - Rich LDAP domain objects
     # =========================================================================
 
-    class Entry(FlextEntity):
+    class Entry(FlextModels.Entity):
         """Base LDAP directory entry implementing rich domain model patterns."""
 
         dn: str = Field(..., description="Distinguished Name")
@@ -380,7 +379,7 @@ class FlextLdapEntities:
         def to_user_entity(self) -> FlextLdapEntities.User:
             """Convert request to user entity."""
             return FlextLdapEntities.User(
-                id=FlextEntityId(f"user_{self.uid}"),
+                id=FlextModels.EntityId(f"user_{self.uid}"),
                 dn=self.dn,
                 uid=self.uid,
                 cn=self.cn,

@@ -34,12 +34,12 @@ from __future__ import annotations
 from enum import Enum, StrEnum
 from typing import cast
 
-from flext_core import FlextResult, get_logger
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldap.constants import FlextLdapDefaultValues
 from flext_ldap.typings import LdapAttributeDict
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 # =============================================================================
 # SINGLE FLEXT LDAP FIELDS CLASS - Consolidated field functionality

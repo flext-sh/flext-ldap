@@ -24,12 +24,13 @@ from typing import ClassVar, TypeVar, cast, override
 
 from flext_core import (
     FlextDomainService,
-    FlextEntityId,
     FlextEntityStatus,
+    FlextLogger,
     FlextModel,
+    FlextModels,
     FlextResult,
     FlextTypes,
-    get_logger,
+    FlextUtilities,
 )
 
 from flext_ldap.constants import (
@@ -39,8 +40,9 @@ from flext_ldap.constants import (
 )
 from flext_ldap.models import FlextLdapGroup, FlextLdapUser
 from flext_ldap.typings import LdapAttributeDict
+from flext_ldap.utilities import FlextLdapUtilities
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 T = TypeVar("T")
 
 
@@ -341,7 +343,7 @@ class FlextLdapDomain:
             """Execute method required by FlextDomainService - CORRECTED signature."""
             return FlextResult[FlextLdapUser].ok(
                 FlextLdapUser(
-                    id=FlextEntityId("default_user"),
+                    id=FlextModels.EntityId("default_user"),
                     dn="cn=default,dc=example,dc=com",
                     uid="default",
                     cn="Default User",
@@ -463,8 +465,6 @@ class FlextLdapDomain:
             self, first_name: str, last_name: str
         ) -> FlextResult[str]:
             """Generate username following business rules - USES FLEXT-CORE."""
-            from flext_core import FlextUtilities
-
             try:
                 # Validate inputs using FlextUtilities
                 if not FlextUtilities.TypeGuards.is_non_empty_string(
@@ -508,7 +508,7 @@ class FlextLdapDomain:
             """Execute method required by FlextDomainService - CORRECTED signature."""
             return FlextResult[FlextLdapGroup].ok(
                 FlextLdapGroup(
-                    id=FlextEntityId("default_group"),
+                    id=FlextModels.EntityId("default_group"),
                     dn="cn=default,dc=example,dc=com",
                     cn="Default Group",
                     description="Default group",
@@ -802,8 +802,6 @@ class FlextLdapDomain:
         @staticmethod
         def safe_ldap_attributes(value: object) -> LdapAttributeDict:
             """Safely convert value to LdapAttributeDict."""
-            from .utilities import FlextLdapUtilities
-
             return FlextLdapUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
                 value
             )  # type: ignore[return-value]
@@ -818,7 +816,7 @@ class FlextLdapDomain:
         def build(self) -> object:
             """Build FlextLdapUser with reduced parameter complexity."""
             return FlextLdapUser(
-                id=FlextEntityId(
+                id=FlextModels.EntityId(
                     f"user_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"
                 ),
                 dn=str(self.params["dn"]),
@@ -843,7 +841,7 @@ class FlextLdapDomain:
         def build(self) -> object:
             """Build FlextLdapGroup with reduced parameter complexity."""
             return FlextLdapGroup(
-                id=FlextEntityId(
+                id=FlextModels.EntityId(
                     f"group_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"
                 ),
                 dn=str(self.params["dn"]),

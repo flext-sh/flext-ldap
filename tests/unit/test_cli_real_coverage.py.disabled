@@ -139,13 +139,13 @@ class TestFlextLdapCliCommandServiceRealCoverage:
 
         mock_search_results = [
             FlextLdapEntry(
-                id=FlextEntityId("user1"),
+                id=FlextModels.EntityId("user1"),
                 dn="cn=user1,ou=users,dc=example,dc=com",
                 attributes={"cn": ["User One"], "mail": ["user1@example.com"]},
                 status=FlextEntityStatus.ACTIVE,
             ),
             FlextLdapEntry(
-                id=FlextEntityId("user2"),
+                id=FlextModels.EntityId("user2"),
                 dn="cn=user2,ou=users,dc=example,dc=com",
                 attributes={"cn": ["User Two"], "mail": ["user2@example.com"]},
                 status=FlextEntityStatus.ACTIVE,

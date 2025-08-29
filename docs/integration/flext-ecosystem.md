@@ -56,10 +56,10 @@ FLEXT-LDAP serves as a core infrastructure component in the FLEXT data platform 
 **FlextResult Pattern**
 
 ```python
-from flext_core import FlextResult, get_logger
+from flext_core import FlextResult, FlextLogger
 from flext_ldap import get_ldap_api
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 async def integrate_with_core():
     \"\"\"Example of FlextResult pattern integration.\"\"\"
@@ -119,10 +119,10 @@ local_settings = FlextLdapSettings(
 **Structured Logging**
 
 ```python
-from flext_observability import get_logger, LogContext
+from flext_observability import FlextLogger, LogContext
 from flext_ldap import get_ldap_api
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 async def ldap_operation_with_logging():
     \"\"\"LDAP operations with structured logging.\"\"\"

@@ -2,7 +2,7 @@
 
 from typing import Final
 
-from flext_core import get_logger
+from flext_core import FlextLogger
 
 from flext_ldap.connection_config import FlextLdapConnectionConfig
 from flext_ldap.settings import (
@@ -15,7 +15,7 @@ from flext_ldap.settings import (
     create_test_config,
 )
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 # Constants
 MAX_PORT: Final[int] = 65535

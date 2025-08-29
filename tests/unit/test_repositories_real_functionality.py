@@ -14,7 +14,7 @@ import inspect
 import unittest
 from unittest.mock import MagicMock
 
-from flext_core import FlextEntityId, FlextResult
+from flext_core import FlextModels, FlextResult
 
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.entities import (
@@ -134,7 +134,9 @@ class TestFlextLdapRepositoryRealFunctionality(unittest.TestCase):
         async def mock_find_by_dn(dn: str) -> FlextResult[FlextLdapEntry | None]:
             if dn == "cn=exists,ou=users,dc=example,dc=com":
                 entry = FlextLdapEntry(
-                    id=FlextEntityId("test-id"), dn=dn, attributes={"cn": ["exists"]}
+                    id=FlextModels.EntityId("test-id"),
+                    dn=dn,
+                    attributes={"cn": ["exists"]},
                 )
                 return FlextResult[FlextLdapEntry | None].ok(entry)
             return FlextResult[FlextLdapEntry | None].ok(None)
@@ -174,7 +176,7 @@ class TestFlextLdapRepositoryRealFunctionality(unittest.TestCase):
 
             # Criar entry válido com ID requerido
             entry = FlextLdapEntry(
-                id=FlextEntityId("test-id"),
+                id=FlextModels.EntityId("test-id"),
                 dn="cn=newuser,ou=users,dc=example,dc=com",
                 attributes={"cn": ["newuser"], "objectClass": ["person"]},
             )
@@ -283,7 +285,7 @@ class TestFlextLdapUserRepositoryRealFunctionality(unittest.TestCase):
             # Mock para find_by_dn usado internamente
             if "testuser" in dn:
                 entry = FlextLdapEntry(
-                    id=FlextEntityId("test-id"),
+                    id=FlextModels.EntityId("test-id"),
                     dn=dn,
                     attributes={"uid": ["testuser"], "cn": ["Test User"]},
                 )
@@ -335,7 +337,7 @@ class TestFlextLdapUserRepositoryRealFunctionality(unittest.TestCase):
             # Mock para find_by_dn usado internamente
             user_id = dn.split(",", maxsplit=1)[0].split("=")[1]  # Extrair uid do DN
             entry = FlextLdapEntry(
-                id=FlextEntityId(f"test-{user_id}"),
+                id=FlextModels.EntityId(f"test-{user_id}"),
                 dn=dn,
                 attributes={"uid": [user_id], "mail": [f"{user_id}@example.com"]},
             )
@@ -404,7 +406,7 @@ class TestFlextLdapGroupRepositoryRealFunctionality(unittest.TestCase):
             # Mock para find_by_dn usado internamente
             if "testgroup" in dn:
                 entry = FlextLdapEntry(
-                    id=FlextEntityId("test-id"),
+                    id=FlextModels.EntityId("test-id"),
                     dn=dn,
                     attributes={
                         "cn": ["testgroup"],
@@ -439,7 +441,7 @@ class TestFlextLdapGroupRepositoryRealFunctionality(unittest.TestCase):
             if "testgroup" in dn:
                 # Simular grupo com membros
                 entry = FlextLdapEntry(
-                    id=FlextEntityId("test-id"),
+                    id=FlextModels.EntityId("test-id"),
                     dn=dn,
                     attributes={
                         "cn": ["testgroup"],
@@ -475,9 +477,9 @@ class TestFlextLdapGroupRepositoryRealFunctionality(unittest.TestCase):
         async def mock_get_group_members(group_dn: str) -> FlextResult[list[str]]:
             if not group_dn or group_dn == "":
                 return FlextResult[list[str]].fail("Invalid group DN")
-            return FlextResult[list[str]].ok(
-                ["uid=existinguser,ou=users,dc=example,dc=com"]
-            )
+            return FlextResult[list[str]].ok([
+                "uid=existinguser,ou=users,dc=example,dc=com"
+            ])
 
         async def mock_update(
             dn: str, attributes: dict[str, object]

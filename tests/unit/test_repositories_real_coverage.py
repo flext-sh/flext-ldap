@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from flext_core import FlextEntityId, FlextEntityStatus, FlextResult
+from flext_core import FlextEntityStatus, FlextModels, FlextResult
 
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.entities import (
@@ -178,7 +178,7 @@ class TestFlextLdapRepositoryRealExecution:
 
         # Create valid entry
         entry = FlextLdapEntry(
-            id=FlextEntityId("test-entry"),
+            id=FlextModels.EntityId("test-entry"),
             dn="cn=test,dc=example,dc=com",
             object_classes=["person"],
             attributes={"cn": ["test"]},
@@ -204,7 +204,7 @@ class TestFlextLdapRepositoryRealExecution:
 
         # Create valid entry
         entry = FlextLdapEntry(
-            id=FlextEntityId("test-entry"),
+            id=FlextModels.EntityId("test-entry"),
             dn="cn=test,dc=example,dc=com",
             object_classes=["person"],
             attributes={"cn": ["test"]},
@@ -234,7 +234,7 @@ class TestFlextLdapRepositoryRealExecution:
 
         # Create valid entry
         entry = FlextLdapEntry(
-            id=FlextEntityId("test-entry"),
+            id=FlextModels.EntityId("test-entry"),
             dn="cn=newuser,dc=example,dc=com",
             object_classes=["person", "inetOrgPerson"],
             attributes={"cn": ["newuser"], "uid": ["newuser"]},
@@ -279,7 +279,7 @@ class TestFlextLdapRepositoryRealExecution:
 
         # Create valid entry
         entry = FlextLdapEntry(
-            id=FlextEntityId("test-entry"),
+            id=FlextModels.EntityId("test-entry"),
             dn="cn=existinguser,dc=example,dc=com",
             object_classes=["person", "inetOrgPerson"],
             attributes={"cn": ["existinguser"], "uid": ["existinguser"]},
@@ -605,7 +605,7 @@ class TestFlextLdapUserRepositoryRealExecution:
         async def mock_find_by_dn(dn):
             find_by_dn_calls.append(dn)
             entry = FlextLdapEntry(
-                id=FlextEntityId(f"user-{len(find_by_dn_calls)}"),
+                id=FlextModels.EntityId(f"user-{len(find_by_dn_calls)}"),
                 dn=dn,
                 object_classes=["person"],
                 attributes={"cn": [f"user{len(find_by_dn_calls)}"]},
@@ -686,7 +686,7 @@ class TestFlextLdapGroupRepositoryRealExecution:
 
         # Create group entry with members
         group_entry = FlextLdapEntry(
-            id=FlextEntityId("test-group"),
+            id=FlextModels.EntityId("test-group"),
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             object_classes=["groupOfNames"],
             attributes={

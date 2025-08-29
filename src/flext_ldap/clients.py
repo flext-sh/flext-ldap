@@ -39,7 +39,7 @@ from typing import Literal, cast
 from urllib.parse import urlparse
 
 import ldap3
-from flext_core import FlextResult, get_logger
+from flext_core import FlextLogger, FlextResult
 from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE
 from ldap3.core.exceptions import LDAPException
 
@@ -47,7 +47,7 @@ from flext_ldap.entities import FlextLdapSearchRequest, FlextLdapSearchResponse
 from flext_ldap.typings import LdapAttributeDict, LdapSearchResult
 from flext_ldap.utils import FlextLdapUtils
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 # Valid LDAP scope literals for ldap3
 LdapScope = Literal["BASE", "LEVEL", "SUBTREE"]

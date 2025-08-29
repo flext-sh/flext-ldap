@@ -36,7 +36,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextContainer, FlextResult, FlextServiceProcessor, get_logger
+from flext_core import FlextContainer, FlextLogger, FlextResult, FlextServiceProcessor
 
 from flext_ldap.container import get_ldap_container
 from flext_ldap.entities import (
@@ -50,7 +50,7 @@ from flext_ldap.repositories import FlextLdapRepositories
 from flext_ldap.typings import LdapAttributeDict
 from flext_ldap.value_objects import FlextLdapDistinguishedName, FlextLdapFilter
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 # =============================================================================
@@ -59,7 +59,9 @@ logger = get_logger(__name__)
 
 
 if TYPE_CHECKING:
-    _ServiceProcessorBase = FlextServiceProcessor[dict[str, object], object, dict[str, object]]
+    _ServiceProcessorBase = FlextServiceProcessor[
+        dict[str, object], object, dict[str, object]
+    ]
 else:
     _ServiceProcessorBase = FlextServiceProcessor
 

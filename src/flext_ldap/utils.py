@@ -32,16 +32,12 @@ Migration Guide:
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
-# Import from flext-core for generic utilities
 from flext_core import FlextLogger, FlextUtilities
 
-# Import from our new utilities module for LDAP-specific extensions
+from flext_ldap.typings import LdapAttributeDict
 from flext_ldap.utilities import FlextLdapUtilities
-
-if TYPE_CHECKING:
-    from flext_ldap.typings import LdapAttributeDict
 
 logger = FlextLogger(__name__)
 

@@ -45,10 +45,10 @@ from urllib.parse import urlparse
 
 from flext_core import (
     FlextDomainService,
-    FlextEntityId,
+    FlextModels.EntityId,
     FlextModel,
     FlextResult,
-    get_logger,
+    FlextLogger,
 )
 from pydantic import ConfigDict, Field, field_validator
 
@@ -59,7 +59,7 @@ from flext_ldap.typings import LdapAttributeDict, LdapSearchResult
 from flext_ldap.utilities import FlextLdapUtilities
 from flext_ldap.utils import FlextLdapValidationHelpers
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 # =============================================================================
 # SINGLE FLEXT LDAP ADAPTERS CLASS - Consolidated adapter functionality
@@ -329,7 +329,7 @@ class FlextLdapAdapters:
 
                     # Create entry
                     entry = FlextLdapEntry(
-                        id=FlextEntityId(f"entry_{hash(dn_str)}"),
+                        id=FlextModels.EntityId(f"entry_{hash(dn_str)}"),
                         dn=dn_str,
                         attributes=attributes_dict,
                         object_classes=[],

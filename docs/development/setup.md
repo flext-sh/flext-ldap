@@ -310,7 +310,7 @@ cd ../flext-ldap
 
 # Test integration
 poetry run python -c "
-from flext_core import FlextResult, get_logger
+from flext_core import FlextResult, FlextLogger
 from flext_ldap import get_ldap_api
 print('✅ FLEXT-Core integration working')
 "
@@ -326,8 +326,8 @@ cd ../flext-ldap
 
 # Test logging integration
 poetry run python -c "
-from flext_observability import get_logger
-logger = get_logger('test')
+from flext_observability import FlextLogger
+logger = FlextLogger('test')
 logger.info('✅ Observability integration working')
 "
 ```

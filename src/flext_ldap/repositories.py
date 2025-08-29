@@ -10,10 +10,10 @@ import asyncio
 from typing import cast
 
 from flext_core import (
-    FlextEntityId,
+    FlextLogger,
+    FlextModels,
     FlextProtocols,
     FlextResult,
-    get_logger,
 )
 
 from flext_ldap.clients import FlextLdapClient
@@ -26,7 +26,7 @@ from flext_ldap.fields import LdapAttributeProcessor
 from flext_ldap.typings import LdapAttributeDict
 from flext_ldap.value_objects import FlextLdapDistinguishedName
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdapRepositories:
@@ -112,7 +112,7 @@ class FlextLdapRepositories:
 
             # Create entry
             entry = FlextLdapEntry(
-                id=FlextEntityId(
+                id=FlextModels.EntityId(
                     f"repo_entry_{dn.replace(',', '_').replace('=', '_')}"
                 ),
                 dn=dn,

@@ -9,7 +9,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock
 
 import pytest
-from flext_core import FlextEntityId, FlextEntityStatus, FlextResult
+from flext_core import FlextEntityStatus, FlextModels, FlextResult
 
 from flext_ldap import (
     FlextLdapApi,
@@ -463,7 +463,7 @@ class TestFlextLdapApiRealUserOperations:
         # Mock service response
 
         mock_user = FlextLdapUser(
-            id=FlextEntityId("test-user"),
+            id=FlextModels.EntityId("test-user"),
             dn="cn=testuser,ou=users,dc=example,dc=com",
             cn="Test User",
             sn="User",
@@ -506,7 +506,7 @@ class TestFlextLdapApiRealUserOperations:
         # Mock service response
 
         mock_user = FlextLdapUser(
-            id=FlextEntityId("test-user"),
+            id=FlextModels.EntityId("test-user"),
             dn="cn=testuser,ou=users,dc=example,dc=com",
             cn="Test User",
             sn="User",

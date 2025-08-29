@@ -10,7 +10,7 @@ COVERAGE TARGET: adapters.py (47% -> 80%+) - 146 missing lines
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from flext_core import FlextEntityId, FlextEntityStatus, FlextResult
+from flext_core import FlextEntityStatus, FlextModels, FlextResult
 
 from flext_ldap.adapters import (
     ConnectionConfig,
@@ -1161,7 +1161,7 @@ class TestFlextLdapEntryServiceRealCoverage:
 
         # Create expected entry for search result
         expected_entry = FlextLdapEntry(
-            id=FlextEntityId("modified-user"),
+            id=FlextModels.EntityId("modified-user"),
             status=FlextEntityStatus.ACTIVE,
             dn=dn,
             attributes={
@@ -1708,7 +1708,7 @@ class TestFlextLdapDirectoryServiceRealCoverage:
         # Mock successful search results
         mock_entries = [
             FlextLdapEntry(
-                id=FlextEntityId("user1"),
+                id=FlextModels.EntityId("user1"),
                 status=FlextEntityStatus.ACTIVE,
                 dn="cn=user1,ou=users,dc=example,dc=com",
                 attributes={
@@ -1718,7 +1718,7 @@ class TestFlextLdapDirectoryServiceRealCoverage:
                 },
             ),
             FlextLdapEntry(
-                id=FlextEntityId("user2"),
+                id=FlextModels.EntityId("user2"),
                 status=FlextEntityStatus.ACTIVE,
                 dn="cn=user2,ou=users,dc=example,dc=com",
                 attributes={
@@ -1807,13 +1807,13 @@ class TestFlextLdapDirectoryServiceRealCoverage:
         # Setup REAL test scenario
         entries_data = [
             FlextLdapEntry(
-                id=FlextEntityId("user1"),
+                id=FlextModels.EntityId("user1"),
                 status=FlextEntityStatus.ACTIVE,
                 dn="cn=user1,dc=example,dc=com",
                 attributes={"cn": ["User One"], "objectClass": ["person"]},
             ),
             FlextLdapEntry(
-                id=FlextEntityId("user2"),
+                id=FlextModels.EntityId("user2"),
                 status=FlextEntityStatus.ACTIVE,
                 dn="cn=user2,dc=example,dc=com",
                 attributes={"cn": ["User Two"], "mail": ["user2@example.com"]},
@@ -1849,7 +1849,7 @@ class TestFlextLdapDirectoryServiceRealCoverage:
         # Setup REAL test scenario with mixed valid/invalid entries
         entries_data = [
             FlextLdapEntry(
-                id=FlextEntityId("valid"),
+                id=FlextModels.EntityId("valid"),
                 status=FlextEntityStatus.ACTIVE,
                 dn="cn=valid,dc=example,dc=com",
                 attributes={"cn": ["Valid"]},

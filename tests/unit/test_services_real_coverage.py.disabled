@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from flext_core import FlextEntityId, FlextEntityStatus, FlextResult
+from flext_core import FlextModels, FlextEntityStatus, FlextResult
 
 from flext_ldap.container import FlextLdapContainer
 from flext_ldap.entities import (
@@ -113,7 +113,7 @@ class TestFlextLdapServiceRealExecution:
         # Mock repository to return user entry
 
         mock_entry = FlextLdapEntry(
-            id=FlextEntityId("user-id"),
+            id=FlextModels.EntityId("user-id"),
             dn="cn=testuser,ou=users,dc=example,dc=com",
             object_classes=["person", "inetOrgPerson"],
             attributes={"uid": ["testuser"], "cn": ["Test User"]},
@@ -229,7 +229,7 @@ class TestFlextLdapServiceRealExecution:
             side_effect=[
                 FlextResult[FlextLdapUser | None].ok(
                     FlextLdapUser(
-                        id=FlextEntityId("user1-id"),
+                        id=FlextModels.EntityId("user1-id"),
                         dn="cn=user1,ou=users,dc=example,dc=com",
                         uid="user1",
                         cn="User One",
@@ -239,7 +239,7 @@ class TestFlextLdapServiceRealExecution:
                 ),
                 FlextResult[FlextLdapUser | None].ok(
                     FlextLdapUser(
-                        id=FlextEntityId("user2-id"),
+                        id=FlextModels.EntityId("user2-id"),
                         dn="cn=user2,ou=users,dc=example,dc=com",
                         uid="user2",
                         cn="User Two",
@@ -305,7 +305,7 @@ class TestFlextLdapServiceRealExecution:
 
         # Create group
         group = FlextLdapGroup(
-            id=FlextEntityId("group-id"),
+            id=FlextModels.EntityId("group-id"),
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
             object_classes=["groupOfNames"],
@@ -336,7 +336,7 @@ class TestFlextLdapServiceRealExecution:
         # Mock repository to return group entry
 
         mock_entry = FlextLdapEntry(
-            id=FlextEntityId("group-id"),
+            id=FlextModels.EntityId("group-id"),
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             object_classes=["groupOfNames"],
             attributes={
@@ -614,7 +614,7 @@ class TestFlextLdapUserServiceRealExecution:
         main_service.create_user = AsyncMock(
             return_value=FlextResult[FlextLdapUser].ok(
                 FlextLdapUser(
-                    id=FlextEntityId("user-id"),
+                    id=FlextModels.EntityId("user-id"),
                     dn="cn=test,dc=example,dc=com",
                     uid="test",
                     cn="Test User",
@@ -702,7 +702,7 @@ class TestFlextLdapGroupServiceRealExecution:
 
         # Test all delegation methods
         group = FlextLdapGroup(
-            id=FlextEntityId("group-id"),
+            id=FlextModels.EntityId("group-id"),
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
             object_classes=["groupOfNames"],

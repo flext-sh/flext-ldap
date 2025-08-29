@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 
 import pytest
-from flext_core import FlextEntityId, FlextEntityStatus, FlextResult
+from flext_core import FlextEntityStatus, FlextModels, FlextResult
 
 # Test real domain functionality
 from flext_ldap.domain import (
@@ -280,7 +280,7 @@ class TestRealModels:
         """Test creating REAL FlextLdapUser instances."""
         # This tests the actual model validation
         user = FlextLdapUser(
-            id=FlextEntityId("test_user_123"),
+            id=FlextModels.EntityId("test_user_123"),
             dn="cn=John Doe,ou=users,dc=example,dc=com",
             cn="John Doe",
             sn="Doe",
@@ -290,7 +290,7 @@ class TestRealModels:
         )
 
         # Verify the model was created correctly
-        assert user.id == FlextEntityId("test_user_123")
+        assert user.id == FlextModels.EntityId("test_user_123")
         assert user.dn == "cn=John Doe,ou=users,dc=example,dc=com"
         assert user.cn == "John Doe"
         assert user.sn == "Doe"
@@ -302,13 +302,13 @@ class TestRealModels:
     def test_real_ldap_group_creation(self) -> None:
         """Test creating REAL FlextLdapGroup instances."""
         group = FlextLdapGroup(
-            id=FlextEntityId("test_group_123"),
+            id=FlextModels.EntityId("test_group_123"),
             dn="cn=administrators,ou=groups,dc=example,dc=com",
             cn="administrators",
             status=FlextEntityStatus.ACTIVE,
         )
 
-        assert group.id == FlextEntityId("test_group_123")
+        assert group.id == FlextModels.EntityId("test_group_123")
         assert group.dn == "cn=administrators,ou=groups,dc=example,dc=com"
         assert group.cn == "administrators"
         # Status is stored as string value, not enum
@@ -317,12 +317,12 @@ class TestRealModels:
     def test_real_ldap_entry_creation(self) -> None:
         """Test creating REAL FlextLdapEntry instances."""
         entry = FlextLdapEntry(
-            id=FlextEntityId("test_entry_123"),
+            id=FlextModels.EntityId("test_entry_123"),
             dn="cn=test,dc=example,dc=com",
             status=FlextEntityStatus.ACTIVE,
         )
 
-        assert entry.id == FlextEntityId("test_entry_123")
+        assert entry.id == FlextModels.EntityId("test_entry_123")
         assert entry.dn == "cn=test,dc=example,dc=com"
         # Status is stored as string value, not enum
         assert entry.status == "active"
@@ -406,8 +406,8 @@ class TestRealErrorHandling:
         # Boundary conditions
         assert not is_string_list("string")  # String is not a list
         assert is_string_list([])  # Empty list is valid
-        assert is_bytes_list(
-            []
+        assert (
+            is_bytes_list([])
         )  # Empty list is valid for bytes list (discovered real behavior)
 
 

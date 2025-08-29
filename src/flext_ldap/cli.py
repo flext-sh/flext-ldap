@@ -19,9 +19,9 @@ from flext_cli import (
 from flext_core import (
     FlextConstants,
     FlextContainer,
+    FlextLogger,
     FlextResult,
     FlextTypes,
-    get_logger,
 )
 from rich.console import Console
 from rich.table import Table
@@ -29,7 +29,7 @@ from rich.table import Table
 from flext_ldap.api import get_ldap_api
 from flext_ldap.entities import FlextLdapEntry
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 # =============================================================================

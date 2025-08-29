@@ -9,12 +9,9 @@ from datetime import UTC, datetime
 
 # No need for cast anymore - using direct construction
 from flext_core import (
-    FlextEntityId,
     FlextEntityStatus,
     FlextEventList,
-    FlextMetadata,
-    FlextTimestamp,
-    FlextVersion,
+    FlextModels,
 )
 
 from flext_ldap import (
@@ -80,12 +77,12 @@ class TestFlextLdapUser:
     def create_test_user(self, **kwargs: object) -> FlextLdapUser:
         """Helper to create test user with defaults using object for kwargs."""
         defaults: dict[str, object] = {
-            "id": FlextEntityId("test_user"),
-            "version": FlextVersion(1),
-            "created_at": FlextTimestamp(datetime.now(UTC)),
-            "updated_at": FlextTimestamp(datetime.now(UTC)),
+            "id": FlextModels.EntityId("test_user"),
+            "version": FlextModels.Version(1),
+            "created_at": FlextModels.Timestamp(datetime.now(UTC)),
+            "updated_at": FlextModels.Timestamp(datetime.now(UTC)),
             "domain_events": FlextEventList([]),
-            "metadata": FlextMetadata({}),
+            "metadata": FlextModels.Metadata({}),
             "dn": "cn=testuser,ou=users,dc=example,dc=com",
             "uid": "testuser",
             "cn": "Test User",
@@ -179,12 +176,12 @@ class TestFlextLdapGroup:
     def create_test_group(self, **kwargs: object) -> FlextLdapGroup:
         """Helper to create test group with defaults using object for kwargs."""
         defaults: dict[str, object] = {
-            "id": FlextEntityId("test_group"),
-            "version": FlextVersion(1),
-            "created_at": FlextTimestamp(datetime.now(UTC)),
-            "updated_at": FlextTimestamp(datetime.now(UTC)),
+            "id": FlextModels.EntityId("test_group"),
+            "version": FlextModels.Version(1),
+            "created_at": FlextModels.Timestamp(datetime.now(UTC)),
+            "updated_at": FlextModels.Timestamp(datetime.now(UTC)),
             "domain_events": FlextEventList([]),
-            "metadata": FlextMetadata({}),
+            "metadata": FlextModels.Metadata({}),
             "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
             "cn": "Test Group",
             "description": "Test group for unit testing",
@@ -280,12 +277,12 @@ class TestFlextLdapEntry:
     def create_test_entry(self, **kwargs: object) -> FlextLdapEntry:
         """Helper to create test entry with defaults using object for kwargs."""
         defaults: dict[str, object] = {
-            "id": FlextEntityId("test_entry"),
-            "version": FlextVersion(1),
-            "created_at": FlextTimestamp(datetime.now(UTC)),
-            "updated_at": FlextTimestamp(datetime.now(UTC)),
+            "id": FlextModels.EntityId("test_entry"),
+            "version": FlextModels.Version(1),
+            "created_at": FlextModels.Timestamp(datetime.now(UTC)),
+            "updated_at": FlextModels.Timestamp(datetime.now(UTC)),
             "domain_events": FlextEventList([]),
-            "metadata": FlextMetadata({}),
+            "metadata": FlextModels.Metadata({}),
             "dn": "cn=testentry,dc=example,dc=com",
             "object_classes": ["top", "person"],
             "attributes": {"cn": ["test"], "sn": ["entry"]},
@@ -462,7 +459,7 @@ class TestBusinessRulesIntegration:
         """Test business rules that span multiple entities."""
         # Create user
         user = FlextLdapUser(
-            id=FlextEntityId("test_cross_user"),
+            id=FlextModels.EntityId("test_cross_user"),
             dn="cn=crossuser,ou=users,dc=example,dc=com",
             uid="crossuser",
             cn="Cross User",
@@ -477,7 +474,7 @@ class TestBusinessRulesIntegration:
 
         # Create group with user as member
         group = FlextLdapGroup(
-            id=FlextEntityId("test_cross_group"),
+            id=FlextModels.EntityId("test_cross_group"),
             dn="cn=crossgroup,ou=groups,dc=example,dc=com",
             cn="Cross Group",
             description="Cross-validation test group",
@@ -570,12 +567,12 @@ class TestRealWorldScenarios:
         for user_data in realistic_users:
             # Create user entity with realistic data
             user = FlextLdapUser(
-                id=FlextEntityId(f"test_{user_data['uid']}"),
-                version=FlextVersion(1),
-                created_at=FlextTimestamp(datetime.now(UTC)),
-                updated_at=FlextTimestamp(datetime.now(UTC)),
+                id=FlextModels.EntityId(f"test_{user_data['uid']}"),
+                version=FlextModels.Version(1),
+                created_at=FlextModels.Timestamp(datetime.now(UTC)),
+                updated_at=FlextModels.Timestamp(datetime.now(UTC)),
                 domain_events=FlextEventList([]),
-                metadata=FlextMetadata({}),
+                metadata=FlextModels.Metadata({}),
                 status=FlextEntityStatus.ACTIVE,
                 **{k: v for k, v in user_data.items() if k != "attributes"},
             )
@@ -620,14 +617,14 @@ class TestRealWorldScenarios:
         for group_data in org_groups:
             # Create group with realistic organizational data
             group = FlextLdapGroup(
-                id=FlextEntityId(
+                id=FlextModels.EntityId(
                     f"test_group_{group_data['cn'].lower().replace(' ', '_')}"
                 ),
-                version=FlextVersion(1),
-                created_at=FlextTimestamp(datetime.now(UTC)),
-                updated_at=FlextTimestamp(datetime.now(UTC)),
+                version=FlextModels.Version(1),
+                created_at=FlextModels.Timestamp(datetime.now(UTC)),
+                updated_at=FlextModels.Timestamp(datetime.now(UTC)),
                 domain_events=FlextEventList([]),
-                metadata=FlextMetadata({}),
+                metadata=FlextModels.Metadata({}),
                 status=FlextEntityStatus.ACTIVE,
                 **group_data,
             )

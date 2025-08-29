@@ -11,7 +11,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import cast
 
-from flext_core import FlextResult, get_logger
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldap.clients import FlextLdapClient
 from flext_ldap.configuration import FlextLdapSettings
@@ -29,7 +29,7 @@ from flext_ldap.services import FlextLdapService
 from flext_ldap.typings import LdapAttributeDict
 from flext_ldap.utilities import FlextLdapUtilities
 
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdapApi:

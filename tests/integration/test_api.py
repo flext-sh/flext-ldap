@@ -9,7 +9,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from flext_core import FlextEntityId, FlextEntityStatus
+from flext_core import FlextEntityStatus, FlextModels
 
 from flext_ldap import (
     FlextLdapClient,
@@ -205,7 +205,7 @@ class TestLdapServiceRealOperations:
         assert create_result.is_success, f"Failed to create user: {create_result.error}"
 
         default_user = FlextLdapUser(
-            id=FlextEntityId("default"),
+            id=FlextModels.EntityId("default"),
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
@@ -221,7 +221,7 @@ class TestLdapServiceRealOperations:
         get_result = await ldap_service.get_user(user_request.dn)
         assert get_result.is_success, f"Failed to get user: {get_result.error}"
         default_user = FlextLdapUser(
-            id=FlextEntityId("default"),
+            id=FlextModels.EntityId("default"),
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
@@ -248,7 +248,7 @@ class TestLdapServiceRealOperations:
         updated_get_result = await ldap_service.get_user(user_request.dn)
         assert updated_get_result.is_success
         default_user = FlextLdapUser(
-            id=FlextEntityId("default"),
+            id=FlextModels.EntityId("default"),
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
@@ -330,7 +330,7 @@ class TestLdapServiceRealOperations:
         # Test group creation
         group_id = uuid4().hex[:8]
         group = FlextLdapGroupModel(
-            id=FlextEntityId(f"real_group_{group_id}"),
+            id=FlextModels.EntityId(f"real_group_{group_id}"),
             dn=f"cn=realgroup-{group_id},ou=groups,{clean_ldap_container['base_dn']}",
             cn=f"Real Test Group {group_id}",
             description="Real test group for integration testing",
@@ -350,7 +350,7 @@ class TestLdapServiceRealOperations:
         get_result = await ldap_service.get_group(group.dn)
         assert get_result.is_success, f"Failed to get group: {get_result.error}"
         default_group = FlextLdapGroupModel(
-            id=FlextEntityId("default"),
+            id=FlextModels.EntityId("default"),
             dn="cn=default,dc=test,dc=com",
             cn="Default Group",
             description="Default group",
@@ -517,7 +517,7 @@ class TestLdapValidationRealOperations:
 
         # Verify the user follows business rules
         default_user = FlextLdapUser(
-            id=FlextEntityId("default"),
+            id=FlextModels.EntityId("default"),
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
