@@ -477,9 +477,9 @@ class TestFlextLdapGroupRepositoryRealFunctionality(unittest.TestCase):
         async def mock_get_group_members(group_dn: str) -> FlextResult[list[str]]:
             if not group_dn or group_dn == "":
                 return FlextResult[list[str]].fail("Invalid group DN")
-            return FlextResult[list[str]].ok([
-                "uid=existinguser,ou=users,dc=example,dc=com"
-            ])
+            return FlextResult[list[str]].ok(
+                ["uid=existinguser,ou=users,dc=example,dc=com"]
+            )
 
         async def mock_update(
             dn: str, attributes: dict[str, object]

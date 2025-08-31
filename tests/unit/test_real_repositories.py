@@ -1064,10 +1064,12 @@ class TestRealFlextLdapGroupRepository:
 
         # Mock get_group_members to return existing members
         async def mock_get_group_members(group_dn):
-            return FlextResult[list[str]].ok([
-                "cn=user1,ou=people,dc=example,dc=com",
-                "cn=user2,ou=people,dc=example,dc=com",
-            ])
+            return FlextResult[list[str]].ok(
+                [
+                    "cn=user1,ou=people,dc=example,dc=com",
+                    "cn=user2,ou=people,dc=example,dc=com",
+                ]
+            )
 
         group_repo.get_group_members = mock_get_group_members
 

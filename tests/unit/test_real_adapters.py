@@ -225,10 +225,10 @@ class TestRealAdaptersIntegration:
     """Test REAL adapters integration patterns."""
 
     def test_directory_entry_integrates_with_flext_model(self) -> None:
-        """Test that DirectoryEntry properly inherits from FlextModel."""
+        """Test that DirectoryEntry properly inherits from FlextModels."""
         entry = DirectoryEntry(dn="cn=test,dc=example,dc=com")
 
-        # Should have FlextModel methods
+        # Should have FlextModels methods
         assert hasattr(entry, "model_dump")
         assert hasattr(entry, "model_validate")
 
@@ -239,10 +239,10 @@ class TestRealAdaptersIntegration:
         assert "attributes" in data
 
     def test_connection_config_integrates_with_flext_model(self) -> None:
-        """Test that ConnectionConfig properly inherits from FlextModel."""
+        """Test that ConnectionConfig properly inherits from FlextModels."""
         config = ConnectionConfig(server_uri="ldap://localhost:389")
 
-        # Should have FlextModel methods
+        # Should have FlextModels methods
         assert hasattr(config, "model_dump")
         assert hasattr(config, "model_validate")
 

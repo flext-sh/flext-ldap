@@ -46,7 +46,7 @@ from urllib.parse import urlparse
 from flext_core import (
     FlextDomainService,
     FlextModels.EntityId,
-    FlextModel,
+    FlextModels,
     FlextResult,
     FlextLogger,
 )
@@ -78,7 +78,7 @@ class FlextLdapAdapters:
         - Open/Closed: Extensible without modification through internal class inheritance
         - Liskov Substitution: All internal classes maintain consistent interfaces
         - Interface Segregation: Specialized classes for specific adapter concerns
-        - Dependency Inversion: Depends on FlextDomainService and FlextModel abstractions
+        - Dependency Inversion: Depends on FlextDomainService and FlextModels abstractions
 
     Examples:
         Connection management:
@@ -108,7 +108,7 @@ class FlextLdapAdapters:
     # CONFIGURATION AND MODELS - Specialized configuration classes
     # =========================================================================
 
-    class DirectoryEntry(FlextModel):
+    class DirectoryEntry(FlextModels):
         """Directory entry model for LDAP operations."""
 
         model_config = ConfigDict(
@@ -131,7 +131,7 @@ class FlextLdapAdapters:
             """Validate DN format using centralized validation."""
             return FlextLdapValidationHelpers.validate_dn_field(v)
 
-    class ConnectionConfig(FlextModel):
+    class ConnectionConfig(FlextModels):
         """Connection configuration for LDAP operations."""
 
         model_config = ConfigDict(

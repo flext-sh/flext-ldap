@@ -34,7 +34,6 @@ async def main() -> None:
         password=bind_password,
     )
     if result.is_success:
-
         # Example search using FlextLdapSearchRequest
         search_request = FlextLdapSearchRequest(
             base_dn="dc=example,dc=com",
@@ -52,9 +51,7 @@ async def main() -> None:
             response = search_result.unwrap_or(empty_response)
             for entry in response.entries[:3]:  # Show first 3
                 dn_value = entry.get("dn", "N/A")
-                (
-                    dn_value.decode() if isinstance(dn_value, bytes) else str(dn_value)
-                )
+                (dn_value.decode() if isinstance(dn_value, bytes) else str(dn_value))
 
         # Note: No disconnect method - connection managed automatically
 
@@ -65,7 +62,6 @@ async def main() -> None:
         password=bind_password,
     )
     if op_result.is_success:
-
         # Add entry
         add_result = await client.add(
             dn="cn=testuser,dc=example,dc=com",
@@ -78,7 +74,6 @@ async def main() -> None:
         )
 
         if add_result.is_success:
-
             # Modify entry
             modify_result = await client.modify(
                 dn="cn=testuser,dc=example,dc=com",
@@ -86,7 +81,6 @@ async def main() -> None:
             )
 
             if modify_result.is_success:
-
                 # Delete entry
                 delete_result = await client.delete(dn="cn=testuser,dc=example,dc=com")
 

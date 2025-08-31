@@ -788,10 +788,10 @@ class FlextLdapFilter(FlextModels.Value):
 #### **Aggregate Root Pattern**
 
 ```python
-from flext_core import FlextAggregates
+from flext_core import FlextModels
 from flext_ldap.domain.entities import FlextLdapUser
 
-class FlextLdapUserAggregate(FlextAggregates):
+class FlextLdapUserAggregate(FlextModels.AggregateRoot):
     """User aggregate managing user lifecycle and group membership."""
     user: FlextLdapUser
     group_memberships: List[str] = field(default_factory=list)
