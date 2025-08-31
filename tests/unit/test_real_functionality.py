@@ -406,8 +406,8 @@ class TestRealErrorHandling:
         # Boundary conditions
         assert not is_string_list("string")  # String is not a list
         assert is_string_list([])  # Empty list is valid
-        assert (
-            is_bytes_list([])
+        assert is_bytes_list(
+            []
         )  # Empty list is valid for bytes list (discovered real behavior)
 
 

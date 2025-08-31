@@ -44,7 +44,6 @@ from typing import cast, override
 
 from flext_core import (
     FlextLogger,
-    FlextModel,
     FlextModels,
     FlextResult,
 )
@@ -75,7 +74,7 @@ class FlextLdapEntities:
         - Open/Closed: Extensible without modification
         - Liskov Substitution: Consistent interface across all entities
         - Interface Segregation: Organized by entity type for specific access
-        - Dependency Inversion: Depends on FlextModels.Entity/FlextModel abstractions
+        - Dependency Inversion: Depends on FlextModels.Entity/FlextModels abstractions
 
     Examples:
         Search operations::
@@ -106,7 +105,7 @@ class FlextLdapEntities:
     # SEARCH MODELS - Request and response models for search operations
     # =========================================================================
 
-    class SearchRequest(FlextModel):
+    class SearchRequest(FlextModels):
         """Request model for LDAP search operations."""
 
         base_dn: str = Field(..., description="Base DN for search")
@@ -152,7 +151,7 @@ class FlextLdapEntities:
                 raise ValueError(msg)
             return v
 
-    class SearchResponse(FlextModel):
+    class SearchResponse(FlextModels):
         """Response model for LDAP searches."""
 
         entries: list[LdapSearchResult] = Field(
@@ -332,7 +331,7 @@ class FlextLdapEntities:
     # REQUEST MODELS - Operation request models
     # =========================================================================
 
-    class CreateUserRequest(FlextModel):
+    class CreateUserRequest(FlextModels):
         """Request model for creating LDAP users."""
 
         dn: str = Field(..., description="Distinguished Name for new user")

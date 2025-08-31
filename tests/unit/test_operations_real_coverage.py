@@ -525,10 +525,12 @@ class TestFlextLdapGroupOperationsReal:
         ops = FlextLdapGroupOperations()
 
         # Test with provided members
-        members = ops._prepare_group_members([
-            "cn=user1,ou=users,dc=example,dc=com",
-            "cn=user2,ou=users,dc=example,dc=com",
-        ])
+        members = ops._prepare_group_members(
+            [
+                "cn=user1,ou=users,dc=example,dc=com",
+                "cn=user2,ou=users,dc=example,dc=com",
+            ]
+        )
 
         assert len(members) == 2
         assert "cn=user1,ou=users,dc=example,dc=com" in members

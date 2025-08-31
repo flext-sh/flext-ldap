@@ -26,7 +26,6 @@ from flext_core import (
     FlextDomainService,
     FlextEntityStatus,
     FlextLogger,
-    FlextModel,
     FlextModels,
     FlextResult,
     FlextTypes,
@@ -668,7 +667,7 @@ class FlextLdapDomain:
     # INTERNAL DOMAIN EVENT CLASSES
     # ==========================================================================
 
-    class UserCreatedEvent(FlextModel):
+    class UserCreatedEvent(FlextModels):
         """Internal domain event fired when a user is created."""
 
         user_id: str
@@ -691,7 +690,7 @@ class FlextLdapDomain:
                 occurred_at=datetime.now(UTC),
             )
 
-    class UserDeletedEvent(FlextModel):
+    class UserDeletedEvent(FlextModels):
         """Internal domain event fired when a user is deleted."""
 
         user_id: str
@@ -714,7 +713,7 @@ class FlextLdapDomain:
                 occurred_at=datetime.now(UTC),
             )
 
-    class GroupMemberAddedEvent(FlextModel):
+    class GroupMemberAddedEvent(FlextModels):
         """Internal domain event fired when a member is added to a group."""
 
         group_dn: str
@@ -737,7 +736,7 @@ class FlextLdapDomain:
                 occurred_at=datetime.now(UTC),
             )
 
-    class PasswordChangedEvent(FlextModel):
+    class PasswordChangedEvent(FlextModels):
         """Internal domain event fired when a user's password is changed."""
 
         user_dn: str

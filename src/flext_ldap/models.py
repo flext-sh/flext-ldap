@@ -1,6 +1,6 @@
 """LDAP Models - Single FlextLdapModels class following FLEXT patterns.
 
-Single class inheriting from FlextModel with all LDAP models
+Single class inheriting from FlextModels with all LDAP models
 organized as internal classes and methods for complete backward compatibility.
 
 Examples:
@@ -28,7 +28,7 @@ Examples:
 
 from __future__ import annotations
 
-from flext_core import FlextModel, FlextModels
+from flext_core import FlextModels
 
 from flext_ldap.configuration import (
     FlextLdapAuthConfig,
@@ -72,12 +72,12 @@ from flext_ldap.value_objects import (
 )
 
 # =============================================================================
-# SINGLE FLEXT LDAP MODELS CLASS - Inheriting from FlextModel
+# SINGLE FLEXT LDAP MODELS CLASS - Inheriting from FlextModels
 # =============================================================================
 
 
-class FlextLdapModels(FlextModel):
-    """Single FlextLdapModels class inheriting from FlextModel.
+class FlextLdapModels(FlextModels):
+    """Single FlextLdapModels class inheriting from FlextModels.
 
     Consolidates ALL LDAP models into a single class following FLEXT patterns.
     Everything from the previous model definitions is now available as
@@ -85,10 +85,10 @@ class FlextLdapModels(FlextModel):
 
     This class follows SOLID principles:
         - Single Responsibility: All LDAP models in one place
-        - Open/Closed: Extends FlextModel without modification
-        - Liskov Substitution: Can be used anywhere FlextModel is expected
+        - Open/Closed: Extends FlextModels without modification
+        - Liskov Substitution: Can be used anywhere FlextModels is expected
         - Interface Segregation: Organized by domain for specific access
-        - Dependency Inversion: Depends on FlextModel abstraction
+        - Dependency Inversion: Depends on FlextModels abstraction
 
     Examples:
         Configuration models::
@@ -114,7 +114,7 @@ class FlextLdapModels(FlextModel):
     # =========================================================================
 
     class Configuration:
-        """LDAP configuration models extending FlextModel."""
+        """LDAP configuration models extending FlextModels."""
 
         # Configuration model aliases
         Settings = FlextLdapSettings
