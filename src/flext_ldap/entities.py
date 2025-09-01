@@ -251,10 +251,10 @@ class FlextLdapEntities:
         @classmethod
         def validate_email(cls, v: str | None) -> str | None:
             """Validate email format - USES FLEXT-CORE."""
-            from flext_core import FlextValidation
+            from flext_core import FlextValidations
 
             if v:
-                result = FlextValidation.Rules.StringRules.validate_email(v)
+                result = FlextValidations.Rules.StringRules.validate_email(v)
                 if not result.is_success:
                     msg = "Invalid email format"
                     raise ValueError(msg)
@@ -366,10 +366,10 @@ class FlextLdapEntities:
         @classmethod
         def validate_email(cls, v: str | None) -> str | None:
             """Validate email format - USES FLEXT-CORE."""
-            from flext_core import FlextValidation
+            from flext_core import FlextValidations
 
             if v:
-                result = FlextValidation.Rules.StringRules.validate_email(v)
+                result = FlextValidations.Rules.StringRules.validate_email(v)
                 if not result.is_success:
                     msg = "Invalid email format"
                     raise ValueError(msg)
