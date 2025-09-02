@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Real functionality tests for clients.py - SEM MOCKS, testando funcionalidade real.
 
-Este módulo testa FlextLdapClient com funcionalidade real, executando a lógica de
+Este módulo testa FlextLDAPClient com funcionalidade real, executando a lógica de
 negócio sem mocks para validar que o código funciona mesmo.
 
 OBJETIVO: clients.py (17% -> 70%+) - 131 linhas não cobertas
@@ -10,6 +10,7 @@ OBJETIVO: clients.py (17% -> 70%+) - 131 linhas não cobertas
 from __future__ import annotations
 
 import asyncio
+import inspect
 import unittest
 from unittest.mock import Mock
 
@@ -18,23 +19,23 @@ from flext_core import FlextResult
 
 from flext_ldap import (
     SCOPE_MAP,
-    FlextLdapClient,
-    FlextLdapSearchRequest,
-    FlextLdapSearchResponse,
+    FlextLDAPClient,
+    FlextLDAPSearchRequest,
+    FlextLDAPSearchResponse,
 )
-from flext_ldap.utils import FlextLdapUtilities
+from flext_ldap.utilities import FlextLDAPUtilities
 
 
-class TestFlextLdapClientRealFunctionality(unittest.TestCase):
-    """Test FlextLdapClient com funcionalidade real sem mocks."""
+class TestFlextLDAPClientRealFunctionality(unittest.TestCase):
+    """Test FlextLDAPClient com funcionalidade real sem mocks."""
 
     def setUp(self) -> None:
         """Set up test fixtures com objetos reais."""
-        self.client = FlextLdapClient()
+        self.client = FlextLDAPClient()
 
     def test_client_creation_and_attributes(self) -> None:
         """Test que client é criado com atributos corretos."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
         assert client is not None
         assert hasattr(client, "_connection")
         assert hasattr(client, "_server")
@@ -59,7 +60,7 @@ class TestFlextLdapClientRealFunctionality(unittest.TestCase):
 
     def test_is_connected_property_real_logic(self) -> None:
         """Test is_connected property usa lógica real."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Initially not connected
         assert client.is_connected is False
@@ -210,7 +211,7 @@ class TestFlextLdapClientRealFunctionality(unittest.TestCase):
 
         async def run_test() -> None:
             # Test without connection
-            request = FlextLdapSearchRequest(
+            request = FlextLDAPSearchRequest(
                 base_dn="dc=example,dc=com", filter_str="(objectClass=*)"
             )
 
@@ -266,7 +267,7 @@ class TestFlextLdapClientRealFunctionality(unittest.TestCase):
             ):
                 search_calls.clear()
 
-                request = FlextLdapSearchRequest(
+                request = FlextLDAPSearchRequest(
                     base_dn="dc=example,dc=com",
                     filter_str="(objectClass=*)",
                     scope=scope,
@@ -484,7 +485,7 @@ class TestFlextLdapClientRealFunctionality(unittest.TestCase):
     def test_destructor_cleanup_functionality(self) -> None:
         """Test __del__ method faz cleanup correto."""
         # Create client with mock connection
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
         mock_connection = Mock()
         mock_connection.bound = True
         client._connection = mock_connection
@@ -496,7 +497,7 @@ class TestFlextLdapClientRealFunctionality(unittest.TestCase):
         mock_connection.unbind.assert_called_once()
 
     def test_search_method_creates_response_with_entries(self) -> None:
-        """Test search method cria FlextLdapSearchResponse com entries."""
+        """Test search method cria FlextLDAPSearchResponse com entries."""
 
         async def run_test() -> None:
             # Mock successful search with entries
@@ -514,7 +515,7 @@ class TestFlextLdapClientRealFunctionality(unittest.TestCase):
 
             self.client._connection = mock_connection
 
-            # Mock FlextLdapUtilities methods that will be called
+            # Mock FlextLDAPUtilities methods that will be called
 
             original_methods = {}
 
@@ -535,38 +536,40 @@ class TestFlextLdapClientRealFunctionality(unittest.TestCase):
 
             # Store original methods
             original_methods["safe_ldap3_search_result"] = (
-                FlextLdapUtilities.safe_ldap3_search_result
+                FlextLDAPUtilities.LdapSpecific.safe_ldap3_search_result
             )
             original_methods["safe_ldap3_entries_list"] = (
-                FlextLdapUtilities.safe_ldap3_entries_list
+                FlextLDAPUtilities.LdapSpecific.safe_ldap3_entries_list
             )
             original_methods["safe_ldap3_entry_dn"] = (
-                FlextLdapUtilities.safe_ldap3_entry_dn
+                FlextLDAPUtilities.LdapSpecific.safe_ldap3_entry_dn
             )
             original_methods["safe_ldap3_entry_attributes_list"] = (
-                FlextLdapUtilities.safe_ldap3_entry_attributes_list
+                FlextLDAPUtilities.LdapSpecific.safe_ldap3_entry_attributes_list
             )
             original_methods["safe_ldap3_attribute_values"] = (
-                FlextLdapUtilities.safe_ldap3_attribute_values
+                FlextLDAPUtilities.LdapSpecific.safe_ldap3_attribute_values
             )
 
             try:
                 # Replace with mocks
-                FlextLdapUtilities.safe_ldap3_search_result = (
+                FlextLDAPUtilities.LdapSpecific.safe_ldap3_search_result = (
                     mock_safe_ldap3_search_result
                 )
-                FlextLdapUtilities.safe_ldap3_entries_list = (
+                FlextLDAPUtilities.LdapSpecific.safe_ldap3_entries_list = (
                     mock_safe_ldap3_entries_list
                 )
-                FlextLdapUtilities.safe_ldap3_entry_dn = mock_safe_ldap3_entry_dn
-                FlextLdapUtilities.safe_ldap3_entry_attributes_list = (
+                FlextLDAPUtilities.LdapSpecific.safe_ldap3_entry_dn = (
+                    mock_safe_ldap3_entry_dn
+                )
+                FlextLDAPUtilities.LdapSpecific.safe_ldap3_entry_attributes_list = (
                     mock_safe_ldap3_entry_attributes_list
                 )
-                FlextLdapUtilities.safe_ldap3_attribute_values = (
+                FlextLDAPUtilities.LdapSpecific.safe_ldap3_attribute_values = (
                     mock_safe_ldap3_attribute_values
                 )
 
-                request = FlextLdapSearchRequest(
+                request = FlextLDAPSearchRequest(
                     base_dn="ou=users,dc=example,dc=com",
                     filter_str="(objectClass=person)",
                 )
@@ -577,7 +580,7 @@ class TestFlextLdapClientRealFunctionality(unittest.TestCase):
                 assert result.is_success is True
 
                 response = result.value
-                assert isinstance(response, FlextLdapSearchResponse)
+                assert isinstance(response, FlextLDAPSearchResponse)
                 assert len(response.entries) == 1
                 assert response.total_count == 1
 
@@ -589,17 +592,17 @@ class TestFlextLdapClientRealFunctionality(unittest.TestCase):
             finally:
                 # Restore original methods
                 for method_name, original_method in original_methods.items():
-                    setattr(FlextLdapUtilities, method_name, original_method)
+                    setattr(FlextLDAPUtilities, method_name, original_method)
 
         asyncio.run(run_test())
 
 
-class TestFlextLdapClientErrorHandling(unittest.TestCase):
-    """Test FlextLdapClient error handling patterns."""
+class TestFlextLDAPClientErrorHandling(unittest.TestCase):
+    """Test FlextLDAPClient error handling patterns."""
 
     def test_all_async_methods_return_flext_result(self) -> None:
         """Test que todos os métodos async retornam FlextResult."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
         async_methods = [
             "connect",
             "search",
@@ -624,7 +627,7 @@ class TestFlextLdapClientErrorHandling(unittest.TestCase):
 
     def test_methods_have_proper_type_annotations(self) -> None:
         """Test que métodos têm type annotations corretas."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
         methods_to_check = [
             "connect",
             "search",

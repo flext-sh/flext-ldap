@@ -8,28 +8,28 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from flext_core import FlextEntityStatus, FlextModels, FlextResult
+from flext_core import FlextConstants, FlextResult
 
-from flext_ldap.clients import FlextLdapClient
+from flext_ldap.clients import FlextLDAPClient
 from flext_ldap.entities import (
-    FlextLdapEntry,
-    FlextLdapSearchRequest,
-    FlextLdapSearchResponse,
+    FlextLDAPEntry,
+    FlextLDAPSearchRequest,
+    FlextLDAPSearchResponse,
 )
 from flext_ldap.repositories import (
-    FlextLdapGroupRepository,
-    FlextLdapRepository,
-    FlextLdapUserRepository,
+    FlextLDAPGroupRepository,
+    FlextLDAPRepository,
+    FlextLDAPUserRepository,
 )
 
 
-class TestFlextLdapRepositoryRealExecution:
-    """Test FlextLdapRepository with real code execution."""
+class TestFlextLDAPRepositoryRealExecution:
+    """Test FlextLDAPRepository with real code execution."""
 
     def test_repository_instantiation(self) -> None:
         """Test repository can be instantiated with client."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         assert repository._client is client
         assert hasattr(repository, "find_by_dn")
@@ -41,8 +41,8 @@ class TestFlextLdapRepositoryRealExecution:
 
     async def test_find_by_dn_validates_dn_format_real(self) -> None:
         """Test find_by_dn validates DN format using real validation logic."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Test with empty DN - this executes real validation code
         result = await repository.find_by_dn("")
@@ -56,18 +56,18 @@ class TestFlextLdapRepositoryRealExecution:
 
     async def test_find_by_dn_creates_search_request_real(self) -> None:
         """Test find_by_dn creates proper search request - executes real code."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Mock client search to capture the request
         captured_request = None
 
-        async def capture_search_request(request):
+        async def capture_search_request(request) -> None:
             nonlocal captured_request
             captured_request = request
             # Return empty result to continue execution
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(entries=[], total_count=0, has_more=False)
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(entries=[], total_count=0, has_more=False)
             )
 
         client.search = capture_search_request
@@ -86,12 +86,12 @@ class TestFlextLdapRepositoryRealExecution:
 
     async def test_find_by_dn_handles_no_such_object_error_real(self) -> None:
         """Test find_by_dn handles 'No such object' error - real error handling."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Mock client to return 'No such object' error
-        async def mock_search_no_object(request):
-            return FlextResult[FlextLdapSearchResponse].fail("No such object (32)")
+        async def mock_search_no_object(request) -> None:
+            return FlextResult[FlextLDAPSearchResponse].fail("No such object (32)")
 
         client.search = mock_search_no_object
 
@@ -103,9 +103,9 @@ class TestFlextLdapRepositoryRealExecution:
         assert result.value is None
 
     async def test_find_by_dn_creates_entry_from_search_results_real(self) -> None:
-        """Test find_by_dn creates FlextLdapEntry from search results - real creation logic."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        """Test find_by_dn creates FlextLDAPEntry from search results - real creation logic."""
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Mock client to return entry data
         test_dn = "cn=testuser,ou=users,dc=example,dc=com"
@@ -116,9 +116,9 @@ class TestFlextLdapRepositoryRealExecution:
             "uid": ["testuser"],
         }
 
-        async def mock_search_with_data(request):
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(
+        async def mock_search_with_data(request) -> None:
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(
                     entries=[entry_data], total_count=1, has_more=False
                 )
             )
@@ -131,7 +131,7 @@ class TestFlextLdapRepositoryRealExecution:
         # Verify real code created proper entry
         assert result.is_success
         assert result.value is not None
-        assert isinstance(result.value, FlextLdapEntry)
+        assert isinstance(result.value, FlextLDAPEntry)
         assert result.value.dn == test_dn
         assert "person" in result.value.object_classes
         assert "inetOrgPerson" in result.value.object_classes
@@ -139,23 +139,23 @@ class TestFlextLdapRepositoryRealExecution:
 
     async def test_search_delegates_to_client_real(self) -> None:
         """Test search method delegates to client - real delegation."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Track client calls
         client_called_with = None
 
-        async def mock_client_search(request):
+        async def mock_client_search(request) -> None:
             nonlocal client_called_with
             client_called_with = request
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(entries=[], total_count=0, has_more=False)
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(entries=[], total_count=0, has_more=False)
             )
 
         client.search = mock_client_search
 
         # Create real search request
-        search_request = FlextLdapSearchRequest(
+        search_request = FlextLDAPSearchRequest(
             base_dn="ou=users,dc=example,dc=com",
             scope="subtree",
             filter_str="(objectClass=person)",
@@ -173,16 +173,16 @@ class TestFlextLdapRepositoryRealExecution:
 
     async def test_save_executes_real_validation_logic(self) -> None:
         """Test save executes real validation logic from repository code."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Create valid entry
-        entry = FlextLdapEntry(
-            id=FlextModels.EntityId("test-entry"),
+        entry = FlextLDAPEntry(
+            id="test-entry",
             dn="cn=test,dc=example,dc=com",
             object_classes=["person"],
             attributes={"cn": ["test"]},
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Status.ACTIVE,
         )
 
         # This test will execute the real repository.save() method, which will:
@@ -199,23 +199,23 @@ class TestFlextLdapRepositoryRealExecution:
 
     async def test_save_checks_entry_existence_real(self) -> None:
         """Test save checks entry existence - real existence check execution."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Create valid entry
-        entry = FlextLdapEntry(
-            id=FlextModels.EntityId("test-entry"),
+        entry = FlextLDAPEntry(
+            id="test-entry",
             dn="cn=test,dc=example,dc=com",
             object_classes=["person"],
             attributes={"cn": ["test"]},
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Status.ACTIVE,
         )
 
         # Mock validation to pass
         entry.validate_business_rules = lambda: FlextResult[None].ok(None)
 
         # Mock exists to fail
-        async def mock_exists_fail(dn):
+        async def mock_exists_fail(dn) -> None:
             return FlextResult[bool].fail("Existence check failed")
 
         repository.exists = mock_exists_fail
@@ -229,23 +229,23 @@ class TestFlextLdapRepositoryRealExecution:
 
     async def test_save_creates_new_entry_real(self) -> None:
         """Test save creates new entry - real creation logic execution."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Create valid entry
-        entry = FlextLdapEntry(
-            id=FlextModels.EntityId("test-entry"),
+        entry = FlextLDAPEntry(
+            id="test-entry",
             dn="cn=newuser,dc=example,dc=com",
             object_classes=["person", "inetOrgPerson"],
             attributes={"cn": ["newuser"], "uid": ["newuser"]},
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Status.ACTIVE,
         )
 
         # Mock validation to pass
         entry.validate_business_rules = lambda: FlextResult[None].ok(None)
 
         # Mock exists to return False (new entry)
-        async def mock_exists_false(dn):
+        async def mock_exists_false(dn) -> None:
             return FlextResult[bool].ok(False)
 
         repository.exists = mock_exists_false
@@ -253,7 +253,7 @@ class TestFlextLdapRepositoryRealExecution:
         # Track client add calls
         client_add_called_with = None
 
-        async def mock_client_add(dn, attributes):
+        async def mock_client_add(dn, attributes) -> None:
             nonlocal client_add_called_with
             client_add_called_with = (dn, attributes)
             return FlextResult[None].ok(None)
@@ -274,23 +274,23 @@ class TestFlextLdapRepositoryRealExecution:
 
     async def test_save_updates_existing_entry_real(self) -> None:
         """Test save updates existing entry - real update logic execution."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Create valid entry
-        entry = FlextLdapEntry(
-            id=FlextModels.EntityId("test-entry"),
+        entry = FlextLDAPEntry(
+            id="test-entry",
             dn="cn=existinguser,dc=example,dc=com",
             object_classes=["person", "inetOrgPerson"],
             attributes={"cn": ["existinguser"], "uid": ["existinguser"]},
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Status.ACTIVE,
         )
 
         # Mock validation to pass
         entry.validate_business_rules = lambda: FlextResult[None].ok(None)
 
         # Mock exists to return True (existing entry)
-        async def mock_exists_true(dn):
+        async def mock_exists_true(dn) -> None:
             return FlextResult[bool].ok(data=True)
 
         repository.exists = mock_exists_true
@@ -298,7 +298,7 @@ class TestFlextLdapRepositoryRealExecution:
         # Track client modify calls
         client_modify_called_with = None
 
-        async def mock_client_modify(dn, attributes):
+        async def mock_client_modify(dn, attributes) -> None:
             nonlocal client_modify_called_with
             client_modify_called_with = (dn, attributes)
             return FlextResult[None].ok(None)
@@ -317,8 +317,8 @@ class TestFlextLdapRepositoryRealExecution:
 
     async def test_delete_validates_dn_format_real(self) -> None:
         """Test delete validates DN format - real validation execution."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Execute real DN validation code
         result = await repository.delete_async("")
@@ -332,13 +332,13 @@ class TestFlextLdapRepositoryRealExecution:
 
     async def test_delete_delegates_to_client_real(self) -> None:
         """Test delete delegates to client - real delegation execution."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Track client delete calls
         client_delete_called_with = None
 
-        async def mock_client_delete(dn):
+        async def mock_client_delete(dn) -> None:
             nonlocal client_delete_called_with
             client_delete_called_with = dn
             return FlextResult[None].ok(None)
@@ -355,16 +355,16 @@ class TestFlextLdapRepositoryRealExecution:
 
     async def test_exists_uses_find_by_dn_real(self) -> None:
         """Test exists uses find_by_dn - real existence check logic."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Track find_by_dn calls
         find_by_dn_called_with = None
 
-        async def mock_find_by_dn(dn):
+        async def mock_find_by_dn(dn) -> None:
             nonlocal find_by_dn_called_with
             find_by_dn_called_with = dn
-            return FlextResult[FlextLdapEntry | None].ok(None)  # Entry not found
+            return FlextResult[FlextLDAPEntry | None].ok(None)  # Entry not found
 
         repository.find_by_dn = mock_find_by_dn
 
@@ -381,8 +381,8 @@ class TestFlextLdapRepositoryRealExecution:
 
     async def test_update_validates_dn_and_checks_existence_real(self) -> None:
         """Test update validates DN and checks existence - real validation execution."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Test DN validation
         result = await repository.update("", {})
@@ -390,7 +390,7 @@ class TestFlextLdapRepositoryRealExecution:
         assert "Invalid DN format" in (result.error or "")
 
         # Mock exists to return False
-        async def mock_exists_false(dn):
+        async def mock_exists_false(dn) -> None:
             return FlextResult[bool].ok(False)
 
         repository.exists = mock_exists_false
@@ -402,11 +402,11 @@ class TestFlextLdapRepositoryRealExecution:
 
     async def test_update_delegates_to_client_modify_real(self) -> None:
         """Test update delegates to client modify - real delegation execution."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Mock exists to return True
-        async def mock_exists_true(dn):
+        async def mock_exists_true(dn) -> None:
             return FlextResult[bool].ok(data=True)
 
         repository.exists = mock_exists_true
@@ -414,7 +414,7 @@ class TestFlextLdapRepositoryRealExecution:
         # Track client modify calls
         client_modify_called_with = None
 
-        async def mock_client_modify(dn, attributes):
+        async def mock_client_modify(dn, attributes) -> None:
             nonlocal client_modify_called_with
             client_modify_called_with = (dn, attributes)
             return FlextResult[None].ok(None)
@@ -431,14 +431,14 @@ class TestFlextLdapRepositoryRealExecution:
         assert client_modify_called_with == (test_dn, test_attributes)
 
 
-class TestFlextLdapUserRepositoryRealExecution:
-    """Test FlextLdapUserRepository with real code execution."""
+class TestFlextLDAPUserRepositoryRealExecution:
+    """Test FlextLDAPUserRepository with real code execution."""
 
     def test_user_repository_instantiation_real(self) -> None:
         """Test user repository can be instantiated - real instantiation."""
-        client = FlextLdapClient()
-        base_repository = FlextLdapRepository(client)
-        user_repository = FlextLdapUserRepository(base_repository)
+        client = FlextLDAPClient()
+        base_repository = FlextLDAPRepository(client)
+        user_repository = FlextLDAPUserRepository(base_repository)
 
         assert user_repository._repo is base_repository
         assert hasattr(user_repository, "find_user_by_uid")
@@ -446,18 +446,18 @@ class TestFlextLdapUserRepositoryRealExecution:
 
     async def test_find_user_by_uid_creates_search_request_real(self) -> None:
         """Test find_user_by_uid creates correct search request - real request creation."""
-        client = FlextLdapClient()
-        base_repository = FlextLdapRepository(client)
-        user_repository = FlextLdapUserRepository(base_repository)
+        client = FlextLDAPClient()
+        base_repository = FlextLDAPRepository(client)
+        user_repository = FlextLDAPUserRepository(base_repository)
 
         # Track search calls
         search_called_with = None
 
-        async def mock_search(request):
+        async def mock_search(request) -> None:
             nonlocal search_called_with
             search_called_with = request
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(entries=[], total_count=0, has_more=False)
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(entries=[], total_count=0, has_more=False)
             )
 
         base_repository.search = mock_search
@@ -481,14 +481,14 @@ class TestFlextLdapUserRepositoryRealExecution:
 
     async def test_find_user_by_uid_handles_missing_dn_real(self) -> None:
         """Test find_user_by_uid handles missing DN - real error handling."""
-        client = FlextLdapClient()
-        base_repository = FlextLdapRepository(client)
-        user_repository = FlextLdapUserRepository(base_repository)
+        client = FlextLDAPClient()
+        base_repository = FlextLDAPRepository(client)
+        user_repository = FlextLDAPUserRepository(base_repository)
 
         # Mock search to return entry without DN
-        async def mock_search_no_dn(request):
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(
+        async def mock_search_no_dn(request) -> None:
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(
                     entries=[{"cn": ["test"], "uid": ["testuser"]}],  # No 'dn' field
                     total_count=1,
                     has_more=False,
@@ -508,16 +508,16 @@ class TestFlextLdapUserRepositoryRealExecution:
 
     async def test_find_user_by_uid_calls_find_by_dn_real(self) -> None:
         """Test find_user_by_uid calls find_by_dn with extracted DN - real call chain."""
-        client = FlextLdapClient()
-        base_repository = FlextLdapRepository(client)
-        user_repository = FlextLdapUserRepository(base_repository)
+        client = FlextLDAPClient()
+        base_repository = FlextLDAPRepository(client)
+        user_repository = FlextLDAPUserRepository(base_repository)
 
         # Mock search to return entry with DN
         test_dn = "cn=testuser,ou=users,dc=example,dc=com"
 
-        async def mock_search_with_dn(request):
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(
+        async def mock_search_with_dn(request) -> None:
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(
                     entries=[{"dn": test_dn, "cn": ["testuser"], "uid": ["testuser"]}],
                     total_count=1,
                     has_more=False,
@@ -529,10 +529,10 @@ class TestFlextLdapUserRepositoryRealExecution:
         # Track find_by_dn calls
         find_by_dn_called_with = None
 
-        async def mock_find_by_dn(dn):
+        async def mock_find_by_dn(dn) -> None:
             nonlocal find_by_dn_called_with
             find_by_dn_called_with = dn
-            return FlextResult[FlextLdapEntry | None].ok(None)
+            return FlextResult[FlextLDAPEntry | None].ok(None)
 
         base_repository.find_by_dn = mock_find_by_dn
 
@@ -547,18 +547,18 @@ class TestFlextLdapUserRepositoryRealExecution:
 
     async def test_find_users_by_filter_creates_combined_filter_real(self) -> None:
         """Test find_users_by_filter creates combined filter - real filter creation."""
-        client = FlextLdapClient()
-        base_repository = FlextLdapRepository(client)
-        user_repository = FlextLdapUserRepository(base_repository)
+        client = FlextLDAPClient()
+        base_repository = FlextLDAPRepository(client)
+        user_repository = FlextLDAPUserRepository(base_repository)
 
         # Track search calls
         search_called_with = None
 
-        async def mock_search(request):
+        async def mock_search(request) -> None:
             nonlocal search_called_with
             search_called_with = request
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(entries=[], total_count=0, has_more=False)
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(entries=[], total_count=0, has_more=False)
             )
 
         base_repository.search = mock_search
@@ -579,14 +579,14 @@ class TestFlextLdapUserRepositoryRealExecution:
 
     async def test_find_users_by_filter_processes_multiple_entries_real(self) -> None:
         """Test find_users_by_filter processes multiple entries - real processing logic."""
-        client = FlextLdapClient()
-        base_repository = FlextLdapRepository(client)
-        user_repository = FlextLdapUserRepository(base_repository)
+        client = FlextLDAPClient()
+        base_repository = FlextLDAPRepository(client)
+        user_repository = FlextLDAPUserRepository(base_repository)
 
         # Mock search to return multiple entries
-        async def mock_search_multiple(request):
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(
+        async def mock_search_multiple(request) -> None:
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(
                     entries=[
                         {"dn": "cn=user1,ou=users,dc=example,dc=com", "cn": ["user1"]},
                         {"dn": "cn=user2,ou=users,dc=example,dc=com", "cn": ["user2"]},
@@ -602,16 +602,16 @@ class TestFlextLdapUserRepositoryRealExecution:
         # Mock find_by_dn to return entries
         find_by_dn_calls = []
 
-        async def mock_find_by_dn(dn):
+        async def mock_find_by_dn(dn) -> None:
             find_by_dn_calls.append(dn)
-            entry = FlextLdapEntry(
-                id=FlextModels.EntityId(f"user-{len(find_by_dn_calls)}"),
+            entry = FlextLDAPEntry(
+                id=f"user-{len(find_by_dn_calls)}",
                 dn=dn,
                 object_classes=["person"],
                 attributes={"cn": [f"user{len(find_by_dn_calls)}"]},
-                status=FlextEntityStatus.ACTIVE,
+                status=FlextConstants.Status.ACTIVE,
             )
-            return FlextResult[FlextLdapEntry | None].ok(entry)
+            return FlextResult[FlextLDAPEntry | None].ok(entry)
 
         base_repository.find_by_dn = mock_find_by_dn
 
@@ -629,14 +629,14 @@ class TestFlextLdapUserRepositoryRealExecution:
         assert "cn=user2,ou=users,dc=example,dc=com" in find_by_dn_calls
 
 
-class TestFlextLdapGroupRepositoryRealExecution:
-    """Test FlextLdapGroupRepository with real code execution."""
+class TestFlextLDAPGroupRepositoryRealExecution:
+    """Test FlextLDAPGroupRepository with real code execution."""
 
     def test_group_repository_instantiation_real(self) -> None:
         """Test group repository can be instantiated - real instantiation."""
-        client = FlextLdapClient()
-        base_repository = FlextLdapRepository(client)
-        group_repository = FlextLdapGroupRepository(base_repository)
+        client = FlextLDAPClient()
+        base_repository = FlextLDAPRepository(client)
+        group_repository = FlextLDAPGroupRepository(base_repository)
 
         assert group_repository._repo is base_repository
         assert hasattr(group_repository, "find_group_by_cn")
@@ -645,18 +645,18 @@ class TestFlextLdapGroupRepositoryRealExecution:
 
     async def test_find_group_by_cn_creates_search_request_real(self) -> None:
         """Test find_group_by_cn creates correct search request - real request creation."""
-        client = FlextLdapClient()
-        base_repository = FlextLdapRepository(client)
-        group_repository = FlextLdapGroupRepository(base_repository)
+        client = FlextLDAPClient()
+        base_repository = FlextLDAPRepository(client)
+        group_repository = FlextLDAPGroupRepository(base_repository)
 
         # Track search calls
         search_called_with = None
 
-        async def mock_search(request):
+        async def mock_search(request) -> None:
             nonlocal search_called_with
             search_called_with = request
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(entries=[], total_count=0, has_more=False)
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(entries=[], total_count=0, has_more=False)
             )
 
         base_repository.search = mock_search
@@ -680,13 +680,13 @@ class TestFlextLdapGroupRepositoryRealExecution:
 
     async def test_get_group_members_extracts_members_real(self) -> None:
         """Test get_group_members extracts member list - real extraction logic."""
-        client = FlextLdapClient()
-        base_repository = FlextLdapRepository(client)
-        group_repository = FlextLdapGroupRepository(base_repository)
+        client = FlextLDAPClient()
+        base_repository = FlextLDAPRepository(client)
+        group_repository = FlextLDAPGroupRepository(base_repository)
 
         # Create group entry with members
-        group_entry = FlextLdapEntry(
-            id=FlextModels.EntityId("test-group"),
+        group_entry = FlextLDAPEntry(
+            id="test-group",
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             object_classes=["groupOfNames"],
             attributes={
@@ -695,12 +695,12 @@ class TestFlextLdapGroupRepositoryRealExecution:
                     "cn=user2,ou=users,dc=example,dc=com",
                 ]
             },
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Status.ACTIVE,
         )
 
         # Mock find_by_dn to return group
-        async def mock_find_by_dn(dn):
-            return FlextResult[FlextLdapEntry | None].ok(group_entry)
+        async def mock_find_by_dn(dn) -> None:
+            return FlextResult[FlextLDAPEntry | None].ok(group_entry)
 
         base_repository.find_by_dn = mock_find_by_dn
 
@@ -716,13 +716,13 @@ class TestFlextLdapGroupRepositoryRealExecution:
 
     async def test_get_group_members_handles_group_not_found_real(self) -> None:
         """Test get_group_members handles group not found - real error handling."""
-        client = FlextLdapClient()
-        base_repository = FlextLdapRepository(client)
-        group_repository = FlextLdapGroupRepository(base_repository)
+        client = FlextLDAPClient()
+        base_repository = FlextLDAPRepository(client)
+        group_repository = FlextLDAPGroupRepository(base_repository)
 
         # Mock find_by_dn to return None
-        async def mock_find_by_dn_not_found(dn):
-            return FlextResult[FlextLdapEntry | None].ok(None)
+        async def mock_find_by_dn_not_found(dn) -> None:
+            return FlextResult[FlextLDAPEntry | None].ok(None)
 
         base_repository.find_by_dn = mock_find_by_dn_not_found
 
@@ -737,9 +737,9 @@ class TestFlextLdapGroupRepositoryRealExecution:
 
     async def test_add_member_to_group_prevents_duplicates_real(self) -> None:
         """Test add_member_to_group prevents duplicate members - real duplicate check."""
-        client = FlextLdapClient()
-        base_repository = FlextLdapRepository(client)
-        group_repository = FlextLdapGroupRepository(base_repository)
+        client = FlextLDAPClient()
+        base_repository = FlextLDAPRepository(client)
+        group_repository = FlextLDAPGroupRepository(base_repository)
 
         # Mock get_group_members to return existing members
         existing_members = [
@@ -747,7 +747,7 @@ class TestFlextLdapGroupRepositoryRealExecution:
             "cn=user2,ou=users,dc=example,dc=com",
         ]
 
-        async def mock_get_members(group_dn):
+        async def mock_get_members(group_dn) -> None:
             return FlextResult[list[str]].ok(existing_members)
 
         group_repository.get_group_members = mock_get_members
@@ -764,14 +764,14 @@ class TestFlextLdapGroupRepositoryRealExecution:
 
     async def test_add_member_to_group_adds_new_member_real(self) -> None:
         """Test add_member_to_group adds new member - real addition logic."""
-        client = FlextLdapClient()
-        base_repository = FlextLdapRepository(client)
-        group_repository = FlextLdapGroupRepository(base_repository)
+        client = FlextLDAPClient()
+        base_repository = FlextLDAPRepository(client)
+        group_repository = FlextLDAPGroupRepository(base_repository)
 
         # Mock get_group_members to return existing members
         existing_members = ["cn=user1,ou=users,dc=example,dc=com"]
 
-        async def mock_get_members(group_dn):
+        async def mock_get_members(group_dn) -> None:
             return FlextResult[list[str]].ok(existing_members)
 
         group_repository.get_group_members = mock_get_members
@@ -779,7 +779,7 @@ class TestFlextLdapGroupRepositoryRealExecution:
         # Track update calls
         update_called_with = None
 
-        async def mock_update(dn, attributes):
+        async def mock_update(dn, attributes) -> None:
             nonlocal update_called_with
             update_called_with = (dn, attributes)
             return FlextResult[None].ok(None)
@@ -808,12 +808,12 @@ class TestRepositoryErrorHandlingReal:
 
     async def test_repository_propagates_client_errors_real(self) -> None:
         """Test repository propagates client errors - real error propagation."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Mock client to fail with specific error
-        async def mock_client_search_fail(request):
-            return FlextResult[FlextLdapSearchResponse].fail("LDAP connection timeout")
+        async def mock_client_search_fail(request) -> None:
+            return FlextResult[FlextLDAPSearchResponse].fail("LDAP connection timeout")
 
         client.search = mock_client_search_fail
 
@@ -826,8 +826,8 @@ class TestRepositoryErrorHandlingReal:
 
     async def test_repository_handles_validation_errors_real(self) -> None:
         """Test repository handles validation errors - real validation error handling."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Execute real validation with various invalid DNs
         invalid_dns = ["", "invalid", "cn=", "=test", "cn=test,", ",dc=test"]
@@ -841,11 +841,11 @@ class TestRepositoryErrorHandlingReal:
 
     async def test_repository_logging_integration_real(self) -> None:
         """Test repository integrates with logging - real logging execution."""
-        client = FlextLdapClient()
-        repository = FlextLdapRepository(client)
+        client = FlextLDAPClient()
+        repository = FlextLDAPRepository(client)
 
         # Mock successful operations to trigger logging
-        async def mock_client_delete_success(dn):
+        async def mock_client_delete_success(dn) -> None:
             return FlextResult[None].ok(None)
 
         client.delete = mock_client_delete_success

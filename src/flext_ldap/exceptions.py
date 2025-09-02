@@ -1,4 +1,4 @@
-"""LDAP Exceptions - Single FlextLdapExceptions class following FLEXT patterns.
+"""LDAP Exceptions - Single FlextLDAPExceptions class following FLEXT patterns.
 
 Single class with all LDAP exception definitions, factory methods, and error handling
 organized as internal classes for complete backward compatibility.
@@ -6,16 +6,16 @@ organized as internal classes for complete backward compatibility.
 Examples:
     Basic exceptions:
 
-        from exceptions import FlextLdapExceptions
+        from exceptions import FlextLDAPExceptions
 
         # Create connection error
-        conn_error = FlextLdapExceptions.LdapConnectionError(
+        conn_error = FlextLDAPExceptions.LdapConnectionError(
             "Failed to connect",
             server_uri="ldap://localhost:389"
         )
 
         # Create validation error
-        val_error = FlextLdapExceptions.ValidationError(
+        val_error = FlextLDAPExceptions.ValidationError(
             "Invalid DN format",
             field_name="dn",
             field_value="invalid-dn"
@@ -24,7 +24,7 @@ Examples:
     Factory methods:
 
         # Using factory for consistent error creation
-        error = FlextLdapExceptions.Factory.connection_failed(
+        error = FlextLDAPExceptions.Factory.connection_failed(
             "ldap://localhost:389",
             "Connection timeout",
             timeout=30
@@ -33,8 +33,8 @@ Examples:
     Legacy compatibility:
 
         # All previous classes still work as direct imports
-        from exceptions import FlextLdapConnectionError, FlextLdapValidationError
-        conn_error = FlextLdapConnectionError("Failed to connect")
+        from exceptions import FlextLDAPConnectionError, FlextLDAPValidationError
+        conn_error = FlextLDAPConnectionError("Failed to connect")
 
 """
 
@@ -42,9 +42,9 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from flext_core import FlextExceptions, FlextLogger
+from flext_core import FlextLogger
 
-from flext_ldap.constants import FlextLdapOperationMessages
+from flext_ldap.constants import FlextLDAPOperationMessages
 
 logger = FlextLogger(__name__)
 
@@ -53,8 +53,8 @@ logger = FlextLogger(__name__)
 # =============================================================================
 
 
-class FlextLdapExceptions:
-    """Single FlextLdapExceptions class with all LDAP exception functionality.
+class FlextLDAPExceptions:
+    """Single FlextLDAPExceptions class with all LDAP exception functionality.
 
     Consolidates ALL LDAP exception classes, factory methods, and error handling
     into a single class following FLEXT patterns. Everything from connection errors
@@ -70,42 +70,42 @@ class FlextLdapExceptions:
     Examples:
         Connection and authentication errors:
 
-            conn_error = FlextLdapExceptions.LdapConnectionError(
+            conn_error = FlextLDAPExceptions.LdapConnectionError(
                 "Failed to connect",
                 server_uri="ldap://localhost:389"
             )
-            auth_error = FlextLdapExceptions.AuthenticationError(
+            auth_error = FlextLDAPExceptions.AuthenticationError(
                 "Invalid credentials",
                 bind_dn="cn=user,dc=example,dc=com"
             )
 
         Operation and search errors:
 
-            search_error = FlextLdapExceptions.SearchError(
+            search_error = FlextLDAPExceptions.SearchError(
                 "Search failed",
                 base_dn="dc=example,dc=com",
                 search_filter="(uid=john)"
             )
-            op_error = FlextLdapExceptions.OperationError(
+            op_error = FlextLDAPExceptions.OperationError(
                 "Modify failed",
                 target_dn="cn=user,dc=example,dc=com"
             )
 
         Domain-specific errors:
 
-            user_error = FlextLdapExceptions.UserError(
+            user_error = FlextLDAPExceptions.UserError(
                 "User validation failed",
                 user_dn="cn=john,dc=example,dc=com",
                 uid="john"
             )
-            group_error = FlextLdapExceptions.GroupError(
+            group_error = FlextLDAPExceptions.GroupError(
                 "Group membership error",
                 group_dn="cn=admins,dc=example,dc=com"
             )
 
         Using factory methods:
 
-            error = FlextLdapExceptions.Factory.connection_failed(
+            error = FlextLDAPExceptions.Factory.connection_failed(
                 "ldap://localhost:389",
                 "Connection timeout"
             )
@@ -116,7 +116,7 @@ class FlextLdapExceptions:
     # BASE ERROR CLASS - Foundation for all LDAP exceptions
     # =========================================================================
 
-    class Error(FlextExceptions):
+    class Error(Exception):
         """Base exception for FLEXT-LDAP with optional LDAP context and codes."""
 
         def __init__(
@@ -126,7 +126,7 @@ class FlextLdapExceptions:
             ldap_result_code: str | None = None,
             ldap_context: dict[str, object] | None = None,
             operation: str | None = None,
-            error_code: str | None = None,
+            _error_code: str | None = None,
         ) -> None:
             """Initialize exception with optional LDAP context details.
 
@@ -138,7 +138,7 @@ class FlextLdapExceptions:
                 error_code: Error code for categorization
 
             """
-            super().__init__(message, error_code=error_code or "LDAP_ERROR")
+            super().__init__(message)
             self.ldap_result_code = ldap_result_code
             self.ldap_context = ldap_context or {}
             self.operation = operation
@@ -158,14 +158,14 @@ class FlextLdapExceptions:
 
             if self.operation:
                 parts.append(
-                    FlextLdapOperationMessages.OPERATION_CONTEXT.format(
+                    FlextLDAPOperationMessages.OPERATION_CONTEXT.format(
                         operation=self.operation,
                     ),
                 )
 
             if self.ldap_result_code:
                 parts.append(
-                    FlextLdapOperationMessages.LDAP_CODE_CONTEXT.format(
+                    FlextLDAPOperationMessages.LDAP_CODE_CONTEXT.format(
                         ldap_code=self.ldap_result_code,
                     ),
                 )
@@ -175,7 +175,7 @@ class FlextLdapExceptions:
                     f"{k}={v}" for k, v in self.ldap_context.items()
                 )
                 parts.append(
-                    FlextLdapOperationMessages.CONTEXT_INFO.format(context=context_str),
+                    FlextLDAPOperationMessages.CONTEXT_INFO.format(context=context_str),
                 )
 
             return " | ".join(parts)
@@ -202,17 +202,17 @@ class FlextLdapExceptions:
             """Initialize connection error with network context."""
             context: dict[str, object] = {}
             if server_uri:
-                context[FlextLdapOperationMessages.SERVER_URI_KEY] = server_uri
+                context[FlextLDAPOperationMessages.SERVER_URI_KEY] = server_uri
             if timeout:
-                context[FlextLdapOperationMessages.TIMEOUT_KEY] = str(timeout)
+                context[FlextLDAPOperationMessages.TIMEOUT_KEY] = str(timeout)
             if retry_count is not None:
-                context[FlextLdapOperationMessages.RETRY_COUNT_KEY] = str(retry_count)
+                context[FlextLDAPOperationMessages.RETRY_COUNT_KEY] = str(retry_count)
 
             super().__init__(
                 message,
                 ldap_context=context,
-                operation=FlextLdapOperationMessages.CONNECTION_OPERATION,
-                error_code="LDAP_CONNECTION_ERROR",
+                operation=FlextLDAPOperationMessages.CONNECTION_OPERATION,
+                _error_code="LDAP_CONNECTION_ERROR",
             )
 
     class AuthenticationError(Error):
@@ -242,7 +242,7 @@ class FlextLdapExceptions:
                 ldap_result_code=ldap_result_code,
                 ldap_context=context,
                 operation="authentication",
-                error_code="LDAP_AUTH_ERROR",
+                _error_code="LDAP_AUTH_ERROR",
             )
 
     # =========================================================================
@@ -279,7 +279,7 @@ class FlextLdapExceptions:
                 ldap_result_code=ldap_result_code,
                 ldap_context=context,
                 operation="search",
-                error_code="LDAP_SEARCH_ERROR",
+                _error_code="LDAP_SEARCH_ERROR",
             )
 
     class OperationError(Error):
@@ -309,7 +309,7 @@ class FlextLdapExceptions:
                 ldap_result_code=ldap_result_code,
                 ldap_context=context,
                 operation=operation_type or "modify",
-                error_code="LDAP_OPERATION_ERROR",
+                _error_code="LDAP_OPERATION_ERROR",
             )
 
     # =========================================================================
@@ -344,7 +344,7 @@ class FlextLdapExceptions:
                 message,
                 ldap_context=context,
                 operation="user_management",
-                error_code="LDAP_USER_ERROR",
+                _error_code="LDAP_USER_ERROR",
             )
 
     class GroupError(Error):
@@ -375,7 +375,7 @@ class FlextLdapExceptions:
                 message,
                 ldap_context=context,
                 operation="group_management",
-                error_code="LDAP_GROUP_ERROR",
+                _error_code="LDAP_GROUP_ERROR",
             )
 
     # =========================================================================
@@ -414,7 +414,7 @@ class FlextLdapExceptions:
                 message,
                 ldap_context=context,
                 operation="validation",
-                error_code="LDAP_VALIDATION_ERROR",
+                _error_code="LDAP_VALIDATION_ERROR",
             )
 
     class ConfigurationError(Error):
@@ -442,7 +442,7 @@ class FlextLdapExceptions:
                 message,
                 ldap_context=context,
                 operation="configuration",
-                error_code="LDAP_CONFIG_ERROR",
+                _error_code="LDAP_CONFIG_ERROR",
             )
 
     class LdapTypeError(Error):
@@ -473,7 +473,7 @@ class FlextLdapExceptions:
                 message,
                 ldap_context=context,
                 operation="type_conversion",
-                error_code="LDAP_TYPE_ERROR",
+                _error_code="LDAP_TYPE_ERROR",
             )
 
     # =========================================================================
@@ -506,10 +506,10 @@ class FlextLdapExceptions:
             *,
             timeout: int | None = None,
             retry_count: int | None = None,
-        ) -> FlextLdapExceptions.LdapConnectionError:
+        ) -> FlextLDAPExceptions.LdapConnectionError:
             """Create connection failure exception."""
             message = f"Failed to connect to LDAP server: {error}"
-            return FlextLdapExceptions.LdapConnectionError(
+            return FlextLDAPExceptions.LdapConnectionError(
                 message,
                 server_uri=server_uri,
                 timeout=timeout,
@@ -521,13 +521,13 @@ class FlextLdapExceptions:
             cls,
             bind_dn: str,
             ldap_result_code: str | None = None,
-        ) -> FlextLdapExceptions.AuthenticationError:
+        ) -> FlextLDAPExceptions.AuthenticationError:
             """Create authentication failure exception."""
             message = "LDAP authentication failed"
             if ldap_result_code and ldap_result_code in cls.LDAP_RESULT_CODES:
                 message += f": {cls.LDAP_RESULT_CODES[ldap_result_code]} (code: {ldap_result_code})"
 
-            return FlextLdapExceptions.AuthenticationError(
+            return FlextLDAPExceptions.AuthenticationError(
                 message,
                 bind_dn=bind_dn,
                 ldap_result_code=ldap_result_code,
@@ -541,10 +541,10 @@ class FlextLdapExceptions:
             error: str,
             *,
             ldap_result_code: str | None = None,
-        ) -> FlextLdapExceptions.SearchError:
+        ) -> FlextLDAPExceptions.SearchError:
             """Create search operation failure exception."""
             message = f"LDAP search failed: {error}"
-            return FlextLdapExceptions.SearchError(
+            return FlextLDAPExceptions.SearchError(
                 message,
                 base_dn=base_dn,
                 search_filter=search_filter,
@@ -559,7 +559,7 @@ class FlextLdapExceptions:
             *,
             uid: str | None = None,
             ldap_result_code: str | None = None,
-        ) -> FlextLdapExceptions.UserError:
+        ) -> FlextLDAPExceptions.UserError:
             """Create user creation failure exception."""
             message = f"User creation failed: {error}"
             if ldap_result_code:
@@ -568,7 +568,7 @@ class FlextLdapExceptions:
                     "Unknown Error",
                 )
                 message = f"{message} (code: {ldap_result_code} - {code_desc})"
-            return FlextLdapExceptions.UserError(
+            return FlextLDAPExceptions.UserError(
                 message,
                 user_dn=user_dn,
                 uid=uid,
@@ -582,10 +582,10 @@ class FlextLdapExceptions:
             *,
             field_value: str | None = None,
             validation_rule: str | None = None,
-        ) -> FlextLdapExceptions.ValidationError:
+        ) -> FlextLDAPExceptions.ValidationError:
             """Create validation failure exception."""
             message = f"Validation failed for {field_name}: {error}"
-            return FlextLdapExceptions.ValidationError(
+            return FlextLDAPExceptions.ValidationError(
                 message,
                 field_name=field_name,
                 field_value=field_value,
@@ -599,10 +599,10 @@ class FlextLdapExceptions:
             error: str,
             *,
             config_section: str | None = None,
-        ) -> FlextLdapExceptions.ConfigurationError:
+        ) -> FlextLDAPExceptions.ConfigurationError:
             """Create configuration error exception."""
             message = f"Configuration error in {config_key}: {error}"
-            return FlextLdapExceptions.ConfigurationError(
+            return FlextLDAPExceptions.ConfigurationError(
                 message,
                 config_section=config_section,
                 config_key=config_key,
@@ -613,37 +613,58 @@ class FlextLdapExceptions:
 # LEGACY COMPATIBILITY CLASSES - Backward Compatibility
 # =============================================================================
 
-# Legacy class aliases for backward compatibility
-FlextLdapError = FlextLdapExceptions.Error
-FlextLdapConnectionError = FlextLdapExceptions.LdapConnectionError
-FlextLdapAuthenticationError = FlextLdapExceptions.AuthenticationError
-FlextLdapSearchError = FlextLdapExceptions.SearchError
-FlextLdapOperationError = FlextLdapExceptions.OperationError
-FlextLdapUserError = FlextLdapExceptions.UserError
-FlextLdapGroupError = FlextLdapExceptions.GroupError
-FlextLdapValidationError = FlextLdapExceptions.ValidationError
-FlextLdapConfigurationError = FlextLdapExceptions.ConfigurationError
-FlextLdapTypeError = FlextLdapExceptions.LdapTypeError
-FlextLdapExceptionFactory = FlextLdapExceptions.Factory
+# =============================================================================
+# COMPATIBILITY ALIASES
+# =============================================================================
 
+# Create aliases for backward compatibility with explicit type annotations
+FlextLDAPConnectionError: type[FlextLDAPExceptions.LdapConnectionError] = (
+    FlextLDAPExceptions.LdapConnectionError
+)
+FlextLDAPAuthenticationError: type[FlextLDAPExceptions.AuthenticationError] = (
+    FlextLDAPExceptions.AuthenticationError
+)
+FlextLDAPConfigurationError: type[FlextLDAPExceptions.ConfigurationError] = (
+    FlextLDAPExceptions.ConfigurationError
+)
+FlextLDAPError: type[FlextLDAPExceptions.Error] = FlextLDAPExceptions.Error
+FlextLDAPExceptionFactory: type[FlextLDAPExceptions.Factory] = (
+    FlextLDAPExceptions.Factory
+)
+FlextLDAPGroupError: type[FlextLDAPExceptions.GroupError] = (
+    FlextLDAPExceptions.GroupError
+)
+FlextLDAPOperationError: type[FlextLDAPExceptions.OperationError] = (
+    FlextLDAPExceptions.OperationError
+)
+FlextLDAPSearchError: type[FlextLDAPExceptions.SearchError] = (
+    FlextLDAPExceptions.SearchError
+)
+FlextLDAPTypeError: type[FlextLDAPExceptions.LdapTypeError] = (
+    FlextLDAPExceptions.LdapTypeError
+)
+FlextLDAPUserError: type[FlextLDAPExceptions.UserError] = FlextLDAPExceptions.UserError
+FlextLDAPValidationError: type[FlextLDAPExceptions.ValidationError] = (
+    FlextLDAPExceptions.ValidationError
+)
 
 # =============================================================================
 # MODULE EXPORTS
 # =============================================================================
 
 __all__ = [
-    "FlextLdapAuthenticationError",
-    "FlextLdapConfigurationError",
-    "FlextLdapConnectionError",
+    "FlextLDAPAuthenticationError",
+    "FlextLDAPConfigurationError",
+    "FlextLDAPConnectionError",
     # Legacy compatibility classes
-    "FlextLdapError",
-    "FlextLdapExceptionFactory",
+    "FlextLDAPError",
+    "FlextLDAPExceptionFactory",
     # Primary consolidated class
-    "FlextLdapExceptions",
-    "FlextLdapGroupError",
-    "FlextLdapOperationError",
-    "FlextLdapSearchError",
-    "FlextLdapTypeError",
-    "FlextLdapUserError",
-    "FlextLdapValidationError",
+    "FlextLDAPExceptions",
+    "FlextLDAPGroupError",
+    "FlextLDAPOperationError",
+    "FlextLDAPSearchError",
+    "FlextLDAPTypeError",
+    "FlextLDAPUserError",
+    "FlextLDAPValidationError",
 ]

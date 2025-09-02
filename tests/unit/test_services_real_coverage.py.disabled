@@ -11,42 +11,42 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from flext_core import FlextModels, FlextEntityStatus, FlextResult
 
-from flext_ldap.container import FlextLdapContainer
+from flext_ldap.container import FlextLDAPContainer
 from flext_ldap.entities import (
-    FlextLdapCreateUserRequest,
-    FlextLdapEntry,
-    FlextLdapGroup,
-    FlextLdapSearchRequest,
-    FlextLdapSearchResponse,
-    FlextLdapUser,
+    FlextLDAPCreateUserRequest,
+    FlextLDAPEntry,
+    FlextLDAPGroup,
+    FlextLDAPSearchRequest,
+    FlextLDAPSearchResponse,
+    FlextLDAPUser,
 )
 from flext_ldap.services import (
-    FlextLdapGroupService,
-    FlextLdapService,
-    FlextLdapUserService,
+    FlextLDAPGroupService,
+    FlextLDAPService,
+    FlextLDAPUserService,
 )
 from flext_ldap.typings import LdapAttributeDict
 
 
-class TestFlextLdapServiceRealExecution:
-    """Test FlextLdapService with real code execution."""
+class TestFlextLDAPServiceRealExecution:
+    """Test FlextLDAPService with real code execution."""
 
     def test_service_instantiation_real(self) -> None:
         """Test service can be instantiated - real instantiation."""
         # Test with default container
-        service = FlextLdapService()
+        service = FlextLDAPService()
         assert service._container is not None
         assert hasattr(service, "initialize")
         assert hasattr(service, "cleanup")
 
         # Test with custom container
-        mock_container = MagicMock(spec=FlextLdapContainer)
-        service_with_container = FlextLdapService(mock_container)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
+        service_with_container = FlextLDAPService(mock_container)
         assert service_with_container._container is mock_container
 
     async def test_initialize_real(self) -> None:
         """Test service initialization - real initialization logic."""
-        service = FlextLdapService()
+        service = FlextLDAPService()
 
         # Execute real initialization
         result = await service.initialize()
@@ -57,10 +57,10 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_cleanup_real(self) -> None:
         """Test service cleanup - real cleanup execution."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_container.cleanup = AsyncMock(return_value=FlextResult[None].ok(None))
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Execute real cleanup
         result = await service.cleanup()
@@ -71,11 +71,11 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_create_user_real(self) -> None:
         """Test create_user method - real user creation logic."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_repository = AsyncMock()
         mock_container.get_repository.return_value = mock_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock repository methods
         mock_repository.save = AsyncMock(return_value=FlextResult[None].ok(None))
@@ -83,7 +83,7 @@ class TestFlextLdapServiceRealExecution:
         # Mock logger to avoid execution of buggy logging code
         with patch("flext_ldap.services.logger.info"):
             # Create user request
-            user_request = FlextLdapCreateUserRequest(
+            user_request = FlextLDAPCreateUserRequest(
                 dn="cn=testuser,ou=users,dc=example,dc=com",
                 uid="testuser",
                 cn="Test User",
@@ -95,7 +95,7 @@ class TestFlextLdapServiceRealExecution:
 
             # Verify real user creation logic
             assert result.is_success
-            assert isinstance(result.value, FlextLdapUser)
+            assert isinstance(result.value, FlextLDAPUser)
             assert result.value.dn == user_request.dn
             assert result.value.uid == user_request.uid
 
@@ -104,15 +104,15 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_get_user_real(self) -> None:
         """Test get_user method - real user retrieval logic."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_repository = AsyncMock()
         mock_container.get_repository.return_value = mock_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock repository to return user entry
 
-        mock_entry = FlextLdapEntry(
+        mock_entry = FlextLDAPEntry(
             id=FlextModels.EntityId("user-id"),
             dn="cn=testuser,ou=users,dc=example,dc=com",
             object_classes=["person", "inetOrgPerson"],
@@ -120,7 +120,7 @@ class TestFlextLdapServiceRealExecution:
             status=FlextEntityStatus.ACTIVE,
         )
         mock_repository.find_by_dn = AsyncMock(
-            return_value=FlextResult[FlextLdapEntry | None].ok(mock_entry)
+            return_value=FlextResult[FlextLDAPEntry | None].ok(mock_entry)
         )
 
         # Execute real user retrieval
@@ -128,7 +128,7 @@ class TestFlextLdapServiceRealExecution:
 
         # Verify real user retrieval logic
         assert result.is_success
-        assert isinstance(result.value, FlextLdapUser)
+        assert isinstance(result.value, FlextLDAPUser)
         assert result.value.dn == mock_entry.dn
         assert result.value.uid == "testuser"
 
@@ -138,11 +138,11 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_get_user_not_found_real(self) -> None:
         """Test get_user when user not found - real not found handling."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_repository = AsyncMock()
         mock_container.get_repository.return_value = mock_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock repository to return None (user not found)
         mock_repository.find_by_dn = AsyncMock(return_value=FlextResult[None].ok(None))
@@ -156,11 +156,11 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_update_user_real(self) -> None:
         """Test update_user method - real user update logic."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_repository = AsyncMock()
         mock_container.get_repository.return_value = mock_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock repository update
         mock_repository.update = AsyncMock(return_value=FlextResult[None].ok(None))
@@ -176,11 +176,11 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_delete_user_real(self) -> None:
         """Test delete_user method - real user deletion logic."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_repository = AsyncMock()
         mock_container.get_repository.return_value = mock_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock repository delete
         mock_repository.delete = AsyncMock(return_value=FlextResult[None].ok(None))
@@ -195,14 +195,14 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_search_users_real(self) -> None:
         """Test search_users method - real user search logic."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_repository = AsyncMock()
         mock_container.get_repository.return_value = mock_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock repository search response
-        mock_search_response = FlextLdapSearchResponse(
+        mock_search_response = FlextLDAPSearchResponse(
             entries=[
                 {
                     "dn": "cn=user1,ou=users,dc=example,dc=com",
@@ -221,14 +221,14 @@ class TestFlextLdapServiceRealExecution:
             has_more=False,
         )
         mock_repository.search = AsyncMock(
-            return_value=FlextResult[FlextLdapSearchResponse].ok(mock_search_response)
+            return_value=FlextResult[FlextLDAPSearchResponse].ok(mock_search_response)
         )
 
         # Mock the individual user retrieval to return None (avoid the complex get_user logic)
         service.get_user = AsyncMock(
             side_effect=[
-                FlextResult[FlextLdapUser | None].ok(
-                    FlextLdapUser(
+                FlextResult[FlextLDAPUser | None].ok(
+                    FlextLDAPUser(
                         id=FlextModels.EntityId("user1-id"),
                         dn="cn=user1,ou=users,dc=example,dc=com",
                         uid="user1",
@@ -237,8 +237,8 @@ class TestFlextLdapServiceRealExecution:
                         status=FlextEntityStatus.ACTIVE,
                     )
                 ),
-                FlextResult[FlextLdapUser | None].ok(
-                    FlextLdapUser(
+                FlextResult[FlextLDAPUser | None].ok(
+                    FlextLDAPUser(
                         id=FlextModels.EntityId("user2-id"),
                         dn="cn=user2,ou=users,dc=example,dc=com",
                         uid="user2",
@@ -259,12 +259,12 @@ class TestFlextLdapServiceRealExecution:
         assert result.is_success
         assert isinstance(result.value, list)
         assert len(result.value) == 2
-        assert all(isinstance(user, FlextLdapUser) for user in result.value)
+        assert all(isinstance(user, FlextLDAPUser) for user in result.value)
 
         # Verify search request was created correctly
         mock_repository.search.assert_called_once()
         search_request = mock_repository.search.call_args[0][0]
-        assert isinstance(search_request, FlextLdapSearchRequest)
+        assert isinstance(search_request, FlextLDAPSearchRequest)
         assert search_request.base_dn == "ou=users,dc=example,dc=com"
         # The real code combines the filter with inetOrgPerson filter
         assert "objectClass=person" in search_request.filter_str
@@ -273,11 +273,11 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_user_exists_real(self) -> None:
         """Test user_exists method - real existence check logic."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_repository = AsyncMock()
         mock_container.get_repository.return_value = mock_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock repository exists
         mock_repository.exists = AsyncMock(return_value=FlextResult[bool].ok(data=True))
@@ -294,17 +294,17 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_create_group_real(self) -> None:
         """Test create_group method - real group creation logic."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_repository = AsyncMock()
         mock_container.get_repository.return_value = mock_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock repository save
         mock_repository.save = AsyncMock(return_value=FlextResult[None].ok(None))
 
         # Create group
-        group = FlextLdapGroup(
+        group = FlextLDAPGroup(
             id=FlextModels.EntityId("group-id"),
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
@@ -327,15 +327,15 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_get_group_real(self) -> None:
         """Test get_group method - real group retrieval logic."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_repository = AsyncMock()
         mock_container.get_repository.return_value = mock_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock repository to return group entry
 
-        mock_entry = FlextLdapEntry(
+        mock_entry = FlextLDAPEntry(
             id=FlextModels.EntityId("group-id"),
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             object_classes=["groupOfNames"],
@@ -346,7 +346,7 @@ class TestFlextLdapServiceRealExecution:
             status=FlextEntityStatus.ACTIVE,
         )
         mock_repository.find_by_dn = AsyncMock(
-            return_value=FlextResult[FlextLdapEntry | None].ok(mock_entry)
+            return_value=FlextResult[FlextLDAPEntry | None].ok(mock_entry)
         )
 
         # Execute real group retrieval
@@ -354,17 +354,17 @@ class TestFlextLdapServiceRealExecution:
 
         # Verify real group retrieval logic
         assert result.is_success
-        assert isinstance(result.value, FlextLdapGroup)
+        assert isinstance(result.value, FlextLDAPGroup)
         assert result.value.dn == mock_entry.dn
         assert result.value.cn == "testgroup"
 
     async def test_update_group_real(self) -> None:
         """Test update_group method - real group update logic."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_repository = AsyncMock()
         mock_container.get_repository.return_value = mock_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock repository update
         mock_repository.update = AsyncMock(return_value=FlextResult[None].ok(None))
@@ -380,11 +380,11 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_delete_group_real(self) -> None:
         """Test delete_group method - real group deletion logic."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_repository = AsyncMock()
         mock_container.get_repository.return_value = mock_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock repository delete
         mock_repository.delete = AsyncMock(return_value=FlextResult[None].ok(None))
@@ -399,11 +399,11 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_add_member_real(self) -> None:
         """Test add_member method - real member addition logic."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_group_repository = AsyncMock()
         mock_container.get_group_repository.return_value = mock_group_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock group repository add member
         mock_group_repository.add_member_to_group = AsyncMock(
@@ -423,11 +423,11 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_remove_member_real(self) -> None:
         """Test remove_member method - real member removal logic."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_group_repository = AsyncMock()
         mock_container.get_group_repository.return_value = mock_group_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock current members
         current_members = [
@@ -462,11 +462,11 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_get_members_real(self) -> None:
         """Test get_members method - real members retrieval logic."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_group_repository = AsyncMock()
         mock_container.get_group_repository.return_value = mock_group_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock group repository get members
         members = [
@@ -486,11 +486,11 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_group_exists_real(self) -> None:
         """Test group_exists method - real group existence check."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_repository = AsyncMock()
         mock_container.get_repository.return_value = mock_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock repository exists
         mock_repository.exists = AsyncMock(return_value=FlextResult[bool].ok(data=True))
@@ -504,7 +504,7 @@ class TestFlextLdapServiceRealExecution:
 
     def test_validate_dn_real(self) -> None:
         """Test validate_dn method - real DN validation logic."""
-        service = FlextLdapService()
+        service = FlextLDAPService()
 
         # Test valid DN
         result = service.validate_dn("cn=testuser,ou=users,dc=example,dc=com")
@@ -517,7 +517,7 @@ class TestFlextLdapServiceRealExecution:
 
     def test_validate_filter_real(self) -> None:
         """Test validate_filter method - real filter validation logic."""
-        service = FlextLdapService()
+        service = FlextLDAPService()
 
         # Test valid filter
         result = service.validate_filter("(objectClass=person)")
@@ -530,7 +530,7 @@ class TestFlextLdapServiceRealExecution:
 
     def test_validate_attributes_real(self) -> None:
         """Test validate_attributes method - real attributes validation."""
-        service = FlextLdapService()
+        service = FlextLDAPService()
 
         # Test valid attributes
         valid_attributes: LdapAttributeDict = {"cn": "test", "uid": ["testuser"]}
@@ -544,7 +544,7 @@ class TestFlextLdapServiceRealExecution:
 
     def test_validate_object_classes_real(self) -> None:
         """Test validate_object_classes method - real object classes validation."""
-        service = FlextLdapService()
+        service = FlextLDAPService()
 
         # Test valid object classes
         result = service.validate_object_classes(["person", "inetOrgPerson"])
@@ -557,22 +557,22 @@ class TestFlextLdapServiceRealExecution:
 
     async def test_search_real(self) -> None:
         """Test search method - real search delegation."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_repository = AsyncMock()
         mock_container.get_repository.return_value = mock_repository
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock repository search
-        mock_response = FlextLdapSearchResponse(
+        mock_response = FlextLDAPSearchResponse(
             entries=[], total_count=0, has_more=False
         )
         mock_repository.search = AsyncMock(
-            return_value=FlextResult[FlextLdapSearchResponse].ok(mock_response)
+            return_value=FlextResult[FlextLDAPSearchResponse].ok(mock_response)
         )
 
         # Create search request
-        search_request = FlextLdapSearchRequest(
+        search_request = FlextLDAPSearchRequest(
             base_dn="dc=example,dc=com",
             scope="subtree",
             filter_str="(objectClass=*)",
@@ -589,13 +589,13 @@ class TestFlextLdapServiceRealExecution:
         mock_repository.search.assert_called_once_with(search_request)
 
 
-class TestFlextLdapUserServiceRealExecution:
-    """Test FlextLdapUserService with real code execution."""
+class TestFlextLDAPUserServiceRealExecution:
+    """Test FlextLDAPUserService with real code execution."""
 
     def test_user_service_instantiation_real(self) -> None:
         """Test user service can be instantiated - real instantiation."""
-        main_service = FlextLdapService()
-        user_service = FlextLdapUserService(main_service)
+        main_service = FlextLDAPService()
+        user_service = FlextLDAPUserService(main_service)
 
         assert user_service._service is main_service
         assert hasattr(user_service, "create_user")
@@ -607,13 +607,13 @@ class TestFlextLdapUserServiceRealExecution:
 
     async def test_user_service_delegates_to_main_service_real(self) -> None:
         """Test user service delegates to main service - real delegation."""
-        main_service = MagicMock(spec=FlextLdapService)
-        user_service = FlextLdapUserService(main_service)
+        main_service = MagicMock(spec=FlextLDAPService)
+        user_service = FlextLDAPUserService(main_service)
 
         # Mock main service methods
         main_service.create_user = AsyncMock(
-            return_value=FlextResult[FlextLdapUser].ok(
-                FlextLdapUser(
+            return_value=FlextResult[FlextLDAPUser].ok(
+                FlextLDAPUser(
                     id=FlextModels.EntityId("user-id"),
                     dn="cn=test,dc=example,dc=com",
                     uid="test",
@@ -624,19 +624,19 @@ class TestFlextLdapUserServiceRealExecution:
             )
         )
         main_service.get_user = AsyncMock(
-            return_value=FlextResult[FlextLdapUser | None].ok(None)
+            return_value=FlextResult[FlextLDAPUser | None].ok(None)
         )
         main_service.update_user = AsyncMock(return_value=FlextResult[None].ok(None))
         main_service.delete_user = AsyncMock(return_value=FlextResult[None].ok(None))
         main_service.search_users = AsyncMock(
-            return_value=FlextResult[list[FlextLdapUser]].ok([])
+            return_value=FlextResult[list[FlextLDAPUser]].ok([])
         )
         main_service.user_exists = AsyncMock(
             return_value=FlextResult[bool].ok(data=True)
         )
 
         # Test all delegation methods
-        user_request = FlextLdapCreateUserRequest(
+        user_request = FlextLDAPCreateUserRequest(
             dn="cn=test,dc=example,dc=com", uid="test", cn="Test User", sn="User"
         )
 
@@ -663,13 +663,13 @@ class TestFlextLdapUserServiceRealExecution:
         main_service.user_exists.assert_called_once_with("cn=test,dc=example,dc=com")
 
 
-class TestFlextLdapGroupServiceRealExecution:
-    """Test FlextLdapGroupService with real code execution."""
+class TestFlextLDAPGroupServiceRealExecution:
+    """Test FlextLDAPGroupService with real code execution."""
 
     def test_group_service_instantiation_real(self) -> None:
         """Test group service can be instantiated - real instantiation."""
-        main_service = FlextLdapService()
-        group_service = FlextLdapGroupService(main_service)
+        main_service = FlextLDAPService()
+        group_service = FlextLDAPGroupService(main_service)
 
         assert group_service._service is main_service
         assert hasattr(group_service, "create_group")
@@ -683,13 +683,13 @@ class TestFlextLdapGroupServiceRealExecution:
 
     async def test_group_service_delegates_to_main_service_real(self) -> None:
         """Test group service delegates to main service - real delegation."""
-        main_service = MagicMock(spec=FlextLdapService)
-        group_service = FlextLdapGroupService(main_service)
+        main_service = MagicMock(spec=FlextLDAPService)
+        group_service = FlextLDAPGroupService(main_service)
 
         # Mock main service methods
         main_service.create_group = AsyncMock(return_value=FlextResult[None].ok(None))
         main_service.get_group = AsyncMock(
-            return_value=FlextResult[FlextLdapGroup | None].ok(None)
+            return_value=FlextResult[FlextLDAPGroup | None].ok(None)
         )
         main_service.update_group = AsyncMock(return_value=FlextResult[None].ok(None))
         main_service.delete_group = AsyncMock(return_value=FlextResult[None].ok(None))
@@ -701,7 +701,7 @@ class TestFlextLdapGroupServiceRealExecution:
         )
 
         # Test all delegation methods
-        group = FlextLdapGroup(
+        group = FlextLDAPGroup(
             id=FlextModels.EntityId("group-id"),
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="testgroup",
@@ -755,12 +755,12 @@ class TestFlextLdapGroupServiceRealExecution:
         )
 
 
-class TestFlextLdapServiceIntegrationReal:
+class TestFlextLDAPServiceIntegrationReal:
     """Test service integration patterns with real execution."""
 
     async def test_service_workflow_real(self) -> None:
         """Test complete service workflow - real workflow execution."""
-        mock_container = MagicMock(spec=FlextLdapContainer)
+        mock_container = MagicMock(spec=FlextLDAPContainer)
         mock_repository = AsyncMock()
         mock_group_repository = AsyncMock()
 
@@ -768,7 +768,7 @@ class TestFlextLdapServiceIntegrationReal:
         mock_container.get_group_repository.return_value = mock_group_repository
         mock_container.cleanup = AsyncMock(return_value=FlextResult[None].ok(None))
 
-        service = FlextLdapService(mock_container)
+        service = FlextLDAPService(mock_container)
 
         # Mock repository operations
         mock_repository.save = AsyncMock(return_value=FlextResult[None].ok(None))
@@ -782,7 +782,7 @@ class TestFlextLdapServiceIntegrationReal:
         assert init_result.is_success
 
         # 2. Create user
-        user_request = FlextLdapCreateUserRequest(
+        user_request = FlextLDAPCreateUserRequest(
             dn="cn=testuser,ou=users,dc=example,dc=com",
             uid="testuser",
             cn="Test User",
@@ -812,7 +812,7 @@ class TestFlextLdapServiceIntegrationReal:
 
     def test_error_handling_consistency_real(self) -> None:
         """Test error handling consistency across services - real error patterns."""
-        service = FlextLdapService()
+        service = FlextLDAPService()
 
         # Test validation methods consistently return FlextResult
         dn_result = service.validate_dn("")
@@ -836,7 +836,7 @@ class TestFlextLdapServiceIntegrationReal:
     def test_logging_integration_real(self) -> None:
         """Test logging integration - real logging execution."""
         with patch("flext_ldap.services.logger") as mock_logger:
-            service = FlextLdapService()
+            service = FlextLDAPService()
 
             # Execute operation that should log
 

@@ -10,7 +10,7 @@ This document provides complete API reference for FLEXT-LDAP core components, in
 
 ### Core Components
 
-- **[FlextLdapApi](#flextldapapi)**: Main API entry point with unified LDAP operations
+- **[FlextLDAPApi](#flextldapapi)**: Main API entry point with unified LDAP operations
 - **[Domain Entities](#domain-entities)**: Business entities (User, Group, Entry)
 - **[Value Objects](#value-objects)**: Immutable value objects (DN, Filter, Scope)
 - **[Configuration](#configuration)**: Settings and configuration management
@@ -27,12 +27,12 @@ All APIs follow FLEXT-Core patterns:
 
 ---
 
-## 🔧 FlextLdapApi
+## 🔧 FlextLDAPApi
 
 ### Class Definition
 
 ```python
-class FlextLdapApi:
+class FlextLDAPApi:
     \"\"\"Unified LDAP API using flext-core patterns.
 
     Single interface that consolidates all LDAP operations with:
@@ -46,7 +46,7 @@ class FlextLdapApi:
 ### Constructor
 
 ```python
-def __init__(self, config: FlextLdapSettings | None = None) -> None:
+def __init__(self, config: FlextLDAPSettings | None = None) -> None:
     \"\"\"Initialize LDAP API with flext-core centralized configuration.
 
     Args:
@@ -55,15 +55,15 @@ def __init__(self, config: FlextLdapSettings | None = None) -> None:
 
     Example:
         # Use default configuration
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Use custom configuration
-        settings = FlextLdapSettings(
+        settings = FlextLDAPSettings(
             server_url=\"ldap://custom.example.com\",
             port=389,
             use_ssl=False
         )
-        api = FlextLdapApi(config=settings)
+        api = FlextLDAPApi(config=settings)
     \"\"\"
 ```
 
@@ -94,8 +94,8 @@ async def connection(
         str: Session ID for use with other operations
 
     Raises:
-        FlextLdapConnectionError: If connection fails
-        FlextLdapAuthenticationError: If authentication fails
+        FlextLDAPConnectionError: If connection fails
+        FlextLDAPAuthenticationError: If authentication fails
 
     Example:
         async with api.connection(
@@ -176,7 +176,7 @@ async def search(
     filter_expr: str,
     attributes: List[str] | None = None,
     scope: str = \"subtree\"
-) -> FlextResult[List[FlextLdapEntry]]:
+) -> FlextResult[List[FlextLDAPEntry]]:
     \"\"\"Search LDAP directory.
 
     Args:
@@ -187,7 +187,7 @@ async def search(
         scope: Search scope (\"base\", \"onelevel\", \"subtree\")
 
     Returns:
-        FlextResult[List[FlextLdapEntry]]: Search results or error
+        FlextResult[List[FlextLDAPEntry]]: Search results or error
 
     Example:
         # Search all users
@@ -220,7 +220,7 @@ async def search_users(
     session_id: str,
     base_dn: str | None = None,
     filter_expr: str | None = None
-) -> FlextResult[List[FlextLdapUser]]:
+) -> FlextResult[List[FlextLDAPUser]]:
     \"\"\"Search for LDAP users with domain entity conversion.
 
     Args:
@@ -229,7 +229,7 @@ async def search_users(
         filter_expr: Search filter (default: \"(objectClass=person)\")
 
     Returns:
-        FlextResult[List[FlextLdapUser]]: User domain entities
+        FlextResult[List[FlextLDAPUser]]: User domain entities
 
     Example:
         result = await api.search_users(session)
@@ -248,8 +248,8 @@ async def search_users(
 async def create_user(
     self,
     session_id: str,
-    request: FlextLdapCreateUserRequest
-) -> FlextResult[FlextLdapUser]:
+    request: FlextLDAPCreateUserRequest
+) -> FlextResult[FlextLDAPUser]:
     \"\"\"Create new LDAP user.
 
     Args:
@@ -257,10 +257,10 @@ async def create_user(
         request: User creation request with validation
 
     Returns:
-        FlextResult[FlextLdapUser]: Created user entity or error
+        FlextResult[FlextLDAPUser]: Created user entity or error
 
     Example:
-        request = FlextLdapCreateUserRequest(
+        request = FlextLDAPCreateUserRequest(
             dn=\"uid=jane.doe,ou=users,dc=company,dc=com\",
             uid=\"jane.doe\",
             cn=\"Jane Doe\",
@@ -347,7 +347,7 @@ async def get_user(
     self,
     session_id: str,
     user_dn: str
-) -> FlextResult[FlextLdapUser]:
+) -> FlextResult[FlextLDAPUser]:
     \"\"\"Get LDAP user by distinguished name.
 
     Args:
@@ -355,7 +355,7 @@ async def get_user(
         user_dn: Distinguished name of user
 
     Returns:
-        FlextResult[FlextLdapUser]: User entity or error
+        FlextResult[FlextLDAPUser]: User entity or error
 
     Example:
         result = await api.get_user(
@@ -377,7 +377,7 @@ async def find_user_by_uid(
     session_id: str,
     uid: str,
     base_dn: str | None = None
-) -> FlextResult[FlextLdapUser]:
+) -> FlextResult[FlextLDAPUser]:
     \"\"\"Find user by UID attribute.
 
     Args:
@@ -386,7 +386,7 @@ async def find_user_by_uid(
         base_dn: Search base (default: from configuration)
 
     Returns:
-        FlextResult[FlextLdapUser]: User entity or error
+        FlextResult[FlextLDAPUser]: User entity or error
 
     Example:
         result = await api.find_user_by_uid(session, \"jane.doe\")
@@ -407,8 +407,8 @@ async def find_user_by_uid(
 async def create_group(
     self,
     session_id: str,
-    request: FlextLdapCreateGroupRequest
-) -> FlextResult[FlextLdapGroup]:
+    request: FlextLDAPCreateGroupRequest
+) -> FlextResult[FlextLDAPGroup]:
     \"\"\"Create new LDAP group.
 
     Args:
@@ -416,10 +416,10 @@ async def create_group(
         request: Group creation request
 
     Returns:
-        FlextResult[FlextLdapGroup]: Created group entity
+        FlextResult[FlextLDAPGroup]: Created group entity
 
     Example:
-        request = FlextLdapCreateGroupRequest(
+        request = FlextLDAPCreateGroupRequest(
             dn=\"cn=developers,ou=groups,dc=company,dc=com\",
             cn=\"developers\",
             description=\"Software Development Team\"
@@ -486,7 +486,7 @@ async def remove_group_member(
 async def create_entry(
     self,
     session_id: str,
-    entry: FlextLdapEntry
+    entry: FlextLDAPEntry
 ) -> FlextResult[bool]:
     \"\"\"Create generic LDAP entry.
 
@@ -498,7 +498,7 @@ async def create_entry(
         FlextResult[bool]: Success or failure result
 
     Example:
-        entry = FlextLdapEntry(
+        entry = FlextLDAPEntry(
             dn=\"ou=newdept,ou=departments,dc=company,dc=com\",
             object_classes=[\"organizationalUnit\"],
             attributes={
@@ -558,21 +558,21 @@ async def delete_entry(
 ### get_ldap_api()
 
 ```python
-def get_ldap_api(config: FlextLdapSettings | None = None) -> FlextLdapApi:
-    \"\"\"Factory function to create FlextLdapApi instance.
+def get_ldap_api(config: FlextLDAPSettings | None = None) -> FlextLDAPApi:
+    \"\"\"Factory function to create FlextLDAPApi instance.
 
     Args:
         config: Optional configuration. Uses default if None.
 
     Returns:
-        FlextLdapApi: Configured API instance
+        FlextLDAPApi: Configured API instance
 
     Example:
         # Use default configuration
         api = get_ldap_api()
 
         # Use custom configuration
-        settings = FlextLdapSettings(server_url=\"ldap://custom.com\")
+        settings = FlextLDAPSettings(server_url=\"ldap://custom.com\")
         api = get_ldap_api(config=settings)
     \"\"\"
 ```
@@ -581,11 +581,11 @@ def get_ldap_api(config: FlextLdapSettings | None = None) -> FlextLdapApi:
 
 ## 🎯 Domain Entities
 
-### FlextLdapUser
+### FlextLDAPUser
 
 ```python
 @dataclass
-class FlextLdapUser:
+class FlextLDAPUser:
     \"\"\"LDAP user domain entity with business logic.
 
     Attributes:
@@ -631,11 +631,11 @@ class FlextLdapUser:
         self.attributes[name] = values
 ```
 
-### FlextLdapGroup
+### FlextLDAPGroup
 
 ```python
 @dataclass
-class FlextLdapGroup:
+class FlextLDAPGroup:
     \"\"\"LDAP group domain entity with membership management.
 
     Attributes:
@@ -676,11 +676,11 @@ class FlextLdapGroup:
         return len(self.members)
 ```
 
-### FlextLdapEntry
+### FlextLDAPEntry
 
 ```python
 @dataclass
-class FlextLdapEntry:
+class FlextLDAPEntry:
     \"\"\"Generic LDAP entry entity.
 
     Attributes:
@@ -718,11 +718,11 @@ class FlextLdapEntry:
 
 ## 💎 Value Objects
 
-### FlextLdapDistinguishedName
+### FlextLDAPDistinguishedName
 
 ```python
 @dataclass(frozen=True)
-class FlextLdapDistinguishedName:
+class FlextLDAPDistinguishedName:
     \"\"\"Distinguished Name value object with RFC 4514 validation.
 
     Attributes:
@@ -757,11 +757,11 @@ class FlextLdapDistinguishedName:
         return self.value.lower().endswith(parent_dn.lower())
 ```
 
-### FlextLdapFilterValue
+### FlextLDAPFilterValue
 
 ```python
 @dataclass(frozen=True)
-class FlextLdapFilterValue:
+class FlextLDAPFilterValue:
     \"\"\"LDAP filter value object with RFC 4515 validation.
 
     Attributes:
@@ -783,32 +783,32 @@ class FlextLdapFilterValue:
         )
 
     @classmethod
-    def equals(cls, attribute: str, value: str) -> 'FlextLdapFilterValue':
+    def equals(cls, attribute: str, value: str) -> 'FlextLDAPFilterValue':
         \"\"\"Create equality filter.\"\"\"
         return cls(f\"({attribute}={value})\")
 
     @classmethod
-    def present(cls, attribute: str) -> 'FlextLdapFilterValue':
+    def present(cls, attribute: str) -> 'FlextLDAPFilterValue':
         \"\"\"Create presence filter.\"\"\"
         return cls(f\"({attribute}=*)\")
 
     @classmethod
-    def and_filters(cls, *filters: 'FlextLdapFilterValue') -> 'FlextLdapFilterValue':
+    def and_filters(cls, *filters: 'FlextLDAPFilterValue') -> 'FlextLDAPFilterValue':
         \"\"\"Combine filters with AND logic.\"\"\"
         filter_strings = [f.value for f in filters]
         return cls(f\"(&{''.join(filter_strings)})\")
 
     @classmethod
-    def or_filters(cls, *filters: 'FlextLdapFilterValue') -> 'FlextLdapFilterValue':
+    def or_filters(cls, *filters: 'FlextLDAPFilterValue') -> 'FlextLDAPFilterValue':
         \"\"\"Combine filters with OR logic.\"\"\"
         filter_strings = [f.value for f in filters]
         return cls(f\"(|{''.join(filter_strings)})\")
 ```
 
-### FlextLdapScopeEnum
+### FlextLDAPScopeEnum
 
 ```python
-class FlextLdapScopeEnum(Enum):
+class FlextLDAPScopeEnum(Enum):
     \"\"\"LDAP search scope enumeration.
 
     Values:
@@ -826,11 +826,11 @@ class FlextLdapScopeEnum(Enum):
 
 ## 📝 Request/Response Objects
 
-### FlextLdapCreateUserRequest
+### FlextLDAPCreateUserRequest
 
 ```python
 @dataclass
-class FlextLdapCreateUserRequest:
+class FlextLDAPCreateUserRequest:
     \"\"\"Request object for user creation with validation.
 
     Attributes:
@@ -861,11 +861,11 @@ class FlextLdapCreateUserRequest:
             raise ValueError(\"Surname is required for user creation\")
 ```
 
-### FlextLdapCreateGroupRequest
+### FlextLDAPCreateGroupRequest
 
 ```python
 @dataclass
-class FlextLdapCreateGroupRequest:
+class FlextLDAPCreateGroupRequest:
     \"\"\"Request object for group creation with validation.
 
     Attributes:
@@ -887,10 +887,10 @@ class FlextLdapCreateGroupRequest:
 
 ## ⚙️ Configuration
 
-### FlextLdapSettings
+### FlextLDAPSettings
 
 ```python
-class FlextLdapSettings(FlextConfig):
+class FlextLDAPSettings(FlextConfig):
     \"\"\"FLEXT-LDAP configuration with environment variable support.
 
     All settings can be overridden via environment variables with
@@ -935,10 +935,10 @@ All API operations return `FlextResult<T>` for type-safe error handling:
 
 ```python
 # Success case
-result: FlextResult[FlextLdapUser] = await api.get_user(session, dn)
+result: FlextResult[FlextLDAPUser] = await api.get_user(session, dn)
 
 if result.success:
-    user: FlextLdapUser = result.data
+    user: FlextLDAPUser = result.data
     print(f\"Found user: {user.display_name}\")
 else:
     error: str = result.error
@@ -971,7 +971,7 @@ Common error types returned in FlextResult.error:
 ### Complete User Management Example
 
 ```python
-from flext_ldap import get_ldap_api, FlextLdapCreateUserRequest
+from flext_ldap import get_ldap_api, FlextLDAPCreateUserRequest
 
 async def complete_user_management_example():
     \"\"\"Complete example of user management operations.\"\"\"
@@ -986,7 +986,7 @@ async def complete_user_management_example():
     ) as session:
 
         # 1. Create new user
-        user_request = FlextLdapCreateUserRequest(
+        user_request = FlextLDAPCreateUserRequest(
             dn=\"uid=jane.doe,ou=users,dc=company,dc=com\",
             uid=\"jane.doe\",
             cn=\"Jane Doe\",
@@ -1042,7 +1042,7 @@ async def group_management_example():
     async with api.connection(...) as session:
 
         # Create group
-        group_request = FlextLdapCreateGroupRequest(
+        group_request = FlextLDAPCreateGroupRequest(
             dn=\"cn=developers,ou=groups,dc=company,dc=com\",
             cn=\"developers\",
             description=\"Software Development Team\"

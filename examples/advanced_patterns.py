@@ -26,14 +26,14 @@ from contextlib import asynccontextmanager
 from flext_core import FlextLogger, FlextResult
 
 from flext_ldap import (
-    FlextLdapApi,
-    FlextLdapDistinguishedName,
-    FlextLdapEntry,
-    FlextLdapFilter,
-    FlextLdapSearchRequest,
-    FlextLdapSettings,
+    FlextLDAPApi,
+    FlextLDAPDistinguishedName,
+    FlextLDAPEntry,
+    FlextLDAPFilter,
+    FlextLDAPSearchRequest,
+    FlextLDAPSettings,
 )
-from flext_ldap.value_objects import FlextLdapFilter as FilterClass
+from flext_ldap.value_objects import FlextLDAPFilter as FilterClass
 
 logger = FlextLogger(__name__)
 
@@ -43,12 +43,12 @@ async def ldap_session(
     server_url: str,
     bind_dn: str,
     password: str,
-) -> AsyncIterator[tuple[FlextLdapApi, str]]:
+) -> AsyncIterator[tuple[FlextLDAPApi, str]]:
     """Enterprise LDAP session context manager.
 
     Provides automatic connection management with proper cleanup.
     """
-    api = FlextLdapApi()
+    api = FlextLDAPApi()
     session_id = f"session_{id(api)}"
 
     def _raise_conn_error(message: str) -> None:
@@ -101,12 +101,12 @@ async def demonstrate_value_objects() -> None:
     """Demonstrate value object usage."""
     try:
         # 1. Distinguished Names
-        dn = FlextLdapDistinguishedName(value="cn=admin,ou=users,dc=example,dc=com")
+        dn = FlextLDAPDistinguishedName(value="cn=admin,ou=users,dc=example,dc=com")
         dn.validate_business_rules()
 
-        # 2. LDAP Filters - Using correct FlextLdapFilter class
+        # 2. LDAP Filters - Using correct FlextLDAPFilter class
         complex_filter = "(&(objectClass=person)(mail=*@example.com))"
-        filter_result = FlextLdapFilter.create(complex_filter)
+        filter_result = FlextLDAPFilter.create(complex_filter)
 
         if filter_result.is_success:
             default_filter = FilterClass(value="(objectClass=*)")
@@ -121,10 +121,10 @@ async def demonstrate_comprehensive_configuration() -> None:
     """Demonstrate comprehensive configuration setup."""
     try:
         # 1. Full settings configuration
-        _settings = FlextLdapSettings(enable_debug_mode=True)
+        _settings = FlextLDAPSettings(enable_debug_mode=True)
 
-        # 2. Create search request using FlextLdapSearchRequest
-        search_request = FlextLdapSearchRequest(
+        # 2. Create search request using FlextLDAPSearchRequest
+        search_request = FlextLDAPSearchRequest(
             base_dn="dc=example,dc=com",
             scope="subtree",
             filter_str="(objectClass=person)",
@@ -148,7 +148,7 @@ async def demonstrate_async_patterns() -> None:
             "ldap://demo.example.com:389", "cn=admin,dc=example,dc=com", "password"
         ) as (api, _session_id):
             # 2. Concurrent operations (simulated) with proper typing
-            tasks: list[Awaitable[FlextResult[list[FlextLdapEntry]]]] = []
+            tasks: list[Awaitable[FlextResult[list[FlextLDAPEntry]]]] = []
             search_bases = [
                 "ou=users,dc=example,dc=com",
                 "ou=groups,dc=example,dc=com",
@@ -166,7 +166,7 @@ async def demonstrate_async_patterns() -> None:
 
             # Execute concurrent searches with proper typing
             results: list[
-                FlextResult[list[FlextLdapEntry]] | BaseException
+                FlextResult[list[FlextLDAPEntry]] | BaseException
             ] = await asyncio.gather(*tasks, return_exceptions=True)
 
             sum(

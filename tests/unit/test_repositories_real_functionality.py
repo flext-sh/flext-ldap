@@ -14,33 +14,33 @@ import inspect
 import unittest
 from unittest.mock import MagicMock
 
-from flext_core import FlextModels, FlextResult
+from flext_core import FlextResult
 
-from flext_ldap.clients import FlextLdapClient
+from flext_ldap.clients import FlextLDAPClient
 from flext_ldap.entities import (
-    FlextLdapEntry,
-    FlextLdapSearchRequest,
-    FlextLdapSearchResponse,
+    FlextLDAPEntry,
+    FlextLDAPSearchRequest,
+    FlextLDAPSearchResponse,
 )
 from flext_ldap.repositories import (
-    FlextLdapGroupRepository,
-    FlextLdapRepository,
-    FlextLdapUserRepository,
+    FlextLDAPGroupRepository,
+    FlextLDAPRepository,
+    FlextLDAPUserRepository,
 )
 
 
-class TestFlextLdapRepositoryRealFunctionality(unittest.TestCase):
-    """Test FlextLdapRepository com funcionalidade real sem mocks."""
+class TestFlextLDAPRepositoryRealFunctionality(unittest.TestCase):
+    """Test FlextLDAPRepository com funcionalidade real sem mocks."""
 
     def setUp(self) -> None:
         """Set up test fixtures com objetos reais."""
         # Criar um mock client mínimo mas que permite testar a lógica do repository
-        self.mock_client = MagicMock(spec=FlextLdapClient)
-        self.repository = FlextLdapRepository(client=self.mock_client)
+        self.mock_client = MagicMock(spec=FlextLDAPClient)
+        self.repository = FlextLDAPRepository(client=self.mock_client)
 
     def test_repository_creation_and_attributes(self) -> None:
         """Test que repository é criado com atributos corretos."""
-        repository = FlextLdapRepository(client=self.mock_client)
+        repository = FlextLDAPRepository(client=self.mock_client)
         assert repository is not None
         assert hasattr(repository, "_client")
         assert repository._client is self.mock_client
@@ -49,7 +49,7 @@ class TestFlextLdapRepositoryRealFunctionality(unittest.TestCase):
         """Test find_by_dn valida DN format usando lógica real."""
 
         async def run_test() -> None:
-            # Teste com DN inválido - deve validar usando FlextLdapDistinguishedName real
+            # Teste com DN inválido - deve validar usando FlextLDAPDistinguishedName real
             invalid_dns = ["", "invalid", "malformed dn", "cn="]
 
             for invalid_dn in invalid_dns:
@@ -61,13 +61,13 @@ class TestFlextLdapRepositoryRealFunctionality(unittest.TestCase):
         asyncio.run(run_test())
 
     def test_find_by_dn_creates_proper_search_request(self) -> None:
-        """Test find_by_dn cria FlextLdapSearchRequest correto."""
+        """Test find_by_dn cria FlextLDAPSearchRequest correto."""
 
         async def mock_search(
-            request: FlextLdapSearchRequest,
-        ) -> FlextResult[FlextLdapSearchResponse]:
+            request: FlextLDAPSearchRequest,
+        ) -> FlextResult[FlextLDAPSearchResponse]:
             # Verificar que o request foi criado corretamente
-            assert isinstance(request, FlextLdapSearchRequest)
+            assert isinstance(request, FlextLDAPSearchRequest)
             assert request.base_dn == "cn=test,ou=users,dc=example,dc=com"
             assert request.scope == "base"
             assert request.filter_str == "(objectClass=*)"
@@ -75,8 +75,8 @@ class TestFlextLdapRepositoryRealFunctionality(unittest.TestCase):
             assert request.time_limit == 30
 
             # Retornar resultado vazio
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(entries=[], total_count=0)
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(entries=[], total_count=0)
             )
 
         async def run_test() -> None:
@@ -96,21 +96,21 @@ class TestFlextLdapRepositoryRealFunctionality(unittest.TestCase):
         """Test search method delega para client e processa resultado."""
 
         async def mock_search(
-            request: FlextLdapSearchRequest,
-        ) -> FlextResult[FlextLdapSearchResponse]:
+            request: FlextLDAPSearchRequest,
+        ) -> FlextResult[FlextLDAPSearchResponse]:
             # Simular busca bem-sucedida com LdapSearchResult (dicionários)
             entry_data = {
                 "dn": "cn=user1,ou=users,dc=example,dc=com",
                 "cn": ["user1"],
                 "mail": ["user1@example.com"],
             }
-            response = FlextLdapSearchResponse(entries=[entry_data], total_count=1)
-            return FlextResult[FlextLdapSearchResponse].ok(response)
+            response = FlextLDAPSearchResponse(entries=[entry_data], total_count=1)
+            return FlextResult[FlextLDAPSearchResponse].ok(response)
 
         async def run_test() -> None:
             self.mock_client.search = mock_search
 
-            search_request = FlextLdapSearchRequest(
+            search_request = FlextLDAPSearchRequest(
                 base_dn="ou=users,dc=example,dc=com",
                 scope="subtree",
                 filter_str="(objectClass=person)",
@@ -122,7 +122,7 @@ class TestFlextLdapRepositoryRealFunctionality(unittest.TestCase):
             assert isinstance(result, FlextResult)
             assert result.is_success is True
             response = result.value
-            assert isinstance(response, FlextLdapSearchResponse)
+            assert isinstance(response, FlextLDAPSearchResponse)
             assert len(response.entries) == 1
             assert response.entries[0]["dn"] == "cn=user1,ou=users,dc=example,dc=com"
 
@@ -131,15 +131,15 @@ class TestFlextLdapRepositoryRealFunctionality(unittest.TestCase):
     def test_exists_method_real_logic(self) -> None:
         """Test exists method usa lógica real para determinar existência."""
 
-        async def mock_find_by_dn(dn: str) -> FlextResult[FlextLdapEntry | None]:
+        async def mock_find_by_dn(dn: str) -> FlextResult[FlextLDAPEntry | None]:
             if dn == "cn=exists,ou=users,dc=example,dc=com":
-                entry = FlextLdapEntry(
-                    id=FlextModels.EntityId("test-id"),
+                entry = FlextLDAPEntry(
+                    id="test-id",
                     dn=dn,
                     attributes={"cn": ["exists"]},
                 )
-                return FlextResult[FlextLdapEntry | None].ok(entry)
-            return FlextResult[FlextLdapEntry | None].ok(None)
+                return FlextResult[FlextLDAPEntry | None].ok(entry)
+            return FlextResult[FlextLDAPEntry | None].ok(None)
 
         async def run_test() -> None:
             # Substituir find_by_dn para controlar resultado
@@ -175,8 +175,8 @@ class TestFlextLdapRepositoryRealFunctionality(unittest.TestCase):
             self.mock_client.add = mock_client_add
 
             # Criar entry válido com ID requerido
-            entry = FlextLdapEntry(
-                id=FlextModels.EntityId("test-id"),
+            entry = FlextLDAPEntry(
+                id="test-id",
                 dn="cn=newuser,ou=users,dc=example,dc=com",
                 attributes={"cn": ["newuser"], "objectClass": ["person"]},
             )
@@ -238,20 +238,20 @@ class TestFlextLdapRepositoryRealFunctionality(unittest.TestCase):
         asyncio.run(run_test())
 
 
-class TestFlextLdapUserRepositoryRealFunctionality(unittest.TestCase):
-    """Test FlextLdapUserRepository com funcionalidade real."""
+class TestFlextLDAPUserRepositoryRealFunctionality(unittest.TestCase):
+    """Test FlextLDAPUserRepository com funcionalidade real."""
 
     def setUp(self) -> None:
         """Set up test fixtures."""
-        mock_client = MagicMock(spec=FlextLdapClient)
-        base_repository = FlextLdapRepository(client=mock_client)
-        self.user_repository = FlextLdapUserRepository(base_repository)
+        mock_client = MagicMock(spec=FlextLDAPClient)
+        base_repository = FlextLDAPRepository(client=mock_client)
+        self.user_repository = FlextLDAPUserRepository(base_repository)
 
     def test_user_repository_creation(self) -> None:
         """Test user repository é criado corretamente."""
-        mock_client = MagicMock(spec=FlextLdapClient)
-        base_repository = FlextLdapRepository(client=mock_client)
-        user_repo = FlextLdapUserRepository(base_repository)
+        mock_client = MagicMock(spec=FlextLDAPClient)
+        base_repository = FlextLDAPRepository(client=mock_client)
+        user_repo = FlextLDAPUserRepository(base_repository)
 
         assert user_repo is not None
         assert hasattr(user_repo, "_repo")
@@ -261,10 +261,10 @@ class TestFlextLdapUserRepositoryRealFunctionality(unittest.TestCase):
         """Test find_user_by_uid cria search request correto."""
 
         async def mock_search(
-            request: FlextLdapSearchRequest,
-        ) -> FlextResult[FlextLdapSearchResponse]:
+            request: FlextLDAPSearchRequest,
+        ) -> FlextResult[FlextLDAPSearchResponse]:
             # Verificar que o request foi criado corretamente para busca por UID
-            assert isinstance(request, FlextLdapSearchRequest)
+            assert isinstance(request, FlextLDAPSearchRequest)
             assert request.base_dn == "ou=users,dc=example,dc=com"
             assert "uid=testuser" in request.filter_str
             assert (
@@ -278,19 +278,19 @@ class TestFlextLdapUserRepositoryRealFunctionality(unittest.TestCase):
                 "uid": ["testuser"],
                 "cn": ["Test User"],
             }
-            response = FlextLdapSearchResponse(entries=[entry_data], total_count=1)
-            return FlextResult[FlextLdapSearchResponse].ok(response)
+            response = FlextLDAPSearchResponse(entries=[entry_data], total_count=1)
+            return FlextResult[FlextLDAPSearchResponse].ok(response)
 
-        async def mock_find_by_dn(dn: str) -> FlextResult[FlextLdapEntry | None]:
+        async def mock_find_by_dn(dn: str) -> FlextResult[FlextLDAPEntry | None]:
             # Mock para find_by_dn usado internamente
             if "testuser" in dn:
-                entry = FlextLdapEntry(
-                    id=FlextModels.EntityId("test-id"),
+                entry = FlextLDAPEntry(
+                    id="test-id",
                     dn=dn,
                     attributes={"uid": ["testuser"], "cn": ["Test User"]},
                 )
-                return FlextResult[FlextLdapEntry | None].ok(entry)
-            return FlextResult[FlextLdapEntry | None].ok(None)
+                return FlextResult[FlextLDAPEntry | None].ok(entry)
+            return FlextResult[FlextLDAPEntry | None].ok(None)
 
         async def run_test() -> None:
             self.user_repository._repo.search = mock_search
@@ -302,10 +302,10 @@ class TestFlextLdapUserRepositoryRealFunctionality(unittest.TestCase):
 
             assert isinstance(result, FlextResult)
             assert result.is_success is True
-            # O result.value é FlextLdapEntry, não FlextLdapSearchResponse
+            # O result.value é FlextLDAPEntry, não FlextLDAPSearchResponse
             user_entry = result.value
             assert user_entry is not None
-            assert isinstance(user_entry, FlextLdapEntry)
+            assert isinstance(user_entry, FlextLDAPEntry)
             assert user_entry.dn == "uid=testuser,ou=users,dc=example,dc=com"
 
         asyncio.run(run_test())
@@ -314,8 +314,8 @@ class TestFlextLdapUserRepositoryRealFunctionality(unittest.TestCase):
         """Test find_users_by_filter delega corretamente para base repository."""
 
         async def mock_search(
-            request: FlextLdapSearchRequest,
-        ) -> FlextResult[FlextLdapSearchResponse]:
+            request: FlextLDAPSearchRequest,
+        ) -> FlextResult[FlextLDAPSearchResponse]:
             # Verificar que filtro foi combinado com objectClass
             assert "(&(objectClass=inetOrgPerson)" in request.filter_str
             assert "(mail=*@example.com)" in request.filter_str
@@ -330,18 +330,18 @@ class TestFlextLdapUserRepositoryRealFunctionality(unittest.TestCase):
                 }
                 for i in range(3)
             ]
-            response = FlextLdapSearchResponse(entries=entries, total_count=3)
-            return FlextResult[FlextLdapSearchResponse].ok(response)
+            response = FlextLDAPSearchResponse(entries=entries, total_count=3)
+            return FlextResult[FlextLDAPSearchResponse].ok(response)
 
-        async def mock_find_by_dn(dn: str) -> FlextResult[FlextLdapEntry | None]:
+        async def mock_find_by_dn(dn: str) -> FlextResult[FlextLDAPEntry | None]:
             # Mock para find_by_dn usado internamente
             user_id = dn.split(",", maxsplit=1)[0].split("=")[1]  # Extrair uid do DN
-            entry = FlextLdapEntry(
-                id=FlextModels.EntityId(f"test-{user_id}"),
+            entry = FlextLDAPEntry(
+                id=f"test-{user_id}",
                 dn=dn,
                 attributes={"uid": [user_id], "mail": [f"{user_id}@example.com"]},
             )
-            return FlextResult[FlextLdapEntry | None].ok(entry)
+            return FlextResult[FlextLDAPEntry | None].ok(entry)
 
         async def run_test() -> None:
             self.user_repository._repo.search = mock_search
@@ -353,27 +353,27 @@ class TestFlextLdapUserRepositoryRealFunctionality(unittest.TestCase):
 
             assert isinstance(result, FlextResult)
             assert result.is_success is True
-            users = result.value  # list[FlextLdapEntry]
+            users = result.value  # list[FlextLDAPEntry]
             assert isinstance(users, list)
             assert len(users) == 3
 
         asyncio.run(run_test())
 
 
-class TestFlextLdapGroupRepositoryRealFunctionality(unittest.TestCase):
-    """Test FlextLdapGroupRepository com funcionalidade real."""
+class TestFlextLDAPGroupRepositoryRealFunctionality(unittest.TestCase):
+    """Test FlextLDAPGroupRepository com funcionalidade real."""
 
     def setUp(self) -> None:
         """Set up test fixtures."""
-        mock_client = MagicMock(spec=FlextLdapClient)
-        base_repository = FlextLdapRepository(client=mock_client)
-        self.group_repository = FlextLdapGroupRepository(base_repository)
+        mock_client = MagicMock(spec=FlextLDAPClient)
+        base_repository = FlextLDAPRepository(client=mock_client)
+        self.group_repository = FlextLDAPGroupRepository(base_repository)
 
     def test_group_repository_creation(self) -> None:
         """Test group repository é criado corretamente."""
-        mock_client = MagicMock(spec=FlextLdapClient)
-        base_repository = FlextLdapRepository(client=mock_client)
-        group_repo = FlextLdapGroupRepository(base_repository)
+        mock_client = MagicMock(spec=FlextLDAPClient)
+        base_repository = FlextLDAPRepository(client=mock_client)
+        group_repo = FlextLDAPGroupRepository(base_repository)
 
         assert group_repo is not None
         assert hasattr(group_repo, "_repo")
@@ -383,10 +383,10 @@ class TestFlextLdapGroupRepositoryRealFunctionality(unittest.TestCase):
         """Test find_group_by_cn cria busca correta."""
 
         async def mock_search(
-            request: FlextLdapSearchRequest,
-        ) -> FlextResult[FlextLdapSearchResponse]:
+            request: FlextLDAPSearchRequest,
+        ) -> FlextResult[FlextLDAPSearchResponse]:
             # Verificar que busca por CN foi criada corretamente
-            assert isinstance(request, FlextLdapSearchRequest)
+            assert isinstance(request, FlextLDAPSearchRequest)
             assert "cn=testgroup" in request.filter_str
             assert (
                 "objectClass=group" in request.filter_str
@@ -399,22 +399,22 @@ class TestFlextLdapGroupRepositoryRealFunctionality(unittest.TestCase):
                 "cn": ["testgroup"],
                 "member": ["uid=user1,ou=users,dc=example,dc=com"],
             }
-            response = FlextLdapSearchResponse(entries=[entry_data], total_count=1)
-            return FlextResult[FlextLdapSearchResponse].ok(response)
+            response = FlextLDAPSearchResponse(entries=[entry_data], total_count=1)
+            return FlextResult[FlextLDAPSearchResponse].ok(response)
 
-        async def mock_find_by_dn(dn: str) -> FlextResult[FlextLdapEntry | None]:
+        async def mock_find_by_dn(dn: str) -> FlextResult[FlextLDAPEntry | None]:
             # Mock para find_by_dn usado internamente
             if "testgroup" in dn:
-                entry = FlextLdapEntry(
-                    id=FlextModels.EntityId("test-id"),
+                entry = FlextLDAPEntry(
+                    id="test-id",
                     dn=dn,
                     attributes={
                         "cn": ["testgroup"],
                         "member": ["uid=user1,ou=users,dc=example,dc=com"],
                     },
                 )
-                return FlextResult[FlextLdapEntry | None].ok(entry)
-            return FlextResult[FlextLdapEntry | None].ok(None)
+                return FlextResult[FlextLDAPEntry | None].ok(entry)
+            return FlextResult[FlextLDAPEntry | None].ok(None)
 
         async def run_test() -> None:
             self.group_repository._repo.search = mock_search
@@ -426,10 +426,10 @@ class TestFlextLdapGroupRepositoryRealFunctionality(unittest.TestCase):
 
             assert isinstance(result, FlextResult)
             assert result.is_success is True
-            # O result.value é FlextLdapEntry, não FlextLdapSearchResponse
+            # O result.value é FlextLDAPEntry, não FlextLDAPSearchResponse
             group_entry = result.value
             assert group_entry is not None
-            assert isinstance(group_entry, FlextLdapEntry)
+            assert isinstance(group_entry, FlextLDAPEntry)
             assert group_entry.dn == "cn=testgroup,ou=groups,dc=example,dc=com"
 
         asyncio.run(run_test())
@@ -437,11 +437,11 @@ class TestFlextLdapGroupRepositoryRealFunctionality(unittest.TestCase):
     def test_get_group_members_processes_member_attribute(self) -> None:
         """Test get_group_members processa atributo member corretamente."""
 
-        async def mock_find_by_dn(dn: str) -> FlextResult[FlextLdapEntry | None]:
+        async def mock_find_by_dn(dn: str) -> FlextResult[FlextLDAPEntry | None]:
             if "testgroup" in dn:
                 # Simular grupo com membros
-                entry = FlextLdapEntry(
-                    id=FlextModels.EntityId("test-id"),
+                entry = FlextLDAPEntry(
+                    id="test-id",
                     dn=dn,
                     attributes={
                         "cn": ["testgroup"],
@@ -451,8 +451,8 @@ class TestFlextLdapGroupRepositoryRealFunctionality(unittest.TestCase):
                         ],
                     },
                 )
-                return FlextResult[FlextLdapEntry | None].ok(entry)
-            return FlextResult[FlextLdapEntry | None].ok(None)
+                return FlextResult[FlextLDAPEntry | None].ok(entry)
+            return FlextResult[FlextLDAPEntry | None].ok(None)
 
         async def run_test() -> None:
             self.group_repository._repo.find_by_dn = mock_find_by_dn
@@ -516,10 +516,10 @@ class TestRepositoryIntegrationRealFunctionality(unittest.TestCase):
 
     def test_repositories_share_same_base_functionality(self) -> None:
         """Test que user e group repositories compartilham funcionalidade base."""
-        mock_client = MagicMock(spec=FlextLdapClient)
-        base_repository = FlextLdapRepository(client=mock_client)
-        user_repo = FlextLdapUserRepository(base_repository)
-        group_repo = FlextLdapGroupRepository(base_repository)
+        mock_client = MagicMock(spec=FlextLDAPClient)
+        base_repository = FlextLDAPRepository(client=mock_client)
+        user_repo = FlextLDAPUserRepository(base_repository)
+        group_repo = FlextLDAPGroupRepository(base_repository)
 
         # Ambos devem usar o mesmo base repository
         assert user_repo._repo is base_repository
@@ -528,14 +528,14 @@ class TestRepositoryIntegrationRealFunctionality(unittest.TestCase):
 
     def test_repository_error_handling_patterns(self) -> None:
         """Test padrões de tratamento de erro dos repositories."""
-        mock_client = MagicMock(spec=FlextLdapClient)
+        mock_client = MagicMock(spec=FlextLDAPClient)
 
         # Configure mocks to return FlextResults
         async def mock_search(
-            request: FlextLdapSearchRequest,
-        ) -> FlextResult[FlextLdapSearchResponse]:
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(entries=[], total_count=0)
+            request: FlextLDAPSearchRequest,
+        ) -> FlextResult[FlextLDAPSearchResponse]:
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(entries=[], total_count=0)
             )
 
         async def mock_delete(dn: str) -> FlextResult[None]:
@@ -543,7 +543,7 @@ class TestRepositoryIntegrationRealFunctionality(unittest.TestCase):
 
         mock_client.search = mock_search
         mock_client.delete = mock_delete
-        repository = FlextLdapRepository(client=mock_client)
+        repository = FlextLDAPRepository(client=mock_client)
 
         # Todos os métodos devem retornar FlextResult
         methods_to_test = [
@@ -565,9 +565,9 @@ class TestRepositoryIntegrationRealFunctionality(unittest.TestCase):
         """Test que repositories mantêm type safety."""
         # Verificar que métodos têm type annotations corretas
         repository_classes = [
-            FlextLdapRepository,
-            FlextLdapUserRepository,
-            FlextLdapGroupRepository,
+            FlextLDAPRepository,
+            FlextLDAPUserRepository,
+            FlextLDAPGroupRepository,
         ]
 
         for repo_class in repository_classes:

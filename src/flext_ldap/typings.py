@@ -1,4 +1,4 @@
-"""LDAP Types - Single FlextLdapTypes class following FLEXT patterns.
+"""LDAP Types - Single FlextLDAPTypes class following FLEXT patterns.
 
 Single class inheriting from FlextCoreTypes with all LDAP types
 organized as internal properties and methods for complete backward compatibility.
@@ -6,11 +6,11 @@ organized as internal properties and methods for complete backward compatibility
 Examples:
     Basic usage with hierarchical types::
 
-        from typings import FlextLdapTypes
+        from typings import FlextLDAPTypes
 
-        dn: FlextLdapTypes.LdapDomain.DistinguishedName = "cn=user,dc=example,dc=com"
-        filter_type: FlextLdapTypes.Search.Filter = "(objectClass=person)"
-        attrs: FlextLdapTypes.Entry.AttributeDict = {"cn": ["John Doe"]}
+        dn: FlextLDAPTypes.LdapDomain.DistinguishedName = "cn=user,dc=example,dc=com"
+        filter_type: FlextLDAPTypes.Search.Filter = "(objectClass=person)"
+        attrs: FlextLDAPTypes.Entry.AttributeDict = {"cn": ["John Doe"]}
 
     Legacy compatibility::
 
@@ -33,8 +33,8 @@ from flext_core import FlextTypes, P, T
 # =============================================================================
 
 
-class FlextLdapTypes(FlextTypes):
-    """Single FlextLdapTypes class inheriting from FlextTypes.
+class FlextLDAPTypes(FlextTypes):
+    """Single FlextLDAPTypes class inheriting from FlextTypes.
 
     Consolidates ALL LDAP types into a single class following FLEXT patterns.
     Everything from the previous type definitions is now available as
@@ -50,20 +50,20 @@ class FlextLdapTypes(FlextTypes):
     Examples:
         Domain types::
 
-            dn: FlextLdapTypes.LdapDomain.DistinguishedName = (
+            dn: FlextLDAPTypes.LdapDomain.DistinguishedName = (
                 "cn=user,dc=example,dc=com"
             )
-            entry_id: FlextLdapTypes.LdapDomain.EntityId = "user123"
+            entry_id: FlextLDAPTypes.LdapDomain.EntityId = "user123"
 
         Search types::
 
-            filter_str: FlextLdapTypes.Search.Filter = "(objectClass=person)"
-            scope: FlextLdapTypes.Search.Scope = "subtree"
+            filter_str: FlextLDAPTypes.Search.Filter = "(objectClass=person)"
+            scope: FlextLDAPTypes.Search.Scope = "subtree"
 
         Entry types::
 
-            attrs: FlextLdapTypes.Entry.AttributeDict = {"cn": ["John Doe"]}
-            value: FlextLdapTypes.Entry.AttributeValue = ["admin", "user"]
+            attrs: FlextLDAPTypes.Entry.AttributeDict = {"cn": ["John Doe"]}
+            value: FlextLDAPTypes.Entry.AttributeValue = ["admin", "user"]
 
     """
 
@@ -88,8 +88,8 @@ class FlextLdapTypes(FlextTypes):
         type GroupId = str
 
         # LDAP-specific identifiers
-        type SessionId = FlextTypes.Service.ServiceId
-        type ConnectionId = FlextTypes.Service.ServiceName
+        type SessionId = str
+        type ConnectionId = str
 
     # =========================================================================
     # SEARCH TYPES - LDAP Search Operations
@@ -140,9 +140,9 @@ class FlextLdapTypes(FlextTypes):
         """LDAP connection and configuration types."""
 
         # Connection configuration
-        type Config = FlextTypes.Config.Config
-        type AuthConfig = FlextTypes.Auth.TokenPayload
-        type ConnectionConfig = FlextTypes.Config.Config
+        type Config = dict[str, object]
+        type AuthConfig = dict[str, object]
+        type ConnectionConfig = dict[str, object]
 
         # Connection state
         type State = str
@@ -157,14 +157,14 @@ class FlextLdapTypes(FlextTypes):
         """LDAP protocol types extending FlextTypes protocols."""
 
         # Service protocols
-        type Service = FlextTypes.Protocol.Service
-        type Repository[T] = FlextTypes.Protocol.Repository[T]
-        type Handler[TInput, TOutput] = FlextTypes.Protocol.Handler[TInput, TOutput]
+        type Service = object
+        type Repository[T] = object
+        type Handler[TInput, TOutput] = object
 
         # LDAP-specific protocols
-        type Connection = FlextTypes.Protocol.Connection
-        type Auth = FlextTypes.Protocol.AuthorizingHandler
-        type Validator[T] = FlextTypes.Protocol.Validator[T]
+        type Connection = object
+        type Auth = object
+        type Validator[T] = object
 
 
 # =============================================================================
@@ -184,38 +184,38 @@ class AsyncCallable(Protocol):
 # =============================================================================
 
 # Core LDAP value types - legacy compatibility
-LdapAttributeValue = FlextLdapTypes.Entry.AttributeValue
-LdapAttributeDict = FlextLdapTypes.Entry.AttributeDict
-LdapSearchResult = FlextLdapTypes.Entry.EntryResult
+LdapAttributeValue = FlextLDAPTypes.Entry.AttributeValue
+LdapAttributeDict = FlextLDAPTypes.Entry.AttributeDict
+LdapSearchResult = FlextLDAPTypes.Entry.EntryResult
 
 # LDAP-specific type aliases - legacy compatibility
-TLdapDn = FlextLdapTypes.LdapDomain.DistinguishedName
-TLdapUri = FlextLdapTypes.LdapDomain.Uri
-TLdapFilter = FlextLdapTypes.Search.Filter
-TLdapSessionId = FlextLdapTypes.LdapDomain.SessionId
-TLdapScope = FlextLdapTypes.Search.Scope
-TLdapConnectionId = FlextLdapTypes.LdapDomain.ConnectionId
+TLdapDn = FlextLDAPTypes.LdapDomain.DistinguishedName
+TLdapUri = FlextLDAPTypes.LdapDomain.Uri
+TLdapFilter = FlextLDAPTypes.Search.Filter
+TLdapSessionId = FlextLDAPTypes.LdapDomain.SessionId
+TLdapScope = FlextLDAPTypes.Search.Scope
+TLdapConnectionId = FlextLDAPTypes.LdapDomain.ConnectionId
 
 # LDAP attribute and entry types - legacy compatibility
-TLdapAttributeValue = FlextLdapTypes.Entry.AttributeValue
-TLdapAttributes = FlextLdapTypes.Entry.AttributeDict
-TLdapEntryData = FlextLdapTypes.Entry.EntryData
-TLdapSearchResult = FlextLdapTypes.Search.ResultList
+TLdapAttributeValue = FlextLDAPTypes.Entry.AttributeValue
+TLdapAttributes = FlextLDAPTypes.Entry.AttributeDict
+TLdapEntryData = FlextLDAPTypes.Entry.EntryData
+TLdapSearchResult = FlextLDAPTypes.Search.ResultList
 
 # Infrastructure types - legacy compatibility
-LdapConnectionConfig = FlextLdapTypes.Connection.Config
-SecurityEventData = FlextTypes.Domain.EventData
+LdapConnectionConfig = FlextLDAPTypes.Connection.Config
+SecurityEventData = FlextTypes.Core.Object
 ErrorPatternData = FlextTypes.Core.Object
 SchemaData = FlextTypes.Core.Object
 
 # Service layer types - legacy compatibility
-DirectoryAuthConfig = FlextLdapTypes.Connection.AuthConfig
-ConnectionConfig = FlextLdapTypes.Connection.ConnectionConfig
-UserRequest = FlextTypes.Core.Data
-SearchResult = FlextTypes.Core.Data
+DirectoryAuthConfig = FlextLDAPTypes.Connection.AuthConfig
+ConnectionConfig = FlextLDAPTypes.Connection.ConnectionConfig
+UserRequest = FlextTypes.Core.Object
+SearchResult = FlextTypes.Core.Object
 
 # Use flext-core JsonDict type - legacy compatibility
-JsonDict = FlextTypes.Core.JsonDict
+JsonDict = dict[str, object]
 
 # Backward compatibility for R (not in FlextTypes)
 R = TypeVar("R")  # Use TypeVar for R compatibility
@@ -232,7 +232,7 @@ __all__ = [
     "DirectoryAuthConfig",
     "ErrorPatternData",
     # Main class
-    "FlextLdapTypes",
+    "FlextLDAPTypes",
     "JsonDict",
     "LdapAttributeDict",
     "LdapAttributeValue",

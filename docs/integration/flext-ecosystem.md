@@ -80,34 +80,34 @@ async def integrate_with_core():
 
 ```python
 from flext_core import FlextContainer, get_flext_container
-from flext_ldap import FlextLdapService, FlextLdapUserRepository
+from flext_ldap import FlextLDAPService, FlextLDAPUserRepository
 
 # Container configuration
 container = FlextContainer.get_global()
 
 # Register LDAP services with the container
 container.register_singleton(
-    FlextLdapUserRepository,
-    FlextLdapUserRepositoryImpl
+    FlextLDAPUserRepository,
+    FlextLDAPUserRepositoryImpl
 )
 
-container.register_transient(FlextLdapService)
+container.register_transient(FlextLDAPService)
 
 # Resolve services with full dependency injection
-ldap_service = container.resolve(FlextLdapService)
+ldap_service = container.resolve(FlextLDAPService)
 ```
 
 **Centralized Configuration**
 
 ```python
 from flext_core import FlextLDAPConfig
-from flext_ldap import FlextLdapSettings
+from flext_ldap import FlextLDAPSettings
 
 # Use centralized configuration from flext-core
 ldap_config = FlextLDAPConfig()
 
 # Local settings extend core configuration
-local_settings = FlextLdapSettings(
+local_settings = FlextLDAPSettings(
     server_url=ldap_config.server_url,
     port=ldap_config.port,
     use_ssl=ldap_config.use_ssl
@@ -223,7 +223,7 @@ async def check_ldap_health():
 **Tap Configuration**
 
 ```python
-from flext_tap_ldap import FlextLdapTap
+from flext_tap_ldap import FlextLDAPTap
 from flext_ldap import get_ldap_api
 
 # Configure LDAP tap for data extraction
@@ -249,7 +249,7 @@ tap_config = {
 }
 
 # Initialize tap with FLEXT-LDAP integration
-tap = FlextLdapTap(config=tap_config)
+tap = FlextLDAPTap(config=tap_config)
 tap.set_ldap_provider(get_ldap_api())  # Use FLEXT-LDAP as provider
 ```
 
@@ -306,7 +306,7 @@ def generate_singer_schema(ou, objects):
 **Target Configuration**
 
 ```python
-from flext_target_ldap import FlextLdapTarget
+from flext_target_ldap import FlextLDAPTarget
 from flext_ldap import get_ldap_api
 
 target_config = {
@@ -329,7 +329,7 @@ target_config = {
 }
 
 # Initialize target with FLEXT-LDAP integration
-target = FlextLdapTarget(config=target_config)
+target = FlextLDAPTarget(config=target_config)
 target.set_ldap_provider(get_ldap_api())  # Use FLEXT-LDAP as provider
 ```
 
@@ -425,7 +425,7 @@ SELECT * FROM normalized_users
 from flext_auth import AuthenticationService, AuthProvider
 from flext_ldap import get_ldap_api
 
-class FlextLdapAuthProvider(AuthProvider):
+class FlextLDAPAuthProvider(AuthProvider):
     \"\"\"LDAP authentication provider for flext-auth.\"\"\"
 
     def __init__(self):
@@ -490,7 +490,7 @@ class FlextLdapAuthProvider(AuthProvider):
 
 # Register LDAP provider with flext-auth
 auth_service = AuthenticationService()
-auth_service.register_provider(\"ldap\", FlextLdapAuthProvider())
+auth_service.register_provider(\"ldap\", FlextLDAPAuthProvider())
 ```
 
 **Single Sign-On Integration**
@@ -499,7 +499,7 @@ auth_service.register_provider(\"ldap\", FlextLdapAuthProvider())
 from flext_auth import SSOService
 from flext_ldap import get_ldap_api
 
-class FlextLdapSSOProvider:
+class FlextLDAPSSOProvider:
     \"\"\"SSO provider using LDAP directory.\"\"\"
 
     async def validate_sso_token(self, token: str) -> FlextResult[AuthUser]:
@@ -537,14 +537,14 @@ class FlextLdapSSOProvider:
 **LDIF Export/Import**
 
 ```python
-from flext_ldif import FlextLdifProcessor, LdifEntry
+from flext_ldif import FlextLDIFProcessor, LdifEntry
 from flext_ldap import get_ldap_api
 
 async def export_ldap_to_ldif():
     \"\"\"Export LDAP directory data to LDIF format.\"\"\"
 
     api = get_ldap_api()
-    ldif_processor = FlextLdifProcessor()
+    ldif_processor = FlextLDIFProcessor()
 
     async with api.connection(...) as session:
         # Export users
@@ -578,7 +578,7 @@ async def import_ldif_to_ldap(ldif_file_path: str):
     \"\"\"Import LDIF file to LDAP directory.\"\"\"
 
     api = get_ldap_api()
-    ldif_processor = FlextLdifProcessor()
+    ldif_processor = FlextLDIFProcessor()
 
     # Parse LDIF file
     ldif_entries = ldif_processor.parse_ldif_file(ldif_file_path)
@@ -607,7 +607,7 @@ async def import_ldif_to_ldap(ldif_file_path: str):
 from flexcore.plugins import FlextPlugin
 from flext_ldap import get_ldap_api
 
-class FlextLdapPlugin(FlextPlugin):
+class FlextLDAPPlugin(FlextPlugin):
     \"\"\"LDAP plugin for FlexCore runtime.\"\"\"
 
     def __init__(self):
@@ -637,7 +637,7 @@ class FlextLdapPlugin(FlextPlugin):
             )
 
 # Register plugin with FlexCore
-flexcore_registry.register_plugin(FlextLdapPlugin())
+flexcore_registry.register_plugin(FlextLDAPPlugin())
 ```
 
 **HTTP API Integration**
@@ -801,7 +801,7 @@ FLEXT_LDIF_EXPORT_PATH=/var/flext/ldap-exports/
 
 ```python
 from flext_core import FlextLDAPConfig
-from flext_ldap import FlextLdapSettings
+from flext_ldap import FlextLDAPSettings
 
 def validate_ecosystem_configuration():
     \"\"\"Validate FLEXT ecosystem configuration.\"\"\"
@@ -810,7 +810,7 @@ def validate_ecosystem_configuration():
     core_config = FlextLDAPConfig()
 
     # LDAP-specific configuration
-    ldap_config = FlextLdapSettings()
+    ldap_config = FlextLDAPSettings()
 
     # Validation checks
     if not core_config.is_valid():

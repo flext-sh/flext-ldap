@@ -4,28 +4,30 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
-from flext_ldap.utils import FlextLdapUtilities
+from flext_ldap.utilities import FlextLDAPUtilities
 
 
-class TestFlextLdapUtilitiesCoverage:
-    """Test FlextLdapUtilities uncovered lines."""
+class TestFlextLDAPUtilitiesCoverage:
+    """Test FlextLDAPUtilities uncovered lines."""
 
     def test_safe_convert_external_dict_with_non_dict(self) -> None:
         """Test safe_convert_external_dict_to_ldap_attributes with non-dict input."""
         # Covers line 74 (return early if not dict)
-        result = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
             "not_a_dict"
         )
         assert result == {}
 
-        result2 = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(None)
+        result2 = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            None
+        )
         assert result2 == {}
 
     def test_safe_convert_external_dict_with_empty_keys(self) -> None:
         """Test safe_convert with empty keys."""
         # Covers line 82 (continue if empty key)
         test_dict = {"": "value", "   ": "value2", "valid_key": "value3"}
-        result = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
             test_dict
         )
         # Should skip only empty string keys, not whitespace
@@ -41,7 +43,7 @@ class TestFlextLdapUtilitiesCoverage:
             "single_bytes": b"single_byte_value",
             "mixed_list": [b"bytes", "string", None, 123],
         }
-        result = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
             test_dict
         )
 
@@ -58,33 +60,40 @@ class TestFlextLdapUtilitiesCoverage:
         # This method just does bool(input), so test various falsy/truthy values
 
         # Test with None
-        assert FlextLdapUtilities.safe_ldap3_search_result(None) is False
+        assert FlextLDAPUtilities.LdapConverters.safe_ldap3_search_result(None) is False
 
         # Test with boolean
-        assert FlextLdapUtilities.safe_ldap3_search_result(True) is True
-        assert FlextLdapUtilities.safe_ldap3_search_result(False) is False
+        assert FlextLDAPUtilities.LdapConverters.safe_ldap3_search_result(True) is True
+        assert (
+            FlextLDAPUtilities.LdapConverters.safe_ldap3_search_result(False) is False
+        )
 
         # Test with falsy values
-        assert FlextLdapUtilities.safe_ldap3_search_result("") is False
-        assert FlextLdapUtilities.safe_ldap3_search_result(0) is False
-        assert FlextLdapUtilities.safe_ldap3_search_result([]) is False
+        assert FlextLDAPUtilities.LdapConverters.safe_ldap3_search_result("") is False
+        assert FlextLDAPUtilities.LdapConverters.safe_ldap3_search_result(0) is False
+        assert FlextLDAPUtilities.LdapConverters.safe_ldap3_search_result([]) is False
 
         # Test with truthy values
-        assert FlextLdapUtilities.safe_ldap3_search_result("non-empty") is True
-        assert FlextLdapUtilities.safe_ldap3_search_result(1) is True
+        assert (
+            FlextLDAPUtilities.LdapConverters.safe_ldap3_search_result("non-empty")
+            is True
+        )
+        assert FlextLDAPUtilities.LdapConverters.safe_ldap3_search_result(1) is True
 
     def test_safe_ldap3_connection_result_variations(self) -> None:
         """Test safe_ldap3_connection_result with different inputs."""
         # Covers lines 194, 200
 
         # Test with None
-        result = FlextLdapUtilities.safe_ldap3_connection_result(None)
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_connection_result(None)
         assert result == "Unknown error"
 
         # Test with mock having result attribute
         mock_with_result = Mock()
         mock_with_result.result = {"description": "Test error description"}
-        result = FlextLdapUtilities.safe_ldap3_connection_result(mock_with_result)
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_connection_result(
+            mock_with_result
+        )
         assert "Test error description" in result
 
     def test_safe_ldap3_entries_list_variations(self) -> None:
@@ -92,19 +101,23 @@ class TestFlextLdapUtilitiesCoverage:
         # Covers lines 213-217, 223-225
 
         # Test with None
-        result = FlextLdapUtilities.safe_ldap3_entries_list(None)
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_entries_list(None)
         assert result == []
 
         # Test with mock without entries attribute
         mock_without_entries = Mock()
         del mock_without_entries.entries
-        result = FlextLdapUtilities.safe_ldap3_entries_list(mock_without_entries)
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_entries_list(
+            mock_without_entries
+        )
         assert result == []
 
         # Test with mock with entries as non-list
         mock_with_invalid_entries = Mock()
         mock_with_invalid_entries.entries = "not_a_list"
-        result = FlextLdapUtilities.safe_ldap3_entries_list(mock_with_invalid_entries)
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_entries_list(
+            mock_with_invalid_entries
+        )
         assert result == []
 
     def test_safe_ldap3_entry_dn_variations(self) -> None:
@@ -112,19 +125,21 @@ class TestFlextLdapUtilitiesCoverage:
         # Covers lines 252, 257-258, 263-267
 
         # Test with None
-        result = FlextLdapUtilities.safe_ldap3_entry_dn(None)
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_entry_dn(None)
         assert result == ""
 
         # Test with mock without entry_dn attribute
         mock_without_dn = Mock()
         del mock_without_dn.entry_dn
-        result = FlextLdapUtilities.safe_ldap3_entry_dn(mock_without_dn)
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_entry_dn(mock_without_dn)
         assert result == ""
 
         # Test with mock with entry_dn as non-string
         mock_with_invalid_dn = Mock()
         mock_with_invalid_dn.entry_dn = 123
-        result = FlextLdapUtilities.safe_ldap3_entry_dn(mock_with_invalid_dn)
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_entry_dn(
+            mock_with_invalid_dn
+        )
         assert result == "123"  # Should convert to string
 
     def test_safe_ldap3_entry_attributes_list_variations(self) -> None:
@@ -132,19 +147,23 @@ class TestFlextLdapUtilitiesCoverage:
         # Covers lines 272-280, 285-286, 291-299
 
         # Test with None
-        result = FlextLdapUtilities.safe_ldap3_entry_attributes_list(None)
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_entry_attributes_list(
+            None
+        )
         assert result == []
 
         # Test with mock without entry_attributes_as_dict attribute
         mock_without_attrs = Mock()
         del mock_without_attrs.entry_attributes_as_dict
-        result = FlextLdapUtilities.safe_ldap3_entry_attributes_list(mock_without_attrs)
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_entry_attributes_list(
+            mock_without_attrs
+        )
         assert result == []
 
         # Test with mock with entry_attributes_as_dict as non-dict
         mock_with_invalid_attrs = Mock()
         mock_with_invalid_attrs.entry_attributes_as_dict = "not_a_dict"
-        result = FlextLdapUtilities.safe_ldap3_entry_attributes_list(
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_entry_attributes_list(
             mock_with_invalid_attrs
         )
         assert result == []
@@ -155,7 +174,7 @@ class TestFlextLdapUtilitiesCoverage:
             "attr1": "value1",
             "attr2": "value2",
         }
-        result = FlextLdapUtilities.safe_ldap3_entry_attributes_list(
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_entry_attributes_list(
             mock_with_valid_attrs
         )
         assert "attr1" in result
@@ -166,20 +185,22 @@ class TestFlextLdapUtilitiesCoverage:
         # Covers lines 311, 315, 335-336, 342-361
 
         # Test with None entry
-        result = FlextLdapUtilities.safe_ldap3_attribute_values(None, "test_attr")
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_attribute_values(
+            None, "test_attr"
+        )
         assert result == []
 
         # Test with mock without entry_attributes_as_dict
         mock_without_attrs = Mock()
         del mock_without_attrs.entry_attributes_as_dict
-        result = FlextLdapUtilities.safe_ldap3_attribute_values(
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_attribute_values(
             mock_without_attrs, "test_attr"
         )
         assert result == []
 
         # Test with valid mock but missing attribute
         mock_with_attrs = Mock()
-        result = FlextLdapUtilities.safe_ldap3_attribute_values(
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_attribute_values(
             mock_with_attrs, "missing_attr"
         )
         assert result == []
@@ -201,19 +222,19 @@ class TestFlextLdapUtilitiesCoverage:
         mock_with_attr_values.mixed_attr = mixed_attr
 
         # Test string attribute
-        result = FlextLdapUtilities.safe_ldap3_attribute_values(
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_attribute_values(
             mock_with_attr_values, "string_attr"
         )
         assert result == ["simple_string"]
 
         # Test list attribute
-        result = FlextLdapUtilities.safe_ldap3_attribute_values(
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_attribute_values(
             mock_with_attr_values, "list_attr"
         )
         assert result == ["item1", "item2"]
 
         # Test mixed types (None should be filtered out)
-        result = FlextLdapUtilities.safe_ldap3_attribute_values(
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_attribute_values(
             mock_with_attr_values, "mixed_attr"
         )
         assert result == ["string", "123"]  # None filtered out
@@ -223,13 +244,15 @@ class TestFlextLdapUtilitiesCoverage:
         # Covers lines 409, 418
 
         # Test with None connection
-        result = FlextLdapUtilities.safe_ldap3_rebind_result(None, "dn", "password")
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_rebind_result(
+            None, "dn", "password"
+        )
         assert result is False
 
         # Test with mock connection that raises exception
         mock_connection = Mock()
         mock_connection.rebind.side_effect = Exception("Rebind failed")
-        result = FlextLdapUtilities.safe_ldap3_rebind_result(
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_rebind_result(
             mock_connection, "dn", "password"
         )
         assert result is False
@@ -249,7 +272,7 @@ class TestFlextLdapUtilitiesCoverage:
         # Covers lines 529-534, 539-544, 552-554
 
         # Test with various input types that need string conversion
-        test_cases = [
+        test_cases: list[tuple[object, str]] = [
             (None, ""),
             (123, "123"),
             (45.67, "45.67"),
@@ -270,9 +293,13 @@ class TestFlextLdapUtilitiesCoverage:
         # Simple error handling tests without problematic patching
 
         # Test with various object types - actual behavior validation
-        result = FlextLdapUtilities.safe_ldap3_search_result("string_input")
+        result = FlextLDAPUtilities.LdapConverters.safe_ldap3_search_result(
+            "string_input"
+        )
         assert isinstance(result, bool)  # Should return boolean
 
         # Test connection result with string input
-        result2 = FlextLdapUtilities.safe_ldap3_connection_result("test_string")
+        result2 = FlextLDAPUtilities.LdapConverters.safe_ldap3_connection_result(
+            "test_string"
+        )
         assert isinstance(result2, str)  # Should return string

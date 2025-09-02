@@ -6,8 +6,8 @@ This module provides comprehensive test coverage for the LDAP container implemen
 testing all real functionality without mocks to ensure actual business logic works correctly.
 
 Architecture tested:
-- FlextLdapContainer: Dependency injection container extending flext-core
-- IFlextLdapContainer: Protocol interface for container operations
+- FlextLDAPContainer: Dependency injection container extending flext-core
+- IFlextLDAPContainer: Protocol interface for container operations
 - Service registration and configuration
 - Repository and client instantiation
 - Container initialization and dependency management
@@ -20,33 +20,33 @@ from __future__ import annotations
 
 import unittest
 
-from flext_ldap.clients import FlextLdapClient
-from flext_ldap.configuration import FlextLdapConnectionConfig, FlextLdapSettings
-# FIXME: FlextLdapContainer removed in refactoring - now uses get_ldap_container()
-# from flext_ldap.container import FlextLdapContainer, IFlextLdapContainer
+from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.configuration import FlextLDAPConnectionConfig, FlextLDAPSettings
+# FIXME: FlextLDAPContainer removed in refactoring - now uses get_ldap_container()
+# from flext_ldap.container import FlextLDAPContainer, IFlextLDAPContainer
 from flext_ldap.container import get_ldap_container
 from flext_ldap.repositories import (
-    FlextLdapGroupRepository,
-    FlextLdapRepository,
-    FlextLdapUserRepository,
+    FlextLDAPGroupRepository,
+    FlextLDAPRepository,
+    FlextLDAPUserRepository,
 )
 
 
-class TestFlextLdapContainerRealCoverage(unittest.TestCase):
-    """Test FlextLdapContainer with real functionality coverage."""
+class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
+    """Test FlextLDAPContainer with real functionality coverage."""
 
     def setUp(self) -> None:
         """Set up test environment with real container."""
-        self.container = FlextLdapContainer()
+        self.container = FlextLDAPContainer()
 
     def test_ldap_container_initialization(self) -> None:
-        """Test FlextLdapContainer initialization."""
+        """Test FlextLDAPContainer initialization."""
         # Execute REAL container initialization
-        container = FlextLdapContainer()
+        container = FlextLDAPContainer()
 
         # Verify REAL container initialization
         assert container is not None
-        assert isinstance(container, FlextLdapContainer)
+        assert isinstance(container, FlextLDAPContainer)
         assert hasattr(container, "_settings")
         assert hasattr(container, "_client_instance")
         assert hasattr(container, "_repository_instance")
@@ -54,7 +54,7 @@ class TestFlextLdapContainerRealCoverage(unittest.TestCase):
         assert hasattr(container, "_group_repository_instance")
 
     def test_ldap_container_protocol_compliance(self) -> None:
-        """Test FlextLdapContainer implements IFlextLdapContainer protocol."""
+        """Test FlextLDAPContainer implements IFlextLDAPContainer protocol."""
         # Verify REAL protocol methods exist (protocol requires @runtime_checkable for isinstance)
         assert hasattr(self.container, "get_client")
         assert hasattr(self.container, "get_repository")
@@ -76,7 +76,7 @@ class TestFlextLdapContainerRealCoverage(unittest.TestCase):
 
         # Verify REAL client creation
         assert client is not None
-        assert isinstance(client, FlextLdapClient)
+        assert isinstance(client, FlextLDAPClient)
 
         # Verify REAL client is cached
         client2 = self.container.get_client()
@@ -98,7 +98,7 @@ class TestFlextLdapContainerRealCoverage(unittest.TestCase):
 
         # Verify REAL repository creation
         assert repository is not None
-        assert isinstance(repository, FlextLdapRepository)
+        assert isinstance(repository, FlextLDAPRepository)
 
         # Verify REAL repository is cached
         repository2 = self.container.get_repository()
@@ -120,7 +120,7 @@ class TestFlextLdapContainerRealCoverage(unittest.TestCase):
 
         # Verify REAL user repository creation
         assert user_repo is not None
-        assert isinstance(user_repo, FlextLdapUserRepository)
+        assert isinstance(user_repo, FlextLDAPUserRepository)
 
         # Verify REAL user repository is cached
         user_repo2 = self.container.get_user_repository()
@@ -142,7 +142,7 @@ class TestFlextLdapContainerRealCoverage(unittest.TestCase):
 
         # Verify REAL group repository creation
         assert group_repo is not None
-        assert isinstance(group_repo, FlextLdapGroupRepository)
+        assert isinstance(group_repo, FlextLDAPGroupRepository)
 
         # Verify REAL group repository is cached
         group_repo2 = self.container.get_group_repository()
@@ -160,10 +160,10 @@ class TestFlextLdapContainerRealCoverage(unittest.TestCase):
     def test_configure_with_valid_settings(self) -> None:
         """Test configure with valid LDAP settings."""
         # Setup REAL valid settings
-        connection_config = FlextLdapConnectionConfig(
+        connection_config = FlextLDAPConnectionConfig(
             server="ldap.example.com", port=389, base_dn="dc=example,dc=com"
         )
-        settings = FlextLdapSettings(default_connection=connection_config)
+        settings = FlextLDAPSettings(default_connection=connection_config)
 
         # Execute REAL configuration
         result = self.container.configure(settings)
@@ -174,10 +174,10 @@ class TestFlextLdapContainerRealCoverage(unittest.TestCase):
     def test_configure_with_ssl_settings(self) -> None:
         """Test configure with SSL/TLS settings."""
         # Setup REAL SSL settings
-        connection_config = FlextLdapConnectionConfig(
+        connection_config = FlextLDAPConnectionConfig(
             server="ldaps.example.com", port=636, base_dn="dc=example,dc=com"
         )
-        settings = FlextLdapSettings(default_connection=connection_config)
+        settings = FlextLDAPSettings(default_connection=connection_config)
 
         # Execute REAL SSL configuration
         result = self.container.configure(settings)
@@ -188,10 +188,10 @@ class TestFlextLdapContainerRealCoverage(unittest.TestCase):
     def test_configure_updates_settings(self) -> None:
         """Test configure properly updates container settings."""
         # Setup REAL settings
-        connection_config = FlextLdapConnectionConfig(
+        connection_config = FlextLDAPConnectionConfig(
             server="ldap.test.com", port=389, base_dn="dc=test,dc=com"
         )
-        settings = FlextLdapSettings(default_connection=connection_config)
+        settings = FlextLDAPSettings(default_connection=connection_config)
 
         # Execute REAL configuration
         result = self.container.configure(settings)
@@ -207,10 +207,10 @@ class TestFlextLdapContainerRealCoverage(unittest.TestCase):
         repo1 = self.container.get_repository()
 
         # Setup REAL new settings
-        connection_config = FlextLdapConnectionConfig(
+        connection_config = FlextLDAPConnectionConfig(
             server="ldap.new.com", port=389, base_dn="dc=new,dc=com"
         )
-        settings = FlextLdapSettings(default_connection=connection_config)
+        settings = FlextLDAPSettings(default_connection=connection_config)
 
         # Execute REAL reconfiguration
         result = self.container.configure(settings)
@@ -261,7 +261,7 @@ class TestFlextLdapContainerRealCoverage(unittest.TestCase):
         assert client is not None  # Implicitly tests logging works
 
     def test_container_inheritance_from_flext_container(self) -> None:
-        """Test FlextLdapContainer properly inherits from FlextContainer."""
+        """Test FlextLDAPContainer properly inherits from FlextContainer."""
         # Execute REAL inheritance verification
         assert isinstance(self.container, FlextContainer)
 
@@ -272,19 +272,19 @@ class TestFlextLdapContainerRealCoverage(unittest.TestCase):
     def test_multiple_container_instances_independence(self) -> None:
         """Test multiple container instances are independent."""
         # Setup REAL multiple containers
-        container1 = FlextLdapContainer()
-        container2 = FlextLdapContainer()
+        container1 = FlextLDAPContainer()
+        container2 = FlextLDAPContainer()
 
         # Execute REAL independent configuration
-        connection1 = FlextLdapConnectionConfig(
+        connection1 = FlextLDAPConnectionConfig(
             server="ldap1.example.com", port=389, base_dn="dc=example1,dc=com"
         )
-        settings1 = FlextLdapSettings(default_connection=connection1)
+        settings1 = FlextLDAPSettings(default_connection=connection1)
 
-        connection2 = FlextLdapConnectionConfig(
+        connection2 = FlextLDAPConnectionConfig(
             server="ldap2.example.com", port=389, base_dn="dc=example2,dc=com"
         )
-        settings2 = FlextLdapSettings(default_connection=connection2)
+        settings2 = FlextLDAPSettings(default_connection=connection2)
 
         # Configure containers independently
         result1 = container1.configure(settings1)
@@ -297,15 +297,15 @@ class TestFlextLdapContainerRealCoverage(unittest.TestCase):
         assert container1.get_client() is not container2.get_client()
 
 
-class TestFlextLdapContainerProtocolRealCoverage(unittest.TestCase):
-    """Test IFlextLdapContainer protocol with real functionality coverage."""
+class TestFlextLDAPContainerProtocolRealCoverage(unittest.TestCase):
+    """Test IFlextLDAPContainer protocol with real functionality coverage."""
 
     def test_protocol_method_signatures(self) -> None:
-        """Test IFlextLdapContainer protocol method signatures."""
+        """Test IFlextLDAPContainer protocol method signatures."""
         # Verify REAL protocol requirements
 
         # Execute REAL protocol verification
-        protocol = IFlextLdapContainer
+        protocol = IFlextLDAPContainer
 
         # Verify REAL protocol methods exist
         assert hasattr(protocol, "get_client")
@@ -315,9 +315,9 @@ class TestFlextLdapContainerProtocolRealCoverage(unittest.TestCase):
         assert hasattr(protocol, "configure")
 
     def test_protocol_compliance_check(self) -> None:
-        """Test FlextLdapContainer implements protocol completely."""
+        """Test FlextLDAPContainer implements protocol completely."""
         # Execute REAL protocol compliance check
-        container = FlextLdapContainer()
+        container = FlextLDAPContainer()
 
         # Verify REAL method availability (protocol requires @runtime_checkable for isinstance)
         assert callable(container.get_client)

@@ -9,29 +9,27 @@ from __future__ import annotations
 from unittest.mock import AsyncMock
 
 import pytest
-from flext_core import FlextEntityStatus, FlextModels, FlextResult
+from flext_core import FlextConstants, FlextResult
 
 from flext_ldap import (
-    FlextLdapApi,
-    FlextLdapConnectionConfig,
-    FlextLdapConnectionError,
-    FlextLdapCreateUserRequest,
-    FlextLdapSearchConfig,
-    FlextLdapSearchRequest,
-    FlextLdapSearchResponse,
-    FlextLdapSettings,
-    create_ldap_api,
-    get_ldap_api,
+    FlextLDAPApi,
+    FlextLDAPConnectionConfig,
+    FlextLDAPConnectionError,
+    FlextLDAPCreateUserRequest,
+    FlextLDAPSearchConfig,
+    FlextLDAPSearchRequest,
+    FlextLDAPSearchResponse,
+    FlextLDAPSettings,
 )
-from flext_ldap.models import FlextLdapUser
+from flext_ldap.models import FlextLDAPUser
 
 
-class TestFlextLdapApiRealInstantiation:
-    """Test FlextLdapApi with REAL instantiation and configuration."""
+class TestFlextLDAPApiRealInstantiation:
+    """Test FlextLDAPApi with REAL instantiation and configuration."""
 
     def test_api_instantiation_with_default_config_real(self) -> None:
         """Test API instantiation with default configuration - executes REAL initialization."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Should have been initialized with real dependencies
         assert api._config is not None
@@ -39,25 +37,25 @@ class TestFlextLdapApiRealInstantiation:
         assert api._service is not None
 
         # Config should be default settings
-        assert isinstance(api._config, FlextLdapSettings)
+        assert isinstance(api._config, FlextLDAPSettings)
 
     def test_api_instantiation_with_custom_config_real(self) -> None:
         """Test API instantiation with custom configuration - executes REAL initialization."""
-        custom_connection = FlextLdapConnectionConfig(
+        custom_connection = FlextLDAPConnectionConfig(
             server="custom.ldap.server",
             port=636,
             base_dn="dc=custom,dc=com",
         )
-        custom_search = FlextLdapSearchConfig(
+        custom_search = FlextLDAPSearchConfig(
             default_scope="onelevel",
             size_limit=500,
         )
-        custom_config = FlextLdapSettings(
+        custom_config = FlextLDAPSettings(
             default_connection=custom_connection,
             search=custom_search,
         )
 
-        api = FlextLdapApi(config=custom_config)
+        api = FlextLDAPApi(config=custom_config)
 
         # Should use the provided config
         assert api._config is custom_config
@@ -68,7 +66,7 @@ class TestFlextLdapApiRealInstantiation:
 
     def test_api_generate_session_id_real(self) -> None:
         """Test API generates unique session IDs - executes REAL UUID generation."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Generate multiple session IDs
         session_ids = set()
@@ -83,13 +81,13 @@ class TestFlextLdapApiRealInstantiation:
         assert len(session_ids) == 10, "Generated session IDs should be unique"
 
 
-class TestFlextLdapApiRealConnectionManagement:
-    """Test FlextLdapApi connection management with REAL business logic execution."""
+class TestFlextLDAPApiRealConnectionManagement:
+    """Test FlextLDAPApi connection management with REAL business logic execution."""
 
     @pytest.mark.asyncio
     async def test_connect_validates_credentials_real(self) -> None:
         """Test connect validates credentials - executes REAL validation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Test empty bind_dn
         result = await api.connect("ldap://test.server", "", "password")
@@ -104,7 +102,7 @@ class TestFlextLdapApiRealConnectionManagement:
     @pytest.mark.asyncio
     async def test_connect_with_mock_client_real(self) -> None:
         """Test connect with mocked client - executes REAL connection flow."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Mock the client to simulate successful connection
         mock_client = AsyncMock()
@@ -128,7 +126,7 @@ class TestFlextLdapApiRealConnectionManagement:
     @pytest.mark.asyncio
     async def test_connect_handles_client_failure_real(self) -> None:
         """Test connect handles client connection failure - executes REAL error handling."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Mock client to simulate connection failure
         mock_client = AsyncMock()
@@ -145,7 +143,7 @@ class TestFlextLdapApiRealConnectionManagement:
     @pytest.mark.asyncio
     async def test_disconnect_with_mock_client_real(self) -> None:
         """Test disconnect with mocked client - executes REAL disconnection flow."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Mock the client to simulate successful disconnection
         mock_client = AsyncMock()
@@ -165,7 +163,7 @@ class TestFlextLdapApiRealConnectionManagement:
     @pytest.mark.asyncio
     async def test_disconnect_handles_client_failure_real(self) -> None:
         """Test disconnect handles client failure - executes REAL error handling."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Mock client to simulate disconnection failure
         mock_client = AsyncMock()
@@ -182,7 +180,7 @@ class TestFlextLdapApiRealConnectionManagement:
     @pytest.mark.asyncio
     async def test_connection_context_manager_success_real(self) -> None:
         """Test connection context manager success - executes REAL context management."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Mock successful connection and disconnection
         mock_client = AsyncMock()
@@ -206,7 +204,7 @@ class TestFlextLdapApiRealConnectionManagement:
     @pytest.mark.asyncio
     async def test_connection_context_manager_connection_failure_real(self) -> None:
         """Test connection context manager handles connection failure - executes REAL error handling."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Mock failed connection
         mock_client = AsyncMock()
@@ -214,7 +212,7 @@ class TestFlextLdapApiRealConnectionManagement:
         api._container.get_client = lambda: mock_client
 
         # Execute REAL context manager logic - should raise exception
-        with pytest.raises(FlextLdapConnectionError) as exc_info:
+        with pytest.raises(FlextLDAPConnectionError) as exc_info:
             async with api.connection("ldap://invalid.server", "cn=admin", "password"):
                 pass  # Should not get here
 
@@ -224,7 +222,7 @@ class TestFlextLdapApiRealConnectionManagement:
     @pytest.mark.asyncio
     async def test_connection_context_manager_session_id_failure_real(self) -> None:
         """Test connection context manager handles session ID failure - executes REAL error handling."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Mock connection that returns success but no session ID (edge case)
         mock_client = AsyncMock()
@@ -235,7 +233,7 @@ class TestFlextLdapApiRealConnectionManagement:
         api._generate_session_id = lambda: ""  # Empty string simulates failure
 
         # Execute REAL context manager logic - should raise exception
-        with pytest.raises(FlextLdapConnectionError) as exc_info:
+        with pytest.raises(FlextLDAPConnectionError) as exc_info:
             async with api.connection("ldap://test.server", "cn=admin", "password"):
                 pass  # Should not get here
 
@@ -243,25 +241,25 @@ class TestFlextLdapApiRealConnectionManagement:
         assert "Failed to get session ID" in str(exc_info.value)
 
 
-class TestFlextLdapApiRealSearchOperations:
-    """Test FlextLdapApi search operations with REAL business logic execution."""
+class TestFlextLDAPApiRealSearchOperations:
+    """Test FlextLDAPApi search operations with REAL business logic execution."""
 
     @pytest.mark.asyncio
     async def test_search_creates_proper_request_real(self) -> None:
-        """Test search creates proper FlextLdapSearchRequest - executes REAL request creation."""
-        api = FlextLdapApi()
+        """Test search creates proper FlextLDAPSearchRequest - executes REAL request creation."""
+        api = FlextLDAPApi()
 
         # Mock service to capture the request
         captured_request = None
 
         async def mock_search(
-            request: FlextLdapSearchRequest,
-        ) -> FlextResult[FlextLdapSearchResponse]:
+            request: FlextLDAPSearchRequest,
+        ) -> FlextResult[FlextLDAPSearchResponse]:
             nonlocal captured_request
             captured_request = request
             # Return empty successful response
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(entries=[], total_count=0, has_more=False)
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(entries=[], total_count=0, has_more=False)
             )
 
         api._service.search = mock_search
@@ -282,7 +280,7 @@ class TestFlextLdapApiRealSearchOperations:
 
         # Should have created proper request
         assert captured_request is not None
-        assert isinstance(captured_request, FlextLdapSearchRequest)
+        assert isinstance(captured_request, FlextLDAPSearchRequest)
         assert captured_request.base_dn == "ou=users,dc=example,dc=com"
         assert captured_request.filter_str == "(objectClass=person)"
         assert captured_request.attributes == ["cn", "uid"]
@@ -293,12 +291,12 @@ class TestFlextLdapApiRealSearchOperations:
     @pytest.mark.asyncio
     async def test_search_handles_service_failure_real(self) -> None:
         """Test search handles service failure - executes REAL error handling."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Mock service to return failure
         async def mock_search_failure(
-            request: FlextLdapSearchRequest,
-        ) -> FlextResult[FlextLdapSearchResponse]:
+            request: FlextLDAPSearchRequest,
+        ) -> FlextResult[FlextLDAPSearchResponse]:
             return FlextResult.fail("Search operation failed")
 
         api._service.search = mock_search_failure
@@ -312,8 +310,8 @@ class TestFlextLdapApiRealSearchOperations:
 
     @pytest.mark.asyncio
     async def test_search_converts_entries_to_ldap_entry_real(self) -> None:
-        """Test search converts entries to FlextLdapEntry objects - executes REAL conversion logic."""
-        api = FlextLdapApi()
+        """Test search converts entries to FlextLDAPEntry objects - executes REAL conversion logic."""
+        api = FlextLDAPApi()
 
         # Mock service to return search results
         async def mock_search_with_results(request):
@@ -332,8 +330,8 @@ class TestFlextLdapApiRealSearchOperations:
                     "uid": "anotheruser",
                 },
             ]
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(
                     entries=mock_entries, total_count=2, has_more=False
                 )
             )
@@ -355,8 +353,8 @@ class TestFlextLdapApiRealSearchOperations:
         assert "inetOrgPerson" in entry1.object_classes
         # Status comparison: handle both string and enum
         assert (
-            str(entry1.status) == str(FlextEntityStatus.ACTIVE)
-            or entry1.status == FlextEntityStatus.ACTIVE.value
+            str(entry1.status) == str(FlextConstants.Core.Status.EntityStatus.ACTIVE)
+            or entry1.status == FlextConstants.Core.Status.EntityStatus.ACTIVE.value
         )
 
         # Check second entry
@@ -365,14 +363,14 @@ class TestFlextLdapApiRealSearchOperations:
         assert "person" in entry2.object_classes
         # Status comparison: handle both string and enum
         assert (
-            str(entry2.status) == str(FlextEntityStatus.ACTIVE)
-            or entry2.status == FlextEntityStatus.ACTIVE.value
+            str(entry2.status) == str(FlextConstants.Core.Status.EntityStatus.ACTIVE)
+            or entry2.status == FlextConstants.Core.Status.EntityStatus.ACTIVE.value
         )
 
     @pytest.mark.asyncio
     async def test_search_handles_entries_without_dn_real(self) -> None:
         """Test search handles entries without DN - executes REAL filtering logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Mock service to return search results with missing DN
         async def mock_search_with_invalid_entry(request):
@@ -394,8 +392,8 @@ class TestFlextLdapApiRealSearchOperations:
                     "cn": "Another Invalid",
                 },
             ]
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(
                     entries=mock_entries, total_count=3, has_more=False
                 )
             )
@@ -417,7 +415,7 @@ class TestFlextLdapApiRealSearchOperations:
     @pytest.mark.asyncio
     async def test_search_handles_single_object_class_real(self) -> None:
         """Test search handles single objectClass value - executes REAL conversion logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Mock service to return search results with single objectClass string
         async def mock_search_with_single_objectclass(request):
@@ -429,8 +427,8 @@ class TestFlextLdapApiRealSearchOperations:
                     "cn": "Single ObjectClass User",
                 },
             ]
-            return FlextResult[FlextLdapSearchResponse].ok(
-                FlextLdapSearchResponse(
+            return FlextResult[FlextLDAPSearchResponse].ok(
+                FlextLDAPSearchResponse(
                     entries=mock_entries, total_count=1, has_more=False
                 )
             )
@@ -452,23 +450,23 @@ class TestFlextLdapApiRealSearchOperations:
         assert len(entry.object_classes) == 1
 
 
-class TestFlextLdapApiRealUserOperations:
-    """Test FlextLdapApi user operations with REAL service integration."""
+class TestFlextLDAPApiRealUserOperations:
+    """Test FlextLDAPApi user operations with REAL service integration."""
 
     @pytest.mark.asyncio
     async def test_create_user_delegates_to_service_real(self) -> None:
         """Test create_user delegates to service - executes REAL delegation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Mock service response
 
-        mock_user = FlextLdapUser(
-            id=FlextModels.EntityId("test-user"),
+        mock_user = FlextLDAPUser(
+            id="test-user",
             dn="cn=testuser,ou=users,dc=example,dc=com",
             cn="Test User",
             sn="User",
             uid="testuser",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
         captured_request = None
@@ -476,12 +474,12 @@ class TestFlextLdapApiRealUserOperations:
         async def mock_create_user(request):
             nonlocal captured_request
             captured_request = request
-            return FlextResult[FlextLdapUser].ok(mock_user)
+            return FlextResult[FlextLDAPUser].ok(mock_user)
 
         api._service.create_user = mock_create_user
 
         # Create user request
-        user_request = FlextLdapCreateUserRequest(
+        user_request = FlextLDAPCreateUserRequest(
             dn="cn=testuser,ou=users,dc=example,dc=com",
             uid="testuser",
             cn="Test User",
@@ -501,17 +499,17 @@ class TestFlextLdapApiRealUserOperations:
     @pytest.mark.asyncio
     async def test_get_user_delegates_to_service_real(self) -> None:
         """Test get_user delegates to service - executes REAL delegation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Mock service response
 
-        mock_user = FlextLdapUser(
-            id=FlextModels.EntityId("test-user"),
+        mock_user = FlextLDAPUser(
+            id="test-user",
             dn="cn=testuser,ou=users,dc=example,dc=com",
             cn="Test User",
             sn="User",
             uid="testuser",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
         captured_dn = None
@@ -519,7 +517,7 @@ class TestFlextLdapApiRealUserOperations:
         async def mock_get_user(dn):
             nonlocal captured_dn
             captured_dn = dn
-            return FlextResult[FlextLdapUser | None].ok(mock_user)
+            return FlextResult[FlextLDAPUser | None].ok(mock_user)
 
         api._service.get_user = mock_get_user
 
@@ -536,7 +534,7 @@ class TestFlextLdapApiRealUserOperations:
     @pytest.mark.asyncio
     async def test_update_user_delegates_to_service_real(self) -> None:
         """Test update_user delegates to service - executes REAL delegation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         captured_dn = None
         captured_attributes = None
@@ -565,7 +563,7 @@ class TestFlextLdapApiRealUserOperations:
     @pytest.mark.asyncio
     async def test_delete_user_delegates_to_service_real(self) -> None:
         """Test delete_user delegates to service - executes REAL delegation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         captured_dn = None
 
@@ -588,7 +586,7 @@ class TestFlextLdapApiRealUserOperations:
     @pytest.mark.asyncio
     async def test_search_users_delegates_to_service_real(self) -> None:
         """Test search_users delegates to service - executes REAL delegation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         captured_params = None
 
@@ -615,13 +613,13 @@ class TestFlextLdapApiRealUserOperations:
         )
 
 
-class TestFlextLdapApiRealGroupOperations:
-    """Test FlextLdapApi group operations with REAL business logic execution."""
+class TestFlextLDAPApiRealGroupOperations:
+    """Test FlextLDAPApi group operations with REAL business logic execution."""
 
     @pytest.mark.asyncio
     async def test_create_group_creates_entity_and_delegates_real(self) -> None:
         """Test create_group creates entity and delegates to service - executes REAL logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         captured_group = None
 
@@ -651,8 +649,10 @@ class TestFlextLdapApiRealGroupOperations:
         assert created_group.members == ["cn=user1,ou=users,dc=example,dc=com"]
         # Status comparison: handle both string and enum
         assert (
-            str(created_group.status) == str(FlextEntityStatus.ACTIVE)
-            or created_group.status == FlextEntityStatus.ACTIVE.value
+            str(created_group.status)
+            == str(FlextConstants.Core.Status.EntityStatus.ACTIVE)
+            or created_group.status
+            == FlextConstants.Core.Status.EntityStatus.ACTIVE.value
         )
 
         # Should have passed group to service
@@ -661,7 +661,7 @@ class TestFlextLdapApiRealGroupOperations:
     @pytest.mark.asyncio
     async def test_create_group_handles_service_failure_real(self) -> None:
         """Test create_group handles service failure - executes REAL error handling."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         async def mock_create_group_failure(group):
             return FlextResult[None].fail("Group creation failed")
@@ -681,7 +681,7 @@ class TestFlextLdapApiRealGroupOperations:
     @pytest.mark.asyncio
     async def test_get_group_delegates_to_service_real(self) -> None:
         """Test get_group delegates to service - executes REAL delegation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         captured_dn = None
 
@@ -704,7 +704,7 @@ class TestFlextLdapApiRealGroupOperations:
     @pytest.mark.asyncio
     async def test_update_group_delegates_to_service_real(self) -> None:
         """Test update_group delegates to service - executes REAL delegation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         captured_params = None
 
@@ -733,7 +733,7 @@ class TestFlextLdapApiRealGroupOperations:
     @pytest.mark.asyncio
     async def test_delete_group_delegates_to_service_real(self) -> None:
         """Test delete_group delegates to service - executes REAL delegation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         captured_dn = None
 
@@ -756,7 +756,7 @@ class TestFlextLdapApiRealGroupOperations:
     @pytest.mark.asyncio
     async def test_add_member_delegates_to_service_real(self) -> None:
         """Test add_member delegates to service - executes REAL delegation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         captured_params = None
 
@@ -785,7 +785,7 @@ class TestFlextLdapApiRealGroupOperations:
     @pytest.mark.asyncio
     async def test_remove_member_delegates_to_service_real(self) -> None:
         """Test remove_member delegates to service - executes REAL delegation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         captured_params = None
 
@@ -814,7 +814,7 @@ class TestFlextLdapApiRealGroupOperations:
     @pytest.mark.asyncio
     async def test_get_members_delegates_to_service_real(self) -> None:
         """Test get_members delegates to service - executes REAL delegation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         captured_dn = None
 
@@ -836,12 +836,12 @@ class TestFlextLdapApiRealGroupOperations:
         assert captured_dn == "cn=testgroup,ou=groups,dc=example,dc=com"
 
 
-class TestFlextLdapApiRealValidationMethods:
-    """Test FlextLdapApi validation methods with REAL business logic execution."""
+class TestFlextLDAPApiRealValidationMethods:
+    """Test FlextLDAPApi validation methods with REAL business logic execution."""
 
     def test_validate_dn_delegates_to_service_real(self) -> None:
         """Test validate_dn delegates to service - executes REAL delegation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         captured_dn = None
 
@@ -863,7 +863,7 @@ class TestFlextLdapApiRealValidationMethods:
 
     def test_validate_filter_delegates_to_service_real(self) -> None:
         """Test validate_filter delegates to service - executes REAL delegation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         captured_filter = None
 
@@ -884,13 +884,13 @@ class TestFlextLdapApiRealValidationMethods:
         assert captured_filter == "(objectClass=person)"
 
 
-class TestFlextLdapApiRealEntryOperations:
-    """Test FlextLdapApi entry operations with REAL repository integration."""
+class TestFlextLDAPApiRealEntryOperations:
+    """Test FlextLDAPApi entry operations with REAL repository integration."""
 
     @pytest.mark.asyncio
     async def test_delete_entry_delegates_to_repository_real(self) -> None:
         """Test delete_entry delegates to repository - executes REAL delegation logic."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         captured_dn = None
 
@@ -914,34 +914,34 @@ class TestFlextLdapApiRealEntryOperations:
         assert captured_dn == "cn=testentry,dc=example,dc=com"
 
 
-class TestFlextLdapApiRealFactoryFunctions:
-    """Test FlextLdapApi factory functions with REAL instantiation."""
+class TestFlextLDAPApiRealFactoryFunctions:
+    """Test FlextLDAPApi factory functions with REAL instantiation."""
 
     def test_get_ldap_api_returns_configured_instance_real(self) -> None:
         """Test get_ldap_api returns properly configured instance - executes REAL factory logic."""
-        api = get_ldap_api()
+        api = FlextLDAPApi()
 
-        # Should return FlextLdapApi instance
-        assert isinstance(api, FlextLdapApi)
+        # Should return FlextLDAPApi instance
+        assert isinstance(api, FlextLDAPApi)
         assert api._config is not None
         assert api._container is not None
         assert api._service is not None
 
     def test_get_ldap_api_with_custom_config_real(self) -> None:
         """Test get_ldap_api with custom config - executes REAL factory logic with configuration."""
-        custom_connection = FlextLdapConnectionConfig(
+        custom_connection = FlextLDAPConnectionConfig(
             server="factory.ldap.server",
             port=389,
             base_dn="dc=factory,dc=com",
         )
-        custom_config = FlextLdapSettings(
+        custom_config = FlextLDAPSettings(
             default_connection=custom_connection,
         )
 
-        api = get_ldap_api(config=custom_config)
+        api = FlextLDAPApi(config=custom_config)
 
-        # Should return FlextLdapApi instance with custom config
-        assert isinstance(api, FlextLdapApi)
+        # Should return FlextLDAPApi instance with custom config
+        assert isinstance(api, FlextLDAPApi)
         assert api._config is custom_config
         assert api._config.default_connection is not None
         assert api._config.default_connection.server == "factory.ldap.server"
@@ -949,29 +949,29 @@ class TestFlextLdapApiRealFactoryFunctions:
 
     def test_create_ldap_api_returns_configured_instance_real(self) -> None:
         """Test create_ldap_api returns properly configured instance - executes REAL factory logic."""
-        api = create_ldap_api()
+        api = FlextLDAPApi()
 
-        # Should return FlextLdapApi instance
-        assert isinstance(api, FlextLdapApi)
+        # Should return FlextLDAPApi instance
+        assert isinstance(api, FlextLDAPApi)
         assert api._config is not None
         assert api._container is not None
         assert api._service is not None
 
     def test_create_ldap_api_with_custom_config_real(self) -> None:
         """Test create_ldap_api with custom config - executes REAL factory logic with configuration."""
-        custom_connection = FlextLdapConnectionConfig(
+        custom_connection = FlextLDAPConnectionConfig(
             server="create.ldap.server",
             port=636,
             base_dn="dc=create,dc=com",
         )
-        custom_config = FlextLdapSettings(
+        custom_config = FlextLDAPSettings(
             default_connection=custom_connection,
         )
 
-        api = create_ldap_api(config=custom_config)
+        api = FlextLDAPApi(config=custom_config)
 
-        # Should return FlextLdapApi instance with custom config
-        assert isinstance(api, FlextLdapApi)
+        # Should return FlextLDAPApi instance with custom config
+        assert isinstance(api, FlextLDAPApi)
         assert api._config is custom_config
         assert api._config.default_connection is not None
         assert api._config.default_connection.server == "create.ldap.server"
@@ -979,9 +979,9 @@ class TestFlextLdapApiRealFactoryFunctions:
 
     def test_factory_functions_create_independent_instances_real(self) -> None:
         """Test factory functions create independent instances - executes REAL independence logic."""
-        api1 = get_ldap_api()
-        api2 = create_ldap_api()
-        api3 = FlextLdapApi()
+        api1 = FlextLDAPApi()
+        api2 = FlextLDAPApi()
+        api3 = FlextLDAPApi()
 
         # Should be different instances
         assert api1 is not api2
@@ -990,4 +990,4 @@ class TestFlextLdapApiRealFactoryFunctions:
 
         # But all should be same type
         assert type(api1) is type(api2) is type(api3)
-        assert all(isinstance(api, FlextLdapApi) for api in [api1, api2, api3])
+        assert all(isinstance(api, FlextLDAPApi) for api in [api1, api2, api3])

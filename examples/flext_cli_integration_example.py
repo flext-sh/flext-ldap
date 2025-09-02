@@ -17,15 +17,15 @@ from flext_cli import (
 )
 from flext_core import FlextResult
 
-from flext_ldap import FlextLdapCreateUserRequest, get_ldap_api
+from flext_ldap import FlextLDAPApi, FlextLDAPCreateUserRequest
 
 
-class FlextLdapCLI:
+class FlextLDAPCLI:
     """CLI integrada para operações LDAP usando flext-cli."""
 
     def __init__(self) -> None:
         self.config = get_config()
-        self.ldap_api = get_ldap_api()
+        self.ldap_api = FlextLDAPApi()
         # Create CLI context with available parameters
         self.context: FlextCliContext = FlextCliContext()
 
@@ -93,8 +93,8 @@ class FlextLdapCLI:
             # Simulação de criação de usuário
             user_dn = f"cn={username},ou=users,dc=example,dc=com"
 
-            # Usar FlextLdapCreateUserRequest para validação
-            user_request = FlextLdapCreateUserRequest(
+            # Usar FlextLDAPCreateUserRequest para validação
+            user_request = FlextLDAPCreateUserRequest(
                 dn=user_dn,
                 uid=username,
                 cn=full_name,
@@ -139,7 +139,7 @@ class FlextLdapCLI:
 async def main() -> None:
     """Função principal demonstrando uso da flext-cli."""
     # Inicializar CLI
-    cli = FlextLdapCLI()
+    cli = FlextLDAPCLI()
 
     # Teste 1: Listar usuários
 

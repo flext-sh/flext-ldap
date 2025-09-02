@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Example usage of FlextLdapClient.
+"""Example usage of FlextLDAPClient.
 
 This example demonstrates how to use the minimal LDAP infrastructure client
 following Clean Architecture principles.
@@ -14,14 +14,14 @@ from __future__ import annotations
 import asyncio
 import os
 
-from flext_ldap import FlextLdapClient, FlextLdapSearchRequest
-from flext_ldap.entities import FlextLdapSearchResponse
+from flext_ldap import FlextLDAPClient, FlextLDAPSearchRequest
+from flext_ldap.entities import FlextLDAPSearchResponse
 
 
 async def main() -> None:
     """Demonstrate LDAP client usage."""
     # Create client instance
-    client = FlextLdapClient()
+    client = FlextLDAPClient()
 
     # Example 1: Single server connection
     server_uri = os.getenv("LDAP_TEST_SERVER", "ldap://localhost:389")
@@ -34,8 +34,8 @@ async def main() -> None:
         password=bind_password,
     )
     if result.is_success:
-        # Example search using FlextLdapSearchRequest
-        search_request = FlextLdapSearchRequest(
+        # Example search using FlextLDAPSearchRequest
+        search_request = FlextLDAPSearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             attributes=["cn", "mail"],
@@ -47,7 +47,7 @@ async def main() -> None:
 
         if search_result.is_success:
             # Use proper type for FlextResult unwrapping
-            empty_response = FlextLdapSearchResponse(entries=[], total_count=0)
+            empty_response = FlextLDAPSearchResponse(entries=[], total_count=0)
             response = search_result.unwrap_or(empty_response)
             for entry in response.entries[:3]:  # Show first 3
                 dn_value = entry.get("dn", "N/A")

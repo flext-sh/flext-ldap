@@ -1,23 +1,23 @@
-"""LDAP Constants - Single FlextLdapConstants class following FLEXT patterns.
+"""LDAP Constants - Single FlextLDAPConstants class following FLEXT patterns.
 
-Single class inheriting from FlextCoreConstants with all LDAP constants
+Single class inheriting from FlextConstants with all LDAP constants
 organized as internal properties and methods for complete backward compatibility.
 
 Examples:
     Basic usage with hierarchical constants::
 
-        from constants import FlextLdapConstants
+        from constants import FlextLDAPConstants
 
-        port = FlextLdapConstants.Connection.DEFAULT_LDAP_PORT
-        timeout = FlextLdapConstants.Connection.DEFAULT_TIMEOUT
-        scope = FlextLdapConstants.Search.SCOPE_SUBTREE
+        port = FlextLDAPConstants.Connection.DEFAULT_LDAP_PORT
+        timeout = FlextLDAPConstants.Connection.DEFAULT_TIMEOUT
+        scope = FlextLDAPConstants.Search.SCOPE_SUBTREE
 
     Legacy compatibility::
 
         # All previous classes still work as properties
-        protocol_consts = FlextLdapConstants.Protocol
-        attr_consts = FlextLdapConstants.Attributes
-        error_consts = FlextLdapConstants.Errors
+        protocol_consts = FlextLDAPConstants.Protocol
+        attr_consts = FlextLDAPConstants.Attributes
+        error_consts = FlextLDAPConstants.Errors
 
 """
 
@@ -25,17 +25,17 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_core import FlextCoreConstants
+from flext_core import FlextConstants
 
 # All classes consolidated in this module following FLEXT simplicity principle
 
 # =============================================================================
-# SINGLE FLEXT LDAP CONSTANTS CLASS - Inheriting from FlextCoreConstants
+# SINGLE FLEXT LDAP CONSTANTS CLASS - Inheriting from FlextConstants
 # =============================================================================
 
 
-class FlextLdapConstants(FlextCoreConstants):
-    """Single FlextLdapConstants class inheriting from FlextCoreConstants.
+class FlextLDAPConstants(FlextConstants):
+    """Single FlextLDAPConstants class inheriting from FlextConstants.
 
     Consolidates ALL LDAP constants into a single class following FLEXT patterns.
     Everything from the previous multiple constant classes is now available as
@@ -43,26 +43,26 @@ class FlextLdapConstants(FlextCoreConstants):
 
     This class follows SOLID principles:
         - Single Responsibility: All LDAP constants in one place
-        - Open/Closed: Extends FlextCoreConstants without modification
-        - Liskov Substitution: Can be used anywhere FlextCoreConstants is expected
+        - Open/Closed: Extends FlextConstants without modification
+        - Liskov Substitution: Can be used anywhere FlextConstants is expected
         - Interface Segregation: Organized by domain for specific access
-        - Dependency Inversion: Depends on FlextCoreConstants abstraction
+        - Dependency Inversion: Depends on FlextConstants abstraction
 
     Examples:
         Protocol constants::
 
-            port = FlextLdapConstants.Protocol.DEFAULT_LDAP_PORT
-            version = FlextLdapConstants.Protocol.LDAP_VERSION_3
+            port = FlextLDAPConstants.Protocol.DEFAULT_LDAP_PORT
+            version = FlextLDAPConstants.Protocol.LDAP_VERSION_3
 
         Connection constants::
 
-            timeout = FlextLdapConstants.Connection.DEFAULT_TIMEOUT
-            pool_size = FlextLdapConstants.Connection.DEFAULT_POOL_SIZE
+            timeout = FlextLDAPConstants.Connection.DEFAULT_TIMEOUT
+            pool_size = FlextLDAPConstants.Connection.DEFAULT_POOL_SIZE
 
         Attribute constants::
 
-            attr = FlextLdapConstants.Attributes.COMMON_NAME
-            mail = FlextLdapConstants.Attributes.MAIL
+            attr = FlextLDAPConstants.Attributes.COMMON_NAME
+            mail = FlextLDAPConstants.Attributes.MAIL
 
     """
 
@@ -110,13 +110,13 @@ class FlextLdapConstants(FlextCoreConstants):
     # =========================================================================
 
     class Connection:
-        """Connection and performance constants extending FlextCoreConstants."""
+        """Connection and performance constants extending FlextConstants."""
 
         # Base constants from flext-core (inherit from parent)
-        DEFAULT_TIMEOUT: Final[int] = FlextCoreConstants.Defaults.TIMEOUT
-        MAX_RETRIES: Final[int] = FlextCoreConstants.Defaults.MAX_RETRIES
-        CONNECTION_TIMEOUT: Final[int] = FlextCoreConstants.Defaults.CONNECTION_TIMEOUT
-        DEFAULT_HOST: Final[str] = FlextCoreConstants.Infrastructure.DEFAULT_HOST
+        DEFAULT_TIMEOUT: Final[int] = FlextConstants.Defaults.TIMEOUT
+        MAX_RETRIES: Final[int] = FlextConstants.Defaults.MAX_RETRIES
+        CONNECTION_TIMEOUT: Final[int] = FlextConstants.Defaults.CONNECTION_TIMEOUT
+        DEFAULT_HOST: Final[str] = FlextConstants.Infrastructure.DEFAULT_HOST
 
         # LDAP-specific connection settings
         DEFAULT_PORT: Final[int] = 389
@@ -174,7 +174,7 @@ class FlextLdapConstants(FlextCoreConstants):
         # Person Attributes (RFC 4519)
         USER_ID: Final[str] = "uid"
         MAIL: Final[str] = "mail"
-        USER_PASSWORD: Final[str] = "userPassword"
+        USER_PASSWORD: Final[str] = "userPassword"  # noqa: S105
         TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
         FACSIMILE_TELEPHONE_NUMBER: Final[str] = "facsimileTelephoneNumber"
         MOBILE: Final[str] = "mobile"
@@ -318,17 +318,17 @@ class FlextLdapConstants(FlextCoreConstants):
 
     @classmethod
     def flext_ldap_protocol_constants(cls) -> type[Protocol]:
-        """Legacy compatibility for FlextLdapProtocolConstants."""
+        """Legacy compatibility for FlextLDAPProtocolConstants."""
         return cls.Protocol
 
     @classmethod
     def flext_ldap_connection_constants(cls) -> type[Connection]:
-        """Legacy compatibility for FlextLdapConnectionConstants."""
+        """Legacy compatibility for FlextLDAPConnectionConstants."""
         return cls.Connection
 
     @classmethod
     def flext_ldap_attribute_constants(cls) -> type[Attributes]:
-        """Legacy compatibility for FlextLdapAttributeConstants."""
+        """Legacy compatibility for FlextLDAPAttributeConstants."""
         return cls.Attributes
 
     # Legacy property aliases with correct naming
@@ -405,7 +405,7 @@ class FlextLdapConstants(FlextCoreConstants):
         # Service information defaults
         DEFAULT_SERVICE_NAME: Final[str] = "flext-ldap"
         DEFAULT_SERVICE_VERSION: Final[str] = "1.0.0"
-        DEFAULT_USER_AGENT: Final[str] = "FlextLdap/1.0.0"
+        DEFAULT_USER_AGENT: Final[str] = "FlextLDAP/1.0.0"
 
         # User specification defaults
         VALID_LDAP_USER_NAME: Final[str] = "valid_user"
@@ -417,24 +417,24 @@ class FlextLdapConstants(FlextCoreConstants):
 # =============================================================================
 
 # Legacy class aliases for backward compatibility
-FlextLdapProtocolConstants = FlextLdapConstants.Protocol
-FlextLdapConnectionConstants = FlextLdapConstants.Connection
-FlextLdapAttributeConstants = FlextLdapConstants.Attributes
-FlextLdapDefaultValues = FlextLdapConstants.DefaultValues
-FlextLdapValidationConstants = FlextLdapConstants.LdapValidation
-FlextLdapValidationMessages = FlextLdapConstants.ValidationMessages
-FlextLdapOperationMessages = FlextLdapConstants.Operations
-FlextLdapObjectClassConstants = FlextLdapConstants.ObjectClasses
-FlextLdapScopeConstants = FlextLdapConstants.Scopes
+FlextLDAPProtocolConstants = FlextLDAPConstants.Protocol
+FlextLDAPConnectionConstants = FlextLDAPConstants.Connection
+FlextLDAPAttributeConstants = FlextLDAPConstants.Attributes
+FlextLDAPDefaultValues = FlextLDAPConstants.DefaultValues
+FlextLDAPValidationConstants = FlextLDAPConstants.LdapValidation
+FlextLDAPValidationMessages = FlextLDAPConstants.ValidationMessages
+FlextLDAPOperationMessages = FlextLDAPConstants.Operations
+FlextLDAPObjectClassConstants = FlextLDAPConstants.ObjectClasses
+FlextLDAPScopeConstants = FlextLDAPConstants.Scopes
 
 # Convenient module-level aliases for frequent usage
-DEFAULT_PORT = FlextLdapConstants.Connection.DEFAULT_PORT
-DEFAULT_SSL_PORT = FlextLdapConstants.Connection.DEFAULT_SSL_PORT
-DEFAULT_PAGE_SIZE = FlextLdapConstants.Connection.DEFAULT_PAGE_SIZE
-OBJECT_CLASS = FlextLdapConstants.Attributes.OBJECT_CLASS
-COMMON_NAME = FlextLdapConstants.Attributes.COMMON_NAME
-USER_ID = FlextLdapConstants.Attributes.USER_ID
-MAIL = FlextLdapConstants.Attributes.MAIL
+DEFAULT_PORT = FlextLDAPConstants.Connection.DEFAULT_PORT
+DEFAULT_SSL_PORT = FlextLDAPConstants.Connection.DEFAULT_SSL_PORT
+DEFAULT_PAGE_SIZE = FlextLDAPConstants.Connection.DEFAULT_PAGE_SIZE
+OBJECT_CLASS = FlextLDAPConstants.Attributes.OBJECT_CLASS
+COMMON_NAME = FlextLDAPConstants.Attributes.COMMON_NAME
+USER_ID = FlextLDAPConstants.Attributes.USER_ID
+MAIL = FlextLDAPConstants.Attributes.MAIL
 
 __all__ = [
     "COMMON_NAME",
@@ -445,16 +445,16 @@ __all__ = [
     "MAIL",
     "OBJECT_CLASS",
     "USER_ID",
-    "FlextLdapAttributeConstants",
-    "FlextLdapConnectionConstants",
+    "FlextLDAPAttributeConstants",
+    "FlextLDAPConnectionConstants",
     # Primary consolidated class
-    "FlextLdapConstants",
-    "FlextLdapDefaultValues",
-    "FlextLdapObjectClassConstants",
-    "FlextLdapOperationMessages",
+    "FlextLDAPConstants",
+    "FlextLDAPDefaultValues",
+    "FlextLDAPObjectClassConstants",
+    "FlextLDAPOperationMessages",
     # Legacy compatibility aliases
-    "FlextLdapProtocolConstants",
-    "FlextLdapScopeConstants",
-    "FlextLdapValidationConstants",
-    "FlextLdapValidationMessages",
+    "FlextLDAPProtocolConstants",
+    "FlextLDAPScopeConstants",
+    "FlextLDAPValidationConstants",
+    "FlextLDAPValidationMessages",
 ]

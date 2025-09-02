@@ -5,19 +5,19 @@ Tests utility classes and functions without external dependencies.
 
 from __future__ import annotations
 
-object
-
-from flext_ldap.utils import FlextLdapUtilities, FlextLdapUtils
+from flext_ldap.utilities import FlextLDAPUtilities
 
 
-class TestFlextLdapUtilities:
+class TestFlextLDAPUtilities:
     """Test FLEXT LDAP utility class methods."""
 
     def test_create_ldap_attributes_with_string_values(self) -> None:
         """Test creating LDAP attributes from string values."""
         raw_attrs = {"cn": ["John Doe"], "sn": ["Doe"], "mail": ["john@example.com"]}
 
-        result = FlextLdapUtilities.create_ldap_attributes(raw_attrs)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            raw_attrs
+        )
 
         assert isinstance(result, dict)
         assert "cn" in result
@@ -34,7 +34,9 @@ class TestFlextLdapUtilities:
             "cn": ["John Doe"],
         }
 
-        result = FlextLdapUtilities.create_ldap_attributes(raw_attrs)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            raw_attrs
+        )
 
         assert isinstance(result, dict)
         assert result["objectClass"] == ["inetOrgPerson", "person"]
@@ -50,7 +52,9 @@ class TestFlextLdapUtilities:
             "mail": ["john@example.com", "john.doe@example.com"],
         }
 
-        result = FlextLdapUtilities.create_typed_ldap_attributes(raw_attrs)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            raw_attrs
+        )
 
         assert result["cn"] == "John Doe"
         assert result["objectClass"] == ["inetOrgPerson", "person"]
@@ -59,7 +63,9 @@ class TestFlextLdapUtilities:
 
     def test_create_ldap_attributes_with_empty_dict(self) -> None:
         """Test creating LDAP attributes from empty dictionary."""
-        result = FlextLdapUtilities.create_ldap_attributes({})
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            {}
+        )
 
         assert isinstance(result, dict)
         assert len(result) == 0
@@ -72,7 +78,9 @@ class TestFlextLdapUtilities:
             "mail": "john@example.com",
         }
 
-        result = FlextLdapUtilities.create_typed_ldap_attributes(raw_attrs)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            raw_attrs
+        )
 
         assert result["cn"] == "John Doe"
         assert result["mail"] == "john@example.com"
@@ -82,7 +90,7 @@ class TestFlextLdapUtilities:
         """Test DN validation with standard DN format."""
         dn = "cn=John Doe,ou=users,dc=example,dc=com"
 
-        result = FlextLdapUtils.validate_dn(dn)
+        result = FlextLDAPUtilities.DnParser.validate_dn(dn)
 
         assert result is True
 
@@ -90,13 +98,13 @@ class TestFlextLdapUtilities:
         """Test DN validation handles spaces and case variations."""
         dn = "CN=John  Doe, OU=Users, DC=Example, DC=Com"
 
-        result = FlextLdapUtils.validate_dn(dn)
+        result = FlextLDAPUtilities.DnParser.validate_dn(dn)
 
         assert result is True
 
     def test_validate_dn_with_empty_string(self) -> None:
         """Test DN validation with empty string."""
-        result = FlextLdapUtils.validate_dn("")
+        result = FlextLDAPUtilities.DnParser.validate_dn("")
 
         assert result is False
 
@@ -109,7 +117,7 @@ class TestFlextLdapUtilities:
         ]
 
         for dn in valid_dns:
-            result = FlextLdapUtils.validate_dn(dn)
+            result = FlextLDAPUtilities.DnParser.validate_dn(dn)
             assert result is True, f"Valid DN should pass validation: {dn}"
 
     def test_validate_dn_format_with_invalid_dn(self) -> None:
@@ -117,31 +125,40 @@ class TestFlextLdapUtilities:
         invalid_dns = ["", "invalid", "cn=", "=value", "malformed dn string"]
 
         for dn in invalid_dns:
-            result = FlextLdapUtils.validate_dn(dn)
+            result = FlextLDAPUtilities.DnParser.validate_dn(dn)
             assert result is False, f"Invalid DN should fail validation: {dn}"
 
     def test_safe_get_first_value_from_list(self) -> None:
         """Test safely getting first value from attribute list."""
-        attributes = {"cn": ["John Doe", "J. Doe"], "mail": "john@example.com"}
+        attributes: dict[str, object] = {
+            "cn": ["John Doe", "J. Doe"],
+            "mail": "john@example.com",
+        }
 
-        result = FlextLdapUtilities.safe_get_first_value(attributes, "cn")
+        result = FlextLDAPUtilities.LdapConverters.safe_get_first_value(
+            attributes, "cn"
+        )
         assert result == "John Doe"
 
-        result = FlextLdapUtilities.safe_get_first_value(attributes, "mail")
+        result = FlextLDAPUtilities.LdapConverters.safe_get_first_value(
+            attributes, "mail"
+        )
         assert result == "john@example.com"
 
     def test_safe_get_first_value_from_missing_key(self) -> None:
         """Test safely getting first value from missing key."""
-        attributes = {"cn": ["John Doe"]}
+        attributes: dict[str, object] = {"cn": ["John Doe"]}
 
-        result = FlextLdapUtilities.safe_get_first_value(attributes, "mail")
+        result = FlextLDAPUtilities.LdapConverters.safe_get_first_value(
+            attributes, "mail"
+        )
         assert result is None
 
     def test_safe_convert_external_dict_to_ldap_attributes(self) -> None:
         """Test safely converting external dict to LDAP attributes."""
         external_dict = {"cn": ["John Doe"], "mail": "john@example.com"}
 
-        result = FlextLdapUtilities.safe_convert_external_dict_to_ldap_attributes(
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
             external_dict
         )
 
@@ -154,7 +171,7 @@ class TestFlextLdapUtilities:
         valid_names = ["cn", "mail", "sn", "objectClass", "displayName"]
 
         for name in valid_names:
-            result = FlextLdapUtils.validate_attribute_name(name)
+            result = FlextLDAPUtilities.Validation.validate_attribute_name(name)
             assert result is True, f"Valid attribute name should pass: {name}"
 
     def test_validate_attribute_name_with_invalid_name(self) -> None:
@@ -162,7 +179,7 @@ class TestFlextLdapUtilities:
         invalid_names = ["", "123invalid", "cn$invalid", "@invalid"]
 
         for name in invalid_names:
-            result = FlextLdapUtils.validate_attribute_name(name)
+            result = FlextLDAPUtilities.Validation.validate_attribute_name(name)
             assert result is False, f"Invalid attribute name should fail: {name}"
 
     def test_validate_attribute_value_with_valid_value(self) -> None:
@@ -170,7 +187,7 @@ class TestFlextLdapUtilities:
         valid_values = ["John Doe", "john@example.com", "123", "valid-value_test"]
 
         for value in valid_values:
-            result = FlextLdapUtils.validate_attribute_value(value)
+            result = FlextLDAPUtilities.Validation.validate_attribute_value(value)
             assert result is True, f"Valid attribute value should pass: {value}"
 
     def test_sanitize_attribute_name_with_special_characters(self) -> None:
@@ -185,7 +202,9 @@ class TestFlextLdapUtilities:
         ]
 
         for input_str in dangerous_inputs:
-            result = FlextLdapUtils.sanitize_attribute_name(input_str)
+            result = FlextLDAPUtilities.LdapConverters.sanitize_attribute_name(
+                input_str
+            )
             assert isinstance(result, str)
             # Should sanitize dangerous characters
 
@@ -194,7 +213,9 @@ class TestFlextLdapUtilities:
         safe_inputs = ["cn", "mail", "sn", "objectClass", "displayName"]
 
         for input_str in safe_inputs:
-            result = FlextLdapUtils.sanitize_attribute_name(input_str)
+            result = FlextLDAPUtilities.LdapConverters.sanitize_attribute_name(
+                input_str
+            )
             # Safe inputs should remain mostly unchanged
             assert isinstance(result, str)
             assert len(result) > 0
@@ -207,7 +228,7 @@ class TestFlextLdapUtilities:
             is_success = False
             error = "Test error message"
 
-        result = FlextLdapUtilities.extract_error_message(MockResult())
+        result = FlextLDAPUtilities.LdapConverters.extract_error_message(MockResult())
         assert result == "Test error message"
 
     def test_extract_error_message_with_default(self) -> None:
@@ -217,7 +238,9 @@ class TestFlextLdapUtilities:
         class MockSuccessResult:
             is_success = True
 
-        result = FlextLdapUtilities.extract_error_message(MockSuccessResult())
+        result = FlextLDAPUtilities.LdapConverters.extract_error_message(
+            MockSuccessResult()
+        )
         assert result == "Unknown error"
 
     def test_is_successful_result_with_success(self) -> None:
@@ -226,7 +249,9 @@ class TestFlextLdapUtilities:
         class MockSuccessResult:
             is_success = True
 
-        result = FlextLdapUtilities.is_successful_result(MockSuccessResult())
+        result = FlextLDAPUtilities.LdapConverters.is_successful_result(
+            MockSuccessResult()
+        )
         assert result is True
 
     def test_is_successful_result_with_failure(self) -> None:
@@ -235,33 +260,37 @@ class TestFlextLdapUtilities:
         class MockFailResult:
             is_success = False
 
-        result = FlextLdapUtilities.is_successful_result(MockFailResult())
+        result = FlextLDAPUtilities.LdapConverters.is_successful_result(
+            MockFailResult()
+        )
         assert result is False
 
     def test_safe_convert_value_to_str_with_bytes(self) -> None:
         """Test safely converting bytes to string."""
         byte_value = b"test value"
 
-        result = FlextLdapUtilities.safe_convert_value_to_str(byte_value)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_value_to_str(byte_value)
         assert result == "test value"
 
     def test_safe_convert_value_to_str_with_string(self) -> None:
         """Test safely converting string to string."""
         string_value = "test value"
 
-        result = FlextLdapUtilities.safe_convert_value_to_str(string_value)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_value_to_str(
+            string_value
+        )
         assert result == "test value"
 
     def test_safe_convert_value_to_str_with_none(self) -> None:
         """Test safely converting None to string."""
-        result = FlextLdapUtilities.safe_convert_value_to_str(None)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_value_to_str(None)
         assert result == ""
 
     def test_safe_convert_list_to_strings(self) -> None:
         """Test safely converting list of values to strings."""
         values = ["test1", b"test2", 123, None, ""]
 
-        result = FlextLdapUtilities.safe_convert_list_to_strings(values)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_list_to_strings(values)
         assert "test1" in result
         assert "test2" in result
         assert "123" in result
@@ -270,17 +299,17 @@ class TestFlextLdapUtilities:
         """Test safely converting list to list of strings."""
         values = ["test1", "test2", 123]
 
-        result = FlextLdapUtilities.safe_list_conversion(values)
+        result = FlextLDAPUtilities.LdapConverters.safe_list_conversion(values)
         assert result == ["test1", "test2", "123"]
 
     def test_safe_list_conversion_with_single_value(self) -> None:
         """Test safely converting single value to list of strings."""
         value = "single_value"
 
-        result = FlextLdapUtilities.safe_list_conversion(value)
+        result = FlextLDAPUtilities.LdapConverters.safe_list_conversion(value)
         assert result == ["single_value"]
 
     def test_safe_list_conversion_with_none(self) -> None:
         """Test safely converting None to empty list."""
-        result = FlextLdapUtilities.safe_list_conversion(None)
+        result = FlextLDAPUtilities.LdapConverters.safe_list_conversion(None)
         assert result == []

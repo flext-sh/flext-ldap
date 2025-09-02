@@ -9,45 +9,48 @@ import uuid
 from datetime import UTC, datetime
 
 import pytest
-from flext_core import FlextEntityStatus, FlextModels
+from flext_core import FlextConstants
 
 from flext_ldap.models import (
-    FlextLdapCreateUserRequest,
-    FlextLdapEntry,
-    FlextLdapGroup,
-    FlextLdapUser,
+    FlextLDAPCreateUserRequest,
+    FlextLDAPEntry,
+    FlextLDAPGroup,
+    FlextLDAPUser,
 )
 from flext_ldap.operations import (
-    FlextLdapConnectionOperations,
-    FlextLdapEntryOperations,
-    FlextLdapGroupOperations,
-    FlextLdapOperations,
-    FlextLdapSearchOperations,
-    FlextLdapUserOperations,
+    FlextLDAPConnectionOperations,
+    FlextLDAPEntryOperations,
+    FlextLDAPGroupOperations,
+    FlextLDAPOperations,
+    FlextLDAPSearchOperations,
+    FlextLDAPUserOperations,
 )
 from flext_ldap.typings import LdapAttributeDict
 
 
-class TestFlextLdapOperations:
+class TestFlextLDAPOperations:
     """Test operations class (base class now internal)."""
 
     def test_operations_base_initialization(self) -> None:
         """Test base operations initialization."""
-        # FlextLdapOperationsBase is now internal - use concrete implementation
-        ops = FlextLdapOperations()
+        # FlextLDAPOperationsBase is now internal - use concrete implementation
+        ops = FlextLDAPOperations()
 
         assert ops is not None
-        assert hasattr(ops, "_container")
-        assert hasattr(ops, "_id_generator")
+        assert hasattr(ops, "_connections")
+        assert hasattr(ops, "_search")
+        assert hasattr(ops, "_entries")
+        assert hasattr(ops, "_users")
+        assert hasattr(ops, "_groups")
 
     def test_generate_id_with_uuid_fallback(self) -> None:
         """Test ID generation with UUID fallback."""
-        # FlextLdapOperationsBase is now internal - use concrete implementation
-        ops = FlextLdapOperations()
+        # FlextLDAPOperationsBase is now internal - use concrete implementation
+        ops = FlextLDAPOperations()
 
         # Should generate a string ID
-        id1 = ops._generate_id()
-        id2 = ops._generate_id()
+        id1 = ops.generate_id()
+        id2 = ops.generate_id()
 
         assert isinstance(id1, str)
         assert isinstance(id2, str)
@@ -56,8 +59,8 @@ class TestFlextLdapOperations:
 
     def test_validate_dn_or_fail_with_valid_dn(self) -> None:
         """Test DN validation with valid DN."""
-        # FlextLdapOperationsBase is now internal - use concrete implementation
-        ops = FlextLdapOperations()
+        # FlextLDAPOperationsBase is now internal - use concrete implementation
+        ops = FlextLDAPOperations()
 
         result = ops._validate_dn_or_fail("cn=test,dc=example,dc=com")
 
@@ -65,8 +68,8 @@ class TestFlextLdapOperations:
 
     def test_validate_dn_or_fail_with_invalid_dn(self) -> None:
         """Test DN validation with invalid DN."""
-        # FlextLdapOperationsBase is now internal - use concrete implementation
-        ops = FlextLdapOperations()
+        # FlextLDAPOperationsBase is now internal - use concrete implementation
+        ops = FlextLDAPOperations()
 
         # This will raise a ValidationError directly from Pydantic
         with pytest.raises(Exception):  # Could be ValidationError from Pydantic
@@ -74,8 +77,8 @@ class TestFlextLdapOperations:
 
     def test_validate_filter_or_fail_with_valid_filter(self) -> None:
         """Test filter validation with valid filter."""
-        # FlextLdapOperationsBase is now internal - use concrete implementation
-        ops = FlextLdapOperations()
+        # FlextLDAPOperationsBase is now internal - use concrete implementation
+        ops = FlextLDAPOperations()
 
         result = ops._validate_filter_or_fail("(cn=test)")
 
@@ -83,8 +86,8 @@ class TestFlextLdapOperations:
 
     def test_validate_filter_or_fail_with_invalid_filter(self) -> None:
         """Test filter validation with invalid filter."""
-        # FlextLdapOperationsBase is now internal - use concrete implementation
-        ops = FlextLdapOperations()
+        # FlextLDAPOperationsBase is now internal - use concrete implementation
+        ops = FlextLDAPOperations()
 
         # This will raise a ValidationError directly from Pydantic
         with pytest.raises(Exception):  # Could be ValidationError from Pydantic
@@ -92,8 +95,8 @@ class TestFlextLdapOperations:
 
     def test_validate_uri_or_fail_with_valid_uri(self) -> None:
         """Test URI validation with valid URI."""
-        # FlextLdapOperationsBase is now internal - use concrete implementation
-        ops = FlextLdapOperations()
+        # FlextLDAPOperationsBase is now internal - use concrete implementation
+        ops = FlextLDAPOperations()
 
         result = ops._validate_uri_or_fail("ldap://localhost:389")
 
@@ -101,28 +104,30 @@ class TestFlextLdapOperations:
 
     def test_validate_uri_or_fail_with_invalid_uri(self) -> None:
         """Test URI validation with invalid URI."""
-        # FlextLdapOperationsBase is now internal - use concrete implementation
-        ops = FlextLdapOperations()
+        # FlextLDAPOperationsBase is now internal - use concrete implementation
+        ops = FlextLDAPOperations()
 
         result = ops._validate_uri_or_fail("invalid://test")
 
         assert not result.is_success
+        assert result.error is not None
         assert "ldap://" in result.error
 
     def test_validate_uri_or_fail_with_empty_uri(self) -> None:
         """Test URI validation with empty URI."""
-        # FlextLdapOperationsBase is now internal - use concrete implementation
-        ops = FlextLdapOperations()
+        # FlextLDAPOperationsBase is now internal - use concrete implementation
+        ops = FlextLDAPOperations()
 
         result = ops._validate_uri_or_fail("")
 
         assert not result.is_success
+        assert result.error is not None
         assert "empty" in result.error
 
     def test_handle_exception_with_context(self) -> None:
         """Test exception handling with context."""
-        # FlextLdapOperationsBase is now internal - use concrete implementation
-        ops = FlextLdapOperations()
+        # FlextLDAPOperationsBase is now internal - use concrete implementation
+        ops = FlextLDAPOperations()
 
         exception = ValueError("Test error")
         result = ops._handle_exception_with_context(
@@ -135,8 +140,8 @@ class TestFlextLdapOperations:
 
     def test_log_operation_success(self) -> None:
         """Test successful operation logging."""
-        # FlextLdapOperationsBase is now internal - use concrete implementation
-        ops = FlextLdapOperations()
+        # FlextLDAPOperationsBase is now internal - use concrete implementation
+        ops = FlextLDAPOperations()
 
         # Should not raise exception
         try:
@@ -145,13 +150,13 @@ class TestFlextLdapOperations:
             pytest.fail(f"log_operation_success raised {e}")
 
 
-class TestFlextLdapConnectionOperations:
+class TestFlextLDAPConnectionOperations:
     """Test LDAP connection operations."""
 
     @pytest.mark.asyncio
     async def test_create_connection_with_valid_uri(self) -> None:
         """Test connection creation with valid URI."""
-        ops = FlextLdapConnectionOperations()
+        ops = FlextLDAPConnectionOperations()
 
         result = await ops.create_connection("ldap://localhost:389")
 
@@ -162,7 +167,7 @@ class TestFlextLdapConnectionOperations:
     @pytest.mark.asyncio
     async def test_create_connection_with_bind_dn(self) -> None:
         """Test connection creation with bind DN."""
-        ops = FlextLdapConnectionOperations()
+        ops = FlextLDAPConnectionOperations()
 
         result = await ops.create_connection(
             "ldap://localhost:389",
@@ -181,29 +186,31 @@ class TestFlextLdapConnectionOperations:
     @pytest.mark.asyncio
     async def test_create_connection_with_invalid_uri(self) -> None:
         """Test connection creation with invalid URI."""
-        ops = FlextLdapConnectionOperations()
+        ops = FlextLDAPConnectionOperations()
 
         result = await ops.create_connection("invalid://test")
 
         assert not result.is_success
+        assert result.error is not None
         assert "ldap://" in result.error
 
     @pytest.mark.asyncio
     async def test_create_connection_with_invalid_bind_dn(self) -> None:
         """Test connection creation with invalid bind DN."""
-        ops = FlextLdapConnectionOperations()
+        ops = FlextLDAPConnectionOperations()
 
         result = await ops.create_connection(
             "ldap://localhost:389", bind_dn="invalid_dn", _bind_password="password"
         )
 
         assert not result.is_success
+        assert result.error is not None
         assert "DN" in result.error
 
     @pytest.mark.asyncio
     async def test_close_connection_success(self) -> None:
         """Test successful connection closure."""
-        ops = FlextLdapConnectionOperations()
+        ops = FlextLDAPConnectionOperations()
 
         # Create connection first
         create_result = await ops.create_connection("ldap://localhost:389")
@@ -218,16 +225,17 @@ class TestFlextLdapConnectionOperations:
     @pytest.mark.asyncio
     async def test_close_connection_not_found(self) -> None:
         """Test closing non-existent connection."""
-        ops = FlextLdapConnectionOperations()
+        ops = FlextLDAPConnectionOperations()
 
         result = await ops.close_connection("nonexistent")
 
         assert not result.is_success
+        assert result.error is not None
         assert "not found" in result.error
 
     def test_get_connection_info_success(self) -> None:
         """Test getting connection info for existing connection."""
-        ops = FlextLdapConnectionOperations()
+        ops = FlextLDAPConnectionOperations()
 
         # Manually add a connection
         connection_id = str(uuid.uuid4())
@@ -247,16 +255,17 @@ class TestFlextLdapConnectionOperations:
 
     def test_get_connection_info_not_found(self) -> None:
         """Test getting connection info for non-existent connection."""
-        ops = FlextLdapConnectionOperations()
+        ops = FlextLDAPConnectionOperations()
 
         result = ops.get_connection_info("nonexistent")
 
         assert not result.is_success
+        assert result.error is not None
         assert "not found" in result.error
 
     def test_list_active_connections_empty(self) -> None:
         """Test listing connections when none exist."""
-        ops = FlextLdapConnectionOperations()
+        ops = FlextLDAPConnectionOperations()
 
         result = ops.list_active_connections()
 
@@ -265,7 +274,7 @@ class TestFlextLdapConnectionOperations:
 
     def test_list_active_connections_with_connections(self) -> None:
         """Test listing connections when some exist."""
-        ops = FlextLdapConnectionOperations()
+        ops = FlextLDAPConnectionOperations()
 
         # Add test connections
         conn1_id = "conn1"
@@ -289,7 +298,7 @@ class TestFlextLdapConnectionOperations:
 
     def test_calculate_duration_with_datetime(self) -> None:
         """Test duration calculation with datetime object."""
-        ops = FlextLdapConnectionOperations()
+        ops = FlextLDAPConnectionOperations()
 
         created_at = datetime.now(UTC)
         duration = ops._calculate_duration(created_at)
@@ -299,20 +308,20 @@ class TestFlextLdapConnectionOperations:
 
     def test_calculate_duration_with_invalid_input(self) -> None:
         """Test duration calculation with invalid input."""
-        ops = FlextLdapConnectionOperations()
+        ops = FlextLDAPConnectionOperations()
 
         duration = ops._calculate_duration("invalid")
 
         assert duration == 0.0
 
 
-class TestFlextLdapSearchOperations:
+class TestFlextLDAPSearchOperations:
     """Test LDAP search operations."""
 
     @pytest.mark.asyncio
     async def test_search_entries_with_valid_parameters(self) -> None:
         """Test entry search with valid parameters."""
-        ops = FlextLdapSearchOperations()
+        ops = FlextLDAPSearchOperations()
 
         result = await ops.search_entries(
             connection_id="test_conn",
@@ -326,7 +335,7 @@ class TestFlextLdapSearchOperations:
     @pytest.mark.asyncio
     async def test_search_entries_with_invalid_base_dn(self) -> None:
         """Test entry search with invalid base DN."""
-        ops = FlextLdapSearchOperations()
+        ops = FlextLDAPSearchOperations()
 
         result = await ops.search_entries(
             connection_id="test_conn",
@@ -335,24 +344,26 @@ class TestFlextLdapSearchOperations:
         )
 
         assert not result.is_success
+        assert result.error is not None
         assert "DN" in result.error
 
     @pytest.mark.asyncio
     async def test_search_entries_with_invalid_filter(self) -> None:
         """Test entry search with invalid filter."""
-        ops = FlextLdapSearchOperations()
+        ops = FlextLDAPSearchOperations()
 
         result = await ops.search_entries(
             connection_id="test_conn", base_dn="dc=example,dc=com", search_filter=""
         )
 
         assert not result.is_success
-        assert "FlextLdapFilter" in result.error or "validation" in result.error
+        assert result.error is not None
+        assert "FlextLDAPFilter" in result.error or "validation" in result.error
 
     @pytest.mark.asyncio
     async def test_search_users_with_valid_parameters(self) -> None:
         """Test user search with valid parameters."""
-        ops = FlextLdapSearchOperations()
+        ops = FlextLDAPSearchOperations()
 
         result = await ops.search_users(
             connection_id="test_conn",
@@ -366,7 +377,7 @@ class TestFlextLdapSearchOperations:
     @pytest.mark.asyncio
     async def test_search_users_with_no_criteria(self) -> None:
         """Test user search with no filter criteria."""
-        ops = FlextLdapSearchOperations()
+        ops = FlextLDAPSearchOperations()
 
         result = await ops.search_users(
             connection_id="test_conn",
@@ -380,7 +391,7 @@ class TestFlextLdapSearchOperations:
     @pytest.mark.asyncio
     async def test_search_groups_with_valid_parameters(self) -> None:
         """Test group search with valid parameters."""
-        ops = FlextLdapSearchOperations()
+        ops = FlextLDAPSearchOperations()
 
         result = await ops.search_groups(
             connection_id="test_conn",
@@ -394,7 +405,7 @@ class TestFlextLdapSearchOperations:
     @pytest.mark.asyncio
     async def test_get_entry_by_dn_valid_dn(self) -> None:
         """Test getting entry by DN with valid DN."""
-        ops = FlextLdapSearchOperations()
+        ops = FlextLDAPSearchOperations()
 
         result = await ops.get_entry_by_dn(
             connection_id="test_conn",
@@ -407,7 +418,7 @@ class TestFlextLdapSearchOperations:
 
     def test_build_user_filter_with_criteria(self) -> None:
         """Test user filter building with criteria."""
-        ops = FlextLdapSearchOperations()
+        ops = FlextLDAPSearchOperations()
 
         filter_str = ops._build_user_filter({"cn": "John", "mail": "john"})
 
@@ -418,7 +429,7 @@ class TestFlextLdapSearchOperations:
 
     def test_build_user_filter_with_no_criteria(self) -> None:
         """Test user filter building with no criteria."""
-        ops = FlextLdapSearchOperations()
+        ops = FlextLDAPSearchOperations()
 
         filter_str = ops._build_user_filter(None)
 
@@ -426,7 +437,7 @@ class TestFlextLdapSearchOperations:
 
     def test_build_group_filter_with_criteria(self) -> None:
         """Test group filter building with criteria."""
-        ops = FlextLdapSearchOperations()
+        ops = FlextLDAPSearchOperations()
 
         filter_str = ops._build_group_filter({"cn": "admin"})
 
@@ -436,7 +447,7 @@ class TestFlextLdapSearchOperations:
 
     def test_escape_ldap_filter_value(self) -> None:
         """Test LDAP filter value escaping."""
-        ops = FlextLdapSearchOperations()
+        ops = FlextLDAPSearchOperations()
 
         escaped = ops._escape_ldap_filter_value("test(*)\\value")
 
@@ -447,7 +458,7 @@ class TestFlextLdapSearchOperations:
 
     def test_convert_entries_to_users(self) -> None:
         """Test converting entries to users."""
-        ops = FlextLdapSearchOperations()
+        ops = FlextLDAPSearchOperations()
 
         # Create mock entries
         attributes: LdapAttributeDict = {
@@ -457,24 +468,24 @@ class TestFlextLdapSearchOperations:
             "mail": ["john@example.com"],
         }
 
-        entry = FlextLdapEntry(
-            id=FlextModels.EntityId("test"),
+        entry = FlextLDAPEntry(
+            id="test",
             dn="cn=john,dc=example,dc=com",
             object_classes=["person"],
             attributes=attributes,
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Status.ACTIVE,
         )
 
         users = ops._convert_entries_to_users([entry])
 
         assert len(users) == 1
-        assert isinstance(users[0], FlextLdapUser)
+        assert isinstance(users[0], FlextLDAPUser)
         assert users[0].uid == "john.doe"
         assert users[0].cn == "John Doe"
 
     def test_convert_entries_to_groups(self) -> None:
         """Test converting entries to groups."""
-        ops = FlextLdapSearchOperations()
+        ops = FlextLDAPSearchOperations()
 
         # Create mock entries
         attributes: LdapAttributeDict = {
@@ -483,29 +494,29 @@ class TestFlextLdapSearchOperations:
             "member": ["cn=user1,dc=example,dc=com", "cn=user2,dc=example,dc=com"],
         }
 
-        entry = FlextLdapEntry(
-            id=FlextModels.EntityId("test"),
+        entry = FlextLDAPEntry(
+            id="test",
             dn="cn=admins,dc=example,dc=com",
             object_classes=["groupOfNames"],
             attributes=attributes,
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Status.ACTIVE,
         )
 
         groups = ops._convert_entries_to_groups([entry])
 
         assert len(groups) == 1
-        assert isinstance(groups[0], FlextLdapGroup)
+        assert isinstance(groups[0], FlextLDAPGroup)
         assert groups[0].cn == "admins"
         assert len(groups[0].members) == 2
 
 
-class TestFlextLdapEntryOperations:
+class TestFlextLDAPEntryOperations:
     """Test LDAP entry operations."""
 
     @pytest.mark.asyncio
     async def test_create_entry_with_valid_data(self) -> None:
         """Test entry creation with valid data."""
-        ops = FlextLdapEntryOperations()
+        ops = FlextLDAPEntryOperations()
 
         attributes: LdapAttributeDict = {"cn": ["test"], "objectClass": ["person"]}
 
@@ -517,13 +528,13 @@ class TestFlextLdapEntryOperations:
         )
 
         assert result.is_success
-        assert isinstance(result.value, FlextLdapEntry)
+        assert isinstance(result.value, FlextLDAPEntry)
         assert result.value.dn == "cn=test,dc=example,dc=com"
 
     @pytest.mark.asyncio
     async def test_create_entry_with_invalid_dn(self) -> None:
         """Test entry creation with invalid DN."""
-        ops = FlextLdapEntryOperations()
+        ops = FlextLDAPEntryOperations()
 
         attributes: LdapAttributeDict = {"cn": ["test"]}
 
@@ -535,12 +546,13 @@ class TestFlextLdapEntryOperations:
         )
 
         assert not result.is_success
+        assert result.error is not None
         assert "DN" in result.error
 
     @pytest.mark.asyncio
     async def test_create_entry_with_no_object_classes(self) -> None:
         """Test entry creation with no object classes."""
-        ops = FlextLdapEntryOperations()
+        ops = FlextLDAPEntryOperations()
 
         attributes: LdapAttributeDict = {"cn": ["test"]}
 
@@ -552,14 +564,15 @@ class TestFlextLdapEntryOperations:
         )
 
         assert not result.is_success
+        assert result.error is not None
         assert "object class" in result.error
 
     @pytest.mark.asyncio
     async def test_modify_entry_with_valid_data(self) -> None:
         """Test entry modification with valid data."""
-        ops = FlextLdapEntryOperations()
+        ops = FlextLDAPEntryOperations()
 
-        modifications = {"mail": ["new@example.com"]}
+        modifications: dict[str, object] = {"mail": ["new@example.com"]}
 
         result = await ops.modify_entry(
             connection_id="test_conn",
@@ -572,33 +585,35 @@ class TestFlextLdapEntryOperations:
     @pytest.mark.asyncio
     async def test_modify_entry_with_invalid_dn(self) -> None:
         """Test entry modification with invalid DN."""
-        ops = FlextLdapEntryOperations()
+        ops = FlextLDAPEntryOperations()
 
-        modifications = {"mail": ["new@example.com"]}
+        modifications: dict[str, object] = {"mail": ["new@example.com"]}
 
         result = await ops.modify_entry(
             connection_id="test_conn", dn="invalid_dn", modifications=modifications
         )
 
         assert not result.is_success
+        assert result.error is not None
         assert "DN" in result.error
 
     @pytest.mark.asyncio
     async def test_modify_entry_with_no_modifications(self) -> None:
         """Test entry modification with no modifications."""
-        ops = FlextLdapEntryOperations()
+        ops = FlextLDAPEntryOperations()
 
         result = await ops.modify_entry(
             connection_id="test_conn", dn="cn=test,dc=example,dc=com", modifications={}
         )
 
         assert not result.is_success
+        assert result.error is not None
         assert "modifications" in result.error
 
     @pytest.mark.asyncio
     async def test_delete_entry_with_valid_dn(self) -> None:
         """Test entry deletion with valid DN."""
-        ops = FlextLdapEntryOperations()
+        ops = FlextLDAPEntryOperations()
 
         result = await ops.delete_entry(
             connection_id="test_conn", dn="cn=test,dc=example,dc=com"
@@ -609,23 +624,24 @@ class TestFlextLdapEntryOperations:
     @pytest.mark.asyncio
     async def test_delete_entry_with_invalid_dn(self) -> None:
         """Test entry deletion with invalid DN."""
-        ops = FlextLdapEntryOperations()
+        ops = FlextLDAPEntryOperations()
 
         result = await ops.delete_entry(connection_id="test_conn", dn="invalid_dn")
 
         assert not result.is_success
+        assert result.error is not None
         assert "DN" in result.error
 
 
-class TestFlextLdapUserOperations:
+class TestFlextLDAPUserOperations:
     """Test LDAP user operations."""
 
     @pytest.mark.asyncio
     async def test_create_user_with_valid_request(self) -> None:
         """Test user creation with valid request."""
-        ops = FlextLdapUserOperations()
+        ops = FlextLDAPUserOperations()
 
-        user_request = FlextLdapCreateUserRequest(
+        user_request = FlextLDAPCreateUserRequest(
             dn="cn=john,dc=example,dc=com",
             uid="john.doe",
             cn="John Doe",
@@ -639,14 +655,14 @@ class TestFlextLdapUserOperations:
         )
 
         assert result.is_success
-        assert isinstance(result.value, FlextLdapUser)
+        assert isinstance(result.value, FlextLDAPUser)
         assert result.value.uid == "john.doe"
         assert result.value.cn == "John Doe"
 
     @pytest.mark.asyncio
     async def test_update_user_password_with_valid_password(self) -> None:
         """Test user password update with valid password."""
-        ops = FlextLdapUserOperations()
+        ops = FlextLDAPUserOperations()
 
         result = await ops.update_user_password(
             connection_id="test_conn",
@@ -659,7 +675,7 @@ class TestFlextLdapUserOperations:
     @pytest.mark.asyncio
     async def test_update_user_password_with_short_password(self) -> None:
         """Test user password update with short password."""
-        ops = FlextLdapUserOperations()
+        ops = FlextLDAPUserOperations()
 
         result = await ops.update_user_password(
             connection_id="test_conn",
@@ -668,12 +684,13 @@ class TestFlextLdapUserOperations:
         )
 
         assert not result.is_success
+        assert result.error is not None
         assert str(ops.MIN_PASSWORD_LENGTH) in result.error
 
     @pytest.mark.asyncio
     async def test_update_user_email_with_valid_email(self) -> None:
         """Test user email update with valid email."""
-        ops = FlextLdapUserOperations()
+        ops = FlextLDAPUserOperations()
 
         result = await ops.update_user_email(
             connection_id="test_conn",
@@ -686,7 +703,7 @@ class TestFlextLdapUserOperations:
     @pytest.mark.asyncio
     async def test_update_user_email_with_invalid_email(self) -> None:
         """Test user email update with invalid email."""
-        ops = FlextLdapUserOperations()
+        ops = FlextLDAPUserOperations()
 
         result = await ops.update_user_email(
             connection_id="test_conn",
@@ -695,12 +712,13 @@ class TestFlextLdapUserOperations:
         )
 
         assert not result.is_success
+        assert result.error is not None
         assert "email" in result.error
 
     @pytest.mark.asyncio
     async def test_activate_user(self) -> None:
         """Test user activation."""
-        ops = FlextLdapUserOperations()
+        ops = FlextLDAPUserOperations()
 
         result = await ops.activate_user(
             connection_id="test_conn", user_dn="cn=john,dc=example,dc=com"
@@ -711,7 +729,7 @@ class TestFlextLdapUserOperations:
     @pytest.mark.asyncio
     async def test_deactivate_user(self) -> None:
         """Test user deactivation."""
-        ops = FlextLdapUserOperations()
+        ops = FlextLDAPUserOperations()
 
         result = await ops.deactivate_user(
             connection_id="test_conn", user_dn="cn=john,dc=example,dc=com"
@@ -721,9 +739,9 @@ class TestFlextLdapUserOperations:
 
     def test_build_user_attributes(self) -> None:
         """Test user attribute building."""
-        ops = FlextLdapUserOperations()
+        ops = FlextLDAPUserOperations()
 
-        user_request = FlextLdapCreateUserRequest(
+        user_request = FlextLDAPCreateUserRequest(
             dn="cn=john,dc=example,dc=com",
             uid="john.doe",
             cn="John Doe",
@@ -743,9 +761,9 @@ class TestFlextLdapUserOperations:
 
     def test_build_user_entity(self) -> None:
         """Test user entity building."""
-        ops = FlextLdapUserOperations()
+        ops = FlextLDAPUserOperations()
 
-        user_request = FlextLdapCreateUserRequest(
+        user_request = FlextLDAPCreateUserRequest(
             dn="cn=john,dc=example,dc=com", uid="john.doe", cn="John Doe", sn="Doe"
         )
 
@@ -757,19 +775,19 @@ class TestFlextLdapUserOperations:
 
         user = ops._build_user_entity(user_request, attributes)
 
-        assert isinstance(user, FlextLdapUser)
+        assert isinstance(user, FlextLDAPUser)
         assert user.uid == "john.doe"
         assert user.cn == "John Doe"
-        assert user.status == FlextEntityStatus.ACTIVE.value
+        assert user.status == FlextConstants.Status.ACTIVE
 
 
-class TestFlextLdapGroupOperations:
+class TestFlextLDAPGroupOperations:
     """Test LDAP group operations."""
 
     @pytest.mark.asyncio
     async def test_create_group_with_valid_data(self) -> None:
         """Test group creation with valid data."""
-        ops = FlextLdapGroupOperations()
+        ops = FlextLDAPGroupOperations()
 
         result = await ops.create_group(
             connection_id="test_conn",
@@ -780,14 +798,14 @@ class TestFlextLdapGroupOperations:
         )
 
         assert result.is_success
-        assert isinstance(result.value, FlextLdapGroup)
+        assert isinstance(result.value, FlextLDAPGroup)
         assert result.value.cn == "admins"
         assert "cn=user1,dc=example,dc=com" in result.value.members
 
     @pytest.mark.asyncio
     async def test_create_group_with_no_members(self) -> None:
         """Test group creation with no members (dummy member added)."""
-        ops = FlextLdapGroupOperations()
+        ops = FlextLDAPGroupOperations()
 
         result = await ops.create_group(
             connection_id="test_conn", dn="cn=empty,dc=example,dc=com", cn="empty"
@@ -799,7 +817,7 @@ class TestFlextLdapGroupOperations:
 
     def test_prepare_group_members_with_members(self) -> None:
         """Test group member preparation with provided members."""
-        ops = FlextLdapGroupOperations()
+        ops = FlextLDAPGroupOperations()
 
         members = ops._prepare_group_members(["cn=user1,dc=example,dc=com"])
 
@@ -808,7 +826,7 @@ class TestFlextLdapGroupOperations:
 
     def test_prepare_group_members_with_no_members(self) -> None:
         """Test group member preparation with no members."""
-        ops = FlextLdapGroupOperations()
+        ops = FlextLDAPGroupOperations()
 
         members = ops._prepare_group_members(None)
 
@@ -817,7 +835,7 @@ class TestFlextLdapGroupOperations:
 
     def test_build_group_attributes(self) -> None:
         """Test group attribute building."""
-        ops = FlextLdapGroupOperations()
+        ops = FlextLDAPGroupOperations()
 
         attributes = ops._build_group_attributes(
             cn="admins",
@@ -832,7 +850,7 @@ class TestFlextLdapGroupOperations:
 
     def test_build_group_entity(self) -> None:
         """Test group entity building."""
-        ops = FlextLdapGroupOperations()
+        ops = FlextLDAPGroupOperations()
 
         attributes: LdapAttributeDict = {
             "cn": ["admins"],
@@ -847,14 +865,14 @@ class TestFlextLdapGroupOperations:
             attributes=attributes,
         )
 
-        assert isinstance(group, FlextLdapGroup)
+        assert isinstance(group, FlextLDAPGroup)
         assert group.cn == "admins"
         assert group.description == "Admin group"
         assert len(group.members) == 1
 
     def test_filter_dummy_members(self) -> None:
         """Test filtering dummy members."""
-        ops = FlextLdapGroupOperations()
+        ops = FlextLDAPGroupOperations()
 
         members = [
             "cn=user1,dc=example,dc=com",
@@ -871,7 +889,7 @@ class TestFlextLdapGroupOperations:
 
     def test_calculate_updated_members_add_action(self) -> None:
         """Test member calculation for add action."""
-        ops = FlextLdapGroupOperations()
+        ops = FlextLDAPGroupOperations()
 
         current_members = ["cn=user1,dc=example,dc=com"]
         result = ops._calculate_updated_members(
@@ -884,7 +902,7 @@ class TestFlextLdapGroupOperations:
 
     def test_calculate_updated_members_remove_action(self) -> None:
         """Test member calculation for remove action."""
-        ops = FlextLdapGroupOperations()
+        ops = FlextLDAPGroupOperations()
 
         current_members = ["cn=user1,dc=example,dc=com", "cn=user2,dc=example,dc=com"]
         result = ops._calculate_updated_members(
@@ -897,26 +915,28 @@ class TestFlextLdapGroupOperations:
 
     def test_calculate_updated_members_invalid_action(self) -> None:
         """Test member calculation with invalid action."""
-        ops = FlextLdapGroupOperations()
+        ops = FlextLDAPGroupOperations()
 
         result = ops._calculate_updated_members([], "user", "invalid")
 
         assert not result.is_success
+        assert result.error is not None
         assert "Invalid action" in result.error
 
     def test_handle_add_member_duplicate(self) -> None:
         """Test adding member that already exists."""
-        ops = FlextLdapGroupOperations()
+        ops = FlextLDAPGroupOperations()
 
         current_members = ["cn=user1,dc=example,dc=com"]
         result = ops._handle_add_member(current_members, "cn=user1,dc=example,dc=com")
 
         assert not result.is_success
+        assert result.error is not None
         assert "already exists" in result.error
 
     def test_handle_remove_member_not_found(self) -> None:
         """Test removing member that doesn't exist."""
-        ops = FlextLdapGroupOperations()
+        ops = FlextLDAPGroupOperations()
 
         current_members = ["cn=user1,dc=example,dc=com"]
         result = ops._handle_remove_member(
@@ -924,11 +944,12 @@ class TestFlextLdapGroupOperations:
         )
 
         assert not result.is_success
+        assert result.error is not None
         assert "not found" in result.error
 
     def test_handle_remove_member_last_member(self) -> None:
         """Test removing last member (dummy added)."""
-        ops = FlextLdapGroupOperations()
+        ops = FlextLDAPGroupOperations()
 
         current_members = ["cn=user1,dc=example,dc=com"]
         result = ops._handle_remove_member(
@@ -940,13 +961,13 @@ class TestFlextLdapGroupOperations:
         assert "cn=dummy" in result.value[0]
 
 
-class TestFlextLdapOperationsUnified:
+class TestFlextLDAPOperationsUnified:
     """Test unified LDAP operations interface."""
 
     @pytest.mark.asyncio
     async def test_create_connection_and_bind(self) -> None:
         """Test connection creation and binding."""
-        ops = FlextLdapOperations()
+        ops = FlextLDAPOperations()
 
         result = await ops.create_connection_and_bind(
             server_uri="ldap://localhost:389",
@@ -960,7 +981,7 @@ class TestFlextLdapOperationsUnified:
     @pytest.mark.asyncio
     async def test_search_and_get_first_no_results(self) -> None:
         """Test search that returns no results."""
-        ops = FlextLdapOperations()
+        ops = FlextLDAPOperations()
 
         result = await ops.search_and_get_first(
             connection_id="test_conn",
@@ -974,7 +995,7 @@ class TestFlextLdapOperationsUnified:
     @pytest.mark.asyncio
     async def test_cleanup_connection(self) -> None:
         """Test connection cleanup."""
-        ops = FlextLdapOperations()
+        ops = FlextLDAPOperations()
 
         # Should not raise exception
         try:
@@ -984,7 +1005,7 @@ class TestFlextLdapOperationsUnified:
 
     def test_operations_initialization(self) -> None:
         """Test unified operations initialization."""
-        ops = FlextLdapOperations()
+        ops = FlextLDAPOperations()
 
         assert ops.connections is not None
         assert ops.search is not None
@@ -992,8 +1013,8 @@ class TestFlextLdapOperationsUnified:
         assert ops.users is not None
         assert ops.groups is not None
 
-        assert isinstance(ops.connections, FlextLdapConnectionOperations)
-        assert isinstance(ops.search, FlextLdapSearchOperations)
-        assert isinstance(ops.entries, FlextLdapEntryOperations)
-        assert isinstance(ops.users, FlextLdapUserOperations)
-        assert isinstance(ops.groups, FlextLdapGroupOperations)
+        assert isinstance(ops.connections, FlextLDAPConnectionOperations)
+        assert isinstance(ops.search, FlextLDAPSearchOperations)
+        assert isinstance(ops.entries, FlextLDAPEntryOperations)
+        assert isinstance(ops.users, FlextLDAPUserOperations)
+        assert isinstance(ops.groups, FlextLDAPGroupOperations)

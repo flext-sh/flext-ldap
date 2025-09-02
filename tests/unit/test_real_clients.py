@@ -12,23 +12,23 @@ import ldap3
 import pytest
 
 from flext_ldap import clients as clients_module
-from flext_ldap.clients import SCOPE_MAP, FlextLdapClient
-from flext_ldap.entities import FlextLdapSearchRequest
+from flext_ldap.clients import SCOPE_MAP, FlextLDAPClient
+from flext_ldap.entities import FlextLDAPSearchRequest
 
 
-class TestRealFlextLdapClient:
-    """Test REAL FlextLdapClient class functionality."""
+class TestRealFlextLDAPClient:
+    """Test REAL FlextLDAPClient class functionality."""
 
     def test_flext_ldap_client_can_be_instantiated(self) -> None:
-        """Test FlextLdapClient can be instantiated directly."""
-        client = FlextLdapClient()
+        """Test FlextLDAPClient can be instantiated directly."""
+        client = FlextLDAPClient()
 
-        assert isinstance(client, FlextLdapClient)
+        assert isinstance(client, FlextLDAPClient)
         assert client is not None
 
     def test_flext_ldap_client_has_required_attributes(self) -> None:
-        """Test FlextLdapClient has required attributes."""
-        client = FlextLdapClient()
+        """Test FlextLDAPClient has required attributes."""
+        client = FlextLDAPClient()
 
         # Should have connection state
         assert hasattr(client, "_connection")
@@ -39,9 +39,9 @@ class TestRealFlextLdapClient:
         assert connection is None
 
     def test_multiple_client_instances_are_independent(self) -> None:
-        """Test multiple FlextLdapClient instances are independent."""
-        client1 = FlextLdapClient()
-        client2 = FlextLdapClient()
+        """Test multiple FlextLDAPClient instances are independent."""
+        client1 = FlextLDAPClient()
+        client2 = FlextLDAPClient()
 
         # They should be different instances
         assert client1 is not client2
@@ -51,7 +51,7 @@ class TestRealFlextLdapClient:
 
     def test_client_methods_exist_and_callable(self) -> None:
         """Test all expected client methods exist and are callable."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Test core methods exist (actual methods from the client)
         core_methods = [
@@ -71,7 +71,7 @@ class TestRealFlextLdapClient:
 
     def test_client_provides_async_interface(self) -> None:
         """Test client provides async interface."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Check that key methods are async (coroutines)
 
@@ -97,14 +97,14 @@ class TestRealFlextLdapClient:
         """Test client handles instantiation edge cases gracefully."""
         # Should not raise exceptions during instantiation
         try:
-            client = FlextLdapClient()
+            client = FlextLDAPClient()
             assert client is not None
         except Exception as e:
             pytest.fail(f"Client instantiation raised exception: {e}")
 
     def test_client_supports_introspection(self) -> None:
         """Test client supports introspection properly."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Should be able to get method lists
         methods = [name for name in dir(client) if not name.startswith("_")]
@@ -112,7 +112,7 @@ class TestRealFlextLdapClient:
 
         # Should be able to inspect types
         assert hasattr(client, "__class__")
-        assert client.__class__.__name__ == "FlextLdapClient"
+        assert client.__class__.__name__ == "FlextLDAPClient"
 
         # Should have module information
         assert hasattr(client, "__module__") or hasattr(client.__class__, "__module__")
@@ -162,7 +162,7 @@ class TestRealClientIntegration:
 
     def test_client_integrates_with_flext_result_pattern(self) -> None:
         """Test client properly integrates with FlextResult pattern."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Test that client is designed to work with FlextResult
         # We can verify this by checking method signatures and attributes
@@ -177,10 +177,10 @@ class TestRealClientIntegration:
 
     def test_client_integrates_with_ldap_entities(self) -> None:
         """Test client integrates with LDAP entities."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
-        # Should work with FlextLdapSearchRequest
-        FlextLdapSearchRequest(
+        # Should work with FlextLDAPSearchRequest
+        FlextLDAPSearchRequest(
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=person)",
             scope="subtree",
@@ -208,7 +208,7 @@ class TestRealClientErrorHandling:
 
     def test_client_handles_connection_errors_gracefully(self) -> None:
         """Test client handles connection errors gracefully."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Properties should exist and be accessible even with no connection
         assert hasattr(client, "is_connected")
@@ -223,7 +223,7 @@ class TestRealClientErrorHandling:
 
     def test_client_handles_invalid_parameters_gracefully(self) -> None:
         """Test client handles invalid parameters gracefully."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Should have validation or error handling for invalid inputs
         assert client is not None
@@ -234,7 +234,7 @@ class TestRealClientErrorHandling:
 
     async def test_client_async_methods_handle_errors_properly(self) -> None:
         """Test client async methods handle errors properly."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Just test that async methods exist and are callable
         # Don't actually call them with invalid parameters to avoid timeouts
@@ -255,7 +255,7 @@ class TestRealClientPerformance:
         start_time = time.time()
 
         # Create multiple client instances
-        clients = [FlextLdapClient() for _ in range(50)]
+        clients = [FlextLDAPClient() for _ in range(50)]
 
         end_time = time.time()
         elapsed = end_time - start_time
@@ -267,7 +267,7 @@ class TestRealClientPerformance:
     def test_client_memory_usage_is_reasonable(self) -> None:
         """Test client memory usage is reasonable."""
         # Create client and verify it doesn't consume excessive memory
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Should not have excessive attributes
         attrs = dir(client)
@@ -283,12 +283,12 @@ class TestRealClientDocumentation:
     def test_client_has_docstrings(self) -> None:
         """Test client classes and methods have docstrings."""
         # Main client class should have docstring
-        assert FlextLdapClient.__doc__ is not None
-        assert len(FlextLdapClient.__doc__.strip()) > 0
+        assert FlextLDAPClient.__doc__ is not None
+        assert len(FlextLDAPClient.__doc__.strip()) > 0
 
     def test_client_methods_have_docstrings(self) -> None:
         """Test client methods have docstrings."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Key methods should have docstrings
         key_methods = [
@@ -313,7 +313,7 @@ class TestRealClientDocumentation:
 
     def test_client_has_proper_module_information(self) -> None:
         """Test client has proper module information."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Should have module information
         assert hasattr(client.__class__, "__module__")
@@ -325,12 +325,12 @@ class TestRealClientUtilities:
     """Test REAL client utility functions and helpers."""
 
     def test_client_uses_flext_utilities(self) -> None:
-        """Test client integrates with FlextLdapUtilities."""
+        """Test client integrates with FlextLDAPUtilities."""
         # Client module should import and use utilities
 
-        # Should have access to FlextLdapUtilities
-        assert hasattr(clients_module, "FlextLdapUtilities")
-        utilities = clients_module.FlextLdapUtilities
+        # Should have access to FlextLDAPUtilities
+        assert hasattr(clients_module, "FlextLDAPUtilities")
+        utilities = clients_module.FlextLDAPUtilities
         assert utilities is not None
 
     def test_client_scope_mapping_is_comprehensive(self) -> None:
@@ -357,7 +357,7 @@ class TestRealClientArchitecture:
 
     def test_client_implements_interface(self) -> None:
         """Test client properly implements expected methods."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Current architecture uses concrete class directly, not interface-based
         # Test that client has expected methods (duck typing approach)
@@ -372,7 +372,7 @@ class TestRealClientArchitecture:
     def test_client_follows_solid_principles(self) -> None:
         """Test client follows SOLID principles."""
         # Single Responsibility - client handles only LDAP operations
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Should have focused responsibility
         assert hasattr(client, "connect")
@@ -388,7 +388,7 @@ class TestRealClientArchitecture:
 
     def test_client_uses_dependency_injection_patterns(self) -> None:
         """Test client uses proper dependency injection patterns."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Should be configurable and testable
         assert client is not None
@@ -398,7 +398,7 @@ class TestRealClientArchitecture:
 
     def test_client_supports_async_context_management(self) -> None:
         """Test client supports async context management patterns."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Should have connection management methods
         assert hasattr(client, "connect")

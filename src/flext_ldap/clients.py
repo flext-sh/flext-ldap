@@ -1,4 +1,4 @@
-"""LDAP Client - Single FlextLdapClient class following FLEXT patterns.
+"""LDAP Client - Single FlextLDAPClient class following FLEXT patterns.
 
 Single class with all LDAP client functionality organized as internal classes
 and methods for complete backward compatibility and proper separation of concerns.
@@ -13,21 +13,21 @@ Follows FLEXT architectural standards:
 Examples:
     Modern usage::
 
-        from clients import FlextLdapClient
+        from clients import FlextLDAPClient
 
         # Direct client usage
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
         result = await client.connect(uri, bind_dn, password)
 
         # Operation-specific access
-        search_result = await FlextLdapClient.Search.execute(request)
-        connection_result = await FlextLdapClient.Connection.bind(dn, password)
+        search_result = await FlextLDAPClient.Search.execute(request)
+        connection_result = await FlextLDAPClient.Connection.bind(dn, password)
 
     Legacy compatibility::
 
-        from clients import FlextLdapClient
+        from clients import FlextLDAPClient
 
-        client = FlextLdapClient()  # Same interface as before
+        client = FlextLDAPClient()  # Same interface as before
 
 """
 
@@ -35,7 +35,10 @@ from __future__ import annotations
 
 import contextlib
 import ssl
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
+
+if TYPE_CHECKING:
+    from ldap3 import Connection
 from urllib.parse import urlparse
 
 import ldap3
@@ -43,9 +46,9 @@ from flext_core import FlextLogger, FlextResult
 from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE
 from ldap3.core.exceptions import LDAPException
 
-from flext_ldap.entities import FlextLdapSearchRequest, FlextLdapSearchResponse
+from flext_ldap.entities import FlextLDAPSearchRequest, FlextLDAPSearchResponse
 from flext_ldap.typings import LdapAttributeDict, LdapSearchResult
-from flext_ldap.utils import FlextLdapUtils
+from flext_ldap.utilities import FlextLDAPUtilities
 
 logger = FlextLogger(__name__)
 
@@ -69,8 +72,8 @@ SCOPE_MAP: dict[str, LdapScope] = {
 # =============================================================================
 
 
-class FlextLdapClient:
-    """Single FlextLdapClient class with all LDAP client functionality.
+class FlextLDAPClient:
+    """Single FlextLDAPClient class with all LDAP client functionality.
 
     Consolidates ALL LDAP client operations into a single class following FLEXT patterns.
     Everything from connection management to CRUD operations is available as
@@ -86,20 +89,20 @@ class FlextLdapClient:
     Examples:
         Direct usage::
 
-            client = FlextLdapClient()
+            client = FlextLDAPClient()
             result = await client.connect(uri, bind_dn, password)
             search_result = await client.search(request)
 
         Operation-specific usage::
 
-            search_result = await FlextLdapClient.Search.execute(request)
-            connection_result = await FlextLdapClient.Connection.bind(dn, password)
+            search_result = await FlextLDAPClient.Search.execute(request)
+            connection_result = await FlextLDAPClient.Connection.bind(dn, password)
 
     """
 
     def __init__(self) -> None:
-        """Initialize FlextLdapClient with connection state management."""
-        self._connection: ldap3.Connection | None = None
+        """Initialize FlextLDAPClient with connection state management."""
+        self._connection: Connection | None = None
         self._server: ldap3.Server | None = None
 
     # =========================================================================
@@ -181,12 +184,16 @@ class FlextLdapClient:
 
         try:
             # Use utility to safely handle ldap3 rebind result
-            success: bool = FlextLdapUtils.Ldap3.safe_ldap3_rebind_result(
-                self._connection, dn, password
+            success: bool = (
+                FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_rebind_result(
+                    self._connection, dn, password
+                )
             )
             if not success:
-                error_message: str = FlextLdapUtils.Ldap3.safe_ldap3_connection_result(
-                    self._connection
+                error_message: str = (
+                    FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_connection_result(
+                        self._connection
+                    )
                 )
                 return FlextResult[None].fail(f"Bind failed: {error_message}")
 
@@ -211,7 +218,9 @@ class FlextLdapClient:
             return FlextResult[None].ok(None)  # Already unbound
 
         try:
-            self._connection.unbind()  # type: ignore[no-untyped-call]
+            # Safe method call using getattr for untyped ldap3
+            unbind_method = getattr(self._connection, "unbind", lambda: None)
+            unbind_method()
             self._connection = None
             self._server = None
 
@@ -241,8 +250,8 @@ class FlextLdapClient:
 
     async def search(
         self,
-        request: FlextLdapSearchRequest,
-    ) -> FlextResult[FlextLdapSearchResponse]:
+        request: FlextLDAPSearchRequest,
+    ) -> FlextResult[FlextLDAPSearchResponse]:
         """Perform LDAP search with comprehensive result handling.
 
         Args:
@@ -253,7 +262,7 @@ class FlextLdapClient:
 
         """
         if not self._connection or not self._connection.bound:
-            return FlextResult[FlextLdapSearchResponse].fail(
+            return FlextResult[FlextLDAPSearchResponse].fail(
                 "Not connected to LDAP server",
             )
 
@@ -275,32 +284,44 @@ class FlextLdapClient:
                 size_limit=request.size_limit,
                 time_limit=request.time_limit,
             )
-            success: bool = FlextLdapUtils.Ldap3.safe_ldap3_search_result(search_result)
+            success: bool = (
+                FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_search_result(
+                    search_result
+                )
+            )
 
             if not success:
-                error_message: str = FlextLdapUtils.Ldap3.safe_ldap3_connection_result(
-                    connection_obj
+                error_message: str = (
+                    FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_connection_result(
+                        cast("Connection", connection_obj)
+                    )
                 )
-                return FlextResult[FlextLdapSearchResponse].fail(
+                return FlextResult[FlextLDAPSearchResponse].fail(
                     f"Search failed: {error_message}"
                 )
 
             # Convert entries to our format using utilities
             entries: list[LdapSearchResult] = []
             connection_entries: list[dict[str, object]] = (
-                FlextLdapUtils.Ldap3.safe_ldap3_entries_list(self._connection)
+                FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_entries_list(
+                    self._connection
+                )
             )
 
             for entry in connection_entries:
-                entry_dn: str = FlextLdapUtils.Ldap3.safe_ldap3_entry_dn(entry)
+                entry_dn: str = (
+                    FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_entry_dn(entry)
+                )
                 entry_data: LdapSearchResult = {"dn": entry_dn}
 
                 entry_attributes: list[str] = (
-                    FlextLdapUtils.Ldap3.safe_ldap3_entry_attributes_list(entry)
+                    FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_entry_attributes_list(
+                        entry
+                    )
                 )
                 for attr_name in entry_attributes:
                     attr_values: list[str] = (
-                        FlextLdapUtils.Ldap3.safe_ldap3_attribute_values(
+                        FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_attribute_values(
                             entry, attr_name
                         )
                     )
@@ -310,7 +331,7 @@ class FlextLdapClient:
                         entry_data[attr_name] = attr_values
                 entries.append(entry_data)
 
-            response = FlextLdapSearchResponse(
+            response = FlextLDAPSearchResponse(
                 entries=entries,
                 total_count=len(entries),
                 has_more=len(entries) >= request.size_limit,
@@ -325,14 +346,14 @@ class FlextLdapClient:
                 },
             )
 
-            return FlextResult[FlextLdapSearchResponse].ok(response)
+            return FlextResult[FlextLDAPSearchResponse].ok(response)
 
         except LDAPException as e:
             logger.exception("LDAP search failed", extra={"error": str(e)})
-            return FlextResult[FlextLdapSearchResponse].fail(f"Search failed: {e}")
+            return FlextResult[FlextLDAPSearchResponse].fail(f"Search failed: {e}")
         except Exception as e:
             logger.exception("Unexpected search error", extra={"error": str(e)})
-            return FlextResult[FlextLdapSearchResponse].fail(f"Search error: {e}")
+            return FlextResult[FlextLDAPSearchResponse].fail(f"Search error: {e}")
 
     # =========================================================================
     # CRUD OPERATIONS - Consolidated Create, Update, Delete operations
@@ -353,7 +374,13 @@ class FlextLdapClient:
             return FlextResult[None].fail("Not connected to LDAP server")
 
         try:
-            success = self._connection.add(dn, attributes=attributes)  # type: ignore[no-untyped-call]
+            # Convert attributes to ldap3-compatible format
+            ldap3_attributes = dict(attributes)
+            # Safe method call using getattr for untyped ldap3
+            add_method = getattr(
+                self._connection, "add", lambda *_args, **_kwargs: False
+            )
+            success = add_method(dn, attributes=ldap3_attributes)
             if not success:
                 return FlextResult[None].fail(f"Add failed: {self._connection.result}")
 
@@ -387,7 +414,13 @@ class FlextLdapClient:
             for attr_name, attr_value in attributes.items():
                 changes[attr_name] = [(ldap3.MODIFY_REPLACE, attr_value)]
 
-            success = self._connection.modify(dn, changes)  # type: ignore[no-untyped-call]
+            # Convert changes to ldap3-compatible format
+            ldap3_changes = dict(changes)
+            # Safe method call using getattr for untyped ldap3
+            modify_method = getattr(
+                self._connection, "modify", lambda *_args, **_kwargs: False
+            )
+            success = modify_method(dn, ldap3_changes)
             if not success:
                 return FlextResult[None].fail(
                     f"Modify failed: {self._connection.result}",
@@ -420,7 +453,11 @@ class FlextLdapClient:
             return FlextResult[None].fail("Not connected to LDAP server")
 
         try:
-            success = self._connection.delete(dn)  # type: ignore[no-untyped-call]
+            # Safe method call using getattr for untyped ldap3
+            delete_method = getattr(
+                self._connection, "delete", lambda *_args, **_kwargs: False
+            )
+            success = delete_method(dn)
             if not success:
                 return FlextResult[None].fail(
                     f"Delete failed: {self._connection.result}",
@@ -449,30 +486,30 @@ class FlextLdapClient:
         @staticmethod
         async def establish(
             uri: str, bind_dn: str, password: str
-        ) -> FlextResult[FlextLdapClient]:
+        ) -> FlextResult[FlextLDAPClient]:
             """Establish connection using default client instance.
 
             Returns:
                 FlextResult containing connected client or error
 
             """
-            client = FlextLdapClient()
+            client = FlextLDAPClient()
             result = await client.connect(uri, bind_dn, password)
             if result.is_success:
-                return FlextResult[FlextLdapClient].ok(client)
-            return FlextResult[FlextLdapClient].fail(
+                return FlextResult[FlextLDAPClient].ok(client)
+            return FlextResult[FlextLDAPClient].fail(
                 result.error or "Connection failed"
             )
 
         @staticmethod
         async def bind(
-            client: FlextLdapClient, dn: str, password: str
+            client: FlextLDAPClient, dn: str, password: str
         ) -> FlextResult[None]:
             """Bind using existing client instance."""
             return await client.bind(dn, password)
 
         @staticmethod
-        async def unbind(client: FlextLdapClient) -> FlextResult[None]:
+        async def unbind(client: FlextLDAPClient) -> FlextResult[None]:
             """Unbind using existing client instance."""
             return await client.unbind()
 
@@ -481,8 +518,8 @@ class FlextLdapClient:
 
         @staticmethod
         async def execute(
-            client: FlextLdapClient, request: FlextLdapSearchRequest
-        ) -> FlextResult[FlextLdapSearchResponse]:
+            client: FlextLDAPClient, request: FlextLDAPSearchRequest
+        ) -> FlextResult[FlextLDAPSearchResponse]:
             """Execute search using client instance."""
             return await client.search(request)
 
@@ -491,20 +528,20 @@ class FlextLdapClient:
 
         @staticmethod
         async def add(
-            client: FlextLdapClient, dn: str, attributes: LdapAttributeDict
+            client: FlextLDAPClient, dn: str, attributes: LdapAttributeDict
         ) -> FlextResult[None]:
             """Add entry using client instance."""
             return await client.add(dn, attributes)
 
         @staticmethod
         async def modify(
-            client: FlextLdapClient, dn: str, attributes: LdapAttributeDict
+            client: FlextLDAPClient, dn: str, attributes: LdapAttributeDict
         ) -> FlextResult[None]:
             """Modify entry using client instance."""
             return await client.modify(dn, attributes)
 
         @staticmethod
-        async def delete(client: FlextLdapClient, dn: str) -> FlextResult[None]:
+        async def delete(client: FlextLDAPClient, dn: str) -> FlextResult[None]:
             """Delete entry using client instance."""
             return await client.delete(dn)
 
@@ -512,7 +549,9 @@ class FlextLdapClient:
         """Cleanup on destruction with safe exception handling."""
         if self._connection and self._connection.bound:
             with contextlib.suppress(Exception):
-                self._connection.unbind()  # type: ignore[no-untyped-call]
+                # Safe method call in cleanup context
+                unbind_method = getattr(self._connection, "unbind", lambda: None)
+                unbind_method()
 
 
 # =============================================================================
@@ -521,6 +560,6 @@ class FlextLdapClient:
 
 __all__ = [
     "SCOPE_MAP",
-    "FlextLdapClient",
+    "FlextLDAPClient",
     "LdapScope",
 ]

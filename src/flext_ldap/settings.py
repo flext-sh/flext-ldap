@@ -5,18 +5,18 @@ Project-specific operational settings for FLEXT-LDAP.
 
 import json
 from pathlib import Path
-from typing import final, override
+from typing import TYPE_CHECKING, final, override
 
 from flext_core import FlextConfig, FlextLogger, FlextResult
 from pydantic import ConfigDict, Field, SecretStr
 
-from flext_ldap.connection_config import FlextLdapConnectionConfig
-from flext_ldap.fields import FlextLdapScopeEnum
+from flext_ldap.connection_config import FlextLDAPConnectionConfig
+from flext_ldap.fields import FlextLDAPScopeEnum
 
 
 # TEMPORARY: Inline dependencies to avoid circular imports - will be extracted
 @final
-class FlextLdapAuthConfig(FlextConfig):
+class FlextLDAPAuthConfig(FlextConfig):
     """LDAP authentication configuration."""
 
     model_config = ConfigDict(
@@ -56,7 +56,7 @@ class FlextLdapAuthConfig(FlextConfig):
 
 
 @final
-class FlextLdapSearchConfig(FlextConfig):
+class FlextLDAPSearchConfig(FlextConfig):
     """LDAP search operation configuration."""
 
     model_config = ConfigDict(
@@ -64,8 +64,8 @@ class FlextLdapSearchConfig(FlextConfig):
         validate_assignment=True,
     )
 
-    default_scope: FlextLdapScopeEnum = Field(
-        default=FlextLdapScopeEnum.SUBTREE,
+    default_scope: FlextLDAPScopeEnum = Field(
+        default=FlextLDAPScopeEnum.SUBTREE,
         description="Default search scope",
     )
     size_limit: int = Field(
@@ -103,7 +103,7 @@ class FlextLdapSearchConfig(FlextConfig):
 
 
 @final
-class FlextLdapLoggingConfig(FlextConfig):
+class FlextLDAPLoggingConfig(FlextConfig):
     """LDAP logging configuration."""
 
     model_config = ConfigDict(
@@ -134,16 +134,23 @@ class FlextLdapLoggingConfig(FlextConfig):
         return FlextResult[None].ok(None)
 
 
+if TYPE_CHECKING:
+    import yaml as yaml_module_type
+else:
+    yaml_module_type = None
+
 try:
     import yaml
+
+    yaml_module: object | None = yaml
 except ImportError:
-    yaml = None  # type: ignore[assignment]
+    yaml_module = None
 
 logger = FlextLogger(__name__)
 
 
 @final
-class FlextLdapSettings(FlextConfig):
+class FlextLDAPSettings(FlextConfig):
     """Project-specific operational settings for FLEXT-LDAP."""
 
     model_config = ConfigDict(
@@ -154,27 +161,27 @@ class FlextLdapSettings(FlextConfig):
     )
 
     # Primary connection configuration
-    default_connection: FlextLdapConnectionConfig | None = Field(
+    default_connection: FlextLDAPConnectionConfig | None = Field(
         default=None,
         description="Default connection configuration",
         alias="connection",
     )
 
     # Authentication configuration
-    auth: FlextLdapAuthConfig | None = Field(
+    auth: FlextLDAPAuthConfig | None = Field(
         default=None,
         description="Authentication configuration",
     )
 
     # Search configuration
-    search: FlextLdapSearchConfig = Field(
-        default_factory=FlextLdapSearchConfig,
+    search: FlextLDAPSearchConfig = Field(
+        default_factory=FlextLDAPSearchConfig,
         description="Search operation configuration",
     )
 
     # Logging configuration
-    logging: FlextLdapLoggingConfig = Field(
-        default_factory=FlextLdapLoggingConfig,
+    logging: FlextLDAPLoggingConfig = Field(
+        default_factory=FlextLDAPLoggingConfig,
         description="Logging configuration",
     )
 
@@ -232,8 +239,8 @@ class FlextLdapSettings(FlextConfig):
 
     def get_effective_connection(
         self,
-        override: FlextLdapConnectionConfig | None = None,
-    ) -> FlextLdapConnectionConfig:
+        override: FlextLDAPConnectionConfig | None = None,
+    ) -> FlextLDAPConnectionConfig:
         """Get effective connection configuration with optional override."""
         if override:
             return override
@@ -242,21 +249,21 @@ class FlextLdapSettings(FlextConfig):
             return self.default_connection
 
         # Return minimal default configuration
-        return FlextLdapConnectionConfig()
+        return FlextLDAPConnectionConfig()
 
-    def get_effective_auth_config(self) -> FlextLdapAuthConfig | None:
+    def get_effective_auth_config(self) -> FlextLDAPAuthConfig | None:
         """Get effective authentication configuration."""
         # Return the auth config from settings, not from connection
         return self.auth
 
     # Testing convenience: expose `.connection` attribute used by some callers/tests
     @property
-    def connection(self) -> FlextLdapConnectionConfig | None:
+    def connection(self) -> FlextLDAPConnectionConfig | None:
         """Get connection configuration."""
         return self.default_connection
 
     @connection.setter
-    def connection(self, value: FlextLdapConnectionConfig | None) -> None:
+    def connection(self, value: FlextLDAPConnectionConfig | None) -> None:
         """Set connection configuration."""
         self.default_connection = value
 
@@ -266,8 +273,8 @@ class FlextLdapSettings(FlextConfig):
         return self.validate_business_rules()
 
     @classmethod
-    def from_env(cls) -> "FlextLdapSettings":
-        """Create FlextLdapSettings from environment variables.
+    def from_env(cls) -> "FlextLDAPSettings":
+        """Create FlextLDAPSettings from environment variables.
 
         Raises:
             ValueError: If required environment variables are missing.
@@ -316,14 +323,14 @@ class FlextLdapSettings(FlextConfig):
         use_ssl = use_ssl_result.value.lower() in {"true", "1", "yes", "on"}
 
         # Create auth config
-        auth_config = FlextLdapAuthConfig(
+        auth_config = FlextLDAPAuthConfig(
             bind_dn=bind_dn_result.value,
             bind_password=SecretStr(bind_password_result.value),
             use_ssl=use_ssl,
         )
 
         # Create connection config - only with valid fields
-        connection_config = FlextLdapConnectionConfig(
+        connection_config = FlextLDAPConnectionConfig(
             server=host_result.value,
             port=int(port_result.value),
         )
@@ -336,8 +343,8 @@ class FlextLdapSettings(FlextConfig):
         return cls.model_validate(config_data)
 
     @classmethod
-    def from_file(cls, file_path: str) -> "FlextLdapSettings":
-        """Create FlextLdapSettings from YAML/JSON file.
+    def from_file(cls, file_path: str) -> FlextResult["FlextLDAPSettings"]:
+        """Create FlextLDAPSettings from YAML/JSON file.
 
         Args:
             file_path: Path to configuration file
@@ -368,11 +375,16 @@ class FlextLdapSettings(FlextConfig):
                 config_dict = json.loads(content)
             except json.JSONDecodeError:
                 # Try to parse as YAML
-                if yaml is None:
-                    raise ValueError(yaml_import_error_msg) from None
+                if yaml_module is None:
+                    return FlextResult[FlextLDAPSettings].fail(yaml_import_error_msg)
                 try:
-                    config_dict = yaml.safe_load(content)
-                except yaml.YAMLError as e:
+                    safe_load_method = getattr(yaml_module, "safe_load", None)
+                    if safe_load_method is None:
+                        return FlextResult[FlextLDAPSettings].fail(
+                            "YAML module doesn't have safe_load method"
+                        )
+                    config_dict = safe_load_method(content)
+                except Exception as e:  # YAMLError if yaml is available
                     yaml_format_error_msg = (
                         f"Failed to parse configuration file: Invalid YAML format: {e}"
                     )
@@ -382,106 +394,108 @@ class FlextLdapSettings(FlextConfig):
                 raise
             raise ValueError(file_read_error_msg) from e
 
-        return cls.model_validate(config_dict)
+        try:
+            instance = cls.model_validate(config_dict)
+            return FlextResult[FlextLDAPSettings].ok(instance)
+        except Exception as e:
+            return FlextResult[FlextLDAPSettings].fail(
+                f"Failed to validate configuration: {e}"
+            )
 
+    @classmethod
+    def create_development(cls) -> "FlextLDAPSettings":
+        """Create development configuration."""
+        connection_config = FlextLDAPConnectionConfig(
+            server="ldap://localhost",
+            port=389,
+        )
 
-# Factory functions for different environments
-def create_development_config() -> FlextLdapSettings:
-    """Create development configuration."""
-    connection_config = FlextLdapConnectionConfig(
-        server="localhost",
-        port=389,
-    )
+        auth_config = FlextLDAPAuthConfig(
+            bind_dn="cn=admin,dc=dev,dc=local",
+            bind_password=SecretStr("admin123"),
+            use_ssl=False,
+            verify_certificates=False,
+        )
 
-    auth_config = FlextLdapAuthConfig(
-        bind_dn="cn=admin,dc=dev,dc=local",
-        bind_password=SecretStr("admin123"),
-        use_ssl=False,
-        verify_certificates=False,
-    )
+        # Use model_validate to avoid pyright false positives with alias fields
+        config_data: dict[str, object] = {
+            "default_connection": connection_config,
+            "auth": auth_config,
+            "logging": FlextLDAPLoggingConfig(
+                enable_debug=True,
+                log_queries=True,
+                structured_logging=True,
+            ),
+            "enable_debug_mode": True,
+            "enable_caching": False,
+        }
+        return cls.model_validate(config_data)
 
-    # Use model_validate to avoid pyright false positives with alias fields
-    config_data: dict[str, object] = {
-        "default_connection": connection_config,
-        "auth": auth_config,
-        "logging": FlextLdapLoggingConfig(
-            enable_debug=True,
-            log_queries=True,
-            structured_logging=True,
-        ),
-        "enable_debug_mode": True,
-        "enable_caching": False,
-    }
-    return FlextLdapSettings.model_validate(config_data)
+    @classmethod
+    def create_test(cls) -> "FlextLDAPSettings":
+        """Create test configuration."""
+        connection_config = FlextLDAPConnectionConfig(
+            server="ldap://localhost",
+            port=3389,
+        )
 
+        auth_config = FlextLDAPAuthConfig(
+            bind_dn="cn=admin,dc=test,dc=local",
+            bind_password=SecretStr("test123"),
+            use_ssl=False,
+            verify_certificates=False,
+        )
 
-def create_test_config() -> FlextLdapSettings:
-    """Create test configuration."""
-    connection_config = FlextLdapConnectionConfig(
-        server="localhost",
-        port=3389,
-    )
+        # Use model_validate to avoid pyright false positives with alias fields
+        config_data: dict[str, object] = {
+            "default_connection": connection_config,
+            "auth": auth_config,
+            "logging": FlextLDAPLoggingConfig(
+                enable_debug=False,
+                log_queries=False,
+                structured_logging=False,
+            ),
+            "enable_test_mode": True,
+            "enable_caching": False,
+        }
+        return cls.model_validate(config_data)
 
-    auth_config = FlextLdapAuthConfig(
-        bind_dn="cn=admin,dc=test,dc=local",
-        bind_password=SecretStr("test123"),
-        use_ssl=False,
-        verify_certificates=False,
-    )
+    @classmethod
+    def create_production(cls) -> "FlextLDAPSettings":
+        """Create production configuration."""
+        connection_config = FlextLDAPConnectionConfig(
+            server="ldaps://ldap.company.com",
+            port=636,
+            use_ssl=True,
+            verify_ssl=True,
+        )
 
-    # Use model_validate to avoid pyright false positives with alias fields
-    config_data: dict[str, object] = {
-        "default_connection": connection_config,
-        "auth": auth_config,
-        "logging": FlextLdapLoggingConfig(
-            enable_debug=False,
-            log_queries=False,
-            structured_logging=False,
-        ),
-        "enable_test_mode": True,
-        "enable_caching": False,
-    }
-    return FlextLdapSettings.model_validate(config_data)
+        auth_config = FlextLDAPAuthConfig(
+            bind_dn="cn=service,ou=accounts,dc=company,dc=com",
+            bind_password=SecretStr("${LDAP_BIND_PASSWORD}"),
+            use_ssl=True,
+            verify_certificates=True,
+        )
 
-
-def create_production_config() -> FlextLdapSettings:
-    """Create production configuration."""
-    connection_config = FlextLdapConnectionConfig(
-        server="ldap.company.com",
-        port=636,
-        use_ssl=True,
-        verify_ssl=True,
-    )
-
-    auth_config = FlextLdapAuthConfig(
-        bind_dn="cn=service,ou=accounts,dc=company,dc=com",
-        bind_password=SecretStr("${LDAP_BIND_PASSWORD}"),
-        use_ssl=True,
-        verify_certificates=True,
-    )
-
-    # Use model_validate to avoid pyright false positives with alias fields
-    config_data: dict[str, object] = {
-        "default_connection": connection_config,
-        "auth": auth_config,
-        "logging": FlextLdapLoggingConfig(
-            enable_debug=False,
-            log_queries=False,
-            structured_logging=True,
-        ),
-        "enable_debug_mode": False,
-        "enable_caching": True,
-        "cache_ttl": 600,
-    }
-    return FlextLdapSettings.model_validate(config_data)
+        # Use model_validate to avoid pyright false positives with alias fields
+        config_data: dict[str, object] = {
+            "default_connection": connection_config,
+            "auth": auth_config,
+            "logging": FlextLDAPLoggingConfig(
+                enable_debug=False,
+                log_queries=False,
+                structured_logging=True,
+            ),
+            "enable_debug_mode": False,
+            "enable_caching": True,
+            "cache_ttl": 600,
+        }
+        return cls.model_validate(config_data)
 
 
 __all__ = [
-    "FlextLdapAuthConfig",
-    "FlextLdapLoggingConfig",
-    "FlextLdapSearchConfig",
-    "FlextLdapSettings",
-    "create_development_config",
-    "create_production_config",
-    "create_test_config",
+    "FlextLDAPAuthConfig",
+    "FlextLDAPLoggingConfig",
+    "FlextLDAPSearchConfig",
+    "FlextLDAPSettings",
 ]

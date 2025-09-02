@@ -1,4 +1,4 @@
-"""LDAP Models - Single FlextLdapModels class following FLEXT patterns.
+"""LDAP Models - Single FlextLDAPModels class following FLEXT patterns.
 
 Single class inheriting from FlextModels with all LDAP models
 organized as internal classes and methods for complete backward compatibility.
@@ -6,23 +6,23 @@ organized as internal classes and methods for complete backward compatibility.
 Examples:
     Basic usage with hierarchical models::
 
-        from models import FlextLdapModels
+        from models import FlextLDAPModels
 
         # Configuration models
-        settings = FlextLdapModels.Configuration.Settings()
-        auth_config = FlextLdapModels.Configuration.AuthConfig()
+        settings = FlextLDAPModels.Configuration.Settings()
+        auth_config = FlextLDAPModels.Configuration.AuthConfig()
 
         # Domain models
-        user = FlextLdapModels.Domain.User()
-        entry = FlextLdapModels.Domain.Entry()
+        user = FlextLDAPModels.Domain.User()
+        entry = FlextLDAPModels.Domain.Entry()
 
     Legacy compatibility::
 
         # All previous models still work as direct imports
-        from models import FlextLdapUser, FlextLdapSettings
+        from models import FlextLDAPUser, FlextLDAPSettings
 
-        user = FlextLdapUser()
-        settings = FlextLdapSettings()
+        user = FlextLDAPUser()
+        settings = FlextLDAPSettings()
 
 """
 
@@ -31,32 +31,29 @@ from __future__ import annotations
 from flext_core import FlextModels
 
 from flext_ldap.configuration import (
-    FlextLdapAuthConfig,
-    FlextLdapConnectionConfig,
-    FlextLdapLoggingConfig,
-    FlextLdapSearchConfig,
-    FlextLdapSettings,
-    create_development_config,
-    create_production_config,
-    create_test_config,
+    FlextLDAPAuthConfig,
+    FlextLDAPConnectionConfig,
+    FlextLDAPLoggingConfig,
+    FlextLDAPSearchConfig,
+    FlextLDAPSettings,
 )
 from flext_ldap.constants import (
-    FlextLdapAttributeConstants,
-    FlextLdapConnectionConstants,
-    FlextLdapConstants,
-    FlextLdapProtocolConstants,
+    FlextLDAPAttributeConstants,
+    FlextLDAPConnectionConstants,
+    FlextLDAPConstants,
+    FlextLDAPProtocolConstants,
 )
 from flext_ldap.entities import (
-    FlextLdapCreateUserRequest,
-    FlextLdapEntry,
-    FlextLdapGroup,
-    FlextLdapSearchRequest,
-    FlextLdapSearchResponse,
-    FlextLdapUser,
+    FlextLDAPCreateUserRequest,
+    FlextLDAPEntry,
+    FlextLDAPGroup,
+    FlextLDAPSearchRequest,
+    FlextLDAPSearchResponse,
+    FlextLDAPUser,
 )
 from flext_ldap.fields import (
-    FlextLdapDataType,
-    FlextLdapScopeEnum,
+    FlextLDAPDataType,
+    FlextLDAPScopeEnum,
     LdapAttributeProcessor,
     LdapDomainValidator,
 )
@@ -66,9 +63,9 @@ from flext_ldap.typings import (
     LdapSearchResult,
 )
 from flext_ldap.value_objects import (
-    FlextLdapDistinguishedName,
-    FlextLdapFilter,
-    FlextLdapScope,
+    FlextLDAPDistinguishedName,
+    FlextLDAPFilter,
+    FlextLDAPScope,
 )
 
 # =============================================================================
@@ -76,8 +73,8 @@ from flext_ldap.value_objects import (
 # =============================================================================
 
 
-class FlextLdapModels(FlextModels):
-    """Single FlextLdapModels class inheriting from FlextModels.
+class FlextLDAPModels(FlextModels.AggregateRoot):
+    """Single FlextLDAPModels class inheriting from FlextModels.
 
     Consolidates ALL LDAP models into a single class following FLEXT patterns.
     Everything from the previous model definitions is now available as
@@ -93,19 +90,19 @@ class FlextLdapModels(FlextModels):
     Examples:
         Configuration models::
 
-            settings = FlextLdapModels.Configuration.Settings()
-            auth = FlextLdapModels.Configuration.AuthConfig()
+            settings = FlextLDAPModels.Configuration.Settings()
+            auth = FlextLDAPModels.Configuration.AuthConfig()
 
         Domain models::
 
-            user = FlextLdapModels.Domain.User()
-            group = FlextLdapModels.Domain.Group()
-            entry = FlextLdapModels.Domain.Entry()
+            user = FlextLDAPModels.Domain.User()
+            group = FlextLDAPModels.Domain.Group()
+            entry = FlextLDAPModels.Domain.Entry()
 
         Request/Response models::
 
-            search_req = FlextLdapModels.Request.SearchRequest()
-            search_resp = FlextLdapModels.Response.SearchResponse()
+            search_req = FlextLDAPModels.Request.SearchRequest()
+            search_resp = FlextLDAPModels.Response.SearchResponse()
 
     """
 
@@ -117,44 +114,44 @@ class FlextLdapModels(FlextModels):
         """LDAP configuration models extending FlextModels."""
 
         # Configuration model aliases
-        Settings = FlextLdapSettings
-        AuthConfig = FlextLdapAuthConfig
-        ConnectionConfig = FlextLdapConnectionConfig
-        LoggingConfig = FlextLdapLoggingConfig
-        SearchConfig = FlextLdapSearchConfig
+        Settings = FlextLDAPSettings
+        AuthConfig = FlextLDAPAuthConfig
+        ConnectionConfig = FlextLDAPConnectionConfig
+        LoggingConfig = FlextLDAPLoggingConfig
+        SearchConfig = FlextLDAPSearchConfig
 
         # Factory methods
         @staticmethod
-        def create_development() -> FlextLdapSettings:
+        def create_development() -> FlextLDAPSettings:
             """Create development configuration."""
-            return create_development_config()
+            return FlextLDAPSettings.create_development()
 
         @staticmethod
-        def create_production() -> FlextLdapSettings:
+        def create_production() -> FlextLDAPSettings:
             """Create production configuration."""
-            return create_production_config()
+            return FlextLDAPSettings.create_production()
 
         @staticmethod
-        def create_test() -> FlextLdapSettings:
+        def create_test() -> FlextLDAPSettings:
             """Create test configuration."""
-            return create_test_config()
+            return FlextLDAPSettings.create_test()
 
     # =========================================================================
     # DOMAIN MODELS - LDAP Domain Entities
     # =========================================================================
 
     class Domain:
-        """LDAP domain models extending FlextModels.Entity."""
+        """LDAP domain models extending FlextModels."""
 
         # Domain entity aliases
-        User = FlextLdapUser
-        Group = FlextLdapGroup
-        Entry = FlextLdapEntry
+        User = FlextLDAPUser
+        Group = FlextLDAPGroup
+        Entry = FlextLDAPEntry
 
         # Value object aliases
-        DistinguishedName = FlextLdapDistinguishedName
-        Filter = FlextLdapFilter
-        Scope = FlextLdapScope
+        DistinguishedName = FlextLDAPDistinguishedName
+        Filter = FlextLDAPFilter
+        Scope = FlextLDAPScope
 
     # =========================================================================
     # REQUEST MODELS - LDAP Operation Requests
@@ -164,8 +161,8 @@ class FlextLdapModels(FlextModels):
         """LDAP request models for operations."""
 
         # Request model aliases
-        SearchRequest = FlextLdapSearchRequest
-        CreateUserRequest = FlextLdapCreateUserRequest
+        SearchRequest = FlextLDAPSearchRequest
+        CreateUserRequest = FlextLDAPCreateUserRequest
 
     # =========================================================================
     # RESPONSE MODELS - LDAP Operation Responses
@@ -175,7 +172,7 @@ class FlextLdapModels(FlextModels):
         """LDAP response models for operations."""
 
         # Response model aliases
-        SearchResponse = FlextLdapSearchResponse
+        SearchResponse = FlextLDAPSearchResponse
 
     # =========================================================================
     # FIELD MODELS - LDAP Field Definitions and Processors
@@ -185,8 +182,8 @@ class FlextLdapModels(FlextModels):
         """LDAP field definitions and processors."""
 
         # Field definition aliases
-        DataType = FlextLdapDataType
-        ScopeEnum = FlextLdapScopeEnum
+        DataType = FlextLDAPDataType
+        ScopeEnum = FlextLDAPScopeEnum
 
         # Processor aliases
         AttributeProcessor = LdapAttributeProcessor
@@ -212,10 +209,10 @@ class FlextLdapModels(FlextModels):
         """LDAP constants access."""
 
         # Constants aliases
-        All = FlextLdapConstants
-        Protocol = FlextLdapProtocolConstants
-        Connection = FlextLdapConnectionConstants
-        Attribute = FlextLdapAttributeConstants
+        All = FlextLDAPConstants
+        Protocol = FlextLDAPProtocolConstants
+        Connection = FlextLDAPConnectionConstants
+        Attribute = FlextLDAPAttributeConstants
 
 
 # =============================================================================
@@ -226,8 +223,8 @@ class FlextLdapModels(FlextModels):
 # self-assignments as ruff correctly identifies them as redundant
 
 # Entity status alias - backward compatibility
-FlextLdapEntityStatus = getattr(FlextModels.Entity, "status", None)
-LDAPScope = FlextLdapScopeEnum
+FlextLDAPEntityStatus = getattr(FlextModels, "status", None)
+LDAPScope = FlextLDAPScopeEnum
 
 
 # =============================================================================
@@ -236,32 +233,32 @@ LDAPScope = FlextLdapScopeEnum
 
 __all__ = [
     # Constants
-    "FlextLdapAttributeConstants",
+    "FlextLDAPAttributeConstants",
     # Configuration models
-    "FlextLdapAuthConfig",
-    "FlextLdapConnectionConfig",
-    "FlextLdapConnectionConstants",
-    "FlextLdapConstants",
+    "FlextLDAPAuthConfig",
+    "FlextLDAPConnectionConfig",
+    "FlextLDAPConnectionConstants",
+    "FlextLDAPConstants",
     # Domain models
-    "FlextLdapCreateUserRequest",
+    "FlextLDAPCreateUserRequest",
     # Field models
-    "FlextLdapDataType",
-    "FlextLdapDistinguishedName",
-    "FlextLdapEntityStatus",
-    "FlextLdapEntry",
-    "FlextLdapFilter",
-    "FlextLdapGroup",
-    "FlextLdapLoggingConfig",
+    "FlextLDAPDataType",
+    "FlextLDAPDistinguishedName",
+    "FlextLDAPEntityStatus",
+    "FlextLDAPEntry",
+    "FlextLDAPFilter",
+    "FlextLDAPGroup",
+    "FlextLDAPLoggingConfig",
     # Main class
-    "FlextLdapModels",
-    "FlextLdapProtocolConstants",
-    "FlextLdapScope",
-    "FlextLdapScopeEnum",
-    "FlextLdapSearchConfig",
-    "FlextLdapSearchRequest",
-    "FlextLdapSearchResponse",
-    "FlextLdapSettings",
-    "FlextLdapUser",
+    "FlextLDAPModels",
+    "FlextLDAPProtocolConstants",
+    "FlextLDAPScope",
+    "FlextLDAPScopeEnum",
+    "FlextLDAPSearchConfig",
+    "FlextLDAPSearchRequest",
+    "FlextLDAPSearchResponse",
+    "FlextLDAPSettings",
+    "FlextLDAPUser",
     # Legacy aliases
     "LDAPScope",
     # Type models
@@ -271,7 +268,4 @@ __all__ = [
     "LdapDomainValidator",
     "LdapSearchResult",
     # Factory functions
-    "create_development_config",
-    "create_production_config",
-    "create_test_config",
 ]

@@ -2,94 +2,87 @@
 
 import importlib.metadata
 
-from .api import FlextLdapApi, get_ldap_api, create_ldap_api
-from .value_objects import FlextLdapScope
+from .api import FlextLDAPApi
+from .value_objects import FlextLDAPScope
 from .constants import (
-    FlextLdapProtocolConstants,
-    FlextLdapConnectionConstants,
-    FlextLdapAttributeConstants,
-    FlextLdapConstants,
-    FlextLdapValidationMessages,
-    FlextLdapOperationMessages,
-    FlextLdapValidationConstants,
-    FlextLdapObjectClassConstants,
-    FlextLdapScopeConstants,
+    FlextLDAPProtocolConstants,
+    FlextLDAPConnectionConstants,
+    FlextLDAPAttributeConstants,
+    FlextLDAPConstants,
+    FlextLDAPValidationMessages,
+    FlextLDAPOperationMessages,
+    FlextLDAPValidationConstants,
+    FlextLDAPObjectClassConstants,
+    FlextLDAPScopeConstants,
 )
-from .connection_config import FlextLdapConnectionConfig
+from .connection_config import FlextLDAPConnectionConfig
 
 # Import from new configuration modules
 from .configuration import (
-    FlextLdapAuthConfig,
-    FlextLdapLoggingConfig,
-    FlextLdapSearchConfig,
+    FlextLDAPAuthConfig,
+    FlextLDAPLoggingConfig,
+    FlextLDAPSearchConfig,
 )
 from .settings import (
-    FlextLdapSettings,
-    create_development_config,
-    create_production_config,
-    create_test_config,
+    FlextLDAPSettings,
 )
 
 # Import field definitions
-from .fields import FlextLdapScopeEnum
+from .fields import FlextLDAPScopeEnum
 
 # Import from reorganized modules
 from .entities import (
-    FlextLdapCreateUserRequest,
-    FlextLdapEntry,
-    FlextLdapGroup,
-    FlextLdapUser,
-    FlextLdapSearchRequest,
-    FlextLdapSearchResponse,
+    FlextLDAPCreateUserRequest,
+    FlextLDAPEntry,
+    FlextLDAPGroup,
+    FlextLDAPUser,
+    FlextLDAPSearchRequest,
+    FlextLDAPSearchResponse,
 )
 from .value_objects import (
-    FlextLdapDistinguishedName,
-    FlextLdapFilter,
+    FlextLDAPDistinguishedName,
+    FlextLDAPFilter,
 )
 
-from .services import FlextLdapService
+from .services import FlextLDAPService
 
-from .clients import FlextLdapClient
+from .clients import FlextLDAPClient
 
-from .container import get_ldap_container, reset_ldap_container
+from .container import FlextLDAPContainer
 
 # Import missing exports that tests need
 from .clients import SCOPE_MAP
 from .domain import (
-    FlextLdapEntityParameterBuilder,
-    FlextLdapActiveUserSpecification,
-    FlextLdapCompleteUserSpecification,
-    FlextLdapDistinguishedNameSpecification,
-    FlextLdapDomainFactory,
-    FlextLdapDomainSpecification,
-    FlextLdapEmailSpecification,
-    FlextLdapGroupManagementService,
-    FlextLdapGroupSpecification,
-    FlextLdapPasswordService,
-    FlextLdapPasswordSpecification,
-    FlextLdapUserManagementService,
-    FlextLdapUserSpecification,
-    FlextLdapGroupEntityBuilder,
-    FlextLdapUserEntityBuilder,
+    FlextLDAPEntityParameterBuilder,
+    FlextLDAPActiveUserSpecification,
+    FlextLDAPCompleteUserSpecification,
+    FlextLDAPDistinguishedNameSpecification,
+    FlextLDAPDomainFactory,
+    FlextLDAPDomainSpecification,
+    FlextLDAPEmailSpecification,
+    FlextLDAPGroupManagementService,
+    FlextLDAPGroupSpecification,
+    FlextLDAPPasswordService,
+    FlextLDAPPasswordSpecification,
+    FlextLDAPUserManagementService,
+    FlextLDAPUserSpecification,
+    FlextLDAPGroupEntityBuilder,
+    FlextLDAPUserEntityBuilder,
 )
 
 from .exceptions import (
-    FlextLdapError,
-    FlextLdapExceptionFactory,
-    FlextLdapUserError,
-    FlextLdapConfigurationError,
-    FlextLdapConnectionError,
+    FlextLDAPError,
+    FlextLDAPExceptionFactory,
+    FlextLDAPUserError,
+    FlextLDAPConfigurationError,
+    FlextLDAPConnectionError,
 )
 
-from .utils import (
-    flext_ldap_validate_dn,
-    flext_ldap_validate_attribute_name,
-    flext_ldap_validate_attribute_value,
-    flext_ldap_sanitize_attribute_name,
-)
+from .utilities import FlextLDAPUtilities
 from .typings import LdapAttributeDict
+from .type_guards import FlextLDAPTypeGuards
 
-from .configuration import FlextLdapAuthConfig as FlextLdapConfig
+from .configuration import FlextLDAPAuthConfig as FlextLDAPConfig
 
 # Version info
 try:
@@ -102,76 +95,68 @@ __version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
 # Public API
 __all__: list[str] = [
     # Core API
-    "FlextLdapApi",
-    "get_ldap_api",
-    "create_ldap_api",
+    "FlextLDAPApi",
     # Configuration
-    "FlextLdapConnectionConfig",
-    "FlextLdapSettings",
-    "FlextLdapAuthConfig",
-    "FlextLdapConfig",
+    "FlextLDAPConnectionConfig",
+    "FlextLDAPSettings",
+    "FlextLDAPAuthConfig",
+    "FlextLDAPConfig",
     # Domain Models
-    "FlextLdapEntry",
-    "FlextLdapUser",
-    "FlextLdapGroup",
-    "FlextLdapCreateUserRequest",
-    "FlextLdapSearchRequest",
-    "FlextLdapSearchResponse",
-    "FlextLdapDistinguishedName",
-    "FlextLdapScope",
+    "FlextLDAPEntry",
+    "FlextLDAPUser",
+    "FlextLDAPGroup",
+    "FlextLDAPCreateUserRequest",
+    "FlextLDAPSearchRequest",
+    "FlextLDAPSearchResponse",
+    "FlextLDAPDistinguishedName",
+    "FlextLDAPScope",
     # Constants (selective export)
-    "FlextLdapProtocolConstants",
-    "FlextLdapConnectionConstants",
-    "FlextLdapAttributeConstants",
-    "FlextLdapObjectClassConstants",
-    "FlextLdapConstants",
-    "FlextLdapValidationMessages",
-    "FlextLdapOperationMessages",
-    "FlextLdapValidationConstants",
-    "FlextLdapObjectClassConstants",
-    "FlextLdapScopeConstants",
-    "FlextLdapScopeEnum",
-    "FlextLdapLoggingConfig",
-    "FlextLdapSearchConfig",
-    "create_development_config",
-    "create_production_config",
-    "create_test_config",
-    "FlextLdapFilter",
+    "FlextLDAPProtocolConstants",
+    "FlextLDAPConnectionConstants",
+    "FlextLDAPAttributeConstants",
+    "FlextLDAPObjectClassConstants",
+    "FlextLDAPConstants",
+    "FlextLDAPValidationMessages",
+    "FlextLDAPOperationMessages",
+    "FlextLDAPValidationConstants",
+    "FlextLDAPObjectClassConstants",
+    "FlextLDAPScopeConstants",
+    "FlextLDAPScopeEnum",
+    "FlextLDAPLoggingConfig",
+    "FlextLDAPSearchConfig",
+    "FlextLDAPFilter",
     # Services
-    "FlextLdapService",
+    "FlextLDAPService",
     # Infrastructure
-    "FlextLdapClient",
-    # Container functions
-    "get_ldap_container",
-    "reset_ldap_container",
+    "FlextLDAPClient",
+    # Container
+    "FlextLDAPContainer",
     # Exceptions
-    "FlextLdapError",
-    "FlextLdapExceptionFactory",
-    "FlextLdapUserError",
-    "FlextLdapConfigurationError",
-    "FlextLdapConnectionError",
-    # Missing exports that tests need
+    "FlextLDAPError",
+    "FlextLDAPExceptionFactory",
+    "FlextLDAPUserError",
+    "FlextLDAPConfigurationError",
+    "FlextLDAPConnectionError",
+    # Exports that tests need
     "SCOPE_MAP",
-    "FlextLdapEntityParameterBuilder",
-    "FlextLdapActiveUserSpecification",
-    "FlextLdapCompleteUserSpecification",
-    "FlextLdapDistinguishedNameSpecification",
-    "FlextLdapDomainFactory",
-    "FlextLdapDomainSpecification",
-    "FlextLdapEmailSpecification",
-    "FlextLdapGroupManagementService",
-    "FlextLdapGroupSpecification",
-    "FlextLdapPasswordService",
-    "FlextLdapPasswordSpecification",
-    "FlextLdapUserManagementService",
-    "FlextLdapUserSpecification",
-    "FlextLdapGroupEntityBuilder",
-    "FlextLdapUserEntityBuilder",
-    # Utilities
-    "flext_ldap_validate_dn",
-    "flext_ldap_validate_attribute_name",
-    "flext_ldap_validate_attribute_value",
-    "flext_ldap_sanitize_attribute_name",
+    "FlextLDAPEntityParameterBuilder",
+    "FlextLDAPActiveUserSpecification",
+    "FlextLDAPCompleteUserSpecification",
+    "FlextLDAPDistinguishedNameSpecification",
+    "FlextLDAPDomainFactory",
+    "FlextLDAPDomainSpecification",
+    "FlextLDAPEmailSpecification",
+    "FlextLDAPGroupManagementService",
+    "FlextLDAPGroupSpecification",
+    "FlextLDAPPasswordService",
+    "FlextLDAPPasswordSpecification",
+    "FlextLDAPUserManagementService",
+    "FlextLDAPUserSpecification",
+    "FlextLDAPGroupEntityBuilder",
+    "FlextLDAPUserEntityBuilder",
+    # Utilities and Type Guards
+    "FlextLDAPUtilities",
+    "FlextLDAPTypeGuards",
     "LdapAttributeDict",
     # Metadata
     "__version__",
@@ -179,4 +164,4 @@ __all__: list[str] = [
 ]
 
 # Testing convenience exposed scope
-# FlextLdapScope is imported directly from value_objects.py above
+# FlextLDAPScope is imported directly from value_objects.py above

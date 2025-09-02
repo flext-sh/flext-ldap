@@ -8,37 +8,37 @@ from __future__ import annotations
 
 from typing import Never
 
-from flext_core import FlextEntityStatus, FlextModels
+from flext_core import FlextConstants
 
 from flext_ldap.domain import (
-    FlextLdapActiveUserSpecification,
-    FlextLdapDistinguishedNameSpecification,
-    FlextLdapEmailSpecification,
-    FlextLdapGroupManagementService,
-    FlextLdapGroupSpecification,
-    FlextLdapPasswordService,
-    FlextLdapPasswordSpecification,
-    FlextLdapUserManagementService,
-    FlextLdapUserSpecification,
+    FlextLDAPActiveUserSpecification,
+    FlextLDAPDistinguishedNameSpecification,
+    FlextLDAPEmailSpecification,
+    FlextLDAPGroupManagementService,
+    FlextLDAPGroupSpecification,
+    FlextLDAPPasswordService,
+    FlextLDAPPasswordSpecification,
+    FlextLDAPUserManagementService,
+    FlextLDAPUserSpecification,
 )
-from flext_ldap.models import FlextLdapGroup, FlextLdapUser
+from flext_ldap.models import FlextLDAPGroup, FlextLDAPUser
 
 
-class TestFlextLdapUserSpecificationRealValidation:
-    """Test FlextLdapUserSpecification with REAL validation logic execution."""
+class TestFlextLDAPUserSpecificationRealValidation:
+    """Test FlextLDAPUserSpecification with REAL validation logic execution."""
 
     def test_user_specification_validates_valid_user_real(self) -> None:
         """Test user specification validates valid user - executes REAL validation."""
-        spec = FlextLdapUserSpecification()
+        spec = FlextLDAPUserSpecification()
 
-        valid_user = FlextLdapUser(
-            id=FlextModels.EntityId("test-user"),
+        valid_user = FlextLDAPUser(
+            id="test-user",
             dn="cn=validuser,ou=users,dc=example,dc=com",
             cn="Valid User",
             sn="User",
             uid="valid.user",
             object_classes=["person", "top", "inetOrgPerson"],
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
         # Execute REAL validation logic
@@ -47,17 +47,17 @@ class TestFlextLdapUserSpecificationRealValidation:
 
     def test_user_specification_rejects_invalid_user_real(self) -> None:
         """Test user specification rejects invalid user - executes REAL validation."""
-        spec = FlextLdapUserSpecification()
+        spec = FlextLDAPUserSpecification()
 
         # User missing required object classes
-        invalid_user = FlextLdapUser(
-            id=FlextModels.EntityId("test-user"),
+        invalid_user = FlextLDAPUser(
+            id="test-user",
             dn="cn=invaliduser,ou=users,dc=example,dc=com",
             cn="Invalid User",
             sn="User",
             uid="invalid.user",
             object_classes=["customClass"],  # Missing person, top
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
         # Execute REAL validation logic
@@ -66,7 +66,7 @@ class TestFlextLdapUserSpecificationRealValidation:
 
     def test_user_specification_rejects_missing_attributes_real(self) -> None:
         """Test user specification rejects users with missing attributes."""
-        spec = FlextLdapUserSpecification()
+        spec = FlextLDAPUserSpecification()
 
         # Test object without required attributes
         invalid_object = object()
@@ -75,7 +75,7 @@ class TestFlextLdapUserSpecificationRealValidation:
 
     def test_user_specification_validation_error_messages_real(self) -> None:
         """Test user specification provides detailed error messages."""
-        spec = FlextLdapUserSpecification()
+        spec = FlextLDAPUserSpecification()
 
         # Test error message for object without uid
         class MockObjectNoUID:
@@ -92,19 +92,19 @@ class TestFlextLdapUserSpecificationRealValidation:
         assert "must have a valid DN" in error_msg
 
 
-class TestFlextLdapGroupSpecificationRealValidation:
-    """Test FlextLdapGroupSpecification with REAL validation logic execution."""
+class TestFlextLDAPGroupSpecificationRealValidation:
+    """Test FlextLDAPGroupSpecification with REAL validation logic execution."""
 
     def test_group_specification_validates_valid_group_real(self) -> None:
         """Test group specification validates valid group - executes REAL validation."""
-        spec = FlextLdapGroupSpecification()
+        spec = FlextLDAPGroupSpecification()
 
-        valid_group = FlextLdapGroup(
-            id=FlextModels.EntityId("test-group"),
+        valid_group = FlextLDAPGroup(
+            id="test-group",
             dn="cn=validgroup,ou=groups,dc=example,dc=com",
             cn="Valid Group",
             object_classes=["groupOfNames", "top"],
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
         # Execute REAL validation logic
@@ -113,15 +113,15 @@ class TestFlextLdapGroupSpecificationRealValidation:
 
     def test_group_specification_rejects_invalid_group_real(self) -> None:
         """Test group specification rejects invalid group - executes REAL validation."""
-        spec = FlextLdapGroupSpecification()
+        spec = FlextLDAPGroupSpecification()
 
         # Group missing required object classes
-        invalid_group = FlextLdapGroup(
-            id=FlextModels.EntityId("test-group"),
+        invalid_group = FlextLDAPGroup(
+            id="test-group",
             dn="cn=invalidgroup,ou=groups,dc=example,dc=com",
             cn="Invalid Group",
             object_classes=["customClass"],  # Missing groupOfNames, top
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
         # Execute REAL validation logic
@@ -130,7 +130,7 @@ class TestFlextLdapGroupSpecificationRealValidation:
 
     def test_group_specification_validation_error_messages_real(self) -> None:
         """Test group specification provides detailed error messages."""
-        spec = FlextLdapGroupSpecification()
+        spec = FlextLDAPGroupSpecification()
 
         # Test error message for object without cn
         class MockObjectNoCN:
@@ -140,12 +140,12 @@ class TestFlextLdapGroupSpecificationRealValidation:
         assert "must have a Common Name" in error_msg
 
 
-class TestFlextLdapDistinguishedNameSpecificationRealValidation:
+class TestFlextLDAPDistinguishedNameSpecificationRealValidation:
     """Test DN specification with REAL regex validation execution."""
 
     def test_dn_specification_validates_valid_dns_real(self) -> None:
         """Test DN specification validates valid DNs - executes REAL regex matching."""
-        spec = FlextLdapDistinguishedNameSpecification()
+        spec = FlextLDAPDistinguishedNameSpecification()
 
         valid_dns = [
             "cn=user,ou=users,dc=example,dc=com",
@@ -160,7 +160,7 @@ class TestFlextLdapDistinguishedNameSpecificationRealValidation:
 
     def test_dn_specification_rejects_invalid_dns_real(self) -> None:
         """Test DN specification rejects invalid DNs - executes REAL regex matching."""
-        spec = FlextLdapDistinguishedNameSpecification()
+        spec = FlextLDAPDistinguishedNameSpecification()
 
         invalid_dns = [
             "",  # Empty string
@@ -176,7 +176,7 @@ class TestFlextLdapDistinguishedNameSpecificationRealValidation:
 
     def test_dn_specification_rejects_non_string_real(self) -> None:
         """Test DN specification rejects non-string candidates."""
-        spec = FlextLdapDistinguishedNameSpecification()
+        spec = FlextLDAPDistinguishedNameSpecification()
 
         non_strings = [123, None, [], {}]
 
@@ -186,7 +186,7 @@ class TestFlextLdapDistinguishedNameSpecificationRealValidation:
 
     def test_dn_specification_validation_error_messages_real(self) -> None:
         """Test DN specification provides detailed error messages."""
-        spec = FlextLdapDistinguishedNameSpecification()
+        spec = FlextLDAPDistinguishedNameSpecification()
 
         # Test error for non-string
         error_msg = spec.get_validation_error(123)
@@ -201,12 +201,12 @@ class TestFlextLdapDistinguishedNameSpecificationRealValidation:
         assert "Invalid DN format" in error_msg
 
 
-class TestFlextLdapPasswordSpecificationRealValidation:
+class TestFlextLDAPPasswordSpecificationRealValidation:
     """Test password specification with REAL password validation execution."""
 
     def test_password_specification_validates_strong_passwords_real(self) -> None:
         """Test password specification validates strong passwords - executes REAL validation."""
-        spec = FlextLdapPasswordSpecification()
+        spec = FlextLDAPPasswordSpecification()
 
         strong_passwords = [
             "StrongPass123!",
@@ -221,7 +221,7 @@ class TestFlextLdapPasswordSpecificationRealValidation:
 
     def test_password_specification_rejects_weak_passwords_real(self) -> None:
         """Test password specification rejects weak passwords - executes REAL validation."""
-        spec = FlextLdapPasswordSpecification()
+        spec = FlextLDAPPasswordSpecification()
 
         weak_passwords = [
             "short",  # Too short
@@ -238,7 +238,7 @@ class TestFlextLdapPasswordSpecificationRealValidation:
 
     def test_password_specification_rejects_non_string_real(self) -> None:
         """Test password specification rejects non-string candidates."""
-        spec = FlextLdapPasswordSpecification()
+        spec = FlextLDAPPasswordSpecification()
 
         non_strings = [123, None, [], {}]
 
@@ -248,7 +248,7 @@ class TestFlextLdapPasswordSpecificationRealValidation:
 
     def test_password_specification_validation_error_messages_real(self) -> None:
         """Test password specification provides detailed error messages."""
-        spec = FlextLdapPasswordSpecification()
+        spec = FlextLDAPPasswordSpecification()
 
         # Test error for non-string
         error_msg = spec.get_validation_error(123)
@@ -265,20 +265,20 @@ class TestFlextLdapPasswordSpecificationRealValidation:
         assert "cannot exceed" in error_msg
 
 
-class TestFlextLdapActiveUserSpecificationRealValidation:
+class TestFlextLDAPActiveUserSpecificationRealValidation:
     """Test active user specification with REAL status validation execution."""
 
     def test_active_user_specification_validates_active_user_real(self) -> None:
         """Test active user specification validates active user - executes REAL validation."""
-        spec = FlextLdapActiveUserSpecification()
+        spec = FlextLDAPActiveUserSpecification()
 
-        active_user = FlextLdapUser(
-            id=FlextModels.EntityId("test-user"),
+        active_user = FlextLDAPUser(
+            id="test-user",
             dn="cn=activeuser,ou=users,dc=example,dc=com",
             cn="Active User",
             sn="User",
             uid="active.user",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
         # Execute REAL status validation
@@ -287,10 +287,10 @@ class TestFlextLdapActiveUserSpecificationRealValidation:
 
     def test_active_user_specification_rejects_inactive_user_real(self) -> None:
         """Test active user specification rejects inactive user - executes REAL validation."""
-        spec = FlextLdapActiveUserSpecification()
+        spec = FlextLDAPActiveUserSpecification()
 
-        inactive_user = FlextLdapUser(
-            id=FlextModels.EntityId("test-user"),
+        inactive_user = FlextLDAPUser(
+            id="test-user",
             dn="cn=inactiveuser,ou=users,dc=example,dc=com",
             cn="Inactive User",
             sn="User",
@@ -304,19 +304,19 @@ class TestFlextLdapActiveUserSpecificationRealValidation:
 
     def test_active_user_specification_rejects_object_without_status_real(self) -> None:
         """Test active user specification rejects object without status."""
-        spec = FlextLdapActiveUserSpecification()
+        spec = FlextLDAPActiveUserSpecification()
 
         object_without_status = object()
         result = spec.is_satisfied_by(object_without_status)
         assert result is False
 
 
-class TestFlextLdapEmailSpecificationRealValidation:
+class TestFlextLDAPEmailSpecificationRealValidation:
     """Test email specification with REAL email validation execution."""
 
     def test_email_specification_validates_valid_emails_real(self) -> None:
         """Test email specification validates valid emails - executes REAL regex validation."""
-        spec = FlextLdapEmailSpecification()
+        spec = FlextLDAPEmailSpecification()
 
         valid_emails = [
             "user@example.com",
@@ -331,7 +331,7 @@ class TestFlextLdapEmailSpecificationRealValidation:
 
     def test_email_specification_rejects_invalid_emails_real(self) -> None:
         """Test email specification rejects invalid emails - executes REAL regex validation."""
-        spec = FlextLdapEmailSpecification()
+        spec = FlextLDAPEmailSpecification()
 
         invalid_emails = [
             "invalid-email",  # No @
@@ -347,12 +347,12 @@ class TestFlextLdapEmailSpecificationRealValidation:
             assert result is False, f"Invalid email should fail: {email}"
 
 
-class TestFlextLdapUserManagementServiceRealLogic:
+class TestFlextLDAPUserManagementServiceRealLogic:
     """Test user management service with REAL business logic execution."""
 
     def test_user_management_service_validates_user_creation_real(self) -> None:
         """Test user management service validates user creation - executes REAL validation chain."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         valid_user_data = {
             "uid": "test.user",
@@ -371,7 +371,7 @@ class TestFlextLdapUserManagementServiceRealLogic:
 
     def test_user_management_service_rejects_invalid_user_creation_real(self) -> None:
         """Test user management service rejects invalid user creation - executes REAL validation."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         # Test missing required field
         invalid_user_data = {
@@ -387,7 +387,7 @@ class TestFlextLdapUserManagementServiceRealLogic:
 
     def test_user_management_service_validates_email_field_real(self) -> None:
         """Test user management service validates email field - executes REAL email validation."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         user_data_invalid_email = {
             "uid": "test.user",
@@ -403,7 +403,7 @@ class TestFlextLdapUserManagementServiceRealLogic:
 
     def test_user_management_service_validates_password_field_real(self) -> None:
         """Test user management service validates password field - executes REAL password validation."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         user_data_weak_password = {
             "uid": "test.user",
@@ -419,7 +419,7 @@ class TestFlextLdapUserManagementServiceRealLogic:
 
     def test_user_management_service_validates_dn_field_real(self) -> None:
         """Test user management service validates DN field - executes REAL DN validation."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         user_data_invalid_dn = {
             "uid": "test.user",
@@ -434,7 +434,7 @@ class TestFlextLdapUserManagementServiceRealLogic:
 
     def test_user_management_service_handles_exceptions_real(self) -> None:
         """Test user management service handles exceptions - executes REAL error handling."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         # Test with data that could trigger exception handling
         # This should execute exception handling paths
@@ -445,7 +445,7 @@ class TestFlextLdapUserManagementServiceRealLogic:
         self,
     ) -> None:
         """Test user management service with all field combinations - executes REAL comprehensive validation."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         # Test with comprehensive user data
         comprehensive_user_data = {
@@ -466,7 +466,7 @@ class TestFlextLdapUserManagementServiceRealLogic:
 
     def test_user_management_service_validation_chain_order_real(self) -> None:
         """Test user management service validation chain order - executes REAL chain validation."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         # Test validation chain with user missing multiple fields
         incomplete_user_data = {
@@ -482,12 +482,12 @@ class TestFlextLdapUserManagementServiceRealLogic:
         assert "Required field missing" in (result.error or "")
 
 
-class TestFlextLdapPasswordServiceRealGeneration:
+class TestFlextLDAPPasswordServiceRealGeneration:
     """Test password service with REAL password generation and validation."""
 
     def test_password_service_generates_secure_passwords_real(self) -> None:
         """Test password service generates secure passwords - executes REAL generation logic."""
-        service = FlextLdapPasswordService()
+        service = FlextLDAPPasswordService()
 
         # Execute REAL password generation
         result = service.generate_secure_password()
@@ -498,13 +498,13 @@ class TestFlextLdapPasswordServiceRealGeneration:
         assert len(password) >= 8  # Minimum length
 
         # Verify generated password meets complexity requirements
-        password_spec = FlextLdapPasswordSpecification()
+        password_spec = FlextLDAPPasswordSpecification()
         is_valid = password_spec.is_satisfied_by(password)
         assert is_valid, f"Generated password should meet requirements: {password}"
 
     def test_password_service_validates_length_parameters_real(self) -> None:
         """Test password service validates length parameters - executes REAL validation logic."""
-        service = FlextLdapPasswordService()
+        service = FlextLDAPPasswordService()
 
         # Test with too short length
         result = service.generate_secure_password(length=4)
@@ -523,7 +523,7 @@ class TestFlextLdapPasswordServiceRealGeneration:
 
     def test_password_service_handles_generation_exceptions_real(self) -> None:
         """Test password service handles generation exceptions - executes REAL error handling."""
-        service = FlextLdapPasswordService()
+        service = FlextLDAPPasswordService()
 
         # Override the password generation to force an exception
         def failing_password_gen(length) -> Never:
@@ -546,7 +546,7 @@ class TestFlextLdapPasswordServiceRealGeneration:
 
     def test_password_service_validates_password_change_real(self) -> None:
         """Test password service validates password change - executes REAL validation logic."""
-        service = FlextLdapPasswordService()
+        service = FlextLDAPPasswordService()
 
         # Test valid password change
         valid_result = service.validate_password_change(
@@ -563,7 +563,7 @@ class TestFlextLdapPasswordServiceRealGeneration:
 
     def test_password_service_validates_password_strength_real(self) -> None:
         """Test password service validates password strength - executes REAL strength validation."""
-        service = FlextLdapPasswordService()
+        service = FlextLDAPPasswordService()
 
         # Test weak new password
         weak_result = service.validate_password_change("OldPass123!", "weak")
@@ -571,7 +571,7 @@ class TestFlextLdapPasswordServiceRealGeneration:
 
     def test_password_service_generates_multiple_different_passwords_real(self) -> None:
         """Test password service generates different passwords - executes REAL randomization."""
-        service = FlextLdapPasswordService()
+        service = FlextLDAPPasswordService()
 
         passwords = set()
         for _ in range(5):
@@ -583,12 +583,12 @@ class TestFlextLdapPasswordServiceRealGeneration:
         assert len(passwords) == 5, "Generated passwords should be unique"
 
 
-class TestFlextLdapGroupManagementServiceRealLogic:
+class TestFlextLDAPGroupManagementServiceRealLogic:
     """Test group management service with REAL business logic execution."""
 
     def test_group_management_service_validates_group_creation_real(self) -> None:
         """Test group management service validates group creation - executes REAL validation."""
-        service = FlextLdapGroupManagementService()
+        service = FlextLDAPGroupManagementService()
 
         valid_group_data = {
             "cn": "Test Group",
@@ -604,7 +604,7 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
     def test_group_management_service_rejects_invalid_group_creation_real(self) -> None:
         """Test group management service rejects invalid group creation - executes REAL validation."""
-        service = FlextLdapGroupManagementService()
+        service = FlextLDAPGroupManagementService()
 
         # Test missing required field
         invalid_group_data = {
@@ -618,7 +618,7 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
     def test_group_management_service_validates_group_dn_real(self) -> None:
         """Test group management service validates group DN - executes REAL DN validation."""
-        service = FlextLdapGroupManagementService()
+        service = FlextLDAPGroupManagementService()
 
         group_data_invalid_dn = {
             "cn": "Test Group",
@@ -631,27 +631,27 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
     def test_group_management_service_validates_member_addition_real(self) -> None:
         """Test group management service validates member addition - executes REAL validation."""
-        service = FlextLdapGroupManagementService()
+        service = FlextLDAPGroupManagementService()
 
         # Create valid group
-        valid_group = FlextLdapGroup(
-            id=FlextModels.EntityId("test-group"),
+        valid_group = FlextLDAPGroup(
+            id="test-group",
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="Test Group",
             object_classes=["groupOfNames", "top"],
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
             members=[],
         )
 
         # Create valid user
-        valid_user = FlextLdapUser(
-            id=FlextModels.EntityId("test-user"),
+        valid_user = FlextLDAPUser(
+            id="test-user",
             dn="cn=testuser,ou=users,dc=example,dc=com",
             cn="Test User",
             sn="User",
             uid="test.user",
             object_classes=["person", "top", "inetOrgPerson"],
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
         # Execute REAL member validation
@@ -661,26 +661,26 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
     def test_group_management_service_rejects_duplicate_member_real(self) -> None:
         """Test group management service rejects duplicate member - executes REAL validation."""
-        service = FlextLdapGroupManagementService()
+        service = FlextLDAPGroupManagementService()
 
         # Create user
-        user = FlextLdapUser(
-            id=FlextModels.EntityId("test-user"),
+        user = FlextLDAPUser(
+            id="test-user",
             dn="cn=testuser,ou=users,dc=example,dc=com",
             cn="Test User",
             sn="User",
             uid="test.user",
             object_classes=["person", "top", "inetOrgPerson"],
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
         # Create group with user already as member
-        group = FlextLdapGroup(
-            id=FlextModels.EntityId("test-group"),
+        group = FlextLDAPGroup(
+            id="test-group",
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="Test Group",
             object_classes=["groupOfNames", "top"],
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
             members=[user.dn],  # User already member
         )
 
@@ -691,21 +691,21 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
     def test_group_management_service_rejects_inactive_user_real(self) -> None:
         """Test group management service rejects inactive user - executes REAL validation."""
-        service = FlextLdapGroupManagementService()
+        service = FlextLDAPGroupManagementService()
 
         # Create valid group
-        valid_group = FlextLdapGroup(
-            id=FlextModels.EntityId("test-group"),
+        valid_group = FlextLDAPGroup(
+            id="test-group",
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="Test Group",
             object_classes=["groupOfNames", "top"],
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
             members=[],
         )
 
         # Create inactive user
-        inactive_user = FlextLdapUser(
-            id=FlextModels.EntityId("test-user"),
+        inactive_user = FlextLDAPUser(
+            id="test-user",
             dn="cn=inactiveuser,ou=users,dc=example,dc=com",
             cn="Inactive User",
             sn="User",
@@ -721,7 +721,7 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
     def test_group_management_service_handles_exceptions_real(self) -> None:
         """Test group management service handles exceptions - executes REAL error handling."""
-        service = FlextLdapGroupManagementService()
+        service = FlextLDAPGroupManagementService()
 
         # Test with invalid group data to trigger exception handling
         # This should execute exception handling paths
@@ -730,7 +730,7 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
     def test_group_management_service_validates_complex_scenarios_real(self) -> None:
         """Test group management service with complex scenarios - executes REAL complex validation."""
-        service = FlextLdapGroupManagementService()
+        service = FlextLDAPGroupManagementService()
 
         # Test nested validation scenarios
         complex_group_data = {
@@ -749,27 +749,27 @@ class TestFlextLdapGroupManagementServiceRealLogic:
 
     def test_group_management_service_member_validation_edge_cases_real(self) -> None:
         """Test group member validation edge cases - executes REAL edge case handling."""
-        service = FlextLdapGroupManagementService()
+        service = FlextLDAPGroupManagementService()
 
         # Create group with edge case members
-        group = FlextLdapGroup(
-            id=FlextModels.EntityId("edge-group"),
+        group = FlextLDAPGroup(
+            id="edge-group",
             dn="cn=edgegroup,ou=groups,dc=example,dc=com",
             cn="Edge Group",
             object_classes=["groupOfNames", "top"],
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
             members=["cn=existing,ou=users,dc=example,dc=com"],  # Already has a member
         )
 
         # Create user with edge case attributes
-        user = FlextLdapUser(
-            id=FlextModels.EntityId("edge-user"),
+        user = FlextLDAPUser(
+            id="edge-user",
             dn="cn=existing,ou=users,dc=example,dc=com",  # Same DN as existing member
             cn="Edge User",
             sn="User",
             uid="edge.user",
             object_classes=["person", "top", "inetOrgPerson"],
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
         # Execute REAL edge case validation

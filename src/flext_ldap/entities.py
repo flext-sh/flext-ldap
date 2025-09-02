@@ -1,4 +1,4 @@
-"""LDAP Entities - Single FlextLdapEntities class following FLEXT patterns.
+"""LDAP Entities - Single FlextLDAPEntities class following FLEXT patterns.
 
 Single class with all LDAP domain entities implementing rich business objects
 organized as internal classes for complete backward compatibility.
@@ -6,34 +6,34 @@ organized as internal classes for complete backward compatibility.
 Examples:
     Search operations::
 
-        from entities import FlextLdapEntities
+        from entities import FlextLDAPEntities
 
         # Create search request
-        request = FlextLdapEntities.SearchRequest(
+        request = FlextLDAPEntities.SearchRequest(
             base_dn="dc=example,dc=com", filter_str="(uid=john)"
         )
 
         # Process response
-        response = FlextLdapEntities.SearchResponse(entries=[...])
+        response = FlextLDAPEntities.SearchResponse(entries=[...])
 
     Entity operations::
 
         # Create user
-        user = FlextLdapEntities.User(
+        user = FlextLDAPEntities.User(
             dn="cn=john,ou=users,dc=example,dc=com", uid="john", cn="John Doe"
         )
 
         # Create group
-        group = FlextLdapEntities.Group(
+        group = FlextLDAPEntities.Group(
             dn="cn=admins,ou=groups,dc=example,dc=com", cn="Administrators"
         )
 
     Legacy compatibility::
 
         # All previous classes still work as direct imports
-        from entities import FlextLdapUser, FlextLdapSearchRequest
+        from entities import FlextLDAPUser, FlextLDAPSearchRequest
 
-        user = FlextLdapUser(dn="cn=user,dc=example,dc=com", uid="user")
+        user = FlextLDAPUser(dn="cn=user,dc=example,dc=com", uid="user")
 
 """
 
@@ -50,7 +50,7 @@ from flext_core import (
 from pydantic import Field, field_validator
 
 from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue, LdapSearchResult
-from flext_ldap.value_objects import FlextLdapDistinguishedName
+from flext_ldap.value_objects import FlextLDAPDistinguishedName
 
 # Type alias for explicit pyright recognition
 DictEntry = dict[str, object]
@@ -62,8 +62,8 @@ logger = FlextLogger(__name__)
 # =============================================================================
 
 
-class FlextLdapEntities:
-    """Single FlextLdapEntities class with all LDAP domain entities.
+class FlextLDAPEntities:
+    """Single FlextLDAPEntities class with all LDAP domain entities.
 
     Consolidates ALL LDAP entities into a single class following FLEXT patterns.
     Everything from search requests to domain entities is available as internal classes
@@ -74,28 +74,28 @@ class FlextLdapEntities:
         - Open/Closed: Extensible without modification
         - Liskov Substitution: Consistent interface across all entities
         - Interface Segregation: Organized by entity type for specific access
-        - Dependency Inversion: Depends on FlextModels.Entity/FlextModels abstractions
+        - Dependency Inversion: Depends on FlextModels/FlextModels abstractions
 
     Examples:
         Search operations::
 
-            request = FlextLdapEntities.SearchRequest(
+            request = FlextLDAPEntities.SearchRequest(
                 base_dn="dc=example,dc=com", filter_str="(uid=john)"
             )
-            response = FlextLdapEntities.SearchResponse(entries=[...])
+            response = FlextLDAPEntities.SearchResponse(entries=[...])
 
         Domain entities::
 
-            user = FlextLdapEntities.User(
+            user = FlextLDAPEntities.User(
                 dn="cn=john,ou=users,dc=example,dc=com", uid="john", cn="John Doe"
             )
-            group = FlextLdapEntities.Group(
+            group = FlextLDAPEntities.Group(
                 dn="cn=admins,ou=groups,dc=example,dc=com", cn="Administrators"
             )
 
         Request models::
 
-            create_request = FlextLdapEntities.CreateUserRequest(
+            create_request = FlextLDAPEntities.CreateUserRequest(
                 dn="cn=newuser,ou=users,dc=example,dc=com", uid="newuser", cn="New User"
             )
 
@@ -105,7 +105,7 @@ class FlextLdapEntities:
     # SEARCH MODELS - Request and response models for search operations
     # =========================================================================
 
-    class SearchRequest(FlextModels):
+    class SearchRequest(FlextModels.Value):
         """Request model for LDAP search operations."""
 
         base_dn: str = Field(..., description="Base DN for search")
@@ -131,12 +131,21 @@ class FlextLdapEntities:
             le=300,
         )
 
+        @override
+        def validate_business_rules(self) -> FlextResult[None]:
+            """Validate search request business rules."""
+            if not self.base_dn:
+                return FlextResult[None].fail("Base DN cannot be empty")
+            if not self.filter_str:
+                return FlextResult[None].fail("Filter cannot be empty")
+            return FlextResult[None].ok(None)
+
         @field_validator("base_dn")
         @classmethod
         def validate_base_dn(cls, v: str) -> str:
             """Validate base DN format."""
             try:
-                FlextLdapDistinguishedName(value=v)
+                FlextLDAPDistinguishedName(value=v)
                 return v
             except ValueError as e:
                 msg = f"Invalid base DN format: {e}"
@@ -151,7 +160,7 @@ class FlextLdapEntities:
                 raise ValueError(msg)
             return v
 
-    class SearchResponse(FlextModels):
+    class SearchResponse(FlextModels.Value):
         """Response model for LDAP searches."""
 
         entries: list[LdapSearchResult] = Field(
@@ -168,12 +177,32 @@ class FlextLdapEntities:
             description="Search execution time in ms",
         )
 
+        @override
+        def validate_business_rules(self) -> FlextResult[None]:
+            """Validate search response business rules."""
+            if self.total_count < 0:
+                return FlextResult[None].fail("Total count cannot be negative")
+            if self.search_time_ms < 0:
+                return FlextResult[None].fail("Search time cannot be negative")
+            return FlextResult[None].ok(None)
+
     # =========================================================================
     # DOMAIN ENTITIES - Rich LDAP domain objects
     # =========================================================================
 
     class Entry(FlextModels.Entity):
         """Base LDAP directory entry implementing rich domain model patterns."""
+
+        # Override id field with validator to convert EntityId to str
+        id: str = Field(..., description="Entity identifier")
+
+        @field_validator("id", mode="before")
+        @classmethod
+        def convert_entity_id(cls, v: object) -> str:
+            """Convert EntityId to string if needed."""
+            if isinstance(v, FlextModels):
+                return str(v)
+            return str(v)
 
         dn: str = Field(..., description="Distinguished Name")
         object_classes: list[str] = Field(
@@ -184,13 +213,17 @@ class FlextLdapEntities:
             default_factory=dict,
             description="LDAP attributes dictionary",
         )
+        status: str = Field(
+            default="active",
+            description="Entity status from FlextConstants.Status",
+        )
 
         # Entity metadata
-        created_at: FlextModels.Timestamp = Field(
-            default_factory=lambda: FlextModels.Timestamp(datetime.now(UTC)),
+        created_at: datetime = Field(
+            default_factory=lambda: datetime.now(UTC),
             description="Creation timestamp",
         )
-        modified_at: FlextModels.Timestamp | None = Field(
+        modified_at: datetime | None = Field(
             None,
             description="Last modification timestamp",
         )
@@ -200,7 +233,7 @@ class FlextLdapEntities:
         def validate_dn(cls, v: str) -> str:
             """Validate DN format."""
             try:
-                FlextLdapDistinguishedName(value=v)
+                FlextLDAPDistinguishedName(value=v)
                 return v
             except ValueError as e:
                 msg = f"Invalid DN format: {e}"
@@ -235,7 +268,8 @@ class FlextLdapEntities:
         def set_attribute(self, name: str, value: LdapAttributeValue) -> None:
             """Set attribute value."""
             self.attributes[name] = value
-            self.modified_at = FlextModels.Timestamp(datetime.now(UTC))
+            # Use model field assignment through __setattr__
+            object.__setattr__(self, "modified_at", datetime.now(UTC))
 
     class User(Entry):
         """LDAP user entity with user-specific validation."""
@@ -315,13 +349,13 @@ class FlextLdapEntities:
             """Add member to group."""
             if member_dn not in self.members:
                 self.members.append(member_dn)
-                self.modified_at = FlextModels.Timestamp(datetime.now(UTC))
+                self.modified_at = datetime.now(UTC)
 
         def remove_member(self, member_dn: str) -> None:
             """Remove member from group."""
             if member_dn in self.members:
                 self.members.remove(member_dn)
-                self.modified_at = FlextModels.Timestamp(datetime.now(UTC))
+                self.modified_at = datetime.now(UTC)
 
         def has_member(self, member_dn: str) -> bool:
             """Check if DN is a member of this group."""
@@ -331,7 +365,7 @@ class FlextLdapEntities:
     # REQUEST MODELS - Operation request models
     # =========================================================================
 
-    class CreateUserRequest(FlextModels):
+    class CreateUserRequest(FlextModels.Value):
         """Request model for creating LDAP users."""
 
         dn: str = Field(..., description="Distinguished Name for new user")
@@ -351,12 +385,23 @@ class FlextLdapEntities:
             description="LDAP object classes",
         )
 
+        @override
+        def validate_business_rules(self) -> FlextResult[None]:
+            """Validate create user request business rules."""
+            if not self.dn:
+                return FlextResult[None].fail("DN cannot be empty")
+            if not self.uid:
+                return FlextResult[None].fail("UID cannot be empty")
+            if not self.cn:
+                return FlextResult[None].fail("Common Name cannot be empty")
+            return FlextResult[None].ok(None)
+
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
             """Validate DN format."""
             try:
-                FlextLdapDistinguishedName(value=v)
+                FlextLDAPDistinguishedName(value=v)
                 return v
             except ValueError as e:
                 msg = f"Invalid DN format: {e}"
@@ -375,10 +420,10 @@ class FlextLdapEntities:
                     raise ValueError(msg)
             return v
 
-        def to_user_entity(self) -> FlextLdapEntities.User:
+        def to_user_entity(self) -> FlextLDAPEntities.User:
             """Convert request to user entity."""
-            return FlextLdapEntities.User(
-                id=FlextModels.EntityId(f"user_{self.uid}"),
+            return FlextLDAPEntities.User(
+                id=f"user_{self.uid}",
                 dn=self.dn,
                 uid=self.uid,
                 cn=self.cn,
@@ -397,12 +442,12 @@ class FlextLdapEntities:
 # =============================================================================
 
 # Legacy class aliases for backward compatibility
-FlextLdapSearchRequest = FlextLdapEntities.SearchRequest
-FlextLdapSearchResponse = FlextLdapEntities.SearchResponse
-FlextLdapEntry = FlextLdapEntities.Entry
-FlextLdapUser = FlextLdapEntities.User
-FlextLdapGroup = FlextLdapEntities.Group
-FlextLdapCreateUserRequest = FlextLdapEntities.CreateUserRequest
+FlextLDAPSearchRequest = FlextLDAPEntities.SearchRequest
+FlextLDAPSearchResponse = FlextLDAPEntities.SearchResponse
+FlextLDAPEntry = FlextLDAPEntities.Entry
+FlextLDAPUser = FlextLDAPEntities.User
+FlextLDAPGroup = FlextLDAPEntities.Group
+FlextLDAPCreateUserRequest = FlextLDAPEntities.CreateUserRequest
 
 
 # =============================================================================
@@ -412,13 +457,13 @@ FlextLdapCreateUserRequest = FlextLdapEntities.CreateUserRequest
 __all__ = [
     # Type alias
     "DictEntry",
-    "FlextLdapCreateUserRequest",
+    "FlextLDAPCreateUserRequest",
     # Primary consolidated class
-    "FlextLdapEntities",
-    "FlextLdapEntry",
-    "FlextLdapGroup",
+    "FlextLDAPEntities",
+    "FlextLDAPEntry",
+    "FlextLDAPGroup",
     # Legacy compatibility classes
-    "FlextLdapSearchRequest",
-    "FlextLdapSearchResponse",
-    "FlextLdapUser",
+    "FlextLDAPSearchRequest",
+    "FlextLDAPSearchResponse",
+    "FlextLDAPUser",
 ]

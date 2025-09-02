@@ -21,13 +21,13 @@ src/flext_ldap/
 
 ### Core API Layer
 
-- **api.py**: Main FlextLdapApi interface providing unified LDAP operations
+- **api.py**: Main FlextLDAPApi interface providing unified LDAP operations
 - **base.py**: Base functionality and shared patterns
 - **config.py**: Configuration management with environment variable support
 
 ### Domain Layer
 
-- **entities.py**: Rich domain entities (FlextLdapUser, FlextLdapGroup)
+- **entities.py**: Rich domain entities (FlextLDAPUser, FlextLDAPGroup)
 - **values.py**: Value objects and data transfer objects
 - **domain/**: Pure business logic without external dependencies
 

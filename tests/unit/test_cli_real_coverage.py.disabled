@@ -15,8 +15,8 @@ from click.testing import CliRunner
 from flext_cli import FlextCliExecutionContext
 
 from flext_ldap import (
-    FlextLdapCliCommandService,
-    FlextLdapCliFormatterService,
+    FlextLDAPCliCommandService,
+    FlextLDAPCliFormatterService,
     cli,
     get_command_service,
     get_formatter_service,
@@ -31,18 +31,18 @@ from flext_ldap.cli import (
 )
 
 
-class TestFlextLdapCliCommandServiceRealCoverage:
-    """Test FlextLdapCliCommandService with real command logic."""
+class TestFlextLDAPCliCommandServiceRealCoverage:
+    """Test FlextLDAPCliCommandService with real command logic."""
 
     def setup_method(self) -> None:
         """Setup test fixtures."""
         # Create REAL service instance for testing
-        self.service = FlextLdapCliCommandService()
+        self.service = FlextLDAPCliCommandService()
 
     def test_cli_command_service_initialization(self) -> None:
-        """Test FlextLdapCliCommandService initializes correctly."""
+        """Test FlextLDAPCliCommandService initializes correctly."""
         # Test REAL initialization
-        service = FlextLdapCliCommandService()
+        service = FlextLDAPCliCommandService()
 
         # Verify REAL initialization components
         assert service._api is not None
@@ -135,16 +135,16 @@ class TestFlextLdapCliCommandServiceRealCoverage:
             "attributes": ["cn", "mail"],
         }
 
-        # Mock search results using REAL FlextLdapEntry objects
+        # Mock search results using REAL FlextLDAPEntry objects
 
         mock_search_results = [
-            FlextLdapEntry(
+            FlextLDAPEntry(
                 id=FlextModels.EntityId("user1"),
                 dn="cn=user1,ou=users,dc=example,dc=com",
                 attributes={"cn": ["User One"], "mail": ["user1@example.com"]},
                 status=FlextEntityStatus.ACTIVE,
             ),
-            FlextLdapEntry(
+            FlextLDAPEntry(
                 id=FlextModels.EntityId("user2"),
                 dn="cn=user2,ou=users,dc=example,dc=com",
                 attributes={"cn": ["User Two"], "mail": ["user2@example.com"]},
@@ -374,27 +374,27 @@ class TestFlextLdapCliCommandServiceRealCoverage:
         assert call_args[2] == ""  # None converted to empty string
 
 
-class TestFlextLdapCliFormatterServiceRealCoverage:
-    """Test FlextLdapCliFormatterService with real formatting logic."""
+class TestFlextLDAPCliFormatterServiceRealCoverage:
+    """Test FlextLDAPCliFormatterService with real formatting logic."""
 
     def setup_method(self) -> None:
         """Setup test fixtures."""
         # Create REAL formatter service instance
-        self.formatter = FlextLdapCliFormatterService()
+        self.formatter = FlextLDAPCliFormatterService()
 
     def test_cli_formatter_service_initialization(self) -> None:
-        """Test FlextLdapCliFormatterService initializes correctly."""
+        """Test FlextLDAPCliFormatterService initializes correctly."""
         # Test REAL initialization
-        formatter = FlextLdapCliFormatterService()
+        formatter = FlextLDAPCliFormatterService()
 
         # Verify REAL initialization components
         assert formatter.container is not None
 
     def test_cli_formatter_service_initialization_with_container(self) -> None:
-        """Test FlextLdapCliFormatterService with custom container."""
+        """Test FlextLDAPCliFormatterService with custom container."""
         # Setup REAL test scenario with custom container
         custom_container = FlextContainer()
-        formatter = FlextLdapCliFormatterService(custom_container)
+        formatter = FlextLDAPCliFormatterService(custom_container)
 
         # Verify REAL custom container usage
         assert formatter.container is custom_container
@@ -517,7 +517,7 @@ class TestFlextLdapCliFormatterServiceRealCoverage:
         assert isinstance(result.value, str)
 
 
-class TestFlextLdapCliFactoryFunctionsRealCoverage:
+class TestFlextLDAPCliFactoryFunctionsRealCoverage:
     """Test CLI factory functions with real instantiation logic."""
 
     def test_get_command_service_returns_service(self) -> None:
@@ -527,7 +527,7 @@ class TestFlextLdapCliFactoryFunctionsRealCoverage:
 
         # Verify REAL service creation
         assert service is not None
-        assert isinstance(service, FlextLdapCliCommandService)
+        assert isinstance(service, FlextLDAPCliCommandService)
         # Service has proper CLI methods instead of service_name attribute
         assert hasattr(service, "execute_command")
 
@@ -547,7 +547,7 @@ class TestFlextLdapCliFactoryFunctionsRealCoverage:
 
         # Verify REAL formatter creation
         assert formatter is not None
-        assert isinstance(formatter, FlextLdapCliFormatterService)
+        assert isinstance(formatter, FlextLDAPCliFormatterService)
 
     def test_get_formatter_service_singleton_behavior(self) -> None:
         """Test get_formatter_service returns same instance (singleton)."""
@@ -559,7 +559,7 @@ class TestFlextLdapCliFactoryFunctionsRealCoverage:
         assert formatter1 is formatter2
 
 
-class TestFlextLdapCliClickCommandsRealCoverage:
+class TestFlextLDAPCliClickCommandsRealCoverage:
     """Test Click CLI commands with real Click invocation."""
 
     def setup_method(self) -> None:
@@ -653,7 +653,7 @@ class TestFlextLdapCliClickCommandsRealCoverage:
         assert callable(main)
 
 
-class TestFlextLdapCliDisplayFunctionsRealCoverage:
+class TestFlextLDAPCliDisplayFunctionsRealCoverage:
     """Test CLI display functions with real output logic."""
 
     def test_display_functions_exist_and_callable(self) -> None:
@@ -771,7 +771,7 @@ class TestFlextLdapCliDisplayFunctionsRealCoverage:
             pytest.fail(f"Display function raised exception: {e}")
 
 
-class TestFlextLdapCliIntegrationRealCoverage:
+class TestFlextLDAPCliIntegrationRealCoverage:
     """Test CLI integration scenarios with real workflows."""
 
     def setup_method(self) -> None:

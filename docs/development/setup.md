@@ -344,7 +344,7 @@ mkdir -p ../flext-target-ldap
 mkdir -p ../flext-dbt-ldap
 
 # Test Singer integration (when implemented)
-# poetry run python -c "from flext_tap_ldap import FlextLdapTap; print('✅ Singer integration working')"
+# poetry run python -c "from flext_tap_ldap import FlextLDAPTap; print('✅ Singer integration working')"
 ```
 
 ---

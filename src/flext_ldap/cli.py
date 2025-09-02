@@ -7,14 +7,11 @@ SPDX-License-Identifier: MIT
 
 import asyncio
 import time
-from typing import cast, override
+from typing import cast
 
 import click
 from flext_cli import (
-    FlextCliCommandService,
-    FlextCliFormatterService,
-    FormatterFactory,
-    get_cli_config,
+    FlextCliConfig,
 )
 from flext_core import (
     FlextConstants,
@@ -26,8 +23,8 @@ from flext_core import (
 from rich.console import Console
 from rich.table import Table
 
-from flext_ldap.api import get_ldap_api
-from flext_ldap.entities import FlextLdapEntry
+from flext_ldap.api import FlextLDAPApi
+from flext_ldap.entities import FlextLDAPEntry
 
 logger = FlextLogger(__name__)
 
@@ -37,7 +34,7 @@ logger = FlextLogger(__name__)
 # =============================================================================
 
 
-class FlextLdapCliCommandService(FlextCliCommandService[object]):
+class FlextLDAPCliCommandService:
     """Command service for FLEXT LDAP CLI operations.
 
     Extends FlextCliCommandService to provide LDAP-specific
@@ -46,17 +43,16 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
 
     def __init__(self) -> None:
         """Initialize LDAP CLI command service."""
-        super().__init__()
-        self._api = get_ldap_api()
-        self._config = get_cli_config()
+        # Initialize without parent call
+        self._api = FlextLDAPApi()
+        self._config = FlextCliConfig.create_development_config()
 
     # Decorators removed due to type incompatibilities - functionality implemented inline
-    @override
     def execute_command(
         self,
         command: str,
         args: dict[str, object] | None = None,
-        **kwargs: object,
+        **_kwargs: object,
     ) -> FlextResult[object]:
         """Execute LDAP command with given arguments - sync wrapper for async operations.
 
@@ -186,10 +182,10 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
                         time_limit=30,
                     )
                     if result.is_success:
-                        entries: list[FlextLdapEntry] = result.value or []
+                        entries: list[FlextLDAPEntry] = result.value or []
                         # Convert entries to dict format for display
                         entry_dicts: list[dict[str, object]] = [
-                            entry.to_dict() for entry in entries
+                            entry.model_dump() for entry in entries
                         ]
 
                         return FlextResult[object].ok(
@@ -241,8 +237,8 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
                         if entries and isinstance(entries, list) and entries:
                             entry = entries[0]
                             user_dict = (
-                                entry.to_dict()
-                                if hasattr(entry, "to_dict")
+                                entry.model_dump()
+                                if hasattr(entry, "model_dump")
                                 else {"dn": str(entry)}
                             )
                             return FlextResult[object].ok(
@@ -264,7 +260,7 @@ class FlextLdapCliCommandService(FlextCliCommandService[object]):
             return FlextResult[object].fail(f"User lookup error: {e}")
 
 
-class FlextLdapCliFormatterService(FlextCliFormatterService):
+class FlextLDAPCliFormatterService:
     """Formatter service for FLEXT LDAP CLI output.
 
     Extends FlextCliFormatterService to provide LDAP-specific
@@ -283,14 +279,22 @@ class FlextLdapCliFormatterService(FlextCliFormatterService):
             except Exception as e:
                 # Silent fallback to core container - CLI container unavailable
                 logger.debug(f"CLI container fallback: {e}")
-        super().__init__(
-            service_name="flext_ldap_cli_formatter",
-            container=container,
-        )
-        self._config = get_cli_config()
+        # Initialize formatter service without parent
+        self._container = container
+        self._config = FlextCliConfig.create_development_config()
+        self.logger = FlextLogger(__name__)
+        self.default_format = "json"
+
+    def validate_format(self, format_type: str) -> FlextResult[str]:
+        """Validate output format type."""
+        valid_formats = ["json", "yaml", "table", "csv"]
+        if format_type not in valid_formats:
+            return FlextResult[str].fail(
+                f"Invalid format: {format_type}. Valid formats: {valid_formats}"
+            )
+        return FlextResult[str].ok(format_type)
 
     # Decorator removed due to type incompatibilities - functionality implemented inline
-    @override
     def format_output(
         self,
         data: object,
@@ -324,13 +328,22 @@ class FlextLdapCliFormatterService(FlextCliFormatterService):
             )
 
         try:
-            console = Console()
-            formatter = FormatterFactory.create(format_type)
+            # console = Console()  # Not used in simple formatting
 
-            # Format the data and capture output
-            with console.capture() as capture:
-                formatter.format(data, console)
-            formatted_output = capture.get()
+            # Simple inline formatting based on type
+            if format_type == "json":
+                import json
+
+                formatted_output = json.dumps(data, indent=2, default=str)
+            elif format_type == "yaml":
+                try:
+                    import yaml
+
+                    formatted_output = yaml.dump(data, default_flow_style=False)
+                except ImportError:
+                    formatted_output = str(data)  # Fallback if yaml not available
+            else:
+                formatted_output = str(data)
 
             if self.logger:
                 self.logger.info("Data formatted successfully")
@@ -342,7 +355,6 @@ class FlextLdapCliFormatterService(FlextCliFormatterService):
                 self.logger.exception(error_msg)
             return FlextResult[str].fail(error_msg)
 
-    @override
     def execute(self) -> FlextResult[str]:
         """Execute the service operation.
 
@@ -353,29 +365,38 @@ class FlextLdapCliFormatterService(FlextCliFormatterService):
 
 
 # =============================================================================
-# GLOBAL CLI SERVICES - Singleton pattern
+# FLEXT-LDAP CLI MANAGER - Class-based service management
 # =============================================================================
 
 
-# Global service instances
-_command_service: FlextLdapCliCommandService | None = None
-_formatter_service: FlextLdapCliFormatterService | None = None
+class FlextLDAPCli:
+    """FlextLDAP CLI Manager - Class-based CLI service management.
 
+    Eliminates global variables and provides clean class-based API
+    for CLI service orchestration.
+    """
 
-def get_command_service() -> FlextLdapCliCommandService:
-    """Get or create the global command service."""
-    global _command_service
-    if _command_service is None:
-        _command_service = FlextLdapCliCommandService()
-    return _command_service
+    def __init__(self) -> None:
+        """Initialize CLI manager."""
+        self._command_service: FlextLDAPCliCommandService | None = None
+        self._formatter_service: FlextLDAPCliFormatterService | None = None
 
+    def get_command_service(self) -> FlextLDAPCliCommandService:
+        """Get or create the command service."""
+        if self._command_service is None:
+            self._command_service = FlextLDAPCliCommandService()
+        return self._command_service
 
-def get_formatter_service() -> FlextLdapCliFormatterService:
-    """Get or create the global formatter service."""
-    global _formatter_service
-    if _formatter_service is None:
-        _formatter_service = FlextLdapCliFormatterService()
-    return _formatter_service
+    def get_formatter_service(self) -> FlextLDAPCliFormatterService:
+        """Get or create the formatter service."""
+        if self._formatter_service is None:
+            self._formatter_service = FlextLDAPCliFormatterService()
+        return self._formatter_service
+
+    def reset_services(self) -> None:
+        """Reset all services (useful for testing)."""
+        self._command_service = None
+        self._formatter_service = None
 
 
 # =============================================================================
@@ -521,9 +542,10 @@ def cli(
     ctx.obj["debug"] = debug
     ctx.obj["console"] = Console()
 
-    # Initialize services
-    ctx.obj["command_service"] = get_command_service()
-    ctx.obj["formatter_service"] = get_formatter_service()
+    # Initialize services using FlextLDAPCli
+    cli_manager = FlextLDAPCli()
+    ctx.obj["command_service"] = cli_manager.get_command_service()
+    ctx.obj["formatter_service"] = cli_manager.get_formatter_service()
 
     if debug:
         logger.debug("FLEXT LDAP CLI initialized with debug mode")
@@ -569,7 +591,7 @@ def test(
     start_time = time.time()
 
     try:
-        command_service: FlextLdapCliCommandService = ctx.obj["command_service"]
+        command_service: FlextLDAPCliCommandService = ctx.obj["command_service"]
         console: Console = ctx.obj["console"]
 
         args: dict[str, object] = {
@@ -653,7 +675,7 @@ def search(
     start_time = time.time()
 
     try:
-        command_service: FlextLdapCliCommandService = ctx.obj["command_service"]
+        command_service: FlextLDAPCliCommandService = ctx.obj["command_service"]
         console: Console = ctx.obj["console"]
 
         args: dict[str, object] = {
@@ -718,7 +740,7 @@ def user_info(
     start_time = time.time()
 
     try:
-        command_service: FlextLdapCliCommandService = ctx.obj["command_service"]
+        command_service: FlextLDAPCliCommandService = ctx.obj["command_service"]
         console: Console = ctx.obj["console"]
 
         args: dict[str, object] = {
@@ -771,9 +793,13 @@ def main() -> None:
     try:
         # Initialize CLI with flext-cli patterns
         _ = FlextContainer.get_global()  # Initialize CLI container
-        config = get_cli_config()
+        config_result = FlextCliConfig.create_development_config()
+        if not config_result.is_success:
+            logger.error("Failed to create CLI config")
+            return
 
-        if config.debug:
+        config = config_result.value
+        if hasattr(config, "debug") and config.debug:
             logger.debug("Starting FLEXT LDAP CLI with debug mode")
 
         cli()
@@ -790,3 +816,12 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+__all__ = [
+    "FlextLDAPCli",
+    "FlextLDAPCliCommandService",
+    "FlextLDAPCliFormatterService",
+    "cli",
+    "main",
+]

@@ -15,45 +15,45 @@ import pytest
 from pydantic import SecretStr, ValidationError
 
 from flext_ldap import (
-    FlextLdapAuthConfig,
-    FlextLdapConnectionConfig,
-    FlextLdapSearchConfig,
-    FlextLdapSettings,
+    FlextLDAPAuthConfig,
+    FlextLDAPConnectionConfig,
+    FlextLDAPSearchConfig,
+    FlextLDAPSettings,
 )
 
 
-class TestFlextLdapConnectionConfigCoverage:
-    """Test FlextLdapConnectionConfig uncovered branches."""
+class TestFlextLDAPConnectionConfigCoverage:
+    """Test FlextLDAPConnectionConfig uncovered branches."""
 
     def test_connection_config_validation_failures(self) -> None:
-        """Test validation failures in FlextLdapConnectionConfig."""
+        """Test validation failures in FlextLDAPConnectionConfig."""
         # Test invalid server (covers lines 52-58)
         with pytest.raises(
             ValidationError, match="String should have at least 1 character"
         ):
-            FlextLdapConnectionConfig(server="", port=389)
+            FlextLDAPConnectionConfig(server="", port=389)
 
         with pytest.raises(
             ValidationError, match="String should have at least 1 character"
         ):
-            FlextLdapConnectionConfig(server="   ", port=389)
+            FlextLDAPConnectionConfig(server="   ", port=389)
 
         # Test invalid port (covers additional validation)
         with pytest.raises(ValidationError, match="Input should be greater than 0"):
-            FlextLdapConnectionConfig(server="test.com", port=0)
+            FlextLDAPConnectionConfig(server="test.com", port=0)
 
         with pytest.raises(
             ValidationError, match="Input should be less than or equal to 65535"
         ):
-            FlextLdapConnectionConfig(server="test.com", port=70000)
+            FlextLDAPConnectionConfig(server="test.com", port=70000)
 
     def test_connection_config_from_uri_edge_cases(self) -> None:
         """Test URI parsing functionality - REMOVED (method doesn't exist)."""
-        # FlextLdapConnectionConfig.from_uri method was removed during architectural cleanup
+        # FlextLDAPConnectionConfig.from_uri method was removed during architectural cleanup
         # Test removed to match actual implementation
 
         # Test basic configuration creation instead
-        config = FlextLdapConnectionConfig(server="test.example.com", port=389)
+        config = FlextLDAPConnectionConfig(server="test.example.com", port=389)
         assert config.server == "test.example.com"
         assert config.port == 389
 
@@ -61,17 +61,17 @@ class TestFlextLdapConnectionConfigCoverage:
         """Test connection config computed properties."""
         # Test URI generation with auth config (current architecture)
 
-        auth_ssl = FlextLdapAuthConfig(
+        auth_ssl = FlextLDAPAuthConfig(
             bind_dn="cn=admin,dc=test", bind_password="password", use_ssl=True
         )
-        config_ssl = FlextLdapConnectionConfig(
+        config_ssl = FlextLDAPConnectionConfig(
             server="test.com", port=636, auth=auth_ssl
         )
 
-        auth_no_ssl = FlextLdapAuthConfig(
+        auth_no_ssl = FlextLDAPAuthConfig(
             bind_dn="cn=admin,dc=test", bind_password="password", use_ssl=False
         )
-        config_no_ssl = FlextLdapConnectionConfig(
+        config_no_ssl = FlextLDAPConnectionConfig(
             server="test.com", port=389, auth=auth_no_ssl
         )
 
@@ -82,48 +82,48 @@ class TestFlextLdapConnectionConfigCoverage:
     def test_connection_config_uri_property(self) -> None:
         """Test URI property generation without auth config."""
         # Test basic URI generation without auth (defaults to ldap://)
-        config = FlextLdapConnectionConfig(server="test.com", port=389)
+        config = FlextLDAPConnectionConfig(server="test.com", port=389)
         assert config.uri == "ldap://test.com:389"
 
 
-class TestFlextLdapAuthConfigCoverage:
-    """Test FlextLdapAuthConfig uncovered branches."""
+class TestFlextLDAPAuthConfigCoverage:
+    """Test FlextLDAPAuthConfig uncovered branches."""
 
     def test_auth_config_validation(self) -> None:
         """Test authentication config validation."""
         # Test empty bind_dn - expect Pydantic validation error
 
         with pytest.raises(ValidationError, match="String should have at least"):
-            FlextLdapAuthConfig(bind_dn="", bind_password="test")
+            FlextLDAPAuthConfig(bind_dn="", bind_password="test")
 
         with pytest.raises(ValidationError, match="String should have at least"):
-            FlextLdapAuthConfig(bind_dn="   ", bind_password="test")
+            FlextLDAPAuthConfig(bind_dn="   ", bind_password="test")
 
 
-class TestFlextLdapSearchConfigCoverage:
-    """Test FlextLdapSearchConfig uncovered branches."""
+class TestFlextLDAPSearchConfigCoverage:
+    """Test FlextLDAPSearchConfig uncovered branches."""
 
     def test_search_config_validation_branches(self) -> None:
         """Test search config validation edge cases."""
         # Test invalid size_limit (covers validation branches)
         with pytest.raises(ValidationError, match="Input should be greater than 0"):
-            FlextLdapSearchConfig(size_limit=0)
+            FlextLDAPSearchConfig(size_limit=0)
 
         with pytest.raises(ValidationError, match="Input should be greater than 0"):
-            FlextLdapSearchConfig(size_limit=-1)
+            FlextLDAPSearchConfig(size_limit=-1)
 
         # Test invalid time_limit
         with pytest.raises(ValidationError, match="Input should be greater than 0"):
-            FlextLdapSearchConfig(time_limit=0)
+            FlextLDAPSearchConfig(time_limit=0)
 
 
-class TestFlextLdapSettingsCoverage:
-    """Test FlextLdapSettings uncovered branches and methods."""
+class TestFlextLDAPSettingsCoverage:
+    """Test FlextLDAPSettings uncovered branches and methods."""
 
     def test_settings_default_construction(self) -> None:
         """Test settings with default values."""
         # Test default construction (covers default value branches)
-        settings = FlextLdapSettings()
+        settings = FlextLDAPSettings()
         # Note: connection defaults to None, auth config available via methods
         assert settings.connection is None  # Default connection not set
         assert hasattr(settings, "get_effective_auth_config")  # Auth config via method
@@ -138,7 +138,7 @@ class TestFlextLdapSettingsCoverage:
                 ValueError, match="FLEXT_LDAP_HOST environment variable is required"
             ),
         ):
-            FlextLdapSettings.from_env()
+            FlextLDAPSettings.from_env()
 
     def test_settings_from_env_partial_vars(self) -> None:
         """Test from_env with partial environment variables."""
@@ -149,7 +149,7 @@ class TestFlextLdapSettingsCoverage:
         }
         with patch.dict(os.environ, env_vars, clear=True):
             with pytest.raises(ValueError):
-                FlextLdapSettings.from_env()
+                FlextLDAPSettings.from_env()
 
     def test_settings_from_env_complete_vars(self) -> None:
         """Test from_env with all required environment variables."""
@@ -163,7 +163,7 @@ class TestFlextLdapSettingsCoverage:
             "FLEXT_LDAP_USE_SSL": "false",
         }
         with patch.dict(os.environ, env_vars, clear=True):
-            settings = FlextLdapSettings.from_env()
+            settings = FlextLDAPSettings.from_env()
             assert settings.connection.server == "test.example.com"
             assert settings.connection.port == 389
             assert settings.connection.base_dn == "dc=test,dc=com"
@@ -177,7 +177,7 @@ class TestFlextLdapSettingsCoverage:
         """Test from_file with non-existent file."""
         # Test file not found (covers lines 298-305)
         with pytest.raises(FileNotFoundError):
-            FlextLdapSettings.from_file("/non/existent/file.yaml")
+            FlextLDAPSettings.from_file("/non/existent/file.yaml")
 
     def test_settings_from_file_invalid_format(self) -> None:
         """Test from_file with invalid YAML format."""
@@ -190,7 +190,7 @@ class TestFlextLdapSettingsCoverage:
 
         try:
             with pytest.raises(ValueError, match="Failed to parse configuration file"):
-                FlextLdapSettings.from_file(temp_path)
+                FlextLDAPSettings.from_file(temp_path)
         finally:
             pathlib.Path(temp_path).unlink()
 
@@ -218,7 +218,7 @@ search:
             temp_path = f.name
 
         try:
-            settings = FlextLdapSettings.from_file(temp_path)
+            settings = FlextLDAPSettings.from_file(temp_path)
             assert settings.connection.server == "yaml.example.com"
             assert settings.connection.port == 636
             assert settings.connection.base_dn == "dc=yaml,dc=com"
@@ -235,16 +235,16 @@ search:
         """Test to_dict method."""
         # Test conversion to dictionary (covers lines 355-378)
 
-        auth_config = FlextLdapAuthConfig(
+        auth_config = FlextLDAPAuthConfig(
             bind_dn="cn=test", bind_password=SecretStr("pass")
         )
-        connection_config = FlextLdapConnectionConfig(
+        connection_config = FlextLDAPConnectionConfig(
             server="test.com", port=389, auth=auth_config
         )
-        search_config = FlextLdapSearchConfig(size_limit=100)
+        search_config = FlextLDAPSearchConfig(size_limit=100)
 
-        # Use the correct field name for FlextLdapSettings (default_connection)
-        settings = FlextLdapSettings(
+        # Use the correct field name for FlextLDAPSettings (default_connection)
+        settings = FlextLDAPSettings(
             default_connection=connection_config,
             search=search_config,
         )
@@ -276,7 +276,7 @@ search:
         }
 
         # Test that we can create settings from dict using model_validate
-        settings = FlextLdapSettings.model_validate(config_dict)
+        settings = FlextLDAPSettings.model_validate(config_dict)
         assert settings.name == "test-settings"
         assert settings.version == "1.0.0"
         assert settings.environment == "test"

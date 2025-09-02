@@ -19,13 +19,12 @@ if TYPE_CHECKING:
 import pytest
 
 from flext_ldap import (
-    FlextLdapClient,
-    FlextLdapSearchRequest,
-    FlextLdapService,
-    get_ldap_container,
-    reset_ldap_container,
+    FlextLDAPClient,
+    FlextLDAPSearchRequest,
+    FlextLDAPService,
 )
-from flext_ldap.entities import FlextLdapSearchResponse
+from flext_ldap.container import FlextLDAPContainer
+from flext_ldap.entities import FlextLDAPSearchResponse
 from flext_ldap.typings import LdapAttributeDict
 
 docker: object | None
@@ -235,9 +234,6 @@ def docker_openldap_container() -> Generator[object]:
 @pytest.fixture
 def ldap_test_config(docker_openldap_container: object) -> dict[str, object]:
     """Provide LDAP test configuration for individual tests."""
-    # Reset global container for each test to ensure clean state
-    reset_ldap_container()
-
     return {
         "server_url": TEST_ENV_VARS["LDAP_TEST_SERVER"],
         "bind_dn": TEST_ENV_VARS["LDAP_TEST_BIND_DN"],
@@ -250,10 +246,11 @@ def ldap_test_config(docker_openldap_container: object) -> dict[str, object]:
 @pytest.fixture
 async def ldap_service(
     clean_ldap_container: dict[str, object],
-) -> AsyncGenerator[FlextLdapService]:
+) -> AsyncGenerator[FlextLDAPService]:
     """Provide configured LDAP service for testing."""
-    container = get_ldap_container()
-    service = FlextLdapService(container)
+    ldap_container = FlextLDAPContainer()
+    container = ldap_container.get_container()
+    service = FlextLDAPService(container)
 
     # Initialize service
     init_result = await service.initialize()
@@ -269,9 +266,9 @@ async def ldap_service(
 @pytest.fixture
 async def connected_ldap_client(
     clean_ldap_container: dict[str, object],
-) -> AsyncGenerator[FlextLdapClient]:
+) -> AsyncGenerator[FlextLDAPClient]:
     """Provide connected LDAP client for testing."""
-    client = FlextLdapClient()
+    client = FlextLDAPClient()
 
     # Connect to LDAP server
     connect_result = await client.connect(
@@ -290,12 +287,12 @@ async def connected_ldap_client(
 
 
 async def _cleanup_ldap_entries_under_dn(
-    client: FlextLdapClient,
+    client: FlextLDAPClient,
     dn: str,
 ) -> None:
     """Clean up LDAP entries under a DN to reduce nested control flow."""
     # Try to delete all entries under the specified DN
-    search_request = FlextLdapSearchRequest(
+    search_request = FlextLDAPSearchRequest(
         base_dn=dn,
         scope="subtree",
         filter_str="(objectClass=*)",
@@ -307,7 +304,7 @@ async def _cleanup_ldap_entries_under_dn(
     search_result = await client.search(search_request)
 
     # Early return if search failed or no data - use proper typing
-    empty_response = FlextLdapSearchResponse(entries=[], total_count=0)
+    empty_response = FlextLDAPSearchResponse(entries=[], total_count=0)
 
     if not search_result.is_success:
         return
@@ -332,7 +329,7 @@ async def clean_ldap_container(
     This fixture ensures each test starts with a clean LDAP directory
     by removing any test entries that might have been left behind.
     """
-    client = FlextLdapClient()
+    client = FlextLDAPClient()
 
     # Connect to LDAP
     connect_result = await client.connect(
@@ -360,7 +357,7 @@ async def clean_ldap_container(
 
 @asynccontextmanager
 async def temporary_ldap_entry(
-    client: FlextLdapClient,
+    client: FlextLDAPClient,
     dn: str,
     attributes: LdapAttributeDict,
 ) -> AsyncGenerator[str]:
