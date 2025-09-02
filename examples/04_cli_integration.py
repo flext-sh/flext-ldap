@@ -9,11 +9,11 @@ import contextlib
 
 # No need for object imports - using proper types
 from flext_cli import (
+    FlextCliConfig,  # Use class instead of function
     FlextCliContext,
     FlextCliExecutionContext,
     FlextCliOutputFormat,
     flext_cli_format,  # Updated function name
-    FlextCliConfig,   # Use class instead of function
 )
 from flext_core import FlextResult
 

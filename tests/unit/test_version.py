@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import pytest
 
-# Test real version functionality
 import flext_ldap.__version__ as version_module
 
 

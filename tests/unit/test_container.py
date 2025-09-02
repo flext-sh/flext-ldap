@@ -21,13 +21,15 @@ import unittest
 
 from flext_core import FlextContainer
 
-from flext_ldap.clients import FlextLDAPClient
-from flext_ldap.configuration import FlextLDAPConnectionConfig, FlextLDAPSettings
-from flext_ldap.container import FlextLDAPContainer, IFlextLDAPContainer
-from flext_ldap.repositories import (
+from flext_ldap import (
+    FlextLDAPClient,
+    FlextLDAPConnectionConfig,
+    FlextLDAPContainer,
     FlextLDAPGroupRepository,
     FlextLDAPRepository,
+    FlextLDAPSettings,
     FlextLDAPUserRepository,
+    IFlextLDAPContainer,
 )
 
 

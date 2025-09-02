@@ -10,7 +10,7 @@ from typing import Never
 
 from flext_core import FlextConstants
 
-from flext_ldap.domain import (
+from flext_ldap import (
     FlextLDAPActiveUserSpecification,
     FlextLDAPDistinguishedNameSpecification,
     FlextLDAPEmailSpecification,

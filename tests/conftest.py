@@ -11,12 +11,9 @@ import time
 from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, suppress
 from functools import lru_cache
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from docker.models.containers import Container
 
 import pytest
+from docker.models.containers import Container
 
 from flext_ldap import (
     FlextLDAPClient,

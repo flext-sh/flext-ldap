@@ -12,19 +12,16 @@ from datetime import UTC, datetime
 import pytest
 from flext_core import FlextConstants
 
-from flext_ldap.models import (
+from flext_ldap import (
+    FlextLDAPConnectionOperations,
     FlextLDAPCreateUserRequest,
     FlextLDAPEntry,
-    FlextLDAPGroup,
-    FlextLDAPUser,
-)
-from flext_ldap.operations import (
-    FlextLDAPConnectionOperations,
     FlextLDAPEntryOperations,
+    FlextLDAPGroup,
     FlextLDAPGroupOperations,
     FlextLDAPOperations,
-    # FlextLDAPOperationsBase now internal - use concrete classes
     FlextLDAPSearchOperations,
+    FlextLDAPUser,
     FlextLDAPUserOperations,
 )
 from flext_ldap.typings import LdapAttributeDict

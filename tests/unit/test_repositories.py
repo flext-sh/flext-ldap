@@ -11,17 +11,15 @@ import time
 import pytest
 from flext_core import FlextConstants, FlextResult
 
-from flext_ldap import repositories as repositories_module
-from flext_ldap.clients import FlextLDAPClient
-from flext_ldap.entities import (
+from flext_ldap import (
+    FlextLDAPClient,
     FlextLDAPEntry,
-    FlextLDAPSearchRequest,
-    FlextLDAPSearchResponse,
-)
-from flext_ldap.repositories import (
     FlextLDAPGroupRepository,
     FlextLDAPRepository,
+    FlextLDAPSearchRequest,
+    FlextLDAPSearchResponse,
     FlextLDAPUserRepository,
+    repositories as repositories_module,
 )
 
 

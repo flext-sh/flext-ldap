@@ -6,7 +6,7 @@ to reach 100% coverage systematically.
 
 from __future__ import annotations
 
-from flext_ldap.exceptions import (
+from flext_ldap import (
     FlextLDAPAuthenticationError,
     FlextLDAPConfigurationError,
     FlextLDAPConnectionError,

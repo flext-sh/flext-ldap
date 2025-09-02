@@ -10,8 +10,7 @@ from typing import Never
 import pytest
 from flext_core import FlextResult
 
-# Test real utilities functionality
-from flext_ldap.utilities import FlextLDAPUtilities
+from flext_ldap import FlextLDAPUtilities
 
 
 class TestRealFlextLDAPUtilities:
@@ -229,10 +228,12 @@ class TestRealFlextLDAPValidation:
         ]
 
         for non_string in non_strings:
-            with pytest.raises((
-                AttributeError,
-                ValueError,
-            )):  # Different errors for different types
+            with pytest.raises(
+                (
+                    AttributeError,
+                    ValueError,
+                )
+            ):  # Different errors for different types
                 FlextLDAPUtilities.Validation.validate_non_empty_string(
                     non_string, "test_field"
                 )
