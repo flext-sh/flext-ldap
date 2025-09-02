@@ -47,7 +47,7 @@ async def _demo_create_primary_user(_service: FlextLDAPApi) -> None:
         cn="John Doe",
         sn="Doe",
         given_name="John",
-        phone=None,
+        # phone=None,  # Field not available in CreateUserRequest
         mail="john.doe@example.com",
     )
 
@@ -91,7 +91,7 @@ async def _demo_create_additional_users(_service: FlextLDAPApi) -> None:
             sn=user_data["sn"],
             mail=user_data["mail"],
             given_name=None,
-            phone=None,
+            # phone=None,  # Field not available in CreateUserRequest
         )
 
         # Simplified for compatibility - would normally use create_user() with session
@@ -132,7 +132,7 @@ async def demonstrate_connection_handling() -> None:
         sn="User",
         given_name="Test",
         mail=None,
-        phone=None,
+        # phone=None,  # Field not available in CreateUserRequest
     )
 
     # Simplified demonstration - real implementation would use session management

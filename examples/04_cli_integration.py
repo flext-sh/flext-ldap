@@ -12,8 +12,8 @@ from flext_cli import (
     FlextCliContext,
     FlextCliExecutionContext,
     FlextCliOutputFormat,
-    cli_format_output,
-    get_config,
+    flext_cli_format,  # Updated function name
+    FlextCliConfig,   # Use class instead of function
 )
 from flext_core import FlextResult
 
@@ -24,7 +24,7 @@ class FlextLDAPCLI:
     """CLI integrada para operações LDAP usando flext-cli."""
 
     def __init__(self) -> None:
-        self.config = get_config()
+        self.config = FlextCliConfig()
         self.ldap_api = FlextLDAPApi()
         # Create CLI context with available parameters
         self.context: FlextCliContext = FlextCliContext()
@@ -103,7 +103,7 @@ class FlextLDAPCLI:
                 if " " in full_name
                 else full_name,
                 mail=email,
-                phone="+1-555-0000",  # Default phone
+                # Note: phone field removed - not available in CreateUserRequest
             )
 
             result: dict[str, object] = {
@@ -133,7 +133,9 @@ class FlextLDAPCLI:
         format_type: FlextCliOutputFormat = FlextCliOutputFormat.JSON,
     ) -> None:
         """Formatar e exibir dados usando flext-cli."""
-        cli_format_output(data, format_type, indent=2)
+        result = flext_cli_format(data, format_type)
+        if result.is_success:
+            print(result.value)
 
 
 async def main() -> None:
