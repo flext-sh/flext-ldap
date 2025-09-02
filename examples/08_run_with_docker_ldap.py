@@ -138,9 +138,9 @@ async def run_examples_with_docker() -> None:
 
     # Run the simple client example (best-effort)
     try:
-        simple_path = Path(__file__).parent / "ldap_simple_client_example.py"
+        simple_path = Path(__file__).parent / "03_ldap_simple_client.py"
         simple_module: types.ModuleType = _load_module_spec(
-            "ldap_simple_client_example", simple_path
+            "ldap_simple_client", simple_path
         )
         main_func = simple_module.main
         await main_func()

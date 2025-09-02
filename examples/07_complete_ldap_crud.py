@@ -65,7 +65,6 @@ async def create_sample_users(api: FlextLDAPApi) -> None:
             sn=user_data["sn"],
             given_name=user_data.get("given_name"),
             mail=user_data.get("mail"),
-            phone=user_data.get("phone"),
         )
         create_result: FlextResult[object] = cast(
             "FlextResult[object]", await api.create_user(request)

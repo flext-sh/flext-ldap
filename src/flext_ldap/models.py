@@ -223,7 +223,8 @@ class FlextLDAPModels(FlextModels.AggregateRoot):
 # self-assignments as ruff correctly identifies them as redundant
 
 # Entity status alias - backward compatibility
-FlextLDAPEntityStatus = getattr(FlextModels, "status", None)
+# FlextModels doesn't have a direct status attribute, use string literals
+FlextLDAPEntityStatus = "active"  # Default status for LDAP entities
 LDAPScope = FlextLDAPScopeEnum
 
 

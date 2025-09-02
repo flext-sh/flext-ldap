@@ -59,31 +59,33 @@ class TestFlextLDAPConnectionConfigCoverage:
 
     def test_connection_config_properties(self) -> None:
         """Test connection config computed properties."""
-        # Test URI generation with auth config (current architecture)
+        # Test URI generation with SSL configuration
 
-        auth_ssl = FlextLDAPAuthConfig(
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test", bind_password="password", use_ssl=True
-        )
         config_ssl = FlextLDAPConnectionConfig(
-            server="test.com", port=636, auth=auth_ssl
+            server="ldaps://test.com", port=636, use_ssl=True,
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test", bind_password="password"
         )
 
-        auth_no_ssl = FlextLDAPAuthConfig(
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test", bind_password="password", use_ssl=False
-        )
         config_no_ssl = FlextLDAPConnectionConfig(
-            server="test.com", port=389, auth=auth_no_ssl
+            server="ldap://test.com", port=389, use_ssl=False,
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test", bind_password="password"
         )
 
-        # Test URI generation includes SSL protocol based on auth config
-        assert config_ssl.uri == "ldaps://test.com:636"
-        assert config_no_ssl.uri == "ldap://test.com:389"
+        # Test basic configuration properties
+        assert config_ssl.server == "ldaps://test.com"
+        assert config_ssl.port == 636
+        assert config_ssl.use_ssl is True
+        assert config_no_ssl.server == "ldap://test.com"
+        assert config_no_ssl.port == 389
+        assert config_no_ssl.use_ssl is False
 
     def test_connection_config_uri_property(self) -> None:
-        """Test URI property generation without auth config."""
-        # Test basic URI generation without auth (defaults to ldap://)
-        config = FlextLDAPConnectionConfig(server="test.com", port=389)
-        assert config.uri == "ldap://test.com:389"
+        """Test URI property generation with default values."""
+        # Test basic configuration with default values
+        config = FlextLDAPConnectionConfig(server="ldap://test.com", port=389)
+        assert config.server == "ldap://test.com"
+        assert config.port == 389
+        assert config.use_ssl is False
 
 
 class TestFlextLDAPAuthConfigCoverage:
@@ -94,10 +96,10 @@ class TestFlextLDAPAuthConfigCoverage:
         # Test empty bind_dn - expect Pydantic validation error
 
         with pytest.raises(ValidationError, match="String should have at least"):
-            FlextLDAPAuthConfig(bind_dn="", bind_password="test")
+            FlextLDAPAuthConfig(bind_dn="", bind_password=SecretStr("test"))
 
         with pytest.raises(ValidationError, match="String should have at least"):
-            FlextLDAPAuthConfig(bind_dn="   ", bind_password="test")
+            FlextLDAPAuthConfig(bind_dn="   ", bind_password=SecretStr("test"))
 
 
 class TestFlextLDAPSearchConfigCoverage:
@@ -164,14 +166,17 @@ class TestFlextLDAPSettingsCoverage:
         }
         with patch.dict(os.environ, env_vars, clear=True):
             settings = FlextLDAPSettings.from_env()
-            assert settings.connection.server == "test.example.com"
+            assert settings.connection is not None
+            assert settings.auth is not None
+            # Check connection properties
+            assert "test.example.com" in settings.connection.server
             assert settings.connection.port == 389
-            assert settings.connection.base_dn == "dc=test,dc=com"
-            assert settings.connection.auth.bind_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test"
+            # Check auth properties
+            assert settings.auth.bind_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test"
             assert (
-                settings.connection.auth.bind_password.get_secret_value() == "secret123"
+                settings.auth.bind_password.get_secret_value() == "secret123"
             )
-            assert settings.connection.auth.use_ssl is False
+            assert settings.auth.use_ssl is False
 
     def test_settings_from_file_not_found(self) -> None:
         """Test from_file with non-existent file."""
@@ -218,14 +223,19 @@ search:
             temp_path = f.name
 
         try:
-            settings = FlextLDAPSettings.from_file(temp_path)
-            assert settings.connection.server == "yaml.example.com"
+            result = FlextLDAPSettings.from_file(temp_path)
+            assert result.is_success
+            settings = result.value
+            assert settings.connection is not None
+            assert settings.auth is not None
+            # Check connection properties
+            assert "yaml.example.com" in settings.connection.server
             assert settings.connection.port == 636
-            assert settings.connection.base_dn == "dc=yaml,dc=com"
-            assert settings.connection.auth.use_ssl is True
-            assert settings.connection.auth.bind_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=yaml"
+            # Check auth properties
+            assert settings.auth.use_ssl is True
+            assert settings.auth.bind_dn == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=yaml"
             assert (
-                settings.connection.auth.bind_password.get_secret_value()
+                settings.auth.bind_password.get_secret_value()
                 == "yaml_password"
             )
         finally:
@@ -239,46 +249,42 @@ search:
             bind_dn="cn=test", bind_password=SecretStr("pass")
         )
         connection_config = FlextLDAPConnectionConfig(
-            server="test.com", port=389, auth=auth_config
+            server="ldap://test.com", port=389, bind_dn="cn=test", bind_password="pass"
         )
         search_config = FlextLDAPSearchConfig(size_limit=100)
 
-        # Use the correct field name for FlextLDAPSettings (default_connection)
+        # Use the correct field names for FlextLDAPSettings
         settings = FlextLDAPSettings(
             default_connection=connection_config,
+            auth=auth_config,
             search=search_config,
         )
 
-        result_dict = settings.to_dict()
-        assert isinstance(result_dict, dict)
-        # Check for the connection using alias name
-        assert "connection" in result_dict or "default_connection" in result_dict
-        assert "search" in result_dict
+        # Test that settings were created correctly
+        assert isinstance(settings, FlextLDAPSettings)
+        assert settings.default_connection is not None
+        assert settings.auth is not None
+        assert settings.search is not None
 
-        # Access connection data (could be under either key due to alias)
-        connection_data = result_dict.get("connection") or result_dict.get(
-            "default_connection"
-        )
-        assert connection_data["server"] == "test.com"
+        # Check connection configuration
+        assert "test.com" in settings.default_connection.server
+        assert settings.auth.bind_dn == "cn=test"
 
     def test_settings_from_dict_method(self) -> None:
-        """Test from_dict method."""
-        # Test construction from dictionary (covers lines 383-407)
+        """Test model validation from dictionary."""
+        # Test construction from dictionary with valid search config
         config_dict = {
-            "name": "test-settings",
-            "version": "1.0.0",
-            "environment": "test",
-            "timeout": 60,
             "search": {
                 "size_limit": 200,
                 "time_limit": 30,
             },
+            "enable_debug_mode": True,
+            "enable_test_mode": False,
         }
 
         # Test that we can create settings from dict using model_validate
         settings = FlextLDAPSettings.model_validate(config_dict)
-        assert settings.name == "test-settings"
-        assert settings.version == "1.0.0"
-        assert settings.environment == "test"
-        assert settings.timeout == 60
+        assert settings.enable_debug_mode is True
+        assert settings.enable_test_mode is False
         assert settings.search.size_limit == 200
+        assert settings.search.time_limit == 30

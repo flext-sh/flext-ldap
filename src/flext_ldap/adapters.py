@@ -327,9 +327,9 @@ class FlextLDAPAdapters:
                     dn_str = str(dn) if dn else ""
 
                     # Convert attributes
-                    attributes_dict = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
-                        {k: v for k, v in result.items() if k != "dn"}
-                    )
+                    attributes_dict = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes({
+                        k: v for k, v in result.items() if k != "dn"
+                    })
 
                     # Create entry
                     entry = FlextLDAPEntry(
@@ -584,7 +584,7 @@ class FlextLDAPAdapters:
                 FlextLDAPAdapters.ConnectionConfig(
                     server="ldap://localhost:389",
                     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-                    bind_password="REDACTED_LDAP_BIND_PASSWORD",  # noqa: S106
+                    bind_password="REDACTED_LDAP_BIND_PASSWORD",
                 )
             )
             self.search = FlextLDAPAdapters.SearchService(client)

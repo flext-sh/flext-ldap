@@ -141,7 +141,7 @@ class TestExceptionFactoryMethods:
         """Test connection_failed factory method variations."""
         # Covers lines 461-469
         error1 = FlextLDAPExceptionFactory.connection_failed("server1", "timeout")
-        error2 = FlextLDAPExceptionFactory.connection_failed("server2", 389)
+        error2 = FlextLDAPExceptionFactory.connection_failed("server2", "port error")
 
         assert isinstance(error1, FlextLDAPConnectionError)
         assert isinstance(error2, FlextLDAPConnectionError)

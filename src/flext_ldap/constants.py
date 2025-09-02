@@ -174,7 +174,7 @@ class FlextLDAPConstants(FlextConstants):
         # Person Attributes (RFC 4519)
         USER_ID: Final[str] = "uid"
         MAIL: Final[str] = "mail"
-        USER_PASSWORD: Final[str] = "userPassword"  # noqa: S105
+        USER_PASSWORD: Final[str] = "userPassword"
         TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
         FACSIMILE_TELEPHONE_NUMBER: Final[str] = "facsimileTelephoneNumber"
         MOBILE: Final[str] = "mobile"

@@ -124,7 +124,7 @@ if result.success:
 - **Performance**: Nenhuma degradação de performance
 - **Segurança**: Tratamento de exceções mais específico e seguro
 - **Manutenibilidade**: Código mais limpo e organizado
-- **Documentação**: Exemplo completo criado em `examples/ldap_simple_client_example.py`
+- **Documentação**: Exemplo completo criado em `examples/03_ldap_simple_client.py`
 
 ---
 
