@@ -20,8 +20,8 @@ from flext_ldap import (
     FlextLDAPSearchRequest,
     FlextLDAPSearchResponse,
     FlextLDAPSettings,
+    FlextLDAPUser,
 )
-from flext_ldap.models import FlextLDAPUser
 
 
 class TestFlextLDAPApiRealInstantiation:

@@ -5,28 +5,11 @@ These tests import and execute REAL type guard code to increase coverage.
 
 from __future__ import annotations
 
-import os
-import pathlib
-import sys
-
-# Add the src directory to path to import directly
-sys.path.insert(
-    0,
-    os.path.join(
-        pathlib.Path(pathlib.Path(pathlib.Path(__file__).parent).parent).parent, "src"
-    ),
-)
-
-# Import the FlextLDAPTypeGuards class
-try:
-    from flext_ldap.type_guards import FlextLDAPTypeGuards
-
-    TYPE_GUARDS_AVAILABLE = True
-
-except ImportError:
-    TYPE_GUARDS_AVAILABLE = False
-
 import pytest
+
+from flext_ldap.type_guards import FlextLDAPTypeGuards
+
+TYPE_GUARDS_AVAILABLE = True
 
 
 @pytest.mark.skipif(not TYPE_GUARDS_AVAILABLE, reason="Type guards not available")

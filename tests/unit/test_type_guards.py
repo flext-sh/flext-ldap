@@ -5,8 +5,7 @@ Tests type guard functions for proper type narrowing and validation.
 
 from __future__ import annotations
 
-from flext_ldap.type_guards import FlextLDAPTypeGuards
-from flext_ldap.typings import LdapAttributeDict
+from flext_ldap import FlextLDAPTypeGuards, LdapAttributeDict
 
 
 class TestLdapTypeGuards:

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldap.value_objects import (
+from flext_ldap import (
     FlextLDAPDistinguishedName,
     FlextLDAPFilter,
     FlextLDAPScope,

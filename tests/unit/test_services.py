@@ -11,21 +11,19 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from flext_core import FlextConstants, FlextResult
 
-from flext_ldap.container import FlextLDAPContainer
-from flext_ldap.entities import (
+from flext_ldap import (
+    FlextLDAPContainer,
     FlextLDAPCreateUserRequest,
     FlextLDAPEntry,
     FlextLDAPGroup,
+    FlextLDAPGroupService,
     FlextLDAPSearchRequest,
     FlextLDAPSearchResponse,
-    FlextLDAPUser,
-)
-from flext_ldap.services import (
-    FlextLDAPGroupService,
     FlextLDAPService,
+    FlextLDAPUser,
     FlextLDAPUserService,
+    LdapAttributeDict,
 )
-from flext_ldap.typings import LdapAttributeDict
 
 
 class TestFlextLDAPServiceRealExecution:

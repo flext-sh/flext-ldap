@@ -62,13 +62,19 @@ class TestFlextLDAPConnectionConfigCoverage:
         # Test URI generation with SSL configuration
 
         config_ssl = FlextLDAPConnectionConfig(
-            server="ldaps://test.com", port=636, use_ssl=True,
-            bind_dn="cn=admin,dc=test", bind_password="password"
+            server="ldaps://test.com",
+            port=636,
+            use_ssl=True,
+            bind_dn="cn=admin,dc=test",
+            bind_password="password",
         )
 
         config_no_ssl = FlextLDAPConnectionConfig(
-            server="ldap://test.com", port=389, use_ssl=False,
-            bind_dn="cn=admin,dc=test", bind_password="password"
+            server="ldap://test.com",
+            port=389,
+            use_ssl=False,
+            bind_dn="cn=admin,dc=test",
+            bind_password="password",
         )
 
         # Test basic configuration properties
@@ -173,9 +179,7 @@ class TestFlextLDAPSettingsCoverage:
             assert settings.connection.port == 389
             # Check auth properties
             assert settings.auth.bind_dn == "cn=admin,dc=test"
-            assert (
-                settings.auth.bind_password.get_secret_value() == "secret123"
-            )
+            assert settings.auth.bind_password.get_secret_value() == "secret123"
             assert settings.auth.use_ssl is False
 
     def test_settings_from_file_not_found(self) -> None:
@@ -234,10 +238,7 @@ search:
             # Check auth properties
             assert settings.auth.use_ssl is True
             assert settings.auth.bind_dn == "cn=admin,dc=yaml"
-            assert (
-                settings.auth.bind_password.get_secret_value()
-                == "yaml_password"
-            )
+            assert settings.auth.bind_password.get_secret_value() == "yaml_password"
         finally:
             pathlib.Path(temp_path).unlink()
 

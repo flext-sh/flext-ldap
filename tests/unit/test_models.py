@@ -7,10 +7,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-# No need for cast anymore - using direct construction
-from flext_core import (
-    FlextEventList,
-)
+from flext_core import FlextEventList
 
 from flext_ldap import (
     FlextLDAPCreateUserRequest,

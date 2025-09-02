@@ -11,8 +11,7 @@ import re
 import pytest
 from flext_core import FlextConstants, FlextResult
 
-# Test real domain functionality
-from flext_ldap.domain import (
+from flext_ldap import (
     MAX_PASSWORD_LENGTH,
     MIN_PASSWORD_LENGTH,
     PASSWORD_PATTERN,

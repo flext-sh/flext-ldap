@@ -11,14 +11,23 @@ import pytest
 from flext_core import FlextResult
 from pydantic import ValidationError
 
-# Test real adapters functionality - CONSOLIDATED IMPORTS TO FIX PLC0415
-from flext_ldap.adapters import FlextLDAPAdapters
-from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap import (
+    FlextLDAPAdapters,
+    FlextLDAPClient,
+    FlextLDAPConnectionService,
+    FlextLDAPDirectoryAdapter,
+    FlextLDAPDirectoryEntry,
+    FlextLDAPDirectoryService,
+    FlextLDAPEntry,
+    FlextLDAPEntryService,
+    FlextLDAPSearchService,
+    OperationExecutor,
+    create_directory_adapter,
+    create_directory_service,
+)
 
-# Use the nested classes from FlextLDAPAdapters
 ConnectionConfig = FlextLDAPAdapters.ConnectionConfig
 DirectoryEntry = FlextLDAPAdapters.DirectoryEntry
-from flext_ldap.clients import FlextLDAPClient
 
 
 class TestRealAdaptersModels:

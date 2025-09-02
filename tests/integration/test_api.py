@@ -15,12 +15,13 @@ from flext_ldap import (
     FlextLDAPClient,
     FlextLDAPCreateUserRequest,
     FlextLDAPDistinguishedName,
+    FlextLDAPGroup as FlextLDAPGroupModel,
     FlextLDAPSearchRequest,
+    FlextLDAPSearchResponse,
     FlextLDAPService,
+    FlextLDAPUser,
+    FlextLDAPUtilities,
 )
-from flext_ldap.entities import FlextLDAPSearchResponse
-from flext_ldap.models import FlextLDAPGroup as FlextLDAPGroupModel, FlextLDAPUser
-from flext_ldap.utilities import FlextLDAPUtilities
 
 
 @pytest.mark.integration

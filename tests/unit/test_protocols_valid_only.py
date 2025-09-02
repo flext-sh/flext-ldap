@@ -18,33 +18,33 @@ class TestArchitecturalTransition:
         from flext_ldap.adapters import FlextLDAPAdapters
         from flext_ldap.operations import FlextLDAPOperations
         from flext_ldap.utilities import FlextLDAPUtilities
-        
+
         # Verify the classes exist and have expected structure
-        assert hasattr(FlextLDAPAdapters, 'ConnectionService')
-        assert hasattr(FlextLDAPOperations, 'SearchOperations')
-        assert hasattr(FlextLDAPUtilities, 'DnParser')
-        
+        assert hasattr(FlextLDAPAdapters, "ConnectionService")
+        assert hasattr(FlextLDAPOperations, "SearchOperations")
+        assert hasattr(FlextLDAPUtilities, "DnParser")
+
         # Confirm successful architectural transition
         assert True
 
     def test_no_legacy_protocols_module(self) -> None:
         """Test that legacy protocols module doesn't exist."""
         with pytest.raises(ImportError):
-            import flext_ldap.protocols  # type: ignore[import-not-found]  # Should not exist
+            pass
 
     def test_functionality_integrated_into_classes(self) -> None:
         """Test that protocol functionality is now integrated into main classes."""
         from flext_ldap.adapters import FlextLDAPAdapters
         from flext_ldap.operations import FlextLDAPOperations
-        
+
         # Test that nested classes provide the functionality that protocols used to define
-        assert hasattr(FlextLDAPAdapters, 'ConnectionService')
-        assert hasattr(FlextLDAPAdapters, 'SearchService')
-        assert hasattr(FlextLDAPAdapters, 'DirectoryService')
-        
-        assert hasattr(FlextLDAPOperations, 'SearchOperations')
-        assert hasattr(FlextLDAPOperations, 'EntryOperations')
-        
+        assert hasattr(FlextLDAPAdapters, "ConnectionService")
+        assert hasattr(FlextLDAPAdapters, "SearchService")
+        assert hasattr(FlextLDAPAdapters, "DirectoryService")
+
+        assert hasattr(FlextLDAPOperations, "SearchOperations")
+        assert hasattr(FlextLDAPOperations, "EntryOperations")
+
         # Architectural compliance verified
         assert True
 
@@ -55,23 +55,23 @@ class TestFlextCoreIntegration:
     def test_uses_flext_result_pattern(self) -> None:
         """Test that FlextResult pattern is used throughout."""
         from flext_core import FlextResult
-        
+
         # Import should work without errors
         assert FlextResult is not None
-        
+
         # FlextResult pattern is properly integrated
-        assert hasattr(FlextResult, 'ok')
-        assert hasattr(FlextResult, 'fail')
-        assert hasattr(FlextResult, 'is_success')
+        assert hasattr(FlextResult, "ok")
+        assert hasattr(FlextResult, "fail")
+        assert hasattr(FlextResult, "is_success")
 
     def test_uses_flext_models_pattern(self) -> None:
         """Test that FlextModels pattern is used correctly."""
         from flext_core import FlextModels
-        
+
         # Verify FlextModels base classes are available
-        assert hasattr(FlextModels, 'Entity')
-        assert hasattr(FlextModels, 'Value')  
-        assert hasattr(FlextModels, 'AggregateRoot')
-        
+        assert hasattr(FlextModels, "Entity")
+        assert hasattr(FlextModels, "Value")
+        assert hasattr(FlextModels, "AggregateRoot")
+
         # FlextModels pattern integration verified
         assert True

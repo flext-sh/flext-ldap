@@ -22,8 +22,8 @@ from flext_ldap import (
     FlextLDAPClient,
     FlextLDAPSearchRequest,
     FlextLDAPSearchResponse,
+    FlextLDAPUtilities,
 )
-from flext_ldap.utilities import FlextLDAPUtilities
 
 
 class TestFlextLDAPClientRealFunctionality(unittest.TestCase):

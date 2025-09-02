@@ -10,8 +10,7 @@ import time
 import pytest
 from pydantic import ValidationError
 
-# Test real config functionality
-from flext_ldap.config import FlextLDAPSettings
+from flext_ldap import FlextLDAPSettings
 
 
 class TestRealFlextLDAPSettings:
