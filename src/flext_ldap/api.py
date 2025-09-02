@@ -13,26 +13,26 @@ from typing import cast
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldap.clients import FlextLdapClient
-from flext_ldap.configuration import FlextLdapSettings
-from flext_ldap.container import get_ldap_container
+from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.configuration import FlextLDAPSettings
+from flext_ldap.container import FlextLDAPContainer
 from flext_ldap.entities import (
-    FlextLdapCreateUserRequest,
-    FlextLdapEntry,
-    FlextLdapGroup,
-    FlextLdapSearchRequest,
-    FlextLdapUser,
+    FlextLDAPCreateUserRequest,
+    FlextLDAPEntry,
+    FlextLDAPGroup,
+    FlextLDAPSearchRequest,
+    FlextLDAPUser,
 )
-from flext_ldap.exceptions import FlextLdapConnectionError
-from flext_ldap.repositories import FlextLdapRepository
-from flext_ldap.services import FlextLdapService
+from flext_ldap.exceptions import FlextLDAPConnectionError
+from flext_ldap.repositories import FlextLDAPRepository
+from flext_ldap.services import FlextLDAPService
 from flext_ldap.typings import LdapAttributeDict
-from flext_ldap.utilities import FlextLdapUtilities
+from flext_ldap.utilities import FlextLDAPUtilities
 
 logger = FlextLogger(__name__)
 
 
-class FlextLdapApi:
+class FlextLDAPApi:
     """High-level LDAP API facade using proper SOLID architecture.
 
     This API provides a clean, type-safe interface to LDAP operations
@@ -40,13 +40,14 @@ class FlextLdapApi:
     go through the service layer and use dependency injection.
     """
 
-    def __init__(self, config: FlextLdapSettings | None = None) -> None:
+    def __init__(self, config: FlextLDAPSettings | None = None) -> None:
         """Initialize API with configuration and dependency injection."""
-        self._config = config or FlextLdapSettings()
-        self._container = get_ldap_container()
-        self._service = FlextLdapService(self._container)
+        self._config = config or FlextLDAPSettings()
+        self._container_manager = FlextLDAPContainer()
+        self._container = self._container_manager.get_container()
+        self._service = FlextLDAPService(self._container)
 
-        logger.info("FlextLdapApi initialized with clean architecture")
+        logger.info("FlextLDAPApi initialized with clean architecture")
 
     def _generate_session_id(self) -> str:
         """Generate unique session ID."""
@@ -89,12 +90,12 @@ class FlextLdapApi:
             return FlextResult[str].fail("bind_dn and bind_password are required")
 
         # Get client from flext-core container
-        client_result = self._container.get("FlextLdapClient")
+        client_result = self._container.get("FlextLDAPClient")
         if not client_result.is_success:
             return FlextResult[str].fail(
                 f"Failed to get LDAP client: {client_result.error}"
             )
-        client = cast("FlextLdapClient", client_result.value)
+        client = cast("FlextLDAPClient", client_result.value)
 
         # Connect using real client
         connect_result = await client.connect(server_uri, bind_dn, bind_password)
@@ -112,12 +113,12 @@ class FlextLdapApi:
 
     async def disconnect(self, session_id: str) -> FlextResult[bool]:
         """Disconnect from LDAP server."""
-        client_result = self._container.get("FlextLdapClient")
+        client_result = self._container.get("FlextLDAPClient")
         if not client_result.is_success:
             return FlextResult[bool].fail(
                 f"Failed to get LDAP client: {client_result.error}"
             )
-        client = cast("FlextLdapClient", client_result.value)
+        client = cast("FlextLDAPClient", client_result.value)
         disconnect_result = await client.unbind()
 
         if disconnect_result.is_success:
@@ -137,13 +138,13 @@ class FlextLdapApi:
         connect_result = await self.connect(server_uri, bind_dn, bind_password)
         if not connect_result.is_success:
             msg = f"Connection failed: {connect_result.error}"
-            raise FlextLdapConnectionError(msg)
+            raise FlextLDAPConnectionError(msg)
 
         # Use FlextResult.value for modern type-safe access
         session_id = connect_result.value
         if not session_id:
             msg = "Failed to get session ID"
-            raise FlextLdapConnectionError(msg)
+            raise FlextLDAPConnectionError(msg)
 
         try:
             yield session_id
@@ -161,10 +162,10 @@ class FlextLdapApi:
         scope: str = "subtree",
         size_limit: int = 1000,
         time_limit: int = 30,
-    ) -> FlextResult[list[FlextLdapEntry]]:
+    ) -> FlextResult[list[FlextLDAPEntry]]:
         """Search LDAP directory using proper architecture."""
         # Create search request
-        search_request = FlextLdapSearchRequest(
+        search_request = FlextLDAPSearchRequest(
             base_dn=base_dn,
             scope=scope,
             filter_str=search_filter,
@@ -176,12 +177,12 @@ class FlextLdapApi:
         # Execute search via service
         search_result = await self._service.search(search_request)
         if not search_result.is_success:
-            return FlextResult[list[FlextLdapEntry]].fail(
+            return FlextResult[list[FlextLDAPEntry]].fail(
                 search_result.error or "Search failed",
             )
 
-        # Convert response entries to FlextLdapEntry objects
-        entries: list[FlextLdapEntry] = []
+        # Convert response entries to FlextLDAPEntry objects
+        entries: list[FlextLDAPEntry] = []
         for entry_data in search_result.value.entries:
             typed_entry = entry_data
             entry_dn = typed_entry.get("dn")
@@ -199,12 +200,12 @@ class FlextLdapApi:
                     object_classes = [str(oc_value)]
 
             # Convert to proper LDAP attributes format
-            ldap_attributes = FlextLdapUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            ldap_attributes = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
                 typed_entry
             )
 
             # Create entry
-            entry = FlextLdapEntry(
+            entry = FlextLDAPEntry(
                 id=f"api_entry_{str(entry_dn).replace(',', '_').replace('=', '_')}",
                 dn=str(entry_dn),
                 object_classes=object_classes,
@@ -213,18 +214,18 @@ class FlextLdapApi:
             )
             entries.append(entry)
 
-        return FlextResult[list[FlextLdapEntry]].ok(entries)
+        return FlextResult[list[FlextLDAPEntry]].ok(entries)
 
     # User Operations
 
     async def create_user(
         self,
-        user_request: FlextLdapCreateUserRequest,
-    ) -> FlextResult[FlextLdapUser]:
+        user_request: FlextLDAPCreateUserRequest,
+    ) -> FlextResult[FlextLDAPUser]:
         """Create user using proper service layer."""
         return await self._service.create_user(user_request)
 
-    async def get_user(self, dn: str) -> FlextResult[FlextLdapUser | None]:
+    async def get_user(self, dn: str) -> FlextResult[FlextLDAPUser | None]:
         """Get user by DN."""
         return await self._service.get_user(dn)
 
@@ -247,10 +248,10 @@ class FlextLdapApi:
         filter_str: str,
         base_dn: str,
         scope: str = "subtree",
-    ) -> FlextResult[list[FlextLdapUser]]:
+    ) -> FlextResult[list[FlextLDAPUser]]:
         """Search users with filter."""
         # Use the generic search method with user-specific filter
-        search_request = FlextLdapSearchRequest(
+        search_request = FlextLDAPSearchRequest(
             base_dn=base_dn,
             filter_str=f"(&(objectClass=person){filter_str})",
             scope=scope,
@@ -262,11 +263,11 @@ class FlextLdapApi:
 
         # Convert search response entries to users (simplified)
         if search_result.is_success and search_result.value:
-            users: list[FlextLdapUser] = []
+            users: list[FlextLDAPUser] = []
             for entry in search_result.value.entries:
                 # Create user from entry - simplified mapping
                 uid = self._get_entry_attribute(entry, "uid", "unknown")
-                user = FlextLdapUser(
+                user = FlextLDAPUser(
                     id=f"user_{uid}",
                     dn=self._get_entry_attribute(entry, "dn"),
                     uid=uid,
@@ -278,8 +279,8 @@ class FlextLdapApi:
                     user_password=None,
                 )
                 users.append(user)
-            return FlextResult[list[FlextLdapUser]].ok(users)
-        return FlextResult[list[FlextLdapUser]].ok([])
+            return FlextResult[list[FlextLDAPUser]].ok(users)
+        return FlextResult[list[FlextLDAPUser]].ok([])
 
     # Group Operations
 
@@ -289,10 +290,10 @@ class FlextLdapApi:
         cn: str,
         description: str | None = None,
         members: list[str] | None = None,
-    ) -> FlextResult[FlextLdapGroup]:
+    ) -> FlextResult[FlextLDAPGroup]:
         """Create group using proper service layer."""
         # Create group entity with required status
-        group = FlextLdapGroup(
+        group = FlextLDAPGroup(
             id=f"api_group_{dn.replace(',', '_').replace('=', '_')}",
             dn=dn,
             cn=cn,
@@ -304,15 +305,15 @@ class FlextLdapApi:
         # Create via service
         create_result = await self._service.create_group(group)
         if create_result.is_success:
-            return FlextResult[FlextLdapGroup].ok(group)
-        return FlextResult[FlextLdapGroup].fail(
+            return FlextResult[FlextLDAPGroup].ok(group)
+        return FlextResult[FlextLDAPGroup].fail(
             create_result.error or "Group creation failed",
         )
 
-    async def get_group(self, dn: str) -> FlextResult[FlextLdapGroup | None]:
+    async def get_group(self, dn: str) -> FlextResult[FlextLDAPGroup | None]:
         """Get group by DN."""
         # Use generic search to find group by DN
-        search_request = FlextLdapSearchRequest(
+        search_request = FlextLDAPSearchRequest(
             base_dn=dn,
             filter_str="(objectClass=groupOfNames)",
             scope="base",
@@ -335,7 +336,7 @@ class FlextLdapApi:
             members = (
                 cast("list[str]", members_raw) if isinstance(members_raw, list) else []
             )
-            group = FlextLdapGroup(
+            group = FlextLDAPGroup(
                 id=f"group_{cn}",
                 dn=self._get_entry_attribute(entry, "dn"),
                 cn=cn,
@@ -343,8 +344,8 @@ class FlextLdapApi:
                 modified_at=None,
                 description=None,
             )
-            return FlextResult[FlextLdapGroup | None].ok(group)
-        return FlextResult[FlextLdapGroup | None].ok(None)
+            return FlextResult[FlextLDAPGroup | None].ok(group)
+        return FlextResult[FlextLDAPGroup | None].ok(None)
 
     async def update_group(
         self,
@@ -374,12 +375,12 @@ class FlextLdapApi:
 
     async def delete_entry(self, dn: str) -> FlextResult[None]:
         """Delete LDAP entry by DN."""
-        repository_result = self._container.get("FlextLdapRepository")
+        repository_result = self._container.get("FlextLDAPRepository")
         if not repository_result.is_success:
             return FlextResult[None].fail(
                 f"Failed to get LDAP repository: {repository_result.error}"
             )
-        repository = cast("FlextLdapRepository", repository_result.value)
+        repository = cast("FlextLDAPRepository", repository_result.value)
         result = await repository.delete_async(dn)
         if not result.is_success:
             return FlextResult[None].fail(result.error or "Delete failed")
@@ -396,22 +397,7 @@ class FlextLdapApi:
         return self._service.validate_filter(filter_str)
 
 
-# Factory Functions
-
-
-def get_ldap_api(config: FlextLdapSettings | None = None) -> FlextLdapApi:
-    """Factory function to create FlextLdapApi instance."""
-    return FlextLdapApi(config)
-
-
-def create_ldap_api(config: FlextLdapSettings | None = None) -> FlextLdapApi:
-    """Alternative factory function for FlextLdapApi."""
-    return FlextLdapApi(config)
-
-
 # Export main API
 __all__ = [
-    "FlextLdapApi",
-    "create_ldap_api",
-    "get_ldap_api",
+    "FlextLDAPApi",
 ]

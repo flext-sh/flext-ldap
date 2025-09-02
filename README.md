@@ -25,11 +25,11 @@ make setup
 
 ```python
 import asyncio
-from flext_ldap.services import FlextLdapService
-from flext_ldap.models import FlextLdapCreateUserRequest
+from flext_ldap.services import FlextLDAPService
+from flext_ldap.models import FlextLDAPCreateUserRequest
 
 async def main() -> None:
-    service = FlextLdapService()
+    service = FlextLDAPService()
     ok = await service.connect(
         server_url="ldap://localhost:3389",
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
@@ -38,7 +38,7 @@ async def main() -> None:
     if ok.is_failure:
         raise SystemExit(f"Falha na conexão: {ok.error}")
 
-    req = FlextLdapCreateUserRequest(
+    req = FlextLDAPCreateUserRequest(
         dn="cn=jane.doe,ou=users,dc=example,dc=com",
         uid="jane.doe",
         cn="Jane",

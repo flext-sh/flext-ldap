@@ -9,44 +9,34 @@ from __future__ import annotations
 import re
 
 import pytest
-from flext_core import FlextEntityStatus, FlextModels, FlextResult
+from flext_core import FlextConstants, FlextResult
 
 # Test real domain functionality
 from flext_ldap.domain import (
     MAX_PASSWORD_LENGTH,
     MIN_PASSWORD_LENGTH,
     PASSWORD_PATTERN,
-    FlextLdapActiveUserSpecification,
-    FlextLdapCompleteUserSpecification,
-    FlextLdapDistinguishedNameSpecification,
-    FlextLdapEmailSpecification,
-    FlextLdapPasswordSpecification,
-    FlextLdapUserManagementService,
+    FlextLDAPActiveUserSpecification,
+    FlextLDAPCompleteUserSpecification,
+    FlextLDAPDistinguishedNameSpecification,
+    FlextLDAPEmailSpecification,
+    FlextLDAPPasswordSpecification,
+    FlextLDAPUserManagementService,
 )
-from flext_ldap.entities import FlextLdapEntry
+from flext_ldap.entities import FlextLDAPEntry
 
 # Test real models
-from flext_ldap.models import FlextLdapGroup, FlextLdapUser
+from flext_ldap.models import FlextLDAPGroup, FlextLDAPUser
 
 # Test real type guards
 from flext_ldap.type_guards import (
     MIN_DN_PARTS,
-    ensure_ldap_dn,
-    ensure_string_list,
-    is_bytes_list,
-    is_ldap_attribute_value,
-    is_ldap_attributes_dict,
-    is_ldap_dn,
-    is_string_list,
+    FlextLDAPTypeGuards,
 )
 
-# Test real utilities if they exist
-try:
-    from flext_ldap.utils import FlextLdapUtilities
+# Test real utilities
 
-    HAS_UTILITIES = True
-except ImportError:
-    HAS_UTILITIES = False
+HAS_UTILITIES = True
 
 
 class TestRealTypeGuards:
@@ -66,7 +56,7 @@ class TestRealTypeGuards:
         ]
 
         for dn in valid_dns:
-            result = is_ldap_dn(dn)
+            result = FlextLDAPTypeGuards.is_ldap_dn(dn)
             assert result is True, f"Valid DN failed validation: {dn}"
 
     def test_is_ldap_dn_with_real_invalid_dns(self) -> None:
@@ -83,7 +73,7 @@ class TestRealTypeGuards:
         ]
 
         for dn in invalid_dns:
-            result = is_ldap_dn(dn)
+            result = FlextLDAPTypeGuards.is_ldap_dn(dn)
             assert result is False, f"Invalid DN passed validation: {dn}"
 
     def test_is_ldap_dn_with_non_string_values(self) -> None:
@@ -91,7 +81,7 @@ class TestRealTypeGuards:
         non_string_values = [None, 123, [], {}, object()]
 
         for value in non_string_values:
-            result = is_ldap_dn(value)
+            result = FlextLDAPTypeGuards.is_ldap_dn(value)
             assert result is False, f"Non-string value passed DN validation: {value}"
 
     def test_is_ldap_attribute_value_with_real_values(self) -> None:
@@ -142,29 +132,29 @@ class TestRealTypeGuards:
     def test_ensure_ldap_dn_with_valid_dn(self) -> None:
         """Test ensure_ldap_dn with valid DN returns the DN."""
         valid_dn = "cn=test,dc=example,dc=com"
-        result = ensure_ldap_dn(valid_dn)
+        result = FlextLDAPTypeGuards.ensure_ldap_dn(valid_dn)
         assert result == valid_dn
 
     def test_ensure_ldap_dn_with_convertible_value(self) -> None:
         """Test ensure_ldap_dn converts values with = to DN."""
         convertible_value = "uid=user,ou=people"
-        result = ensure_ldap_dn(convertible_value)
+        result = FlextLDAPTypeGuards.ensure_ldap_dn(convertible_value)
         assert result == convertible_value
 
     def test_ensure_ldap_dn_raises_for_invalid_value(self) -> None:
         """Test ensure_ldap_dn raises ValueError for invalid values."""
         with pytest.raises(ValueError, match="Cannot convert.*to valid LDAP DN"):
-            ensure_ldap_dn("no equals sign")
+            FlextLDAPTypeGuards.ensure_ldap_dn("no equals sign")
 
     def test_ensure_string_list_with_string(self) -> None:
         """Test ensure_string_list converts string to list."""
-        result = ensure_string_list("single_value")
+        result = FlextLDAPTypeGuards.ensure_string_list("single_value")
         assert result == ["single_value"]
 
     def test_ensure_string_list_with_list(self) -> None:
         """Test ensure_string_list keeps list as list."""
         input_list = ["value1", "value2"]
-        result = ensure_string_list(input_list)
+        result = FlextLDAPTypeGuards.ensure_string_list(input_list)
         assert result == input_list
 
     def test_min_dn_parts_constant(self) -> None:
@@ -178,7 +168,7 @@ class TestRealDomainSpecifications:
 
     def test_password_specification_real_validation(self) -> None:
         """Test password specification with REAL password validation logic."""
-        spec = FlextLdapPasswordSpecification()
+        spec = FlextLDAPPasswordSpecification()
 
         # Test real password validation
         assert spec.name == "SecurePassword"
@@ -198,7 +188,7 @@ class TestRealDomainSpecifications:
 
     def test_dn_specification_real_validation(self) -> None:
         """Test DN specification with REAL DN validation."""
-        spec = FlextLdapDistinguishedNameSpecification()
+        spec = FlextLDAPDistinguishedNameSpecification()
 
         assert spec.name == "ValidDistinguishedName"
         assert "RFC 4514" in spec.description
@@ -217,7 +207,7 @@ class TestRealDomainSpecifications:
 
     def test_email_specification_real_validation(self) -> None:
         """Test email specification with REAL email pattern matching."""
-        spec = FlextLdapEmailSpecification()
+        spec = FlextLDAPEmailSpecification()
 
         assert spec.name == "ValidEmail"
         assert "email address" in spec.description
@@ -232,7 +222,7 @@ class TestRealDomainSpecifications:
 
     def test_user_management_service_real_validation(self) -> None:
         """Test user management service with REAL validation logic."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         # Test with missing required fields - this will definitely fail
         incomplete_data = {"uid": "test"}  # Missing required fields
@@ -244,7 +234,7 @@ class TestRealDomainSpecifications:
 
     def test_user_management_service_invalid_password(self) -> None:
         """Test user management service with password validation."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         # Complete data but with very short password
         data_with_bad_password = {
@@ -262,35 +252,35 @@ class TestRealDomainSpecifications:
 
     def test_complete_user_specification_composition(self) -> None:
         """Test complete user specification has proper composition."""
-        spec = FlextLdapCompleteUserSpecification()
+        spec = FlextLDAPCompleteUserSpecification()
 
         assert spec.name == "CompleteUser"
         assert hasattr(spec, "dn_spec")
         assert hasattr(spec, "active_spec")
 
         # Verify sub-specifications are properly initialized
-        assert isinstance(spec.dn_spec, FlextLdapDistinguishedNameSpecification)
-        assert isinstance(spec.active_spec, FlextLdapActiveUserSpecification)
+        assert isinstance(spec.dn_spec, FlextLDAPDistinguishedNameSpecification)
+        assert isinstance(spec.active_spec, FlextLDAPActiveUserSpecification)
 
 
 class TestRealModels:
     """Test REAL model creation and validation."""
 
     def test_real_ldap_user_creation(self) -> None:
-        """Test creating REAL FlextLdapUser instances."""
+        """Test creating REAL FlextLDAPUser instances."""
         # This tests the actual model validation
-        user = FlextLdapUser(
-            id=FlextModels.EntityId("test_user_123"),
+        user = FlextLDAPUser(
+            id="test_user_123",
             dn="cn=John Doe,ou=users,dc=example,dc=com",
             cn="John Doe",
             sn="Doe",
             uid="john.doe",
             mail="john.doe@example.com",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
         # Verify the model was created correctly
-        assert user.id == FlextModels.EntityId("test_user_123")
+        assert user.id == "test_user_123"
         assert user.dn == "cn=John Doe,ou=users,dc=example,dc=com"
         assert user.cn == "John Doe"
         assert user.sn == "Doe"
@@ -300,29 +290,29 @@ class TestRealModels:
         assert user.status == "active"
 
     def test_real_ldap_group_creation(self) -> None:
-        """Test creating REAL FlextLdapGroup instances."""
-        group = FlextLdapGroup(
-            id=FlextModels.EntityId("test_group_123"),
+        """Test creating REAL FlextLDAPGroup instances."""
+        group = FlextLDAPGroup(
+            id="test_group_123",
             dn="cn=REDACTED_LDAP_BIND_PASSWORDistrators,ou=groups,dc=example,dc=com",
             cn="REDACTED_LDAP_BIND_PASSWORDistrators",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
-        assert group.id == FlextModels.EntityId("test_group_123")
+        assert group.id == "test_group_123"
         assert group.dn == "cn=REDACTED_LDAP_BIND_PASSWORDistrators,ou=groups,dc=example,dc=com"
         assert group.cn == "REDACTED_LDAP_BIND_PASSWORDistrators"
         # Status is stored as string value, not enum
         assert group.status == "active"
 
     def test_real_ldap_entry_creation(self) -> None:
-        """Test creating REAL FlextLdapEntry instances."""
-        entry = FlextLdapEntry(
-            id=FlextModels.EntityId("test_entry_123"),
+        """Test creating REAL FlextLDAPEntry instances."""
+        entry = FlextLDAPEntry(
+            id="test_entry_123",
             dn="cn=test,dc=example,dc=com",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
-        assert entry.id == FlextModels.EntityId("test_entry_123")
+        assert entry.id == "test_entry_123"
         assert entry.dn == "cn=test,dc=example,dc=com"
         # Status is stored as string value, not enum
         assert entry.status == "active"
@@ -348,13 +338,13 @@ class TestRealConstants:
         assert result is None or result is not None  # Either outcome is valid
 
 
-@pytest.mark.skipif(not HAS_UTILITIES, reason="FlextLdapUtilities not available")
+@pytest.mark.skipif(not HAS_UTILITIES, reason="FlextLDAPUtilities not available")
 class TestRealUtilities:
     """Test REAL utility functions if they exist."""
 
     def test_utilities_class_exists(self) -> None:
-        """Test that FlextLdapUtilities class exists and has methods."""
-        assert hasattr(FlextLdapUtilities, "__name__")
+        """Test that FlextLDAPUtilities class exists and has methods."""
+        assert hasattr(FlextLDAPUtilities, "__name__")
 
         # Check for common utility methods
         expected_methods = [
@@ -364,8 +354,8 @@ class TestRealUtilities:
         ]
 
         for method_name in expected_methods:
-            if hasattr(FlextLdapUtilities, method_name):
-                method = getattr(FlextLdapUtilities, method_name)
+            if hasattr(FlextLDAPUtilities, method_name):
+                method = getattr(FlextLDAPUtilities, method_name)
                 assert callable(method), f"{method_name} should be callable"
 
 
@@ -374,7 +364,7 @@ class TestRealErrorHandling:
 
     def test_domain_service_handles_invalid_input_types(self) -> None:
         """Test domain service handles invalid input types gracefully."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         # Test with completely wrong input type
         result = service.validate_user_creation("not a dictionary")
@@ -387,9 +377,9 @@ class TestRealErrorHandling:
     def test_specifications_handle_none_values(self) -> None:
         """Test specifications handle None values correctly."""
         specs = [
-            FlextLdapPasswordSpecification(),
-            FlextLdapEmailSpecification(),
-            FlextLdapDistinguishedNameSpecification(),
+            FlextLDAPPasswordSpecification(),
+            FlextLDAPEmailSpecification(),
+            FlextLDAPDistinguishedNameSpecification(),
         ]
 
         for spec in specs:
@@ -399,14 +389,14 @@ class TestRealErrorHandling:
     def test_type_guards_handle_edge_cases(self) -> None:
         """Test type guards handle edge cases correctly."""
         # Empty values
-        assert not is_ldap_dn("")
+        assert not FlextLDAPTypeGuards.is_ldap_dn("")
         assert is_ldap_attribute_value("")  # Empty string is valid attribute value
         assert is_ldap_attributes_dict({})  # Empty dict is valid
 
         # Boundary conditions
-        assert not is_string_list("string")  # String is not a list
-        assert is_string_list([])  # Empty list is valid
-        assert is_bytes_list(
+        assert not FlextLDAPTypeGuards.is_string_list("string")  # String is not a list
+        assert FlextLDAPTypeGuards.is_string_list([])  # Empty list is valid
+        assert FlextLDAPTypeGuards.is_bytes_list(
             []
         )  # Empty list is valid for bytes list (discovered real behavior)
 
@@ -416,7 +406,7 @@ class TestRealIntegrationPatterns:
 
     def test_complete_user_specification_uses_sub_specs(self) -> None:
         """Test that complete user spec actually uses its sub-specifications."""
-        spec = FlextLdapCompleteUserSpecification()
+        spec = FlextLDAPCompleteUserSpecification()
 
         # Access sub-specs to ensure they work
         dn_spec = spec.dn_spec
@@ -428,7 +418,7 @@ class TestRealIntegrationPatterns:
         # Test with mock object that has required attributes
         class MockUser:
             def __init__(self) -> None:
-                self.status = FlextEntityStatus.ACTIVE
+                self.status = FlextConstants.Core.Status.EntityStatus.ACTIVE
 
         mock_user = MockUser()
         # This tests the actual is_satisfied_by logic
@@ -437,7 +427,7 @@ class TestRealIntegrationPatterns:
 
     def test_user_management_service_validation_chain(self) -> None:
         """Test that user management service validation chain works."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         # Test partial validation - each step should be testable
         assert hasattr(service, "_user_spec")
@@ -445,6 +435,6 @@ class TestRealIntegrationPatterns:
         assert hasattr(service, "_email_spec")
 
         # Verify they are the right types
-        assert isinstance(service._user_spec, FlextLdapCompleteUserSpecification)
-        assert isinstance(service._password_spec, FlextLdapPasswordSpecification)
-        assert isinstance(service._email_spec, FlextLdapEmailSpecification)
+        assert isinstance(service._user_spec, FlextLDAPCompleteUserSpecification)
+        assert isinstance(service._password_spec, FlextLDAPPasswordSpecification)
+        assert isinstance(service._email_spec, FlextLDAPEmailSpecification)

@@ -4,15 +4,12 @@ from typing import Final
 
 from flext_core import FlextLogger
 
-from flext_ldap.connection_config import FlextLdapConnectionConfig
+from flext_ldap.connection_config import FlextLDAPConnectionConfig
 from flext_ldap.settings import (
-    FlextLdapAuthConfig,
-    FlextLdapLoggingConfig,
-    FlextLdapSearchConfig,
-    FlextLdapSettings,
-    create_development_config,
-    create_production_config,
-    create_test_config,
+    FlextLDAPAuthConfig,
+    FlextLDAPLoggingConfig,
+    FlextLDAPSearchConfig,
+    FlextLDAPSettings,
 )
 
 logger = FlextLogger(__name__)
@@ -24,19 +21,16 @@ MAX_PORT: Final[int] = 65535
 # All configuration classes moved to settings.py (facade imports above)
 
 
-# FlextLdapSettings moved to settings.py (facade import above)
+# FlextLDAPSettings moved to settings.py (facade import above)
 
 
-# Factory functions moved to settings.py with FlextLdapSettings class
+# Factory functions moved to settings.py with FlextLDAPSettings class
 
 # Export all imported classes for backward compatibility
 __all__ = [
-    "FlextLdapAuthConfig",
-    "FlextLdapConnectionConfig",
-    "FlextLdapLoggingConfig",
-    "FlextLdapSearchConfig",
-    "FlextLdapSettings",
-    "create_development_config",
-    "create_production_config",
-    "create_test_config",
+    "FlextLDAPAuthConfig",
+    "FlextLDAPConnectionConfig",
+    "FlextLDAPLoggingConfig",
+    "FlextLDAPSearchConfig",
+    "FlextLDAPSettings",
 ]

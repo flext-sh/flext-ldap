@@ -12,11 +12,11 @@ import flext_ldap.protocols as protocols_module
 
 # Test ONLY valid protocols after FLEXT compliance refactoring
 from flext_ldap.protocols import (
-    FlextLdapConnectionProtocol,
-    FlextLdapEntryProtocol,
-    FlextLdapGroupProtocol,
-    FlextLdapSearchProtocol,
-    FlextLdapUserProtocol,
+    FlextLDAPConnectionProtocol,
+    FlextLDAPEntryProtocol,
+    FlextLDAPGroupProtocol,
+    FlextLDAPSearchProtocol,
+    FlextLDAPUserProtocol,
 )
 
 
@@ -26,11 +26,11 @@ class TestValidProtocolDefinitions:
     def test_runtime_checkable_protocols(self) -> None:
         """Test protocols are runtime checkable."""
         valid_protocols = [
-            FlextLdapConnectionProtocol,
-            FlextLdapSearchProtocol,
-            FlextLdapEntryProtocol,
-            FlextLdapUserProtocol,
-            FlextLdapGroupProtocol,
+            FlextLDAPConnectionProtocol,
+            FlextLDAPSearchProtocol,
+            FlextLDAPEntryProtocol,
+            FlextLDAPUserProtocol,
+            FlextLDAPGroupProtocol,
         ]
 
         for protocol in valid_protocols:
@@ -40,24 +40,24 @@ class TestValidProtocolDefinitions:
 
     def test_protocol_method_annotations(self) -> None:
         """Test protocols have proper method annotations."""
-        # Test FlextLdapConnectionProtocol
-        hints = get_type_hints(FlextLdapConnectionProtocol.connect)
+        # Test FlextLDAPConnectionProtocol
+        hints = get_type_hints(FlextLDAPConnectionProtocol.connect)
         assert "return" in hints
 
-        # Test FlextLdapSearchProtocol
-        hints = get_type_hints(FlextLdapSearchProtocol.search)
+        # Test FlextLDAPSearchProtocol
+        hints = get_type_hints(FlextLDAPSearchProtocol.search)
         assert "return" in hints
 
     def test_protocols_export_correctly(self) -> None:
         """Test valid protocols are exported from protocols module."""
         valid_exports = [
-            "FlextLdapConnectionProtocol",
-            "FlextLdapSearchProtocol",
-            "FlextLdapEntryProtocol",
-            "FlextLdapUserProtocol",
-            "FlextLdapGroupProtocol",
-            "FlextLdapRepositoryProtocol",
-            "FlextLdapValidatorProtocol",
+            "FlextLDAPConnectionProtocol",
+            "FlextLDAPSearchProtocol",
+            "FlextLDAPEntryProtocol",
+            "FlextLDAPUserProtocol",
+            "FlextLDAPGroupProtocol",
+            "FlextLDAPRepositoryProtocol",
+            "FlextLDAPValidatorProtocol",
         ]
 
         for export_name in valid_exports:
@@ -70,19 +70,19 @@ class TestProtocolCompliance:
     def test_protocols_use_flext_result(self) -> None:
         """Test protocols use FlextResult for type safety."""
         # Check that async methods return FlextResult
-        connection_hints = get_type_hints(FlextLdapConnectionProtocol.connect)
+        connection_hints = get_type_hints(FlextLDAPConnectionProtocol.connect)
         assert "FlextResult" in str(connection_hints.get("return", ""))
 
-        search_hints = get_type_hints(FlextLdapSearchProtocol.search)
+        search_hints = get_type_hints(FlextLDAPSearchProtocol.search)
         assert "FlextResult" in str(search_hints.get("return", ""))
 
     def test_no_local_abstract_classes_imported(self) -> None:
         """Verify no local abstract classes are imported after refactoring."""
         # These should NOT exist after FLEXT refactoring
         forbidden_classes = [
-            "FlextLdapOperationsBase",
-            "FlextLdapServiceBase",
-            "FlextLdapClientBase",
+            "FlextLDAPOperationsBase",
+            "FlextLDAPServiceBase",
+            "FlextLDAPClientBase",
         ]
 
         for forbidden in forbidden_classes:

@@ -12,8 +12,8 @@ from flext_cli import FlextCliExecutionContext
 from flext_core import FlextContainer, FlextTypes
 
 from flext_ldap.cli import (
-    FlextLdapCliCommandService,
-    FlextLdapCliFormatterService,
+    FlextLDAPCliCommandService,
+    FlextLDAPCliFormatterService,
     _display_entry_attributes,
     _display_search_results,
     _display_single_entry,
@@ -24,12 +24,12 @@ from flext_ldap.cli import (
 )
 
 
-class TestFlextLdapCliCommandService:
+class TestFlextLDAPCliCommandService:
     """Test CLI command service behavior."""
 
     def test_command_service_initialization(self) -> None:
         """Test CLI command service initializes correctly."""
-        service = FlextLdapCliCommandService()
+        service = FlextLDAPCliCommandService()
 
         assert service is not None
         assert hasattr(service, "_api")
@@ -37,7 +37,7 @@ class TestFlextLdapCliCommandService:
 
     def test_command_service_initialization_without_container(self) -> None:
         """Test CLI command service initializes with default container."""
-        service = FlextLdapCliCommandService()
+        service = FlextLDAPCliCommandService()
 
         assert service is not None
         assert hasattr(service, "_api")
@@ -45,7 +45,7 @@ class TestFlextLdapCliCommandService:
 
     def test_execute_command_with_invalid_command(self) -> None:
         """Test execute_command with invalid command returns error."""
-        service = FlextLdapCliCommandService()
+        service = FlextLDAPCliCommandService()
         context = FlextCliExecutionContext(
             command_name="invalid_command", command_args={}
         )
@@ -57,7 +57,7 @@ class TestFlextLdapCliCommandService:
 
     def test_execute_command_test_with_missing_args(self) -> None:
         """Test test command with missing required arguments."""
-        service = FlextLdapCliCommandService()
+        service = FlextLDAPCliCommandService()
 
         # Mock the API connection to fail due to missing args
         mock_api = Mock()
@@ -74,7 +74,7 @@ class TestFlextLdapCliCommandService:
 
     def test_execute_command_search_with_invalid_args(self) -> None:
         """Test search command with invalid arguments."""
-        service = FlextLdapCliCommandService()
+        service = FlextLDAPCliCommandService()
 
         context = FlextCliExecutionContext(
             command_name="search", command_args={"invalid": "args"}
@@ -84,20 +84,20 @@ class TestFlextLdapCliCommandService:
         assert not result.is_success
 
 
-class TestFlextLdapCliFormatterService:
+class TestFlextLDAPCliFormatterService:
     """Test CLI formatter service behavior."""
 
     def test_formatter_service_initialization(self) -> None:
         """Test CLI formatter service initializes correctly."""
         container = Mock(spec=FlextContainer)
-        service = FlextLdapCliFormatterService(container)
+        service = FlextLDAPCliFormatterService(container)
 
         assert service is not None
         assert hasattr(service, "_config")
 
     def test_formatter_service_initialization_without_container(self) -> None:
         """Test CLI formatter service initializes with default container."""
-        service = FlextLdapCliFormatterService()
+        service = FlextLDAPCliFormatterService()
 
         assert service is not None
         assert hasattr(service, "_config")
@@ -105,7 +105,7 @@ class TestFlextLdapCliFormatterService:
     def test_format_output_success_data(self) -> None:
         """Test format_output with success data."""
         container = Mock(spec=FlextContainer)
-        service = FlextLdapCliFormatterService(container)
+        service = FlextLDAPCliFormatterService(container)
 
         test_data = {"status": "success", "message": "Test successful"}
 
@@ -117,7 +117,7 @@ class TestFlextLdapCliFormatterService:
     def test_format_output_failure_data(self) -> None:
         """Test format_output with failure data."""
         container = Mock(spec=FlextContainer)
-        service = FlextLdapCliFormatterService(container)
+        service = FlextLDAPCliFormatterService(container)
 
         test_data = {"status": "error", "message": "Test failed"}
 
@@ -129,7 +129,7 @@ class TestFlextLdapCliFormatterService:
     def test_format_output_invalid_format(self) -> None:
         """Test format_output with invalid format type."""
         container = Mock(spec=FlextContainer)
-        service = FlextLdapCliFormatterService(container)
+        service = FlextLDAPCliFormatterService(container)
 
         test_data = {"test": "data"}
 
@@ -142,7 +142,7 @@ class TestFlextLdapCliFormatterService:
     def test_execute_returns_success(self) -> None:
         """Test execute method returns success."""
         container = Mock(spec=FlextContainer)
-        service = FlextLdapCliFormatterService(container)
+        service = FlextLDAPCliFormatterService(container)
 
         result = service.execute()
 
@@ -296,7 +296,7 @@ class TestCliSingletonServices:
         service2 = get_command_service()
 
         assert service1 is not None
-        assert isinstance(service1, FlextLdapCliCommandService)
+        assert isinstance(service1, FlextLDAPCliCommandService)
         assert service1 is service2  # Should be the same instance (singleton)
 
     def test_get_formatter_service(self) -> None:
@@ -305,16 +305,16 @@ class TestCliSingletonServices:
         service2 = get_formatter_service()
 
         assert service1 is not None
-        assert isinstance(service1, FlextLdapCliFormatterService)
+        assert isinstance(service1, FlextLDAPCliFormatterService)
         assert service1 is service2  # Should be the same instance (singleton)
 
 
-class TestFlextLdapCliCommandServiceAdditional:
+class TestFlextLDAPCliCommandServiceAdditional:
     """Additional tests for CLI command service."""
 
     def test_execute_test_command_with_minimal_args(self) -> None:
         """Test test command with minimal arguments."""
-        service = FlextLdapCliCommandService()
+        service = FlextLDAPCliCommandService()
 
         # Mock the API connection to fail gracefully
         mock_api = Mock()
@@ -334,7 +334,7 @@ class TestFlextLdapCliCommandServiceAdditional:
 
     def test_execute_search_command_with_minimal_args(self) -> None:
         """Test search command with minimal arguments."""
-        service = FlextLdapCliCommandService()
+        service = FlextLDAPCliCommandService()
 
         # Mock the API connection to fail gracefully
         mock_api = Mock()
@@ -355,7 +355,7 @@ class TestFlextLdapCliCommandServiceAdditional:
 
     def test_execute_user_info_command_with_minimal_args(self) -> None:
         """Test user info command with minimal arguments."""
-        service = FlextLdapCliCommandService()
+        service = FlextLDAPCliCommandService()
 
         # Mock the API connection to fail gracefully
         mock_api = Mock()
@@ -375,7 +375,7 @@ class TestFlextLdapCliCommandServiceAdditional:
 
     def test_execute_command_with_retry_logic(self) -> None:
         """Test command execution retry logic on exception."""
-        service = FlextLdapCliCommandService()
+        service = FlextLDAPCliCommandService()
 
         # Mock the API to raise exception on first call, succeed on second
         mock_api = Mock()
@@ -397,13 +397,13 @@ class TestFlextLdapCliCommandServiceAdditional:
         assert "First failure" in result.error
 
 
-class TestFlextLdapCliFormatterServiceAdditional:
+class TestFlextLDAPCliFormatterServiceAdditional:
     """Additional tests for CLI formatter service."""
 
     def test_format_output_with_specific_format_types(self) -> None:
         """Test format_output with different format types."""
         container = Mock(spec=FlextContainer)
-        service = FlextLdapCliFormatterService(container)
+        service = FlextLDAPCliFormatterService(container)
 
         test_data = {"test": "data"}
 
@@ -422,7 +422,7 @@ class TestFlextLdapCliFormatterServiceAdditional:
     def test_format_output_with_none_data(self) -> None:
         """Test format_output with None data."""
         container = Mock(spec=FlextContainer)
-        service = FlextLdapCliFormatterService(container)
+        service = FlextLDAPCliFormatterService(container)
 
         result = service.format_output(None, "table")
         assert result.is_success
@@ -430,7 +430,7 @@ class TestFlextLdapCliFormatterServiceAdditional:
     def test_format_output_with_complex_data(self) -> None:
         """Test format_output with complex nested data."""
         container = Mock(spec=FlextContainer)
-        service = FlextLdapCliFormatterService(container)
+        service = FlextLDAPCliFormatterService(container)
 
         complex_data = {
             "entries": [

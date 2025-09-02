@@ -88,10 +88,10 @@ return data
 
 **Missing Components**:
 
-- `FlextLdapDomainService` for complex business rules
-- `FlextLdapUserValidator` for domain validation
-- `FlextLdapGroupMembershipService` for group operations
-- `FlextLdapSchemaService` for schema validation
+- `FlextLDAPDomainService` for complex business rules
+- `FlextLDAPUserValidator` for domain validation
+- `FlextLDAPGroupMembershipService` for group operations
+- `FlextLDAPSchemaService` for schema validation
 
 ---
 
@@ -127,9 +127,9 @@ except Exception as e:
 
 **Issue**: Multiple configuration classes instead of centralized FlextLDAPConfig:
 
-- `FlextLdapSettings`
-- `FlextLdapConnectionConfig`
-- `FlextLdapAuthConfig`
+- `FlextLDAPSettings`
+- `FlextLDAPConnectionConfig`
+- `FlextLDAPAuthConfig`
 
 Should use single `FlextLDAPConfig` from flext-core.
 
@@ -157,10 +157,10 @@ Should use single `FlextLDAPConfig` from flext-core.
 
 **Missing Components**:
 
-- `FlextLdapUserAggregate` for user lifecycle management
-- `FlextLdapGroupAggregate` for group membership invariants
-- `FlextLdapDirectoryValue` for directory structure validation
-- `FlextLdapSearchCriteria` value object for complex queries
+- `FlextLDAPUserAggregate` for user lifecycle management
+- `FlextLDAPGroupAggregate` for group membership invariants
+- `FlextLDAPDirectoryValue` for directory structure validation
+- `FlextLDAPSearchCriteria` value object for complex queries
 
 #### 4.3 **No Domain Events**
 

@@ -3,13 +3,14 @@
 from pathlib import Path
 from typing import ClassVar
 
-from flext_core import FlextConfig, FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult
+from flext_core.config import FlextConfig
 from pydantic import Field, field_validator
 
 logger = FlextLogger(__name__)
 
 
-class FlextLdapConnectionConfig(FlextConfig):
+class FlextLDAPConnectionConfig(FlextConfig):
     """LDAP connection configuration with validation."""
 
     model_config: ClassVar = {
@@ -137,4 +138,4 @@ class FlextLdapConnectionConfig(FlextConfig):
             return FlextResult[None].fail(f"Configuration validation failed: {e}")
 
 
-__all__ = ["FlextLdapConnectionConfig"]
+__all__ = ["FlextLDAPConnectionConfig"]

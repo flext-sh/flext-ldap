@@ -1,4 +1,4 @@
-"""LDAP Value Objects - Single FlextLdapValueObjects class following FLEXT patterns.
+"""LDAP Value Objects - Single FlextLDAPValueObjects class following FLEXT patterns.
 
 Single class with all LDAP value objects following domain-driven design patterns
 organized as internal classes for complete backward compatibility.
@@ -6,10 +6,10 @@ organized as internal classes for complete backward compatibility.
 Examples:
     Distinguished Name operations::
 
-        from value_objects import FlextLdapValueObjects
+        from value_objects import FlextLDAPValueObjects
 
         # Create DN
-        dn_result = FlextLdapValueObjects.DistinguishedName.create(
+        dn_result = FlextLDAPValueObjects.DistinguishedName.create(
             "cn=user,dc=example,dc=com"
         )
         dn = dn_result.value
@@ -20,21 +20,21 @@ Examples:
     Filter operations::
 
         # Create filters
-        filter_obj = FlextLdapValueObjects.Filter.equals("uid", "john")
-        complex_filter = FlextLdapValueObjects.Filter.object_class("person")
+        filter_obj = FlextLDAPValueObjects.Filter.equals("uid", "john")
+        complex_filter = FlextLDAPValueObjects.Filter.object_class("person")
 
     Scope operations::
 
         # Create scopes
-        base_scope = FlextLdapValueObjects.Scope.base()
-        sub_scope = FlextLdapValueObjects.Scope.sub()
+        base_scope = FlextLDAPValueObjects.Scope.base()
+        sub_scope = FlextLDAPValueObjects.Scope.sub()
 
     Legacy compatibility::
 
         # All previous classes still work as direct imports
-        from value_objects import FlextLdapDistinguishedName, FlextLdapFilter
+        from value_objects import FlextLDAPDistinguishedName, FlextLDAPFilter
 
-        dn = FlextLdapDistinguishedName(value="cn=user,dc=example,dc=com")
+        dn = FlextLDAPDistinguishedName(value="cn=user,dc=example,dc=com")
 
 """
 
@@ -53,8 +53,8 @@ logger = FlextLogger(__name__)
 # =============================================================================
 
 
-class FlextLdapValueObjects:
-    """Single FlextLdapValueObjects class with all LDAP value objects.
+class FlextLDAPValueObjects:
+    """Single FlextLDAPValueObjects class with all LDAP value objects.
 
     Consolidates ALL LDAP value objects into a single class following FLEXT patterns.
     Everything from DN validation to filter creation is available as internal classes
@@ -65,12 +65,12 @@ class FlextLdapValueObjects:
         - Open/Closed: Extensible without modification
         - Liskov Substitution: Consistent interface across all value objects
         - Interface Segregation: Organized by value object type for specific access
-        - Dependency Inversion: Depends on FlextModels.Value abstraction
+        - Dependency Inversion: Depends on FlextModels abstraction
 
     Examples:
         Distinguished Name operations::
 
-            dn_result = FlextLdapValueObjects.DistinguishedName.create(
+            dn_result = FlextLDAPValueObjects.DistinguishedName.create(
                 "cn=user,dc=example,dc=com"
             )
             if dn_result.is_success:
@@ -80,15 +80,15 @@ class FlextLdapValueObjects:
 
         Filter operations::
 
-            equals_filter = FlextLdapValueObjects.Filter.equals("uid", "john")
-            class_filter = FlextLdapValueObjects.Filter.object_class("person")
-            all_filter = FlextLdapValueObjects.Filter.all_objects()
+            equals_filter = FlextLDAPValueObjects.Filter.equals("uid", "john")
+            class_filter = FlextLDAPValueObjects.Filter.object_class("person")
+            all_filter = FlextLDAPValueObjects.Filter.all_objects()
 
         Scope operations::
 
-            base_scope = FlextLdapValueObjects.Scope.base()
-            one_scope = FlextLdapValueObjects.Scope.one()
-            sub_scope = FlextLdapValueObjects.Scope.sub()
+            base_scope = FlextLDAPValueObjects.Scope.base()
+            one_scope = FlextLDAPValueObjects.Scope.one()
+            sub_scope = FlextLDAPValueObjects.Scope.sub()
 
     """
 
@@ -148,7 +148,7 @@ class FlextLdapValueObjects:
             return self.value.split(",", 1)[0].strip()
 
         def is_descendant_of(
-            self, parent_dn: str | FlextLdapValueObjects.DistinguishedName
+            self, parent_dn: str | FlextLDAPValueObjects.DistinguishedName
         ) -> bool:
             """Check if this DN is a descendant of the given parent DN."""
             parent_str = parent_dn if isinstance(parent_dn, str) else parent_dn.value
@@ -157,7 +157,7 @@ class FlextLdapValueObjects:
         @classmethod
         def create(
             cls, value: str
-        ) -> FlextResult[FlextLdapValueObjects.DistinguishedName]:
+        ) -> FlextResult[FlextLDAPValueObjects.DistinguishedName]:
             """Create DN from string with validation."""
             try:
                 dn = cls(value=value)
@@ -204,26 +204,26 @@ class FlextLdapValueObjects:
                 return FlextResult[None].fail(f"Scope validation error: {e}")
 
         @classmethod
-        def create(cls, scope: str) -> FlextResult[FlextLdapValueObjects.Scope]:
+        def create(cls, scope: str) -> FlextResult[FlextLDAPValueObjects.Scope]:
             """Create scope value object with validation."""
             try:
                 scope_obj = cls(scope=scope)
-                return FlextResult[FlextLdapValueObjects.Scope].ok(scope_obj)
+                return FlextResult[FlextLDAPValueObjects.Scope].ok(scope_obj)
             except ValueError as e:
-                return FlextResult[FlextLdapValueObjects.Scope].fail(str(e))
+                return FlextResult[FlextLDAPValueObjects.Scope].fail(str(e))
 
         @classmethod
-        def base(cls) -> FlextLdapValueObjects.Scope:
+        def base(cls) -> FlextLDAPValueObjects.Scope:
             """Create base scope (search only the entry itself)."""
             return cls(scope="base")
 
         @classmethod
-        def one(cls) -> FlextLdapValueObjects.Scope:
+        def one(cls) -> FlextLDAPValueObjects.Scope:
             """Create one-level scope (search direct children only)."""
             return cls(scope="one")
 
         @classmethod
-        def sub(cls) -> FlextLdapValueObjects.Scope:
+        def sub(cls) -> FlextLDAPValueObjects.Scope:
             """Create subtree scope (search entry and all descendants)."""
             return cls(scope="sub")
 
@@ -284,33 +284,33 @@ class FlextLdapValueObjects:
                 return FlextResult[None].fail(f"Filter validation error: {e}")
 
         @classmethod
-        def create(cls, value: str) -> FlextResult[FlextLdapValueObjects.Filter]:
+        def create(cls, value: str) -> FlextResult[FlextLDAPValueObjects.Filter]:
             """Create filter from string with validation."""
             try:
                 filter_obj = cls(value=value)
-                return FlextResult[FlextLdapValueObjects.Filter].ok(filter_obj)
+                return FlextResult[FlextLDAPValueObjects.Filter].ok(filter_obj)
             except Exception as e:
-                return FlextResult[FlextLdapValueObjects.Filter].fail(str(e))
+                return FlextResult[FlextLDAPValueObjects.Filter].fail(str(e))
 
         @classmethod
-        def equals(cls, attribute: str, value: str) -> FlextLdapValueObjects.Filter:
+        def equals(cls, attribute: str, value: str) -> FlextLDAPValueObjects.Filter:
             """Create equality filter."""
             return cls(value=f"({attribute}={value})")
 
         @classmethod
         def starts_with(
             cls, attribute: str, value: str
-        ) -> FlextLdapValueObjects.Filter:
+        ) -> FlextLDAPValueObjects.Filter:
             """Create starts-with filter."""
             return cls(value=f"({attribute}={value}*)")
 
         @classmethod
-        def object_class(cls, object_class: str) -> FlextLdapValueObjects.Filter:
+        def object_class(cls, object_class: str) -> FlextLDAPValueObjects.Filter:
             """Create object class filter."""
             return cls(value=f"(objectClass={object_class})")
 
         @classmethod
-        def all_objects(cls) -> FlextLdapValueObjects.Filter:
+        def all_objects(cls) -> FlextLDAPValueObjects.Filter:
             """Create filter that matches all objects."""
             return cls(value="(objectClass=*)")
 
@@ -320,9 +320,9 @@ class FlextLdapValueObjects:
 # =============================================================================
 
 # Legacy class aliases for backward compatibility
-FlextLdapDistinguishedName = FlextLdapValueObjects.DistinguishedName
-FlextLdapScope = FlextLdapValueObjects.Scope
-FlextLdapFilter = FlextLdapValueObjects.Filter
+FlextLDAPDistinguishedName = FlextLDAPValueObjects.DistinguishedName
+FlextLDAPScope = FlextLDAPValueObjects.Scope
+FlextLDAPFilter = FlextLDAPValueObjects.Filter
 
 
 # =============================================================================
@@ -331,9 +331,9 @@ FlextLdapFilter = FlextLdapValueObjects.Filter
 
 __all__ = [
     # Legacy compatibility classes
-    "FlextLdapDistinguishedName",
-    "FlextLdapFilter",
-    "FlextLdapScope",
+    "FlextLDAPDistinguishedName",
+    "FlextLDAPFilter",
+    "FlextLDAPScope",
     # Primary consolidated class
-    "FlextLdapValueObjects",
+    "FlextLDAPValueObjects",
 ]

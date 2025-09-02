@@ -10,23 +10,21 @@ COVERAGE TARGET: adapters.py (47% -> 80%+) - 146 missing lines
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from flext_core import FlextEntityStatus, FlextModels, FlextResult
+from flext_core import FlextConstants, FlextResult
 
 from flext_ldap.adapters import (
     ConnectionConfig,
     DirectoryEntry,
-    FlextLdapConnectionService,
-    FlextLdapDirectoryAdapter,
-    FlextLdapDirectoryEntry,
-    FlextLdapDirectoryService,
-    FlextLdapEntryService,
-    FlextLdapSearchService,
+    FlextLDAPConnectionService,
+    FlextLDAPDirectoryAdapter,
+    FlextLDAPDirectoryEntry,
+    FlextLDAPDirectoryService,
+    FlextLDAPEntryService,
+    FlextLDAPSearchService,
     OperationExecutor,
-    create_directory_adapter,
-    create_directory_service,
 )
-from flext_ldap.clients import FlextLdapClient
-from flext_ldap.entities import FlextLdapEntry
+from flext_ldap.clients import FlextLDAPClient
+from flext_ldap.entities import FlextLDAPEntry
 
 
 class TestDirectoryEntryRealCoverage:
@@ -361,20 +359,20 @@ class TestOperationExecutorRealCoverage:
         assert result.error == "Disconnect operation failed"
 
 
-class TestFlextLdapConnectionServiceRealCoverage:
-    """Test FlextLdapConnectionService with real connection logic."""
+class TestFlextLDAPConnectionServiceRealCoverage:
+    """Test FlextLDAPConnectionService with real connection logic."""
 
     def setup_method(self) -> None:
         """Setup test fixtures."""
         # Create REAL mock client for controlled testing
-        self.mock_client = MagicMock(spec=FlextLdapClient)
-        self.service = FlextLdapConnectionService(self.mock_client)
+        self.mock_client = MagicMock(spec=FlextLDAPClient)
+        self.service = FlextLDAPConnectionService(self.mock_client)
 
     def test_connection_service_initialization(self) -> None:
-        """Test FlextLdapConnectionService initializes correctly."""
+        """Test FlextLDAPConnectionService initializes correctly."""
         # Test REAL initialization
-        client = MagicMock(spec=FlextLdapClient)
-        service = FlextLdapConnectionService(client)
+        client = MagicMock(spec=FlextLDAPClient)
+        service = FlextLDAPConnectionService(client)
 
         # Verify REAL initialization state
         assert service._ldap_client is client
@@ -664,20 +662,20 @@ class TestFlextLdapConnectionServiceRealCoverage:
         assert error is None  # This is the bug - port 0 should be rejected
 
 
-class TestFlextLdapSearchServiceRealCoverage:
-    """Test FlextLdapSearchService with real search logic."""
+class TestFlextLDAPSearchServiceRealCoverage:
+    """Test FlextLDAPSearchService with real search logic."""
 
     def setup_method(self) -> None:
         """Setup test fixtures."""
         # Create REAL mock client for controlled testing
-        self.mock_client = MagicMock(spec=FlextLdapClient)
-        self.service = FlextLdapSearchService(self.mock_client)
+        self.mock_client = MagicMock(spec=FlextLDAPClient)
+        self.service = FlextLDAPSearchService(self.mock_client)
 
     def test_search_service_initialization(self) -> None:
-        """Test FlextLdapSearchService initializes correctly."""
+        """Test FlextLDAPSearchService initializes correctly."""
         # Test REAL initialization
-        client = MagicMock(spec=FlextLdapClient)
-        service = FlextLdapSearchService(client)
+        client = MagicMock(spec=FlextLDAPClient)
+        service = FlextLDAPSearchService(client)
 
         # Verify REAL initialization state
         assert service._ldap_client is client
@@ -725,16 +723,16 @@ class TestFlextLdapSearchServiceRealCoverage:
         assert entries[0].dn == "cn=user1,ou=users,dc=example,dc=com"
         # Status is stored as string value of enum in the real implementation
         assert (
-            entries[0].status == FlextEntityStatus.ACTIVE.value
-            or entries[0].status == FlextEntityStatus.ACTIVE
+            entries[0].status == FlextConstants.Core.Status.EntityStatus.ACTIVE.value
+            or entries[0].status == FlextConstants.Core.Status.EntityStatus.ACTIVE
         )
 
         # Verify second entry
         assert entries[1].dn == "cn=user2,ou=users,dc=example,dc=com"
         # Status is stored as string value of enum in the real implementation
         assert (
-            entries[1].status == FlextEntityStatus.ACTIVE.value
-            or entries[1].status == FlextEntityStatus.ACTIVE
+            entries[1].status == FlextConstants.Core.Status.EntityStatus.ACTIVE.value
+            or entries[1].status == FlextConstants.Core.Status.EntityStatus.ACTIVE
         )
 
         # Verify search request parameters
@@ -1009,20 +1007,20 @@ class TestFlextLdapSearchServiceRealCoverage:
         assert "none_value" not in result  # None values are filtered
 
 
-class TestFlextLdapEntryServiceRealCoverage:
-    """Test FlextLdapEntryService with real entry manipulation logic."""
+class TestFlextLDAPEntryServiceRealCoverage:
+    """Test FlextLDAPEntryService with real entry manipulation logic."""
 
     def setup_method(self) -> None:
         """Setup test fixtures."""
         # Create REAL mock client for controlled testing
-        self.mock_client = MagicMock(spec=FlextLdapClient)
-        self.service = FlextLdapEntryService(self.mock_client)
+        self.mock_client = MagicMock(spec=FlextLDAPClient)
+        self.service = FlextLDAPEntryService(self.mock_client)
 
     def test_entry_service_initialization(self) -> None:
-        """Test FlextLdapEntryService initializes correctly."""
+        """Test FlextLDAPEntryService initializes correctly."""
         # Test REAL initialization
-        client = MagicMock(spec=FlextLdapClient)
-        service = FlextLdapEntryService(client)
+        client = MagicMock(spec=FlextLDAPClient)
+        service = FlextLDAPEntryService(client)
 
         # Verify REAL initialization state
         assert service._ldap_client is client
@@ -1160,9 +1158,9 @@ class TestFlextLdapEntryServiceRealCoverage:
         self.mock_client.modify.return_value = FlextResult[bool].ok(True)
 
         # Create expected entry for search result
-        expected_entry = FlextLdapEntry(
-            id=FlextModels.EntityId("modified-user"),
-            status=FlextEntityStatus.ACTIVE,
+        expected_entry = FlextLDAPEntry(
+            id="modified-user",
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
             dn=dn,
             attributes={
                 "cn": ["User"],
@@ -1171,12 +1169,12 @@ class TestFlextLdapEntryServiceRealCoverage:
             },
         )
 
-        # Mock the FlextLdapSearchService that gets created internally
-        with patch("flext_ldap.adapters.FlextLdapSearchService") as MockSearchService:
+        # Mock the FlextLDAPSearchService that gets created internally
+        with patch("flext_ldap.adapters.FlextLDAPSearchService") as MockSearchService:
             mock_search_instance = MockSearchService.return_value
             # Mock the async search_entries method
             mock_search_instance.search_entries = AsyncMock(
-                return_value=FlextResult[list[FlextLdapEntry]].ok([expected_entry])
+                return_value=FlextResult[list[FlextLDAPEntry]].ok([expected_entry])
             )
 
             # Execute REAL modify operation
@@ -1436,11 +1434,11 @@ class TestFlextLdapEntryServiceRealCoverage:
             assert "DN cannot be empty" in error
 
 
-class TestFlextLdapDirectoryEntryRealCoverage:
-    """Test FlextLdapDirectoryEntry with real protocol compatibility logic."""
+class TestFlextLDAPDirectoryEntryRealCoverage:
+    """Test FlextLDAPDirectoryEntry with real protocol compatibility logic."""
 
     def test_directory_entry_initialization_valid_data(self) -> None:
-        """Test FlextLdapDirectoryEntry initializes with valid data."""
+        """Test FlextLDAPDirectoryEntry initializes with valid data."""
         # Setup REAL test scenario
         dn = "cn=testuser,ou=users,dc=example,dc=com"
         attributes = {
@@ -1451,7 +1449,7 @@ class TestFlextLdapDirectoryEntryRealCoverage:
         }
 
         # Execute REAL initialization
-        entry = FlextLdapDirectoryEntry(dn, attributes)
+        entry = FlextLDAPDirectoryEntry(dn, attributes)
 
         # Verify REAL initialization logic
         assert entry.dn == dn
@@ -1468,7 +1466,7 @@ class TestFlextLdapDirectoryEntryRealCoverage:
         assert entry.attributes["objectClass"] == ["person", "inetOrgPerson"]
 
     def test_directory_entry_initialization_mixed_attribute_types(self) -> None:
-        """Test FlextLdapDirectoryEntry handles mixed attribute types."""
+        """Test FlextLDAPDirectoryEntry handles mixed attribute types."""
         # Setup REAL test scenario with mixed types
         dn = "cn=testuser,dc=example,dc=com"
         attributes = {
@@ -1482,7 +1480,7 @@ class TestFlextLdapDirectoryEntryRealCoverage:
         }
 
         # Execute REAL initialization
-        entry = FlextLdapDirectoryEntry(dn, attributes)
+        entry = FlextLDAPDirectoryEntry(dn, attributes)
 
         # Verify REAL type conversion logic based on actual implementation
         assert entry.attributes["cn"] == ["Single String"]  # String -> [String]
@@ -1507,7 +1505,7 @@ class TestFlextLdapDirectoryEntryRealCoverage:
             "telephoneNumber": ["+1-555-123-4567"],
         }
 
-        entry = FlextLdapDirectoryEntry(dn, attributes)
+        entry = FlextLDAPDirectoryEntry(dn, attributes)
 
         # Execute REAL attribute retrieval
         cn_values = entry.get_attribute_values("cn")
@@ -1525,7 +1523,7 @@ class TestFlextLdapDirectoryEntryRealCoverage:
         dn = "cn=testuser,dc=example,dc=com"
         attributes = {"cn": ["Test User"]}
 
-        entry = FlextLdapDirectoryEntry(dn, attributes)
+        entry = FlextLDAPDirectoryEntry(dn, attributes)
 
         # Execute REAL attribute retrieval for nonexistent attributes
         nonexistent_values = entry.get_attribute_values("nonexistent")
@@ -1545,7 +1543,7 @@ class TestFlextLdapDirectoryEntryRealCoverage:
             "objectClass": ["person"],
         }
 
-        entry = FlextLdapDirectoryEntry(dn, attributes)
+        entry = FlextLDAPDirectoryEntry(dn, attributes)
 
         # Execute REAL case-sensitive attribute retrieval
         cn_lower = entry.get_attribute_values("cn")
@@ -1558,13 +1556,13 @@ class TestFlextLdapDirectoryEntryRealCoverage:
         assert cn_mixed == []  # Different case should not match
 
     def test_directory_entry_empty_attributes_handling(self) -> None:
-        """Test FlextLdapDirectoryEntry handles empty attributes gracefully."""
+        """Test FlextLDAPDirectoryEntry handles empty attributes gracefully."""
         # Setup REAL test scenario with empty attributes
         dn = "cn=testuser,dc=example,dc=com"
         attributes = {}
 
         # Execute REAL initialization with empty attributes
-        entry = FlextLdapDirectoryEntry(dn, attributes)
+        entry = FlextLDAPDirectoryEntry(dn, attributes)
 
         # Verify REAL empty attributes handling
         assert entry.dn == dn
@@ -1572,13 +1570,13 @@ class TestFlextLdapDirectoryEntryRealCoverage:
         assert entry.get_attribute_values("any") == []
 
     def test_directory_entry_complex_dn_handling(self) -> None:
-        """Test FlextLdapDirectoryEntry handles complex DNs correctly."""
+        """Test FlextLDAPDirectoryEntry handles complex DNs correctly."""
         # Setup REAL test scenario with complex DN
         complex_dn = "cn=John Doe+employeeNumber=12345,ou=Engineering,ou=Employees,dc=company,dc=com"
         attributes = {"cn": ["John Doe"], "employeeNumber": ["12345"]}
 
         # Execute REAL initialization
-        entry = FlextLdapDirectoryEntry(complex_dn, attributes)
+        entry = FlextLDAPDirectoryEntry(complex_dn, attributes)
 
         # Verify REAL complex DN handling
         assert entry.dn == complex_dn
@@ -1586,18 +1584,18 @@ class TestFlextLdapDirectoryEntryRealCoverage:
         assert entry.attributes["employeeNumber"] == ["12345"]
 
 
-class TestFlextLdapDirectoryServiceRealCoverage:
-    """Test FlextLdapDirectoryService with real directory service logic."""
+class TestFlextLDAPDirectoryServiceRealCoverage:
+    """Test FlextLDAPDirectoryService with real directory service logic."""
 
     def setup_method(self) -> None:
         """Setup test fixtures."""
         # Create REAL service instance for testing
-        self.service = FlextLdapDirectoryService()
+        self.service = FlextLDAPDirectoryService()
 
     def test_directory_service_initialization(self) -> None:
-        """Test FlextLdapDirectoryService initializes correctly."""
+        """Test FlextLDAPDirectoryService initializes correctly."""
         # Test REAL initialization
-        service = FlextLdapDirectoryService()
+        service = FlextLDAPDirectoryService()
 
         # Verify REAL initialization components
         assert service._ldap_client is not None
@@ -1606,9 +1604,9 @@ class TestFlextLdapDirectoryServiceRealCoverage:
         assert service._entry_service is not None
 
         # Verify service types
-        assert isinstance(service._connection_service, FlextLdapConnectionService)
-        assert isinstance(service._search_service, FlextLdapSearchService)
-        assert isinstance(service._entry_service, FlextLdapEntryService)
+        assert isinstance(service._connection_service, FlextLDAPConnectionService)
+        assert isinstance(service._search_service, FlextLDAPSearchService)
+        assert isinstance(service._entry_service, FlextLDAPEntryService)
 
     @pytest.mark.asyncio
     async def test_connect_successful_connection(self) -> None:
@@ -1707,9 +1705,9 @@ class TestFlextLdapDirectoryServiceRealCoverage:
 
         # Mock successful search results
         mock_entries = [
-            FlextLdapEntry(
-                id=FlextModels.EntityId("user1"),
-                status=FlextEntityStatus.ACTIVE,
+            FlextLDAPEntry(
+                id="user1",
+                status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
                 dn="cn=user1,ou=users,dc=example,dc=com",
                 attributes={
                     "cn": ["User One"],
@@ -1717,9 +1715,9 @@ class TestFlextLdapDirectoryServiceRealCoverage:
                     "mail": ["user1@example.com"],
                 },
             ),
-            FlextLdapEntry(
-                id=FlextModels.EntityId("user2"),
-                status=FlextEntityStatus.ACTIVE,
+            FlextLDAPEntry(
+                id="user2",
+                status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
                 dn="cn=user2,ou=users,dc=example,dc=com",
                 attributes={
                     "cn": ["User Two"],
@@ -1733,7 +1731,7 @@ class TestFlextLdapDirectoryServiceRealCoverage:
         with patch.object(self.service._search_service, "search_entries"):
             # Setup asyncio.run to return mocked results
             with patch("asyncio.run") as mock_run:
-                mock_run.return_value = FlextResult[list[FlextLdapEntry]].ok(
+                mock_run.return_value = FlextResult[list[FlextLDAPEntry]].ok(
                     mock_entries
                 )
 
@@ -1757,7 +1755,7 @@ class TestFlextLdapDirectoryServiceRealCoverage:
         # Mock empty search results
         with patch.object(self.service._search_service, "search_entries"):
             with patch("asyncio.run") as mock_run:
-                mock_run.return_value = FlextResult[list[FlextLdapEntry]].ok([])
+                mock_run.return_value = FlextResult[list[FlextLDAPEntry]].ok([])
 
                 # Execute REAL search with default base DN
                 result = self.service.search_users(search_filter)
@@ -1775,7 +1773,7 @@ class TestFlextLdapDirectoryServiceRealCoverage:
         # Mock search service failure
         with patch.object(self.service._search_service, "search_entries"):
             with patch("asyncio.run") as mock_run:
-                mock_run.return_value = FlextResult[list[FlextLdapEntry]].fail(
+                mock_run.return_value = FlextResult[list[FlextLDAPEntry]].fail(
                     "LDAP server unreachable"
                 )
 
@@ -1806,15 +1804,15 @@ class TestFlextLdapDirectoryServiceRealCoverage:
         """Test _convert_entries_to_protocol with valid entries."""
         # Setup REAL test scenario
         entries_data = [
-            FlextLdapEntry(
-                id=FlextModels.EntityId("user1"),
-                status=FlextEntityStatus.ACTIVE,
+            FlextLDAPEntry(
+                id="user1",
+                status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
                 dn="cn=user1,dc=example,dc=com",
                 attributes={"cn": ["User One"], "objectClass": ["person"]},
             ),
-            FlextLdapEntry(
-                id=FlextModels.EntityId("user2"),
-                status=FlextEntityStatus.ACTIVE,
+            FlextLDAPEntry(
+                id="user2",
+                status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
                 dn="cn=user2,dc=example,dc=com",
                 attributes={"cn": ["User Two"], "mail": ["user2@example.com"]},
             ),
@@ -1848,9 +1846,9 @@ class TestFlextLdapDirectoryServiceRealCoverage:
         """Test _convert_entries_to_protocol with invalid entries."""
         # Setup REAL test scenario with mixed valid/invalid entries
         entries_data = [
-            FlextLdapEntry(
-                id=FlextModels.EntityId("valid"),
-                status=FlextEntityStatus.ACTIVE,
+            FlextLDAPEntry(
+                id="valid",
+                status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
                 dn="cn=valid,dc=example,dc=com",
                 attributes={"cn": ["Valid"]},
             ),
@@ -1903,29 +1901,29 @@ class TestFlextLdapDirectoryServiceRealCoverage:
         assert result["telephoneNumber"] == ["+1-555-123", "+1-555-456", "+1-555-789"]
 
 
-class TestFlextLdapDirectoryAdapterRealCoverage:
-    """Test FlextLdapDirectoryAdapter with real adapter logic."""
+class TestFlextLDAPDirectoryAdapterRealCoverage:
+    """Test FlextLDAPDirectoryAdapter with real adapter logic."""
 
     def test_directory_adapter_initialization(self) -> None:
-        """Test FlextLdapDirectoryAdapter initializes correctly."""
+        """Test FlextLDAPDirectoryAdapter initializes correctly."""
         # Test REAL initialization
-        adapter = FlextLdapDirectoryAdapter()
+        adapter = FlextLDAPDirectoryAdapter()
 
         # Verify REAL initialization components
         assert adapter._directory_service is not None
-        assert isinstance(adapter._directory_service, FlextLdapDirectoryService)
+        assert isinstance(adapter._directory_service, FlextLDAPDirectoryService)
 
     def test_get_directory_service_returns_service(self) -> None:
         """Test get_directory_service returns the correct service instance."""
         # Setup REAL test scenario
-        adapter = FlextLdapDirectoryAdapter()
+        adapter = FlextLDAPDirectoryAdapter()
 
         # Execute REAL service retrieval
         service = adapter.get_directory_service()
 
         # Verify REAL service return
         assert service is adapter._directory_service
-        assert isinstance(service, FlextLdapDirectoryService)
+        assert isinstance(service, FlextLDAPDirectoryService)
 
         # Verify service interface compliance
         assert hasattr(service, "connect")
@@ -1934,7 +1932,7 @@ class TestFlextLdapDirectoryAdapterRealCoverage:
     def test_get_directory_service_consistency(self) -> None:
         """Test get_directory_service returns same instance consistently."""
         # Setup REAL test scenario
-        adapter = FlextLdapDirectoryAdapter()
+        adapter = FlextLDAPDirectoryAdapter()
 
         # Execute REAL service retrieval multiple times
         service1 = adapter.get_directory_service()
@@ -1947,9 +1945,9 @@ class TestFlextLdapDirectoryAdapterRealCoverage:
         assert service1 is service3
 
     def test_directory_adapter_interface_compliance(self) -> None:
-        """Test FlextLdapDirectoryAdapter complies with interface."""
+        """Test FlextLDAPDirectoryAdapter complies with interface."""
         # Test REAL interface compliance
-        adapter = FlextLdapDirectoryAdapter()
+        adapter = FlextLDAPDirectoryAdapter()
 
         # Verify REAL interface implementation
         assert hasattr(adapter, "get_directory_service")
@@ -1965,26 +1963,27 @@ class TestFactoryFunctionsRealCoverage:
     """Test factory functions with real creation logic."""
 
     def test_create_directory_service_returns_service(self) -> None:
-        """Test create_directory_service factory function."""
-        # Execute REAL factory function
-        service = create_directory_service()
+        """Test FlextLDAPDirectoryService creation."""
+        # Execute REAL service creation using new class-based API
+        client = FlextLDAPClient()
+        service = FlextLDAPDirectoryService(client)
 
         # Verify REAL service creation
         assert service is not None
-        assert isinstance(service, FlextLdapDirectoryService)
+        assert isinstance(service, FlextLDAPDirectoryService)
 
-        # Verify service is properly initialized
-        assert service._ldap_client is not None
-        assert service._connection_service is not None
-        assert service._search_service is not None
-        assert service._entry_service is not None
+        # Verify service is properly initialized with client
+        assert service._client is not None
 
     def test_create_directory_service_unique_instances(self) -> None:
-        """Test create_directory_service creates unique instances."""
-        # Execute REAL factory function multiple times
-        service1 = create_directory_service()
-        service2 = create_directory_service()
-        service3 = create_directory_service()
+        """Test FlextLDAPDirectoryService creates unique instances."""
+        # Execute REAL service creation multiple times
+        client1 = FlextLDAPClient()
+        service1 = FlextLDAPDirectoryService(client1)
+        client2 = FlextLDAPClient()
+        service2 = FlextLDAPDirectoryService(client2)
+        client3 = FlextLDAPClient()
+        service3 = FlextLDAPDirectoryService(client3)
 
         # Verify REAL unique instance creation
         assert service1 is not service2
@@ -1992,29 +1991,30 @@ class TestFactoryFunctionsRealCoverage:
         assert service1 is not service3
 
         # Verify all are properly typed
-        assert isinstance(service1, FlextLdapDirectoryService)
-        assert isinstance(service2, FlextLdapDirectoryService)
-        assert isinstance(service3, FlextLdapDirectoryService)
+        assert isinstance(service1, FlextLDAPDirectoryService)
+        assert isinstance(service2, FlextLDAPDirectoryService)
+        assert isinstance(service3, FlextLDAPDirectoryService)
 
     def test_create_directory_adapter_returns_adapter(self) -> None:
-        """Test create_directory_adapter factory function."""
-        # Execute REAL factory function
-        adapter = create_directory_adapter()
+        """Test FlextLDAPDirectoryAdapter creation."""
+        # Execute REAL adapter creation using new class-based API
+        client = FlextLDAPClient()
+        adapter = FlextLDAPDirectoryAdapter(client)
 
         # Verify REAL adapter creation
         assert adapter is not None
-        assert isinstance(adapter, FlextLdapDirectoryAdapter)
+        assert isinstance(adapter, FlextLDAPDirectoryAdapter)
 
         # Verify adapter is properly initialized
-        assert adapter._directory_service is not None
-        assert isinstance(adapter._directory_service, FlextLdapDirectoryService)
+        assert adapter._client is not None
+        assert isinstance(adapter._directory_service, FlextLDAPDirectoryService)
 
     def test_create_directory_adapter_unique_instances(self) -> None:
         """Test create_directory_adapter creates unique instances."""
         # Execute REAL factory function multiple times
-        adapter1 = create_directory_adapter()
-        adapter2 = create_directory_adapter()
-        adapter3 = create_directory_adapter()
+        adapter1 = FlextLDAPDirectoryAdapter(FlextLDAPClient())
+        adapter2 = FlextLDAPDirectoryAdapter(FlextLDAPClient())
+        adapter3 = FlextLDAPDirectoryAdapter(FlextLDAPClient())
 
         # Verify REAL unique instance creation
         assert adapter1 is not adapter2
@@ -2022,15 +2022,15 @@ class TestFactoryFunctionsRealCoverage:
         assert adapter1 is not adapter3
 
         # Verify all are properly typed
-        assert isinstance(adapter1, FlextLdapDirectoryAdapter)
-        assert isinstance(adapter2, FlextLdapDirectoryAdapter)
-        assert isinstance(adapter3, FlextLdapDirectoryAdapter)
+        assert isinstance(adapter1, FlextLDAPDirectoryAdapter)
+        assert isinstance(adapter2, FlextLDAPDirectoryAdapter)
+        assert isinstance(adapter3, FlextLDAPDirectoryAdapter)
 
     def test_factory_functions_return_working_objects(self) -> None:
         """Test factory functions return fully working objects."""
         # Execute REAL factory functions
-        service = create_directory_service()
-        adapter = create_directory_adapter()
+        service = FlextLDAPDirectoryService(FlextLDAPClient())
+        adapter = FlextLDAPDirectoryAdapter(FlextLDAPClient())
 
         # Verify REAL functional objects
         # Service should have working methods
@@ -2039,20 +2039,20 @@ class TestFactoryFunctionsRealCoverage:
 
         # Adapter should return working service
         adapter_service = adapter.get_directory_service()
-        assert isinstance(adapter_service, FlextLdapDirectoryService)
+        assert isinstance(adapter_service, FlextLDAPDirectoryService)
         assert callable(adapter_service.connect)
         assert callable(adapter_service.search_users)
 
     def test_factory_functions_consistent_behavior(self) -> None:
         """Test factory functions have consistent behavior."""
         # Execute REAL factory functions multiple times
-        services = [create_directory_service() for _ in range(3)]
-        adapters = [create_directory_adapter() for _ in range(3)]
+        services = [FlextLDAPDirectoryService(FlextLDAPClient()) for _ in range(3)]
+        adapters = [FlextLDAPDirectoryAdapter(FlextLDAPClient()) for _ in range(3)]
 
         # Verify REAL consistent behavior
         # All services should have same type and interface
         for service in services:
-            assert isinstance(service, FlextLdapDirectoryService)
+            assert isinstance(service, FlextLDAPDirectoryService)
             assert hasattr(service, "_ldap_client")
             assert hasattr(service, "_connection_service")
             assert hasattr(service, "_search_service")
@@ -2060,6 +2060,6 @@ class TestFactoryFunctionsRealCoverage:
 
         # All adapters should have same type and interface
         for adapter in adapters:
-            assert isinstance(adapter, FlextLdapDirectoryAdapter)
+            assert isinstance(adapter, FlextLDAPDirectoryAdapter)
             assert hasattr(adapter, "_directory_service")
-            assert isinstance(adapter._directory_service, FlextLdapDirectoryService)
+            assert isinstance(adapter._directory_service, FlextLDAPDirectoryService)

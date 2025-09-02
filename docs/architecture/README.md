@@ -82,11 +82,11 @@ FLEXT-LDAP follows Clean Architecture principles with clear separation of concer
 
 ### Core Entities
 
-#### FlextLdapUser
+#### FlextLDAPUser
 
 ```python
 @dataclass
-class FlextLdapUser:
+class FlextLDAPUser:
     \"\"\"LDAP user entity with business logic.\"\"\"
     id: str
     dn: str  # Distinguished Name
@@ -104,11 +104,11 @@ class FlextLdapUser:
         return self.cn or f\"{self.uid}\"
 ```
 
-#### FlextLdapGroup
+#### FlextLDAPGroup
 
 ```python
 @dataclass
-class FlextLdapGroup:
+class FlextLDAPGroup:
     \"\"\"LDAP group aggregate with membership management.\"\"\"
     id: str
     dn: str
@@ -128,11 +128,11 @@ class FlextLdapGroup:
 
 ### Value Objects
 
-#### FlextLdapDistinguishedName
+#### FlextLDAPDistinguishedName
 
 ```python
 @dataclass(frozen=True)
-class FlextLdapDistinguishedName:
+class FlextLDAPDistinguishedName:
     \"\"\"Distinguished Name value object with validation.\"\"\"
     value: str
 
@@ -148,13 +148,13 @@ class FlextLdapDistinguishedName:
 
 ### Domain Services
 
-#### FlextLdapUserValidator
+#### FlextLDAPUserValidator
 
 ```python
-class FlextLdapUserValidator:
+class FlextLDAPUserValidator:
     \"\"\"Domain service for complex user validation.\"\"\"
 
-    def validate_user_creation(self, user: FlextLdapUser) -> FlextResult[bool]:
+    def validate_user_creation(self, user: FlextLDAPUser) -> FlextResult[bool]:
         \"\"\"Validate user creation according to business rules.\"\"\"
         if not user.is_valid():
             return FlextResult[None].fail(\"User data is invalid\")
@@ -171,16 +171,16 @@ class FlextLdapUserValidator:
 
 ### Application Services
 
-#### FlextLdapService
+#### FlextLDAPService
 
 ```python
-class FlextLdapService:
+class FlextLDAPService:
     \"\"\"Application service orchestrating LDAP operations.\"\"\"
 
     def __init__(
         self,
-        user_repository: FlextLdapUserRepository,
-        validator: FlextLdapUserValidator,
+        user_repository: FlextLDAPUserRepository,
+        validator: FlextLDAPUserValidator,
         event_publisher: FlextEventPublisher
     ):
         self._user_repository = user_repository
@@ -190,11 +190,11 @@ class FlextLdapService:
     async def create_user(
         self,
         request: CreateUserRequest
-    ) -> FlextResult[FlextLdapUser]:
+    ) -> FlextResult[FlextLDAPUser]:
         \"\"\"Create user with complete business logic.\"\"\"
 
         # 1. Create domain entity
-        user = FlextLdapUser.from_request(request)
+        user = FlextLDAPUser.from_request(request)
 
         # 2. Domain validation
         validation_result = self._validator.validate_user_creation(user)
@@ -231,10 +231,10 @@ class CreateUserCommand:
 class CreateUserHandler:
     \"\"\"Handler for user creation command.\"\"\"
 
-    def __init__(self, ldap_service: FlextLdapService):
+    def __init__(self, ldap_service: FlextLDAPService):
         self._ldap_service = ldap_service
 
-    async def handle(self, command: CreateUserCommand) -> FlextResult[FlextLdapUser]:
+    async def handle(self, command: CreateUserCommand) -> FlextResult[FlextLDAPUser]:
         return await self._ldap_service.create_user(command)
 ```
 
@@ -249,10 +249,10 @@ class FindUserByUidQuery:
 class FindUserByUidHandler:
     \"\"\"Handler for user lookup query.\"\"\"
 
-    def __init__(self, user_repository: FlextLdapUserRepository):
+    def __init__(self, user_repository: FlextLDAPUserRepository):
         self._user_repository = user_repository
 
-    async def handle(self, query: FindUserByUidQuery) -> FlextResult[FlextLdapUser]:
+    async def handle(self, query: FindUserByUidQuery) -> FlextResult[FlextLDAPUser]:
         return await self._user_repository.get_by_uid(query.uid)
 ```
 
@@ -263,13 +263,13 @@ class FindUserByUidHandler:
 ### Repository Implementation
 
 ```python
-class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
+class FlextLDAPUserRepositoryImpl(FlextLDAPUserRepository):
     \"\"\"Infrastructure implementation of user repository.\"\"\"
 
-    def __init__(self, ldap_client: FlextLdapClient):
+    def __init__(self, ldap_client: FlextLDAPClient):
         self._ldap_client = ldap_client
 
-    async def save(self, user: FlextLdapUser) -> FlextResult[FlextLdapUser]:
+    async def save(self, user: FlextLDAPUser) -> FlextResult[FlextLDAPUser]:
         \"\"\"Save user to LDAP directory.\"\"\"
         try:
             # Convert domain entity to LDAP entry
@@ -289,7 +289,7 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
         except Exception as e:
             return FlextResult[None].fail(f\"Infrastructure error: {str(e)}\")
 
-    def _to_ldap_entry(self, user: FlextLdapUser) -> Dict[str, object]:
+    def _to_ldap_entry(self, user: FlextLDAPUser) -> Dict[str, object]:
         \"\"\"Convert domain entity to LDAP entry format.\"\"\"
         return {
             \"objectClass\": [\"person\", \"organizationalPerson\", \"inetOrgPerson\"],
@@ -303,10 +303,10 @@ class FlextLdapUserRepositoryImpl(FlextLdapUserRepository):
 ### LDAP Client Implementation
 
 ```python
-class FlextLdapClient:
+class FlextLDAPClient:
     \"\"\"Infrastructure LDAP client using ldap3.\"\"\"
 
-    def __init__(self, connection_config: FlextLdapConnectionConfig):
+    def __init__(self, connection_config: FlextLDAPConnectionConfig):
         self._config = connection_config
         self._connection: Optional[Connection] = None
 
@@ -349,14 +349,14 @@ class FlextLdapClient:
 ### Factory Pattern
 
 ```python
-class FlextLdapUserFactory:
+class FlextLDAPUserFactory:
     \"\"\"Factory for creating user entities with validation.\"\"\"
 
     @staticmethod
-    def create_from_ldap_entry(entry: Dict[str, object]) -> FlextResult[FlextLdapUser]:
+    def create_from_ldap_entry(entry: Dict[str, object]) -> FlextResult[FlextLDAPUser]:
         \"\"\"Create user entity from LDAP entry data.\"\"\"
         try:
-            user = FlextLdapUser(
+            user = FlextLDAPUser(
                 id=str(uuid4()),
                 dn=entry.get(\"dn\", \"\"),
                 uid=entry.get(\"uid\", [\"\"])[0],
@@ -407,11 +407,11 @@ Uses FlextContainer for service orchestration:
 ```python
 # Container configuration
 container = FlextContainer.get_global()
-container.register(FlextLdapUserRepository, FlextLdapUserRepositoryImpl)
-container.register(FlextLdapUserValidator, FlextLdapUserValidator)
+container.register(FlextLDAPUserRepository, FlextLDAPUserRepositoryImpl)
+container.register(FlextLDAPUserValidator, FlextLDAPUserValidator)
 
 # Service resolution
-user_service = container.resolve(FlextLdapService)
+user_service = container.resolve(FlextLDAPService)
 ```
 
 ### Configuration Management
@@ -421,7 +421,7 @@ Centralized configuration via FlextLDAPConfig:
 ```python
 # Configuration class
 @dataclass
-class FlextLdapSettings(FlextConfig):
+class FlextLDAPSettings(FlextConfig):
     \"\"\"LDAP configuration with validation.\"\"\"
     server_url: str
     port: int = 389

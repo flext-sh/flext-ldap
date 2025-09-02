@@ -10,24 +10,24 @@ import re
 
 from flext_core import FlextModels, FlextEntityStatus
 
-from flext_ldap.constants import FlextLdapValidationConstants
-    FlextLdapActiveUserSpecification,
-    FlextLdapCompleteUserSpecification,
-    FlextLdapDistinguishedNameSpecification,
-    FlextLdapDomainFactory,
-    FlextLdapEmailSpecification,
-    FlextLdapGroupManagementService,
-    FlextLdapGroupMemberAddedEvent,
-    FlextLdapGroupSpecification,
-    FlextLdapPasswordChangedEvent,
-    FlextLdapPasswordService,
-    FlextLdapPasswordSpecification,
-    FlextLdapUserCreatedEvent,
-    FlextLdapUserDeletedEvent,
-    FlextLdapUserManagementService,
-    FlextLdapUserSpecification,
+from flext_ldap.constants import FlextLDAPValidationConstants
+    FlextLDAPActiveUserSpecification,
+    FlextLDAPCompleteUserSpecification,
+    FlextLDAPDistinguishedNameSpecification,
+    FlextLDAPDomainFactory,
+    FlextLDAPEmailSpecification,
+    FlextLDAPGroupManagementService,
+    FlextLDAPGroupMemberAddedEvent,
+    FlextLDAPGroupSpecification,
+    FlextLDAPPasswordChangedEvent,
+    FlextLDAPPasswordService,
+    FlextLDAPPasswordSpecification,
+    FlextLDAPUserCreatedEvent,
+    FlextLDAPUserDeletedEvent,
+    FlextLDAPUserManagementService,
+    FlextLDAPUserSpecification,
 )
-from flext_ldap.models import FlextLdapGroup, FlextLdapUser
+from flext_ldap.models import FlextLDAPGroup, FlextLDAPUser
 
 
 class TestDomainConstants:
@@ -35,16 +35,16 @@ class TestDomainConstants:
 
     def test_password_constants(self) -> None:
         """Test password-related constants."""
-        assert FlextLdapValidationConstants.MIN_PASSWORD_LENGTH >= 8
-        assert FlextLdapValidationConstants.MAX_PASSWORD_LENGTH >= FlextLdapValidationConstants.MIN_PASSWORD_LENGTH
+        assert FlextLDAPValidationConstants.MIN_PASSWORD_LENGTH >= 8
+        assert FlextLDAPValidationConstants.MAX_PASSWORD_LENGTH >= FlextLDAPValidationConstants.MIN_PASSWORD_LENGTH
         # MIN_USERNAME_LENGTH e PASSWORD_GENERATION_MAX_RETRIES não existem centralizados, então podem ser removidos ou migrados para o constants se necessário
-        # assert FlextLdapValidationConstants.MIN_USERNAME_LENGTH >= 2
-        # assert FlextLdapValidationConstants.PASSWORD_GENERATION_MAX_RETRIES >= 1
-        # assert FlextLdapValidationConstants.SECURE_RANDOM_GENERATION_MIN_RETRIES >= 1
+        # assert FlextLDAPValidationConstants.MIN_USERNAME_LENGTH >= 2
+        # assert FlextLDAPValidationConstants.PASSWORD_GENERATION_MAX_RETRIES >= 1
+        # assert FlextLDAPValidationConstants.SECURE_RANDOM_GENERATION_MIN_RETRIES >= 1
 
     def test_password_pattern_validation(self) -> None:
         """Test password pattern regex validation."""
-        # Se o padrão não existir em FlextLdapValidationConstants, adicionar lá e importar aqui
+        # Se o padrão não existir em FlextLDAPValidationConstants, adicionar lá e importar aqui
         pattern = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;':\",./<>?]).{8,}$")
         assert isinstance(pattern, re.Pattern)
 
@@ -72,12 +72,12 @@ class TestDomainConstants:
             assert not pattern.match(pwd), f"Invalid password accepted: {pwd}"
 
 
-class TestFlextLdapUserSpecification:
+class TestFlextLDAPUserSpecification:
     """Test user specification with real validation logic."""
 
     def test_user_specification_initialization(self) -> None:
         """Test user specification initialization."""
-        spec = FlextLdapUserSpecification()
+        spec = FlextLDAPUserSpecification()
 
         assert spec.name is not None
         assert spec.description is not None
@@ -85,10 +85,10 @@ class TestFlextLdapUserSpecification:
 
     def test_valid_user_satisfaction(self) -> None:
         """Test specification with valid LDAP user."""
-        spec = FlextLdapUserSpecification()
+        spec = FlextLDAPUserSpecification()
 
         # Create valid user
-        valid_user = FlextLdapUser(
+        valid_user = FlextLDAPUser(
             id=FlextModels.EntityId("test-user"),
             uid="john.doe",
             cn="John Doe",
@@ -102,7 +102,7 @@ class TestFlextLdapUserSpecification:
 
     def test_invalid_user_satisfaction(self) -> None:
         """Test specification with invalid objects."""
-        spec = FlextLdapUserSpecification()
+        spec = FlextLDAPUserSpecification()
 
         # Test with various invalid objects
         invalid_objects = [
@@ -119,7 +119,7 @@ class TestFlextLdapUserSpecification:
 
     def test_validation_error_message(self) -> None:
         """Test validation error message generation."""
-        spec = FlextLdapUserSpecification()
+        spec = FlextLDAPUserSpecification()
 
         error_msg = spec.get_validation_error("invalid")
         assert isinstance(error_msg, str)
@@ -128,21 +128,21 @@ class TestFlextLdapUserSpecification:
         assert "User must have a valid UID" in error_msg
 
 
-class TestFlextLdapGroupSpecification:
+class TestFlextLDAPGroupSpecification:
     """Test group specification with real validation logic."""
 
     def test_group_specification_initialization(self) -> None:
         """Test group specification initialization."""
-        spec = FlextLdapGroupSpecification()
+        spec = FlextLDAPGroupSpecification()
 
         assert spec.name is not None
         assert spec.description is not None
 
     def test_valid_group_satisfaction(self) -> None:
         """Test specification with valid LDAP group."""
-        spec = FlextLdapGroupSpecification()
+        spec = FlextLDAPGroupSpecification()
 
-        valid_group = FlextLdapGroup(
+        valid_group = FlextLDAPGroup(
             id=FlextModels.EntityId("test-group"),
             cn="REDACTED_LDAP_BIND_PASSWORDs",
             dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
@@ -155,7 +155,7 @@ class TestFlextLdapGroupSpecification:
 
     def test_invalid_group_satisfaction(self) -> None:
         """Test specification with invalid objects."""
-        spec = FlextLdapGroupSpecification()
+        spec = FlextLDAPGroupSpecification()
 
         invalid_objects = [
             None,
@@ -169,19 +169,19 @@ class TestFlextLdapGroupSpecification:
             assert not spec.is_satisfied_by(obj)
 
 
-class TestFlextLdapDistinguishedNameSpecification:
+class TestFlextLDAPDistinguishedNameSpecification:
     """Test DN specification with real validation logic."""
 
     def test_dn_specification_initialization(self) -> None:
         """Test DN specification initialization."""
-        spec = FlextLdapDistinguishedNameSpecification()
+        spec = FlextLDAPDistinguishedNameSpecification()
 
         assert spec.name is not None
         assert spec.description is not None
 
     def test_valid_dn_satisfaction(self) -> None:
         """Test specification with valid DNs."""
-        spec = FlextLdapDistinguishedNameSpecification()
+        spec = FlextLDAPDistinguishedNameSpecification()
 
         valid_dns = [
             "cn=user,dc=example,dc=com",
@@ -195,7 +195,7 @@ class TestFlextLdapDistinguishedNameSpecification:
 
     def test_invalid_dn_satisfaction(self) -> None:
         """Test specification with invalid DNs."""
-        spec = FlextLdapDistinguishedNameSpecification()
+        spec = FlextLDAPDistinguishedNameSpecification()
 
         invalid_dns = [
             "",
@@ -211,19 +211,19 @@ class TestFlextLdapDistinguishedNameSpecification:
             assert not spec.is_satisfied_by(dn), f"Invalid DN accepted: {dn}"
 
 
-class TestFlextLdapPasswordSpecification:
+class TestFlextLDAPPasswordSpecification:
     """Test password specification with real validation logic."""
 
     def test_password_specification_initialization(self) -> None:
         """Test password specification initialization."""
-        spec = FlextLdapPasswordSpecification()
+        spec = FlextLDAPPasswordSpecification()
 
         assert spec.name is not None
         assert spec.description is not None
 
     def test_valid_password_satisfaction(self) -> None:
         """Test specification with valid passwords."""
-        spec = FlextLdapPasswordSpecification()
+        spec = FlextLDAPPasswordSpecification()
 
         valid_passwords = [
             "SecurePass123!",
@@ -236,7 +236,7 @@ class TestFlextLdapPasswordSpecification:
 
     def test_invalid_password_satisfaction(self) -> None:
         """Test specification with invalid passwords."""
-        spec = FlextLdapPasswordSpecification()
+        spec = FlextLDAPPasswordSpecification()
 
         invalid_passwords = [
             "",
@@ -254,19 +254,19 @@ class TestFlextLdapPasswordSpecification:
             assert not spec.is_satisfied_by(pwd), f"Invalid password accepted: {pwd}"
 
 
-class TestFlextLdapEmailSpecification:
+class TestFlextLDAPEmailSpecification:
     """Test email specification with real validation logic."""
 
     def test_email_specification_initialization(self) -> None:
         """Test email specification initialization."""
-        spec = FlextLdapEmailSpecification()
+        spec = FlextLDAPEmailSpecification()
 
         assert spec.name is not None
         assert spec.description is not None
 
     def test_valid_email_satisfaction(self) -> None:
         """Test specification with valid emails."""
-        spec = FlextLdapEmailSpecification()
+        spec = FlextLDAPEmailSpecification()
 
         valid_emails = [
             "user@example.com",
@@ -280,7 +280,7 @@ class TestFlextLdapEmailSpecification:
 
     def test_invalid_email_satisfaction(self) -> None:
         """Test specification with invalid emails."""
-        spec = FlextLdapEmailSpecification()
+        spec = FlextLDAPEmailSpecification()
 
         invalid_emails = [
             "",
@@ -297,21 +297,21 @@ class TestFlextLdapEmailSpecification:
             assert not spec.is_satisfied_by(email), f"Invalid email accepted: {email}"
 
 
-class TestFlextLdapActiveUserSpecification:
+class TestFlextLDAPActiveUserSpecification:
     """Test active user specification with real validation logic."""
 
     def test_active_user_specification_initialization(self) -> None:
         """Test active user specification initialization."""
-        spec = FlextLdapActiveUserSpecification()
+        spec = FlextLDAPActiveUserSpecification()
 
         assert spec.name is not None
         assert spec.description is not None
 
     def test_active_user_satisfaction(self) -> None:
         """Test specification with active user."""
-        spec = FlextLdapActiveUserSpecification()
+        spec = FlextLDAPActiveUserSpecification()
 
-        active_user = FlextLdapUser(
+        active_user = FlextLDAPUser(
             id=FlextModels.EntityId("active-user"),
             uid="active.user",
             cn="Active User",
@@ -324,9 +324,9 @@ class TestFlextLdapActiveUserSpecification:
 
     def test_inactive_user_satisfaction(self) -> None:
         """Test specification with inactive user."""
-        spec = FlextLdapActiveUserSpecification()
+        spec = FlextLDAPActiveUserSpecification()
 
-        inactive_user = FlextLdapUser(
+        inactive_user = FlextLDAPUser(
             id=FlextModels.EntityId("inactive-user"),
             uid="inactive.user",
             cn="Inactive User",
@@ -338,21 +338,21 @@ class TestFlextLdapActiveUserSpecification:
         assert not spec.is_satisfied_by(inactive_user)
 
 
-class TestFlextLdapCompleteUserSpecification:
+class TestFlextLDAPCompleteUserSpecification:
     """Test complete user specification with real validation logic."""
 
     def test_complete_user_specification_initialization(self) -> None:
         """Test complete user specification initialization."""
-        spec = FlextLdapCompleteUserSpecification()
+        spec = FlextLDAPCompleteUserSpecification()
 
         assert spec.name is not None
         assert spec.description is not None
 
     def test_complete_user_satisfaction(self) -> None:
         """Test specification with complete user."""
-        spec = FlextLdapCompleteUserSpecification()
+        spec = FlextLDAPCompleteUserSpecification()
 
-        complete_user = FlextLdapUser(
+        complete_user = FlextLDAPUser(
             id=FlextModels.EntityId("complete-user"),
             uid="complete.user",
             cn="Complete User",
@@ -368,10 +368,10 @@ class TestFlextLdapCompleteUserSpecification:
 
     def test_incomplete_user_satisfaction(self) -> None:
         """Test specification with incomplete user."""
-        spec = FlextLdapCompleteUserSpecification()
+        spec = FlextLDAPCompleteUserSpecification()
 
         # User missing email
-        incomplete_user = FlextLdapUser(
+        incomplete_user = FlextLDAPUser(
             id=FlextModels.EntityId("incomplete-user"),
             uid="incomplete.user",
             cn="Incomplete User",
@@ -386,18 +386,18 @@ class TestFlextLdapCompleteUserSpecification:
         assert isinstance(result, bool)
 
 
-class TestFlextLdapUserManagementService:
+class TestFlextLDAPUserManagementService:
     """Test user management service with real business logic."""
 
     def test_user_service_initialization(self) -> None:
         """Test user management service initialization."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         assert service is not None
 
     def test_validate_user_creation(self) -> None:
         """Test user creation validation."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         # Valid parameters
         valid_params = {
@@ -415,7 +415,7 @@ class TestFlextLdapUserManagementService:
 
     def test_generate_username(self) -> None:
         """Test username generation."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         result = service.generate_username("John", "Doe")
 
@@ -425,30 +425,30 @@ class TestFlextLdapUserManagementService:
         assert len(username) > 0
 
 
-class TestFlextLdapGroupManagementService:
+class TestFlextLDAPGroupManagementService:
     """Test group management service with real business logic."""
 
     def test_group_service_initialization(self) -> None:
         """Test group management service initialization."""
-        service = FlextLdapGroupManagementService()
+        service = FlextLDAPGroupManagementService()
 
         assert service is not None
 
     def test_dn_spec_property(self) -> None:
         """Test DN specification property access."""
-        service = FlextLdapGroupManagementService()
+        service = FlextLDAPGroupManagementService()
 
         dn_spec = service.dn_spec
 
-        assert isinstance(dn_spec, FlextLdapDistinguishedNameSpecification)
+        assert isinstance(dn_spec, FlextLDAPDistinguishedNameSpecification)
         assert dn_spec.name is not None
 
     def test_can_add_member_validation(self) -> None:
         """Test group member addition validation."""
-        service = FlextLdapGroupManagementService()
+        service = FlextLDAPGroupManagementService()
 
         # Create valid group and user
-        group = FlextLdapGroup(
+        group = FlextLDAPGroup(
             id=FlextModels.EntityId("test-group"),
             cn="test-group",
             dn="cn=test-group,ou=groups,dc=example,dc=com",
@@ -457,7 +457,7 @@ class TestFlextLdapGroupManagementService:
             object_classes=["groupOfNames", "top"],
         )
 
-        user = FlextLdapUser(
+        user = FlextLDAPUser(
             id=FlextModels.EntityId("test-user"),
             uid="test.user",
             cn="Test User",
@@ -472,7 +472,7 @@ class TestFlextLdapGroupManagementService:
         assert result.is_success
 
         # Should not be able to add inactive user
-        inactive_user = FlextLdapUser(
+        inactive_user = FlextLDAPUser(
             id=FlextModels.EntityId("inactive-user"),
             uid="inactive.user",
             cn="Inactive User",
@@ -487,7 +487,7 @@ class TestFlextLdapGroupManagementService:
 
     def test_validate_group_creation(self) -> None:
         """Test group creation validation."""
-        service = FlextLdapGroupManagementService()
+        service = FlextLDAPGroupManagementService()
 
         valid_group_data = {
             "cn": "valid-group",
@@ -501,18 +501,18 @@ class TestFlextLdapGroupManagementService:
         assert isinstance(result.is_success, bool)
 
 
-class TestFlextLdapPasswordService:
+class TestFlextLDAPPasswordService:
     """Test password service with real security logic."""
 
     def test_password_service_initialization(self) -> None:
         """Test password service initialization."""
-        service = FlextLdapPasswordService()
+        service = FlextLDAPPasswordService()
 
         assert service is not None
 
     def test_generate_secure_password(self) -> None:
         """Test secure password generation."""
-        service = FlextLdapPasswordService()
+        service = FlextLDAPPasswordService()
 
         result = service.generate_secure_password()
 
@@ -523,7 +523,7 @@ class TestFlextLdapPasswordService:
 
     def test_validate_password_change(self) -> None:
         """Test password change validation."""
-        service = FlextLdapPasswordService()
+        service = FlextLDAPPasswordService()
 
         current_password = "OldSecure123!"
         new_password = "NewSecure456@"
@@ -535,7 +535,7 @@ class TestFlextLdapPasswordService:
 
     def test_validate_password_change_same_password(self) -> None:
         """Test validation when new password is same as current."""
-        service = FlextLdapPasswordService()
+        service = FlextLDAPPasswordService()
 
         password = "SamePassword123!"
         result = service.validate_password_change(password, password)
@@ -544,36 +544,36 @@ class TestFlextLdapPasswordService:
         assert not result.is_success
 
 
-class TestFlextLdapDomainEvents:
+class TestFlextLDAPDomainEvents:
     """Test domain events exist and are importable."""
 
     def test_domain_events_importable(self) -> None:
         """Test that domain events can be imported."""
         # Basic test that events exist and are classes
-        assert FlextLdapUserCreatedEvent is not None
-        assert FlextLdapUserDeletedEvent is not None
-        assert FlextLdapGroupMemberAddedEvent is not None
-        assert FlextLdapPasswordChangedEvent is not None
+        assert FlextLDAPUserCreatedEvent is not None
+        assert FlextLDAPUserDeletedEvent is not None
+        assert FlextLDAPGroupMemberAddedEvent is not None
+        assert FlextLDAPPasswordChangedEvent is not None
 
         # Verify they're callable (classes)
-        assert callable(FlextLdapUserCreatedEvent)
-        assert callable(FlextLdapUserDeletedEvent)
-        assert callable(FlextLdapGroupMemberAddedEvent)
-        assert callable(FlextLdapPasswordChangedEvent)
+        assert callable(FlextLDAPUserCreatedEvent)
+        assert callable(FlextLDAPUserDeletedEvent)
+        assert callable(FlextLDAPGroupMemberAddedEvent)
+        assert callable(FlextLDAPPasswordChangedEvent)
 
 
-class TestFlextLdapDomainFactory:
+class TestFlextLDAPDomainFactory:
     """Test domain factory with real creation logic."""
 
     def test_domain_factory_initialization(self) -> None:
         """Test domain factory initialization."""
-        factory = FlextLdapDomainFactory()
+        factory = FlextLDAPDomainFactory()
 
         assert factory is not None
 
     def test_create_user_from_data(self) -> None:
         """Test user creation from data."""
-        factory = FlextLdapDomainFactory()
+        factory = FlextLDAPDomainFactory()
 
         user_data = {
             "uid": "test.user",
@@ -586,12 +586,12 @@ class TestFlextLdapDomainFactory:
 
         assert result.is_success
         user = result.value
-        assert isinstance(user, FlextLdapUser)
+        assert isinstance(user, FlextLDAPUser)
         assert user.uid == "test.user"
 
     def test_create_group_from_data(self) -> None:
         """Test group creation from data."""
-        factory = FlextLdapDomainFactory()
+        factory = FlextLDAPDomainFactory()
 
         group_data = {
             "cn": "test-group",
@@ -603,5 +603,5 @@ class TestFlextLdapDomainFactory:
 
         assert result.is_success
         group = result.value
-        assert isinstance(group, FlextLdapGroup)
+        assert isinstance(group, FlextLDAPGroup)
         assert group.cn == "test-group"

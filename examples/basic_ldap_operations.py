@@ -28,10 +28,10 @@ import os
 from flext_core import FlextLogger
 
 from flext_ldap import (
-    FlextLdapApi,
-    FlextLdapDistinguishedName,
-    FlextLdapFilter,
-    FlextLdapSettings,
+    FlextLDAPApi,
+    FlextLDAPDistinguishedName,
+    FlextLDAPFilter,
+    FlextLDAPSettings,
 )
 
 logger = FlextLogger(__name__)
@@ -39,8 +39,8 @@ logger = FlextLogger(__name__)
 
 async def demonstrate_configuration() -> None:
     """Demonstrate configuration management."""
-    # 1. Settings configuration using FlextLdapSettings
-    settings = FlextLdapSettings()
+    # 1. Settings configuration using FlextLDAPSettings
+    settings = FlextLDAPSettings()
 
     # 2. Connection info - will be passed to API methods
 
@@ -48,10 +48,10 @@ async def demonstrate_configuration() -> None:
     settings.validate_business_rules()
 
 
-async def demonstrate_api_usage() -> FlextLdapApi:
+async def demonstrate_api_usage() -> FlextLDAPApi:
     """Demonstrate API usage patterns."""
     # 1. Initialize API
-    api = FlextLdapApi()
+    api = FlextLDAPApi()
 
     # 2. Connect (using demo server for example)
     try:
@@ -71,7 +71,7 @@ async def demonstrate_api_usage() -> FlextLdapApi:
     return api
 
 
-async def demonstrate_search_operations(api: FlextLdapApi) -> None:
+async def demonstrate_search_operations(api: FlextLDAPApi) -> None:
     """Demonstrate search operations."""
     # Session ID for demonstration
 
@@ -98,17 +98,17 @@ async def demonstrate_search_operations(api: FlextLdapApi) -> None:
 async def demonstrate_error_handling() -> None:
     """Demonstrate FlextResult error handling patterns."""
     # 1. DN validation errors
-    dn_result = FlextLdapDistinguishedName.create("")
+    dn_result = FlextLDAPDistinguishedName.create("")
     if not dn_result.is_success:
         pass
 
     # 2. Filter validation errors
-    filter_result = FlextLdapFilter.create("invalid-filter-format")
+    filter_result = FlextLDAPFilter.create("invalid-filter-format")
     if not filter_result.is_success:
         pass
 
     # 3. Connection errors (simulated)
-    api = FlextLdapApi()
+    api = FlextLDAPApi()
     try:
         test_password = os.getenv(
             "LDAP_TEST_PASSWORD", "demo_password_not_for_production"
@@ -136,7 +136,7 @@ async def demonstrate_logging_integration() -> None:
 
     # Create settings with logging
     logger.debug("Creating LDAP settings")
-    settings = FlextLdapSettings()
+    settings = FlextLDAPSettings()
 
     logger.debug(
         "Settings created successfully",

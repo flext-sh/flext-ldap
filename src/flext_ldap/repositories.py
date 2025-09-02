@@ -1,9 +1,9 @@
-"""SINGLE CONSOLIDATED FlextLdapRepositories class following FLEXT architectural patterns.
+"""SINGLE CONSOLIDATED FlextLDAPRepositories class following FLEXT architectural patterns.
 
 FLEXT_REFACTORING_PROMPT.md COMPLIANCE: Single consolidated class for all LDAP repository functionality.
-All specialized functionality delivered through internal subclasses within FlextLdapRepositories.
+All specialized functionality delivered through internal subclasses within FlextLDAPRepositories.
 
-CONSOLIDATED CLASSES: FlextLdapRepository + FlextLdapUserRepository + FlextLdapGroupRepository
+CONSOLIDATED CLASSES: FlextLDAPRepository + FlextLDAPUserRepository + FlextLDAPGroupRepository
 """
 
 import asyncio
@@ -11,73 +11,72 @@ from typing import cast
 
 from flext_core import (
     FlextLogger,
-    FlextModels,
     FlextProtocols,
     FlextResult,
 )
 
-from flext_ldap.clients import FlextLdapClient
+from flext_ldap.clients import FlextLDAPClient
 from flext_ldap.entities import (
-    FlextLdapEntry,
-    FlextLdapSearchRequest,
-    FlextLdapSearchResponse,
+    FlextLDAPEntry,
+    FlextLDAPSearchRequest,
+    FlextLDAPSearchResponse,
 )
 from flext_ldap.fields import LdapAttributeProcessor
 from flext_ldap.typings import LdapAttributeDict
-from flext_ldap.value_objects import FlextLdapDistinguishedName
+from flext_ldap.value_objects import FlextLDAPDistinguishedName
 
 logger = FlextLogger(__name__)
 
 
-class FlextLdapRepositories:
+class FlextLDAPRepositories:
     """SINGLE CONSOLIDATED CLASS for all LDAP repository functionality.
 
     Following FLEXT architectural patterns - consolidates ALL LDAP repository functionality
     including base repository operations, user-specific operations, and group-specific operations
     into one main class with specialized internal subclasses for organization.
 
-    CONSOLIDATED CLASSES: FlextLdapRepository + FlextLdapUserRepository + FlextLdapGroupRepository
+    CONSOLIDATED CLASSES: FlextLDAPRepository + FlextLDAPUserRepository + FlextLDAPGroupRepository
     """
 
     # ==========================================================================
     # INTERNAL SPECIALIZED CLASSES FOR DIFFERENT REPOSITORY DOMAINS
     # ==========================================================================
 
-    class Repository(FlextProtocols.Domain.Repository[FlextLdapEntry]):
+    class Repository(FlextProtocols.Domain.Repository[FlextLDAPEntry]):
         """Internal base LDAP repository implementation using dependency injection."""
 
-        def __init__(self, client: FlextLdapClient) -> None:
+        def __init__(self, client: FlextLDAPClient) -> None:
             """Initialize repository with LDAP client."""
             self._client = client
 
         # FlextProtocols.Domain.Repository protocol implementation
-        def get_by_id(self, entity_id: str) -> FlextResult[FlextLdapEntry | None]:
+        def get_by_id(self, entity_id: str) -> FlextResult[FlextLDAPEntry | None]:
             """Get entity by ID (synchronous wrapper for async find_by_dn)."""
             try:
                 return asyncio.run(self.find_by_dn(entity_id))
             except Exception as e:
-                return FlextResult[FlextLdapEntry | None].fail(
+                return FlextResult[FlextLDAPEntry | None].fail(
                     f"Failed to get by ID: {e}"
                 )
 
-        def find_all(self) -> FlextResult[list[FlextLdapEntry]]:
+        def find_all(self) -> FlextResult[list[FlextLDAPEntry]]:
             """Find all entities - not practical for LDAP, returns error."""
-            return FlextResult[list[FlextLdapEntry]].fail(
+            return FlextResult[list[FlextLDAPEntry]].fail(
                 "find_all not supported for LDAP repositories - use search with filters"
             )
 
         # LDAP-specific methods (extend protocol functionality)
-        async def find_by_dn(self, dn: str) -> FlextResult[FlextLdapEntry | None]:
+        async def find_by_dn(self, dn: str) -> FlextResult[FlextLDAPEntry | None]:
             """Find entry by distinguished name."""
             # Validate DN format
-            dn_validation = FlextLdapDistinguishedName.create(dn)
+            dn_validation = FlextLDAPDistinguishedName.create(dn)
             if not dn_validation.is_success:
-                return FlextResult[FlextLdapEntry | None].fail(
+                return FlextResult[FlextLDAPEntry | None].fail(
                     f"Invalid DN format: {dn_validation.error}",
                 )
 
             # Search for the specific entry
-            search_request = FlextLdapSearchRequest(
+            search_request = FlextLDAPSearchRequest(
                 base_dn=dn,
                 scope="base",
                 filter_str="(objectClass=*)",
@@ -90,11 +89,11 @@ class FlextLdapRepositories:
             if not search_result.is_success:
                 error_msg = search_result.error or "Search failed"
                 if "No such object" in error_msg or "32" in error_msg:
-                    return FlextResult[FlextLdapEntry | None].ok(None)
-                return FlextResult[FlextLdapEntry | None].fail(error_msg)
+                    return FlextResult[FlextLDAPEntry | None].ok(None)
+                return FlextResult[FlextLDAPEntry | None].fail(error_msg)
 
             if not search_result.value.entries:
-                return FlextResult[FlextLdapEntry | None].ok(None)
+                return FlextResult[FlextLDAPEntry | None].ok(None)
 
             # Convert search result to entry
             entry_data = search_result.value.entries[0]
@@ -111,10 +110,8 @@ class FlextLdapRepositories:
                     object_classes = [str(oc_value)]
 
             # Create entry
-            entry = FlextLdapEntry(
-                id=FlextModels.EntityId(
-                    f"repo_entry_{dn.replace(',', '_').replace('=', '_')}"
-                ),
+            entry = FlextLDAPEntry(
+                id=f"repo_entry_{dn.replace(',', '_').replace('=', '_')}",
                 dn=dn,
                 object_classes=object_classes,
                 attributes=LdapAttributeProcessor.normalize_attributes(entry_data),
@@ -122,16 +119,16 @@ class FlextLdapRepositories:
             )
 
             logger.debug("Found entry by DN", extra={"dn": dn})
-            return FlextResult[FlextLdapEntry | None].ok(entry)
+            return FlextResult[FlextLDAPEntry | None].ok(entry)
 
         async def search(
             self,
-            request: FlextLdapSearchRequest,
-        ) -> FlextResult[FlextLdapSearchResponse]:
+            request: FlextLDAPSearchRequest,
+        ) -> FlextResult[FlextLDAPSearchResponse]:
             """Search entries with criteria."""
             search_result = await self._client.search(request)
             if not search_result.is_success:
-                return FlextResult[FlextLdapSearchResponse].fail(
+                return FlextResult[FlextLDAPSearchResponse].fail(
                     search_result.error or "Search failed",
                 )
 
@@ -145,17 +142,17 @@ class FlextLdapRepositories:
             )
             return search_result
 
-        def save(self, entity: FlextLdapEntry) -> FlextResult[FlextLdapEntry]:
+        def save(self, entity: FlextLDAPEntry) -> FlextResult[FlextLDAPEntry]:
             """Save entity (synchronous wrapper for async save_async)."""
             try:
                 result = asyncio.run(self.save_async(entity))
                 if result.is_success:
-                    return FlextResult[FlextLdapEntry].ok(entity)
-                return FlextResult[FlextLdapEntry].fail(result.error or "Save failed")
+                    return FlextResult[FlextLDAPEntry].ok(entity)
+                return FlextResult[FlextLDAPEntry].fail(result.error or "Save failed")
             except Exception as e:
-                return FlextResult[FlextLdapEntry].fail(f"Failed to save: {e}")
+                return FlextResult[FlextLDAPEntry].fail(f"Failed to save: {e}")
 
-        async def save_async(self, entry: FlextLdapEntry) -> FlextResult[None]:
+        async def save_async(self, entry: FlextLDAPEntry) -> FlextResult[None]:
             """Save entry to LDAP directory."""
             # Validate entry business rules
             validation_result = entry.validate_business_rules()
@@ -205,7 +202,7 @@ class FlextLdapRepositories:
         async def delete_async(self, dn: str) -> FlextResult[None]:
             """Delete entry from LDAP directory."""
             # Validate DN format
-            dn_validation = FlextLdapDistinguishedName.create(dn)
+            dn_validation = FlextLDAPDistinguishedName.create(dn)
             if not dn_validation.is_success:
                 return FlextResult[None].fail(
                     f"Invalid DN format: {dn_validation.error}"
@@ -231,7 +228,7 @@ class FlextLdapRepositories:
         ) -> FlextResult[None]:
             """Update entry attributes."""
             # Validate DN format
-            dn_validation = FlextLdapDistinguishedName.create(dn)
+            dn_validation = FlextLDAPDistinguishedName.create(dn)
             if not dn_validation.is_success:
                 return FlextResult[None].fail(
                     f"Invalid DN format: {dn_validation.error}"
@@ -260,7 +257,7 @@ class FlextLdapRepositories:
     class UserRepository:
         """Internal specialized repository for LDAP user operations."""
 
-        def __init__(self, base_repository: "FlextLdapRepositories.Repository") -> None:
+        def __init__(self, base_repository: "FlextLDAPRepositories.Repository") -> None:
             """Initialize user repository."""
             self._repo = base_repository
 
@@ -268,9 +265,9 @@ class FlextLdapRepositories:
             self,
             uid: str,
             base_dn: str,
-        ) -> FlextResult[FlextLdapEntry | None]:
+        ) -> FlextResult[FlextLDAPEntry | None]:
             """Find user by UID attribute."""
-            search_request = FlextLdapSearchRequest(
+            search_request = FlextLDAPSearchRequest(
                 base_dn=base_dn,
                 scope="subtree",
                 filter_str=f"(&(objectClass=inetOrgPerson)(uid={uid}))",
@@ -281,20 +278,20 @@ class FlextLdapRepositories:
 
             search_result = await self._repo.search(search_request)
             if not search_result.is_success:
-                return FlextResult[FlextLdapEntry | None].fail(
+                return FlextResult[FlextLDAPEntry | None].fail(
                     search_result.error or "User search failed",
                 )
 
             if not search_result.value.entries:
-                return FlextResult[FlextLdapEntry | None].ok(None)
+                return FlextResult[FlextLDAPEntry | None].ok(None)
 
-            # Get the first entry and convert to FlextLdapEntry
+            # Get the first entry and convert to FlextLDAPEntry
             entry_data = search_result.value.entries[0]
             typed_entry_data = entry_data
             entry_dn = typed_entry_data.get("dn", "")
 
             if not entry_dn:
-                return FlextResult[FlextLdapEntry | None].fail(
+                return FlextResult[FlextLDAPEntry | None].fail(
                     "Entry DN not found in search results",
                 )
 
@@ -304,9 +301,9 @@ class FlextLdapRepositories:
             self,
             ldap_filter: str,
             base_dn: str,
-        ) -> FlextResult[list[FlextLdapEntry]]:
+        ) -> FlextResult[list[FlextLDAPEntry]]:
             """Find users by custom LDAP filter."""
-            search_request = FlextLdapSearchRequest(
+            search_request = FlextLDAPSearchRequest(
                 base_dn=base_dn,
                 scope="subtree",
                 filter_str=f"(&(objectClass=inetOrgPerson){ldap_filter})",
@@ -317,11 +314,11 @@ class FlextLdapRepositories:
 
             search_result = await self._repo.search(search_request)
             if not search_result.is_success:
-                return FlextResult[list[FlextLdapEntry]].fail(
+                return FlextResult[list[FlextLDAPEntry]].fail(
                     search_result.error or "Users search failed",
                 )
 
-            entries: list[FlextLdapEntry] = []
+            entries: list[FlextLDAPEntry] = []
             for entry_data in search_result.value.entries:
                 typed_entry_data_loop = entry_data
                 entry_dn = typed_entry_data_loop.get("dn")
@@ -335,12 +332,12 @@ class FlextLdapRepositories:
                     if entry:
                         entries.append(entry)
 
-            return FlextResult[list[FlextLdapEntry]].ok(entries)
+            return FlextResult[list[FlextLDAPEntry]].ok(entries)
 
     class GroupRepository:
         """Internal specialized repository for LDAP group operations."""
 
-        def __init__(self, base_repository: "FlextLdapRepositories.Repository") -> None:
+        def __init__(self, base_repository: "FlextLDAPRepositories.Repository") -> None:
             """Initialize group repository."""
             self._repo = base_repository
 
@@ -348,9 +345,9 @@ class FlextLdapRepositories:
             self,
             cn: str,
             base_dn: str,
-        ) -> FlextResult[FlextLdapEntry | None]:
+        ) -> FlextResult[FlextLDAPEntry | None]:
             """Find group by CN attribute."""
-            search_request = FlextLdapSearchRequest(
+            search_request = FlextLDAPSearchRequest(
                 base_dn=base_dn,
                 scope="subtree",
                 filter_str=f"(&(objectClass=groupOfNames)(cn={cn}))",
@@ -361,20 +358,20 @@ class FlextLdapRepositories:
 
             search_result = await self._repo.search(search_request)
             if not search_result.is_success:
-                return FlextResult[FlextLdapEntry | None].fail(
+                return FlextResult[FlextLDAPEntry | None].fail(
                     search_result.error or "Group search failed",
                 )
 
             if not search_result.value.entries:
-                return FlextResult[FlextLdapEntry | None].ok(None)
+                return FlextResult[FlextLDAPEntry | None].ok(None)
 
-            # Get the first entry and convert to FlextLdapEntry
+            # Get the first entry and convert to FlextLDAPEntry
             entry_data = search_result.value.entries[0]
             typed_entry_data = entry_data
             entry_dn = typed_entry_data.get("dn", "")
 
             if not entry_dn:
-                return FlextResult[FlextLdapEntry | None].fail(
+                return FlextResult[FlextLDAPEntry | None].fail(
                     "Entry DN not found in search results",
                 )
 
@@ -431,7 +428,7 @@ class FlextLdapRepositories:
     # MAIN CONSOLIDATED INTERFACE
     # ==========================================================================
 
-    def __init__(self, client: FlextLdapClient) -> None:
+    def __init__(self, client: FlextLDAPClient) -> None:
         """Initialize all repository handlers with consolidated pattern."""
         self._base_repo = self.Repository(client)
         self._user_repo = self.UserRepository(self._base_repo)
@@ -453,18 +450,18 @@ class FlextLdapRepositories:
         return self._group_repo
 
     # High-level convenience methods for common operations
-    async def find_by_dn(self, dn: str) -> FlextResult[FlextLdapEntry | None]:
+    async def find_by_dn(self, dn: str) -> FlextResult[FlextLDAPEntry | None]:
         """Find entry by distinguished name (convenience method)."""
         return await self._base_repo.find_by_dn(dn)
 
     async def search(
         self,
-        request: FlextLdapSearchRequest,
-    ) -> FlextResult[FlextLdapSearchResponse]:
+        request: FlextLDAPSearchRequest,
+    ) -> FlextResult[FlextLDAPSearchResponse]:
         """Search entries with criteria (convenience method)."""
         return await self._base_repo.search(request)
 
-    async def save_async(self, entry: FlextLdapEntry) -> FlextResult[None]:
+    async def save_async(self, entry: FlextLDAPEntry) -> FlextResult[None]:
         """Save entry to LDAP directory (convenience method)."""
         return await self._base_repo.save_async(entry)
 
@@ -486,14 +483,14 @@ class FlextLdapRepositories:
 # =============================================================================
 
 # Export internal classes for external access (backward compatibility)
-FlextLdapRepository = FlextLdapRepositories.Repository
-FlextLdapUserRepository = FlextLdapRepositories.UserRepository
-FlextLdapGroupRepository = FlextLdapRepositories.GroupRepository
+FlextLDAPRepository = FlextLDAPRepositories.Repository
+FlextLDAPUserRepository = FlextLDAPRepositories.UserRepository
+FlextLDAPGroupRepository = FlextLDAPRepositories.GroupRepository
 
 __all__ = [
-    "FlextLdapGroupRepository",
-    "FlextLdapRepositories",
+    "FlextLDAPGroupRepository",
+    "FlextLDAPRepositories",
     # Legacy compatibility aliases
-    "FlextLdapRepository",
-    "FlextLdapUserRepository",
+    "FlextLDAPRepository",
+    "FlextLDAPUserRepository",
 ]

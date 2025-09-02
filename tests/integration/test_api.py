@@ -9,18 +9,18 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from flext_core import FlextEntityStatus, FlextModels
+from flext_core import FlextConstants
 
 from flext_ldap import (
-    FlextLdapClient,
-    FlextLdapCreateUserRequest,
-    FlextLdapDistinguishedName,
-    FlextLdapSearchRequest,
-    FlextLdapService,
+    FlextLDAPClient,
+    FlextLDAPCreateUserRequest,
+    FlextLDAPDistinguishedName,
+    FlextLDAPSearchRequest,
+    FlextLDAPService,
 )
-from flext_ldap.entities import FlextLdapSearchResponse
-from flext_ldap.models import FlextLdapGroup as FlextLdapGroupModel, FlextLdapUser
-from flext_ldap.utils import FlextLdapUtilities
+from flext_ldap.entities import FlextLDAPSearchResponse
+from flext_ldap.models import FlextLDAPGroup as FlextLDAPGroupModel, FlextLDAPUser
+from flext_ldap.utilities import FlextLDAPUtilities
 
 
 @pytest.mark.integration
@@ -33,7 +33,7 @@ class TestLdapClientRealOperations:
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test real LDAP server connection."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Connect to real LDAP server
         result = await client.connect(
@@ -53,12 +53,12 @@ class TestLdapClientRealOperations:
     @pytest.mark.asyncio
     async def test_client_search_real_entries(
         self,
-        connected_ldap_client: FlextLdapClient,
+        connected_ldap_client: FlextLDAPClient,
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test searching real LDAP entries."""
         # Search for base DN - should exist
-        search_request = FlextLdapSearchRequest(
+        search_request = FlextLDAPSearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),
             scope="base",
             filter_str="(objectClass=*)",
@@ -71,7 +71,7 @@ class TestLdapClientRealOperations:
 
         # Verify search succeeded and found base DN
         assert result.is_success, f"Search failed: {result.error}"
-        empty_response = FlextLdapSearchResponse(entries=[], total_count=0)
+        empty_response = FlextLDAPSearchResponse(entries=[], total_count=0)
         response_data = result.value if result.is_success else empty_response
         assert response_data.entries, "Should find at least the base DN"
         assert response_data.total_count > 0
@@ -79,7 +79,7 @@ class TestLdapClientRealOperations:
     @pytest.mark.asyncio
     async def test_client_add_modify_delete_real_entry(
         self,
-        connected_ldap_client: FlextLdapClient,
+        connected_ldap_client: FlextLDAPClient,
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test complete CRUD operations with real LDAP entries."""
@@ -94,7 +94,9 @@ class TestLdapClientRealOperations:
             "uid": [f"testuser-{uuid4().hex[:8]}"],
             "mail": ["test@example.com"],
         }
-        user_attributes = FlextLdapUtilities.create_ldap_attributes(user_attrs_raw)
+        user_attributes = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
+            user_attrs_raw
+        )
 
         # First create the OU if it doesn't exist
         ou_dn = f"ou=people,{clean_ldap_container['base_dn']}"
@@ -102,7 +104,9 @@ class TestLdapClientRealOperations:
             "objectClass": ["organizationalUnit"],
             "ou": ["people"],
         }
-        ou_attributes = FlextLdapUtilities.create_ldap_attributes(ou_attrs_raw)
+        ou_attributes = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
+            ou_attrs_raw
+        )
         _ = await connected_ldap_client.add(ou_dn, ou_attributes)
         # Ignore if OU already exists (error code 68)
 
@@ -115,12 +119,14 @@ class TestLdapClientRealOperations:
             "mail": ["updated@example.com"],
             "description": ["Updated user description"],
         }
-        modify_attributes = FlextLdapUtilities.create_ldap_attributes(modify_attrs_raw)
+        modify_attributes = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
+            modify_attrs_raw
+        )
         modify_result = await connected_ldap_client.modify(test_dn, modify_attributes)
         assert modify_result.is_success, f"Failed to modify user: {modify_result.error}"
 
         # SEARCH: Verify modifications
-        search_request = FlextLdapSearchRequest(
+        search_request = FlextLDAPSearchRequest(
             base_dn=test_dn,
             scope="base",
             filter_str="(objectClass=*)",
@@ -130,7 +136,7 @@ class TestLdapClientRealOperations:
         )
         search_result = await connected_ldap_client.search(search_request)
         assert search_result.is_success, f"Failed to search user: {search_result.error}"
-        empty_response = FlextLdapSearchResponse(entries=[], total_count=0)
+        empty_response = FlextLDAPSearchResponse(entries=[], total_count=0)
         search_data = (
             search_result.value if search_result.is_success else empty_response
         )
@@ -150,7 +156,7 @@ class TestLdapClientRealOperations:
         # After deleting all entries, the OU might not exist anymore - this is normal LDAP behavior
         if verify_search.is_success:
             # If search succeeds, there should be no entries
-            empty_response = FlextLdapSearchResponse(entries=[], total_count=0)
+            empty_response = FlextLDAPSearchResponse(entries=[], total_count=0)
             verify_data = (
                 verify_search.value if verify_search.is_success else empty_response
             )
@@ -168,7 +174,7 @@ class TestLdapServiceRealOperations:
     @pytest.mark.asyncio
     async def test_service_user_lifecycle_real_operations(
         self,
-        ldap_service: FlextLdapService,
+        ldap_service: FlextLDAPService,
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test complete user lifecycle with real LDAP operations."""
@@ -186,11 +192,13 @@ class TestLdapServiceRealOperations:
             "objectClass": ["organizationalUnit"],
             "ou": ["users"],
         }
-        ou_attributes_2 = FlextLdapUtilities.create_ldap_attributes(ou_attrs_raw_2)
+        ou_attributes_2 = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
+            ou_attrs_raw_2
+        )
         await client.add(ou_dn, ou_attributes_2)  # Ignore if exists
 
         # Test user creation
-        user_request = FlextLdapCreateUserRequest(
+        user_request = FlextLDAPCreateUserRequest(
             dn=f"cn=realuser-{uuid4().hex[:8]},{ou_dn}",
             uid=f"realuser-{uuid4().hex[:8]}",
             cn="Real Test User",
@@ -204,13 +212,13 @@ class TestLdapServiceRealOperations:
         create_result = await ldap_service.create_user(user_request)
         assert create_result.is_success, f"Failed to create user: {create_result.error}"
 
-        default_user = FlextLdapUser(
-            id=FlextModels.EntityId("default"),
+        default_user = FlextLDAPUser(
+            id="default",
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
         created_user = create_result.value if create_result.is_success else default_user
         assert created_user.uid == user_request.uid
@@ -220,13 +228,13 @@ class TestLdapServiceRealOperations:
         # READ: Verify user exists
         get_result = await ldap_service.get_user(user_request.dn)
         assert get_result.is_success, f"Failed to get user: {get_result.error}"
-        default_user = FlextLdapUser(
-            id=FlextModels.EntityId("default"),
+        default_user = FlextLDAPUser(
+            id="default",
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
         retrieved_user = get_result.value if get_result.is_success else default_user
         assert retrieved_user is not None
@@ -238,7 +246,9 @@ class TestLdapServiceRealOperations:
             "mail": ["updated-real@example.com"],
             "description": ["Updated via service"],
         }
-        update_attributes = FlextLdapUtilities.create_ldap_attributes(update_attrs_raw)
+        update_attributes = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
+            update_attrs_raw
+        )
         update_result = await ldap_service.update_user(
             user_request.dn, update_attributes
         )
@@ -247,13 +257,13 @@ class TestLdapServiceRealOperations:
         # Verify update
         updated_get_result = await ldap_service.get_user(user_request.dn)
         assert updated_get_result.is_success
-        default_user = FlextLdapUser(
-            id=FlextModels.EntityId("default"),
+        default_user = FlextLDAPUser(
+            id="default",
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
         updated_user = (
             updated_get_result.value if updated_get_result.is_success else default_user
@@ -270,7 +280,7 @@ class TestLdapServiceRealOperations:
         assert search_result.is_success, (
             f"Failed to search users: {search_result.error}"
         )
-        default_users: list[FlextLdapUser] = []
+        default_users: list[FlextLDAPUser] = []
         found_users = search_result.value if search_result.is_success else default_users
         assert len(found_users) == 1
         found_user = found_users[0]
@@ -283,7 +293,7 @@ class TestLdapServiceRealOperations:
         # Verify deletion
         verify_result = await ldap_service.get_user(user_request.dn)
         assert verify_result.is_success
-        default_user_verify: FlextLdapUser | None = None
+        default_user_verify: FlextLDAPUser | None = None
         verified_user = (
             verify_result.value if verify_result.is_success else default_user_verify
         )
@@ -292,7 +302,7 @@ class TestLdapServiceRealOperations:
     @pytest.mark.asyncio
     async def test_service_group_lifecycle_real_operations(
         self,
-        ldap_service: FlextLdapService,
+        ldap_service: FlextLDAPService,
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test complete group lifecycle with real LDAP operations."""
@@ -311,7 +321,9 @@ class TestLdapServiceRealOperations:
                 "objectClass": ["organizationalUnit"],
                 "ou": [ou_name],
             }
-            ou_attributes_3 = FlextLdapUtilities.create_ldap_attributes(ou_attrs_raw_3)
+            ou_attributes_3 = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
+                ou_attrs_raw_3
+            )
             await client.add(ou_dn, ou_attributes_3)  # Ignore if exists
 
         # Create test user for group membership
@@ -324,20 +336,22 @@ class TestLdapServiceRealOperations:
             "sn": ["User"],
             "uid": [f"groupuser-{uuid4().hex[:8]}"],
         }
-        user_attributes_4 = FlextLdapUtilities.create_ldap_attributes(user_attrs_raw_4)
+        user_attributes_4 = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
+            user_attrs_raw_4
+        )
         await client.add(user_dn, user_attributes_4)
 
         # Test group creation
         group_id = uuid4().hex[:8]
-        group = FlextLdapGroupModel(
-            id=FlextModels.EntityId(f"real_group_{group_id}"),
+        group = FlextLDAPGroupModel(
+            id=f"real_group_{group_id}",
             dn=f"cn=realgroup-{group_id},ou=groups,{clean_ldap_container['base_dn']}",
             cn=f"Real Test Group {group_id}",
             description="Real test group for integration testing",
             object_classes=["groupOfNames"],
             attributes={},
             members=[user_dn],  # Add member during creation
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
         # CREATE: Real group creation
@@ -349,15 +363,15 @@ class TestLdapServiceRealOperations:
         # READ: Verify group exists
         get_result = await ldap_service.get_group(group.dn)
         assert get_result.is_success, f"Failed to get group: {get_result.error}"
-        default_group = FlextLdapGroupModel(
-            id=FlextModels.EntityId("default"),
+        default_group = FlextLDAPGroupModel(
+            id="default",
             dn="cn=default,dc=test,dc=com",
             cn="Default Group",
             description="Default group",
             object_classes=["groupOfNames"],
             attributes={},
             members=[],
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
         retrieved_group = get_result.value if get_result.is_success else default_group
         assert retrieved_group is not None
@@ -368,7 +382,7 @@ class TestLdapServiceRealOperations:
         update_attrs_raw_5 = {
             "description": ["Updated group description"],
         }
-        update_attributes_5 = FlextLdapUtilities.create_ldap_attributes(
+        update_attributes_5 = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
             update_attrs_raw_5
         )
         update_result = await ldap_service.update_group(group.dn, update_attributes_5)
@@ -385,7 +399,9 @@ class TestLdapServiceRealOperations:
             "sn": ["User2"],
             "uid": [f"groupuser2-{uuid4().hex[:8]}"],
         }
-        user2_attributes_6 = FlextLdapUtilities.create_ldap_attributes(user2_attrs_raw)
+        user2_attributes_6 = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
+            user2_attrs_raw
+        )
         await client.add(user2_dn, user2_attributes_6)
 
         # Add member
@@ -433,7 +449,7 @@ class TestLdapServiceRealOperations:
         # Verify deletion
         verify_result = await ldap_service.get_group(group.dn)
         assert verify_result.is_success
-        default_group_verify: FlextLdapGroupModel | None = None
+        default_group_verify: FlextLDAPGroupModel | None = None
         verified_group = (
             verify_result.value if verify_result.is_success else default_group_verify
         )
@@ -451,13 +467,13 @@ class TestLdapValidationRealOperations:
     @pytest.mark.asyncio
     async def test_dn_validation_real_ldap(
         self,
-        connected_ldap_client: FlextLdapClient,
+        connected_ldap_client: FlextLDAPClient,
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test DN validation with real LDAP server."""
         # Test valid DN creation
         valid_dn = f"cn=validuser,ou=users,{clean_ldap_container['base_dn']}"
-        dn_result = FlextLdapDistinguishedName.create(valid_dn)
+        dn_result = FlextLDAPDistinguishedName.create(valid_dn)
         assert dn_result.is_success, f"Valid DN should work: {dn_result.error}"
 
         # Test invalid DN formats - should fail validation
@@ -468,7 +484,7 @@ class TestLdapValidationRealOperations:
         ]
 
         for invalid_dn in invalid_dns:
-            dn_result = FlextLdapDistinguishedName.create(invalid_dn)
+            dn_result = FlextLDAPDistinguishedName.create(invalid_dn)
             if not dn_result.is_success:
                 # Validation correctly rejected invalid DN
                 assert True
@@ -477,7 +493,7 @@ class TestLdapValidationRealOperations:
     @pytest.mark.asyncio
     async def test_business_rules_validation_real_ldap(
         self,
-        ldap_service: FlextLdapService,
+        ldap_service: FlextLDAPService,
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test business rules validation with real LDAP operations."""
@@ -495,11 +511,13 @@ class TestLdapValidationRealOperations:
             "objectClass": ["organizationalUnit"],
             "ou": ["validation-test"],
         }
-        ou_attributes_7 = FlextLdapUtilities.create_ldap_attributes(ou_attrs_raw_7)
+        ou_attributes_7 = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
+            ou_attrs_raw_7
+        )
         await client.add(ou_dn, ou_attributes_7)
 
         # Test user with valid business rules
-        valid_user_request = FlextLdapCreateUserRequest(
+        valid_user_request = FlextLDAPCreateUserRequest(
             dn=f"cn=validbusinessuser,{ou_dn}",
             uid="validbusinessuser",
             cn="Valid Business User",
@@ -516,13 +534,13 @@ class TestLdapValidationRealOperations:
         )
 
         # Verify the user follows business rules
-        default_user = FlextLdapUser(
-            id=FlextModels.EntityId("default"),
+        default_user = FlextLDAPUser(
+            id="default",
             dn="cn=default,dc=test,dc=com",
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
         created_user = create_result.value if create_result.is_success else default_user
         validation_result = created_user.validate_business_rules()
@@ -549,7 +567,7 @@ class TestLdapErrorHandlingReal:
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test handling of real connection failures."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Test connection to non-existent server
         bad_result = await client.connect(
@@ -582,12 +600,12 @@ class TestLdapErrorHandlingReal:
     @pytest.mark.asyncio
     async def test_ldap_operation_error_handling(
         self,
-        connected_ldap_client: FlextLdapClient,
+        connected_ldap_client: FlextLDAPClient,
         clean_ldap_container: dict[str, object],
     ) -> None:
         """Test error handling for LDAP operations."""
         # Test search with invalid base DN
-        invalid_search = FlextLdapSearchRequest(
+        invalid_search = FlextLDAPSearchRequest(
             base_dn="cn=nonexistent,dc=invalid,dc=com",
             scope="base",
             filter_str="(objectClass=*)",
@@ -612,7 +630,7 @@ class TestLdapErrorHandlingReal:
             "objectClass": ["nonExistentObjectClass"],  # Invalid object class
             "invalidAttribute": ["value"],
         }
-        invalid_attributes = FlextLdapUtilities.create_ldap_attributes(
+        invalid_attributes = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
             invalid_attrs_raw
         )
 

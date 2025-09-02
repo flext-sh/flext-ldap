@@ -1,4 +1,4 @@
-"""LDAP Fields - Single FlextLdapFields class following FLEXT patterns.
+"""LDAP Fields - Single FlextLDAPFields class following FLEXT patterns.
 
 Single class with all LDAP field definitions, processors, and validators
 organized as internal classes for complete backward compatibility.
@@ -6,26 +6,26 @@ organized as internal classes for complete backward compatibility.
 Examples:
     Field types and enums::
 
-        from fields import FlextLdapFields
+        from fields import FlextLDAPFields
 
         # Data types
-        string_type = FlextLdapFields.DataTypes.STRING
-        scope_value = FlextLdapFields.Scopes.BASE
+        string_type = FlextLDAPFields.DataTypes.STRING
+        scope_value = FlextLDAPFields.Scopes.BASE
 
     Processing and validation::
 
         # Attribute processing
-        normalized = FlextLdapFields.Processors.normalize_attributes(attrs)
+        normalized = FlextLDAPFields.Processors.normalize_attributes(attrs)
 
         # Domain validation
-        result = FlextLdapFields.Validators.validate_common_name(cn, attrs, "User")
+        result = FlextLDAPFields.Validators.validate_common_name(cn, attrs, "User")
 
     Legacy compatibility::
 
         # All previous classes still work as direct imports
-        from fields import FlextLdapDataType, LdapAttributeProcessor
+        from fields import FlextLDAPDataType, LdapAttributeProcessor
 
-        data_type = FlextLdapDataType.STRING
+        data_type = FlextLDAPDataType.STRING
 
 """
 
@@ -36,7 +36,7 @@ from typing import cast
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldap.constants import FlextLdapDefaultValues
+from flext_ldap.constants import FlextLDAPDefaultValues
 from flext_ldap.typings import LdapAttributeDict
 
 logger = FlextLogger(__name__)
@@ -46,8 +46,8 @@ logger = FlextLogger(__name__)
 # =============================================================================
 
 
-class FlextLdapFields:
-    """Single FlextLdapFields class with all LDAP field functionality.
+class FlextLDAPFields:
+    """Single FlextLDAPFields class with all LDAP field functionality.
 
     Consolidates ALL LDAP field definitions, processors, and validators into
     a single class following FLEXT patterns. Everything from data types to
@@ -63,19 +63,19 @@ class FlextLdapFields:
     Examples:
         Data types and enums::
 
-            string_type = FlextLdapFields.DataTypes.STRING
-            scope_value = FlextLdapFields.Scopes.BASE
+            string_type = FlextLDAPFields.DataTypes.STRING
+            scope_value = FlextLDAPFields.Scopes.BASE
 
         Processing operations::
 
-            normalized = FlextLdapFields.Processors.normalize_attributes(attrs)
-            coerced = FlextLdapFields.Processors.coerce_attribute_value(value)
+            normalized = FlextLDAPFields.Processors.normalize_attributes(attrs)
+            coerced = FlextLDAPFields.Processors.coerce_attribute_value(value)
 
         Validation operations::
 
-            result = FlextLdapFields.Validators.validate_common_name(cn, attrs, "User")
+            result = FlextLDAPFields.Validators.validate_common_name(cn, attrs, "User")
             classes_result = (
-                FlextLdapFields.Validators.validate_required_object_classes(...)
+                FlextLDAPFields.Validators.validate_required_object_classes(...)
             )
 
     """
@@ -87,19 +87,19 @@ class FlextLdapFields:
     class DataTypes(Enum):
         """Semantic data types used across LDAP domain models."""
 
-        STRING = FlextLdapDefaultValues.STRING_FIELD_TYPE
-        INTEGER = FlextLdapDefaultValues.INTEGER_FIELD_TYPE
-        BOOLEAN = FlextLdapDefaultValues.BOOLEAN_FIELD_TYPE
-        BINARY = FlextLdapDefaultValues.BINARY_FIELD_TYPE
-        DATETIME = FlextLdapDefaultValues.DATETIME_FIELD_TYPE
-        DN = FlextLdapDefaultValues.DN_FIELD_TYPE
-        EMAIL = FlextLdapDefaultValues.EMAIL_FIELD_TYPE
-        PHONE = FlextLdapDefaultValues.PHONE_FIELD_TYPE
-        UUID = FlextLdapDefaultValues.UUID_FIELD_TYPE
-        URL = FlextLdapDefaultValues.URL_FIELD_TYPE
-        IP_ADDRESS = FlextLdapDefaultValues.IP_ADDRESS_FIELD_TYPE
-        MAC_ADDRESS = FlextLdapDefaultValues.MAC_ADDRESS_FIELD_TYPE
-        CERTIFICATE = FlextLdapDefaultValues.CERTIFICATE_FIELD_TYPE
+        STRING = FlextLDAPDefaultValues.STRING_FIELD_TYPE
+        INTEGER = FlextLDAPDefaultValues.INTEGER_FIELD_TYPE
+        BOOLEAN = FlextLDAPDefaultValues.BOOLEAN_FIELD_TYPE
+        BINARY = FlextLDAPDefaultValues.BINARY_FIELD_TYPE
+        DATETIME = FlextLDAPDefaultValues.DATETIME_FIELD_TYPE
+        DN = FlextLDAPDefaultValues.DN_FIELD_TYPE
+        EMAIL = FlextLDAPDefaultValues.EMAIL_FIELD_TYPE
+        PHONE = FlextLDAPDefaultValues.PHONE_FIELD_TYPE
+        UUID = FlextLDAPDefaultValues.UUID_FIELD_TYPE
+        URL = FlextLDAPDefaultValues.URL_FIELD_TYPE
+        IP_ADDRESS = FlextLDAPDefaultValues.IP_ADDRESS_FIELD_TYPE
+        MAC_ADDRESS = FlextLDAPDefaultValues.MAC_ADDRESS_FIELD_TYPE
+        CERTIFICATE = FlextLDAPDefaultValues.CERTIFICATE_FIELD_TYPE
         UNKNOWN = "unknown"
 
         class PasswordDataType(StrEnum):
@@ -145,7 +145,7 @@ class FlextLdapFields:
 
             # Optimized with dictionary comprehension for better performance
             return {
-                key: FlextLdapFields.Processors.coerce_attribute_value(value)
+                key: FlextLDAPFields.Processors.coerce_attribute_value(value)
                 for key, value in attrs.items()
             }
 
@@ -163,7 +163,7 @@ class FlextLdapFields:
             entity_type: str,
         ) -> FlextResult[None]:
             """Validate common name requirement for users and groups."""
-            if not cn_field and not FlextLdapFields.Validators._get_attribute_value(
+            if not cn_field and not FlextLDAPFields.Validators._get_attribute_value(
                 attributes,
                 "cn",
             ):
@@ -215,13 +215,13 @@ class FlextLdapFields:
 # =============================================================================
 
 # Legacy class aliases for backward compatibility
-FlextLdapDataType = FlextLdapFields.DataTypes
-FlextLdapScopeEnum = FlextLdapFields.Scopes
-LdapAttributeProcessor = FlextLdapFields.Processors
-LdapDomainValidator = FlextLdapFields.Validators
+FlextLDAPDataType = FlextLDAPFields.DataTypes
+FlextLDAPScopeEnum = FlextLDAPFields.Scopes
+LdapAttributeProcessor = FlextLDAPFields.Processors
+LdapDomainValidator = FlextLDAPFields.Validators
 
 # Legacy constants for backward compatibility
-MIN_PASSWORD_LENGTH = FlextLdapFields.Constants.MIN_PASSWORD_LENGTH
+MIN_PASSWORD_LENGTH = FlextLDAPFields.Constants.MIN_PASSWORD_LENGTH
 
 
 # =============================================================================
@@ -232,10 +232,10 @@ __all__ = [
     # Legacy constants
     "MIN_PASSWORD_LENGTH",
     # Legacy compatibility classes
-    "FlextLdapDataType",
+    "FlextLDAPDataType",
     # Primary consolidated class
-    "FlextLdapFields",
-    "FlextLdapScopeEnum",
+    "FlextLDAPFields",
+    "FlextLDAPScopeEnum",
     "LdapAttributeProcessor",
     "LdapDomainValidator",
 ]

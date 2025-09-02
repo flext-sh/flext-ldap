@@ -61,14 +61,14 @@ When TRACE is enabled, you'll see detailed debugging information:
 
 ```bash
 FLEXT_LOG_LEVEL=TRACE python -c "
-from flext_ldap.config import FlextLdapConnectionConfig
-from flext_ldap.ldap_infrastructure import FlextLdapConverter
+from flext_ldap.config import FlextLDAPConnectionConfig
+from flext_ldap.ldap_infrastructure import FlextLDAPConverter
 
 # Server validation with detailed TRACE logs
-config = FlextLdapConnectionConfig(server='test.example.com')
+config = FlextLDAPConnectionConfig(server='test.example.com')
 
 # Type detection with caching information
-converter = FlextLdapConverter()
+converter = FlextLDAPConverter()
 converter.detect_type('test@example.com')  # Shows cache miss, type detection
 converter.detect_type('test@example.com')  # Shows cache hit
 "

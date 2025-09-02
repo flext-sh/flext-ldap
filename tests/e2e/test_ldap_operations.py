@@ -10,10 +10,10 @@ import pytest
 from pydantic import SecretStr
 
 from flext_ldap import (
-    FlextLdapAuthConfig,
-    FlextLdapConnectionConfig,
-    FlextLdapCreateUserRequest,
-    get_ldap_api,
+    FlextLDAPApi,
+    FlextLDAPAuthConfig,
+    FlextLDAPConnectionConfig,
+    FlextLDAPCreateUserRequest,
 )
 
 
@@ -29,10 +29,10 @@ class TestLdapE2EOperations:
         Currently it tests the API flow without actual LDAP operations.
         """
         # Get API instance
-        api = get_ldap_api()
+        api = FlextLDAPApi()
 
         # Test configuration
-        FlextLdapConnectionConfig(
+        FlextLDAPConnectionConfig(
             server="localhost",
             port=3389,  # Test port for Docker LDAP server
         )
@@ -49,7 +49,7 @@ class TestLdapE2EOperations:
         assert hasattr(connection_result, "is_success")
 
         # Create user request
-        user_request = FlextLdapCreateUserRequest(
+        user_request = FlextLDAPCreateUserRequest(
             dn="cn=testuser,ou=users,dc=flext,dc=local",
             uid="testuser",
             cn="Test User",
@@ -73,7 +73,7 @@ class TestLdapE2EOperations:
     @pytest.mark.asyncio
     async def test_search_operations_flow(self) -> None:
         """Test LDAP search operations flow."""
-        api = get_ldap_api()
+        api = FlextLDAPApi()
 
         # Test search without connection (should fail gracefully)
         search_result = await api.search(
@@ -88,7 +88,7 @@ class TestLdapE2EOperations:
     @pytest.mark.asyncio
     async def test_group_management_flow(self) -> None:
         """Test group management workflow."""
-        api = get_ldap_api()
+        api = FlextLDAPApi()
 
         # Test group operations structure
         # Note: Actual implementation would require real LDAP server
@@ -104,7 +104,7 @@ class TestLdapE2EOperations:
     @pytest.mark.asyncio
     async def test_connection_error_handling(self) -> None:
         """Test connection error handling in E2E scenarios."""
-        api = get_ldap_api()
+        api = FlextLDAPApi()
 
         # Test connection to non-existent server
         result = await api.connect(
@@ -122,13 +122,13 @@ class TestLdapE2EOperations:
         """Test API configuration integration."""
         # Test with custom configuration
 
-        auth_config = FlextLdapAuthConfig(
+        auth_config = FlextLDAPAuthConfig(
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=local",
             bind_password=SecretStr("REDACTED_LDAP_BIND_PASSWORD123"),
             use_ssl=True,
         )
 
-        FlextLdapConnectionConfig(
+        FlextLDAPConnectionConfig(
             server="test.ldap.server",
             port=636,
             timeout=60,
@@ -136,7 +136,7 @@ class TestLdapE2EOperations:
         )
 
         # Create API with configuration
-        api = get_ldap_api()
+        api = FlextLDAPApi()
 
         # Should handle configuration properly
         assert api is not None
@@ -144,7 +144,7 @@ class TestLdapE2EOperations:
     @pytest.mark.asyncio
     async def test_error_propagation_e2e(self) -> None:
         """Test error propagation through the entire stack."""
-        api = get_ldap_api()
+        api = FlextLDAPApi()
 
         # Test various error scenarios
         scenarios = [
@@ -185,12 +185,12 @@ class TestLdapE2EWithDockerServer:
         # 2. Test domain: dc=flext,dc=local
         # 3. Admin credentials: cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local / REDACTED_LDAP_BIND_PASSWORD123
 
-        get_ldap_api()
+        FlextLDAPApi()
 
         # Connection parameters for Docker test server
 
         # For now, just test the structure
-        user_request = FlextLdapCreateUserRequest(
+        user_request = FlextLDAPCreateUserRequest(
             dn="cn=e2etest,ou=users,dc=flext,dc=local",
             uid="e2etest",
             cn="E2E Test User",
@@ -212,7 +212,7 @@ class TestLdapE2EWithDockerServer:
         # 3. Attribute retrieval
         # 4. Paged search results
 
-        api = get_ldap_api()
+        api = FlextLDAPApi()
         assert api is not None
 
     @pytest.mark.asyncio
@@ -225,5 +225,5 @@ class TestLdapE2EWithDockerServer:
         # 3. Group search
         # 4. Group deletion
 
-        api = get_ldap_api()
+        api = FlextLDAPApi()
         assert api is not None

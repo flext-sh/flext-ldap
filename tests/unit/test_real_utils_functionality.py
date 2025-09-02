@@ -10,15 +10,12 @@ from typing import Never
 import pytest
 from flext_core import FlextResult
 
-# Test real utils functionality
-from flext_ldap.utils import (
-    FlextLdapUtilities,
-    FlextLdapValidationHelpers,
-)
+# Test real utilities functionality
+from flext_ldap.utilities import FlextLDAPUtilities
 
 
-class TestRealFlextLdapUtilities:
-    """Test REAL FlextLdapUtilities class functionality."""
+class TestRealFlextLDAPUtilities:
+    """Test REAL FlextLDAPUtilities class functionality."""
 
     def test_is_successful_result_with_successful_result(self) -> None:
         """Test is_successful_result with successful FlextResult."""
@@ -26,7 +23,7 @@ class TestRealFlextLdapUtilities:
         success_result = FlextResult[str].ok("test_value")
 
         # Should detect success correctly
-        result = FlextLdapUtilities.is_successful_result(success_result)
+        result = FlextLDAPUtilities.LdapConverters.is_successful_result(success_result)
         assert result is True
 
     def test_is_successful_result_with_failed_result(self) -> None:
@@ -35,7 +32,7 @@ class TestRealFlextLdapUtilities:
         failed_result = FlextResult[str].fail("test_error")
 
         # Should detect failure correctly
-        result = FlextLdapUtilities.is_successful_result(failed_result)
+        result = FlextLDAPUtilities.LdapConverters.is_successful_result(failed_result)
         assert result is False
 
     def test_is_successful_result_with_non_result_object(self) -> None:
@@ -50,7 +47,7 @@ class TestRealFlextLdapUtilities:
         ]
 
         for obj in non_results:
-            result = FlextLdapUtilities.is_successful_result(obj)
+            result = FlextLDAPUtilities.LdapConverters.is_successful_result(obj)
             assert result is False
 
     def test_is_successful_result_with_mock_success_object(self) -> None:
@@ -64,8 +61,12 @@ class TestRealFlextLdapUtilities:
         success_obj = MockSuccessObject(True)
         failed_obj = MockSuccessObject(False)
 
-        assert FlextLdapUtilities.is_successful_result(success_obj) is True
-        assert FlextLdapUtilities.is_successful_result(failed_obj) is False
+        assert (
+            FlextLDAPUtilities.LdapConverters.is_successful_result(success_obj) is True
+        )
+        assert (
+            FlextLDAPUtilities.LdapConverters.is_successful_result(failed_obj) is False
+        )
 
     def test_create_typed_ldap_attributes_with_strings(self) -> None:
         """Test create_typed_ldap_attributes with string values."""
@@ -75,7 +76,9 @@ class TestRealFlextLdapUtilities:
             "sn": "Doe",
         }
 
-        result = FlextLdapUtilities.create_typed_ldap_attributes(input_attrs)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            input_attrs
+        )
 
         # Should keep strings as strings (actual behavior)
         assert isinstance(result, dict)
@@ -91,7 +94,9 @@ class TestRealFlextLdapUtilities:
             "cn": ["John Doe"],
         }
 
-        result = FlextLdapUtilities.create_typed_ldap_attributes(input_attrs)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            input_attrs
+        )
 
         # Should preserve lists, convert items to strings
         assert isinstance(result, dict)
@@ -109,7 +114,9 @@ class TestRealFlextLdapUtilities:
             "gidNumbers": [100, 101, 102],  # List of integers
         }
 
-        result = FlextLdapUtilities.create_typed_ldap_attributes(input_attrs)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            input_attrs
+        )
 
         # Should convert properly - lists stay lists, singles stay singles
         assert isinstance(result, dict)
@@ -125,9 +132,11 @@ class TestRealFlextLdapUtilities:
 
     def test_create_typed_ldap_attributes_with_empty_dict(self) -> None:
         """Test create_typed_ldap_attributes with empty input."""
-        input_attrs = {}
+        input_attrs: dict[str, object] = {}
 
-        result = FlextLdapUtilities.create_typed_ldap_attributes(input_attrs)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            input_attrs
+        )
 
         # Should return empty dict
         assert isinstance(result, dict)
@@ -141,7 +150,9 @@ class TestRealFlextLdapUtilities:
             "mail": ["test@example.com"],
         }
 
-        result = FlextLdapUtilities.create_typed_ldap_attributes(input_attrs)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            input_attrs
+        )
 
         # Should handle empty lists
         assert isinstance(result, dict)
@@ -157,7 +168,9 @@ class TestRealFlextLdapUtilities:
             "certificates": [b"cert1", b"cert2"],
         }
 
-        result = FlextLdapUtilities.create_typed_ldap_attributes(input_attrs)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            input_attrs
+        )
 
         # Should handle bytes appropriately
         assert isinstance(result, dict)
@@ -168,8 +181,8 @@ class TestRealFlextLdapUtilities:
         assert len(result["certificates"]) == 2
 
 
-class TestRealFlextLdapValidationHelpers:
-    """Test REAL FlextLdapValidationHelpers class functionality."""
+class TestRealFlextLDAPValidation:
+    """Test REAL FlextLDAPUtilities.Validation class functionality."""
 
     def test_validate_non_empty_string_with_valid_strings(self) -> None:
         """Test validate_non_empty_string with valid string values."""
@@ -183,7 +196,7 @@ class TestRealFlextLdapValidationHelpers:
         ]
 
         for test_string in valid_strings:
-            result = FlextLdapValidationHelpers.validate_non_empty_string(
+            result = FlextLDAPUtilities.Validation.validate_non_empty_string(
                 test_string, "test_field"
             )
             assert isinstance(result, str)
@@ -199,7 +212,7 @@ class TestRealFlextLdapValidationHelpers:
 
         for empty_string in empty_strings:
             with pytest.raises(ValueError):
-                FlextLdapValidationHelpers.validate_non_empty_string(
+                FlextLDAPUtilities.Validation.validate_non_empty_string(
                     empty_string, "test_field"
                 )
 
@@ -217,9 +230,12 @@ class TestRealFlextLdapValidationHelpers:
 
         for non_string in non_strings:
             with pytest.raises(
-                (AttributeError, ValueError)
+                (
+                    AttributeError,
+                    ValueError,
+                )
             ):  # Different errors for different types
-                FlextLdapValidationHelpers.validate_non_empty_string(
+                FlextLDAPUtilities.Validation.validate_non_empty_string(
                     non_string, "test_field"
                 )
 
@@ -233,7 +249,7 @@ class TestRealFlextLdapValidationHelpers:
         ]
 
         for input_str, expected in test_cases:
-            result = FlextLdapValidationHelpers.validate_non_empty_string(
+            result = FlextLDAPUtilities.Validation.validate_non_empty_string(
                 input_str, "test_field"
             )
             assert result == expected
@@ -249,7 +265,7 @@ class TestRealFlextLdapValidationHelpers:
         ]
 
         for dn in valid_dns:
-            result = FlextLdapValidationHelpers.validate_dn_field(dn)
+            result = FlextLDAPUtilities.DnParser.validate_dn_field(dn)
             assert isinstance(result, str)
             assert len(result.strip()) > 0
             assert result == dn  # Should return as-is for valid DNs
@@ -264,7 +280,7 @@ class TestRealFlextLdapValidationHelpers:
 
         for empty_dn in empty_dns:
             with pytest.raises(ValueError):
-                FlextLdapValidationHelpers.validate_dn_field(empty_dn)
+                FlextLDAPUtilities.DnParser.validate_dn_field(empty_dn)
 
     def test_validate_filter_field_with_valid_filters(self) -> None:
         """Test validate_filter_field with valid LDAP filter strings."""
@@ -278,7 +294,7 @@ class TestRealFlextLdapValidationHelpers:
         ]
 
         for filter_str in valid_filters:
-            result = FlextLdapValidationHelpers.validate_filter_field(filter_str)
+            result = FlextLDAPUtilities.Validation.validate_filter_field(filter_str)
             assert isinstance(result, str)
             assert len(result.strip()) > 0
             assert result == filter_str
@@ -293,7 +309,7 @@ class TestRealFlextLdapValidationHelpers:
 
         for empty_filter in empty_filters:
             with pytest.raises(ValueError):
-                FlextLdapValidationHelpers.validate_filter_field(empty_filter)
+                FlextLDAPUtilities.Validation.validate_filter_field(empty_filter)
 
     def test_validate_uri_field_with_valid_uris(self) -> None:
         """Test validate_uri_field with valid URI strings."""
@@ -304,7 +320,7 @@ class TestRealFlextLdapValidationHelpers:
         ]
 
         for server in valid_servers:
-            result = FlextLdapValidationHelpers.validate_uri_field(server)
+            result = FlextLDAPUtilities.Validation.validate_uri_field(server)
             assert isinstance(result, str)
             assert len(result.strip()) > 0
             assert result == server
@@ -319,7 +335,7 @@ class TestRealFlextLdapValidationHelpers:
 
         for empty_server in empty_servers:
             with pytest.raises(ValueError):
-                FlextLdapValidationHelpers.validate_uri_field(empty_server)
+                FlextLDAPUtilities.Validation.validate_uri_field(empty_server)
 
     def test_validate_base_dn_field_with_valid_base_dns(self) -> None:
         """Test validate_base_dn_field with valid base DN strings."""
@@ -332,7 +348,7 @@ class TestRealFlextLdapValidationHelpers:
         ]
 
         for base_dn in valid_base_dns:
-            result = FlextLdapValidationHelpers.validate_base_dn_field(base_dn)
+            result = FlextLDAPUtilities.Validation.validate_base_dn_field(base_dn)
             assert isinstance(result, str)
             assert len(result.strip()) > 0
             assert result == base_dn
@@ -347,7 +363,7 @@ class TestRealFlextLdapValidationHelpers:
 
         for empty_base_dn in empty_base_dns:
             with pytest.raises(ValueError):
-                FlextLdapValidationHelpers.validate_base_dn_field(empty_base_dn)
+                FlextLDAPUtilities.Validation.validate_base_dn_field(empty_base_dn)
 
     def test_validate_cn_field_with_valid_cns(self) -> None:
         """Test validate_cn_field with valid CN strings."""
@@ -361,7 +377,7 @@ class TestRealFlextLdapValidationHelpers:
         ]
 
         for username in valid_usernames:
-            result = FlextLdapValidationHelpers.validate_cn_field(username)
+            result = FlextLDAPUtilities.Validation.validate_cn_field(username)
             assert isinstance(result, str)
             assert len(result.strip()) > 0
             assert result == username
@@ -376,7 +392,7 @@ class TestRealFlextLdapValidationHelpers:
 
         for empty_username in empty_usernames:
             with pytest.raises(ValueError):
-                FlextLdapValidationHelpers.validate_cn_field(empty_username)
+                FlextLDAPUtilities.Validation.validate_cn_field(empty_username)
 
 
 class TestRealUtilitiesIntegration:
@@ -386,11 +402,17 @@ class TestRealUtilitiesIntegration:
         """Test utilities integrate properly with real FlextResult objects."""
         # Test with successful FlextResult
         success_result = FlextResult[dict].ok({"test": "data"})
-        assert FlextLdapUtilities.is_successful_result(success_result) is True
+        assert (
+            FlextLDAPUtilities.LdapConverters.is_successful_result(success_result)
+            is True
+        )
 
         # Test with failed FlextResult
         error_result = FlextResult[dict].fail("Test error message")
-        assert FlextLdapUtilities.is_successful_result(error_result) is False
+        assert (
+            FlextLDAPUtilities.LdapConverters.is_successful_result(error_result)
+            is False
+        )
 
         # Verify FlextResult properties are accessible
         assert success_result.is_success is True
@@ -401,11 +423,11 @@ class TestRealUtilitiesIntegration:
     def test_validation_helpers_provide_consistent_error_messages(self) -> None:
         """Test validation helpers provide consistent error messages."""
         test_cases = [
-            (FlextLdapValidationHelpers.validate_dn_field, ""),
-            (FlextLdapValidationHelpers.validate_filter_field, ""),
-            (FlextLdapValidationHelpers.validate_uri_field, ""),
-            (FlextLdapValidationHelpers.validate_base_dn_field, ""),
-            (FlextLdapValidationHelpers.validate_cn_field, ""),
+            (FlextLDAPUtilities.DnParser.validate_dn_field, ""),
+            (FlextLDAPUtilities.Validation.validate_filter_field, ""),
+            (FlextLDAPUtilities.Validation.validate_uri_field, ""),
+            (FlextLDAPUtilities.Validation.validate_base_dn_field, ""),
+            (FlextLDAPUtilities.Validation.validate_cn_field, ""),
         ]
 
         for validator_func, empty_input in test_cases:
@@ -442,7 +464,9 @@ class TestRealUtilitiesIntegration:
             "description": "Test user account",
         }
 
-        result = FlextLdapUtilities.create_typed_ldap_attributes(user_attributes)
+        result = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+            user_attributes
+        )
 
         # Verify all attributes are properly converted
         assert isinstance(result, dict)
@@ -477,14 +501,18 @@ class TestRealUtilitiesErrorHandling:
         """Test utilities handle edge cases without crashing."""
         # Test with None input
         try:
-            FlextLdapUtilities.create_typed_ldap_attributes(None)
+            FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+                None
+            )
             # Should not crash, but may raise AttributeError
         except AttributeError:
             pass  # Expected for None input - 'NoneType' has no attribute 'items'
 
         # Test with non-dict input
         try:
-            FlextLdapUtilities.create_typed_ldap_attributes("not a dict")
+            FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
+                "not a dict"
+            )
             # Should not crash, but may raise AttributeError
         except (AttributeError, TypeError):
             pass  # Expected for non-dict input
@@ -492,11 +520,11 @@ class TestRealUtilitiesErrorHandling:
     def test_validation_helpers_provide_detailed_errors(self) -> None:
         """Test validation helpers provide detailed error information."""
         validators = [
-            FlextLdapValidationHelpers.validate_dn_field,
-            FlextLdapValidationHelpers.validate_filter_field,
-            FlextLdapValidationHelpers.validate_uri_field,
-            FlextLdapValidationHelpers.validate_base_dn_field,
-            FlextLdapValidationHelpers.validate_cn_field,
+            FlextLDAPUtilities.DnParser.validate_dn_field,
+            FlextLDAPUtilities.Validation.validate_filter_field,
+            FlextLDAPUtilities.Validation.validate_uri_field,
+            FlextLDAPUtilities.Validation.validate_base_dn_field,
+            FlextLDAPUtilities.Validation.validate_cn_field,
         ]
 
         for validator in validators:
@@ -524,4 +552,4 @@ class TestRealUtilitiesErrorHandling:
 
         # Should raise exception when property access fails (current implementation)
         with pytest.raises(RuntimeError, match="Malformed is_success property"):
-            FlextLdapUtilities.is_successful_result(malformed_obj)
+            FlextLDAPUtilities.LdapConverters.is_successful_result(malformed_obj)

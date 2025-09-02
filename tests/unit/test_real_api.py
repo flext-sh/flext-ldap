@@ -11,35 +11,32 @@ import time
 import pytest
 
 # Test real API functionality
-from flext_ldap.api import (
-    FlextLdapApi,
-    get_ldap_api,
-)
+from flext_ldap.api import FlextLDAPApi
 
 
-class TestRealLdapApiFunction:
-    """Test REAL get_ldap_api function."""
+class TestRealLdapApiClass:
+    """Test REAL FlextLDAPApi class instantiation."""
 
-    def test_get_ldap_api_returns_api_instance(self) -> None:
-        """Test get_ldap_api returns FlextLdapApi instance."""
-        api = get_ldap_api()
+    def test_api_class_instantiation(self) -> None:
+        """Test FlextLDAPApi class can be instantiated."""
+        api = FlextLDAPApi()
 
-        assert isinstance(api, FlextLdapApi)
+        assert isinstance(api, FlextLDAPApi)
         assert api is not None
 
-    def test_get_ldap_api_returns_consistent_type(self) -> None:
+    def test_api_class_returns_consistent_type(self) -> None:
         """Test get_ldap_api returns consistent type."""
-        api1 = get_ldap_api()
-        api2 = get_ldap_api()
+        api1 = FlextLDAPApi()
+        api2 = FlextLDAPApi()
 
         # Should return same type (not necessarily same instance)
         assert type(api1) is type(api2)
-        assert isinstance(api1, FlextLdapApi)
-        assert isinstance(api2, FlextLdapApi)
+        assert isinstance(api1, FlextLDAPApi)
+        assert isinstance(api2, FlextLDAPApi)
 
     def test_get_ldap_api_has_expected_methods(self) -> None:
         """Test get_ldap_api returns API with expected methods."""
-        api = get_ldap_api()
+        api = FlextLDAPApi()
 
         # Should have the main API methods
         expected_methods = [
@@ -63,19 +60,19 @@ class TestRealLdapApiFunction:
             assert callable(method), f"API method not callable: {method_name}"
 
 
-class TestRealFlextLdapApi:
-    """Test REAL FlextLdapApi class functionality."""
+class TestRealFlextLDAPApi:
+    """Test REAL FlextLDAPApi class functionality."""
 
     def test_flext_ldap_api_can_be_instantiated(self) -> None:
-        """Test FlextLdapApi can be instantiated directly."""
-        api = FlextLdapApi()
+        """Test FlextLDAPApi can be instantiated directly."""
+        api = FlextLDAPApi()
 
-        assert isinstance(api, FlextLdapApi)
+        assert isinstance(api, FlextLDAPApi)
         assert api is not None
 
     def test_flext_ldap_api_has_required_attributes(self) -> None:
-        """Test FlextLdapApi has required attributes."""
-        api = FlextLdapApi()
+        """Test FlextLDAPApi has required attributes."""
+        api = FlextLDAPApi()
 
         # Should have service attribute
         assert hasattr(api, "_service")
@@ -85,9 +82,9 @@ class TestRealFlextLdapApi:
         assert service is not None
 
     def test_multiple_api_instances_are_independent(self) -> None:
-        """Test multiple FlextLdapApi instances are independent."""
-        api1 = FlextLdapApi()
-        api2 = FlextLdapApi()
+        """Test multiple FlextLDAPApi instances are independent."""
+        api1 = FlextLDAPApi()
+        api2 = FlextLDAPApi()
 
         # They should be different instances
         assert api1 is not api2
@@ -97,7 +94,7 @@ class TestRealFlextLdapApi:
 
     def test_api_methods_exist_and_callable(self) -> None:
         """Test all expected API methods exist and are callable."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Test core methods exist
         core_methods = [
@@ -122,7 +119,7 @@ class TestRealFlextLdapApi:
 
     def test_api_methods_return_appropriate_types(self) -> None:
         """Test API methods return appropriate types (without calling them)."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Test method signatures exist by checking they're callable
         # We can't call them without proper setup, but we can verify they exist
@@ -140,7 +137,7 @@ class TestRealApiIntegration:
 
     def test_api_integrates_with_flext_result(self) -> None:
         """Test API properly integrates with FlextResult pattern."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Test that API is designed to work with FlextResult
         # We can verify this by checking method signatures and attributes
@@ -152,8 +149,8 @@ class TestRealApiIntegration:
 
     def test_function_api_vs_instance_api_compatibility(self) -> None:
         """Test function API and instance API are compatible."""
-        function_api = get_ldap_api()
-        instance_api = FlextLdapApi()
+        function_api = FlextLDAPApi()
+        instance_api = FlextLDAPApi()
 
         # Should have same methods
         function_methods = [
@@ -173,7 +170,7 @@ class TestRealApiIntegration:
 
     def test_api_provides_async_interface(self) -> None:
         """Test API provides async interface."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Check that key methods are async (coroutines)
 
@@ -205,7 +202,7 @@ class TestRealApiErrorHandling:
         """Test API handles instantiation edge cases gracefully."""
         # Should not raise exceptions during instantiation
         try:
-            api = FlextLdapApi()
+            api = FlextLDAPApi()
             assert api is not None
         except Exception as e:
             pytest.fail(f"API instantiation raised exception: {e}")
@@ -214,17 +211,17 @@ class TestRealApiErrorHandling:
         """Test get_ldap_api handles multiple calls gracefully."""
         # Should not raise exceptions on multiple calls
         try:
-            apis = [get_ldap_api() for _ in range(10)]
+            apis = [FlextLDAPApi() for _ in range(10)]
             assert len(apis) == 10
             # All should be same type
             for api in apis:
-                assert isinstance(api, FlextLdapApi)
+                assert isinstance(api, FlextLDAPApi)
         except Exception as e:
             pytest.fail(f"Multiple get_ldap_api calls raised exception: {e}")
 
     def test_api_methods_dont_raise_on_inspection(self) -> None:
         """Test API methods don't raise exceptions when inspected."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Getting method references should not raise exceptions
         try:
@@ -256,7 +253,7 @@ class TestRealApiPerformance:
         start_time = time.time()
 
         # Create multiple API instances
-        apis = [FlextLdapApi() for _ in range(100)]
+        apis = [FlextLDAPApi() for _ in range(100)]
 
         end_time = time.time()
         elapsed = end_time - start_time
@@ -270,7 +267,7 @@ class TestRealApiPerformance:
         start_time = time.time()
 
         # Access singleton many times
-        apis = [get_ldap_api() for _ in range(1000)]
+        apis = [FlextLDAPApi() for _ in range(1000)]
 
         end_time = time.time()
         elapsed = end_time - start_time
@@ -280,7 +277,7 @@ class TestRealApiPerformance:
         assert len(apis) == 1000
         # All should be same type
         for api in apis:
-            assert isinstance(api, FlextLdapApi)
+            assert isinstance(api, FlextLDAPApi)
 
 
 class TestRealApiDocumentation:
@@ -288,11 +285,11 @@ class TestRealApiDocumentation:
 
     def test_api_has_docstrings(self) -> None:
         """Test API classes and methods have docstrings."""
-        FlextLdapApi()
+        FlextLDAPApi()
 
         # Main class should have docstring
-        assert FlextLdapApi.__doc__ is not None
-        assert len(FlextLdapApi.__doc__.strip()) > 0
+        assert FlextLDAPApi.__doc__ is not None
+        assert len(FlextLDAPApi.__doc__.strip()) > 0
 
         # get_ldap_api function should have docstring
         assert get_ldap_api.__doc__ is not None
@@ -300,7 +297,7 @@ class TestRealApiDocumentation:
 
     def test_api_methods_have_docstrings(self) -> None:
         """Test API methods have docstrings."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Key methods should have docstrings
         key_methods = [
@@ -324,7 +321,7 @@ class TestRealApiDocumentation:
 
     def test_api_supports_introspection(self) -> None:
         """Test API supports introspection properly."""
-        api = FlextLdapApi()
+        api = FlextLDAPApi()
 
         # Should be able to get method lists
         methods = [name for name in dir(api) if not name.startswith("_")]
@@ -332,7 +329,7 @@ class TestRealApiDocumentation:
 
         # Should be able to inspect types
         assert hasattr(api, "__class__")
-        assert api.__class__.__name__ == "FlextLdapApi"
+        assert api.__class__.__name__ == "FlextLDAPApi"
 
         # Should have module information
         assert hasattr(api, "__module__") or hasattr(api.__class__, "__module__")

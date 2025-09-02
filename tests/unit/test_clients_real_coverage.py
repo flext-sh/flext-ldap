@@ -6,6 +6,7 @@ They test the LDAP client logic, error handling, and integration patterns.
 
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import MagicMock, patch
 
 import ldap3
@@ -14,19 +15,19 @@ from ldap3.core.exceptions import LDAPException
 
 from flext_ldap import (
     SCOPE_MAP,
-    FlextLdapClient,
-    FlextLdapSearchRequest,
-    FlextLdapSearchResponse,
+    FlextLDAPClient,
+    FlextLDAPSearchRequest,
+    FlextLDAPSearchResponse,
     LdapAttributeDict,
 )
 
 
-class TestFlextLdapClientRealExecution:
-    """Test FlextLdapClient with real code execution."""
+class TestFlextLDAPClientRealExecution:
+    """Test FlextLDAPClient with real code execution."""
 
     def test_client_instantiation_real(self) -> None:
         """Test client can be instantiated - real instantiation."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Verify real initialization
         assert client._connection is None
@@ -42,7 +43,7 @@ class TestFlextLdapClientRealExecution:
 
     def test_is_connected_property_real(self) -> None:
         """Test is_connected property logic - real property execution."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Initially not connected
         assert not client.is_connected
@@ -76,7 +77,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_connect_parses_uri_real(self) -> None:
         """Test connect parses URI correctly - real URI parsing execution."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock Server and Connection to avoid actual connection
         with (
@@ -102,7 +103,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_connect_handles_ldaps_uri_real(self) -> None:
         """Test connect handles LDAPS URI with SSL - real SSL logic execution."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock Server and Connection
         with (
@@ -141,7 +142,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_connect_handles_default_ports_real(self) -> None:
         """Test connect uses default ports - real default port logic."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock Server and Connection
         with (
@@ -181,7 +182,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_connect_handles_bind_failure_real(self) -> None:
         """Test connect handles bind failure - real bind failure handling."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock Server and Connection with bind failure
         with (
@@ -207,7 +208,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_connect_handles_ldap_exception_real(self) -> None:
         """Test connect handles LDAP exceptions - real exception handling."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock Server to raise LDAPException
         with patch("flext_ldap.clients.ldap3.Server") as mock_server_class:
@@ -223,7 +224,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_connect_handles_generic_exception_real(self) -> None:
         """Test connect handles generic exceptions - real exception handling."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock Server to raise generic exception
         with patch("flext_ldap.clients.ldap3.Server") as mock_server_class:
@@ -239,10 +240,10 @@ class TestFlextLdapClientRealExecution:
 
     async def test_search_not_connected_real(self) -> None:
         """Test search when not connected - real connection check."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Create search request
-        search_request = FlextLdapSearchRequest(
+        search_request = FlextLDAPSearchRequest(
             base_dn="dc=example,dc=com",
             scope="subtree",
             filter_str="(objectClass=*)",
@@ -260,7 +261,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_search_scope_mapping_real(self) -> None:
         """Test search maps scope correctly - real scope mapping execution."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection
         mock_connection = MagicMock()
@@ -268,7 +269,7 @@ class TestFlextLdapClientRealExecution:
         client._connection = mock_connection
 
         # Mock search method and utilities
-        with patch("flext_ldap.clients.FlextLdapUtilities") as mock_utils:
+        with patch("flext_ldap.clients.FlextLDAPUtilities") as mock_utils:
             mock_utils.safe_ldap3_search_result.return_value = True
             mock_utils.safe_ldap3_entries_list.return_value = []
 
@@ -285,7 +286,7 @@ class TestFlextLdapClientRealExecution:
             ]
 
             for scope_name, expected_constant in test_scopes:
-                search_request = FlextLdapSearchRequest(
+                search_request = FlextLDAPSearchRequest(
                     base_dn="dc=example,dc=com",
                     scope=scope_name,
                     filter_str="(objectClass=*)",
@@ -306,7 +307,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_search_handles_search_failure_real(self) -> None:
         """Test search handles search failure - real search failure handling."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection
         mock_connection = MagicMock()
@@ -314,7 +315,7 @@ class TestFlextLdapClientRealExecution:
         client._connection = mock_connection
 
         # Mock search method and utilities to simulate failure
-        with patch("flext_ldap.clients.FlextLdapUtilities") as mock_utils:
+        with patch("flext_ldap.clients.FlextLDAPUtilities") as mock_utils:
             mock_utils.safe_ldap3_search_result.return_value = False
             mock_utils.safe_ldap3_connection_result.return_value = (
                 "Search failed: invalid filter"
@@ -322,7 +323,7 @@ class TestFlextLdapClientRealExecution:
 
             mock_connection.search.return_value = False
 
-            search_request = FlextLdapSearchRequest(
+            search_request = FlextLDAPSearchRequest(
                 base_dn="dc=example,dc=com",
                 scope="subtree",
                 filter_str="(invalid filter)",
@@ -342,7 +343,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_search_processes_entries_real(self) -> None:
         """Test search processes entries correctly - real entry processing."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection
         mock_connection = MagicMock()
@@ -350,7 +351,7 @@ class TestFlextLdapClientRealExecution:
         client._connection = mock_connection
 
         # Mock search method and utilities
-        with patch("flext_ldap.clients.FlextLdapUtilities") as mock_utils:
+        with patch("flext_ldap.clients.FlextLDAPUtilities") as mock_utils:
             mock_utils.safe_ldap3_search_result.return_value = True
 
             # Mock entries
@@ -379,7 +380,7 @@ class TestFlextLdapClientRealExecution:
 
             mock_connection.search.return_value = True
 
-            search_request = FlextLdapSearchRequest(
+            search_request = FlextLDAPSearchRequest(
                 base_dn="ou=users,dc=example,dc=com",
                 scope="subtree",
                 filter_str="(objectClass=person)",
@@ -393,7 +394,7 @@ class TestFlextLdapClientRealExecution:
 
             # Verify real entry processing
             assert result.is_success
-            assert isinstance(result.value, FlextLdapSearchResponse)
+            assert isinstance(result.value, FlextLDAPSearchResponse)
             assert result.value.total_count == 2
             assert len(result.value.entries) == 2
 
@@ -411,7 +412,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_search_handles_ldap_exception_real(self) -> None:
         """Test search handles LDAP exceptions - real exception handling."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection
         mock_connection = MagicMock()
@@ -419,7 +420,7 @@ class TestFlextLdapClientRealExecution:
         mock_connection.search.side_effect = LDAPException("Search timeout")
         client._connection = mock_connection
 
-        search_request = FlextLdapSearchRequest(
+        search_request = FlextLDAPSearchRequest(
             base_dn="dc=example,dc=com",
             scope="subtree",
             filter_str="(objectClass=*)",
@@ -437,7 +438,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_search_handles_generic_exception_real(self) -> None:
         """Test search handles generic exceptions - real exception handling."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection
         mock_connection = MagicMock()
@@ -445,7 +446,7 @@ class TestFlextLdapClientRealExecution:
         mock_connection.search.side_effect = ValueError("Invalid search parameters")
         client._connection = mock_connection
 
-        search_request = FlextLdapSearchRequest(
+        search_request = FlextLDAPSearchRequest(
             base_dn="dc=example,dc=com",
             scope="subtree",
             filter_str="(objectClass=*)",
@@ -463,7 +464,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_add_not_connected_real(self) -> None:
         """Test add when not connected - real connection check."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         attributes: LdapAttributeDict = {
             "objectClass": ["person", "inetOrgPerson"],
@@ -480,7 +481,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_add_success_real(self) -> None:
         """Test successful add operation - real add execution."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection
         mock_connection = MagicMock()
@@ -505,7 +506,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_add_failure_real(self) -> None:
         """Test add operation failure - real failure handling."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection with add failure
         mock_connection = MagicMock()
@@ -525,7 +526,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_add_ldap_exception_real(self) -> None:
         """Test add handles LDAP exceptions - real exception handling."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection with exception
         mock_connection = MagicMock()
@@ -544,7 +545,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_modify_not_connected_real(self) -> None:
         """Test modify when not connected - real connection check."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         attributes: LdapAttributeDict = {"description": "modified"}
 
@@ -557,7 +558,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_modify_success_real(self) -> None:
         """Test successful modify operation - real modify execution."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection
         mock_connection = MagicMock()
@@ -588,7 +589,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_modify_failure_real(self) -> None:
         """Test modify operation failure - real failure handling."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection with modify failure
         mock_connection = MagicMock()
@@ -608,7 +609,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_delete_not_connected_real(self) -> None:
         """Test delete when not connected - real connection check."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Execute real connection check
         result = await client.delete("cn=testuser,dc=example,dc=com")
@@ -619,7 +620,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_delete_success_real(self) -> None:
         """Test successful delete operation - real delete execution."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection
         mock_connection = MagicMock()
@@ -636,7 +637,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_delete_failure_real(self) -> None:
         """Test delete operation failure - real failure handling."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection with delete failure
         mock_connection = MagicMock()
@@ -654,7 +655,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_bind_no_connection_real(self) -> None:
         """Test bind when no connection exists - real connection check."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Execute real connection check
         result = await client.bind("cn=testuser,dc=example,dc=com", "password")
@@ -665,14 +666,14 @@ class TestFlextLdapClientRealExecution:
 
     async def test_bind_success_real(self) -> None:
         """Test successful bind operation - real bind execution."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection
         mock_connection = MagicMock()
         client._connection = mock_connection
 
-        # Mock FlextLdapUtilities
-        with patch("flext_ldap.clients.FlextLdapUtilities") as mock_utils:
+        # Mock FlextLDAPUtilities
+        with patch("flext_ldap.clients.FlextLDAPUtilities") as mock_utils:
             mock_utils.safe_ldap3_rebind_result.return_value = True
 
             # Execute real bind operation
@@ -686,14 +687,14 @@ class TestFlextLdapClientRealExecution:
 
     async def test_bind_failure_real(self) -> None:
         """Test bind operation failure - real failure handling."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection
         mock_connection = MagicMock()
         client._connection = mock_connection
 
-        # Mock FlextLdapUtilities
-        with patch("flext_ldap.clients.FlextLdapUtilities") as mock_utils:
+        # Mock FlextLDAPUtilities
+        with patch("flext_ldap.clients.FlextLDAPUtilities") as mock_utils:
             mock_utils.safe_ldap3_rebind_result.return_value = False
             mock_utils.safe_ldap3_connection_result.return_value = "Invalid credentials"
 
@@ -706,7 +707,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_unbind_no_connection_real(self) -> None:
         """Test unbind when no connection - real unbind logic."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Execute real unbind with no connection
         result = await client.unbind()
@@ -716,7 +717,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_unbind_success_real(self) -> None:
         """Test successful unbind operation - real unbind execution."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection
         mock_connection = MagicMock()
@@ -734,7 +735,7 @@ class TestFlextLdapClientRealExecution:
 
     async def test_unbind_ldap_exception_real(self) -> None:
         """Test unbind handles LDAP exceptions - real exception handling."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection with exception
         mock_connection = MagicMock()
@@ -750,7 +751,7 @@ class TestFlextLdapClientRealExecution:
 
     def test_destructor_cleanup_real(self) -> None:
         """Test destructor cleanup logic - real cleanup execution."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection that is bound
         mock_connection = MagicMock()
@@ -765,7 +766,7 @@ class TestFlextLdapClientRealExecution:
 
     def test_destructor_handles_exceptions_real(self) -> None:
         """Test destructor handles exceptions silently - real exception handling."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock connection that raises exception
         mock_connection = MagicMock()
@@ -783,7 +784,7 @@ class TestFlextLdapClientRealExecution:
 
     def test_destructor_no_connection_real(self) -> None:
         """Test destructor when no connection - real no-op logic."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # No connection set
         assert client._connection is None
@@ -797,18 +798,18 @@ class TestFlextLdapClientRealExecution:
             )
 
 
-class TestFlextLdapClientIntegrationReal:
-    """Test FlextLdapClient integration patterns with real execution."""
+class TestFlextLDAPClientIntegrationReal:
+    """Test FlextLDAPClient integration patterns with real execution."""
 
     async def test_full_operation_flow_real(self) -> None:
         """Test full client operation flow - real workflow execution."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Mock all components for full workflow
         with (
             patch("flext_ldap.clients.ldap3.Server") as mock_server_class,
             patch("flext_ldap.clients.ldap3.Connection") as mock_connection_class,
-            patch("flext_ldap.clients.FlextLdapUtilities") as mock_utils,
+            patch("flext_ldap.clients.FlextLDAPUtilities") as mock_utils,
         ):
             # Setup connection mocks
             mock_server = MagicMock()
@@ -844,7 +845,7 @@ class TestFlextLdapClientIntegrationReal:
             assert add_result.is_success
 
             # 3. Search
-            search_request = FlextLdapSearchRequest(
+            search_request = FlextLDAPSearchRequest(
                 base_dn="dc=example,dc=com",
                 scope="subtree",
                 filter_str="(cn=test)",
@@ -876,11 +877,11 @@ class TestFlextLdapClientIntegrationReal:
 
     async def test_error_consistency_real(self) -> None:
         """Test error message consistency across operations - real error handling."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Test consistent "not connected" errors
         search_result = await client.search(
-            FlextLdapSearchRequest(
+            FlextLDAPSearchRequest(
                 base_dn="dc=test",
                 scope="base",
                 filter_str="(objectClass=*)",
@@ -902,7 +903,7 @@ class TestFlextLdapClientIntegrationReal:
 
     def test_logging_integration_real(self) -> None:
         """Test logging integration - real logging execution."""
-        client = FlextLdapClient()
+        client = FlextLDAPClient()
 
         # Test logging is properly configured
         with patch("flext_ldap.clients.logger") as mock_logger:

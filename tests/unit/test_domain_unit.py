@@ -5,38 +5,38 @@ Tests domain services, specifications, and business logic without external depen
 
 from __future__ import annotations
 
-from flext_core import FlextEntityStatus, FlextModels
+from flext_core import FlextConstants
 
 from flext_ldap.domain import (
     MIN_PASSWORD_LENGTH,
-    FlextLdapPasswordService,
-    FlextLdapUserManagementService,
-    FlextLdapUserSpecification,
+    FlextLDAPPasswordService,
+    FlextLDAPUserManagementService,
+    FlextLDAPUserSpecification,
 )
-from flext_ldap.models import FlextLdapUser
+from flext_ldap.models import FlextLDAPUser
 
 
-class TestFlextLdapUserSpecification:
+class TestFlextLDAPUserSpecification:
     """Test LDAP user specification domain logic."""
 
     def test_create_user_specification(self) -> None:
         """Test user specification creation."""
-        spec = FlextLdapUserSpecification()
+        spec = FlextLDAPUserSpecification()
         assert spec is not None
 
     def test_user_specification_with_valid_user(self) -> None:
         """Test user specification with valid user."""
-        user = FlextLdapUser(
-            id=FlextModels.EntityId("test-user"),
+        user = FlextLDAPUser(
+            id="test-user",
             dn="cn=test,dc=example,dc=com",
             cn="Test User",
             sn="User",
             uid="test.user",
             mail="test@example.com",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
-        spec = FlextLdapUserSpecification()
+        spec = FlextLDAPUserSpecification()
 
         # Should be able to check the user (even if method implementation varies)
         try:
@@ -48,17 +48,17 @@ class TestFlextLdapUserSpecification:
             pass
 
 
-class TestFlextLdapPasswordService:
+class TestFlextLDAPPasswordService:
     """Test LDAP password service domain logic."""
 
     def test_create_password_service(self) -> None:
         """Test password service creation."""
-        service = FlextLdapPasswordService()
+        service = FlextLDAPPasswordService()
         assert service is not None
 
     def test_password_service_methods_exist(self) -> None:
         """Test password service has expected methods."""
-        service = FlextLdapPasswordService()
+        service = FlextLDAPPasswordService()
 
         # Check that service has some expected methods
         expected_methods = ["generate_password", "validate_password", "hash_password"]
@@ -69,17 +69,17 @@ class TestFlextLdapPasswordService:
                 assert callable(method)
 
 
-class TestFlextLdapUserManagementService:
+class TestFlextLDAPUserManagementService:
     """Test LDAP user management service."""
 
     def test_create_user_management_service(self) -> None:
         """Test user management service creation."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
         assert service is not None
 
     def test_user_management_service_methods_exist(self) -> None:
         """Test user management service has expected methods."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         # Check for common user management methods
         expected_methods = [
@@ -96,7 +96,7 @@ class TestFlextLdapUserManagementService:
 
     def test_user_management_service_with_valid_data(self) -> None:
         """Test user management service with valid data."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         # Try to create a user with basic data
         user_data = {
@@ -113,7 +113,7 @@ class TestFlextLdapUserManagementService:
                 # Check if result is FlextResult or similar
                 if hasattr(result, "is_success"):
                     assert isinstance(result.is_success, bool)
-                elif isinstance(result, FlextLdapUser):
+                elif isinstance(result, FlextLDAPUser):
                     assert result.uid == "test.user"
             except (NotImplementedError, ValueError, TypeError):
                 # Method might not be fully implemented
@@ -127,11 +127,11 @@ class TestDomainLayer:
         """Test that domain layer imports work correctly."""
         # Basic import test
 
-        assert FlextLdapUserSpecification is not None
+        assert FlextLDAPUserSpecification is not None
 
     def test_domain_classes_inherit_correctly(self) -> None:
         """Test domain classes have proper inheritance."""
-        spec = FlextLdapUserSpecification()
+        spec = FlextLDAPUserSpecification()
 
         # Should have basic object methods
         assert hasattr(spec, "__init__")

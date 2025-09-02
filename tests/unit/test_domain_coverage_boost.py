@@ -6,23 +6,23 @@ Following CLAUDE.md ANTI-HALLUCINATION protocol - execute REAL code, measure REA
 
 from __future__ import annotations
 
-from flext_core import FlextEntityStatus, FlextModels
+from flext_core import FlextConstants
 
 from flext_ldap import (
     EntityParameterBuilder,
-    FlextLdapActiveUserSpecification,
-    FlextLdapCompleteUserSpecification,
-    FlextLdapDistinguishedNameSpecification,
-    FlextLdapDomainFactory,
-    FlextLdapEmailSpecification,
-    FlextLdapGroup,
-    FlextLdapGroupManagementService,
-    FlextLdapGroupSpecification,
-    FlextLdapPasswordService,
-    FlextLdapPasswordSpecification,
-    FlextLdapUser,
-    FlextLdapUserManagementService,
-    FlextLdapUserSpecification,
+    FlextLDAPActiveUserSpecification,
+    FlextLDAPCompleteUserSpecification,
+    FlextLDAPDistinguishedNameSpecification,
+    FlextLDAPDomainFactory,
+    FlextLDAPEmailSpecification,
+    FlextLDAPGroup,
+    FlextLDAPGroupManagementService,
+    FlextLDAPGroupSpecification,
+    FlextLDAPPasswordService,
+    FlextLDAPPasswordSpecification,
+    FlextLDAPUser,
+    FlextLDAPUserManagementService,
+    FlextLDAPUserSpecification,
     GroupEntityBuilder,
     UserEntityBuilder,
 )
@@ -33,20 +33,20 @@ class TestDomainCoverageBoost:
 
     def test_user_specification_real_execution(self) -> None:
         """Execute UserSpecification code paths - TARGET: 50+ lines coverage."""
-        spec = FlextLdapUserSpecification()
+        spec = FlextLDAPUserSpecification()
 
         # Execute initialization code
         assert spec.name is not None
         assert spec.description is not None
 
         # Test is_satisfied_by method - REAL execution
-        valid_user = FlextLdapUser(
-            id=FlextModels.EntityId("test-user"),
+        valid_user = FlextLDAPUser(
+            id="test-user",
             uid="test.user",
             cn="Test User",
             sn="User",
             dn="cn=test.user,dc=example,dc=com",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
             object_classes=["person", "top"],
         )
 
@@ -61,18 +61,18 @@ class TestDomainCoverageBoost:
 
     def test_group_specification_real_execution(self) -> None:
         """Execute GroupSpecification code paths."""
-        spec = FlextLdapGroupSpecification()
+        spec = FlextLDAPGroupSpecification()
 
         # Execute initialization
         assert spec.name is not None
 
         # Create valid group and test
-        valid_group = FlextLdapGroup(
-            id=FlextModels.EntityId("test-group"),
+        valid_group = FlextLDAPGroup(
+            id="test-group",
             cn="testgroup",
             dn="cn=testgroup,dc=example,dc=com",
             members=[],
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
             object_classes=["groupOfNames", "top"],
         )
 
@@ -82,7 +82,7 @@ class TestDomainCoverageBoost:
 
     def test_dn_specification_real_execution(self) -> None:
         """Execute DN specification code paths."""
-        spec = FlextLdapDistinguishedNameSpecification()
+        spec = FlextLDAPDistinguishedNameSpecification()
 
         # Test valid DNs - execute real validation logic
         valid_dns = ["cn=user,dc=example,dc=com", "uid=john,ou=users,dc=company,dc=org"]
@@ -99,7 +99,7 @@ class TestDomainCoverageBoost:
 
     def test_password_specification_real_execution(self) -> None:
         """Execute password specification code paths."""
-        spec = FlextLdapPasswordSpecification()
+        spec = FlextLDAPPasswordSpecification()
 
         # Test valid passwords
         valid_passwords = ["SecurePass123!", "MyStrong@Pass2024"]
@@ -115,7 +115,7 @@ class TestDomainCoverageBoost:
 
     def test_email_specification_real_execution(self) -> None:
         """Execute email specification code paths."""
-        spec = FlextLdapEmailSpecification()
+        spec = FlextLDAPEmailSpecification()
 
         # Test valid emails
         valid_emails = ["user@example.com", "test@domain.org"]
@@ -131,24 +131,24 @@ class TestDomainCoverageBoost:
 
     def test_active_user_specification_real_execution(self) -> None:
         """Execute active user specification code paths."""
-        spec = FlextLdapActiveUserSpecification()
+        spec = FlextLDAPActiveUserSpecification()
 
         # Test active user
-        active_user = FlextLdapUser(
-            id=FlextModels.EntityId("active"),
+        active_user = FlextLDAPUser(
+            id="active",
             uid="active.user",
             cn="Active User",
             sn="User",
             dn="cn=active,dc=example,dc=com",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
         result = spec.is_satisfied_by(active_user)
         assert isinstance(result, bool)
 
         # Test inactive user
-        inactive_user = FlextLdapUser(
-            id=FlextModels.EntityId("inactive"),
+        inactive_user = FlextLDAPUser(
+            id="inactive",
             uid="inactive.user",
             cn="Inactive User",
             sn="User",
@@ -161,16 +161,16 @@ class TestDomainCoverageBoost:
 
     def test_complete_user_specification_real_execution(self) -> None:
         """Execute complete user specification - composite pattern."""
-        spec = FlextLdapCompleteUserSpecification()
+        spec = FlextLDAPCompleteUserSpecification()
 
         # Create complete user
-        complete_user = FlextLdapUser(
-            id=FlextModels.EntityId("complete"),
+        complete_user = FlextLDAPUser(
+            id="complete",
             uid="complete.user",
             cn="Complete User",
             sn="User",
             dn="cn=complete,dc=example,dc=com",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
             object_classes=["person", "top"],
         )
 
@@ -184,7 +184,7 @@ class TestDomainCoverageBoost:
 
     def test_user_management_service_real_execution(self) -> None:
         """Execute user management service business logic."""
-        service = FlextLdapUserManagementService()
+        service = FlextLDAPUserManagementService()
 
         # Test generate_username method
         result = service.generate_username("John", "Doe")
@@ -197,28 +197,28 @@ class TestDomainCoverageBoost:
 
     def test_group_management_service_real_execution(self) -> None:
         """Execute group management service business logic."""
-        service = FlextLdapGroupManagementService()
+        service = FlextLDAPGroupManagementService()
 
         # Test dn_spec property
         dn_spec = service.dn_spec
         assert dn_spec is not None
 
         # Test can_add_member method
-        group = FlextLdapGroup(
-            id=FlextModels.EntityId("group1"),
+        group = FlextLDAPGroup(
+            id="group1",
             cn="group1",
             dn="cn=group1,dc=example,dc=com",
             members=[],
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
-        user = FlextLdapUser(
-            id=FlextModels.EntityId("user1"),
+        user = FlextLDAPUser(
+            id="user1",
             uid="user1",
             cn="User One",
             sn="One",
             dn="cn=user1,dc=example,dc=com",
-            status=FlextEntityStatus.ACTIVE,
+            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
         )
 
         result = service.can_add_member(group, user)
@@ -226,7 +226,7 @@ class TestDomainCoverageBoost:
 
     def test_password_service_real_execution(self) -> None:
         """Execute password service security logic."""
-        service = FlextLdapPasswordService()
+        service = FlextLDAPPasswordService()
 
         # Test generate_secure_password
         result = service.generate_secure_password()
@@ -238,7 +238,7 @@ class TestDomainCoverageBoost:
 
     def test_domain_factory_real_execution(self) -> None:
         """Execute domain factory creation logic."""
-        factory = FlextLdapDomainFactory()
+        factory = FlextLDAPDomainFactory()
 
         # Test create_user_from_data
         user_data = {
