@@ -200,7 +200,9 @@ class FlextLDAPEntities:
         @classmethod
         def convert_entity_id(cls, v: object) -> str:
             """Convert EntityId to string if needed."""
-            if isinstance(v, FlextModels):
+            if hasattr(v, "value"):  # FlextModels.EntityId has a value attribute
+                return str(v.value)
+            if hasattr(v, "__str__"):
                 return str(v)
             return str(v)
 
