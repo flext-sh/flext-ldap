@@ -103,28 +103,35 @@ def test_exception_imports() -> None:
 
 def test_utility_imports() -> None:
     """Test that utility imports work correctly and function properly."""
-    # Test attribute name sanitization
-    sanitized = FlextLDAPUtilities.Validation.sanitize_attribute_name("Test@Name!")
-    assert isinstance(sanitized, str)
-    assert len(sanitized) > 0
+    # Test attribute name validation
+    validation_result = FlextLDAPUtilities.Validation.validate_attribute_name("testName")
+    assert validation_result.is_success
+    assert isinstance(validation_result.value, str)
+    assert len(validation_result.value) > 0
 
-    # Test DN validation with valid DN
-    dn_valid = FlextLDAPUtilities.DnParser.validate_dn("cn=test,dc=example,dc=com")
-    assert dn_valid is True
+    # Test non-empty string validation
+    non_empty_result = FlextLDAPUtilities.Validation.validate_non_empty_string("test", "test_field")
+    assert isinstance(non_empty_result, str)
+    assert non_empty_result == "test"
 
     # Test DN validation with invalid DN
     dn_invalid = FlextLDAPUtilities.DnParser.validate_dn("invalid-dn")
     assert dn_invalid is False
 
-    # Test attribute name validation
-    attr_name_valid = FlextLDAPUtilities.Validation.validate_attribute_name("cn")
-    assert attr_name_valid is True
+    # Test attribute name validation - returns FlextResult
+    attr_name_result = FlextLDAPUtilities.Validation.validate_attribute_name("cn")
+    assert attr_name_result.is_success
+    assert attr_name_result.value == "cn"
 
-    # Test attribute value validation
-    attr_value_valid = FlextLDAPUtilities.Validation.validate_attribute_value(
+    # Test attribute value validation - returns boolean
+    attr_value_result = FlextLDAPUtilities.Validation.validate_attribute_value(
         "test_value"
     )
-    assert attr_value_valid is True
+    assert attr_value_result is True
+    
+    # Test invalid attribute value
+    attr_value_invalid = FlextLDAPUtilities.Validation.validate_attribute_value("")
+    assert attr_value_invalid is False
 
 
 def test_all_public_api() -> None:

@@ -38,7 +38,7 @@ class TestFlextLDAPUserSpecificationRealValidation:
             sn="User",
             uid="valid.user",
             object_classes=["person", "top", "inetOrgPerson"],
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
 
         # Execute REAL validation logic
@@ -57,7 +57,7 @@ class TestFlextLDAPUserSpecificationRealValidation:
             sn="User",
             uid="invalid.user",
             object_classes=["customClass"],  # Missing person, top
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
 
         # Execute REAL validation logic
@@ -104,7 +104,7 @@ class TestFlextLDAPGroupSpecificationRealValidation:
             dn="cn=validgroup,ou=groups,dc=example,dc=com",
             cn="Valid Group",
             object_classes=["groupOfNames", "top"],
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
 
         # Execute REAL validation logic
@@ -121,7 +121,7 @@ class TestFlextLDAPGroupSpecificationRealValidation:
             dn="cn=invalidgroup,ou=groups,dc=example,dc=com",
             cn="Invalid Group",
             object_classes=["customClass"],  # Missing groupOfNames, top
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
 
         # Execute REAL validation logic
@@ -278,7 +278,7 @@ class TestFlextLDAPActiveUserSpecificationRealValidation:
             cn="Active User",
             sn="User",
             uid="active.user",
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
 
         # Execute REAL status validation
@@ -295,7 +295,7 @@ class TestFlextLDAPActiveUserSpecificationRealValidation:
             cn="Inactive User",
             sn="User",
             uid="inactive.user",
-            status=FlextEntityStatus.INACTIVE,
+            status=FlextConstants.Enums.EntityStatus.INACTIVE,
         )
 
         # Execute REAL status validation
@@ -639,7 +639,7 @@ class TestFlextLDAPGroupManagementServiceRealLogic:
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="Test Group",
             object_classes=["groupOfNames", "top"],
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
             members=[],
         )
 
@@ -651,7 +651,7 @@ class TestFlextLDAPGroupManagementServiceRealLogic:
             sn="User",
             uid="test.user",
             object_classes=["person", "top", "inetOrgPerson"],
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
 
         # Execute REAL member validation
@@ -671,7 +671,7 @@ class TestFlextLDAPGroupManagementServiceRealLogic:
             sn="User",
             uid="test.user",
             object_classes=["person", "top", "inetOrgPerson"],
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
 
         # Create group with user already as member
@@ -680,7 +680,7 @@ class TestFlextLDAPGroupManagementServiceRealLogic:
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="Test Group",
             object_classes=["groupOfNames", "top"],
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
             members=[user.dn],  # User already member
         )
 
@@ -699,7 +699,7 @@ class TestFlextLDAPGroupManagementServiceRealLogic:
             dn="cn=testgroup,ou=groups,dc=example,dc=com",
             cn="Test Group",
             object_classes=["groupOfNames", "top"],
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
             members=[],
         )
 
@@ -711,7 +711,7 @@ class TestFlextLDAPGroupManagementServiceRealLogic:
             sn="User",
             uid="inactive.user",
             object_classes=["person", "top", "inetOrgPerson"],
-            status=FlextEntityStatus.INACTIVE,  # Inactive status
+            status=FlextConstants.Enums.EntityStatus.INACTIVE,  # Inactive status
         )
 
         # Execute REAL validation - should reject inactive user
@@ -757,7 +757,7 @@ class TestFlextLDAPGroupManagementServiceRealLogic:
             dn="cn=edgegroup,ou=groups,dc=example,dc=com",
             cn="Edge Group",
             object_classes=["groupOfNames", "top"],
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
             members=["cn=existing,ou=users,dc=example,dc=com"],  # Already has a member
         )
 
@@ -769,7 +769,7 @@ class TestFlextLDAPGroupManagementServiceRealLogic:
             sn="User",
             uid="edge.user",
             object_classes=["person", "top", "inetOrgPerson"],
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
 
         # Execute REAL edge case validation

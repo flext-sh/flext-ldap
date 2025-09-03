@@ -30,7 +30,7 @@ class TestArchitecturalTransition:
     def test_no_legacy_protocols_module(self) -> None:
         """Test that legacy protocols module doesn't exist."""
         with pytest.raises(ImportError):
-            pass
+            from flext_ldap import protocols  # This should fail since protocols module was removed
 
     def test_functionality_integrated_into_classes(self) -> None:
         """Test that protocol functionality is now integrated into main classes."""

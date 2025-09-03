@@ -484,30 +484,28 @@ class FlextLDAPOperations:
             for entry in entries:
                 # Extract required fields with type safety using correct utility access
                 uid = (
-                    FlextLDAPUtilities.LdapConverters.safe_convert_value_to_str(
-                        entry.attributes.get("uid")
+                    FlextLDAPUtilities.LdapConverters.safe_get_first_value(
+                        entry.attributes, "uid"
                     )
                     or "unknown"
                 )
                 cn = (
-                    FlextLDAPUtilities.LdapConverters.safe_convert_value_to_str(
-                        entry.attributes.get("cn")
+                    FlextLDAPUtilities.LdapConverters.safe_get_first_value(
+                        entry.attributes, "cn"
                     )
                     or "unknown"
                 )
                 sn = (
-                    FlextLDAPUtilities.LdapConverters.safe_convert_value_to_str(
-                        entry.attributes.get("sn")
+                    FlextLDAPUtilities.LdapConverters.safe_get_first_value(
+                        entry.attributes, "sn"
                     )
                     or "unknown"
                 )
-                given_name = (
-                    FlextLDAPUtilities.LdapConverters.safe_convert_value_to_str(
-                        entry.attributes.get("givenName")
-                    )
+                given_name = FlextLDAPUtilities.LdapConverters.safe_get_first_value(
+                    entry.attributes, "givenName"
                 )
-                mail = FlextLDAPUtilities.LdapConverters.safe_convert_value_to_str(
-                    entry.attributes.get("mail")
+                mail = FlextLDAPUtilities.LdapConverters.safe_get_first_value(
+                    entry.attributes, "mail"
                 )
                 # Note: phone not included as FlextLDAPUser doesn't have phone field
 
@@ -539,15 +537,13 @@ class FlextLDAPOperations:
             for entry in entries:
                 # Extract required fields with type safety using correct utility access
                 cn = (
-                    FlextLDAPUtilities.LdapConverters.safe_convert_value_to_str(
-                        entry.attributes.get("cn")
+                    FlextLDAPUtilities.LdapConverters.safe_get_first_value(
+                        entry.attributes, "cn"
                     )
                     or "unknown"
                 )
-                description = (
-                    FlextLDAPUtilities.LdapConverters.safe_convert_value_to_str(
-                        entry.attributes.get("description")
-                    )
+                description = FlextLDAPUtilities.LdapConverters.safe_get_first_value(
+                    entry.attributes, "description"
                 )
 
                 # Extract members from attributes

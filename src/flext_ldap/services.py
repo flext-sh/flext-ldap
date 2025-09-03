@@ -134,8 +134,12 @@ class FlextLDAPServices:
     async def cleanup(self) -> FlextResult[None]:
         """Cleanup service resources."""
         logger.info("LDAP service cleaning up")
-        # FlextContainer doesn't have cleanup method, just clear and return success
-        self._container.clear()
+        # Handle different container types
+        if hasattr(self._container, 'reset'):
+            self._container.reset()
+        elif hasattr(self._container, 'clear'):
+            self._container.clear()
+        # If no cleanup method available, just log success
         return FlextResult[None].ok(None)
 
     # =========================================================================

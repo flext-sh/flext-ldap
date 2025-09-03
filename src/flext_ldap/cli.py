@@ -128,12 +128,10 @@ class FlextLDAPCliCommandService:
                 server_uri, bind_dn_str, bind_password_str
             ) as session:
                 if session:
-                    return FlextResult[object].ok(
-                        {
-                            "status": "success",
-                            "message": f"Successfully connected to {server}:{port}",
-                        }
-                    )
+                    return FlextResult[object].ok({
+                        "status": "success",
+                        "message": f"Successfully connected to {server}:{port}",
+                    })
                 return FlextResult[object].fail(
                     "Connection failed",
                 )
@@ -188,13 +186,11 @@ class FlextLDAPCliCommandService:
                             entry.model_dump() for entry in entries
                         ]
 
-                        return FlextResult[object].ok(
-                            {
-                                "status": "success",
-                                "entries": entry_dicts,
-                                "count": len(entry_dicts),
-                            }
-                        )
+                        return FlextResult[object].ok({
+                            "status": "success",
+                            "entries": entry_dicts,
+                            "count": len(entry_dicts),
+                        })
                     return FlextResult[object].fail(
                         result.error or "Search failed",
                     )
@@ -241,12 +237,10 @@ class FlextLDAPCliCommandService:
                                 if hasattr(entry, "model_dump")
                                 else {"dn": str(entry)}
                             )
-                            return FlextResult[object].ok(
-                                {
-                                    "status": "success",
-                                    "user": user_dict,
-                                }
-                            )
+                            return FlextResult[object].ok({
+                                "status": "success",
+                                "user": user_dict,
+                            })
                         return FlextResult[object].fail(
                             f"User {uid} not found",
                         )

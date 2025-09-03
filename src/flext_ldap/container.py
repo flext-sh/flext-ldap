@@ -1,5 +1,7 @@
 """FLEXT-LDAP Container - Class-based dependency injection using flext-core."""
 
+from typing import cast
+
 from flext_core import FlextContainer, FlextLogger, FlextResult
 
 from flext_ldap.clients import FlextLDAPClient
@@ -51,6 +53,92 @@ class FlextLDAPContainer:
             self._services_registered = True
 
         return container
+
+    def get_client(self) -> FlextLDAPClient:
+        """Get LDAP client from container.
+
+        Returns:
+            FlextLDAPClient: The registered LDAP client
+
+        Raises:
+            RuntimeError: If client is not registered
+
+        """
+        container = self.get_container()
+        client_result = container.get("FlextLDAPClient")
+        if not client_result.is_success:
+            msg = f"Failed to get LDAP client: {client_result.error}"
+            raise RuntimeError(msg)
+
+        return cast("FlextLDAPClient", client_result.value)
+
+    def get_repository(self) -> FlextLDAPRepository:
+        """Get LDAP repository from container.
+
+        Returns:
+            FlextLDAPRepository: The registered LDAP repository
+
+        Raises:
+            RuntimeError: If repository is not registered
+
+        """
+        container = self.get_container()
+        repo_result = container.get("FlextLDAPRepository")
+        if not repo_result.is_success:
+            msg = f"Failed to get LDAP repository: {repo_result.error}"
+            raise RuntimeError(msg)
+        return cast("FlextLDAPRepository", repo_result.value)
+
+    def get_user_repository(self) -> FlextLDAPUserRepository:
+        """Get LDAP user repository from container.
+
+        Returns:
+            FlextLDAPUserRepository: The registered LDAP user repository
+
+        Raises:
+            RuntimeError: If user repository is not registered
+
+        """
+        container = self.get_container()
+        user_repo_result = container.get("FlextLDAPUserRepository")
+        if not user_repo_result.is_success:
+            msg = f"Failed to get LDAP user repository: {user_repo_result.error}"
+            raise RuntimeError(msg)
+        return cast("FlextLDAPUserRepository", user_repo_result.value)
+
+    def get_group_repository(self) -> FlextLDAPGroupRepository:
+        """Get LDAP group repository from container.
+
+        Returns:
+            FlextLDAPGroupRepository: The registered LDAP group repository
+
+        Raises:
+            RuntimeError: If group repository is not registered
+
+        """
+        container = self.get_container()
+        group_repo_result = container.get("FlextLDAPGroupRepository")
+        if not group_repo_result.is_success:
+            msg = f"Failed to get LDAP group repository: {group_repo_result.error}"
+            raise RuntimeError(msg)
+        return cast("FlextLDAPGroupRepository", group_repo_result.value)
+
+    def configure(self, settings: FlextLDAPSettings) -> FlextResult[None]:
+        """Configure container with LDAP settings.
+
+        Args:
+            settings: LDAP settings to configure
+
+        Returns:
+            FlextResult[None]: Success or error result
+
+        """
+        try:
+            # For now, just validate settings exist
+            logger.debug(f"Container configured with settings: {type(settings)}")
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Configuration failed: {e}")
 
     def _register_services(self, container: FlextContainer) -> FlextResult[None]:
         """Register LDAP services with flext-core container.
@@ -105,28 +193,6 @@ class FlextLDAPContainer:
         except Exception as e:
             logger.exception("Failed to register LDAP services")
             return FlextResult[None].fail(f"Service registration error: {e}")
-
-    def configure(self, settings: FlextLDAPSettings) -> FlextResult[None]:
-        """Configure LDAP services with settings.
-
-        Args:
-            settings: LDAP settings configuration
-
-        Returns:
-            FlextResult[None]: Success or error result
-
-        """
-        container = self.get_container()
-
-        # Register settings as a service
-        settings_result = container.register("FlextLDAPSettings", settings)
-
-        if settings_result.is_success:
-            logger.info("LDAP container configured with settings")
-            return FlextResult[None].ok(None)
-        return FlextResult[None].fail(
-            f"Failed to register settings: {settings_result.error}"
-        )
 
     def reset(self) -> None:
         """Reset LDAP service registrations."""

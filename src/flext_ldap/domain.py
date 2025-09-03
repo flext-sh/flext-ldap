@@ -20,7 +20,7 @@ import secrets
 import string
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
-from typing import ClassVar, TypeVar, cast, override
+from typing import ClassVar, cast, override
 
 from flext_core import (
     FlextDomainService,
@@ -41,7 +41,6 @@ from flext_ldap.typings import LdapAttributeDict
 from flext_ldap.utilities import FlextLDAPUtilities
 
 logger = FlextLogger(__name__)
-T = TypeVar("T")
 
 
 class FlextLDAPDomain:
@@ -209,8 +208,15 @@ class FlextLDAPDomain:
 
             # Check complexity if required
             if FlextLDAPValidationConstants.REQUIRE_PASSWORD_COMPLEXITY:
-                # PASSWORD_PATTERN não está centralizado, usar regex local ou criar constante se necessário
-                return True  # NOTE: Password complexity validation can be implemented here if needed
+                # Implement proper password complexity validation
+                import re
+                # Password must have: uppercase, lowercase, digit, special char
+                has_upper = bool(re.search(r"[A-Z]", candidate))
+                has_lower = bool(re.search(r"[a-z]", candidate))
+                has_digit = bool(re.search(r"[0-9]", candidate))
+                has_special = bool(re.search(r'[!@#$%^&*(),.?":{}|<>]', candidate))
+
+                return has_upper and has_lower and has_digit and has_special
 
             return True
 
@@ -241,12 +247,12 @@ class FlextLDAPDomain:
                 return False
 
             status = getattr(candidate, "status", None)
-            # Compare with enum value, not string representation
+            # Compare with enum value - EntityStatus.ACTIVE is "active" (lowercase)
             if status is None:
                 return False
             if hasattr(status, "value"):
-                return str(status.value) == "ACTIVE"
-            return str(status) == "ACTIVE"
+                return str(status.value) == "active"
+            return str(status) == "active"
 
         @override
         def get_validation_error(self, candidate: object) -> str:
