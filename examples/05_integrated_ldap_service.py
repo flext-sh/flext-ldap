@@ -220,10 +220,7 @@ async def _demo_group_operations(ldap_service: FlextLDAPApi) -> None:
                 entries = search_result.value
                 for group_entry in entries:
                     group_entry.get_attribute("cn") or "N/A"
-                    (
-                        group_entry.get_attribute("description")
-                        or "No description"
-                    )
+                    (group_entry.get_attribute("description") or "No description")
 
                 # Perform group search validation
                 await _perform_group_search_validation(ldap_service, session_id)

@@ -1,7 +1,6 @@
 """LDAP test server management."""
 
 import asyncio
-import time
 
 import docker
 from flext_core import FlextLogger, FlextResult
@@ -14,10 +13,12 @@ logger = FlextLogger(__name__)
 class LdapTestServer:
     """Manages Docker-based LDAP test server."""
 
-    def __init__(self,
-                 container_name: str = "flext-ldap-test-server",
-                 port: int = 3390,
-                 admin_password: str = "admin123") -> None:
+    def __init__(
+        self,
+        container_name: str = "flext-ldap-test-server",
+        port: int = 3390,
+        admin_password: str = "admin123",
+    ) -> None:
         """Initialize LDAP test server."""
         self.container_name = container_name
         self.port = port
@@ -71,7 +72,7 @@ class LdapTestServer:
             return FlextResult.error("LDAP server failed to start within timeout")
 
         except Exception as e:
-            logger.exception(f"Failed to start LDAP server: {e}")
+            logger.exception("Failed to start LDAP server")
             return FlextResult.error(f"Failed to start LDAP server: {e}")
 
     async def stop(self) -> FlextResult[bool]:
@@ -91,50 +92,51 @@ class LdapTestServer:
             return FlextResult.ok(True)
 
         except Exception as e:
-            logger.exception(f"Failed to stop LDAP server: {e}")
+            logger.exception("Failed to stop LDAP server")
             return FlextResult.error(f"Failed to stop LDAP server: {e}")
 
-    async def wait_for_ready(self, timeout: int = 60) -> bool:
+    async def wait_for_ready(self, timeout_seconds: int = 60) -> bool:
         """Wait for LDAP server to be ready."""
         import ldap3
 
-        start_time = time.time()
+        try:
+            async with asyncio.timeout(timeout_seconds):
+                while True:
+                    try:
+                        # Try to connect to LDAP server
+                        server = ldap3.Server(
+                            host="localhost",
+                            port=self.port,
+                            use_ssl=False,
+                            connect_timeout=5,
+                        )
 
-        while time.time() - start_time < timeout:
-            try:
-                # Try to connect to LDAP server
-                server = ldap3.Server(
-                    host="localhost",
-                    port=self.port,
-                    use_ssl=False,
-                    connect_timeout=5,
-                )
+                        conn = ldap3.Connection(
+                            server=server,
+                            user="cn=admin,dc=flext,dc=local",
+                            password=self.admin_password,
+                            auto_bind=True,
+                            authentication=ldap3.SIMPLE,
+                        )
 
-                conn = ldap3.Connection(
-                    server=server,
-                    user="cn=admin,dc=flext,dc=local",
-                    password=self.admin_password,
-                    auto_bind=True,
-                    authentication=ldap3.SIMPLE,
-                )
+                        # Simple search to verify server is ready
+                        conn.search(
+                            search_base="dc=flext,dc=local",
+                            search_filter="(objectClass=*)",
+                            search_scope=ldap3.BASE,
+                        )
 
-                # Simple search to verify server is ready
-                conn.search(
-                    search_base="dc=flext,dc=local",
-                    search_filter="(objectClass=*)",
-                    search_scope=ldap3.BASE,
-                )
+                        conn.unbind()
+                        logger.info("LDAP server is ready")
+                        return True
 
-                conn.unbind()
-                logger.info("LDAP server is ready")
-                return True
+                    except Exception as e:
+                        logger.debug(f"LDAP server not ready yet: {e}")
+                        await asyncio.sleep(2)
 
-            except Exception as e:
-                logger.debug(f"LDAP server not ready yet: {e}")
-                await asyncio.sleep(2)
-
-        logger.error("LDAP server failed to become ready within timeout")
-        return False
+        except TimeoutError:
+            logger.exception("LDAP server failed to become ready within timeout")
+            return False
 
     async def setup_test_data(self) -> FlextResult[bool]:
         """Setup initial test data in LDAP server."""
@@ -187,7 +189,7 @@ class LdapTestServer:
             return FlextResult.ok(True)
 
         except Exception as e:
-            logger.exception(f"Failed to setup test data: {e}")
+            logger.exception("Failed to setup test data")
             return FlextResult.error(f"Failed to setup test data: {e}")
 
     def get_connection_config(self) -> FlextLDAPConnectionConfig:
@@ -214,39 +216,42 @@ def get_test_ldap_config() -> FlextLDAPConnectionConfig:
     )
 
 
-async def wait_for_ldap_server(host: str = "localhost", port: int = 3390, timeout: int = 60) -> bool:
+async def wait_for_ldap_server(
+    host: str = "localhost", port: int = 3390, timeout_seconds: int = 60
+) -> bool:
     """Wait for LDAP server to be available."""
     import ldap3
 
-    start_time = time.time()
+    try:
+        async with asyncio.timeout(timeout_seconds):
+            while True:
+                try:
+                    server = ldap3.Server(
+                        host=host,
+                        port=port,
+                        use_ssl=False,
+                        connect_timeout=5,
+                    )
 
-    while time.time() - start_time < timeout:
-        try:
-            server = ldap3.Server(
-                host=host,
-                port=port,
-                use_ssl=False,
-                connect_timeout=5,
-            )
+                    conn = ldap3.Connection(
+                        server=server,
+                        user="cn=admin,dc=flext,dc=local",
+                        password="admin123",
+                        auto_bind=True,
+                        authentication=ldap3.SIMPLE,
+                    )
 
-            conn = ldap3.Connection(
-                server=server,
-                user="cn=admin,dc=flext,dc=local",
-                password="admin123",
-                auto_bind=True,
-                authentication=ldap3.SIMPLE,
-            )
+                    conn.search(
+                        search_base="dc=flext,dc=local",
+                        search_filter="(objectClass=*)",
+                        search_scope=ldap3.BASE,
+                    )
 
-            conn.search(
-                search_base="dc=flext,dc=local",
-                search_filter="(objectClass=*)",
-                search_scope=ldap3.BASE,
-            )
+                    conn.unbind()
+                    return True
 
-            conn.unbind()
-            return True
+                except Exception:
+                    await asyncio.sleep(2)
 
-        except Exception:
-            await asyncio.sleep(2)
-
-    return False
+    except TimeoutError:
+        return False

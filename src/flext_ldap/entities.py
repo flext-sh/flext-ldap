@@ -50,7 +50,7 @@ from flext_core import (
 from pydantic import Field, field_validator
 
 from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue, LdapSearchResult
-from flext_ldap.value_objects import FlextLDAPDistinguishedName
+from flext_ldap.value_objects import FlextLDAPValueObjects
 
 DictEntry = dict[str, object]
 
@@ -144,7 +144,7 @@ class FlextLDAPEntities:
         def validate_base_dn(cls, v: str) -> str:
             """Validate base DN format."""
             try:
-                FlextLDAPDistinguishedName(value=v)
+                FlextLDAPValueObjects.DistinguishedName(value=v)
                 return v
             except ValueError as e:
                 msg = f"Invalid base DN format: {e}"
@@ -199,10 +199,10 @@ class FlextLDAPEntities:
         @classmethod
         def convert_entity_id(cls, v: str | FlextModels.EntityId) -> str:
             """Convert EntityId to string if needed."""
-            if hasattr(v, "value"):  # FlextModels.EntityId has a value attribute
-                return str(v.value)
-            if hasattr(v, "__str__"):
+            # Handle FlextModels.EntityId objects
+            if isinstance(v, FlextModels.EntityId):
                 return str(v)
+            # Handle string and other types
             return str(v)
 
         dn: str = Field(..., description="Distinguished Name")
@@ -234,7 +234,7 @@ class FlextLDAPEntities:
         def validate_dn(cls, v: str) -> str:
             """Validate DN format."""
             try:
-                FlextLDAPDistinguishedName(value=v)
+                FlextLDAPValueObjects.DistinguishedName(value=v)
                 return v
             except ValueError as e:
                 msg = f"Invalid DN format: {e}"
@@ -360,7 +360,7 @@ class FlextLDAPEntities:
                 self.members.remove(member_dn)
                 self.modified_at = datetime.now(UTC)
                 return FlextResult[None].ok(None)
-            return FlextResult[None].error(f"Member {member_dn} not found in group")
+            return FlextResult[None].fail(f"Member {member_dn} not found in group")
 
         def has_member(self, member_dn: str) -> bool:
             """Check if DN is a member of this group."""
@@ -406,7 +406,7 @@ class FlextLDAPEntities:
         def validate_dn(cls, v: str) -> str:
             """Validate DN format."""
             try:
-                FlextLDAPDistinguishedName(value=v)
+                FlextLDAPValueObjects.DistinguishedName(value=v)
                 return v
             except ValueError as e:
                 msg = f"Invalid DN format: {e}"
@@ -447,12 +447,7 @@ class FlextLDAPEntities:
 # =============================================================================
 
 # Legacy class aliases for backward compatibility
-FlextLDAPSearchRequest = FlextLDAPEntities.SearchRequest
-FlextLDAPSearchResponse = FlextLDAPEntities.SearchResponse
-FlextLDAPEntry = FlextLDAPEntities.Entry
-FlextLDAPUser = FlextLDAPEntities.User
-FlextLDAPGroup = FlextLDAPEntities.Group
-FlextLDAPCreateUserRequest = FlextLDAPEntities.CreateUserRequest
+# Export aliases eliminated - use FlextLDAPEntities.* directly following flext-core pattern
 
 
 # =============================================================================
@@ -462,13 +457,8 @@ FlextLDAPCreateUserRequest = FlextLDAPEntities.CreateUserRequest
 __all__ = [
     # Type alias
     "DictEntry",
-    "FlextLDAPCreateUserRequest",
     # Primary consolidated class
     "FlextLDAPEntities",
-    "FlextLDAPEntry",
-    "FlextLDAPGroup",
-    # Legacy compatibility classes
-    "FlextLDAPSearchRequest",
-    "FlextLDAPSearchResponse",
-    "FlextLDAPUser",
 ]
+
+# Export module-level aliases eliminated - use FlextLDAPEntities.* directly following flext-core pattern

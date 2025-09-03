@@ -1,6 +1,7 @@
-"""FLEXT LDAP Settings Configuration.
+"""FLEXT LDAP Settings - Single class following flext-core patterns.
 
-Project-specific operational settings for FLEXT-LDAP.
+Unified settings class consolidating ALL LDAP configuration using Pydantic models
+and flext-core patterns. Eliminates separate config classes.
 """
 
 import json
@@ -11,26 +12,55 @@ from flext_core import FlextConfig, FlextLogger, FlextResult
 from pydantic import ConfigDict, Field, SecretStr
 
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
-from flext_ldap.fields import FlextLDAPScopeEnum
+from flext_ldap.fields import FlextLDAPFields
+
+if TYPE_CHECKING:
+    import yaml as yaml_module_type
+else:
+    yaml_module_type = None
+
+try:
+    import yaml
+
+    yaml_module: object | None = yaml
+except ImportError:
+    yaml_module = None
+
+logger = FlextLogger(__name__)
 
 
 @final
-class FlextLDAPAuthConfig(FlextConfig):
-    """LDAP authentication configuration."""
+class FlextLDAPSettings(FlextConfig):
+    """Single FLEXT LDAP Settings class following flext-core patterns.
+
+    Consolidates ALL LDAP configuration including auth, search, logging, and
+    connection settings using Pydantic and flext-core patterns.
+
+    No separate config classes, no custom configuration helpers.
+    """
 
     model_config = ConfigDict(
+        populate_by_name=True,
         extra="forbid",
         validate_assignment=True,
-        str_strip_whitespace=True,
+        use_enum_values=True,
     )
 
-    bind_dn: str = Field(
-        ...,
+    # Primary connection configuration
+    default_connection: FlextLDAPConnectionConfig | None = Field(
+        default=None,
+        description="Default connection configuration",
+        alias="connection",
+    )
+
+    # Authentication configuration (direct fields)
+    bind_dn: str | None = Field(
+        default=None,
         description="Distinguished Name for binding",
         min_length=3,
     )
-    bind_password: SecretStr = Field(
-        ...,
+    bind_password: SecretStr | None = Field(
+        default=None,
         description="Password for binding (secure)",
     )
     use_ssl: bool = Field(
@@ -42,29 +72,9 @@ class FlextLDAPAuthConfig(FlextConfig):
         description="Verify SSL certificates",
     )
 
-    @override
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate authentication configuration."""
-        if not self.bind_dn.strip():
-            return FlextResult[None].fail("Bind DN cannot be empty")
-
-        if len(self.bind_password.get_secret_value()) < 1:
-            return FlextResult[None].fail("Bind password cannot be empty")
-
-        return FlextResult[None].ok(None)
-
-
-@final
-class FlextLDAPSearchConfig(FlextConfig):
-    """LDAP search operation configuration."""
-
-    model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
-    )
-
-    default_scope: FlextLDAPScopeEnum = Field(
-        default=FlextLDAPScopeEnum.SUBTREE,
+    # Search configuration (direct fields)
+    default_scope: str = Field(
+        default=FlextLDAPFields.Scopes.SUBTREE,
         description="Default search scope",
     )
     size_limit: int = Field(
@@ -86,30 +96,7 @@ class FlextLDAPSearchConfig(FlextConfig):
         le=1000,
     )
 
-    @override
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate search configuration."""
-        if self.size_limit <= 0:
-            return FlextResult[None].fail("Size limit must be positive")
-
-        if self.time_limit <= 0:
-            return FlextResult[None].fail("Time limit must be positive")
-
-        if self.page_size <= 0:
-            return FlextResult[None].fail("Page size must be positive")
-
-        return FlextResult[None].ok(None)
-
-
-@final
-class FlextLDAPLoggingConfig(FlextConfig):
-    """LDAP logging configuration."""
-
-    model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
-    )
-
+    # Logging configuration (direct fields)
     enable_debug: bool = Field(
         default=False,
         description="Enable debug logging",
@@ -125,63 +112,6 @@ class FlextLDAPLoggingConfig(FlextConfig):
     structured_logging: bool = Field(
         default=True,
         description="Enable structured (JSON) logging",
-    )
-
-    @override
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate logging configuration."""
-        return FlextResult[None].ok(None)
-
-
-if TYPE_CHECKING:
-    import yaml as yaml_module_type
-else:
-    yaml_module_type = None
-
-try:
-    import yaml
-
-    yaml_module: object | None = yaml
-except ImportError:
-    yaml_module = None
-
-logger = FlextLogger(__name__)
-
-
-@final
-class FlextLDAPSettings(FlextConfig):
-    """Project-specific operational settings for FLEXT-LDAP."""
-
-    model_config = ConfigDict(
-        populate_by_name=True,
-        extra="forbid",
-        validate_assignment=True,
-        use_enum_values=True,
-    )
-
-    # Primary connection configuration
-    default_connection: FlextLDAPConnectionConfig | None = Field(
-        default=None,
-        description="Default connection configuration",
-        alias="connection",
-    )
-
-    # Authentication configuration
-    auth: FlextLDAPAuthConfig | None = Field(
-        default=None,
-        description="Authentication configuration",
-    )
-
-    # Search configuration
-    search: FlextLDAPSearchConfig = Field(
-        default_factory=FlextLDAPSearchConfig,
-        description="Search operation configuration",
-    )
-
-    # Logging configuration
-    logging: FlextLDAPLoggingConfig = Field(
-        default_factory=FlextLDAPLoggingConfig,
-        description="Logging configuration",
     )
 
     # Performance tuning
@@ -225,14 +155,19 @@ class FlextLDAPSettings(FlextConfig):
                 "Cache TTL must be positive when caching is enabled",
             )
 
-        # Validate sub-configurations
-        search_validation = self.search.validate_business_rules()
-        if not search_validation.is_success:
-            return search_validation
+        # Validate search configuration inline
+        if self.size_limit <= 0:
+            return FlextResult[None].fail("Size limit must be positive")
+        if self.time_limit <= 0:
+            return FlextResult[None].fail("Time limit must be positive")
+        if self.page_size <= 0:
+            return FlextResult[None].fail("Page size must be positive")
 
-        logging_validation = self.logging.validate_business_rules()
-        if not logging_validation.is_success:
-            return logging_validation
+        # Validate auth configuration inline
+        if self.bind_dn and not self.bind_dn.strip():
+            return FlextResult[None].fail("Bind DN cannot be empty")
+        if self.bind_password and len(self.bind_password.get_secret_value()) < 1:
+            return FlextResult[None].fail("Bind password cannot be empty")
 
         return FlextResult[None].ok(None)
 
@@ -250,10 +185,16 @@ class FlextLDAPSettings(FlextConfig):
         # Return minimal default configuration
         return FlextLDAPConnectionConfig()
 
-    def get_effective_auth_config(self) -> FlextLDAPAuthConfig | None:
-        """Get effective authentication configuration."""
-        # Return the auth config from settings, not from connection
-        return self.auth
+    def get_effective_auth_config(self) -> dict[str, object] | None:
+        """Get effective authentication configuration as dictionary."""
+        if self.bind_dn and self.bind_password:
+            return {
+                "bind_dn": self.bind_dn,
+                "bind_password": self.bind_password,
+                "use_ssl": self.use_ssl,
+                "verify_certificates": self.verify_certificates,
+            }
+        return None
 
     # Testing convenience: expose `.connection` attribute used by some callers/tests
     @property
@@ -321,12 +262,9 @@ class FlextLDAPSettings(FlextConfig):
         )
         use_ssl = use_ssl_result.value.lower() in {"true", "1", "yes", "on"}
 
-        # Create auth config
-        auth_config = FlextLDAPAuthConfig(
-            bind_dn=bind_dn_result.value,
-            bind_password=SecretStr(bind_password_result.value),
-            use_ssl=use_ssl,
-        )
+        # Use direct auth fields
+        bind_dn = bind_dn_result.value
+        bind_password = SecretStr(bind_password_result.value)
 
         # Create connection config - only with valid fields
         connection_config = FlextLDAPConnectionConfig(
@@ -334,10 +272,12 @@ class FlextLDAPSettings(FlextConfig):
             port=int(port_result.value),
         )
 
-        # Create settings using alias field name for Pydantic
+        # Create settings with unified fields
         config_data: dict[str, object] = {
             "default_connection": connection_config,
-            "auth": auth_config,
+            "bind_dn": bind_dn,
+            "bind_password": bind_password,
+            "use_ssl": use_ssl,
         }
         return cls.model_validate(config_data)
 
@@ -409,22 +349,16 @@ class FlextLDAPSettings(FlextConfig):
             port=389,
         )
 
-        auth_config = FlextLDAPAuthConfig(
-            bind_dn="cn=admin,dc=dev,dc=local",
-            bind_password=SecretStr("admin123"),
-            use_ssl=False,
-            verify_certificates=False,
-        )
-
-        # Use model_validate to avoid pyright false positives with alias fields
+        # Use direct field assignments
         config_data: dict[str, object] = {
             "default_connection": connection_config,
-            "auth": auth_config,
-            "logging": FlextLDAPLoggingConfig(
-                enable_debug=True,
-                log_queries=True,
-                structured_logging=True,
-            ),
+            "bind_dn": "cn=admin,dc=dev,dc=local",
+            "bind_password": SecretStr("admin123"),
+            "use_ssl": False,
+            "verify_certificates": False,
+            "enable_debug": True,
+            "log_queries": True,
+            "structured_logging": True,
             "enable_debug_mode": True,
             "enable_caching": False,
         }
@@ -438,22 +372,16 @@ class FlextLDAPSettings(FlextConfig):
             port=3389,
         )
 
-        auth_config = FlextLDAPAuthConfig(
-            bind_dn="cn=admin,dc=test,dc=local",
-            bind_password=SecretStr("test123"),
-            use_ssl=False,
-            verify_certificates=False,
-        )
-
-        # Use model_validate to avoid pyright false positives with alias fields
+        # Use direct field assignments
         config_data: dict[str, object] = {
             "default_connection": connection_config,
-            "auth": auth_config,
-            "logging": FlextLDAPLoggingConfig(
-                enable_debug=False,
-                log_queries=False,
-                structured_logging=False,
-            ),
+            "bind_dn": "cn=admin,dc=test,dc=local",
+            "bind_password": SecretStr("test123"),
+            "use_ssl": False,
+            "verify_certificates": False,
+            "enable_debug": False,
+            "log_queries": False,
+            "structured_logging": False,
             "enable_test_mode": True,
             "enable_caching": False,
         }
@@ -469,22 +397,16 @@ class FlextLDAPSettings(FlextConfig):
             verify_ssl=True,
         )
 
-        auth_config = FlextLDAPAuthConfig(
-            bind_dn="cn=service,ou=accounts,dc=company,dc=com",
-            bind_password=SecretStr("${LDAP_BIND_PASSWORD}"),
-            use_ssl=True,
-            verify_certificates=True,
-        )
-
-        # Use model_validate to avoid pyright false positives with alias fields
+        # Use direct field assignments
         config_data: dict[str, object] = {
             "default_connection": connection_config,
-            "auth": auth_config,
-            "logging": FlextLDAPLoggingConfig(
-                enable_debug=False,
-                log_queries=False,
-                structured_logging=True,
-            ),
+            "bind_dn": "cn=service,ou=accounts,dc=company,dc=com",
+            "bind_password": SecretStr("${LDAP_BIND_PASSWORD}"),
+            "use_ssl": True,
+            "verify_certificates": True,
+            "enable_debug": False,
+            "log_queries": False,
+            "structured_logging": True,
             "enable_debug_mode": False,
             "enable_caching": True,
             "cache_ttl": 600,
@@ -493,8 +415,5 @@ class FlextLDAPSettings(FlextConfig):
 
 
 __all__ = [
-    "FlextLDAPAuthConfig",
-    "FlextLDAPLoggingConfig",
-    "FlextLDAPSearchConfig",
     "FlextLDAPSettings",
 ]

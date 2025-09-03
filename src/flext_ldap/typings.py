@@ -12,21 +12,14 @@ Examples:
         filter_type: FlextLDAPTypes.Search.Filter = "(objectClass=person)"
         attrs: FlextLDAPTypes.Entry.AttributeDict = {"cn": ["John Doe"]}
 
-    Legacy compatibility::
-
-        # All previous types still work as aliases
-        from typings import LdapAttributeDict, TLdapDn
-
-        attrs: LdapAttributeDict = {"cn": ["John Doe"]}
-        dn: TLdapDn = "cn=user,dc=example,dc=com"
 
 """
 
 from __future__ import annotations
 
-from typing import Protocol, TypeVar
+from typing import Protocol
 
-from flext_core import FlextTypes, P, T
+from flext_core import FlextTypes
 
 # =============================================================================
 # SINGLE FLEXT LDAP TYPES CLASS - Inheriting from FlextCoreTypes
@@ -76,7 +69,7 @@ class FlextLDAPTypes(FlextTypes):
 
         # Distinguished Name types
         type DistinguishedName = str
-        type Dn = str  # Short alias
+        type Dn = str
 
         # LDAP URI and connection types
         type Uri = str
@@ -166,93 +159,46 @@ class FlextLDAPTypes(FlextTypes):
         type Auth = object
         type Validator[T] = object
 
+    # =========================================================================
+    # PROTOCOLS - Async and callable patterns
+    # =========================================================================
 
-# =============================================================================
-# ADDITIONAL PROTOCOLS - Backward Compatibility
-# =============================================================================
+    class AsyncCallable(Protocol):
+        """Async callable protocol for LDAP operations."""
 
-
-class AsyncCallable(Protocol):
-    """Async callable protocol for backward compatibility."""
-
-    def __call__(self, *args: object, **kwargs: object) -> None:  # pragma: no cover
-        ...
-
-
-# =============================================================================
-# LEGACY TYPE ALIASES - Backward Compatibility
-# =============================================================================
-
-# Core LDAP value types - legacy compatibility
-LdapAttributeValue = FlextLDAPTypes.Entry.AttributeValue
-LdapAttributeDict = FlextLDAPTypes.Entry.AttributeDict
-LdapSearchResult = FlextLDAPTypes.Entry.EntryResult
-
-# LDAP-specific type aliases - legacy compatibility
-TLdapDn = FlextLDAPTypes.LdapDomain.DistinguishedName
-TLdapUri = FlextLDAPTypes.LdapDomain.Uri
-TLdapFilter = FlextLDAPTypes.Search.Filter
-TLdapSessionId = FlextLDAPTypes.LdapDomain.SessionId
-TLdapScope = FlextLDAPTypes.Search.Scope
-TLdapConnectionId = FlextLDAPTypes.LdapDomain.ConnectionId
-
-# LDAP attribute and entry types - legacy compatibility
-TLdapAttributeValue = FlextLDAPTypes.Entry.AttributeValue
-TLdapAttributes = FlextLDAPTypes.Entry.AttributeDict
-TLdapEntryData = FlextLDAPTypes.Entry.EntryData
-TLdapSearchResult = FlextLDAPTypes.Search.ResultList
-
-# Infrastructure types - legacy compatibility
-LdapConnectionConfig = FlextLDAPTypes.Connection.Config
-SecurityEventData = FlextTypes.Core.Object
-ErrorPatternData = FlextTypes.Core.Object
-SchemaData = FlextTypes.Core.Object
-
-# Service layer types - legacy compatibility
-DirectoryAuthConfig = FlextLDAPTypes.Connection.AuthConfig
-ConnectionConfig = FlextLDAPTypes.Connection.ConnectionConfig
-UserRequest = FlextTypes.Core.Object
-SearchResult = FlextTypes.Core.Object
-
-# Use flext-core JsonDict type - legacy compatibility
-JsonDict = dict[str, object]
-
-# Backward compatibility for R (not in FlextTypes)
-R = TypeVar("R")  # Use TypeVar for R compatibility
+        def __call__(self, *args: object, **kwargs: object) -> None:  # pragma: no cover
+            ...
 
 
 # =============================================================================
 # MODULE EXPORTS
 # =============================================================================
 
+# =============================================================================
+# ESSENTIAL TYPE ALIASES - Only for internal usage
+# =============================================================================
+
+# Core LDAP value types - only the ones used in code
+LdapAttributeValue = FlextLDAPTypes.Entry.AttributeValue
+LdapAttributeDict = FlextLDAPTypes.Entry.AttributeDict
+LdapSearchResult = FlextLDAPTypes.Entry.EntryResult
+
+# LDAP attribute and entry types - only used ones
+TLdapAttributes = FlextLDAPTypes.Entry.AttributeDict
+TLdapAttributeValue = FlextLDAPTypes.Entry.AttributeValue
+TLdapEntryData = FlextLDAPTypes.Entry.EntryData
+TLdapSearchResult = FlextLDAPTypes.Search.ResultList
+
+
 __all__ = [
-    # Legacy type aliases
-    "AsyncCallable",
-    "ConnectionConfig",
-    "DirectoryAuthConfig",
-    "ErrorPatternData",
-    # Main class
+    # Main class following flext-core pattern
     "FlextLDAPTypes",
-    "JsonDict",
     "LdapAttributeDict",
+    # Essential aliases used in code
     "LdapAttributeValue",
-    "LdapConnectionConfig",
     "LdapSearchResult",
-    "P",
-    "R",
-    "SchemaData",
-    "SearchResult",
-    "SecurityEventData",
-    "T",
     "TLdapAttributeValue",
     "TLdapAttributes",
-    "TLdapConnectionId",
-    "TLdapDn",
     "TLdapEntryData",
-    "TLdapFilter",
-    "TLdapScope",
     "TLdapSearchResult",
-    "TLdapSessionId",
-    "TLdapUri",
-    "UserRequest",
 ]

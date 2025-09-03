@@ -320,9 +320,7 @@ class FlextLDAPValueObjects:
 # =============================================================================
 
 # Legacy class aliases for backward compatibility
-FlextLDAPDistinguishedName = FlextLDAPValueObjects.DistinguishedName
-FlextLDAPScope = FlextLDAPValueObjects.Scope
-FlextLDAPFilter = FlextLDAPValueObjects.Filter
+# Export aliases eliminated - use FlextLDAPValueObjects.* directly following flext-core pattern
 
 
 # =============================================================================
@@ -330,10 +328,5 @@ FlextLDAPFilter = FlextLDAPValueObjects.Filter
 # =============================================================================
 
 __all__ = [
-    # Legacy compatibility classes
-    "FlextLDAPDistinguishedName",
-    "FlextLDAPFilter",
-    "FlextLDAPScope",
-    # Primary consolidated class
     "FlextLDAPValueObjects",
 ]

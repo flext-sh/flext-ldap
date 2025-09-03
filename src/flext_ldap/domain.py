@@ -31,14 +31,11 @@ from flext_core import (
     FlextUtilities,
 )
 
-from flext_ldap.constants import (
-    FlextLDAPDefaultValues,
-    FlextLDAPObjectClassConstants,
-    FlextLDAPValidationConstants,
-)
-from flext_ldap.models import FlextLDAPGroup, FlextLDAPUser
+from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.typings import LdapAttributeDict
-from flext_ldap.utilities import FlextLDAPUtilities
+
+# Removed FlextLDAPUtilities - using Python standard library and flext-core directly
 
 logger = FlextLogger(__name__)
 
@@ -83,8 +80,8 @@ class FlextLDAPDomain:
 
         def __init__(self) -> None:
             super().__init__(
-                name=FlextLDAPDefaultValues.VALID_LDAP_USER_NAME,
-                description=FlextLDAPDefaultValues.VALID_LDAP_USER_DESCRIPTION,
+                name=FlextLDAPConstants.DefaultValues.VALID_LDAP_USER_NAME,
+                description=FlextLDAPConstants.DefaultValues.VALID_LDAP_USER_DESCRIPTION,
             )
 
         @override
@@ -104,8 +101,8 @@ class FlextLDAPDomain:
             # Validate object classes
             object_classes = getattr(candidate, "object_classes", [])
             required_classes = [
-                FlextLDAPObjectClassConstants.PERSON,
-                FlextLDAPObjectClassConstants.TOP,
+                FlextLDAPConstants.ObjectClasses.PERSON,
+                FlextLDAPConstants.ObjectClasses.TOP,
             ]
 
             return all(cls in object_classes for cls in required_classes)
@@ -137,8 +134,8 @@ class FlextLDAPDomain:
             # Validate object classes
             object_classes = getattr(candidate, "object_classes", [])
             required_classes = [
-                FlextLDAPObjectClassConstants.GROUP_OF_NAMES,
-                FlextLDAPObjectClassConstants.TOP,
+                FlextLDAPConstants.ObjectClasses.GROUP_OF_NAMES,
+                FlextLDAPConstants.ObjectClasses.TOP,
             ]
 
             return all(cls in object_classes for cls in required_classes)
@@ -171,7 +168,7 @@ class FlextLDAPDomain:
             if not isinstance(candidate, str):
                 return False
 
-            if len(candidate) > FlextLDAPValidationConstants.MAX_FILTER_LENGTH:
+            if len(candidate) > FlextLDAPConstants.LdapValidation.MAX_FILTER_LENGTH:
                 return False
 
             return bool(self.DN_PATTERN.match(candidate))
@@ -200,16 +197,17 @@ class FlextLDAPDomain:
             if not isinstance(candidate, str):
                 return False
 
-            if len(candidate) < FlextLDAPValidationConstants.MIN_PASSWORD_LENGTH:
+            if len(candidate) < FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH:
                 return False
 
-            if len(candidate) > FlextLDAPValidationConstants.MAX_PASSWORD_LENGTH:
+            if len(candidate) > FlextLDAPConstants.LdapValidation.MAX_PASSWORD_LENGTH:
                 return False
 
             # Check complexity if required
-            if FlextLDAPValidationConstants.REQUIRE_PASSWORD_COMPLEXITY:
+            if FlextLDAPConstants.LdapValidation.REQUIRE_PASSWORD_COMPLEXITY:
                 # Implement proper password complexity validation
                 import re
+
                 # Password must have: uppercase, lowercase, digit, special char
                 has_upper = bool(re.search(r"[A-Z]", candidate))
                 has_lower = bool(re.search(r"[a-z]", candidate))
@@ -225,10 +223,10 @@ class FlextLDAPDomain:
             """Get detailed password validation error."""
             if not isinstance(candidate, str):
                 return "Password must be a string"
-            if len(candidate) < FlextLDAPValidationConstants.MIN_PASSWORD_LENGTH:
-                return f"Password must be at least {FlextLDAPValidationConstants.MIN_PASSWORD_LENGTH} characters"
-            if len(candidate) > FlextLDAPValidationConstants.MAX_PASSWORD_LENGTH:
-                return f"Password cannot exceed {FlextLDAPValidationConstants.MAX_PASSWORD_LENGTH} characters"
+            if len(candidate) < FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH:
+                return f"Password must be at least {FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH} characters"
+            if len(candidate) > FlextLDAPConstants.LdapValidation.MAX_PASSWORD_LENGTH:
+                return f"Password cannot exceed {FlextLDAPConstants.LdapValidation.MAX_PASSWORD_LENGTH} characters"
             return "Password does not meet complexity requirements"
 
     class ActiveUserSpecification(DomainSpecification):
@@ -266,7 +264,7 @@ class FlextLDAPDomain:
         """Internal specification for email address validation."""
 
         EMAIL_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            FlextLDAPValidationConstants.EMAIL_PATTERN,
+            FlextLDAPConstants.LdapValidation.EMAIL_PATTERN,
         )
 
         def __init__(self) -> None:
@@ -336,7 +334,7 @@ class FlextLDAPDomain:
     # INTERNAL DOMAIN SERVICE CLASSES
     # ==========================================================================
 
-    class UserManagementService(FlextDomainService[FlextLDAPUser]):
+    class UserManagementService(FlextDomainService[FlextLDAPEntities.User]):
         """Internal domain service for user management business logic."""
 
         def __init__(self, **data: object) -> None:
@@ -345,10 +343,10 @@ class FlextLDAPDomain:
             self._password_spec = FlextLDAPDomain.PasswordSpecification()
             self._email_spec = FlextLDAPDomain.EmailSpecification()
 
-        def execute(self) -> FlextResult[FlextLDAPUser]:
+        def execute(self) -> FlextResult[FlextLDAPEntities.User]:
             """Execute method required by FlextDomainService - CORRECTED signature."""
-            return FlextResult[FlextLDAPUser].ok(
-                FlextLDAPUser(
+            return FlextResult[FlextLDAPEntities.User].ok(
+                FlextLDAPEntities.User(
                     id="default_user",
                     dn="cn=default,dc=example,dc=com",
                     uid="default",
@@ -445,8 +443,8 @@ class FlextLDAPDomain:
 
         def can_delete_user(
             self,
-            user: FlextLDAPUser,
-            requesting_user: FlextLDAPUser,
+            user: FlextLDAPEntities.User,
+            requesting_user: FlextLDAPEntities.User,
         ) -> FlextResult[bool]:
             """Check if user can be deleted by requesting user."""
             try:
@@ -492,7 +490,8 @@ class FlextLDAPDomain:
                 username = FlextUtilities.TextProcessor.slugify(username)
 
                 if (
-                    len(username) < FlextLDAPValidationConstants.MIN_PASSWORD_LENGTH
+                    len(username)
+                    < FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH
                 ):  # MIN_USERNAME_LENGTH não existe, usar MIN_PASSWORD_LENGTH ou criar constante
                     return FlextResult[str].fail("Generated username too short")
 
@@ -502,7 +501,7 @@ class FlextLDAPDomain:
                 logger.exception("Username generation failed")
                 return FlextResult[str].fail(f"Username generation error: {e}")
 
-    class GroupManagementService(FlextDomainService[FlextLDAPGroup]):
+    class GroupManagementService(FlextDomainService[FlextLDAPEntities.Group]):
         """Internal domain service for group management business logic."""
 
         def __init__(self, **data: object) -> None:
@@ -510,10 +509,10 @@ class FlextLDAPDomain:
             self._group_spec = FlextLDAPDomain.GroupSpecification()
             self._dn_spec = FlextLDAPDomain.DistinguishedNameSpecification()
 
-        def execute(self) -> FlextResult[FlextLDAPGroup]:
+        def execute(self) -> FlextResult[FlextLDAPEntities.Group]:
             """Execute method required by FlextDomainService - CORRECTED signature."""
-            return FlextResult[FlextLDAPGroup].ok(
-                FlextLDAPGroup(
+            return FlextResult[FlextLDAPEntities.Group].ok(
+                FlextLDAPEntities.Group(
                     id="default_group",
                     dn="cn=default,dc=example,dc=com",
                     cn="Default Group",
@@ -529,8 +528,8 @@ class FlextLDAPDomain:
 
         def can_add_member(
             self,
-            group: FlextLDAPGroup,
-            user: FlextLDAPUser,
+            group: FlextLDAPEntities.Group,
+            user: FlextLDAPEntities.User,
             *,
             allow_inactive: bool = False,
         ) -> FlextResult[bool]:
@@ -643,10 +642,10 @@ class FlextLDAPDomain:
 
         def _validate_password_length(self, length: int) -> str | None:
             """Validate password length parameters - EXTRACTED METHOD."""
-            if length < FlextLDAPValidationConstants.MIN_PASSWORD_LENGTH:
-                return f"Password length must be at least {FlextLDAPValidationConstants.MIN_PASSWORD_LENGTH}"
-            if length > FlextLDAPValidationConstants.MAX_PASSWORD_LENGTH:
-                return f"Password length cannot exceed {FlextLDAPValidationConstants.MAX_PASSWORD_LENGTH}"
+            if length < FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH:
+                return f"Password length must be at least {FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH}"
+            if length > FlextLDAPConstants.LdapValidation.MAX_PASSWORD_LENGTH:
+                return f"Password length cannot exceed {FlextLDAPConstants.LdapValidation.MAX_PASSWORD_LENGTH}"
             return None
 
         def _generate_password_with_retries(self, length: int) -> FlextResult[str]:
@@ -830,9 +829,8 @@ class FlextLDAPDomain:
             from flext_core import FlextUtilities
 
             if FlextUtilities.TypeGuards.is_list_non_empty(value):
-                return FlextLDAPUtilities.LdapConverters.safe_convert_list_to_strings(
-                    cast("list[object]", value)
-                )
+                # Use Python standard conversion instead of custom wrapper
+                return [str(item) for item in cast("list[object]", value)]
             return default or []
 
         @staticmethod
@@ -845,21 +843,26 @@ class FlextLDAPDomain:
 
         @staticmethod
         def safe_ldap_attributes(value: object) -> LdapAttributeDict:
-            """Safely convert value to LdapAttributeDict."""
-            return FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
-                value
-            )
+            """Safely convert value to LdapAttributeDict using Python standard conversion."""
+            if not isinstance(value, dict):
+                return {}
+            # Use Python standard dict comprehension instead of custom converter
+            return {
+                k: [str(v)] if not isinstance(v, list) else [str(item) for item in v]
+                for k, v in value.items()
+                if v is not None
+            }
 
     class UserEntityBuilder:
-        """Internal builder for FlextLDAPUser entities - ELIMINATES DUPLICATION."""
+        """Internal builder for FlextLDAPEntities.User entities - ELIMINATES DUPLICATION."""
 
         def __init__(self, params: FlextTypes.Core.Dict) -> None:
             self.params = params
             self.builder = FlextLDAPDomain.EntityParameterBuilder()
 
         def build(self) -> object:
-            """Build FlextLDAPUser with reduced parameter complexity."""
-            return FlextLDAPUser(
+            """Build FlextLDAPEntities.User with reduced parameter complexity."""
+            return FlextLDAPEntities.User(
                 id=f"user_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}",
                 dn=str(self.params["dn"]),
                 uid=self.builder.safe_str(self.params["uid"]) or "",
@@ -874,15 +877,15 @@ class FlextLDAPDomain:
             )
 
     class GroupEntityBuilder:
-        """Internal builder for FlextLDAPGroup entities - ELIMINATES DUPLICATION."""
+        """Internal builder for FlextLDAPEntities.Group entities - ELIMINATES DUPLICATION."""
 
         def __init__(self, params: FlextTypes.Core.Dict) -> None:
             self.params = params
             self.builder = FlextLDAPDomain.EntityParameterBuilder()
 
         def build(self) -> object:
-            """Build FlextLDAPGroup with reduced parameter complexity."""
-            return FlextLDAPGroup(
+            """Build FlextLDAPEntities.Group with reduced parameter complexity."""
+            return FlextLDAPEntities.Group(
                 id=f"group_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}",
                 dn=str(self.params["dn"]),
                 cn=self.builder.safe_str(self.params["cn"]) or "",
@@ -904,7 +907,7 @@ class FlextLDAPDomain:
         def create_user_from_data(
             self,
             user_data: FlextTypes.Core.Dict,
-        ) -> FlextResult[FlextLDAPUser]:
+        ) -> FlextResult[FlextLDAPEntities.User]:
             """Create user entity from data with full validation."""
             operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]] = {
                 "validate": self._user_service.validate_user_creation,
@@ -915,21 +918,21 @@ class FlextLDAPDomain:
             result = self._create_entity_from_data(user_data, "User", operations)
             # Narrow the type for the public API
             if result.is_failure:
-                return FlextResult[FlextLDAPUser].fail(
+                return FlextResult[FlextLDAPEntities.User].fail(
                     result.error or "User creation failed",
                 )
             # Use FlextResult.value for modern type-safe access (success verified above)
             created = result.value
             if created is None:
-                return FlextResult[FlextLDAPUser].fail("User creation returned None")
-            # Late import kept to avoid circular dependency; ruff allow
-            from .models import (
-                FlextLDAPUser as _User,
-            )
+                return FlextResult[FlextLDAPEntities.User].fail(
+                    "User creation returned None"
+                )
+            # Use imported FlextLDAPEntities from top of file
+            user_class = FlextLDAPEntities.User
 
-            if isinstance(created, _User):
-                return FlextResult[FlextLDAPUser].ok(created)
-            return FlextResult[FlextLDAPUser].fail(
+            if isinstance(created, user_class):
+                return FlextResult[FlextLDAPEntities.User].ok(created)
+            return FlextResult[FlextLDAPEntities.User].fail(
                 "User creation returned invalid type"
             )
 
@@ -970,7 +973,7 @@ class FlextLDAPDomain:
             }
 
         def _create_user_entity(self, user_params: FlextTypes.Core.Dict) -> object:
-            """Create FlextLDAPUser entity from extracted parameters - REFACTORED."""
+            """Create FlextLDAPEntities.User entity from extracted parameters - REFACTORED."""
             builder = FlextLDAPDomain.UserEntityBuilder(user_params)
             return builder.build()
 
@@ -986,7 +989,7 @@ class FlextLDAPDomain:
         def create_group_from_data(
             self,
             group_data: FlextTypes.Core.Dict,
-        ) -> FlextResult[FlextLDAPGroup]:
+        ) -> FlextResult[FlextLDAPEntities.Group]:
             """Create group entity from data with full validation."""
             operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]] = {
                 "validate": self._group_service.validate_group_creation,
@@ -996,21 +999,21 @@ class FlextLDAPDomain:
             }
             result = self._create_entity_from_data(group_data, "Group", operations)
             if result.is_failure:
-                return FlextResult[FlextLDAPGroup].fail(
+                return FlextResult[FlextLDAPEntities.Group].fail(
                     result.error or "Group creation failed",
                 )
             # Use FlextResult.value for modern type-safe access (success verified above)
             created = result.value
             if created is None:
-                return FlextResult[FlextLDAPGroup].fail("Group creation returned None")
-            # Late import kept to avoid circular dependency; ruff allow
-            from .models import (
-                FlextLDAPGroup as _Group,
-            )
+                return FlextResult[FlextLDAPEntities.Group].fail(
+                    "Group creation returned None"
+                )
+            # Use imported FlextLDAPEntities from top of file
+            group_class = FlextLDAPEntities.Group
 
-            if isinstance(created, _Group):
-                return FlextResult[FlextLDAPGroup].ok(created)
-            return FlextResult[FlextLDAPGroup].fail(
+            if isinstance(created, group_class):
+                return FlextResult[FlextLDAPEntities.Group].ok(created)
+            return FlextResult[FlextLDAPEntities.Group].fail(
                 "Group creation returned invalid type"
             )
 
@@ -1054,7 +1057,7 @@ class FlextLDAPDomain:
             }
 
         def _create_group_entity(self, group_params: FlextTypes.Core.Dict) -> object:
-            """Create FlextLDAPGroup entity from extracted parameters - REFACTORED."""
+            """Create FlextLDAPEntities.Group entity from extracted parameters - REFACTORED."""
             builder = FlextLDAPDomain.GroupEntityBuilder(group_params)
             return builder.build()
 
@@ -1231,13 +1234,13 @@ class FlextLDAPDomain:
 
     def create_user_from_data(
         self, user_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextLDAPUser]:
+    ) -> FlextResult[FlextLDAPEntities.User]:
         """Create user from data (convenience method)."""
         return self._factory.create_user_from_data(user_data)
 
     def create_group_from_data(
         self, group_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextLDAPGroup]:
+    ) -> FlextResult[FlextLDAPEntities.Group]:
         """Create group from data (convenience method)."""
         return self._factory.create_group_from_data(group_data)
 
@@ -1250,48 +1253,8 @@ class FlextLDAPDomain:
 # BACKWARD COMPATIBILITY ALIASES - Following FLEXT consolidation patterns
 # =============================================================================
 
-# Export internal classes for external access (backward compatibility)
-FlextLDAPDomainSpecification = FlextLDAPDomain.DomainSpecification
-FlextLDAPUserSpecification = FlextLDAPDomain.UserSpecification
-FlextLDAPGroupSpecification = FlextLDAPDomain.GroupSpecification
-FlextLDAPDistinguishedNameSpecification = FlextLDAPDomain.DistinguishedNameSpecification
-FlextLDAPPasswordSpecification = FlextLDAPDomain.PasswordSpecification
-FlextLDAPActiveUserSpecification = FlextLDAPDomain.ActiveUserSpecification
-FlextLDAPEmailSpecification = FlextLDAPDomain.EmailSpecification
-FlextLDAPCompleteUserSpecification = FlextLDAPDomain.CompleteUserSpecification
-FlextLDAPUserManagementService = FlextLDAPDomain.UserManagementService
-FlextLDAPGroupManagementService = FlextLDAPDomain.GroupManagementService
-FlextLDAPPasswordService = FlextLDAPDomain.PasswordService
-FlextLDAPUserCreatedEvent = FlextLDAPDomain.UserCreatedEvent
-FlextLDAPUserDeletedEvent = FlextLDAPDomain.UserDeletedEvent
-FlextLDAPGroupMemberAddedEvent = FlextLDAPDomain.GroupMemberAddedEvent
-FlextLDAPPasswordChangedEvent = FlextLDAPDomain.PasswordChangedEvent
-FlextLDAPDomainFactory = FlextLDAPDomain.DomainFactory
-FlextLDAPEntityParameterBuilder = FlextLDAPDomain.EntityParameterBuilder
-FlextLDAPUserEntityBuilder = FlextLDAPDomain.UserEntityBuilder
-FlextLDAPGroupEntityBuilder = FlextLDAPDomain.GroupEntityBuilder
+# Export aliases eliminated - use FlextLDAPDomain.* directly following flext-core pattern
 
 __all__ = [
-    "FlextLDAPActiveUserSpecification",
-    "FlextLDAPCompleteUserSpecification",
-    "FlextLDAPDistinguishedNameSpecification",
     "FlextLDAPDomain",
-    "FlextLDAPDomainFactory",
-    # Legacy compatibility aliases
-    "FlextLDAPDomainSpecification",
-    "FlextLDAPEmailSpecification",
-    # Internal builder classes for backward compatibility
-    "FlextLDAPEntityParameterBuilder",
-    "FlextLDAPGroupEntityBuilder",
-    "FlextLDAPGroupManagementService",
-    "FlextLDAPGroupMemberAddedEvent",
-    "FlextLDAPGroupSpecification",
-    "FlextLDAPPasswordChangedEvent",
-    "FlextLDAPPasswordService",
-    "FlextLDAPPasswordSpecification",
-    "FlextLDAPUserCreatedEvent",
-    "FlextLDAPUserDeletedEvent",
-    "FlextLDAPUserEntityBuilder",
-    "FlextLDAPUserManagementService",
-    "FlextLDAPUserSpecification",
 ]

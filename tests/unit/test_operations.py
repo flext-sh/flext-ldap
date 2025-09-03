@@ -37,11 +37,11 @@ class TestFlextLDAPOperationsReal:
 
         # Verify real initialization happened
         assert hasattr(ops, "connections")
-        assert hasattr(ops, "search") 
+        assert hasattr(ops, "search")
         assert hasattr(ops, "entries")
         assert hasattr(ops, "users")
         assert hasattr(ops, "groups")
-        
+
         # Verify operation handlers are properly initialized
         assert ops.connections is not None
         assert ops.search is not None
