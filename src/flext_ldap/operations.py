@@ -3,7 +3,7 @@
 FLEXT_REFACTORING_PROMPT.md COMPLIANCE: Single consolidated class for all LDAP operation functionality.
 All specialized functionality delivered through internal subclasses within FlextLDAPOperations.
 
-CONSOLIDATED CLASSES: FlextLDAPOperationsService + FlextLDAPConnectionOperations + FlextLDAPSearchOperations + FlextLDAPEntryOperations + FlextLDAPUserOperations + FlextLDAPGroupOperations
+CONSOLIDATED CLASSES: FlextLDAPOperationsService + FlextLDAPConnectionOperations + FlextLDAPSearchOperations + FlextLDAPEntities.EntryOperations + FlextLDAPEntities.UserOperations + FlextLDAPEntities.GroupOperations
 """
 
 import uuid
@@ -18,19 +18,12 @@ from flext_core import (
 )
 from pydantic import PrivateAttr
 
-from flext_ldap.constants import FlextLDAPValidationMessages
-from flext_ldap.models import (
-    FlextLDAPCreateUserRequest,
-    FlextLDAPEntry,
-    FlextLDAPGroup,
-    FlextLDAPUser,
-)
+from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.typings import LdapAttributeDict
-from flext_ldap.utilities import FlextLDAPUtilities
-from flext_ldap.value_objects import (
-    FlextLDAPDistinguishedName,
-    FlextLDAPFilter,
-)
+
+# Removed FlextLDAPUtilities - using Python standard library directly
+from flext_ldap.value_objects import FlextLDAPValueObjects
 
 logger = FlextLogger(__name__)
 
@@ -42,7 +35,7 @@ class FlextLDAPOperations:
     including connections, search, entries, users, and groups into one main class
     with specialized internal subclasses for organization.
 
-    CONSOLIDATED CLASSES: FlextLDAPOperationsService + FlextLDAPConnectionOperations + FlextLDAPSearchOperations + FlextLDAPEntryOperations + FlextLDAPUserOperations + FlextLDAPGroupOperations
+    CONSOLIDATED CLASSES: FlextLDAPOperationsService + FlextLDAPConnectionOperations + FlextLDAPSearchOperations + FlextLDAPEntities.EntryOperations + FlextLDAPEntities.UserOperations + FlextLDAPEntities.GroupOperations
     """
 
     # ==========================================================================
@@ -68,16 +61,16 @@ class FlextLDAPOperations:
             self, dn: str, context: str = "DN"
         ) -> FlextResult[None]:
             """Validate DN and return error if invalid - REUSABLE VALIDATION."""
-            dn_validation = FlextLDAPDistinguishedName(
+            dn_validation = FlextLDAPValueObjects.DistinguishedName(
                 value=dn
             ).validate_business_rules()
             if not dn_validation.is_success:
                 error_msg = (
                     dn_validation.error
-                    or FlextLDAPValidationMessages.UNKNOWN_VALIDATION_ERROR
+                    or FlextLDAPConstants.ValidationMessages.UNKNOWN_VALIDATION_ERROR
                 )
                 return FlextResult[None].fail(
-                    FlextLDAPValidationMessages.INVALID_DN_WITH_CONTEXT.format(
+                    FlextLDAPConstants.ValidationMessages.INVALID_DN_WITH_CONTEXT.format(
                         context=context,
                         error=error_msg,
                     ),
@@ -86,16 +79,16 @@ class FlextLDAPOperations:
 
         def _validate_filter_or_fail(self, search_filter: str) -> FlextResult[None]:
             """Validate LDAP filter and return error if invalid - REUSABLE VALIDATION."""
-            filter_validation = FlextLDAPFilter(
+            filter_validation = FlextLDAPValueObjects.Filter(
                 value=search_filter,
             ).validate_business_rules()
             if not filter_validation.is_success:
                 error_msg = (
                     filter_validation.error
-                    or FlextLDAPValidationMessages.UNKNOWN_VALIDATION_ERROR
+                    or FlextLDAPConstants.ValidationMessages.UNKNOWN_VALIDATION_ERROR
                 )
                 return FlextResult[None].fail(
-                    FlextLDAPValidationMessages.INVALID_SEARCH_FILTER.format(
+                    FlextLDAPConstants.ValidationMessages.INVALID_SEARCH_FILTER.format(
                         error=error_msg,
                     ),
                 )
@@ -277,24 +270,24 @@ class FlextLDAPOperations:
             attributes: list[str] | None = None,
             size_limit: int = 1000,
             time_limit: int = 30,
-        ) -> FlextResult[list[FlextLDAPEntry]]:
+        ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
             """Search for LDAP entries - REFACTORED with shared validation."""
             try:
                 # Use REFACTORED validation helpers - NO DUPLICATION
                 dn_validation = self._validate_dn_or_fail(base_dn, "base DN")
                 if not dn_validation.is_success:
-                    return FlextResult[list[FlextLDAPEntry]].fail(
+                    return FlextResult[list[FlextLDAPEntities.Entry]].fail(
                         dn_validation.error or "DN validation failed",
                     )
 
                 filter_validation = self._validate_filter_or_fail(search_filter)
                 if not filter_validation.is_success:
-                    return FlextResult[list[FlextLDAPEntry]].fail(
+                    return FlextResult[list[FlextLDAPEntities.Entry]].fail(
                         filter_validation.error or "Filter validation failed",
                     )
 
                 # Simulate search operation
-                entries: list[FlextLDAPEntry] = []
+                entries: list[FlextLDAPEntities.Entry] = []
 
                 # Use REFACTORED logging - NO DUPLICATION
                 logger.debug(
@@ -311,7 +304,7 @@ class FlextLDAPOperations:
                     },
                 )
 
-                return FlextResult[list[FlextLDAPEntry]].ok(entries)
+                return FlextResult[list[FlextLDAPEntities.Entry]].ok(entries)
 
             except Exception as e:
                 # Use REFACTORED exception handling - NO DUPLICATION
@@ -320,7 +313,7 @@ class FlextLDAPOperations:
                     e,
                     connection_id,
                 )
-                return FlextResult[list[FlextLDAPEntry]].fail(error_msg)
+                return FlextResult[list[FlextLDAPEntities.Entry]].fail(error_msg)
 
         async def search_users(
             self,
@@ -328,7 +321,7 @@ class FlextLDAPOperations:
             base_dn: str,
             filter_criteria: dict[str, str] | None = None,
             size_limit: int = 1000,
-        ) -> FlextResult[list[FlextLDAPUser]]:
+        ) -> FlextResult[list[FlextLDAPEntities.User]]:
             """Search for user entries - REFACTORED with helper composition."""
             try:
                 # Use REFACTORED filter building - NO DUPLICATION
@@ -345,7 +338,7 @@ class FlextLDAPOperations:
                 )
 
                 if not search_result.is_success:
-                    return FlextResult[list[FlextLDAPUser]].fail(
+                    return FlextResult[list[FlextLDAPEntities.User]].fail(
                         search_result.error or "User search failed",
                     )
 
@@ -361,7 +354,7 @@ class FlextLDAPOperations:
                     result_count=len(users),
                 )
 
-                return FlextResult[list[FlextLDAPUser]].ok(users)
+                return FlextResult[list[FlextLDAPEntities.User]].ok(users)
 
             except Exception as e:
                 # Use REFACTORED exception handling - NO DUPLICATION
@@ -370,7 +363,7 @@ class FlextLDAPOperations:
                     e,
                     connection_id,
                 )
-                return FlextResult[list[FlextLDAPUser]].fail(error_msg)
+                return FlextResult[list[FlextLDAPEntities.User]].fail(error_msg)
 
         async def search_groups(
             self,
@@ -378,7 +371,7 @@ class FlextLDAPOperations:
             base_dn: str,
             filter_criteria: dict[str, str] | None = None,
             size_limit: int = 1000,
-        ) -> FlextResult[list[FlextLDAPGroup]]:
+        ) -> FlextResult[list[FlextLDAPEntities.Group]]:
             """Search for group entries - REFACTORED with helper composition."""
             try:
                 # Use REFACTORED filter building - NO DUPLICATION
@@ -395,7 +388,7 @@ class FlextLDAPOperations:
                 )
 
                 if not search_result.is_success:
-                    return FlextResult[list[FlextLDAPGroup]].fail(
+                    return FlextResult[list[FlextLDAPEntities.Group]].fail(
                         search_result.error or "Group search failed",
                     )
 
@@ -411,7 +404,7 @@ class FlextLDAPOperations:
                     result_count=len(groups),
                 )
 
-                return FlextResult[list[FlextLDAPGroup]].ok(groups)
+                return FlextResult[list[FlextLDAPEntities.Group]].ok(groups)
 
             except Exception as e:
                 # Use REFACTORED exception handling - NO DUPLICATION
@@ -420,14 +413,14 @@ class FlextLDAPOperations:
                     e,
                     connection_id,
                 )
-                return FlextResult[list[FlextLDAPGroup]].fail(error_msg)
+                return FlextResult[list[FlextLDAPEntities.Group]].fail(error_msg)
 
         async def get_entry_by_dn(
             self,
             connection_id: str,
             dn: str,
             attributes: list[str] | None = None,
-        ) -> FlextResult[FlextLDAPEntry]:
+        ) -> FlextResult[FlextLDAPEntities.Entry]:
             """Get a single entry by DN - REFACTORED."""
             search_result = await self.search_entries(
                 connection_id=connection_id,
@@ -439,14 +432,16 @@ class FlextLDAPOperations:
             )
 
             if not search_result.is_success:
-                return FlextResult[FlextLDAPEntry].fail(
+                return FlextResult[FlextLDAPEntities.Entry].fail(
                     search_result.error or "Search operation failed",
                 )
 
             if not search_result.value:
-                return FlextResult[FlextLDAPEntry].fail(f"Entry not found: {dn}")
+                return FlextResult[FlextLDAPEntities.Entry].fail(
+                    f"Entry not found: {dn}"
+                )
 
-            return FlextResult[FlextLDAPEntry].ok(search_result.value[0])
+            return FlextResult[FlextLDAPEntities.Entry].ok(search_result.value[0])
 
         def _build_user_filter(self, filter_criteria: dict[str, str] | None) -> str:
             """Build user-specific filter - REUSABLE HELPER."""
@@ -477,40 +472,36 @@ class FlextLDAPOperations:
 
         def _convert_entries_to_users(
             self,
-            entries: list[FlextLDAPEntry],
-        ) -> list[FlextLDAPUser]:
+            entries: list[FlextLDAPEntities.Entry],
+        ) -> list[FlextLDAPEntities.User]:
             """Convert entries to users - REUSABLE HELPER."""
-            users: list[FlextLDAPUser] = []
+            users: list[FlextLDAPEntities.User] = []
             for entry in entries:
-                # Extract required fields with type safety using correct utility access
-                uid = (
-                    FlextLDAPUtilities.LdapConverters.safe_get_first_value(
-                        entry.attributes, "uid"
-                    )
-                    or "unknown"
+                # Extract fields using Python standard dict.get() with first value, ensuring string types
+                attrs = entry.attributes
+                uid = str(
+                    attrs.get("uid", ["unknown"])[0] if attrs.get("uid") else "unknown"
                 )
-                cn = (
-                    FlextLDAPUtilities.LdapConverters.safe_get_first_value(
-                        entry.attributes, "cn"
-                    )
-                    or "unknown"
+                cn_val = (
+                    attrs.get("cn", ["unknown"])[0] if attrs.get("cn") else "unknown"
                 )
-                sn = (
-                    FlextLDAPUtilities.LdapConverters.safe_get_first_value(
-                        entry.attributes, "sn"
-                    )
-                    or "unknown"
+                cn = str(cn_val) if cn_val else None
+                sn_val = (
+                    attrs.get("sn", ["unknown"])[0] if attrs.get("sn") else "unknown"
                 )
-                given_name = FlextLDAPUtilities.LdapConverters.safe_get_first_value(
-                    entry.attributes, "givenName"
+                sn = str(sn_val) if sn_val else None
+                given_name_val = (
+                    attrs.get("givenName", [None])[0]
+                    if attrs.get("givenName")
+                    else None
                 )
-                mail = FlextLDAPUtilities.LdapConverters.safe_get_first_value(
-                    entry.attributes, "mail"
-                )
-                # Note: phone not included as FlextLDAPUser doesn't have phone field
+                given_name = str(given_name_val) if given_name_val else None
+                mail_val = attrs.get("mail", [None])[0] if attrs.get("mail") else None
+                mail = str(mail_val) if mail_val else None
+                # Note: phone not included as FlextLDAPEntities.User doesn't have phone field
 
                 users.append(
-                    FlextLDAPUser(
+                    FlextLDAPEntities.User(
                         id=f"user_{uuid.uuid4().hex[:8]}",
                         dn=entry.dn,
                         uid=uid,
@@ -522,7 +513,7 @@ class FlextLDAPOperations:
                         object_classes=entry.object_classes,
                         attributes=entry.attributes,
                         modified_at=None,
-                        # Note: no phone field in FlextLDAPUser
+                        # Note: no phone field in FlextLDAPEntities.User
                         # Note: no status field as FlextModels already has it
                     ),
                 )
@@ -530,21 +521,22 @@ class FlextLDAPOperations:
 
         def _convert_entries_to_groups(
             self,
-            entries: list[FlextLDAPEntry],
-        ) -> list[FlextLDAPGroup]:
+            entries: list[FlextLDAPEntities.Entry],
+        ) -> list[FlextLDAPEntities.Group]:
             """Convert entries to groups - REUSABLE HELPER."""
-            groups: list[FlextLDAPGroup] = []
+            groups: list[FlextLDAPEntities.Group] = []
             for entry in entries:
-                # Extract required fields with type safety using correct utility access
-                cn = (
-                    FlextLDAPUtilities.LdapConverters.safe_get_first_value(
-                        entry.attributes, "cn"
-                    )
-                    or "unknown"
+                # Extract fields using Python standard dict.get() with first value, ensuring string types
+                attrs = entry.attributes
+                cn = str(
+                    attrs.get("cn", ["unknown"])[0] if attrs.get("cn") else "unknown"
                 )
-                description = FlextLDAPUtilities.LdapConverters.safe_get_first_value(
-                    entry.attributes, "description"
+                description_val = (
+                    attrs.get("description", [None])[0]
+                    if attrs.get("description")
+                    else None
                 )
+                description = str(description_val) if description_val else None
 
                 # Extract members from attributes
                 members_value = entry.attributes.get("member", [])
@@ -558,7 +550,7 @@ class FlextLDAPOperations:
                 else:
                     members = []
 
-                group = FlextLDAPGroup(
+                group = FlextLDAPEntities.Group(
                     id=f"group_{uuid.uuid4().hex[:8]}",
                     dn=entry.dn,
                     cn=cn,
@@ -581,23 +573,23 @@ class FlextLDAPOperations:
             dn: str,
             object_classes: list[str],
             attributes: LdapAttributeDict,
-        ) -> FlextResult[FlextLDAPEntry]:
+        ) -> FlextResult[FlextLDAPEntities.Entry]:
             """Create a new LDAP entry - REFACTORED with shared validation."""
             try:
                 # Use REFACTORED validation helpers - NO DUPLICATION
                 dn_validation = self._validate_dn_or_fail(dn)
                 if not dn_validation.is_success:
-                    return FlextResult[FlextLDAPEntry].fail(
+                    return FlextResult[FlextLDAPEntities.Entry].fail(
                         dn_validation.error or "DN validation failed",
                     )
 
                 if not object_classes:
-                    return FlextResult[FlextLDAPEntry].fail(
+                    return FlextResult[FlextLDAPEntities.Entry].fail(
                         "Entry must have at least one object class",
                     )
 
                 # Create entry entity with validation
-                entry = FlextLDAPEntry(
+                entry = FlextLDAPEntities.Entry(
                     id=f"entry_{uuid.uuid4().hex[:8]}",
                     dn=dn,
                     object_classes=object_classes,
@@ -608,7 +600,7 @@ class FlextLDAPOperations:
 
                 validation_result = entry.validate_business_rules()
                 if not validation_result.is_success:
-                    return FlextResult[FlextLDAPEntry].fail(
+                    return FlextResult[FlextLDAPEntities.Entry].fail(
                         f"Entry validation failed: {validation_result.error}",
                     )
 
@@ -621,7 +613,7 @@ class FlextLDAPOperations:
                     attribute_count=len(attributes),
                 )
 
-                return FlextResult[FlextLDAPEntry].ok(entry)
+                return FlextResult[FlextLDAPEntities.Entry].ok(entry)
 
             except Exception as e:
                 # Use REFACTORED exception handling - NO DUPLICATION
@@ -630,7 +622,7 @@ class FlextLDAPOperations:
                     e,
                     connection_id,
                 )
-                return FlextResult[FlextLDAPEntry].fail(error_msg)
+                return FlextResult[FlextLDAPEntities.Entry].fail(error_msg)
 
         async def modify_entry(
             self,
@@ -713,8 +705,8 @@ class FlextLDAPOperations:
         async def create_user(
             self,
             connection_id: str,
-            user_request: FlextLDAPCreateUserRequest,
-        ) -> FlextResult[FlextLDAPUser]:
+            user_request: FlextLDAPEntities.CreateUserRequest,
+        ) -> FlextResult[FlextLDAPEntities.User]:
             """Create a new LDAP user - REFACTORED with helper composition."""
             try:
                 # Use REFACTORED attribute building - NO DUPLICATION
@@ -722,7 +714,7 @@ class FlextLDAPOperations:
 
                 # Create entry using shared operations with standard user object classes
                 if self._entry_ops is None:
-                    return FlextResult[FlextLDAPUser].fail(
+                    return FlextResult[FlextLDAPEntities.User].fail(
                         "Entry operations not available"
                     )
 
@@ -736,7 +728,7 @@ class FlextLDAPOperations:
                 )
 
                 if not entry_result.is_success:
-                    return FlextResult[FlextLDAPUser].fail(
+                    return FlextResult[FlextLDAPEntities.User].fail(
                         f"Failed to create user entry: {entry_result.error}",
                     )
 
@@ -745,7 +737,7 @@ class FlextLDAPOperations:
 
                 validation_result = user.validate_business_rules()
                 if not validation_result.is_success:
-                    return FlextResult[FlextLDAPUser].fail(
+                    return FlextResult[FlextLDAPEntities.User].fail(
                         f"User validation failed: {validation_result.error}",
                     )
 
@@ -757,7 +749,7 @@ class FlextLDAPOperations:
                     uid=user_request.uid,
                 )
 
-                return FlextResult[FlextLDAPUser].ok(user)
+                return FlextResult[FlextLDAPEntities.User].ok(user)
 
             except Exception as e:
                 # Use REFACTORED exception handling - NO DUPLICATION
@@ -766,7 +758,7 @@ class FlextLDAPOperations:
                     e,
                     connection_id,
                 )
-                return FlextResult[FlextLDAPUser].fail(error_msg)
+                return FlextResult[FlextLDAPEntities.User].fail(error_msg)
 
         async def update_user_password(
             self,
@@ -836,7 +828,7 @@ class FlextLDAPOperations:
 
         def _build_user_attributes(
             self,
-            user_request: FlextLDAPCreateUserRequest,
+            user_request: FlextLDAPEntities.CreateUserRequest,
         ) -> LdapAttributeDict:
             """Build user attributes from request - REUSABLE HELPER."""
             attributes: LdapAttributeDict = {
@@ -854,12 +846,12 @@ class FlextLDAPOperations:
 
         def _build_user_entity(
             self,
-            user_request: FlextLDAPCreateUserRequest,
+            user_request: FlextLDAPEntities.CreateUserRequest,
             attributes: LdapAttributeDict,
-        ) -> FlextLDAPUser:
+        ) -> FlextLDAPEntities.User:
             """Build user entity - REUSABLE HELPER."""
             user_id_str = self._generate_id()
-            return FlextLDAPUser(
+            return FlextLDAPEntities.User(
                 id=user_id_str,
                 dn=user_request.dn,
                 object_classes=["inetOrgPerson", "person", "top"],
@@ -871,7 +863,7 @@ class FlextLDAPOperations:
                 mail=user_request.mail,
                 user_password=user_request.user_password,
                 modified_at=None,
-                # Note: no phone field in FlextLDAPUser
+                # Note: no phone field in FlextLDAPEntities.User
                 # Note: no status field as FlextModels already has it
             )
 
@@ -895,7 +887,7 @@ class FlextLDAPOperations:
             cn: str,
             description: str | None = None,
             initial_members: list[str] | None = None,
-        ) -> FlextResult[FlextLDAPGroup]:
+        ) -> FlextResult[FlextLDAPEntities.Group]:
             """Create a new LDAP group - REFACTORED with helper composition."""
             try:
                 # Use REFACTORED helper for member handling - NO DUPLICATION
@@ -904,7 +896,7 @@ class FlextLDAPOperations:
 
                 # Create entry using shared operations
                 if self._entry_ops is None:
-                    return FlextResult[FlextLDAPGroup].fail(
+                    return FlextResult[FlextLDAPEntities.Group].fail(
                         "Entry operations not available"
                     )
 
@@ -918,7 +910,7 @@ class FlextLDAPOperations:
                 )
 
                 if not entry_result.is_success:
-                    return FlextResult[FlextLDAPGroup].fail(
+                    return FlextResult[FlextLDAPEntities.Group].fail(
                         f"Failed to create group entry: {entry_result.error}",
                     )
 
@@ -929,7 +921,7 @@ class FlextLDAPOperations:
 
                 validation_result = group.validate_business_rules()
                 if not validation_result.is_success:
-                    return FlextResult[FlextLDAPGroup].fail(
+                    return FlextResult[FlextLDAPEntities.Group].fail(
                         f"Group validation failed: {validation_result.error}",
                     )
 
@@ -942,7 +934,7 @@ class FlextLDAPOperations:
                     member_count=len(members),
                 )
 
-                return FlextResult[FlextLDAPGroup].ok(group)
+                return FlextResult[FlextLDAPEntities.Group].ok(group)
 
             except Exception as e:
                 # Use REFACTORED exception handling - NO DUPLICATION
@@ -951,7 +943,7 @@ class FlextLDAPOperations:
                     e,
                     connection_id,
                 )
-                return FlextResult[FlextLDAPGroup].fail(error_msg)
+                return FlextResult[FlextLDAPEntities.Group].fail(error_msg)
 
         async def add_group_member(
             self,
@@ -1109,10 +1101,10 @@ class FlextLDAPOperations:
             description: str | None,
             members: list[str],
             attributes: LdapAttributeDict,
-        ) -> FlextLDAPGroup:
+        ) -> FlextLDAPEntities.Group:
             """Build group entity - REUSABLE HELPER."""
             group_id_str = self._generate_id()
-            return FlextLDAPGroup(
+            return FlextLDAPEntities.Group(
                 id=group_id_str,
                 dn=dn,
                 object_classes=["groupOfNames", "top"],
@@ -1180,10 +1172,10 @@ class FlextLDAPOperations:
             self,
             connection_id: str,
             group_dn: str,
-        ) -> FlextResult[FlextLDAPEntry]:
+        ) -> FlextResult[FlextLDAPEntities.Entry]:
             """Get current group membership data."""
             if self._search_ops is None:
-                return FlextResult[FlextLDAPEntry].fail(
+                return FlextResult[FlextLDAPEntities.Entry].fail(
                     "Search operations not available"
                 )
 
@@ -1196,11 +1188,11 @@ class FlextLDAPOperations:
             )
 
             if not group_result.is_success:
-                return FlextResult[FlextLDAPEntry].fail(
+                return FlextResult[FlextLDAPEntities.Entry].fail(
                     f"Failed to get group: {group_result.error}",
                 )
 
-            return FlextResult[FlextLDAPEntry].ok(group_result.value)
+            return FlextResult[FlextLDAPEntities.Entry].ok(group_result.value)
 
         def _calculate_updated_members(
             self,
@@ -1338,7 +1330,7 @@ class FlextLDAPOperations:
         base_dn: str,
         search_filter: str,
         attributes: list[str] | None = None,
-    ) -> FlextResult[FlextLDAPEntry | None]:
+    ) -> FlextResult[FlextLDAPEntities.Entry | None]:
         """Search and return first matching entry."""
         search_result = await self.search.search_entries(
             connection_id=connection_id,
@@ -1349,12 +1341,12 @@ class FlextLDAPOperations:
         )
 
         if not search_result.is_success:
-            return FlextResult[FlextLDAPEntry | None].fail(
+            return FlextResult[FlextLDAPEntities.Entry | None].fail(
                 search_result.error or "Search operation failed",
             )
 
         first_entry = search_result.value[0] if search_result.value else None
-        return FlextResult[FlextLDAPEntry | None].ok(first_entry)
+        return FlextResult[FlextLDAPEntities.Entry | None].ok(first_entry)
 
     def _validate_dn_or_fail(self, dn: str, context: str = "DN") -> FlextResult[None]:
         """Delegate to internal validation method for testing purposes."""
@@ -1398,20 +1390,8 @@ class FlextLDAPOperations:
 # =============================================================================
 
 # Export internal classes for external access (backward compatibility)
-FlextLDAPOperationsService = FlextLDAPOperations.OperationsService
-FlextLDAPConnectionOperations = FlextLDAPOperations.ConnectionOperations
-FlextLDAPSearchOperations = FlextLDAPOperations.SearchOperations
-FlextLDAPEntryOperations = FlextLDAPOperations.EntryOperations
-FlextLDAPUserOperations = FlextLDAPOperations.UserOperations
-FlextLDAPGroupOperations = FlextLDAPOperations.GroupOperations
+# Export aliases eliminated - use FlextLDAPOperations.* directly following flext-core pattern
 
 __all__ = [
-    "FlextLDAPConnectionOperations",
-    "FlextLDAPEntryOperations",
-    "FlextLDAPGroupOperations",
     "FlextLDAPOperations",
-    # Legacy compatibility aliases
-    "FlextLDAPOperationsService",
-    "FlextLDAPSearchOperations",
-    "FlextLDAPUserOperations",
 ]

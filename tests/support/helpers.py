@@ -1,6 +1,6 @@
 """Test helper functions for LDAP operations."""
 
-from typing import Any
+from typing import object
 
 import ldap3
 from flext_core import FlextLogger, FlextResult
@@ -40,7 +40,7 @@ async def create_test_user(
         return FlextResult.error(f"Failed to create user: {conn.last_error}")
 
     except Exception as e:
-        logger.exception(f"Error creating test user {dn}: {e}")
+        logger.exception(f"Error creating test user {dn}")
         return FlextResult.error(f"Error creating test user: {e}")
 
 
@@ -74,7 +74,7 @@ async def create_test_group(
         return FlextResult.error(f"Failed to create group: {conn.last_error}")
 
     except Exception as e:
-        logger.exception(f"Error creating test group {dn}: {e}")
+        logger.exception(f"Error creating test group {dn}")
         return FlextResult.error(f"Error creating test group: {e}")
 
 
@@ -113,7 +113,7 @@ async def cleanup_test_entries(
         return FlextResult.ok(cleaned_count)
 
     except Exception as e:
-        logger.exception(f"Error during cleanup: {e}")
+        logger.exception("Error during cleanup")
         return FlextResult.error(f"Error during cleanup: {e}")
 
 
@@ -149,14 +149,14 @@ async def verify_entry_exists(
         return FlextResult.ok(exists)
 
     except Exception as e:
-        logger.exception(f"Error verifying entry {dn}: {e}")
+        logger.exception(f"Error verifying entry {dn}")
         return FlextResult.error(f"Error verifying entry: {e}")
 
 
 async def get_entry_attributes(
     config: FlextLDAPConnectionConfig,
     dn: str,
-) -> FlextResult[dict[str, Any]]:
+) -> FlextResult[dict[str, object]]:
     """Get attributes of an LDAP entry."""
     try:
         server = ldap3.Server(
@@ -188,7 +188,7 @@ async def get_entry_attributes(
         return FlextResult.error(f"Entry not found: {dn}")
 
     except Exception as e:
-        logger.exception(f"Error getting attributes for {dn}: {e}")
+        logger.exception(f"Error getting attributes for {dn}")
         return FlextResult.error(f"Error getting attributes: {e}")
 
 
@@ -197,7 +197,7 @@ async def search_entries(
     base_dn: str,
     search_filter: str,
     scope: int = ldap3.SUBTREE,
-) -> FlextResult[list[dict[str, Any]]]:
+) -> FlextResult[list[dict[str, object]]]:
     """Search for entries in LDAP server."""
     try:
         server = ldap3.Server(
@@ -225,7 +225,9 @@ async def search_entries(
             for entry in conn.entries:
                 entry_data = {
                     "dn": entry.entry_dn,
-                    "attributes": {attr: entry[attr].values for attr in entry.entry_attributes},
+                    "attributes": {
+                        attr: entry[attr].values for attr in entry.entry_attributes
+                    },
                 }
                 results.append(entry_data)
 
@@ -233,14 +235,14 @@ async def search_entries(
         return FlextResult.ok(results)
 
     except Exception as e:
-        logger.exception(f"Error searching entries: {e}")
+        logger.exception("Error searching entries")
         return FlextResult.error(f"Error searching entries: {e}")
 
 
 async def modify_entry(
     config: FlextLDAPConnectionConfig,
     dn: str,
-    changes: dict[str, Any],
+    changes: dict[str, object],
 ) -> FlextResult[bool]:
     """Modify an LDAP entry."""
     try:
@@ -275,7 +277,7 @@ async def modify_entry(
         return FlextResult.error(f"Failed to modify entry: {conn.last_error}")
 
     except Exception as e:
-        logger.exception(f"Error modifying entry {dn}: {e}")
+        logger.exception(f"Error modifying entry {dn}")
         return FlextResult.error(f"Error modifying entry: {e}")
 
 

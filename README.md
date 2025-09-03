@@ -9,11 +9,13 @@ Biblioteca de operações LDAP com Clean Architecture e DDD, oferecendo serviço
 ## 🚀 Instalação
 
 Pré-requisitos:
+
 - Python 3.13+
 - Poetry
 - Acesso a um servidor LDAP (ou Docker para desenvolvimento)
 
 Configuração:
+
 ```bash
 git clone <repository-url>
 cd flext-ldap

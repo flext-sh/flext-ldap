@@ -36,7 +36,7 @@ from typing import cast
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldap.constants import FlextLDAPDefaultValues
+from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.typings import LdapAttributeDict
 
 logger = FlextLogger(__name__)
@@ -87,19 +87,19 @@ class FlextLDAPFields:
     class DataTypes(Enum):
         """Semantic data types used across LDAP domain models."""
 
-        STRING = FlextLDAPDefaultValues.STRING_FIELD_TYPE
-        INTEGER = FlextLDAPDefaultValues.INTEGER_FIELD_TYPE
-        BOOLEAN = FlextLDAPDefaultValues.BOOLEAN_FIELD_TYPE
-        BINARY = FlextLDAPDefaultValues.BINARY_FIELD_TYPE
-        DATETIME = FlextLDAPDefaultValues.DATETIME_FIELD_TYPE
-        DN = FlextLDAPDefaultValues.DN_FIELD_TYPE
-        EMAIL = FlextLDAPDefaultValues.EMAIL_FIELD_TYPE
-        PHONE = FlextLDAPDefaultValues.PHONE_FIELD_TYPE
-        UUID = FlextLDAPDefaultValues.UUID_FIELD_TYPE
-        URL = FlextLDAPDefaultValues.URL_FIELD_TYPE
-        IP_ADDRESS = FlextLDAPDefaultValues.IP_ADDRESS_FIELD_TYPE
-        MAC_ADDRESS = FlextLDAPDefaultValues.MAC_ADDRESS_FIELD_TYPE
-        CERTIFICATE = FlextLDAPDefaultValues.CERTIFICATE_FIELD_TYPE
+        STRING = FlextLDAPConstants.DefaultValues.STRING_FIELD_TYPE
+        INTEGER = FlextLDAPConstants.DefaultValues.INTEGER_FIELD_TYPE
+        BOOLEAN = FlextLDAPConstants.DefaultValues.BOOLEAN_FIELD_TYPE
+        BINARY = FlextLDAPConstants.DefaultValues.BINARY_FIELD_TYPE
+        DATETIME = FlextLDAPConstants.DefaultValues.DATETIME_FIELD_TYPE
+        DN = FlextLDAPConstants.DefaultValues.DN_FIELD_TYPE
+        EMAIL = FlextLDAPConstants.DefaultValues.EMAIL_FIELD_TYPE
+        PHONE = FlextLDAPConstants.DefaultValues.PHONE_FIELD_TYPE
+        UUID = FlextLDAPConstants.DefaultValues.UUID_FIELD_TYPE
+        URL = FlextLDAPConstants.DefaultValues.URL_FIELD_TYPE
+        IP_ADDRESS = FlextLDAPConstants.DefaultValues.IP_ADDRESS_FIELD_TYPE
+        MAC_ADDRESS = FlextLDAPConstants.DefaultValues.MAC_ADDRESS_FIELD_TYPE
+        CERTIFICATE = FlextLDAPConstants.DefaultValues.CERTIFICATE_FIELD_TYPE
         UNKNOWN = "unknown"
 
         class PasswordDataType(StrEnum):
@@ -211,31 +211,9 @@ class FlextLDAPFields:
 
 
 # =============================================================================
-# LEGACY COMPATIBILITY CLASSES - Backward Compatibility
-# =============================================================================
-
-# Legacy class aliases for backward compatibility
-FlextLDAPDataType = FlextLDAPFields.DataTypes
-FlextLDAPScopeEnum = FlextLDAPFields.Scopes
-LdapAttributeProcessor = FlextLDAPFields.Processors
-LdapDomainValidator = FlextLDAPFields.Validators
-
-# Legacy constants for backward compatibility
-MIN_PASSWORD_LENGTH = FlextLDAPFields.Constants.MIN_PASSWORD_LENGTH
-
-
-# =============================================================================
-# MODULE EXPORTS
+# MODULE EXPORTS - Following flext-core pattern: only main class
 # =============================================================================
 
 __all__ = [
-    # Legacy constants
-    "MIN_PASSWORD_LENGTH",
-    # Legacy compatibility classes
-    "FlextLDAPDataType",
-    # Primary consolidated class
     "FlextLDAPFields",
-    "FlextLDAPScopeEnum",
-    "LdapAttributeProcessor",
-    "LdapDomainValidator",
 ]

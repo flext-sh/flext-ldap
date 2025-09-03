@@ -296,14 +296,8 @@ class FlextLDAPTypeGuards:
         return hasattr(obj, "is_success")
 
 
-# Export constant and functions for backward compatibility
-MIN_DN_PARTS = FlextLDAPTypeGuards.MIN_DN_PARTS
-is_ldap_attribute_value = FlextLDAPTypeGuards.is_ldap_attribute_value
-is_ldap_attributes_dict = FlextLDAPTypeGuards.is_ldap_attributes_dict
+# Constants and functions eliminated - use FlextLDAPTypeGuards directly following flext-core pattern
 
 __all__ = [
-    "MIN_DN_PARTS",
     "FlextLDAPTypeGuards",
-    "is_ldap_attribute_value",
-    "is_ldap_attributes_dict",
 ]

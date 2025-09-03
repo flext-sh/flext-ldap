@@ -5,12 +5,8 @@ from typing import cast
 from flext_core import FlextContainer, FlextLogger, FlextResult
 
 from flext_ldap.clients import FlextLDAPClient
-from flext_ldap.configuration import FlextLDAPSettings
-from flext_ldap.repositories import (
-    FlextLDAPGroupRepository,
-    FlextLDAPRepository,
-    FlextLDAPUserRepository,
-)
+from flext_ldap.repositories import FlextLDAPRepositories
+from flext_ldap.settings import FlextLDAPSettings
 
 logger = FlextLogger(__name__)
 
@@ -72,7 +68,7 @@ class FlextLDAPContainer:
 
         return cast("FlextLDAPClient", client_result.value)
 
-    def get_repository(self) -> FlextLDAPRepository:
+    def get_repository(self) -> FlextLDAPRepositories.Repository:
         """Get LDAP repository from container.
 
         Returns:
@@ -83,13 +79,13 @@ class FlextLDAPContainer:
 
         """
         container = self.get_container()
-        repo_result = container.get("FlextLDAPRepository")
+        repo_result = container.get("FlextLDAPRepositories.Repository")
         if not repo_result.is_success:
             msg = f"Failed to get LDAP repository: {repo_result.error}"
             raise RuntimeError(msg)
-        return cast("FlextLDAPRepository", repo_result.value)
+        return cast("FlextLDAPRepositories.Repository", repo_result.value)
 
-    def get_user_repository(self) -> FlextLDAPUserRepository:
+    def get_user_repository(self) -> FlextLDAPRepositories.UserRepository:
         """Get LDAP user repository from container.
 
         Returns:
@@ -100,13 +96,13 @@ class FlextLDAPContainer:
 
         """
         container = self.get_container()
-        user_repo_result = container.get("FlextLDAPUserRepository")
+        user_repo_result = container.get("FlextLDAPRepositories.UserRepository")
         if not user_repo_result.is_success:
             msg = f"Failed to get LDAP user repository: {user_repo_result.error}"
             raise RuntimeError(msg)
-        return cast("FlextLDAPUserRepository", user_repo_result.value)
+        return cast("FlextLDAPRepositories.UserRepository", user_repo_result.value)
 
-    def get_group_repository(self) -> FlextLDAPGroupRepository:
+    def get_group_repository(self) -> FlextLDAPRepositories.GroupRepository:
         """Get LDAP group repository from container.
 
         Returns:
@@ -117,11 +113,11 @@ class FlextLDAPContainer:
 
         """
         container = self.get_container()
-        group_repo_result = container.get("FlextLDAPGroupRepository")
+        group_repo_result = container.get("FlextLDAPRepositories.GroupRepository")
         if not group_repo_result.is_success:
             msg = f"Failed to get LDAP group repository: {group_repo_result.error}"
             raise RuntimeError(msg)
-        return cast("FlextLDAPGroupRepository", group_repo_result.value)
+        return cast("FlextLDAPRepositories.GroupRepository", group_repo_result.value)
 
     def configure(self, settings: FlextLDAPSettings) -> FlextResult[None]:
         """Configure container with LDAP settings.
@@ -160,17 +156,19 @@ class FlextLDAPContainer:
                 )
 
             # Register repository with client dependency
-            repository = FlextLDAPRepository(client)
-            repo_result = container.register("FlextLDAPRepository", repository)
+            repository = FlextLDAPRepositories.Repository(client)
+            repo_result = container.register(
+                "FlextLDAPRepositories.Repository", repository
+            )
             if not repo_result.is_success:
                 return FlextResult[None].fail(
                     f"Failed to register repository: {repo_result.error}"
                 )
 
             # Register user repository
-            user_repository = FlextLDAPUserRepository(repository)
+            user_repository = FlextLDAPRepositories.UserRepository(repository)
             user_repo_result = container.register(
-                "FlextLDAPUserRepository", user_repository
+                "FlextLDAPRepositories.UserRepository", user_repository
             )
             if not user_repo_result.is_success:
                 return FlextResult[None].fail(
@@ -178,9 +176,9 @@ class FlextLDAPContainer:
                 )
 
             # Register group repository
-            group_repository = FlextLDAPGroupRepository(repository)
+            group_repository = FlextLDAPRepositories.GroupRepository(repository)
             group_repo_result = container.register(
-                "FlextLDAPGroupRepository", group_repository
+                "FlextLDAPRepositories.GroupRepository", group_repository
             )
             if not group_repo_result.is_success:
                 return FlextResult[None].fail(

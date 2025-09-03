@@ -21,8 +21,17 @@ from flext_ldap import (
     FlextLDAPSearchResponse,
     FlextLDAPService,
     FlextLDAPUser,
-    FlextLDAPUtilities,
 )
+
+
+# Helper function to replace create_ldap_attributes
+def create_ldap_attributes(attrs: dict[str, object]) -> dict[str, list[str]]:
+    """Convert attributes to LDAP format using Python standard conversion."""
+    return {
+        k: [str(v)] if not isinstance(v, list) else [str(item) for item in v]
+        for k, v in attrs.items()
+        if v is not None
+    }
 
 
 @pytest.mark.integration
@@ -96,9 +105,7 @@ class TestLdapClientRealOperations:
             "uid": [f"testuser-{uuid4().hex[:8]}"],
             "mail": ["test@example.com"],
         }
-        user_attributes = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
-            user_attrs_raw
-        )
+        user_attributes = create_ldap_attributes(user_attrs_raw)
 
         # First create the OU if it doesn't exist
         ou_dn = f"ou=people,{clean_ldap_container['base_dn']}"
@@ -106,9 +113,7 @@ class TestLdapClientRealOperations:
             "objectClass": ["organizationalUnit"],
             "ou": ["people"],
         }
-        ou_attributes = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
-            ou_attrs_raw
-        )
+        ou_attributes = create_ldap_attributes(ou_attrs_raw)
         _ = await connected_ldap_client.add(ou_dn, ou_attributes)
         # Ignore if OU already exists (error code 68)
 
@@ -121,9 +126,7 @@ class TestLdapClientRealOperations:
             "mail": ["updated@example.com"],
             "description": ["Updated user description"],
         }
-        modify_attributes = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
-            modify_attrs_raw
-        )
+        modify_attributes = create_ldap_attributes(modify_attrs_raw)
         modify_result = await connected_ldap_client.modify(test_dn, modify_attributes)
         assert modify_result.is_success, f"Failed to modify user: {modify_result.error}"
 
@@ -195,9 +198,7 @@ class TestLdapServiceRealOperations:
             "objectClass": ["organizationalUnit"],
             "ou": ["users"],
         }
-        ou_attributes_2 = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
-            ou_attrs_raw_2
-        )
+        ou_attributes_2 = create_ldap_attributes(ou_attrs_raw_2)
         await client.add(ou_dn, ou_attributes_2)  # Ignore if exists
 
         # Test user creation
@@ -249,9 +250,7 @@ class TestLdapServiceRealOperations:
             "mail": ["updated-real@example.com"],
             "description": ["Updated via service"],
         }
-        update_attributes = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
-            update_attrs_raw
-        )
+        update_attributes = create_ldap_attributes(update_attrs_raw)
         update_result = await ldap_service.update_user(
             user_request.dn, update_attributes
         )
@@ -325,9 +324,7 @@ class TestLdapServiceRealOperations:
                 "objectClass": ["organizationalUnit"],
                 "ou": [ou_name],
             }
-            ou_attributes_3 = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
-                ou_attrs_raw_3
-            )
+            ou_attributes_3 = create_ldap_attributes(ou_attrs_raw_3)
             await client.add(ou_dn, ou_attributes_3)  # Ignore if exists
 
         # Create test user for group membership
@@ -340,9 +337,7 @@ class TestLdapServiceRealOperations:
             "sn": ["User"],
             "uid": [f"groupuser-{uuid4().hex[:8]}"],
         }
-        user_attributes_4 = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
-            user_attrs_raw_4
-        )
+        user_attributes_4 = create_ldap_attributes(user_attrs_raw_4)
         await client.add(user_dn, user_attributes_4)
 
         # Test group creation
@@ -386,9 +381,7 @@ class TestLdapServiceRealOperations:
         update_attrs_raw_5 = {
             "description": ["Updated group description"],
         }
-        update_attributes_5 = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
-            update_attrs_raw_5
-        )
+        update_attributes_5 = create_ldap_attributes(update_attrs_raw_5)
         update_result = await ldap_service.update_group(group.dn, update_attributes_5)
         assert update_result.is_success, (
             f"Failed to update group: {update_result.error}"
@@ -403,9 +396,7 @@ class TestLdapServiceRealOperations:
             "sn": ["User2"],
             "uid": [f"groupuser2-{uuid4().hex[:8]}"],
         }
-        user2_attributes_6 = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
-            user2_attrs_raw
-        )
+        user2_attributes_6 = create_ldap_attributes(user2_attrs_raw)
         await client.add(user2_dn, user2_attributes_6)
 
         # Add member
@@ -516,9 +507,7 @@ class TestLdapValidationRealOperations:
             "objectClass": ["organizationalUnit"],
             "ou": ["validation-test"],
         }
-        ou_attributes_7 = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
-            ou_attrs_raw_7
-        )
+        ou_attributes_7 = create_ldap_attributes(ou_attrs_raw_7)
         await client.add(ou_dn, ou_attributes_7)
 
         # Test user with valid business rules
@@ -529,7 +518,6 @@ class TestLdapValidationRealOperations:
             sn="User",
             given_name="Valid",
             mail="valid.business@example.com",
-            phone="+1-555-0201",
         )
 
         # Should succeed with valid business rules
@@ -635,9 +623,7 @@ class TestLdapErrorHandlingReal:
             "objectClass": ["nonExistentObjectClass"],  # Invalid object class
             "invalidAttribute": ["value"],
         }
-        invalid_attributes = FlextLDAPUtilities.LdapConverters.create_ldap_attributes(
-            invalid_attrs_raw
-        )
+        invalid_attributes = create_ldap_attributes(invalid_attrs_raw)
 
         add_result = await connected_ldap_client.add(invalid_dn, invalid_attributes)
         # Should fail with appropriate error

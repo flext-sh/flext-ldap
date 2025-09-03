@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Real coverage tests for flext_ldap.container module.
 
 This module provides comprehensive test coverage for the LDAP container implementation,
@@ -18,8 +17,6 @@ operations, service registration, dependency resolution, and configuration.
 from __future__ import annotations
 
 import unittest
-
-from flext_core import FlextContainer
 
 from flext_ldap import (
     FlextLDAPClient,
@@ -44,11 +41,11 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
         # Verify REAL container initialization
         assert container is not None
         assert isinstance(container, FlextLDAPContainer)
-        
+
         # Verify container provides real functionality
         assert hasattr(container, "get_container")
         assert hasattr(container, "configure")
-        
+
         # Test that container actually works
         flext_container = container.get_container()
         assert flext_container is not None
@@ -269,7 +266,7 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
         """Test FlextLDAPContainer provides FlextContainer functionality."""
         # FlextLDAPContainer wraps FlextContainer rather than inheriting from it
         assert isinstance(self.container, FlextLDAPContainer)
-        
+
         # Verify REAL container functionality is accessible
         flext_container = self.container.get_container()
         assert flext_container is not None
@@ -300,14 +297,14 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
         # Verify REAL container independence
         assert result1.is_success is True
         assert result2.is_success is True
-        
+
         # Containers should be different instances
         assert container1 is not container2
-        
+
         # Both containers should work independently
         assert container1.get_container() is not None
         assert container2.get_container() is not None
-        
+
         # Both containers use the global container (singleton pattern)
         # So clients are the same instance but that's the expected behavior
         client1 = container1.get_client()

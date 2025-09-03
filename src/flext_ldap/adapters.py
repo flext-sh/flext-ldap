@@ -1,6 +1,7 @@
 """LDAP Adapters - Single FlextLDAPAdapters class following FLEXT patterns.
 
-Single consolidated class with all LDAP adapter functionality including directory operations,
+Single consolidated class with all LDAP adapter functionality including
+directory operations,
 connection management, search services, and entry management organized as specialized
 internal subclasses for complete backward compatibility.
 
@@ -40,7 +41,7 @@ Examples:
 from __future__ import annotations
 
 from collections.abc import Callable, Coroutine
-from typing import cast, override
+from typing import override
 from urllib.parse import urlparse
 
 from flext_core import (
@@ -53,9 +54,10 @@ from pydantic import ConfigDict, Field, field_validator
 
 from flext_ldap.clients import FlextLDAPClient
 from flext_ldap.constants import FlextLDAPConstants
-from flext_ldap.entities import FlextLDAPEntry, FlextLDAPSearchRequest
+from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.typings import LdapAttributeDict, LdapSearchResult
-from flext_ldap.utilities import FlextLDAPUtilities
+
+# Utilities eliminated - using Python standard library and flext-core directly
 
 logger = FlextLogger(__name__)
 
@@ -130,8 +132,11 @@ class FlextLDAPAdapters:
         @field_validator("dn")
         @classmethod
         def validate_dn(cls, v: str) -> str:
-            """Validate DN format using centralized validation."""
-            return FlextLDAPUtilities.DnParser.validate_dn_field(v)
+            """Validate DN format using simple validation."""
+            if not v or not isinstance(v, str):
+                msg = "DN must be a non-empty string"
+                raise ValueError(msg)
+            return v
 
         @override
         def validate_business_rules(self) -> FlextResult[None]:
@@ -187,7 +192,7 @@ class FlextLDAPAdapters:
     # OPERATION SERVICES - Specialized operation execution classes
     # =========================================================================
 
-    class OperationExecutor(FlextDomainService[list[FlextLDAPEntry]]):
+    class OperationExecutor(FlextDomainService[list[FlextLDAPEntities.Entry]]):
         """Base operation executor for LDAP operations with async support."""
 
         def __init__(self, client: FlextLDAPClient, **data: object) -> None:
@@ -198,10 +203,10 @@ class FlextLDAPAdapters:
         async def execute_async_operation(
             self,
             operation_func: Callable[
-                [], Coroutine[None, None, FlextResult[list[FlextLDAPEntry]]]
+                [], Coroutine[None, None, FlextResult[list[FlextLDAPEntities.Entry]]]
             ],
             context: str = "LDAP operation",
-        ) -> FlextResult[list[FlextLDAPEntry]]:
+        ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
             """Execute async operation with proper error handling."""
             try:
                 logger.debug(f"Executing {context}")
@@ -209,12 +214,12 @@ class FlextLDAPAdapters:
             except Exception as e:
                 error_msg = f"Failed to execute {context}: {e}"
                 logger.exception(error_msg)
-                return FlextResult[list[FlextLDAPEntry]].fail(error_msg)
+                return FlextResult[list[FlextLDAPEntities.Entry]].fail(error_msg)
 
         @override
-        def execute(self) -> FlextResult[list[FlextLDAPEntry]]:
+        def execute(self) -> FlextResult[list[FlextLDAPEntities.Entry]]:
             """Execute operation - required by FlextDomainService."""
-            return FlextResult[list[FlextLDAPEntry]].fail(
+            return FlextResult[list[FlextLDAPEntities.Entry]].fail(
                 "Not implemented in base class"
             )
 
@@ -310,7 +315,7 @@ class FlextLDAPAdapters:
             except Exception:
                 return False
 
-    class SearchService(FlextDomainService[list[FlextLDAPEntry]]):
+    class SearchService(FlextDomainService[list[FlextLDAPEntities.Entry]]):
         """Specialized search service for LDAP search operations."""
 
         def __init__(self, client: FlextLDAPClient, **data: object) -> None:
@@ -324,16 +329,18 @@ class FlextLDAPAdapters:
             filter_str: str = "(objectClass=*)",
             scope: str = "subtree",
             attributes: list[str] | None = None,
-        ) -> FlextResult[list[FlextLDAPEntry]]:
+        ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
             """Search LDAP entries with comprehensive error handling."""
             try:
                 # Validate parameters
                 validation_error = self._validate_search_params(base_dn, filter_str)
                 if validation_error:
-                    return FlextResult[list[FlextLDAPEntry]].fail(validation_error)
+                    return FlextResult[list[FlextLDAPEntities.Entry]].fail(
+                        validation_error
+                    )
 
                 # Perform search
-                search_request = FlextLDAPSearchRequest(
+                search_request = FlextLDAPEntities.SearchRequest(
                     base_dn=base_dn,
                     filter_str=filter_str,
                     scope=scope,
@@ -344,19 +351,19 @@ class FlextLDAPAdapters:
                 search_result = await self._client.search(search_request)
 
                 if search_result.is_success:
-                    # Convert to FlextLDAPEntry objects - SearchResponse.entries is list[LdapSearchResult]
+                    # Convert to FlextLDAPEntities.Entry objects - SearchResponse.entries is list[LdapSearchResult]
                     entries = self._convert_search_results_to_ldap_entries(
                         search_result.value.entries
                     )
-                    return FlextResult[list[FlextLDAPEntry]].ok(entries)
-                return FlextResult[list[FlextLDAPEntry]].fail(
+                    return FlextResult[list[FlextLDAPEntities.Entry]].ok(entries)
+                return FlextResult[list[FlextLDAPEntities.Entry]].fail(
                     search_result.error or "Search failed"
                 )
 
             except Exception as e:
                 error_msg = f"Search operation failed: {e}"
                 logger.exception(error_msg)
-                return FlextResult[list[FlextLDAPEntry]].fail(error_msg)
+                return FlextResult[list[FlextLDAPEntities.Entry]].fail(error_msg)
 
         def _validate_search_params(
             self, base_dn: str, search_filter: str
@@ -372,9 +379,9 @@ class FlextLDAPAdapters:
 
         def _convert_search_results_to_ldap_entries(
             self, results: list[LdapSearchResult]
-        ) -> list[FlextLDAPEntry]:
-            """Convert search results to FlextLDAPEntry objects."""
-            entries: list[FlextLDAPEntry] = []
+        ) -> list[FlextLDAPEntities.Entry]:
+            """Convert search results to FlextLDAPEntities.Entry objects."""
+            entries: list[FlextLDAPEntities.Entry] = []
 
             for result in results:
                 try:
@@ -385,16 +392,24 @@ class FlextLDAPAdapters:
                     # Ensure dn is always string for type safety
                     dn_str = str(dn) if dn else ""
 
-                    # Convert attributes
-                    attributes_dict = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes({
-                        k: v for k, v in result.items() if k != "dn"
-                    })
+                    # Convert attributes using Python standard conversion
+                    result_dict = {k: v for k, v in result.items() if k != "dn"}
+                    attributes_dict = {
+                        k: [str(v)]
+                        if not isinstance(v, list)
+                        else [str(item) for item in v]
+                        for k, v in result_dict.items()
+                        if v is not None
+                    }
 
-                    # Create entry
-                    entry = FlextLDAPEntry(
+                    # Create entry with properly typed attributes
+                    from typing import cast
+
+                    typed_attributes = cast("LdapAttributeDict", attributes_dict)
+                    entry = FlextLDAPEntities.Entry(
                         id=f"entry_{hash(dn_str)}",
                         dn=dn_str,
-                        attributes=attributes_dict,
+                        attributes=typed_attributes,
                         object_classes=[],
                         modified_at=None,
                     )
@@ -402,16 +417,18 @@ class FlextLDAPAdapters:
 
                 except Exception as e:
                     logger.warning(
-                        f"Failed to convert search result to FlextLDAPEntry: {e}"
+                        f"Failed to convert search result to FlextLDAPEntities.Entry: {e}"
                     )
                     continue
 
             return entries
 
         @override
-        def execute(self) -> FlextResult[list[FlextLDAPEntry]]:
+        def execute(self) -> FlextResult[list[FlextLDAPEntities.Entry]]:
             """Execute search operation - required by FlextDomainService."""
-            return FlextResult[list[FlextLDAPEntry]].fail("Use search_entries method")
+            return FlextResult[list[FlextLDAPEntities.Entry]].fail(
+                "Use search_entries method"
+            )
 
     class EntryService(OperationExecutor):
         """Specialized entry service for LDAP entry CRUD operations."""
@@ -452,18 +469,27 @@ class FlextLDAPAdapters:
                         return FlextResult[None].fail(validation_error)
 
                     # Convert to the expected type
+                    from typing import cast
 
                     legacy_attributes: LdapAttributeDict = cast(
                         "LdapAttributeDict", attributes
                     )
                     entry_attributes = legacy_attributes
 
-                # Use type-safe utility to convert attributes to LdapAttributeDict
-                ldap_attrs = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
-                    entry_attributes
-                )
+                # Convert to LDAP attributes using Python standard conversion
+                ldap_attrs = {
+                    k: [str(v)]
+                    if not isinstance(v, list)
+                    else [str(item) for item in v]
+                    for k, v in entry_attributes.items()
+                    if v is not None
+                }
 
-                return await self._client.add(dn, ldap_attrs)
+                # Cast to proper type for client
+                from typing import cast
+
+                typed_ldap_attrs = cast("LdapAttributeDict", ldap_attrs)
+                return await self._client.add(dn, typed_ldap_attrs)
 
             except Exception as e:
                 error_msg = f"Failed to add entry: {e}"
@@ -489,11 +515,19 @@ class FlextLDAPAdapters:
                         validation_result.error or "Validation failed"
                     )
 
-                # Convert modifications to proper LDAP attribute format
-                ldap_modifications = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
-                    modifications
-                )
-                return await self._client.modify(dn, ldap_modifications)
+                # Convert modifications to proper LDAP attribute format using Python standard
+                ldap_modifications = {}
+                for key, value in modifications.items():
+                    if isinstance(value, list):
+                        ldap_modifications[key] = [str(item) for item in value]
+                    else:
+                        ldap_modifications[key] = [str(value)]
+
+                # Cast to proper type for client
+                from typing import cast
+
+                typed_modifications = cast("LdapAttributeDict", ldap_modifications)
+                return await self._client.modify(dn, typed_modifications)
 
             except Exception as e:
                 error_msg = f"Failed to modify entry {dn}: {e}"
@@ -526,12 +560,12 @@ class FlextLDAPAdapters:
 
         async def _async_validation_wrapper(
             self, validation_func: Callable[[], str | None]
-        ) -> FlextResult[list[FlextLDAPEntry]]:
+        ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
             """Wrapper to make validation async compatible."""
             error = validation_func()
             if error:
-                return FlextResult[list[FlextLDAPEntry]].fail(error)
-            return FlextResult[list[FlextLDAPEntry]].ok([])
+                return FlextResult[list[FlextLDAPEntities.Entry]].fail(error)
+            return FlextResult[list[FlextLDAPEntities.Entry]].ok([])
 
         def _validate_modify_params(
             self, dn: str, modifications: dict[str, object]
@@ -594,7 +628,7 @@ class FlextLDAPAdapters:
         ) -> FlextResult[list[dict[str, object]]]:
             """Get all entries from directory."""
             try:
-                search_request = FlextLDAPSearchRequest(
+                search_request = FlextLDAPEntities.SearchRequest(
                     base_dn=base_dn,
                     filter_str=filter_str,
                     scope="subtree",
@@ -653,10 +687,12 @@ class FlextLDAPAdapters:
             self, attributes: dict[str, object]
         ) -> dict[str, object]:
             """Normalize entry attributes for protocol compatibility."""
-            # Use type-safe utility to convert external dict
-            ldap_attrs = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
-                attributes
-            )
+            # Convert attributes using Python standard conversion
+            ldap_attrs = {
+                k: [str(v)] if not isinstance(v, list) else [str(item) for item in v]
+                for k, v in attributes.items()
+                if v is not None
+            }
 
             # Return normalized format with explicit typing
             normalized_attrs: dict[str, object] = {}
@@ -686,7 +722,7 @@ class FlextLDAPAdapters:
         ) -> FlextResult[list[dict[str, object]]]:
             """Search for users in directory."""
             try:
-                search_request = FlextLDAPSearchRequest(
+                search_request = FlextLDAPEntities.SearchRequest(
                     base_dn=base_dn,
                     filter_str=search_filter,
                     scope="subtree",
@@ -748,7 +784,7 @@ class FlextLDAPAdapters:
             base_dn: str,
             filter_str: str = "(objectClass=*)",
             scope: str = "subtree",
-        ) -> FlextResult[list[FlextLDAPEntry]]:
+        ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
             """Search directory entries."""
             return await self.search.search_entries(base_dn, filter_str, scope)
 
@@ -763,7 +799,7 @@ ConnectionConfig = FlextLDAPAdapters.ConnectionConfig
 OperationExecutor = FlextLDAPAdapters.OperationExecutor
 FlextLDAPConnectionService = FlextLDAPAdapters.ConnectionService
 FlextLDAPSearchService = FlextLDAPAdapters.SearchService
-FlextLDAPEntryService = FlextLDAPAdapters.EntryService
+# FlextLDAPEntities.EntryService = FlextLDAPAdapters.EntryService - removed dynamic assignment
 FlextLDAPDirectoryEntry = FlextLDAPAdapters.DirectoryEntry
 FlextLDAPDirectoryService = FlextLDAPAdapters.DirectoryService
 FlextLDAPDirectoryAdapter = FlextLDAPAdapters.DirectoryAdapter
@@ -774,16 +810,8 @@ FlextLDAPDirectoryAdapter = FlextLDAPAdapters.DirectoryAdapter
 # =============================================================================
 
 __all__ = [
-    "ConnectionConfig",
-    # Legacy compatibility classes
+    # Legacy compatibility classes (if they exist)
     "DirectoryEntry",
     # Primary consolidated class
     "FlextLDAPAdapters",
-    "FlextLDAPConnectionService",
-    "FlextLDAPDirectoryAdapter",
-    "FlextLDAPDirectoryEntry",
-    "FlextLDAPDirectoryService",
-    "FlextLDAPEntryService",
-    "FlextLDAPSearchService",
-    "OperationExecutor",
 ]

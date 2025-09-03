@@ -1,9 +1,9 @@
 """Test data for LDAP testing."""
 
-from typing import Any
+from typing import object
 
 # Sample LDAP entries for testing
-SAMPLE_USER_ENTRY: dict[str, Any] = {
+SAMPLE_USER_ENTRY: dict[str, object] = {
     "dn": "cn=testuser,ou=people,dc=flext,dc=local",
     "attributes": {
         "cn": ["testuser"],
@@ -16,7 +16,7 @@ SAMPLE_USER_ENTRY: dict[str, Any] = {
     },
 }
 
-SAMPLE_GROUP_ENTRY: dict[str, Any] = {
+SAMPLE_GROUP_ENTRY: dict[str, object] = {
     "dn": "cn=testgroup,ou=groups,dc=flext,dc=local",
     "attributes": {
         "cn": ["testgroup"],
@@ -27,7 +27,7 @@ SAMPLE_GROUP_ENTRY: dict[str, Any] = {
 }
 
 # Multiple test users for comprehensive testing
-TEST_USERS: list[dict[str, Any]] = [
+TEST_USERS: list[dict[str, object]] = [
     {
         "dn": "cn=alice,ou=people,dc=flext,dc=local",
         "attributes": {
@@ -66,7 +66,7 @@ TEST_USERS: list[dict[str, Any]] = [
     },
 ]
 
-TEST_GROUPS: list[dict[str, Any]] = [
+TEST_GROUPS: list[dict[str, object]] = [
     {
         "dn": "cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=flext,dc=local",
         "attributes": {
@@ -91,7 +91,7 @@ TEST_GROUPS: list[dict[str, Any]] = [
 ]
 
 # Test organizational units
-TEST_OUS: list[dict[str, Any]] = [
+TEST_OUS: list[dict[str, object]] = [
     {
         "dn": "ou=people,dc=flext,dc=local",
         "attributes": {
@@ -111,7 +111,7 @@ TEST_OUS: list[dict[str, Any]] = [
 ]
 
 # Invalid test data for error handling tests
-INVALID_ENTRIES: list[dict[str, Any]] = [
+INVALID_ENTRIES: list[dict[str, object]] = [
     {
         "dn": "",  # Empty DN
         "attributes": {"cn": ["invalid"]},

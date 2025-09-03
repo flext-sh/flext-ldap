@@ -106,9 +106,7 @@ class TestRealAdaptersModels:
         valid_timeouts = [1, 30, 60, 120, 300]  # gt=0, le=300
 
         for timeout in valid_timeouts:
-            config = ConnectionConfig(
-                server="ldap://localhost:389", timeout=timeout
-            )
+            config = ConnectionConfig(server="ldap://localhost:389", timeout=timeout)
             assert config.timeout == timeout
 
     def test_connection_config_timeout_validation_invalid(self) -> None:
@@ -192,7 +190,9 @@ class TestRealConnectionService:
 
         assert not service.is_connected()
 
-    async def test_connection_service_establish_connection_validates_config(self) -> None:
+    async def test_connection_service_establish_connection_validates_config(
+        self,
+    ) -> None:
         """Test establish_connection validates configuration."""
         client = FlextLDAPClient()
         FlextLDAPAdapters.ConnectionService(client)
@@ -201,7 +201,9 @@ class TestRealConnectionService:
         with pytest.raises(ValidationError):
             ConnectionConfig(server="invalid-uri")
 
-    async def test_connection_service_terminate_connection_when_not_connected(self) -> None:
+    async def test_connection_service_terminate_connection_when_not_connected(
+        self,
+    ) -> None:
         """Test terminate_connection when not connected."""
         client = FlextLDAPClient()
         service = FlextLDAPAdapters.ConnectionService(client)
@@ -555,7 +557,10 @@ class TestRealAdaptersErrorHandling:
             error_str = str(e)
             # Should contain information about the validation failure
             assert len(error_str) > 0
-            assert "at least 3 characters" in error_str or "String should have at least 3 characters" in error_str
+            assert (
+                "at least 3 characters" in error_str
+                or "String should have at least 3 characters" in error_str
+            )
 
         # Test ConnectionConfig with invalid timeout
         try:
@@ -564,4 +569,7 @@ class TestRealAdaptersErrorHandling:
             error_str = str(e)
             # Should contain information about the validation failure
             assert len(error_str) > 0
-            assert "greater than 0" in error_str or "Input should be greater than 0" in error_str
+            assert (
+                "greater than 0" in error_str
+                or "Input should be greater than 0" in error_str
+            )

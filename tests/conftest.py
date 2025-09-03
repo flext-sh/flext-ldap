@@ -17,11 +17,10 @@ from docker.models.containers import Container
 
 from flext_ldap import (
     FlextLDAPClient,
-    FlextLDAPSearchRequest,
-    FlextLDAPService,
+    FlextLDAPServices,
 )
 from flext_ldap.container import FlextLDAPContainer
-from flext_ldap.entities import FlextLDAPSearchResponse
+from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.typings import LdapAttributeDict
 
 docker: object | None
@@ -243,11 +242,10 @@ def ldap_test_config(docker_openldap_container: object) -> dict[str, object]:
 @pytest.fixture
 async def ldap_service(
     clean_ldap_container: dict[str, object],
-) -> AsyncGenerator[FlextLDAPService]:
+) -> AsyncGenerator[FlextLDAPServices]:
     """Provide configured LDAP service for testing."""
     ldap_container = FlextLDAPContainer()
-    container = ldap_container.get_container()
-    service = FlextLDAPService(ldap_container)
+    service = FlextLDAPServices(ldap_container)
 
     # Initialize service
     init_result = await service.initialize()
@@ -289,7 +287,7 @@ async def _cleanup_ldap_entries_under_dn(
 ) -> None:
     """Clean up LDAP entries under a DN to reduce nested control flow."""
     # Try to delete all entries under the specified DN
-    search_request = FlextLDAPSearchRequest(
+    search_request = FlextLDAPEntities.SearchRequest(
         base_dn=dn,
         scope="subtree",
         filter_str="(objectClass=*)",
@@ -301,7 +299,7 @@ async def _cleanup_ldap_entries_under_dn(
     search_result = await client.search(search_request)
 
     # Early return if search failed or no data - use proper typing
-    empty_response = FlextLDAPSearchResponse(entries=[], total_count=0)
+    empty_response = FlextLDAPEntities.SearchResponse(entries=[], total_count=0)
 
     if not search_result.is_success:
         return

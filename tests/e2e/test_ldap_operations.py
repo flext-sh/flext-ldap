@@ -33,7 +33,7 @@ class TestLdapE2EOperations:
 
         # Test configuration
         FlextLDAPConnectionConfig(
-            server="localhost",
+            server="ldap://localhost",
             port=3389,  # Test port for Docker LDAP server
         )
 
@@ -122,17 +122,16 @@ class TestLdapE2EOperations:
         """Test API configuration integration."""
         # Test with custom configuration
 
-        auth_config = FlextLDAPAuthConfig(
+        FlextLDAPAuthConfig(
             bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=local",
             bind_password=SecretStr("REDACTED_LDAP_BIND_PASSWORD123"),
             use_ssl=True,
         )
 
         FlextLDAPConnectionConfig(
-            server="test.ldap.server",
+            server="ldaps://test.ldap.server",
             port=636,
             timeout=60,
-            auth=auth_config,
         )
 
         # Create API with configuration

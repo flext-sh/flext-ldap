@@ -12,12 +12,6 @@ Examples:
         timeout = FlextLDAPConstants.Connection.DEFAULT_TIMEOUT
         scope = FlextLDAPConstants.Search.SCOPE_SUBTREE
 
-    Legacy compatibility::
-
-        # All previous classes still work as properties
-        protocol_consts = FlextLDAPConstants.Protocol
-        attr_consts = FlextLDAPConstants.Attributes
-        error_consts = FlextLDAPConstants.Errors
 
 """
 
@@ -115,6 +109,7 @@ class FlextLDAPConstants(FlextConstants):
         # LDAP-specific connection settings
         DEFAULT_PORT: Final[int] = 389
         DEFAULT_SSL_PORT: Final[int] = 636
+        MAX_PORT: Final[int] = 65535
         DEFAULT_BIND_DN: Final[str] = ""
         DEFAULT_BASE_DN: Final[str] = ""
 
@@ -307,66 +302,6 @@ class FlextLDAPConstants(FlextConstants):
         SUB: Final[str] = "subtree"
 
     # =========================================================================
-    # LEGACY COMPATIBILITY PROPERTIES - Backward Compatibility
-    # =========================================================================
-
-    @classmethod
-    def flext_ldap_protocol_constants(cls) -> type[Protocol]:
-        """Legacy compatibility for FlextLDAPProtocolConstants."""
-        return cls.Protocol
-
-    @classmethod
-    def flext_ldap_connection_constants(cls) -> type[Connection]:
-        """Legacy compatibility for FlextLDAPConnectionConstants."""
-        return cls.Connection
-
-    @classmethod
-    def flext_ldap_attribute_constants(cls) -> type[Attributes]:
-        """Legacy compatibility for FlextLDAPAttributeConstants."""
-        return cls.Attributes
-
-    # Legacy property aliases with correct naming
-    @classmethod
-    def get_protocol_constants(cls) -> type[Protocol]:
-        """Get protocol constants class."""
-        return cls.Protocol
-
-    @classmethod
-    def get_connection_constants(cls) -> type[Connection]:
-        """Get connection constants class."""
-        return cls.Connection
-
-    @classmethod
-    def get_attribute_constants(cls) -> type[Attributes]:
-        """Get attribute constants class."""
-        return cls.Attributes
-
-    @classmethod
-    def get_validation_constants(cls) -> type[LdapValidation]:
-        """Get validation constants class."""
-        return cls.LdapValidation
-
-    @classmethod
-    def get_validation_messages(cls) -> type[ValidationMessages]:
-        """Get validation messages class."""
-        return cls.ValidationMessages
-
-    @classmethod
-    def get_operation_constants(cls) -> type[Operations]:
-        """Get operation constants class."""
-        return cls.Operations
-
-    @classmethod
-    def get_object_class_constants(cls) -> type[ObjectClasses]:
-        """Get object class constants class."""
-        return cls.ObjectClasses
-
-    @classmethod
-    def get_scope_constants(cls) -> type[Scopes]:
-        """Get scope constants class."""
-        return cls.Scopes
-
-    # =========================================================================
     # DEFAULT VALUES CONSTANTS - Configuration and Type Defaults
     # =========================================================================
 
@@ -407,48 +342,9 @@ class FlextLDAPConstants(FlextConstants):
 
 
 # =============================================================================
-# MODULE EXPORTS - Backward Compatibility
+# MODULE EXPORTS - FLEXT-CORE PATTERN
 # =============================================================================
 
-# Legacy class aliases for backward compatibility
-FlextLDAPProtocolConstants = FlextLDAPConstants.Protocol
-FlextLDAPConnectionConstants = FlextLDAPConstants.Connection
-FlextLDAPAttributeConstants = FlextLDAPConstants.Attributes
-FlextLDAPDefaultValues = FlextLDAPConstants.DefaultValues
-FlextLDAPValidationConstants = FlextLDAPConstants.LdapValidation
-FlextLDAPValidationMessages = FlextLDAPConstants.ValidationMessages
-FlextLDAPOperationMessages = FlextLDAPConstants.Operations
-FlextLDAPObjectClassConstants = FlextLDAPConstants.ObjectClasses
-FlextLDAPScopeConstants = FlextLDAPConstants.Scopes
-
-# Convenient module-level aliases for frequent usage
-DEFAULT_PORT = FlextLDAPConstants.Connection.DEFAULT_PORT
-DEFAULT_SSL_PORT = FlextLDAPConstants.Connection.DEFAULT_SSL_PORT
-DEFAULT_PAGE_SIZE = FlextLDAPConstants.Connection.DEFAULT_PAGE_SIZE
-OBJECT_CLASS = FlextLDAPConstants.Attributes.OBJECT_CLASS
-COMMON_NAME = FlextLDAPConstants.Attributes.COMMON_NAME
-USER_ID = FlextLDAPConstants.Attributes.USER_ID
-MAIL = FlextLDAPConstants.Attributes.MAIL
-
 __all__ = [
-    "COMMON_NAME",
-    "DEFAULT_PAGE_SIZE",
-    # Convenient module-level aliases
-    "DEFAULT_PORT",
-    "DEFAULT_SSL_PORT",
-    "MAIL",
-    "OBJECT_CLASS",
-    "USER_ID",
-    "FlextLDAPAttributeConstants",
-    "FlextLDAPConnectionConstants",
-    # Primary consolidated class
     "FlextLDAPConstants",
-    "FlextLDAPDefaultValues",
-    "FlextLDAPObjectClassConstants",
-    "FlextLDAPOperationMessages",
-    # Legacy compatibility aliases
-    "FlextLDAPProtocolConstants",
-    "FlextLDAPScopeConstants",
-    "FlextLDAPValidationConstants",
-    "FlextLDAPValidationMessages",
 ]

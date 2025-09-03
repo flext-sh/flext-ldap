@@ -43,9 +43,10 @@ from flext_core import FlextLogger, FlextResult
 from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE, Connection
 from ldap3.core.exceptions import LDAPException
 
-from flext_ldap.entities import FlextLDAPSearchRequest, FlextLDAPSearchResponse
+from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.typings import LdapAttributeDict, LdapSearchResult
-from flext_ldap.utilities import FlextLDAPUtilities
+
+# Removed FlextLDAPUtilities import - using ldap3 and flext-core directly
 
 logger = FlextLogger(__name__)
 
@@ -180,17 +181,13 @@ class FlextLDAPClient:
             return FlextResult[None].fail("No connection established")
 
         try:
-            # Use utility to safely handle ldap3 rebind result
-            success: bool = (
-                FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_rebind_result(
-                    self._connection, dn, password
-                )
-            )
+            # Use ldap3 directly - no wrapper needed
+            self._connection.rebind(dn, password)
+            success = self._connection.result["description"] == "success"
             if not success:
-                error_message: str = (
-                    FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_connection_result(
-                        self._connection
-                    )
+                # Use ldap3 result directly
+                error_message = str(
+                    self._connection.result.get("message", "Authentication failed")
                 )
                 return FlextResult[None].fail(f"Bind failed: {error_message}")
 
@@ -247,8 +244,8 @@ class FlextLDAPClient:
 
     async def search(
         self,
-        request: FlextLDAPSearchRequest,
-    ) -> FlextResult[FlextLDAPSearchResponse]:
+        request: FlextLDAPEntities.SearchRequest,
+    ) -> FlextResult[FlextLDAPEntities.SearchResponse]:
         """Perform LDAP search with comprehensive result handling.
 
         Args:
@@ -259,7 +256,7 @@ class FlextLDAPClient:
 
         """
         if not self._connection or not self._connection.bound:
-            return FlextResult[FlextLDAPSearchResponse].fail(
+            return FlextResult[FlextLDAPEntities.SearchResponse].fail(
                 "Not connected to LDAP server",
             )
 
@@ -281,46 +278,39 @@ class FlextLDAPClient:
                 size_limit=request.size_limit,
                 time_limit=request.time_limit,
             )
-            success: bool = (
-                FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_search_result(
-                    search_result
-                )
-            )
+            # Use ldap3 search result directly
+            success = bool(search_result)
 
             if not success:
-                error_message: str = (
-                    FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_connection_result(
-                        cast("Connection", connection_obj)
-                    )
-                )
-                return FlextResult[FlextLDAPSearchResponse].fail(
+                # Get error from connection result directly
+                connection = cast("Connection", connection_obj)
+                error_message = str(connection.result.get("message", "Search failed"))
+                return FlextResult[FlextLDAPEntities.SearchResponse].fail(
                     f"Search failed: {error_message}"
                 )
 
             # Convert entries to our format using utilities
             entries: list[LdapSearchResult] = []
-            connection_entries: list[dict[str, object]] = (
-                FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_entries_list(
-                    self._connection
-                )
-            )
+            # Use ldap3 entries directly
+            connection_entries = self._connection.entries if self._connection else []
 
             for entry in connection_entries:
-                entry_dn: str = (
-                    FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_entry_dn(entry)
-                )
+                # Get DN directly from ldap3 entry
+                entry_dn = str(entry.entry_dn) if hasattr(entry, "entry_dn") else ""
                 entry_data: LdapSearchResult = {"dn": entry_dn}
 
-                entry_attributes: list[str] = (
-                    FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_entry_attributes_list(
-                        entry
-                    )
+                # Get attribute names directly from ldap3 entry
+                entry_attributes = (
+                    list(entry.entry_attributes.keys())
+                    if hasattr(entry, "entry_attributes")
+                    else []
                 )
                 for attr_name in entry_attributes:
-                    attr_values: list[str] = (
-                        FlextLDAPUtilities.LdapSpecific.Ldap3.safe_ldap3_attribute_values(
-                            entry, attr_name
-                        )
+                    # Get attribute values directly from ldap3 entry
+                    attr_values = (
+                        entry.entry_attributes.get(attr_name, [])
+                        if hasattr(entry, "entry_attributes")
+                        else []
                     )
                     if len(attr_values) == 1:
                         entry_data[attr_name] = attr_values[0]
@@ -328,7 +318,7 @@ class FlextLDAPClient:
                         entry_data[attr_name] = attr_values
                 entries.append(entry_data)
 
-            response = FlextLDAPSearchResponse(
+            response = FlextLDAPEntities.SearchResponse(
                 entries=entries,
                 total_count=len(entries),
                 has_more=len(entries) >= request.size_limit,
@@ -343,14 +333,18 @@ class FlextLDAPClient:
                 },
             )
 
-            return FlextResult[FlextLDAPSearchResponse].ok(response)
+            return FlextResult[FlextLDAPEntities.SearchResponse].ok(response)
 
         except LDAPException as e:
             logger.exception("LDAP search failed", extra={"error": str(e)})
-            return FlextResult[FlextLDAPSearchResponse].fail(f"Search failed: {e}")
+            return FlextResult[FlextLDAPEntities.SearchResponse].fail(
+                f"Search failed: {e}"
+            )
         except Exception as e:
             logger.exception("Unexpected search error", extra={"error": str(e)})
-            return FlextResult[FlextLDAPSearchResponse].fail(f"Search error: {e}")
+            return FlextResult[FlextLDAPEntities.SearchResponse].fail(
+                f"Search error: {e}"
+            )
 
     # =========================================================================
     # CRUD OPERATIONS - Consolidated Create, Update, Delete operations
@@ -515,8 +509,8 @@ class FlextLDAPClient:
 
         @staticmethod
         async def execute(
-            client: FlextLDAPClient, request: FlextLDAPSearchRequest
-        ) -> FlextResult[FlextLDAPSearchResponse]:
+            client: FlextLDAPClient, request: FlextLDAPEntities.SearchRequest
+        ) -> FlextResult[FlextLDAPEntities.SearchResponse]:
             """Execute search using client instance."""
             return await client.search(request)
 

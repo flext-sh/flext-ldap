@@ -44,7 +44,7 @@ from typing import ClassVar, override
 
 from flext_core import FlextLogger
 
-from flext_ldap.constants import FlextLDAPOperationMessages
+from flext_ldap.constants import FlextLDAPConstants
 
 logger = FlextLogger(__name__)
 
@@ -158,14 +158,14 @@ class FlextLDAPExceptions:
 
             if self.operation:
                 parts.append(
-                    FlextLDAPOperationMessages.OPERATION_CONTEXT.format(
+                    FlextLDAPConstants.Operations.OPERATION_CONTEXT.format(
                         operation=self.operation,
                     ),
                 )
 
             if self.ldap_result_code:
                 parts.append(
-                    FlextLDAPOperationMessages.LDAP_CODE_CONTEXT.format(
+                    FlextLDAPConstants.Operations.LDAP_CODE_CONTEXT.format(
                         ldap_code=self.ldap_result_code,
                     ),
                 )
@@ -175,7 +175,9 @@ class FlextLDAPExceptions:
                     f"{k}={v}" for k, v in self.ldap_context.items()
                 )
                 parts.append(
-                    FlextLDAPOperationMessages.CONTEXT_INFO.format(context=context_str),
+                    FlextLDAPConstants.Operations.CONTEXT_INFO.format(
+                        context=context_str
+                    ),
                 )
 
             return " | ".join(parts)
@@ -202,16 +204,18 @@ class FlextLDAPExceptions:
             """Initialize connection error with network context."""
             context: dict[str, object] = {}
             if server_uri:
-                context[FlextLDAPOperationMessages.SERVER_URI_KEY] = server_uri
+                context[FlextLDAPConstants.Operations.SERVER_URI_KEY] = server_uri
             if timeout:
-                context[FlextLDAPOperationMessages.TIMEOUT_KEY] = str(timeout)
+                context[FlextLDAPConstants.Operations.TIMEOUT_KEY] = str(timeout)
             if retry_count is not None:
-                context[FlextLDAPOperationMessages.RETRY_COUNT_KEY] = str(retry_count)
+                context[FlextLDAPConstants.Operations.RETRY_COUNT_KEY] = str(
+                    retry_count
+                )
 
             super().__init__(
                 message,
                 ldap_context=context,
-                operation=FlextLDAPOperationMessages.CONNECTION_OPERATION,
+                operation=FlextLDAPConstants.Operations.CONNECTION_OPERATION,
                 _error_code="LDAP_CONNECTION_ERROR",
             )
 
@@ -617,54 +621,12 @@ class FlextLDAPExceptions:
 # COMPATIBILITY ALIASES
 # =============================================================================
 
-# Create aliases for backward compatibility with explicit type annotations
-FlextLDAPConnectionError: type[FlextLDAPExceptions.LdapConnectionError] = (
-    FlextLDAPExceptions.LdapConnectionError
-)
-FlextLDAPAuthenticationError: type[FlextLDAPExceptions.AuthenticationError] = (
-    FlextLDAPExceptions.AuthenticationError
-)
-FlextLDAPConfigurationError: type[FlextLDAPExceptions.ConfigurationError] = (
-    FlextLDAPExceptions.ConfigurationError
-)
-FlextLDAPError: type[FlextLDAPExceptions.Error] = FlextLDAPExceptions.Error
-FlextLDAPExceptionFactory: type[FlextLDAPExceptions.Factory] = (
-    FlextLDAPExceptions.Factory
-)
-FlextLDAPGroupError: type[FlextLDAPExceptions.GroupError] = (
-    FlextLDAPExceptions.GroupError
-)
-FlextLDAPOperationError: type[FlextLDAPExceptions.OperationError] = (
-    FlextLDAPExceptions.OperationError
-)
-FlextLDAPSearchError: type[FlextLDAPExceptions.SearchError] = (
-    FlextLDAPExceptions.SearchError
-)
-FlextLDAPTypeError: type[FlextLDAPExceptions.LdapTypeError] = (
-    FlextLDAPExceptions.LdapTypeError
-)
-FlextLDAPUserError: type[FlextLDAPExceptions.UserError] = FlextLDAPExceptions.UserError
-FlextLDAPValidationError: type[FlextLDAPExceptions.ValidationError] = (
-    FlextLDAPExceptions.ValidationError
-)
+# Export aliases eliminated - use FlextLDAPExceptions.* directly following flext-core pattern
 
 # =============================================================================
 # MODULE EXPORTS
 # =============================================================================
 
 __all__ = [
-    "FlextLDAPAuthenticationError",
-    "FlextLDAPConfigurationError",
-    "FlextLDAPConnectionError",
-    # Legacy compatibility classes
-    "FlextLDAPError",
-    "FlextLDAPExceptionFactory",
-    # Primary consolidated class
     "FlextLDAPExceptions",
-    "FlextLDAPGroupError",
-    "FlextLDAPOperationError",
-    "FlextLDAPSearchError",
-    "FlextLDAPTypeError",
-    "FlextLDAPUserError",
-    "FlextLDAPValidationError",
 ]

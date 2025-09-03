@@ -2,7 +2,7 @@
 
 import asyncio
 from collections.abc import AsyncGenerator, Generator
-from typing import Any
+from typing import object
 
 import pytest
 from flext_core import FlextLogger
@@ -40,37 +40,41 @@ async def real_ldap_server() -> AsyncGenerator[LdapTestServer]:
 
 
 @pytest.fixture
-async def ldap_connection(real_ldap_server: LdapTestServer) -> AsyncGenerator[FlextLDAPConnectionConfig]:
+async def ldap_connection(
+    real_ldap_server: LdapTestServer,
+) -> AsyncGenerator[FlextLDAPConnectionConfig]:
     """Get LDAP connection configuration for testing."""
     return real_ldap_server.get_connection_config()
 
 
 @pytest.fixture
-async def ldap_api(ldap_connection: FlextLDAPConnectionConfig) -> AsyncGenerator[FlextLDAPApi]:
+async def ldap_api(
+    ldap_connection: FlextLDAPConnectionConfig,
+) -> AsyncGenerator[FlextLDAPApi]:
     """Get configured LDAP API instance."""
     return FlextLDAPApi()
 
 
 @pytest.fixture
-def test_user_data() -> dict[str, Any]:
+def test_user_data() -> dict[str, object]:
     """Get test user data."""
     return SAMPLE_USER_ENTRY.copy()
 
 
 @pytest.fixture
-def test_group_data() -> dict[str, Any]:
+def test_group_data() -> dict[str, object]:
     """Get test group data."""
     return SAMPLE_GROUP_ENTRY.copy()
 
 
 @pytest.fixture
-def multiple_test_users() -> list[dict[str, Any]]:
+def multiple_test_users() -> list[dict[str, object]]:
     """Get multiple test users data."""
     return [user.copy() for user in TEST_USERS]
 
 
 @pytest.fixture
-def multiple_test_groups() -> list[dict[str, Any]]:
+def multiple_test_groups() -> list[dict[str, object]]:
     """Get multiple test groups data."""
     return [group.copy() for group in TEST_GROUPS]
 
@@ -93,7 +97,9 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop]:
 
 
 @pytest.fixture
-async def clean_ldap_state(ldap_connection: FlextLDAPConnectionConfig) -> AsyncGenerator[None]:
+async def clean_ldap_state(
+    ldap_connection: FlextLDAPConnectionConfig,
+) -> AsyncGenerator[None]:
     """Ensure clean LDAP state for each test."""
     from .helpers import cleanup_test_entries, search_entries
 
