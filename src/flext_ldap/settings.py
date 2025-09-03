@@ -14,7 +14,6 @@ from flext_ldap.connection_config import FlextLDAPConnectionConfig
 from flext_ldap.fields import FlextLDAPScopeEnum
 
 
-# TEMPORARY: Inline dependencies to avoid circular imports - will be extracted
 @final
 class FlextLDAPAuthConfig(FlextConfig):
     """LDAP authentication configuration."""

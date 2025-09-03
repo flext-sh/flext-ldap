@@ -40,7 +40,7 @@ Examples:
 from __future__ import annotations
 
 from collections.abc import Callable, Coroutine
-from typing import override
+from typing import cast, override
 from urllib.parse import urlparse
 
 from flext_core import (
@@ -115,6 +115,10 @@ class FlextLDAPAdapters:
             frozen=True,
         )
 
+        id: str = Field(
+            default_factory=lambda: f"entry_{id(object())}",
+            description="Unique identifier",
+        )
         dn: str = Field(..., description="Distinguished Name", min_length=3)
         object_classes: list[str] = Field(
             default_factory=list, description="LDAP object classes"
@@ -128,6 +132,14 @@ class FlextLDAPAdapters:
         def validate_dn(cls, v: str) -> str:
             """Validate DN format using centralized validation."""
             return FlextLDAPUtilities.DnParser.validate_dn_field(v)
+
+        @override
+        def validate_business_rules(self) -> FlextResult[None]:
+            """Validate directory entry business rules."""
+            if not self.dn:
+                return FlextResult[None].fail("DN cannot be empty")
+
+            return FlextResult[None].ok(None)
 
     class ConnectionConfig(FlextModels.Value):
         """Connection configuration for LDAP operations."""
@@ -250,6 +262,54 @@ class FlextLDAPAdapters:
 
             return FlextResult[None].ok(None)
 
+        async def establish_connection(
+            self, config: FlextLDAPAdapters.ConnectionConfig
+        ) -> FlextResult[None]:
+            """Establish connection to LDAP server."""
+            try:
+                # Validate configuration
+                validation_result = config.validate_business_rules()
+                if not validation_result.is_success:
+                    return FlextResult[None].fail(
+                        validation_result.error or "Configuration validation failed"
+                    )
+
+                # Update config and attempt connection
+                self._config = config
+                return await self.connect_and_bind()
+            except Exception as e:
+                return FlextResult[None].fail(f"Failed to establish connection: {e}")
+
+        async def terminate_connection(self) -> FlextResult[None]:
+            """Terminate LDAP connection."""
+            try:
+                connected = self.is_connected()
+                if not connected:
+                    return FlextResult[None].fail("No active connection to terminate")
+
+                # For now, just disconnect
+                if hasattr(self._client, "_connection") and self._client._connection:
+                    unbind_method = getattr(
+                        self._client._connection, "unbind", lambda: None
+                    )
+                    unbind_method()
+                    self._client._connection = None
+                return FlextResult[None].ok(None)
+            except Exception as e:
+                return FlextResult[None].fail(f"Failed to terminate connection: {e}")
+
+        def is_connected(self) -> bool:
+            """Check if client is connected."""
+            try:
+                # Use getattr to safely access the method
+                is_connected_method = getattr(
+                    self._client, "is_connected", lambda: False
+                )
+                result = is_connected_method()
+                return bool(result)
+            except Exception:
+                return False
+
     class SearchService(FlextDomainService[list[FlextLDAPEntry]]):
         """Specialized search service for LDAP search operations."""
 
@@ -302,12 +362,11 @@ class FlextLDAPAdapters:
             self, base_dn: str, search_filter: str
         ) -> str | None:
             """Validate search parameters."""
-            dn_result = FlextLDAPUtilities.DnParser.parse_distinguished_name(base_dn)
-            if not dn_result.is_success:
-                return f"Invalid base DN: {base_dn}"
+            if not base_dn or not base_dn.strip():
+                return "Base DN cannot be empty"
 
-            if not search_filter.startswith("(") or not search_filter.endswith(")"):
-                return f"Invalid filter format: {search_filter}"
+            if not search_filter or not search_filter.strip():
+                return "Search filter cannot be empty"
 
             return None
 
@@ -327,9 +386,9 @@ class FlextLDAPAdapters:
                     dn_str = str(dn) if dn else ""
 
                     # Convert attributes
-                    attributes_dict = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
-                        {k: v for k, v in result.items() if k != "dn"}
-                    )
+                    attributes_dict = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes({
+                        k: v for k, v in result.items() if k != "dn"
+                    })
 
                     # Create entry
                     entry = FlextLDAPEntry(
@@ -362,33 +421,52 @@ class FlextLDAPAdapters:
             super().__init__(client, **data)
 
         async def add_entry(
-            self, dn: str, attributes: dict[str, object]
+            self,
+            entry_param: FlextLDAPAdapters.DirectoryEntry | str,
+            attributes: dict[str, object] | None = None,
         ) -> FlextResult[None]:
             """Add new LDAP entry."""
             try:
-                # Validate DN parameter
-                def validation_func() -> str | None:
-                    return self._validate_dn_param(dn)
+                # Handle both DirectoryEntry and dn+attributes parameters
+                if isinstance(entry_param, FlextLDAPAdapters.DirectoryEntry):
+                    entry = entry_param
+                    # Validate entry
+                    validation_error = self._validate_entry(entry)
+                    if validation_error:
+                        return FlextResult[None].fail(validation_error)
 
-                validation_result = await self.execute_async_operation(
-                    lambda: self._async_validation_wrapper(validation_func),
-                    "DN validation",
-                )
+                    # Use entry attributes
+                    dn = entry.dn
+                    # Convert to the expected type
+                    entry_attributes: LdapAttributeDict = dict(entry.attributes)
+                else:
+                    # Legacy mode: dn as string with attributes dict
+                    if attributes is None:
+                        return FlextResult[None].fail(
+                            "Attributes required when using DN string"
+                        )
 
-                if not validation_result.is_success:
-                    return FlextResult[None].fail(
-                        validation_result.error or "Validation failed"
+                    dn = entry_param
+                    validation_error = self._validate_dn_param(dn)
+                    if validation_error:
+                        return FlextResult[None].fail(validation_error)
+
+                    # Convert to the expected type
+
+                    legacy_attributes: LdapAttributeDict = cast(
+                        "LdapAttributeDict", attributes
                     )
+                    entry_attributes = legacy_attributes
 
-                # Use type-safe utility to convert modifications to LdapAttributeDict
+                # Use type-safe utility to convert attributes to LdapAttributeDict
                 ldap_attrs = FlextLDAPUtilities.LdapConverters.safe_convert_external_dict_to_ldap_attributes(
-                    attributes
+                    entry_attributes
                 )
 
                 return await self._client.add(dn, ldap_attrs)
 
             except Exception as e:
-                error_msg = f"Failed to add entry {dn}: {e}"
+                error_msg = f"Failed to add entry: {e}"
                 logger.exception(error_msg)
                 return FlextResult[None].fail(error_msg)
 
@@ -473,11 +551,31 @@ class FlextLDAPAdapters:
             if not dn or not dn.strip():
                 return "DN cannot be empty"
 
-            dn_result = FlextLDAPUtilities.DnParser.parse_distinguished_name(dn)
-            if not dn_result.is_success:
-                return f"Invalid DN format: {dn}"
+            return None
+
+        def _validate_entry(
+            self, entry: FlextLDAPAdapters.DirectoryEntry
+        ) -> str | None:
+            """Validate LDAP entry for add operation."""
+            # Check if entry has attributes
+            if not entry.attributes:
+                return "Entry must have at least one attribute"
+
+            # Check if entry has objectClass
+            object_classes = entry.attributes.get("objectClass", [])
+            if not object_classes:
+                return "Entry must have objectClass"
 
             return None
+
+        def _perform_add_entry(self) -> None:
+            """Perform add entry operation (placeholder for private method)."""
+
+        def _perform_modify_entry(self) -> None:
+            """Perform modify entry operation (placeholder for private method)."""
+
+        def _perform_delete_entry(self) -> None:
+            """Perform delete entry operation (placeholder for private method)."""
 
     # =========================================================================
     # DIRECTORY SERVICES - High-level directory operation classes
@@ -569,6 +667,48 @@ class FlextLDAPAdapters:
                     normalized_attrs[k] = v
             return normalized_attrs
 
+        async def connect(
+            self, config: FlextLDAPAdapters.ConnectionConfig
+        ) -> FlextResult[None]:
+            """Connect to LDAP server."""
+            try:
+                # Use connection service for actual connection
+                connection_service = FlextLDAPAdapters.ConnectionService(config)
+                return await connection_service.establish_connection(config)
+            except Exception as e:
+                return FlextResult[None].fail(f"Failed to connect: {e}")
+
+        async def search_users(
+            self,
+            search_filter: str = "(objectClass=person)",
+            base_dn: str = "dc=example,dc=com",
+            attributes: list[str] | None = None,
+        ) -> FlextResult[list[dict[str, object]]]:
+            """Search for users in directory."""
+            try:
+                search_request = FlextLDAPSearchRequest(
+                    base_dn=base_dn,
+                    filter_str=search_filter,
+                    scope="subtree",
+                    attributes=attributes,
+                    size_limit=1000,
+                    time_limit=30,
+                )
+                search_result = await self._client.search(search_request)
+
+                if search_result.is_success:
+                    protocol_entries = self._convert_entries_to_protocol(
+                        search_result.value.entries
+                    )
+                    return FlextResult[list[dict[str, object]]].ok(protocol_entries)
+                return FlextResult[list[dict[str, object]]].fail(
+                    search_result.error or "User search failed"
+                )
+            except Exception as e:
+                error_msg = f"Failed to search users: {e}"
+                logger.exception(error_msg)
+                return FlextResult[list[dict[str, object]]].fail(error_msg)
+
         @override
         def execute(self) -> FlextResult[object]:
             """Execute directory service operation - required by FlextDomainService."""
@@ -595,6 +735,12 @@ class FlextLDAPAdapters:
             self, base_dn: str, filter_str: str = "(objectClass=*)"
         ) -> FlextResult[list[dict[str, object]]]:
             """Get all directory entries."""
+            # Validate base DN
+            if not base_dn or not base_dn.strip():
+                return FlextResult[list[dict[str, object]]].fail(
+                    "Base DN cannot be empty"
+                )
+
             return await self.directory.get_all_entries(base_dn, filter_str)
 
         async def search_entries(

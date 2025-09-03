@@ -2,8 +2,8 @@
 
 import importlib.metadata
 
-from .api import FlextLDAPApi
-from .value_objects import FlextLDAPScope
+from flext_ldap.api import FlextLDAPApi
+from flext_ldap.value_objects import FlextLDAPScope
 from .constants import (
     FlextLDAPProtocolConstants,
     FlextLDAPConnectionConstants,
@@ -15,23 +15,36 @@ from .constants import (
     FlextLDAPObjectClassConstants,
     FlextLDAPScopeConstants,
 )
-from .connection_config import FlextLDAPConnectionConfig
+
+# Import specific constants that tests need
+from .constants import (
+    FlextLDAPValidationConstants as _ValidationConstants,
+)
+
+MAX_PASSWORD_LENGTH = _ValidationConstants.MAX_PASSWORD_LENGTH
+MIN_PASSWORD_LENGTH = _ValidationConstants.MIN_PASSWORD_LENGTH
+
+# Import PASSWORD_PATTERN from appropriate location
+import re
+
+PASSWORD_PATTERN = re.compile(r"^(?=.*[a-zA-Z])(?=.*\d).{8,}$")
+from flext_ldap.connection_config import FlextLDAPConnectionConfig
 
 # Import from new configuration modules
-from .configuration import (
+from flext_ldap.configuration import (
     FlextLDAPAuthConfig,
     FlextLDAPLoggingConfig,
     FlextLDAPSearchConfig,
 )
-from .settings import (
+from flext_ldap.settings import (
     FlextLDAPSettings,
 )
 
 # Import field definitions
-from .fields import FlextLDAPScopeEnum
+from flext_ldap.fields import FlextLDAPScopeEnum
 
 # Import from reorganized modules
-from .entities import (
+from flext_ldap.entities import (
     FlextLDAPCreateUserRequest,
     FlextLDAPEntry,
     FlextLDAPGroup,
@@ -39,20 +52,25 @@ from .entities import (
     FlextLDAPSearchRequest,
     FlextLDAPSearchResponse,
 )
-from .value_objects import (
+from flext_ldap.value_objects import (
     FlextLDAPDistinguishedName,
     FlextLDAPFilter,
 )
 
-from .services import FlextLDAPService
+from flext_ldap.services import (
+    FlextLDAPService,
+    FlextLDAPServices,
+    FlextLDAPUserService,
+    FlextLDAPGroupService,
+)
 
-from .clients import FlextLDAPClient
+from flext_ldap.clients import FlextLDAPClient
 
-from .container import FlextLDAPContainer
+from flext_ldap.container import FlextLDAPContainer
 
 # Import missing exports that tests need
-from .clients import SCOPE_MAP
-from .domain import (
+from flext_ldap.clients import SCOPE_MAP
+from flext_ldap.domain import (
     FlextLDAPEntityParameterBuilder,
     FlextLDAPActiveUserSpecification,
     FlextLDAPCompleteUserSpecification,
@@ -70,19 +88,46 @@ from .domain import (
     FlextLDAPUserEntityBuilder,
 )
 
-from .exceptions import (
+from flext_ldap.exceptions import (
     FlextLDAPError,
     FlextLDAPExceptionFactory,
     FlextLDAPUserError,
     FlextLDAPConfigurationError,
     FlextLDAPConnectionError,
+    FlextLDAPAuthenticationError,
+    FlextLDAPOperationError,
+    FlextLDAPSearchError,
+    FlextLDAPTypeError,
+    FlextLDAPValidationError,
 )
 
-from .utilities import FlextLDAPUtilities
-from .typings import LdapAttributeDict
-from .type_guards import FlextLDAPTypeGuards
+from flext_ldap.utilities import FlextLDAPUtilities
+from flext_ldap.typings import LdapAttributeDict
+from flext_ldap.type_guards import FlextLDAPTypeGuards
 
-from .configuration import FlextLDAPAuthConfig as FlextLDAPConfig
+from flext_ldap.configuration import FlextLDAPAuthConfig as FlextLDAPConfig
+
+# Import adapters
+from flext_ldap.adapters import FlextLDAPAdapters
+
+# Import operations
+from flext_ldap.operations import (
+    FlextLDAPOperations,
+    FlextLDAPOperationsService,
+    FlextLDAPConnectionOperations,
+    FlextLDAPSearchOperations,
+    FlextLDAPEntryOperations,
+    FlextLDAPUserOperations,
+    FlextLDAPGroupOperations,
+)
+
+# Import repositories
+from flext_ldap.repositories import (
+    FlextLDAPRepositories,
+    FlextLDAPRepository,
+    FlextLDAPUserRepository,
+    FlextLDAPGroupRepository,
+)
 
 # Version info
 try:
@@ -127,6 +172,9 @@ __all__: list[str] = [
     "FlextLDAPFilter",
     # Services
     "FlextLDAPService",
+    "FlextLDAPServices",
+    "FlextLDAPUserService",
+    "FlextLDAPGroupService",
     # Infrastructure
     "FlextLDAPClient",
     # Container
@@ -137,6 +185,11 @@ __all__: list[str] = [
     "FlextLDAPUserError",
     "FlextLDAPConfigurationError",
     "FlextLDAPConnectionError",
+    "FlextLDAPAuthenticationError",
+    "FlextLDAPOperationError",
+    "FlextLDAPSearchError",
+    "FlextLDAPTypeError",
+    "FlextLDAPValidationError",
     # Exports that tests need
     "SCOPE_MAP",
     "FlextLDAPEntityParameterBuilder",
@@ -158,6 +211,25 @@ __all__: list[str] = [
     "FlextLDAPUtilities",
     "FlextLDAPTypeGuards",
     "LdapAttributeDict",
+    # Adapters
+    "FlextLDAPAdapters",
+    # Operations
+    "FlextLDAPOperations",
+    "FlextLDAPOperationsService",
+    "FlextLDAPConnectionOperations",
+    "FlextLDAPSearchOperations",
+    "FlextLDAPEntryOperations",
+    "FlextLDAPUserOperations",
+    "FlextLDAPGroupOperations",
+    # Repositories
+    "FlextLDAPRepositories",
+    "FlextLDAPRepository",
+    "FlextLDAPUserRepository",
+    "FlextLDAPGroupRepository",
+    # Constants for tests
+    "MAX_PASSWORD_LENGTH",
+    "MIN_PASSWORD_LENGTH",
+    "PASSWORD_PATTERN",
     # Metadata
     "__version__",
     "__version_info__",

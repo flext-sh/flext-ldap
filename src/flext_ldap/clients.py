@@ -35,15 +35,12 @@ from __future__ import annotations
 
 import contextlib
 import ssl
-from typing import TYPE_CHECKING, Literal, cast
-
-if TYPE_CHECKING:
-    from ldap3 import Connection
+from typing import Literal, cast
 from urllib.parse import urlparse
 
 import ldap3
 from flext_core import FlextLogger, FlextResult
-from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE
+from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE, Connection
 from ldap3.core.exceptions import LDAPException
 
 from flext_ldap.entities import FlextLDAPSearchRequest, FlextLDAPSearchResponse

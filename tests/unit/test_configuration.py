@@ -39,13 +39,13 @@ class TestFlextLDAPConnectionConfigCoverage:
             FlextLDAPConnectionConfig(server="   ", port=389)
 
         # Test invalid port (covers additional validation)
-        with pytest.raises(ValidationError, match="Input should be greater than 0"):
-            FlextLDAPConnectionConfig(server="test.com", port=0)
+        with pytest.raises(ValidationError, match="Input should be greater than or equal to 1"):
+            FlextLDAPConnectionConfig(server="ldap://test.com", port=0)
 
         with pytest.raises(
             ValidationError, match="Input should be less than or equal to 65535"
         ):
-            FlextLDAPConnectionConfig(server="test.com", port=70000)
+            FlextLDAPConnectionConfig(server="ldap://test.com", port=70000)
 
     def test_connection_config_from_uri_edge_cases(self) -> None:
         """Test URI parsing functionality - REMOVED (method doesn't exist)."""
@@ -53,8 +53,8 @@ class TestFlextLDAPConnectionConfigCoverage:
         # Test removed to match actual implementation
 
         # Test basic configuration creation instead
-        config = FlextLDAPConnectionConfig(server="test.example.com", port=389)
-        assert config.server == "test.example.com"
+        config = FlextLDAPConnectionConfig(server="ldap://test.example.com", port=389)
+        assert config.server == "ldap://test.example.com"
         assert config.port == 389
 
     def test_connection_config_properties(self) -> None:
@@ -163,7 +163,7 @@ class TestFlextLDAPSettingsCoverage:
         """Test from_env with all required environment variables."""
         # Test with complete environment variables (covers lines 285, 289)
         env_vars = {
-            "FLEXT_LDAP_HOST": "test.example.com",
+            "FLEXT_LDAP_HOST": "ldap://test.example.com",
             "FLEXT_LDAP_PORT": "389",
             "FLEXT_LDAP_BIND_DN": "cn=admin,dc=test",
             "FLEXT_LDAP_BIND_PASSWORD": "secret123",
@@ -208,13 +208,11 @@ class TestFlextLDAPSettingsCoverage:
         # Create valid YAML configuration (covers lines 327-350)
         yaml_config = """
 default_connection:
-  server: yaml.example.com
+  server: ldap://yaml.example.com
   port: 636
-  base_dn: dc=yaml,dc=com
-  auth:
-    bind_dn: cn=admin,dc=yaml
-    bind_password: yaml_password
-    use_ssl: true
+  bind_dn: cn=admin,dc=yaml
+  bind_password: yaml_password
+  use_ssl: true
 
 search:
   size_limit: 500
@@ -230,15 +228,13 @@ search:
             result = FlextLDAPSettings.from_file(temp_path)
             assert result.is_success
             settings = result.value
-            assert settings.connection is not None
-            assert settings.auth is not None
+            assert settings.default_connection is not None
             # Check connection properties
-            assert "yaml.example.com" in settings.connection.server
-            assert settings.connection.port == 636
-            # Check auth properties
-            assert settings.auth.use_ssl is True
-            assert settings.auth.bind_dn == "cn=admin,dc=yaml"
-            assert settings.auth.bind_password.get_secret_value() == "yaml_password"
+            assert settings.default_connection.server == "ldap://yaml.example.com"
+            assert settings.default_connection.port == 636
+            assert settings.default_connection.use_ssl is True
+            assert settings.default_connection.bind_dn == "cn=admin,dc=yaml"
+            assert settings.default_connection.bind_password == "yaml_password"
         finally:
             pathlib.Path(temp_path).unlink()
 

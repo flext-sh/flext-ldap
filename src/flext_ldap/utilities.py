@@ -25,12 +25,10 @@ Examples:
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, ClassVar
-
-if TYPE_CHECKING:
-    from ldap3 import Connection
+from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult, FlextUtilities
+from ldap3 import Connection
 
 from flext_ldap.typings import LdapAttributeDict
 
@@ -561,7 +559,7 @@ class FlextLDAPUtilities:
                     return False
 
             @staticmethod
-            def safe_ldap3_entries_list(connection: object) -> list[dict[str, object]]:
+            def safe_ldap3_entries_list(connection: Connection) -> list[dict[str, object]]:
                 """Safely get entries from ldap3 connection.
 
                 Args:
@@ -671,16 +669,21 @@ class FlextLDAPUtilities:
                 if value is None:
                     continue  # Skip None values
                 if isinstance(value, list):
-                    # Convert list values to strings
-                    str_values = []
+                    # Convert list values, preserving bytes
+                    converted_values = []
                     for item in value:
-                        str_val = FlextUtilities.TextProcessor.safe_string(item)
-                        if str_val:  # Only add non-empty strings
-                            str_values.append(str_val)
-                    if str_values:  # Only add attribute if it has values
-                        result[attr_name] = str_values
+                        if isinstance(item, bytes):
+                            converted_values.append(item)  # Preserve bytes
+                        else:
+                            str_val = FlextUtilities.TextProcessor.safe_string(item)
+                            if str_val:  # Only add non-empty strings
+                                converted_values.append(str_val)
+                    if converted_values:  # Only add attribute if it has values
+                        result[attr_name] = converted_values
+                # Convert single value, preserving bytes
+                elif isinstance(value, bytes):
+                    result[attr_name] = value  # Preserve bytes
                 else:
-                    # Convert single value to string
                     str_val = FlextUtilities.TextProcessor.safe_string(value)
                     if str_val:  # Only add non-empty strings
                         result[attr_name] = str_val
@@ -763,7 +766,7 @@ class FlextLDAPUtilities:
             return sanitized.strip()
 
         @staticmethod
-        def extract_error_message(result: object) -> str:
+        def extract_error_message(result: FlextResult[object]) -> str:
             """Extract error message from result object.
 
             Args:
@@ -833,7 +836,7 @@ class FlextLDAPUtilities:
 
         @staticmethod
         def safe_ldap3_rebind_result(
-            connection: object, user: object, password: object
+            connection: Connection, user: str, password: str
         ) -> bool:
             """Safely get rebind result from ldap3 connection.
 
@@ -875,7 +878,7 @@ class FlextLDAPUtilities:
             return bool(result)
 
         @staticmethod
-        def safe_ldap3_connection_result(connection: object) -> str:
+        def safe_ldap3_connection_result(connection: Connection) -> str:
             """Safely get connection result description.
 
             Args:
@@ -898,7 +901,7 @@ class FlextLDAPUtilities:
                 return "Unknown error"
 
         @staticmethod
-        def safe_ldap3_entries_list(response: object) -> list[object]:
+        def safe_ldap3_entries_list(response: Connection) -> list[object]:
             """Safely extract entries list from ldap3 response.
 
             Args:
@@ -918,7 +921,7 @@ class FlextLDAPUtilities:
                 return []
 
         @staticmethod
-        def safe_ldap3_entry_dn(entry: object) -> str:
+        def safe_ldap3_entry_dn(entry: dict[str, object]) -> str:
             """Safely extract DN from ldap3 entry.
 
             Args:
@@ -938,7 +941,7 @@ class FlextLDAPUtilities:
                 return ""
 
         @staticmethod
-        def safe_ldap3_entry_attributes_list(entry: object) -> list[str]:
+        def safe_ldap3_entry_attributes_list(entry: dict[str, object]) -> list[str]:
             """Safely extract attribute names from ldap3 entry.
 
             Args:
@@ -960,7 +963,7 @@ class FlextLDAPUtilities:
                 return []
 
         @staticmethod
-        def safe_ldap3_attribute_values(entry: object, attribute: str) -> list[str]:
+        def safe_ldap3_attribute_values(entry: dict[str, object], attribute: str) -> list[str]:
             """Safely extract attribute values from ldap3 entry.
 
             Args:

@@ -27,12 +27,6 @@ from typing import Final
 
 from flext_core import FlextConstants
 
-# All classes consolidated in this module following FLEXT simplicity principle
-
-# =============================================================================
-# SINGLE FLEXT LDAP CONSTANTS CLASS - Inheriting from FlextConstants
-# =============================================================================
-
 
 class FlextLDAPConstants(FlextConstants):
     """Single FlextLDAPConstants class inheriting from FlextConstants.

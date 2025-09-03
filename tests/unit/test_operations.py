@@ -36,9 +36,15 @@ class TestFlextLDAPOperationsReal:
         ops = FlextLDAPOperations()
 
         # Verify real initialization happened
-        assert hasattr(ops, "_container")
-        assert hasattr(ops, "_id_generator")
-        assert ops._container is not None
+        assert hasattr(ops, "connections")
+        assert hasattr(ops, "search") 
+        assert hasattr(ops, "entries")
+        assert hasattr(ops, "users")
+        assert hasattr(ops, "groups")
+        
+        # Verify operation handlers are properly initialized
+        assert ops.connections is not None
+        assert ops.search is not None
 
     def test_generate_id_real_execution(self) -> None:
         """Test ID generation with real execution."""
@@ -46,8 +52,8 @@ class TestFlextLDAPOperationsReal:
         ops = FlextLDAPOperations()
 
         # Call real implementation
-        id1 = ops._generate_id()
-        id2 = ops._generate_id()
+        id1 = ops.generate_id()
+        id2 = ops.generate_id()
 
         # Verify real ID generation
         assert isinstance(id1, str)
@@ -407,7 +413,7 @@ class TestFlextLDAPSearchOperationsReal:
             dn="cn=john.doe,ou=users,dc=example,dc=com",
             object_classes=["person", "organizationalPerson"],
             attributes=attributes,
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
 
         users = ops._convert_entries_to_users([entry])
@@ -440,7 +446,7 @@ class TestFlextLDAPSearchOperationsReal:
             dn="cn=admins,ou=groups,dc=example,dc=com",
             object_classes=["groupOfNames"],
             attributes=attributes,
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
 
         groups = ops._convert_entries_to_groups([entry])
@@ -511,7 +517,7 @@ class TestFlextLDAPUserOperationsReal:
         assert user.cn == "John Doe"
         assert user.sn == "Doe"
         assert user.given_name == "John"
-        assert user.status == FlextConstants.Core.Status.EntityStatus.ACTIVE.value
+        assert user.status == FlextConstants.Enums.EntityStatus.ACTIVE
 
 
 class TestFlextLDAPGroupOperationsReal:

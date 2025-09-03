@@ -52,7 +52,6 @@ from pydantic import Field, field_validator
 from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue, LdapSearchResult
 from flext_ldap.value_objects import FlextLDAPDistinguishedName
 
-# Type alias for explicit pyright recognition
 DictEntry = dict[str, object]
 
 logger = FlextLogger(__name__)
@@ -198,7 +197,7 @@ class FlextLDAPEntities:
 
         @field_validator("id", mode="before")
         @classmethod
-        def convert_entity_id(cls, v: object) -> str:
+        def convert_entity_id(cls, v: str | FlextModels.EntityId) -> str:
             """Convert EntityId to string if needed."""
             if hasattr(v, "value"):  # FlextModels.EntityId has a value attribute
                 return str(v.value)
@@ -347,17 +346,21 @@ class FlextLDAPEntities:
 
             return FlextResult[None].ok(None)
 
-        def add_member(self, member_dn: str) -> None:
+        def add_member(self, member_dn: str) -> FlextResult[None]:
             """Add member to group."""
             if member_dn not in self.members:
                 self.members.append(member_dn)
                 self.modified_at = datetime.now(UTC)
+                return FlextResult[None].ok(None)
+            return FlextResult[None].ok(None)  # Already a member, no-op
 
-        def remove_member(self, member_dn: str) -> None:
+        def remove_member(self, member_dn: str) -> FlextResult[None]:
             """Remove member from group."""
             if member_dn in self.members:
                 self.members.remove(member_dn)
                 self.modified_at = datetime.now(UTC)
+                return FlextResult[None].ok(None)
+            return FlextResult[None].error(f"Member {member_dn} not found in group")
 
         def has_member(self, member_dn: str) -> bool:
             """Check if DN is a member of this group."""

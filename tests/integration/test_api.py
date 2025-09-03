@@ -13,6 +13,7 @@ from flext_core import FlextConstants
 
 from flext_ldap import (
     FlextLDAPClient,
+    FlextLDAPContainer,
     FlextLDAPCreateUserRequest,
     FlextLDAPDistinguishedName,
     FlextLDAPGroup as FlextLDAPGroupModel,
@@ -180,7 +181,8 @@ class TestLdapServiceRealOperations:
     ) -> None:
         """Test complete user lifecycle with real LDAP operations."""
         # Setup: Create OU for users
-        client = ldap_service._container.get_client()
+        ldap_container = FlextLDAPContainer()
+        client = ldap_container.get_client()
         await client.connect(
             str(clean_ldap_container["server_url"]),
             str(clean_ldap_container["bind_dn"]),
@@ -219,7 +221,7 @@ class TestLdapServiceRealOperations:
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
         created_user = create_result.value if create_result.is_success else default_user
         assert created_user.uid == user_request.uid
@@ -235,7 +237,7 @@ class TestLdapServiceRealOperations:
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
         retrieved_user = get_result.value if get_result.is_success else default_user
         assert retrieved_user is not None
@@ -264,7 +266,7 @@ class TestLdapServiceRealOperations:
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
         updated_user = (
             updated_get_result.value if updated_get_result.is_success else default_user
@@ -308,7 +310,8 @@ class TestLdapServiceRealOperations:
     ) -> None:
         """Test complete group lifecycle with real LDAP operations."""
         # Setup: Connect and create OUs
-        client = ldap_service._container.get_client()
+        ldap_container = FlextLDAPContainer()
+        client = ldap_container.get_client()
         await client.connect(
             str(clean_ldap_container["server_url"]),
             str(clean_ldap_container["bind_dn"]),
@@ -352,7 +355,7 @@ class TestLdapServiceRealOperations:
             object_classes=["groupOfNames"],
             attributes={},
             members=[user_dn],  # Add member during creation
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
 
         # CREATE: Real group creation
@@ -372,7 +375,7 @@ class TestLdapServiceRealOperations:
             object_classes=["groupOfNames"],
             attributes={},
             members=[],
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
         retrieved_group = get_result.value if get_result.is_success else default_group
         assert retrieved_group is not None
@@ -499,7 +502,8 @@ class TestLdapValidationRealOperations:
     ) -> None:
         """Test business rules validation with real LDAP operations."""
         # Setup connection
-        client = ldap_service._container.get_client()
+        ldap_container = FlextLDAPContainer()
+        client = ldap_container.get_client()
         await client.connect(
             str(clean_ldap_container["server_url"]),
             str(clean_ldap_container["bind_dn"]),
@@ -541,7 +545,7 @@ class TestLdapValidationRealOperations:
             uid="default",
             cn="Default User",
             sn="Default",
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
         created_user = create_result.value if create_result.is_success else default_user
         validation_result = created_user.validate_business_rules()

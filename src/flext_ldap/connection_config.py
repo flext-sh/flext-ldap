@@ -3,8 +3,7 @@
 from pathlib import Path
 from typing import ClassVar
 
-from flext_core import FlextLogger, FlextResult
-from flext_core.config import FlextConfig
+from flext_core import FlextConfig, FlextLogger, FlextResult
 from pydantic import Field, field_validator
 
 logger = FlextLogger(__name__)

@@ -11,6 +11,7 @@ import re
 import pytest
 from flext_core import FlextConstants, FlextResult
 
+# Test real utilities
 from flext_ldap import (
     MAX_PASSWORD_LENGTH,
     MIN_PASSWORD_LENGTH,
@@ -21,6 +22,7 @@ from flext_ldap import (
     FlextLDAPEmailSpecification,
     FlextLDAPPasswordSpecification,
     FlextLDAPUserManagementService,
+    FlextLDAPUtilities,
 )
 from flext_ldap.entities import FlextLDAPEntry
 
@@ -31,9 +33,9 @@ from flext_ldap.models import FlextLDAPGroup, FlextLDAPUser
 from flext_ldap.type_guards import (
     MIN_DN_PARTS,
     FlextLDAPTypeGuards,
+    is_ldap_attribute_value,
+    is_ldap_attributes_dict,
 )
-
-# Test real utilities
 
 HAS_UTILITIES = True
 
@@ -275,7 +277,7 @@ class TestRealModels:
             sn="Doe",
             uid="john.doe",
             mail="john.doe@example.com",
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
 
         # Verify the model was created correctly
@@ -294,7 +296,7 @@ class TestRealModels:
             id="test_group_123",
             dn="cn=administrators,ou=groups,dc=example,dc=com",
             cn="administrators",
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
 
         assert group.id == "test_group_123"
@@ -308,7 +310,7 @@ class TestRealModels:
         entry = FlextLDAPEntry(
             id="test_entry_123",
             dn="cn=test,dc=example,dc=com",
-            status=FlextConstants.Core.Status.EntityStatus.ACTIVE,
+            status=FlextConstants.Enums.EntityStatus.ACTIVE,
         )
 
         assert entry.id == "test_entry_123"
@@ -417,7 +419,7 @@ class TestRealIntegrationPatterns:
         # Test with mock object that has required attributes
         class MockUser:
             def __init__(self) -> None:
-                self.status = FlextConstants.Core.Status.EntityStatus.ACTIVE
+                self.status = FlextConstants.Enums.EntityStatus.ACTIVE
 
         mock_user = MockUser()
         # This tests the actual is_satisfied_by logic

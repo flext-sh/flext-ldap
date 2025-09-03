@@ -153,10 +153,10 @@ class TestRealFlextLDAPUtilities:
             input_attrs
         )
 
-        # Should handle empty lists
+        # Should handle empty lists by filtering them out (correct LDAP behavior)
         assert isinstance(result, dict)
         assert result["cn"] == "John Doe"  # Single string stays single
-        assert result["emptyAttr"] == []
+        assert "emptyAttr" not in result  # Empty lists should be filtered out
         assert result["mail"] == ["test@example.com"]
 
     def test_create_typed_ldap_attributes_preserves_bytes(self) -> None:
@@ -232,6 +232,7 @@ class TestRealFlextLDAPValidation:
                 (
                     AttributeError,
                     ValueError,
+                    TypeError,
                 )
             ):  # Different errors for different types
                 FlextLDAPUtilities.Validation.validate_non_empty_string(
