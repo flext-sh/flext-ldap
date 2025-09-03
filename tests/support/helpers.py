@@ -1,6 +1,6 @@
 """Test helper functions for LDAP operations."""
 
-from typing import object
+from typing import Any
 
 import ldap3
 from flext_core import FlextLogger, FlextResult
@@ -156,7 +156,7 @@ async def verify_entry_exists(
 async def get_entry_attributes(
     config: FlextLDAPConnectionConfig,
     dn: str,
-) -> FlextResult[dict[str, object]]:
+) -> FlextResult[dict[str, Any]]:
     """Get attributes of an LDAP entry."""
     try:
         server = ldap3.Server(
@@ -197,7 +197,7 @@ async def search_entries(
     base_dn: str,
     search_filter: str,
     scope: int = ldap3.SUBTREE,
-) -> FlextResult[list[dict[str, object]]]:
+) -> FlextResult[list[dict[str, Any]]]:
     """Search for entries in LDAP server."""
     try:
         server = ldap3.Server(
@@ -242,7 +242,7 @@ async def search_entries(
 async def modify_entry(
     config: FlextLDAPConnectionConfig,
     dn: str,
-    changes: dict[str, object],
+    changes: dict[str, Any],
 ) -> FlextResult[bool]:
     """Modify an LDAP entry."""
     try:

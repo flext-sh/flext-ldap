@@ -80,9 +80,9 @@ class FlextLDAPServices:
         logger.info("LDAP service cleaning up")
         # Handle different container types safely
         if hasattr(self._container, "reset"):
-            self._container.reset()
+            self._container.reset()  # type: ignore[attr-defined]
         elif hasattr(self._container, "clear"):
-            self._container.clear()
+            self._container.clear()  # type: ignore[attr-defined]
         # If no cleanup method available, just log success
         return FlextResult[None].ok(None)
 

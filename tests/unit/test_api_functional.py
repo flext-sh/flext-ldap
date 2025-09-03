@@ -10,7 +10,7 @@ import unittest
 
 from flext_core import FlextResult
 
-from flext_ldap import FlextLDAPApi, get_flext_ldap_api
+from flext_ldap.api import FlextLDAPApi
 
 
 class TestFlextLDAPApiFunctional(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestFlextLDAPApiFunctional(unittest.TestCase):
     def test_api_factory_function_functional(self) -> None:
         """Test API factory function creates real API instances."""
         # Test factory function (PRIORIZAR BIBLIOTECAS - using flext-core patterns)
-        api = get_flext_ldap_api()
+        api = FlextLDAPApi()
 
         assert api is not None
         assert isinstance(api, FlextLDAPApi)

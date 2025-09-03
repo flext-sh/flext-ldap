@@ -14,14 +14,10 @@ from flext_core import FlextConstants
 from flext_ldap import (
     FlextLDAPClient,
     FlextLDAPContainer,
-    FlextLDAPCreateUserRequest,
-    FlextLDAPDistinguishedName,
-    FlextLDAPGroup as FlextLDAPGroupModel,
-    FlextLDAPSearchRequest,
-    FlextLDAPSearchResponse,
-    FlextLDAPService,
-    FlextLDAPUser,
+    FlextLDAPValueObjects,
 )
+from flext_ldap.entities import FlextLDAPEntities
+from flext_ldap.services import FlextLDAPServices as FlextLDAPService
 
 
 # Helper function to replace create_ldap_attributes
@@ -69,7 +65,7 @@ class TestLdapClientRealOperations:
     ) -> None:
         """Test searching real LDAP entries."""
         # Search for base DN - should exist
-        search_request = FlextLDAPSearchRequest(
+        search_request = FlextLDAPEntities.SearchRequest(
             base_dn=str(clean_ldap_container["base_dn"]),
             scope="base",
             filter_str="(objectClass=*)",
@@ -82,7 +78,7 @@ class TestLdapClientRealOperations:
 
         # Verify search succeeded and found base DN
         assert result.is_success, f"Search failed: {result.error}"
-        empty_response = FlextLDAPSearchResponse(entries=[], total_count=0)
+        empty_response = FlextLDAPEntities.SearchResponse(entries=[], total_count=0)
         response_data = result.value if result.is_success else empty_response
         assert response_data.entries, "Should find at least the base DN"
         assert response_data.total_count > 0
@@ -131,7 +127,7 @@ class TestLdapClientRealOperations:
         assert modify_result.is_success, f"Failed to modify user: {modify_result.error}"
 
         # SEARCH: Verify modifications
-        search_request = FlextLDAPSearchRequest(
+        search_request = FlextLDAPEntities.SearchRequest(
             base_dn=test_dn,
             scope="base",
             filter_str="(objectClass=*)",
@@ -141,7 +137,7 @@ class TestLdapClientRealOperations:
         )
         search_result = await connected_ldap_client.search(search_request)
         assert search_result.is_success, f"Failed to search user: {search_result.error}"
-        empty_response = FlextLDAPSearchResponse(entries=[], total_count=0)
+        empty_response = FlextLDAPEntities.SearchResponse(entries=[], total_count=0)
         search_data = (
             search_result.value if search_result.is_success else empty_response
         )
@@ -161,7 +157,7 @@ class TestLdapClientRealOperations:
         # After deleting all entries, the OU might not exist anymore - this is normal LDAP behavior
         if verify_search.is_success:
             # If search succeeds, there should be no entries
-            empty_response = FlextLDAPSearchResponse(entries=[], total_count=0)
+            empty_response = FlextLDAPEntities.SearchResponse(entries=[], total_count=0)
             verify_data = (
                 verify_search.value if verify_search.is_success else empty_response
             )
@@ -202,7 +198,7 @@ class TestLdapServiceRealOperations:
         await client.add(ou_dn, ou_attributes_2)  # Ignore if exists
 
         # Test user creation
-        user_request = FlextLDAPCreateUserRequest(
+        user_request = FlextLDAPEntities.CreateUserRequest(
             dn=f"cn=realuser-{uuid4().hex[:8]},{ou_dn}",
             uid=f"realuser-{uuid4().hex[:8]}",
             cn="Real Test User",
@@ -216,7 +212,7 @@ class TestLdapServiceRealOperations:
         create_result = await ldap_service.create_user(user_request)
         assert create_result.is_success, f"Failed to create user: {create_result.error}"
 
-        default_user = FlextLDAPUser(
+        default_user = FlextLDAPEntities.User(
             id="default",
             dn="cn=default,dc=test,dc=com",
             uid="default",
@@ -232,7 +228,7 @@ class TestLdapServiceRealOperations:
         # READ: Verify user exists
         get_result = await ldap_service.get_user(user_request.dn)
         assert get_result.is_success, f"Failed to get user: {get_result.error}"
-        default_user = FlextLDAPUser(
+        default_user = FlextLDAPEntities.User(
             id="default",
             dn="cn=default,dc=test,dc=com",
             uid="default",
@@ -259,7 +255,7 @@ class TestLdapServiceRealOperations:
         # Verify update
         updated_get_result = await ldap_service.get_user(user_request.dn)
         assert updated_get_result.is_success
-        default_user = FlextLDAPUser(
+        default_user = FlextLDAPEntities.User(
             id="default",
             dn="cn=default,dc=test,dc=com",
             uid="default",
@@ -282,7 +278,7 @@ class TestLdapServiceRealOperations:
         assert search_result.is_success, (
             f"Failed to search users: {search_result.error}"
         )
-        default_users: list[FlextLDAPUser] = []
+        default_users: list[FlextLDAPEntities.User] = []
         found_users = search_result.value if search_result.is_success else default_users
         assert len(found_users) == 1
         found_user = found_users[0]
@@ -295,7 +291,7 @@ class TestLdapServiceRealOperations:
         # Verify deletion
         verify_result = await ldap_service.get_user(user_request.dn)
         assert verify_result.is_success
-        default_user_verify: FlextLDAPUser | None = None
+        default_user_verify: FlextLDAPEntities.User | None = None
         verified_user = (
             verify_result.value if verify_result.is_success else default_user_verify
         )
@@ -342,7 +338,7 @@ class TestLdapServiceRealOperations:
 
         # Test group creation
         group_id = uuid4().hex[:8]
-        group = FlextLDAPGroupModel(
+        group = FlextLDAPEntities.Group(
             id=f"real_group_{group_id}",
             dn=f"cn=realgroup-{group_id},ou=groups,{clean_ldap_container['base_dn']}",
             cn=f"Real Test Group {group_id}",
@@ -362,7 +358,7 @@ class TestLdapServiceRealOperations:
         # READ: Verify group exists
         get_result = await ldap_service.get_group(group.dn)
         assert get_result.is_success, f"Failed to get group: {get_result.error}"
-        default_group = FlextLDAPGroupModel(
+        default_group = FlextLDAPEntities.Group(
             id="default",
             dn="cn=default,dc=test,dc=com",
             cn="Default Group",
@@ -444,7 +440,7 @@ class TestLdapServiceRealOperations:
         # Verify deletion
         verify_result = await ldap_service.get_group(group.dn)
         assert verify_result.is_success
-        default_group_verify: FlextLDAPGroupModel | None = None
+        default_group_verify: FlextLDAPEntities.Group | None = None
         verified_group = (
             verify_result.value if verify_result.is_success else default_group_verify
         )
@@ -468,7 +464,7 @@ class TestLdapValidationRealOperations:
         """Test DN validation with real LDAP server."""
         # Test valid DN creation
         valid_dn = f"cn=validuser,ou=users,{clean_ldap_container['base_dn']}"
-        dn_result = FlextLDAPDistinguishedName.create(valid_dn)
+        dn_result = FlextLDAPValueObjects.DistinguishedName.create(valid_dn)
         assert dn_result.is_success, f"Valid DN should work: {dn_result.error}"
 
         # Test invalid DN formats - should fail validation
@@ -479,7 +475,7 @@ class TestLdapValidationRealOperations:
         ]
 
         for invalid_dn in invalid_dns:
-            dn_result = FlextLDAPDistinguishedName.create(invalid_dn)
+            dn_result = FlextLDAPValueObjects.DistinguishedName.create(invalid_dn)
             if not dn_result.is_success:
                 # Validation correctly rejected invalid DN
                 assert True
@@ -511,7 +507,7 @@ class TestLdapValidationRealOperations:
         await client.add(ou_dn, ou_attributes_7)
 
         # Test user with valid business rules
-        valid_user_request = FlextLDAPCreateUserRequest(
+        valid_user_request = FlextLDAPEntities.CreateUserRequest(
             dn=f"cn=validbusinessuser,{ou_dn}",
             uid="validbusinessuser",
             cn="Valid Business User",
@@ -527,7 +523,7 @@ class TestLdapValidationRealOperations:
         )
 
         # Verify the user follows business rules
-        default_user = FlextLDAPUser(
+        default_user = FlextLDAPEntities.User(
             id="default",
             dn="cn=default,dc=test,dc=com",
             uid="default",
@@ -598,7 +594,7 @@ class TestLdapErrorHandlingReal:
     ) -> None:
         """Test error handling for LDAP operations."""
         # Test search with invalid base DN
-        invalid_search = FlextLDAPSearchRequest(
+        invalid_search = FlextLDAPEntities.SearchRequest(
             base_dn="cn=nonexistent,dc=invalid,dc=com",
             scope="base",
             filter_str="(objectClass=*)",

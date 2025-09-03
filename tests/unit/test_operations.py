@@ -13,17 +13,9 @@ import pytest
 from flext_core import FlextConstants
 
 from flext_ldap import (
-    FlextLDAPConnectionOperations,
-    FlextLDAPCreateUserRequest,
-    FlextLDAPEntry,
-    FlextLDAPEntryOperations,
-    FlextLDAPGroup,
-    FlextLDAPGroupOperations,
     FlextLDAPOperations,
-    FlextLDAPSearchOperations,
-    FlextLDAPUser,
-    FlextLDAPUserOperations,
 )
+from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.typings import LdapAttributeDict
 
 
@@ -154,7 +146,7 @@ class TestFlextLDAPConnectionOperationsReal:
     @pytest.mark.asyncio
     async def test_create_connection_valid_uri_real(self) -> None:
         """Test connection creation with valid URI - real execution."""
-        ops = FlextLDAPConnectionOperations()
+        ops = FlextLDAPOperations.ConnectionOperations()
 
         result = await ops.create_connection("ldap://localhost:389")
 
@@ -172,7 +164,7 @@ class TestFlextLDAPConnectionOperationsReal:
     @pytest.mark.asyncio
     async def test_create_connection_with_bind_real(self) -> None:
         """Test connection creation with bind DN - real execution."""
-        ops = FlextLDAPConnectionOperations()
+        ops = FlextLDAPOperations.ConnectionOperations()
 
         result = await ops.create_connection(
             "ldap://localhost:389",
@@ -191,7 +183,7 @@ class TestFlextLDAPConnectionOperationsReal:
     @pytest.mark.asyncio
     async def test_create_connection_invalid_uri_real(self) -> None:
         """Test connection creation with invalid URI - real validation."""
-        ops = FlextLDAPConnectionOperations()
+        ops = FlextLDAPOperations.ConnectionOperations()
 
         result = await ops.create_connection("http://invalid:80")
 
@@ -200,7 +192,7 @@ class TestFlextLDAPConnectionOperationsReal:
 
     def test_get_connection_info_real(self) -> None:
         """Test getting connection info - real execution."""
-        ops = FlextLDAPConnectionOperations()
+        ops = FlextLDAPOperations.ConnectionOperations()
 
         # Add test connection directly
         connection_id = str(uuid.uuid4())
@@ -225,7 +217,7 @@ class TestFlextLDAPConnectionOperationsReal:
 
     def test_get_connection_info_not_found_real(self) -> None:
         """Test getting connection info for non-existent connection."""
-        ops = FlextLDAPConnectionOperations()
+        ops = FlextLDAPOperations.ConnectionOperations()
 
         result = ops.get_connection_info("nonexistent")
 
@@ -234,7 +226,7 @@ class TestFlextLDAPConnectionOperationsReal:
 
     def test_list_active_connections_real(self) -> None:
         """Test listing active connections - real execution."""
-        ops = FlextLDAPConnectionOperations()
+        ops = FlextLDAPOperations.ConnectionOperations()
 
         # Start with empty list
         result = ops.list_active_connections()
@@ -267,7 +259,7 @@ class TestFlextLDAPConnectionOperationsReal:
     @pytest.mark.asyncio
     async def test_close_connection_real(self) -> None:
         """Test closing connection - real execution."""
-        ops = FlextLDAPConnectionOperations()
+        ops = FlextLDAPOperations.ConnectionOperations()
 
         # Create connection first
         create_result = await ops.create_connection("ldap://localhost:389")
@@ -287,7 +279,7 @@ class TestFlextLDAPConnectionOperationsReal:
     @pytest.mark.asyncio
     async def test_close_connection_not_found_real(self) -> None:
         """Test closing non-existent connection."""
-        ops = FlextLDAPConnectionOperations()
+        ops = FlextLDAPOperations.ConnectionOperations()
 
         result = await ops.close_connection("nonexistent")
 
@@ -296,7 +288,7 @@ class TestFlextLDAPConnectionOperationsReal:
 
     def test_calculate_duration_real(self) -> None:
         """Test duration calculation with real implementation."""
-        ops = FlextLDAPConnectionOperations()
+        ops = FlextLDAPOperations.ConnectionOperations()
 
         # Test with datetime object
         past_time = datetime.now(UTC)
@@ -319,7 +311,7 @@ class TestFlextLDAPSearchOperationsReal:
     @pytest.mark.asyncio
     async def test_search_entries_valid_params_real(self) -> None:
         """Test entry search with valid parameters - real execution."""
-        ops = FlextLDAPSearchOperations()
+        ops = FlextLDAPOperations.SearchOperations()
 
         result = await ops.search_entries(
             connection_id="test_conn",
@@ -335,7 +327,7 @@ class TestFlextLDAPSearchOperationsReal:
     @pytest.mark.asyncio
     async def test_search_entries_invalid_dn_real(self) -> None:
         """Test entry search with invalid base DN - real validation."""
-        ops = FlextLDAPSearchOperations()
+        ops = FlextLDAPOperations.SearchOperations()
 
         # This should return a failed result rather than raise
         result = await ops.search_entries(
@@ -349,7 +341,7 @@ class TestFlextLDAPSearchOperationsReal:
 
     def test_build_user_filter_real(self) -> None:
         """Test user filter building - real execution."""
-        ops = FlextLDAPSearchOperations()
+        ops = FlextLDAPOperations.SearchOperations()
 
         # Test with criteria
         filter_str = ops._build_user_filter({"cn": "John", "mail": "john"})
@@ -368,7 +360,7 @@ class TestFlextLDAPSearchOperationsReal:
 
     def test_build_group_filter_real(self) -> None:
         """Test group filter building - real execution."""
-        ops = FlextLDAPSearchOperations()
+        ops = FlextLDAPOperations.SearchOperations()
 
         # Test with criteria
         filter_str = ops._build_group_filter({"cn": "REDACTED_LDAP_BIND_PASSWORD", "description": "test"})
@@ -382,7 +374,7 @@ class TestFlextLDAPSearchOperationsReal:
 
     def test_escape_ldap_filter_value_real(self) -> None:
         """Test LDAP filter value escaping - real implementation."""
-        ops = FlextLDAPSearchOperations()
+        ops = FlextLDAPOperations.SearchOperations()
 
         # Test special characters
         escaped = ops._escape_ldap_filter_value("test(*)\\value")
@@ -397,7 +389,7 @@ class TestFlextLDAPSearchOperationsReal:
 
     def test_convert_entries_to_users_real(self) -> None:
         """Test converting entries to users - real execution."""
-        ops = FlextLDAPSearchOperations()
+        ops = FlextLDAPOperations.SearchOperations()
 
         # Create realistic entry data
         attributes: LdapAttributeDict = {
@@ -408,7 +400,7 @@ class TestFlextLDAPSearchOperationsReal:
             "mail": ["john@example.com"],
         }
 
-        entry = FlextLDAPEntry(
+        entry = FlextLDAPEntities.Entry(
             id=str(uuid.uuid4()),
             dn="cn=john.doe,ou=users,dc=example,dc=com",
             object_classes=["person", "organizationalPerson"],
@@ -420,7 +412,7 @@ class TestFlextLDAPSearchOperationsReal:
 
         assert len(users) == 1
         user = users[0]
-        assert isinstance(user, FlextLDAPUser)
+        assert isinstance(user, FlextLDAPEntities.User)
         assert user.uid == "john.doe"
         assert user.cn == "John Doe"
         assert user.sn == "Doe"
@@ -429,7 +421,7 @@ class TestFlextLDAPSearchOperationsReal:
 
     def test_convert_entries_to_groups_real(self) -> None:
         """Test converting entries to groups - real execution."""
-        ops = FlextLDAPSearchOperations()
+        ops = FlextLDAPOperations.SearchOperations()
 
         # Create realistic group entry
         attributes: LdapAttributeDict = {
@@ -441,7 +433,7 @@ class TestFlextLDAPSearchOperationsReal:
             ],
         }
 
-        entry = FlextLDAPEntry(
+        entry = FlextLDAPEntities.Entry(
             id=str(uuid.uuid4()),
             dn="cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com",
             object_classes=["groupOfNames"],
@@ -453,7 +445,7 @@ class TestFlextLDAPSearchOperationsReal:
 
         assert len(groups) == 1
         group = groups[0]
-        assert isinstance(group, FlextLDAPGroup)
+        assert isinstance(group, FlextLDAPEntities.Group)
         assert group.cn == "REDACTED_LDAP_BIND_PASSWORDs"
         assert group.description == "Administrator group"
         assert len(group.members) == 2
@@ -465,9 +457,9 @@ class TestFlextLDAPUserOperationsReal:
 
     def test_build_user_attributes_real(self) -> None:
         """Test user attribute building - real execution."""
-        ops = FlextLDAPUserOperations()
+        ops = FlextLDAPOperations.UserOperations()
 
-        user_request = FlextLDAPCreateUserRequest(
+        user_request = FlextLDAPEntities.CreateUserRequest(
             dn="cn=john.doe,ou=users,dc=example,dc=com",
             uid="john.doe",
             cn="John Doe",
@@ -493,9 +485,9 @@ class TestFlextLDAPUserOperationsReal:
 
     def test_build_user_entity_real(self) -> None:
         """Test user entity building - real execution."""
-        ops = FlextLDAPUserOperations()
+        ops = FlextLDAPOperations.UserOperations()
 
-        user_request = FlextLDAPCreateUserRequest(
+        user_request = FlextLDAPEntities.CreateUserRequest(
             dn="cn=john.doe,ou=users,dc=example,dc=com",
             uid="john.doe",
             cn="John Doe",
@@ -512,7 +504,7 @@ class TestFlextLDAPUserOperationsReal:
 
         user = ops._build_user_entity(user_request, attributes)
 
-        assert isinstance(user, FlextLDAPUser)
+        assert isinstance(user, FlextLDAPEntities.User)
         assert user.uid == "john.doe"
         assert user.cn == "John Doe"
         assert user.sn == "Doe"
@@ -525,7 +517,7 @@ class TestFlextLDAPGroupOperationsReal:
 
     def test_prepare_group_members_real(self) -> None:
         """Test group member preparation - real execution."""
-        ops = FlextLDAPGroupOperations()
+        ops = FlextLDAPOperations.GroupOperations()
 
         # Test with provided members
         members = ops._prepare_group_members(
@@ -546,7 +538,7 @@ class TestFlextLDAPGroupOperationsReal:
 
     def test_build_group_attributes_real(self) -> None:
         """Test group attribute building - real execution."""
-        ops = FlextLDAPGroupOperations()
+        ops = FlextLDAPOperations.GroupOperations()
 
         attributes = ops._build_group_attributes(
             cn="REDACTED_LDAP_BIND_PASSWORDs",
@@ -564,7 +556,7 @@ class TestFlextLDAPGroupOperationsReal:
 
     def test_build_group_entity_real(self) -> None:
         """Test group entity building - real execution."""
-        ops = FlextLDAPGroupOperations()
+        ops = FlextLDAPOperations.GroupOperations()
 
         attributes: LdapAttributeDict = {
             "cn": ["REDACTED_LDAP_BIND_PASSWORDs"],
@@ -580,7 +572,7 @@ class TestFlextLDAPGroupOperationsReal:
             attributes=attributes,
         )
 
-        assert isinstance(group, FlextLDAPGroup)
+        assert isinstance(group, FlextLDAPEntities.Group)
         assert group.cn == "REDACTED_LDAP_BIND_PASSWORDs"
         assert group.description == "Administrator group"
         assert len(group.members) == 1
@@ -588,7 +580,7 @@ class TestFlextLDAPGroupOperationsReal:
 
     def test_filter_dummy_members_real(self) -> None:
         """Test filtering dummy members - real execution."""
-        ops = FlextLDAPGroupOperations()
+        ops = FlextLDAPOperations.GroupOperations()
 
         members = [
             "cn=user1,ou=users,dc=example,dc=com",
@@ -609,7 +601,7 @@ class TestFlextLDAPGroupOperationsReal:
 
     def test_calculate_updated_members_real(self) -> None:
         """Test member calculation for group operations - real execution."""
-        ops = FlextLDAPGroupOperations()
+        ops = FlextLDAPOperations.GroupOperations()
 
         current_members = ["cn=user1,ou=users,dc=example,dc=com"]
 
@@ -653,11 +645,11 @@ class TestFlextLDAPOperationsUnifiedReal:
         assert ops.groups is not None
 
         # Verify correct types
-        assert isinstance(ops.connections, FlextLDAPConnectionOperations)
-        assert isinstance(ops.search, FlextLDAPSearchOperations)
-        assert isinstance(ops.entries, FlextLDAPEntryOperations)
-        assert isinstance(ops.users, FlextLDAPUserOperations)
-        assert isinstance(ops.groups, FlextLDAPGroupOperations)
+        assert isinstance(ops.connections, FlextLDAPOperations.ConnectionOperations)
+        assert isinstance(ops.search, FlextLDAPOperations.SearchOperations)
+        assert isinstance(ops.entries, FlextLDAPOperations.EntryOperations)
+        assert isinstance(ops.users, FlextLDAPOperations.UserOperations)
+        assert isinstance(ops.groups, FlextLDAPOperations.GroupOperations)
 
     @pytest.mark.asyncio
     async def test_create_connection_and_bind_real(self) -> None:

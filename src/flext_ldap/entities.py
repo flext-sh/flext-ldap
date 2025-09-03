@@ -40,16 +40,16 @@ Examples:
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import cast, override
+from typing import Literal, override
 
 from flext_core import (
     FlextLogger,
     FlextModels,
     FlextResult,
 )
-from pydantic import Field, field_validator
+from pydantic import Field, computed_field, field_validator
 
-from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue, LdapSearchResult
+from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue
 from flext_ldap.value_objects import FlextLDAPValueObjects
 
 DictEntry = dict[str, object]
@@ -159,12 +159,67 @@ class FlextLDAPEntities:
                 raise ValueError(msg)
             return v
 
-    class SearchResponse(FlextModels.Value):
-        """Response model for LDAP searches."""
+    # =========================================================================
+    # DISCRIMINATED UNIONS - Advanced Python 3.13 + Pydantic Type Safety
+    # =========================================================================
 
-        entries: list[LdapSearchResult] = Field(
-            default_factory=lambda: cast("list[LdapSearchResult]", []),
-            description="Search result entries",
+    class UserSearchResult(FlextModels.Value):
+        """Type-safe user search result with discriminated union."""
+
+        entry_type: Literal["user"] = "user"
+        dn: str = Field(..., description="Distinguished Name")
+        uid: str = Field(..., description="User ID")
+        cn: str | None = Field(None, description="Common Name")
+        sn: str | None = Field(None, description="Surname")
+        given_name: str | None = Field(None, description="Given Name")
+        mail: str | None = Field(None, description="Email address")
+
+        @computed_field
+        def display_name(self) -> str:
+            """Computed display name for user."""
+            if self.cn:
+                return self.cn
+            if self.given_name and self.sn:
+                return f"{self.given_name} {self.sn}"
+            return self.uid
+
+    class GroupSearchResult(FlextModels.Value):
+        """Type-safe group search result with discriminated union."""
+
+        entry_type: Literal["group"] = "group"
+        dn: str = Field(..., description="Distinguished Name")
+        cn: str = Field(..., description="Group Common Name")
+        description: str | None = Field(None, description="Group description")
+        members: list[str] = Field(default_factory=list, description="Group member DNs")
+
+        @computed_field
+        def member_count(self) -> int:
+            """Computed member count."""
+            return len(self.members)
+
+    class GenericSearchResult(FlextModels.Value):
+        """Type-safe generic search result with discriminated union."""
+
+        entry_type: Literal["generic"] = "generic"
+        dn: str = Field(..., description="Distinguished Name")
+        object_classes: list[str] = Field(
+            default_factory=list, description="LDAP object classes"
+        )
+        attributes: LdapAttributeDict = Field(
+            default_factory=dict, description="All LDAP attributes"
+        )
+
+        @computed_field
+        def primary_object_class(self) -> str:
+            """Primary object class for this entry."""
+            return self.object_classes[0] if self.object_classes else "unknown"
+
+    class SearchResponse(FlextModels.Value):
+        """Advanced search response with discriminated unions for type safety."""
+
+        entries: list[dict[str, object]] = Field(
+            default_factory=list,
+            description="Type-safe search result entries with discriminated unions",
         )
         total_count: int = Field(default=0, description="Total number of entries found")
         has_more: bool = Field(

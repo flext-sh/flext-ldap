@@ -14,7 +14,6 @@ from flext_core import (
     FlextDomainService,
     FlextLogger,
     FlextResult,
-    FlextTypes,
 )
 from pydantic import PrivateAttr
 
@@ -45,9 +44,9 @@ class FlextLDAPOperations:
     class OperationsService(FlextDomainService[None]):
         """Internal base service using flext-core patterns - CORRECT signature."""
 
-        def __init__(self, **data: object) -> None:
+        def __init__(self) -> None:
             """Initialize shared components using flext-core domain service."""
-            super().__init__(**data)
+            super().__init__()
 
         def _generate_id(self) -> str:
             """Generate ID using UUID - simple approach."""
@@ -141,7 +140,7 @@ class FlextLDAPOperations:
         """Internal specialized connection operations class."""
 
         # Private attribute for active connections
-        _active_connections: dict[str, FlextTypes.Core.Dict] = PrivateAttr(
+        _active_connections: dict[str, dict[str, object]] = PrivateAttr(
             default_factory=dict
         )
 
@@ -230,27 +229,27 @@ class FlextLDAPOperations:
 
         def get_connection_info(
             self, connection_id: str
-        ) -> FlextResult[FlextTypes.Core.Dict]:
+        ) -> FlextResult[dict[str, object]]:
             """Get connection information - REFACTORED."""
             if connection_id not in self._active_connections:
-                return FlextResult[FlextTypes.Core.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Connection not found: {connection_id}",
                 )
 
             connection_info = self._active_connections[connection_id].copy()
             connection_info["connection_id"] = connection_id
             connection_info["active"] = True
-            return FlextResult[FlextTypes.Core.Dict].ok(connection_info)
+            return FlextResult[dict[str, object]].ok(connection_info)
 
-        def list_active_connections(self) -> FlextResult[list[FlextTypes.Core.Dict]]:
+        def list_active_connections(self) -> FlextResult[list[dict[str, object]]]:
             """List all active connections - REFACTORED."""
-            connections: list[FlextTypes.Core.Dict] = []
+            connections: list[dict[str, object]] = []
             for conn_id, conn_info in self._active_connections.items():
-                info: FlextTypes.Core.Dict = conn_info.copy()
+                info: dict[str, object] = conn_info.copy()
                 info["connection_id"] = conn_id
                 info["active"] = True
                 connections.append(info)
-            return FlextResult[list[FlextTypes.Core.Dict]].ok(connections)
+            return FlextResult[list[dict[str, object]]].ok(connections)
 
         def _calculate_duration(self, created_at: object) -> float:
             """Calculate connection duration in seconds - REUSABLE HELPER."""
@@ -628,7 +627,7 @@ class FlextLDAPOperations:
             self,
             connection_id: str,
             dn: str,
-            modifications: FlextTypes.Core.Dict,
+            modifications: dict[str, object],
         ) -> FlextResult[None]:
             """Modify an existing LDAP entry - REFACTORED."""
             try:
@@ -772,7 +771,7 @@ class FlextLDAPOperations:
                     f"Password must be at least {self.MIN_PASSWORD_LENGTH} characters",
                 )
 
-            modifications: FlextTypes.Core.Dict = {"userPassword": [new_password]}
+            modifications: dict[str, object] = {"userPassword": [new_password]}
             if self._entry_ops is None:
                 return FlextResult[None].fail("Entry operations not available")
 
@@ -790,7 +789,7 @@ class FlextLDAPOperations:
             if "@" not in email:
                 return FlextResult[None].fail("Invalid email format")
 
-            modifications: FlextTypes.Core.Dict = {"mail": [email]}
+            modifications: dict[str, object] = {"mail": [email]}
             if self._entry_ops is None:
                 return FlextResult[None].fail("Entry operations not available")
 
@@ -804,7 +803,7 @@ class FlextLDAPOperations:
             user_dn: str,
         ) -> FlextResult[None]:
             """Activate user account - REFACTORED."""
-            modifications: FlextTypes.Core.Dict = {"accountStatus": ["active"]}
+            modifications: dict[str, object] = {"accountStatus": ["active"]}
             if self._entry_ops is None:
                 return FlextResult[None].fail("Entry operations not available")
 
@@ -818,7 +817,7 @@ class FlextLDAPOperations:
             user_dn: str,
         ) -> FlextResult[None]:
             """Deactivate user account - REFACTORED."""
-            modifications: FlextTypes.Core.Dict = {"accountStatus": ["inactive"]}
+            modifications: dict[str, object] = {"accountStatus": ["inactive"]}
             if self._entry_ops is None:
                 return FlextResult[None].fail("Entry operations not available")
 
@@ -1057,7 +1056,7 @@ class FlextLDAPOperations:
             description: str,
         ) -> FlextResult[None]:
             """Update group description - REFACTORED."""
-            modifications: FlextTypes.Core.Dict = {"description": [description]}
+            modifications: dict[str, object] = {"description": [description]}
             if self._entry_ops is None:
                 return FlextResult[None].fail("Entry operations not available")
 
@@ -1246,7 +1245,7 @@ class FlextLDAPOperations:
             member_dn: str,
         ) -> FlextResult[None]:
             """Apply the membership change to LDAP."""
-            modifications: FlextTypes.Core.Dict = {"member": updated_members}
+            modifications: dict[str, object] = {"member": updated_members}
             if self._entry_ops is None:
                 return FlextResult[None].fail("Entry operations not available")
 

@@ -11,12 +11,11 @@ from pydantic import ValidationError
 
 from flext_ldap import (
     FlextLDAPClient,
-    FlextLDAPConnectionConstants,
-    FlextLDAPEntry,
 )
 
 # Import from the adapters module
 from flext_ldap.adapters import FlextLDAPAdapters
+from flext_ldap.constants import FlextLDAPConstants
 
 # Type aliases for cleaner code
 ConnectionConfig = FlextLDAPAdapters.ConnectionConfig
@@ -82,7 +81,7 @@ class TestRealAdaptersModels:
         assert config.server == "ldap://localhost:389"
         assert config.bind_dn is None
         assert config.bind_password is None
-        assert config.timeout == FlextLDAPConnectionConstants.DEFAULT_TIMEOUT
+        assert config.timeout == FlextLDAPConstants.Connection.DEFAULT_TIMEOUT
         assert config.use_tls is False
 
     def test_connection_config_creation_full(self) -> None:
@@ -163,7 +162,11 @@ class TestRealConnectionService:
     def test_connection_service_can_be_instantiated(self) -> None:
         """Test ConnectionService can be instantiated with client."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.ConnectionService(client)
+        config = FlextLDAPAdapters.ConnectionConfig(
+            server="ldap://localhost:389",
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+        )
+        service = FlextLDAPAdapters.ConnectionService(client=client, config=config)
 
         assert isinstance(service, FlextLDAPAdapters.ConnectionService)
         assert service is not None
@@ -171,7 +174,11 @@ class TestRealConnectionService:
     def test_connection_service_has_required_methods(self) -> None:
         """Test ConnectionService has required methods."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.ConnectionService(client)
+        config = FlextLDAPAdapters.ConnectionConfig(
+            server="ldap://localhost:389",
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+        )
+        service = FlextLDAPAdapters.ConnectionService(client=client, config=config)
 
         # Should have connection interface methods
         assert hasattr(service, "establish_connection")
@@ -186,7 +193,11 @@ class TestRealConnectionService:
     def test_connection_service_initial_state_not_connected(self) -> None:
         """Test connection service starts in not connected state."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.ConnectionService(client)
+        config = FlextLDAPAdapters.ConnectionConfig(
+            server="ldap://localhost:389",
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+        )
+        service = FlextLDAPAdapters.ConnectionService(client=client, config=config)
 
         assert not service.is_connected()
 
@@ -194,8 +205,7 @@ class TestRealConnectionService:
         self,
     ) -> None:
         """Test establish_connection validates configuration."""
-        client = FlextLDAPClient()
-        FlextLDAPAdapters.ConnectionService(client)
+        # Testing validation - this should be outside validation test
 
         # Invalid config should fail validation - this will fail during validation before attempting connection
         with pytest.raises(ValidationError):
@@ -206,7 +216,11 @@ class TestRealConnectionService:
     ) -> None:
         """Test terminate_connection when not connected."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.ConnectionService(client)
+        config = FlextLDAPAdapters.ConnectionConfig(
+            server="ldap://localhost:389",
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+        )
+        service = FlextLDAPAdapters.ConnectionService(client=client, config=config)
 
         # Should fail gracefully when no connection exists
         result = await service.terminate_connection()
@@ -220,7 +234,7 @@ class TestRealSearchService:
     def test_search_service_can_be_instantiated(self) -> None:
         """Test SearchService can be instantiated with client."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.SearchService(client)
+        service = FlextLDAPAdapters.SearchService(client=client)
 
         assert isinstance(service, FlextLDAPAdapters.SearchService)
         assert service is not None
@@ -228,7 +242,7 @@ class TestRealSearchService:
     def test_search_service_has_required_methods(self) -> None:
         """Test SearchService has required methods."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.SearchService(client)
+        service = FlextLDAPAdapters.SearchService(client=client)
 
         # Should have search interface methods
         assert hasattr(service, "search_entries")
@@ -237,7 +251,7 @@ class TestRealSearchService:
     async def test_search_service_validates_empty_base_dn(self) -> None:
         """Test search_entries validates empty base DN."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.SearchService(client)
+        service = FlextLDAPAdapters.SearchService(client=client)
 
         result = await service.search_entries("", "(objectClass=*)")
         assert not result.is_success
@@ -246,7 +260,7 @@ class TestRealSearchService:
     async def test_search_service_validates_empty_filter(self) -> None:
         """Test search_entries validates empty search filter."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.SearchService(client)
+        service = FlextLDAPAdapters.SearchService(client=client)
 
         result = await service.search_entries("dc=example,dc=com", "")
         assert not result.is_success
@@ -259,7 +273,7 @@ class TestRealEntryService:
     def test_entry_service_can_be_instantiated(self) -> None:
         """Test EntryService can be instantiated with client."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.EntryService(client)
+        service = FlextLDAPAdapters.EntryService(client=client)
 
         assert isinstance(service, FlextLDAPAdapters.EntryService)
         assert service is not None
@@ -267,7 +281,7 @@ class TestRealEntryService:
     def test_entry_service_has_required_methods(self) -> None:
         """Test EntryService has required methods."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.EntryService(client)
+        service = FlextLDAPAdapters.EntryService(client=client)
 
         # Should have entry interface methods
         assert hasattr(service, "add_entry")
@@ -282,7 +296,7 @@ class TestRealEntryService:
     async def test_entry_service_validates_entry_for_add_no_attributes(self) -> None:
         """Test add_entry validates entry with no attributes."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.EntryService(client)
+        service = FlextLDAPAdapters.EntryService(client=client)
 
         # Entry without attributes should fail validation
         entry_no_attrs = DirectoryEntry(dn="cn=test,dc=example,dc=com")
@@ -293,7 +307,7 @@ class TestRealEntryService:
     async def test_entry_service_validates_entry_for_add_no_object_class(self) -> None:
         """Test add_entry validates entry without objectClass."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.EntryService(client)
+        service = FlextLDAPAdapters.EntryService(client=client)
 
         # Entry without objectClass should fail
         entry_no_oc = DirectoryEntry(
@@ -306,7 +320,7 @@ class TestRealEntryService:
     async def test_entry_service_validates_dn_for_modify(self) -> None:
         """Test modify_entry validates DN parameter."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.EntryService(client)
+        service = FlextLDAPAdapters.EntryService(client=client)
 
         # Empty DN should fail
         result = await service.modify_entry("", {})
@@ -316,7 +330,7 @@ class TestRealEntryService:
     async def test_entry_service_validates_dn_for_delete(self) -> None:
         """Test delete_entry validates DN parameter."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.EntryService(client)
+        service = FlextLDAPAdapters.EntryService(client=client)
 
         # Empty DN should fail
         result = await service.delete_entry("")
@@ -326,7 +340,7 @@ class TestRealEntryService:
     async def test_entry_service_validates_no_modifications(self) -> None:
         """Test modify_entry validates empty modifications."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.EntryService(client)
+        service = FlextLDAPAdapters.EntryService(client=client)
 
         # No modifications should fail
         result = await service.modify_entry("cn=test,dc=example,dc=com", {})
@@ -340,7 +354,7 @@ class TestRealDirectoryAdapter:
     def test_directory_adapter_can_be_instantiated(self) -> None:
         """Test DirectoryAdapter can be instantiated."""
         client = FlextLDAPClient()
-        adapter = FlextLDAPAdapters.DirectoryAdapter(client)
+        adapter = FlextLDAPAdapters.DirectoryAdapter(client=client)
 
         assert isinstance(adapter, FlextLDAPAdapters.DirectoryAdapter)
         assert adapter is not None
@@ -348,7 +362,7 @@ class TestRealDirectoryAdapter:
     def test_directory_adapter_has_required_methods(self) -> None:
         """Test DirectoryAdapter has required methods."""
         client = FlextLDAPClient()
-        adapter = FlextLDAPAdapters.DirectoryAdapter(client)
+        adapter = FlextLDAPAdapters.DirectoryAdapter(client=client)
 
         # Should have adapter methods
         assert hasattr(adapter, "get_all_entries")
@@ -357,7 +371,7 @@ class TestRealDirectoryAdapter:
     async def test_directory_adapter_validates_base_dn(self) -> None:
         """Test DirectoryAdapter validates base DN."""
         client = FlextLDAPClient()
-        adapter = FlextLDAPAdapters.DirectoryAdapter(client)
+        adapter = FlextLDAPAdapters.DirectoryAdapter(client=client)
 
         # Empty base DN should fail
         result = await adapter.get_all_entries("")
@@ -371,7 +385,7 @@ class TestRealDirectoryService:
     def test_directory_service_can_be_instantiated(self) -> None:
         """Test DirectoryService can be instantiated."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.DirectoryService(client)
+        service = FlextLDAPAdapters.DirectoryService(client=client)
 
         assert isinstance(service, FlextLDAPAdapters.DirectoryService)
         assert service is not None
@@ -379,7 +393,7 @@ class TestRealDirectoryService:
     def test_directory_service_has_required_methods(self) -> None:
         """Test DirectoryService has required methods."""
         client = FlextLDAPClient()
-        service = FlextLDAPAdapters.DirectoryService(client)
+        service = FlextLDAPAdapters.DirectoryService(client=client)
 
         # Should have interface methods
         assert hasattr(service, "connect")
@@ -396,13 +410,13 @@ class TestRealOperationExecutor:
     def test_operation_executor_can_be_instantiated(self) -> None:
         """Test OperationExecutor can be instantiated."""
         client = FlextLDAPClient()
-        executor = OperationExecutor(client)
+        executor = OperationExecutor(client=client)
         assert isinstance(executor, OperationExecutor)
 
     def test_operation_executor_execute_method(self) -> None:
         """Test OperationExecutor execute method returns expected result."""
         client = FlextLDAPClient()
-        executor = OperationExecutor(client)
+        executor = OperationExecutor(client=client)
 
         # Base class execute should return error (not implemented)
         result = executor.execute()
@@ -412,10 +426,10 @@ class TestRealOperationExecutor:
     async def test_operation_executor_async_operation_success(self) -> None:
         """Test OperationExecutor handles successful async operations."""
         client = FlextLDAPClient()
-        executor = OperationExecutor(client)
+        executor = OperationExecutor(client=client)
 
-        async def successful_operation() -> FlextResult[list[FlextLDAPEntry]]:
-            return FlextResult[list[FlextLDAPEntry]].ok([])
+        async def successful_operation() -> FlextResult[list[DirectoryEntry]]:
+            return FlextResult[list[DirectoryEntry]].ok([])
 
         result = await executor.execute_async_operation(
             successful_operation, "test operation"
@@ -427,9 +441,9 @@ class TestRealOperationExecutor:
     async def test_operation_executor_async_operation_exception_handling(self) -> None:
         """Test OperationExecutor handles exceptions gracefully."""
         client = FlextLDAPClient()
-        executor = OperationExecutor(client)
+        executor = OperationExecutor(client=client)
 
-        async def failing_operation() -> FlextResult[list[FlextLDAPEntry]]:
+        async def failing_operation() -> FlextResult[list[DirectoryEntry]]:
             msg = "Operation failed"
             raise RuntimeError(msg)
 

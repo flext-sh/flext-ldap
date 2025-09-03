@@ -17,9 +17,10 @@ Examples:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Protocol
 
-from flext_core import FlextTypes
+from flext_core import FlextModels, FlextResult, FlextTypes
 
 # =============================================================================
 # SINGLE FLEXT LDAP TYPES CLASS - Inheriting from FlextCoreTypes
@@ -76,7 +77,7 @@ class FlextLDAPTypes(FlextTypes):
         type ConnectionString = str
 
         # Entity identification
-        type EntityId = FlextTypes.Domain.EntityId
+        type EntityId = str
         type UserId = str
         type GroupId = str
 
@@ -149,15 +150,19 @@ class FlextLDAPTypes(FlextTypes):
     class LdapProtocol:
         """LDAP protocol types extending FlextTypes protocols."""
 
-        # Service protocols
+        # Advanced Python 3.13 service protocols with proper bounds
         type Service = object
-        type Repository[T] = object
-        type Handler[TInput, TOutput] = object
+        type Repository[T: FlextModels.Entity] = object  # Bounded to entities only
+        type Handler[TInput: FlextModels.Value, TOutput: FlextResult[object]] = (
+            object  # Bounded type parameters
+        )
 
-        # LDAP-specific protocols
+        # LDAP-specific protocols with semantic bounds
         type Connection = object
         type Auth = object
-        type Validator[T] = object
+        type Validator[T: FlextModels.Value] = Callable[
+            [T], FlextResult[None]
+        ]  # Proper validator signature
 
     # =========================================================================
     # PROTOCOLS - Async and callable patterns
