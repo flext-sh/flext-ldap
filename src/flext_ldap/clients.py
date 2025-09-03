@@ -19,9 +19,9 @@ Examples:
         client = FlextLDAPClient()
         result = await client.connect(uri, bind_dn, password)
 
-        # Operation-specific access
-        search_result = await FlextLDAPClient.Search.execute(request)
-        connection_result = await FlextLDAPClient.Connection.bind(dn, password)
+        # Direct instance operations
+        search_result = await client.search(request)
+        bind_result = await client.bind(dn, password)
 
     Legacy compatibility::
 
@@ -91,10 +91,10 @@ class FlextLDAPClient:
             result = await client.connect(uri, bind_dn, password)
             search_result = await client.search(request)
 
-        Operation-specific usage::
+        Direct instance operations::
 
-            search_result = await FlextLDAPClient.Search.execute(request)
-            connection_result = await FlextLDAPClient.Connection.bind(dn, password)
+            search_result = await client.search(request)
+            bind_result = await client.bind(dn, password)
 
     """
 
@@ -466,75 +466,6 @@ class FlextLDAPClient:
                 extra={"error": str(e), "dn": dn},
             )
             return FlextResult[None].fail(f"Delete error: {e}")
-
-    # =========================================================================
-    # OPERATION-SPECIFIC STATIC CLASSES - Hierarchical organization
-    # =========================================================================
-
-    class Connection:
-        """Connection-specific operations with static methods."""
-
-        @staticmethod
-        async def establish(
-            uri: str, bind_dn: str, password: str
-        ) -> FlextResult[FlextLDAPClient]:
-            """Establish connection using default client instance.
-
-            Returns:
-                FlextResult containing connected client or error
-
-            """
-            client = FlextLDAPClient()
-            result = await client.connect(uri, bind_dn, password)
-            if result.is_success:
-                return FlextResult[FlextLDAPClient].ok(client)
-            return FlextResult[FlextLDAPClient].fail(
-                result.error or "Connection failed"
-            )
-
-        @staticmethod
-        async def bind(
-            client: FlextLDAPClient, dn: str, password: str
-        ) -> FlextResult[None]:
-            """Bind using existing client instance."""
-            return await client.bind(dn, password)
-
-        @staticmethod
-        async def unbind(client: FlextLDAPClient) -> FlextResult[None]:
-            """Unbind using existing client instance."""
-            return await client.unbind()
-
-    class Search:
-        """Search-specific operations with static methods."""
-
-        @staticmethod
-        async def execute(
-            client: FlextLDAPClient, request: FlextLDAPEntities.SearchRequest
-        ) -> FlextResult[FlextLDAPEntities.SearchResponse]:
-            """Execute search using client instance."""
-            return await client.search(request)
-
-    class Entry:
-        """Entry manipulation operations with static methods."""
-
-        @staticmethod
-        async def add(
-            client: FlextLDAPClient, dn: str, attributes: LdapAttributeDict
-        ) -> FlextResult[None]:
-            """Add entry using client instance."""
-            return await client.add(dn, attributes)
-
-        @staticmethod
-        async def modify(
-            client: FlextLDAPClient, dn: str, attributes: LdapAttributeDict
-        ) -> FlextResult[None]:
-            """Modify entry using client instance."""
-            return await client.modify(dn, attributes)
-
-        @staticmethod
-        async def delete(client: FlextLDAPClient, dn: str) -> FlextResult[None]:
-            """Delete entry using client instance."""
-            return await client.delete(dn)
 
     def __del__(self) -> None:
         """Cleanup on destruction with safe exception handling."""

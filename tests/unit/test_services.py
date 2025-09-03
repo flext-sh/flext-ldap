@@ -117,7 +117,7 @@ class TestFlextLDAPServiceRealFunctionality:
 
     def test_ldap_entry_model_validation_real(self) -> None:
         """Test LDAP entry model validation."""
-        entry = FlextLDAPEntry(
+        entry = FlextLDAPEntities.Entry(
             id="testentry-001",
             dn="cn=testentry,dc=example,dc=com",
             attributes={
@@ -184,7 +184,7 @@ class TestFlextLDAPServiceRealFunctionality:
             },
         ]
 
-        response = FlextLDAPSearchResponse(entries=entries, total_count=2)
+        response = FlextLDAPEntities.SearchResponse(entries=entries, total_count=2)
 
         assert response.total_count == 2
         assert len(response.entries) == 2

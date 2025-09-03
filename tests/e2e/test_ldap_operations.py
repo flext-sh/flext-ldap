@@ -7,14 +7,10 @@ They require a real LDAP server for full integration testing.
 from __future__ import annotations
 
 import pytest
-from pydantic import SecretStr
 
-from flext_ldap import (
-    FlextLDAPApi,
-    FlextLDAPAuthConfig,
-    FlextLDAPConnectionConfig,
-    FlextLDAPCreateUserRequest,
-)
+from flext_ldap.api import FlextLDAPApi
+from flext_ldap.connection_config import FlextLDAPConnectionConfig
+from flext_ldap.entities import FlextLDAPEntities
 
 
 @pytest.mark.e2e
@@ -49,7 +45,7 @@ class TestLdapE2EOperations:
         assert hasattr(connection_result, "is_success")
 
         # Create user request
-        user_request = FlextLDAPCreateUserRequest(
+        user_request = FlextLDAPEntities.CreateUserRequest(
             dn="cn=testuser,ou=users,dc=flext,dc=local",
             uid="testuser",
             cn="Test User",
@@ -122,12 +118,6 @@ class TestLdapE2EOperations:
         """Test API configuration integration."""
         # Test with custom configuration
 
-        FlextLDAPAuthConfig(
-            bind_dn="cn=admin,dc=test,dc=local",
-            bind_password=SecretStr("admin123"),
-            use_ssl=True,
-        )
-
         FlextLDAPConnectionConfig(
             server="ldaps://test.ldap.server",
             port=636,
@@ -189,14 +179,13 @@ class TestLdapE2EWithDockerServer:
         # Connection parameters for Docker test server
 
         # For now, just test the structure
-        user_request = FlextLDAPCreateUserRequest(
+        user_request = FlextLDAPEntities.CreateUserRequest(
             dn="cn=e2etest,ou=users,dc=flext,dc=local",
             uid="e2etest",
             cn="E2E Test User",
             sn="TestUser",
             given_name="E2E",
             mail="e2etest@example.com",
-            phone="+1-555-0301",
         )
 
         assert user_request.dn == "cn=e2etest,ou=users,dc=flext,dc=local"

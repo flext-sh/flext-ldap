@@ -194,5 +194,5 @@ __version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
 # Add version info to exports
 _final_exports.extend(["__version__", "__version_info__"])
 
-# Define __all__ as literal list for linter compatibility
-__all__: list[str] = sorted(set(_final_exports))  # noqa: PLE0605
+# Define __all__ as tuple for linter compatibility
+__all__ = tuple(sorted(set(_final_exports)))

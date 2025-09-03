@@ -11,10 +11,10 @@ Examples:
         from adapters import FlextLDAPAdapters
 
         # Create connection service
-        connection = FlextLDAPAdapters.ConnectionService(config)
+        connection = FlextLDAPAdapters.ConnectionService(client=FlextLDAPClient(), config=config)
 
         # Create search service
-        search = FlextLDAPAdapters.SearchService(client)
+        search = FlextLDAPAdapters.SearchService(client=client)
 
         # Create directory adapter
         adapter = FlextLDAPAdapters.DirectoryAdapter(client)
@@ -28,13 +28,13 @@ Examples:
         entry = FlextLDAPAdapters.DirectoryEntry(dn="cn=user,dc=example,dc=com")
 
         # Operation execution
-        executor = FlextLDAPAdapters.OperationExecutor(client)
+        executor = FlextLDAPAdapters.OperationExecutor(client=client)
 
     Legacy compatibility:
 
         # All previous classes still work as direct imports
         from adapters import FlextLDAPConnectionService, FlextLDAPSearchService
-        conn_service = FlextLDAPConnectionService(config)
+        conn_service = FlextLDAPConnectionService(client=FlextLDAPClient(), config=config)
 
 """
 
@@ -87,11 +87,11 @@ class FlextLDAPAdapters:
                 server="ldap://localhost:389",
                 bind_dn="cn=admin,dc=example,dc=com"
             )
-            connection = FlextLDAPAdapters.ConnectionService(config)
+            connection = FlextLDAPAdapters.ConnectionService(client=FlextLDAPClient(), config=config)
 
         Search operations:
 
-            search_service = FlextLDAPAdapters.SearchService(client)
+            search_service = FlextLDAPAdapters.SearchService(client=client)
             results = await search_service.search_entries(
                 base_dn="dc=example,dc=com",
                 filter_str="(uid=john)"
@@ -195,10 +195,7 @@ class FlextLDAPAdapters:
     class OperationExecutor(FlextDomainService[list[FlextLDAPEntities.Entry]]):
         """Base operation executor for LDAP operations with async support."""
 
-        def __init__(self, client: FlextLDAPClient, **data: object) -> None:
-            """Initialize with LDAP client."""
-            super().__init__(**data)
-            self._client = client
+        client: FlextLDAPClient
 
         async def execute_async_operation(
             self,
@@ -226,24 +223,19 @@ class FlextLDAPAdapters:
     class ConnectionService(OperationExecutor):
         """Specialized connection service for LDAP server connectivity."""
 
-        def __init__(self, config: FlextLDAPAdapters.ConnectionConfig) -> None:
-            """Initialize with connection configuration."""
-            # Create client - FlextLDAPClient takes no constructor arguments
-            client = FlextLDAPClient()
-            super().__init__(client)
-            self._config = config
+        config: FlextLDAPAdapters.ConnectionConfig
 
         async def test_connection(self) -> FlextResult[None]:
             """Test LDAP server connection."""
             try:
-                if self._config.bind_dn and self._config.bind_password:
-                    return await self._client.bind(
-                        self._config.bind_dn, self._config.bind_password
+                if self.config.bind_dn and self.config.bind_password:
+                    return await self.client.bind(
+                        self.config.bind_dn, self.config.bind_password
                     )
-                return await self._client.connect(
-                    self._config.server,
-                    self._config.bind_dn or "",
-                    self._config.bind_password or "",
+                return await self.client.connect(
+                    self.config.server,
+                    self.config.bind_dn or "",
+                    self.config.bind_password or "",
                 )
             except Exception as e:
                 error_msg = f"Connection test failed: {e}"
@@ -252,17 +244,17 @@ class FlextLDAPAdapters:
 
         async def connect_and_bind(self) -> FlextResult[None]:
             """Connect to server and bind with credentials."""
-            connect_result = await self._client.connect(
-                self._config.server,
-                self._config.bind_dn or "",
-                self._config.bind_password or "",
+            connect_result = await self.client.connect(
+                self.config.server,
+                self.config.bind_dn or "",
+                self.config.bind_password or "",
             )
             if not connect_result.is_success:
                 return connect_result
 
-            if self._config.bind_dn and self._config.bind_password:
-                return await self._client.bind(
-                    self._config.bind_dn, self._config.bind_password
+            if self.config.bind_dn and self.config.bind_password:
+                return await self.client.bind(
+                    self.config.bind_dn, self.config.bind_password
                 )
 
             return FlextResult[None].ok(None)
@@ -279,9 +271,19 @@ class FlextLDAPAdapters:
                         validation_result.error or "Configuration validation failed"
                     )
 
-                # Update config and attempt connection
-                self._config = config
-                return await self.connect_and_bind()
+                # Use the provided config for connection
+                # Use the provided config for connection
+                connect_result = await self.client.connect(
+                    config.server,
+                    config.bind_dn or "",
+                    config.bind_password or "",
+                )
+                if not connect_result.is_success:
+                    return connect_result
+
+                if config.bind_dn and config.bind_password:
+                    return await self.client.bind(config.bind_dn, config.bind_password)
+                return FlextResult[None].ok(None)
             except Exception as e:
                 return FlextResult[None].fail(f"Failed to establish connection: {e}")
 
@@ -293,12 +295,12 @@ class FlextLDAPAdapters:
                     return FlextResult[None].fail("No active connection to terminate")
 
                 # For now, just disconnect
-                if hasattr(self._client, "_connection") and self._client._connection:
+                if hasattr(self.client, "_connection") and self.client._connection:
                     unbind_method = getattr(
-                        self._client._connection, "unbind", lambda: None
+                        self.client._connection, "unbind", lambda: None
                     )
                     unbind_method()
-                    self._client._connection = None
+                    self.client._connection = None
                 return FlextResult[None].ok(None)
             except Exception as e:
                 return FlextResult[None].fail(f"Failed to terminate connection: {e}")
@@ -308,7 +310,7 @@ class FlextLDAPAdapters:
             try:
                 # Use getattr to safely access the method
                 is_connected_method = getattr(
-                    self._client, "is_connected", lambda: False
+                    self.client, "is_connected", lambda: False
                 )
                 result = is_connected_method()
                 return bool(result)
@@ -318,10 +320,7 @@ class FlextLDAPAdapters:
     class SearchService(FlextDomainService[list[FlextLDAPEntities.Entry]]):
         """Specialized search service for LDAP search operations."""
 
-        def __init__(self, client: FlextLDAPClient, **data: object) -> None:
-            """Initialize with LDAP client."""
-            super().__init__(**data)
-            self._client = client
+        client: FlextLDAPClient
 
         async def search_entries(
             self,
@@ -348,7 +347,7 @@ class FlextLDAPAdapters:
                     size_limit=1000,
                     time_limit=30,
                 )
-                search_result = await self._client.search(search_request)
+                search_result = await self.client.search(search_request)
 
                 if search_result.is_success:
                     # Convert to FlextLDAPEntities.Entry objects - SearchResponse.entries is list[LdapSearchResult]
@@ -433,9 +432,9 @@ class FlextLDAPAdapters:
     class EntryService(OperationExecutor):
         """Specialized entry service for LDAP entry CRUD operations."""
 
-        def __init__(self, client: FlextLDAPClient, **data: object) -> None:
+        def __init__(self, client: FlextLDAPClient) -> None:
             """Initialize entry service with client."""
-            super().__init__(client, **data)
+            super().__init__(client=client)
 
         async def add_entry(
             self,
@@ -489,7 +488,7 @@ class FlextLDAPAdapters:
                 from typing import cast
 
                 typed_ldap_attrs = cast("LdapAttributeDict", ldap_attrs)
-                return await self._client.add(dn, typed_ldap_attrs)
+                return await self.client.add(dn, typed_ldap_attrs)
 
             except Exception as e:
                 error_msg = f"Failed to add entry: {e}"
@@ -527,7 +526,7 @@ class FlextLDAPAdapters:
                 from typing import cast
 
                 typed_modifications = cast("LdapAttributeDict", ldap_modifications)
-                return await self._client.modify(dn, typed_modifications)
+                return await self.client.modify(dn, typed_modifications)
 
             except Exception as e:
                 error_msg = f"Failed to modify entry {dn}: {e}"
@@ -551,7 +550,7 @@ class FlextLDAPAdapters:
                         validation_result.error or "Validation failed"
                     )
 
-                return await self._client.delete(dn)
+                return await self.client.delete(dn)
 
             except Exception as e:
                 error_msg = f"Failed to delete entry {dn}: {e}"
@@ -618,10 +617,7 @@ class FlextLDAPAdapters:
     class DirectoryService(FlextDomainService[object]):
         """High-level directory service for comprehensive LDAP operations."""
 
-        def __init__(self, client: FlextLDAPClient, **data: object) -> None:
-            """Initialize with LDAP client."""
-            super().__init__(**data)
-            self._client = client
+        client: FlextLDAPClient
 
         async def get_all_entries(
             self, base_dn: str, filter_str: str = "(objectClass=*)"
@@ -636,7 +632,7 @@ class FlextLDAPAdapters:
                     size_limit=1000,
                     time_limit=30,
                 )
-                search_result = await self._client.search(search_request)
+                search_result = await self.client.search(search_request)
 
                 if search_result.is_success:
                     # Convert results to protocol format - SearchResponse.entries is the list we need
@@ -709,7 +705,9 @@ class FlextLDAPAdapters:
             """Connect to LDAP server."""
             try:
                 # Use connection service for actual connection
-                connection_service = FlextLDAPAdapters.ConnectionService(config)
+                connection_service = FlextLDAPAdapters.ConnectionService(
+                    client=FlextLDAPClient(), config=config
+                )
                 return await connection_service.establish_connection(config)
             except Exception as e:
                 return FlextResult[None].fail(f"Failed to connect: {e}")
@@ -730,7 +728,7 @@ class FlextLDAPAdapters:
                     size_limit=1000,
                     time_limit=30,
                 )
-                search_result = await self._client.search(search_request)
+                search_result = await self.client.search(search_request)
 
                 if search_result.is_success:
                     protocol_entries = self._convert_entries_to_protocol(
@@ -755,17 +753,18 @@ class FlextLDAPAdapters:
 
         def __init__(self, client: FlextLDAPClient) -> None:
             """Initialize with LDAP client and create specialized services."""
-            self._client = client
+            self.client = client
             self.connection = FlextLDAPAdapters.ConnectionService(
-                FlextLDAPAdapters.ConnectionConfig(
+                client=FlextLDAPClient(),
+                config=FlextLDAPAdapters.ConnectionConfig(
                     server="ldap://localhost:389",
                     bind_dn="cn=admin,dc=example,dc=com",
-                    bind_password="admin",  # noqa: S106
-                )
+                    bind_password="test_password",  # noqa: S106
+                ),
             )
-            self.search = FlextLDAPAdapters.SearchService(client)
-            self.entries = FlextLDAPAdapters.EntryService(client)
-            self.directory = FlextLDAPAdapters.DirectoryService(client)
+            self.search = FlextLDAPAdapters.SearchService(client=client)
+            self.entries = FlextLDAPAdapters.EntryService(client=client)
+            self.directory = FlextLDAPAdapters.DirectoryService(client=client)
 
         async def get_all_entries(
             self, base_dn: str, filter_str: str = "(objectClass=*)"

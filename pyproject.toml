@@ -35,8 +35,6 @@ dependencies = [
     "pydantic-settings (>=2.10.1)",
     "ldap3 (>=2.9.1)",
     "cryptography (>=45.0.5)",
-    "click (>=8.2.1)",
-    "rich (>=14.0.0)",
     "structlog (>=25.4.0)",
 ]
 [[project.authors]]

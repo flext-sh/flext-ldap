@@ -2,7 +2,7 @@
 
 import asyncio
 from collections.abc import AsyncGenerator, Generator
-from typing import object
+from typing import Any
 
 import pytest
 from flext_core import FlextLogger
@@ -56,25 +56,25 @@ async def ldap_api(
 
 
 @pytest.fixture
-def test_user_data() -> dict[str, object]:
+def test_user_data() -> dict[str, Any]:
     """Get test user data."""
     return SAMPLE_USER_ENTRY.copy()
 
 
 @pytest.fixture
-def test_group_data() -> dict[str, object]:
+def test_group_data() -> dict[str, Any]:
     """Get test group data."""
     return SAMPLE_GROUP_ENTRY.copy()
 
 
 @pytest.fixture
-def multiple_test_users() -> list[dict[str, object]]:
+def multiple_test_users() -> list[dict[str, Any]]:
     """Get multiple test users data."""
     return [user.copy() for user in TEST_USERS]
 
 
 @pytest.fixture
-def multiple_test_groups() -> list[dict[str, object]]:
+def multiple_test_groups() -> list[dict[str, Any]]:
     """Get multiple test groups data."""
     return [group.copy() for group in TEST_GROUPS]
 
