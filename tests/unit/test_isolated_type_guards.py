@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import pytest
 
+from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.type_guards import FlextLDAPTypeGuards
 
 TYPE_GUARDS_AVAILABLE = True
@@ -17,9 +18,9 @@ class TestIsolatedTypeGuards:
     """Test type guards in isolation without external dependencies."""
 
     def test_min_dn_parts_constant_is_correct(self) -> None:
-        """Test that FlextLDAPTypeGuards.MIN_DN_PARTS constant has correct value."""
-        assert FlextLDAPTypeGuards.MIN_DN_PARTS == 2
-        assert isinstance(FlextLDAPTypeGuards.MIN_DN_PARTS, int)
+        """Test that MIN_DN_PARTS constant has correct value (now in FlextLDAPConstants)."""
+        assert FlextLDAPConstants.LdapValidation.MIN_DN_PARTS == 2
+        assert isinstance(FlextLDAPConstants.LdapValidation.MIN_DN_PARTS, int)
 
     def test_is_ldap_dn_with_valid_dn_strings(self) -> None:
         """Test is_ldap_dn function with valid DN strings."""

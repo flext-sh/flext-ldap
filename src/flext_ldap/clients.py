@@ -39,7 +39,7 @@ from typing import Literal, cast
 from urllib.parse import urlparse
 
 import ldap3
-from flext_core import FlextLogger, FlextProcessors, FlextResult
+from flext_core import FlextLogger, FlextResult
 from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE, Connection
 from ldap3.core.exceptions import LDAPException
 
@@ -73,14 +73,14 @@ SCOPE_MAP: dict[str, LdapScope] = {
 class LDAPSearchStrategies:
     """Strategy classes for decomposing complex LDAP search operations."""
 
-    class SearchExecutionStrategy(FlextProcessors.BaseProcessor):
+    class SearchExecutionStrategy:
         """Strategy for executing LDAP search operations with proper error handling."""
 
         def __init__(self, connection: Connection | None) -> None:
             self.connection = connection
 
-        def process_data(
-            self, entry: FlextLDAPEntities.SearchRequest
+        def execute_search(
+            self, request: FlextLDAPEntities.SearchRequest
         ) -> FlextResult[dict[str, object]]:
             """Execute LDAP search and return raw ldap3 results."""
             if not self.connection or not getattr(self.connection, "bound", False):
@@ -91,19 +91,19 @@ class LDAPSearchStrategies:
             try:
                 # Map scope to ldap3 constant
                 scope: LdapScope = SCOPE_MAP.get(
-                    entry.scope.lower(), cast("LdapScope", ldap3.SUBTREE)
+                    request.scope.lower(), cast("LdapScope", ldap3.SUBTREE)
                 )
 
                 # Execute search using ldap3 directly
                 connection_obj: object = cast("object", self.connection)
                 search_method = getattr(connection_obj, "search")
                 search_result: object = search_method(
-                    search_base=entry.base_dn,
-                    search_filter=entry.filter_str,
+                    search_base=request.base_dn,
+                    search_filter=request.filter_str,
                     search_scope=scope,
-                    attributes=entry.attributes or ALL_ATTRIBUTES,
-                    size_limit=entry.size_limit,
-                    time_limit=entry.time_limit,
+                    attributes=request.attributes or ALL_ATTRIBUTES,
+                    size_limit=request.size_limit,
+                    time_limit=request.time_limit,
                 )
 
                 success = bool(search_result)
@@ -125,16 +125,16 @@ class LDAPSearchStrategies:
             except Exception as e:
                 return FlextResult[dict[str, object]].fail(f"Search error: {e}")
 
-    class EntryConversionStrategy(FlextProcessors.BaseProcessor):
+    class EntryConversionStrategy:
         """Strategy for converting raw LDAP entries to structured format."""
 
-        def process_data(
-            self, entry: Connection
+        def convert_entries(
+            self, connection: Connection
         ) -> FlextResult[dict[str, object]]:
             """Convert ldap3 entries to LdapSearchResult format."""
             try:
                 entries: list[LdapSearchResult] = []
-                connection_entries = entry.entries if entry else []
+                connection_entries = connection.entries if connection else []
 
                 for entry in connection_entries:
                     # Get DN directly from ldap3 entry
@@ -166,16 +166,16 @@ class LDAPSearchStrategies:
                     f"Entry conversion error: {e}"
                 )
 
-    class ResponseBuilderStrategy(FlextProcessors.BaseProcessor):
+    class ResponseBuilderStrategy:
         """Strategy for building final search response objects."""
 
-        def process_data(
-            self, entry: dict[str, object]
-        ) -> FlextResult[dict[str, object]]:
+        def build_response(
+            self, data: dict[str, object]
+        ) -> FlextResult[FlextLDAPEntities.SearchResponse]:
             """Build SearchResponse from processed entries and request data."""
             try:
-                entries = cast("list[LdapSearchResult]", entry.get("entries", []))
-                request = cast("FlextLDAPEntities.SearchRequest", entry.get("request"))
+                entries = cast("list[LdapSearchResult]", data.get("entries", []))
+                request = cast("FlextLDAPEntities.SearchRequest", data.get("request"))
 
                 response = FlextLDAPEntities.SearchResponse(
                     entries=entries,
@@ -183,10 +183,10 @@ class LDAPSearchStrategies:
                     has_more=len(entries) >= request.size_limit,
                 )
 
-                return FlextResult[dict[str, object]].ok({"response": response})
+                return FlextResult[FlextLDAPEntities.SearchResponse].ok(response)
 
             except Exception as e:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLDAPEntities.SearchResponse].fail(
                     f"Response building error: {e}"
                 )
 
@@ -386,7 +386,7 @@ class FlextLDAPClient:
             search_strategy = LDAPSearchStrategies.SearchExecutionStrategy(
                 self._connection
             )
-            execution_result = search_strategy.process_data(request)
+            execution_result = search_strategy.execute_search(request)
 
             if not execution_result.is_success:
                 return FlextResult[FlextLDAPEntities.SearchResponse].fail(
@@ -400,7 +400,7 @@ class FlextLDAPClient:
                 )
 
             conversion_strategy = LDAPSearchStrategies.EntryConversionStrategy()
-            entries_result = conversion_strategy.process_data(self._connection)
+            entries_result = conversion_strategy.convert_entries(self._connection)
 
             if not entries_result.is_success:
                 return FlextResult[FlextLDAPEntities.SearchResponse].fail(
@@ -410,7 +410,7 @@ class FlextLDAPClient:
             # Strategy 3: Build final response
             response_strategy = LDAPSearchStrategies.ResponseBuilderStrategy()
             response_data = {"entries": entries_result.value, "request": request}
-            response_result = response_strategy.process_data(response_data)
+            response_result = response_strategy.build_response(response_data)
 
             if not response_result.is_success:
                 return FlextResult[FlextLDAPEntities.SearchResponse].fail(

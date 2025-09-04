@@ -15,9 +15,10 @@ class TestExceptionStringRepresentations:
     def test_ldap_error_with_operation_and_code(self) -> None:
         """Test FlextLDAPExceptions.Error __str__ with operation and ldap_result_code."""
         # Covers lines 70-77, 78-86
-        error = FlextLDAPExceptions.Error(
-            "Base error", operation="test_operation", ldap_result_code="50"
+        config = FlextLDAPExceptions.ErrorConfig(
+            message="Base error", operation="test_operation", ldap_result_code="50"
         )
+        error = FlextLDAPExceptions.Error(config)
         result_str = str(error)
         assert "Base error" in result_str
         assert "test_operation" in result_str

@@ -20,7 +20,7 @@ import secrets
 import string
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
-from typing import ClassVar, override, cast
+from typing import ClassVar, cast, override
 
 from flext_core import (
     FlextCommands,
@@ -206,7 +206,6 @@ class FlextLDAPDomain:
             # Check complexity if required
             if FlextLDAPConstants.LdapValidation.REQUIRE_PASSWORD_COMPLEXITY:
                 # Implement proper password complexity validation
-                import re
 
                 # Password must have: uppercase, lowercase, digit, special char
                 has_upper = bool(re.search(r"[A-Z]", candidate))
@@ -725,7 +724,7 @@ class FlextLDAPDomain:
             # Add automatic timestamp if not provided
             if "occurred_at" not in kwargs:
                 kwargs["occurred_at"] = datetime.now(UTC)
-            return event_class(**kwargs)  # type: ignore[arg-type]
+            return event_class(**kwargs)
 
         @staticmethod
         def create_typed_event[T](event_class: type[T], **event_kwargs: object) -> T:
@@ -862,8 +861,6 @@ class FlextLDAPDomain:
         @staticmethod
         def safe_str(value: object) -> str | None:
             """Safely convert value to string or None - USES FLEXT-CORE."""
-            from flext_core import FlextUtilities
-
             # Cast to supported type for FlextUtilities
             safe_value = (
                 value
@@ -876,8 +873,6 @@ class FlextLDAPDomain:
         @staticmethod
         def safe_list(value: object, default: list[str] | None = None) -> list[str]:
             """Safely convert value to list or use default - USES FLEXT-CORE."""
-            from flext_core import FlextUtilities
-
             if FlextUtilities.TypeGuards.is_list_non_empty(value):
                 # Use Python standard conversion instead of custom wrapper
                 return [str(item) for item in cast("list[object]", value)]

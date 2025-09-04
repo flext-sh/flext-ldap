@@ -50,6 +50,7 @@ from flext_core import (
 )
 from pydantic import ConfigDict, Field, computed_field, field_validator
 
+from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue
 from flext_ldap.value_objects import FlextLDAPValueObjects
 
@@ -283,6 +284,119 @@ class FlextLDAPEntities:
                 return FlextResult[None].fail("Total count cannot be negative")
             if self.search_time_ms < 0:
                 return FlextResult[None].fail("Search time cannot be negative")
+
+            # Validate reasonable results (domain rule)
+            if self.total_count > FlextLDAPConstants.Connection.MAX_SIZE_LIMIT:
+                logger.warning("Large search result", extra={"count": self.total_count})
+
+            return FlextResult[None].ok(None)
+
+    class SearchParams(FlextModels.Config):
+        """Unified parameter object for search operations across all components.
+
+        Consolidates all SearchParams classes from operations.py, repositories.py,
+        and exceptions.py to eliminate duplication and provide consistent interface.
+        """
+
+        model_config = ConfigDict(frozen=True, extra="forbid")
+
+        # Core search parameters (from operations.py)
+        connection_id: str = Field(..., min_length=1, description="LDAP connection identifier")
+        base_dn: str = Field(..., min_length=1, description="Base DN for search")
+        search_filter: str = Field(default="(objectClass=*)", min_length=1, description="LDAP search filter")
+        scope: str = Field(default="subtree", pattern=r"^(base|one|subtree|onelevel)$", description="Search scope")
+        attributes: list[str] | None = Field(default=None, description="Attributes to retrieve")
+        size_limit: int = Field(default=1000, gt=0, le=10000, description="Maximum entries to return")
+        time_limit: int = Field(default=30, gt=0, le=300, description="Search timeout in seconds")
+
+        # Repository-specific parameters (from repositories.py)
+        identifier: str | None = Field(default=None, min_length=1, description="Specific identifier to search for")
+        search_scope: str | None = Field(default=None, description="Repository search scope")
+
+        # Exception handling parameters (from exceptions.py)
+        timeout: int | None = Field(default=None, ge=1, le=300, description="Operation timeout")
+        retry_count: int | None = Field(default=None, ge=0, le=10, description="Retry attempts")
+
+        @classmethod
+        def create_basic_search(
+            cls,
+            connection_id: str,
+            base_dn: str,
+            search_filter: str = "(objectClass=*)"
+        ) -> FlextLDAPEntities.SearchParams:
+            """Factory method for basic search operations."""
+            return cls(
+                connection_id=connection_id,
+                base_dn=base_dn,
+                search_filter=search_filter
+            )
+
+        @classmethod
+        def create_user_search(
+            cls,
+            connection_id: str,
+            base_dn: str,
+            uid: str | None = None,
+            size_limit: int = 1,
+            time_limit: int = 30
+        ) -> FlextLDAPEntities.SearchParams:
+            """Factory method for user-specific searches."""
+            filter_str = f"(&(objectClass=person)(uid={uid}))" if uid else "(&(objectClass=person))"
+            return cls(
+                connection_id=connection_id,
+                base_dn=base_dn,
+                search_filter=filter_str,
+                attributes=["uid", "cn", "sn", "givenName", "mail"],
+                size_limit=size_limit,
+                time_limit=time_limit
+            )
+
+        @classmethod
+        def create_group_search(
+            cls,
+            connection_id: str,
+            base_dn: str,
+            cn: str | None = None,
+            size_limit: int = 1,
+            time_limit: int = 30
+        ) -> FlextLDAPEntities.SearchParams:
+            """Factory method for group-specific searches."""
+            filter_str = f"(&(objectClass=groupOfNames)(cn={cn}))" if cn else "(&(objectClass=groupOfNames))"
+            return cls(
+                connection_id=connection_id,
+                base_dn=base_dn,
+                search_filter=filter_str,
+                attributes=["cn", "member", "description"],
+                size_limit=size_limit,
+                time_limit=time_limit
+            )
+
+        @classmethod
+        def create_repository_search(
+            cls,
+            identifier: str,
+            base_dn: str = "dc=example,dc=com"
+        ) -> FlextLDAPEntities.SearchParams:
+            """Factory method for repository searches."""
+            return cls(
+                connection_id="repository_connection",
+                base_dn=base_dn,
+                identifier=identifier,
+                search_filter=f"(uid={identifier})"
+            )
+
+        @override
+        def validate_business_rules(self) -> FlextResult[None]:
+            """Validate search parameters business rules."""
+            if self.size_limit <= 0:
+                return FlextResult[None].fail("Size limit must be positive")
+            if self.time_limit <= 0:
+                return FlextResult[None].fail("Time limit must be positive")
+
+            # Validate reasonable limits (domain rule)
+            if self.size_limit > FlextLDAPConstants.Connection.MAX_SIZE_LIMIT:
+                logger.warning("Large search limit", extra={"size_limit": self.size_limit})
+
             return FlextResult[None].ok(None)
 
     # =========================================================================

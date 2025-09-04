@@ -62,46 +62,46 @@ import importlib.metadata
 # FOUNDATION LAYER - Import first, no dependencies on other modules
 # =============================================================================
 
-from flext_ldap.constants import *
-from flext_ldap.typings import *
-from flext_ldap.exceptions import *
+from flext_ldap import constants
+from flext_ldap import typings
+from flext_ldap import exceptions
 
 # =============================================================================
 # DOMAIN LAYER - Depends only on Foundation layer
 # =============================================================================
 
-from flext_ldap.entities import *
-from flext_ldap.value_objects import *
-from flext_ldap.domain import *
-from flext_ldap.models import *
+from flext_ldap import entities
+from flext_ldap import value_objects
+from flext_ldap import domain
+from flext_ldap import models
 
 # =============================================================================
 # APPLICATION LAYER - Depends on Domain + Foundation layers
 # =============================================================================
 
-from flext_ldap.services import *
-from flext_ldap.operations import *
-from flext_ldap.repositories import *
-from flext_ldap.api import *
+from flext_ldap import services
+from flext_ldap import operations
+from flext_ldap import repositories
+from flext_ldap import api
 
 # =============================================================================
 # INFRASTRUCTURE LAYER - Depends on Application + Core + Foundation
 # =============================================================================
 
-from flext_ldap.clients import *
-from flext_ldap.container import *
+from flext_ldap import clients
+from flext_ldap import container
 
 # configuration.py eliminated - using direct imports from settings and connection_config
-from flext_ldap.connection_config import *
-from flext_ldap.settings import *
+from flext_ldap import connection_config
+from flext_ldap import settings
 
 # =============================================================================
 # SUPPORT LAYER - Depends on layers as needed, imported last
 # =============================================================================
 
-from flext_ldap.adapters import *
-from flext_ldap.fields import *
-from flext_ldap.type_guards import *
+from flext_ldap import adapters
+from flext_ldap import fields
+from flext_ldap import type_guards
 
 # =============================================================================
 # CLI ENTRY POINT - Main CLI functionality (optional import)
@@ -112,75 +112,37 @@ from contextlib import suppress
 # CLI import disabled - using flext-cli directly where needed
 
 # =============================================================================
-# CONSOLIDATED EXPORTS - Combine all __all__ from modules
+# PUBLIC EXPORTS - Manual definition of all public APIs
 # =============================================================================
 
-# Combine all __all__ exports from imported modules
-import flext_ldap.adapters as _adapters
-import flext_ldap.api as _api
-import flext_ldap.clients as _clients
-
-# _configuration removed - using direct module imports
-import flext_ldap.connection_config as _connection_config
-import flext_ldap.constants as _constants
-import flext_ldap.container as _container
-import flext_ldap.domain as _domain
-import flext_ldap.entities as _entities
-import flext_ldap.exceptions as _exceptions
-import flext_ldap.fields as _fields
-import flext_ldap.models as _models
-import flext_ldap.operations as _operations
-import flext_ldap.repositories as _repositories
-import flext_ldap.services as _services
-import flext_ldap.settings as _settings
-import flext_ldap.type_guards as _type_guards
-import flext_ldap.typings as _typings
-import flext_ldap.value_objects as _value_objects
-
-# Collect all __all__ exports from imported modules
-_temp_exports: list[str] = []
-
-for module in [
-    _constants,
-    _typings,
-    _exceptions,
-    _entities,
-    _value_objects,
-    _domain,
-    _models,
-    _services,
-    _operations,
-    _repositories,
-    _api,
-    _clients,
-    _container,
-    # _configuration removed
-    _connection_config,
-    _settings,
-    _adapters,
-    _fields,
-    _type_guards,
-]:
-    if hasattr(module, "__all__"):
-        _temp_exports.extend(module.__all__)
-
-# Try to include CLI exports if available
-try:
-    import flext_ldap.cli as _cli
-
-    if hasattr(_cli, "__all__"):
-        _temp_exports.extend(_cli.__all__)
-except ImportError:
-    pass
-
-# Remove duplicates and sort for consistent exports
-_seen: set[str] = set()
-_final_exports: list[str] = []
-for item in _temp_exports:
-    if item not in _seen:
-        _seen.add(item)
-        _final_exports.append(item)
-_final_exports.sort()
+# Import all key classes directly for explicit exports
+from flext_ldap.api import FlextLDAPApi, get_flext_ldap_api
+from flext_ldap.connection_config import FlextLDAPConnectionConfig
+from flext_ldap.entities import FlextLDAPEntities, DictEntry
+from flext_ldap.constants import FlextLDAPConstants
+from flext_ldap.exceptions import FlextLDAPExceptions
+from flext_ldap.models import FlextLDAPModels
+from flext_ldap.services import FlextLDAPServices
+from flext_ldap.clients import FlextLDAPClient, SCOPE_MAP, LdapScope
+from flext_ldap.operations import FlextLDAPOperations
+from flext_ldap.repositories import FlextLDAPRepositories
+from flext_ldap.value_objects import FlextLDAPValueObjects
+from flext_ldap.domain import FlextLDAPDomain
+from flext_ldap.container import FlextLDAPContainer
+from flext_ldap.settings import FlextLDAPSettings
+from flext_ldap.adapters import FlextLDAPAdapters
+from flext_ldap.fields import FlextLDAPFields
+from flext_ldap.type_guards import FlextLDAPTypeGuards
+from flext_ldap.typings import (
+    FlextLDAPTypes,
+    LdapAttributeDict,
+    LdapAttributeValue,
+    LdapSearchResult,
+    TLdapAttributeValue,
+    TLdapAttributes,
+    TLdapEntryData,
+    TLdapSearchResult
+)
 
 # Version info - handle ImportError gracefully
 try:
@@ -190,8 +152,48 @@ except importlib.metadata.PackageNotFoundError:
 
 __version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
 
-# Add version info to exports
-_final_exports.extend(["__version__", "__version_info__"])
+# Manual __all__ definition for explicit control
+__all__ = [
+    # Version and metadata
+    "__version__",
+    "__version_info__",
 
-# Define __all__ as tuple for linter compatibility
-__all__ = tuple(sorted(set(_final_exports)))
+    # Foundation Layer
+    "FlextLDAPConstants",
+    "FlextLDAPTypes",
+    "LdapAttributeDict",
+    "LdapAttributeValue",
+    "LdapSearchResult",
+    "TLdapAttributeValue",
+    "TLdapAttributes",
+    "TLdapEntryData",
+    "TLdapSearchResult",
+    "FlextLDAPExceptions",
+
+    # Domain Layer
+    "DictEntry",
+    "FlextLDAPEntities",
+    "FlextLDAPValueObjects",
+    "FlextLDAPDomain",
+    "FlextLDAPModels",
+
+    # Application Layer
+    "FlextLDAPServices",
+    "FlextLDAPOperations",
+    "FlextLDAPRepositories",
+    "FlextLDAPApi",
+    "get_flext_ldap_api",
+
+    # Infrastructure Layer
+    "SCOPE_MAP",
+    "FlextLDAPClient",
+    "LdapScope",
+    "FlextLDAPContainer",
+    "FlextLDAPConnectionConfig",
+    "FlextLDAPSettings",
+
+    # Support Layer
+    "FlextLDAPAdapters",
+    "FlextLDAPFields",
+    "FlextLDAPTypeGuards",
+]

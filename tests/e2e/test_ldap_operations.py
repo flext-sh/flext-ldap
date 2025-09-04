@@ -52,7 +52,6 @@ class TestLdapE2EOperations:
             sn="User",
             given_name="Test",
             mail="testuser@example.com",
-            phone="+1-555-0300",
         )
 
         # Test user creation request structure

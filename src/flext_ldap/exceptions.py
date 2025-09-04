@@ -42,7 +42,7 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from flext_core import FlextExceptions, FlextLogger, FlextModels
+from flext_core import FlextLogger, FlextModels
 from pydantic import ConfigDict, Field
 
 from flext_ldap.constants import FlextLDAPConstants
@@ -137,20 +137,9 @@ class FlextLDAPExceptions:
 
         server_uri: str = Field(..., min_length=1)
         error: str = Field(..., min_length=1)
+        bind_dn: str | None = Field(default=None)
         timeout: int | None = Field(default=None, ge=1, le=300)
         retry_count: int | None = Field(default=None, ge=0, le=10)
-
-    class SearchParams(FlextModels.Config):
-        """Parameter Object for search operations - reduces 6+ parameters to 1."""
-
-        model_config = ConfigDict(frozen=True, extra="forbid")
-
-        base_dn: str = Field(..., min_length=1)
-        search_filter: str = Field(..., min_length=1)
-        error: str = Field(..., min_length=1)
-        attributes: list[str] | None = None
-        size_limit: int | None = Field(default=None, ge=1)
-        time_limit: int | None = Field(default=None, ge=1)
 
     class UserOperationParams(FlextModels.Config):
         """Parameter Object for user operations - reduces 6+ parameters to 1."""
@@ -195,6 +184,36 @@ class FlextLDAPExceptions:
                     "context": config.ldap_context,
                 },
             )
+
+        def __str__(self) -> str:
+            """Format exception string including LDAP context metadata."""
+            parts = [super().__str__()]
+
+            if self.operation:
+                parts.append(
+                    FlextLDAPConstants.Operations.OPERATION_CONTEXT.format(
+                        operation=self.operation,
+                    ),
+                )
+
+            if self.ldap_result_code:
+                parts.append(
+                    FlextLDAPConstants.Operations.LDAP_CODE_CONTEXT.format(
+                        ldap_code=self.ldap_result_code,
+                    ),
+                )
+
+            if self.ldap_context:
+                context_str = ", ".join(
+                    f"{k}={v}" for k, v in self.ldap_context.items()
+                )
+                parts.append(
+                    FlextLDAPConstants.Operations.CONTEXT_INFO.format(
+                        context=context_str
+                    ),
+                )
+
+            return " | ".join(parts)
 
     class _BaseSpecificError(Error):
         """Base class for specific LDAP errors - Template Method Pattern.
@@ -339,6 +358,7 @@ class FlextLDAPExceptions:
             message: str,
             *,
             server_uri: str | None = None,
+            bind_dn: str | None = None,
             timeout: int | None = None,
             retry_count: int | None = None,
         ) -> None:
@@ -346,6 +366,8 @@ class FlextLDAPExceptions:
             context: dict[str, object] = {}
             if server_uri:
                 context[FlextLDAPConstants.Operations.SERVER_URI_KEY] = server_uri
+            if bind_dn:
+                context["bind_dn"] = bind_dn
             if timeout:
                 context[FlextLDAPConstants.Operations.TIMEOUT_KEY] = str(timeout)
             if retry_count is not None:
@@ -485,10 +507,15 @@ class FlextLDAPExceptions:
             user_dn: str | None = None,
             uid: str | None = None,
             validation_field: str | None = None,
+            ldap_result_code: str | None = None,
         ) -> None:
             """Initialize user error."""
             super().__init__(
-                message, user_dn=user_dn, uid=uid, validation_field=validation_field
+                message,
+                user_dn=user_dn,
+                uid=uid,
+                validation_field=validation_field,
+                ldap_result_code=ldap_result_code
             )
 
         @override
@@ -697,72 +724,65 @@ class FlextLDAPExceptions:
             cls,
             bind_dn: str,
             ldap_result_code: str | None = None,
-        ) -> FlextExceptions.BaseError:
-            """Create authentication failure exception using FlextExceptions.create() factory."""
+        ) -> FlextLDAPExceptions.AuthenticationError:
+            """Create authentication failure exception."""
             message = "LDAP authentication failed"
             if ldap_result_code and ldap_result_code in cls.LDAP_RESULT_CODES:
                 message += f": {cls.LDAP_RESULT_CODES[ldap_result_code]} (code: {ldap_result_code})"
 
-            return FlextExceptions.create(
+            return FlextLDAPExceptions.AuthenticationError(
                 message,
-                operation="ldap_authenticate",
-                context={
-                    "bind_dn": bind_dn,
-                    "ldap_result_code": ldap_result_code,
-                },
+                bind_dn=bind_dn,
+                ldap_result_code=ldap_result_code,
             )
 
         @classmethod
         def search_failed(
-            cls, params: FlextLDAPExceptions.SearchParams
-        ) -> FlextExceptions.BaseError:
-            """Create search failure using Parameter Object - reduces 6 params to 1."""
-            message = f"LDAP search failed: {params.error}"
-            return FlextExceptions.create(
+            cls,
+            base_dn: str,
+            search_filter: str,
+            error: str,
+            *,
+            ldap_result_code: str | None = None,
+        ) -> FlextLDAPExceptions.SearchError:
+            """Create search failure exception."""
+            message = f"LDAP search failed: {error}"
+            return FlextLDAPExceptions.SearchError(
                 message,
-                operation="ldap_search",
-                context={
-                    "base_dn": params.base_dn,
-                    "search_filter": params.search_filter,
-                    "error": params.error,
-                    "attributes": params.attributes,
-                    "size_limit": params.size_limit,
-                    "time_limit": params.time_limit,
-                },
+                base_dn=base_dn,
+                search_filter=search_filter,
+                ldap_result_code=ldap_result_code,
             )
 
         @classmethod
         def user_creation_failed(
-            cls, params: FlextLDAPExceptions.UserOperationParams
-        ) -> FlextExceptions.BaseError:
-            """Create user creation failure using Parameter Object - reduces 6 params to 1."""
-            message = f"User creation failed: {params.error}"
-            return FlextExceptions.create(
+            cls,
+            user_dn: str,
+            error: str,
+            *,
+            uid: str | None = None,
+            ldap_result_code: str | None = None,
+        ) -> FlextLDAPExceptions.UserError:
+            """Create user creation failure exception."""
+            message = f"User creation failed: {error}"
+            return FlextLDAPExceptions.UserError(
                 message,
-                operation="ldap_create_user",
-                context={
-                    "user_dn": params.user_dn,
-                    "uid": params.uid,
-                    "operation": params.operation,
-                    "error": params.error,
-                },
+                user_dn=user_dn,
+                uid=uid,
+                ldap_result_code=ldap_result_code,
             )
 
         @classmethod
         def validation_failed(
-            cls, params: FlextLDAPExceptions.ValidationParams
-        ) -> FlextExceptions.BaseError:
-            """Create validation failure using Parameter Object - reduces 6 params to 1."""
-            message = f"Validation failed for {params.field_name}: {params.error}"
-            return FlextExceptions.create(
+            cls,
+            field_name: str,
+            error: str,
+        ) -> FlextLDAPExceptions.ValidationError:
+            """Create validation failure exception."""
+            message = f"Validation failed for {field_name}: {error}"
+            return FlextLDAPExceptions.ValidationError(
                 message,
-                operation="field_validation",
-                context={
-                    "field_name": params.field_name,
-                    "error_detail": params.error,
-                    "field_value": params.field_value,
-                    "validation_rule": params.validation_rule,
-                },
+                field_name=field_name,
             )
 
         @classmethod
@@ -772,18 +792,13 @@ class FlextLDAPExceptions:
             error: str,
             *,
             config_section: str | None = None,
-        ) -> FlextExceptions.BaseError:
-            """Create configuration error exception using FlextExceptions.create() factory."""
+        ) -> FlextLDAPExceptions.ConfigurationError:
+            """Create configuration error exception."""
             message = f"Configuration error in {config_key}: {error}"
-            context = {
-                "config_key": config_key,
-                "error_detail": error,
-            }
-            if config_section is not None:
-                context["config_section"] = config_section
-
-            return FlextExceptions.create(
-                message, operation="configuration", context=context
+            return FlextLDAPExceptions.ConfigurationError(
+                message,
+                config_key=config_key,
+                config_section=config_section,
             )
 
 
