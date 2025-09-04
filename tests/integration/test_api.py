@@ -205,7 +205,6 @@ class TestLdapServiceRealOperations:
             sn="User",
             given_name="Real",
             mail="real@example.com",
-            phone="+1-555-0200",
         )
 
         # CREATE: Real user creation

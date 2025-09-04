@@ -11,9 +11,12 @@ from typing import cast
 
 from flext_core import (
     FlextLogger,
+    FlextModels,
+    FlextProcessors,
     FlextProtocols,
     FlextResult,
 )
+from pydantic import ConfigDict, Field
 
 from flext_ldap.clients import FlextLDAPClient
 from flext_ldap.entities import FlextLDAPEntities
@@ -22,6 +25,95 @@ from flext_ldap.typings import LdapAttributeDict
 from flext_ldap.value_objects import FlextLDAPValueObjects
 
 logger = FlextLogger(__name__)
+
+
+# =============================================================================
+# REPOSITORY SEARCH STRATEGIES - Template Method Pattern for Eliminating Duplication
+# =============================================================================
+
+
+class RepositorySearchStrategies:
+    """Strategy classes for eliminating 35-line duplication in repository search methods."""
+
+    class SearchParams(FlextModels.Config):
+        """Parameter Object for repository search operations - reduces complexity."""
+
+        model_config = ConfigDict(frozen=True, extra="forbid")
+
+        identifier: str = Field(
+            ..., min_length=1, description="ID to search for (uid, cn, etc)"
+        )
+        base_dn: str = Field(..., min_length=1, description="Base DN for search")
+        object_class: str = Field(
+            ..., min_length=1, description="LDAP object class filter"
+        )
+        attribute_name: str = Field(
+            ..., min_length=1, description="Attribute to match against"
+        )
+        size_limit: int = Field(default=1, ge=1, le=1000, description="Maximum results")
+        time_limit: int = Field(default=30, ge=1, le=300, description="Search timeout")
+
+    class _BaseSearchProcessor(FlextProcessors.BaseProcessor):
+        """Template Method base class eliminating 35-line duplication across find_* methods."""
+
+        def __init__(self, repo: object) -> None:
+            self._repo = repo
+
+        async def process_search(
+            self, params: "RepositorySearchStrategies.SearchParams"
+        ) -> FlextResult[FlextLDAPEntities.Entry | None]:
+            """Template method implementing common search pattern - eliminates duplication."""
+            # Step 1: Build search request using parameters
+            search_request = self._build_search_request(params)
+
+            # Step 2: Execute search
+            search_result = await self._execute_search(search_request)
+            if not search_result.is_success:
+                return FlextResult[FlextLDAPEntities.Entry | None].fail(
+                    search_result.error or f"{params.object_class} search failed",
+                )
+
+            # Step 3: Process search results
+            if not search_result.value.entries:
+                return FlextResult[FlextLDAPEntities.Entry | None].ok(None)
+
+            # Step 4: Convert entry
+            return await self._convert_entry(search_result.value.entries[0])
+
+        def _build_search_request(
+            self, params: "RepositorySearchStrategies.SearchParams"
+        ) -> FlextLDAPEntities.SearchRequest:
+            """Build search request from parameters."""
+            return FlextLDAPEntities.SearchRequest(
+                base_dn=params.base_dn,
+                scope="subtree",
+                filter_str=f"(&(objectClass={params.object_class})({params.attribute_name}={params.identifier}))",
+                attributes=None,
+                size_limit=params.size_limit,
+                time_limit=params.time_limit,
+            )
+
+        async def _execute_search(
+            self, request: FlextLDAPEntities.SearchRequest
+        ) -> FlextResult:
+            """Execute search using repository."""
+            repo = cast("FlextLDAPRepositories.BaseRepository", self._repo)
+            return await repo.search(request)
+
+        async def _convert_entry(
+            self, entry_data: object
+        ) -> FlextResult[FlextLDAPEntities.Entry | None]:
+            """Convert search result entry to repository entry."""
+            typed_entry_data = cast("dict[str, object]", entry_data)
+            entry_dn = typed_entry_data.get("dn", "")
+
+            if not entry_dn:
+                return FlextResult[FlextLDAPEntities.Entry | None].fail(
+                    "Entry DN not found in search results",
+                )
+
+            repo = cast("FlextLDAPRepositories.BaseRepository", self._repo)
+            return await repo.find_by_dn(str(entry_dn))
 
 
 class FlextLDAPRepositories:
@@ -270,36 +362,20 @@ class FlextLDAPRepositories:
             uid: str,
             base_dn: str,
         ) -> FlextResult[FlextLDAPEntities.Entry | None]:
-            """Find user by UID attribute."""
-            search_request = FlextLDAPEntities.SearchRequest(
+            """Find user by UID attribute using Template Method Pattern - eliminates 35-line duplication."""
+            search_params = RepositorySearchStrategies.SearchParams(
+                identifier=uid,
                 base_dn=base_dn,
-                scope="subtree",
-                filter_str=f"(&(objectClass=inetOrgPerson)(uid={uid}))",
-                attributes=None,
+                object_class="inetOrgPerson",
+                attribute_name="uid",
                 size_limit=1,
                 time_limit=30,
             )
 
-            search_result = await self._repo.search(search_request)
-            if not search_result.is_success:
-                return FlextResult[FlextLDAPEntities.Entry | None].fail(
-                    search_result.error or "User search failed",
-                )
-
-            if not search_result.value.entries:
-                return FlextResult[FlextLDAPEntities.Entry | None].ok(None)
-
-            # Get the first entry and convert to FlextLDAPEntities.Entry
-            entry_data = search_result.value.entries[0]
-            typed_entry_data = entry_data
-            entry_dn = typed_entry_data.get("dn", "")
-
-            if not entry_dn:
-                return FlextResult[FlextLDAPEntities.Entry | None].fail(
-                    "Entry DN not found in search results",
-                )
-
-            return await self._repo.find_by_dn(str(entry_dn))
+            search_processor = RepositorySearchStrategies._BaseSearchProcessor(
+                self._repo
+            )
+            return await search_processor.process_search(search_params)
 
         async def find_users_by_filter(
             self,
@@ -350,36 +426,20 @@ class FlextLDAPRepositories:
             cn: str,
             base_dn: str,
         ) -> FlextResult[FlextLDAPEntities.Entry | None]:
-            """Find group by CN attribute."""
-            search_request = FlextLDAPEntities.SearchRequest(
+            """Find group by CN attribute using Template Method Pattern - eliminates 35-line duplication."""
+            search_params = RepositorySearchStrategies.SearchParams(
+                identifier=cn,
                 base_dn=base_dn,
-                scope="subtree",
-                filter_str=f"(&(objectClass=groupOfNames)(cn={cn}))",
-                attributes=None,
+                object_class="groupOfNames",
+                attribute_name="cn",
                 size_limit=1,
                 time_limit=30,
             )
 
-            search_result = await self._repo.search(search_request)
-            if not search_result.is_success:
-                return FlextResult[FlextLDAPEntities.Entry | None].fail(
-                    search_result.error or "Group search failed",
-                )
-
-            if not search_result.value.entries:
-                return FlextResult[FlextLDAPEntities.Entry | None].ok(None)
-
-            # Get the first entry and convert to FlextLDAPEntities.Entry
-            entry_data = search_result.value.entries[0]
-            typed_entry_data = entry_data
-            entry_dn = typed_entry_data.get("dn", "")
-
-            if not entry_dn:
-                return FlextResult[FlextLDAPEntities.Entry | None].fail(
-                    "Entry DN not found in search results",
-                )
-
-            return await self._repo.find_by_dn(str(entry_dn))
+            search_processor = RepositorySearchStrategies._BaseSearchProcessor(
+                self._repo
+            )
+            return await search_processor.process_search(search_params)
 
         async def get_group_members(self, group_dn: str) -> FlextResult[list[str]]:
             """Get members of a group."""

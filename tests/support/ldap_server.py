@@ -3,9 +3,11 @@
 import asyncio
 
 import docker
+import ldap3
 from flext_core import FlextLogger, FlextResult
 
 from flext_ldap import FlextLDAPConnectionConfig
+from tests.support.test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
 
 logger = FlextLogger(__name__)
 
@@ -68,7 +70,7 @@ class LdapTestServer:
             # Wait for server to be ready
             if await self.wait_for_ready():
                 logger.info("LDAP test server started successfully")
-                return FlextResult.ok(True)
+                return FlextResult.ok(data=True)
             return FlextResult.error("LDAP server failed to start within timeout")
 
         except Exception as e:
@@ -89,7 +91,7 @@ class LdapTestServer:
                 logger.debug("No existing container found")
 
             self._container = None
-            return FlextResult.ok(True)
+            return FlextResult.ok(data=True)
 
         except Exception as e:
             logger.exception("Failed to stop LDAP server")
@@ -97,7 +99,7 @@ class LdapTestServer:
 
     async def wait_for_ready(self, timeout_seconds: int = 60) -> bool:
         """Wait for LDAP server to be ready."""
-        import ldap3
+        # ldap3 already imported at top
 
         try:
             async with asyncio.timeout(timeout_seconds):
@@ -141,9 +143,7 @@ class LdapTestServer:
     async def setup_test_data(self) -> FlextResult[bool]:
         """Setup initial test data in LDAP server."""
         try:
-            import ldap3
-
-            from tests.support.test_data import TEST_GROUPS, TEST_OUS, TEST_USERS
+            # ldap3 and test_data already imported at top
 
             # Connect to LDAP server
             server = ldap3.Server(
@@ -186,7 +186,7 @@ class LdapTestServer:
 
             conn.unbind()
             logger.info("Test data setup completed")
-            return FlextResult.ok(True)
+            return FlextResult.ok(data=True)
 
         except Exception as e:
             logger.exception("Failed to setup test data")
@@ -220,7 +220,7 @@ async def wait_for_ldap_server(
     host: str = "localhost", port: int = 3390, timeout_seconds: int = 60
 ) -> bool:
     """Wait for LDAP server to be available."""
-    import ldap3
+    # ldap3 already imported at top
 
     try:
         async with asyncio.timeout(timeout_seconds):

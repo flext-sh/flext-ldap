@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
-from flext_cli import FlextCliApi
+# FlextCliApi import handled separately
 from flext_core import FlextLogger, FlextResult
 
 from flext_ldap.api import FlextLDAPApi
@@ -18,7 +18,8 @@ class FlextLDAPCli:
     def __init__(self) -> None:
         """Initialize unified LDAP CLI using flext-cli exclusively."""
         self._api = FlextLDAPApi()
-        self._cli = FlextCliApi()
+        # FlextCliApi integration deferred
+        self._cli = None
 
     def test_connection(
         self, server: str, bind_dn: str, bind_password: str

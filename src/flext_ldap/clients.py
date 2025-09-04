@@ -39,7 +39,7 @@ from typing import Literal, cast
 from urllib.parse import urlparse
 
 import ldap3
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextProcessors, FlextResult
 from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE, Connection
 from ldap3.core.exceptions import LDAPException
 
@@ -63,6 +63,132 @@ SCOPE_MAP: dict[str, LdapScope] = {
     "subtree": cast("LdapScope", SUBTREE),
     "subordinates": cast("LdapScope", SUBTREE),
 }
+
+
+# =============================================================================
+# LDAP SEARCH STRATEGIES - Strategy Pattern for Complex Operations
+# =============================================================================
+
+
+class LDAPSearchStrategies:
+    """Strategy classes for decomposing complex LDAP search operations."""
+
+    class SearchExecutionStrategy(FlextProcessors.BaseProcessor):
+        """Strategy for executing LDAP search operations with proper error handling."""
+
+        def __init__(self, connection: Connection | None) -> None:
+            self.connection = connection
+
+        def process_data(
+            self, entry: FlextLDAPEntities.SearchRequest
+        ) -> FlextResult[dict[str, object]]:
+            """Execute LDAP search and return raw ldap3 results."""
+            if not self.connection or not getattr(self.connection, "bound", False):
+                return FlextResult[dict[str, object]].fail(
+                    "Not connected to LDAP server"
+                )
+
+            try:
+                # Map scope to ldap3 constant
+                scope: LdapScope = SCOPE_MAP.get(
+                    entry.scope.lower(), cast("LdapScope", ldap3.SUBTREE)
+                )
+
+                # Execute search using ldap3 directly
+                connection_obj: object = cast("object", self.connection)
+                search_method = getattr(connection_obj, "search")
+                search_result: object = search_method(
+                    search_base=entry.base_dn,
+                    search_filter=entry.filter_str,
+                    search_scope=scope,
+                    attributes=entry.attributes or ALL_ATTRIBUTES,
+                    size_limit=entry.size_limit,
+                    time_limit=entry.time_limit,
+                )
+
+                success = bool(search_result)
+                if not success:
+                    connection = cast("Connection", connection_obj)
+                    error_message = str(
+                        connection.result.get("message", "Search failed")
+                    )
+                    return FlextResult[dict[str, object]].fail(
+                        f"Search failed: {error_message}"
+                    )
+
+                return FlextResult[dict[str, object]].ok(
+                    {"success": success, "connection": self.connection}
+                )
+
+            except LDAPException as e:
+                return FlextResult[dict[str, object]].fail(f"LDAP search failed: {e}")
+            except Exception as e:
+                return FlextResult[dict[str, object]].fail(f"Search error: {e}")
+
+    class EntryConversionStrategy(FlextProcessors.BaseProcessor):
+        """Strategy for converting raw LDAP entries to structured format."""
+
+        def process_data(
+            self, entry: Connection
+        ) -> FlextResult[dict[str, object]]:
+            """Convert ldap3 entries to LdapSearchResult format."""
+            try:
+                entries: list[LdapSearchResult] = []
+                connection_entries = entry.entries if entry else []
+
+                for entry in connection_entries:
+                    # Get DN directly from ldap3 entry
+                    entry_dn = str(entry.entry_dn) if hasattr(entry, "entry_dn") else ""
+                    entry_data: LdapSearchResult = {"dn": entry_dn}
+
+                    # Process attributes using strategy pattern
+                    entry_attributes = (
+                        list(entry.entry_attributes.keys())
+                        if hasattr(entry, "entry_attributes")
+                        else []
+                    )
+                    for attr_name in entry_attributes:
+                        attr_values = (
+                            entry.entry_attributes.get(attr_name, [])
+                            if hasattr(entry, "entry_attributes")
+                            else []
+                        )
+                        if len(attr_values) == 1:
+                            entry_data[attr_name] = attr_values[0]
+                        elif attr_values:  # Only add non-empty lists
+                            entry_data[attr_name] = attr_values
+                    entries.append(entry_data)
+
+                return FlextResult[dict[str, object]].ok({"entries": entries})
+
+            except Exception as e:
+                return FlextResult[dict[str, object]].fail(
+                    f"Entry conversion error: {e}"
+                )
+
+    class ResponseBuilderStrategy(FlextProcessors.BaseProcessor):
+        """Strategy for building final search response objects."""
+
+        def process_data(
+            self, entry: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
+            """Build SearchResponse from processed entries and request data."""
+            try:
+                entries = cast("list[LdapSearchResult]", entry.get("entries", []))
+                request = cast("FlextLDAPEntities.SearchRequest", entry.get("request"))
+
+                response = FlextLDAPEntities.SearchResponse(
+                    entries=entries,
+                    total_count=len(entries),
+                    has_more=len(entries) >= request.size_limit,
+                )
+
+                return FlextResult[dict[str, object]].ok({"response": response})
+
+            except Exception as e:
+                return FlextResult[dict[str, object]].fail(
+                    f"Response building error: {e}"
+                )
 
 
 # =============================================================================
@@ -246,7 +372,7 @@ class FlextLDAPClient:
         self,
         request: FlextLDAPEntities.SearchRequest,
     ) -> FlextResult[FlextLDAPEntities.SearchResponse]:
-        """Perform LDAP search with comprehensive result handling.
+        """Perform LDAP search with comprehensive result handling using Strategy Pattern.
 
         Args:
             request: Search request with filters, scope, and attributes
@@ -255,95 +381,60 @@ class FlextLDAPClient:
             FlextResult containing search response or error information
 
         """
-        if not self._connection or not self._connection.bound:
-            return FlextResult[FlextLDAPEntities.SearchResponse].fail(
-                "Not connected to LDAP server",
-            )
-
         try:
-            # Map scope to ldap3 constant
-            scope: LdapScope = SCOPE_MAP.get(
-                request.scope.lower(), cast("LdapScope", ldap3.SUBTREE)
+            # Strategy 1: Execute LDAP search
+            search_strategy = LDAPSearchStrategies.SearchExecutionStrategy(
+                self._connection
             )
+            execution_result = search_strategy.process_data(request)
 
-            # Use utility to safely handle ldap3 search result
-            connection_obj: object = cast("object", self._connection)
-            search_attr_name = "search"  # Dynamic attribute name to avoid B009
-            search_method = getattr(connection_obj, search_attr_name)
-            search_result: object = search_method(
-                search_base=request.base_dn,
-                search_filter=request.filter_str,
-                search_scope=scope,
-                attributes=request.attributes or ALL_ATTRIBUTES,
-                size_limit=request.size_limit,
-                time_limit=request.time_limit,
-            )
-            # Use ldap3 search result directly
-            success = bool(search_result)
-
-            if not success:
-                # Get error from connection result directly
-                connection = cast("Connection", connection_obj)
-                error_message = str(connection.result.get("message", "Search failed"))
+            if not execution_result.is_success:
                 return FlextResult[FlextLDAPEntities.SearchResponse].fail(
-                    f"Search failed: {error_message}"
+                    execution_result.error or "Search execution failed"
                 )
 
-            # Convert entries to our format using utilities
-            entries: list[LdapSearchResult] = []
-            # Use ldap3 entries directly
-            connection_entries = self._connection.entries if self._connection else []
-
-            for entry in connection_entries:
-                # Get DN directly from ldap3 entry
-                entry_dn = str(entry.entry_dn) if hasattr(entry, "entry_dn") else ""
-                entry_data: LdapSearchResult = {"dn": entry_dn}
-
-                # Get attribute names directly from ldap3 entry
-                entry_attributes = (
-                    list(entry.entry_attributes.keys())
-                    if hasattr(entry, "entry_attributes")
-                    else []
+            # Strategy 2: Convert entries to structured format
+            if self._connection is None:
+                return FlextResult[FlextLDAPEntities.SearchResponse].fail(
+                    "No active connection available"
                 )
-                for attr_name in entry_attributes:
-                    # Get attribute values directly from ldap3 entry
-                    attr_values = (
-                        entry.entry_attributes.get(attr_name, [])
-                        if hasattr(entry, "entry_attributes")
-                        else []
-                    )
-                    if len(attr_values) == 1:
-                        entry_data[attr_name] = attr_values[0]
-                    elif attr_values:  # Only add non-empty lists
-                        entry_data[attr_name] = attr_values
-                entries.append(entry_data)
 
-            response = FlextLDAPEntities.SearchResponse(
-                entries=entries,
-                total_count=len(entries),
-                has_more=len(entries) >= request.size_limit,
-            )
+            conversion_strategy = LDAPSearchStrategies.EntryConversionStrategy()
+            entries_result = conversion_strategy.process_data(self._connection)
 
+            if not entries_result.is_success:
+                return FlextResult[FlextLDAPEntities.SearchResponse].fail(
+                    entries_result.error or "Entry conversion failed"
+                )
+
+            # Strategy 3: Build final response
+            response_strategy = LDAPSearchStrategies.ResponseBuilderStrategy()
+            response_data = {"entries": entries_result.value, "request": request}
+            response_result = response_strategy.process_data(response_data)
+
+            if not response_result.is_success:
+                return FlextResult[FlextLDAPEntities.SearchResponse].fail(
+                    response_result.error or "Response building failed"
+                )
+
+            # Log success with structured data
             logger.debug(
-                "Search completed",
+                "Search completed using Strategy Pattern",
                 extra={
                     "base_dn": request.base_dn,
                     "filter": request.filter_str,
-                    "count": len(entries),
+                    "count": len(entries_result.value),
                 },
             )
 
-            return FlextResult[FlextLDAPEntities.SearchResponse].ok(response)
+            return response_result
 
-        except LDAPException as e:
-            logger.exception("LDAP search failed", extra={"error": str(e)})
-            return FlextResult[FlextLDAPEntities.SearchResponse].fail(
-                f"Search failed: {e}"
-            )
         except Exception as e:
-            logger.exception("Unexpected search error", extra={"error": str(e)})
+            logger.exception(
+                "Unexpected search strategy error", extra={"error": str(e)}
+            )
             return FlextResult[FlextLDAPEntities.SearchResponse].fail(
-                f"Search error: {e}"
+                f"Search strategy error: {e}"
             )
 
     # =========================================================================

@@ -150,29 +150,18 @@ class FlextLDAPApi:
 
     async def search(
         self,
-        base_dn: str,
-        search_filter: str = "(objectClass=*)",
-        *,
-        attributes: list[str] | None = None,
-        scope: str = "subtree",
-        size_limit: int = 1000,
-        time_limit: int = 30,
+        search_request: FlextLDAPEntities.SearchRequest,
     ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
-        """Search LDAP directory using proper architecture."""
-        # Import cast for type handling
-        from typing import cast
+        """Search LDAP directory using Parameter Object Pattern.
 
-        # Create search request
-        search_request = FlextLDAPEntities.SearchRequest(
-            base_dn=base_dn,
-            scope=scope,
-            filter_str=search_filter,
-            attributes=attributes,
-            size_limit=size_limit,
-            time_limit=time_limit,
-        )
+        Args:
+            search_request: Encapsulated search parameters with validation
 
-        # Execute search via service
+        Returns:
+            FlextResult containing search results or error
+
+        """
+        # Execute search via service - eliminates parameter mapping duplication
         search_result = await self._service.search(search_request)
         if not search_result.is_success:
             return FlextResult[list[FlextLDAPEntities.Entry]].fail(
@@ -217,6 +206,38 @@ class FlextLDAPApi:
 
         return FlextResult[list[FlextLDAPEntities.Entry]].ok(entries)
 
+    # Convenience methods using factory patterns from SearchRequest
+    async def search_simple(
+        self,
+        base_dn: str,
+        search_filter: str = "(objectClass=*)",
+        *,
+        scope: str = "subtree",
+        attributes: list[str] | None = None,
+    ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
+        """Simplified search interface using factory method pattern."""
+        # Use factory method from SearchRequest for convenience
+        search_request = FlextLDAPEntities.SearchRequest(
+            base_dn=base_dn,
+            filter_str=search_filter,
+            scope=scope,
+            attributes=attributes,
+            size_limit=1000,
+            time_limit=30,
+        )
+        return await self.search(search_request)
+
+    async def search_users(
+        self,
+        base_dn: str,
+        uid: str | None = None,
+    ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
+        """Search users using factory method for common pattern."""
+        search_request = FlextLDAPEntities.SearchRequest.create_user_search(
+            base_dn=base_dn, uid=uid
+        )
+        return await self.search(search_request)
+
     # User Operations
 
     async def create_user(
@@ -244,7 +265,7 @@ class FlextLDAPApi:
         result = await self._service.delete_user(dn)
         return result.map(lambda _: None)
 
-    async def search_users(
+    async def search_users_by_filter(
         self,
         filter_str: str,
         base_dn: str,

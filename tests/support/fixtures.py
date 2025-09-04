@@ -8,6 +8,7 @@ import pytest
 from flext_core import FlextLogger
 
 from flext_ldap import FlextLDAPApi, FlextLDAPConnectionConfig
+from .helpers import cleanup_test_entries, search_entries
 
 from .ldap_server import LdapTestServer, get_test_ldap_config
 from .test_data import SAMPLE_GROUP_ENTRY, SAMPLE_USER_ENTRY, TEST_GROUPS, TEST_USERS
@@ -56,25 +57,25 @@ async def ldap_api(
 
 
 @pytest.fixture
-def test_user_data() -> dict[str, Any]:
+def test_user_data() -> dict[str, object]:
     """Get test user data."""
     return SAMPLE_USER_ENTRY.copy()
 
 
 @pytest.fixture
-def test_group_data() -> dict[str, Any]:
+def test_group_data() -> dict[str, object]:
     """Get test group data."""
     return SAMPLE_GROUP_ENTRY.copy()
 
 
 @pytest.fixture
-def multiple_test_users() -> list[dict[str, Any]]:
+def multiple_test_users() -> list[dict[str, object]]:
     """Get multiple test users data."""
     return [user.copy() for user in TEST_USERS]
 
 
 @pytest.fixture
-def multiple_test_groups() -> list[dict[str, Any]]:
+def multiple_test_groups() -> list[dict[str, object]]:
     """Get multiple test groups data."""
     return [group.copy() for group in TEST_GROUPS]
 
@@ -101,7 +102,7 @@ async def clean_ldap_state(
     ldap_connection: FlextLDAPConnectionConfig,
 ) -> AsyncGenerator[None]:
     """Ensure clean LDAP state for each test."""
-    from .helpers import cleanup_test_entries, search_entries
+    # helpers already imported at top
 
     # Clean up before test
     search_result = await search_entries(
