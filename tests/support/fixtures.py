@@ -2,14 +2,13 @@
 
 import asyncio
 from collections.abc import AsyncGenerator, Generator
-from typing import Any
 
 import pytest
 from flext_core import FlextLogger
 
 from flext_ldap import FlextLDAPApi, FlextLDAPConnectionConfig
-from .helpers import cleanup_test_entries, search_entries
 
+from .helpers import cleanup_test_entries, search_entries
 from .ldap_server import LdapTestServer, get_test_ldap_config
 from .test_data import SAMPLE_GROUP_ENTRY, SAMPLE_USER_ENTRY, TEST_GROUPS, TEST_USERS
 

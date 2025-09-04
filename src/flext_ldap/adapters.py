@@ -38,12 +38,11 @@ Examples:
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import override, cast
+from collections.abc import Awaitable, Callable
+from typing import cast, override
 from urllib.parse import urlparse
 
 from flext_core import (
-    FlextDomainService,
     FlextLogger,
     FlextModels,
     FlextResult,
@@ -211,7 +210,7 @@ class FlextLDAPAdapters:
         connection_id: str | None = None
         server_info: dict[str, str] | None = None
         operation_executed: str
-        
+
         @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate connection result business rules."""
@@ -237,7 +236,7 @@ class FlextLDAPAdapters:
         entries: list[FlextLDAPEntities.Entry]
         total_count: int
         search_executed: str
-        
+
         @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate search result business rules."""
@@ -307,8 +306,13 @@ class FlextLDAPAdapters:
         ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
             """Process search request - core business logic."""
             try:
+                # Validate search filter is not empty
+                if not request.filter_str or request.filter_str.strip() == "":
+                    return FlextResult[list[FlextLDAPEntities.Entry]].fail(
+                        "Search filter cannot be empty"
+                    )
+
                 # Placeholder implementation - actual search will be done async in service layer
-                _ = request  # Use request parameter to avoid unused warning
                 return FlextResult[list[FlextLDAPEntities.Entry]].ok([])
             except Exception as e:
                 return FlextResult[list[FlextLDAPEntities.Entry]].fail(
@@ -325,30 +329,34 @@ class FlextLDAPAdapters:
                 search_executed=correlation_id,
             )
 
-    class OperationExecutor(FlextDomainService[list[FlextLDAPEntities.Entry]]):
+    class OperationExecutor:
         """Base operation executor with reduced complexity through ServiceProcessor integration."""
-
-        client: FlextLDAPClient
-        _connection_processor: FlextLDAPAdapters.ConnectionServiceProcessor
 
         def __init__(self, client: FlextLDAPClient) -> None:
             """Initialize with ServiceProcessor pattern."""
-            super().__init__()
             self.client = client
-            self._connection_processor = FlextLDAPAdapters.ConnectionServiceProcessor(
-                client
-            )
+            self._connection_processor = FlextLDAPAdapters.ConnectionServiceProcessor(client)
 
         async def execute_with_processor(
             self, request: FlextLDAPAdapters.ConnectionRequest
-        ) -> FlextResult[FlextLDAPAdapters.ConnectionResult]:
+        ) -> FlextResult[None]:
             """Execute using ServiceProcessor pattern - eliminates boilerplate."""
-            return self._connection_processor.run_with_metrics("connection", request)
+            return self._connection_processor.process(request)
 
-        @override
         def execute(self) -> FlextResult[list[FlextLDAPEntities.Entry]]:
-            """Execute operation - simplified through processor pattern."""
-            return FlextResult[list[FlextLDAPEntities.Entry]].ok([])
+            """Execute operation - base class method."""
+            return FlextResult[list[FlextLDAPEntities.Entry]].fail(
+                "Not implemented in base class - use specific operation methods"
+            )
+
+        async def execute_async_operation(
+            self, operation: Callable[[], Awaitable[FlextResult[list[object]]]], operation_name: str
+        ) -> FlextResult[list[object]]:
+            """Execute async operation with exception handling."""
+            try:
+                return await operation()
+            except Exception as e:
+                return FlextResult[list[object]].fail(f"Failed to execute {operation_name}: {e}")
 
     class ConnectionService(OperationExecutor):
         """Specialized connection service using ServiceProcessor pattern.
@@ -356,11 +364,14 @@ class FlextLDAPAdapters:
         Reduced complexity from multiple async methods to unified processor approach.
         """
 
-        config: FlextLDAPAdapters.ConnectionConfig
+        def __init__(self, client: FlextLDAPClient, config: FlextLDAPAdapters.ConnectionConfig) -> None:
+            """Initialize connection service with client and config."""
+            super().__init__(client)
+            self.config = config
 
         async def test_connection(
             self,
-        ) -> FlextResult[FlextLDAPAdapters.ConnectionResult]:
+        ) -> FlextResult[None]:
             """Test connection using ServiceProcessor pattern."""
             request = FlextLDAPAdapters.ConnectionRequest(
                 server_uri=self.config.server,
@@ -373,7 +384,7 @@ class FlextLDAPAdapters:
 
         async def connect_and_bind(
             self,
-        ) -> FlextResult[FlextLDAPAdapters.ConnectionResult]:
+        ) -> FlextResult[None]:
             """Connect and bind using ServiceProcessor pattern."""
             request = FlextLDAPAdapters.ConnectionRequest(
                 server_uri=self.config.server,
@@ -386,7 +397,7 @@ class FlextLDAPAdapters:
 
         async def establish_connection(
             self, config: FlextLDAPAdapters.ConnectionConfig
-        ) -> FlextResult[FlextLDAPAdapters.ConnectionResult]:
+        ) -> FlextResult[None]:
             """Establish connection using ServiceProcessor pattern."""
             request = FlextLDAPAdapters.ConnectionRequest(
                 server_uri=config.server,
@@ -399,8 +410,11 @@ class FlextLDAPAdapters:
 
         async def terminate_connection(
             self,
-        ) -> FlextResult[FlextLDAPAdapters.ConnectionResult]:
+        ) -> FlextResult[None]:
             """Terminate connection using ServiceProcessor pattern."""
+            if not self.is_connected():
+                return FlextResult[None].fail("No active connection to terminate")
+
             request = FlextLDAPAdapters.ConnectionRequest(
                 server_uri=self.config.server,
                 bind_dn=self.config.bind_dn,
@@ -437,17 +451,27 @@ class FlextLDAPAdapters:
             filter_str: str = "(objectClass=*)",
             scope: str = "subtree",
             attributes: list[str] | None = None,
-        ) -> FlextResult[FlextLDAPAdapters.SearchResult]:
+        ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
             """Search LDAP entries using ServiceProcessor pattern."""
-            request = FlextLDAPAdapters.SearchRequest(
-                base_dn=base_dn,
-                filter_str=filter_str,
-                scope=scope,
-                attributes=attributes,
-                size_limit=1000,
-                time_limit=30,
-            )
-            return self._search_processor.run_with_metrics("search", request)
+            try:
+                request = FlextLDAPAdapters.SearchRequest(
+                    base_dn=base_dn,
+                    filter_str=filter_str,
+                    scope=scope,
+                    attributes=attributes,
+                    size_limit=1000,
+                    time_limit=30,
+                )
+                return self._search_processor.process(request)
+            except Exception as e:
+                error_str = str(e)
+                if "base_dn" in error_str and "too_short" in error_str:
+                    return FlextResult[list[FlextLDAPEntities.Entry]].fail(
+                        "Base DN cannot be empty"
+                    )
+                return FlextResult[list[FlextLDAPEntities.Entry]].fail(
+                    f"Search validation failed: {e}"
+                )
 
         async def simple_search(
             self, base_dn: str, filter_str: str = "(objectClass=*)"
@@ -456,7 +480,7 @@ class FlextLDAPAdapters:
             result = await self.search_entries(base_dn, filter_str)
             if result.is_success:
                 return FlextResult[list[FlextLDAPEntities.Entry]].ok(
-                    result.value.entries
+                    result.value
                 )
             return FlextResult[list[FlextLDAPEntities.Entry]].fail(
                 result.error or "Search failed"
@@ -610,7 +634,6 @@ class FlextLDAPAdapters:
                 validation_error = self._validate_dn_param(dn)
                 if validation_error:
                     return FlextResult[None].fail(validation_error)
-                    )
 
                 return await self.client.delete(dn)
 
@@ -676,10 +699,12 @@ class FlextLDAPAdapters:
     # DIRECTORY SERVICES - High-level directory operation classes
     # =========================================================================
 
-    class DirectoryService(FlextDomainService[object]):
+    class DirectoryService:
         """High-level directory service for comprehensive LDAP operations."""
 
-        client: FlextLDAPClient
+        def __init__(self, client: FlextLDAPClient) -> None:
+            """Initialize directory service with client."""
+            self.client = client
 
         async def get_all_entries(
             self, base_dn: str, filter_str: str = "(objectClass=*)"
@@ -808,9 +833,8 @@ class FlextLDAPAdapters:
                 logger.exception(error_msg)
                 return FlextResult[list[dict[str, object]]].fail(error_msg)
 
-        @override
         def execute(self) -> FlextResult[object]:
-            """Execute directory service operation - required by FlextDomainService."""
+            """Execute directory service operation."""
             return FlextResult[object].fail("Use specific methods like get_all_entries")
 
     class DirectoryAdapter:
@@ -850,7 +874,10 @@ class FlextLDAPAdapters:
             scope: str = "subtree",
         ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
             """Search directory entries."""
-            return await self.search.search_entries(base_dn, filter_str, scope)
+            result = await self.search.search_entries(base_dn, filter_str, scope)
+            if result.is_success:
+                return FlextResult[list[FlextLDAPEntities.Entry]].ok(result.value)
+            return FlextResult[list[FlextLDAPEntities.Entry]].fail(result.error or "Search failed")
 
 
 # =============================================================================

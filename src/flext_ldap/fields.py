@@ -201,14 +201,6 @@ class FlextLDAPFields:
     # CONSTANTS - Field-related constants
     # =========================================================================
 
-    class Constants:
-        """Field-related constants."""
-
-        MIN_PASSWORD_LENGTH = 6
-        MAX_PASSWORD_LENGTH = 128
-        DEFAULT_STRING_LENGTH = 255
-        DEFAULT_TEXT_LENGTH = 1024
-
 
 # =============================================================================
 # MODULE EXPORTS - Following flext-core pattern: only main class

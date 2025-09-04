@@ -9,7 +9,7 @@ CONSOLIDATED CLASSES: FlextLDAPOperationsService + FlextLDAPConnectionOperations
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import ClassVar, cast
+from typing import cast
 
 from flext_core import (
     FlextDomainService,
@@ -34,16 +34,8 @@ logger = FlextLogger(__name__)
 # =============================================================================
 
 
-class SearchParams(FlextModels.Config):
-    """Parameter Object for search operations - reduces 7 params to 1."""
-
-    connection_id: str = Field(..., min_length=1)
-    base_dn: str = Field(..., min_length=1)
-    search_filter: str = Field(default="(objectClass=*)", min_length=1)
-    scope: str = Field(default="subtree", pattern=r"^(base|one|subtree)$")
-    attributes: list[str] | None = None
-    size_limit: int = Field(default=1000, gt=0, le=10000)
-    time_limit: int = Field(default=30, gt=0, le=300)
+# SearchParams moved to entities.py to eliminate duplication
+# Use FlextLDAPEntities.SearchParams instead
 
 
 class UserConversionParams(FlextModels.Config):
@@ -474,7 +466,7 @@ class FlextLDAPOperations:
 
         async def search_entries(
             self,
-            params: SearchParams,
+            params: FlextLDAPEntities.SearchParams,
         ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
             """Search for LDAP entries - REFACTORED with shared validation."""
             try:
@@ -533,7 +525,7 @@ class FlextLDAPOperations:
                 base_filter = self._build_user_filter(filter_criteria)
 
                 # Use general search and convert to users
-                search_params = SearchParams(
+                search_params = FlextLDAPEntities.SearchParams(
                     connection_id=connection_id,
                     base_dn=base_dn,
                     search_filter=base_filter,
@@ -584,7 +576,7 @@ class FlextLDAPOperations:
                 base_filter = self._build_group_filter(filter_criteria)
 
                 # Use general search and convert to groups
-                search_params = SearchParams(
+                search_params = FlextLDAPEntities.SearchParams(
                     connection_id=connection_id,
                     base_dn=base_dn,
                     search_filter=base_filter,
@@ -629,7 +621,7 @@ class FlextLDAPOperations:
             attributes: list[str] | None = None,
         ) -> FlextResult[FlextLDAPEntities.Entry]:
             """Get a single entry by DN - REFACTORED."""
-            search_params = SearchParams(
+            search_params = FlextLDAPEntities.SearchParams(
                 connection_id=connection_id,
                 base_dn=dn,
                 search_filter="(objectClass=*)",
@@ -905,8 +897,6 @@ class FlextLDAPOperations:
     class UserOperations(OperationsService):
         """Internal specialized user management operations class."""
 
-        MIN_PASSWORD_LENGTH: ClassVar[int] = 6
-
         # Private attribute for entry operations
         _entry_ops: object | None = PrivateAttr(default=None)
 
@@ -980,9 +970,9 @@ class FlextLDAPOperations:
             new_password: str,
         ) -> FlextResult[None]:
             """Update user password - REFACTORED with validation."""
-            if not new_password or len(new_password) < self.MIN_PASSWORD_LENGTH:
+            if not new_password or len(new_password) < FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH:
                 return FlextResult[None].fail(
-                    f"Password must be at least {self.MIN_PASSWORD_LENGTH} characters",
+                    f"Password must be at least {FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH} characters",
                 )
 
             modifications: dict[str, object] = {"userPassword": [new_password]}
@@ -1578,7 +1568,7 @@ class FlextLDAPOperations:
         attributes: list[str] | None = None,
     ) -> FlextResult[FlextLDAPEntities.Entry | None]:
         """Search and return first matching entry."""
-        search_params = SearchParams(
+        search_params = FlextLDAPEntities.SearchParams(
             connection_id=connection_id,
             base_dn=base_dn,
             search_filter=search_filter,

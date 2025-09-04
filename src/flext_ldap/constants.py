@@ -232,6 +232,7 @@ class FlextLDAPConstants(FlextConstants):
         MAX_FILTER_NESTING_DEPTH: Final[int] = 10
         MIN_PASSWORD_LENGTH: Final[int] = 8
         MAX_PASSWORD_LENGTH: Final[int] = 128
+        MIN_DN_PARTS: Final[int] = 2
         REQUIRE_PASSWORD_COMPLEXITY: Final[bool] = True
         EMAIL_PATTERN: Final[str] = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 

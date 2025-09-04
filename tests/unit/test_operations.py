@@ -16,6 +16,8 @@ from flext_ldap import (
     FlextLDAPOperations,
 )
 from flext_ldap.entities import FlextLDAPEntities
+
+# SearchParams moved to entities.py
 from flext_ldap.typings import LdapAttributeDict
 
 
@@ -313,11 +315,13 @@ class TestFlextLDAPSearchOperationsReal:
         """Test entry search with valid parameters - real execution."""
         ops = FlextLDAPOperations.SearchOperations()
 
-        result = await ops.search_entries(
+        params = FlextLDAPEntities.SearchParams(
             connection_id="test_conn",
             base_dn="dc=example,dc=com",
             search_filter="(objectClass=*)",
         )
+
+        result = await ops.search_entries(params)
 
         # Should succeed but return empty results (no real LDAP)
         assert result.is_success
@@ -330,11 +334,12 @@ class TestFlextLDAPSearchOperationsReal:
         ops = FlextLDAPOperations.SearchOperations()
 
         # This should return a failed result rather than raise
-        result = await ops.search_entries(
+        search_params = FlextLDAPEntities.SearchParams(
             connection_id="test_conn",
             base_dn="invalid_dn",  # Invalid DN format
             search_filter="(objectClass=*)",
         )
+        result = await ops.search_entries(search_params)
 
         # Should handle gracefully and return failed result
         assert not result.is_success or result.value == []

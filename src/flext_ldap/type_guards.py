@@ -27,6 +27,7 @@ from __future__ import annotations
 
 from typing import TypeGuard, cast
 
+from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.typings import (
     TLdapAttributes,
     TLdapAttributeValue,
@@ -41,9 +42,6 @@ class FlextLDAPTypeGuards:
     Provides static methods for type checking LDAP-specific data structures.
     Eliminates all standalone functions and provides clean class-based API.
     """
-
-    # Constants for DN validation
-    MIN_DN_PARTS: int = 2
 
     @staticmethod
     def is_ldap_dn(value: object) -> TypeGuard[str]:
@@ -65,7 +63,7 @@ class FlextLDAPTypeGuards:
 
         # Check for basic DN format: attr=value
         parts = value.split("=")
-        if len(parts) < FlextLDAPTypeGuards.MIN_DN_PARTS:
+        if len(parts) < FlextLDAPConstants.LdapValidation.MIN_DN_PARTS:
             return False
 
         # Must have non-empty attribute name and value

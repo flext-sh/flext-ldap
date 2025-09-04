@@ -442,7 +442,29 @@ class FlextLDAPApi:
         return cls(config)
 
 
+def get_flext_ldap_api(config: FlextLDAPSettings | None = None) -> FlextLDAPApi:
+    """Get FlextLDAP API instance - factory function following flext-core pattern.
+
+    Convenience function that wraps FlextLDAPApi.create() for consistent
+    factory pattern usage across the FLEXT ecosystem.
+
+    Args:
+        config: Optional LDAP configuration. If None, uses environment variables.
+
+    Returns:
+        Configured FlextLDAPApi instance ready for LDAP operations.
+
+    Example:
+        >>> from flext_ldap import get_flext_ldap_api
+        >>> api = get_flext_ldap_api()
+        >>> result = await api.connect("ldap://server", "cn=admin", "password")
+
+    """
+    return FlextLDAPApi.create(config)
+
+
 # Export main API following flext-core pattern
 __all__ = [
     "FlextLDAPApi",
+    "get_flext_ldap_api",
 ]

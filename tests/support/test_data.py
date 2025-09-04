@@ -1,6 +1,5 @@
 """Test data for LDAP testing."""
 
-from typing import Any
 
 # Sample LDAP entries for testing
 SAMPLE_USER_ENTRY: dict[str, object] = {
