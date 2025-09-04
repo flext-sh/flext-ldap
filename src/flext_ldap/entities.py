@@ -40,14 +40,15 @@ Examples:
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Literal, override
+from typing import Annotated, Literal, Self, override
 
 from flext_core import (
     FlextLogger,
     FlextModels,
     FlextResult,
+    FlextValidations,
 )
-from pydantic import Field, computed_field, field_validator
+from pydantic import ConfigDict, Field, computed_field, field_validator
 
 from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue
 from flext_ldap.value_objects import FlextLDAPValueObjects
@@ -105,30 +106,59 @@ class FlextLDAPEntities:
     # =========================================================================
 
     class SearchRequest(FlextModels.Value):
-        """Request model for LDAP search operations."""
+        """Request model for LDAP search operations with Python 3.13 + Pydantic v2 patterns."""
 
-        base_dn: str = Field(..., description="Base DN for search")
-        scope: str = Field(default="subtree", description="Search scope")
-        filter_str: str = Field(
-            default="(objectClass=*)",
-            description="LDAP search filter",
+        # Pydantic v2 advanced configuration
+        model_config = ConfigDict(
+            frozen=True,
+            extra="forbid",
+            validate_assignment=True,
+            str_strip_whitespace=True,
         )
-        attributes: list[str] | None = Field(
-            None,
-            description="Attributes to retrieve (None for all)",
-        )
-        size_limit: int = Field(
-            1000,
-            description="Maximum number of entries to return",
-            gt=0,
-            le=10000,
-        )
-        time_limit: int = Field(
-            30,
-            description="Search time limit in seconds",
-            gt=0,
-            le=300,
-        )
+
+        # Advanced type annotations with Annotated and constraints
+        base_dn: Annotated[str, Field(min_length=3, description="Base DN for search")]
+        scope: Annotated[
+            str,
+            Field(
+                default="subtree",
+                pattern="^(base|onelevel|subtree)$",
+                description="Search scope",
+            ),
+        ]
+        filter_str: Annotated[
+            str,
+            Field(
+                default="(objectClass=*)",
+                pattern=r"^\(.+\)$",
+                description="LDAP search filter (must be enclosed in parentheses)",
+            ),
+        ]
+        attributes: Annotated[
+            list[str] | None,
+            Field(
+                default=None,
+                description="Attributes to retrieve (None for all)",
+            ),
+        ]
+        size_limit: Annotated[
+            int,
+            Field(
+                default=1000,
+                gt=0,
+                le=10000,
+                description="Maximum number of entries to return",
+            ),
+        ]
+        time_limit: Annotated[
+            int,
+            Field(
+                default=30,
+                gt=0,
+                le=300,
+                description="Search time limit in seconds",
+            ),
+        ]
 
         @override
         def validate_business_rules(self) -> FlextResult[None]:
@@ -153,11 +183,26 @@ class FlextLDAPEntities:
         @field_validator("filter_str")
         @classmethod
         def validate_filter(cls, v: str) -> str:
-            """Validate filter format."""
+            """Validate filter format with enhanced pattern checking."""
             if not v.startswith("(") or not v.endswith(")"):
                 msg = "LDAP filter must be enclosed in parentheses"
                 raise ValueError(msg)
             return v
+
+        @classmethod
+        def create_user_search(cls, base_dn: str, uid: str | None = None) -> Self:
+            """Factory method for common user search patterns."""
+            filter_str = (
+                f"(&(objectClass=person)(uid={uid}))" if uid else "(objectClass=person)"
+            )
+            return cls(
+                base_dn=base_dn,
+                filter_str=filter_str,
+                scope="subtree",
+                attributes=["uid", "cn", "sn", "mail"],
+                size_limit=100,
+                time_limit=30,
+            )
 
     # =========================================================================
     # DISCRIMINATED UNIONS - Advanced Python 3.13 + Pydantic Type Safety
@@ -341,7 +386,7 @@ class FlextLDAPEntities:
         @classmethod
         def validate_email(cls, v: str | None) -> str | None:
             """Validate email format - USES FLEXT-CORE."""
-            from flext_core import FlextValidations
+            # FlextValidations already imported at top
 
             if v:
                 result = FlextValidations.Rules.StringRules.validate_email(v)
@@ -471,7 +516,7 @@ class FlextLDAPEntities:
         @classmethod
         def validate_email(cls, v: str | None) -> str | None:
             """Validate email format - USES FLEXT-CORE."""
-            from flext_core import FlextValidations
+            # FlextValidations already imported at top
 
             if v:
                 result = FlextValidations.Rules.StringRules.validate_email(v)

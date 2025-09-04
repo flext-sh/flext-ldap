@@ -72,10 +72,17 @@ class TestLdapE2EOperations:
         api = FlextLDAPApi()
 
         # Test search without connection (should fail gracefully)
-        search_result = await api.search(
+        # FlextLDAPEntities already imported at top
+
+        search_request = FlextLDAPEntities.SearchRequest(
             base_dn="dc=flext,dc=local",
-            search_filter="(objectClass=person)",
+            filter_str="(objectClass=person)",
+            scope="subtree",
+            attributes=["cn", "uid"],
+            size_limit=1000,
+            time_limit=30,
         )
+        search_result = await api.search(search_request)
 
         # Should handle missing session gracefully
         assert search_result is not None

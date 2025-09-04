@@ -164,7 +164,7 @@ class TestFlextLDAPClientFunctional(unittest.TestCase):
     def test_python_standard_library_usage(self) -> None:
         """Test that we're using Python standard libraries effectively."""
         # Test urlparse (standard library)
-        from urllib.parse import urlparse
+        # urlparse already imported at top
 
         result = urlparse("ldaps://test.example.com:636")
         assert result.scheme == "ldaps"

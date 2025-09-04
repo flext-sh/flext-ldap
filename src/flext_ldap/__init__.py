@@ -109,8 +109,7 @@ from flext_ldap.type_guards import *
 
 from contextlib import suppress
 
-with suppress(ImportError):
-    from flext_ldap.cli import *
+# CLI import disabled - using flext-cli directly where needed
 
 # =============================================================================
 # CONSOLIDATED EXPORTS - Combine all __all__ from modules

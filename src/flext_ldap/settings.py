@@ -138,37 +138,51 @@ class FlextLDAPSettings(FlextConfig):
 
     @override
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate complete settings configuration."""
-        if self.default_connection:
-            if not self.default_connection.server:
-                return FlextResult[None].fail(
-                    "Default connection must specify a server",
-                )
+        """Validate complete settings configuration using Railway Pattern - ELIMINATES 9 returns."""
+        # Use Railway Pattern to chain validations - eliminates multiple returns
+        return (
+            FlextResult[None]
+            .ok(None)
+            .flat_map(lambda _: self._validate_default_connection())
+            .flat_map(lambda _: self._validate_cache_settings())
+            .flat_map(lambda _: self._validate_search_configuration())
+            .flat_map(lambda _: self._validate_auth_configuration())
+        )
 
-            conn_validation = self.default_connection.validate_business_rules()
-            if not conn_validation.is_success:
-                return conn_validation
+    def _validate_default_connection(self) -> FlextResult[None]:
+        """Validate default connection settings."""
+        if not self.default_connection:
+            return FlextResult[None].ok(None)
 
-        # Validate cache settings
+        if not self.default_connection.server:
+            return FlextResult[None].fail("Default connection must specify a server")
+
+        return self.default_connection.validate_business_rules()
+
+    def _validate_cache_settings(self) -> FlextResult[None]:
+        """Validate cache configuration."""
         if self.enable_caching and self.cache_ttl <= 0:
             return FlextResult[None].fail(
-                "Cache TTL must be positive when caching is enabled",
+                "Cache TTL must be positive when caching is enabled"
             )
+        return FlextResult[None].ok(None)
 
-        # Validate search configuration inline
+    def _validate_search_configuration(self) -> FlextResult[None]:
+        """Validate search limits configuration."""
         if self.size_limit <= 0:
             return FlextResult[None].fail("Size limit must be positive")
         if self.time_limit <= 0:
             return FlextResult[None].fail("Time limit must be positive")
         if self.page_size <= 0:
             return FlextResult[None].fail("Page size must be positive")
+        return FlextResult[None].ok(None)
 
-        # Validate auth configuration inline
+    def _validate_auth_configuration(self) -> FlextResult[None]:
+        """Validate authentication configuration."""
         if self.bind_dn and not self.bind_dn.strip():
             return FlextResult[None].fail("Bind DN cannot be empty")
         if self.bind_password and len(self.bind_password.get_secret_value()) < 1:
             return FlextResult[None].fail("Bind password cannot be empty")
-
         return FlextResult[None].ok(None)
 
     def get_effective_connection(
@@ -230,36 +244,28 @@ class FlextLDAPSettings(FlextConfig):
         base_dn_error = "FLEXT_LDAP_BASE_DN environment variable is required"
 
         # Check for required environment variables
-        host_result = cls.get_env_with_validation("FLEXT_LDAP_HOST", required=True)
+        host_result = FlextConfig.get_env_var("FLEXT_LDAP_HOST")
         if not host_result.is_success:
             raise ValueError(host_error)
 
-        port_result = cls.get_env_with_validation("FLEXT_LDAP_PORT", required=True)
+        port_result = FlextConfig.get_env_var("FLEXT_LDAP_PORT")
         if not port_result.is_success:
             raise ValueError(port_error)
 
-        bind_dn_result = cls.get_env_with_validation(
-            "FLEXT_LDAP_BIND_DN", required=True
-        )
+        bind_dn_result = FlextConfig.get_env_var("FLEXT_LDAP_BIND_DN")
         if not bind_dn_result.is_success:
             raise ValueError(bind_dn_error)
 
-        bind_password_result = cls.get_env_with_validation(
-            "FLEXT_LDAP_BIND_PASSWORD", required=True
-        )
+        bind_password_result = FlextConfig.get_env_var("FLEXT_LDAP_BIND_PASSWORD")
         if not bind_password_result.is_success:
             raise ValueError(bind_credential_error)
 
-        base_dn_result = cls.get_env_with_validation(
-            "FLEXT_LDAP_BASE_DN", required=True
-        )
+        base_dn_result = FlextConfig.get_env_var("FLEXT_LDAP_BASE_DN")
         if not base_dn_result.is_success:
             raise ValueError(base_dn_error)
 
         # Get optional values
-        use_ssl_result = cls.get_env_with_validation(
-            "FLEXT_LDAP_USE_SSL", required=False, default="false"
-        )
+        use_ssl_result = FlextConfig.get_env_var("FLEXT_LDAP_USE_SSL", default="false")
         use_ssl = use_ssl_result.value.lower() in {"true", "1", "yes", "on"}
 
         # Use direct auth fields

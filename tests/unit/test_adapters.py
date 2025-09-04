@@ -163,8 +163,7 @@ class TestRealConnectionService:
         """Test ConnectionService can be instantiated with client."""
         client = FlextLDAPClient()
         config = FlextLDAPAdapters.ConnectionConfig(
-            server="ldap://localhost:389",
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+            server="ldap://localhost:389", bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
         )
         service = FlextLDAPAdapters.ConnectionService(client=client, config=config)
 
@@ -175,8 +174,7 @@ class TestRealConnectionService:
         """Test ConnectionService has required methods."""
         client = FlextLDAPClient()
         config = FlextLDAPAdapters.ConnectionConfig(
-            server="ldap://localhost:389",
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+            server="ldap://localhost:389", bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
         )
         service = FlextLDAPAdapters.ConnectionService(client=client, config=config)
 
@@ -194,8 +192,7 @@ class TestRealConnectionService:
         """Test connection service starts in not connected state."""
         client = FlextLDAPClient()
         config = FlextLDAPAdapters.ConnectionConfig(
-            server="ldap://localhost:389",
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+            server="ldap://localhost:389", bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
         )
         service = FlextLDAPAdapters.ConnectionService(client=client, config=config)
 
@@ -217,8 +214,7 @@ class TestRealConnectionService:
         """Test terminate_connection when not connected."""
         client = FlextLDAPClient()
         config = FlextLDAPAdapters.ConnectionConfig(
-            server="ldap://localhost:389",
-            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+            server="ldap://localhost:389", bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
         )
         service = FlextLDAPAdapters.ConnectionService(client=client, config=config)
 

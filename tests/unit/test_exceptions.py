@@ -129,8 +129,14 @@ class TestExceptionFactoryMethods:
     def test_connection_failed_with_different_params(self) -> None:
         """Test connection_failed factory method variations."""
         # Covers lines 461-469
-        error1 = FlextLDAPExceptions.Factory.connection_failed("server1", "timeout")
-        error2 = FlextLDAPExceptions.Factory.connection_failed("server2", "port error")
+        conn_params1 = FlextLDAPExceptions.ConnectionParams(
+            server_uri="server1", error="timeout"
+        )
+        conn_params2 = FlextLDAPExceptions.ConnectionParams(
+            server_uri="server2", error="port error"
+        )
+        error1 = FlextLDAPExceptions.Factory.connection_failed(conn_params1)
+        error2 = FlextLDAPExceptions.Factory.connection_failed(conn_params2)
 
         assert isinstance(error1, FlextLDAPExceptions.LdapConnectionError)
         assert isinstance(error2, FlextLDAPExceptions.LdapConnectionError)
