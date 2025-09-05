@@ -7,15 +7,17 @@ management. Eliminates separate service classes using composition patterns.
 # Import current service implementation for compatibility
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from flext_core import FlextContainer, FlextLogger, FlextResult
 
 from flext_ldap.container import FlextLDAPContainer
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.repositories import FlextLDAPRepositories
-from flext_ldap.typings import LdapAttributeDict
 from flext_ldap.value_objects import FlextLDAPValueObjects
+
+if TYPE_CHECKING:
+    from flext_ldap.typings import LdapAttributeDict
 
 logger = FlextLogger(__name__)
 
@@ -46,7 +48,7 @@ class FlextLDAPServices:
 
         """
         # This is a base implementation - specific operations handled by methods
-        return FlextResult[object].ok(request)
+        return FlextResult.ok(request)
 
     def build(self, domain: object, *, correlation_id: str) -> dict[str, object]:
         """Build the final output from the domain object (pure function).
@@ -73,7 +75,7 @@ class FlextLDAPServices:
     async def initialize(self) -> FlextResult[None]:
         """Initialize service and dependencies."""
         logger.info("LDAP service initializing")
-        return FlextResult[None].ok(None)
+        return FlextResult.ok(None)
 
     async def cleanup(self) -> FlextResult[None]:
         """Cleanup service resources."""
@@ -87,7 +89,7 @@ class FlextLDAPServices:
             if clear_method and callable(clear_method):
                 clear_method()
         # If no cleanup method available, just log success
-        return FlextResult[None].ok(None)
+        return FlextResult.ok(None)
 
     # =========================================================================
     # USER OPERATIONS - Consolidated user management
@@ -111,15 +113,15 @@ class FlextLDAPServices:
         # Validate user business rules
         validation_result = user_entity.validate_business_rules()
         if not validation_result.is_success:
-            return FlextResult[FlextLDAPEntities.User].fail(
+            return FlextResult.fail(
                 f"User validation failed: {validation_result.error}",
             )
 
         # Save user via repository from flext-core container
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[FlextLDAPEntities.User].fail(
-                f"Repository access failed: {repository_result.error}"
+            return FlextResult.fail(
+                f"Repository access failed: {repository_result.error}",
             )
 
         # Type cast repository to correct interface
@@ -127,8 +129,8 @@ class FlextLDAPServices:
         save_result = await repository.save_async(user_entity)
 
         if not save_result.is_success:
-            return FlextResult[FlextLDAPEntities.User].fail(
-                save_result.error or "Save failed"
+            return FlextResult.fail(
+                save_result.error or "Save failed",
             )
 
         logger.info(
@@ -141,7 +143,7 @@ class FlextLDAPServices:
                 "execution_context": "FlextLDAPServices.create_user",
             },
         )
-        return FlextResult[FlextLDAPEntities.User].ok(user_entity)
+        return FlextResult.ok(user_entity)
 
     async def get_user(self, dn: str) -> FlextResult[FlextLDAPEntities.User | None]:
         """Get user by distinguished name.
@@ -155,8 +157,8 @@ class FlextLDAPServices:
         """
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[FlextLDAPEntities.User | None].fail(
-                f"Repository access failed: {repository_result.error}"
+            return FlextResult.fail(
+                f"Repository access failed: {repository_result.error}",
             )
 
         # Type cast repository to correct interface
@@ -164,12 +166,12 @@ class FlextLDAPServices:
         entry_result = await repository.find_by_dn(dn)
 
         if not entry_result.is_success:
-            return FlextResult[FlextLDAPEntities.User | None].fail(
-                entry_result.error or "User lookup failed"
+            return FlextResult.fail(
+                entry_result.error or "User lookup failed",
             )
 
         if not entry_result.value:
-            return FlextResult[FlextLDAPEntities.User | None].ok(None)
+            return FlextResult.ok(None)
 
         # Convert entry to user - entry is already FlextLDAPEntry, extract user fields
         entry = entry_result.value
@@ -193,7 +195,7 @@ class FlextLDAPServices:
             created_at=entry.created_at,
             modified_at=entry.modified_at,
         )
-        return FlextResult[FlextLDAPEntities.User | None].ok(user_entity)
+        return FlextResult.ok(user_entity)
 
     async def update_user(
         self,
@@ -212,8 +214,8 @@ class FlextLDAPServices:
         """
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[FlextLDAPEntities.User].fail(
-                f"Repository access failed: {repository_result.error}"
+            return FlextResult.fail(
+                f"Repository access failed: {repository_result.error}",
             )
 
         # Type cast repository to correct interface
@@ -221,19 +223,19 @@ class FlextLDAPServices:
         update_result = await repository.update(dn, updates)
 
         if not update_result.is_success:
-            return FlextResult[FlextLDAPEntities.User].fail(
-                update_result.error or "User update failed"
+            return FlextResult.fail(
+                update_result.error or "User update failed",
             )
 
         # Get updated user - handle potential None return
         user_result = await self.get_user(dn)
         if not user_result.is_success:
-            return FlextResult[FlextLDAPEntities.User].fail(
-                user_result.error or "Failed to get updated user"
+            return FlextResult.fail(
+                user_result.error or "Failed to get updated user",
             )
         if user_result.value is None:
-            return FlextResult[FlextLDAPEntities.User].fail("Updated user not found")
-        return FlextResult[FlextLDAPEntities.User].ok(user_result.value)
+            return FlextResult.fail("Updated user not found")
+        return FlextResult.ok(user_result.value)
 
     async def delete_user(self, dn: str) -> FlextResult[bool]:
         """Delete user from directory.
@@ -247,8 +249,8 @@ class FlextLDAPServices:
         """
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[bool].fail(
-                f"Repository access failed: {repository_result.error}"
+            return FlextResult.fail(
+                f"Repository access failed: {repository_result.error}",
             )
 
         # Type cast repository to correct interface
@@ -256,7 +258,7 @@ class FlextLDAPServices:
         delete_result = await repository.delete_async(dn)
 
         if not delete_result.is_success:
-            return FlextResult[bool].fail(delete_result.error or "User deletion failed")
+            return FlextResult.fail(delete_result.error or "User deletion failed")
 
         logger.info(
             "LDAP user deleted successfully",
@@ -267,14 +269,15 @@ class FlextLDAPServices:
             },
         )
         success = True
-        return FlextResult[bool].ok(success)
+        return FlextResult.ok(success)
 
     # =========================================================================
     # GROUP OPERATIONS - Consolidated group management
     # =========================================================================
 
     async def create_group(
-        self, group: FlextLDAPEntities.Group
+        self,
+        group: FlextLDAPEntities.Group,
     ) -> FlextResult[FlextLDAPEntities.Group]:
         """Create new group in LDAP directory.
 
@@ -288,15 +291,15 @@ class FlextLDAPServices:
         # Validate group business rules
         validation_result = group.validate_business_rules()
         if not validation_result.is_success:
-            return FlextResult[FlextLDAPEntities.Group].fail(
+            return FlextResult.fail(
                 f"Group validation failed: {validation_result.error}",
             )
 
         # Save group via repository
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[FlextLDAPEntities.Group].fail(
-                f"Repository access failed: {repository_result.error}"
+            return FlextResult.fail(
+                f"Repository access failed: {repository_result.error}",
             )
 
         # Type cast repository to correct interface
@@ -304,8 +307,8 @@ class FlextLDAPServices:
         save_result = await repository.save_async(group)
 
         if not save_result.is_success:
-            return FlextResult[FlextLDAPEntities.Group].fail(
-                save_result.error or "Group save failed"
+            return FlextResult.fail(
+                save_result.error or "Group save failed",
             )
 
         logger.info(
@@ -317,7 +320,7 @@ class FlextLDAPServices:
                 "execution_context": "FlextLDAPServices.create_group",
             },
         )
-        return FlextResult[FlextLDAPEntities.Group].ok(group)
+        return FlextResult.ok(group)
 
     async def get_group(self, dn: str) -> FlextResult[FlextLDAPEntities.Group | None]:
         """Get group by DN.
@@ -331,20 +334,20 @@ class FlextLDAPServices:
         """
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[FlextLDAPEntities.Group | None].fail(
-                f"Repository access failed: {repository_result.error}"
+            return FlextResult.fail(
+                f"Repository access failed: {repository_result.error}",
             )
 
         # Type cast repository to correct interface
         repository = cast("FlextLDAPRepositories.Repository", repository_result.value)
         entry_result = await repository.find_by_dn(dn)
         if not entry_result.is_success:
-            return FlextResult[FlextLDAPEntities.Group | None].fail(
-                entry_result.error or "Failed to find entry"
+            return FlextResult.fail(
+                entry_result.error or "Failed to find entry",
             )
 
         if entry_result.value is None:
-            return FlextResult[FlextLDAPEntities.Group | None].ok(None)
+            return FlextResult.ok(None)
 
         # Convert entry to group
         entry = entry_result.value
@@ -354,7 +357,7 @@ class FlextLDAPServices:
             cn=str(
                 entry.attributes.get("cn", [""])[0]
                 if isinstance(entry.attributes.get("cn"), list)
-                else entry.attributes.get("cn", "")
+                else entry.attributes.get("cn", ""),
             ),
             object_classes=entry.object_classes,
             members=[
@@ -369,106 +372,111 @@ class FlextLDAPServices:
             description=str(
                 entry.attributes.get("description", [""])[0]
                 if isinstance(entry.attributes.get("description"), list)
-                else entry.attributes.get("description", "")
+                else entry.attributes.get("description", ""),
             ),
             modified_at=entry.modified_at,
         )
 
-        return FlextResult[FlextLDAPEntities.Group | None].ok(group)
+        return FlextResult.ok(group)
 
     async def update_group(
-        self, dn: str, attributes: LdapAttributeDict
+        self,
+        dn: str,
+        attributes: LdapAttributeDict,
     ) -> FlextResult[None]:
         """Update group attributes."""
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[None].fail(
-                f"Repository access failed: {repository_result.error}"
+            return FlextResult.fail(
+                f"Repository access failed: {repository_result.error}",
             )
 
         # Type cast repository to correct interface
         repository = cast("FlextLDAPRepositories.Repository", repository_result.value)
         result = await repository.update(dn, attributes)
         if not result.is_success:
-            return FlextResult[None].fail(result.error or "Update failed")
-        return FlextResult[None].ok(None)
+            return FlextResult.fail(result.error or "Update failed")
+        return FlextResult.ok(None)
 
     async def delete_group(self, dn: str) -> FlextResult[None]:
         """Delete group by DN."""
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[None].fail(
-                f"Repository access failed: {repository_result.error}"
+            return FlextResult.fail(
+                f"Repository access failed: {repository_result.error}",
             )
 
         # Type cast repository to correct interface
         repository = cast("FlextLDAPRepositories.Repository", repository_result.value)
         result = await repository.delete_async(dn)
         if not result.is_success:
-            return FlextResult[None].fail(result.error or "Delete failed")
-        return FlextResult[None].ok(None)
+            return FlextResult.fail(result.error or "Delete failed")
+        return FlextResult.ok(None)
 
     async def add_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
         """Add member to group."""
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[None].fail(
-                f"Repository access failed: {repository_result.error}"
+            return FlextResult.fail(
+                f"Repository access failed: {repository_result.error}",
             )
 
         # Type cast repository to correct interface
         base_repository = cast(
-            "FlextLDAPRepositories.Repository", repository_result.value
+            "FlextLDAPRepositories.Repository",
+            repository_result.value,
         )
         group_repository = FlextLDAPRepositories.GroupRepository(base_repository)
         result = await group_repository.add_member_to_group(group_dn, member_dn)
         if not result.is_success:
-            return FlextResult[None].fail(result.error or "Add member failed")
-        return FlextResult[None].ok(None)
+            return FlextResult.fail(result.error or "Add member failed")
+        return FlextResult.ok(None)
 
     async def remove_member(self, group_dn: str, member_dn: str) -> FlextResult[None]:
         """Remove member from group."""
         # Get current members
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[None].fail(
-                f"Repository access failed: {repository_result.error}"
+            return FlextResult.fail(
+                f"Repository access failed: {repository_result.error}",
             )
 
         # Type cast repository to correct interface
         base_repository = cast(
-            "FlextLDAPRepositories.Repository", repository_result.value
+            "FlextLDAPRepositories.Repository",
+            repository_result.value,
         )
         group_repository = FlextLDAPRepositories.GroupRepository(base_repository)
         members_result = await group_repository.get_group_members(group_dn)
         if not members_result.is_success:
-            return FlextResult[None].fail(
-                f"Failed to get members: {members_result.error}"
+            return FlextResult.fail(
+                f"Failed to get members: {members_result.error}",
             )
 
         current_members = members_result.value
         if member_dn not in current_members:
-            return FlextResult[None].fail(f"Member {member_dn} not found in group")
+            return FlextResult.fail(f"Member {member_dn} not found in group")
 
         # Remove member and update
         updated_members = [m for m in current_members if m != member_dn]
         attributes: LdapAttributeDict = {"member": updated_members}
         result = await base_repository.update(group_dn, attributes)
         if not result.is_success:
-            return FlextResult[None].fail(result.error or "Remove member failed")
-        return FlextResult[None].ok(None)
+            return FlextResult.fail(result.error or "Remove member failed")
+        return FlextResult.ok(None)
 
     async def get_members(self, group_dn: str) -> FlextResult[list[str]]:
         """Get group members."""
         repository_result = self._get_repository()
         if not repository_result.is_success:
             return FlextResult[list[str]].fail(
-                f"Repository access failed: {repository_result.error}"
+                f"Repository access failed: {repository_result.error}",
             )
 
         # Type cast repository to correct interface
         base_repository = cast(
-            "FlextLDAPRepositories.Repository", repository_result.value
+            "FlextLDAPRepositories.Repository",
+            repository_result.value,
         )
         group_repository = FlextLDAPRepositories.GroupRepository(base_repository)
         return await group_repository.get_group_members(group_dn)
@@ -478,22 +486,23 @@ class FlextLDAPServices:
         """Validate DN format."""
         result = FlextLDAPValueObjects.DistinguishedName.create(dn)
         if result.is_success:
-            return FlextResult[None].ok(None)
-        return FlextResult[None].fail(result.error or "Invalid DN")
+            return FlextResult.ok(None)
+        return FlextResult.fail(result.error or "Invalid DN")
 
     def validate_filter(self, filter_str: str) -> FlextResult[None]:
         """Validate LDAP filter format."""
         result = FlextLDAPValueObjects.Filter.create(filter_str)
         if result.is_success:
-            return FlextResult[None].ok(None)
-        return FlextResult[None].fail(result.error or "Invalid filter")
+            return FlextResult.ok(None)
+        return FlextResult.fail(result.error or "Invalid filter")
 
     # =========================================================================
     # SEARCH OPERATIONS - Consolidated search functionality
     # =========================================================================
 
     async def search(
-        self, request: FlextLDAPEntities.SearchRequest
+        self,
+        request: FlextLDAPEntities.SearchRequest,
     ) -> FlextResult[FlextLDAPEntities.SearchResponse]:
         """Perform LDAP search operation.
 
@@ -506,8 +515,8 @@ class FlextLDAPServices:
         """
         repository_result = self._get_repository()
         if not repository_result.is_success:
-            return FlextResult[FlextLDAPEntities.SearchResponse].fail(
-                f"Repository access failed: {repository_result.error}"
+            return FlextResult.fail(
+                f"Repository access failed: {repository_result.error}",
             )
 
         # Type cast repository to correct interface
@@ -515,11 +524,11 @@ class FlextLDAPServices:
         search_result = await repository.search(request)
 
         if not search_result.is_success:
-            return FlextResult[FlextLDAPEntities.SearchResponse].fail(
-                search_result.error or "Search failed"
+            return FlextResult.fail(
+                search_result.error or "Search failed",
             )
 
-        return FlextResult[FlextLDAPEntities.SearchResponse].ok(search_result.value)
+        return FlextResult.ok(search_result.value)
 
     # =========================================================================
     # VALIDATION METHODS - For test coverage and business logic
@@ -536,9 +545,9 @@ class FlextLDAPServices:
 
         """
         if not attributes:
-            return FlextResult[None].fail("Attributes cannot be empty")
+            return FlextResult.fail("Attributes cannot be empty")
 
-        return FlextResult[None].ok(None)
+        return FlextResult.ok(None)
 
     def validate_object_classes(self, object_classes: list[str]) -> FlextResult[None]:
         """Validate LDAP object classes list.
@@ -551,12 +560,14 @@ class FlextLDAPServices:
 
         """
         if not object_classes:
-            return FlextResult[None].fail("Object classes cannot be empty")
+            return FlextResult.fail("Object classes cannot be empty")
 
-        return FlextResult[None].ok(None)
+        return FlextResult.ok(None)
 
     async def search_users(
-        self, filter_str: str, base_dn: str
+        self,
+        filter_str: str,
+        base_dn: str,
     ) -> FlextResult[list[FlextLDAPEntities.User]]:
         """Search for users matching filter.
 
@@ -580,7 +591,7 @@ class FlextLDAPServices:
         search_result = await self.search(search_request)
         if not search_result.is_success:
             return FlextResult[list[FlextLDAPEntities.User]].fail(
-                search_result.error or "Search failed"
+                search_result.error or "Search failed",
             )
 
         users = []
@@ -604,9 +615,9 @@ class FlextLDAPServices:
         """
         user_result = await self.get_user(dn)
         if not user_result.is_success:
-            return FlextResult[bool].fail(user_result.error or "Failed to get user")
+            return FlextResult.fail(user_result.error or "Failed to get user")
 
-        return FlextResult[bool].ok(user_result.value is not None)
+        return FlextResult.ok(user_result.value is not None)
 
     async def group_exists(self, dn: str) -> FlextResult[bool]:
         """Check if group exists at specified DN.
@@ -620,53 +631,57 @@ class FlextLDAPServices:
         """
         group_result = await self.get_group(dn)
         if not group_result.is_success:
-            return FlextResult[bool].fail(group_result.error or "Failed to get group")
+            return FlextResult.fail(group_result.error or "Failed to get group")
 
-        return FlextResult[bool].ok(group_result.value is not None)
+        return FlextResult.ok(group_result.value is not None)
 
     # =========================================================================
     # GROUP MEMBER MANAGEMENT - Specialized group operations using Python standard libraries
     # =========================================================================
 
     async def add_member_to_group(
-        self, group_dn: str, member_dn: str
+        self,
+        group_dn: str,
+        member_dn: str,
     ) -> FlextResult[None]:
         """Add member to group using Python standard libraries (no custom wrappers)."""
         # Get current group
         group_result = await self.get_group(group_dn)
         if not group_result.is_success:
-            return FlextResult[None].fail(group_result.error or "Failed to get group")
+            return FlextResult.fail(group_result.error or "Failed to get group")
 
         if group_result.value is None:
-            return FlextResult[None].fail("Group not found")
+            return FlextResult.fail("Group not found")
 
         group = group_result.value
 
         # Check if member already exists using Python standard library
         if member_dn in group.members:
-            return FlextResult[None].fail("Member already in group")
+            return FlextResult.fail("Member already in group")
 
         # Add member using Python standard list operations
         updated_members = [*group.members, member_dn]
         return await self.update_group(group_dn, {"member": updated_members})
 
     async def remove_member_from_group(
-        self, group_dn: str, member_dn: str
+        self,
+        group_dn: str,
+        member_dn: str,
     ) -> FlextResult[None]:
         """Remove member from group using Python standard libraries."""
         # Get current group
         group_result = await self.get_group(group_dn)
         if not group_result.is_success:
-            return FlextResult[None].fail(group_result.error or "Failed to get group")
+            return FlextResult.fail(group_result.error or "Failed to get group")
 
         if group_result.value is None:
-            return FlextResult[None].fail("Group not found")
+            return FlextResult.fail("Group not found")
 
         group = group_result.value
 
         # Check if member exists using Python standard library
         if member_dn not in group.members:
-            return FlextResult[None].fail("Member not in group")
+            return FlextResult.fail("Member not in group")
 
         # Remove member using Python list comprehension
         updated_members = [m for m in group.members if m != member_dn]
@@ -677,7 +692,7 @@ class FlextLDAPServices:
         group_result = await self.get_group(group_dn)
         if not group_result.is_success:
             return FlextResult[list[str]].fail(
-                group_result.error or "Failed to get group"
+                group_result.error or "Failed to get group",
             )
 
         if group_result.value is None:

@@ -150,7 +150,9 @@ class TestLdapE2EOperations:
 
         for uri, _expected_error_type in scenarios:
             result = await api.connect(
-                server_uri=uri, bind_dn="cn=test", bind_password="test"
+                server_uri=uri,
+                bind_dn="cn=test",
+                bind_password="test",
             )
 
             # Should handle all error types gracefully

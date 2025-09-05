@@ -165,10 +165,10 @@ class FlextLDAPEntities:
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate search request business rules."""
             if not self.base_dn:
-                return FlextResult[None].fail("Base DN cannot be empty")
+                return FlextResult.fail("Base DN cannot be empty")
             if not self.filter_str:
-                return FlextResult[None].fail("Filter cannot be empty")
-            return FlextResult[None].ok(None)
+                return FlextResult.fail("Filter cannot be empty")
+            return FlextResult.ok(None)
 
         @field_validator("base_dn")
         @classmethod
@@ -249,10 +249,12 @@ class FlextLDAPEntities:
         entry_type: Literal["generic"] = "generic"
         dn: str = Field(..., description="Distinguished Name")
         object_classes: list[str] = Field(
-            default_factory=list, description="LDAP object classes"
+            default_factory=list,
+            description="LDAP object classes",
         )
         attributes: LdapAttributeDict = Field(
-            default_factory=dict, description="All LDAP attributes"
+            default_factory=dict,
+            description="All LDAP attributes",
         )
 
         @computed_field
@@ -281,15 +283,15 @@ class FlextLDAPEntities:
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate search response business rules."""
             if self.total_count < 0:
-                return FlextResult[None].fail("Total count cannot be negative")
+                return FlextResult.fail("Total count cannot be negative")
             if self.search_time_ms < 0:
-                return FlextResult[None].fail("Search time cannot be negative")
+                return FlextResult.fail("Search time cannot be negative")
 
             # Validate reasonable results (domain rule)
             if self.total_count > FlextLDAPConstants.Connection.MAX_SIZE_LIMIT:
                 logger.warning("Large search result", extra={"count": self.total_count})
 
-            return FlextResult[None].ok(None)
+            return FlextResult.ok(None)
 
     class SearchParams(FlextModels.Config):
         """Unified parameter object for search operations across all components.
@@ -301,34 +303,76 @@ class FlextLDAPEntities:
         model_config = ConfigDict(frozen=True, extra="forbid")
 
         # Core search parameters (from operations.py)
-        connection_id: str = Field(..., min_length=1, description="LDAP connection identifier")
+        connection_id: str = Field(
+            ...,
+            min_length=1,
+            description="LDAP connection identifier",
+        )
         base_dn: str = Field(..., min_length=1, description="Base DN for search")
-        search_filter: str = Field(default="(objectClass=*)", min_length=1, description="LDAP search filter")
-        scope: str = Field(default="subtree", pattern=r"^(base|one|subtree|onelevel)$", description="Search scope")
-        attributes: list[str] | None = Field(default=None, description="Attributes to retrieve")
-        size_limit: int = Field(default=1000, gt=0, le=10000, description="Maximum entries to return")
-        time_limit: int = Field(default=30, gt=0, le=300, description="Search timeout in seconds")
+        search_filter: str = Field(
+            default="(objectClass=*)",
+            min_length=1,
+            description="LDAP search filter",
+        )
+        scope: str = Field(
+            default="subtree",
+            pattern=r"^(base|one|subtree|onelevel)$",
+            description="Search scope",
+        )
+        attributes: list[str] | None = Field(
+            default=None,
+            description="Attributes to retrieve",
+        )
+        size_limit: int = Field(
+            default=1000,
+            gt=0,
+            le=10000,
+            description="Maximum entries to return",
+        )
+        time_limit: int = Field(
+            default=30,
+            gt=0,
+            le=300,
+            description="Search timeout in seconds",
+        )
 
         # Repository-specific parameters (from repositories.py)
-        identifier: str | None = Field(default=None, min_length=1, description="Specific identifier to search for")
-        search_scope: str | None = Field(default=None, description="Repository search scope")
+        identifier: str | None = Field(
+            default=None,
+            min_length=1,
+            description="Specific identifier to search for",
+        )
+        search_scope: str | None = Field(
+            default=None,
+            description="Repository search scope",
+        )
 
         # Exception handling parameters (from exceptions.py)
-        timeout: int | None = Field(default=None, ge=1, le=300, description="Operation timeout")
-        retry_count: int | None = Field(default=None, ge=0, le=10, description="Retry attempts")
+        timeout: int | None = Field(
+            default=None,
+            ge=1,
+            le=300,
+            description="Operation timeout",
+        )
+        retry_count: int | None = Field(
+            default=None,
+            ge=0,
+            le=10,
+            description="Retry attempts",
+        )
 
         @classmethod
         def create_basic_search(
             cls,
             connection_id: str,
             base_dn: str,
-            search_filter: str = "(objectClass=*)"
+            search_filter: str = "(objectClass=*)",
         ) -> FlextLDAPEntities.SearchParams:
             """Factory method for basic search operations."""
             return cls(
                 connection_id=connection_id,
                 base_dn=base_dn,
-                search_filter=search_filter
+                search_filter=search_filter,
             )
 
         @classmethod
@@ -338,17 +382,21 @@ class FlextLDAPEntities:
             base_dn: str,
             uid: str | None = None,
             size_limit: int = 1,
-            time_limit: int = 30
+            time_limit: int = 30,
         ) -> FlextLDAPEntities.SearchParams:
             """Factory method for user-specific searches."""
-            filter_str = f"(&(objectClass=person)(uid={uid}))" if uid else "(&(objectClass=person))"
+            filter_str = (
+                f"(&(objectClass=person)(uid={uid}))"
+                if uid
+                else "(&(objectClass=person))"
+            )
             return cls(
                 connection_id=connection_id,
                 base_dn=base_dn,
                 search_filter=filter_str,
                 attributes=["uid", "cn", "sn", "givenName", "mail"],
                 size_limit=size_limit,
-                time_limit=time_limit
+                time_limit=time_limit,
             )
 
         @classmethod
@@ -358,46 +406,53 @@ class FlextLDAPEntities:
             base_dn: str,
             cn: str | None = None,
             size_limit: int = 1,
-            time_limit: int = 30
+            time_limit: int = 30,
         ) -> FlextLDAPEntities.SearchParams:
             """Factory method for group-specific searches."""
-            filter_str = f"(&(objectClass=groupOfNames)(cn={cn}))" if cn else "(&(objectClass=groupOfNames))"
+            filter_str = (
+                f"(&(objectClass=groupOfNames)(cn={cn}))"
+                if cn
+                else "(&(objectClass=groupOfNames))"
+            )
             return cls(
                 connection_id=connection_id,
                 base_dn=base_dn,
                 search_filter=filter_str,
                 attributes=["cn", "member", "description"],
                 size_limit=size_limit,
-                time_limit=time_limit
+                time_limit=time_limit,
             )
 
         @classmethod
         def create_repository_search(
             cls,
             identifier: str,
-            base_dn: str = "dc=example,dc=com"
+            base_dn: str = "dc=example,dc=com",
         ) -> FlextLDAPEntities.SearchParams:
             """Factory method for repository searches."""
             return cls(
                 connection_id="repository_connection",
                 base_dn=base_dn,
                 identifier=identifier,
-                search_filter=f"(uid={identifier})"
+                search_filter=f"(uid={identifier})",
             )
 
         @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate search parameters business rules."""
             if self.size_limit <= 0:
-                return FlextResult[None].fail("Size limit must be positive")
+                return FlextResult.fail("Size limit must be positive")
             if self.time_limit <= 0:
-                return FlextResult[None].fail("Time limit must be positive")
+                return FlextResult.fail("Time limit must be positive")
 
             # Validate reasonable limits (domain rule)
             if self.size_limit > FlextLDAPConstants.Connection.MAX_SIZE_LIMIT:
-                logger.warning("Large search limit", extra={"size_limit": self.size_limit})
+                logger.warning(
+                    "Large search limit",
+                    extra={"size_limit": self.size_limit},
+                )
 
-            return FlextResult[None].ok(None)
+            return FlextResult.ok(None)
 
     # =========================================================================
     # DOMAIN ENTITIES - Rich LDAP domain objects
@@ -458,10 +513,10 @@ class FlextLDAPEntities:
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate business rules."""
             if not self.object_classes:
-                return FlextResult[None].fail(
-                    "Entry must have at least one object class"
+                return FlextResult.fail(
+                    "Entry must have at least one object class",
                 )
-            return FlextResult[None].ok(None)
+            return FlextResult.ok(None)
 
         def get_rdn(self) -> str:
             """Get the Relative Distinguished Name."""
@@ -519,12 +574,12 @@ class FlextLDAPEntities:
 
             # User-specific validations
             if not self.has_object_class("person"):
-                return FlextResult[None].fail("User must have 'person' object class")
+                return FlextResult.fail("User must have 'person' object class")
 
             if not self.cn and not self.get_attribute("cn"):
-                return FlextResult[None].fail("User must have a Common Name")
+                return FlextResult.fail("User must have a Common Name")
 
-            return FlextResult[None].ok(None)
+            return FlextResult.ok(None)
 
         def get_full_name(self) -> str:
             """Get user's full name."""
@@ -554,27 +609,27 @@ class FlextLDAPEntities:
 
             # Group-specific validations
             if not self.has_object_class("groupOfNames"):
-                return FlextResult[None].fail(
-                    "Group must have 'groupOfNames' object class"
+                return FlextResult.fail(
+                    "Group must have 'groupOfNames' object class",
                 )
 
-            return FlextResult[None].ok(None)
+            return FlextResult.ok(None)
 
         def add_member(self, member_dn: str) -> FlextResult[None]:
             """Add member to group."""
             if member_dn not in self.members:
                 self.members.append(member_dn)
                 self.modified_at = datetime.now(UTC)
-                return FlextResult[None].ok(None)
-            return FlextResult[None].ok(None)  # Already a member, no-op
+                return FlextResult.ok(None)
+            return FlextResult.ok(None)  # Already a member, no-op
 
         def remove_member(self, member_dn: str) -> FlextResult[None]:
             """Remove member from group."""
             if member_dn in self.members:
                 self.members.remove(member_dn)
                 self.modified_at = datetime.now(UTC)
-                return FlextResult[None].ok(None)
-            return FlextResult[None].fail(f"Member {member_dn} not found in group")
+                return FlextResult.ok(None)
+            return FlextResult.fail(f"Member {member_dn} not found in group")
 
         def has_member(self, member_dn: str) -> bool:
             """Check if DN is a member of this group."""
@@ -608,12 +663,12 @@ class FlextLDAPEntities:
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate create user request business rules."""
             if not self.dn:
-                return FlextResult[None].fail("DN cannot be empty")
+                return FlextResult.fail("DN cannot be empty")
             if not self.uid:
-                return FlextResult[None].fail("UID cannot be empty")
+                return FlextResult.fail("UID cannot be empty")
             if not self.cn:
-                return FlextResult[None].fail("Common Name cannot be empty")
-            return FlextResult[None].ok(None)
+                return FlextResult.fail("Common Name cannot be empty")
+            return FlextResult.ok(None)
 
         @field_validator("dn")
         @classmethod
@@ -655,6 +710,100 @@ class FlextLDAPEntities:
                 modified_at=None,
             )
 
+    class CreateGroupRequest(FlextModels.Value):
+        """Request model for creating LDAP groups."""
+
+        dn: str = Field(..., description="Distinguished Name for new group")
+        cn: str = Field(..., description="Common Name", min_length=1)
+        description: str | None = Field(None, description="Group description")
+        member_dns: list[str] = Field(
+            default_factory=list,
+            description="List of member DNs",
+        )
+        object_classes: list[str] = Field(
+            default_factory=lambda: [
+                "top",
+                "groupOfNames",
+            ],
+            description="LDAP object classes",
+        )
+
+        @override
+        def validate_business_rules(self) -> FlextResult[None]:
+            """Validate create group request business rules."""
+            if not self.dn:
+                return FlextResult.fail("DN cannot be empty")
+            if not self.cn:
+                return FlextResult.fail("Common Name cannot be empty")
+            return FlextResult.ok(None)
+
+        @field_validator("dn")
+        @classmethod
+        def validate_dn(cls, v: str) -> str:
+            """Validate DN format."""
+            try:
+                FlextLDAPValueObjects.DistinguishedName(value=v)
+                return v
+            except ValueError as e:
+                msg = f"Invalid DN format: {e}"
+                raise ValueError(msg) from e
+
+        def to_group_entity(self) -> FlextLDAPEntities.Group:
+            """Convert request to group entity."""
+            return FlextLDAPEntities.Group(
+                id=f"group_{self.cn}",
+                dn=self.dn,
+                cn=self.cn,
+                description=self.description,
+                members=self.member_dns.copy(),
+                object_classes=self.object_classes.copy(),
+                attributes={},
+                modified_at=None,
+            )
+
+    class UpdateGroupRequest(FlextModels.Value):
+        """Request model for updating LDAP groups."""
+
+        dn: str = Field(..., description="Distinguished Name of group to update")
+        cn: str | None = Field(None, description="New Common Name")
+        description: str | None = Field(None, description="New group description")
+        member_dns: list[str] | None = Field(
+            None,
+            description="New list of member DNs (replaces existing)",
+        )
+
+        @override
+        def validate_business_rules(self) -> FlextResult[None]:
+            """Validate update group request business rules."""
+            if not self.dn:
+                return FlextResult.fail("DN cannot be empty")
+
+            has_updates = any(
+                [
+                    self.cn is not None,
+                    self.description is not None,
+                    self.member_dns is not None,
+                ]
+            )
+
+            if not has_updates:
+                return FlextResult.fail(
+                    "At least one field must be provided for update"
+                )
+
+            return FlextResult.ok(None)
+
+        @field_validator("dn")
+        @classmethod
+        def validate_dn(cls, v: str) -> str:
+            """Validate DN format."""
+            try:
+                FlextLDAPValueObjects.DistinguishedName(value=v)
+                return v
+            except ValueError as e:
+                msg = f"Invalid DN format: {e}"
+                raise ValueError(msg) from e
+
 
 # =============================================================================
 # LEGACY COMPATIBILITY CLASSES - Backward Compatibility
@@ -663,6 +812,22 @@ class FlextLDAPEntities:
 # Legacy class aliases for backward compatibility
 # Export aliases eliminated - use FlextLDAPEntities.* directly following flext-core pattern
 
+
+# =============================================================================
+# PYDANTIC MODEL REBUILD - Fix forward references
+# =============================================================================
+
+# LdapAttributeDict already imported in TYPE_CHECKING block above
+
+# Rebuild models after all definitions are complete
+FlextLDAPEntities.User.model_rebuild()
+FlextLDAPEntities.Group.model_rebuild()
+FlextLDAPEntities.Entry.model_rebuild()
+FlextLDAPEntities.SearchRequest.model_rebuild()
+FlextLDAPEntities.SearchResponse.model_rebuild()
+FlextLDAPEntities.CreateUserRequest.model_rebuild()
+FlextLDAPEntities.CreateGroupRequest.model_rebuild()
+FlextLDAPEntities.UpdateGroupRequest.model_rebuild()
 
 # =============================================================================
 # MODULE EXPORTS

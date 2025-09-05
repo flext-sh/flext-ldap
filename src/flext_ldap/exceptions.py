@@ -209,7 +209,7 @@ class FlextLDAPExceptions:
                 )
                 parts.append(
                     FlextLDAPConstants.Operations.CONTEXT_INFO.format(
-                        context=context_str
+                        context=context_str,
                     ),
                 )
 
@@ -336,7 +336,7 @@ class FlextLDAPExceptions:
                 )
                 parts.append(
                     FlextLDAPConstants.Operations.CONTEXT_INFO.format(
-                        context=context_str
+                        context=context_str,
                     ),
                 )
 
@@ -372,7 +372,7 @@ class FlextLDAPExceptions:
                 context[FlextLDAPConstants.Operations.TIMEOUT_KEY] = str(timeout)
             if retry_count is not None:
                 context[FlextLDAPConstants.Operations.RETRY_COUNT_KEY] = str(
-                    retry_count
+                    retry_count,
                 )
 
             error_config = FlextLDAPExceptions.ErrorConfig(
@@ -515,7 +515,7 @@ class FlextLDAPExceptions:
                 user_dn=user_dn,
                 uid=uid,
                 validation_field=validation_field,
-                ldap_result_code=ldap_result_code
+                ldap_result_code=ldap_result_code,
             )
 
         @override
@@ -550,7 +550,10 @@ class FlextLDAPExceptions:
         ) -> None:
             """Initialize group error."""
             super().__init__(
-                message, group_dn=group_dn, group_cn=group_cn, member_dn=member_dn
+                message,
+                group_dn=group_dn,
+                group_cn=group_cn,
+                member_dn=member_dn,
             )
 
         @override
@@ -625,7 +628,9 @@ class FlextLDAPExceptions:
         ) -> None:
             """Initialize configuration error."""
             super().__init__(
-                message, config_section=config_section, config_key=config_key
+                message,
+                config_section=config_section,
+                config_key=config_key,
             )
 
         @override
@@ -709,7 +714,8 @@ class FlextLDAPExceptions:
 
         @classmethod
         def connection_failed(
-            cls, params: FlextLDAPExceptions.ConnectionParams
+            cls,
+            params: FlextLDAPExceptions.ConnectionParams,
         ) -> FlextLDAPExceptions.LdapConnectionError:
             """Create connection failure using Parameter Object - reduces 6 params to 1."""
             message = f"LDAP connection failed to {params.server_uri}: {params.error}"

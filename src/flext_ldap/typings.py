@@ -20,7 +20,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Protocol
 
-from flext_core import FlextModels, FlextResult, FlextTypes
+from flext_core import FlextResult, FlextTypes
 
 # =============================================================================
 # SINGLE FLEXT LDAP TYPES CLASS - Inheriting from FlextCoreTypes
@@ -69,21 +69,21 @@ class FlextLDAPTypes(FlextTypes):
         """LDAP domain-specific types extending FlextTypes."""
 
         # Distinguished Name types
-        type DistinguishedName = str
-        type Dn = str
+        DistinguishedName = str
+        Dn = str
 
         # LDAP URI and connection types
-        type Uri = str
-        type ConnectionString = str
+        Uri = str
+        ConnectionString = str
 
         # Entity identification
-        type EntityId = str
-        type UserId = str
-        type GroupId = str
+        EntityId = str
+        UserId = str
+        GroupId = str
 
         # LDAP-specific identifiers
-        type SessionId = str
-        type ConnectionId = str
+        SessionId = str
+        ConnectionId = str
 
     # =========================================================================
     # SEARCH TYPES - LDAP Search Operations
@@ -93,18 +93,18 @@ class FlextLDAPTypes(FlextTypes):
         """LDAP search operation types."""
 
         # Search parameters
-        type Filter = str
-        type Scope = str
-        type Base = str
+        Filter = str
+        Scope = str
+        Base = str
 
         # Search limits
-        type SizeLimit = int
-        type TimeLimit = int
-        type PageSize = int
+        SizeLimit = int
+        TimeLimit = int
+        PageSize = int
 
         # Search results
-        type ResultList = list[dict[str, object]]
-        type ResultDict = dict[str, object]
+        ResultList = list[dict[str, object]]
+        ResultDict = dict[str, object]
 
     # =========================================================================
     # ENTRY TYPES - LDAP Entry and Attribute Types
@@ -114,17 +114,17 @@ class FlextLDAPTypes(FlextTypes):
         """LDAP entry and attribute types."""
 
         # Attribute value types
-        type AttributeValue = str | bytes | list[str] | list[bytes]
-        type AttributeDict = dict[str, AttributeValue]
-        type AttributeName = str
+        AttributeValue = str | bytes | list[str] | list[bytes]
+        AttributeDict = dict[str, AttributeValue]
+        AttributeName = str
 
         # Entry types
-        type EntryData = dict[str, AttributeValue]
-        type EntryResult = dict[str, object]
+        EntryData = dict[str, AttributeValue]
+        EntryResult = dict[str, object]
 
         # Modification types
-        type ModificationDict = dict[str, object]
-        type OperationType = str
+        ModificationDict = dict[str, object]
+        OperationType = str
 
     # =========================================================================
     # CONNECTION TYPES - LDAP Connection Management
@@ -134,14 +134,14 @@ class FlextLDAPTypes(FlextTypes):
         """LDAP connection and configuration types."""
 
         # Connection configuration
-        type Config = dict[str, object]
-        type AuthConfig = dict[str, object]
-        type ConnectionConfig = dict[str, object]
+        Config = dict[str, object]
+        AuthConfig = dict[str, object]
+        ConnectionConfig = dict[str, object]
 
         # Connection state
-        type State = str
-        type Status = str
-        type Health = bool
+        State = str
+        Status = str
+        Health = bool
 
     # =========================================================================
     # PROTOCOL TYPES - LDAP Protocol Extensions
@@ -151,18 +151,14 @@ class FlextLDAPTypes(FlextTypes):
         """LDAP protocol types extending FlextTypes protocols."""
 
         # Advanced Python 3.13 service protocols with proper bounds
-        type Service = object
-        type Repository[T: FlextModels.Entity] = object  # Bounded to entities only
-        type Handler[TInput: FlextModels.Value, TOutput: FlextResult[object]] = (
-            object  # Bounded type parameters
-        )
+        Service = object
+        Repository = object  # Bounded to entities only
+        Handler = object  # Bounded type parameters
 
         # LDAP-specific protocols with semantic bounds
-        type Connection = object
-        type Auth = object
-        type Validator[T: FlextModels.Value] = Callable[
-            [T], FlextResult[None]
-        ]  # Proper validator signature
+        Connection = object
+        Auth = object
+        Validator = Callable[[object], FlextResult[None]]  # Proper validator signature
 
     # =========================================================================
     # PROTOCOLS - Async and callable patterns
@@ -172,6 +168,7 @@ class FlextLDAPTypes(FlextTypes):
         """Async callable protocol for LDAP operations."""
 
         def __call__(self, *args: object, **kwargs: object) -> None:  # pragma: no cover
+            """Execute async callable with arbitrary arguments."""
             ...
 
 

@@ -137,10 +137,8 @@ class FlextLDAPValueObjects:
         @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate business rules for DN."""
-            try:
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"DN validation error: {e}")
+            # DN is validated in field_validator, no additional business rules
+            return FlextResult.ok(None)
 
         @property
         def rdn(self) -> str:
@@ -148,7 +146,8 @@ class FlextLDAPValueObjects:
             return self.value.split(",", 1)[0].strip()
 
         def is_descendant_of(
-            self, parent_dn: str | FlextLDAPValueObjects.DistinguishedName
+            self,
+            parent_dn: str | FlextLDAPValueObjects.DistinguishedName,
         ) -> bool:
             """Check if this DN is a descendant of the given parent DN."""
             parent_str = parent_dn if isinstance(parent_dn, str) else parent_dn.value
@@ -156,14 +155,17 @@ class FlextLDAPValueObjects:
 
         @classmethod
         def create(
-            cls, value: str
+            cls,
+            value: str,
         ) -> FlextResult[FlextLDAPValueObjects.DistinguishedName]:
             """Create DN from string with validation."""
             try:
                 dn = cls(value=value)
                 return FlextResult.ok(dn)
-            except Exception as e:
+            except ValueError as e:
                 return FlextResult.fail(str(e))
+            except TypeError as e:
+                return FlextResult.fail(f"Invalid input type: {e}")
 
     # =========================================================================
     # SCOPE - LDAP search scope value object
@@ -198,19 +200,17 @@ class FlextLDAPValueObjects:
         @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate business rules."""
-            try:
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Scope validation error: {e}")
+            # Scope is validated in field_validator, no additional business rules
+            return FlextResult.ok(None)
 
         @classmethod
         def create(cls, scope: str) -> FlextResult[FlextLDAPValueObjects.Scope]:
             """Create scope value object with validation."""
             try:
                 scope_obj = cls(scope=scope)
-                return FlextResult[FlextLDAPValueObjects.Scope].ok(scope_obj)
+                return FlextResult.ok(scope_obj)
             except ValueError as e:
-                return FlextResult[FlextLDAPValueObjects.Scope].fail(str(e))
+                return FlextResult.fail(str(e))
 
         @classmethod
         def base(cls) -> FlextLDAPValueObjects.Scope:
@@ -278,19 +278,19 @@ class FlextLDAPValueObjects:
         @override
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate business rules for filter."""
-            try:
-                return FlextResult[None].ok(None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Filter validation error: {e}")
+            # Filter is validated in field_validator, no additional business rules
+            return FlextResult.ok(None)
 
         @classmethod
         def create(cls, value: str) -> FlextResult[FlextLDAPValueObjects.Filter]:
             """Create filter from string with validation."""
             try:
                 filter_obj = cls(value=value)
-                return FlextResult[FlextLDAPValueObjects.Filter].ok(filter_obj)
-            except Exception as e:
-                return FlextResult[FlextLDAPValueObjects.Filter].fail(str(e))
+                return FlextResult.ok(filter_obj)
+            except ValueError as e:
+                return FlextResult.fail(str(e))
+            except TypeError as e:
+                return FlextResult.fail(f"Invalid input type: {e}")
 
         @classmethod
         def equals(cls, attribute: str, value: str) -> FlextLDAPValueObjects.Filter:
@@ -299,7 +299,9 @@ class FlextLDAPValueObjects:
 
         @classmethod
         def starts_with(
-            cls, attribute: str, value: str
+            cls,
+            attribute: str,
+            value: str,
         ) -> FlextLDAPValueObjects.Filter:
             """Create starts-with filter."""
             return cls(value=f"({attribute}={value}*)")
