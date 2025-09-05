@@ -25,15 +25,17 @@ Usage:
 
 from __future__ import annotations
 
-from typing import TypeGuard, cast
+from typing import TYPE_CHECKING, TypeGuard, cast
 
 from flext_ldap.constants import FlextLDAPConstants
-from flext_ldap.typings import (
-    TLdapAttributes,
-    TLdapAttributeValue,
-    TLdapEntryData,
-    TLdapSearchResult,
-)
+
+if TYPE_CHECKING:
+    from flext_ldap.typings import (
+        TLdapAttributes,
+        TLdapAttributeValue,
+        TLdapEntryData,
+        TLdapSearchResult,
+    )
 
 
 class FlextLDAPTypeGuards:
@@ -156,7 +158,7 @@ class FlextLDAPTypeGuards:
         # Must have dn
         typed_dict: dict[str, object] = cast("dict[str, object]", value)
         if "dn" not in typed_dict or not FlextLDAPTypeGuards.is_ldap_dn(
-            typed_dict["dn"]
+            typed_dict["dn"],
         ):
             return False
 

@@ -173,7 +173,7 @@ class TestLdapTypeGuards:
                 {
                     "dn": "cn=John Doe,ou=users,dc=example,dc=com",
                     "attributes": {"cn": ["John Doe"], "sn": ["Doe"]},
-                }
+                },
             ],
             [
                 {

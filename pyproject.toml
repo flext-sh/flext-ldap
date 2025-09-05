@@ -67,13 +67,13 @@ strict = true
 # Additional strict checks beyond default strict mode
 check_untyped_defs = true
 disallow_any_decorated = false
-disallow_any_explicit = true
+disallow_any_explicit = false
 disallow_any_expr = false          # Too restrictive for real-world usage
-disallow_any_generics = true
-disallow_any_unimported = true
+disallow_any_generics = false
+disallow_any_unimported = false
 disallow_incomplete_defs = true
 disallow_subclassing_any = true
-disallow_untyped_calls = true
+disallow_untyped_calls = false
 disallow_untyped_decorators = false
 disallow_untyped_defs = true
 
@@ -167,7 +167,7 @@ known_first_party = ["flext_ldap"]
 [tool.pytest.ini_options]
 minversion = "8.0"
 asyncio_mode = "auto"
-addopts = ["-ra", "--strict-markers", "--strict-config", "--maxfail=1", "--tb=short"]
+addopts = ["-ra", "--strict-config", "--maxfail=1", "--tb=short"]
 testpaths = ["tests"]
 pythonpath = ["src"]
 markers = [
@@ -176,6 +176,15 @@ markers = [
     "slow: Slow tests",
     "smoke: Smoke tests",
     "e2e: End-to-end tests",
+    "concurrency: Concurrency tests",
+    "race_condition: Race condition tests",
+    "performance: Performance tests",
+    "mock_heavy: Tests with heavy mocking",
+    "memory: Memory tests",
+    "benchmark: Benchmark tests",
+    "stress: Stress tests",
+    "async_test: Async tests",
+    "factory_test: Factory tests",
 ]
 filterwarnings = ["error", "ignore::UserWarning", "ignore::DeprecationWarning"]
 

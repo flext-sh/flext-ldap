@@ -158,7 +158,8 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
         """Test configure with valid LDAP settings."""
         # Setup REAL valid settings
         connection_config = FlextLDAPConnectionConfig(
-            server="ldap://example.com", port=389
+            server="ldap://example.com",
+            port=389,
         )
         settings = FlextLDAPSettings(default_connection=connection_config)
 
@@ -172,7 +173,9 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
         """Test configure with SSL/TLS settings."""
         # Setup REAL SSL settings
         connection_config = FlextLDAPConnectionConfig(
-            server="ldaps://example.com", port=636, use_ssl=True
+            server="ldaps://example.com",
+            port=636,
+            use_ssl=True,
         )
         settings = FlextLDAPSettings(default_connection=connection_config)
 
@@ -186,7 +189,8 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
         """Test configure properly updates container settings."""
         # Setup REAL settings
         connection_config = FlextLDAPConnectionConfig(
-            server="ldap://test.com", port=389
+            server="ldap://test.com",
+            port=389,
         )
         settings = FlextLDAPSettings(default_connection=connection_config)
 
@@ -206,7 +210,8 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
 
         # Setup REAL new settings
         connection_config = FlextLDAPConnectionConfig(
-            server="ldap://ldap.new.com", port=389
+            server="ldap://ldap.new.com",
+            port=389,
         )
         settings = FlextLDAPSettings(default_connection=connection_config)
 
@@ -281,12 +286,14 @@ class TestFlextLDAPContainerRealCoverage(unittest.TestCase):
 
         # Execute REAL independent configuration
         connection1 = FlextLDAPConnectionConfig(
-            server="ldap://ldap1.example.com", port=389
+            server="ldap://ldap1.example.com",
+            port=389,
         )
         settings1 = FlextLDAPSettings(default_connection=connection1)
 
         connection2 = FlextLDAPConnectionConfig(
-            server="ldap://ldap2.example.com", port=389
+            server="ldap://ldap2.example.com",
+            port=389,
         )
         settings2 = FlextLDAPSettings(default_connection=connection2)
 

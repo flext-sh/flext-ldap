@@ -22,6 +22,9 @@ ConnectionConfig = FlextLDAPAdapters.ConnectionConfig
 DirectoryEntry = FlextLDAPAdapters.DirectoryEntry
 OperationExecutor = FlextLDAPAdapters.OperationExecutor
 
+# Fix forward references for DirectoryEntry
+DirectoryEntry.model_rebuild()
+
 
 class TestRealAdaptersModels:
     """Test REAL adapters domain models."""
@@ -163,7 +166,8 @@ class TestRealConnectionService:
         """Test ConnectionService can be instantiated with client."""
         client = FlextLDAPClient()
         config = FlextLDAPAdapters.ConnectionConfig(
-            server="ldap://localhost:389", bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+            server="ldap://localhost:389",
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         )
         service = FlextLDAPAdapters.ConnectionService(client=client, config=config)
 
@@ -174,7 +178,8 @@ class TestRealConnectionService:
         """Test ConnectionService has required methods."""
         client = FlextLDAPClient()
         config = FlextLDAPAdapters.ConnectionConfig(
-            server="ldap://localhost:389", bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+            server="ldap://localhost:389",
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         )
         service = FlextLDAPAdapters.ConnectionService(client=client, config=config)
 
@@ -192,7 +197,8 @@ class TestRealConnectionService:
         """Test connection service starts in not connected state."""
         client = FlextLDAPClient()
         config = FlextLDAPAdapters.ConnectionConfig(
-            server="ldap://localhost:389", bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+            server="ldap://localhost:389",
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         )
         service = FlextLDAPAdapters.ConnectionService(client=client, config=config)
 
@@ -214,7 +220,8 @@ class TestRealConnectionService:
         """Test terminate_connection when not connected."""
         client = FlextLDAPClient()
         config = FlextLDAPAdapters.ConnectionConfig(
-            server="ldap://localhost:389", bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+            server="ldap://localhost:389",
+            bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         )
         service = FlextLDAPAdapters.ConnectionService(client=client, config=config)
 
@@ -307,7 +314,8 @@ class TestRealEntryService:
 
         # Entry without objectClass should fail
         entry_no_oc = DirectoryEntry(
-            dn="cn=test,dc=example,dc=com", attributes={"cn": ["test"]}
+            dn="cn=test,dc=example,dc=com",
+            attributes={"cn": ["test"]},
         )
         result = await service.add_entry(entry_no_oc)
         assert not result.is_success
@@ -428,7 +436,8 @@ class TestRealOperationExecutor:
             return FlextResult[list[DirectoryEntry]].ok([])
 
         result = await executor.execute_async_operation(
-            successful_operation, "test operation"
+            successful_operation,
+            "test operation",
         )
 
         assert result.is_success
@@ -444,7 +453,8 @@ class TestRealOperationExecutor:
             raise RuntimeError(msg)
 
         result = await executor.execute_async_operation(
-            failing_operation, "test operation"
+            failing_operation,
+            "test operation",
         )
 
         assert not result.is_success

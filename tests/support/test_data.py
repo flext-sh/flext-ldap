@@ -1,6 +1,5 @@
 """Test data for LDAP testing."""
 
-
 # Sample LDAP entries for testing
 SAMPLE_USER_ENTRY: dict[str, object] = {
     "dn": "cn=testuser,ou=people,dc=flext,dc=local",

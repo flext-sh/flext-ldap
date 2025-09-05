@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TypeVar, cast
+from typing import TYPE_CHECKING, TypeVar
 
 from flext_core import FlextContainer, FlextLogger, FlextResult, FlextServices
 
 from flext_ldap.clients import FlextLDAPClient
 from flext_ldap.repositories import FlextLDAPRepositories
-from flext_ldap.settings import FlextLDAPSettings
+
+if TYPE_CHECKING:
+    from flext_ldap.settings import FlextLDAPSettings
 
 # Type variable for generic service resolution
 T = TypeVar("T")
@@ -28,7 +30,7 @@ class FlextLDAPContainer:
         self._services_registered = False
         self._service_registry = FlextServices.ServiceRegistry()
         logger.debug(
-            "FlextLDAPContainer initialized with FlextServices.ServiceRegistry"
+            "FlextLDAPContainer initialized with FlextServices.ServiceRegistry",
         )
 
     def get_container(self) -> FlextContainer:
@@ -48,7 +50,8 @@ class FlextLDAPContainer:
             registration_result = self._register_services(container)
             if not registration_result.is_success:
                 logger.error(
-                    f"Failed to register LDAP services: {registration_result.error}"
+                    "Failed to register LDAP services: %s",
+                    registration_result.error,
                 )
                 error_msg = (
                     f"LDAP service registration failed: {registration_result.error}"
@@ -58,7 +61,7 @@ class FlextLDAPContainer:
 
         return container
 
-    def _get_service[T](self, service_key: str, service_type: type[T]) -> T:
+    def _get_service(self, service_key: str) -> object:
         """Generic service resolver using FlextServices.ServiceRegistry.
 
         Uses flext-core ServiceRegistry for service discovery instead of custom logic.
@@ -83,7 +86,7 @@ class FlextLDAPContainer:
             if not result.is_success:
                 msg = f"Failed to discover service '{service_key}': {discovery_result.error}"
                 raise RuntimeError(msg)
-            return cast("service_type", result.value)  # type: ignore[valid-type]
+            return result.value
 
         service_info = discovery_result.value
         service_instance = service_info.get("instance")
@@ -91,30 +94,23 @@ class FlextLDAPContainer:
             msg = f"Service '{service_key}' has no instance registered"
             raise RuntimeError(msg)
 
-        return cast("service_type", service_instance)  # type: ignore[valid-type]
+        return service_instance
 
     def get_client(self) -> FlextLDAPClient:
         """Get LDAP client using generic resolver."""
-        return self._get_service("FlextLDAPClient", FlextLDAPClient)
+        return self._get_service("FlextLDAPClient")  # type: ignore[return-value]
 
     def get_repository(self) -> FlextLDAPRepositories.Repository:
         """Get LDAP repository using generic resolver."""
-        return self._get_service(
-            "FlextLDAPRepositories.Repository", FlextLDAPRepositories.Repository
-        )
+        return self._get_service("FlextLDAPRepositories.Repository")  # type: ignore[return-value]
 
     def get_user_repository(self) -> FlextLDAPRepositories.UserRepository:
         """Get LDAP user repository using generic resolver."""
-        return self._get_service(
-            "FlextLDAPRepositories.UserRepository", FlextLDAPRepositories.UserRepository
-        )
+        return self._get_service("FlextLDAPRepositories.UserRepository")  # type: ignore[return-value]
 
     def get_group_repository(self) -> FlextLDAPRepositories.GroupRepository:
         """Get LDAP group repository using generic resolver."""
-        return self._get_service(
-            "FlextLDAPRepositories.GroupRepository",
-            FlextLDAPRepositories.GroupRepository,
-        )
+        return self._get_service("FlextLDAPRepositories.GroupRepository")  # type: ignore[return-value]
 
     def configure(self, settings: FlextLDAPSettings) -> FlextResult[None]:
         """Configure container with LDAP settings.
@@ -128,10 +124,10 @@ class FlextLDAPContainer:
         """
         try:
             # For now, just validate settings exist
-            logger.debug(f"Container configured with settings: {type(settings)}")
-            return FlextResult[None].ok(None)
+            logger.debug("Container configured with settings: %s", type(settings))
+            return FlextResult.ok(None)
         except Exception as e:
-            return FlextResult[None].fail(f"Configuration failed: {e}")
+            return FlextResult.fail(f"Configuration failed: {e}")
 
     def _register_services(self, container: FlextContainer) -> FlextResult[None]:
         """Register LDAP services using FlextServices.ServiceRegistry pattern.
@@ -181,8 +177,8 @@ class FlextLDAPContainer:
             for service_info in services:
                 registration_result = self._service_registry.register(service_info)
                 if not registration_result.is_success:
-                    return FlextResult[None].fail(
-                        f"Failed to register service '{service_info['name']}': {registration_result.error}"
+                    return FlextResult.fail(
+                        f"Failed to register service '{service_info['name']}': {registration_result.error}",
                     )
 
                 # Also register in legacy container for backward compatibility
@@ -191,20 +187,22 @@ class FlextLDAPContainer:
                 if isinstance(service_name, str):
                     legacy_result = container.register(service_name, service_instance)
                 else:
-                    legacy_result = FlextResult[None].fail(
-                        "Service name must be string"
+                    legacy_result = FlextResult.fail(
+                        "Service name must be string",
                     )
                 if not legacy_result.is_success:
                     logger.warning(
-                        f"Failed to register '{service_info['name']}' in legacy container: {legacy_result.error}"
+                        "Failed to register '%s' in legacy container: %s",
+                        service_info["name"],
+                        legacy_result.error,
                     )
 
             logger.info("LDAP services registered with FlextServices.ServiceRegistry")
-            return FlextResult[None].ok(None)
+            return FlextResult.ok(None)
 
         except Exception as e:
             logger.exception("Failed to register LDAP services")
-            return FlextResult[None].fail(f"Service registration error: {e}")
+            return FlextResult.fail(f"Service registration error: {e}")
 
     def reset(self) -> None:
         """Reset LDAP service registrations using FlextServices pattern."""

@@ -247,7 +247,8 @@ class TestLdapServiceRealOperations:
         }
         update_attributes = create_ldap_attributes(update_attrs_raw)
         update_result = await ldap_service.update_user(
-            user_request.dn, update_attributes
+            user_request.dn,
+            update_attributes,
         )
         assert update_result.is_success, f"Failed to update user: {update_result.error}"
 
@@ -630,7 +631,7 @@ class TestLdapErrorHandlingReal:
 
         # Test delete non-existent entry
         delete_result = await connected_ldap_client.delete(
-            f"cn=nonexistent-{uuid4().hex},ou=nonexistent,{clean_ldap_container['base_dn']}"
+            f"cn=nonexistent-{uuid4().hex},ou=nonexistent,{clean_ldap_container['base_dn']}",
         )
         # Should handle gracefully
         assert not delete_result.is_success

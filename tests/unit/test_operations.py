@@ -124,7 +124,9 @@ class TestFlextLDAPOperationsReal:
         # Test with real exception
         test_exception = ValueError("Test error message")
         result = ops._handle_exception_with_context(
-            "test operation", test_exception, "conn123"
+            "test operation",
+            test_exception,
+            "conn123",
         )
 
         assert isinstance(result, str)
@@ -529,7 +531,7 @@ class TestFlextLDAPGroupOperationsReal:
             [
                 "cn=user1,ou=users,dc=example,dc=com",
                 "cn=user2,ou=users,dc=example,dc=com",
-            ]
+            ],
         )
 
         assert len(members) == 2
@@ -612,7 +614,9 @@ class TestFlextLDAPGroupOperationsReal:
 
         # Test add action
         result = ops._calculate_updated_members(
-            current_members, "cn=user2,ou=users,dc=example,dc=com", "add"
+            current_members,
+            "cn=user2,ou=users,dc=example,dc=com",
+            "add",
         )
         assert result.is_success
         assert len(result.value) == 2
@@ -620,7 +624,9 @@ class TestFlextLDAPGroupOperationsReal:
 
         # Test remove action
         result = ops._calculate_updated_members(
-            current_members, "cn=user1,ou=users,dc=example,dc=com", "remove"
+            current_members,
+            "cn=user1,ou=users,dc=example,dc=com",
+            "remove",
         )
         assert result.is_success
         # Should have dummy member when last real member removed
@@ -629,7 +635,9 @@ class TestFlextLDAPGroupOperationsReal:
 
         # Test invalid action
         result = ops._calculate_updated_members(
-            current_members, "cn=user1,ou=users,dc=example,dc=com", "invalid"
+            current_members,
+            "cn=user1,ou=users,dc=example,dc=com",
+            "invalid",
         )
         assert not result.is_success
         assert "Invalid action" in result.error

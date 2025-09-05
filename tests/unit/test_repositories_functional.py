@@ -31,6 +31,7 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
         # Test functional failure case
         failure_result = simulate_successful_repo_operation("")
         assert failure_result.is_success is False
+        assert failure_result.error
         assert "Invalid data" in failure_result.error
 
     def test_data_transformation_functional(self) -> None:
@@ -79,7 +80,8 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
 
         # Test LDAP filter construction using standard string operations
         def build_user_filter(
-            username: str | None = None, email: str | None = None
+            username: str | None = None,
+            email: str | None = None,
         ) -> str:
             filters = []
 
@@ -137,9 +139,9 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
         org_person_required = ["cn", "sn", "objectClass", "mail"]
 
         # Test data
-        person_attrs = {"cn": "John Doe", "sn": "Doe", "objectClass": ["person"]}
+        person_attrs: dict[str, object] = {"cn": "John Doe", "sn": "Doe", "objectClass": ["person"]}
 
-        org_person_attrs = {
+        org_person_attrs: dict[str, object] = {
             "cn": "Jane Smith",
             "sn": "Smith",
             "mail": "jane@example.com",
@@ -148,7 +150,8 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
 
         # Validate using Python standard set operations
         def validate_required_attributes(
-            attrs: dict[str, object], required: list[str]
+            attrs: dict[str, object],
+            required: list[str],
         ) -> bool:
             attr_keys = set(attrs.keys())
             required_keys = set(required)

@@ -107,7 +107,8 @@ class OpenLDAPContainerManager:
                 # Try to force remove by name if getting by ID fails
                 with suppress(Exception):
                     self.client.api.remove_container(
-                        OPENLDAP_CONTAINER_NAME, force=True
+                        OPENLDAP_CONTAINER_NAME,
+                        force=True,
                     )
 
         self.container = None
@@ -188,7 +189,7 @@ class OpenLDAPContainerManager:
         try:
             logs_bytes = self.container.logs()
             return str(
-                logs_bytes.decode() if isinstance(logs_bytes, bytes) else logs_bytes
+                logs_bytes.decode() if isinstance(logs_bytes, bytes) else logs_bytes,
             )
         except (RuntimeError, ValueError, TypeError) as e:
             return f"Failed to get logs: {e}"

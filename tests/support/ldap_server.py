@@ -217,7 +217,9 @@ def get_test_ldap_config() -> FlextLDAPConnectionConfig:
 
 
 async def wait_for_ldap_server(
-    host: str = "localhost", port: int = 3390, timeout_seconds: int = 60
+    host: str = "localhost",
+    port: int = 3390,
+    timeout_seconds: int = 60,
 ) -> bool:
     """Wait for LDAP server to be available."""
     # ldap3 already imported at top

@@ -126,7 +126,7 @@ class TestRealFlextLDAPSettings:
                 {
                     "invalid_field": "value",
                     "port": "not_an_int",
-                }
+                },
             )
 
 

@@ -7,20 +7,23 @@ Uses dependency injection and proper service layer patterns.
 from __future__ import annotations
 
 import uuid
-from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import cast
+from typing import TYPE_CHECKING, cast, overload
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldap.clients import FlextLDAPClient
 from flext_ldap.container import FlextLDAPContainer
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.exceptions import FlextLDAPExceptions
-from flext_ldap.repositories import FlextLDAPRepositories
 from flext_ldap.services import FlextLDAPServices
 from flext_ldap.settings import FlextLDAPSettings
-from flext_ldap.typings import LdapAttributeDict
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from flext_ldap.clients import FlextLDAPClient
+    from flext_ldap.repositories import FlextLDAPRepositories
+    from flext_ldap.typings import LdapAttributeDict
 
 # Removed FlextLDAPUtilities - using Python standard library
 
@@ -49,18 +52,28 @@ class FlextLDAPApi:
         return f"session_{uuid.uuid4()}"
 
     def _get_entry_attribute(
-        self, entry: dict[str, object], key: str, default: str = ""
+        self,
+        entry: dict[str, object] | FlextLDAPEntities.Entry,
+        key: str,
+        default: str = "",
     ) -> str:
         """Safely extract string attribute from LDAP entry."""
-        value = entry.get(key, [default])
+        # Handle Entry objects
+        if isinstance(entry, FlextLDAPEntities.Entry):
+            value = entry.get_attribute(key) or [default]
+        else:
+            # Handle dict entries
+            value = entry.get(key, [default])  # type: ignore[assignment]
 
         # Handle list values (common in LDAP)
         if isinstance(value, list):
             if value:
-                # Get first item with type safety - suppress type checking for object conversion
+                # Get first item with type safety - suppress type checking
+                # for object conversion
                 first_value: object = value[0]
                 try:
-                    # Use type ignore for object to string conversion - safe for LDAP data
+                    # Use type ignore for object to string conversion
+                    # - safe for LDAP data
                     return str(first_value) if first_value is not None else default
                 except (TypeError, ValueError):
                     return default
@@ -82,20 +95,20 @@ class FlextLDAPApi:
     ) -> FlextResult[str]:
         """Connect to LDAP server and return session ID."""
         if not bind_dn or not bind_password:
-            return FlextResult[str].fail("bind_dn and bind_password are required")
+            return FlextResult.fail("bind_dn and bind_password are required")
 
         # Get client from flext-core container
         client_result = self._container.get("FlextLDAPClient")
         if not client_result.is_success:
-            return FlextResult[str].fail(
-                f"Failed to get LDAP client: {client_result.error}"
+            return FlextResult.fail(
+                f"Failed to get LDAP client: {client_result.error}",
             )
         client = cast("FlextLDAPClient", client_result.value)
 
         # Connect using real client
         connect_result = await client.connect(server_uri, bind_dn, bind_password)
         if not connect_result.is_success:
-            return FlextResult[str].fail(f"Connection failed: {connect_result.error}")
+            return FlextResult.fail(f"Connection failed: {connect_result.error}")
 
         # Generate session ID for this connection
         session_id = self._generate_session_id()
@@ -104,14 +117,14 @@ class FlextLDAPApi:
             extra={"session_id": session_id, "server": server_uri},
         )
 
-        return FlextResult[str].ok(session_id)
+        return FlextResult.ok(session_id)
 
     async def disconnect(self, session_id: str) -> FlextResult[bool]:
         """Disconnect from LDAP server."""
         client_result = self._container.get("FlextLDAPClient")
         if not client_result.is_success:
-            return FlextResult[bool].fail(
-                f"Failed to get LDAP client: {client_result.error}"
+            return FlextResult.fail(
+                f"Failed to get LDAP client: {client_result.error}",
             )
         client = cast("FlextLDAPClient", client_result.value)
         disconnect_result = await client.unbind()
@@ -119,8 +132,8 @@ class FlextLDAPApi:
         if disconnect_result.is_success:
             logger.info("LDAP connection terminated", extra={"session_id": session_id})
             success = True
-            return FlextResult[bool].ok(success)
-        return FlextResult[bool].fail(f"Disconnect failed: {disconnect_result.error}")
+            return FlextResult.ok(success)
+        return FlextResult.fail(f"Disconnect failed: {disconnect_result.error}")
 
     @asynccontextmanager
     async def connection(
@@ -234,7 +247,8 @@ class FlextLDAPApi:
     ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
         """Search users using factory method for common pattern."""
         search_request = FlextLDAPEntities.SearchRequest.create_user_search(
-            base_dn=base_dn, uid=uid
+            base_dn=base_dn,
+            uid=uid,
         )
         return await self.search(search_request)
 
@@ -306,29 +320,62 @@ class FlextLDAPApi:
 
     # Group Operations
 
+    @overload
+    async def create_group(
+        self,
+        request: FlextLDAPEntities.CreateGroupRequest,
+    ) -> FlextResult[FlextLDAPEntities.Group]: ...
+
+    @overload
     async def create_group(
         self,
         dn: str,
         cn: str,
         description: str | None = None,
         members: list[str] | None = None,
+    ) -> FlextResult[FlextLDAPEntities.Group]: ...
+
+    async def create_group(  # type: ignore[misc]
+        self,
+        dn_or_request: str | FlextLDAPEntities.CreateGroupRequest,
+        cn: str | None = None,
+        description: str | None = None,
+        members: list[str] | None = None,
     ) -> FlextResult[FlextLDAPEntities.Group]:
-        """Create group using proper service layer."""
+        """Create group using proper service layer.
+
+        Can accept either a CreateGroupRequest object or individual parameters.
+        """
+        # Handle both request object and individual parameters
+        if isinstance(dn_or_request, FlextLDAPEntities.CreateGroupRequest):
+            request = dn_or_request
+            dn = request.dn
+            cn = request.cn
+            description = request.description
+            members = request.member_dns
+        else:
+            dn = dn_or_request
+            if cn is None:
+                return FlextResult.fail(
+                    "cn parameter is required when using individual parameters"
+                )
+            members = members or []
+
         # Create group entity with required status
         group = FlextLDAPEntities.Group(
             id=f"api_group_{dn.replace(',', '_').replace('=', '_')}",
             dn=dn,
             cn=cn,
             description=description,
-            members=members or [],
+            members=members,
             modified_at=None,
         )
 
         # Create via service
         create_result = await self._service.create_group(group)
         if create_result.is_success:
-            return FlextResult[FlextLDAPEntities.Group].ok(group)
-        return FlextResult[FlextLDAPEntities.Group].fail(
+            return FlextResult.ok(group)
+        return FlextResult.fail(
             create_result.error or "Group creation failed",
         )
 
@@ -366,8 +413,8 @@ class FlextLDAPApi:
                 modified_at=None,
                 description=None,
             )
-            return FlextResult[FlextLDAPEntities.Group | None].ok(group)
-        return FlextResult[FlextLDAPEntities.Group | None].ok(None)
+            return FlextResult.ok(group)
+        return FlextResult.ok(None)
 
     async def update_group(
         self,
@@ -399,14 +446,14 @@ class FlextLDAPApi:
         """Delete LDAP entry by DN."""
         repository_result = self._container.get("FlextLDAPRepositories.Repository")
         if not repository_result.is_success:
-            return FlextResult[None].fail(
-                f"Failed to get LDAP repository: {repository_result.error}"
+            return FlextResult.fail(
+                f"Failed to get LDAP repository: {repository_result.error}",
             )
         repository = cast("FlextLDAPRepositories.Repository", repository_result.value)
         result = await repository.delete_async(dn)
         if not result.is_success:
-            return FlextResult[None].fail(result.error or "Delete failed")
-        return FlextResult[None].ok(None)
+            return FlextResult.fail(result.error or "Delete failed")
+        return FlextResult.ok(None)
 
     # Validation Methods
 

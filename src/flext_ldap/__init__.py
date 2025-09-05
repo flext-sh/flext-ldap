@@ -141,7 +141,7 @@ from flext_ldap.typings import (
     TLdapAttributeValue,
     TLdapAttributes,
     TLdapEntryData,
-    TLdapSearchResult
+    TLdapSearchResult,
 )
 
 # Version info - handle ImportError gracefully
@@ -157,7 +157,6 @@ __all__ = [
     # Version and metadata
     "__version__",
     "__version_info__",
-
     # Foundation Layer
     "FlextLDAPConstants",
     "FlextLDAPTypes",
@@ -169,21 +168,18 @@ __all__ = [
     "TLdapEntryData",
     "TLdapSearchResult",
     "FlextLDAPExceptions",
-
     # Domain Layer
     "DictEntry",
     "FlextLDAPEntities",
     "FlextLDAPValueObjects",
     "FlextLDAPDomain",
     "FlextLDAPModels",
-
     # Application Layer
     "FlextLDAPServices",
     "FlextLDAPOperations",
     "FlextLDAPRepositories",
     "FlextLDAPApi",
     "get_flext_ldap_api",
-
     # Infrastructure Layer
     "SCOPE_MAP",
     "FlextLDAPClient",
@@ -191,7 +187,6 @@ __all__ = [
     "FlextLDAPContainer",
     "FlextLDAPConnectionConfig",
     "FlextLDAPSettings",
-
     # Support Layer
     "FlextLDAPAdapters",
     "FlextLDAPFields",

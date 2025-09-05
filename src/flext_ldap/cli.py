@@ -22,23 +22,28 @@ class FlextLDAPCli:
         self._cli = None
 
     def test_connection(
-        self, server: str, bind_dn: str, bind_password: str
+        self,
+        server: str,
+        bind_dn: str,
+        bind_password: str,
     ) -> FlextResult[dict[str, object]]:
         """Test LDAP connection."""
 
         async def _test() -> FlextResult[dict[str, object]]:
             try:
                 connection_result = await self._api.connect(
-                    server, bind_dn, bind_password
+                    server,
+                    bind_dn,
+                    bind_password,
                 )
                 if not connection_result.is_success:
                     return FlextResult.fail(
-                        f"Connection failed: {connection_result.error}"
+                        f"Connection failed: {connection_result.error}",
                     )
 
                 await self._api.disconnect(connection_result.value)
                 return FlextResult.ok(
-                    {"status": "connected", "server": server, "bind_dn": bind_dn}
+                    {"status": "connected", "server": server, "bind_dn": bind_dn},
                 )
             except Exception as e:
                 logger.exception("LDAP connection test failed")
@@ -58,7 +63,7 @@ class FlextLDAPCli:
             if result.is_success:
                 logger.info("Connection test successful")
             else:
-                logger.error(f"Connection test failed: {result.error}")
+                logger.error("Connection test failed: %s", result.error)
 
 
 __all__ = [

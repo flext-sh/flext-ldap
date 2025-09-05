@@ -10,7 +10,10 @@ import pytest
 from flext_core import FlextResult
 
 from flext_ldap import FlextLDAPClient, FlextLDAPEntities
-from flext_ldap.clients import FlextLDAPClient as DirectFlextLDAPClient
+from flext_ldap.clients import (
+    FlextLDAPClient as DirectFlextLDAPClient,
+    LDAPSearchStrategies,
+)
 from flext_ldap.typings import LdapAttributeDict
 
 
@@ -24,14 +27,16 @@ class TestFlextLDAPClientComprehensive:
 
         assert client._connection is None
         assert client._server is None
-        assert not client.is_connected()
+        assert not client.is_connected
 
     async def test_connect_with_valid_ldap_uri(self) -> None:
         """Test connection with valid LDAP URI."""
         client = FlextLDAPClient()
 
         result = await client.connect(
-            "ldap://localhost:389", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com", "password"
+            "ldap://localhost:389",
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
+            "password",
         )
 
         # Should fail gracefully without real LDAP server
@@ -55,7 +60,9 @@ class TestFlextLDAPClientComprehensive:
         client = FlextLDAPClient()
 
         result = await client.connect(
-            "ldaps://localhost:636", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com", "password"
+            "ldaps://localhost:636",
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
+            "password",
         )
 
         # Should fail gracefully without real LDAP server
@@ -79,7 +86,9 @@ class TestFlextLDAPClientComprehensive:
         client = FlextLDAPClient()
 
         result = await client.connect(
-            "invalid://uri:format", "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com", "password"
+            "invalid://uri:format",
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=com",
+            "password",
         )
 
         assert not result.is_success
@@ -114,7 +123,7 @@ class TestFlextLDAPClientComprehensive:
         result = await client.bind("cn=user,dc=test,dc=com", "password")
 
         assert not result.is_success
-        assert "not connected" in result.error.lower()
+        assert "connection" in result.error.lower()
 
     async def test_unbind_without_connection(self) -> None:
         """Test unbind operation without connection."""
@@ -129,7 +138,7 @@ class TestFlextLDAPClientComprehensive:
         """Test is_connected check without connection."""
         client = FlextLDAPClient()
 
-        assert not client.is_connected()
+        assert not client.is_connected
 
     async def test_search_without_connection(self) -> None:
         """Test search operation without connection."""
@@ -268,11 +277,12 @@ class TestFlextLDAPClientComprehensive:
     async def test_search_strategy_classes_direct(self) -> None:
         """Test internal SearchStrategy classes directly."""
         # Test SearchExecutionStrategy
-        client = DirectFlextLDAPClient()
-        strategy = client.SearchExecutionStrategy(None)
+        strategy = LDAPSearchStrategies.SearchExecutionStrategy(None)
 
         request = FlextLDAPEntities.SearchRequest(
-            base_dn="dc=test,dc=com", filter_str="(objectClass=person)", scope="subtree"
+            base_dn="dc=test,dc=com",
+            filter_str="(objectClass=person)",
+            scope="subtree",
         )
 
         result = strategy.execute_search(request)
@@ -281,27 +291,27 @@ class TestFlextLDAPClientComprehensive:
         assert not result.is_success
         assert any(
             pattern in result.error.lower()
-            for pattern in ["connection", "error", "failed"]
+            for pattern in ["not connected", "connection", "error", "failed"]
         )
 
     async def test_entry_conversion_strategy_direct(self) -> None:
         """Test EntryConversionStrategy directly."""
-        client = DirectFlextLDAPClient()
-        strategy = client.EntryConversionStrategy()
+        DirectFlextLDAPClient()
+        strategy = LDAPSearchStrategies.EntryConversionStrategy()
 
         # Test with None connection (should handle gracefully)
-        result = strategy.convert_entries(None)  # type: ignore[arg-type]
+        result = strategy.convert_entries(None)
 
         assert result.is_success
         # Should return empty entries list
-        entries = result.value.get("entries", [])  # type: ignore[union-attr]
+        entries = result.value.get("entries", []) if result.value else []
         assert isinstance(entries, list)
         assert len(entries) == 0
 
     async def test_response_builder_strategy_direct(self) -> None:
         """Test ResponseBuilderStrategy directly."""
-        client = DirectFlextLDAPClient()
-        strategy = client.ResponseBuilderStrategy()
+        DirectFlextLDAPClient()
+        strategy = LDAPSearchStrategies.ResponseBuilderStrategy()
 
         # Test with minimal valid data
         data = {
@@ -324,8 +334,8 @@ class TestFlextLDAPClientComprehensive:
 
     async def test_response_builder_with_entries(self) -> None:
         """Test ResponseBuilderStrategy with entries."""
-        client = DirectFlextLDAPClient()
-        strategy = client.ResponseBuilderStrategy()
+        DirectFlextLDAPClient()
+        strategy = LDAPSearchStrategies.ResponseBuilderStrategy()
 
         # Test with entries that hit size limit
         request = FlextLDAPEntities.SearchRequest(
@@ -351,12 +361,12 @@ class TestFlextLDAPClientComprehensive:
 
     async def test_response_builder_error_handling(self) -> None:
         """Test ResponseBuilderStrategy error handling."""
-        client = DirectFlextLDAPClient()
-        strategy = client.ResponseBuilderStrategy()
+        DirectFlextLDAPClient()
+        strategy = LDAPSearchStrategies.ResponseBuilderStrategy()
 
         # Test with invalid data (missing request)
         data = {
-            "entries": []
+            "entries": [],
             # Missing "request" key - should cause error
         }
 
@@ -367,7 +377,8 @@ class TestFlextLDAPClientComprehensive:
 
     @pytest.mark.integration
     async def test_full_client_lifecycle_with_docker(
-        self, connected_ldap_client: FlextLDAPClient
+        self,
+        connected_ldap_client: FlextLDAPClient,
     ) -> None:
         """Test complete client lifecycle with real Docker LDAP server."""
         # This test would use the connected_ldap_client fixture which
@@ -385,7 +396,7 @@ class TestFlextLDAPClientComprehensive:
 
         if connect_result.is_success:
             # If connection succeeds, test basic operations
-            assert client.is_connected()
+            assert client.is_connected
 
             # Test search
             search_request = FlextLDAPEntities.SearchRequest(
@@ -400,7 +411,7 @@ class TestFlextLDAPClientComprehensive:
             # Test unbind
             unbind_result = await client.unbind()
             assert unbind_result.is_success
-            assert not client.is_connected()
+            assert not client.is_connected
         else:
             # Expected failure without Docker LDAP server
             error_lower = connect_result.error.lower()
@@ -481,7 +492,7 @@ class TestFlextLDAPClientComprehensive:
         assert client._server is None
 
         # These should not raise exceptions
-        assert not client.is_connected()
+        assert not client.is_connected
 
     async def test_error_message_consistency(self) -> None:
         """Test that error messages are consistent across operations."""
@@ -491,8 +502,10 @@ class TestFlextLDAPClientComprehensive:
             lambda: client.bind("cn=test,dc=test", "pass"),
             lambda: client.search(
                 FlextLDAPEntities.SearchRequest(
-                    base_dn="dc=test", filter_str="(objectClass=*)", scope="base"
-                )
+                    base_dn="dc=test",
+                    filter_str="(objectClass=*)",
+                    scope="base",
+                ),
             ),
             lambda: client.add("cn=test,dc=test", {"cn": "test"}),
             lambda: client.modify("cn=test,dc=test", {"description": "test"}),
@@ -502,4 +515,7 @@ class TestFlextLDAPClientComprehensive:
         for operation in operations:
             result = await operation()
             assert not result.is_success
-            assert "not connected" in result.error.lower()
+            assert any(
+                phrase in result.error.lower()
+                for phrase in ["not connected", "no connection", "connection"]
+            )

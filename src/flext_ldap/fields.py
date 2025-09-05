@@ -32,12 +32,14 @@ Examples:
 from __future__ import annotations
 
 from enum import Enum, StrEnum
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from flext_core import FlextLogger, FlextResult
 
 from flext_ldap.constants import FlextLDAPConstants
-from flext_ldap.typings import LdapAttributeDict
+
+if TYPE_CHECKING:
+    from flext_ldap.typings import LdapAttributeDict
 
 logger = FlextLogger(__name__)
 
@@ -167,8 +169,8 @@ class FlextLDAPFields:
                 attributes,
                 "cn",
             ):
-                return FlextResult[None].fail(f"{entity_type} must have a Common Name")
-            return FlextResult[None].ok(None)
+                return FlextResult.fail(f"{entity_type} must have a Common Name")
+            return FlextResult.ok(None)
 
         @staticmethod
         def validate_required_object_classes(
@@ -179,14 +181,15 @@ class FlextLDAPFields:
             """Validate required object classes for entities."""
             for req_class in required_classes:
                 if req_class not in object_classes:
-                    return FlextResult[None].fail(
+                    return FlextResult.fail(
                         f"{entity_type} must have object class '{req_class}'",
                     )
-            return FlextResult[None].ok(None)
+            return FlextResult.ok(None)
 
         @staticmethod
         def _get_attribute_value(
-            attributes: dict[str, object], name: str
+            attributes: dict[str, object],
+            name: str,
         ) -> str | None:
             """Helper to get single attribute value."""
             raw = attributes.get(name)

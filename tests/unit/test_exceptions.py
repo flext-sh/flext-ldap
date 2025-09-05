@@ -16,7 +16,9 @@ class TestExceptionStringRepresentations:
         """Test FlextLDAPExceptions.Error __str__ with operation and ldap_result_code."""
         # Covers lines 70-77, 78-86
         config = FlextLDAPExceptions.ErrorConfig(
-            message="Base error", operation="test_operation", ldap_result_code="50"
+            message="Base error",
+            operation="test_operation",
+            ldap_result_code="50",
         )
         error = FlextLDAPExceptions.Error(config)
         result_str = str(error)
@@ -28,7 +30,8 @@ class TestExceptionStringRepresentations:
         """Test FlextLDAPExceptions.LdapConnectionError with ldap_result_code."""
         # Covers lines 127, 129, 131
         error = FlextLDAPExceptions.LdapConnectionError(
-            "Connection failed", server_uri="ldap://test.com:389"
+            "Connection failed",
+            server_uri="ldap://test.com:389",
         )
         result_str = str(error)
         assert "Connection failed" in result_str
@@ -39,7 +42,9 @@ class TestExceptionStringRepresentations:
         """Test FlextLDAPExceptions.AuthenticationError string formatting branches."""
         # Covers lines 165-171
         error = FlextLDAPExceptions.AuthenticationError(
-            "Auth failed", bind_dn="cn=user,dc=test", ldap_result_code="49"
+            "Auth failed",
+            bind_dn="cn=user,dc=test",
+            ldap_result_code="49",
         )
         result_str = str(error)
         assert "Auth failed" in result_str
@@ -105,7 +110,10 @@ class TestExceptionStringRepresentations:
         """Test FlextLDAPExceptions.LdapTypeError with type information."""
         # Covers lines 381-393
         error = FlextLDAPExceptions.LdapTypeError(
-            "Type error", expected_type="int", actual_type="str", attribute_name="port"
+            "Type error",
+            expected_type="int",
+            actual_type="str",
+            attribute_name="port",
         )
         result_str = str(error)
         assert "Type error" in result_str
@@ -116,7 +124,9 @@ class TestExceptionStringRepresentations:
         """Test FlextLDAPExceptions.ConfigurationError with config section."""
         # Covers lines 423-429
         error = FlextLDAPExceptions.ConfigurationError(
-            "Config error", config_key="server", config_section="ldap"
+            "Config error",
+            config_key="server",
+            config_section="ldap",
         )
         result_str = str(error)
         assert "Config error" in result_str
@@ -131,10 +141,12 @@ class TestExceptionFactoryMethods:
         """Test connection_failed factory method variations."""
         # Covers lines 461-469
         conn_params1 = FlextLDAPExceptions.ConnectionParams(
-            server_uri="server1", error="timeout"
+            server_uri="server1",
+            error="timeout",
         )
         conn_params2 = FlextLDAPExceptions.ConnectionParams(
-            server_uri="server2", error="port error"
+            server_uri="server2",
+            error="port error",
         )
         error1 = FlextLDAPExceptions.Factory.connection_failed(conn_params1)
         error2 = FlextLDAPExceptions.Factory.connection_failed(conn_params2)
@@ -150,21 +162,28 @@ class TestExceptionFactoryMethods:
 
         # authentication_failed with code
         auth_error = FlextLDAPExceptions.Factory.authentication_failed(
-            "cn=user", ldap_result_code="49"
+            "cn=user",
+            ldap_result_code="49",
         )
         assert isinstance(auth_error, FlextLDAPExceptions.AuthenticationError)
         assert "49" in str(auth_error)
 
         # search_failed with code
         search_error = FlextLDAPExceptions.Factory.search_failed(
-            "ou=users", "(uid=test)", "Not found", ldap_result_code="32"
+            "ou=users",
+            "(uid=test)",
+            "Not found",
+            ldap_result_code="32",
         )
         assert isinstance(search_error, FlextLDAPExceptions.SearchError)
         assert "32" in str(search_error)
 
         # user_creation_failed with uid and code
         user_error = FlextLDAPExceptions.Factory.user_creation_failed(
-            "cn=newuser", "Creation failed", uid="newuser", ldap_result_code="68"
+            "cn=newuser",
+            "Creation failed",
+            uid="newuser",
+            ldap_result_code="68",
         )
         assert isinstance(user_error, FlextLDAPExceptions.UserError)
         assert "newuser" in str(user_error)
@@ -176,7 +195,9 @@ class TestExceptionFactoryMethods:
 
         # configuration_error with section
         config_error = FlextLDAPExceptions.Factory.configuration_error(
-            "key", "error", config_section="section"
+            "key",
+            "error",
+            config_section="section",
         )
         assert isinstance(config_error, FlextLDAPExceptions.ConfigurationError)
         assert "section" in str(config_error)
@@ -191,7 +212,9 @@ class TestExceptionInheritance:
             FlextLDAPExceptions.LdapConnectionError("test"),
             FlextLDAPExceptions.AuthenticationError("test"),
             FlextLDAPExceptions.SearchError(
-                "test", base_dn="base", search_filter="filter"
+                "test",
+                base_dn="base",
+                search_filter="filter",
             ),
             FlextLDAPExceptions.OperationError("test"),
             FlextLDAPExceptions.UserError("test"),

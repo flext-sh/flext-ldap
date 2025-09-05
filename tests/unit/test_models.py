@@ -273,7 +273,7 @@ class TestFlextLDAPEntry:
                     "cn=group1,ou=groups,dc=example,dc=com",
                     "cn=group2,ou=groups,dc=example,dc=com",
                 ],
-            }
+            },
         )
 
         assert entry.dn == "cn=testentry,dc=example,dc=com"
@@ -514,7 +514,7 @@ class TestRealWorldScenarios:
                     "department": ["Engineering"],
                     "title": ["Senior Software Engineer"],
                     "manager": [
-                        "cn=jane.doe,ou=employees,ou=people,dc=corp,dc=example,dc=com"
+                        "cn=jane.doe,ou=employees,ou=people,dc=corp,dc=example,dc=com",
                     ],
                 },
             },

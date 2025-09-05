@@ -152,38 +152,38 @@ class FlextLDAPSettings(FlextConfig):
     def _validate_default_connection(self) -> FlextResult[None]:
         """Validate default connection settings."""
         if not self.default_connection:
-            return FlextResult[None].ok(None)
+            return FlextResult.ok(None)
 
         if not self.default_connection.server:
-            return FlextResult[None].fail("Default connection must specify a server")
+            return FlextResult.fail("Default connection must specify a server")
 
         return self.default_connection.validate_business_rules()
 
     def _validate_cache_settings(self) -> FlextResult[None]:
         """Validate cache configuration."""
         if self.enable_caching and self.cache_ttl <= 0:
-            return FlextResult[None].fail(
-                "Cache TTL must be positive when caching is enabled"
+            return FlextResult.fail(
+                "Cache TTL must be positive when caching is enabled",
             )
-        return FlextResult[None].ok(None)
+        return FlextResult.ok(None)
 
     def _validate_search_configuration(self) -> FlextResult[None]:
         """Validate search limits configuration."""
         if self.size_limit <= 0:
-            return FlextResult[None].fail("Size limit must be positive")
+            return FlextResult.fail("Size limit must be positive")
         if self.time_limit <= 0:
-            return FlextResult[None].fail("Time limit must be positive")
+            return FlextResult.fail("Time limit must be positive")
         if self.page_size <= 0:
-            return FlextResult[None].fail("Page size must be positive")
-        return FlextResult[None].ok(None)
+            return FlextResult.fail("Page size must be positive")
+        return FlextResult.ok(None)
 
     def _validate_auth_configuration(self) -> FlextResult[None]:
         """Validate authentication configuration."""
         if self.bind_dn and not self.bind_dn.strip():
-            return FlextResult[None].fail("Bind DN cannot be empty")
+            return FlextResult.fail("Bind DN cannot be empty")
         if self.bind_password and len(self.bind_password.get_secret_value()) < 1:
-            return FlextResult[None].fail("Bind password cannot be empty")
-        return FlextResult[None].ok(None)
+            return FlextResult.fail("Bind password cannot be empty")
+        return FlextResult.ok(None)
 
     def get_effective_connection(
         self,
@@ -304,7 +304,6 @@ class FlextLDAPSettings(FlextConfig):
         yaml_import_error_msg = (
             "Failed to parse configuration file: YAML parsing requires PyYAML package"
         )
-        file_read_error_msg = f"Failed to read configuration file: {file_path}"
 
         # Check if file exists
         file_path_obj = Path(file_path)
@@ -321,30 +320,40 @@ class FlextLDAPSettings(FlextConfig):
             except json.JSONDecodeError:
                 # Try to parse as YAML
                 if yaml_module is None:
-                    return FlextResult[FlextLDAPSettings].fail(yaml_import_error_msg)
+                    return FlextResult.fail(yaml_import_error_msg)
                 try:
                     safe_load_method = getattr(yaml_module, "safe_load", None)
                     if safe_load_method is None:
-                        return FlextResult[FlextLDAPSettings].fail(
-                            "YAML module doesn't have safe_load method"
+                        return FlextResult.fail(
+                            "YAML module doesn't have safe_load method",
                         )
                     config_dict = safe_load_method(content)
+                except ImportError as import_err:
+                    yaml_error_msg = (
+                        "PyYAML not installed but required for .yml/.yaml files"
+                    )
+                    raise ValueError(yaml_error_msg) from import_err
                 except Exception as e:  # YAMLError if yaml is available
                     yaml_format_error_msg = (
                         f"Failed to parse configuration file: Invalid YAML format: {e}"
                     )
                     raise ValueError(yaml_format_error_msg) from e
-        except Exception as e:
-            if isinstance(e, (FileNotFoundError, ValueError)):
-                raise
-            raise ValueError(file_read_error_msg) from e
+        except (FileNotFoundError, ValueError):
+            raise
+        except OSError as e:
+            msg = f"Failed to read configuration file: {e}"
+            raise ValueError(msg) from e
 
         try:
             instance = cls.model_validate(config_dict)
-            return FlextResult[FlextLDAPSettings].ok(instance)
-        except Exception as e:
-            return FlextResult[FlextLDAPSettings].fail(
-                f"Failed to validate configuration: {e}"
+            return FlextResult.ok(instance)
+        except ValueError as e:
+            return FlextResult.fail(
+                f"Configuration validation error: {e}",
+            )
+        except TypeError as e:
+            return FlextResult.fail(
+                f"Configuration type error: {e}",
             )
 
     @classmethod

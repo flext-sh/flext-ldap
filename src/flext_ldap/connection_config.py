@@ -129,12 +129,12 @@ class FlextLDAPConnectionConfig(FlextConfig):
             # Additional validation logic here
             if self.use_ssl and self.verify_ssl and not self.ca_cert_file:
                 logger.warning(
-                    "SSL verification enabled but no CA certificate file specified"
+                    "SSL verification enabled but no CA certificate file specified",
                 )
 
-            return FlextResult[None].ok(None)
+            return FlextResult.ok(None)
         except Exception as e:
-            return FlextResult[None].fail(f"Configuration validation failed: {e}")
+            return FlextResult.fail(f"Configuration validation failed: {e}")
 
 
 __all__ = ["FlextLDAPConnectionConfig"]
