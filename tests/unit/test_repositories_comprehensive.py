@@ -6,19 +6,8 @@ Docker containers, and no mocks. Tests both success and failure paths.
 
 from __future__ import annotations
 
-import asyncio
-from typing import Any
-
 import pytest
 from flext_core import FlextResult
-from flext_tests import (
-    AdminUserFactory,
-    AsyncTestUtils,
-    FlextMatchers,
-    PerformanceProfiler,
-    TestBuilders,
-    UserFactory,
-)
 
 from flext_ldap import FlextLDAPClient, FlextLDAPEntities
 from flext_ldap.repositories import FlextLDAPRepositories
@@ -38,9 +27,9 @@ class TestFlextLDAPRepositoriesComprehensive:
         assert hasattr(repos, "_base_repo")
         assert hasattr(repos, "_user_repo")
         assert hasattr(repos, "_group_repo")
-        FlextMatchers.assert_instance_of(repos._base_repo, FlextLDAPRepositories.Repository)
-        FlextMatchers.assert_instance_of(repos._user_repo, FlextLDAPRepositories.UserRepository)
-        FlextMatchers.assert_instance_of(repos._group_repo, FlextLDAPRepositories.GroupRepository)
+        assert isinstance(repos._base_repo, FlextLDAPRepositories.Repository)
+        assert isinstance(repos._user_repo, FlextLDAPRepositories.UserRepository)
+        assert isinstance(repos._group_repo, FlextLDAPRepositories.GroupRepository)
 
     def test_repository_property_access(self) -> None:
         """Test repository property access using FlextMatchers."""
@@ -49,15 +38,15 @@ class TestFlextLDAPRepositoriesComprehensive:
 
         # Test repository property with FlextMatchers
         repo = repos.repository
-        FlextMatchers.assert_instance_of(repo, FlextLDAPRepositories.Repository)
+        assert isinstance(repo, FlextLDAPRepositories.Repository)
 
         # Test users property
         users = repos.users
-        FlextMatchers.assert_instance_of(users, FlextLDAPRepositories.UserRepository)
+        assert isinstance(users, FlextLDAPRepositories.UserRepository)
 
         # Test groups property
         groups = repos.groups
-        FlextMatchers.assert_instance_of(groups, FlextLDAPRepositories.GroupRepository)
+        assert isinstance(groups, FlextLDAPRepositories.GroupRepository)
 
     # =============================================================================
     # Repository Class Tests
@@ -77,12 +66,14 @@ class TestFlextLDAPRepositoriesComprehensive:
 
         result = await repo.find_by_dn("cn=test,dc=example,dc=com")
 
-        # Use FlextMatchers for result validation
-        FlextMatchers.assert_is_flext_result(result)
+        # Use basic assertions for result validation
+        from flext_core import FlextResult
+        assert isinstance(result, FlextResult)
         if not result.is_success:
-            FlextMatchers.assert_string_not_empty(result.error)
+            error_msg = result.error or ""
+            assert len(error_msg) > 0
             assert any(
-                pattern in result.error.lower()
+                pattern in error_msg.lower()
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
@@ -91,26 +82,26 @@ class TestFlextLDAPRepositoriesComprehensive:
         client = FlextLDAPClient()
         repo = FlextLDAPRepositories.Repository(client)
 
-        # Use TestBuilders for complex search request creation
-        builder = TestBuilders.FlexibleBuilder()
-        search_data = (builder
-            .with_attribute('base_dn', 'dc=example,dc=com')
-            .with_attribute('filter_str', '(objectClass=person)')
-            .with_attribute('scope', 'subtree')
-            .with_attribute('attributes', ['cn', 'uid'])
-            .build()
+        # Create search request directly with proper types
+        search_request = FlextLDAPEntities.SearchRequest(
+            base_dn="dc=example,dc=com",
+            filter_str="(objectClass=person)",
+            scope="subtree",
+            attributes=["cn", "uid"],
+            size_limit=100,
+            time_limit=30,
         )
-        
-        search_request = FlextLDAPEntities.SearchRequest(**search_data)
 
         result = await repo.search(search_request)
 
-        # Use FlextMatchers for comprehensive validation
-        FlextMatchers.assert_is_flext_result(result)
+        # Use basic assertions for comprehensive validation
+        from flext_core import FlextResult
+        assert isinstance(result, FlextResult)
         if not result.is_success:
-            FlextMatchers.assert_string_not_empty(result.error)
+            error_msg = result.error or ""
+            assert len(error_msg) > 0
             assert any(
-                pattern in result.error.lower()
+                pattern in error_msg.lower()
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
@@ -130,7 +121,7 @@ class TestFlextLDAPRepositoriesComprehensive:
 
         assert not result.is_success
         assert any(
-            pattern in result.error.lower()
+            pattern in ((result.error or "").lower())
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 
@@ -143,7 +134,7 @@ class TestFlextLDAPRepositoriesComprehensive:
 
         assert not result.is_success
         assert any(
-            pattern in result.error.lower()
+            pattern in ((result.error or "").lower())
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 
@@ -156,7 +147,7 @@ class TestFlextLDAPRepositoriesComprehensive:
 
         assert not result.is_success
         assert any(
-            pattern in result.error.lower()
+            pattern in ((result.error or "").lower())
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 
@@ -171,7 +162,7 @@ class TestFlextLDAPRepositoriesComprehensive:
 
         assert not result.is_success
         assert any(
-            pattern in result.error.lower()
+            pattern in ((result.error or "").lower())
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 
@@ -185,7 +176,7 @@ class TestFlextLDAPRepositoriesComprehensive:
 
         # Should return failure result, not raise NotImplementedError
         assert not result.is_success
-        assert "failed" in result.error.lower() or "error" in result.error.lower()
+        assert "failed" in ((result.error or "").lower()) or "error" in ((result.error or "").lower())
 
     def test_find_all_not_implemented(self) -> None:
         """Test find_all raises NotImplementedError."""
@@ -195,7 +186,7 @@ class TestFlextLDAPRepositoriesComprehensive:
         result = repo.find_all()
         assert not result.is_success
         assert any(
-            pattern in result.error.lower()
+            pattern in ((result.error or "").lower())
             for pattern in ["not supported", "not connected", "error"]
         )
 
@@ -214,7 +205,7 @@ class TestFlextLDAPRepositoriesComprehensive:
         result = repo.save(entry)
         assert not result.is_success
         assert any(
-            pattern in result.error.lower()
+            pattern in ((result.error or "").lower())
             for pattern in ["not implemented", "not connected", "exists"]
         )
 
@@ -226,7 +217,7 @@ class TestFlextLDAPRepositoriesComprehensive:
         result = repo.delete("test_id")
         assert not result.is_success
         assert any(
-            pattern in result.error.lower()
+            pattern in ((result.error or "").lower())
             for pattern in ["not supported", "not connected", "error"]
         )
 
@@ -255,7 +246,7 @@ class TestFlextLDAPRepositoriesComprehensive:
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                pattern in ((result.error or "").lower())
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
@@ -273,7 +264,7 @@ class TestFlextLDAPRepositoriesComprehensive:
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                pattern in ((result.error or "").lower())
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
@@ -291,7 +282,7 @@ class TestFlextLDAPRepositoriesComprehensive:
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                pattern in ((result.error or "").lower())
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
@@ -320,7 +311,7 @@ class TestFlextLDAPRepositoriesComprehensive:
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                pattern in ((result.error or "").lower())
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
@@ -337,7 +328,7 @@ class TestFlextLDAPRepositoriesComprehensive:
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                pattern in ((result.error or "").lower())
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
@@ -355,7 +346,7 @@ class TestFlextLDAPRepositoriesComprehensive:
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                pattern in ((result.error or "").lower())
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
@@ -373,7 +364,7 @@ class TestFlextLDAPRepositoriesComprehensive:
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                pattern in ((result.error or "").lower())
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
@@ -386,6 +377,9 @@ class TestFlextLDAPRepositoriesComprehensive:
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=*)",
             scope="subtree",
+            attributes=None,
+            size_limit=100,
+            time_limit=30,
         )
 
         result = await repos.search(search_request)
@@ -393,7 +387,7 @@ class TestFlextLDAPRepositoriesComprehensive:
         assert isinstance(result, FlextResult)
         if not result.is_success:
             assert any(
-                pattern in result.error.lower()
+                pattern in ((result.error or "").lower())
                 for pattern in ["not connected", "connection", "failed", "ldap"]
             )
 
@@ -413,7 +407,7 @@ class TestFlextLDAPRepositoriesComprehensive:
 
         assert not result.is_success
         assert any(
-            pattern in result.error.lower()
+            pattern in ((result.error or "").lower())
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 
@@ -426,7 +420,7 @@ class TestFlextLDAPRepositoriesComprehensive:
 
         assert not result.is_success
         assert any(
-            pattern in result.error.lower()
+            pattern in ((result.error or "").lower())
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 
@@ -439,7 +433,7 @@ class TestFlextLDAPRepositoriesComprehensive:
 
         assert not result.is_success
         assert any(
-            pattern in result.error.lower()
+            pattern in ((result.error or "").lower())
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 
@@ -454,7 +448,7 @@ class TestFlextLDAPRepositoriesComprehensive:
 
         assert not result.is_success
         assert any(
-            pattern in result.error.lower()
+            pattern in ((result.error or "").lower())
             for pattern in ["not connected", "connection", "failed", "ldap"]
         )
 

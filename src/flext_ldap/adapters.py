@@ -356,7 +356,9 @@ class FlextLDAPAdapters:
             request: FlextLDAPAdapters.ConnectionRequest,
         ) -> FlextResult[None]:
             """Execute using ServiceProcessor pattern - eliminates boilerplate."""
-            return cast("FlextResult[None]", self._connection_processor.process(request))
+            return cast(
+                "FlextResult[None]", self._connection_processor.process(request)
+            )
 
         def execute(self) -> FlextResult[list[FlextLDAPEntities.Entry]]:
             """Execute operation - base class method."""
@@ -893,7 +895,7 @@ class FlextLDAPAdapters:
                 config=FlextLDAPAdapters.ConnectionConfig(
                     server="ldap://localhost:389",
                     bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-                    bind_password="${TEST_PASSWORD}",  # noqa: S106
+                    bind_password="${TEST_PASSWORD}",
                 ),
             )
             self.search = FlextLDAPAdapters.SearchService(client=client)

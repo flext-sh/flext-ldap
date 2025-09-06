@@ -697,7 +697,7 @@ class FlextLDAPDomain:
         @classmethod
         def create_with_factory(cls, **kwargs: object) -> FlextModels.Value:
             """Template method for creating events using factory pattern."""
-            return FlextLDAPDomain._DomainEventFactory.create_event_base(cls, **kwargs)  # type: ignore[return-value]
+            return FlextLDAPDomain._DomainEventFactory.create_event_base(cls, **kwargs)
 
     class _DomainEventFactory:
         """Factory Pattern for creating domain events using flext-core patterns.
@@ -760,7 +760,7 @@ class FlextLDAPDomain:
             created_by: str,
         ) -> "FlextLDAPDomain.UserCreatedEvent":
             """Create user created event using Template Method Pattern - ELIMINATES 13-line duplication."""
-            return FlextLDAPDomain._DomainEventFactory.create_typed_event(  # type: ignore[return-value]
+            return FlextLDAPDomain._DomainEventFactory.create_typed_event(
                 cls,
                 user_id=user_id,
                 user_dn=user_dn,
@@ -788,7 +788,7 @@ class FlextLDAPDomain:
             deleted_by: str,
         ) -> "FlextLDAPDomain.UserDeletedEvent":
             """Create user deleted event using Template Method Pattern - ELIMINATES 13-line duplication."""
-            return FlextLDAPDomain._DomainEventFactory.create_typed_event(  # type: ignore[return-value]
+            return FlextLDAPDomain._DomainEventFactory.create_typed_event(
                 cls,
                 user_id=user_id,
                 user_dn=user_dn,
@@ -816,7 +816,7 @@ class FlextLDAPDomain:
             added_by: str,
         ) -> "FlextLDAPDomain.GroupMemberAddedEvent":
             """Create group member added event using Template Method Pattern - ELIMINATES 13-line duplication."""
-            return FlextLDAPDomain._DomainEventFactory.create_typed_event(  # type: ignore[return-value]
+            return FlextLDAPDomain._DomainEventFactory.create_typed_event(
                 cls,
                 group_dn=group_dn,
                 member_dn=member_dn,
@@ -844,7 +844,7 @@ class FlextLDAPDomain:
             changed_by: str,
         ) -> "FlextLDAPDomain.PasswordChangedEvent":
             """Create password changed event using Template Method Pattern - ELIMINATES 13-line duplication."""
-            return FlextLDAPDomain._DomainEventFactory.create_typed_event(  # type: ignore[return-value]
+            return FlextLDAPDomain._DomainEventFactory.create_typed_event(
                 cls,
                 user_dn=user_dn,
                 changed_by=changed_by,
@@ -968,7 +968,7 @@ class FlextLDAPDomain:
 
         def _create_entity(self, all_params: dict[str, object]) -> object:
             """Create FlextLDAPEntities.User entity."""
-            return FlextLDAPEntities.User(**all_params)  # type: ignore[arg-type]
+            return FlextLDAPEntities.User(**all_params)
 
     class GroupEntityBuilder(_BaseEntityBuilder):
         """Group entity builder using Template Method Pattern - ELIMINATES DUPLICATION."""
@@ -986,7 +986,7 @@ class FlextLDAPDomain:
 
         def _create_entity(self, all_params: dict[str, object]) -> object:
             """Create FlextLDAPEntities.Group entity."""
-            return FlextLDAPEntities.Group(**all_params)  # type: ignore[arg-type]
+            return FlextLDAPEntities.Group(**all_params)
 
     # ==========================================================================
     # COMMAND PATTERNS - Using FlextCommands for complex operations
@@ -1031,7 +1031,7 @@ class FlextLDAPDomain:
                 user_params = self._extract_user_parameters(cmd.user_data)
 
                 # Create user entity - use type ignore for dynamic parameter passing
-                user = FlextLDAPEntities.User(**user_params)  # type: ignore[arg-type]
+                user = FlextLDAPEntities.User(**user_params)
                 self.logger.info(f"User created successfully via command: {user.uid}")
                 return FlextResult.ok(user)
 
