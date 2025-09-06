@@ -5,6 +5,8 @@ Tests pure domain logic and business rules without external dependencies.
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import FlextConstants
 
 from flext_ldap import FlextLDAPEntities, FlextLDAPValueObjects
@@ -63,20 +65,19 @@ class TestFlextLDAPUser:
 
     def create_test_user(self, **kwargs: object) -> FlextLDAPEntities.User:
         """Helper to create test user with defaults using object for kwargs."""
-        defaults: dict[str, object] = {
-            "id": "test_user",
-            "dn": "cn=testuser,ou=users,dc=example,dc=com",
-            "uid": "testuser",
-            "cn": "Test User",
-            "sn": "User",
-            "given_name": "Test",
-            "mail": "testuser@example.com",
-            "object_classes": ["inetOrgPerson", "person"],
-            "attributes": {},
-            "status": FlextConstants.Enums.EntityStatus.ACTIVE,
-        }
-        defaults.update(kwargs)
-        return FlextLDAPEntities.User(**defaults)
+        # Create with typed arguments to satisfy MyPy
+        return FlextLDAPEntities.User(
+            id=str(kwargs.get("id", "test_user")),
+            dn=str(kwargs.get("dn", "cn=testuser,ou=users,dc=example,dc=com")),
+            uid=str(kwargs.get("uid", "testuser")),
+            cn=str(kwargs.get("cn", "Test User")),
+            sn=str(kwargs.get("sn", "User")),
+            given_name=str(kwargs.get("given_name", "Test")),
+            mail=str(kwargs.get("mail", "testuser@example.com")),
+            object_classes=cast("list[str]", kwargs.get("object_classes", ["inetOrgPerson", "person"])),
+            attributes=cast("dict[str, str | bytes | list[str] | list[bytes]]", kwargs.get("attributes", {})),
+            status=str(kwargs.get("status", FlextConstants.Enums.EntityStatus.ACTIVE)),
+        )
 
     def test_user_creation_with_required_fields(self) -> None:
         """Test user entity creation with required fields."""
@@ -156,18 +157,17 @@ class TestFlextLDAPGroup:
 
     def create_test_group(self, **kwargs: object) -> FlextLDAPEntities.Group:
         """Helper to create test group with defaults using object for kwargs."""
-        defaults: dict[str, object] = {
-            "id": "test_group",
-            "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
-            "cn": "Test Group",
-            "description": "Test group for unit testing",
-            "object_classes": ["groupOfNames"],
-            "attributes": {},
-            "members": [],
-            "status": FlextConstants.Enums.EntityStatus.ACTIVE,
-        }
-        defaults.update(kwargs)
-        return FlextLDAPEntities.Group(**defaults)
+        # Create with typed arguments to satisfy MyPy
+        return FlextLDAPEntities.Group(
+            id=str(kwargs.get("id", "test_group")),
+            dn=str(kwargs.get("dn", "cn=testgroup,ou=groups,dc=example,dc=com")),
+            cn=str(kwargs.get("cn", "Test Group")),
+            description=str(kwargs.get("description", "Test group for unit testing")),
+            object_classes=cast("list[str]", kwargs.get("object_classes", ["groupOfNames"])),
+            attributes=cast("dict[str, str | bytes | list[str] | list[bytes]]", kwargs.get("attributes", {})),
+            members=cast("list[str]", kwargs.get("members", [])),
+            status=str(kwargs.get("status", FlextConstants.Enums.EntityStatus.ACTIVE)),
+        )
 
     def test_group_creation_with_required_fields(self) -> None:
         """Test group entity creation with required fields."""
@@ -251,15 +251,14 @@ class TestFlextLDAPEntry:
 
     def create_test_entry(self, **kwargs: object) -> FlextLDAPEntities.Entry:
         """Helper to create test entry with defaults using object for kwargs."""
-        defaults: dict[str, object] = {
-            "id": "test_entry",
-            "dn": "cn=testentry,dc=example,dc=com",
-            "object_classes": ["top", "person"],
-            "attributes": {"cn": ["test"], "sn": ["entry"]},
-            "status": FlextConstants.Enums.EntityStatus.ACTIVE,
-        }
-        defaults.update(kwargs)
-        return FlextLDAPEntities.Entry(**defaults)
+        # Create with typed arguments to satisfy MyPy
+        return FlextLDAPEntities.Entry(
+            id=str(kwargs.get("id", "test_entry")),
+            dn=str(kwargs.get("dn", "cn=testentry,dc=example,dc=com")),
+            object_classes=cast("list[str]", kwargs.get("object_classes", ["top", "person"])),
+            attributes=cast("dict[str, str | bytes | list[str] | list[bytes]]", kwargs.get("attributes", {"cn": ["test"], "sn": ["entry"]})),
+            status=str(kwargs.get("status", FlextConstants.Enums.EntityStatus.ACTIVE)),
+        )
 
     def test_entry_creation_and_attribute_access(self) -> None:
         """Test entry creation and attribute access methods."""
@@ -294,11 +293,15 @@ class TestFlextLDAPEntry:
 
         # Test object classes from attributes
         object_class_attr = entry.get_attribute("objectClass")
+        assert object_class_attr is not None
+        assert isinstance(object_class_attr, list)
         assert "top" in object_class_attr
         assert "person" in object_class_attr
         assert "inetOrgPerson" in object_class_attr
 
         member_of = entry.get_attribute("memberOf")
+        assert member_of is not None
+        assert isinstance(member_of, list)
         assert len(member_of) == 2
         assert "cn=group1,ou=groups,dc=example,dc=com" in member_of
 
@@ -536,30 +539,23 @@ class TestRealWorldScenarios:
         ]
 
         for user_data in realistic_users:
-            # Create user entity with realistic data - filter out invalid fields
-            valid_user_fields = {
-                k: v
-                for k, v in user_data.items()
-                if k
-                not in {
-                    "attributes",
-                    "phone",
-                    "metadata",
-                    "version",
-                    "created_at",
-                    "updated_at",
-                    "domain_events",
-                }
-            }
+            # Create user entity with realistic data explicitly typed
             user = FlextLDAPEntities.User(
                 id=f"test_{user_data['uid']}",
+                dn=str(user_data["dn"]),
+                uid=str(user_data["uid"]),
+                cn=str(user_data["cn"]),
+                sn=str(user_data["sn"]),
+                given_name=str(user_data["given_name"]),
+                mail=str(user_data["mail"]),
+                object_classes=cast("list[str]", user_data["object_classes"]),
+                attributes=cast("dict[str, str | bytes | list[str] | list[bytes]]", user_data.get("attributes", {})),
                 status=FlextConstants.Enums.EntityStatus.ACTIVE,
-                **valid_user_fields,
             )
             # Add attributes and phone data separately
-            user.attributes.update(user_data.get("attributes", {}))
+            # user.attributes already set in constructor, no need to update
             if "phone" in user_data:
-                user.attributes["phone"] = [user_data["phone"]]
+                user.attributes["phone"] = [str(user_data["phone"])]
 
             # Test realistic business rule validation
             validation_result = user.validate_business_rules()
@@ -568,12 +564,18 @@ class TestRealWorldScenarios:
             )
 
             # Test realistic attribute access
+            assert user.mail is not None
             assert user.mail.endswith(".com")
             # Verify phone through attributes instead of direct field (not in model)
             phone_attrs = user.attributes.get("phone", [])
-            if phone_attrs and phone_attrs[0]:
-                assert len(phone_attrs[0]) >= 10
+            if phone_attrs and isinstance(phone_attrs, list) and len(phone_attrs) > 0:
+                first_phone = phone_attrs[0]
+                if isinstance(first_phone, str):
+                    assert len(first_phone) >= 10
+            assert user.sn is not None
+            assert user.cn is not None
             assert user.sn in user.cn
+            assert user.cn is not None
             assert user.dn.startswith(f"cn={user.cn.lower().replace(' ', '.')}")
 
     def test_organizational_group_structures(self) -> None:
@@ -602,10 +604,16 @@ class TestRealWorldScenarios:
 
         for group_data in org_groups:
             # Create group with realistic organizational data
+            cn_str = str(group_data["cn"])
             group = FlextLDAPEntities.Group(
-                id=f"test_group_{group_data['cn'].lower().replace(' ', '_')}",
+                id=f"test_group_{cn_str.lower().replace(' ', '_')}",
+                dn=str(group_data["dn"]),
+                cn=cn_str,
+                description=str(group_data.get("description", "")),
+                object_classes=cast("list[str]", group_data["object_classes"]),
+                members=cast("list[str]", group_data.get("members", [])),
+                attributes={},
                 status=FlextConstants.Enums.EntityStatus.ACTIVE,
-                **group_data,
             )
 
             # Test realistic group validation

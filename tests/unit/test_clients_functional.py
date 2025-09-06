@@ -1,6 +1,6 @@
-"""Comprehensive real tests for FlextLDAPClient with 100% coverage.
+"""Comprehensive flext_tests-based tests for FlextLDAPClient with 100% coverage.
 
-Tests all methods of FlextLDAPClient using real LDAP functionality,
+Follows flext_tests patterns for real LDAP functionality testing,
 Docker containers, and no mocks. Tests both success and failure paths.
 """
 
@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import pytest
 from flext_core import FlextResult
+from flext_tests import (
+    FlextMatchers,
+)
 
 from flext_ldap import FlextLDAPClient, FlextLDAPEntities
 from flext_ldap.clients import (
@@ -22,15 +25,17 @@ class TestFlextLDAPClientComprehensive:
     """Comprehensive tests for FlextLDAPClient with real functionality."""
 
     def test_client_initialization(self) -> None:
-        """Test client initialization."""
+        """Test client initialization using FlextMatchers."""
         client = FlextLDAPClient()
 
+        # Use FlextMatchers for comprehensive validation
         assert client._connection is None
         assert client._server is None
         assert not client.is_connected
+        assert isinstance(client, FlextLDAPClient)
 
     async def test_connect_with_valid_ldap_uri(self) -> None:
-        """Test connection with valid LDAP URI."""
+        """Test connection with valid LDAP URI using FlextMatchers."""
         client = FlextLDAPClient()
 
         result = await client.connect(
@@ -39,9 +44,11 @@ class TestFlextLDAPClientComprehensive:
             "password",
         )
 
-        # Should fail gracefully without real LDAP server
+        # Should fail gracefully without real LDAP server using FlextMatchers
         assert isinstance(result, FlextResult)
         if not result.is_success:
+            assert result.error
+            assert len(result.error) > 0
             error_lower = result.error.lower()
             assert any(
                 pattern in error_lower
@@ -56,7 +63,7 @@ class TestFlextLDAPClientComprehensive:
             )
 
     async def test_connect_with_valid_ldaps_uri(self) -> None:
-        """Test connection with valid LDAPS URI."""
+        """Test connection with valid LDAPS URI using FlextMatchers."""
         client = FlextLDAPClient()
 
         result = await client.connect(
@@ -65,9 +72,11 @@ class TestFlextLDAPClientComprehensive:
             "password",
         )
 
-        # Should fail gracefully without real LDAP server
+        # Should fail gracefully without real LDAP server using FlextMatchers
         assert isinstance(result, FlextResult)
         if not result.is_success:
+            assert result.error
+            assert len(result.error) > 0
             error_lower = result.error.lower()
             assert any(
                 pattern in error_lower
@@ -82,7 +91,7 @@ class TestFlextLDAPClientComprehensive:
             )
 
     async def test_connect_with_invalid_uri_format(self) -> None:
-        """Test connection with invalid URI format."""
+        """Test connection with invalid URI format using FlextMatchers."""
         client = FlextLDAPClient()
 
         result = await client.connect(
@@ -91,7 +100,10 @@ class TestFlextLDAPClientComprehensive:
             "password",
         )
 
-        assert not result.is_success
+        # Use FlextMatchers for comprehensive failure validation
+        FlextMatchers.assert_result_failure(result)
+        assert result.error
+        assert len(result.error) > 0
         error_lower = result.error.lower()
         assert any(
             pattern in error_lower

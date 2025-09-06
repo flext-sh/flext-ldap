@@ -162,7 +162,7 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
         assert validate_required_attributes(org_person_attrs, org_person_required)
 
         # Test missing required attributes
-        incomplete_attrs = {"cn": "Test"}
+        incomplete_attrs: dict[str, object] = {"cn": "Test"}
         assert not validate_required_attributes(incomplete_attrs, person_required)
 
     def test_result_chaining_functional(self) -> None:

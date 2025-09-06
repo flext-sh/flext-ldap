@@ -76,12 +76,12 @@ class TestFlextLDAPOperationsReal:
         # Test invalid protocol
         result = ops._validate_uri_or_fail("http://localhost:80")
         assert not result.is_success
-        assert "ldap://" in result.error
+        assert "ldap://" in (result.error or "")
 
         # Test empty URI
         result = ops._validate_uri_or_fail("")
         assert not result.is_success
-        assert "empty" in result.error
+        assert "empty" in (result.error or "")
 
     def test_validate_dn_real_validation(self) -> None:
         """Test DN validation with real code execution."""
@@ -192,7 +192,7 @@ class TestFlextLDAPConnectionOperationsReal:
         result = await ops.create_connection("http://invalid:80")
 
         assert not result.is_success
-        assert "ldap://" in result.error
+        assert "ldap://" in (result.error or "")
 
     def test_get_connection_info_real(self) -> None:
         """Test getting connection info - real execution."""
@@ -226,7 +226,7 @@ class TestFlextLDAPConnectionOperationsReal:
         result = ops.get_connection_info("nonexistent")
 
         assert not result.is_success
-        assert "not found" in result.error
+        assert "not found" in (result.error or "")
 
     def test_list_active_connections_real(self) -> None:
         """Test listing active connections - real execution."""
@@ -288,7 +288,7 @@ class TestFlextLDAPConnectionOperationsReal:
         result = await ops.close_connection("nonexistent")
 
         assert not result.is_success
-        assert "not found" in result.error
+        assert "not found" in (result.error or "")
 
     def test_calculate_duration_real(self) -> None:
         """Test duration calculation with real implementation."""
@@ -640,7 +640,7 @@ class TestFlextLDAPGroupOperationsReal:
             "invalid",
         )
         assert not result.is_success
-        assert "Invalid action" in result.error
+        assert "Invalid action" in (result.error or "")
 
 
 class TestFlextLDAPOperationsUnifiedReal:

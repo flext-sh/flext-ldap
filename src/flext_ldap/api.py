@@ -60,10 +60,11 @@ class FlextLDAPApi:
         """Safely extract string attribute from LDAP entry."""
         # Handle Entry objects
         if isinstance(entry, FlextLDAPEntities.Entry):
-            value = entry.get_attribute(key) or [default]
+            attr_value = entry.get_attribute(key)
+            value = attr_value if attr_value is not None else [default]
         else:
             # Handle dict entries
-            value = entry.get(key, [default])  # type: ignore[assignment]
+            value = entry.get(key, [default])
 
         # Handle list values (common in LDAP)
         if isinstance(value, list):
@@ -335,7 +336,7 @@ class FlextLDAPApi:
         members: list[str] | None = None,
     ) -> FlextResult[FlextLDAPEntities.Group]: ...
 
-    async def create_group(  # type: ignore[misc]
+    async def create_group(
         self,
         dn_or_request: str | FlextLDAPEntities.CreateGroupRequest,
         cn: str | None = None,

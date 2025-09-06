@@ -128,7 +128,7 @@ class LDAPAttributeProcessor:
                         "Entry missing attributes",
                     )
 
-                attrs = entry.attributes  # type: ignore[attr-defined]
+                attrs = getattr(entry, "attributes", {})
                 if not isinstance(attrs, dict):
                     return FlextResult[dict[str, object]].fail(
                         "Invalid attributes format",
@@ -192,7 +192,7 @@ class LDAPAttributeProcessor:
                         "Entry missing attributes",
                     )
 
-                attrs = entry.attributes  # type: ignore[attr-defined]
+                attrs = getattr(entry, "attributes", {})
                 extracted = self._extract_group_attributes(attrs)
                 return FlextResult[dict[str, object]].ok(extracted)
 
@@ -1419,7 +1419,7 @@ class FlextLDAPOperations:
             if not hasattr(group_entry, "get_attribute"):
                 return []
 
-            current_members = group_entry.get_attribute("member")  # type: ignore[attr-defined]
+            current_members = getattr(group_entry, "get_attribute", lambda _: None)("member")
 
             # Simplified member extraction using Strategy Pattern
             if current_members is None:

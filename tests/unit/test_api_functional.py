@@ -47,7 +47,7 @@ class TestFlextLDAPApiFunctional(unittest.TestCase):
         assert success.value == "test_data"
 
         # Test FlextResult.fail() functionality
-        failure = FlextResult.fail("test_error")
+        failure: FlextResult[str] = FlextResult.fail("test_error")
         assert failure.is_success is False
         assert failure.error == "test_error"
 

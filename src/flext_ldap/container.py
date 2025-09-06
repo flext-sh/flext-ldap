@@ -98,19 +98,19 @@ class FlextLDAPContainer:
 
     def get_client(self) -> FlextLDAPClient:
         """Get LDAP client using generic resolver."""
-        return self._get_service("FlextLDAPClient")  # type: ignore[return-value]
+        return self._get_service("FlextLDAPClient")
 
     def get_repository(self) -> FlextLDAPRepositories.Repository:
         """Get LDAP repository using generic resolver."""
-        return self._get_service("FlextLDAPRepositories.Repository")  # type: ignore[return-value]
+        return self._get_service("FlextLDAPRepositories.Repository")
 
     def get_user_repository(self) -> FlextLDAPRepositories.UserRepository:
         """Get LDAP user repository using generic resolver."""
-        return self._get_service("FlextLDAPRepositories.UserRepository")  # type: ignore[return-value]
+        return self._get_service("FlextLDAPRepositories.UserRepository")
 
     def get_group_repository(self) -> FlextLDAPRepositories.GroupRepository:
         """Get LDAP group repository using generic resolver."""
-        return self._get_service("FlextLDAPRepositories.GroupRepository")  # type: ignore[return-value]
+        return self._get_service("FlextLDAPRepositories.GroupRepository")
 
     def configure(self, settings: FlextLDAPSettings) -> FlextResult[None]:
         """Configure container with LDAP settings.

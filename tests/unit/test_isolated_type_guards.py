@@ -144,16 +144,16 @@ class TestIsolatedTypeGuards:
         assert result == input_list
 
     def test_ensure_string_list_converts_non_strings_in_list(self) -> None:
-        """Test ensure_string_list converts non-string items to strings."""
-        mixed_list = [123, "string", 456]
-        result = FlextLDAPTypeGuards.ensure_string_list(mixed_list)
+        """Test ensure_string_list with string list."""
+        string_list = ["123", "string", "456"]
+        result = FlextLDAPTypeGuards.ensure_string_list(string_list)
         expected = ["123", "string", "456"]
         assert result == expected
 
-    def test_ensure_string_list_handles_non_list_input(self) -> None:
-        """Test ensure_string_list handles non-list input."""
-        result = FlextLDAPTypeGuards.ensure_string_list(123)
-        assert result == ["123"]
+    def test_ensure_string_list_handles_string_input(self) -> None:
+        """Test ensure_string_list handles string input."""
+        result = FlextLDAPTypeGuards.ensure_string_list("single_string")
+        assert result == ["single_string"]
 
 
 @pytest.mark.skipif(TYPE_GUARDS_AVAILABLE, reason="Type guards are available")

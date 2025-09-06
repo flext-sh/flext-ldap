@@ -246,7 +246,8 @@ async def ldap_service(
 ) -> AsyncGenerator[FlextLDAPServices]:
     """Provide configured LDAP service for testing."""
     ldap_container = FlextLDAPContainer()
-    service = FlextLDAPServices(ldap_container)
+    container = ldap_container.get_container()
+    service = FlextLDAPServices(container)
 
     # Initialize service
     init_result = await service.initialize()

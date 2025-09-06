@@ -114,7 +114,7 @@ class FlextLDAPRepositories:
     # INTERNAL SPECIALIZED CLASSES FOR DIFFERENT REPOSITORY DOMAINS
     # ==========================================================================
 
-    class Repository(FlextProtocols.Domain.Repository):  # type: ignore[type-arg]
+    class Repository(FlextProtocols.Domain.Repository):
         """Internal base LDAP repository implementation using dependency injection."""
 
         def __init__(self, client: FlextLDAPClient) -> None:

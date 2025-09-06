@@ -47,6 +47,9 @@ class TestSimpleFlextTestsIntegration:
             base_dn="dc=example,dc=com",
             filter_str="(objectClass=*)",
             scope="base",
+            attributes=[],
+            size_limit=100,
+            time_limit=30,
         )
 
         result = await api.search(search_request)
