@@ -2,6 +2,10 @@
 
 These tests provide functional validation of operations.py by executing real code paths
 without requiring external LDAP infrastructure. Focus on business logic validation.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

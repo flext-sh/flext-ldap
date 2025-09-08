@@ -3,39 +3,8 @@
 Single class with all LDAP value objects following domain-driven design patterns
 organized as internal classes for complete backward compatibility.
 
-Examples:
-    Distinguished Name operations::
-
-        from value_objects import FlextLDAPValueObjects
-
-        # Create DN
-        dn_result = FlextLDAPValueObjects.DistinguishedName.create(
-            "cn=user,dc=example,dc=com"
-        )
-        dn = dn_result.value
-
-        # Check hierarchy
-        is_child = dn.is_descendant_of("dc=example,dc=com")
-
-    Filter operations::
-
-        # Create filters
-        filter_obj = FlextLDAPValueObjects.Filter.equals("uid", "john")
-        complex_filter = FlextLDAPValueObjects.Filter.object_class("person")
-
-    Scope operations::
-
-        # Create scopes
-        base_scope = FlextLDAPValueObjects.Scope.base()
-        sub_scope = FlextLDAPValueObjects.Scope.sub()
-
-    Legacy compatibility::
-
-        # All previous classes still work as direct imports
-        from value_objects import FlextLDAPDistinguishedName, FlextLDAPFilter
-
-        dn = FlextLDAPDistinguishedName(value="cn=user,dc=example,dc=com")
-
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -59,37 +28,6 @@ class FlextLDAPValueObjects:
     Consolidates ALL LDAP value objects into a single class following FLEXT patterns.
     Everything from DN validation to filter creation is available as internal classes
     with full backward compatibility and domain-driven design principles.
-
-    This class follows SOLID principles:
-        - Single Responsibility: All LDAP value objects consolidated
-        - Open/Closed: Extensible without modification
-        - Liskov Substitution: Consistent interface across all value objects
-        - Interface Segregation: Organized by value object type for specific access
-        - Dependency Inversion: Depends on FlextModels abstraction
-
-    Examples:
-        Distinguished Name operations::
-
-            dn_result = FlextLDAPValueObjects.DistinguishedName.create(
-                "cn=user,dc=example,dc=com"
-            )
-            if dn_result.is_success:
-                dn = dn_result.value
-                rdn = dn.rdn
-                is_child = dn.is_descendant_of("dc=example,dc=com")
-
-        Filter operations::
-
-            equals_filter = FlextLDAPValueObjects.Filter.equals("uid", "john")
-            class_filter = FlextLDAPValueObjects.Filter.object_class("person")
-            all_filter = FlextLDAPValueObjects.Filter.all_objects()
-
-        Scope operations::
-
-            base_scope = FlextLDAPValueObjects.Scope.base()
-            one_scope = FlextLDAPValueObjects.Scope.one()
-            sub_scope = FlextLDAPValueObjects.Scope.sub()
-
     """
 
     # =========================================================================
@@ -315,14 +253,6 @@ class FlextLDAPValueObjects:
         def all_objects(cls) -> FlextLDAPValueObjects.Filter:
             """Create filter that matches all objects."""
             return cls(value="(objectClass=*)")
-
-
-# =============================================================================
-# LEGACY COMPATIBILITY CLASSES - Backward Compatibility
-# =============================================================================
-
-# Legacy class aliases for backward compatibility
-# Export aliases eliminated - use FlextLDAPValueObjects.* directly following flext-core pattern
 
 
 # =============================================================================

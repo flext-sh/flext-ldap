@@ -3,16 +3,8 @@
 Single class inheriting from FlextCoreTypes with all LDAP types
 organized as internal properties and methods for complete backward compatibility.
 
-Examples:
-    Basic usage with hierarchical types::
-
-        from typings import FlextLDAPTypes
-
-        dn: FlextLDAPTypes.LdapDomain.DistinguishedName = "cn=user,dc=example,dc=com"
-        filter_type: FlextLDAPTypes.Search.Filter = "(objectClass=person)"
-        attrs: FlextLDAPTypes.Entry.AttributeDict = {"cn": ["John Doe"]}
-
-
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -103,8 +95,8 @@ class FlextLDAPTypes(FlextTypes):
         PageSize = int
 
         # Search results
-        ResultList = list[dict[str, object]]
-        ResultDict = dict[str, object]
+        ResultList = list[FlextTypes.Core.Dict]
+        ResultDict = FlextTypes.Core.Dict
 
     # =========================================================================
     # ENTRY TYPES - LDAP Entry and Attribute Types
@@ -114,16 +106,16 @@ class FlextLDAPTypes(FlextTypes):
         """LDAP entry and attribute types."""
 
         # Attribute value types
-        AttributeValue = str | bytes | list[str] | list[bytes]
+        AttributeValue = str | bytes | FlextTypes.Core.StringList | list[bytes]
         AttributeDict = dict[str, AttributeValue]
         AttributeName = str
 
         # Entry types
         EntryData = dict[str, AttributeValue]
-        EntryResult = dict[str, object]
+        EntryResult = FlextTypes.Core.Dict
 
         # Modification types
-        ModificationDict = dict[str, object]
+        ModificationDict = FlextTypes.Core.Dict
         OperationType = str
 
     # =========================================================================
@@ -134,9 +126,9 @@ class FlextLDAPTypes(FlextTypes):
         """LDAP connection and configuration types."""
 
         # Connection configuration
-        Config = dict[str, object]
-        AuthConfig = dict[str, object]
-        ConnectionConfig = dict[str, object]
+        Config = FlextTypes.Core.Dict
+        AuthConfig = FlextTypes.Core.Dict
+        ConnectionConfig = FlextTypes.Core.Dict
 
         # Connection state
         State = str

@@ -1,6 +1,10 @@
 """Real adapters tests - testing actual adapter functionality without mocks.
 
 These tests execute REAL adapter code to increase coverage and validate functionality.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

@@ -2,6 +2,10 @@
 
 These tests validate complete LDAP workflows from API to infrastructure.
 They require a real LDAP server for full integration testing.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

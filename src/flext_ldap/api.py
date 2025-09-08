@@ -1,45 +1,34 @@
-"""FLEXT-LDAP API - Clean Architecture Implementation.
+"""LDAP API module.
 
-High-level API facade following SOLID principles and Domain-Driven Design.
-Uses dependency injection and proper service layer patterns.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import uuid
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, cast, overload
+from typing import cast, overload
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 from flext_ldap.container import FlextLDAPContainer
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.exceptions import FlextLDAPExceptions
+from flext_ldap.repositories import FlextLDAPRepositories
 from flext_ldap.services import FlextLDAPServices
 from flext_ldap.settings import FlextLDAPSettings
-
-if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
-
-    from flext_ldap.clients import FlextLDAPClient
-    from flext_ldap.repositories import FlextLDAPRepositories
-    from flext_ldap.typings import LdapAttributeDict
-
-# Removed FlextLDAPUtilities - using Python standard library
+from flext_ldap.typings import LdapAttributeDict
 
 logger = FlextLogger(__name__)
 
 
 class FlextLDAPApi:
-    """High-level LDAP API facade using proper SOLID architecture.
-
-    This API provides a clean, type-safe interface to LDAP operations
-    without exposing internal implementation details. All operations
-    go through the service layer and use dependency injection.
-    """
+    """High-level LDAP API facade."""
 
     def __init__(self, config: FlextLDAPSettings | None = None) -> None:
-        """Initialize API with configuration and dependency injection."""
+        """Initialize API."""
         self._config = config or FlextLDAPSettings()
         self._container_manager = FlextLDAPContainer()
         self._container = self._container_manager.get_container()
@@ -48,23 +37,26 @@ class FlextLDAPApi:
         logger.info("FlextLDAPApi initialized with clean architecture")
 
     def _generate_session_id(self) -> str:
-        """Generate unique session ID."""
+        """Generate session ID."""
         return f"session_{uuid.uuid4()}"
 
     def _get_entry_attribute(
         self,
-        entry: dict[str, object] | FlextLDAPEntities.Entry,
+        entry: FlextTypes.Core.Dict | FlextLDAPEntities.Entry,
         key: str,
         default: str = "",
     ) -> str:
-        """Safely extract string attribute from LDAP entry."""
+        """Extract string attribute from entry."""
         # Handle Entry objects
         if isinstance(entry, FlextLDAPEntities.Entry):
             attr_value = entry.get_attribute(key)
             value = attr_value if attr_value is not None else [default]
         else:
             # Handle dict entries
-            value = entry.get(key, [default])
+            value = cast(
+                "str | bytes | FlextTypes.Core.StringList | list[bytes]",
+                entry.get(key, [default]),
+            )
 
         # Handle list values (common in LDAP)
         if isinstance(value, list):
@@ -94,47 +86,38 @@ class FlextLDAPApi:
         bind_dn: str,
         bind_password: str,
     ) -> FlextResult[str]:
-        """Connect to LDAP server and return session ID."""
-        if not bind_dn or not bind_password:
-            return FlextResult.fail("bind_dn and bind_password are required")
+        """Connect to LDAP server.
 
-        # Get client from flext-core container
-        client_result = self._container.get("FlextLDAPClient")
-        if not client_result.is_success:
-            return FlextResult.fail(
-                f"Failed to get LDAP client: {client_result.error}",
-            )
-        client = cast("FlextLDAPClient", client_result.value)
+        Args:
+            server_uri: LDAP server URI
+            bind_dn: Distinguished name for binding
+            bind_password: Password for binding
 
-        # Connect using real client
-        connect_result = await client.connect(server_uri, bind_dn, bind_password)
-        if not connect_result.is_success:
-            return FlextResult.fail(f"Connection failed: {connect_result.error}")
+        Returns:
+            FlextResult containing session ID or error
 
-        # Generate session ID for this connection
+        """
         session_id = self._generate_session_id()
-        logger.info(
-            "LDAP connection established",
-            extra={"session_id": session_id, "server": server_uri},
-        )
+        result = await self._service.connect(server_uri, bind_dn, bind_password)
+        if not result.is_success:
+            return FlextResult[str].fail(result.error or "Connection failed")
+        return FlextResult[str].ok(session_id)
 
-        return FlextResult.ok(session_id)
+    async def disconnect(self, session_id: str | None = None) -> FlextResult[None]:
+        """Disconnect from LDAP server.
 
-    async def disconnect(self, session_id: str) -> FlextResult[bool]:
-        """Disconnect from LDAP server."""
-        client_result = self._container.get("FlextLDAPClient")
-        if not client_result.is_success:
-            return FlextResult.fail(
-                f"Failed to get LDAP client: {client_result.error}",
-            )
-        client = cast("FlextLDAPClient", client_result.value)
-        disconnect_result = await client.unbind()
+        Args:
+            session_id: Session ID to disconnect (optional, currently unused)
 
-        if disconnect_result.is_success:
-            logger.info("LDAP connection terminated", extra={"session_id": session_id})
-            success = True
-            return FlextResult.ok(success)
-        return FlextResult.fail(f"Disconnect failed: {disconnect_result.error}")
+        Returns:
+            FlextResult indicating success or error
+
+        """
+        # Note: session_id parameter maintained for API compatibility
+        # Currently not used by the service layer implementation
+        _ = session_id  # Acknowledge parameter to silence linter
+        result = await self._service.disconnect()
+        return result.map(lambda _: None)
 
     @asynccontextmanager
     async def connection(
@@ -143,18 +126,23 @@ class FlextLDAPApi:
         bind_dn: str,
         bind_password: str,
     ) -> AsyncIterator[str]:
-        """Context manager for LDAP connections."""
+        """Context manager for LDAP connection.
+
+        Args:
+            server_uri: LDAP server URI
+            bind_dn: Distinguished name for binding
+            bind_password: Password for binding
+
+        Yields:
+            Session ID for use within context
+
+        """
         connect_result = await self.connect(server_uri, bind_dn, bind_password)
         if not connect_result.is_success:
-            msg = f"Connection failed: {connect_result.error}"
-            raise FlextLDAPExceptions.LdapConnectionError(msg)
+            error_msg = connect_result.error or "Connection failed"
+            raise FlextLDAPExceptions.LDAPConnectionError(error_msg)
 
-        # Use FlextResult.value for modern type-safe access
         session_id = connect_result.value
-        if not session_id:
-            msg = "Failed to get session ID"
-            raise FlextLDAPExceptions.LdapConnectionError(msg)
-
         try:
             yield session_id
         finally:
@@ -166,7 +154,7 @@ class FlextLDAPApi:
         self,
         search_request: FlextLDAPEntities.SearchRequest,
     ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
-        """Search LDAP directory using Parameter Object Pattern.
+        """Execute LDAP search using validated request entity.
 
         Args:
             search_request: Encapsulated search parameters with validation
@@ -195,7 +183,9 @@ class FlextLDAPApi:
             if "objectClass" in typed_entry:
                 oc_value = typed_entry["objectClass"]
                 if isinstance(oc_value, list):
-                    typed_oc_list: list[object] = cast("list[object]", oc_value)
+                    typed_oc_list: FlextTypes.Core.List = cast(
+                        "FlextTypes.Core.List", oc_value
+                    )
                     object_classes = [str(oc) for oc in typed_oc_list]
                 else:
                     object_classes = [str(oc_value)]
@@ -227,7 +217,7 @@ class FlextLDAPApi:
         search_filter: str = "(objectClass=*)",
         *,
         scope: str = "subtree",
-        attributes: list[str] | None = None,
+        attributes: FlextTypes.Core.StringList | None = None,
     ) -> FlextResult[list[FlextLDAPEntities.Entry]]:
         """Simplified search interface using factory method pattern."""
         # Use factory method from SearchRequest for convenience
@@ -333,7 +323,7 @@ class FlextLDAPApi:
         dn: str,
         cn: str,
         description: str | None = None,
-        members: list[str] | None = None,
+        members: FlextTypes.Core.StringList | None = None,
     ) -> FlextResult[FlextLDAPEntities.Group]: ...
 
     async def create_group(
@@ -341,7 +331,7 @@ class FlextLDAPApi:
         dn_or_request: str | FlextLDAPEntities.CreateGroupRequest,
         cn: str | None = None,
         description: str | None = None,
-        members: list[str] | None = None,
+        members: FlextTypes.Core.StringList | None = None,
     ) -> FlextResult[FlextLDAPEntities.Group]:
         """Create group using proper service layer.
 
@@ -404,7 +394,9 @@ class FlextLDAPApi:
             # Handle members list safely
             members_raw = entry.get("member", [])
             members = (
-                cast("list[str]", members_raw) if isinstance(members_raw, list) else []
+                cast("FlextTypes.Core.StringList", members_raw)
+                if isinstance(members_raw, list)
+                else []
             )
             group = FlextLDAPEntities.Group(
                 id=f"group_{cn}",
@@ -437,7 +429,9 @@ class FlextLDAPApi:
         """Remove member from group."""
         return await self._service.remove_member(group_dn, member_dn)
 
-    async def get_members(self, group_dn: str) -> FlextResult[list[str]]:
+    async def get_members(
+        self, group_dn: str
+    ) -> FlextResult[FlextTypes.Core.StringList]:
         """Get group members."""
         return await self._service.get_members(group_dn)
 

@@ -2,6 +2,10 @@
 
 Follows flext_tests patterns for real LDAP functionality testing,
 Docker containers, and no mocks. Tests both success and failure paths.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -67,7 +71,6 @@ class TestFlextLDAPRepositoriesComprehensive:
         result = await repo.find_by_dn("cn=test,dc=example,dc=com")
 
         # Use basic assertions for result validation
-        from flext_core import FlextResult
         assert isinstance(result, FlextResult)
         if not result.is_success:
             error_msg = result.error or ""
@@ -95,7 +98,6 @@ class TestFlextLDAPRepositoriesComprehensive:
         result = await repo.search(search_request)
 
         # Use basic assertions for comprehensive validation
-        from flext_core import FlextResult
         assert isinstance(result, FlextResult)
         if not result.is_success:
             error_msg = result.error or ""
@@ -176,7 +178,9 @@ class TestFlextLDAPRepositoriesComprehensive:
 
         # Should return failure result, not raise NotImplementedError
         assert not result.is_success
-        assert "failed" in ((result.error or "").lower()) or "error" in ((result.error or "").lower())
+        assert "failed" in ((result.error or "").lower()) or "error" in (
+            (result.error or "").lower()
+        )
 
     def test_find_all_not_implemented(self) -> None:
         """Test find_all raises NotImplementedError."""

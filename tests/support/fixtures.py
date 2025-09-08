@@ -1,4 +1,8 @@
-"""Test fixtures for LDAP testing."""
+"""Test fixtures for LDAP testing.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 import asyncio
 from collections.abc import AsyncGenerator, Generator
@@ -56,25 +60,25 @@ async def ldap_api(
 
 
 @pytest.fixture
-def test_user_data() -> dict[str, object]:
+def test_user_data() -> FlextTypes.Core.Dict:
     """Get test user data."""
     return SAMPLE_USER_ENTRY.copy()
 
 
 @pytest.fixture
-def test_group_data() -> dict[str, object]:
+def test_group_data() -> FlextTypes.Core.Dict:
     """Get test group data."""
     return SAMPLE_GROUP_ENTRY.copy()
 
 
 @pytest.fixture
-def multiple_test_users() -> list[dict[str, object]]:
+def multiple_test_users() -> list[FlextTypes.Core.Dict]:
     """Get multiple test users data."""
     return [user.copy() for user in TEST_USERS]
 
 
 @pytest.fixture
-def multiple_test_groups() -> list[dict[str, object]]:
+def multiple_test_groups() -> list[FlextTypes.Core.Dict]:
     """Get multiple test groups data."""
     return [group.copy() for group in TEST_GROUPS]
 

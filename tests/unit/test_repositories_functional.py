@@ -2,13 +2,17 @@
 
 Following mandate: "testes funcionais reais sem mocks" and "PRIORIZAR BIBLIOTECAS".
 Tests validate REAL repository pattern functionality using Python standard libraries.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import unittest
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 
 
 class TestRepositoryPatternFunctional(unittest.TestCase):
@@ -139,9 +143,13 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
         org_person_required = ["cn", "sn", "objectClass", "mail"]
 
         # Test data
-        person_attrs: dict[str, object] = {"cn": "John Doe", "sn": "Doe", "objectClass": ["person"]}
+        person_attrs: FlextTypes.Core.Dict = {
+            "cn": "John Doe",
+            "sn": "Doe",
+            "objectClass": ["person"],
+        }
 
-        org_person_attrs: dict[str, object] = {
+        org_person_attrs: FlextTypes.Core.Dict = {
             "cn": "Jane Smith",
             "sn": "Smith",
             "mail": "jane@example.com",
@@ -150,8 +158,8 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
 
         # Validate using Python standard set operations
         def validate_required_attributes(
-            attrs: dict[str, object],
-            required: list[str],
+            attrs: FlextTypes.Core.Dict,
+            required: FlextTypes.Core.StringList,
         ) -> bool:
             attr_keys = set(attrs.keys())
             required_keys = set(required)
@@ -162,7 +170,7 @@ class TestRepositoryPatternFunctional(unittest.TestCase):
         assert validate_required_attributes(org_person_attrs, org_person_required)
 
         # Test missing required attributes
-        incomplete_attrs: dict[str, object] = {"cn": "Test"}
+        incomplete_attrs: FlextTypes.Core.Dict = {"cn": "Test"}
         assert not validate_required_attributes(incomplete_attrs, person_required)
 
     def test_result_chaining_functional(self) -> None:

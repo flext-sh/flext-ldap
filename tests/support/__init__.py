@@ -1,4 +1,8 @@
-"""Test support utilities for FLEXT LDAP testing."""
+"""Test support utilities for FLEXT LDAP testing.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from .fixtures import (
     real_ldap_server,

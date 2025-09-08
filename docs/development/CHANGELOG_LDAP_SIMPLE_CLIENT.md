@@ -70,7 +70,7 @@ class LdapConnectionConfig:
 @dataclass
 class LdapPoolConfig:
     """Configuration for LDAP connection pool."""
-    server_urls: list[str]
+    server_urls: FlextTypes.Core.StringList
     bind_dn: str | None = None
     password: str | None = None
     use_ssl: bool = False

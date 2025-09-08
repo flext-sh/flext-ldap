@@ -1,7 +1,11 @@
-"""Test helper functions for LDAP operations."""
+"""Test helper functions for LDAP operations.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 import ldap3
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 from flext_ldap import FlextLDAPConnectionConfig
 
@@ -11,7 +15,7 @@ logger = FlextLogger(__name__)
 async def create_test_user(
     config: FlextLDAPConnectionConfig,
     dn: str,
-    attributes: dict[str, list[str]],
+    attributes: dict[str, FlextTypes.Core.StringList],
 ) -> FlextResult[bool]:
     """Create a test user in LDAP server."""
     try:
@@ -45,7 +49,7 @@ async def create_test_user(
 async def create_test_group(
     config: FlextLDAPConnectionConfig,
     dn: str,
-    attributes: dict[str, list[str]],
+    attributes: dict[str, FlextTypes.Core.StringList],
 ) -> FlextResult[bool]:
     """Create a test group in LDAP server."""
     try:
@@ -78,7 +82,7 @@ async def create_test_group(
 
 async def cleanup_test_entries(
     config: FlextLDAPConnectionConfig,
-    dns: list[str],
+    dns: FlextTypes.Core.StringList,
 ) -> FlextResult[int]:
     """Clean up test entries from LDAP server."""
     try:
@@ -154,7 +158,7 @@ async def verify_entry_exists(
 async def get_entry_attributes(
     config: FlextLDAPConnectionConfig,
     dn: str,
-) -> FlextResult[dict[str, object]]:
+) -> FlextResult[FlextTypes.Core.Dict]:
     """Get attributes of an LDAP entry."""
     try:
         server = ldap3.Server(
@@ -195,7 +199,7 @@ async def search_entries(
     base_dn: str,
     search_filter: str,
     scope: int = ldap3.SUBTREE,
-) -> FlextResult[list[dict[str, object]]]:
+) -> FlextResult[list[FlextTypes.Core.Dict]]:
     """Search for entries in LDAP server."""
     try:
         server = ldap3.Server(
@@ -240,7 +244,7 @@ async def search_entries(
 async def modify_entry(
     config: FlextLDAPConnectionConfig,
     dn: str,
-    changes: dict[str, object],
+    changes: FlextTypes.Core.Dict,
 ) -> FlextResult[bool]:
     """Modify an LDAP entry."""
     try:

@@ -2,6 +2,10 @@
 
 Tests real functionality using flext_tests factories, matchers, and async utilities.
 NO MOCKS - only real functional validation with Docker containers.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

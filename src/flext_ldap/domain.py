@@ -1,12 +1,11 @@
-"""SINGLE CONSOLIDATED FlextLDAPDomain class following FLEXT architectural patterns.
+"""LDAP domain module.
 
-FLEXT_REFACTORING_PROMPT.md COMPLIANCE: Single consolidated class for all LDAP
-domain functionality.
-All specialized functionality delivered through internal subclasses within
-FlextLDAPDomain.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 
-CONSOLIDATED CLASSES: All domain specifications + domain services + domain
-events + domain factories
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 import re
@@ -22,6 +21,7 @@ from flext_core import (
     FlextLogger,
     FlextModels,
     FlextResult,
+    FlextTypes,
     FlextUtilities,
 )
 
@@ -355,7 +355,7 @@ class FlextLDAPDomain:
 
         def validate_user_creation(
             self,
-            user_data: dict[str, object],
+            user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
             """Validate user creation business rules - REFACTORED to reduce returns."""
             try:
@@ -367,7 +367,7 @@ class FlextLDAPDomain:
 
         def _perform_all_user_validations(
             self,
-            user_data: dict[str, object],
+            user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
             """Perform all user validations and return first failure or success."""
             # Chain all validations - stop at first failure
@@ -387,7 +387,7 @@ class FlextLDAPDomain:
 
         def _validate_required_fields(
             self,
-            user_data: dict[str, object],
+            user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
             """Validate required user fields."""
             required_fields = ["uid", "cn", "sn", "dn"]
@@ -398,7 +398,7 @@ class FlextLDAPDomain:
 
         def _validate_dn_field(
             self,
-            user_data: dict[str, object],
+            user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
             """Validate DN field format."""
             dn = str(user_data["dn"])
@@ -410,7 +410,7 @@ class FlextLDAPDomain:
 
         def _validate_email_field(
             self,
-            user_data: dict[str, object],
+            user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
             """Validate email field if provided."""
             if user_data.get("mail"):
@@ -423,7 +423,7 @@ class FlextLDAPDomain:
 
         def _validate_password_field(
             self,
-            user_data: dict[str, object],
+            user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
             """Validate password field if provided."""
             # Support both common password field names
@@ -561,7 +561,7 @@ class FlextLDAPDomain:
 
         def validate_group_creation(
             self,
-            group_data: dict[str, object],
+            group_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
             """Validate group creation business rules."""
             try:
@@ -689,7 +689,7 @@ class FlextLDAPDomain:
                 validation_rules,
             )
 
-        def _get_validation_rules(self) -> dict[str, str]:
+        def _get_validation_rules(self) -> FlextTypes.Core.Headers:
             """Template method - subclasses provide their validation rules."""
             error_msg = "Subclasses must implement _get_validation_rules"
             raise NotImplementedError(error_msg)
@@ -697,7 +697,10 @@ class FlextLDAPDomain:
         @classmethod
         def create_with_factory(cls, **kwargs: object) -> FlextModels.Value:
             """Template method for creating events using factory pattern."""
-            return FlextLDAPDomain._DomainEventFactory.create_event_base(cls, **kwargs)
+            return cast(
+                "FlextModels.Value",
+                FlextLDAPDomain._DomainEventFactory.create_event_base(cls, **kwargs),
+            )
 
     class _DomainEventFactory:
         """Factory Pattern for creating domain events using flext-core patterns.
@@ -708,7 +711,7 @@ class FlextLDAPDomain:
 
         @staticmethod
         def create_base_validation_rules(
-            required_fields: dict[str, str],
+            required_fields: FlextTypes.Core.Headers,
         ) -> FlextResult[None]:
             """Centralized validation logic for all domain events using Railway Pattern."""
             for field_name, field_value in required_fields.items():
@@ -744,7 +747,7 @@ class FlextLDAPDomain:
         user_id: str
         user_dn: str
 
-        def _get_validation_rules(self) -> dict[str, str]:
+        def _get_validation_rules(self) -> FlextTypes.Core.Headers:
             """Provide validation rules for user created event."""
             return {
                 "User ID": self.user_id,
@@ -760,11 +763,14 @@ class FlextLDAPDomain:
             created_by: str,
         ) -> "FlextLDAPDomain.UserCreatedEvent":
             """Create user created event using Template Method Pattern - ELIMINATES 13-line duplication."""
-            return FlextLDAPDomain._DomainEventFactory.create_typed_event(
-                cls,
-                user_id=user_id,
-                user_dn=user_dn,
-                actor=created_by,
+            return cast(
+                "FlextLDAPDomain.UserCreatedEvent",
+                FlextLDAPDomain._DomainEventFactory.create_typed_event(
+                    cls,
+                    user_id=user_id,
+                    user_dn=user_dn,
+                    actor=created_by,
+                ),
             )
 
     class UserDeletedEvent(_BaseDomainEvent):
@@ -773,7 +779,7 @@ class FlextLDAPDomain:
         user_id: str
         user_dn: str
 
-        def _get_validation_rules(self) -> dict[str, str]:
+        def _get_validation_rules(self) -> FlextTypes.Core.Headers:
             """Provide validation rules for user deleted event."""
             return {
                 "User ID": self.user_id,
@@ -788,11 +794,14 @@ class FlextLDAPDomain:
             deleted_by: str,
         ) -> "FlextLDAPDomain.UserDeletedEvent":
             """Create user deleted event using Template Method Pattern - ELIMINATES 13-line duplication."""
-            return FlextLDAPDomain._DomainEventFactory.create_typed_event(
-                cls,
-                user_id=user_id,
-                user_dn=user_dn,
-                actor=deleted_by,
+            return cast(
+                "FlextLDAPDomain.UserDeletedEvent",
+                FlextLDAPDomain._DomainEventFactory.create_typed_event(
+                    cls,
+                    user_id=user_id,
+                    user_dn=user_dn,
+                    actor=deleted_by,
+                ),
             )
 
     class GroupMemberAddedEvent(_BaseDomainEvent):
@@ -801,7 +810,7 @@ class FlextLDAPDomain:
         group_dn: str
         member_dn: str
 
-        def _get_validation_rules(self) -> dict[str, str]:
+        def _get_validation_rules(self) -> FlextTypes.Core.Headers:
             """Provide validation rules for group member added event."""
             return {
                 "Group DN": self.group_dn,
@@ -816,11 +825,14 @@ class FlextLDAPDomain:
             added_by: str,
         ) -> "FlextLDAPDomain.GroupMemberAddedEvent":
             """Create group member added event using Template Method Pattern - ELIMINATES 13-line duplication."""
-            return FlextLDAPDomain._DomainEventFactory.create_typed_event(
-                cls,
-                group_dn=group_dn,
-                member_dn=member_dn,
-                actor=added_by,
+            return cast(
+                "FlextLDAPDomain.GroupMemberAddedEvent",
+                FlextLDAPDomain._DomainEventFactory.create_typed_event(
+                    cls,
+                    group_dn=group_dn,
+                    member_dn=member_dn,
+                    actor=added_by,
+                ),
             )
 
     class PasswordChangedEvent(_BaseDomainEvent):
@@ -830,7 +842,7 @@ class FlextLDAPDomain:
         changed_by: str
         is_self_change: bool
 
-        def _get_validation_rules(self) -> dict[str, str]:
+        def _get_validation_rules(self) -> FlextTypes.Core.Headers:
             """Provide validation rules for password changed event."""
             return {
                 "User DN": self.user_dn,
@@ -844,12 +856,15 @@ class FlextLDAPDomain:
             changed_by: str,
         ) -> "FlextLDAPDomain.PasswordChangedEvent":
             """Create password changed event using Template Method Pattern - ELIMINATES 13-line duplication."""
-            return FlextLDAPDomain._DomainEventFactory.create_typed_event(
-                cls,
-                user_dn=user_dn,
-                changed_by=changed_by,
-                actor=changed_by,
-                is_self_change=user_dn == changed_by,
+            return cast(
+                "FlextLDAPDomain.PasswordChangedEvent",
+                FlextLDAPDomain._DomainEventFactory.create_typed_event(
+                    cls,
+                    user_dn=user_dn,
+                    changed_by=changed_by,
+                    actor=changed_by,
+                    is_self_change=user_dn == changed_by,
+                ),
             )
 
     # ==========================================================================
@@ -872,18 +887,20 @@ class FlextLDAPDomain:
             return result or None
 
         @staticmethod
-        def safe_list(value: object, default: list[str] | None = None) -> list[str]:
+        def safe_list(
+            value: object, default: FlextTypes.Core.StringList | None = None
+        ) -> FlextTypes.Core.StringList:
             """Safely convert value to list or use default - USES FLEXT-CORE."""
             if FlextUtilities.TypeGuards.is_list_non_empty(value):
                 # Use Python standard conversion instead of custom wrapper
-                return [str(item) for item in cast("list[object]", value)]
+                return [str(item) for item in cast("FlextTypes.Core.List", value)]
             return default or []
 
         @staticmethod
-        def safe_dict(value: object) -> dict[str, object]:
+        def safe_dict(value: object) -> FlextTypes.Core.Dict:
             """Safely convert value to dict or empty dict."""
             if isinstance(value, dict):
-                typed_dict: dict[str, object] = cast("dict[str, object]", value)
+                typed_dict: FlextTypes.Core.Dict = cast("FlextTypes.Core.Dict", value)
                 return dict(typed_dict)
             return {}
 
@@ -902,7 +919,7 @@ class FlextLDAPDomain:
     class _BaseEntityBuilder:
         """Base builder using Template Method Pattern - ELIMINATES DUPLICATION between User/Group builders."""
 
-        def __init__(self, params: dict[str, object], entity_type: str) -> None:
+        def __init__(self, params: FlextTypes.Core.Dict, entity_type: str) -> None:
             self.params = params
             self.entity_type = entity_type
             self.builder = FlextLDAPDomain.EntityParameterBuilder()
@@ -925,7 +942,7 @@ class FlextLDAPDomain:
             """Generate entity ID with timestamp."""
             return f"{self.entity_type}_{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}"
 
-        def _extract_base_parameters(self, entity_id: str) -> dict[str, object]:
+        def _extract_base_parameters(self, entity_id: str) -> FlextTypes.Core.Dict:
             """Extract parameters common to all entities."""
             return {
                 "id": entity_id,
@@ -937,12 +954,12 @@ class FlextLDAPDomain:
                 "modified_at": None,
             }
 
-        def _extract_specific_parameters(self) -> dict[str, object]:
+        def _extract_specific_parameters(self) -> FlextTypes.Core.Dict:
             """Template method - subclasses implement entity-specific parameters."""
             error_msg = "Subclasses must implement _extract_specific_parameters"
             raise NotImplementedError(error_msg)
 
-        def _create_entity(self, all_params: dict[str, object]) -> object:
+        def _create_entity(self, all_params: FlextTypes.Core.Dict) -> object:
             """Template method - subclasses implement entity creation."""
             error_msg = "Subclasses must implement _create_entity"
             raise NotImplementedError(error_msg)
@@ -950,10 +967,10 @@ class FlextLDAPDomain:
     class UserEntityBuilder(_BaseEntityBuilder):
         """User entity builder using Template Method Pattern - ELIMINATES DUPLICATION."""
 
-        def __init__(self, params: dict[str, object]) -> None:
+        def __init__(self, params: FlextTypes.Core.Dict) -> None:
             super().__init__(params, "user")
 
-        def _extract_specific_parameters(self) -> dict[str, object]:
+        def _extract_specific_parameters(self) -> FlextTypes.Core.Dict:
             """Extract user-specific parameters."""
             return {
                 "uid": self.builder.safe_str(self.params["uid"]) or "",
@@ -966,17 +983,17 @@ class FlextLDAPDomain:
                 ),
             }
 
-        def _create_entity(self, all_params: dict[str, object]) -> object:
+        def _create_entity(self, all_params: FlextTypes.Core.Dict) -> object:
             """Create FlextLDAPEntities.User entity."""
             return FlextLDAPEntities.User(**all_params)
 
     class GroupEntityBuilder(_BaseEntityBuilder):
         """Group entity builder using Template Method Pattern - ELIMINATES DUPLICATION."""
 
-        def __init__(self, params: dict[str, object]) -> None:
+        def __init__(self, params: FlextTypes.Core.Dict) -> None:
             super().__init__(params, "group")
 
-        def _extract_specific_parameters(self) -> dict[str, object]:
+        def _extract_specific_parameters(self) -> FlextTypes.Core.Dict:
             """Extract group-specific parameters."""
             return {
                 "cn": self.builder.safe_str(self.params["cn"]) or "",
@@ -984,7 +1001,7 @@ class FlextLDAPDomain:
                 "members": self.builder.safe_list(self.params["members"]),
             }
 
-        def _create_entity(self, all_params: dict[str, object]) -> object:
+        def _create_entity(self, all_params: FlextTypes.Core.Dict) -> object:
             """Create FlextLDAPEntities.Group entity."""
             return FlextLDAPEntities.Group(**all_params)
 
@@ -995,7 +1012,7 @@ class FlextLDAPDomain:
     class CreateUserCommand(FlextCommands.Models.Command):
         """Command for creating users using CQRS pattern."""
 
-        user_data: dict[str, object]
+        user_data: FlextTypes.Core.Dict
 
         def validate_command(self) -> FlextResult[None]:
             """Validate user creation data."""
@@ -1042,10 +1059,10 @@ class FlextLDAPDomain:
 
         def _extract_user_parameters(
             self,
-            user_data: dict[str, object],
-        ) -> dict[str, object]:
+            user_data: FlextTypes.Core.Dict,
+        ) -> FlextTypes.Core.Dict:
             """Extract and validate user parameters for entity creation."""
-            operations: Mapping[str, Callable[[dict[str, object]], object]] = {
+            operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]] = {
                 "extract_uid": lambda data: str(data.get("uid", "")),
                 "extract_cn": lambda data: str(data.get("cn", "")),
                 "extract_sn": lambda data: str(
@@ -1084,11 +1101,13 @@ class FlextLDAPDomain:
 
         def create_user_from_data(
             self,
-            user_data: dict[str, object],
+            user_data: FlextTypes.Core.Dict,
         ) -> FlextResult[FlextLDAPEntities.User]:
             """Create user entity using FlextCommands pattern for reduced complexity."""
             # Use FlextCommands pattern to reduce complexity
-            command = FlextLDAPDomain.CreateUserCommand(user_data=user_data)
+            command = FlextLDAPDomain.CreateUserCommand(
+                command_type="create_user", user_data=user_data
+            )
             return cast(
                 "FlextResult[FlextLDAPEntities.User]",
                 self._create_user_handler.handle(command),
@@ -1096,8 +1115,8 @@ class FlextLDAPDomain:
 
         def _extract_user_parameters(
             self,
-            user_data: dict[str, object],
-        ) -> dict[str, object]:
+            user_data: FlextTypes.Core.Dict,
+        ) -> FlextTypes.Core.Dict:
             """Extract and convert user parameters from raw data."""
             given_name = user_data.get("given_name")
             mail = user_data.get("mail")
@@ -1108,13 +1127,13 @@ class FlextLDAPDomain:
             attributes_raw = user_data.get("attributes", {})
 
             # Type-safe conversions with explicit casts
-            object_classes: list[str] = (
-                [str(item) for item in cast("list[object]", object_classes_raw)]
+            object_classes: FlextTypes.Core.StringList = (
+                [str(item) for item in cast("FlextTypes.Core.List", object_classes_raw)]
                 if isinstance(object_classes_raw, list)
                 else ["inetOrgPerson", "person", "top"]
             )
-            attributes: dict[str, object] = (
-                cast("dict[str, object]", attributes_raw)
+            attributes: FlextTypes.Core.Dict = (
+                cast("FlextTypes.Core.Dict", attributes_raw)
                 if isinstance(attributes_raw, dict)
                 else {}
             )
@@ -1130,7 +1149,7 @@ class FlextLDAPDomain:
                 "attributes": attributes,
             }
 
-        def _create_user_entity(self, user_params: dict[str, object]) -> object:
+        def _create_user_entity(self, user_params: FlextTypes.Core.Dict) -> object:
             """Create FlextLDAPEntities.User entity from extracted parameters - REFACTORED."""
             builder = FlextLDAPDomain.UserEntityBuilder(user_params)
             return builder.build()
@@ -1146,10 +1165,10 @@ class FlextLDAPDomain:
 
         def create_group_from_data(
             self,
-            group_data: dict[str, object],
+            group_data: FlextTypes.Core.Dict,
         ) -> FlextResult[FlextLDAPEntities.Group]:
             """Create group entity from data with full validation."""
-            operations: Mapping[str, Callable[[dict[str, object]], object]] = {
+            operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]] = {
                 "validate": self._group_service.validate_group_creation,
                 "extract": self._extract_group_parameters,
                 "create": self._create_group_entity,
@@ -1177,8 +1196,8 @@ class FlextLDAPDomain:
 
         def _extract_group_parameters(
             self,
-            group_data: dict[str, object],
-        ) -> dict[str, object]:
+            group_data: FlextTypes.Core.Dict,
+        ) -> FlextTypes.Core.Dict:
             """Extract and convert group parameters from raw data."""
             description = group_data.get("description")
             members_raw = group_data.get("members", [])
@@ -1189,18 +1208,18 @@ class FlextLDAPDomain:
             attributes_raw = group_data.get("attributes", {})
 
             # Type-safe conversions with explicit casts
-            members: list[str] = (
-                [str(item) for item in cast("list[object]", members_raw)]
+            members: FlextTypes.Core.StringList = (
+                [str(item) for item in cast("FlextTypes.Core.List", members_raw)]
                 if isinstance(members_raw, list)
                 else []
             )
-            object_classes: list[str] = (
-                [str(item) for item in cast("list[object]", object_classes_raw)]
+            object_classes: FlextTypes.Core.StringList = (
+                [str(item) for item in cast("FlextTypes.Core.List", object_classes_raw)]
                 if isinstance(object_classes_raw, list)
                 else ["groupOfNames", "top"]
             )
-            attributes: dict[str, object] = (
-                cast("dict[str, object]", attributes_raw)
+            attributes: FlextTypes.Core.Dict = (
+                cast("FlextTypes.Core.Dict", attributes_raw)
                 if isinstance(attributes_raw, dict)
                 else {}
             )
@@ -1214,7 +1233,7 @@ class FlextLDAPDomain:
                 "attributes": attributes,
             }
 
-        def _create_group_entity(self, group_params: dict[str, object]) -> object:
+        def _create_group_entity(self, group_params: FlextTypes.Core.Dict) -> object:
             """Create FlextLDAPEntities.Group entity from extracted parameters - REFACTORED."""
             builder = FlextLDAPDomain.GroupEntityBuilder(group_params)
             return builder.build()
@@ -1228,9 +1247,9 @@ class FlextLDAPDomain:
 
         def _create_entity_from_data(
             self,
-            data: dict[str, object],
+            data: FlextTypes.Core.Dict,
             entity_type: str,
-            operations: Mapping[str, Callable[[dict[str, object]], object]],
+            operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]],
         ) -> FlextResult[object]:
             """Template method for entity creation - ELIMINATES CODE DUPLICATION."""
             try:
@@ -1246,14 +1265,14 @@ class FlextLDAPDomain:
 
         def _execute_entity_creation_pipeline(
             self,
-            data: dict[str, object],
+            data: FlextTypes.Core.Dict,
             entity_type: str,
-            operations: Mapping[str, Callable[[dict[str, object]], object]],
+            operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]],
         ) -> FlextResult[object]:
             """Execute entity creation pipeline using Railway Oriented Programming - eliminates multiple returns."""
             # Railway chain: validate -> extract -> create -> final_validate
             return (
-                FlextResult[dict[str, object]]
+                FlextResult[FlextTypes.Core.Dict]
                 .ok(data)
                 .flat_map(
                     lambda d: self._validate_business_rules(d, operations, entity_type),
@@ -1279,22 +1298,22 @@ class FlextLDAPDomain:
 
         def _validate_business_rules(
             self,
-            data: dict[str, object],
-            operations: Mapping[str, Callable[[dict[str, object]], object]],
+            data: FlextTypes.Core.Dict,
+            operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]],
             entity_type: str,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             """Step 1: Validate business rules."""
             result = self._execute_operation(
                 operations.get("validate"),
                 data,
                 f"{entity_type} validation",
             )
-            return result.flat_map(lambda _: FlextResult[dict[str, object]].ok(data))
+            return result.flat_map(lambda _: FlextResult[FlextTypes.Core.Dict].ok(data))
 
         def _extract_parameters(
             self,
-            data: dict[str, object],
-            operations: Mapping[str, Callable[[dict[str, object]], object]],
+            data: FlextTypes.Core.Dict,
+            operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]],
             entity_type: str,
         ) -> FlextResult[object]:
             """Step 2: Extract parameters."""
@@ -1307,7 +1326,7 @@ class FlextLDAPDomain:
         def _create_entity_from_params(
             self,
             params: object,
-            operations: Mapping[str, Callable[[dict[str, object]], object]],
+            operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]],
             entity_type: str,
         ) -> FlextResult[object]:
             """Step 3: Create entity from parameters."""
@@ -1324,7 +1343,7 @@ class FlextLDAPDomain:
         def _final_validate_entity(
             self,
             entity: object,
-            operations: Mapping[str, Callable[[dict[str, object]], object]],
+            operations: Mapping[str, Callable[[FlextTypes.Core.Dict], object]],
             entity_type: str,
         ) -> FlextResult[object]:
             """Step 4: Final domain validation."""
@@ -1338,7 +1357,7 @@ class FlextLDAPDomain:
 
         def _execute_operation(
             self,
-            operation: Callable[[dict[str, object]], object]
+            operation: Callable[[FlextTypes.Core.Dict], object]
             | Callable[[object], object]
             | None,
             data: object,
@@ -1423,28 +1442,28 @@ class FlextLDAPDomain:
     # High-level convenience methods
     def validate_user_creation(
         self,
-        user_data: dict[str, object],
+        user_data: FlextTypes.Core.Dict,
     ) -> FlextResult[object]:
         """Validate user creation (convenience method)."""
         return self._user_service.validate_user_creation(user_data)
 
     def validate_group_creation(
         self,
-        group_data: dict[str, object],
+        group_data: FlextTypes.Core.Dict,
     ) -> FlextResult[object]:
         """Validate group creation (convenience method)."""
         return self._group_service.validate_group_creation(group_data)
 
     def create_user_from_data(
         self,
-        user_data: dict[str, object],
+        user_data: FlextTypes.Core.Dict,
     ) -> FlextResult[FlextLDAPEntities.User]:
         """Create user from data (convenience method)."""
         return self._factory.create_user_from_data(user_data)
 
     def create_group_from_data(
         self,
-        group_data: dict[str, object],
+        group_data: FlextTypes.Core.Dict,
     ) -> FlextResult[FlextLDAPEntities.Group]:
         """Create group from data (convenience method)."""
         return self._factory.create_group_from_data(group_data)

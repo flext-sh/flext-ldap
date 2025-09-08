@@ -1,29 +1,7 @@
 """LDAP Models - Single FlextLDAPModels class following FLEXT patterns.
 
-Single class inheriting from FlextModels with all LDAP models
-organized as internal classes and methods for complete backward compatibility.
-
-Examples:
-    Basic usage with hierarchical models::
-
-        from models import FlextLDAPModels
-
-        # Configuration models
-        settings = FlextLDAPModels.Configuration.Settings()
-        auth_config = FlextLDAPModels.Configuration.AuthConfig()
-
-        # Domain models
-        user = FlextLDAPModels.Domain.User()
-        entry = FlextLDAPModels.Domain.Entry()
-
-    Legacy compatibility::
-
-        # All previous models still work as direct imports
-        from models import FlextLDAPUser, FlextLDAPSettings
-
-        user = FlextLDAPUser()
-        settings = FlextLDAPSettings()
-
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -31,8 +9,6 @@ from __future__ import annotations
 from flext_core import FlextModels
 
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
-
-# Following flext-core pattern: unified settings class contains auth, logging, search config
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.fields import FlextLDAPFields
@@ -56,30 +32,6 @@ class FlextLDAPModels(FlextModels.AggregateRoot):
     Everything from the previous model definitions is now available as
     internal classes with full backward compatibility.
 
-    This class follows SOLID principles:
-        - Single Responsibility: All LDAP models in one place
-        - Open/Closed: Extends FlextModels without modification
-        - Liskov Substitution: Can be used anywhere FlextModels is expected
-        - Interface Segregation: Organized by domain for specific access
-        - Dependency Inversion: Depends on FlextModels abstraction
-
-    Examples:
-        Configuration models::
-
-            settings = FlextLDAPModels.Configuration.Settings()
-            auth = FlextLDAPModels.Configuration.AuthConfig()
-
-        Domain models::
-
-            user = FlextLDAPModels.Domain.User()
-            group = FlextLDAPModels.Domain.Group()
-            entry = FlextLDAPModels.Domain.Entry()
-
-        Request/Response models::
-
-            search_req = FlextLDAPModels.Request.SearchRequest()
-            search_resp = FlextLDAPModels.Response.SearchResponse()
-
     """
 
     # =========================================================================
@@ -96,17 +48,32 @@ class FlextLDAPModels(FlextModels.AggregateRoot):
         # Factory methods
         @staticmethod
         def create_development() -> FlextLDAPSettings:
-            """Create development configuration."""
+            """Create development configuration.
+
+            Returns:
+                FlextLDAPSettings: Development configuration settings.
+
+            """
             return FlextLDAPSettings.create_development()
 
         @staticmethod
         def create_production() -> FlextLDAPSettings:
-            """Create production configuration."""
+            """Create production configuration.
+
+            Returns:
+                FlextLDAPSettings: Production configuration settings.
+
+            """
             return FlextLDAPSettings.create_production()
 
         @staticmethod
         def create_test() -> FlextLDAPSettings:
-            """Create test configuration."""
+            """Create test configuration.
+
+            Returns:
+                FlextLDAPSettings: Test configuration settings.
+
+            """
             return FlextLDAPSettings.create_test()
 
     # =========================================================================

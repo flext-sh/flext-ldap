@@ -1498,7 +1498,7 @@ def __getattr__(name: str) -> object:
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 # Clean public API (current and future)
-__all__: list[str] = [
+__all__: FlextTypes.Core.StringList = [
     # Core API (stable)
     "FlextLDAPApi",
     "get_ldap_api",

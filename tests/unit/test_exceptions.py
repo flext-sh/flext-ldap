@@ -2,6 +2,10 @@
 
 This test file targets specific uncovered lines in exceptions.py
 to reach 100% coverage systematically.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

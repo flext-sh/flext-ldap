@@ -3,38 +3,10 @@
 Single class with all LDAP domain entities implementing rich business objects
 organized as internal classes for complete backward compatibility.
 
-Examples:
-    Search operations::
 
-        from entities import FlextLDAPEntities
 
-        # Create search request
-        request = FlextLDAPEntities.SearchRequest(
-            base_dn="dc=example,dc=com", filter_str="(uid=john)"
-        )
-
-        # Process response
-        response = FlextLDAPEntities.SearchResponse(entries=[...])
-
-    Entity operations::
-
-        # Create user
-        user = FlextLDAPEntities.User(
-            dn="cn=john,ou=users,dc=example,dc=com", uid="john", cn="John Doe"
-        )
-
-        # Create group
-        group = FlextLDAPEntities.Group(
-            dn="cn=admins,ou=groups,dc=example,dc=com", cn="Administrators"
-        )
-
-    Legacy compatibility::
-
-        # All previous classes still work as direct imports
-        from entities import FlextLDAPUser, FlextLDAPSearchRequest
-
-        user = FlextLDAPUser(dn="cn=user,dc=example,dc=com", uid="user")
-
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -46,6 +18,7 @@ from flext_core import (
     FlextLogger,
     FlextModels,
     FlextResult,
+    FlextTypes,
     FlextValidations,
 )
 from pydantic import ConfigDict, Field, computed_field, field_validator
@@ -54,7 +27,7 @@ from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue
 from flext_ldap.value_objects import FlextLDAPValueObjects
 
-DictEntry = dict[str, object]
+DictEntry = FlextTypes.Core.Dict
 
 logger = FlextLogger(__name__)
 
@@ -69,36 +42,6 @@ class FlextLDAPEntities:
     Consolidates ALL LDAP entities into a single class following FLEXT patterns.
     Everything from search requests to domain entities is available as internal classes
     with full backward compatibility and rich business logic.
-
-    This class follows SOLID principles:
-        - Single Responsibility: All LDAP entities consolidated
-        - Open/Closed: Extensible without modification
-        - Liskov Substitution: Consistent interface across all entities
-        - Interface Segregation: Organized by entity type for specific access
-        - Dependency Inversion: Depends on FlextModels/FlextModels abstractions
-
-    Examples:
-        Search operations::
-
-            request = FlextLDAPEntities.SearchRequest(
-                base_dn="dc=example,dc=com", filter_str="(uid=john)"
-            )
-            response = FlextLDAPEntities.SearchResponse(entries=[...])
-
-        Domain entities::
-
-            user = FlextLDAPEntities.User(
-                dn="cn=john,ou=users,dc=example,dc=com", uid="john", cn="John Doe"
-            )
-            group = FlextLDAPEntities.Group(
-                dn="cn=admins,ou=groups,dc=example,dc=com", cn="Administrators"
-            )
-
-        Request models::
-
-            create_request = FlextLDAPEntities.CreateUserRequest(
-                dn="cn=newuser,ou=users,dc=example,dc=com", uid="newuser", cn="New User"
-            )
 
     """
 
@@ -136,7 +79,7 @@ class FlextLDAPEntities:
             ),
         ]
         attributes: Annotated[
-            list[str] | None,
+            FlextTypes.Core.StringList | None,
             Field(
                 default=None,
                 description="Attributes to retrieve (None for all)",
@@ -236,7 +179,9 @@ class FlextLDAPEntities:
         dn: str = Field(..., description="Distinguished Name")
         cn: str = Field(..., description="Group Common Name")
         description: str | None = Field(None, description="Group description")
-        members: list[str] = Field(default_factory=list, description="Group member DNs")
+        members: FlextTypes.Core.StringList = Field(
+            default_factory=list, description="Group member DNs"
+        )
 
         @computed_field
         def member_count(self) -> int:
@@ -248,7 +193,7 @@ class FlextLDAPEntities:
 
         entry_type: Literal["generic"] = "generic"
         dn: str = Field(..., description="Distinguished Name")
-        object_classes: list[str] = Field(
+        object_classes: FlextTypes.Core.StringList = Field(
             default_factory=list,
             description="LDAP object classes",
         )
@@ -265,7 +210,7 @@ class FlextLDAPEntities:
     class SearchResponse(FlextModels.Value):
         """Advanced search response with discriminated unions for type safety."""
 
-        entries: list[dict[str, object]] = Field(
+        entries: list[FlextTypes.Core.Dict] = Field(
             default_factory=list,
             description="Type-safe search result entries with discriminated unions",
         )
@@ -319,7 +264,7 @@ class FlextLDAPEntities:
             pattern=r"^(base|one|subtree|onelevel)$",
             description="Search scope",
         )
-        attributes: list[str] | None = Field(
+        attributes: FlextTypes.Core.StringList | None = Field(
             default=None,
             description="Attributes to retrieve",
         )
@@ -475,7 +420,7 @@ class FlextLDAPEntities:
             return str(v)
 
         dn: str = Field(..., description="Distinguished Name")
-        object_classes: list[str] = Field(
+        object_classes: FlextTypes.Core.StringList = Field(
             default_factory=list,
             description="LDAP object classes",
         )
@@ -594,7 +539,7 @@ class FlextLDAPEntities:
 
         cn: str = Field(..., description="Common Name")
         description: str | None = Field(None, description="Group description")
-        members: list[str] = Field(
+        members: FlextTypes.Core.StringList = Field(
             default_factory=list,
             description="Group member DNs",
         )
@@ -649,7 +594,7 @@ class FlextLDAPEntities:
         given_name: str | None = Field(None, description="Given Name")
         mail: str | None = Field(None, description="Email address")
         user_password: str | None = Field(None, description="User password")
-        object_classes: list[str] = Field(
+        object_classes: FlextTypes.Core.StringList = Field(
             default_factory=lambda: [
                 "top",
                 "person",
@@ -716,11 +661,11 @@ class FlextLDAPEntities:
         dn: str = Field(..., description="Distinguished Name for new group")
         cn: str = Field(..., description="Common Name", min_length=1)
         description: str | None = Field(None, description="Group description")
-        member_dns: list[str] = Field(
+        member_dns: FlextTypes.Core.StringList = Field(
             default_factory=list,
             description="List of member DNs",
         )
-        object_classes: list[str] = Field(
+        object_classes: FlextTypes.Core.StringList = Field(
             default_factory=lambda: [
                 "top",
                 "groupOfNames",
@@ -767,7 +712,7 @@ class FlextLDAPEntities:
         dn: str = Field(..., description="Distinguished Name of group to update")
         cn: str | None = Field(None, description="New Common Name")
         description: str | None = Field(None, description="New group description")
-        member_dns: list[str] | None = Field(
+        member_dns: FlextTypes.Core.StringList | None = Field(
             None,
             description="New list of member DNs (replaces existing)",
         )

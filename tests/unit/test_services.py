@@ -2,12 +2,18 @@
 
 Follows flext_tests patterns for real LDAP functionality testing,
 Docker containers, and flext_tests utilities. No mocks allowed.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
-from flext_core import FlextResult
+from flext_core import FlextContainer, FlextResult, FlextTypes
 from flext_tests import (
     FlextMatchers,
 )
@@ -48,7 +54,7 @@ class TestFlextLDAPServicesComprehensive:
     async def test_process_base_implementation(self) -> None:
         """Test process method base implementation using FlextMatchers."""
         service = FlextLDAPServices()
-        request: dict[str, object] = {"test": "data"}
+        request: FlextTypes.Core.Dict = {"test": "data"}
 
         result = service.process(request)
 
@@ -120,9 +126,6 @@ class TestFlextLDAPServicesComprehensive:
 
         service = FlextLDAPServices()
         # Use typing.cast to bypass type checking for test mock
-        from typing import cast
-
-        from flext_core import FlextContainer
         service._container = cast("FlextContainer", MinimalContainer())
 
         result = await service.cleanup()
@@ -137,9 +140,6 @@ class TestFlextLDAPServicesComprehensive:
 
         service = FlextLDAPServices()
         # Use typing.cast to bypass type checking for test mock
-        from typing import cast
-
-        from flext_core import FlextContainer
         service._container = cast("FlextContainer", EmptyContainer())
 
         result = await service.cleanup()
@@ -205,11 +205,12 @@ class TestFlextLDAPServicesComprehensive:
         """Test get_user when repository access fails."""
         service = FlextLDAPServices()
         # Override to force repository failure using setattr
-        from flext_core import FlextResult
         original_get_repo = service._get_repository
-        setattr(service, "_get_repository", lambda: FlextResult[object].fail(
-            "Repository unavailable"
-        ))
+        setattr(
+            service,
+            "_get_repository",
+            lambda: FlextResult[object].fail("Repository unavailable"),
+        )
 
         result = await service.get_user("cn=test,dc=test,dc=com")
 
@@ -269,7 +270,7 @@ class TestFlextLDAPServicesComprehensive:
 
         # May fail due to user not existing, but should handle gracefully
         if not result.is_success:
-            error_lower = ((result.error or "").lower())
+            error_lower = (result.error or "").lower()
             assert any(
                 pattern in error_lower
                 for pattern in [
@@ -413,7 +414,9 @@ class TestFlextLDAPServicesComprehensive:
         result = service.validate_dn("invalid_dn_format")
 
         assert not result.is_success
-        assert "invalid" in ((result.error or "").lower()) or "format" in ((result.error or "").lower())
+        assert "invalid" in ((result.error or "").lower()) or "format" in (
+            (result.error or "").lower()
+        )
 
     def test_validate_filter_valid(self) -> None:
         """Test filter validation with valid filter."""
@@ -442,7 +445,9 @@ class TestFlextLDAPServicesComprehensive:
         result = service.validate_filter("invalid_filter")
 
         assert not result.is_success
-        assert "invalid" in ((result.error or "").lower()) or "format" in ((result.error or "").lower())
+        assert "invalid" in ((result.error or "").lower()) or "format" in (
+            (result.error or "").lower()
+        )
 
     async def test_search(self) -> None:
         """Test search operation."""
@@ -483,7 +488,9 @@ class TestFlextLDAPServicesComprehensive:
         result = service.validate_attributes(attributes)
 
         assert not result.is_success
-        assert "empty" in ((result.error or "").lower()) or "attributes" in ((result.error or "").lower())
+        assert "empty" in ((result.error or "").lower()) or "attributes" in (
+            (result.error or "").lower()
+        )
 
     def test_validate_object_classes_valid(self) -> None:
         """Test object classes validation with valid classes."""
@@ -499,12 +506,14 @@ class TestFlextLDAPServicesComprehensive:
         """Test object classes validation with empty list."""
         service = FlextLDAPServices()
 
-        object_classes: list[str] = []
+        object_classes: FlextTypes.Core.StringList = []
 
         result = service.validate_object_classes(object_classes)
 
         assert not result.is_success
-        assert "empty" in ((result.error or "").lower()) or "object" in ((result.error or "").lower())
+        assert "empty" in ((result.error or "").lower()) or "object" in (
+            (result.error or "").lower()
+        )
 
     async def test_search_users(self) -> None:
         """Test search_users operation."""

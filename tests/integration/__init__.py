@@ -1,1 +1,5 @@
-"""Integration tests for FLEXT LDAP."""
+"""Integration tests for FLEXT LDAP.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""

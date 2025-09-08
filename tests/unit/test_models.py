@@ -1,13 +1,17 @@
 """Unit tests for FLEXT LDAP entities and value objects - NO MOCKS.
 
 Tests pure domain logic and business rules without external dependencies.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextConstants
+from flext_core import FlextConstants, FlextTypes
 
 from flext_ldap import FlextLDAPEntities, FlextLDAPValueObjects
 
@@ -74,8 +78,14 @@ class TestFlextLDAPUser:
             sn=str(kwargs.get("sn", "User")),
             given_name=str(kwargs.get("given_name", "Test")),
             mail=str(kwargs.get("mail", "testuser@example.com")),
-            object_classes=cast("list[str]", kwargs.get("object_classes", ["inetOrgPerson", "person"])),
-            attributes=cast("dict[str, str | bytes | list[str] | list[bytes]]", kwargs.get("attributes", {})),
+            object_classes=cast(
+                "FlextTypes.Core.StringList",
+                kwargs.get("object_classes", ["inetOrgPerson", "person"]),
+            ),
+            attributes=cast(
+                "dict[str, str | bytes | FlextTypes.Core.StringList | list[bytes]]",
+                kwargs.get("attributes", {}),
+            ),
             status=str(kwargs.get("status", FlextConstants.Enums.EntityStatus.ACTIVE)),
         )
 
@@ -163,9 +173,15 @@ class TestFlextLDAPGroup:
             dn=str(kwargs.get("dn", "cn=testgroup,ou=groups,dc=example,dc=com")),
             cn=str(kwargs.get("cn", "Test Group")),
             description=str(kwargs.get("description", "Test group for unit testing")),
-            object_classes=cast("list[str]", kwargs.get("object_classes", ["groupOfNames"])),
-            attributes=cast("dict[str, str | bytes | list[str] | list[bytes]]", kwargs.get("attributes", {})),
-            members=cast("list[str]", kwargs.get("members", [])),
+            object_classes=cast(
+                "FlextTypes.Core.StringList",
+                kwargs.get("object_classes", ["groupOfNames"]),
+            ),
+            attributes=cast(
+                "dict[str, str | bytes | FlextTypes.Core.StringList | list[bytes]]",
+                kwargs.get("attributes", {}),
+            ),
+            members=cast("FlextTypes.Core.StringList", kwargs.get("members", [])),
             status=str(kwargs.get("status", FlextConstants.Enums.EntityStatus.ACTIVE)),
         )
 
@@ -255,8 +271,14 @@ class TestFlextLDAPEntry:
         return FlextLDAPEntities.Entry(
             id=str(kwargs.get("id", "test_entry")),
             dn=str(kwargs.get("dn", "cn=testentry,dc=example,dc=com")),
-            object_classes=cast("list[str]", kwargs.get("object_classes", ["top", "person"])),
-            attributes=cast("dict[str, str | bytes | list[str] | list[bytes]]", kwargs.get("attributes", {"cn": ["test"], "sn": ["entry"]})),
+            object_classes=cast(
+                "FlextTypes.Core.StringList",
+                kwargs.get("object_classes", ["top", "person"]),
+            ),
+            attributes=cast(
+                "dict[str, str | bytes | FlextTypes.Core.StringList | list[bytes]]",
+                kwargs.get("attributes", {"cn": ["test"], "sn": ["entry"]}),
+            ),
             status=str(kwargs.get("status", FlextConstants.Enums.EntityStatus.ACTIVE)),
         )
 
@@ -548,8 +570,13 @@ class TestRealWorldScenarios:
                 sn=str(user_data["sn"]),
                 given_name=str(user_data["given_name"]),
                 mail=str(user_data["mail"]),
-                object_classes=cast("list[str]", user_data["object_classes"]),
-                attributes=cast("dict[str, str | bytes | list[str] | list[bytes]]", user_data.get("attributes", {})),
+                object_classes=cast(
+                    "FlextTypes.Core.StringList", user_data["object_classes"]
+                ),
+                attributes=cast(
+                    "dict[str, str | bytes | FlextTypes.Core.StringList | list[bytes]]",
+                    user_data.get("attributes", {}),
+                ),
                 status=FlextConstants.Enums.EntityStatus.ACTIVE,
             )
             # Add attributes and phone data separately
@@ -610,8 +637,12 @@ class TestRealWorldScenarios:
                 dn=str(group_data["dn"]),
                 cn=cn_str,
                 description=str(group_data.get("description", "")),
-                object_classes=cast("list[str]", group_data["object_classes"]),
-                members=cast("list[str]", group_data.get("members", [])),
+                object_classes=cast(
+                    "FlextTypes.Core.StringList", group_data["object_classes"]
+                ),
+                members=cast(
+                    "FlextTypes.Core.StringList", group_data.get("members", [])
+                ),
                 attributes={},
                 status=FlextConstants.Enums.EntityStatus.ACTIVE,
             )

@@ -1,61 +1,30 @@
-"""FLEXT-LDAP Type Guards - Class-based runtime type checking for LDAP operations.
+"""LDAP type guards module.
 
-This module provides a class-based approach to type guards for runtime type checking
-of LDAP-specific data structures. Eliminates all standalone functions and follows
-the FlextLDAP[Module] naming convention.
-
-All type guards return boolean values and narrow types for static analysis tools.
-Uses isinstance() checks for runtime type validation and provides TypeGuard annotations
-for MyPy type narrowing.
-
-Architecture:
-    - Eliminates standalone functions in favor of class-based structure
-    - Provides TypeGuard annotations for MyPy type narrowing
-    - Follows FlextLDAP[Module] naming convention
-    - No legacy compatibility or fallback modes
-
-Usage:
-    >>> from flext_ldap.type_guards import FlextLDAPTypeGuards
-    >>> result = some_ldap_operation()
-    >>> if FlextLDAPTypeGuards.is_ldap_search_result(result.value):
-    ...     # MyPy now knows result.value is TLdapSearchResult
-    ...     for entry in result.value:
-    ...         print(entry["dn"])
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeGuard, cast
+from typing import TypeGuard, cast
+
+from flext_core import FlextTypes
 
 from flext_ldap.constants import FlextLDAPConstants
-
-if TYPE_CHECKING:
-    from flext_ldap.typings import (
-        TLdapAttributes,
-        TLdapAttributeValue,
-        TLdapEntryData,
-        TLdapSearchResult,
-    )
+from flext_ldap.typings import (
+    TLdapAttributes,
+    TLdapAttributeValue,
+    TLdapEntryData,
+    TLdapSearchResult,
+)
 
 
 class FlextLDAPTypeGuards:
-    """FlextLDAP Type Guards - Class-based runtime type checking for LDAP operations.
-
-    Provides static methods for type checking LDAP-specific data structures.
-    Eliminates all standalone functions and provides clean class-based API.
-    """
+    """Runtime type checking for LDAP operations."""
 
     @staticmethod
     def is_ldap_dn(value: object) -> TypeGuard[str]:
-        """Type guard for LDAP Distinguished Name.
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value is a valid LDAP DN string
-
-        """
+        """Type guard for LDAP DN."""
         if not isinstance(value, str) or len(value) == 0:
             return False
 
@@ -78,31 +47,20 @@ class FlextLDAPTypeGuards:
     def is_ldap_attribute_value(value: object) -> TypeGuard[TLdapAttributeValue]:
         """Type guard for LDAP attribute values.
 
-        Args:
-            value: Value to check
-
         Returns:
-            True if value is a valid LDAP attribute value type
+            TypeGuard[TLdapAttributeValue]: True if value is valid LDAP attribute value.
 
         """
         if isinstance(value, (str, bytes)):
             return True
         if isinstance(value, list):
-            typed_list: list[object] = cast("list[object]", value)
+            typed_list: FlextTypes.Core.List = cast("FlextTypes.Core.List", value)
             return all(isinstance(item, (str, bytes)) for item in typed_list)
         return False
 
     @staticmethod
     def is_ldap_attributes_dict(value: object) -> TypeGuard[TLdapAttributes]:
-        """Type guard for LDAP attributes dictionary.
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value is a valid LDAP attributes dict
-
-        """
+        """Type guard for LDAP attributes dictionary."""
         if not isinstance(value, dict):
             return False
 
@@ -117,25 +75,17 @@ class FlextLDAPTypeGuards:
 
     @staticmethod
     def is_ldap_search_result(value: object) -> TypeGuard[TLdapSearchResult]:
-        """Type guard for LDAP search results.
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value is a valid LDAP search result list
-
-        """
+        """Type guard for LDAP search results."""
         if not isinstance(value, list):
             return False
 
-        typed_list: list[object] = cast("list[object]", value)
+        typed_list: FlextTypes.Core.List = cast("FlextTypes.Core.List", value)
         for item in typed_list:
             if not isinstance(item, dict):
                 return False
             if "dn" not in item:
                 return False
-            typed_item: dict[str, object] = cast("dict[str, object]", item)
+            typed_item: FlextTypes.Core.Dict = cast("FlextTypes.Core.Dict", item)
             if not FlextLDAPTypeGuards.is_ldap_dn(typed_item["dn"]):
                 return False
 
@@ -143,20 +93,12 @@ class FlextLDAPTypeGuards:
 
     @staticmethod
     def is_ldap_entry_data(value: object) -> TypeGuard[TLdapEntryData]:
-        """Type guard for LDAP entry data.
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value is a valid LDAP entry data dict
-
-        """
+        """Type guard for LDAP entry data."""
         if not isinstance(value, dict):
             return False
 
         # Must have dn
-        typed_dict: dict[str, object] = cast("dict[str, object]", value)
+        typed_dict: FlextTypes.Core.Dict = cast("FlextTypes.Core.Dict", value)
         if "dn" not in typed_dict or not FlextLDAPTypeGuards.is_ldap_dn(
             typed_dict["dn"],
         ):
@@ -177,14 +119,11 @@ class FlextLDAPTypeGuards:
         return True
 
     @staticmethod
-    def is_connection_result(value: object) -> TypeGuard[dict[str, object]]:
+    def is_connection_result(value: object) -> TypeGuard[FlextTypes.Core.Dict]:
         """Type guard for LDAP connection results.
 
-        Args:
-            value: Value to check
-
         Returns:
-            True if value is a valid connection result dict
+            TypeGuard[TLdapEntryData]:: Description of return value.
 
         """
         return (
@@ -194,48 +133,26 @@ class FlextLDAPTypeGuards:
         )
 
     @staticmethod
-    def is_string_list(value: object) -> TypeGuard[list[str]]:
-        """Type guard for list of strings.
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value is a list of strings
-
-        """
+    def is_string_list(value: object) -> TypeGuard[FlextTypes.Core.StringList]:
+        """Type guard for list of strings."""
         if not isinstance(value, list):
             return False
-        typed_list: list[object] = cast("list[object]", value)
+        typed_list: FlextTypes.Core.List = cast("FlextTypes.Core.List", value)
         return all(isinstance(item, str) for item in typed_list)
 
     @staticmethod
     def is_bytes_list(value: object) -> TypeGuard[list[bytes]]:
-        """Type guard for list of bytes.
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value is a list of bytes
-
-        """
+        """Type guard for list of bytes."""
         if not isinstance(value, list):
             return False
-        typed_list: list[object] = cast("list[object]", value)
+        typed_list: FlextTypes.Core.List = cast("FlextTypes.Core.List", value)
         return all(isinstance(item, bytes) for item in typed_list)
 
     @staticmethod
-    def ensure_string_list(value: str | list[str]) -> list[str]:
-        """Ensure value is a list of strings.
-
-        Args:
-            value: String or list of strings
-
-        Returns:
-            List of strings
-
-        """
+    def ensure_string_list(
+        value: str | FlextTypes.Core.StringList,
+    ) -> FlextTypes.Core.StringList:
+        """Ensure value is a list of strings."""
         if isinstance(value, str):
             return [value]
         if FlextLDAPTypeGuards.is_string_list(value):
@@ -247,18 +164,7 @@ class FlextLDAPTypeGuards:
 
     @staticmethod
     def ensure_ldap_dn(value: object) -> str:
-        """Ensure value is a valid LDAP DN.
-
-        Args:
-            value: Value to convert to DN
-
-        Returns:
-            Valid LDAP DN string
-
-        Raises:
-            ValueError: If value cannot be converted to valid DN
-
-        """
+        """Ensure value is a valid LDAP DN."""
         if FlextLDAPTypeGuards.is_ldap_dn(value):
             return value
 
@@ -271,28 +177,12 @@ class FlextLDAPTypeGuards:
 
     @staticmethod
     def has_error_attribute(obj: object) -> TypeGuard[object]:
-        """Type guard for objects with error attribute.
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            True if object has error attribute
-
-        """
+        """Type guard for objects with error attribute."""
         return hasattr(obj, "error")
 
     @staticmethod
     def has_is_success_attribute(obj: object) -> TypeGuard[object]:
-        """Type guard for objects with is_success attribute.
-
-        Args:
-            obj: Object to check
-
-        Returns:
-            True if object has is_success attribute
-
-        """
+        """Type guard for objects with is_success attribute."""
         return hasattr(obj, "is_success")
 
 
