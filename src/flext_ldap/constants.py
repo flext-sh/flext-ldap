@@ -3,23 +3,16 @@
 Single class inheriting from FlextConstants with all LDAP constants
 organized as internal properties and methods for complete backward compatibility.
 
-Examples:
-    Basic usage with hierarchical constants::
-
-        from constants import FlextLDAPConstants
-
-        port = FlextLDAPConstants.Connection.DEFAULT_LDAP_PORT
-        timeout = FlextLDAPConstants.Connection.DEFAULT_TIMEOUT
-        scope = FlextLDAPConstants.Search.SCOPE_SUBTREE
-
-
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 from typing import Final
 
-from flext_core import FlextConstants
+from flext_core import FlextConstants, FlextTypes
+from flext_core.typings import FlextTypes
 
 
 class FlextLDAPConstants(FlextConstants):
@@ -28,29 +21,6 @@ class FlextLDAPConstants(FlextConstants):
     Consolidates ALL LDAP constants into a single class following FLEXT patterns.
     Everything from the previous multiple constant classes is now available as
     internal properties with full backward compatibility.
-
-    This class follows SOLID principles:
-        - Single Responsibility: All LDAP constants in one place
-        - Open/Closed: Extends FlextConstants without modification
-        - Liskov Substitution: Can be used anywhere FlextConstants is expected
-        - Interface Segregation: Organized by domain for specific access
-        - Dependency Inversion: Depends on FlextConstants abstraction
-
-    Examples:
-        Protocol constants::
-
-            port = FlextLDAPConstants.Protocol.DEFAULT_LDAP_PORT
-            version = FlextLDAPConstants.Protocol.LDAP_VERSION_3
-
-        Connection constants::
-
-            timeout = FlextLDAPConstants.Connection.DEFAULT_TIMEOUT
-            pool_size = FlextLDAPConstants.Connection.DEFAULT_POOL_SIZE
-
-        Attribute constants::
-
-            attr = FlextLDAPConstants.Attributes.COMMON_NAME
-            mail = FlextLDAPConstants.Attributes.MAIL
 
     """
 
@@ -192,8 +162,13 @@ class FlextLDAPConstants(FlextConstants):
         ROLE_OCCUPANT: Final[str] = "roleOccupant"
 
         @classmethod
-        def get_person_attributes(cls) -> list[str]:
-            """Get standard person-related attributes."""
+        def get_person_attributes(cls) -> FlextTypes.Core.StringList:
+            """Get standard person-related attributes.
+
+            Returns:
+                FlextTypes.Core.StringList: List of standard person attributes.
+
+            """
             return [
                 cls.OBJECT_CLASS,
                 cls.COMMON_NAME,
@@ -210,8 +185,13 @@ class FlextLDAPConstants(FlextConstants):
             ]
 
         @classmethod
-        def get_group_attributes(cls) -> list[str]:
-            """Get standard group-related attributes."""
+        def get_group_attributes(cls) -> FlextTypes.Core.StringList:
+            """Get standard group-related attributes.
+
+            Returns:
+                FlextTypes.Core.StringList: List of standard group attributes.
+
+            """
             return [
                 cls.OBJECT_CLASS,
                 cls.COMMON_NAME,

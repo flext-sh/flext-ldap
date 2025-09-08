@@ -1,7 +1,11 @@
-"""Test data for LDAP testing."""
+"""Test data for LDAP testing.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 # Sample LDAP entries for testing
-SAMPLE_USER_ENTRY: dict[str, object] = {
+SAMPLE_USER_ENTRY: FlextTypes.Core.Dict = {
     "dn": "cn=testuser,ou=people,dc=flext,dc=local",
     "attributes": {
         "cn": ["testuser"],
@@ -14,7 +18,7 @@ SAMPLE_USER_ENTRY: dict[str, object] = {
     },
 }
 
-SAMPLE_GROUP_ENTRY: dict[str, object] = {
+SAMPLE_GROUP_ENTRY: FlextTypes.Core.Dict = {
     "dn": "cn=testgroup,ou=groups,dc=flext,dc=local",
     "attributes": {
         "cn": ["testgroup"],
@@ -25,7 +29,7 @@ SAMPLE_GROUP_ENTRY: dict[str, object] = {
 }
 
 # Multiple test users for comprehensive testing
-TEST_USERS: list[dict[str, object]] = [
+TEST_USERS: list[FlextTypes.Core.Dict] = [
     {
         "dn": "cn=alice,ou=people,dc=flext,dc=local",
         "attributes": {
@@ -64,7 +68,7 @@ TEST_USERS: list[dict[str, object]] = [
     },
 ]
 
-TEST_GROUPS: list[dict[str, object]] = [
+TEST_GROUPS: list[FlextTypes.Core.Dict] = [
     {
         "dn": "cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=flext,dc=local",
         "attributes": {
@@ -89,7 +93,7 @@ TEST_GROUPS: list[dict[str, object]] = [
 ]
 
 # Test organizational units
-TEST_OUS: list[dict[str, object]] = [
+TEST_OUS: list[FlextTypes.Core.Dict] = [
     {
         "dn": "ou=people,dc=flext,dc=local",
         "attributes": {
@@ -109,7 +113,7 @@ TEST_OUS: list[dict[str, object]] = [
 ]
 
 # Invalid test data for error handling tests
-INVALID_ENTRIES: list[dict[str, object]] = [
+INVALID_ENTRIES: list[FlextTypes.Core.Dict] = [
     {
         "dn": "",  # Empty DN
         "attributes": {"cn": ["invalid"]},
@@ -125,7 +129,7 @@ INVALID_ENTRIES: list[dict[str, object]] = [
 ]
 
 # Search filter test data
-TEST_FILTERS: dict[str, str] = {
+TEST_FILTERS: FlextTypes.Core.Headers = {
     "all_users": "(objectClass=person)",
     "all_groups": "(objectClass=groupOfNames)",
     "specific_user": "(uid=testuser)",
@@ -136,7 +140,7 @@ TEST_FILTERS: dict[str, str] = {
 }
 
 # Expected search results
-EXPECTED_SEARCH_RESULTS: dict[str, list[str]] = {
+EXPECTED_SEARCH_RESULTS: dict[str, FlextTypes.Core.StringList] = {
     "all_users": [
         "cn=alice,ou=people,dc=flext,dc=local",
         "cn=bob,ou=people,dc=flext,dc=local",

@@ -3,43 +3,19 @@
 Single class with all LDAP field definitions, processors, and validators
 organized as internal classes for complete backward compatibility.
 
-Examples:
-    Field types and enums::
-
-        from fields import FlextLDAPFields
-
-        # Data types
-        string_type = FlextLDAPFields.DataTypes.STRING
-        scope_value = FlextLDAPFields.Scopes.BASE
-
-    Processing and validation::
-
-        # Attribute processing
-        normalized = FlextLDAPFields.Processors.normalize_attributes(attrs)
-
-        # Domain validation
-        result = FlextLDAPFields.Validators.validate_common_name(cn, attrs, "User")
-
-    Legacy compatibility::
-
-        # All previous classes still work as direct imports
-        from fields import FlextLDAPDataType, LdapAttributeProcessor
-
-        data_type = FlextLDAPDataType.STRING
-
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 from enum import Enum, StrEnum
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextTypes
 
 from flext_ldap.constants import FlextLDAPConstants
-
-if TYPE_CHECKING:
-    from flext_ldap.typings import LdapAttributeDict
+from flext_ldap.typings import LdapAttributeDict
 
 logger = FlextLogger(__name__)
 
@@ -133,15 +109,25 @@ class FlextLDAPFields:
         """Utility class for processing LDAP attributes."""
 
         @staticmethod
-        def coerce_attribute_value(value: object) -> str | list[str]:
-            """Normalize attribute value to str or list[str]."""
+        def coerce_attribute_value(value: object) -> str | FlextTypes.Core.StringList:
+            """Normalize attribute value to str or FlextTypes.Core.StringList.
+
+            Returns:
+                str | FlextTypes.Core.StringList: Normalized attribute value.
+
+            """
             if isinstance(value, list):
-                return [str(item) for item in cast("list[object]", value)]
+                return [str(item) for item in cast("FlextTypes.Core.List", value)]
             return str(value)
 
         @staticmethod
-        def normalize_attributes(attrs: dict[str, object]) -> LdapAttributeDict:
-            """Normalize mapping: lists -> list[str], scalars -> str."""
+        def normalize_attributes(attrs: FlextTypes.Core.Dict) -> LdapAttributeDict:
+            """Normalize mapping: lists -> FlextTypes.Core.StringList, scalars -> str.
+
+            Returns:
+                LdapAttributeDict: Normalized attributes dictionary.
+
+            """
             if not isinstance(attrs, dict) or not attrs:
                 return {}
 
@@ -161,10 +147,15 @@ class FlextLDAPFields:
         @staticmethod
         def validate_common_name(
             cn_field: str | None,
-            attributes: dict[str, object],
+            attributes: FlextTypes.Core.Dict,
             entity_type: str,
         ) -> FlextResult[None]:
-            """Validate common name requirement for users and groups."""
+            """Validate common name requirement for users and groups.
+
+            Returns:
+                FlextResult[None]: Validation result.
+
+            """
             if not cn_field and not FlextLDAPFields.Validators._get_attribute_value(
                 attributes,
                 "cn",
@@ -174,11 +165,16 @@ class FlextLDAPFields:
 
         @staticmethod
         def validate_required_object_classes(
-            object_classes: list[str],
-            required_classes: list[str],
+            object_classes: FlextTypes.Core.StringList,
+            required_classes: FlextTypes.Core.StringList,
             entity_type: str,
         ) -> FlextResult[None]:
-            """Validate required object classes for entities."""
+            """Validate required object classes for entities.
+
+            Returns:
+                FlextResult[None]: Validation result.
+
+            """
             for req_class in required_classes:
                 if req_class not in object_classes:
                     return FlextResult.fail(
@@ -188,15 +184,20 @@ class FlextLDAPFields:
 
         @staticmethod
         def _get_attribute_value(
-            attributes: dict[str, object],
+            attributes: FlextTypes.Core.Dict,
             name: str,
         ) -> str | None:
-            """Helper to get single attribute value."""
+            """Helper to get single attribute value.
+
+            Returns:
+                str | None: Attribute value as string or None if not found.
+
+            """
             raw = attributes.get(name)
             if raw is None:
                 return None
             if isinstance(raw, list):
-                typed_list: list[object] = cast("list[object]", raw)
+                typed_list: FlextTypes.Core.List = cast("FlextTypes.Core.List", raw)
                 return str(typed_list[0]) if typed_list else None
             return str(raw)
 

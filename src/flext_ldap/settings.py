@@ -2,29 +2,25 @@
 
 Unified settings class consolidating ALL LDAP configuration using Pydantic models
 and flext-core patterns. Eliminates separate config classes.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
+
+from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, final, override
+from typing import final, override
 
-from flext_core import FlextConfig, FlextLogger, FlextResult
+import yaml
+from flext_core import FlextConfig, FlextLogger, FlextResult, FlextTypes
 from pydantic import ConfigDict, Field, SecretStr
 
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
 from flext_ldap.fields import FlextLDAPFields
 
-if TYPE_CHECKING:
-    import yaml as yaml_module_type
-else:
-    yaml_module_type = None
-
-try:
-    import yaml
-
-    yaml_module: object | None = yaml
-except ImportError:
-    yaml_module = None
+yaml_module: object | None = yaml
 
 logger = FlextLogger(__name__)
 
@@ -150,7 +146,12 @@ class FlextLDAPSettings(FlextConfig):
         )
 
     def _validate_default_connection(self) -> FlextResult[None]:
-        """Validate default connection settings."""
+        """Validate default connection settings.
+
+        Returns:
+            FlextResult[None]: Validation result.
+
+        """
         if not self.default_connection:
             return FlextResult.ok(None)
 
@@ -199,7 +200,7 @@ class FlextLDAPSettings(FlextConfig):
         # Return minimal default configuration
         return FlextLDAPConnectionConfig()
 
-    def get_effective_auth_config(self) -> dict[str, object] | None:
+    def get_effective_auth_config(self) -> FlextTypes.Core.Dict | None:
         """Get effective authentication configuration as dictionary."""
         if self.bind_dn and self.bind_password:
             return {
@@ -227,11 +228,14 @@ class FlextLDAPSettings(FlextConfig):
         return self.validate_business_rules()
 
     @classmethod
-    def from_env(cls) -> "FlextLDAPSettings":
+    def from_env(cls) -> FlextLDAPSettings:
         """Create FlextLDAPSettings from environment variables.
 
         Raises:
             ValueError: If required environment variables are missing.
+
+        Returns:
+            "FlextLDAPSettings":: Description of return value.
 
         """
         # Error messages as constants
@@ -279,7 +283,7 @@ class FlextLDAPSettings(FlextConfig):
         )
 
         # Create settings with unified fields
-        config_data: dict[str, object] = {
+        config_data: FlextTypes.Core.Dict = {
             "default_connection": connection_config,
             "bind_dn": bind_dn,
             "bind_password": bind_password,
@@ -288,7 +292,7 @@ class FlextLDAPSettings(FlextConfig):
         return cls.model_validate(config_data)
 
     @classmethod
-    def from_file(cls, file_path: str) -> FlextResult["FlextLDAPSettings"]:
+    def from_file(cls, file_path: str) -> FlextResult[FlextLDAPSettings]:
         """Create FlextLDAPSettings from YAML/JSON file.
 
         Args:
@@ -297,6 +301,9 @@ class FlextLDAPSettings(FlextConfig):
         Raises:
             FileNotFoundError: If file doesn't exist
             ValueError: If file format is invalid
+
+        Returns:
+            FlextResult["FlextLDAPSettings"]:: Description of return value.
 
         """
         # Error messages as constants
@@ -357,7 +364,7 @@ class FlextLDAPSettings(FlextConfig):
             )
 
     @classmethod
-    def create_development(cls) -> "FlextLDAPSettings":
+    def create_development(cls) -> FlextLDAPSettings:
         """Create development configuration."""
         connection_config = FlextLDAPConnectionConfig(
             server="ldap://localhost",
@@ -365,7 +372,7 @@ class FlextLDAPSettings(FlextConfig):
         )
 
         # Use direct field assignments
-        config_data: dict[str, object] = {
+        config_data: FlextTypes.Core.Dict = {
             "default_connection": connection_config,
             "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=dev,dc=local",
             "bind_password": SecretStr("REDACTED_LDAP_BIND_PASSWORD123"),
@@ -380,7 +387,7 @@ class FlextLDAPSettings(FlextConfig):
         return cls.model_validate(config_data)
 
     @classmethod
-    def create_test(cls) -> "FlextLDAPSettings":
+    def create_test(cls) -> FlextLDAPSettings:
         """Create test configuration."""
         connection_config = FlextLDAPConnectionConfig(
             server="ldap://localhost",
@@ -388,7 +395,7 @@ class FlextLDAPSettings(FlextConfig):
         )
 
         # Use direct field assignments
-        config_data: dict[str, object] = {
+        config_data: FlextTypes.Core.Dict = {
             "default_connection": connection_config,
             "bind_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=local",
             "bind_password": SecretStr("test123"),
@@ -403,7 +410,7 @@ class FlextLDAPSettings(FlextConfig):
         return cls.model_validate(config_data)
 
     @classmethod
-    def create_production(cls) -> "FlextLDAPSettings":
+    def create_production(cls) -> FlextLDAPSettings:
         """Create production configuration."""
         connection_config = FlextLDAPConnectionConfig(
             server="ldaps://ldap.company.com",
@@ -413,7 +420,7 @@ class FlextLDAPSettings(FlextConfig):
         )
 
         # Use direct field assignments
-        config_data: dict[str, object] = {
+        config_data: FlextTypes.Core.Dict = {
             "default_connection": connection_config,
             "bind_dn": "cn=service,ou=accounts,dc=company,dc=com",
             "bind_password": SecretStr("${LDAP_BIND_PASSWORD}"),

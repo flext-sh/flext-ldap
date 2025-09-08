@@ -2,6 +2,10 @@
 
 Follows flext_tests patterns for real LDAP functionality testing,
 Docker containers, and no mocks. Tests both success and failure paths.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -9,7 +13,7 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 
 from flext_ldap import FlextLDAPEntities, get_flext_ldap_api
 from flext_ldap.api import FlextLDAPApi
@@ -67,10 +71,14 @@ class TestFlextLDAPApiComprehensive:
             "objectClass": ["person", "top"],
         }
 
-        result = api._get_entry_attribute(cast("dict[str, object]", entry_dict), "cn", "Unknown")
+        result = api._get_entry_attribute(
+            cast("FlextTypes.Core.Dict", entry_dict), "cn", "Unknown"
+        )
         assert result == "Test User"
 
-        result = api._get_entry_attribute(cast("dict[str, object]", entry_dict), "sn", "Unknown")
+        result = api._get_entry_attribute(
+            cast("FlextTypes.Core.Dict", entry_dict), "sn", "Unknown"
+        )
         assert result == "Unknown"
 
         # Test with empty dict
@@ -83,7 +91,9 @@ class TestFlextLDAPApiComprehensive:
             "uid": ["testuser"],
         }
 
-        result = api._get_entry_attribute(cast("dict[str, object]", entry_single), "cn", "Unknown")
+        result = api._get_entry_attribute(
+            cast("FlextTypes.Core.Dict", entry_single), "cn", "Unknown"
+        )
         assert result == "Single User"
 
         # Test with empty list
@@ -92,7 +102,9 @@ class TestFlextLDAPApiComprehensive:
             "uid": ["testuser"],
         }
 
-        result = api._get_entry_attribute(cast("dict[str, object]", entry_empty), "cn", "Default")
+        result = api._get_entry_attribute(
+            cast("FlextTypes.Core.Dict", entry_empty), "cn", "Default"
+        )
         assert result == "Default"
 
     async def test_connect_without_real_server(self) -> None:
@@ -104,7 +116,6 @@ class TestFlextLDAPApiComprehensive:
         )
 
         # Use basic assertions for result validation
-        from flext_core import FlextResult
         assert isinstance(result, FlextResult)
         if result.is_success:
             # If it succeeds, we have a real LDAP server

@@ -16,7 +16,7 @@ from typing import Final, cast
 
 from flext_core import FlextConstants, FlextLogger, FlextResult
 
-from flext_ldap import (
+from ..flext_ldap import (
     FlextLDAPApi,
     FlextLDAPCreateUserRequest,
 )
@@ -93,7 +93,7 @@ async def search_users(api: FlextLDAPApi) -> None:
 
     if typed_result.is_success:
         users = typed_result.value or []
-        typed_users: list[object] = cast("list[object]", users)
+        typed_users: FlextTypes.Core.List = cast("FlextTypes.Core.List", users)
         logger.info(f"✅ Found {len(typed_users)} users:")
 
         for user in typed_users:

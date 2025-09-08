@@ -1,128 +1,39 @@
-"""LDAP Exceptions - Single FlextLDAPExceptions class following FLEXT patterns.
+"""LDAP exceptions module.
 
-Single class with all LDAP exception definitions, factory methods, and error handling
-organized as internal classes for complete backward compatibility.
-
-Examples:
-    Basic exceptions:
-
-        from exceptions import FlextLDAPExceptions
-
-        # Create connection error
-        conn_error = FlextLDAPExceptions.LdapConnectionError(
-            "Failed to connect",
-            server_uri="ldap://localhost:389"
-        )
-
-        # Create validation error
-        val_error = FlextLDAPExceptions.ValidationError(
-            "Invalid DN format",
-            field_name="dn",
-            field_value="invalid-dn"
-        )
-
-    Factory methods:
-
-        # Using factory for consistent error creation
-        error = FlextLDAPExceptions.Factory.connection_failed(
-            "ldap://localhost:389",
-            "Connection timeout",
-            timeout=30
-        )
-
-    Legacy compatibility:
-
-        # All previous classes still work as direct imports
-        from exceptions import FlextLDAPConnectionError, FlextLDAPValidationError
-        conn_error = FlextLDAPConnectionError("Failed to connect")
-
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 from typing import ClassVar, override
 
-from flext_core import FlextLogger, FlextModels
+from flext_core import FlextConstants, FlextLogger, FlextModels, FlextResult, FlextTypes
 from pydantic import ConfigDict, Field
 
 from flext_ldap.constants import FlextLDAPConstants
 
 logger = FlextLogger(__name__)
 
-# =============================================================================
+
+# ===================================================================
 # SINGLE FLEXT LDAP EXCEPTIONS CLASS - Consolidated exception functionality
 # =============================================================================
 
 
 class FlextLDAPExceptions:
-    """Single FlextLDAPExceptions class with all LDAP exception functionality.
-
-    Consolidates ALL LDAP exception classes, factory methods, and error handling
-    into a single class following FLEXT patterns. Everything from connection errors
-    to validation errors is available as internal classes with full backward compatibility.
-
-    This class follows SOLID principles:
-        - Single Responsibility: All LDAP exception handling consolidated
-        - Open/Closed: Extensible without modification
-        - Liskov Substitution: Consistent interface across all exception types
-        - Interface Segregation: Organized by exception domain for specific access
-        - Dependency Inversion: Depends on FlextExceptions abstraction
-
-    Examples:
-        Connection and authentication errors:
-
-            conn_error = FlextLDAPExceptions.LdapConnectionError(
-                "Failed to connect",
-                server_uri="ldap://localhost:389"
-            )
-            auth_error = FlextLDAPExceptions.AuthenticationError(
-                "Invalid credentials",
-                bind_dn="cn=user,dc=example,dc=com"
-            )
-
-        Operation and search errors:
-
-            search_error = FlextLDAPExceptions.SearchError(
-                "Search failed",
-                base_dn="dc=example,dc=com",
-                search_filter="(uid=john)"
-            )
-            op_error = FlextLDAPExceptions.OperationError(
-                "Modify failed",
-                target_dn="cn=user,dc=example,dc=com"
-            )
-
-        Domain-specific errors:
-
-            user_error = FlextLDAPExceptions.UserError(
-                "User validation failed",
-                user_dn="cn=john,dc=example,dc=com",
-                uid="john"
-            )
-            group_error = FlextLDAPExceptions.GroupError(
-                "Group membership error",
-                group_dn="cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com"
-            )
-
-        Using factory methods:
-
-            error = FlextLDAPExceptions.Factory.connection_failed(
-                "ldap://localhost:389",
-                "Connection timeout"
-            )
-
-    """
+    """LDAP exception classes and factory methods."""
 
     # =========================================================================
     # BASE ERROR CLASS - Foundation for all LDAP exceptions
     # =========================================================================
 
     class ErrorConfig(FlextModels.Config):
-        """Configuration object for LDAP error context - eliminates parameter explosion."""
+        """LDAP error configuration."""
 
         message: str
         ldap_result_code: str | None = None
-        ldap_context: dict[str, object] | None = None
+        ldap_context: FlextTypes.Core.Dict | None = None
         operation: str | None = None
         error_code: str | None = None
 
@@ -131,7 +42,7 @@ class FlextLDAPExceptions:
     # =========================================================================
 
     class ConnectionParams(FlextModels.Config):
-        """Parameter Object for connection operations - reduces 6+ parameters to 1."""
+        """Connection operation parameters."""
 
         model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -142,7 +53,7 @@ class FlextLDAPExceptions:
         retry_count: int | None = Field(default=None, ge=0, le=10)
 
     class UserOperationParams(FlextModels.Config):
-        """Parameter Object for user operations - reduces 6+ parameters to 1."""
+        """User operation parameters."""
 
         model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -152,7 +63,7 @@ class FlextLDAPExceptions:
         operation: str | None = None
 
     class ValidationParams(FlextModels.Config):
-        """Parameter Object for validation operations - reduces 6+ parameters to 1."""
+        """Validation operation parameters."""
 
         model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -162,15 +73,10 @@ class FlextLDAPExceptions:
         validation_rule: str | None = None
 
     class Error(Exception):
-        """Base exception for FLEXT-LDAP with optional LDAP context and codes."""
+        """Base LDAP exception."""
 
         def __init__(self, config: FlextLDAPExceptions.ErrorConfig) -> None:
-            """Initialize exception using configuration object - eliminates parameter explosion.
-
-            Args:
-                config: ErrorConfig object containing all context details
-
-            """
+            """Initialize exception with configuration."""
             super().__init__(config.message)
             self.ldap_result_code = config.ldap_result_code
             self.ldap_context = config.ldap_context or {}
@@ -186,7 +92,7 @@ class FlextLDAPExceptions:
             )
 
         def __str__(self) -> str:
-            """Format exception string including LDAP context metadata."""
+            """Format exception message with context."""
             parts = [super().__str__()]
 
             if self.operation:
@@ -216,20 +122,10 @@ class FlextLDAPExceptions:
             return " | ".join(parts)
 
     class _BaseSpecificError(Error):
-        """Base class for specific LDAP errors - Template Method Pattern.
-
-        Eliminates 30-line duplications across UserError, GroupError, LdapTypeError
-        by providing a common context building pattern through Template Method Pattern.
-        """
+        """Base class for specific LDAP errors."""
 
         def __init__(self, message: str, **kwargs: str | None) -> None:
-            """Initialize specific error using Template Method Pattern.
-
-            Args:
-                message: Error message
-                **kwargs: Context parameters specific to error type
-
-            """
+            """Initialize specific error with context."""
             context = self._build_context(kwargs)
             config = FlextLDAPExceptions.ErrorConfig(
                 message=message,
@@ -239,17 +135,9 @@ class FlextLDAPExceptions:
             )
             super().__init__(config)
 
-        def _build_context(self, kwargs: dict[str, str | None]) -> dict[str, object]:
-            """Template method to build context from parameters.
-
-            Args:
-                kwargs: Parameters to include in context
-
-            Returns:
-                dict[str, object]: Context dictionary with non-None values
-
-            """
-            context: dict[str, object] = {}
+        def _build_context(self, kwargs: dict[str, str | None]) -> FlextTypes.Core.Dict:
+            """Build context from parameters."""
+            context: FlextTypes.Core.Dict = {}
             field_mapping = self._get_field_mapping()
 
             for param_name, param_value in kwargs.items():
@@ -263,57 +151,27 @@ class FlextLDAPExceptions:
 
             return context
 
-        def _get_field_mapping(self) -> dict[str, str]:
-            """Get mapping from parameter names to context keys.
-
-            Subclasses can override to customize parameter-to-context mapping.
-
-            Returns:
-                dict[str, str]: Mapping from parameter to context key
-
-            """
+        def _get_field_mapping(self) -> FlextTypes.Core.Headers:
+            """Get parameter-to-context mapping."""
             return {}
 
         def _is_sensitive_field(self, field_name: str, _field_value: str) -> bool:
-            """Check if field contains sensitive data that should be redacted.
-
-            Args:
-                field_name: Name of the field
-                field_value: Value of the field
-
-            Returns:
-                bool: True if field should be redacted
-
-            """
+            """Check if field should be redacted."""
             return "password" in field_name.lower()
 
         def _get_operation_name(self) -> str:
-            """Get operation name for this error type.
-
-            Must be implemented by subclasses.
-
-            Returns:
-                str: Operation name
-
-            """
+            """Get operation name."""
             msg = "Subclasses must implement _get_operation_name"
             raise NotImplementedError(msg)
 
         def _get_error_code(self) -> str:
-            """Get error code for this error type.
-
-            Must be implemented by subclasses.
-
-            Returns:
-                str: Error code
-
-            """
+            """Get error code."""
             msg = "Subclasses must implement _get_error_code"
             raise NotImplementedError(msg)
 
         @override
         def __str__(self) -> str:
-            """Format exception string including LDAP context metadata."""
+            """Format exception message with context."""
             parts = [super().__str__()]
 
             if self.operation:
@@ -347,11 +205,7 @@ class FlextLDAPExceptions:
     # =========================================================================
 
     class LdapConnectionError(Error):
-        """LDAP connection related errors.
-
-        Raised when connection establishment, maintenance, or termination fails.
-        Includes server connectivity issues, network timeouts, and protocol errors.
-        """
+        """LDAP connection errors."""
 
         def __init__(
             self,
@@ -362,8 +216,8 @@ class FlextLDAPExceptions:
             timeout: int | None = None,
             retry_count: int | None = None,
         ) -> None:
-            """Initialize connection error with network context."""
-            context: dict[str, object] = {}
+            """Initialize connection error."""
+            context: FlextTypes.Core.Dict = {}
             if server_uri:
                 context[FlextLDAPConstants.Operations.SERVER_URI_KEY] = server_uri
             if bind_dn:
@@ -384,11 +238,7 @@ class FlextLDAPExceptions:
             super().__init__(error_config)
 
     class AuthenticationError(Error):
-        """LDAP authentication errors.
-
-        Raised when bind operations fail due to invalid credentials,
-        insufficient privileges, or authentication method issues.
-        """
+        """LDAP authentication errors."""
 
         def __init__(
             self,
@@ -399,7 +249,7 @@ class FlextLDAPExceptions:
             ldap_result_code: str | None = None,
         ) -> None:
             """Initialize authentication error."""
-            context: dict[str, object] = {}
+            context: FlextTypes.Core.Dict = {}
             if bind_dn:
                 context["bind_dn"] = bind_dn
             if auth_method:
@@ -419,11 +269,7 @@ class FlextLDAPExceptions:
     # =========================================================================
 
     class SearchError(_BaseSpecificError):
-        """LDAP search operation errors.
-
-        Raised when search operations fail due to invalid filters,
-        base DN issues, permission problems, or result processing errors.
-        """
+        """LDAP search operation errors."""
 
         def __init__(
             self,
@@ -434,7 +280,7 @@ class FlextLDAPExceptions:
             scope: str | None = None,
             ldap_result_code: str | None = None,
         ) -> None:
-            """Initialize search error with query context."""
+            """Initialize search error."""
             super().__init__(
                 message,
                 base_dn=base_dn,
@@ -444,8 +290,8 @@ class FlextLDAPExceptions:
             )
 
         @override
-        def _get_field_mapping(self) -> dict[str, str]:
-            """Map search_filter parameter to 'filter' context key."""
+        def _get_field_mapping(self) -> FlextTypes.Core.Headers:
+            """Get field mapping for search errors."""
             return {"search_filter": "filter"}
 
         @override
@@ -459,11 +305,7 @@ class FlextLDAPExceptions:
             return "LDAP_SEARCH_ERROR"
 
     class OperationError(Error):
-        """LDAP modify operations errors (add, modify, delete).
-
-        Raised when directory modification operations fail due to
-        schema violations, permission issues, or data constraints.
-        """
+        """LDAP modify operation errors."""
 
         def __init__(
             self,
@@ -474,7 +316,7 @@ class FlextLDAPExceptions:
             ldap_result_code: str | None = None,
         ) -> None:
             """Initialize operation error."""
-            context: dict[str, object] = {}
+            context: FlextTypes.Core.Dict = {}
             if target_dn:
                 context["target_dn"] = target_dn
             if operation_type:
@@ -494,11 +336,7 @@ class FlextLDAPExceptions:
     # =========================================================================
 
     class UserError(_BaseSpecificError):
-        """LDAP user-specific errors.
-
-        Raised when user operations fail due to user-specific business rules,
-        validation errors, or user lifecycle management issues.
-        """
+        """LDAP user-specific errors."""
 
         def __init__(
             self,
@@ -519,26 +357,22 @@ class FlextLDAPExceptions:
             )
 
         @override
-        def _get_field_mapping(self) -> dict[str, str]:
-            """Map validation_field parameter to 'field' context key."""
+        def _get_field_mapping(self) -> FlextTypes.Core.Headers:
+            """Get field mapping for user errors."""
             return {"validation_field": "field"}
 
         @override
         def _get_operation_name(self) -> str:
-            """Return user management operation name."""
+            """Get operation name."""
             return "user_management"
 
         @override
         def _get_error_code(self) -> str:
-            """Return user error code."""
+            """Get error code."""
             return "LDAP_USER_ERROR"
 
     class GroupError(_BaseSpecificError):
-        """LDAP group-specific errors.
-
-        Raised when group operations fail due to membership issues,
-        group policy violations, or group lifecycle management problems.
-        """
+        """LDAP group-specific errors."""
 
         def __init__(
             self,
@@ -558,12 +392,12 @@ class FlextLDAPExceptions:
 
         @override
         def _get_operation_name(self) -> str:
-            """Return group management operation name."""
+            """Get operation name."""
             return "group_management"
 
         @override
         def _get_error_code(self) -> str:
-            """Return group error code."""
+            """Get error code."""
             return "LDAP_GROUP_ERROR"
 
     # =========================================================================
@@ -571,11 +405,7 @@ class FlextLDAPExceptions:
     # =========================================================================
 
     class ValidationError(_BaseSpecificError):
-        """LDAP data validation errors.
-
-        Raised when data validation fails for LDAP attributes, DN formats,
-        filter syntax, or business rule validation.
-        """
+        """LDAP data validation errors."""
 
         def __init__(
             self,
@@ -594,8 +424,8 @@ class FlextLDAPExceptions:
             )
 
         @override
-        def _get_field_mapping(self) -> dict[str, str]:
-            """Map parameter names to context keys for validation errors."""
+        def _get_field_mapping(self) -> FlextTypes.Core.Headers:
+            """Get field mapping for validation errors."""
             return {
                 "field_name": "field",
                 "field_value": "value",
@@ -604,20 +434,16 @@ class FlextLDAPExceptions:
 
         @override
         def _get_operation_name(self) -> str:
-            """Return validation operation name."""
+            """Get operation name."""
             return "validation"
 
         @override
         def _get_error_code(self) -> str:
-            """Return validation error code."""
+            """Get error code."""
             return "LDAP_VALIDATION_ERROR"
 
     class ConfigurationError(_BaseSpecificError):
-        """LDAP configuration and settings errors.
-
-        Raised when configuration is invalid, missing required settings,
-        or contains conflicting parameters.
-        """
+        """LDAP configuration errors."""
 
         def __init__(
             self,
@@ -634,26 +460,22 @@ class FlextLDAPExceptions:
             )
 
         @override
-        def _get_field_mapping(self) -> dict[str, str]:
-            """Map parameter names to context keys for configuration errors."""
+        def _get_field_mapping(self) -> FlextTypes.Core.Headers:
+            """Get field mapping for configuration errors."""
             return {"config_section": "section", "config_key": "key"}
 
         @override
         def _get_operation_name(self) -> str:
-            """Return configuration operation name."""
+            """Get operation name."""
             return "configuration"
 
         @override
         def _get_error_code(self) -> str:
-            """Return configuration error code."""
+            """Get error code."""
             return "LDAP_CONFIG_ERROR"
 
     class LdapTypeError(_BaseSpecificError):
-        """LDAP type validation and conversion errors.
-
-        Raised when type conversion fails, attribute types are incompatible,
-        or schema type constraints are violated.
-        """
+        """LDAP type validation errors."""
 
         def __init__(
             self,
@@ -672,8 +494,8 @@ class FlextLDAPExceptions:
             )
 
         @override
-        def _get_field_mapping(self) -> dict[str, str]:
-            """Map parameter names to context keys for type errors."""
+        def _get_field_mapping(self) -> FlextTypes.Core.Headers:
+            """Get field mapping for type errors."""
             return {
                 "expected_type": "expected",
                 "actual_type": "actual",
@@ -682,7 +504,7 @@ class FlextLDAPExceptions:
 
         @override
         def _get_operation_name(self) -> str:
-            """Return type conversion operation name."""
+            """Get operation name."""
             return "type_conversion"
 
         @override
@@ -691,18 +513,96 @@ class FlextLDAPExceptions:
             return "LDAP_TYPE_ERROR"
 
     # =========================================================================
+    # CONFIGURATION FACADE — Settings → BaseSystemConfig bridge (dict border)
+    # =========================================================================
+
+    @classmethod
+    def configure_exceptions_system(
+        cls,
+        config: FlextTypes.Core.Dict,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
+        """Configure LDAP exceptions system using flext-core patterns.
+
+        - Validates core fields (environment/log_level/validation_level) via
+          flext-core SystemConfigs (model-driven) without changing output shape.
+        - Preserves dict compatibility at the border.
+        - Adds sane defaults for exception handling behavior.
+        """
+        try:
+            # Ensure environment default and validate against flext-core enums
+            validated: FlextTypes.Core.Dict = dict(config)
+
+            if "environment" not in validated:
+                validated["environment"] = (
+                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
+                )
+
+            # Core validation via flext-core SystemConfigs (bridge compatibility)
+            core_validation = {
+                "environment": validated.get(
+                    "environment",
+                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                ),
+                "log_level": validated.get(
+                    "log_level",
+                    FlextConstants.Config.LogLevel.WARNING.value,
+                ),
+                "validation_level": validated.get(
+                    "validation_level",
+                    FlextConstants.Config.ValidationLevel.NORMAL.value,
+                ),
+            }
+            _ = FlextModels.SystemConfigs.BaseSystemConfig.model_validate(
+                core_validation
+            )
+
+            # Derived defaults aligned with flext-core exceptions
+            env_value = str(validated.get("environment"))
+            if "log_level" not in validated:
+                validated["log_level"] = (
+                    FlextConstants.Config.LogLevel.ERROR.value
+                    if env_value
+                    == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
+                    else FlextConstants.Config.LogLevel.WARNING.value
+                )
+            if "validation_level" not in validated:
+                validated["validation_level"] = (
+                    FlextConstants.Config.ValidationLevel.STRICT.value
+                    if env_value
+                    == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
+                    else FlextConstants.Config.ValidationLevel.NORMAL.value
+                )
+
+            # LDAP exceptions specific toggles (kept simple and optional)
+            validated.setdefault("enable_metrics", True)
+            validated.setdefault(
+                "enable_stack_traces",
+                env_value != FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
+            )
+            max_details = validated.get("max_error_details", 1000)
+            try:
+                validated["max_error_details"] = int(max_details)
+            except Exception:
+                validated["max_error_details"] = 1000
+            validated.setdefault("error_correlation_enabled", True)
+            validated.setdefault("enable_ldap_context_enrichment", True)
+            validated.setdefault("enable_ldap_code_hints", True)
+
+            return FlextResult[FlextTypes.Core.Dict].ok(validated)
+        except Exception as e:
+            return FlextResult[FlextTypes.Core.Dict].fail(
+                f"Failed to configure LDAP exceptions system: {e}",
+            )
+
+    # =========================================================================
     # EXCEPTION FACTORY - Centralized error creation
     # =========================================================================
 
     class Factory:
-        """Factory for creating consistent LDAP exceptions with proper context.
-
-        Provides centralized exception creation to ensure consistent error formatting,
-        context preservation, and proper error categorization across the library.
-        """
+        """Factory for creating LDAP exceptions."""
 
         # Common LDAP result codes for quick reference
-        LDAP_RESULT_CODES: ClassVar[dict[str, str]] = {
+        LDAP_RESULT_CODES: ClassVar[FlextTypes.Core.Headers] = {
             "0": "Success",
             "1": "Operations Error",
             "32": "No Such Object",
@@ -717,7 +617,7 @@ class FlextLDAPExceptions:
             cls,
             params: FlextLDAPExceptions.ConnectionParams,
         ) -> FlextLDAPExceptions.LdapConnectionError:
-            """Create connection failure using Parameter Object - reduces 6 params to 1."""
+            """Create connection failure exception."""
             message = f"LDAP connection failed to {params.server_uri}: {params.error}"
             return FlextLDAPExceptions.LdapConnectionError(
                 message,

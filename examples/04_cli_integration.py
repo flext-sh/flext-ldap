@@ -7,17 +7,17 @@ comandos CLI no contexto do flext-ldap.
 import asyncio
 import contextlib
 
-# No need for object imports - using proper types
+from flext_core import FlextTypes
 from flext_cli import (
-    FlextCliConfig,  # Use class instead of function
+    FlextCliConfig,
     FlextCliContext,
     FlextCliExecutionContext,
     FlextCliOutputFormat,
-    flext_cli_format,  # Updated function name
+    flext_cli_format,
 )
 from flext_core import FlextResult
 
-from flext_ldap import FlextLDAPApi, FlextLDAPCreateUserRequest
+from ..flext_ldap import FlextLDAPApi, FlextLDAPCreateUserRequest
 
 
 class FlextLDAPCLI:
@@ -32,7 +32,7 @@ class FlextLDAPCLI:
     async def list_users(
         self,
         base_dn: str = "ou=users,dc=example,dc=com",
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Listar usuários LDAP usando flext-cli."""
         try:
             # Simulação de conexão LDAP (sem servidor real)
@@ -60,7 +60,7 @@ class FlextLDAPCLI:
                 },
             ]
 
-            result: dict[str, object] = {
+            result: FlextTypes.Core.Dict = {
                 "command": "list_users",
                 "base_dn": base_dn,
                 "users": users_data,
@@ -68,17 +68,19 @@ class FlextLDAPCLI:
                 "execution_context": execution_context.get_execution_info(),
             }
 
-            return FlextResult[dict[str, object]].ok(result)
+            return FlextResult[FlextTypes.Core.Dict].ok(result)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Erro ao listar usuários: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(
+                f"Erro ao listar usuários: {e}"
+            )
 
     async def create_user(
         self,
         username: str,
         full_name: str,
         email: str,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Criar usuário LDAP usando flext-cli."""
         try:
             execution_context = FlextCliExecutionContext(
@@ -106,7 +108,7 @@ class FlextLDAPCLI:
                 # Note: phone field removed - not available in CreateUserRequest
             )
 
-            result: dict[str, object] = {
+            result: FlextTypes.Core.Dict = {
                 "command": "create_user",
                 "user_dn": user_dn,
                 "username": username,
@@ -122,14 +124,14 @@ class FlextLDAPCLI:
                 "execution_context": execution_context.get_execution_info(),
             }
 
-            return FlextResult[dict[str, object]].ok(result)
+            return FlextResult[FlextTypes.Core.Dict].ok(result)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Erro ao criar usuário: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"Erro ao criar usuário: {e}")
 
     def format_and_display(
         self,
-        data: dict[str, object] | list[object] | object,
+        data: FlextTypes.Core.Dict | FlextTypes.Core.List | object,
         format_type: FlextCliOutputFormat = FlextCliOutputFormat.JSON,
     ) -> None:
         """Formatar e exibir dados usando flext-cli."""
@@ -148,7 +150,7 @@ async def main() -> None:
     result = await cli.list_users(base_dn="ou=users,dc=example,dc=com")
     # Use explicit success check with proper typing
     if result.is_success:
-        empty_data: dict[str, object] = {}
+        empty_data: FlextTypes.Core.Dict = {}
         data = result.unwrap_or(empty_data)
         if data:
             cli.format_and_display(data, FlextCliOutputFormat.JSON)
@@ -160,14 +162,14 @@ async def main() -> None:
     )
     # Use explicit success check with proper typing
     if result.is_success:
-        empty_create_data: dict[str, object] = {}
+        empty_create_data: FlextTypes.Core.Dict = {}
         data = result.unwrap_or(empty_create_data)
         if data:
             cli.format_and_display(data, FlextCliOutputFormat.JSON)
 
     # Teste 3: Demonstrar configuração
 
-    config_data: dict[str, object] = {
+    config_data: FlextTypes.Core.Dict = {
         "cli_config": {
             "debug": getattr(cli.context, "is_debug", False),
             "verbose": getattr(cli.context, "is_verbose", False),
@@ -186,7 +188,7 @@ async def main() -> None:
 
     # Teste 4: Demonstrar diferentes formatos de output
 
-    sample_data: dict[str, object] = {
+    sample_data: FlextTypes.Core.Dict = {
         "biblioteca": "flext-cli",
         "versao": "1.0.0",
         "status": "funcionando",

@@ -1,4 +1,8 @@
-"""Example of using flext_tests library for functional testing without mocks."""
+"""Example of using flext_tests library for functional testing without mocks.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 import asyncio
 
@@ -30,7 +34,11 @@ class TestFlextTestsIntegration:
 
         # Use AsyncTestUtils.run_concurrent for parallel testing
         session_results = await AsyncTestUtils.run_concurrent(
-            [generate_session(), generate_session(), generate_session()]
+            [
+                generate_session(),
+                generate_session(),
+                generate_session(),
+            ]
         )
 
         # Verify all sessions are unique

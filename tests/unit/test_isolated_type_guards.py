@@ -1,11 +1,16 @@
 """Isolated tests for type guards - testing REAL functionality without external deps.
 
 These tests import and execute REAL type guard code to increase coverage.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import pytest
+from flext_core import FlextTypes
 
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.type_guards import FlextLDAPTypeGuards
@@ -102,7 +107,7 @@ class TestIsolatedTypeGuards:
 
     def test_is_ldap_attributes_dict_with_invalid_dicts(self) -> None:
         """Test is_ldap_attributes_dict rejects invalid dictionaries."""
-        invalid_dicts: list[object] = [
+        invalid_dicts: FlextTypes.Core.List = [
             None,
             "string",
             123,

@@ -1,4 +1,12 @@
-"""FLEXT LDAP Connection Configuration."""
+"""FLEXT LDAP Connection Configuration.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from pathlib import Path
 from typing import ClassVar
@@ -103,7 +111,12 @@ class FlextLDAPConnectionConfig(FlextConfig):
     @field_validator("ca_cert_file", "client_cert_file", "client_key_file")
     @classmethod
     def validate_cert_files(cls, v: Path | None) -> Path | None:
-        """Validate certificate files exist if specified."""
+        """Validate certificate files exist if specified.
+
+        Returns:
+            str:: Description of return value.
+
+        """
         if v is not None and not v.exists():
             msg = f"Certificate file does not exist: {v}"
             raise ValueError(msg)
@@ -124,7 +137,12 @@ class FlextLDAPConnectionConfig(FlextConfig):
         return self.server
 
     def validate_configuration(self) -> FlextResult[None]:
-        """Validate the complete configuration."""
+        """Validate the complete configuration.
+
+        Returns:
+            str:: Description of return value.
+
+        """
         try:
             # Additional validation logic here
             if self.use_ssl and self.verify_ssl and not self.ca_cert_file:

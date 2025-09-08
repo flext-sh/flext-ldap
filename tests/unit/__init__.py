@@ -1,1 +1,5 @@
-"""Unit tests package for flext-ldap."""
+"""Unit tests package for flext-ldap.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""

@@ -7,6 +7,10 @@ This demonstrates proper usage of ALL flext_tests capabilities:
 - Async utilities
 - Hypothesis testing
 - Builder patterns
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -61,7 +65,7 @@ class TestComprehensiveFlextTests:
                 "created_at": None,
                 "last_login": None,
                 "custom_attributes": {},
-                "attributes": {}
+                "attributes": {},
             }
 
             # Create LDAP entity using real data
@@ -83,9 +87,9 @@ class TestComprehensiveFlextTests:
 
         # Run concurrent operations with performance tracking
         with profiler.track_operation("concurrent_sessions"):
-            sessions = await AsyncTestUtils.run_concurrent([
-                session_generation_task() for _ in range(10)
-            ])
+            sessions = await AsyncTestUtils.run_concurrent(
+                [session_generation_task() for _ in range(10)]
+            )
 
         # Validate results using FlextMatchers
         assert sessions
@@ -104,8 +108,8 @@ class TestComprehensiveFlextTests:
         builder = TestBuilders.FlexibleBuilder()
 
         # Build search request using builder pattern
-        search_request = (builder
-            .with_attribute("base_dn", "ou=users,dc=test,dc=com")
+        search_request = (
+            builder.with_attribute("base_dn", "ou=users,dc=test,dc=com")
             .with_attribute("filter_str", "(objectClass=person)")
             .with_attribute("scope", "subtree")
             .with_attribute("attributes", ["cn", "mail", "uid"])
@@ -121,7 +125,7 @@ class TestComprehensiveFlextTests:
             scope=search_request["scope"],
             attributes=search_request["attributes"],
             size_limit=search_request["size_limit"],
-            time_limit=search_request["time_limit"]
+            time_limit=search_request["time_limit"],
         )
 
         # Validate LDAP format - basic validation
@@ -142,7 +146,7 @@ class TestComprehensiveFlextTests:
             base_dn="dc=test,dc=com",
             filter_str=f"(cn={test_user.name})",
             scope="subtree",
-            attributes=["cn", "mail"]
+            attributes=["cn", "mail"],
         )
 
         # Execute real search (will fail gracefully without connection)
@@ -171,7 +175,7 @@ class TestComprehensiveFlextTests:
                 "user": user,
                 "dn_format": f"cn={user.name},ou=users,dc=example,dc=com",
                 "expected_cn": user.name,
-                "expected_mail": user.email
+                "expected_mail": user.email,
             }
             test_scenarios.append(scenario)
 
@@ -199,6 +203,7 @@ class TestComprehensiveFlextTests:
 
     async def test_timeout_and_error_handling_with_async_utils(self) -> None:
         """Test timeout and error handling using AsyncTestUtils."""
+
         # Test timeout behavior
         async def slow_operation() -> str:
             await asyncio.sleep(0.5)
@@ -206,9 +211,7 @@ class TestComprehensiveFlextTests:
 
         # Test timeout functionality
         with pytest.raises(asyncio.TimeoutError):
-            await AsyncTestUtils.run_with_timeout(
-                slow_operation(), timeout_seconds=0.1
-            )
+            await AsyncTestUtils.run_with_timeout(slow_operation(), timeout_seconds=0.1)
 
         # Test successful completion within timeout
         result = await AsyncTestUtils.run_with_timeout(

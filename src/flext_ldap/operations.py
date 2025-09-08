@@ -1,18 +1,13 @@
-"""SINGLE CONSOLIDATED FlextLDAPOperations class following FLEXT architectural patterns.
+"""LDAP operations module.
 
-FLEXT_REFACTORING_PROMPT.md COMPLIANCE: Single consolidated class for all LDAP
-operation functionality.
-All specialized functionality delivered through internal subclasses within
-FlextLDAPOperations.
-
-CONSOLIDATED CLASSES: FlextLDAPOperationsService + FlextLDAPConnectionOperations +
-FlextLDAPSearchOperations + FlextLDAPEntities.EntryOperations +
-FlextLDAPEntities.UserOperations + FlextLDAPEntities.GroupOperations
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from flext_core import (
     FlextDomainService,
@@ -20,18 +15,14 @@ from flext_core import (
     FlextModels,
     FlextProcessors,
     FlextResult,
+    FlextTypes,
 )
 from pydantic import Field, PrivateAttr
 
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.entities import FlextLDAPEntities
 from flext_ldap.typings import LdapAttributeDict
-
-# Removed FlextLDAPUtilities - using Python standard library directly
 from flext_ldap.value_objects import FlextLDAPValueObjects
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 logger = FlextLogger(__name__)
 
@@ -45,12 +36,12 @@ logger = FlextLogger(__name__)
 
 
 class UserConversionParams(FlextModels.Config):
-    """Parameter Object for user conversion operations - reduces complexity."""
+    """User conversion parameters."""
 
-    entries: list[object]
+    entries: FlextTypes.Core.List
     include_disabled: bool = Field(default=False)
     include_system: bool = Field(default=False)
-    attribute_filter: list[str] | None = None
+    attribute_filter: FlextTypes.Core.StringList | None = None
 
 
 # =============================================================================
@@ -59,24 +50,21 @@ class UserConversionParams(FlextModels.Config):
 
 
 class LDAPCommandProcessor:
-    """Command Pattern implementation using flext-core for complex operations.
-
-    Reduces complexity by encapsulating complex operations as commands.
-    """
+    """LDAP command processor."""
 
     class SearchCommand(FlextModels.Config):
-        """Search command encapsulating all search parameters."""
+        """Search command parameters."""
 
         connection_id: str = Field(..., min_length=1)
         base_dn: str = Field(..., min_length=1)
         search_filter: str = Field(default="(objectClass=*)")
         scope: str = Field(default="subtree")
-        attributes: list[str] | None = None
+        attributes: FlextTypes.Core.StringList | None = None
         size_limit: int = Field(default=1000, ge=1, le=10000)
 
-        def execute(self) -> FlextResult[dict[str, object]]:
-            """Execute search command - encapsulates search complexity."""
-            return FlextResult[dict[str, object]].ok(
+        def execute(self) -> FlextResult[FlextTypes.Core.Dict]:
+            """Execute search command."""
+            return FlextResult[FlextTypes.Core.Dict].ok(
                 {
                     "base_dn": self.base_dn,
                     "filter": self.search_filter,
@@ -88,7 +76,12 @@ class LDAPCommandProcessor:
             )
 
     class MembershipCommand(FlextModels.Config):
-        """Membership modification command."""
+        """Membership command parameters.
+
+        Returns:
+            FlextResult[FlextTypes.Core.Dict]: The membership command parameters.
+
+        """
 
         connection_id: str = Field(..., min_length=1)
         group_dn: str = Field(..., min_length=1)
@@ -96,7 +89,12 @@ class LDAPCommandProcessor:
         action: str = Field(..., pattern=r"^(add|remove)$")
 
         def validate_membership_operation(self) -> FlextResult[None]:
-            """Validate membership operation parameters."""
+            """Validate membership operation.
+
+            Returns:
+                FlextResult[None]: The validation result.
+
+            """
             if not self.group_dn or not self.member_dn:
                 return FlextResult.fail("Group DN and Member DN are required")
             if self.action not in {"add", "remove"}:
@@ -110,44 +108,45 @@ class LDAPCommandProcessor:
 
 
 class LDAPAttributeProcessor:
-    """LDAP Attribute Processing Strategy using flext-core FlextProcessors.
+    """LDAP attribute processing strategies.
 
-    Eliminates complexity from _convert_entries_to_users by applying
-    Strategy Pattern + Command Pattern for attribute extraction.
+    Returns:
+        FlextResult[None]:: Description of return value.
+
     """
 
     class UserAttributeExtractor(FlextProcessors.BaseProcessor):
-        """User-specific attribute extractor using FlextProcessors."""
+        """User attribute extractor."""
 
-        def process_data(self, entry: object) -> FlextResult[dict[str, object]]:
-            """Extract user attributes using flext-core processor pattern."""
+        def process_data(self, entry: object) -> FlextResult[FlextTypes.Core.Dict]:
+            """Extract user attributes."""
             try:
                 # Type validation
                 if not hasattr(entry, "attributes"):
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         "Entry missing attributes",
                     )
 
                 attrs = getattr(entry, "attributes", {})
                 if not isinstance(attrs, dict):
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         "Invalid attributes format",
                     )
 
                 # Use flext-core processor pattern for attribute extraction
                 extracted = self._extract_ldap_attributes(attrs)
-                return FlextResult[dict[str, object]].ok(extracted)
+                return FlextResult[FlextTypes.Core.Dict].ok(extracted)
 
             except Exception as e:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Core.Dict].fail(
                     f"Attribute extraction failed: {e}",
                 )
 
         def _extract_ldap_attributes(
             self,
-            attrs: dict[str, object],
-        ) -> dict[str, object]:
-            """Extract LDAP attributes using Strategy Pattern - eliminates repetitive code."""
+            attrs: FlextTypes.Core.Dict,
+        ) -> FlextTypes.Core.Dict:
+            """Extract LDAP attributes using strategies."""
             # Define extraction strategies for different attribute types
             # Callable already imported at top
 
@@ -166,7 +165,7 @@ class LDAPAttributeProcessor:
             }
 
         def _extract_string_attribute(self, attr_value: object, default: str) -> object:
-            """Extract string attribute with default - Strategy Pattern."""
+            """Extract string attribute with default."""
             if not attr_value:
                 return default
             if isinstance(attr_value, list) and attr_value:
@@ -174,7 +173,7 @@ class LDAPAttributeProcessor:
             return str(attr_value)
 
         def _extract_optional_string_attribute(self, attr_value: object) -> object:
-            """Extract optional string attribute - Strategy Pattern."""
+            """Extract optional string attribute."""
             if not attr_value:
                 return None
             if isinstance(attr_value, list) and attr_value:
@@ -182,29 +181,29 @@ class LDAPAttributeProcessor:
             return str(attr_value) if attr_value else None
 
     class GroupAttributeExtractor(FlextProcessors.BaseProcessor):
-        """Group-specific attribute extractor using FlextProcessors."""
+        """Group attribute extractor."""
 
-        def process_data(self, entry: object) -> FlextResult[dict[str, object]]:
-            """Extract group attributes using flext-core processor pattern."""
+        def process_data(self, entry: object) -> FlextResult[FlextTypes.Core.Dict]:
+            """Extract group attributes."""
             try:
                 if not hasattr(entry, "attributes"):
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         "Entry missing attributes",
                     )
 
                 attrs = getattr(entry, "attributes", {})
                 extracted = self._extract_group_attributes(attrs)
-                return FlextResult[dict[str, object]].ok(extracted)
+                return FlextResult[FlextTypes.Core.Dict].ok(extracted)
 
             except Exception as e:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Core.Dict].fail(
                     f"Group attribute extraction failed: {e}",
                 )
 
         def _extract_group_attributes(
             self,
-            attrs: dict[str, object],
-        ) -> dict[str, object]:
+            attrs: FlextTypes.Core.Dict,
+        ) -> FlextTypes.Core.Dict:
             """Extract group attributes using Strategy Pattern."""
             cn = self._extract_string_attribute(attrs.get("cn"), "unknown")
             description = self._extract_optional_string_attribute(
@@ -230,7 +229,9 @@ class LDAPAttributeProcessor:
                 return str(attr_value[0]) if attr_value[0] else None
             return str(attr_value) if attr_value else None
 
-        def _extract_member_list(self, member_value: object) -> list[str]:
+        def _extract_member_list(
+            self, member_value: object
+        ) -> FlextTypes.Core.StringList:
             """Extract member list from various formats."""
             if isinstance(member_value, list):
                 return [str(m) for m in member_value if m]
@@ -240,13 +241,11 @@ class LDAPAttributeProcessor:
 
 
 class FlextLDAPOperations:
-    """SINGLE CONSOLIDATED CLASS for all LDAP operation functionality.
+    """Consolidated LDAP operations class.
 
-    Following FLEXT architectural patterns - consolidates ALL LDAP operation functionality
-    including connections, search, entries, users, and groups into one main class
-    with specialized internal subclasses for organization.
+    Returns:
+        FlextTypes.Core.StringList:: Description of return value.
 
-    CONSOLIDATED CLASSES: FlextLDAPOperationsService + FlextLDAPConnectionOperations + FlextLDAPSearchOperations + FlextLDAPEntities.EntryOperations + FlextLDAPEntities.UserOperations + FlextLDAPEntities.GroupOperations
     """
 
     # ==========================================================================
@@ -254,7 +253,7 @@ class FlextLDAPOperations:
     # ==========================================================================
 
     class OperationsService(FlextDomainService[None]):
-        """Internal base service using flext-core patterns - CORRECT signature."""
+        """Internal operations base service."""
 
         def __init__(self) -> None:
             """Initialize shared components using flext-core domain service."""
@@ -355,7 +354,7 @@ class FlextLDAPOperations:
         """Internal specialized connection operations class."""
 
         # Private attribute for active connections
-        _active_connections: dict[str, dict[str, object]] = PrivateAttr(
+        _active_connections: dict[str, FlextTypes.Core.Dict] = PrivateAttr(
             default_factory=dict,
         )
 
@@ -445,27 +444,27 @@ class FlextLDAPOperations:
         def get_connection_info(
             self,
             connection_id: str,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             """Get connection information - REFACTORED."""
             if connection_id not in self._active_connections:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Core.Dict].fail(
                     f"Connection not found: {connection_id}",
                 )
 
             connection_info = self._active_connections[connection_id].copy()
             connection_info["connection_id"] = connection_id
             connection_info["active"] = True
-            return FlextResult[dict[str, object]].ok(connection_info)
+            return FlextResult[FlextTypes.Core.Dict].ok(connection_info)
 
-        def list_active_connections(self) -> FlextResult[list[dict[str, object]]]:
+        def list_active_connections(self) -> FlextResult[list[FlextTypes.Core.Dict]]:
             """List all active connections - REFACTORED."""
-            connections: list[dict[str, object]] = []
+            connections: list[FlextTypes.Core.Dict] = []
             for conn_id, conn_info in self._active_connections.items():
-                info: dict[str, object] = conn_info.copy()
+                info: FlextTypes.Core.Dict = conn_info.copy()
                 info["connection_id"] = conn_id
                 info["active"] = True
                 connections.append(info)
-            return FlextResult[list[dict[str, object]]].ok(connections)
+            return FlextResult[list[FlextTypes.Core.Dict]].ok(connections)
 
         def _calculate_duration(self, created_at: object) -> float:
             """Calculate connection duration in seconds - REUSABLE HELPER."""
@@ -528,7 +527,7 @@ class FlextLDAPOperations:
             self,
             connection_id: str,
             base_dn: str,
-            filter_criteria: dict[str, str] | None = None,
+            filter_criteria: FlextTypes.Core.Headers | None = None,
             size_limit: int = 1000,
         ) -> FlextResult[list[FlextLDAPEntities.User]]:
             """Search for user entries - REFACTORED with helper composition."""
@@ -579,7 +578,7 @@ class FlextLDAPOperations:
             self,
             connection_id: str,
             base_dn: str,
-            filter_criteria: dict[str, str] | None = None,
+            filter_criteria: FlextTypes.Core.Headers | None = None,
             size_limit: int = 1000,
         ) -> FlextResult[list[FlextLDAPEntities.Group]]:
             """Search for group entries - REFACTORED with helper composition."""
@@ -630,7 +629,7 @@ class FlextLDAPOperations:
             self,
             connection_id: str,
             dn: str,
-            attributes: list[str] | None = None,
+            attributes: FlextTypes.Core.StringList | None = None,
         ) -> FlextResult[FlextLDAPEntities.Entry]:
             """Get a single entry by DN - REFACTORED."""
             search_params = FlextLDAPEntities.SearchParams(
@@ -655,7 +654,9 @@ class FlextLDAPOperations:
 
             return FlextResult.ok(search_result.value[0])
 
-        def _build_user_filter(self, filter_criteria: dict[str, str] | None) -> str:
+        def _build_user_filter(
+            self, filter_criteria: FlextTypes.Core.Headers | None
+        ) -> str:
             """Build user-specific filter - REUSABLE HELPER."""
             base_filter = "(&(objectClass=person)"
             if filter_criteria:
@@ -664,7 +665,9 @@ class FlextLDAPOperations:
                     base_filter += f"({attr}=*{escaped_value}*)"
             return base_filter + ")"
 
-        def _build_group_filter(self, filter_criteria: dict[str, str] | None) -> str:
+        def _build_group_filter(
+            self, filter_criteria: FlextTypes.Core.Headers | None
+        ) -> str:
             """Build group-specific filter - REUSABLE HELPER."""
             base_filter = "(&(objectClass=groupOfNames)"
             if filter_criteria:
@@ -771,7 +774,7 @@ class FlextLDAPOperations:
                         description=str(attrs.get("description"))
                         if attrs.get("description")
                         else None,
-                        members=cast("list[str]", attrs.get("members"))
+                        members=cast("FlextTypes.Core.StringList", attrs.get("members"))
                         if isinstance(attrs.get("members"), list)
                         else [],
                         object_classes=entry.object_classes,
@@ -788,7 +791,7 @@ class FlextLDAPOperations:
             self,
             connection_id: str,
             dn: str,
-            object_classes: list[str],
+            object_classes: FlextTypes.Core.StringList,
             attributes: LdapAttributeDict,
         ) -> FlextResult[FlextLDAPEntities.Entry]:
             """Create a new LDAP entry - REFACTORED with shared validation."""
@@ -845,7 +848,7 @@ class FlextLDAPOperations:
             self,
             connection_id: str,
             dn: str,
-            modifications: dict[str, object],
+            modifications: FlextTypes.Core.Dict,
         ) -> FlextResult[None]:
             """Modify an existing LDAP entry - REFACTORED."""
             try:
@@ -991,7 +994,7 @@ class FlextLDAPOperations:
                     f"Password must be at least {FlextLDAPConstants.LdapValidation.MIN_PASSWORD_LENGTH} characters",
                 )
 
-            modifications: dict[str, object] = {"userPassword": [new_password]}
+            modifications: FlextTypes.Core.Dict = {"userPassword": [new_password]}
             if self._entry_ops is None:
                 return FlextResult.fail("Entry operations not available")
 
@@ -1009,7 +1012,7 @@ class FlextLDAPOperations:
             if "@" not in email:
                 return FlextResult.fail("Invalid email format")
 
-            modifications: dict[str, object] = {"mail": [email]}
+            modifications: FlextTypes.Core.Dict = {"mail": [email]}
             if self._entry_ops is None:
                 return FlextResult.fail("Entry operations not available")
 
@@ -1023,7 +1026,7 @@ class FlextLDAPOperations:
             user_dn: str,
         ) -> FlextResult[None]:
             """Activate user account - REFACTORED."""
-            modifications: dict[str, object] = {"accountStatus": ["active"]}
+            modifications: FlextTypes.Core.Dict = {"accountStatus": ["active"]}
             if self._entry_ops is None:
                 return FlextResult.fail("Entry operations not available")
 
@@ -1037,7 +1040,7 @@ class FlextLDAPOperations:
             user_dn: str,
         ) -> FlextResult[None]:
             """Deactivate user account - REFACTORED."""
-            modifications: dict[str, object] = {"accountStatus": ["inactive"]}
+            modifications: FlextTypes.Core.Dict = {"accountStatus": ["inactive"]}
             if self._entry_ops is None:
                 return FlextResult.fail("Entry operations not available")
 
@@ -1105,7 +1108,7 @@ class FlextLDAPOperations:
             dn: str,
             cn: str,
             description: str | None = None,
-            initial_members: list[str] | None = None,
+            initial_members: FlextTypes.Core.StringList | None = None,
         ) -> FlextResult[FlextLDAPEntities.Group]:
             """Create a new LDAP group - REFACTORED with helper composition."""
             try:
@@ -1229,11 +1232,11 @@ class FlextLDAPOperations:
             self,
             connection_id: str,
             group_dn: str,
-        ) -> FlextResult[list[str]]:
+        ) -> FlextResult[FlextTypes.Core.StringList]:
             """Get all members of a group - REFACTORED."""
             try:
                 if self._search_ops is None:
-                    return FlextResult[list[str]].fail(
+                    return FlextResult[FlextTypes.Core.StringList].fail(
                         "Search operations not available",
                     )
 
@@ -1249,13 +1252,13 @@ class FlextLDAPOperations:
                 )
 
                 if not group_result.is_success:
-                    return FlextResult[list[str]].fail(
+                    return FlextResult[FlextTypes.Core.StringList].fail(
                         f"Failed to get group: {group_result.error}",
                     )
 
                 # Get member attribute and convert to list of strings
                 member_attr = group_result.value.get_attribute("member")
-                members: list[str] = []
+                members: FlextTypes.Core.StringList = []
                 if member_attr:
                     if isinstance(member_attr, list):
                         members = [str(m) for m in member_attr]
@@ -1263,7 +1266,7 @@ class FlextLDAPOperations:
                         members = [str(member_attr)]
 
                 real_members = self._filter_dummy_members(members)
-                return FlextResult[list[str]].ok(real_members)
+                return FlextResult[FlextTypes.Core.StringList].ok(real_members)
 
             except Exception as e:
                 # Use REFACTORED exception handling - NO DUPLICATION
@@ -1272,7 +1275,7 @@ class FlextLDAPOperations:
                     e,
                     connection_id,
                 )
-                return FlextResult[list[str]].fail(error_msg)
+                return FlextResult[FlextTypes.Core.StringList].fail(error_msg)
 
         async def update_group_description(
             self,
@@ -1281,7 +1284,7 @@ class FlextLDAPOperations:
             description: str,
         ) -> FlextResult[None]:
             """Update group description - REFACTORED."""
-            modifications: dict[str, object] = {"description": [description]}
+            modifications: FlextTypes.Core.Dict = {"description": [description]}
             if self._entry_ops is None:
                 return FlextResult.fail("Entry operations not available")
 
@@ -1295,8 +1298,8 @@ class FlextLDAPOperations:
 
         def _prepare_group_members(
             self,
-            initial_members: list[str] | None,
-        ) -> list[str]:
+            initial_members: FlextTypes.Core.StringList | None,
+        ) -> FlextTypes.Core.StringList:
             """Prepare group members with dummy member if needed - REUSABLE HELPER."""
             members = initial_members or []
             if not members:
@@ -1308,7 +1311,7 @@ class FlextLDAPOperations:
             self,
             cn: str,
             description: str | None,
-            members: list[str],
+            members: FlextTypes.Core.StringList,
         ) -> LdapAttributeDict:
             """Build group attributes - REUSABLE HELPER."""
             attributes: LdapAttributeDict = {
@@ -1324,7 +1327,7 @@ class FlextLDAPOperations:
             dn: str,
             cn: str,
             description: str | None,
-            members: list[str],
+            members: FlextTypes.Core.StringList,
             attributes: LdapAttributeDict,
         ) -> FlextLDAPEntities.Group:
             """Build group entity - REUSABLE HELPER."""
@@ -1341,7 +1344,9 @@ class FlextLDAPOperations:
                 # Note: no status field as FlextModels already has it
             )
 
-        def _filter_dummy_members(self, members: list[str]) -> list[str]:
+        def _filter_dummy_members(
+            self, members: FlextTypes.Core.StringList
+        ) -> FlextTypes.Core.StringList:
             """Filter out dummy members - REUSABLE HELPER."""
             return [m for m in members if not m.startswith("cn=dummy,ou=temp")]
 
@@ -1414,12 +1419,16 @@ class FlextLDAPOperations:
                     f"Membership command execution failed: {e}",
                 )
 
-        def _extract_current_members(self, group_entry: object) -> list[str]:
+        def _extract_current_members(
+            self, group_entry: object
+        ) -> FlextTypes.Core.StringList:
             """Extract current members from group entry - simplified logic."""
             if not hasattr(group_entry, "get_attribute"):
                 return []
 
-            current_members = getattr(group_entry, "get_attribute", lambda _: None)("member")
+            current_members = getattr(group_entry, "get_attribute", lambda _: None)(
+                "member"
+            )
 
             # Simplified member extraction using Strategy Pattern
             if current_members is None:
@@ -1456,37 +1465,41 @@ class FlextLDAPOperations:
 
         def _calculate_updated_members(
             self,
-            current_members: list[str],
+            current_members: FlextTypes.Core.StringList,
             member_dn: str,
             action: str,
-        ) -> FlextResult[list[str]]:
+        ) -> FlextResult[FlextTypes.Core.StringList]:
             """Calculate updated member list based on action."""
             if action == "add":
                 return self._handle_add_member(current_members, member_dn)
             if action == "remove":
                 return self._handle_remove_member(current_members, member_dn)
-            return FlextResult[list[str]].fail(f"Invalid action: {action}")
+            return FlextResult[FlextTypes.Core.StringList].fail(
+                f"Invalid action: {action}"
+            )
 
         def _handle_add_member(
             self,
-            current_members: list[str],
+            current_members: FlextTypes.Core.StringList,
             member_dn: str,
-        ) -> FlextResult[list[str]]:
+        ) -> FlextResult[FlextTypes.Core.StringList]:
             """Handle adding a member to the group."""
             if member_dn in current_members:
-                return FlextResult[list[str]].fail(
+                return FlextResult[FlextTypes.Core.StringList].fail(
                     f"Member already exists in group: {member_dn}",
                 )
-            return FlextResult[list[str]].ok([*current_members, member_dn])
+            return FlextResult[FlextTypes.Core.StringList].ok(
+                [*current_members, member_dn]
+            )
 
         def _handle_remove_member(
             self,
-            current_members: list[str],
+            current_members: FlextTypes.Core.StringList,
             member_dn: str,
-        ) -> FlextResult[list[str]]:
+        ) -> FlextResult[FlextTypes.Core.StringList]:
             """Handle removing a member from the group."""
             if member_dn not in current_members:
-                return FlextResult[list[str]].fail(
+                return FlextResult[FlextTypes.Core.StringList].fail(
                     f"Member not found in group: {member_dn}",
                 )
 
@@ -1495,18 +1508,18 @@ class FlextLDAPOperations:
             if not updated_members:
                 updated_members = ["cn=dummy,ou=temp,dc=example,dc=com"]
 
-            return FlextResult[list[str]].ok(updated_members)
+            return FlextResult[FlextTypes.Core.StringList].ok(updated_members)
 
         async def _apply_membership_change(
             self,
             connection_id: str,
             group_dn: str,
-            updated_members: list[str],
+            updated_members: FlextTypes.Core.StringList,
             action: str,
             member_dn: str,
         ) -> FlextResult[None]:
             """Apply the membership change to LDAP."""
-            modifications: dict[str, object] = {"member": updated_members}
+            modifications: FlextTypes.Core.Dict = {"member": updated_members}
             if self._entry_ops is None:
                 return FlextResult.fail("Entry operations not available")
 
@@ -1589,7 +1602,7 @@ class FlextLDAPOperations:
         connection_id: str,
         base_dn: str,
         search_filter: str,
-        attributes: list[str] | None = None,
+        attributes: FlextTypes.Core.StringList | None = None,
     ) -> FlextResult[FlextLDAPEntities.Entry | None]:
         """Search and return first matching entry."""
         search_params = FlextLDAPEntities.SearchParams(

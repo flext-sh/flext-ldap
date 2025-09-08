@@ -1,9 +1,7 @@
-"""SINGLE CONSOLIDATED FlextLDAPRepositories class following FLEXT architectural patterns.
+"""Class for all LDAP repository functionality.
 
-FLEXT_REFACTORING_PROMPT.md COMPLIANCE: Single consolidated class for all LDAP repository functionality.
-All specialized functionality delivered through internal subclasses within FlextLDAPRepositories.
-
-CONSOLIDATED CLASSES: FlextLDAPRepository + FlextLDAPUserRepository + FlextLDAPGroupRepository
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 import asyncio
@@ -14,6 +12,7 @@ from flext_core import (
     FlextProcessors,
     FlextProtocols,
     FlextResult,
+    FlextTypes,
 )
 
 from flext_ldap.clients import FlextLDAPClient
@@ -88,7 +87,7 @@ class RepositorySearchStrategies:
             entry_data: object,
         ) -> FlextResult[FlextLDAPEntities.Entry | None]:
             """Convert search result entry to repository entry."""
-            typed_entry_data = cast("dict[str, object]", entry_data)
+            typed_entry_data = cast("FlextTypes.Core.Dict", entry_data)
             entry_dn = typed_entry_data.get("dn", "")
 
             if not entry_dn:
@@ -114,7 +113,7 @@ class FlextLDAPRepositories:
     # INTERNAL SPECIALIZED CLASSES FOR DIFFERENT REPOSITORY DOMAINS
     # ==========================================================================
 
-    class Repository(FlextProtocols.Domain.Repository):
+    class Repository(FlextProtocols.Domain.Repository[object]):
         """Internal base LDAP repository implementation using dependency injection."""
 
         def __init__(self, client: FlextLDAPClient) -> None:
@@ -182,7 +181,9 @@ class FlextLDAPRepositories:
             if "objectClass" in typed_entry:
                 oc_value = typed_entry["objectClass"]
                 if isinstance(oc_value, list):
-                    typed_oc_list: list[object] = cast("list[object]", oc_value)
+                    typed_oc_list: FlextTypes.Core.List = cast(
+                        "FlextTypes.Core.List", oc_value
+                    )
                     object_classes = [str(oc) for oc in typed_oc_list]
                 else:
                     object_classes = [str(oc_value)]
@@ -428,29 +429,31 @@ class FlextLDAPRepositories:
             )
             return await search_processor.process_search(search_params)
 
-        async def get_group_members(self, group_dn: str) -> FlextResult[list[str]]:
+        async def get_group_members(
+            self, group_dn: str
+        ) -> FlextResult[FlextTypes.Core.StringList]:
             """Get members of a group."""
             entry_result = await self._repo.find_by_dn(group_dn)
             if not entry_result.is_success:
-                return FlextResult[list[str]].fail(
+                return FlextResult[FlextTypes.Core.StringList].fail(
                     entry_result.error or "Group lookup failed",
                 )
 
             if not entry_result.value:
-                return FlextResult[list[str]].fail("Group not found")
+                return FlextResult[FlextTypes.Core.StringList].fail("Group not found")
 
             entry = entry_result.value
             member_attr = entry.get_attribute("member")
 
             # Convert attribute value to list of strings
-            members: list[str] = []
+            members: FlextTypes.Core.StringList = []
             if member_attr:
                 if isinstance(member_attr, list):
                     members = [str(m) for m in member_attr]
                 else:
                     members = [str(member_attr)]
 
-            return FlextResult[list[str]].ok(members)
+            return FlextResult[FlextTypes.Core.StringList].ok(members)
 
         async def add_member_to_group(
             self,

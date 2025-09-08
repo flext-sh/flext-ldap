@@ -2,6 +2,10 @@
 
 Following mandate: "testes funcionais reais sem mocks" and "PRIORIZAR BIBLIOTECAS".
 Tests validate REAL API functionality using Python standard libraries.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

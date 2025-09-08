@@ -2,6 +2,10 @@
 
 These tests execute actual LDAP operations against a real OpenLDAP container.
 NO MOCKS - only real code execution and validation.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -9,7 +13,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from flext_core import FlextConstants
+from flext_core import FlextConstants, FlextTypes
 
 from flext_ldap import (
     FlextLDAPClient,
@@ -21,7 +25,9 @@ from flext_ldap.services import FlextLDAPServices as FlextLDAPService
 
 
 # Helper function to replace create_ldap_attributes
-def create_ldap_attributes(attrs: dict[str, object]) -> dict[str, list[str]]:
+def create_ldap_attributes(
+    attrs: FlextTypes.Core.Dict,
+) -> dict[str, FlextTypes.Core.StringList]:
     """Convert attributes to LDAP format using Python standard conversion."""
     return {
         k: [str(v)] if not isinstance(v, list) else [str(item) for item in v]
@@ -37,7 +43,7 @@ class TestLdapClientRealOperations:
     @pytest.mark.asyncio
     async def test_client_connection_real_server(
         self,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test real LDAP server connection."""
         client = FlextLDAPClient()
@@ -61,7 +67,7 @@ class TestLdapClientRealOperations:
     async def test_client_search_real_entries(
         self,
         connected_ldap_client: FlextLDAPClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test searching real LDAP entries."""
         # Search for base DN - should exist
@@ -87,7 +93,7 @@ class TestLdapClientRealOperations:
     async def test_client_add_modify_delete_real_entry(
         self,
         connected_ldap_client: FlextLDAPClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test complete CRUD operations with real LDAP entries."""
         # Create test user entry
@@ -176,7 +182,7 @@ class TestLdapServiceRealOperations:
     async def test_service_user_lifecycle_real_operations(
         self,
         ldap_service: FlextLDAPService,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test complete user lifecycle with real LDAP operations."""
         # Setup: Create OU for users
@@ -301,7 +307,7 @@ class TestLdapServiceRealOperations:
     async def test_service_group_lifecycle_real_operations(
         self,
         ldap_service: FlextLDAPService,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test complete group lifecycle with real LDAP operations."""
         # Setup: Connect and create OUs
@@ -406,7 +412,7 @@ class TestLdapServiceRealOperations:
         assert members_result.is_success, (
             f"Failed to get members: {members_result.error}"
         )
-        default_members: list[str] = []
+        default_members: FlextTypes.Core.StringList = []
         members_list = (
             members_result.value if members_result.is_success else default_members
         )
@@ -422,7 +428,7 @@ class TestLdapServiceRealOperations:
         # Verify member was removed
         members_after_remove = await ldap_service.get_members(group.dn)
         assert members_after_remove.is_success
-        default_members_after: list[str] = []
+        default_members_after: FlextTypes.Core.StringList = []
         remaining_members = (
             members_after_remove.value
             if members_after_remove.is_success
@@ -459,7 +465,7 @@ class TestLdapValidationRealOperations:
     async def test_dn_validation_real_ldap(
         self,
         connected_ldap_client: FlextLDAPClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test DN validation with real LDAP server."""
         # Test valid DN creation
@@ -485,7 +491,7 @@ class TestLdapValidationRealOperations:
     async def test_business_rules_validation_real_ldap(
         self,
         ldap_service: FlextLDAPService,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test business rules validation with real LDAP operations."""
         # Setup connection
@@ -553,7 +559,7 @@ class TestLdapErrorHandlingReal:
     @pytest.mark.asyncio
     async def test_connection_failure_handling(
         self,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test handling of real connection failures."""
         client = FlextLDAPClient()
@@ -590,7 +596,7 @@ class TestLdapErrorHandlingReal:
     async def test_ldap_operation_error_handling(
         self,
         connected_ldap_client: FlextLDAPClient,
-        clean_ldap_container: dict[str, object],
+        clean_ldap_container: FlextTypes.Core.Dict,
     ) -> None:
         """Test error handling for LDAP operations."""
         # Test search with invalid base DN

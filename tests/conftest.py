@@ -1,6 +1,11 @@
 """Global pytest configuration for FLEXT-LDAP tests.
 
 This module provides fixtures for OpenLDAP container management and test configuration.
+
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -14,6 +19,7 @@ from functools import lru_cache
 
 import pytest
 from docker.models.containers import Container
+from flext_core import FlextTypes
 
 from flext_ldap import (
     FlextLDAPClient,
@@ -229,7 +235,7 @@ def docker_openldap_container() -> Generator[object]:
 
 
 @pytest.fixture
-def ldap_test_config(docker_openldap_container: object) -> dict[str, object]:
+def ldap_test_config(docker_openldap_container: object) -> FlextTypes.Core.Dict:
     """Provide LDAP test configuration for individual tests."""
     return {
         "server_url": TEST_ENV_VARS["LDAP_TEST_SERVER"],
@@ -242,7 +248,7 @@ def ldap_test_config(docker_openldap_container: object) -> dict[str, object]:
 
 @pytest.fixture
 async def ldap_service(
-    clean_ldap_container: dict[str, object],
+    clean_ldap_container: FlextTypes.Core.Dict,
 ) -> AsyncGenerator[FlextLDAPServices]:
     """Provide configured LDAP service for testing."""
     ldap_container = FlextLDAPContainer()
@@ -262,7 +268,7 @@ async def ldap_service(
 
 @pytest.fixture
 async def connected_ldap_client(
-    clean_ldap_container: dict[str, object],
+    clean_ldap_container: FlextTypes.Core.Dict,
 ) -> AsyncGenerator[FlextLDAPClient]:
     """Provide connected LDAP client for testing."""
     client = FlextLDAPClient()
@@ -319,8 +325,8 @@ async def _cleanup_ldap_entries_under_dn(
 
 @pytest.fixture
 async def clean_ldap_container(
-    ldap_test_config: dict[str, object],
-) -> dict[str, object]:
+    ldap_test_config: FlextTypes.Core.Dict,
+) -> FlextTypes.Core.Dict:
     """Provide a clean LDAP container by removing test entries.
 
     This fixture ensures each test starts with a clean LDAP directory

@@ -1,11 +1,15 @@
-"""FLEXT LDAP CLI - Single class using flext-cli exclusively."""
+"""FLEXT LDAP CLI - Single class using flext-cli exclusively.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import asyncio
 
-# FlextCliApi import handled separately
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core.typings import FlextTypes
 
 from flext_ldap.api import FlextLDAPApi
 
@@ -26,10 +30,20 @@ class FlextLDAPCli:
         server: str,
         bind_dn: str,
         bind_password: str,
-    ) -> FlextResult[dict[str, object]]:
-        """Test LDAP connection."""
+    ) -> FlextResult[FlextTypes.Core.Dict]:
+        """Test LDAP connection.
 
-        async def _test() -> FlextResult[dict[str, object]]:
+        Args:
+            server: The server to connect to.
+            bind_dn: The bind DN to use.
+            bind_password: The bind password to use.
+
+        Returns:
+            FlextResult[FlextTypes.Core.Dict]: Connection test result.
+
+        """
+
+        async def _test() -> FlextResult[FlextTypes.Core.Dict]:
             try:
                 connection_result = await self._api.connect(
                     server,

@@ -21,13 +21,14 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from flext_core import FlextTypes
 
 import asyncio
 import os
 
 from flext_core import FlextLogger
 
-from flext_ldap import (
+from ..flext_ldap import (
     FlextLDAPApi,
     FlextLDAPDistinguishedName,
     FlextLDAPFilter,

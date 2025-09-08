@@ -2,6 +2,10 @@
 
 Follows flext_tests patterns for real LDAP functionality testing,
 Docker containers, and no mocks. Tests both success and failure paths.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

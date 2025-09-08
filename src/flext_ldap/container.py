@@ -1,10 +1,19 @@
-"""FLEXT-LDAP Container - Class-based dependency injection using flext-core."""
+"""FLEXT-LDAP Container - Class-based dependency injection using flext-core.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, cast
 
-from flext_core import FlextContainer, FlextLogger, FlextResult, FlextServices
+from flext_core import (
+    FlextContainer,
+    FlextLogger,
+    FlextResult,
+    FlextServices,
+)
 
 from flext_ldap.clients import FlextLDAPClient
 from flext_ldap.repositories import FlextLDAPRepositories
@@ -98,19 +107,28 @@ class FlextLDAPContainer:
 
     def get_client(self) -> FlextLDAPClient:
         """Get LDAP client using generic resolver."""
-        return self._get_service("FlextLDAPClient")
+        return cast("FlextLDAPClient", self._get_service("FlextLDAPClient"))
 
     def get_repository(self) -> FlextLDAPRepositories.Repository:
         """Get LDAP repository using generic resolver."""
-        return self._get_service("FlextLDAPRepositories.Repository")
+        return cast(
+            "FlextLDAPRepositories.Repository",
+            self._get_service("FlextLDAPRepositories.Repository"),
+        )
 
     def get_user_repository(self) -> FlextLDAPRepositories.UserRepository:
         """Get LDAP user repository using generic resolver."""
-        return self._get_service("FlextLDAPRepositories.UserRepository")
+        return cast(
+            "FlextLDAPRepositories.UserRepository",
+            self._get_service("FlextLDAPRepositories.UserRepository"),
+        )
 
     def get_group_repository(self) -> FlextLDAPRepositories.GroupRepository:
         """Get LDAP group repository using generic resolver."""
-        return self._get_service("FlextLDAPRepositories.GroupRepository")
+        return cast(
+            "FlextLDAPRepositories.GroupRepository",
+            self._get_service("FlextLDAPRepositories.GroupRepository"),
+        )
 
     def configure(self, settings: FlextLDAPSettings) -> FlextResult[None]:
         """Configure container with LDAP settings.
@@ -130,18 +148,7 @@ class FlextLDAPContainer:
             return FlextResult.fail(f"Configuration failed: {e}")
 
     def _register_services(self, container: FlextContainer) -> FlextResult[None]:
-        """Register LDAP services using FlextServices.ServiceRegistry pattern.
-
-        Uses FlextServices.ServiceRegistry for service registration instead of
-        manual container registration, eliminating code duplication.
-
-        Args:
-            container: The flext-core container (maintained for compatibility)
-
-        Returns:
-            FlextResult[None]: Success or error result
-
-        """
+        """Register LDAP services in container."""
         try:
             # Create service instances using dependency injection pattern
             client = FlextLDAPClient()

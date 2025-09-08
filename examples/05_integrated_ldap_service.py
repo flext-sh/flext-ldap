@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from flext_core import FlextTypes
 
 import asyncio
 import os
@@ -16,7 +17,7 @@ from urllib.parse import urlparse
 
 from flext_core import FlextLogger
 
-from flext_ldap import FlextLDAPApi, FlextLDAPSettings
+from ..flext_ldap import FlextLDAPApi, FlextLDAPSettings
 
 logger = FlextLogger(__name__)
 

@@ -1,9 +1,15 @@
 """Unit tests for FLEXT-LDAP type guard functions.
 
 Tests type guard functions for proper type narrowing and validation.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from flext_core import FlextTypes
 
 from flext_ldap import FlextLDAPTypeGuards, LdapAttributeDict
 
@@ -28,7 +34,7 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_dn_with_invalid_values(self) -> None:
         """Test LDAP DN type guard with invalid values."""
-        invalid_values: list[object] = [
+        invalid_values: FlextTypes.Core.List = [
             None,
             123,
             [],
@@ -145,7 +151,7 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_entry_data_with_invalid_entries(self) -> None:
         """Test LDAP entry data type guard with invalid entry data."""
-        invalid_entries: list[object] = [
+        invalid_entries: FlextTypes.Core.List = [
             None,
             "string",
             123,
@@ -194,7 +200,7 @@ class TestLdapTypeGuards:
 
     def test_is_ldap_search_result_with_invalid_results(self) -> None:
         """Test LDAP search result type guard with invalid search results."""
-        invalid_results: list[object] = [
+        invalid_results: FlextTypes.Core.List = [
             None,
             "string",
             123,

@@ -9,13 +9,17 @@ All custom wrappers have been eliminated in favor of:
 - ldap3 library direct usage
 - flext-core FlextUtilities
 - Pydantic validators
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextTypes
+from flext_core.typings import FlextTypes
 
 logger = FlextLogger(__name__)
 
 # Export only what's actually needed - everything else uses standard libraries
-__all__: list[str] = []
+__all__: FlextTypes.Core.StringList = []

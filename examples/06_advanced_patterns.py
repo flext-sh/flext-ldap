@@ -18,6 +18,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from flext_core import FlextTypes
 
 import asyncio
 from collections.abc import AsyncIterator, Awaitable
@@ -25,7 +26,7 @@ from contextlib import asynccontextmanager
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldap import (
+from ..flext_ldap import (
     FlextLDAPApi,
     FlextLDAPDistinguishedName,
     FlextLDAPEntry,
