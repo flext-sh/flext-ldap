@@ -93,7 +93,8 @@ class TestFlextLDAPApiComprehensiveExpansion:
         # Create entry with problematic values that could cause TypeError/ValueError
         class UnconvertibleObject:
             def __str__(self) -> str:
-                raise ValueError("Cannot convert to string")
+                msg = "Cannot convert to string"
+                raise ValueError(msg)
 
         problematic_entry = {
             "bad_object": [UnconvertibleObject()],

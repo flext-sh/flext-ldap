@@ -14,18 +14,19 @@ from pathlib import Path
 from typing import final, override
 
 import yaml
-
-# MANDATORY: Automatic .env loading - dotenv is always available
-from flext_core import FlextConfig, FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextConfig, FlextResult, FlextTypes
 from pydantic import Field, SecretStr
 from pydantic_settings import SettingsConfigDict
 
 from flext_ldap.connection_config import FlextLDAPConnectionConfig
 from flext_ldap.fields import FlextLDAPFields
 
-yaml_module: object | None = yaml
+# Python 3.13 type aliases for LDAP settings
+type LdapSettingsDict = FlextTypes.Core.Dict
+type LdapConnectionName = str
+type LdapConfigPath = str | Path
 
-logger = FlextLogger(__name__)
+yaml_module: object | None = yaml
 
 
 @final
@@ -35,6 +36,7 @@ class FlextLDAPSettings(FlextConfig):
     Consolidates ALL LDAP configuration including auth, search, logging, and
     connection settings using Pydantic and flext-core patterns.
 
+    Uses Python 3.13 type aliases and final decorator for enhanced type safety.
     No separate config classes, no custom configuration helpers.
     """
 
@@ -296,7 +298,7 @@ class FlextLDAPSettings(FlextConfig):
             "bind_password": bind_password,
             "use_ssl": use_ssl,
         }
-        return cls.model_validate(config_data)
+        return cls.model_validate(config_data)  # type: ignore[attr-defined]
 
     @classmethod
     def from_file(cls, file_path: str) -> FlextResult[FlextLDAPSettings]:
@@ -391,7 +393,7 @@ class FlextLDAPSettings(FlextConfig):
             "enable_debug_mode": True,
             "enable_caching": False,
         }
-        return cls.model_validate(config_data)
+        return cls.model_validate(config_data)  # type: ignore[attr-defined]
 
     @classmethod
     def create_test(cls) -> FlextLDAPSettings:
@@ -414,7 +416,7 @@ class FlextLDAPSettings(FlextConfig):
             "enable_test_mode": True,
             "enable_caching": False,
         }
-        return cls.model_validate(config_data)
+        return cls.model_validate(config_data)  # type: ignore[attr-defined]
 
     @classmethod
     def create_production(cls) -> FlextLDAPSettings:
@@ -440,7 +442,7 @@ class FlextLDAPSettings(FlextConfig):
             "enable_caching": True,
             "cache_ttl": 600,
         }
-        return cls.model_validate(config_data)
+        return cls.model_validate(config_data)  # type: ignore[attr-defined]
 
 
 __all__ = [

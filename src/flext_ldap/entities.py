@@ -1,9 +1,8 @@
-"""LDAP Entities - Single FlextLDAPEntities class following FLEXT patterns.
+"""LDAP Entities - Python 3.13 optimized with advanced Pydantic v2 patterns.
 
 Single class with all LDAP domain entities implementing rich business objects
-organized as internal classes for complete backward compatibility.
-
-
+organized as internal classes with Python 3.13 structural pattern matching,
+type aliases, and Pydantic v2 computed fields for maximum performance.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,15 +20,29 @@ from flext_core import (
     FlextTypes,
     FlextValidations,
 )
-from pydantic import ConfigDict, Field, computed_field, field_validator
+from pydantic import (
+    ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+)
 
 from flext_ldap.constants import FlextLDAPConstants
 from flext_ldap.typings import LdapAttributeDict, LdapAttributeValue
 from flext_ldap.value_objects import FlextLDAPValueObjects
 
-DictEntry = FlextTypes.Core.Dict
-
 logger = FlextLogger(__name__)
+
+# Advanced type aliases using Python 3.13
+type EntityId = str
+type DistinguishedName = str
+type LdapFilter = str
+type SearchScope = Literal["base", "onelevel", "subtree"]
+type AttributeName = str
+type AttributeValueList = list[str]
+type EntityResult[T] = FlextResult[T]
+type EntityStatus = Literal["active", "inactive", "disabled", "pending"]
+type ObjectClassList = list[str]
 
 # =============================================================================
 # SINGLE FLEXT LDAP ENTITIES CLASS - Consolidated entity functionality
@@ -127,10 +140,14 @@ class FlextLDAPEntities:
         @field_validator("filter_str")
         @classmethod
         def validate_filter(cls, v: str) -> str:
-            """Validate filter format with enhanced pattern checking."""
-            if not v.startswith("(") or not v.endswith(")"):
-                msg = "LDAP filter must be enclosed in parentheses"
-                raise ValueError(msg)
+            """Validate filter format using FlextValidations - NO DUPLICATION."""
+            # Use FlextValidations pattern matching for LDAP filter validation
+            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
+                v, r"^\(.+\)$", "LDAP filter must be enclosed in parentheses"
+            )
+            if pattern_result.is_failure:
+                error_msg = f"Filter validation failed: {pattern_result.error}"
+                raise ValueError(error_msg)
             return v
 
         @classmethod
@@ -771,8 +788,6 @@ FlextLDAPEntities.UpdateGroupRequest.model_rebuild()
 # =============================================================================
 
 __all__ = [
-    # Type alias
-    "DictEntry",
     # Primary consolidated class
     "FlextLDAPEntities",
 ]

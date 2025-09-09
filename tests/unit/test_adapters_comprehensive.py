@@ -9,11 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-from flext_core import FlextResult
+import asyncio
 
-from flext_ldap.adapters import FlextLDAPAdapters
-from flext_ldap.clients import FlextLDAPClient
+import pytest
+from flext_core import FlextModels, FlextResult
+
+import flext_ldap.adapters as adapters_module
+from flext_ldap import FlextLDAPAdapters, FlextLDAPClient, FlextLDAPEntities
 
 
 @pytest.fixture
@@ -28,7 +30,7 @@ def test_config() -> FlextLDAPAdapters.ConnectionConfig:
     return FlextLDAPAdapters.ConnectionConfig(
         server="ldap://test.example.com:389",
         bind_dn="cn=admin,dc=test,dc=com",
-        bind_password="test_password"
+        bind_password="test_password",
     )
 
 
@@ -37,8 +39,6 @@ class TestFlextLDAPAdaptersFunctional:
 
     def test_adapters_module_loads_without_errors(self) -> None:
         """Test that adapters module loads completely without import errors."""
-        import flext_ldap.adapters as adapters_module
-
         # Verify module has expected structure
         assert hasattr(adapters_module, "FlextLDAPAdapters")
 
@@ -64,7 +64,7 @@ class TestFlextLDAPAdaptersFunctional:
             "SearchService",
             "EntryService",
             "DirectoryService",
-            "DirectoryAdapter"
+            "DirectoryAdapter",
         ]
 
         for class_name in expected_nested_classes:
@@ -82,10 +82,7 @@ class TestAdapterModels:
         entry = FlextLDAPAdapters.DirectoryEntry(
             id="entry_1",
             dn="cn=test,dc=example,dc=com",
-            attributes={
-                "cn": ["test"],
-                "objectClass": ["person", "top"]
-            }
+            attributes={"cn": ["test"], "objectClass": ["person", "top"]},
         )
 
         assert entry.id == "entry_1"
@@ -99,7 +96,7 @@ class TestAdapterModels:
         config = FlextLDAPAdapters.ConnectionConfig(
             server="ldap://localhost:389",
             bind_dn="cn=admin,dc=example,dc=com",
-            bind_password="password"
+            bind_password="password",
         )
 
         assert config.server == "ldap://localhost:389"
@@ -110,7 +107,7 @@ class TestAdapterModels:
         ssl_config = FlextLDAPAdapters.ConnectionConfig(
             server="ldaps://secure.example.com:636",
             bind_dn="cn=admin,dc=secure,dc=com",
-            bind_password="secure_password"
+            bind_password="secure_password",
         )
 
         assert ssl_config.server == "ldaps://secure.example.com:636"
@@ -125,7 +122,7 @@ class TestAdapterModels:
             bind_dn="cn=admin,dc=example,dc=com",
             bind_password="password",
             operation_type="connect",
-            timeout=30
+            timeout=30,
         )
 
         assert request.server_uri == "ldap://localhost:389"
@@ -138,7 +135,7 @@ class TestAdapterModels:
             server_uri="ldap://test.com:389",
             bind_dn="cn=user,dc=test,dc=com",
             bind_password="test_pass",
-            operation_type="test"
+            operation_type="test",
         )
 
         assert minimal_request.server_uri == "ldap://test.com:389"
@@ -151,7 +148,7 @@ class TestAdapterModels:
             success=True,
             connection_id="conn_12345",
             server_info={"server": "OpenLDAP", "version": "2.4.46"},
-            operation_executed="connection_attempt_2025-01-01"
+            operation_executed="connection_attempt_2025-01-01",
         )
 
         assert success_result.success is True
@@ -164,7 +161,7 @@ class TestAdapterModels:
             success=False,
             connection_id=None,
             server_info=None,
-            operation_executed="connection_failed_2025-01-01"
+            operation_executed="connection_failed_2025-01-01",
         )
 
         assert failed_result.success is False
@@ -180,7 +177,7 @@ class TestAdapterModels:
             scope="subtree",
             attributes=["uid", "cn", "mail"],
             size_limit=100,
-            time_limit=30
+            time_limit=30,
         )
 
         assert search_request.base_dn == "ou=users,dc=example,dc=com"
@@ -191,8 +188,7 @@ class TestAdapterModels:
 
         # Test minimal search request
         minimal_search = FlextLDAPAdapters.SearchRequest(
-            base_dn="dc=example,dc=com",
-            filter_str="(objectClass=*)"
+            base_dn="dc=example,dc=com", filter_str="(objectClass=*)"
         )
 
         assert minimal_search.base_dn == "dc=example,dc=com"
@@ -201,7 +197,6 @@ class TestAdapterModels:
     def test_search_result_model_functionality(self) -> None:
         """Test SearchResult model for search operation results."""
         # Create proper Entry objects
-        from flext_ldap.entities import FlextLDAPEntities
 
         entry1 = FlextLDAPEntities.Entry(
             id="entry_1",
@@ -209,8 +204,8 @@ class TestAdapterModels:
             attributes={
                 "cn": ["User One"],
                 "uid": ["user1"],
-                "mail": ["user1@example.com"]
-            }
+                "mail": ["user1@example.com"],
+            },
         )
 
         entry2 = FlextLDAPEntities.Entry(
@@ -219,15 +214,15 @@ class TestAdapterModels:
             attributes={
                 "cn": ["User Two"],
                 "uid": ["user2"],
-                "mail": ["user2@example.com"]
-            }
+                "mail": ["user2@example.com"],
+            },
         )
 
         # Test search result with proper entries
         search_result = FlextLDAPAdapters.SearchResult(
             entries=[entry1, entry2],
             total_count=2,
-            search_executed="2025-01-01 12:00:00"
+            search_executed="2025-01-01 12:00:00",
         )
 
         assert len(search_result.entries) == 2
@@ -240,17 +235,24 @@ class TestAdapterModels:
 class TestOperationExecutor:
     """Test OperationExecutor base class functionality."""
 
-    def test_operation_executor_instantiation(self, test_client: FlextLDAPClient) -> None:
+    def test_operation_executor_instantiation(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test OperationExecutor base class can be instantiated."""
         executor = FlextLDAPAdapters.OperationExecutor(test_client)
         assert executor is not None
 
         # Test that executor has expected methods
-        executor_methods = [method for method in dir(executor)
-                           if not method.startswith("_") and callable(getattr(executor, method))]
+        executor_methods = [
+            method
+            for method in dir(executor)
+            if not method.startswith("_") and callable(getattr(executor, method))
+        ]
         assert len(executor_methods) >= 0  # Should have some public methods
 
-    def test_operation_executor_serviceprocessor_integration(self, test_client: FlextLDAPClient) -> None:
+    def test_operation_executor_serviceprocessor_integration(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test OperationExecutor ServiceProcessor integration patterns."""
         executor = FlextLDAPAdapters.OperationExecutor(test_client)
 
@@ -265,10 +267,12 @@ class TestConnectionService:
     def test_connection_service_instantiation(
         self,
         test_client: FlextLDAPClient,
-        test_config: FlextLDAPAdapters.ConnectionConfig
+        test_config: FlextLDAPAdapters.ConnectionConfig,
     ) -> None:
         """Test ConnectionService creation and basic functionality."""
-        connection_service = FlextLDAPAdapters.ConnectionService(test_client, test_config)
+        connection_service = FlextLDAPAdapters.ConnectionService(
+            test_client, test_config
+        )
         assert connection_service is not None
 
         # Verify inheritance from OperationExecutor
@@ -277,14 +281,20 @@ class TestConnectionService:
     def test_connection_service_methods_existence(
         self,
         test_client: FlextLDAPClient,
-        test_config: FlextLDAPAdapters.ConnectionConfig
+        test_config: FlextLDAPAdapters.ConnectionConfig,
     ) -> None:
         """Test ConnectionService has expected methods for connection operations."""
-        connection_service = FlextLDAPAdapters.ConnectionService(test_client, test_config)
+        connection_service = FlextLDAPAdapters.ConnectionService(
+            test_client, test_config
+        )
 
         # Test that service has connection-related methods
-        service_methods = [method for method in dir(connection_service)
-                          if not method.startswith("_") and callable(getattr(connection_service, method))]
+        service_methods = [
+            method
+            for method in dir(connection_service)
+            if not method.startswith("_")
+            and callable(getattr(connection_service, method))
+        ]
 
         # Should have public methods for connection operations
         assert len(service_methods) >= 0
@@ -301,13 +311,18 @@ class TestSearchService:
         # Verify inheritance from OperationExecutor
         assert isinstance(search_service, FlextLDAPAdapters.OperationExecutor)
 
-    def test_search_service_methods_existence(self, test_client: FlextLDAPClient) -> None:
+    def test_search_service_methods_existence(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test SearchService has expected methods for search operations."""
         search_service = FlextLDAPAdapters.SearchService(test_client)
 
         # Test that service has search-related methods
-        service_methods = [method for method in dir(search_service)
-                          if not method.startswith("_") and callable(getattr(search_service, method))]
+        service_methods = [
+            method
+            for method in dir(search_service)
+            if not method.startswith("_") and callable(getattr(search_service, method))
+        ]
 
         # Should have public methods for search operations
         assert len(service_methods) >= 0
@@ -329,8 +344,11 @@ class TestEntryService:
         entry_service = FlextLDAPAdapters.EntryService(test_client)
 
         # Test that service has entry CRUD methods
-        service_methods = [method for method in dir(entry_service)
-                          if not method.startswith("_") and callable(getattr(entry_service, method))]
+        service_methods = [
+            method
+            for method in dir(entry_service)
+            if not method.startswith("_") and callable(getattr(entry_service, method))
+        ]
 
         # Should have methods for entry operations
         assert len(service_methods) >= 0
@@ -339,23 +357,33 @@ class TestEntryService:
 class TestDirectoryService:
     """Test DirectoryService high-level directory operations."""
 
-    def test_directory_service_instantiation(self, test_client: FlextLDAPClient) -> None:
+    def test_directory_service_instantiation(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test DirectoryService creation and basic functionality."""
         directory_service = FlextLDAPAdapters.DirectoryService(test_client)
         assert directory_service is not None
 
-    def test_directory_service_comprehensive_operations(self, test_client: FlextLDAPClient) -> None:
+    def test_directory_service_comprehensive_operations(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test DirectoryService comprehensive LDAP operations."""
         directory_service = FlextLDAPAdapters.DirectoryService(test_client)
 
         # Test that service has directory operation methods
-        service_methods = [method for method in dir(directory_service)
-                          if not method.startswith("_") and callable(getattr(directory_service, method))]
+        service_methods = [
+            method
+            for method in dir(directory_service)
+            if not method.startswith("_")
+            and callable(getattr(directory_service, method))
+        ]
 
         # Should have methods for comprehensive directory operations
         assert len(service_methods) >= 0
 
-    def test_directory_service_integration_patterns(self, test_client: FlextLDAPClient) -> None:
+    def test_directory_service_integration_patterns(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test DirectoryService integration with other adapter components."""
         directory_service = FlextLDAPAdapters.DirectoryService(test_client)
 
@@ -367,23 +395,33 @@ class TestDirectoryService:
 class TestDirectoryAdapter:
     """Test DirectoryAdapter main orchestration class."""
 
-    def test_directory_adapter_instantiation(self, test_client: FlextLDAPClient) -> None:
+    def test_directory_adapter_instantiation(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test DirectoryAdapter creation and basic functionality."""
         directory_adapter = FlextLDAPAdapters.DirectoryAdapter(test_client)
         assert directory_adapter is not None
 
-    def test_directory_adapter_orchestration_capability(self, test_client: FlextLDAPClient) -> None:
+    def test_directory_adapter_orchestration_capability(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test DirectoryAdapter orchestrates all LDAP operations."""
         directory_adapter = FlextLDAPAdapters.DirectoryAdapter(test_client)
 
         # Test that adapter has orchestration methods
-        adapter_methods = [method for method in dir(directory_adapter)
-                          if not method.startswith("_") and callable(getattr(directory_adapter, method))]
+        adapter_methods = [
+            method
+            for method in dir(directory_adapter)
+            if not method.startswith("_")
+            and callable(getattr(directory_adapter, method))
+        ]
 
         # Should have methods for orchestrating LDAP operations
         assert len(adapter_methods) >= 0
 
-    def test_directory_adapter_component_integration(self, test_client: FlextLDAPClient) -> None:
+    def test_directory_adapter_component_integration(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test DirectoryAdapter integration with all adapter components."""
         directory_adapter = FlextLDAPAdapters.DirectoryAdapter(test_client)
 
@@ -411,13 +449,10 @@ class TestAdapterIntegration:
     def test_adapters_follow_flext_core_patterns(self) -> None:
         """Test adapters follow flext-core architectural patterns."""
         # Test FlextModels usage
-        from flext_core import FlextModels
 
         # Verify DirectoryEntry uses FlextModels.Entity
         entry = FlextLDAPAdapters.DirectoryEntry(
-            id="test_id",
-            dn="cn=test,dc=example,dc=com",
-            attributes={}
+            id="test_id", dn="cn=test,dc=example,dc=com", attributes={}
         )
         assert isinstance(entry, FlextModels.Entity)
 
@@ -425,7 +460,7 @@ class TestAdapterIntegration:
         config = FlextLDAPAdapters.ConnectionConfig(
             server="ldap://test.com:389",
             bind_dn="cn=admin,dc=test,dc=com",
-            bind_password="test"
+            bind_password="test",
         )
         assert isinstance(config, FlextModels.Value)
 
@@ -437,7 +472,7 @@ class TestAdapterIntegration:
             FlextLDAPAdapters.DirectoryEntry(
                 id="",  # Empty ID should potentially cause validation issues
                 dn="invalid-dn-format",
-                attributes="not-a-dict"  # Invalid type
+                attributes="not-a-dict",  # Invalid type
             )
         except Exception:
             # Validation error expected for invalid data
@@ -449,7 +484,7 @@ class TestAdapterIntegration:
         test_config = FlextLDAPAdapters.ConnectionConfig(
             server="ldap://test.com:389",
             bind_dn="cn=admin,dc=test,dc=com",
-            bind_password="test"
+            bind_password="test",
         )
         components = [
             FlextLDAPAdapters.OperationExecutor(test_client),
@@ -457,14 +492,17 @@ class TestAdapterIntegration:
             FlextLDAPAdapters.SearchService(test_client),
             FlextLDAPAdapters.EntryService(test_client),
             FlextLDAPAdapters.DirectoryService(test_client),
-            FlextLDAPAdapters.DirectoryAdapter(test_client)
+            FlextLDAPAdapters.DirectoryAdapter(test_client),
         ]
 
         for component in components:
             assert component is not None
             # Each component should have some methods
-            component_methods = [method for method in dir(component)
-                                if not method.startswith("_") and callable(getattr(component, method))]
+            component_methods = [
+                method
+                for method in dir(component)
+                if not method.startswith("_") and callable(getattr(component, method))
+            ]
             assert len(component_methods) >= 0
 
 
@@ -481,17 +519,17 @@ class TestAdapterErrorHandling:
                 "valid_data": {
                     "server": "ldap://valid.host.com:389",
                     "bind_dn": "cn=admin,dc=example,dc=com",
-                    "bind_password": "password"
-                }
+                    "bind_password": "password",
+                },
             },
             # SearchRequest validation
             {
                 "model": FlextLDAPAdapters.SearchRequest,
                 "valid_data": {
                     "base_dn": "dc=example,dc=com",
-                    "filter_str": "(objectClass=*)"
-                }
-            }
+                    "filter_str": "(objectClass=*)",
+                },
+            },
         ]
 
         for test_case in test_cases:
@@ -508,58 +546,61 @@ class TestAdapterErrorHandling:
         test_config = FlextLDAPAdapters.ConnectionConfig(
             server="ldap://test.com:389",
             bind_dn="cn=admin,dc=test,dc=com",
-            bind_password="test"
+            bind_password="test",
         )
         services = [
             FlextLDAPAdapters.ConnectionService(test_client, test_config),
             FlextLDAPAdapters.SearchService(test_client),
             FlextLDAPAdapters.EntryService(test_client),
             FlextLDAPAdapters.DirectoryService(test_client),
-            FlextLDAPAdapters.DirectoryAdapter(test_client)
+            FlextLDAPAdapters.DirectoryAdapter(test_client),
         ]
 
         for service in services:
             assert service is not None
             # Services should handle initialization without errors
-            service_class_name = service.__class__.__name__
 
     # HIGH-IMPACT COVERAGE TESTS - TARGETING LARGE UNCOVERED GAPS
-    
+
     @pytest.mark.asyncio
-    async def test_connection_operation_types_comprehensive(self, test_client: FlextLDAPClient) -> None:
+    async def test_connection_operation_types_comprehensive(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test connection operation types - covers lines 200-214."""
         connection_service = FlextLDAPAdapters.ConnectionService(
-            client=test_client, 
+            client=test_client,
             config=FlextLDAPAdapters.ConnectionConfig(
                 server="ldap://test.example.com:389",
-                bind_dn="cn=admin,dc=test,dc=com", 
-                bind_password="test_password"
-            )
+                bind_dn="cn=admin,dc=test,dc=com",
+                bind_password="test_password",
+            ),
         )
-        
+
         # Create connection requests for different operation types
         operation_types = ["test", "connect", "bind", "terminate"]
-        
+
         for op_type in operation_types:
             connection_request = FlextLDAPAdapters.ConnectionRequest(
                 operation_type=op_type,
                 server_uri="ldap://test.com:389",
                 bind_dn="cn=admin,dc=test",
-                bind_password="password"
+                bind_password="password",
             )
-            
+
             # Test operation execution (covers lines 200-214)
             result = await connection_service.execute_with_processor(connection_request)
-            
+
             # Should return FlextResult (may succeed or fail, both exercise the code paths)
             assert isinstance(result, FlextResult)
             # All operation types should be handled (including unknown/default case)
 
     @pytest.mark.asyncio
-    async def test_search_results_processing_comprehensive(self, test_client: FlextLDAPClient) -> None:
+    async def test_search_results_processing_comprehensive(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test search results processing - covers lines 457-497."""
         search_service = FlextLDAPAdapters.SearchService(test_client)
-        
+
         # Create comprehensive mock search results with various data structures
         mock_search_results = [
             {
@@ -567,42 +608,44 @@ class TestAdapterErrorHandling:
                 "cn": ["User One"],
                 "uid": ["user1"],
                 "mail": ["user1@example.com"],
-                "objectClass": ["person", "organizationalPerson"]
+                "objectClass": ["person", "organizationalPerson"],
             },
             {
                 "dn": ["cn=user2,ou=users,dc=example,dc=com"],  # DN as list
                 "cn": "User Two",  # Single value (not list)
                 "employeeNumber": ["12345"],
                 "description": None,  # None value
-                "department": ["IT", "Engineering"]  # Multiple values
+                "department": ["IT", "Engineering"],  # Multiple values
             },
             {
                 "dn": "",  # Empty DN
                 "objectClass": ["organizationalUnit"],
-                "ou": ["Empty DN Test"]
+                "ou": ["Empty DN Test"],
             },
             {
                 # No DN field
                 "cn": ["No DN User"],
-                "uid": ["nodnduser"]
-            }
+                "uid": ["nodnduser"],
+            },
         ]
-        
+
         # Test results processing (covers lines 457-497 - entry conversion logic)
-        if hasattr(search_service, '_process_search_results'):
+        if hasattr(search_service, "_process_search_results"):
             processed = search_service._process_search_results(mock_search_results)
             assert isinstance(processed, list)
-        elif hasattr(search_service, 'process_results'):
+        elif hasattr(search_service, "process_results"):
             processed = search_service.process_results(mock_search_results)
             assert isinstance(processed, list)
         else:
             # Test alternative processing methods if they exist
             pass  # Method exercises the code paths for coverage
 
-    async def test_entry_processing_edge_cases(self, test_client: FlextLDAPClient) -> None:
+    async def test_entry_processing_edge_cases(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test entry processing edge cases - covers lines 460-490."""
         entry_service = FlextLDAPAdapters.EntryService(test_client)
-        
+
         # Test various entry data formats that exercise processing logic
         edge_case_entries = [
             # Entry with complex attribute types
@@ -613,42 +656,44 @@ class TestAdapterErrorHandling:
                 "single_attr": "single_value",
                 "numeric_attr": 12345,  # Numeric value
                 "empty_attr": "",
-                "null_attr": None
+                "null_attr": None,
             },
             # Entry with special characters in DN
             {
                 "dn": "cn=Special User+sn=Test,ou=users,dc=example,dc=com",
                 "cn": ["Special User"],
-                "specialChars": ["àáâãäå", "çñ", "ßæøå"]
+                "specialChars": ["àáâãäå", "çñ", "ßæøå"],
             },
             # Entry with very long values
             {
                 "dn": "cn=longvalues,dc=test",
                 "longText": ["a" * 1000],  # Very long text
-                "manyValues": [f"value{i}" for i in range(50)]  # Many values
-            }
+                "manyValues": [f"value{i}" for i in range(50)],  # Many values
+            },
         ]
-        
+
         # Process each edge case (exercises attribute conversion logic)
         for entry_data in edge_case_entries:
-            if hasattr(entry_service, 'process_entry'):
+            if hasattr(entry_service, "process_entry"):
                 result = entry_service.process_entry(entry_data)
                 # Method should handle edge cases gracefully
                 assert result is not None or result is None
 
     @pytest.mark.asyncio
-    async def test_directory_service_operations_comprehensive(self, test_client: FlextLDAPClient) -> None:
+    async def test_directory_service_operations_comprehensive(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test directory service operations - covers lines 511-540."""
         directory_service = FlextLDAPAdapters.DirectoryService(test_client)
-        
+
         # Test various directory operations if they exist
         directory_operations = [
             ("list_entries", "ou=users,dc=test"),
             ("get_entry", "cn=testuser,dc=test"),
             ("validate_dn", "cn=test,dc=example,dc=com"),
-            ("check_permissions", "ou=groups,dc=test")
+            ("check_permissions", "ou=groups,dc=test"),
         ]
-        
+
         for operation_name, test_data in directory_operations:
             if hasattr(directory_service, operation_name):
                 try:
@@ -663,22 +708,24 @@ class TestAdapterErrorHandling:
                     # Even exceptions exercise the code paths for coverage
                     pass
 
-    @pytest.mark.asyncio  
-    async def test_adapter_integration_comprehensive(self, test_client: FlextLDAPClient) -> None:
+    @pytest.mark.asyncio
+    async def test_adapter_integration_comprehensive(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test adapter integration - covers lines 660-684, 691-715."""
         directory_adapter = FlextLDAPAdapters.DirectoryAdapter(test_client)
-        
+
         # Test adapter integration patterns
         integration_operations = [
             "initialize_connection",
-            "validate_configuration", 
+            "validate_configuration",
             "test_connectivity",
             "get_server_info",
             "check_schema",
             "list_namespaces",
-            "validate_credentials"
+            "validate_credentials",
         ]
-        
+
         for operation in integration_operations:
             if hasattr(directory_adapter, operation):
                 try:
@@ -701,22 +748,22 @@ class TestAdapterErrorHandling:
             {
                 "server": "ldap://valid.example.com:389",
                 "bind_dn": "cn=admin,dc=test,dc=com",
-                "bind_password": "valid_password"
+                "bind_password": "valid_password",
             },
             # LDAPS configuration
             {
-                "server": "ldaps://secure.example.com:636", 
+                "server": "ldaps://secure.example.com:636",
                 "bind_dn": "cn=admin,dc=secure,dc=com",
-                "bind_password": "secure_password"
+                "bind_password": "secure_password",
             },
             # Configuration with port variations
             {
                 "server": "ldap://custom.example.com:1389",
                 "bind_dn": "uid=admin,dc=custom,dc=org",
-                "bind_password": "custom_pass"
-            }
+                "bind_password": "custom_pass",
+            },
         ]
-        
+
         for config_data in config_scenarios:
             try:
                 config = FlextLDAPAdapters.ConnectionConfig(**config_data)
@@ -728,39 +775,44 @@ class TestAdapterErrorHandling:
                 # Even validation failures provide coverage
                 pass
 
-    async def test_service_error_exception_handling(self, test_client: FlextLDAPClient) -> None:
-        """Test service exception handling - covers lines 333-340, 346-353.""" 
+    async def test_service_error_exception_handling(
+        self, test_client: FlextLDAPClient
+    ) -> None:
+        """Test service exception handling - covers lines 333-340, 346-353."""
         # Create services for testing exception handling
         services = [
             FlextLDAPAdapters.ConnectionService(
                 test_client,
                 FlextLDAPAdapters.ConnectionConfig(
                     server="ldap://error.test:389",
-                    bind_dn="cn=admin,dc=error", 
-                    bind_password="error_pass"
-                )
+                    bind_dn="cn=admin,dc=error",
+                    bind_password="error_pass",
+                ),
             ),
             FlextLDAPAdapters.SearchService(test_client),
-            FlextLDAPAdapters.EntryService(test_client)
+            FlextLDAPAdapters.EntryService(test_client),
         ]
-        
+
         # Test exception handling in various service operations
         for service in services:
-            service_methods = [attr for attr in dir(service) 
-                             if not attr.startswith('_') and callable(getattr(service, attr))]
-            
+            service_methods = [
+                attr
+                for attr in dir(service)
+                if not attr.startswith("_") and callable(getattr(service, attr))
+            ]
+
             for method_name in service_methods[:3]:  # Test first few methods
                 try:
                     method = getattr(service, method_name)
                     if asyncio.iscoroutinefunction(method):
                         # Try calling with invalid parameters to trigger exception handling
                         try:
-                            result = await method(None)  # Invalid parameter
+                            await method(None)  # Invalid parameter
                         except Exception:
                             pass  # Exception handling code path exercised
                     else:
                         try:
-                            result = method(None)  # Invalid parameter
+                            method(None)  # Invalid parameter
                         except Exception:
                             pass  # Exception handling code path exercised
                 except Exception:
@@ -772,21 +824,18 @@ class TestAdapterErrorHandling:
         # Test edge cases for adapter models
         model_edge_cases = [
             # DirectoryEntry with minimal data
-            {
-                "dn": "cn=minimal,dc=test",
-                "attributes": {}
-            },
+            {"dn": "cn=minimal,dc=test", "attributes": {}},
             # DirectoryEntry with complex attributes
             {
                 "dn": "cn=complex,ou=users,dc=example,dc=com",
                 "attributes": {
                     "objectClass": ["person", "organizationalPerson"],
                     "cn": ["Complex User"],
-                    "description": ["Multi-line\nDescription\nWith\nBreaks"]
-                }
-            }
+                    "description": ["Multi-line\nDescription\nWith\nBreaks"],
+                },
+            },
         ]
-        
+
         for case_data in model_edge_cases:
             try:
                 # Test DirectoryEntry creation with edge case data
@@ -797,32 +846,30 @@ class TestAdapterErrorHandling:
                 # Validation failures also provide coverage
                 pass
 
-    async def test_search_scope_and_filter_processing(self, test_client: FlextLDAPClient) -> None:
+    async def test_search_scope_and_filter_processing(
+        self, test_client: FlextLDAPClient
+    ) -> None:
         """Test search scope and filter processing - covers lines 574-584."""
         search_service = FlextLDAPAdapters.SearchService(test_client)
-        
+
         # Test various search configurations
         search_configurations = [
+            {"base_dn": "dc=test,dc=com", "filter": "(objectClass=*)", "scope": "base"},
             {
-                "base_dn": "dc=test,dc=com",
-                "filter": "(objectClass=*)",
-                "scope": "base"
-            },
-            {
-                "base_dn": "ou=users,dc=example,dc=com", 
+                "base_dn": "ou=users,dc=example,dc=com",
                 "filter": "(&(objectClass=person)(uid=*))",
-                "scope": "subtree"
+                "scope": "subtree",
             },
             {
                 "base_dn": "ou=groups,dc=test",
                 "filter": "(|(cn=admin*)(cn=user*))",
-                "scope": "onelevel"
-            }
+                "scope": "onelevel",
+            },
         ]
-        
+
         for search_config in search_configurations:
             # Test search configuration processing if methods exist
-            if hasattr(search_service, 'process_search_config'):
+            if hasattr(search_service, "process_search_config"):
                 try:
                     result = search_service.process_search_config(search_config)
                     # Should process configuration (covers processing logic)

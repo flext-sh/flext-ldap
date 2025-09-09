@@ -44,7 +44,7 @@ class TestFlextLDAPUtilities:
         # Module should be minimal - no custom utility functions
         # (Following the mandate to use standard libraries instead)
         module_attrs = [attr for attr in dir(utilities_module)
-                       if not attr.startswith("_") and attr not in ["logger", "FlextLogger", "FlextTypes", "annotations"]]
+                       if not attr.startswith("_") and attr not in {"logger", "FlextLogger", "FlextTypes", "annotations"}]
 
         # Should have minimal custom attributes beyond imports and logger
         assert len(module_attrs) == 0  # Only imports, logger and internals

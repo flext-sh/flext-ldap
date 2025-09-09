@@ -537,29 +537,29 @@ class TestFlextLDAPClientComprehensive:
             )
 
     # HIGH-IMPACT COVERAGE TESTS - TARGETING UNCOVERED AREAS
-    
+
     async def test_bind_without_connection_comprehensive(self) -> None:
         """Test bind operation without established connection."""
         client = FlextLDAPClient()
-        
+
         # Test bind without connection
         result = await client.bind("cn=admin,dc=test,dc=com", "password")
-        
+
         # Should fail gracefully
         assert not result.is_success
         assert "not connected" in result.error.lower() or "no connection" in result.error.lower()
-    
+
     async def test_ssl_tls_connection_configuration(self) -> None:
         """Test SSL/TLS connection configuration - covers SSL setup paths."""
         client = FlextLDAPClient()
-        
+
         # Test LDAPS connection (SSL)
         result = await client.connect(
-            "ldaps://localhost:636", 
-            "cn=admin,dc=test,dc=com", 
+            "ldaps://localhost:636",
+            "cn=admin,dc=test,dc=com",
             "password"
         )
-        
+
         # Should attempt SSL connection (will fail without server but exercises SSL code)
         assert isinstance(result, FlextResult)
         if not result.is_success:
@@ -569,25 +569,25 @@ class TestFlextLDAPClientComprehensive:
     async def test_search_strategy_execution_comprehensive(self) -> None:
         """Test search strategy execution - covers strategy pattern code paths."""
         client = FlextLDAPClient()
-        
+
         search_request = FlextLDAPEntities.SearchRequest(
             base_dn="ou=users,dc=example,dc=com",
-            filter_str="(&(objectClass=person)(uid=test*))", 
+            filter_str="(&(objectClass=person)(uid=test*))",
             scope="subtree",
             attributes=["cn", "uid", "mail", "objectClass"],
             size_limit=50
         )
-        
+
         # Test search without connection (exercises strategy failure path)
         result = await client.search(search_request)
-        
+
         assert not result.is_success
         assert "not connected" in result.error.lower() or "no connection" in result.error.lower()
 
     async def test_search_with_all_attributes_wildcard(self) -> None:
         """Test search with ALL_ATTRIBUTES wildcard - covers attribute handling."""
         client = FlextLDAPClient()
-        
+
         search_request = FlextLDAPEntities.SearchRequest(
             base_dn="dc=test,dc=com",
             filter_str="(objectClass=*)",
@@ -595,9 +595,9 @@ class TestFlextLDAPClientComprehensive:
             attributes=["*"],  # All attributes
             size_limit=10
         )
-        
+
         result = await client.search(search_request)
-        
+
         # Should fail without connection but exercises attribute processing
         assert not result.is_success
         assert "connected" in result.error.lower()
@@ -605,7 +605,7 @@ class TestFlextLDAPClientComprehensive:
     async def test_add_operation_comprehensive_attributes(self) -> None:
         """Test add operation with complex attributes - covers add functionality."""
         client = FlextLDAPClient()
-        
+
         # Complex attribute dictionary
         complex_attributes: LdapAttributeDict = {
             "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
@@ -619,9 +619,9 @@ class TestFlextLDAPClientComprehensive:
             "employeeNumber": "EMP-12345",
             "departmentNumber": ["IT", "Engineering"]
         }
-        
+
         result = await client.add("cn=testcomplex,ou=users,dc=test,dc=com", complex_attributes)
-        
+
         # Should fail without connection but exercises attribute processing
         assert not result.is_success
         assert "not connected" in result.error.lower()
@@ -629,8 +629,8 @@ class TestFlextLDAPClientComprehensive:
     async def test_modify_operation_comprehensive(self) -> None:
         """Test modify operation with various modification types."""
         client = FlextLDAPClient()
-        
-        # Test various modification scenarios  
+
+        # Test various modification scenarios
         modifications: LdapAttributeDict = {
             "description": "Updated description",
             "mail": "newemail@example.com",
@@ -638,27 +638,27 @@ class TestFlextLDAPClientComprehensive:
             "title": "Senior Developer",
             "departmentNumber": "Engineering"
         }
-        
+
         result = await client.modify("cn=testuser,ou=users,dc=test,dc=com", modifications)
-        
+
         # Should fail without connection but exercises modification logic
-        assert not result.is_success  
+        assert not result.is_success
         assert "not connected" in result.error.lower()
 
     async def test_delete_operation_error_scenarios(self) -> None:
         """Test delete operation error scenarios - covers error handling paths."""
         client = FlextLDAPClient()
-        
+
         # Test delete various DN formats
         test_dns = [
             "cn=testuser,ou=users,dc=test,dc=com",
-            "uid=testuid,ou=people,dc=example,dc=org", 
+            "uid=testuid,ou=people,dc=example,dc=org",
             "ou=testou,dc=test,dc=com"
         ]
-        
+
         for dn in test_dns:
             result = await client.delete(dn)
-            
+
             # Should fail without connection but exercises delete validation
             assert not result.is_success
             assert "not connected" in result.error.lower()
@@ -666,42 +666,42 @@ class TestFlextLDAPClientComprehensive:
     def test_client_destructor_cleanup(self) -> None:
         """Test client destructor and cleanup - covers __del__ method."""
         client = FlextLDAPClient()
-        
+
         # Set up mock connection state
         client._connection = None  # Simulate disconnected state
         client._server = None
-        
+
         # Test destructor doesn't raise exceptions
         try:
             # This should execute cleanly
             client.__del__()
-        except Exception as e:
+        except Exception:
             # __del__ should handle exceptions gracefully
             pass  # Destructor cleanup should be safe
 
     async def test_connection_state_consistency(self) -> None:
         """Test connection state consistency across operations."""
         client = FlextLDAPClient()
-        
+
         # Verify initial state
         assert not client.is_connected
         assert client._connection is None
         assert client._server is None
-        
+
         # Test state after failed connection attempt
-        result = await client.connect("ldap://nonexistent.example.com:389", "cn=admin", "pass")
-        
+        await client.connect("ldap://nonexistent.example.com:389", "cn=admin", "pass")
+
         # Connection should still be None after failure
         assert not client.is_connected
-        assert client._connection is None or not getattr(client._connection, 'bound', True)
+        assert client._connection is None or not getattr(client._connection, "bound", True)
 
     async def test_unbind_without_connection(self) -> None:
-        """Test unbind operation when no connection exists.""" 
+        """Test unbind operation when no connection exists."""
         client = FlextLDAPClient()
-        
+
         # Test unbind without connection
         result = await client.unbind()
-        
+
         # Should handle gracefully (no-op when not connected)
         assert result.is_success or not result.is_success  # Both outcomes acceptable
         assert not client.is_connected
@@ -709,17 +709,12 @@ class TestFlextLDAPClientComprehensive:
     async def test_error_propagation_consistency(self) -> None:
         """Test consistent error propagation across all operations."""
         client = FlextLDAPClient()
-        
+
         # Test all operations return FlextResult with consistent error format
         operations_results = []
-        
-        operations_results.append(await client.bind("cn=test", "pass"))
-        operations_results.append(await client.search(FlextLDAPEntities.SearchRequest(
-            base_dn="dc=test", filter_str="(objectClass=*)", scope="base")))
-        operations_results.append(await client.add("cn=test", {"cn": "test"}))
-        operations_results.append(await client.modify("cn=test", {"description": "test"}))
-        operations_results.append(await client.delete("cn=test"))
-        
+
+        operations_results.extend((await client.bind("cn=test", "pass"), await client.search(FlextLDAPEntities.SearchRequest(base_dn="dc=test", filter_str="(objectClass=*)", scope="base")), await client.add("cn=test", {"cn": "test"}), await client.modify("cn=test", {"description": "test"}), await client.delete("cn=test")))
+
         # All should be FlextResult objects with errors
         for result in operations_results:
             assert isinstance(result, FlextResult)

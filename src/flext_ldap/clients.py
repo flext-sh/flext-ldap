@@ -3,7 +3,6 @@
 Implements connection management and basic LDAP operations using ldap3,
 with strategy classes for search execution, entry conversion and response build.
 
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -12,21 +11,27 @@ from __future__ import annotations
 
 import contextlib
 import ssl
-from typing import TYPE_CHECKING, Literal, cast
+from typing import Literal, cast
 from urllib.parse import urlparse
 
 import ldap3
-from flext_core import FlextLogger, FlextResult, FlextTypes
+from flext_core import (
+    FlextMixins,
+    FlextProtocols,
+    FlextResult,
+    FlextTypes,
+)
 from ldap3 import ALL_ATTRIBUTES, BASE, LEVEL, SUBTREE, Connection
 from ldap3.core.exceptions import LDAPException
 
 from flext_ldap.entities import FlextLDAPEntities
+from flext_ldap.typings import LdapAttributeDict
 
-if TYPE_CHECKING:
-    from flext_ldap.typings import LdapAttributeDict
+# Python 3.13 type aliases
+type LdapConnectionResult = FlextResult[Connection]
+type SearchResultDict = FlextTypes.Core.Dict
 
-
-logger = FlextLogger(__name__)
+# FlextLogger available via FlextMixins.Service inheritance
 
 # Valid LDAP scope literals for ldap3
 LdapScope = Literal["BASE", "LEVEL", "SUBTREE"]
@@ -189,10 +194,14 @@ class LDAPSearchStrategies:
 # =============================================================================
 
 
-class FlextLDAPClient:
-    """LDAP client with connection and operation methods."""
+class FlextLDAPClient(
+    FlextMixins.Service, FlextProtocols.Infrastructure.LdapConnection
+):
+    """LDAP client implementing FlextProtocols.Infrastructure.LdapConnection with FlextMixins.Service."""
 
     def __init__(self) -> None:
+        # Initialize FlextMixins.Service for logging capabilities
+        super().__init__()
         self._connection: Connection | None = None
         self._server: ldap3.Server | None = None
 
@@ -235,22 +244,25 @@ class FlextLDAPClient:
             if not self._connection.bound:
                 return FlextResult.fail("Failed to bind to LDAP server")
 
-            logger.info(
+            self.log_info(
                 "Connected to LDAP server",
-                extra={"uri": uri, "bind_dn": bind_dn},
+                uri=uri,
+                bind_dn=bind_dn,
             )
             return FlextResult.ok(None)
 
         except LDAPException as e:
-            logger.exception(
+            self.log_error(
                 "LDAP connection failed",
-                extra={"error": str(e), "uri": uri},
+                error=str(e),
+                uri=uri,
             )
             return FlextResult.fail(f"LDAP connection failed: {e}")
         except Exception as e:
-            logger.exception(
+            self.log_error(
                 "Unexpected connection error",
-                extra={"error": str(e), "uri": uri},
+                error=str(e),
+                uri=uri,
             )
             return FlextResult.fail(f"Connection error: {e}")
 
@@ -274,14 +286,14 @@ class FlextLDAPClient:
                 )
                 return FlextResult.fail(f"Bind failed: {error_message}")
 
-            logger.debug("Bind successful", extra={"dn": dn})
+            self.log_info("Bind successful", dn=dn)
             return FlextResult.ok(None)
 
         except LDAPException as e:
-            logger.exception("LDAP bind failed", extra={"error": str(e), "dn": dn})
+            self.log_error("LDAP bind failed", error=str(e), dn=dn)
             return FlextResult.fail(f"Bind failed: {e}")
         except Exception as e:
-            logger.exception("Unexpected bind error", extra={"error": str(e), "dn": dn})
+            self.log_error("Unexpected bind error", error=str(e), dn=dn)
             return FlextResult.fail(f"Bind error: {e}")
 
     async def unbind(self) -> FlextResult[None]:
@@ -301,17 +313,16 @@ class FlextLDAPClient:
             self._connection = None
             self._server = None
 
-            logger.debug("Unbound from LDAP server")
+            self.log_info("Unbound from LDAP server")
             return FlextResult.ok(None)
 
         except LDAPException as e:
-            logger.exception("LDAP unbind failed", extra={"error": str(e)})
+            self.log_error("LDAP unbind failed", error=str(e))
             return FlextResult.fail(f"Unbind failed: {e}")
         except Exception as e:
-            logger.exception("Unexpected unbind error", extra={"error": str(e)})
+            self.log_error("Unexpected unbind error", error=str(e))
             return FlextResult.fail(f"Unbind error: {e}")
 
-    @property
     def is_connected(self) -> bool:
         """Check if connected and bound to LDAP server.
 
@@ -325,7 +336,30 @@ class FlextLDAPClient:
     # SEARCH OPERATIONS - Consolidated search functionality
     # =========================================================================
 
-    async def search(
+    def search(
+        self,
+        base_dn: str,
+        search_filter: str,
+        scope: str = "subtree",
+    ) -> object:
+        """LDAP search following flext-core protocol signature.
+
+        This method follows the flext-core LdapConnection protocol.
+        For advanced search operations, use search_with_request().
+        """
+        # Create SearchRequest from basic parameters
+        request = FlextLDAPEntities.SearchRequest(
+            base_dn=base_dn,
+            filter_str=search_filter,
+            scope=scope,
+            attributes=None,  # Default value
+            size_limit=1000,  # Default value
+            time_limit=30,  # Default value
+        )
+        # Delegate to the advanced method
+        return self.search_with_request(request)
+
+    async def search_with_request(
         self,
         request: FlextLDAPEntities.SearchRequest,
     ) -> FlextResult[FlextLDAPEntities.SearchResponse]:
@@ -375,19 +409,19 @@ class FlextLDAPClient:
                 )
 
             # Log success with structured data
-            logger.debug(
+            self.log_info(
                 "Search completed using Strategy Pattern",
-                extra={
-                    "base_dn": request.base_dn,
-                    "filter": request.filter_str,
-                    "count": len(cast("list[object]", entries_result.value.get("entries", []))),
-                },
+                base_dn=request.base_dn,
+                filter=request.filter_str,
+                count=len(
+                    cast("list[object]", entries_result.value.get("entries", []))
+                ),
             )
 
             return response_result
 
         except Exception as e:
-            logger.exception(
+            self.log_error(
                 "Unexpected search strategy error",
                 extra={"error": str(e)},
             )
@@ -399,7 +433,20 @@ class FlextLDAPClient:
     # CRUD OPERATIONS - Consolidated Create, Update, Delete operations
     # =========================================================================
 
-    async def add(self, dn: str, attributes: LdapAttributeDict) -> FlextResult[None]:
+    def add(self, dn: str, attributes: FlextTypes.Core.Dict) -> object:
+        """Add new entry to LDAP directory following flext-core protocol.
+
+        Returns:
+            object: Success or error result.
+
+        """
+        # Convert to LdapAttributeDict and delegate to implementation
+        ldap_attributes: LdapAttributeDict = cast("LdapAttributeDict", dict(attributes))
+        return self.add_entry(dn, ldap_attributes)
+
+    async def add_entry(
+        self, dn: str, attributes: LdapAttributeDict
+    ) -> FlextResult[None]:
         """Add new entry to LDAP directory.
 
         Returns:
@@ -418,17 +465,32 @@ class FlextLDAPClient:
             if not success:
                 return FlextResult.fail(f"Add failed: {self._connection.result}")
 
-            logger.info("Entry added", extra={"dn": dn})
+            self.log_info("Entry added", dn=dn)
             return FlextResult.ok(None)
 
         except LDAPException as e:
-            logger.exception("LDAP add failed", extra={"error": str(e), "dn": dn})
+            self.log_error("LDAP add failed", error=str(e), dn=dn)
             return FlextResult.fail(f"Add failed: {e}")
         except Exception as e:
-            logger.exception("Unexpected add error", extra={"error": str(e), "dn": dn})
+            self.log_error("Unexpected add error", error=str(e), dn=dn)
             return FlextResult.fail(f"Add error: {e}")
 
-    async def modify(self, dn: str, attributes: LdapAttributeDict) -> FlextResult[None]:
+    def modify(self, dn: str, modifications: FlextTypes.Core.Dict) -> object:
+        """Modify existing LDAP entry following flext-core protocol.
+
+        Returns:
+            object: Success or error result.
+
+        """
+        # Convert to LdapAttributeDict and delegate to implementation
+        ldap_modifications: LdapAttributeDict = cast(
+            "LdapAttributeDict", dict(modifications)
+        )
+        return self.modify_entry(dn, ldap_modifications)
+
+    async def modify_entry(
+        self, dn: str, attributes: LdapAttributeDict
+    ) -> FlextResult[None]:
         """Modify existing LDAP entry.
 
         Returns:
@@ -454,16 +516,17 @@ class FlextLDAPClient:
                     f"Modify failed: {self._connection.result}",
                 )
 
-            logger.info("Entry modified", extra={"dn": dn})
+            self.log_info("Entry modified", dn=dn)
             return FlextResult.ok(None)
 
         except LDAPException as e:
-            logger.exception("LDAP modify failed", extra={"error": str(e), "dn": dn})
+            self.log_error("LDAP modify failed", error=str(e), dn=dn)
             return FlextResult.fail(f"Modify failed: {e}")
         except Exception as e:
-            logger.exception(
+            self.log_error(
                 "Unexpected modify error",
-                extra={"error": str(e), "dn": dn},
+                error=str(e),
+                dn=dn,
             )
             return FlextResult.fail(f"Modify error: {e}")
 
@@ -486,16 +549,17 @@ class FlextLDAPClient:
                     f"Delete failed: {self._connection.result}",
                 )
 
-            logger.info("Entry deleted", extra={"dn": dn})
+            self.log_info("Entry deleted", dn=dn)
             return FlextResult.ok(None)
 
         except LDAPException as e:
-            logger.exception("LDAP delete failed", extra={"error": str(e), "dn": dn})
+            self.log_error("LDAP delete failed", error=str(e), dn=dn)
             return FlextResult.fail(f"Delete failed: {e}")
         except Exception as e:
-            logger.exception(
+            self.log_error(
                 "Unexpected delete error",
-                extra={"error": str(e), "dn": dn},
+                error=str(e),
+                dn=dn,
             )
             return FlextResult.fail(f"Delete error: {e}")
 
@@ -506,6 +570,47 @@ class FlextLDAPClient:
                 # Safe method call in cleanup context
                 unbind_method = getattr(self._connection, "unbind", lambda: None)
                 unbind_method()
+
+    # =========================================================================
+    # PROTOCOL METHODS - Required by FlextProtocols.Infrastructure.Connection
+    # =========================================================================
+
+    def __call__(self, *_args: object, **_kwargs: object) -> object:
+        """Callable interface for connection - protocol requirement."""
+        # Return connection status for callable interface
+        return self.is_connected()
+
+    def test_connection(self) -> object:
+        """Test connection to LDAP server - protocol requirement."""
+        if not self._connection:
+            return FlextResult.fail("No connection established")
+
+        try:
+            # Test connection by performing a simple bind check
+            is_bound = getattr(self._connection, "bound", False)
+            if is_bound:
+                return FlextResult.ok("Connection test successful")
+            return FlextResult.fail("Connection not bound")
+        except Exception as e:
+            return FlextResult.fail(f"Connection test failed: {e}")
+
+    def get_connection_string(self) -> str:
+        """Get connection string for LDAP server - protocol requirement."""
+        if not self._server:
+            return "No server configured"
+
+        try:
+            # Build connection string from server info
+            scheme = "ldaps" if getattr(self._server, "ssl", False) else "ldap"
+            host = getattr(self._server, "host", "localhost")
+            port = getattr(self._server, "port", 389)
+            return f"{scheme}://{host}:{port}"
+        except Exception:
+            return "Connection string unavailable"
+
+    def close_connection(self) -> object:
+        """Close connection to LDAP server - protocol requirement."""
+        return self.unbind()  # Delegate to existing unbind method
 
 
 # =============================================================================

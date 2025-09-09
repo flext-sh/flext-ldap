@@ -1083,7 +1083,7 @@ class TestCommandObjectExecution:
             method = getattr(ops_service, method_name)
             try:
                 # Try to execute method (may require parameters)
-                if method_name in ["execute", "process", "validate"]:
+                if method_name in {"execute", "process", "validate"}:
                     # Skip methods that clearly need parameters
                     continue
                 result = method()

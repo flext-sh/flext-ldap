@@ -12,10 +12,15 @@ from __future__ import annotations
 import re
 from typing import ClassVar, final, override
 
-from flext_core import FlextLogger, FlextModels, FlextResult, FlextUtilities
+from flext_core import FlextModels, FlextResult, FlextUtilities
 from pydantic import ConfigDict, Field, field_validator
 
-logger = FlextLogger(__name__)
+from flext_ldap.constants import FlextLDAPConstants
+
+# Python 3.13 type aliases
+type ValidatedDn = str
+type LdapFilterString = str
+type AttributeName = str
 
 # =============================================================================
 # SINGLE FLEXT LDAP VALUE OBJECTS CLASS - Consolidated value object functionality
@@ -48,13 +53,13 @@ class FlextLDAPValueObjects:
         value: str = Field(
             ...,
             description="RFC 2253 compliant Distinguished Name",
-            min_length=3,
-            max_length=2048,
+            min_length=FlextLDAPConstants.LdapValidation.MIN_DN_LENGTH,
+            max_length=FlextLDAPConstants.LdapValidation.MAX_DN_LENGTH,
         )
 
-        # Basic DN validation pattern - simplified for practical use
+        # DN validation pattern from SOURCE OF TRUTH
         DN_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            r"^[a-zA-Z]+=[^,]+(?:,[a-zA-Z]+=[^,]+)*$",
+            FlextLDAPConstants.LdapValidation.DN_PATTERN,
         )
 
         @field_validator("value")
@@ -115,15 +120,8 @@ class FlextLDAPValueObjects:
 
         scope: str = Field(..., description="LDAP search scope")
 
-        # Valid LDAP scopes per RFC 4511
-        VALID_SCOPES: ClassVar[set[str]] = {
-            "base",
-            "one",
-            "sub",
-            "children",
-            "onelevel",
-            "subtree",
-        }
+        # Valid LDAP scopes from SOURCE OF TRUTH
+        VALID_SCOPES: ClassVar[set[str]] = FlextLDAPConstants.Scopes.VALID_SCOPES
 
         @field_validator("scope")
         @classmethod
@@ -153,17 +151,17 @@ class FlextLDAPValueObjects:
         @classmethod
         def base(cls) -> FlextLDAPValueObjects.Scope:
             """Create base scope (search only the entry itself)."""
-            return cls(scope="base")
+            return cls(scope=FlextLDAPConstants.Scopes.BASE)
 
         @classmethod
         def one(cls) -> FlextLDAPValueObjects.Scope:
             """Create one-level scope (search direct children only)."""
-            return cls(scope="one")
+            return cls(scope=FlextLDAPConstants.Scopes.ONE)
 
         @classmethod
         def sub(cls) -> FlextLDAPValueObjects.Scope:
             """Create subtree scope (search entry and all descendants)."""
-            return cls(scope="sub")
+            return cls(scope=FlextLDAPConstants.Scopes.SUB)
 
     # =========================================================================
     # FILTER - LDAP filter value object with RFC 4515 compliance
@@ -183,13 +181,13 @@ class FlextLDAPValueObjects:
         value: str = Field(
             ...,
             description="RFC 4515 compliant LDAP filter",
-            min_length=1,
-            max_length=4096,  # Reasonable filter size limit
+            min_length=FlextLDAPConstants.LdapValidation.MIN_FILTER_LENGTH,
+            max_length=FlextLDAPConstants.LdapValidation.MAX_FILTER_LENGTH_VALUE_OBJECTS,
         )
 
-        # Basic LDAP filter validation pattern
+        # LDAP filter validation pattern from SOURCE OF TRUTH
         FILTER_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            r"^\([&|!]?[\w\s\-=><~:*().,]+\)$",
+            FlextLDAPConstants.LdapValidation.FILTER_PATTERN,
         )
 
         @field_validator("value")

@@ -200,14 +200,17 @@ class TestFlextLDAPApiFunctionalFocused:
         # Create objects that raise errors during string conversion
         class BadStringConversion:
             def __str__(self) -> str:
-                raise ValueError("Cannot convert to string")
+                msg = "Cannot convert to string"
+                raise ValueError(msg)
 
         class BadRepr:
             def __repr__(self) -> str:
-                raise TypeError("Cannot represent")
+                msg = "Cannot represent"
+                raise TypeError(msg)
 
             def __str__(self) -> str:
-                raise ValueError("Cannot convert")
+                msg = "Cannot convert"
+                raise ValueError(msg)
 
         # Test error handling
         error_entry = {

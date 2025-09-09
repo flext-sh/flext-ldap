@@ -703,14 +703,14 @@ class TestFlextLDAPServicesComprehensive:
         mock_entry.dn = "cn=test,dc=example,dc=com"
         mock_entry.object_classes = ["person", "organizationalPerson"]
         mock_entry.attributes = {"cn": ["Test User"], "uid": ["testuid"]}
-        mock_entry.get_attribute = Mock(side_effect=lambda attr: {
+        mock_entry.get_attribute = Mock(side_effect={
             "uid": "testuid",
             "cn": "Test User",
             "sn": "User",
             "givenName": "Test",
             "mail": "test@example.com",
             "userPassword": "password123"
-        }.get(attr))
+        }.get)
         from datetime import datetime
         mock_entry.created_at = datetime.now(UTC)
         mock_entry.modified_at = datetime.now(UTC)
